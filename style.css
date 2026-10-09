@@ -181,6 +181,10 @@ nav .nav-links a.active {
     color: var(--accent);
 }
 
+.nav-mobile-footer {
+    display: none;
+}
+
 nav .nav-toggle {
     display: none;
     background: none;
@@ -1987,23 +1991,42 @@ footer {
         bottom: 0;
         border-bottom: none;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
         gap: 0;
-        padding: 32px 0;
+        padding: 0 0 100px;
         overflow-y: auto;
     }
 
     nav.menu-open .nav-links li {
         width: 100%;
         text-align: center;
+        opacity: 0;
+        transform: translateY(12px);
+        animation: menuFadeIn 0.3s ease forwards;
+    }
+
+    nav.menu-open .nav-links li:nth-child(1) { animation-delay: 0.05s; }
+    nav.menu-open .nav-links li:nth-child(2) { animation-delay: 0.1s; }
+    nav.menu-open .nav-links li:nth-child(3) { animation-delay: 0.15s; }
+    nav.menu-open .nav-links li:nth-child(4) { animation-delay: 0.2s; }
+    nav.menu-open .nav-links li:nth-child(5) { animation-delay: 0.25s; }
+
+    @keyframes menuFadeIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     nav.menu-open .nav-links a {
-        font-size: 1.2rem;
-        font-weight: 500;
+        font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 400;
+        letter-spacing: -0.01em;
         color: var(--text-secondary);
         display: block;
-        padding: 14px 24px;
+        padding: 16px 24px;
+        transition: color 0.2s ease;
     }
 
     nav.menu-open .nav-links a.active {
@@ -2011,8 +2034,51 @@ footer {
     }
 
     nav.menu-open .nav-links a:hover {
-        background: var(--bg-card);
         color: var(--text);
+    }
+
+    .nav-mobile-footer {
+        display: none;
+    }
+
+    nav.menu-open .nav-mobile-footer {
+        display: flex;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        justify-content: center;
+        padding: 28px 24px;
+        border-top: 1px solid var(--border);
+        opacity: 0;
+        animation: menuFadeIn 0.4s ease 0.25s forwards;
+    }
+
+    .nav-mobile-social {
+        display: flex;
+        gap: 20px;
+    }
+
+    .nav-mobile-social a {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bg-card);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    .nav-mobile-social a:hover {
+        color: var(--accent);
+        background: var(--accent-subtle);
+    }
+
+    .nav-mobile-social svg {
+        width: 18px;
+        height: 18px;
     }
 
     body.menu-open {
