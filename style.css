@@ -975,6 +975,120 @@ nav.menu-open .nav-toggle span:nth-child(3) {
     gap: 20px;
 }
 
+/* ── About Page ── */
+
+.about-hero {
+    padding: 140px 24px 60px;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.about-hero-content {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.about-hero-text {
+    flex: 1;
+}
+
+.about-hero h1 {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 20px;
+}
+
+.about-hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 560px;
+}
+
+.about-hero-photo {
+    flex-shrink: 0;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--border);
+}
+
+.about-hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.about-highlights {
+    display: flex;
+    gap: 40px;
+    margin-top: 36px;
+}
+
+.about-highlight {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.about-highlight-value {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+}
+
+.about-highlight-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+.about-section-title {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin-bottom: 32px;
+}
+
+.timeline-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.badge-education {
+    background: rgba(102, 203, 255, 0.12);
+    color: var(--accent);
+}
+
+.badge-work {
+    background: rgba(129, 199, 132, 0.12);
+    color: #81c784;
+}
+
+.badge-volunteering {
+    background: rgba(255, 183, 77, 0.12);
+    color: #ffb74d;
+}
+
+.badge-other {
+    background: rgba(186, 147, 220, 0.12);
+    color: #ba93dc;
+}
+
 /* ── Contact Form ── */
 
 .form-dynamic-fields[hidden],
@@ -2034,6 +2148,26 @@ footer {
     .projects-hero {
         padding: 100px 24px 40px;
     }
+
+    .about-hero {
+        padding: 100px 24px 40px;
+    }
+
+    .about-hero-content {
+        flex-direction: column-reverse;
+        gap: 32px;
+        text-align: center;
+    }
+
+    .about-hero-photo {
+        width: 160px;
+        height: 160px;
+    }
+
+    .about-highlights {
+        justify-content: center;
+        gap: 32px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -2047,5 +2181,16 @@ footer {
 
     .donate-impact-grid {
         grid-template-columns: 1fr;
+    }
+
+    .about-highlights {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .about-highlight {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 8px;
     }
 }
