@@ -190,6 +190,17 @@ $canonical = '/projects/';
         <span class="projects-divider-line"></span>
     </div>
     <div class="card-grid">
+        <a class="card faded" href="/projects/emoticolor/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/emoticolor.png" alt="">
+            </div>
+            <h3>Emoticolor</h3>
+            <p>Emotion-based social network where users share how they feel through colors.</p>
+            <ul class="project-tags"><li>Web app</li><li>Thesis project</li></ul>
+        </a>
         <a class="card faded" href="/projects/word-of-the-day/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
