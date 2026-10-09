@@ -158,7 +158,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-$valid_reasons = ['General', 'Bug report', 'Feature request', 'Collaboration', 'Other'];
+$valid_reasons = ['Project request', 'General', 'Bug report', 'Feature request', 'Collaboration', 'Other'];
 if (!in_array($reason, $valid_reasons)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Invalid reason selected.']);

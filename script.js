@@ -33,13 +33,86 @@ document.addEventListener('DOMContentLoaded', function () {
     if (contactForm) {
         var submit = document.getElementById('form-submit');
         var altchaVerified = false;
+        var reasonSelect = contactForm.querySelector('#reason');
+        var fieldsProjectRequest = document.getElementById('fields-project-request');
+        var fieldsExistingProject = document.getElementById('fields-existing-project');
+        var fieldsTechnical = document.getElementById('fields-technical');
+        var projectSelect = contactForm.querySelector('#project');
+        var projectOtherGroup = document.getElementById('project-other-group');
+        var projectTypeSelect = contactForm.querySelector('#project_type');
+        var projectTypeOtherGroup = document.getElementById('project-type-other-group');
+
+        function updateFieldsForReason(reason) {
+            fieldsProjectRequest.hidden = true;
+            fieldsExistingProject.hidden = true;
+            fieldsTechnical.hidden = true;
+            projectOtherGroup.hidden = true;
+            projectTypeOtherGroup.hidden = true;
+
+            if (projectSelect) projectSelect.selectedIndex = 0;
+            if (projectTypeSelect) projectTypeSelect.selectedIndex = 0;
+
+            if (reason === 'Project request') {
+                fieldsProjectRequest.hidden = false;
+            } else if (reason === 'Bug report' || reason === 'Feature request') {
+                fieldsExistingProject.hidden = false;
+                fieldsTechnical.hidden = false;
+            }
+        }
+
+        reasonSelect.addEventListener('change', function () {
+            updateFieldsForReason(this.value);
+            checkFormValid();
+        });
+
+        if (projectSelect) {
+            projectSelect.addEventListener('change', function () {
+                projectOtherGroup.hidden = this.value !== 'Other';
+                checkFormValid();
+            });
+        }
+
+        if (projectTypeSelect) {
+            projectTypeSelect.addEventListener('change', function () {
+                projectTypeOtherGroup.hidden = this.value !== 'Other';
+                checkFormValid();
+            });
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        var presetReason = params.get('reason');
+        if (presetReason) {
+            var opt = reasonSelect.querySelector('option[value="' + presetReason + '"]');
+            if (opt) {
+                reasonSelect.value = presetReason;
+                updateFieldsForReason(presetReason);
+            }
+        }
 
         function checkFormValid() {
             var name = contactForm.querySelector('#name').value.trim();
             var email = contactForm.querySelector('#email').value.trim();
-            var reason = contactForm.querySelector('#reason').value;
+            var reason = reasonSelect.value;
             var message = contactForm.querySelector('#message').value.trim();
-            submit.disabled = !(name && email && reason && message && altchaVerified);
+            var valid = name && email && reason && message && altchaVerified;
+
+            if (reason === 'Project request') {
+                var ptype = projectTypeSelect.value;
+                valid = valid && ptype;
+                if (ptype === 'Other') {
+                    var typeOther = contactForm.querySelector('#project_type_other').value.trim();
+                    valid = valid && typeOther;
+                }
+            } else if (reason === 'Bug report' || reason === 'Feature request') {
+                var proj = projectSelect.value;
+                valid = valid && proj;
+                if (proj === 'Other') {
+                    var other = contactForm.querySelector('#project_other').value.trim();
+                    valid = valid && other;
+                }
+            }
+
+            submit.disabled = !valid;
         }
 
         contactForm.querySelectorAll('input, select, textarea').forEach(function (el) {
@@ -73,15 +146,27 @@ document.addEventListener('DOMContentLoaded', function () {
             submit.classList.add('loading');
             status.hidden = true;
 
+            var reason = reasonSelect.value;
+            var projectVal = '';
+            if (reason === 'Project request') {
+                projectVal = projectTypeSelect.value === 'Other'
+                    ? contactForm.querySelector('#project_type_other').value
+                    : projectTypeSelect.value;
+            } else if (reason === 'Bug report' || reason === 'Feature request') {
+                projectVal = projectSelect.value === 'Other'
+                    ? contactForm.querySelector('#project_other').value
+                    : projectSelect.value;
+            }
+
             var data = {
                 name: contactForm.querySelector('#name').value,
                 email: contactForm.querySelector('#email').value,
-                reason: contactForm.querySelector('#reason').value,
+                reason: reason,
                 message: contactForm.querySelector('#message').value,
-                project: contactForm.querySelector('#project').value,
-                project_version: contactForm.querySelector('#project_version').value,
-                os: contactForm.querySelector('#os').value,
-                browser: contactForm.querySelector('#browser').value,
+                project: projectVal,
+                project_version: !fieldsTechnical.hidden ? (contactForm.querySelector('#project_version').value || '') : '',
+                os: !fieldsTechnical.hidden ? (contactForm.querySelector('#os').value || '') : '',
+                browser: !fieldsTechnical.hidden ? (contactForm.querySelector('#browser').value || '') : '',
                 language: contactForm.querySelector('#language').value,
                 company: contactForm.querySelector('#company') ? contactForm.querySelector('#company').value : '',
                 ts: contactForm.querySelector('#ts') ? contactForm.querySelector('#ts').value : '',
@@ -105,6 +190,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         altchaVerified = false;
                         if (altchaWidget) altchaWidget.reset();
                         submit.disabled = true;
+                        fieldsProjectRequest.hidden = true;
+                        fieldsExistingProject.hidden = true;
+                        fieldsTechnical.hidden = true;
+                        projectOtherGroup.hidden = true;
+                        projectTypeOtherGroup.hidden = true;
                     }
                 })
                 .catch(function () {

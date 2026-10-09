@@ -16,6 +16,7 @@ $canonical = '/projects/';
 <div class="page-header">
     <p class="section-label">Projects</p>
     <h1 class="section-title">What I've built</h1>
+    <p class="page-description">Personal and open-source projects I've designed and developed on my own — apps, browser extensions, tools, and more.</p>
 </div>
 
 <section class="section">

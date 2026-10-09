@@ -36,31 +36,63 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
             </div>
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="reason">Reason <span class="field-badge required">Required</span></label>
-                <select id="reason" name="reason" required>
-                    <option value="" disabled selected>Select a reason</option>
-                    <option value="General">General</option>
-                    <option value="Bug report">Bug report</option>
-                    <option value="Feature request">Feature request</option>
-                    <option value="Collaboration">Collaboration</option>
-                    <option value="Other">Other</option>
-                </select>
+        <div class="form-group">
+            <label for="reason">Reason <span class="field-badge required">Required</span></label>
+            <select id="reason" name="reason" required>
+                <option value="" disabled selected>Select a reason</option>
+                <option value="Project request">Project request</option>
+                <option value="Bug report">Bug report</option>
+                <option value="Feature request">Feature request</option>
+                <option value="General">General</option>
+                <option value="Collaboration">Collaboration</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+
+        <div id="fields-project-request" class="form-dynamic-fields" hidden>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="project_type">Project type <span class="field-badge required">Required</span></label>
+                    <select id="project_type" name="project_type">
+                        <option value="" disabled selected>Select a type</option>
+                        <option value="Website">Website</option>
+                        <option value="Web app">Web app</option>
+                        <option value="Landing page">Landing page</option>
+                        <option value="Android app">Android app</option>
+                        <option value="Browser extension">Browser extension</option>
+                        <option value="UX/UI design">UX/UI design</option>
+                        <option value="Redesign">Redesign</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div id="project-type-other-group" class="form-group" hidden>
+                    <label for="project_type_other">Specify <span class="field-badge required">Required</span></label>
+                    <input type="text" id="project_type_other" name="project_type_other" placeholder="Describe the project type">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="project">Project <span class="field-badge optional">Optional</span></label>
-                <select id="project" name="project">
-                    <option value="" selected>None</option>
-                    <option value="Notefox">Notefox</option>
-                    <option value="Sav PDF Viewer">Sav PDF Viewer</option>
-                    <option value="Emoji">Emoji</option>
-                    <option value="savmrl.it">savmrl.it</option>
-                    <option value="Accented Letters">Accented Letters</option>
-                    <option value="Limite">Limite</option>
-                    <option value="Word of the Day">Word of the Day</option>
-                    <option value="HTML per tutti">HTML per tutti</option>
-                </select>
+        </div>
+
+        <div id="fields-existing-project" class="form-dynamic-fields" hidden>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="project">Project <span class="field-badge required">Required</span></label>
+                    <select id="project" name="project">
+                        <option value="" disabled selected>Select a project</option>
+                        <option value="Notefox">Notefox</option>
+                        <option value="Sav PDF Viewer">Sav PDF Viewer</option>
+                        <option value="Emoji">Emoji</option>
+                        <option value="savmrl.it">savmrl.it</option>
+                        <option value="Accented Letters">Accented Letters</option>
+                        <option value="Limite">Limite</option>
+                        <option value="Word of the Day">Word of the Day</option>
+                        <option value="HTML per tutti">HTML per tutti</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div id="project-other-group" class="form-group" hidden>
+                    <label for="project_other">Project name <span class="field-badge required">Required</span></label>
+                    <input type="text" id="project_other" name="project_other" placeholder="Enter the project name">
+                </div>
             </div>
         </div>
 
@@ -69,34 +101,36 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
             <textarea id="message" name="message" required rows="5" placeholder="Write your message here..."></textarea>
         </div>
 
-        <div class="form-row form-row-three">
-            <div class="form-group">
-                <label for="project_version">Project version <span class="field-badge optional">Optional</span></label>
-                <input type="text" id="project_version" name="project_version" placeholder="e.g. 2.1.0">
-            </div>
-            <div class="form-group">
-                <label for="os">OS <span class="field-badge optional">Optional</span></label>
-                <select id="os" name="os">
-                    <option value="" selected>Not specified</option>
-                    <option value="Windows">Windows</option>
-                    <option value="macOS">macOS</option>
-                    <option value="Linux">Linux</option>
-                    <option value="Android">Android</option>
-                    <option value="iOS">iOS</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="browser">Web browser <span class="field-badge optional">Optional</span></label>
-                <select id="browser" name="browser">
-                    <option value="" selected>Not specified</option>
-                    <option value="Chrome">Chrome</option>
-                    <option value="Firefox">Firefox</option>
-                    <option value="Safari">Safari</option>
-                    <option value="Edge">Edge</option>
-                    <option value="Opera">Opera</option>
-                    <option value="Other">Other</option>
-                </select>
+        <div id="fields-technical" class="form-dynamic-fields" hidden>
+            <div class="form-row form-row-three">
+                <div class="form-group">
+                    <label for="project_version">Project version <span class="field-badge optional">Optional</span></label>
+                    <input type="text" id="project_version" name="project_version" placeholder="e.g. 2.1.0">
+                </div>
+                <div class="form-group">
+                    <label for="os">OS <span class="field-badge optional">Optional</span></label>
+                    <select id="os" name="os">
+                        <option value="" selected>Not specified</option>
+                        <option value="Windows">Windows</option>
+                        <option value="macOS">macOS</option>
+                        <option value="Linux">Linux</option>
+                        <option value="Android">Android</option>
+                        <option value="iOS">iOS</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="browser">Web browser <span class="field-badge optional">Optional</span></label>
+                    <select id="browser" name="browser">
+                        <option value="" selected>Not specified</option>
+                        <option value="Chrome">Chrome</option>
+                        <option value="Firefox">Firefox</option>
+                        <option value="Safari">Safari</option>
+                        <option value="Edge">Edge</option>
+                        <option value="Opera">Opera</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
             </div>
         </div>
 

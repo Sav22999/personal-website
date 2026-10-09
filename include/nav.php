@@ -12,6 +12,9 @@
                 <a href="/projects/"<?php if (isset($current_page) && $current_page === 'projects') echo ' class="active"'; ?>>Projects</a>
             </li>
             <li>
+                <a href="/services/"<?php if (isset($current_page) && $current_page === 'services') echo ' class="active"'; ?>>Services</a>
+            </li>
+            <li>
                 <a href="/contact-me/"<?php if (isset($current_page) && $current_page === 'contact-me') echo ' class="active"'; ?>>Contact</a>
             </li>
             <li>
