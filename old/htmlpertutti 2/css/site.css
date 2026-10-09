@@ -1,0 +1,151 @@
+@font-face {
+    font-family: code;
+    src: url("/old/htmlpertutti/font/sourcecodepro.ttf");
+}
+
+@font-face {
+    font-family: zilla-slab;
+    src: url("/old/htmlpertutti/font/zillaslab.otf");
+}
+
+body {
+    background-color: var(--colore-sfondo);
+    color: var(--colore-testo);
+    font-family: var(--font-testo);
+    font-size: 20px;
+    background-image: url("/old/htmlpertutti/img/pattern1.png");
+    background-repeat: repeat;
+    background-size: 100px 100px;
+}
+
+#body {
+    margin-top: 20px;
+    margin-left: 15%;
+    margin-right: 15%;
+    width: auto;
+    padding: 20px;
+    text-align: center;
+    transition: 0.5s;
+}
+
+/*Loading & Working*/
+div#loading {
+    display: block;
+    position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: #000000;
+    background-image: url("/old/images/loading/loading.gif"), linear-gradient(to right, #000000, #222222);
+    background-position: center center, center center;
+    background-size: auto 15%, 100% 100%;
+    background-repeat: no-repeat;
+    z-index: 999999;
+}
+
+.acquista {
+    font-family: inherit;
+    height: 62px;
+    width: 100%;
+    min-width: 250px;
+    padding-right: 20px;
+    padding-left: 20px;
+    margin: 2px;
+    margin-left: 0px;
+    margin-right: 0px;
+    background-color: var(--colore-sfondo-bottone-amazon);
+    color: var(--colore-testo-bottone-amazon);
+    border: 0px solid transparent;
+    position: relative;
+    font-size: 24px;
+    font-family: inherit;
+    font-weight: bold;
+    border-radius: var(--border-radius);
+    white-space: pre-wrap;
+    cursor: pointer;
+    transition: 0.5s;
+    box-shadow: 0px 0px 0px 1px var(--colore-sfondo-bottone-amazon-hover);
+}
+
+.acquista:hover {
+    background-color: var(--colore-sfondo-bottone-amazon-hover);
+}
+
+#acquista {
+    width: 90%;
+    height: auto;
+    min-width: 100px;
+    max-width: 700px;
+    border-radius: var(--border-radius);
+}
+
+.center {
+    text-align: center;
+    margin-left: auto;;
+    margin-right: auto;
+}
+
+#copertina {
+    width: 90%;
+    min-width: 100px;
+    max-width: 700px;
+    height: auto;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: 0px 0px 0px 1px var(--colore-sfondo-bottone-amazon-hover);
+    margin-bottom: 2px;
+}
+
+#copertina img {
+    width: 100%;
+}
+
+.sup_hr {
+    border-top: 1px solid whitesmoke;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+h1 {
+    padding: 0px;
+    margin: 0px;
+    font-size: 40px;
+    font-weight: 500;
+}
+
+h4 {
+    padding: 0px;
+    margin: 0px;
+    font-size: 20px;
+    font-weight: none;
+    font-style: italic;
+}
+
+.txt_left {
+    text-align: left;
+}
+
+a {
+    color: inherit;
+}
+
+del {
+    color: darkred;
+    text-decoration: line-through;
+}
+
+ins {
+    color: green;
+    text-decoration: none;
+}
+
+#no_error {
+    width: 100%;
+    border-radius: var(--border-radius);
+    background-color: darkred;
+    color: whitesmoke;
+    text-align: center;
+    padding: 10px;
+    display: block;
+}

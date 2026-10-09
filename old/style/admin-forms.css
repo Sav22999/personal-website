@@ -1,0 +1,922 @@
+@import url('https://fonts.googleapis.com/css2?family=Basic&family=Open+Sans:ital,wght@0,300;0,400;0,700;1,400&family=Source+Code+Pro&display=swap');
+
+:root {
+    --font-family-basic: "Basic";
+    --font-family-mono: "Source Code Pro";
+    --font-family-open: "Open Sans";
+    --border-radius: 5px;
+    --primary-color: #3399ff;
+    --secondary-color: #66ccff;
+    --background-color-white: #FFFFFF;
+    --background-color-darkwhite: #EEEEEE;
+    --background-color-darkdarkwhite: #DDDDDD;
+    --text-color-lightblack: #444444;
+    --text-color-black: #000000;
+    --text-color-white: #FFFFFF;
+    --secondary-text-color: #FFFFFF;
+    --transition: 0.5s;
+    --box-shadow: 0px 0px 0px 4px var(--secondary-color);
+    --white: #FFFFFF;
+    --black: #000000;
+    --red: #FF0000;
+    --light-pink: #FFDDDDDD;
+    --pink: #FFAAAA;
+    --light-black: #444444;
+    --dark-pink: #FF8888;
+    --transparent-pink: rgba(255, 170, 170, 0.5);
+    --light-gray: #DDDDDD;
+    --light-blue: #3399ff;
+    --light-light-blue: #66ccff;
+    --transparent-light-blue: rgba(51, 153, 255, 0.5);
+    --transparent-light-light-blue: rgba(102, 204, 255, 0.5);
+    --light-light-gray: #EEEEEE;
+}
+
+/*box-sizing: border-box; -> in the size (width, height) are included padding and border*/
+
+* {
+    scrollbar-color: var(--primary-color) var(--white);
+    scrollbar-width: thin;
+    outline: none;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background-color: var(--white); /* or add it to the track */
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+}
+
+body {
+    background-color: var(--background-color-darkwhite);
+    color: var(--text-color-lightblack);
+    font-size: 18px;
+    font-family: var(--font-family-open), var(--font-family-basic), sans-serif;
+    margin: 0px;
+}
+
+main {
+    margin: 0px;
+    width: auto;
+    margin-left: 20%;
+    margin-right: 20%;
+    min-height: 200px;
+    background-color: var(--background-color-white);
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+/*New recipe, new ingredient and new country*/
+.main-buttons {
+    margin: 0px;
+    margin-top: 10px;
+    padding: 0px;
+}
+
+.title-recipe, .preparation-recipe {
+    width: 100%;
+    margin: 0px;
+    display: block;
+}
+
+.title-recipe {
+    margin-bottom: 10px;
+}
+
+.preparation-recipe {
+    height: 500px;
+    overflow-y: auto;
+    line-height: 18px;
+}
+
+.cover-section::before {
+    content: "* Immagine in evidenza";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.inserted-images-section::before {
+    content: "Immagini caricate";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.types-section::before {
+    content: "* Categorie";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.ingredients-section::before {
+    content: "* Ingredienti";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.preparation-time-section::before {
+    content: "* Tempo di preparazione (in min)";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.calories-section::before {
+    content: "Calorie (in kcal)";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.difficulty-section::before {
+    content: "* Difficoltà";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.origin-country-section::before {
+    content: "Paese di origine";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.tags-section::before {
+    content: "Tag";
+    display: block;
+    margin-bottom: 10px;
+}
+
+#span-cover-pop-up::before {
+    content: "Scegli un'immagine";
+    display: block;
+    margin-bottom: 10px;
+}
+
+#span-country-pop-up::before {
+    content: "Scegli un Paese";
+    display: block;
+    margin-bottom: 10px;
+}
+
+#span-ingredient-pop-up::before {
+    content: "Scegli/Modifica un ingrediente";
+    display: block;
+    margin-bottom: 10px;
+}
+
+#span-tag-pop-up::before {
+    content: "Scrivi tag";
+    display: block;
+    margin-bottom: 10px;
+}
+
+.section-new-recipe {
+    background-color: var(--background-color-white);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    margin: 0px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.pop-up {
+    position: absolute;
+    top: auto; /*to set programmatically*/
+    right: auto; /*to set programmatically*/
+    height: auto;
+    float: right;
+    width: 25%;
+    min-width: 300px;
+    max-width: 600px;
+    padding: 10px;
+    display: none;
+    background-color: var(--background-color-white);
+    box-shadow: 0px 0px 5px var(--primary-color);
+    transition: 0s;
+    border-radius: var(--border-radius);
+    z-index: 100;
+}
+
+.inserted-image, .inserted-image-4, .inserted-image-8, .cover-image {
+    width: 100%;
+    height: 100px;
+    opacity: 0.8;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    transition: var(--transition);
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--background-color-darkwhite);
+}
+
+.cover-image {
+    opacity: 1;
+    cursor: default;
+}
+
+.inserted-image-4 {
+    width: 50%;
+}
+
+.inserted-image-8 {
+    width: 50%;
+    height: 50px;
+}
+
+.inserted-image:hover, .inserted-image-4:hover, .inserted-image-8:hover {
+    opacity: 1;
+}
+
+#pop-up-inserted-images {
+    width: 100%;
+    height: 400px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    border-radius: var(--border-radius);
+    position: absolute;
+}
+
+.inserted-image:hover {
+    opacity: 1;
+}
+
+.inserted-image:focus {
+    box-shadow: var(--box-shadow);
+}
+
+.image-title {
+    width: auto;
+    max-width: 500px;
+    height: 50px;
+    padding: 10px;
+    font-size: 20px;
+    float: left;
+    margin: 0px;
+    opacity: 0.7;
+    box-sizing: border-box;
+    white-space: normal;
+    background-color: var(--white);
+    color: var(--black);
+    transition: var(--transition);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.image-title:hover {
+    opacity: 1;
+}
+
+.insert-image {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+}
+
+.pop-up-display-message {
+    background-color: var(--black);
+    opacity: 0.7;
+    position: fixed;
+    color: var(--white);
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    width: auto;
+    height: auto;
+    display: none;
+    padding: 10%;
+    padding-top: 20%;
+    z-index: 999;
+    text-align: center;
+}
+
+#pop-up-display-too-small {
+    opacity: 1;
+}
+
+#remove-country, #remove-country-separator, #remove-ingredient, #remove-ingredient-separator, #remove-tag, #remove-tag-separator, #remove-cover, #remove-cover-separator, #cover-image {
+    display: none;
+}
+
+/*Home page*/
+.home-page-section-div, .support-page-section-div, .page-section-div {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    margin: 0px;
+    box-sizing: border-box;
+}
+
+.button-home-page, .div-support-page, .div-home-page {
+    font: inherit;
+    /*font-size: 20px;*/
+    border: 0px solid transparent;
+    word-break: normal;
+    display: inline-block;
+    padding: 20px;
+    margin: 0px;
+    margin-top: 10px;
+    box-sizing: border-box;
+    min-height: 100px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    background-color: var(--background-color-darkwhite);
+}
+
+.button-home-page-no-min-height, .div-support-page {
+    min-height: auto;
+    padding: 10px;
+}
+
+.div-home-page {
+    padding: 0px;
+    overflow: hidden;
+    min-height: 250px;
+    width: 100%;
+    text-align: left;
+    cursor: default;
+}
+
+#approved-section, #to-approve-section, .div-approved-recipe-section, .div-to-approve-recipe-section {
+    width: 100%;
+}
+
+.div-approved-recipe-section, .div-to-approve-recipe-section {
+    background-color: var(--background-color-darkwhite);
+    border-radius: var(--border-radius);
+    margin: 5px;
+}
+
+.div-approved-page, .div-to-approve-recipe, .div-drafted-page {
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.div-approved-page div.div-cover, .div-to-approve-recipe div.div-cover, .div-home-page div.div-cover, .div-approved-recipe-section div.div-cover, .div-to-approve-recipe-section div.div-cover, .div-drafted-page div.div-cover {
+    width: 100%;
+    height: 200px;
+    margin: 0px;
+    box-sizing: border-box;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    border-radius: var(--border-radius);
+}
+
+.div-approved-page h1, .div-to-approve-recipe h1, .div-home-page h1, .div-approved-recipe-section h1, .div-to-approve-recipe-section h1, .div-drafted-page h1 {
+    margin: 0px;
+    padding: 10px;
+    font: inherit;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.div-support-page {
+    text-align: left;
+    background-size: 20px auto;
+    background-repeat: no-repeat;
+    background-image: url("/old/easyrecipes/images/arrow-down-icon.png");
+    background-position: 20px 17px;
+    padding-left: 60px;
+}
+
+.div-support-page-details {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 2px solid var(--light-blue)
+}
+
+.button-home-page-1, .div-support-page, .page-width-1 {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.button-home-page-2, .page-width-2 {
+    width: 50%;
+}
+
+.button-home-page-3, .page-width-3 {
+    width: 33%;
+}
+
+.button-home-page-start, .button-home-page-end {
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+.button-home-page:hover {
+    background-color: var(--background-color-darkdarkwhite);
+}
+
+.button-home-page:active {
+    box-shadow: var(--box-shadow);
+}
+
+#recipes-saved-as-draft-index::before, #recipes-inserted-index::before, #recipes-approved-index::before {
+    content: "Ricette che hai salvato come bozza";
+    display: block;
+    margin: 10px;
+    color: var(--light-blue);
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#recipes-inserted-index::before {
+    content: "Ricette inserite da te e pronte per essere approvate";
+}
+
+#recipes-approved-index::before {
+    content: "Ricette inserite da te";
+}
+
+.section-index {
+    background-color: var(--background-color-white);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    margin: 0px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+/*Generic*/
+h1 {
+    font: inherit;
+    font-size: 30px;
+    font-weight: bold;
+    color: var(--light-blue);
+    margin: 0px;
+    margin-bottom: 10px;
+    padding: 0px;
+    box-sizing: border-box;
+    cursor: default;
+    opacity: 1;
+    transition: inherit;
+    width: auto;
+    display: block;
+}
+
+.h1-section {
+    font: inherit;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--light-blue);
+    margin: 0px;
+    margin-bottom: 10px;
+    padding: 0px;
+    box-sizing: border-box;
+    cursor: default;
+    opacity: 1;
+    transition: inherit;
+    width: auto;
+    display: block;
+}
+
+.display-block-inline {
+    display: inline-block;
+}
+
+.display-block {
+    display: block;
+}
+
+.v-separator-after::after {
+    content: "|";
+}
+
+v-separator-before::before {
+    content: "|";
+}
+
+.textbox, .button, .textarea, .button-dark, p.preparation-recipe-preview {
+    width: 100%;
+    padding: 10px;
+    margin: 0px;
+    margin-bottom: 10px;
+    display: block;
+    transition: var(--transition);
+    box-sizing: border-box;
+    background-color: var(--background-color-white);
+    border: 1px solid var(--background-color-darkwhite);
+    font-size: 14px;
+    font-family: inherit;
+    border-radius: var(--border-radius);
+    z-index: 1;
+}
+
+.button, .submit, .button-dark {
+    cursor: pointer;
+    width: auto;
+    padding-left: 30px;
+    padding-right: 30px;
+    background-color: var(--background-color-darkwhite);
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border: 0px solid transparent;
+    white-space: normal;
+}
+
+.button-dark {
+    background-color: var(--light-black);
+    color: var(--white);
+}
+
+.button:hover {
+    background-color: var(--background-color-darkdarkwhite);
+}
+
+.button-dark:hover {
+    background-color: var(--black);
+}
+
+.red-button {
+    background-color: var(--pink);
+}
+
+.red-button:hover {
+    background: var(--dark-pink);
+}
+
+.textbox:hover, .textarea:hover {
+    border: 1px solid var(--background-color-darkdarkwhite);
+}
+
+.textbox:focus, .button:focus, .textarea:focus, select:focus {
+    box-shadow: var(--box-shadow);
+    z-index: 99;
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 100px;
+    height: 150px;
+}
+
+.link, a {
+    text-decoration: underline;
+    font-size: 16px;
+    font-weight: normal;
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+}
+
+.link:hover, a:hover {
+    color: var(--text-color-black);
+}
+
+.link:active, a:active {
+    color: var(--primary-color);
+}
+
+.link:visited, a:visited {
+    font-style: italic;
+}
+
+.no-link, .no-link:hover, .no-link:active, .no-link:visited {
+    text-decoration: none;
+    font-size: inherit;
+    font-weight: normal;
+    cursor: inherit;
+    user-select: none;
+    transition: var(--transition);
+}
+
+.message {
+    background-color: var(--secondary-color);
+    color: var(--secondary-text-color);
+    width: auto;
+    margin: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    font-size: inherit;
+    font-family: inherit;
+    user-select: none;
+    font-weight: bold;
+    border-radius: var(--border-radius);
+}
+
+.message-bottom {
+    background-color: var(--primary-color);
+    color: var(--secondary-text-color);
+    width: auto;
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    padding: 20px;
+    box-sizing: border-box;
+    user-select: none;
+    border-right: 0px;
+    opacity: 0.9;
+    display: none;
+    z-index: 10000;
+}
+
+.message-warning {
+    background-color: var(--red);;
+}
+
+.close-message-button {
+    background-color: var(--transparent-pink);
+    color: var(--black);
+    position: absolute;
+    margin: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    width: 50px;
+    height: auto;
+    border-radius: 0px;
+    background-image: url("/old/easyrecipes/images/close-icon.png");
+    background-position: center center;
+    background-size: 14px auto;
+    background-repeat: no-repeat;
+}
+
+.close-message-button:hover {
+    background-color: var(--dark-pink);
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.background-gradient-light, .background-gradient-dark, .background-gradient-red, .background-gradient-primary, .background-gradient-blue {
+    background-color: var(--white);
+    background-image: linear-gradient(to right, #dddddd, #ffffff);
+    background-position: center center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    color: var(--text-color-lightblack);
+}
+
+.background-gradient-dark {
+    background-color: var(--black);
+    background-image: linear-gradient(to right, #000000, #222222);
+    color: var(--white);
+}
+
+.background-gradient-red {
+    background-color: #FF0000;
+    background-image: linear-gradient(to right, #AA2222, #FF0000);
+    color: var(--background-color-darkwhite);
+}
+
+.background-gradient-primary {
+    background-color: var(--primary-color);
+    background-image: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    color: var(--background-color-darkwhite);
+}
+
+.background-gradient-blue {
+    background-color: #0000FF;
+    background-image: linear-gradient(to right, #2222AA, #0000FF);
+    color: var(--background-color-darkwhite);
+}
+
+.background-color-primary {
+    background-color: var(--primary-color);
+}
+
+.background-color-secondary {
+    background-color: var(--secondary-color);
+}
+
+.text-color-black {
+    color: var(--black);
+}
+
+.text-color-light-black {
+    color: var(--light-black);
+}
+
+.text-color-light-gray {
+    color: var(--light-gray);
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.margin-left-minus-5 {
+    margin-left: -5px;
+}
+
+.margin-top-10 {
+    margin-top: 10px;
+}
+
+.margin-bottom-10 {
+    margin-bottom: 10px;
+}
+
+.margin-bottom-20 {
+    margin-bottom: 20px;
+}
+
+.margin-10 {
+    margin: 10px;
+}
+
+.margin-minus-10 {
+    margin: -10px;
+}
+
+.no-lateral-margin {
+    margin-right: 0px;
+    margin-left: 0px;
+}
+
+.no-margin {
+    margin: 0px;
+}
+
+.no-margin-left {
+    margin-left: 0px;
+}
+
+.no-margin-right {
+    margin-right: 0px;
+}
+
+.no-margin-top {
+    margin-top: 0px;
+}
+
+.no-margin-bottom {
+    margin-bottom: 0px;
+}
+
+.padding-10 {
+    padding: 10px;
+}
+
+.border-box {
+    box-sizing: border-box;
+}
+
+.no-box-shadow:focus {
+    box-shadow: none;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.width-100-perc {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.width-50-perc {
+    width: 50%;
+    box-sizing: border-box;
+}
+
+.width-25-perc {
+    width: 25%;
+    box-sizing: border-box;
+}
+
+.width-20-perc {
+    width: 20%;
+    box-sizing: border-box;
+}
+
+.width-30-perc {
+    width: 30%;
+    box-sizing: border-box;
+}
+
+.width-40-perc {
+    width: 40%;
+    box-sizing: border-box;
+}
+
+.width-60-perc {
+    width: 60%;
+    box-sizing: border-box;
+}
+
+.width-70-perc {
+    width: 70%;
+    box-sizing: border-box;
+}
+
+.width-80-perc {
+    width: 80%;
+    box-sizing: border-box;
+}
+
+.width-auto {
+    width: auto;
+}
+
+.width-50 {
+    width: 50px;
+    box-sizing: border-box;
+}
+
+.height-50 {
+    height: 50px;
+    box-sizing: border-box;
+}
+
+.height-100 {
+    height: 100px;
+    box-sizing: border-box;
+}
+
+.height-20 {
+    height: 20px;
+    box-sizing: border-box;
+}
+
+hr {
+    width: 100px;
+    height: 2px;
+    background-color: var(--primary-color);
+    border: 0px solid transparent;
+    border-radius: 0px;
+}
+
+.button-selected {
+    background-color: var(--primary-color);
+    color: var(--text-color-white);
+}
+
+.button-selected:hover {
+    background-color: var(--secondary-color);
+    color: var(--text-color-white);
+}
+
+.margin-left-minus-5 {
+    margin-left: -5px;
+}
+
+.hidden {
+    display: none;
+}
+
+.position-relative {
+    position: relative;
+}
+
+.float-left {
+    float: left;
+}
+
+.float-right {
+    float: right;
+}
+
+.font-size-20 {
+    font-size: 20px;
+}
+
+.capitalize-text {
+    text-transform: capitalize;
+}
+
+.lowercase {
+    text-transform: lowercase;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+
+@media only screen and (max-width: 1200px) {
+    /*tablet*/
+    main {
+        width: auto;
+        margin-left: 10%;
+        margin-right: 10%;
+    }
+}
+
+@media only screen and (max-width: 800px) {
+    /*mobile*/
+    main {
+        width: auto;
+        margin-left: 60px;
+        margin-right: 0px;
+    }
+}

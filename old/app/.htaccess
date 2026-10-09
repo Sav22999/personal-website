@@ -1,0 +1,2 @@
+ErrorDocument 404 /app/common-voice-android/statistics/
+ErrorDocument 403 /app/common-voice-android/statistics/

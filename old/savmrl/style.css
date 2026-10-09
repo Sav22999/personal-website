@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Basic&family=Open+Sans:ital,wght@0,300;0,400;0,700;1,400&family=Source+Code+Pro&display=swap');
+
+:root {
+    --font-family-basic: "Basic";
+    --font-family-mono: "Source Code Pro";
+    --font-family-open: "Open Sans";
+    --border-radius: 5px;
+    --primary-color: #3399ff;
+    --primary-color-variant: rgba(51, 153, 255, 0.35);
+    --secondary-color: #66ccff;
+    --background-color-white: #FFFFFF;
+    --background-color-darkwhite: #EEEEEE;
+    --background-color-darkdarkwhite: #DDDDDD;
+    --text-color-lightblack: #444444;
+    --text-color-black: #000000;
+    --text-color-white: #FFFFFF;
+    --secondary-text-color: #FFFFFF;
+    --transition: 0.5s;
+    --box-shadow: 0px 0px 0px 4px var(--secondary-color);
+    --white: #FFFFFF;
+    --black: #000000;
+    --red: #c12b2b;
+    --red-variant: rgba(255, 0, 0, 0.38);
+    --light-pink: #FFDDDDDD;
+    --pink: #FFAAAA;
+    --light-black: #444444;
+    --dark-pink: #FF8888;
+    --transparent-pink: rgba(255, 170, 170, 0.5);
+    --light-gray: #DDDDDD;
+    --light-blue: #3399ff;
+    --light-light-blue: #66ccff;
+    --transparent-light-blue: rgba(51, 153, 255, 0.5);
+    --transparent-light-light-blue: rgba(102, 204, 255, 0.5);
+    --light-light-gray: #EEEEEE;
+    --green: #2d8c2d;
+}
+
+/*box-sizing: border-box; -> in the size (width, height) are included padding and border*/
+
+* {
+    scrollbar-color: var(--primary-color) var(--white);
+    scrollbar-width: thin;
+    outline: none;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background-color: var(--white); /* or add it to the track */
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+}
+
+body {
+    background-color: var(--background-color-darkwhite);
+    color: var(--text-color-lightblack);
+    font-size: 18px;
+    font-family: var(--font-family-open), var(--font-family-basic), sans-serif;
+    margin: 0px;
+}
+
+main {
+    width: 80%;
+    margin: 0%;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: 200px;
+    background-color: var(--background-color-white);
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 0px;
+    padding: 0;
+    border-radius: var(--border-radius) !important;
+}
+
+thead {
+    background-color: var(--primary-color);
+    color: var(--text-color-white);
+}
+
+table td, table th {
+    padding: 8px 4px;
+
+    text-overflow: ellipsis;
+
+    text-align: center;
+}
+
+.td-link {
+    text-align: left;
+}
+
+.status {
+    color: var(--text-color-white);
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+
+    cursor: pointer;
+}
+
+div.reported {
+    background-color: var(--red);
+}
+
+div.not-reported {
+    background-color: var(--green);
+}
+
+tbody tr:nth-child(even) {
+    background: rgba(204, 204, 204, 0.35)
+}
+
+tbody tr:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.35)
+}
+
+tbody tr:hover {
+    background-color: var(--primary-color-variant);
+}
+
+tbody tr.reported {
+    background-color: var(--red-variant);
+}
+
+.padding-30 {
+    padding: 15px 30px;
+    display: block;
+
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.tip {
+    font-size: 10px !important;
+    font-weight: 400 !important;
+    color: green !important;
+    padding: 10px !important;
+    font-style: italic;
+}
+
+.tip::before {
+    content: "Tip: ";
+    font-weight: 700;
+}

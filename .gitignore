@@ -1,0 +1,26 @@
+# Credentials and secrets
+.mail-config.php
+old/include/variables.php
+old/api/emoticolor/credentials.php
+.env
+.env.*
+
+# Dependencies
+vendor/
+node_modules/
+
+# IDE, tools and OS
+.DS_Store
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+*~
+Thumbs.db
+
+# Maintenance bypass key
+.maintenance
+
+# Temporary/debug files
+preview-icons.html

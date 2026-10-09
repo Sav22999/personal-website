@@ -1,0 +1,132 @@
+/*Admin panel*/
+div#header-admin-panel {
+    position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: auto;
+    width: 50px;
+    height: auto;
+    background-color: #66ccff;
+    border: 0px solid transparent;
+    border-right: 2px solid #3399ff;
+    z-index: 9999;
+}
+
+div#header-admin-panel * {
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    transition: 0.5s;
+    background-size: auto 50%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    display: block;
+    list-style-type: none;
+    padding: 0px;
+    margin: 0px;
+    cursor: pointer;
+}
+
+div#header-admin-panel li:hover {
+    background-color: rgba(51, 153, 255, 0.5);
+}
+
+div#header-admin-panel li:active {
+    background-color: rgba(51, 153, 255, 1);
+}
+
+textarea#textarea-article {
+    min-height: 500px;
+}
+
+#admin-image-url {
+    width: 84%;
+    display: inline-block;
+    padding: 10px;
+}
+
+#admin-image-show-hide {
+    width: 12%;
+    height: 42px;
+    font-size: 10px;
+    padding: 14px;
+    display: inline-block;
+    float: right;
+    margin: 0px;
+    margin-top: 5px;
+    margin-right: -4px;
+    cursor: pointer;
+    background-color: #eeeeee;
+    background-image: url("/old/images/icons/show.png");
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 30% auto;
+}
+
+#admin-image-show-hide:hover {
+    background-color: #E0E0E0;
+}
+
+#admin-image-preview-url {
+    padding: 10px;
+    width: 100%;
+    height: 300px;
+    font-size: 16px;
+    font-family: inherit;
+    border: 1px solid #3399ff;
+    background-color: transparent;
+    background-image: url(""), url("/old/images/backgrounds/transparency.png");
+    background-position: center center, center center;
+    background-size: contain, auto 200px;
+    background-repeat: no-repeat, repeat;
+    border-radius: var(--border-radius);
+    margin: 5px;
+    margin-bottom: 15px;
+    display: none;
+    box-sizing: border-box;
+}
+
+.from-email, .date-email {
+    padding: 0px;
+    margin: 0px;
+    display: inline-block;
+}
+
+.from-email::before {
+    content: "Da:";
+}
+
+.date-email::before {
+    content: "(";
+}
+
+.date-email::after {
+    content: ")";
+}
+
+.date-email {
+    color: #777777;
+}
+
+.from-date-email {
+    border-top: 3px solid #777777;
+    padding: 0px;
+    margin: 10px;
+}
+
+.container {
+    display: block;
+    position: relative;
+    padding: 0px;
+    margin: 0px;
+    margin-bottom: -10px;
+}
+
+.container .container-left {
+    float: left;
+}
+
+.container .container-right {
+    float: right;
+}

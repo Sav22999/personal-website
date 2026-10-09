@@ -1,0 +1,2 @@
+ErrorDocument 404 /commonvoice/error/404/
+ErrorDocument 403 /commonvoice/error/403/

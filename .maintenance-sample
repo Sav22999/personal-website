@@ -1,0 +1,26 @@
+<secret-key>
+
+# Maintenance Mode
+#
+# To enable maintenance mode, copy this file to `.maintenance` (in this same directory)
+#
+# Then edit `.maintenance` and replace `my-secret-key` with a random secret and delete
+# everything else -- only the plain text string of the bypass
+# The file must contain a single line: the bypass key.
+#
+# What it does:
+#   - Every page will return HTTP 503 with a standalone maintenance page.
+#   - Search engines receive a Retry-After header (1 hour).
+#   - The site is completely inaccessible to visitors.
+#
+# Bypass (admin access):
+#   Visit any page with ?bypass=<secret-key> (e.g. https://www.savpdfviewer.com/?bypass=<secret-key>).
+#   A cookie is set for 24 hours, and all pages load normally with a yellow
+#   "MAINTENANCE MODE ACTIVE" banner at the top.
+#
+# To deactivate:
+#   Delete the `.maintenance` file
+#
+#   The site returns to normal immediately. No restart needed.
+#
+# Note: `.maintenance` is listed in .gitignore and will not be committed.

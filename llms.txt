@@ -1,0 +1,28 @@
+# Saverio Morelli
+
+> Frontend Developer & UX Designer
+
+Saverio Morelli is a frontend developer and UX designer based in Italy. He builds open-source software, browser extensions, and Android apps. He graduated in Multimedia Communication and Information Technologies (M.Sc.) at University of Udine with 110/110 cum laude, and holds a B.Sc. in Computer Science from University of Trento. He works at Fondazione Bruno Kessler (FBK) as Frontend App Developer and UX Designer.
+
+## Projects
+
+- [Notefox](https://www.notefox.eu): Take notes on any website. Private, open-source, with sync across devices. Available for Firefox, Chrome, and Edge.
+- [Sav PDF Viewer](https://www.savpdfviewer.com): Private, open-source PDF reader for Android. No ads, no permissions, no tracking. Used by 100,000+ people.
+- [Emoji](https://www.emojiaddon.com): Browser add-on to copy or insert any emoji with a click. Search by keywords, color, or gender.
+- [savmrl.it](https://savmrl.it): Free, anonymous link shortener and redirecting service.
+- [Accented Letters](https://github.com/Sav22999/accented-letters-addons): Firefox add-on to copy accented and special characters.
+- [Limite](https://github.com/Sav22999/limite): Browser add-on that tracks how much time you spend on each website.
+- [Word of the Day](https://github.com/Sav22999/word-of-the-day): Learn a new word every day. An Android app.
+- [HTML per tutti](https://www.saveriomorelli.com/htmlpertutti/): A book to learn HTML from scratch, written in Italian. Available on Amazon.
+
+## Links
+
+- Website: https://www.saveriomorelli.com/
+- GitHub: https://github.com/Sav22999
+- LinkedIn: https://www.linkedin.com/in/saveriomorelli
+- Telegram: https://t.me/sav_projects
+- Instagram: https://www.instagram.com/sav.morelli/
+
+## Contact
+
+Use the contact form at https://www.saveriomorelli.com/contact-me/email/ or reach out via Telegram or LinkedIn.

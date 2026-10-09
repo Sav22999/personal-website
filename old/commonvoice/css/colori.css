@@ -1,0 +1,16 @@
+:root {
+    --colore-sfondo: rgb(240, 240, 240);
+    --colore-testo: rgb(245, 245, 245);
+    --colore-sfondo-loading: rgb(48, 48, 48);
+    --colore-sfondo-bottone: rgb(220, 220, 220);
+    --colore-sfondo-bottone-hover: rgb(190, 190, 190);
+    --colore-testo-bottone: black;
+    --font-testo: zilla-slab;
+    --font-testo-codice: code;
+    --border-radius: 4px;
+    --colore-sfondo-menu: rgb(220, 220, 220);
+    --colore-testo-menu: whitesmoke;
+    --colore-testo-bottone-amazon: whitesmoke;
+    --colore-sfondo-bottone-amazon: rgb(48, 48, 48);
+    --colore-sfondo-bottone-amazon-hover: rgb(170, 0, 0);
+}
