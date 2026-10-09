@@ -571,7 +571,71 @@ nav.menu-open .nav-toggle span:nth-child(3) {
     color: var(--text-secondary);
 }
 
-/* ── Projects ── */
+/* ── Projects Page ── */
+
+.projects-hero {
+    padding: 140px 24px 60px;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.projects-hero h1 {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 20px;
+}
+
+.projects-hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 520px;
+}
+
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    list-style: none;
+    margin-top: 10px;
+}
+
+.project-tags li {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.projects-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 48px 0 20px;
+}
+
+.projects-divider h2 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.projects-divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ── Projects (old card style, kept for subpages) ── */
 
 .card.faded {
     opacity: 0.6;
@@ -591,19 +655,6 @@ nav.menu-open .nav-toggle span:nth-child(3) {
     width: 100%;
     height: 100%;
     object-fit: contain;
-}
-
-.projects-section-divider {
-    margin-top: 48px;
-    margin-bottom: 16px;
-}
-
-.projects-section-divider h2 {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
 }
 
 /* ── Donate ── */
@@ -1978,6 +2029,10 @@ footer {
 
     .contact-secondary {
         grid-template-columns: 1fr;
+    }
+
+    .projects-hero {
+        padding: 100px 24px 40px;
     }
 }
 
