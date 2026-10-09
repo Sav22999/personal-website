@@ -99,6 +99,7 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
         <div class="form-group">
             <label for="message">Message <span class="field-badge required">Required</span></label>
             <textarea id="message" name="message" required rows="5" placeholder="Write your message here..."></textarea>
+            <p class="form-hint">Please write in Italian or English only.</p>
         </div>
 
         <div id="fields-technical" class="form-dynamic-fields" hidden>
@@ -140,7 +141,6 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
                 <option value="" selected>Not specified</option>
                 <option value="English">English</option>
                 <option value="Italian">Italian</option>
-                <option value="Other">Other</option>
             </select>
         </div>
 
