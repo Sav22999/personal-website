@@ -686,13 +686,12 @@ nav.menu-open .nav-toggle span:nth-child(3) {
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
-    overflow: hidden;
+    color: var(--accent);
 }
 
-.donate-option-icon img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
+.donate-option-icon svg {
+    width: 24px;
+    height: 24px;
 }
 
 .donate-option h3 {
