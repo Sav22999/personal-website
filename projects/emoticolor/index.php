@@ -60,13 +60,9 @@ $canonical = '/projects/emoticolor/';
             <img src="/images/projects/emoticolor.png" alt="Emoticolor icon">
         </div>
         <div class="addon-info">
-            <p class="addon-description">Emoticolor was an emotion-based social network designed and developed as a
-                master's thesis project. Users could share their emotional states through posts associated with
-                colors, follow both other users and specific emotions, react to posts anonymously, and explore
-                guided learning paths to better understand their emotions. The platform was built around
-                transparency and privacy: a purely chronological feed with no algorithmic ranking, no push
-                notifications, anonymous reactions, and privacy-by-design with end-to-end encrypted emails and
-                two-factor authentication.</p>
+            <p class="addon-description">Emoticolor was an open-source social network that proposed an ethically grounded alternative to mainstream platforms by placing emotional literacy at its core. Users could express their emotional states through a guided experience combining emotions with colours and optional narrative text, follow both other users and specific emotions, react to posts anonymously, and explore progressive learning paths grounded in neuroscience and psychology.</p>
+            <p class="addon-description">The platform was guided by four interconnected principles: <strong>Ethical design</strong>, eliminating engagement-driving mechanisms in favour of a transparent, chronological feed with no algorithmic ranking and no push notifications; <strong>Emotional literacy</strong>, promoted through progressive learning paths designed to expand users' emotional vocabulary and self-awareness; <strong>Digital sovereignty and sustainability</strong>, achieved through an open-source codebase and a lightweight Progressive Web App following Sustainable Web Design principles; <strong>Privacy by design</strong>, enforced through end-to-end encrypted emails and two-factor authentication.</p>
+            <p class="addon-description">The project followed the Double Diamond methodology, progressing through low-, medium-, and high-fidelity prototyping stages validated by expert reviews and user testing. Usability testing confirmed that the ethically constrained design does not hinder engagement, but rather fosters a more authentic space for emotional expression.</p>
             <div class="book-meta">
                 <div class="book-meta-item">
                     <span class="book-meta-label">Type</span>
@@ -85,8 +81,16 @@ $canonical = '/projects/emoticolor/';
                     <span class="book-meta-value">GPL v3</span>
                 </div>
                 <div class="book-meta-item">
-                    <span class="book-meta-label">Context</span>
-                    <span class="book-meta-value">Master's thesis — University of Udine</span>
+                    <span class="book-meta-label">Thesis</span>
+                    <span class="book-meta-value"><em>Emoticolor — Un social network sulle emozioni</em></span>
+                </div>
+                <div class="book-meta-item">
+                    <span class="book-meta-label">Supervisor</span>
+                    <span class="book-meta-value">Prof. Paolo C. Atzori</span>
+                </div>
+                <div class="book-meta-item">
+                    <span class="book-meta-label">University</span>
+                    <span class="book-meta-value">University of Udine — M.Sc. Multimedia Communication and Information Technologies</span>
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
@@ -103,7 +107,16 @@ $canonical = '/projects/emoticolor/';
                     </svg>
                     View on GitHub
                 </a>
+                <a href="https://servizi.amm.uniud.it/CercaTesi/" target="_blank" rel="noopener"
+                   class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+                    </svg>
+                    Read the thesis
+                </a>
             </div>
+            <p class="addon-thesis-note">The full thesis is freely available on the University of Udine repository. Search by title (<em>Emoticolor — Un social network sulle emozioni</em>) or by author name.</p>
         </div>
     </div>
 </section>

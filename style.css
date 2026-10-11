@@ -1920,6 +1920,414 @@ altcha-widget {
     height: 16px;
 }
 
+/* ── Portfolio ── */
+
+.portfolio-hero {
+    padding: 140px 24px 0;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.portfolio-hero h1 {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 20px;
+}
+
+.portfolio-hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 520px;
+    margin-bottom: 48px;
+}
+
+.portfolio-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 48px;
+}
+
+.portfolio-stat {
+    background: var(--bg-card);
+    padding: 28px 24px;
+    text-align: center;
+}
+
+.portfolio-stat-value {
+    display: block;
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.portfolio-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+
+.portfolio-section-header {
+    margin-bottom: 40px;
+}
+
+.portfolio-section-header h2 {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+
+.portfolio-section-header p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.portfolio-skills {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.portfolio-skill {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.portfolio-skill:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+    transform: translateY(-4px);
+}
+
+.portfolio-skill-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--accent-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: var(--accent);
+}
+
+.portfolio-skill-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.portfolio-skill h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.portfolio-skill > p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.portfolio-skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+}
+
+.portfolio-skill-tags li {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.portfolio-featured {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.portfolio-featured-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+    color: var(--text);
+}
+
+.portfolio-featured-card:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+    transform: translateY(-4px);
+    color: var(--text);
+}
+
+.portfolio-featured-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.portfolio-featured-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.portfolio-featured-card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.portfolio-featured-card > p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    flex: 1;
+}
+
+.portfolio-featured-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-top: 20px;
+}
+
+.portfolio-featured-link svg {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition);
+}
+
+.portfolio-featured-card:hover .portfolio-featured-link svg {
+    transform: translateX(4px);
+}
+
+.portfolio-all-projects {
+    text-align: center;
+    margin-top: 32px;
+}
+
+.portfolio-all-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent);
+    padding: 10px 24px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.portfolio-all-link:hover {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.portfolio-all-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+.portfolio-experience {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.portfolio-exp-item {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 32px;
+    padding: 24px 28px;
+    background: var(--bg-card);
+}
+
+.portfolio-exp-period {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding-top: 2px;
+}
+
+.portfolio-exp-content h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.portfolio-exp-company {
+    font-size: 0.88rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.portfolio-exp-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.portfolio-education {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.portfolio-edu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 24px 28px;
+    background: var(--bg-card);
+}
+
+.portfolio-edu-degree h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.portfolio-edu-school {
+    font-size: 0.88rem;
+    color: var(--accent);
+}
+
+.portfolio-edu-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.portfolio-edu-year {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.portfolio-edu-grade {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.portfolio-community {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.portfolio-community-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 16px;
+    padding: 18px 28px;
+    background: var(--bg-card);
+    align-items: center;
+}
+
+.portfolio-community-role {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.portfolio-community-org {
+    font-size: 0.88rem;
+    color: var(--accent);
+}
+
+.portfolio-community-year {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.portfolio-cta-section {
+    text-align: center;
+    padding: 48px 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.portfolio-cta-section h2 {
+    font-family: 'Stack Sans Notch', 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+
+.portfolio-cta-section p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+}
+
+/* ── Emoticolor thesis note ── */
+
+.addon-thesis-note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 12px;
+    line-height: 1.5;
+}
+
 /* ── Footer ── */
 
 footer {
@@ -2183,6 +2591,43 @@ footer {
     .timeline-list .timeline-item {
         grid-template-columns: 1fr;
         gap: 4px;
+    }
+
+    .portfolio-hero {
+        padding: 100px 24px 0;
+    }
+
+    .portfolio-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .portfolio-skills {
+        grid-template-columns: 1fr;
+    }
+
+    .portfolio-featured {
+        grid-template-columns: 1fr;
+    }
+
+    .portfolio-exp-item {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .portfolio-edu-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .portfolio-edu-detail {
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .portfolio-community-item {
+        grid-template-columns: 1fr;
+        gap: 2px;
     }
 
     .services-hero {

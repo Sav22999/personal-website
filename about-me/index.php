@@ -47,17 +47,17 @@ $canonical = '/about-me/';
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
             <p class="timeline-date">April 2026</p>
-            <p class="timeline-text">I graduated in Multimedia Communication and Information Technologies (M.Sc.) at <a href="https://www.uniud.it/en">University of Udine</a> with grade 110/110, cum laude</p>
+            <p class="timeline-text">I graduated in Multimedia Communication and Information Technologies (M.Sc.) at <a href="https://www.uniud.it/en/">University of Udine</a> with grade 110/110, cum laude</p>
         </div>
         <div class="timeline-item">
-            <span class="timeline-badge badge-other">Other</span>
+            <span class="timeline-badge badge-work">Work</span>
             <p class="timeline-date">December 2025</p>
-            <p class="timeline-text">I became Indoor Volleyball Referee (FIPAV)</p>
+            <p class="timeline-text">I became Indoor Volleyball Referee (<a href="https://www.federvolley.it/">Federazione Italiana Pallavolo — FIPAV</a>)</p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
             <p class="timeline-date">September 2024</p>
-            <p class="timeline-text">Started the Master's degree in <a href="https://www.uniud.it/en">Computer Science</a> at University of Udine</p>
+            <p class="timeline-text">Started the Master's degree in <a href="https://www.uniud.it/en/education/offer/courses/scientific-area/mathematics-computer-sciences-multimedia-physics/master-degree-courses-graduate-120-ects/multimedia-communication-and-information-technologies/">Communication and Information Technologies</a> at <a href="https://www.uniud.it/en/">University of Udine</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-work">Work</span>
@@ -67,7 +67,7 @@ $canonical = '/about-me/';
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
             <p class="timeline-date">March 2024</p>
-            <p class="timeline-text">I graduated in Computer Science (B.Sc.) at <a href="https://www.unitn.it/en">University of Trento</a></p>
+            <p class="timeline-text">I graduated in <a href="https://corsi.unitn.it/en/computer-science-bachelor">Computer Science</a> (B.Sc.) at <a href="https://www.unitn.it/en">University of Trento</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-volunteering">Volunteering</span>
@@ -91,11 +91,11 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">September 2021 &mdash; January 2022</p>
-            <p class="timeline-text">I worked as IT Support Assistant at <a href="https://www.unitn.it">UniTn</a></p>
+            <p class="timeline-text">I worked as IT Support Assistant at <a href="https://www.unitn.it/en">University of Trento</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">July 2021</p>
-            <p class="timeline-text">First release of the <a href="https://addons.mozilla.org/it/firefox/addon/websites-notes/">Notefox</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/notefox/">Notefox</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2021 &mdash; 2026</p>
@@ -103,15 +103,15 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">May 2021</p>
-            <p class="timeline-text">First release of the <a href="https://addons.mozilla.org/it/firefox/addon/limite/">Limite</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/limite/">Limite</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">January 2021</p>
-            <p class="timeline-text">First release (alpha) of <a href="https://play.google.com/store/apps/details?id=com.saverio.wordoftheday_en">Word of the Day</a></p>
+            <p class="timeline-text">First release (alpha) of <a href="/projects/word-of-the-day/">Word of the Day</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">January 2021</p>
-            <p class="timeline-text">First release of <a href="https://play.google.com/store/apps/details?id=com.saverio.pdfviewer">Sav PDF Viewer Pro</a></p>
+            <p class="timeline-text">First release of <a href="/projects/sav-pdf-viewer/">Sav PDF Viewer Pro</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">October 2020 &mdash; December 2023</p>
@@ -119,38 +119,38 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-volunteering">Volunteering</span>
-            <p class="timeline-date">March 2020</p>
+            <p class="timeline-date">March 2020 &mdash; 2025</p>
             <p class="timeline-text">I became a <a href="https://people.mozilla.org/p/Sav22999">Mozilla Rep</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">November 2019</p>
-            <p class="timeline-text">Published the <a href="https://www.saveriomorelli.com/htmlpertutti/">HTML per tutti</a> book</p>
+            <p class="timeline-text">Published the <a href="/htmlpertutti/">HTML per tutti</a> book</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">November 2019</p>
-            <p class="timeline-text">First release of the <a href="https://addons.mozilla.org/it/firefox/addon/emoji-sav/">Emoji</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/emoji/">Emoji</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">November 2019 &mdash; July 2026</p>
-            <p class="timeline-text">First release (alpha) of the <a href="https://www.saveriomorelli.com/commonvoice/">CV Project</a> app</p>
+            <p class="timeline-text">First release (alpha) of the <a href="/projects/cv-project/">CV Project</a> app</p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
             <p class="timeline-date">September 2019</p>
-            <p class="timeline-text">Started University in Trento (B.Sc. Computer Science) at <a href="https://www.unitn.it/en">UniTn</a></p>
+            <p class="timeline-text">Started University in Trento (B.Sc. <a href="https://corsi.unitn.it/en/computer-science-bachelor">Computer Science</a>) at <a href="https://www.unitn.it/en">University of Trento</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">April 2019</p>
-            <p class="timeline-text">First release of the <a href="https://addons.mozilla.org/it/firefox/addon/accented-letters/">Accented Letters</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/accented-letters/">Accented Letters</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">September 2018</p>
-            <p class="timeline-text">First release of <a href="https://t.me/mozitabot">MozItaBot</a></p>
+            <p class="timeline-text">First release of <a href="/projects/mozitabot/">MozItaBot</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-other">Other</span>
             <p class="timeline-date">September 2018</p>
-            <p class="timeline-text">I became a swimming teacher (FIN)</p>
+            <p class="timeline-text">I became a swimming instructor (<a href="https://www.federnuoto.it/">Federazione Italiana Nuoto — FIN</a>)</p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
@@ -159,20 +159,20 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2018 &mdash; 2020</p>
-            <p class="timeline-text">First release of <a href="https://sav22999.github.io/project_nolimit_math/">NoLimit Math</a></p>
+            <p class="timeline-text">First release of <a href="/projects/nolimit-math/">NoLimit Math</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-volunteering">Volunteering</span>
-            <p class="timeline-date">September 2017</p>
+            <p class="timeline-date">September 2017 &mdash; 2025</p>
             <p class="timeline-text">I became a volunteer of <a href="https://mozillaitalia.org">Mozilla Italia</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2011 &mdash; 2020</p>
-            <p class="timeline-text">First release of <a href="https://github.com/Sav22999/mycodeeditor">My Code Editor</a></p>
+            <p class="timeline-text">First release of <a href="/projects/my-code-editor/">My Code Editor</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2004</p>
-            <p class="timeline-text">My love of swimming has begun</p>
+            <p class="timeline-text">My love of swimming began</p>
         </div>
         <div class="timeline-item">
             <p class="timeline-date">22 September 1999</p>
