@@ -21,7 +21,7 @@ $canonical = '/projects/notefox/';
                 "url": "https://www.saveriomorelli.com/"
             },
             "url": "https://www.notefox.eu",
-            "softwareVersion": "5.0.0.2",
+            "softwareVersion": "5.0.0.3",
             "offers": {
                 "@type": "Offer",
                 "price": "0",
@@ -93,7 +93,7 @@ $canonical = '/projects/notefox/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Latest version</span>
-                    <span class="book-meta-value">v5.0.0.2</span>
+                    <span class="book-meta-value">v5.0.0.3</span>
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
@@ -186,192 +186,16 @@ $canonical = '/projects/notefox/';
 <section class="section" style="padding-top: 0;">
     <div class="addon-timeline">
         <h2 class="addon-timeline-title">Changelog</h2>
-        <div class="timeline-list">
-            <div class="timeline-item major">
-                <span class="timeline-version">v5.0</span>
-                <span class="timeline-date">6 October 2026</span>
-                <p>Introduces Notefox Account v2 with merge-based sync, web access to synced notes, sync history,
-                    two-factor authentication and session management, plus multiple notes per type and multiple pinnable
-                    sticky notes. Includes 5.0.0.1–5.0.0.2.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.7</span>
-                <span class="timeline-date">9 April 2026</span>
-                <p>Adds folders, tags as text, ordered and unordered lists, default sticky-note properties and editable
-                    page/domain links in All notes; 4.7.1 adds the sidebar view. Includes 4.7.1–4.7.2.2 (translation
-                    updates, a donation message and a fix for IME input).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.6</span>
-                <span class="timeline-date">4 December 2025</span>
-                <p>New icon and default font, resizable popup, adjustable text size, a clear-formatting button,
-                    fullscreen in All notes and developer options with a custom API endpoint. Includes 4.6.0.1–4.6.1
-                    (link fix and translation updates).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.5</span>
-                <span class="timeline-date">23 July 2025</span>
-                <p>Adds options to colour the toolbar icon and notes by tag colour, a paste-without-formatting shortcut,
-                    optional anonymous telemetry and error-log sending, and sidebar and sticky-note improvements.
-                    Includes 4.5.0.1–4.5.5.3 (offline handling for Notefox Account and bug fixes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.4</span>
-                <span class="timeline-date">18 April 2025</span>
-                <p>Adds debugging tools, an error-log feature, code-block and highlight formatting buttons and a privacy
-                    consent screen requested by Mozilla. Includes 4.4.1–4.4.5.5, which fixed a Firefox crash and several
-                    smaller bugs.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.3</span>
-                <span class="timeline-date">11 March 2025</span>
-                <p>Extends sub-path (“•••”) URLs to any combination of URL parameters, improves section detection and
-                    fixes the priority of sub-path notes. Includes 4.3.1–4.3.2.1 (bug fixes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.2</span>
-                <span class="timeline-date">8 February 2025</span>
-                <p>Adds more font families with preview, saving and searching page content, custom date/time formats, an
-                    option to hide Undo/Redo and refreshed tabs. Includes 4.2.0.1–4.2.1 (sticky notes in the mobile
-                    version).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v4.1</span>
-                <span class="timeline-date">19 July 2024</span>
-                <p>Adds the mobile version for Firefox for Android and two new themes, darker and lighter. Includes
-                    4.1.0.1–4.1.0.4; 4.1.0.4 brought the new version to the Chrome Web Store and Edge Add-ons.</p>
-            </div>
-            <div class="timeline-item major">
-                <span class="timeline-version">v4.0</span>
-                <span class="timeline-date">4 May 2024</span>
-                <p>Completely redesigned popup, Settings and All notes, and introduces the Notefox Account to sync notes
-                    across devices, plus new formatting buttons, sticky-note themes and editable note titles. Includes
-                    4.0.1–4.0.1.5 (immersive sticky notes, Interlingua).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.11</span>
-                <span class="timeline-date">18 March 2024</span>
-                <p>Switches notes to a handwriting font and adds an insert/remove link button. Includes 3.11.1–3.11.2.2
-                    (option to disable the Shantell Sans font).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.10</span>
-                <span class="timeline-date">19 February 2024</span>
-                <p>Brings sticky notes to Chromium-based browsers. Includes 3.10.0.1–3.10.1 (option to check notes on
-                    all supported protocols).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.9</span>
-                <span class="timeline-date">3 November 2023</span>
-                <p>Saves sticky-note size, opacity and position per page. Includes 3.9.1–3.9.3, which added clickable
-                    links, more tag colours and changing the tag colour from the popup.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.8</span>
-                <span class="timeline-date">25 October 2023</span>
-                <p>Fixes abnormal CPU usage and adds export to and import from a file.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.7</span>
-                <span class="timeline-date">14 October 2023</span>
-                <p>Adds sub-path notes and rich text: bold, italic, underline, images and undo/redo. Includes
-                    3.7.1–3.7.12 (spellcheck, more HTML tags, a word-wrap option, multi-keyword search and sticky-note
-                    fixes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.6</span>
-                <span class="timeline-date">12 October 2023</span>
-                <p>Improves search and fixes an important storage bug.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.5</span>
-                <span class="timeline-date">5 October 2023</span>
-                <p>Improves search, adds Page notes for moz-extension pages and makes some permissions optional.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.4</span>
-                <span class="timeline-date">21 August 2023</span>
-                <p>Adds Global notes, light and dark themes, sorting and filtering in All notes and a welcome page.
-                    Includes 3.4.0.1–3.4.1.3 (note titles and notes on non-HTTP(S) pages).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.3</span>
-                <span class="timeline-date">11 August 2023</span>
-                <p>Moves notes to synced storage so they sync through a Firefox Account. Includes 3.3.1–3.3.2 (minimise
-                    and restore for sticky notes, toolbar icon fixes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.2</span>
-                <span class="timeline-date">11 August 2023</span>
-                <p>Sticky notes follow the default Domain/Page preference. Includes 3.2.1–3.2.1.1 (sticky notes show
-                    whether they belong to a page or a domain).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v3.1</span>
-                <span class="timeline-date">11 August 2023</span>
-                <p>Sticky notes become available for domain notes too.</p>
-            </div>
-            <div class="timeline-item major">
-                <span class="timeline-version">v3.0</span>
-                <span class="timeline-date">11 August 2023</span>
-                <p>Introduces sticky notes on pages, with adjustable size, position and opacity, plus a refreshed UI and
-                    icons. Includes 3.0.1.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.3</span>
-                <span class="timeline-date">21 March 2023</span>
-                <p>Adds keyboard shortcuts to open the popup on the default, domain or page tab. Includes 2.3.1–2.3.2
-                    (bug fixes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.2</span>
-                <span class="timeline-date">17 November 2022</span>
-                <p>Adds a new option in Settings and other improvements. Includes 2.2.1–2.2.2 (bug fix).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.1</span>
-                <span class="timeline-date">18 October 2022</span>
-                <p>Adds a search box and filters to All notes. Includes 2.1.1 (better search and a Crowdin translation
-                    button).</p>
-            </div>
-            <div class="timeline-item major">
-                <span class="timeline-version">v2.0</span>
-                <span class="timeline-date">13 October 2022</span>
-                <p>Adds a Settings page, improves import and export, and introduces the orange colour scheme and a new
-                    icon.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.6</span>
-                <span class="timeline-date">20 September 2021</span>
-                <p>Translation updates, including Spanish (1.6.0.2). Includes 1.6.0.1–1.6.0.2.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.5</span>
-                <span class="timeline-date">20 September 2021</span>
-                <p>No release notes available. Includes 1.5.1.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.3</span>
-                <span class="timeline-date">2 August 2021</span>
-                <p>Adds clearing notes for a single page or a whole domain and a different toolbar icon when notes
-                    exist. Includes 1.3.0.1–1.3.2.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.2</span>
-                <span class="timeline-date">1 August 2021</span>
-                <p>Adds import and export, a confirmation before clearing all notes and a new icon. Includes 1.2.1.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.1</span>
-                <span class="timeline-date">31 July 2021</span>
-                <p>Adds the dedicated All notes page, plus bug fixes.</p>
-            </div>
-            <div class="timeline-item major">
-                <span class="timeline-version">v1.0</span>
-                <span class="timeline-date">30 July 2021</span>
-                <p>First release. Includes 1.0.1.</p>
-            </div>
-        </div>
+        <p class="addon-timeline-external">The full changelog is available on the official website.</p>
+        <a href="https://www.notefox.eu/news/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            View release notes on notefox.eu
+        </a>
     </div>
 </section>
 

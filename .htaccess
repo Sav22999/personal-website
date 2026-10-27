@@ -30,9 +30,10 @@ ErrorDocument 503 /errors/503/
     ExpiresByType application/font-woff2 "access plus 1 year"
 </IfModule>
 
-# Force trailing slash on directories
+# Redirects
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^contact/?$ /contact-me/ [L,R=301]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^(.*[^/])$ %{REQUEST_URI}/ [L,R=301]
 </IfModule>

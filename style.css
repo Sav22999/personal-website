@@ -1545,6 +1545,11 @@ altcha-widget {
     margin-bottom: 20px;
 }
 
+.addon-timeline-external {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
 .screenshot-grid {
     display: flex;
     gap: 16px;
@@ -2560,6 +2565,26 @@ footer {
 
     .addon-icon {
         width: 72px;
+    }
+
+    .addon-badges {
+        flex-direction: column;
+    }
+
+    .addon-badge {
+        justify-content: center;
+    }
+
+    .book-actions {
+        flex-direction: column;
+    }
+
+    .book-btn {
+        justify-content: center;
+    }
+
+    .addon-timeline .book-btn {
+        width: 100%;
     }
 
     .screenshot-overlay img {

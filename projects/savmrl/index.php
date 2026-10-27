@@ -1,7 +1,7 @@
 <?php
 $current_page = 'projects';
 $title = 'savmrl.it';
-$description = 'savmrl.it — free, anonymous link shortener and redirect service: no registration, with optional expiry dates, click limits and access codes. A project by Saverio Morelli.';
+$description = 'savmrl.it — free URL shortener and redirect service with user accounts, expiry dates, click limits, access codes, analytics and API. A project by Saverio Morelli.';
 $canonical = '/projects/savmrl/';
 ?>
 <!DOCTYPE html>
@@ -15,6 +15,7 @@ $canonical = '/projects/savmrl/';
             "name": "savmrl.it",
             "applicationCategory": "WebApplication",
             "operatingSystem": "Web",
+            "softwareVersion": "build 20261027",
             "author": {
                 "@type": "Person",
                 "name": "Saverio Morelli",
@@ -52,23 +53,27 @@ $canonical = '/projects/savmrl/';
             <img src="/images/projects/savmrl.png" alt="savmrl.it icon">
         </div>
         <div class="addon-info">
-            <p class="addon-description">savmrl.it is a free, anonymous URL shortener and redirect service that works
-                without registration or an account. Shortened links can have an expiry date, a maximum number of
-                openings, a custom name and an access code. A statistics page shows how many times each link has been
-                opened, and a QR code is generated for every link. It also offers a simple API and companion browser
-                add-ons for Firefox, Chrome and Edge.</p>
+            <p class="addon-description">savmrl.it is a free URL shortener and redirect service. After creating a free
+                account, you can shorten links with optional expiry dates, a maximum number of openings, custom names,
+                access codes and configurable redirect delays. A statistics page tracks how many times each link has
+                been opened, and a QR code is generated for every link. The service supports multiple languages and
+                offers an API (v2) and companion browser add-ons for Firefox, Chrome and Edge.</p>
             <div class="book-meta">
                 <div class="book-meta-item">
                     <span class="book-meta-label">Type</span>
                     <span class="book-meta-value">Web service</span>
                 </div>
                 <div class="book-meta-item">
-                    <span class="book-meta-label">Platforms</span>
-                    <span class="book-meta-value">Web</span>
+                    <span class="book-meta-label">Web version</span>
+                    <span class="book-meta-value">build 20261027</span>
                 </div>
                 <div class="book-meta-item">
-                    <span class="book-meta-label">Add-on users</span>
-                    <span class="book-meta-value">~5</span>
+                    <span class="book-meta-label">Add-on version</span>
+                    <span class="book-meta-value">v2.0</span>
+                </div>
+                <div class="book-meta-item">
+                    <span class="book-meta-label">Platforms</span>
+                    <span class="book-meta-value">Web, Firefox, Chrome, Edge</span>
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">License</span>
@@ -156,8 +161,31 @@ $canonical = '/projects/savmrl/';
 
 <section class="section" style="padding-top: 0;">
     <div class="addon-timeline">
+        <h2 class="addon-timeline-title">Changelog <span class="section-title-note">· savmrl.it (web service)</span></h2>
+        <p class="addon-timeline-external">The full changelog is available on the official website.</p>
+        <a href="https://www.savmrl.it/changelog/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            View release notes on savmrl.it
+        </a>
+    </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
         <h2 class="addon-timeline-title">Changelog <span class="section-title-note">· savmrl.it companion (browser add-on)</span></h2>
         <div class="timeline-list">
+            <div class="timeline-item major">
+                <span class="timeline-version">v2.0</span>
+                <span class="timeline-date">12 October 2026</span>
+                <p>Major update: upgraded to Manifest V3. Added user login with two-factor authentication.
+                    New advanced link creation with custom names, maximum openings, expiry dates, access codes
+                    and redirect delays. Added "My Links" tab to manage existing links. Localisation support.</p>
+            </div>
             <div class="timeline-item major">
                 <span class="timeline-version">v1.0</span>
                 <span class="timeline-date">13 January 2024</span>

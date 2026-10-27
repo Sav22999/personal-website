@@ -21,7 +21,7 @@ $canonical = '/projects/sav-pdf-viewer/';
                 "url": "https://www.saveriomorelli.com/"
             },
             "url": "https://www.savpdfviewer.com/",
-            "softwareVersion": "2.5.1",
+            "softwareVersion": "2.5.2",
             "offers": {
                 "@type": "Offer",
                 "price": "0",
@@ -78,7 +78,7 @@ $canonical = '/projects/sav-pdf-viewer/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Latest version</span>
-                    <span class="book-meta-value">v2.5.1</span>
+                    <span class="book-meta-value">v2.5.2</span>
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
@@ -157,147 +157,16 @@ $canonical = '/projects/sav-pdf-viewer/';
 <section class="section" style="padding-top: 0;">
     <div class="addon-timeline">
         <h2 class="addon-timeline-title">Changelog</h2>
-        <div class="timeline-list">
-            <div class="timeline-item">
-                <span class="timeline-version">v2.5</span>
-                <span class="timeline-date">8 October 2026</span>
-                <p>Added a high-contrast option and a choice of accent colour in Settings. Includes 2.5–2.5.1 (2.5.1, a
-                    minor high-contrast fix, was published on Google Play on 9 October 2026).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.4</span>
-                <span class="timeline-date">20 August 2026</span>
-                <p>Tapping the page now toggles the toolbar, plus minor fixes. Includes 2.4–2.4.0.2 (Settings reordered
-                    to match the toolbox menu, a refreshed app icon).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.3</span>
-                <span class="timeline-date">13 August 2026</span>
-                <p>Search now supports multi-word queries, with improvements to the navigation bar and other minor
-                    improvements.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.2</span>
-                <span class="timeline-date">8 July 2026</span>
-                <p>Added support for AES-256-protected PDFs and separate per-ABI builds. Includes 2.2–2.2.2 (fixes for
-                    the panel sitting behind the navigation bar on Android 15+, slow loading of all pages at startup and
-                    double-byte characters in file names).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v2.1</span>
-                <span class="timeline-date">6 July 2026</span>
-                <p>Switched to a FOSS PDF library, removed dependency libraries and unnecessary permissions, and added a
-                    Print button in the top bar. Also fixed bottom-up and right-to-left swiping.</p>
-            </div>
-            <div class="timeline-item major">
-                <span class="timeline-version">v2.0</span>
-                <span class="timeline-date">25 March 2026</span>
-                <p>Major update with text selection and copy, a search feature with filters and a new Settings page,
-                    plus many bug fixes and improvements.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.17</span>
-                <span class="timeline-date">12 March 2026</span>
-                <p>Added a search feature in the menu panel and fixed some bugs.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.16</span>
-                <span class="timeline-date">6 August 2025</span>
-                <p>Added a lock-rotation option in the menu panel and moved the Share button to the top bar.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.15</span>
-                <span class="timeline-date">31 October 2023</span>
-                <p>New app icon with support for the monochrome (themed) icon style. Includes 1.15–1.15.1.2 (tap the PDF
-                    to show the top bar, fixes to the light and forced-dark filters, a confirmation dialog before
-                    opening links, signed release APK on GitHub).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.14</span>
-                <span class="timeline-date">27 October 2023</span>
-                <p>Added support for links in PDFs, horizontal scrolling, a forced-dark filter and single-page mode.
-                    Includes 1.14–1.14.2 (bug fixes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.13</span>
-                <span class="timeline-date">1 August 2023</span>
-                <p>Any opened file can now be shared. Includes 1.13–1.13.4 (fixed a crash when opening PDFs from other
-                    apps and a black screen with PDFs opened from Gmail).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.12</span>
-                <span class="timeline-date">6 June 2023</span>
-                <p>Added zoom controls in the menu panel and fixed bugs when changing orientation. Includes
-                    1.12–1.12.0.2 (updated icons and SDK changes).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.11</span>
-                <span class="timeline-date">12 April 2023</span>
-                <p>Tapping anywhere on the page now hides or shows the top bar, with improved gestures and an updated
-                    PDF library. Includes 1.11–1.11.1 (zoom bug fix).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.10</span>
-                <span class="timeline-date">27 March 2023</span>
-                <p>Added a scrollbar button for faster navigation and improved bookmark gestures. Includes 1.10–1.10.4
-                    (an All bookmarks button, page numbers while scrolling, a Get help button and an improved night
-                    theme).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.9</span>
-                <span class="timeline-date">24 April 2022</span>
-                <p>Added bookmarks, which can be added, removed and managed, plus backend and UI improvements.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.8</span>
-                <span class="timeline-date">1 October 2021</span>
-                <p>Added a menu panel so the app works well on small screens, plus performance improvements. Includes
-                    1.8–1.8.0.3 (a small bug fix, the first F-Droid release and updated translations).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.7</span>
-                <span class="timeline-date">30 September 2021</span>
-                <p>The top bar now hides after 5 seconds of inactivity.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.6</span>
-                <span class="timeline-date">11 June 2021</span>
-                <p>Added a night-light mode. Includes 1.6–1.6.4 (fit-to-width and page-restore fixes when rotating, a
-                    sharing fix and new translations).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.5</span>
-                <span class="timeline-date">8 June 2021</span>
-                <p>Added support for password-protected PDFs and a Go to top button. Includes 1.5–1.5.1 (an Open new
-                    file button).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.4</span>
-                <span class="timeline-date">7 June 2021</span>
-                <p>Added a total-pages counter and fixed an orientation bug. Includes 1.4–1.4.2 (a fix for restoring the
-                    last position and a Go to page feature).</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.3</span>
-                <span class="timeline-date">6 June 2021</span>
-                <p>Added a top bar and full-screen mode.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.2</span>
-                <span class="timeline-date">1 May 2021</span>
-                <p>Fixed a crash on Android 11.</p>
-            </div>
-            <div class="timeline-item">
-                <span class="timeline-version">v1.1</span>
-                <span class="timeline-date">11 February 2021</span>
-                <p>Added a Share button and a review prompt (released as 1.1.1).</p>
-            </div>
-            <div class="timeline-item major">
-                <span class="timeline-version">v1.0</span>
-                <span class="timeline-date">20 January 2021</span>
-                <p>First release of the app.</p>
-            </div>
-        </div>
+        <p class="addon-timeline-external">The full changelog is available on the official website.</p>
+        <a href="https://www.savpdfviewer.com/news/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            View release notes on savpdfviewer.com
+        </a>
     </div>
 </section>
 
