@@ -131,6 +131,20 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
+        <a class="card" href="/projects/ripasso-fipav/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/ripasso-fipav.png" alt="">
+            </div>
+            <h3>Fischietto</h3>
+            <p>Personal, unofficial web app with quizzes, rule references and official documents to help volleyball referees study, revise and stay up to date with the FIPAV rulebook.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>Italian</li>
+            </ul>
+        </a>
     </div>
 
     <div class="projects-divider">

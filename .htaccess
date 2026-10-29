@@ -5,6 +5,20 @@ ErrorDocument 500 /errors/500/
 ErrorDocument 501 /errors/501/
 ErrorDocument 503 /errors/503/
 
+# Block configuration, credentials, hidden files, dumps and backups (in subfolders too)
+<FilesMatch "^\.|^(variables|credentials)([-.].*)?\.php$|\.(sql|sql\.gz|log|bak|old|swp|ini|env)$|^composer\.(json|lock)$|~$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Composer libraries must not be reachable from the browser
+RedirectMatch 404 ^/vendor(/|$)
+
 # Security headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"

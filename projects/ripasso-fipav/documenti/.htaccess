@@ -1,0 +1,25 @@
+# Documents downloadable from the portal: only PDF files can be opened here
+Options -Indexes
+
+<FilesMatch "^(?!.*\.pdf$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_mime.c>
+  AddType application/pdf .pdf
+  RemoveHandler .php .phtml .phar .pl .py .cgi .sh
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.pdf$">
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Robots-Tag "noindex"
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>

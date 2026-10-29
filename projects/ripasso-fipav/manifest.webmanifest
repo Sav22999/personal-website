@@ -1,0 +1,20 @@
+{
+  "name": "Fischietto",
+  "short_name": "Fischietto",
+  "description": "Quiz e ripasso del regolamento per arbitri FIPAV di pallavolo.",
+  "lang": "it",
+  "id": "./",
+  "start_url": "./#quiz",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F6FA",
+  "theme_color": "#F3F5F9",
+  "orientation": "any",
+  "categories": ["education", "sports"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

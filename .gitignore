@@ -2,8 +2,16 @@
 .mail-config.php
 old/include/variables.php
 old/api/emoticolor/credentials.php
+projects/ripasso-fipav/lib/config.php
+projects/ripasso-fipav/sql/
 .env
 .env.*
+
+# Database dumps, logs and backups (may contain data or credentials)
+*.sql
+*.sql.gz
+*.log
+*.bak
 
 # Dependencies
 vendor/

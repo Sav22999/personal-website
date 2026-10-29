@@ -1,0 +1,4 @@
+# Database credentials: never commit them
+lib/config.php
+*.log
+.DS_Store
