@@ -159,6 +159,20 @@ $canonical = '/projects/';
                 <li>Multilingual</li>
             </ul>
         </a>
+        <a class="card" href="/projects/chess/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/chess.png" alt="">
+            </div>
+            <h3>Chess</h3>
+            <p>Play chess with a friend online, a random opponent, on the same device or against the computer. No account required.</p>
+            <ul class="project-tags">
+                <li>Web game</li>
+                <li>Multilingual</li>
+            </ul>
+        </a>
     </div>
 
     <div class="projects-divider">

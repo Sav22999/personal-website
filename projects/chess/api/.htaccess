@@ -1,0 +1,4 @@
+<FilesMatch "^(db|engine)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
