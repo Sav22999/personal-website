@@ -6,6 +6,14 @@
  */
 window.APP_RELEASES = [
   {
+    version: '3.2.1',
+    date: '2026-10-30',
+    title: 'Nuovo footer',
+    groups: [
+      { title: 'Miglioramenti', items: ['Il footer ora dice «Sviluppato con ♥ da Saverio Morelli».'] },
+    ],
+  },
+  {
     version: '3.2.0',
     date: '2026-10-29',
     title: 'Panoramica del pannello più completa',
