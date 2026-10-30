@@ -1,6 +1,6 @@
 <?php
 $description = 'Chess – play a friend online with a room code, a random opponent, on the same device or against the computer. With tips for every piece.';
-$v = 5;
+$v = 16;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_BULB = '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0012 2z"/>';
@@ -9,6 +9,8 @@ $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';
 $ICON_HANDSHAKE = '<path d="M11 17l2 2a1.4 1.4 0 002-2M14 14l2.5 2.5a1.4 1.4 0 002-2l-3.9-3.9a3 3 0 00-4.2 0l-.9.9a1.4 1.4 0 01-2-2l2.8-2.8a5 5 0 016 0l.3.3a2 2 0 001.4.6H21M3 13h2l5 5a1.4 1.4 0 002-2M3 4h8"/>';
 $ICON_UNDO = '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>';
 $ICON_FLIP = '<path d="M7 16V4M3 8l4-4 4 4M17 8v12M21 16l-4 4-4-4"/>';
+$ICON_PALETTE = '<circle cx="13.5" cy="6.5" r="1.3"/><circle cx="17.5" cy="10.5" r="1.3"/><circle cx="8.5" cy="7.5" r="1.3"/><circle cx="6.5" cy="12.5" r="1.3"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H16c3.1 0 5.6-2.5 5.6-5.6C21.6 6 17.3 2 12 2z"/>';
+$ICON_CHAT = '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>';
 $ICON_BOOK = '<path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5A2.5 2.5 0 014 18.5"/>';
 $ICON_LEAVE = '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>';
 $ICON_CHECK = $icon('<path d="M5 12l5 5L20 7"/>', 18, 3);
@@ -76,6 +78,10 @@ $timeChips = function ($name, $default) {
                         <button type="button" class="link-btn howto-link" data-open-rules>
                             <?= $icon($ICON_BOOK, 16) ?>
                             <span data-i18n="rules_title">Game rules</span>
+                        </button>
+                        <button type="button" class="link-btn howto-link" data-open-style>
+                            <?= $icon($ICON_PALETTE, 16) ?>
+                            <span data-i18n="appearance">Pieces &amp; board</span>
                         </button>
                     </div>
                 </div>
@@ -223,7 +229,10 @@ $timeChips = function ($name, $default) {
         </div>
 
         <footer class="site-footer">
-            <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
+            <div class="credit-block">
+                <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
+                <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span data-i18n="credit_ai">Built with Claude AI</span></span>
+            </div>
             <button type="button" class="version-btn" id="btn-version" data-i18n-title="release_notes">
                 <span id="app-version"></span>
                 <?= $icon('<path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="10"/>', 13, 2.4) ?>
@@ -274,6 +283,7 @@ $timeChips = function ($name, $default) {
             </div>
             <div class="game-header-right">
                 <span class="mode-badge" id="mode-badge"></span>
+                <button type="button" class="btn-icon" data-open-style data-i18n-title="appearance"><?= $icon($ICON_PALETTE, 20, 2) ?></button>
                 <button type="button" class="btn-icon" data-open-rules data-i18n-title="rules_title"><?= $icon($ICON_BOOK, 20, 2) ?></button>
                 <button type="button" class="btn-icon" id="btn-leave-game" data-i18n-title="leave"><?= $icon($ICON_LEAVE, 20, 2) ?></button>
             </div>
@@ -293,6 +303,7 @@ $timeChips = function ($name, $default) {
                 </div>
             </div>
 
+            <div class="chat-backdrop" id="chat-backdrop"></div>
             <aside class="side-panel" id="side-panel">
                 <div class="side-inner">
                     <div class="tip-card" id="tip-card"></div>
@@ -300,12 +311,24 @@ $timeChips = function ($name, $default) {
                         <h3 class="side-title" data-i18n="moves_title">Moves</h3>
                         <ol class="move-list" id="move-list"></ol>
                     </div>
+                    <section class="chat hidden" id="chat" aria-labelledby="chat-title">
+                        <div class="chat-head">
+                            <h3 class="side-title chat-title" id="chat-title" data-i18n="chat_title">Chat</h3>
+                            <button type="button" class="btn-icon chat-close" id="btn-chat-close" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+                        </div>
+                        <ol class="chat-list" id="chat-list" aria-live="polite"></ol>
+                        <form class="chat-form" id="chat-form" autocomplete="off">
+                            <input type="text" id="chat-input" maxlength="200" enterkeyhint="send" data-i18n-placeholder="chat_placeholder" placeholder="Write a message…">
+                            <button type="submit" class="chat-send" id="btn-chat-send" data-i18n-title="chat_send"><?= $icon('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 18, 2.2) ?></button>
+                        </form>
+                    </section>
                     <div class="game-actions" id="game-actions">
                         <button type="button" class="action-btn tip-toggle" id="btn-tips" aria-pressed="false">
                             <?= $icon($ICON_BULB, 20, 2) ?><span data-i18n="tips">Tips</span>
                         </button>
                         <button type="button" class="action-btn" id="btn-hint"><?= $icon($ICON_WAND, 20, 2) ?><span data-i18n="hint">Hint</span></button>
                         <button type="button" class="action-btn" id="btn-undo"><?= $icon($ICON_UNDO, 20, 2) ?><span data-i18n="undo">Undo</span></button>
+                        <button type="button" class="action-btn hidden" id="btn-chat"><?= $icon($ICON_CHAT, 20, 2) ?><span data-i18n="chat_title">Chat</span><span class="chat-badge hidden" id="chat-badge"></span></button>
                         <button type="button" class="action-btn" id="btn-flip"><?= $icon($ICON_FLIP, 20, 2) ?><span data-i18n="flip">Flip</span></button>
                         <button type="button" class="action-btn" id="btn-draw"><?= $icon($ICON_HANDSHAKE, 20, 2) ?><span data-i18n="draw">Draw</span></button>
                         <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 20, 2) ?><span data-i18n="resign">Resign</span></button>
@@ -344,6 +367,40 @@ $timeChips = function ($name, $default) {
             <button type="button" class="zoom-close" id="btn-close-rules" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="rules_title">Game rules</h3>
             <div class="rules-body" id="rules-body"></div>
+        </div>
+    </div>
+
+    <!-- Pieces & board -->
+    <div id="style-overlay" class="modal hidden">
+        <div class="modal-content style-content">
+            <button type="button" class="zoom-close" id="btn-close-style" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <h3 data-i18n="appearance">Pieces &amp; board</h3>
+            <div class="custom-layout">
+                <div class="custom-main">
+                    <h4 class="style-section" data-i18n="pieces_label">Pieces</h4>
+                    <div class="style-grid" id="style-grid"></div>
+                    <h4 class="style-section" data-i18n="board_label">Board</h4>
+                    <div class="board-grid" id="board-grid"></div>
+                </div>
+                <div class="custom-side">
+                    <!-- Wide screens: a live preview of every choice -->
+                    <div class="custom-preview" aria-hidden="true"><div class="board" id="custom-preview"></div></div>
+                    <h4 class="style-section" data-i18n="options_label">Options</h4>
+                    <div class="option-list">
+                <label class="option-row"><span data-i18n="opt_coords">Show coordinates</span><input type="checkbox" class="switch" data-opt="coords"></label>
+                <label class="option-row"><span data-i18n="opt_last">Highlight the last move</span><input type="checkbox" class="switch" data-opt="lastMove"></label>
+                <label class="option-row"><span><span data-i18n="opt_dots">Show possible moves</span><small data-i18n="opt_dots_hint">With Tips on they are always shown.</small></span><input type="checkbox" class="switch" data-opt="dots"></label>
+                <label class="option-row"><span data-i18n="opt_queen">Always promote to a queen</span><input type="checkbox" class="switch" data-opt="autoQueen"></label>
+                <div class="option-row"><span data-i18n="opt_anim">Animations</span>
+                    <div class="seg" role="radiogroup">
+                        <button type="button" role="radio" data-anim-opt="normal" data-i18n="anim_normal">Normal</button>
+                        <button type="button" role="radio" data-anim-opt="fast" data-i18n="anim_fast">Fast</button>
+                        <button type="button" role="radio" data-anim-opt="off" data-i18n="anim_off">Off</button>
+                    </div>
+                </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

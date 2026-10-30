@@ -22,7 +22,7 @@ $description = 'FaceGuess – a two-player face-guessing game with brand-new cha
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -183,7 +183,10 @@ $description = 'FaceGuess – a two-player face-guessing game with brand-new cha
         </div>
 
         <footer class="site-footer">
-            <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
+            <div class="credit-block">
+                <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
+                <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span data-i18n="credit_ai">Built with Claude AI</span></span>
+            </div>
             <button type="button" class="version-btn" id="btn-version" data-i18n-title="release_notes">
                 <span id="app-version"></span>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="10"/></svg>
@@ -470,10 +473,10 @@ $description = 'FaceGuess – a two-player face-guessing game with brand-new cha
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </div>
 
-<script src="i18n.js?v=14"></script>
-<script src="characters.js?v=14"></script>
-<script src="releases.js?v=14"></script>
-<script src="rules.js?v=14"></script>
-<script src="game.js?v=14"></script>
+<script src="i18n.js?v=15"></script>
+<script src="characters.js?v=15"></script>
+<script src="releases.js?v=15"></script>
+<script src="rules.js?v=15"></script>
+<script src="game.js?v=15"></script>
 </body>
 </html>

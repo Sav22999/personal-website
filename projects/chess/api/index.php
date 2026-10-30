@@ -9,6 +9,9 @@ const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const TIME_CONTROLS = [0, 300, 600, 900];
 const RANDOM_TIME_CONTROL = 600;
 const ABANDON_SECONDS = 60;
+const CHAT_MAX_LENGTH = 200;
+const CHAT_BURST = 5; // messages allowed per player every 10 seconds
+const CHAT_HISTORY = 50;
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
@@ -24,6 +27,7 @@ switch ($action) {
     case 'rematch':      requestRematch(); break;
     case 'claim_win':    claimWin(); break;
     case 'leave':        leaveRoom(); break;
+    case 'send_message': sendMessage(); break;
     default:
         echo json_encode(['error' => 'Unknown action']);
 }
@@ -318,7 +322,51 @@ function pollState()
         'result' => $room['result'],
         'reason' => $room['reason'],
         'players' => $players,
+        'messages' => chatMessages($room['id'], (int)($_GET['since'] ?? 0)),
     ]);
+}
+
+// --- Chat (plain text only; the client escapes everything it shows) ---
+function cleanMessage($raw)
+{
+    if (!is_string($raw)) return '';
+    // Control and invisible formatting characters out, whitespace collapsed (invalid UTF-8 becomes '').
+    $text = preg_replace('/[\p{Cc}\p{Cf}]+/u', ' ', $raw) ?? '';
+    $text = trim(preg_replace('/\s+/u', ' ', $text) ?? '');
+    return mb_substr($text, 0, CHAT_MAX_LENGTH);
+}
+
+function formatMessage($row) { return ['id' => (int)$row['id'], 'slot' => (int)$row['slot'], 'text' => $row['body']]; }
+
+// Messages after $since, oldest first (the last CHAT_HISTORY on a first poll).
+function chatMessages($roomId, $since)
+{
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT id, slot, body FROM chess_messages WHERE room_id = ? AND id > ? ORDER BY id DESC LIMIT " . CHAT_HISTORY);
+        $stmt->execute([$roomId, max(0, $since)]);
+        return array_map('formatMessage', array_reverse($stmt->fetchAll()));
+    } catch (PDOException $e) {
+        return []; // Chat table not created yet: the game still works.
+    }
+}
+
+function sendMessage()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) { respondError('invalid_session'); return; }
+    if ($player['room_status'] === 'waiting') { respondError('not_started'); return; }
+    $text = cleanMessage($_POST['text'] ?? '');
+    if ($text === '') { respondError('empty_message'); return; }
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM chess_messages WHERE room_id = ? AND slot = ? AND created_at > NOW() - INTERVAL 10 SECOND");
+    $stmt->execute([$player['room_id'], $player['slot']]);
+    if ((int)$stmt->fetchColumn() >= CHAT_BURST) { respondError('too_fast'); return; }
+
+    $pdo->prepare("INSERT INTO chess_messages (room_id, slot, body) VALUES (?, ?, ?)")->execute([$player['room_id'], $player['slot'], $text]);
+    $id = (int)$pdo->lastInsertId();
+    echo json_encode(['success' => true, 'message' => formatMessage(['id' => $id, 'slot' => $player['slot'], 'body' => $text])]);
 }
 
 function fetchRoom($id)

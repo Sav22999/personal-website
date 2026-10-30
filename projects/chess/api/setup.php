@@ -38,6 +38,16 @@ $queries = [
         FOREIGN KEY (`room_id`) REFERENCES `chess_rooms`(`id`) ON DELETE CASCADE,
         INDEX `idx_room` (`room_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+    "CREATE TABLE IF NOT EXISTS `chess_messages` (
+        `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        `room_id` INT UNSIGNED NOT NULL,
+        `slot` TINYINT UNSIGNED NOT NULL COMMENT 'Sender: 1 or 2',
+        `body` VARCHAR(200) NOT NULL COMMENT 'Plain text only',
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (`room_id`) REFERENCES `chess_rooms`(`id`) ON DELETE CASCADE,
+        INDEX `idx_room_msg` (`room_id`, `id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 ];
 
 $results = [];

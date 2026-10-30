@@ -212,7 +212,11 @@ input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rg
     .hero-links { display: none; }
     .howto-inline { display: block; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
     .site-footer { max-width: 1120px; justify-content: space-between; }
+    .credit-block { align-items: flex-start; }
 }
+.credit-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.credit-ai { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); opacity: 0.8; }
+.credit-ai svg { color: var(--accent-light); }
 .credit { color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: baseline; gap: 7px; flex-wrap: wrap; justify-content: center; }
 .credit-name { font-family: var(--font-brand); font-size: 1.08rem; color: var(--text); letter-spacing: 0.01em; transition: color 0.15s; }
 .credit:hover .credit-name, .credit:focus-visible .credit-name { color: var(--accent-light); }
