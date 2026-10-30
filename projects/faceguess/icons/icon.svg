@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B7CF6"/>
+      <stop offset="1" stop-color="#4A3AC4"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E9E6FF"/>
+    </linearGradient>
+    <clipPath id="window"><rect x="150" y="124" width="212" height="214" rx="26"/></clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- back card -->
+  <rect x="112" y="118" width="252" height="316" rx="40" fill="#2B2163" opacity="0.35" transform="rotate(-10 238 276)"/>
+
+  <!-- front card -->
+  <rect x="128" y="100" width="256" height="324" rx="40" fill="url(#card)"/>
+  <rect x="150" y="124" width="212" height="214" rx="26" fill="#3E3E6A"/>
+  <g clip-path="url(#window)">
+    <circle cx="256" cy="210" r="120" fill="#5A5A92" opacity="0.6"/>
+    <path d="M172 338 C176 300 214 284 256 284 C298 284 336 300 340 338 Z" fill="#6C5CE7"/>
+    <rect x="240" y="252" width="32" height="40" rx="8" fill="#C98E66"/>
+    <ellipse cx="256" cy="212" rx="56" ry="64" fill="#E3A97E"/>
+    <path d="M198 206 C196 158 222 140 256 140 C292 140 318 158 314 206 C304 180 286 172 256 172 C226 172 208 180 198 206 Z" fill="#3B2A20"/>
+    <circle cx="235" cy="214" r="7" fill="#1E1A2E"/>
+    <circle cx="277" cy="214" r="7" fill="#1E1A2E"/>
+    <path d="M236 244 Q256 258 276 244" fill="none" stroke="#8A4B33" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <rect x="176" y="362" width="160" height="22" rx="11" fill="#C9C2FF"/>
+
+  <!-- question badge -->
+  <circle cx="374" cy="128" r="74" fill="#FFD95A" stroke="#4A3AC4" stroke-width="14"/>
+  <path d="M348 108 C348 86 364 74 376 74 C392 74 404 86 404 102 C404 120 386 124 380 136 L380 146" fill="none" stroke="#2B2163" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="380" cy="174" r="12" fill="#2B2163"/>
+</svg>

@@ -1,0 +1,9 @@
+<FilesMatch "^db\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^characters\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
