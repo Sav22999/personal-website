@@ -4,6 +4,7 @@ old/include/variables.php
 old/api/emoticolor/credentials.php
 projects/ripasso-fipav/lib/config.php
 projects/ripasso-fipav/sql/
+projects/*/api/db.php
 .env
 .env.*
 
