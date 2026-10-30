@@ -1,7 +1,17 @@
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 
 // Newest first. Each entry lists its notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.4.1',
+        notes: {
+            en: ['The clock now starts as soon as the game begins', 'You can play the computer with a clock too'],
+            it: ['L’orologio ora parte appena inizia la partita', 'Puoi giocare contro il computer anche con l’orologio'],
+            es: ['El reloj ahora empieza en cuanto comienza la partida', 'También puedes jugar contra el ordenador con reloj'],
+            fr: ['La pendule démarre désormais dès le début de la partie', 'Tu peux aussi jouer contre l’ordinateur avec une pendule'],
+            de: ['Die Uhr läuft jetzt ab Spielbeginn', 'Auch gegen den Computer kannst du mit Uhr spielen'],
+        },
+    },
     {
         version: '1.4.0',
         notes: {

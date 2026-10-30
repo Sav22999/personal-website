@@ -306,6 +306,7 @@ function startAi() {
         players: [{ name: playerName, color: 'w', points2: 0, me: true }, { name: t('computer'), color: 'b', points2: 0, computer: true }],
         myColor: 'w',
         level,
+        timeMs: radioValue('time-ai') * 60000,
     });
     session.colorChoice = color;
     assignAiColors();
@@ -322,6 +323,8 @@ function assignAiColors() {
 
 function enterGame() {
     showModal('gameover-overlay', false);
+    // Local clocks start with the game; online ones come from the server.
+    if (!isOnline()) session.turnStartedAt = performance.now();
     $('board-arrows').innerHTML = '';
     showScreen('game');
     renderAll();
@@ -530,7 +533,7 @@ function maybeComputerMove() {
 
 // --- Clocks ---
 function localClockRunning() {
-    return session.timeMs > 0 && !session.over && session.chess.history.length >= 2;
+    return session.timeMs > 0 && !session.over;
 }
 
 // Remaining time per colour as of now, or null without a clock.
@@ -829,7 +832,8 @@ function renderActions() {
     $('btn-hint').disabled = over || !canMoveNow();
     $('btn-undo').classList.toggle('hidden', !local);
     const humanMoves = s.mode === 'ai' ? s.chess.history.filter((h, i) => (i % 2 === 0 ? 'w' : 'b') === s.myColor).length : s.chess.history.length;
-    $('btn-undo').disabled = over || humanMoves === 0 || (s.mode === 'local' && s.timeMs > 0);
+    // Taking moves back would make the clocks meaningless.
+    $('btn-undo').disabled = over || humanMoves === 0 || s.timeMs > 0;
     $('btn-flip').classList.toggle('hidden', false);
     const myOfferPending = isOnline() && s.drawOffer !== null && s.server && s.drawOffer === s.server.mySlot;
     $('btn-draw').disabled = over || s.chess.history.length < 2 || myOfferPending || (isOnline() && (!s.server || s.server.status !== 'playing'));

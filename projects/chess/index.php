@@ -1,6 +1,6 @@
 <?php
 $description = 'Chess – play a friend online with a room code, a random opponent, on the same device or against the computer. With tips for every piece.';
-$v = 16;
+$v = 17;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_BULB = '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0012 2z"/>';
@@ -220,6 +220,10 @@ $timeChips = function ($name, $default) {
                                     <label class="chip"><input type="radio" name="ai-color" value="b"><span><i class="chip-dot b"></i><span data-i18n="black">Black</span></span></label>
                                     <label class="chip"><input type="radio" name="ai-color" value="r"><span><i class="chip-dot r"></i><span data-i18n="random_color">Random</span></span></label>
                                 </div>
+                            </div>
+                            <div class="field">
+                                <span class="field-label" data-i18n="time_label">Time per player</span>
+                                <?= $timeChips('time-ai', 0) ?>
                             </div>
                             <button type="button" class="btn btn-primary btn-block" id="btn-start-ai" data-i18n="start_game">Start game</button>
                         </div>

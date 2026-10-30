@@ -55,7 +55,8 @@ function sanList($room) { return $room['sans'] === '' ? [] : explode(' ', $room[
 // Whoever has white moves on even plies.
 function slotToMove($room) { return count(moveList($room)) % 2 === 0 ? (int)$room['white_slot'] : other($room['white_slot']); }
 // The clock only runs once both players have made their first move.
-function clockRunning($room) { return (int)$room['time_control'] > 0 && $room['status'] === 'playing' && count(moveList($room)) >= 2; }
+// White's clock starts as soon as the game does (turn_started_ms is set by startGame and on rematch).
+function clockRunning($room) { return (int)$room['time_control'] > 0 && $room['status'] === 'playing'; }
 
 function insertRoomWithHost($name, $timeControl, $isPublic, $lang)
 {
