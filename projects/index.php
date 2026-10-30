@@ -157,6 +157,7 @@ $canonical = '/projects/';
             <ul class="project-tags">
                 <li>Web game</li>
                 <li>Multilingual</li>
+                <li>Built with Claude</li>
             </ul>
         </a>
         <a class="card" href="/projects/chess/">
@@ -171,6 +172,7 @@ $canonical = '/projects/';
             <ul class="project-tags">
                 <li>Web game</li>
                 <li>Multilingual</li>
+                <li>Built with Claude</li>
             </ul>
         </a>
     </div>
