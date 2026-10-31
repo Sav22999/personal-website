@@ -6,6 +6,14 @@
  */
 window.APP_RELEASES = [
   {
+    version: '3.3.2',
+    date: '2026-10-31',
+    title: 'Installazione solo su telefono e tablet',
+    groups: [
+      { title: 'Miglioramenti', items: ['La voce «Installa l’app» e la sezione «App sul telefono» del profilo compaiono solo su telefono e tablet, non sul computer, e non compaiono quando Fischietto è già aperto come app installata.'] },
+    ],
+  },
+  {
     version: '3.3.1',
     date: '2026-10-31',
     title: 'Email per il cambio di ruolo',

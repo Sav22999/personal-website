@@ -2458,6 +2458,9 @@ if (!location.hash) history.replaceState(null, '', '#quiz');
   const $ = id => document.getElementById(id);
   const BANNER_KEY = 'fipav-install-banner-dismissed';
   const isPhone = window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 900;
+  // Installing is offered only on phones and tablets: on desktop the menu item and the profile section are hidden
+  const isMobileDevice = Install.isIOS() || /android|mobile/i.test(navigator.userAgent) ||
+    (window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches);
   let dismissed = false;
   try { dismissed = localStorage.getItem(BANNER_KEY) === '1'; } catch (e) {}
 
@@ -2493,7 +2496,9 @@ if (!location.hash) history.replaceState(null, '', '#quiz');
 
   Install.onChange(mode => {
     const installed = mode === 'installed';
-    $('btn-install').hidden = installed;
+    $('btn-install').hidden = installed || !isMobileDevice;
+    // Already running as the installed app: nothing to offer
+    $('profile-app').hidden = !isMobileDevice || installed;
     $('install-banner').hidden = installed || dismissed || !isPhone;
     $('install-status-title').textContent = installed ? 'App installata' : 'Installa l’app';
     $('install-status-text').textContent = installed
