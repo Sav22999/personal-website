@@ -6,9 +6,60 @@ $description = 'FaceGuess – a two-player face-guessing game with brand-new cha
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="robots" content="noindex">
-    <title>FaceGuess</title>
+    <meta name="robots" content="index, follow">
+    <title>FaceGuess – Saverio Morelli</title>
     <meta name="description" content="<?= htmlspecialchars($description) ?>">
+    <meta name="author" content="Saverio Morelli">
+    <link rel="canonical" href="https://www.saveriomorelli.com/projects/faceguess/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="FaceGuess – Saverio Morelli">
+    <meta property="og:description" content="<?= htmlspecialchars($description) ?>">
+    <meta property="og:url" content="https://www.saveriomorelli.com/projects/faceguess/">
+    <meta property="og:image" content="https://www.saveriomorelli.com/projects/faceguess/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FaceGuess – guess who’s hiding behind the cards, by Saverio Morelli">
+    <meta property="og:site_name" content="Saverio Morelli">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FaceGuess – Saverio Morelli">
+    <meta name="twitter:description" content="<?= htmlspecialchars($description) ?>">
+    <meta name="twitter:image" content="https://www.saveriomorelli.com/projects/faceguess/og-image.png">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": [
+            "VideoGame",
+            "WebApplication"
+        ],
+        "name": "FaceGuess",
+        "url": "https://www.saveriomorelli.com/projects/faceguess/",
+        "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        "applicationCategory": "GameApplication",
+        "genre": "Guessing game",
+        "operatingSystem": "Any (web browser)",
+        "playMode": "MultiPlayer",
+        "inLanguage": [
+            "en",
+            "it",
+            "es",
+            "fr",
+            "de"
+        ],
+        "isAccessibleForFree": true,
+        "image": "https://www.saveriomorelli.com/projects/faceguess/og-image.png",
+        "author": {
+            "@type": "Person",
+            "name": "Saverio Morelli",
+            "url": "https://www.saveriomorelli.com/"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR"
+        }
+    }
+    </script>
     <meta name="theme-color" content="#0F0F1A">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-capable" content="yes">

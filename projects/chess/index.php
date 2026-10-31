@@ -1,5 +1,5 @@
 <?php
-$description = 'Chess – play a friend online with a room code, a random opponent, on the same device or against the computer. With tips for every piece.';
+$description = 'Free online chess: play a friend with a room code, a random opponent, on the same device or against the computer. Tips for every piece, clock and chat. No sign-up.';
 $v = 21;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
@@ -28,9 +28,63 @@ $timeChips = function ($name, $default) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="robots" content="noindex">
-    <title>Chess</title>
+    <meta name="robots" content="index, follow">
+    <title>Chess – Saverio Morelli</title>
     <meta name="description" content="<?= htmlspecialchars($description) ?>">
+    <meta name="author" content="Saverio Morelli">
+    <link rel="canonical" href="https://www.saveriomorelli.com/projects/chess/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Chess – Saverio Morelli">
+    <meta property="og:description" content="<?= htmlspecialchars($description) ?>">
+    <meta property="og:url" content="https://www.saveriomorelli.com/projects/chess/">
+    <meta property="og:image" content="https://www.saveriomorelli.com/projects/chess/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Chess – free online chess with tips, clock and chat, by Saverio Morelli">
+    <meta property="og:site_name" content="Saverio Morelli">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chess – Saverio Morelli">
+    <meta name="twitter:description" content="<?= htmlspecialchars($description) ?>">
+    <meta name="twitter:image" content="https://www.saveriomorelli.com/projects/chess/og-image.png">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": [
+            "VideoGame",
+            "WebApplication"
+        ],
+        "name": "Chess",
+        "url": "https://www.saveriomorelli.com/projects/chess/",
+        "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        "applicationCategory": "GameApplication",
+        "genre": "Board game",
+        "operatingSystem": "Any (web browser)",
+        "playMode": [
+            "MultiPlayer",
+            "SinglePlayer"
+        ],
+        "inLanguage": [
+            "en",
+            "it",
+            "es",
+            "fr",
+            "de"
+        ],
+        "isAccessibleForFree": true,
+        "image": "https://www.saveriomorelli.com/projects/chess/og-image.png",
+        "author": {
+            "@type": "Person",
+            "name": "Saverio Morelli",
+            "url": "https://www.saveriomorelli.com/"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR"
+        }
+    }
+    </script>
     <meta name="theme-color" content="#0C110E">
     <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-capable" content="yes">

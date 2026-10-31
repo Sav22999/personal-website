@@ -13,6 +13,8 @@ Saverio Morelli is a frontend developer and UX designer based in Italy. He build
 - [Accented Letters](https://github.com/Sav22999/accented-letters-addons): Firefox add-on to copy accented and special characters.
 - [Limite](https://github.com/Sav22999/limite): Browser add-on that tracks how much time you spend on each website.
 - [Word of the Day](https://github.com/Sav22999/word-of-the-day): Learn a new word every day. An Android app.
+- [Chess](https://www.saveriomorelli.com/projects/chess/): Free online chess in the browser. Play a friend with a room code, a random opponent, on the same device or against the computer, with tips, clock and chat. Built with Claude AI.
+- [FaceGuess](https://www.saveriomorelli.com/projects/faceguess/): Free two-player face-guessing web game with new characters every match. Play a friend online or in person. Built with Claude AI.
 - [HTML per tutti](https://www.saveriomorelli.com/htmlpertutti/): A book to learn HTML from scratch, written in Italian. Available on Amazon.
 
 ## Links
