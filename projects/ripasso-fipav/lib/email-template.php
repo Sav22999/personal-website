@@ -79,7 +79,8 @@ function email_layout(string $content, array $o): string
 
 /**
  * Builds an email. $kind: 'approved' (account activated), 'rejected' (registration not approved)
- * or 'password_reset' (temporary password set by an administrator: $d['temp_password']).
+ * 'password_reset' (temporary password set by an administrator: $d['temp_password'])
+ * or 'role_changed' (new permission level: $d['old_level'], $d['new_level']).
  * $d: name, email, portal_url, icon_url, assets_url (folder with the email icons), contact_url, credit_url.
  * The icons are drawn as SVG in assets/email/ and sent as PNG: Gmail and Outlook do not display SVG images.
  * Returns ['subject' => ..., 'html' => ..., 'text' => ...].
@@ -151,6 +152,69 @@ function render_account_email(string $kind, array $d): array
               . "Come accedere\n1. Apri il portale: $portal\n2. Inserisci la tua email: {$d['email']}\n3. Usa la password che hai scelto in registrazione.\n\n"
               . "Cosa trovi dentro: quiz su misura, ripasso dei riferimenti normativi, documenti ufficiali, statistiche personali.\n\n"
               . "Password dimenticata? Scrivi all'amministratore: {$d['contact_url']}\n\n-- \nFischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}\n";
+    } elseif ($kind === 'role_changed') {
+        $old = (int)$d['old_level'];
+        $new = (int)$d['new_level'];
+        $up = $new > $old;
+        $roleName = function (int $l) { return [1 => 'Utente', 5 => 'Moderatore contenuti', 9 => 'Amministratore', 10 => 'Master admin'][$l] ?? 'Utente'; };
+        // What each level can do (every level includes the ones below)
+        $abilities = [
+            1  => ['Quiz su misura, ripasso dei riferimenti, documenti ufficiali e statistiche personali'],
+            5  => ['Creare, modificare e disattivare domande e riferimenti', 'Vedere e chiudere le segnalazioni degli utenti'],
+            9  => ['Abilitare le nuove registrazioni e gestire utenti e moderatori', 'Gestire gli «Altri documenti utili» della sezione Documenti'],
+            10 => ['Nominare e gestire gli amministratori', 'Passare ad altri il ruolo di master admin'],
+        ];
+        $list = [];
+        foreach ($abilities as $lvl => $items) if ($lvl <= $new) foreach ($items as $it) $list[] = [$it, $lvl > 1 && $lvl > $old];
+        $subject = 'Fischietto: il tuo ruolo ora è ' . $roleName($new);
+        $o['preheader'] = 'Il tuo ruolo su Fischietto è passato da ' . $roleName($old) . ' a ' . $roleName($new) . '.';
+        $o['footer_note'] = 'Ricevi questa email perché un amministratore ha cambiato il ruolo del tuo account Fischietto. È un messaggio automatico: non rispondere.';
+        $pill = function (string $label, bool $current) {
+            return '<span style="display:inline-block;padding:7px 14px;border-radius:999px;font-size:14px;font-weight:700;'
+                . ($current ? 'background-color:#2F6FD0;color:#ffffff;' : 'background-color:#EBEFF5;color:#7A879E;text-decoration:line-through;') . '">' . email_esc($label) . '</span>';
+        };
+        $rows = '';
+        foreach ($list as [$text, $isNew]) {
+            $rows .= '<tr><td style="vertical-align:top;padding:0 10px 10px 0;width:20px;">' . $img('check', 18) . '</td>'
+                . '<td style="vertical-align:top;padding:0 0 10px;font-size:15px;line-height:1.5;color:#14264A;">' . email_esc($text)
+                . ($isNew ? ' <span style="display:inline-block;padding:1px 8px;border-radius:999px;background-color:#FDF3DC;color:#B57A0C;font-size:11px;font-weight:800;letter-spacing:.04em;vertical-align:1px;">NUOVO</span>' : '') . '</td></tr>';
+        }
+        $panel = $d['portal_url'] . 'admin.html';
+        $content =
+            '<table role="presentation" cellspacing="0" cellpadding="0" style="margin-bottom:18px;"><tr><td>' . $img('ruolo', 48) . '</td></tr></table>'
+          . '<h1 class="h1" style="margin:0 0 12px;font-size:26px;line-height:1.25;font-weight:800;color:#14264A;">' . ($up ? 'Nuovo ruolo, ' . $first . '!' : 'Il tuo ruolo è cambiato, ' . $first) . '</h1>'
+          . '<p style="' . $muted . '">' . ($up ? 'Un amministratore ti ha affidato un nuovo ruolo su Fischietto. Grazie per il tuo contributo!' : 'Un amministratore ha aggiornato il ruolo del tuo account su Fischietto. Puoi continuare a usare il portale come sempre.') . '</p>'
+          . '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:4px 0 28px;"><tr>'
+          .   '<td style="padding-right:10px;">' . $pill($roleName($old), false) . '</td>'
+          .   '<td style="padding-right:10px;font-size:20px;color:#7A879E;">&rarr;</td>'
+          .   '<td>' . $pill($roleName($new), true) . '</td>'
+          . '</tr></table>'
+          . '<div style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;padding:20px 22px 10px;margin-bottom:28px;">'
+          .   '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A879E;margin-bottom:14px;">Cosa puoi fare ora</div>'
+          .   '<table role="presentation" width="100%" cellspacing="0" cellpadding="0">' . $rows . '</table>'
+          . '</div>'
+          . ($new >= 5
+              ? '<p style="' . $muted . '">Trovi gli strumenti di gestione nel menu del tuo account, alla voce «Pannello di gestione».</p><div style="padding:0 0 26px;">' . email_button('Apri la gestione', $panel) . '</div>'
+              : '<div style="padding:0 0 26px;">' . email_button('Apri Fischietto', $portal) . '</div>')
+          . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Pensi che sia un errore? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Scrivi all’amministratore</a>.</p>';
+        $text = "Ciao {$d['name']},
+
+il tuo ruolo su Fischietto è passato da " . $roleName($old) . ' a ' . $roleName($new) . ".
+
+Cosa puoi fare ora:
+"
+              . implode('', array_map(function ($x) { return '- ' . $x[0] . "
+"; }, $list))
+              . "
+" . ($new >= 5 ? "Gestione: $panel
+" : "Portale: $portal
+")
+              . "
+Pensi che sia un errore? Scrivi all'amministratore: {$d['contact_url']}
+
+-- 
+Fischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}
+";
     } elseif ($kind === 'password_reset') {
         $subject = 'La tua password di Fischietto è stata reimpostata';
         $o['preheader'] = 'Ecco la password temporanea per accedere: al primo accesso ne sceglierai una nuova.';

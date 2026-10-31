@@ -222,7 +222,7 @@ switch ($route) {
         $s = require_user(PERM_ADMIN);
         require_csrf($s);
         $u = admin_update_user($s, request_body());
-        // "mail" is present only when an email was attempted (account enabled for the first time)
+        // "mail" is present only when an email was attempted (account enabled for the first time, or role changed)
         send_json(['ok' => true, 'user' => public_user($u), 'mail' => $GLOBALS['last_account_mail'] ?? null, 'mailEnabled' => mail_enabled()]);
 
     case 'admin.user.send_activation':
@@ -292,7 +292,7 @@ switch ($route) {
         $s = require_user(PERM_MASTER);
         require_csrf($s);
         $u = admin_transfer_master($s, request_body());
-        send_json(['ok' => true, 'user' => public_user($u)]);
+        send_json(['ok' => true, 'user' => public_user($u), 'mail' => $GLOBALS['last_account_mail'] ?? null]);
 
     default:
         fail('Azione sconosciuta.', 404, 'not_found');

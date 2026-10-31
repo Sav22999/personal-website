@@ -6,6 +6,19 @@
  */
 window.APP_RELEASES = [
   {
+    version: '3.3.1',
+    date: '2026-10-31',
+    title: 'Email per il cambio di ruolo',
+    groups: [
+      {
+        title: 'Novità',
+        items: [
+          'Quando un amministratore cambia il ruolo di un utente (o passa il ruolo di master admin), l’utente riceve un’email con il nuovo ruolo e cosa può fare ora.',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.3.0',
     date: '2026-10-31',
     title: 'Email agli utenti',

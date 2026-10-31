@@ -239,8 +239,12 @@ function admin_update_user(array $actor, array $in): array
     $user = find_user($id);
     // Enabling an account that never received the "account activated" email sends it now
     if ($status === 'active' && $u['status'] !== 'active' && empty($u['activation_mail_at'])) {
-        $GLOBALS['last_account_mail'] = send_account_emails([$user], 'approved')[0];
+        $GLOBALS['last_account_mail'] = ['kind' => 'approved'] + send_account_emails([$user], 'approved')[0];
         $user = find_user($id);
+    } elseif ($status === 'active' && $u['status'] === 'active' && $perm !== (int)$u['permissions'] && mail_enabled()) {
+        // Role changed on an active account: tell the user what they can do now
+        $GLOBALS['last_account_mail'] = ['kind' => 'role_changed']
+            + send_account_emails([$user], 'role_changed', ['old_level' => (int)$u['permissions'], 'new_level' => $perm])[0];
     }
     return $user;
 }
@@ -348,7 +352,7 @@ function admin_delete_user(array $actor, int $id): void
     require_manageable($actor, $u);
     // Rejecting a registration: tell the person before the data is deleted
     if ($u['status'] === 'pending' && mail_enabled()) {
-        $GLOBALS['last_account_mail'] = send_account_emails([$u], 'rejected')[0];
+        $GLOBALS['last_account_mail'] = ['kind' => 'rejected'] + send_account_emails([$u], 'rejected')[0];
     }
     db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$id]);
 }
@@ -373,7 +377,12 @@ function admin_transfer_master(array $actor, array $in): array
         if ($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
-    return find_user($id);
+    $user = find_user($id);
+    if (mail_enabled()) {
+        $GLOBALS['last_account_mail'] = ['kind' => 'role_changed']
+            + send_account_emails([$user], 'role_changed', ['old_level' => (int)$target['permissions'], 'new_level' => PERM_MASTER])[0];
+    }
+    return $user;
 }
 
 /**

@@ -148,6 +148,7 @@ Il portale invia email dalla casella noreply del sito (SMTP, senza librerie este
 - **account abilitato**: benvenuto e indicazioni per accedere (inviata quando un account viene abilitato per la prima volta);
 - **registrazione rifiutata**: avviso prima che la richiesta venga eliminata;
 - **password reimpostata**: la password temporanea, da cambiare al primo accesso;
+- **ruolo cambiato**: il nuovo ruolo e cosa permette (anche quando si passa il ruolo di master admin; non quando un account viene disabilitato o riabilitato);
 - **nuova registrazione** (all'indirizzo `notify_email` di `lib/config.php`, se impostato).
 
 Agli utenti già attivi che non hanno mai ricevuto l'email di attivazione la si invia dalla sezione Utenti («Invia a tutti» oppure dal menu «⋯» del singolo utente). La data di invio è salvata in `activation_mail_at`.

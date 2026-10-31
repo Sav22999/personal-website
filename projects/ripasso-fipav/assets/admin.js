@@ -239,7 +239,7 @@
           const v = parseInt(el.value, 10);
           const go = () => updateUser(u, { permissions: v }, 'Ruolo aggiornato: ' + roleLabel(v), () => { el.value = u.permissions; });
           if (v >= 9) {
-            confirmModal('Nominare ' + u.name + ' amministratore?', 'Potrà abilitare utenti e gestire utenti e moderatori. Solo tu, come master admin, potrai modificarlo.', 'Nomina amministratore')
+            confirmModal('Nominare ' + u.name + ' amministratore?', 'Potrà abilitare utenti e gestire utenti e moderatori. Solo tu, come master admin, potrai modificarlo.' + (S.mailEnabled ? ' Riceverà un’email che lo avvisa del nuovo ruolo.' : ''), 'Nomina amministratore')
               .then(ok => { if (ok) go(); else el.value = u.permissions; });
           } else go();
         });
@@ -257,8 +257,10 @@
     return u.status === 'active' && !u.activation_mail_at && u.canManage && u.permissions >= 1;
   }
   // Text appended to a toast after an action that tried to send an email
+  const MAIL_WHAT = { approved: 'l’email con le indicazioni per accedere', rejected: 'l’email che lo avvisa', role_changed: 'l’email con il nuovo ruolo' };
   function mailOutcome(mail, what) {
     if (!mail) return '';
+    what = MAIL_WHAT[mail.kind] || what;
     return mail.sent ? ' · inviata ' + what : '. Attenzione: ' + what + ' non è partita (' + mail.error + ')';
   }
 
@@ -400,9 +402,9 @@
     if (!transferTarget) return;
     await withBusy($('transfer-confirm'), async () => {
       try {
-        await Api.post('admin.user.transfer_master', { id: transferTarget.id, password: $('transfer-password').value });
+        const d = await Api.post('admin.user.transfer_master', { id: transferTarget.id, password: $('transfer-password').value });
         closeTransfer();
-        toast('Ruolo di master admin passato');
+        toast('Ruolo di master admin passato' + mailOutcome(d.mail));
         setTimeout(() => window.location.reload(), 900);
       } catch (ex) {
         $('transfer-error').textContent = ex.message;
