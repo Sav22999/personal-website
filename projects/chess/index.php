@@ -1,6 +1,6 @@
 <?php
 $description = 'Chess – play a friend online with a room code, a random opponent, on the same device or against the computer. With tips for every piece.';
-$v = 19;
+$v = 21;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_BULB = '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0012 2z"/>';
@@ -336,7 +336,7 @@ $timeChips = function ($name, $default) {
                         <button type="button" class="action-btn" id="btn-flip"><?= $icon($ICON_FLIP, 20, 2) ?><span data-i18n="flip">Flip</span></button>
                         <button type="button" class="action-btn" id="btn-draw"><?= $icon($ICON_HANDSHAKE, 20, 2) ?><span data-i18n="draw">Draw</span></button>
                         <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 20, 2) ?><span data-i18n="resign">Resign</span></button>
-                        <button type="button" class="action-btn primary hidden" id="btn-new-game"><?= $icon('<path d="M3 12a9 9 0 1015.5-6.2L21 8M21 3v5h-5"/>', 20, 2) ?><span data-i18n="new_game">New game</span></button>
+                        <button type="button" class="action-btn primary hidden" id="btn-new-game"><?= $icon('<path d="M21 12a9 9 0 11-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/>', 20, 2) ?><span data-i18n="new_game">New game</span></button>
                     </div>
                 </div>
             </aside>

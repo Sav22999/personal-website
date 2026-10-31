@@ -1501,7 +1501,8 @@ function setBoardTheme(name) {
 function setPieceStyle(name) {
     PIECE_SVG.setStyle(name);
     storageSet('chess_pieces', PIECE_SVG.style);
-    document.querySelectorAll('.style-option').forEach(o => {
+    // Only the piece options: the board options share the .style-option look.
+    document.querySelectorAll('.style-option[data-style]').forEach(o => {
         const on = o.dataset.style === PIECE_SVG.style;
         o.classList.toggle('active', on);
         o.setAttribute('aria-pressed', on);
