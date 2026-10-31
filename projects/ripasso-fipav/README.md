@@ -18,7 +18,9 @@ ripasso-fipav/
 │   └── altri/            «Altri documenti utili», gestiti dal pannello
 ├── lib/                  codice PHP e configurazione (bloccata al browser)
 │   ├── config.php        ← credenziali del database (NON su git)
-│   └── config.example.php
+│   ├── config.example.php
+│   ├── mail-config.php   ← casella email noreply (NON su git)
+│   └── mail-config.example.php
 ├── install.php           installazione guidata (una volta sola, poi va eliminato)
 ├── install/seed.json     domande e riferimenti iniziali (bloccato al browser)
 └── sql/                  dump SQL per phpMyAdmin (NON su git, bloccato al browser)
@@ -138,6 +140,21 @@ Chiunque può registrarsi, ma l'account resta **in attesa** finché un amministr
 - `lib/`, `install/`, `sql/` e i file `.md`, `.json`, `.sql` e nascosti non sono raggiungibili dal browser (`.htaccess`).
 - Query sempre con prepared statement.
 - I commenti nel codice sono in inglese; i testi mostrati agli utenti restano in italiano.
+
+## Email agli utenti
+
+Il portale invia email dalla casella noreply del sito (SMTP, senza librerie esterne: `lib/mailer.php`), con il modello grafico di `lib/email-template.php`:
+
+- **account abilitato**: benvenuto e indicazioni per accedere (inviata quando un account viene abilitato per la prima volta);
+- **registrazione rifiutata**: avviso prima che la richiesta venga eliminata;
+- **password reimpostata**: la password temporanea, da cambiare al primo accesso;
+- **nuova registrazione** (all'indirizzo `notify_email` di `lib/config.php`, se impostato).
+
+Agli utenti già attivi che non hanno mai ricevuto l'email di attivazione la si invia dalla sezione Utenti («Invia a tutti» oppure dal menu «⋯» del singolo utente). La data di invio è salvata in `activation_mail_at`.
+
+I dati della casella stanno in `lib/mail-config.php` (copia di `lib/mail-config.example.php`): escluso da git e bloccato al browser. Senza quel file il portale funziona ma non invia email, e il pannello lo segnala.
+
+Le icone delle email sono disegnate in SVG (`assets/email/*.svg`) e inviate come PNG, perché Gmail e Outlook non mostrano le immagini SVG. Se modifichi un SVG, rigenera il PNG corrispondente (144×144, sfondo trasparente).
 
 ## Notifica email (facoltativa)
 

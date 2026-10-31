@@ -6,6 +6,30 @@
  */
 window.APP_RELEASES = [
   {
+    version: '3.3.0',
+    date: '2026-10-31',
+    title: 'Email agli utenti',
+    groups: [
+      {
+        title: 'Novità',
+        items: [
+          'Quando un account viene abilitato, l’utente riceve un’email di benvenuto con le indicazioni per accedere.',
+          'Se una registrazione viene rifiutata, la persona riceve un’email che la avvisa.',
+          'Dopo un reset della password, l’utente riceve via email la password temporanea, da cambiare al primo accesso.',
+        ],
+      },
+      {
+        title: 'Gestione',
+        items: [
+          'Nella sezione Utenti un avviso indica chi, tra gli utenti già attivi, non ha ancora ricevuto l’email di attivazione: puoi inviarla a tutti con un tocco o al singolo utente dal menu «⋯».',
+          'Su ogni utente compare quando è stata inviata l’email di attivazione.',
+          'Le email partono dalla casella noreply del sito, con un modello grafico dedicato a Fischietto.',
+          'Corretto: scegliere una voce dal menu «⋯» di un utente apriva anche la sua panoramica.',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.2.1',
     date: '2026-10-30',
     title: 'Nuovo footer',

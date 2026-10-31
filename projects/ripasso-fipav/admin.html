@@ -14,8 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=3.2.1">
-<link rel="stylesheet" href="assets/admin.css?v=3.2.1">
+<link rel="stylesheet" href="assets/app.css?v=3.3.0">
+<link rel="stylesheet" href="assets/admin.css?v=3.3.0">
 <script>
   try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -162,6 +162,11 @@
         </dl>
         <p>Dopo un reset della password l'utente deve sceglierne una nuova al primo accesso.</p>
       </details>
+      <div class="mail-banner" id="mail-banner" hidden>
+        <div class="mail-banner-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>
+        <div class="mail-banner-text" id="mail-banner-text"></div>
+        <button class="btn btn-primary btn-sm" id="mail-send-all" hidden>Invia a tutti</button>
+      </div>
       <div class="admin-count" id="users-count"></div>
       <div class="admin-list" id="users-list"></div>
     </section>
@@ -500,7 +505,8 @@
     <h3 class="modal-title">Password temporanea</h3>
     <p class="modal-text" id="pw-modal-text"></p>
     <div class="pw-box"><code id="pw-value"></code><button class="btn btn-secondary btn-sm" id="pw-copy">Copia</button></div>
-    <p class="form-hint" style="margin:12px 0 0">Viene mostrata una sola volta. Comunicala all'utente in modo riservato: al primo accesso dovrà scegliere una nuova password.</p>
+    <div class="pw-mail" id="pw-mail" hidden></div>
+    <p class="form-hint" style="margin:12px 0 0" id="pw-hint">Viene mostrata una sola volta. Al primo accesso l'utente dovrà scegliere una nuova password.</p>
     <div class="modal-actions"><button class="btn btn-primary" id="pw-close">Fatto</button></div>
   </div>
 </div>
@@ -524,8 +530,8 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/version.js?v=3.2.1"></script>
-<script src="assets/api.js?v=3.2.1"></script>
-<script src="assets/admin.js?v=3.2.1"></script>
+<script src="assets/version.js?v=3.3.0"></script>
+<script src="assets/api.js?v=3.3.0"></script>
+<script src="assets/admin.js?v=3.3.0"></script>
 </body>
 </html>

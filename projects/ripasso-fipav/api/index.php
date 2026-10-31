@@ -7,6 +7,7 @@
  *   (after a password reset only auth.password is allowed until the password is changed)
  * Content moderator (>=5): admin.overview (aggregated, anonymous), admin.content, admin.question.save|toggle|delete, admin.ref.save|delete, admin.flags
  * Administrator (>=9): admin.users, admin.user.stats (read-only), admin.user.update|reset_password|delete (users and moderators only)
+ *                      admin.user.send_activation, admin.user.send_activation_all ("account activated" email)
  *                      admin.documents, admin.document.save (multipart) | delete | move ("Other useful documents" only)
  * Master admin (10): same as above, also on administrators, plus admin.user.transfer_master
  */
@@ -16,6 +17,8 @@ declare(strict_types=1);
 require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/schema.php';
 require __DIR__ . '/../lib/content.php';
+require __DIR__ . '/../lib/mailer.php';
+require __DIR__ . '/../lib/email-template.php';
 require __DIR__ . '/../lib/users.php';
 require __DIR__ . '/../lib/documents.php';
 
@@ -202,7 +205,7 @@ switch ($route) {
     case 'admin.users':
         only('GET');
         $s = require_user(PERM_ADMIN);
-        send_json(['ok' => true, 'users' => admin_list_users($s), 'levels' => PERMISSION_LEVELS, 'assignable' => ASSIGNABLE_LEVELS]);
+        send_json(['ok' => true, 'users' => admin_list_users($s), 'levels' => PERMISSION_LEVELS, 'assignable' => ASSIGNABLE_LEVELS, 'mailEnabled' => mail_enabled()]);
 
     case 'admin.overview':
         only('GET');
@@ -219,21 +222,38 @@ switch ($route) {
         $s = require_user(PERM_ADMIN);
         require_csrf($s);
         $u = admin_update_user($s, request_body());
-        send_json(['ok' => true, 'user' => public_user($u)]);
+        // "mail" is present only when an email was attempted (account enabled for the first time)
+        send_json(['ok' => true, 'user' => public_user($u), 'mail' => $GLOBALS['last_account_mail'] ?? null, 'mailEnabled' => mail_enabled()]);
+
+    case 'admin.user.send_activation':
+        only('POST');
+        $s = require_user(PERM_ADMIN);
+        require_csrf($s);
+        admin_send_activation($s, (int)(request_body()['id'] ?? 0));
+        send_json(['ok' => true]);
+
+    case 'admin.user.send_activation_all':
+        only('POST');
+        $s = require_user(PERM_ADMIN);
+        require_csrf($s);
+        send_json(['ok' => true] + admin_send_activation_all($s));
 
     case 'admin.user.reset_password':
         only('POST');
         $s = require_user(PERM_ADMIN);
         require_csrf($s);
-        $pw = admin_reset_password($s, (int)(request_body()['id'] ?? 0));
-        send_json(['ok' => true, 'password' => $pw]);
+        $id = (int)(request_body()['id'] ?? 0);
+        $pw = admin_reset_password($s, $id);
+        // The temporary password is also emailed to the user (it only works until they choose a new one)
+        $mail = mail_enabled() ? send_account_emails([find_user($id)], 'password_reset', ['temp_password' => $pw])[0] : null;
+        send_json(['ok' => true, 'password' => $pw, 'mail' => $mail]);
 
     case 'admin.user.delete':
         only('POST');
         $s = require_user(PERM_ADMIN);
         require_csrf($s);
         admin_delete_user($s, (int)(request_body()['id'] ?? 0));
-        send_json(['ok' => true]);
+        send_json(['ok' => true, 'mail' => $GLOBALS['last_account_mail'] ?? null]);
 
     // ---------- Other useful documents (permissions >= 9) ----------
 

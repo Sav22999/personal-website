@@ -835,7 +835,8 @@ input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rg
 }
 .chat-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.5); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .chat {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 71; height: min(72dvh, 560px);
+    position: fixed; left: 0; right: 0; bottom: var(--kb-offset, 0px); z-index: 71;
+    height: min(72dvh, 560px, calc(var(--vv-height, 100dvh) - 12px));
     display: flex; flex-direction: column; gap: 10px; padding: 14px 14px calc(14px + var(--safe-bottom));
     background: var(--bg-card); border: 1px solid var(--border); border-bottom: none; border-radius: 22px 22px 0 0;
     box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.4); transform: translateY(105%); visibility: hidden;
@@ -860,7 +861,8 @@ body.chat-open .chat-backdrop { opacity: 1; pointer-events: auto; }
 .chat-form { display: flex; gap: 8px; }
 .chat-form input {
     flex: 1; min-width: 0; padding: 11px 14px; border-radius: 22px; border: 1px solid var(--border);
-    background: var(--bg); color: var(--text); font: inherit; font-size: 15px; outline: none;
+    /* 16px or more, or iOS Safari zooms the page when the field gets focus */
+    background: var(--bg); color: var(--text); font: inherit; font-size: 16px; outline: none;
 }
 .chat-form input:focus { border-color: var(--accent); }
 .chat-form input:disabled { opacity: 0.5; }
@@ -909,7 +911,7 @@ body.chat-open .chat-backdrop { opacity: 1; pointer-events: auto; }
     .chat-close, #btn-chat, .chat-backdrop { display: none; }
     .chat-text { font-size: 14px; }
     .chat-send { width: 40px; height: 40px; }
-    .chat-form input { padding: 9px 13px; font-size: 14px; }
+    .chat-form input { padding: 9px 13px; }
     .game-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; overflow: visible; }
     .action-btn { min-height: 58px; font-size: 12.5px; }
     .action-btn.primary { grid-column: 1 / -1; flex-direction: row; min-height: 48px; font-size: 14px; }

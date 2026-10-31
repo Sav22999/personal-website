@@ -81,8 +81,15 @@ function notify_admin_new_user(string $name, string $email): void
 {
     $cfg = config();
     $to = trim((string)($cfg['notify_email'] ?? ''));
+    if ($to === '') return;
+    if (mail_enabled()) {
+        $m = render_registration_notice($name, $email, account_email_links());
+        send_mail($to, '', $m['subject'], $m['html'], $m['text']);
+        return;
+    }
+    // Fallback without the SMTP mailbox: PHP mail()
     $from = trim((string)($cfg['mail_from'] ?? ''));
-    if ($to === '' || $from === '') return;
+    if ($from === '') return;
     $url = trim((string)($cfg['public_url'] ?? ''));
     $subject = '=?UTF-8?B?' . base64_encode('Fischietto: nuova registrazione da abilitare') . '?=';
     $body = "Nuovo utente in attesa di abilitazione:\n\nNome: $name\nEmail: $email\n"
@@ -177,7 +184,7 @@ function admin_list_users(array $actor): array
         }
     }
     $out = [];
-    $rows = db()->query('SELECT id, name, email, permissions, status, must_change_password, created_at, approved_at, last_login_at, last_seen_at FROM ' . t('users') . " ORDER BY FIELD(status,'pending','active','disabled'), permissions DESC, created_at DESC");
+    $rows = db()->query('SELECT id, name, email, permissions, status, must_change_password, created_at, approved_at, activation_mail_at, last_login_at, last_seen_at FROM ' . t('users') . " ORDER BY FIELD(status,'pending','active','disabled'), permissions DESC, created_at DESC");
     foreach ($rows as $u) {
         $u['id'] = (int)$u['id'];
         $u['permissions'] = (int)$u['permissions'];
@@ -229,7 +236,82 @@ function admin_update_user(array $actor, array $in): array
     if ($status !== 'active' || $perm < PERM_USER) {
         db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$id]);
     }
+    $user = find_user($id);
+    // Enabling an account that never received the "account activated" email sends it now
+    if ($status === 'active' && $u['status'] !== 'active' && empty($u['activation_mail_at'])) {
+        $GLOBALS['last_account_mail'] = send_account_emails([$user], 'approved')[0];
+        $user = find_user($id);
+    }
+    return $user;
+}
+
+// ---------------- Account emails ----------------
+
+/** Links used in the emails. The portal address comes from the current request, so it is always the live one. */
+function account_email_links(): array
+{
+    $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+    if ($host !== '' && preg_match('/^[a-z0-9.-]+(:\d+)?$/i', $host)) {
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+        $portal = ($https ? 'https://' : 'http://') . $host . app_base_path();
+    } else {
+        $portal = rtrim((string)(config()['public_url'] ?? ''), '/') . '/';
+    }
+    return [
+        'portal_url'  => $portal,
+        'icon_url'    => $portal . 'assets/icons/icon-192.png',
+        'assets_url'  => $portal . 'assets/email/',
+        'contact_url' => 'https://www.saveriomorelli.com/contact-me/email/',
+        'credit_url'  => 'https://www.saveriomorelli.com/',
+    ];
+}
+
+/**
+ * Sends the account email to each user ($kind: 'approved' or 'rejected') over one connection.
+ * For 'approved' it records the date in activation_mail_at. Returns ['sent' => bool, 'error' => string] per user.
+ */
+function send_account_emails(array $users, string $kind, array $extra = []): array
+{
+    $links = account_email_links();
+    $messages = [];
+    foreach ($users as $u) {
+        $m = render_account_email($kind, $links + $extra + ['name' => $u['name'], 'email' => $u['email']]);
+        $messages[] = ['to' => $u['email'], 'name' => $u['name'], 'subject' => $m['subject'], 'html' => $m['html'], 'text' => $m['text']];
+    }
+    $out = [];
+    foreach (send_mails($messages) as $i => $r) {
+        if ($r['ok'] && $kind === 'approved') {
+            db()->prepare('UPDATE ' . t('users') . ' SET activation_mail_at = ? WHERE id = ?')->execute([now_utc(), (int)$users[$i]['id']]);
+        }
+        $out[] = ['sent' => $r['ok'], 'error' => $r['error']];
+    }
+    return $out;
+}
+
+/** Sends (or sends again) the "account activated" email to one active user. */
+function admin_send_activation(array $actor, int $id): array
+{
+    $u = find_user($id);
+    if (!$u) fail('Utente non trovato.', 404, 'not_found');
+    require_manageable($actor, $u);
+    if ($u['status'] !== 'active') fail('L\'email di attivazione si invia solo agli account attivi.', 422, 'validation');
+    if (!mail_enabled()) fail('Invio email non configurato: manca lib/mail-config.php.', 503, 'mail_disabled');
+    $r = send_account_emails([$u], 'approved')[0];
+    if (!$r['sent']) fail('Email non inviata: ' . $r['error'] . '.', 502, 'mail_failed');
     return find_user($id);
+}
+
+/** Sends the "account activated" email to every active user (that the actor manages) who never received it. */
+function admin_send_activation_all(array $actor): array
+{
+    if (!mail_enabled()) fail('Invio email non configurato: manca lib/mail-config.php.', 503, 'mail_disabled');
+    $rows = db()->query('SELECT * FROM ' . t('users') . " WHERE status = 'active' AND permissions >= " . PERM_USER . ' AND activation_mail_at IS NULL ORDER BY id LIMIT 100')->fetchAll();
+    $targets = array_values(array_filter($rows, function ($u) use ($actor) { return can_manage_user($actor, $u); }));
+    if (!$targets) return ['sent' => 0, 'failed' => 0, 'errors' => []];
+    $results = send_account_emails($targets, 'approved');
+    $errors = [];
+    foreach ($results as $i => $r) if (!$r['sent']) $errors[] = $targets[$i]['email'] . ': ' . $r['error'];
+    return ['sent' => count($results) - count($errors), 'failed' => count($errors), 'errors' => array_slice($errors, 0, 5)];
 }
 
 function generate_temp_password(): string
@@ -264,6 +346,10 @@ function admin_delete_user(array $actor, int $id): void
     $u = find_user($id);
     if (!$u) fail('Utente non trovato.', 404, 'not_found');
     require_manageable($actor, $u);
+    // Rejecting a registration: tell the person before the data is deleted
+    if ($u['status'] === 'pending' && mail_enabled()) {
+        $GLOBALS['last_account_mail'] = send_account_emails([$u], 'rejected')[0];
+    }
     db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$id]);
 }
 

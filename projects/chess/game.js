@@ -893,8 +893,31 @@ function renderChat(stickToBottom = false) {
     badge.classList.toggle('hidden', !s.chat.unread);
 }
 
+// On phones the on-screen keyboard only shrinks the visual viewport, so a sheet fixed to the bottom
+// would end up underneath it. Keep the chat sheet on top of the keyboard and as tall as the space left.
+let chatKeyboardOffset = -1;
+function fitChatToKeyboard() {
+    const vv = window.visualViewport;
+    const root = document.documentElement.style;
+    if (!vv || !document.body.classList.contains('chat-open')) {
+        root.removeProperty('--kb-offset');
+        root.removeProperty('--vv-height');
+        chatKeyboardOffset = -1;
+        return;
+    }
+    const offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    root.setProperty('--kb-offset', offset + 'px');
+    root.setProperty('--vv-height', Math.round(vv.height) + 'px');
+    if (offset !== chatKeyboardOffset) {
+        chatKeyboardOffset = offset;
+        const list = $('chat-list');
+        list.scrollTop = list.scrollHeight;
+    }
+}
+
 function openChat() {
     document.body.classList.add('chat-open');
+    fitChatToKeyboard();
     session.chat.unread = 0;
     renderChat(true);
     // On touch screens the keyboard would cover the messages, so only focus with a mouse.
@@ -904,6 +927,7 @@ function openChat() {
 function closeChat() {
     document.body.classList.remove('chat-open');
     $('chat-input').blur();
+    fitChatToKeyboard();
 }
 
 async function sendChat(e) {
@@ -1232,7 +1256,16 @@ function showGameOver() {
     $('gameover-icon').innerHTML = GAMEOVER_ICONS[icon];
     const [a, b] = s.players;
     $('score-line').innerHTML = a && b ? `<span>${escapeHtml(a.name)}</span><strong>${fmtPoints(a.points2)} – ${fmtPoints(b.points2)}</strong><span>${escapeHtml(b.name)}</span>` : '';
-    $('btn-gameover-home').textContent = isOnline() && s.isPublic ? t('play_someone_else') : t('back_home');
+    // After a random match, playing someone else is the natural next step: it comes right after Rematch.
+    const someoneElse = isOnline() && s.isPublic;
+    const home = $('btn-gameover-home');
+    const review = $('btn-review');
+    home.textContent = someoneElse ? t('play_someone_else') : t('back_home');
+    home.classList.toggle('btn-secondary', someoneElse);
+    home.classList.toggle('btn-ghost', !someoneElse);
+    review.classList.toggle('btn-secondary', !someoneElse);
+    review.classList.toggle('btn-ghost', someoneElse);
+    if (someoneElse) review.before(home); else home.before(review);
     updateRematchUI();
     showModal('confirm-overlay', false);
     $('promo-picker').classList.add('hidden');
@@ -1551,6 +1584,10 @@ function init() {
     $('btn-chat-close').addEventListener('click', closeChat);
     $('chat-backdrop').addEventListener('click', closeChat);
     $('chat-form').addEventListener('submit', sendChat);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', fitChatToKeyboard);
+        window.visualViewport.addEventListener('scroll', fitChatToKeyboard);
+    }
     $('style-grid').addEventListener('click', (e) => {
         const o = e.target.closest('.style-option');
         if (o) setPieceStyle(o.dataset.style);

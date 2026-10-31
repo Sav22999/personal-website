@@ -1,7 +1,17 @@
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 
 // Newest first. Each entry lists its notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.4.2',
+        notes: {
+            en: ['On phones the chat now stays above the keyboard, so you can see what you type'],
+            it: ['Sui telefoni la chat ora resta sopra la tastiera, così vedi quello che scrivi'],
+            es: ['En el móvil el chat ahora queda encima del teclado, así ves lo que escribes'],
+            fr: ['Sur téléphone, le chat reste maintenant au-dessus du clavier : tu vois ce que tu écris'],
+            de: ['Auf dem Handy bleibt der Chat jetzt über der Tastatur, sodass du siehst, was du schreibst'],
+        },
+    },
     {
         version: '1.4.1',
         notes: {

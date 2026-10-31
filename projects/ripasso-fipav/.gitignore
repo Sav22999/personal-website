@@ -1,4 +1,6 @@
 # Database credentials: never commit them
 lib/config.php
+# Mailbox credentials for outgoing email: never commit them
+lib/mail-config.php
 *.log
 .DS_Store

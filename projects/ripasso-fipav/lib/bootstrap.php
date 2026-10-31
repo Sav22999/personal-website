@@ -295,7 +295,7 @@ function ensure_schema(): void
     } catch (Throwable $e) {
         return; // portal not installed yet
     }
-    if ($version >= 4) return;
+    if ($version >= 5) return;
 
     $pdo = db();
     if ($version < 2) {
@@ -324,6 +324,14 @@ function ensure_schema(): void
         if (function_exists('prefill_ref_changes')) prefill_ref_changes();
         $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
         if (function_exists('bump_content_version')) bump_content_version();
+    }
+    if ($version < 5) {
+        // v5: when the "account activated" email was sent (NULL = never: it can be sent from the panel)
+        $have = array_column($pdo->query('SHOW COLUMNS FROM ' . t('users'))->fetchAll(), 'Field');
+        if (!in_array('activation_mail_at', $have, true)) {
+            $pdo->exec('ALTER TABLE ' . t('users') . " ADD COLUMN `activation_mail_at` DATETIME NULL AFTER `approved_by`");
+        }
+        $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '5') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
     }
 }
 

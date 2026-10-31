@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function schema_statements(): array
 {
@@ -25,6 +25,7 @@ function schema_statements(): array
             `created_at` DATETIME NOT NULL,
             `approved_at` DATETIME NULL,
             `approved_by` INT UNSIGNED NULL,
+            `activation_mail_at` DATETIME NULL,
             `last_login_at` DATETIME NULL,
             `last_seen_at` DATETIME NULL,
             UNIQUE KEY `uq_email` (`email`),

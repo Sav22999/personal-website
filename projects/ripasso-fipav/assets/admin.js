@@ -41,7 +41,7 @@
     t.textContent = msg;
     t.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+    toastTimer = setTimeout(() => t.classList.remove('show'), Math.max(2600, msg.length * 55));
   }
 
   let modalResolve = null;
@@ -147,6 +147,7 @@
     if (!S.me.canManageUsers) return;
     const d = await Api.get('admin.users');
     S.users = d.users;
+    S.mailEnabled = !!d.mailEnabled;
     const pending = S.users.filter(u => u.status === 'pending').length;
     $('pending-count').textContent = pending;
     $('pending-count').hidden = pending === 0;
@@ -173,6 +174,7 @@
     const list = S.users.filter(u => (S.userFilter === 'all' || u.status === S.userFilter) &&
       (!role || (role === 9 ? u.permissions >= 9 : role === 5 ? u.permissions >= 5 && u.permissions < 9 : u.permissions >= 1 && u.permissions < 5)) &&
       (!q || norm(u.name + ' ' + u.email).includes(q)));
+    renderMailBanner();
     $('users-count').textContent = list.length + (list.length === 1 ? ' utente' : ' utenti');
     const box = $('users-list');
     if (!list.length) { box.innerHTML = '<div class="admin-empty">Nessun utente corrisponde ai filtri.</div>'; return; }
@@ -216,17 +218,20 @@
             '<span class="pill ' + statusPill + '">' + STATUS_LABEL[u.status] + '</span>' +
             (u.status !== 'pending' ? '<span class="role-badge ' + roleClass(u.permissions) + '">' + esc(u.role) + '</span>' : '') +
             (u.must_change_password ? '<span class="pill gold">Deve cambiare password</span>' : '') +
+            (needsActivationMail(u) ? '<span class="pill gold" title="Non ha ricevuto l’email con le indicazioni per accedere">Email di attivazione non inviata</span>' : '') +
           '</div>' +
           '<div class="u-email">' + esc(u.email) + '</div>' +
           '<div class="a-meta"><span>Registrato il ' + fmtDate(u.created_at) + '</span>' +
             '<span>Ultimo accesso: ' + fmtDate(u.last_seen_at || u.last_login_at) + '</span>' +
-            '<span>' + u.answers + ' risposte date</span></div>' +
+            '<span>' + u.answers + ' risposte date</span>' +
+            (u.activation_mail_at ? '<span>Email di attivazione inviata il ' + fmtDate(u.activation_mail_at) + '</span>' : '') + '</div>' +
         '</div>' +
         '<div class="u-actions">' + actions + '</div>';
 
       Avatar.apply(card.querySelector('.u-avatar'), u.name, u.gravatar, { size: 40 });
       // Clicking the card (outside the action controls) opens the read-only overview
-      card.addEventListener('click', e => { if (!e.target.closest('.u-actions')) openUserStats(u); });
+      // (a menu item removes itself from the page when clicked: a detached target is not a click on the card)
+      card.addEventListener('click', e => { if (e.target.isConnected && !e.target.closest('.u-actions')) openUserStats(u); });
       card.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target === card) openUserStats(u); });
       card.querySelectorAll('[data-act]').forEach(el => {
         const act = el.dataset.act;
@@ -247,6 +252,62 @@
     });
   }
 
+  // ---------- "Account activated" email ----------
+  function needsActivationMail(u) {
+    return u.status === 'active' && !u.activation_mail_at && u.canManage && u.permissions >= 1;
+  }
+  // Text appended to a toast after an action that tried to send an email
+  function mailOutcome(mail, what) {
+    if (!mail) return '';
+    return mail.sent ? ' · inviata ' + what : '. Attenzione: ' + what + ' non è partita (' + mail.error + ')';
+  }
+
+  function renderMailBanner() {
+    const missing = S.users.filter(needsActivationMail).length;
+    const banner = $('mail-banner');
+    if (!S.mailEnabled) {
+      banner.hidden = false;
+      banner.classList.add('warn');
+      $('mail-banner-text').innerHTML = '<strong>Invio email non configurato.</strong> Manca il file <code>lib/mail-config.php</code> sul server: gli utenti abilitati o rifiutati non ricevono avvisi.';
+      $('mail-send-all').hidden = true;
+      return;
+    }
+    banner.classList.remove('warn');
+    banner.hidden = missing === 0;
+    if (!missing) return;
+    $('mail-banner-text').innerHTML = '<strong>' + (missing === 1 ? '1 utente attivo non ha' : missing + ' utenti attivi non hanno') + ' ricevuto l’email di attivazione</strong> con le indicazioni per accedere.';
+    $('mail-send-all').hidden = false;
+    $('mail-send-all').textContent = missing === 1 ? 'Invia' : 'Invia a tutti (' + missing + ')';
+  }
+
+  async function sendActivation(u) {
+    const again = !!u.activation_mail_at;
+    if (again && !(await confirmModal('Inviare di nuovo l’email?', u.name + ' ha già ricevuto l’email di attivazione il ' + fmtDate(u.activation_mail_at) + '. Vuoi inviarla di nuovo a ' + u.email + '?', 'Invia di nuovo'))) return;
+    try {
+      await Api.post('admin.user.send_activation', { id: u.id });
+      await loadUsers();
+      renderUsers();
+      toast('Email di attivazione inviata a ' + u.name);
+    } catch (e) { toast(e.message); }
+  }
+
+  $('mail-send-all').addEventListener('click', async () => {
+    const targets = S.users.filter(needsActivationMail);
+    if (!targets.length) return;
+    const names = targets.slice(0, 5).map(u => u.name).join(', ') + (targets.length > 5 ? ' e altri ' + (targets.length - 5) : '');
+    if (!(await confirmModal('Inviare l’email di attivazione?', 'Riceveranno le indicazioni per accedere: ' + names + '.', targets.length === 1 ? 'Invia' : 'Invia ' + targets.length + ' email'))) return;
+    const btn = $('mail-send-all');
+    btn.disabled = true;
+    btn.textContent = 'Invio in corso…';
+    try {
+      const d = await Api.post('admin.user.send_activation_all', {});
+      await loadUsers();
+      renderUsers();
+      toast(d.failed ? 'Inviate ' + d.sent + ' email, ' + d.failed + ' non partite: ' + d.errors.join('; ') : (d.sent === 1 ? 'Email inviata' : 'Inviate ' + d.sent + ' email'));
+    } catch (e) { toast(e.message); renderMailBanner(); }
+    finally { btn.disabled = false; }
+  });
+
   function openUserMenu(anchor, u) {
     const wasOpen = S.openMenu && S.openMenu.parentElement === anchor;
     closeUserMenu();
@@ -254,7 +315,9 @@
     const menu = document.createElement('div');
     menu.className = 'u-menu';
     menu.setAttribute('role', 'menu');
-    const items = [['reset', 'Reimposta password']];
+    const items = [];
+    if (u.status === 'active') items.push(['mail', u.activation_mail_at ? 'Invia di nuovo l’email di attivazione' : 'Invia email di attivazione']);
+    items.push(['reset', 'Reimposta password']);
     if (u.status === 'active') items.push(['disable', 'Disabilita account']);
     if (S.me.isMaster && u.status === 'active') items.push(['transfer', 'Passa il ruolo di master admin']);
     items.push(['sep'], ['delete', 'Elimina account', 'danger']);
@@ -263,6 +326,7 @@
       closeUserMenu();
       const m = b.dataset.m;
       if (m === 'reset') resetPassword(u);
+      if (m === 'mail') sendActivation(u);
       if (m === 'delete') deleteUser(u);
       if (m === 'transfer') openTransfer(u);
       if (m === 'disable' && await confirmModal('Disabilitare ' + u.name + '?', 'Verrà disconnesso subito e non potrà accedere finché non lo riabiliti. I suoi progressi restano salvati.', 'Disabilita')) {
@@ -349,10 +413,10 @@
 
   async function updateUser(u, changes, okMsg, onError) {
     try {
-      await Api.post('admin.user.update', Object.assign({ id: u.id }, changes));
+      const d = await Api.post('admin.user.update', Object.assign({ id: u.id }, changes));
       await loadUsers();
       renderUsers();
-      toast(okMsg);
+      toast(okMsg + mailOutcome(d.mail, 'l’email con le indicazioni per accedere'));
     } catch (e) {
       toast(e.message);
       if (onError) onError();
@@ -360,11 +424,19 @@
   }
 
   async function resetPassword(u) {
-    if (!(await confirmModal('Reimpostare la password?', 'Verrà generata una password temporanea per ' + u.name + ' e le sue sessioni aperte verranno chiuse. Al primo accesso dovrà sceglierne una nuova.', 'Genera password'))) return;
+    if (!(await confirmModal('Reimpostare la password?', 'Verrà generata una password temporanea per ' + u.name + ' e le sue sessioni aperte verranno chiuse.' +
+      (S.mailEnabled ? ' La riceverà anche via email, a ' + u.email + '.' : '') + ' Al primo accesso dovrà sceglierne una nuova.', 'Genera password'))) return;
     try {
       const d = await Api.post('admin.user.reset_password', { id: u.id });
       $('pw-modal-text').textContent = 'Nuova password temporanea per ' + u.name + ' (' + u.email + '):';
       $('pw-value').textContent = d.password;
+      // Tell the admin whether the user already received it by email
+      const pm = $('pw-mail');
+      pm.hidden = false;
+      pm.className = 'pw-mail ' + (d.mail && d.mail.sent ? 'ok' : 'warn');
+      pm.textContent = d.mail && d.mail.sent ? 'Inviata via email a ' + u.email + '.'
+        : d.mail ? 'Email non inviata (' + d.mail.error + '): comunicala tu all’utente in modo riservato.'
+        : 'Invio email non configurato: comunicala tu all’utente in modo riservato.';
       $('pw-modal').hidden = false;
       await loadUsers();
       renderUsers();
@@ -378,14 +450,14 @@
   async function deleteUser(u) {
     const pending = u.status === 'pending';
     const ok = await confirmModal(pending ? 'Rifiutare la registrazione?' : 'Eliminare ' + u.name + '?',
-      pending ? 'La richiesta di ' + u.name + ' verrà eliminata.' : 'L\'account e tutti i suoi progressi (statistiche, segnalibri, quiz sospesi) verranno eliminati definitivamente.',
+      pending ? 'La richiesta di ' + u.name + ' verrà eliminata' + (S.mailEnabled ? ' e riceverà un’email che lo avvisa.' : '.') : 'L\'account e tutti i suoi progressi (statistiche, segnalibri, quiz sospesi) verranno eliminati definitivamente.',
       pending ? 'Rifiuta' : 'Elimina');
     if (!ok) return;
     try {
-      await Api.post('admin.user.delete', { id: u.id });
+      const d = await Api.post('admin.user.delete', { id: u.id });
       await loadUsers();
       renderUsers();
-      toast(pending ? 'Registrazione rifiutata' : 'Utente eliminato');
+      toast(pending ? 'Registrazione rifiutata' + mailOutcome(d.mail, 'l’email che lo avvisa') : 'Utente eliminato');
     } catch (e) { toast(e.message); }
   }
 

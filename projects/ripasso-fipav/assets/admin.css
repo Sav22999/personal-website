@@ -57,6 +57,20 @@
 .admin-select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
 .admin-select:disabled { opacity: .55; }
 .admin-count { font-size: .82rem; color: var(--text-3); margin: 16px 0 8px; }
+/* Password reset: was the temporary password emailed? */
+.pw-mail { margin-top: 12px; padding: 10px 12px; border-radius: var(--r-sm); font-size: .86rem; line-height: 1.45; }
+.pw-mail.ok { background: var(--green-soft); color: var(--green); }
+.pw-mail.warn { background: var(--amber-soft); color: var(--amber-strong); }
+/* Users who never received the "account activated" email */
+.mail-banner { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent); background: var(--blue-soft); font-size: .88rem; }
+.mail-banner[hidden] { display: none; }
+.mail-banner.warn { border-color: color-mix(in srgb, var(--amber) 60%, transparent); background: var(--amber-soft); }
+.mail-banner-icon { flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--surface); color: var(--blue); }
+.mail-banner.warn .mail-banner-icon { color: var(--amber-strong); }
+.mail-banner-text { flex: 1; min-width: 0; color: var(--text-2); line-height: 1.45; }
+.mail-banner-text strong { color: var(--text); }
+.mail-banner .btn { flex-shrink: 0; }
+@media (max-width: 560px) { .mail-banner { flex-wrap: wrap; } .mail-banner .btn { width: 100%; } }
 .admin-list { display: grid; gap: 8px; }
 .admin-empty { padding: 28px; text-align: center; color: var(--text-3); border: 1px dashed var(--line); border-radius: var(--r-md); }
 .admin-intro { color: var(--text-2); margin-bottom: 14px; }
