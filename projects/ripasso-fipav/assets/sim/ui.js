@@ -31,15 +31,19 @@
     d.flagged = Array.isArray(d.flagged) ? d.flagged : [];
     return d;
   }
-  function saveSimData() { try { Store.setItem(STORE_KEY, JSON.stringify(simData)); } catch (e) {} }
+  function saveSimData() {
+    // Category names travel with the data, so the Statistiche page of the portal can show them
+    simData.catLabels = CATS;
+    try { Store.setItem(STORE_KEY, JSON.stringify(simData)); } catch (e) {}
+  }
 
-  function record(sitId, ok, helped) {
+  function record(sitId, ok, helped, warn) {
     const sit = SIT[sitId] || SIT.wrong_whistle;
     const c = simData.byCat[sit.cat] || (simData.byCat[sit.cat] = { c: 0, w: 0, h: 0 });
     const s = simData.bySit[sitId] || (simData.bySit[sitId] = { c: 0, w: 0 });
     if (ok) { c.c++; s.c++; } else { c.w++; s.w++; }
     if (helped) c.h++;
-    G.decisions.push({ sit: sitId, ok, helped: !!helped });
+    G.decisions.push({ sit: sitId, ok, helped: !!helped, warn: !!warn });
     if (G.M) G.M.adaptConduct(ok);
     saveSimData();
   }
@@ -133,12 +137,53 @@
     return side * MOVE[role].max * (role === '1' ? 0.85 : 0.75);
   }
 
+  /**
+   * "All in order": after time-outs and substitutions, and before the start of the set, the scorer and the
+   * 2nd referee (if present) raise both arms (same signal as the block fault) to tell the 1st that play can go on.
+   */
+  const ALL_OK = [{ pose: 'blockFault', caption: 'Tutto in ordine: entrambe le braccia alzate, palmi in avanti', dur: 1.8 }];
+  function allOk() {
+    const mode = G.M.opts.mode;
+    G.allOk = { t0: performance.now() };
+    if (mode === '2' && G.M.opts.allOkAuto === false) {
+      // You make the signal yourself: the 1st referee waits for it before authorising the service
+      G.waitAllOk = true;
+      $('btn-allok').hidden = false;
+      $('btn-allok').classList.add('pulse');
+      hint('Segnapunti pronto: fai il segnale di «tutto in ordine» al 1° arbitro');
+      return;
+    }
+    if (mode !== 'solo') miniSignal({ role: '2', steps: ALL_OK }, mode === '2' ? 'Tu (2° arbitro) e il segnapunti · tutto in ordine' : '2° arbitro e segnapunti · tutto in ordine');
+  }
+
+  function userAllOk() {
+    if (!G.waitAllOk) return;
+    G.waitAllOk = false;
+    $('btn-allok').hidden = true;
+    $('btn-allok').classList.remove('pulse');
+    G.prepT = Math.min(G.prepT, 1.4);
+    miniSignal({ role: '2', steps: ALL_OK }, 'Tu (2° arbitro) · tutto in ordine');
+  }
+
+  /** During a time-out (after the signal), the 2nd referee waits at the net post, facing the scorer. */
+  function timeoutStill() {
+    return !!G.huddle && G.phase === 'break' && !(G.partnerNudge && performance.now() < G.partnerNudge.until) && !(G.selfNudge && performance.now() < G.selfNudge.until);
+  }
+
+  function hold2() { return G.r2HoldUntil != null && (G.clock || 0) < G.r2HoldUntil; }
+
+  /** Substitutions: the 2nd referee stands with the back to the net post, just on the side of that team. */
+  function postSide(T) { return clamp(G.M.side[T] * 0.35, -MOVE['2'].max, MOVE['2'].max); }
+
   /** Where the 2nd referee stands to signal towards a team: on that team's side of the net. */
   function sideOfTeam2(T) { return clamp(G.M.side[T] * 1.6, -MOVE['2'].max, MOVE['2'].max); }
 
   function updateMovement(dt) {
     const M = G.M;
     if (!M || G.phase === 'idle' || G.phase === 'over') return;
+    // The rally is over: the 2nd referee checks that the players at the net have landed in balance before
+    // moving to the side of the next receiving team (otherwise some faults could not be seen)
+    if (G.whistled && !G.r2HoldSet && (G.phase === 'rally' || G.phase === 'decision')) { G.r2HoldSet = true; G.r2HoldUntil = (G.clock || 0) + 1.6; }
     const myRole = M.opts.mode === '2' ? '2' : '1';
     const mv = MOVE[myRole];
     let target = G.refTarget === undefined ? 0 : G.refTarget;
@@ -147,6 +192,12 @@
       const screenSign = G.view === 'second' ? -1 : 1;
       target = clamp(G.refX + G.moveDir * screenSign * mv.speed * 0.5, -mv.max, mv.max);
       G.manualUntil = performance.now() + 1800;
+    } else if (myRole === '2' && hold2()) {
+      // End of the rally: the 2nd stays where he is until all players have landed in balance
+      target = G.refX;
+    } else if (myRole === '2' && timeoutStill()) {
+      // Time-out: the 2nd referee stands still with the back to the net post, facing the scorer
+      target = 0;
     } else if (G.selfNudge && performance.now() < G.selfNudge.until) {
       // After your own whistle as 2nd referee: you move to the side of the team at fault, then signal
       target = G.selfNudge.x;
@@ -165,6 +216,8 @@
       let pt = autoRefX(pr);
       // A small step towards the team at fault, while signalling to the 1st referee
       if (G.partnerNudge && performance.now() < G.partnerNudge.until) pt = G.partnerNudge.x;
+      else if (pr === '2' && hold2()) pt = G.partnerX;
+      else if (pr === '2' && timeoutStill()) pt = 0;
       const ps = MOVE[pr].speed * dt;
       G.partnerX += clamp(pt - G.partnerX, -ps, ps);
     }
@@ -180,15 +233,39 @@
     grid.querySelectorAll('.role-card').forEach(b => b.addEventListener('click', () => {
       grid.querySelectorAll('.role-card').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
       $('opt-libero-row').hidden = b.dataset.mode === '1';
+      $('opt-allok-row').hidden = b.dataset.mode !== '2';
     }));
     $('opt-libero-row').hidden = true;
+    $('opt-allok-row').hidden = true;
     ['opt-target', 'opt-freq', 'opt-fouls', 'opt-forms', 'opt-conduct', 'opt-score'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       $(id).querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
     })));
     $('btn-start').addEventListener('click', () => {
       const mode = grid.querySelector('.role-card.active').dataset.mode;
-      startMatch({
-        mode,
+      startMatch(Object.assign({ mode }, readOptions()));
+    });
+    renderStats();
+  }
+
+  // ---------- Starting line-up slip (1st referee alone, or 2nd referee) ----------
+  /** The slip handed in by the coach before the set: the players in positions I–VI (Rule 7.3, scorer's manual). */
+  function openSlip(T) {
+    const c = $('slip-card');
+    if (!c.hidden && c.dataset.team === T) { c.hidden = true; return; }
+    const d = E.TEAM_DEF[T], L = d.lineup;
+    const R = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+    c.dataset.team = T;
+    c.style.setProperty('--team', TEAM_COLOR[T]);
+    $('slip-title').textContent = d.label + ' · 1° set';
+    $('slip-row').innerHTML = L.map((n, i) => '<div class="slip-box"><small>' + R[i] + '</small><b>' + n + '</b></div>').join('');
+    // On court: front row IV III II at the net, back row V VI I
+    $('slip-court').innerHTML = [3, 2, 1, 4, 5, 0].map(i => '<div class="slip-pos"><small>' + R[i] + '</small><b>' + L[i] + '</b></div>').join('');
+    c.hidden = false;
+  }
+
+  /** The options of the setup screen (all but the role). */
+  function readOptions() {
+    return {
         target: parseInt($('opt-target').querySelector('.active').dataset.v, 10),
         freq: parseFloat($('opt-freq').querySelector('.active').dataset.v),
         fouls: parseFloat($('opt-fouls').querySelector('.active').dataset.v),
@@ -201,29 +278,55 @@
         scoreMine: $('opt-score').querySelector('.active').dataset.v === 'mine',
         subAnim: $('opt-subanim').checked,
         summary: $('opt-summary').checked,
-      });
-    });
-    renderStats();
+        allOkAuto: $('opt-allok').checked,
+    };
   }
 
+  /** Puts the controls back to the values in use (when the settings are opened during the match). */
+  function writeOptions(o) {
+    const seg = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === String(v)));
+    seg('opt-target', o.target); seg('opt-freq', o.freq); seg('opt-fouls', o.fouls); seg('opt-forms', o.formations || 'easy');
+    seg('opt-conduct', o.conduct); seg('opt-score', o.scoreMine ? 'mine' : 'right');
+    $('opt-aids').checked = !!o.aids; $('opt-libero').checked = !!o.libero; $('opt-automove').checked = !!o.autoMove;
+    $('opt-timeout').checked = !!o.waitTimeout; $('opt-subanim').checked = !!o.subAnim; $('opt-summary').checked = !!o.summary;
+    $('opt-allok').checked = o.allOkAuto !== false;
+  }
+
+  // ---------- Settings during the match: the same controls, moved into a window ----------
+  let optsHome = null;
+  function openOptions() {
+    if (!G.M || G.phase === 'over' || G.phase === 'idle') return;
+    if (G.modal && G.modal !== 'pause-modal') return;
+    if (G.modal === 'pause-modal') closeModal('pause-modal');
+    const box = document.querySelector('.sim-options');
+    optsHome = { parent: box.parentNode, next: box.nextSibling };
+    writeOptions(G.M.opts);
+    $('opt-libero-row').hidden = G.M.opts.mode === '1';
+    $('opt-allok-row').hidden = G.M.opts.mode !== '2';
+    // A set cannot be shortened below the points already played
+    const top = Math.max(G.M.score.A, G.M.score.B);
+    $('opt-target').querySelectorAll('button').forEach(b => { b.disabled = parseInt(b.dataset.v, 10) <= top; });
+    $('opts-body').appendChild(box);
+    openModal('opts-modal');
+  }
+  function closeOptions(apply) {
+    const box = document.querySelector('.sim-options');
+    if (apply && G.M) {
+      const o = readOptions();
+      Object.assign(G.M.opts, o);
+      banner('Impostazioni aggiornate', 'Valgono dalla prossima azione.', 1800);
+      updateScore();
+    }
+    $('opt-target').querySelectorAll('button').forEach(b => { b.disabled = false; });
+    if (optsHome) optsHome.parent.insertBefore(box, optsHome.next);
+    optsHome = null;
+    closeModal('opts-modal');
+    G.lastFrame = performance.now();
+  }
+
+  /** The statistics are on the Statistiche page of the portal: here only a link, once there is something to see. */
   function renderStats() {
-    const cats = Object.keys(simData.byCat);
-    const card = $('sim-stats-card');
-    if (!cats.length) { card.hidden = true; return; }
-    card.hidden = false;
-    let c = 0, w = 0, h = 0;
-    cats.forEach(k => { c += simData.byCat[k].c; w += simData.byCat[k].w; h += simData.byCat[k].h || 0; });
-    const pct = c + w ? Math.round(c / (c + w) * 100) : 0;
-    let html = '<div class="ss-totals">' +
-      '<div class="ss-tile"><b>' + simData.games.length + '</b><span>partite</span></div>' +
-      '<div class="ss-tile"><b>' + (c + w) + '</b><span>decisioni</span></div>' +
-      '<div class="ss-tile"><b>' + pct + '%</b><span>corrette</span></div>' +
-      '<div class="ss-tile"><b>' + h + '</b><span>con l’aiuto</span></div></div>';
-    Object.keys(CATS).filter(k => simData.byCat[k]).forEach(k => {
-      const s = simData.byCat[k], n = s.c + s.w, p = n ? Math.round(s.c / n * 100) : 0;
-      html += '<div class="ss-row"><span>' + esc(CATS[k]) + '</span><span class="ss-bar"><span style="width:' + p + '%"></span></span><span class="ss-num">' + p + '% · ' + n + '</span></div>';
-    });
-    $('sim-stats').innerHTML = html;
+    $('sim-stats-card').hidden = !Object.keys(simData.byCat).length;
   }
 
   // ======================================================================================
@@ -243,6 +346,11 @@
     $('sim-end').hidden = true;
     $('sim-game').hidden = false;
     $('sim-top-actions').hidden = false;
+    // The starting line-up slips can be checked when there is no 2nd referee to do it, or when you are the 2nd
+    $('slip-btn-a').hidden = $('slip-btn-b').hidden = opts.mode === '1';
+    $('slip-card').hidden = true;
+    G.needAllOk = true;   // before the first service: scorer and 2nd referee signal that all is in order
+    G.waitAllOk = false; $('btn-allok').hidden = true;
     $('badge-role').textContent = roleName(opts.mode);
     $('sb-set').textContent = 'Set a ' + opts.target;
     if (!G.renderer) G.renderer = new SimRender.Renderer($('sim-canvas'));
@@ -295,8 +403,8 @@
     const withSig = wrong.concat(G.decisions.filter(d => d.ok)).filter(d => d.signal && !seen[d.sit] && (seen[d.sit] = true));
     if (withSig.length) {
       html += '<h2 class="sim-h2">Segnaletica della partita</h2><div class="end-signals">' + withSig.map((d, i) =>
-        '<div class="end-sig' + (d.ok ? '' : ' ko') + '"><button class="end-sig-head" data-i="' + i + '" aria-expanded="false">' +
-          '<span class="end-sig-mark">' + (d.ok ? '✓' : '✕') + '</span><span>' + esc((SIT[d.sit] || SIT.wrong_whistle).title) +
+        '<div class="end-sig' + (d.warn ? ' warn' : d.ok ? '' : ' ko') + '"><button class="end-sig-head" data-i="' + i + '" aria-expanded="false">' +
+          '<span class="end-sig-mark">' + (d.warn ? '!' : d.ok ? '✓' : '✕') + '</span><span>' + esc((SIT[d.sit] || SIT.wrong_whistle).title) +
           '<small>' + esc(d.right || '') + ' · ' + (d.signal.role === '2' ? '2° arbitro' : '1° arbitro') + '</small></span><span class="end-sig-go">Segnaletica ›</span></button>' +
           '<div class="end-sig-body" hidden><div class="fg-fig"></div><div><p class="fg-cap"></p><ol class="fg-list">' +
           d.signal.steps.filter(s => s.pose !== 'rest' || /Attende|Si porta/.test(s.caption)).map(s => '<li>' + esc(s.caption) + '</li>').join('') +
@@ -382,7 +490,7 @@
     if (c.quiet) return;              // regular Libero replacements handled by the 2nd referee: no entry
     G.log.push({
       kind: x.kind, before: x.before, after: G.M.score.A + '–' + G.M.score.B, outcome: x.outcome,
-      by: c.by || (x.kind === 'rally' ? '1° arbitro' : '2° arbitro'), user: !!c.user, ok: c.ok, yours: c.yours, happened: c.happened || '',
+      by: c.by || (x.kind === 'rally' ? '1° arbitro' : '2° arbitro'), user: !!c.user, ok: c.ok, warn: !!c.warn, yours: c.yours, happened: c.happened || '',
       replay: x.replay || null,
     });
     if (!$('log').hidden) renderLog();
@@ -390,14 +498,14 @@
   function logHtml(list) {
     if (!list.length) return '<p class="form-hint">Ancora nessuna azione.</p>';
     return list.slice().reverse().map(l => {
-      const cls = l.user ? (l.ok ? 'ok' : 'ko') : 'ai';
+      const cls = l.user ? (l.warn ? 'warn' : l.ok ? 'ok' : 'ko') : 'ai';
       const n = G.log.indexOf(l) + 1;
       return '<div class="lg-item ' + cls + '">' +
         '<div class="lg-top"><span class="lg-n">' + n + '. ' + esc(LOG_KIND[l.kind] || 'Evento') + '</span><span class="lg-score">' + esc(l.before === l.after ? l.after : l.before + ' → ' + l.after) + '</span></div>' +
         '<div class="lg-what">' + esc(l.outcome) + '</div>' +
         (l.happened ? '<div class="lg-hap">' + esc(l.happened) + '</div>' : '') +
         '<div class="lg-by"><span class="lg-badge">' + esc(l.by) + (l.user ? ' · tu' : '') + '</span>' +
-          (l.user ? (l.ok ? '<span class="lg-res ok">✓ corretta</span>' : '<span class="lg-res ko">✕ tua decisione: ' + esc(l.yours || '') + '</span>') : '') +
+          (l.user ? (l.warn ? '<span class="lg-res warn">! punto giusto, fallo diverso: ' + esc(l.yours || '') + '</span>' : l.ok ? '<span class="lg-res ok">✓ corretta</span>' : '<span class="lg-res ko">✕ tua decisione: ' + esc(l.yours || '') + '</span>') : '') +
           (l.replay ? '<button class="lg-replay" data-log="' + (n - 1) + '" title="Rivedi l’azione">▶ Rivedi</button>' : '') + '</div>' +
         '</div>';
     }).join('');
@@ -418,6 +526,16 @@
   /** The decision windows can always open the game log (the drawer opens above the window, like the score sheet). */
   function bindDecLog() {
     $('dec-log').addEventListener('click', () => toggleLog(true));
+    // The starting line-up slips can be checked from the decision window too (1st referee alone, 2nd referee)
+    const row = $('dec-log').parentNode;
+    if (G.M && G.M.opts.mode !== '1' && row && !row.querySelector('[data-slip]')) {
+      ['A', 'B'].forEach(T => {
+        const b = document.createElement('button');
+        b.className = 'btn btn-ghost btn-sm'; b.dataset.slip = T; b.textContent = 'Formazione ' + T;
+        b.addEventListener('click', () => openSlip(T));
+        row.appendChild(b);
+      });
+    }
   }
   function renderLog() { $('log-body').innerHTML = logHtml(G.log || []); }
   function toggleLog(force) {
@@ -453,10 +571,17 @@
     G.event = e;
     G.eventT = 0;
     // Irregular requests are spotted by the scorer (checks on the score sheet), who tells the 2nd referee
-    if ((e.kind === 'sub' || e.kind === 'timeout') && e.expected && e.expected !== 'authorize' && !e.scorer) {
+    if ((e.kind === 'sub' || e.kind === 'timeout' || (e.kind === 'libero' && e.user)) && e.expected && e.expected !== 'authorize' && !e.scorer) {
       e.scorer = true;
       e.text += ' Il segnapunti avvisa a voce il 2° arbitro: dal referto la richiesta risulta irregolare.';
+      e.scorerSays = 'ko';
       banner('Segnapunti', 'Avvisa il 2° arbitro: richiesta irregolare della ' + E.TEAM_DEF[e.team].label + '.', 2200);
+    } else if ((e.kind === 'sub' || e.kind === 'timeout' || (e.kind === 'libero' && e.user)) && !e.scorer) {
+      // Regular requests: the scorer checks the score sheet and confirms that everything is in order
+      e.scorer = true;
+      e.scorerSays = 'ok';
+      e.text += ' Il segnapunti controlla il referto: la richiesta è regolare.';
+      banner('Segnapunti', 'Dal referto è tutto regolare: ' + ({ sub: 'sostituzione', timeout: 'tempo di riposo', libero: 'rimpiazzo del Libero' })[e.kind] + ' della ' + E.TEAM_DEF[e.team].label + '.', 2200);
     }
     if (e.user && (e.kind === 'conduct' || e.kind === 'sub' || e.kind === 'timeout')) {
       // Misconduct and requests are whistled by the referee first (then the decision, with its signal)
@@ -503,7 +628,8 @@
     if (txt) banner(who, txt, 3000);
     const sig = e.comp === '2' ? (exp === 'authorize' ? secondSignal(e, 'authorize') : secondSignal(e, 'reject')) : eventSignal(e, exp);
     // The 2nd referee first moves to the side of the team that made the request, then makes the signal
-    if (e.comp === '2' && mode === '1' && (e.kind === 'sub' || e.kind === 'timeout')) G.partnerNudge = { x: clamp(M.side[e.team] * 1.6, -MOVE['2'].max, MOVE['2'].max), until: performance.now() + 4500 };
+    // (substitution: back to the net post, facing the team that asked for it; time-out: on that team's side)
+    if (e.comp === '2' && mode === '1' && (e.kind === 'sub' || e.kind === 'timeout')) G.partnerNudge = { x: e.kind === 'sub' ? postSide(e.team) : clamp(M.side[e.team] * 1.6, -MOVE['2'].max, MOVE['2'].max), until: performance.now() + 4500 };
     if (!quiet) miniSignal(sig, who);
     const dur = sig && sig.steps ? sig.steps.reduce((a, x) => a + (x.dur || 1.6), 0) * 1000 : 0;
     finishEvent(e, txt ? Math.max(1900, dur * 0.85) : 500);
@@ -531,7 +657,11 @@
     record(e.sit, ok, e.helped);
     const L = e.kind === 'libero' ? { authorize: 'Regolare: lascia proseguire', reject: 'Irregolare: fischia e fai correggere' } : { authorize: 'Autorizza', reject: 'Respingi la richiesta' };
     const lbl = E.TEAM_DEF[e.team].label;
-    if (choice === 'authorize' && (e.kind === 'sub' || e.kind === 'timeout')) G.selfNudge = { x: sideOfTeam2(e.team), until: performance.now() + 4200 };
+    if (choice === 'authorize' && (e.kind === 'sub' || e.kind === 'timeout')) {
+      G.selfNudge = { x: e.kind === 'sub' ? postSide(e.team) : sideOfTeam2(e.team), until: performance.now() + 4200 };
+      // Substitution: you turn towards the team that asked for it (first person)
+      if (e.kind === 'sub') G.r2Face = { x: G.M.side[e.team] * 7, until: performance.now() + 4200 };
+    }
     showFeedback({
       ok, sitId: e.sit,
       quiet: ok && exp === 'authorize',
@@ -571,6 +701,8 @@
     // Snapshot of the scene for "Rivedi" in the log (who was on court and where, before the change)
     const snap = { event: Object.assign({}, e), pos: JSON.parse(JSON.stringify(G.M.pos)),
       court: { A: [0, 1, 2, 3, 4, 5].map(k => G.M.onCourt('A', k)), B: [0, 1, 2, 3, 4, 5].map(k => G.M.onCourt('B', k)) } };
+    // Disciplinary sanctions: the player (or the game captain) comes to the referee's chair (IT 3.6.1, 3.6.2)
+    if (e.kind === 'conduct' && startApproach(e, e.expected)) delay = Math.max(delay || 0, G.approach.total * 1000 + 300);
     const res = G.M.applyBetween(e);
     updateScore();
     // Optional animation of substitutions and Libero replacements (the players walk in and out)
@@ -582,6 +714,18 @@
     }
     logEntry({ kind: e.kind, before, outcome: (G.lastCall && G.lastCall.right) || aiEventText(e, e.expected || (e.regular ? 'authorize' : null)) || e.text,
       replay: { snap, from: 0, to: 4, focus: 1.6, label: LOG_KIND[e.kind] || 'Richiesta', event: true } });
+    if ((e.kind === 'timeout' || e.kind === 'sub') && e.expected === 'authorize') G.needAllOk = true;
+    if (e.kind === 'conduct' && res.expelled != null) {
+      const wait = G.approach ? Math.round((G.approach.walk + G.approach.hold) * 1000) + 200 : 300;
+      later(() => applyExpulsion(e.team, res.expelled, res.outFor), wait);
+      delay = Math.max(delay || 0, wait + 3200);
+    }
+    // The captain has left the court: a game captain must be designated. With a 2nd referee it is the 2nd who asks
+    if ((e.kind === 'sub' || e.kind === 'libero') && captainToAsk(e.team)) {
+      const T = e.team, M = G.M;
+      if (M.opts.mode === '1') { later(() => askCaptain(T, false), 900); delay = Math.max(delay || 0, 3400); }
+      else banner('Capitano non in campo', 'Il capitano della ' + E.TEAM_DEF[T].label + ' non è più in campo: ' + (M.opts.mode === '2' ? 'da 2° arbitro' : 'da arbitro unico') + ' chiedi chi è il capitano in gioco (fischio libero o referto).', 3600);
+    }
     if (e.kind === 'timeout' && (e.expected === 'authorize')) {
       startHuddle();
       if (G.M.opts.waitTimeout) {
@@ -593,10 +737,36 @@
       banner('Tempo di riposo', E.TEAM_DEF[e.team].label + ' · 30 secondi', 2600);
       delay = Math.max(delay || 0, 3800);
     }
-    if (res.point) banner('Punto', 'Punto e servizio alla ' + E.TEAM_DEF[res.point].label + '.', 2200);
+    if (res.point) {
+      const show = () => banner('Punto', 'Punto e servizio alla ' + E.TEAM_DEF[res.point].label + '.', 2200);
+      if (e.kind === 'conduct' && G.approach) later(show, Math.round((G.approach.walk + G.approach.hold) * 1000)); else show();
+    }
     if (res.followUp && res.followUp.length) G.queue.unshift(...res.followUp);
     G.event = null;
     later(() => { if (G.phase === 'break') nextEvent(); }, delay || 400);
+  }
+
+  /**
+   * Sanctions for misconduct (IT 3.6.1, 3.6.2): the 1st referee whistles and calls to the chair the player on
+   * court who is sanctioned, or the game captain (verbal warning, or a member not on court: then that member
+   * stands up and raises an arm while the card is shown). Delay sanctions do not call anyone (IT 4.5).
+   */
+  function startApproach(e, k) {
+    const LBL = { verbal: 'avvertimento verbale', yellow: 'avvertimento ufficiale (giallo)', red: 'penalizzazione (rosso)', expulsion: 'espulsione', disqualification: 'squalifica' };
+    if (!LBL[k]) return false;
+    const M = G.M, T = e.team, onC = [0, 1, 2, 3, 4, 5].map(i => M.onCourt(T, i));
+    const direct = k !== 'verbal' && typeof e.who === 'number' && onC.includes(e.who);
+    const walker = direct ? e.who : M.gameCaptain(T);
+    const key = T + walker, q = M.pos[key];
+    if (!q) return false;
+    const to = { x: M.side[T] * 0.9, y: -4.7 };
+    const walk = clamp(Math.hypot(to.x - q.x, to.y - q.y) / 3.2, 0.8, 2.2), hold = 2.0;
+    const standing = !direct && k !== 'verbal' ? e.who : null;
+    G.approach = { key, T, from: { x: q.x, y: q.y }, to, t0: G.clock || 0, walk, hold, total: walk * 2 + hold, standing };
+    const who = direct ? 'Il n. ' + walker : 'Il capitano in gioco (n. ' + walker + ')';
+    banner('Al seggiolone', who + ' si avvicina al 1° arbitro: ' + LBL[k] +
+      (standing != null ? (standing === 'coach' ? '; l’allenatore si alza e alza il braccio' : '; il n. ' + standing + ' si alza e alza il braccio') : '') + '.', Math.round((walk + hold) * 1000) + 600);
+    return true;
   }
 
   /**
@@ -711,6 +881,11 @@
     G.netShake = null;
     G.authorized = false;
     G.huddle = null;
+    G.approach = null;
+    G.rallySigs = [];
+    G.authSig = false;
+    G.r2HoldSet = false; G.r2HoldUntil = null; G.r2Face = null;
+    if (G.needAllOk) { G.needAllOk = false; allOk(); }
     G.prepFrom = {};
     Object.keys(M.pos).forEach(k => { G.prepFrom[k] = { x: M.pos[k].x, y: M.pos[k].y }; });
     const plan = M.planRally();
@@ -758,10 +933,15 @@
     const dt = Math.min(0.05, (now - (G.lastFrame || now)) / 1000);
     G.lastFrame = now;
     const running = !G.paused && !G.modal;
-    $('btn-collab').hidden = !(G.M && G.M.opts.mode === '2' && G.phase === 'rally' && !G.whistled);
-    if (running) { step(dt * (G.speed || 1)); updateMovement(dt * (G.speed || 1)); G.clock = (G.clock || 0) + dt * (G.speed || 1); }
+    const canCollab = G.M && G.M.opts.mode === '2' && G.phase === 'rally' && !G.whistled;
+    $('btn-collab').hidden = !canCollab;
+    // The collaboration panel belongs to the rally: it closes as soon as the rally is over
+    if (!canCollab && !$('collab-panel').hidden) $('collab-panel').hidden = true;
+    // While choosing the collaboration signal the play goes on in slow motion
+    const k = (G.speed || 1) * (canCollab && !$('collab-panel').hidden ? 0.3 : 1);
+    if (running) { step(dt * k); updateMovement(dt * k); G.clock = (G.clock || 0) + dt * k; }
     updateClocks();
-    runTimers(dt * (G.speed || 1), running);
+    runTimers(dt * k, running);
     draw();
   }
 
@@ -797,7 +977,13 @@
       G.prepT += dt;
       const ready = G.prepT >= 1.3;
       if (M.opts.mode === '2') {
-        if (G.prepT >= 2.6) { G.authorized = true; whistle(); banner('1° arbitro', 'Autorizza il servizio.', 1200); beginRally(); }
+        // The 1st referee's authorisation signal, also live on his character (seen from your position): arm
+        // towards the serving team, whistle (when the arm is out), then the arm folds
+        if (G.prepT >= 1.0 && !G.authSig && !G.waitAllOk) {
+          G.authSig = true;
+          miniSignal({ role: '1', steps: SimGestures.authorizeSteps(handFor(M.serving, '1')) }, '1° arbitro · autorizzazione al servizio');
+        }
+        if (G.authSig && G.prepT >= 2.6) { G.authorized = true; whistle(); banner('1° arbitro', 'Autorizza il servizio.', 1200); beginRally(); }
       } else {
         $('btn-authorize').hidden = !ready;
         $('btn-authorize').classList.toggle('pulse', ready);
@@ -814,7 +1000,7 @@
       const prevT = G.t;
       G.t += dt * (slow ? 0.28 : 1);
       // Net shakes
-      R.events.forEach(ev => { if (ev.kind === 'net' && ev.t > prevT && ev.t <= G.t) G.netShake = { y: ev.y, t0: G.t, amp: ev.strong ? 0.09 : 0.05 }; });
+      R.events.forEach(ev => { if (ev.kind === 'net' && ev.t > prevT && ev.t <= G.t) G.netShake = { y: ev.y, t0: G.t, w0: performance.now(), amp: ev.strong ? 0.09 : 0.05 }; });
       // The 2nd referee helps the 1st with ball-handling faults: an unofficial signal at mid-chest, a small step
       if (M.opts.mode === '1' && !G.whistled) {
         const hf = R.faults.find(f => HANDLING[f.key] && G.t >= f.t + 0.25 && G.t < f.t + 1.5);
@@ -850,11 +1036,16 @@
           continue;
         }
         if (!userDecides && G.t >= f.t + 0.35) return aiWhistle(f, false);
-        if (userDecides && f.comp === 'both' && partner && G.t >= f.t + G.aiPartnerGrace + 0.35) return aiWhistle(f, true);
+        // Faults that the 2nd referee sees best (the centre line, IT 1.2.3): with you as 1st, the 2nd whistles them
+        // straight away (you may still whistle first); with you as 2nd, the 1st leaves them to you
+        if (SECOND_VIEW[f.key] && M.opts.mode === '1' && G.t >= f.t + 0.3) return aiWhistle(f, false);
+        if (SECOND_VIEW[f.key] && M.opts.mode === '2') { if (f.t > G.t) break; continue; }
+        if (userDecides && f.comp === 'both' && partner && G.t >= f.t + G.aiPartnerGrace + (M.opts.mode === '2' ? 1.1 : 0.35)) return aiWhistle(f, true);
         if (f.t > G.t) break;
       }
-      // Ball dead
-      if (G.t >= R.endT + 0.35 && !G.whistled) {
+      // Ball dead. With you as 2nd referee the 1st waits a moment longer before whistling, so you have the time
+      // to signal (ball touched, out) or to whistle a fault of yours
+      if (G.t >= R.endT + (M.opts.mode === '2' ? 1.4 : 0.35) && !G.whistled) {
         if (G.deadAt === null) G.deadAt = G.t;
         ballDead();
       }
@@ -922,19 +1113,53 @@
     const lbl = E.TEAM_DEF[t.team].label;
     return t.who === 'team' ? 'alla ' + lbl + ' (tramite il capitano in gioco)' : t.who === 'coach' ? 'all’allenatore della ' + lbl : 'al n. ' + t.who + ' della ' + lbl + (t.via === 'captain' ? ' (comunicata tramite il capitano in gioco)' : '');
   }
+  /**
+   * An expelled (for the set) or disqualified (for the match) member goes to the locker room; on court he is
+   * substituted straight away: legally, or with an exceptional substitution, or the team is incomplete (Rule 15.8).
+   */
+  function applyExpulsion(T, who, outFor) {
+    const M = G.M, d = E.TEAM_DEF[T];
+    const before = M.pos[T + who] ? { x: M.pos[T + who].x, y: M.pos[T + who].y } : null;
+    const r = M.forcedSub(T, who, outFor);
+    const where = outFor === 'match' ? 'per il resto della gara' : 'fino alla fine del set';
+    let txt = 'Il n. ' + who + ' va negli spogliatoi ' + where + '.';
+    if (r.kind === 'regular') txt += ' Sostituzione regolamentare: entra il n. ' + r.inn + '.';
+    if (r.kind === 'exceptional') txt += ' Non è possibile una sostituzione regolamentare: sostituzione eccezionale con il n. ' + r.inn + '.';
+    if (r.kind === 'libero') txt += ' Rientra il n. ' + r.inn + ', che il Libero stava rimpiazzando; il Libero non può più giocare.';
+    if (r.kind === 'incomplete') txt += ' Nessuna sostituzione possibile: la ' + d.label + ' è incompleta e perde il set.';
+    banner(outFor === 'match' ? 'Squalifica' : 'Espulsione', txt, 3200);
+    G.lastSubLog = txt;
+    if ((r.kind === 'regular' || r.kind === 'exceptional') && before && M.opts.subAnim) {
+      G.subAnim = { T, inn: r.inn, out: who, court: before, zone: [M.side[T] * 1.6, 5.1], t0: G.clock || 0, dur: 2.6 };
+    }
+    G.lastCall = { by: '2° arbitro', user: false, happened: txt };
+    logEntry({ kind: 'sub', before: M.score.A + '–' + M.score.B, outcome: txt, replay: null });
+    updateScore();
+    if (!$('sheet').hidden) renderSheet();
+    if (r.kind === 'regular' || r.kind === 'exceptional') G.needAllOk = true;
+  }
+
+  /** True when the team captain is not on court and the game captain has not been asked yet. */
+  function captainToAsk(T) {
+    const M = G.M, t = M.teams[T], d = E.TEAM_DEF[T];
+    const on = [0, 1, 2, 3, 4, 5].map(k => M.onCourt(T, k));
+    return !on.includes(d.captain) && t.gcAsked !== M.gameCaptain(T);
+  }
+
   /** Asks a team who the game captain is (the referee whistles and the team shows it). */
   function askCaptain(T, silent) {
     const M = G.M, n = M.gameCaptain(T), d = E.TEAM_DEF[T];
     if (!silent) whistle();
     M.teams[T].gcAsked = n;
-    G.capReveal = { T, n, until: performance.now() + 4500 };
-    // Official signal of the request (not a sanction): the index finger touches the chest at the number's height
-    const role = M.opts.mode === '2' ? '2' : '1';
+    G.capReveal = { T, n, t0: performance.now(), until: performance.now() + 5000 };
+    // Official signal of the request (not a sanction): the index finger touches the chest at the number's height.
+    // With a 2nd referee, it is the 2nd who asks; the sole referee asks himself.
+    const role = M.opts.mode === 'solo' ? '1' : '2';
     miniSignal({ role, steps: [
       { pose: 'whistle', whistle: true, caption: 'Fischio', dur: 0.9 },
       { pose: 'askCap', side: handFor(T, role), motion: 'tapChest', once: true, caption: 'Chi è il capitano in gioco? L’indice tocca il petto all’altezza del numero', dur: 2.0 },
-    ] }, 'Richiesta del capitano in gioco');
-    banner('Richiesta del capitano in gioco · ' + d.label, n === d.captain ? 'Il capitano n. ' + n + ' è in campo: è lui il capitano in gioco.' : 'Capitano in gioco: n. ' + n + ' (il capitano n. ' + d.captain + ' non è in campo).', 3200);
+    ] }, (role === '2' ? (M.opts.mode === '2' ? 'Tu (2° arbitro)' : '2° arbitro') : '1° arbitro') + ' · richiesta del capitano in gioco');
+    banner('Richiesta del capitano in gioco · ' + d.label + (role === '2' ? ' (2° arbitro)' : ''), n === d.captain ? 'Il capitano n. ' + n + ' è in campo: è lui il capitano in gioco.' : 'Capitano in gioco: n. ' + n + ' (il capitano n. ' + d.captain + ' non è in campo).', 3200);
     if (!$('sheet').hidden) renderSheet();
     return n;
   }
@@ -1174,6 +1399,9 @@
     return { key: dec.key, point: dec.point || null };
   }
 
+  /** Faults of both referees that, in practice, the 2nd sees much better (Indicazioni tecniche 1.2.3, 4.3.15). */
+  const SECOND_VIEW = { centre_line: 1 };
+
   function aiWhistle(f, userMissed) {
     const M = G.M;
     G.whistled = true;
@@ -1232,7 +1460,8 @@
       G.lastCall = { by: '1° arbitro', user: false, happened: unseen ? tr.fault.text + ' Il 1° arbitro non l’ha visto.' : R.natural ? naturalText(R.natural) : '' };
       banner('1° arbitro', decisionLabel(res) + '.' + (unseen ? ' Non ha visto: ' + tr.fault.text + ' Il tuo segnale di collaborazione l’avrebbe aiutato.' : '') +
         (touchUnseen ? ' Non ha visto il tocco del muro: con il segnale di palla toccata l’avresti aiutato.' : ''), unseen || touchUnseen ? 4200 : 2200);
-      miniSignal(rallySignal(res, null, !unseen && !tr.fault && R.natural && R.natural.noWhistle, '1'), '1° arbitro');
+      const sig1 = rallySignal(res, null, !unseen && !tr.fault && R.natural && R.natural.noWhistle, '1');
+      miniSignal(sig1, '1° arbitro');
       later(() => afterRally(res), unseen || touchUnseen ? 3200 : 1800);
       return;
     }
@@ -1355,14 +1584,22 @@
     }
     // A whistle without a fault is always an error, even when it is then handled correctly (rally replayed)
     const handled = tr.wrongWhistle && (dec.key === 'no_fault' || dec.key === 'double_fault');
-    const ok = !tr.wrongWhistle && dec.key === exp.key && (exp.point === null || dec.point === exp.point);
+    let ok = !tr.wrongWhistle && dec.key === exp.key && (exp.point === null || dec.point === exp.point);
+    // Same point, different reason: the rally had already ended with an earlier fault. It counts as correct,
+    // with a warning ("attenzione") about the fault to whistle and its signal.
+    const warn = !ok && !tr.wrongWhistle && !!tr.fault && !!exp.point && dec.point === exp.point && dec.key !== exp.key;
+    if (warn) {
+      ok = true;
+      note = 'Attenzione: il punto è giusto, ma l’azione era già finita prima, con il fallo «' + E.DECISIONS[exp.key].label + '»' +
+        (tr.missed ? ', che andava fischiato subito' : '') + ': la decisione e la segnaletica corrette sono quelle di questo fallo.';
+    }
     if (tr.wrongWhistle) note = (note ? note + ' ' : '') + (handled
       ? 'Hai gestito bene il fischio sbagliato (azione da ripetere), ma fischiare senza fallo resta un errore grave.'
       : 'Fischiare senza fallo è un errore grave: va riconosciuto e l’azione si ripete con la segnaletica del doppio fallo.');
-    record(sitId, ok, G.helped);
+    record(sitId, ok, G.helped, warn);
     if (M.opts.mode === '2' && whistleT != null && dec.point && FAULT_SIGNAL[dec.key]) G.selfNudge = { x: sideOfTeam2(E.other(dec.point)), until: performance.now() + 4200 };
     showFeedback({
-      ok, sitId, happened, note,
+      ok, warn, sitId, happened, note,
       yours: E.DECISIONS[dec.key].label + (dec.point ? ' · punto alla ' + E.TEAM_DEF[dec.point].label : ''),
       right: decisionLabel(exp),
       context: happened,
@@ -1416,8 +1653,15 @@
         { pose: 'serve', side: handFor(exp.point, pr), caption: '', dur: 1.6 },
         { pose: 'rest', caption: '', dur: 0.4 }] };
     }
-    logEntry({ kind: 'rally', before, outcome: replay ? decisionLabel(exp) + ' · si ripete' : decisionLabel(exp),
-      replay: replayInfo(R, f0 && f0.key === exp.key ? f0 : null, false) });
+    const rpi = replayInfo(R, f0 && f0.key === exp.key ? f0 : null, false);
+    (G.rallySigs || []).forEach(x => attachSig(rpi, x.sig, x.t));
+    // After your whistle as 2nd referee the 1st shows the team to serve (recorded for the replay too)
+    if (G.liveSig && G.liveSig.role === '1' && exp.point && M.opts.mode === '2' && G.whistleT != null && rpi) {
+      const ends = (rpi.sigs || []).map(x => x.t + x.sig.steps.reduce((a, s) => a + (s.dur || 1.6), 0));
+      attachSig(rpi, { role: '1', steps: G.liveSig.steps }, ends.length ? Math.max(...ends) : G.whistleT);
+    }
+    G.rallySigs = [];
+    logEntry({ kind: 'rally', before, outcome: replay ? decisionLabel(exp) + ' · si ripete' : decisionLabel(exp), replay: rpi });
     updateScore();
     hideBanner();
     G.R = null;
@@ -1496,7 +1740,7 @@
       steps.push({ pose: 'serve', side: handFor(exp.point, '1'), caption: 'Servizio alla ' + lbl(exp.point), dur: 1.5 });
       steps.push({ pose: sig.pose, side: handFor(faultTeam, '1'), motion: sig.motion, caption: sig.name, dur: 2.2 });
     } else {
-      steps.push({ pose: 'rest', caption: 'Si porta dal lato della squadra in fallo (' + lbl(faultTeam) + ')', dur: 0.9 });
+      steps.push({ pose: 'rest', caption: 'Si porta dal lato della squadra in fallo (' + lbl(faultTeam) + ')', dur: 0.9, moveTo: sideOfTeam2(faultTeam) });
       steps.push({ pose: sig.pose, side: handFor(faultTeam, '2'), motion: sig.motion, caption: sig.name, dur: 2.2 });
       steps.push({ pose: 'rest', caption: 'Attende che il 1° arbitro assegni il servizio', dur: 1.2 });
       steps.push({ pose: 'serve', side: handFor(exp.point, '2'), caption: 'Ripete il gesto del 1° arbitro: servizio alla ' + lbl(exp.point), dur: 1.6 });
@@ -1516,9 +1760,14 @@
       const steps = [W('Fischio'), { pose: ({ yellow: 'yellow', red: 'red', expulsion: 'expulsion', disqualification: 'disqualification', delay_warning: 'delayY', delay_penalty: 'delayR' })[exp] || 'yellow', side: s,
         caption: (({ yellow: 'Cartellino giallo (avvertimento ufficiale)', red: 'Cartellino rosso (penalizzazione)', expulsion: 'Giallo e rosso insieme (espulsione)', disqualification: 'Giallo e rosso separati (squalifica)', delay_warning: 'Avvertimento per ritardo: cartellino giallo al polso', delay_penalty: 'Penalizzazione per ritardo: cartellino rosso al polso' }[exp]) || sanctionLabel(exp)) + ' ' + (e.who === 'team' ? 'alla squadra' : e.who === 'coach' ? 'all’allenatore' : 'al n. ' + e.who), dur: 2.2 }];
       if (exp === 'red' || exp === 'delay_penalty') steps.push({ pose: 'serve', side: handFor(E.other(e.team), '1'), caption: 'Servizio alla squadra avversaria', dur: 1.5 });
-      return { role: '1', steps };
+      const note = exp === 'delay_warning' || exp === 'delay_penalty'
+        ? 'Per i ritardi di gioco non si chiama nessuno al seggiolone: il cartellino si porta al polso dal lato della squadra sanzionata (Indicazioni tecniche 4.5).'
+        : 'Prima del cartellino il giocatore in campo (o il capitano in gioco, per chi non è in campo) viene invitato ad avvicinarsi al seggiolone (Indicazioni tecniche 3.6.2).';
+      return { role: '1', steps, note };
     }
-    const MOVE2 = R2() === '1' ? [] : [{ pose: 'rest', caption: 'Si sposta dal lato della squadra che ha fatto la richiesta (' + lbl + ')', dur: 0.9 }];
+    const MOVE2 = R2() === '1' ? [] : [{ pose: 'rest', caption: e.kind === 'sub'
+      ? 'Si porta con le spalle al palo della rete, rivolto verso la squadra che ha chiesto la sostituzione (' + lbl + ')'
+      : 'Si sposta dal lato della squadra che ha fatto la richiesta (' + lbl + ')', dur: 0.9 }];
     if (exp === 'authorize' && e.kind === 'timeout') return { role: R2(), steps: [W('Fischio'), ...MOVE2, { pose: 'timeout', caption: 'Tempo di riposo: una mano verticale col palmo verso l’interno, l’altra sopra col palmo in basso (T)', dur: 1.8 }, { pose: 'serve', side: handFor(e.team, R2()), caption: 'Indica la squadra che lo ha chiesto (' + lbl + ')', dur: 1.4 }] };
     if (exp === 'authorize' && e.kind === 'sub') return { role: R2(), steps: [W('Fischio'), ...MOVE2, { pose: 'sub', motion: 'roll', once: true, caption: 'Sostituzione: pugni chiusi, gli avambracci fanno un giro completo uno intorno all’altro', dur: 2.0 }] };
     if (exp === 'reject_improper') return { role: R2(), steps: [W('Fischio'), { pose: 'improper', side: handFor(e.team, R2()), caption: 'Richiesta impropria respinta: braccio teso verso la squadra ma più in basso della spalla, palmo verso l’esterno e dorso verso il campo', dur: 2.0 }] };
@@ -1548,6 +1797,7 @@
     $('gm-who').textContent = who || (sig.role === '2' ? '2° arbitro' : '1° arbitro');
     // The automatic referee also makes the signal "live", on their character in the scene
     const mode = G.M.opts.mode, mine = mode === '2' ? '2' : '1';
+    if (G.R && (G.phase === 'rally' || G.phase === 'decision')) (G.rallySigs = G.rallySigs || []).push({ sig, t: G.t });
     if (mode !== 'solo' && sig.role !== mine) G.liveSig = { role: sig.role, steps: sig.steps, t0: performance.now(), sides: sidesFor(sig.role) };
     SimGestures.play($('gm-fig'), sig.steps, $('gm-cap'), null, sidesFor(sig.role));
     const total = sig.steps.reduce((s, x) => s + (x.dur || 1.6), 0);
@@ -1560,8 +1810,62 @@
   // ======================================================================================
   let fbContinue = null;
   let fbInfo = null;
+  /**
+   * The referee's signal in the replay: it starts at the whistle (or at the end of the rally when there is no
+   * whistle) and the recording runs until the signal is over.
+   */
+  function attachSig(rp, sig, at) {
+    if (!rp || !sig || !sig.steps || !sig.steps.length) return;
+    const start = at != null ? at : rp.whistle != null ? rp.whistle : rp.focus + 0.3;
+    const total = sig.steps.reduce((a, x) => a + (x.dur || 1.6), 0);
+    let lead = 0;
+    for (const st of sig.steps) { if (!st.whistle) break; lead += st.dur || 1.6; }
+    rp.sigs = rp.sigs || [];
+    if (rp.sigs.some(x => x.sig === sig || (x.sig.role === sig.role && Math.abs(x.t - start) < 0.05))) return;
+    rp.sigs.push({ sig, t: start, mark: start + lead, total });
+    rp.to = Math.max(rp.to, start + total + 0.3);
+  }
+
+  /**
+   * Replay: where the 2nd referee is at time t when his signal includes moving to a side (moveTo step):
+   * from where he was to that side during the step, then he stays there. null when there is no such move.
+   */
+  function replay2X(t, base) {
+    const I = RP.info;
+    if (!I || !I.sigs) return null;
+    let x = null;
+    I.sigs.filter(s => s.sig.role === '2' && t >= s.t).forEach(s => {
+      let at = s.t;
+      for (const st of s.sig.steps) {
+        const d = st.dur || 1.6;
+        if (st.moveTo != null && t >= at) { const k = clamp((t - at) / d, 0, 1), e = k * k * (3 - 2 * k); x = base + (st.moveTo - base) * e; }
+        at += d;
+      }
+    });
+    return x;
+  }
+
+  /** The signal of a referee that is being made at time t of the replay (the latest started one). */
+  function activeSig(info, role, t) {
+    let best = null;
+    (info.sigs || []).forEach(x => { if (x.sig.role === role && t >= x.t && t <= x.t + x.total + 0.4 && (!best || x.t > best.t)) best = x; });
+    return best;
+  }
+
   function showFeedback(info, onContinue) {
-    G.lastCall = { by: info.by || userRole(), user: !info.by, ok: info.ok, yours: info.yours, right: info.right, happened: info.happened };
+    $('collab-panel').hidden = true;
+    // The signal made by whoever decided (you, or the other referee when you did not whistle) goes in the replay
+    if (info.replay) {
+      const own = !info.by && info.yourSignal && info.yourSignal.steps && info.yourSignal.steps.length;
+      const sg = own ? info.yourSignal : info.signal;
+      // The signals made during the rally by the other referee (collaboration, whistle), then the decision's one
+      if (G.R && info.replay.R === G.R) {
+        (G.rallySigs || []).forEach(x => attachSig(info.replay, x.sig, x.t));
+        if (own) (G.rallySigs = G.rallySigs || []).push({ sig: sg, t: info.replay.whistle != null ? info.replay.whistle : info.replay.focus + 0.3 });
+      }
+      attachSig(info.replay, sg);
+    }
+    G.lastCall = { by: info.by || userRole(), user: !info.by, ok: info.ok, warn: !!info.warn, yours: info.yours, right: info.right, happened: info.happened };
     const last = G.decisions[G.decisions.length - 1];
     if (last && !last.signal && info.signal && info.signal.steps.length) {
       last.signal = info.signal;
@@ -1569,7 +1873,7 @@
       last.right = info.right;
     }
     // Routine correct calls (clear ball in/out) close quickly, without interrupting the game
-    if (info.quiet) {
+    if (info.quiet && !info.warn) {
       banner('Corretto', info.right + '.', 1600);
       miniSignal(info.signal);
       later(onContinue, 900);
@@ -1597,21 +1901,39 @@
   function openReplay(info) {
     if (!info) return;
     RP.info = info; RP.t = info.from; RP.playing = true; RP.last = performance.now(); RP.top = false;
+    // The replay can be watched from the 1st referee's chair, from the 2nd referee's place (if there is a 2nd) or from above
+    RP.view = G.view || 'first';
+    $('rp-v2').hidden = !G.M || G.M.opts.mode === 'solo';
     $('rp-range').min = info.from; $('rp-range').max = info.to; $('rp-range').step = 0.01;
     const pos = t => ((t - info.from) / (info.to - info.from) * 100) + '%';
-    $('rp-mark').style.left = pos(info.focus);
+    // Each moment is a band over its whole duration (semi-transparent, the time bar stays visible)
+    const band = (el, a, b) => { const x0 = Math.max(info.from, a), x1 = Math.min(info.to, Math.max(b, a + 0.12)); el.style.left = pos(x0); el.style.width = 'calc(' + pos(x1) + ' - ' + pos(x0) + ')'; };
+    band($('rp-mark'), info.focus - 0.15, info.focus + 0.45);
     $('rp-mark').title = info.label;
     $('rp-mark-w').hidden = info.whistle == null;
-    if (info.whistle != null) $('rp-mark-w').style.left = pos(info.whistle);
+    if (info.whistle != null) band($('rp-mark-w'), info.whistle, info.whistle + 0.6);
     $('rp-legend-f').textContent = info.label;
     $('rp-legend-w').hidden = info.whistle == null;
+    const sigs = info.sigs || [];
+    $('rp-legend-s').hidden = !sigs.length;
+    $('rp-mark-s').hidden = true;
+    document.querySelectorAll('.rp-bar .rp-mark.s.extra').forEach(x => x.remove());
+    sigs.forEach(x => {
+      const m = document.createElement('span');
+      m.className = 'rp-mark s extra';
+      m.title = 'Segnaletica · ' + (x.sig.role === '2' ? '2° arbitro' : '1° arbitro');
+      band(m, x.mark, x.t + x.total);
+      $('rp-mark-s').parentNode.appendChild(m);
+    });
+    $('rp-sig').hidden = true; $('rp-sig2').hidden = true;
     $('replay-title').textContent = info.title || 'Registrazione dell’azione';
     $('rp-note').textContent = info.event ? info.snap.event.text : info.missed ? 'Il fallo non è stato fischiato: guarda il momento evidenziato sulla barra.' : 'Rivedi l’azione: il segno sulla barra indica il momento decisivo.';
     openModal('replay-modal');
     if (!RP.renderer) RP.renderer = new SimRender.Renderer($('rp-canvas'));
     RP.renderer.resize();
     RP.renderer.setView(G.view);
-    RP.renderer.setRefX && RP.renderer.setRefX(G.refX || 0);
+    RP.baseX = G.refX || 0;
+    RP.renderer.setRefX && RP.renderer.setRefX(RP.baseX);
     replayButtons();
     cancelAnimationFrame(RP.raf);
     RP.raf = requestAnimationFrame(replayTick);
@@ -1620,6 +1942,8 @@
     $('rp-play').textContent = RP.playing ? '❚❚ Pausa' : '▶ Riproduci';
     $('rp-slow').classList.toggle('active', RP.slow);
     $('rp-top').classList.toggle('active', RP.top);
+    $('rp-v1').classList.toggle('active', !RP.top && RP.view === 'first');
+    $('rp-v2').classList.toggle('active', !RP.top && RP.view === 'second');
   }
   function replayTick(now) {
     const info = RP.info;
@@ -1637,7 +1961,22 @@
     $('rp-badge').hidden = !(nearF || nearW);
     $('rp-badge').textContent = nearW && (!nearF || Math.abs(RP.t - info.whistle) < Math.abs(RP.t - info.focus)) ? 'Fischio' : info.label;
     $('rp-badge').classList.toggle('w', !$('rp-badge').hidden && $('rp-badge').textContent === 'Fischio');
+    // The camera stands where the referee of that view is (the 2nd moving to a side if his signal says so)
+    if (G.M && RP.renderer.setRefX && !RP.top) {
+      const m = G.M.opts.mode, x1 = m === '2' ? G.partnerX : G.refX, x2 = m === '2' ? G.refX : G.partnerX;
+      if (RP.view === 'second') { const mx = replay2X(RP.t, x2 || 0); RP.renderer.setRefX(mx != null ? mx : (x2 || 0)); }
+      else RP.renderer.setRefX(x1 || 0);
+    }
     draw({ renderer: RP.renderer, R: info.R || null, t: RP.t, snap: info.snap });
+    // The referees' signals (1st and 2nd), each in its own box, in sync with the recording
+    [['1', ''], ['2', '2']].forEach(([role, id]) => {
+      const x = activeSig(info, role, RP.t), box = $('rp-sig' + id);
+      box.hidden = !x;
+      if (x) {
+        $('rp-sig' + id + '-who').textContent = 'Segnaletica · ' + (role === '2' ? '2° arbitro' : '1° arbitro');
+        $('rp-sig' + id + '-cap').textContent = SimGestures.frame($('rp-sig' + id + '-fig'), x.sig.steps, RP.t - x.t, sidesFor(role));
+      }
+    });
     RP.raf = requestAnimationFrame(replayTick);
   }
   /**
@@ -1662,17 +2001,22 @@
     if (d.score) { const [a, b] = String(d.score).split('-').map(Number); M.score = { A: a || 0, B: b || 0 }; }
     G.M = M; G.R = null; G.view = d.mode === '2' ? 'second' : 'first'; G.refX = 0; G.partnerX = 0; G.prepFrom = {};
     const a = d.action;
-    const R = { plan: a.plan || {}, tHit: a.tHit, endT: a.endT, server: a.server, faults: a.faults || [], natural: a.natural, trap: a.trap,
+    const sv = (a.server && a.server.team) || d.serving || 'A';
+    const R = { plan: a.plan || {}, tHit: a.tHit, endT: a.endT, server: a.server, serving: sv, receiving: E.other(sv), faults: a.faults || [], natural: a.natural, trap: a.trap,
       formations: a.formations || {}, events: a.events || [], ball: a.ball || [], keys: a.keys || {}, moves: a.moves || {}, slow: [] };
     const fault = (a.faults || [])[0] || null;
     const info = replayInfo(R, fault && Math.abs(fault.t - a.focus) < 0.01 ? fault : null, false, a.whistle != null ? a.whistle : null);
     if (a.focus != null) info.focus = a.focus;
     info.title = 'Azione segnalata · ' + (d.code || ('SIM-' + d.sit)) + ' · ' + (d.role || '') + ' · ' + (d.score || '');
     openReplay(info);
+    RP.locked = true;
+    $('rp-close').hidden = true;
     $('rp-note').textContent = [d.happened, d.yours ? 'Decisione presa: ' + d.yours : '', d.right ? 'Indicata come corretta: ' + d.right : '', d.reportText ? 'Segnalazione: «' + d.reportText + '»' : ''].filter(Boolean).join(' · ');
   }
 
   function closeReplay() {
+    // A reported action opened from Gestione › Segnalazioni: the window stays open (there is no match behind it)
+    if (RP.locked) return;
     cancelAnimationFrame(RP.raf);
     closeModal('replay-modal');
   }
@@ -1701,20 +2045,23 @@
     fbInfo = info;
     fbContinue = onContinue;
     const c = $('dcard');
-    c.className = 'dcard ' + (info.ok ? 'ok' : 'ko');
-    $('dc-icon').textContent = info.ok ? '✓' : '✕';
-    $('dc-title').textContent = info.ok ? 'Decisione corretta' : 'Decisione da rivedere';
-    $('dc-yours').textContent = info.yours + (info.ok ? '' : ' · corretta: ' + info.right);
-    const sig = (info.ok ? info.signal : info.yourSignal) || { role: '1', steps: [] };
+    c.className = 'dcard ' + (info.warn ? 'warn' : info.ok ? 'ok' : 'ko');
+    $('dc-icon').textContent = info.warn ? '!' : info.ok ? '✓' : '✕';
+    $('dc-title').textContent = info.warn ? 'Attenzione: punto giusto, fallo diverso' : info.ok ? 'Decisione corretta' : 'Decisione da rivedere';
+    $('dc-yours').textContent = info.yours + (info.warn ? ' · da fischiare: ' + info.right : info.ok ? '' : ' · corretta: ' + info.right);
+    // With a warning, the card shows the correct signal (the fault that ended the rally)
+    const sig = ((info.ok || info.warn) ? info.signal : info.yourSignal) || { role: '1', steps: [] };
     if (!sig.steps.length && !sig.note) sig.note = 'Nessuna segnaletica.';
     $('dc-sig').classList.toggle('ko', !info.ok);
+    $('dc-sig').classList.toggle('warn', !!info.warn);
+    $('dc-sig-label').textContent = info.warn ? 'Segnaletica corretta (del fallo che ha chiuso l’azione)' : 'La tua segnaletica';
     $('dc-replay').hidden = !info.replay;
     fillSignal('dc', sig);
     c.hidden = false;
     G.modal = 'dcard';
-    setTimeout(() => $(info.ok ? 'dc-continue' : 'dc-details').focus(), 50);
-    // A correct call goes on by itself once the signal is over
-    if (info.ok) {
+    setTimeout(() => $(info.ok && !info.warn ? 'dc-continue' : 'dc-details').focus(), 50);
+    // A correct call goes on by itself once the signal is over (not with a warning: it is worth reading)
+    if (info.ok && !info.warn) {
       const tok = c._tok = {};
       const total = sig.steps.reduce((s, x) => s + (x.dur || 1.6), 0);
       later(() => { if (c._tok === tok && !c.hidden) continueCard(); }, total * 1000 + 1500, { always: true });
@@ -1743,9 +2090,9 @@
     fbInfo = info;
     fbContinue = onContinue;
     const sit = SIT[info.sitId] || SIT.wrong_whistle;
-    $('fb-head').className = 'fb-head ' + (info.ok ? 'ok' : 'ko');
-    $('fb-icon').textContent = info.ok ? '✓' : '✕';
-    $('feedback-title').textContent = info.ok ? 'Decisione corretta' : 'Decisione da rivedere';
+    $('fb-head').className = 'fb-head ' + (info.warn ? 'warn' : info.ok ? 'ok' : 'ko');
+    $('fb-icon').textContent = info.warn ? '!' : info.ok ? '✓' : '✕';
+    $('feedback-title').textContent = info.warn ? 'Attenzione: punto giusto, fallo diverso' : info.ok ? 'Decisione corretta' : 'Decisione da rivedere';
     let html = '<div class="fb-section"><h5>Che cosa è successo</h5><p>' + esc(info.happened) + '</p></div>' +
       '<div class="fb-compare"><div><small>La tua decisione</small>' + esc(info.yours) + '</div><div><small>Decisione corretta</small>' + esc(info.right) + '</div></div>';
     if (info.note) html += '<div class="fb-note">' + esc(info.note) + '</div>';
@@ -1769,8 +2116,10 @@
     // The signal the user made, when the decision was wrong
     const ys = info.yourSignal;
     const y = $('fy-gesture');
-    if (!info.ok && ys && (ys.steps.length || ys.note)) {
+    if ((!info.ok || info.warn) && ys && (ys.steps.length || ys.note)) {
       y.hidden = false;
+      y.classList.toggle('warn', !!info.warn);
+      $('fy-mark').innerHTML = info.warn ? '<span>!</span> Gesto da correggere: il punto è giusto, ma il fallo da segnalare è un altro' : '<span>✕</span> Errore';
       fillSignal('fy', ys, 'La tua segnaletica · ' + roleLabel(ys));
     } else {
       y.hidden = true;
@@ -1818,7 +2167,7 @@
     const rp = info.replay, R = rp && rp.R;
     if (R) {
       d.action = {
-        plan: R.plan, tHit: R.tHit, endT: R.endT, whistle: rp.whistle, focus: rp.focus, server: R.server,
+        plan: R.plan, tHit: R.tHit, endT: R.endT, whistle: rp.whistle, focus: rp.focus, server: R.server, serving: R.serving, receiving: R.receiving,
         faults: R.faults, natural: R.natural, trap: R.trap || null, formations: R.formations,
         events: R.events, ball: R.ball, keys: R.keys, moves: R.moves,
       };
@@ -1925,11 +2274,18 @@
   // ======================================================================================
   // Modals and pause
   // ======================================================================================
-  function openModal(id) { $(id).hidden = false; G.modal = id; }
+  function openModal(id) {
+    $(id).hidden = false; G.modal = id;
+    // Score and line-up slips stay above the decision windows only (they can be checked while deciding)
+    if (id !== 'decision-modal') $('slip-card').hidden = true;
+    syncScoreFront();
+  }
+  function syncScoreFront() { /* the scoreboard stays under every window (the slips open from the decision window) */ }
   function closeModal(id) {
     $(id).hidden = true;
-    const still = ['replay-modal', 'decision-modal', 'feedback-modal', 'help-modal', 'pause-modal', 'report-modal'].find(m => !$(m).hidden);
+    const still = ['replay-modal', 'decision-modal', 'feedback-modal', 'help-modal', 'pause-modal', 'report-modal', 'opts-modal'].find(m => !$(m).hidden);
     G.modal = still || (!$('pick-layer').hidden ? 'pick' : !$('dcard').hidden ? 'dcard' : PP.active ? 'person' : null);
+    syncScoreFront();
   }
   function closeModals() { if (G.toWait) { G.toWait = null; $('to-wait').hidden = true; } cancelAnimationFrame(RP.raf); $('peek-bar').hidden = true; G.pendingConduct = null; if (PP.active) endPick(false); ['replay-modal', 'decision-modal', 'feedback-modal', 'help-modal', 'pause-modal', 'report-modal'].forEach(m => { $(m).hidden = true; }); closeCard(); G.modal = null; }
 
@@ -1946,6 +2302,13 @@
   // Drawing: builds the scene for the renderer
   // ======================================================================================
   const BENCH = { A: { x0: -6.2, x1: -2.8, coach: -6.9 }, B: { x0: 2.8, x1: 6.2, coach: 6.9 } };
+  /** The member not on court who gets a card through the game captain stands up while the captain is at the chair. */
+  function approachStanding(T, who) {
+    const A = G.approach;
+    if (!A || A.T !== T || A.standing !== who || G.phase !== 'break') return false;
+    const c = (G.clock || 0) - A.t0;
+    return c >= A.walk * 0.8 && c <= A.walk + A.hold + 0.3;
+  }
 
   function personFor(T, num, p) {
     const d = E.TEAM_DEF[T];
@@ -1995,6 +2358,14 @@
             const k = clamp(((G.clock || 0) - H.t0) / H.dur, 0, 1), e2 = k * k * (3 - 2 * k);
             p = { x: H.from[key].x + (H.to[key].x - H.from[key].x) * e2, y: H.from[key].y + (H.to[key].y - H.from[key].y) * e2, z: 0, pose: k < 1 ? 'walk' : 'stand' };
           }
+          // Called to the referee's chair for a sanction, then back
+          const A = !rp && G.approach;
+          if (A && A.key === key && phase === 'break') {
+            const c = (G.clock || 0) - A.t0;
+            const u = c < A.walk ? c / A.walk : c < A.walk + A.hold ? 1 : Math.max(0, 1 - (c - A.walk - A.hold) / A.walk);
+            const e2 = u * u * (3 - 2 * u), moving = (c < A.walk) || (c > A.walk + A.hold && u > 0);
+            p = { x: A.from.x + (A.to.x - A.from.x) * e2, y: A.from.y + (A.to.y - A.from.y) * e2, z: 0, pose: moving ? 'walk' : 'stand', atChair: c >= A.walk && c <= A.walk + A.hold };
+          }
         }
         const SA = !rp && G.subAnim;
         if (SA && SA.T === T && SA.inn === n) {
@@ -2007,7 +2378,12 @@
           const a = M.playerAt(R, key, t - 0.08), b2 = M.playerAt(R, key, t + 0.08);
           person.swing = clamp(0.5 - ((b2 ? b2.z : 0) - (a ? a.z : 0)) * 3.2, 0, 1);
         }
-        if (!rp && G.capReveal && G.capReveal.T === T && G.capReveal.n === n && performance.now() < G.capReveal.until) { person.bubble = 'Capitano in gioco'; person.highlight = 'rgba(255,213,79,.55)'; }
+        if (p.atChair) { person.bubble = 'Al seggiolone'; person.highlight = 'rgba(255,213,79,.55)'; }
+        if (!rp && G.capReveal && G.capReveal.T === T && G.capReveal.n === n && performance.now() < G.capReveal.until) {
+          // The game captain raises an arm: to be identified, and to show the referees he knows he is the game captain
+          person.bubble = 'Capitano in gioco'; person.highlight = 'rgba(255,213,79,.55)';
+          if (performance.now() - G.capReveal.t0 > 1100) person.pose = 'wave';
+        }
         // Break events: highlight who is involved
         const e = event;
         if (e && e.team === T && (e.out === n || e.who === n || e.swap === n)) person.highlight = 'rgba(255,213,79,.55)';
@@ -2020,7 +2396,7 @@
     ['A', 'B'].forEach(T => {
       const d = E.TEAM_DEF[T], team = M.teams[T], b = BENCH[T];
       const onCourtNums = courtNums(T);
-      let bench = d.roster.filter(n => !onCourtNums.includes(n));
+      let bench = d.roster.filter(n => !onCourtNums.includes(n) && !(rp && rp.snap ? false : team.out && team.out[n]));
       if (!onCourtNums.includes(d.libero)) bench.push(d.libero);
       const e = event;
       bench = bench.filter(n => !(e && e.team === T && e.inn === n));
@@ -2038,10 +2414,12 @@
         const x = b.x0 + (b.x1 - b.x0) * (i + 0.5) / Math.max(bench.length, 1);
         const q = personFor(T, n, { x, y: 7.65, pose: 'sit' });
         if (e && e.kind === 'conduct' && e.team === T && e.who === n) { q.bubble = '!!'; q.bubbleColor = '#ffcdd2'; q.pose = 'stand'; q.highlight = 'rgba(255,213,79,.55)'; }
+        if (approachStanding(T, n)) { q.pose = 'wave'; q.bubble = 'Si alza'; q.highlight = 'rgba(255,213,79,.55)'; }
         people.push(q);
       });
       const coach = { id: 'coach' + T, x: b.coach, y: 6.9, pose: 'stand', jersey: d.jersey, shorts: '#262c38', outfit: 'staff', collar: '#ffffff', hair: '#2b2420', h: 1.8, skin: T === 'A' ? 1 : 2, label: 'All. ' + T };
       if (e && e.team === T && e.kind === 'timeout') { coach.pose = 'gesture-t'; coach.bubble = 'T'; }
+      if (approachStanding(T, 'coach')) { coach.pose = 'wave'; coach.bubble = 'Si alza'; coach.highlight = 'rgba(255,213,79,.55)'; }
       people.push(coach);
       // Incoming player (substitution or Libero) waiting at the side line
       if (e && e.team === T && (e.kind === 'sub' || e.kind === 'libero')) {
@@ -2057,11 +2435,20 @@
     const mode = M.opts.mode;
     const firstX = mode === '2' ? G.partnerX : G.refX;
     const live = role => {
-      const L = G.liveSig;
-      if (rp || !L || L.role !== role) return null;
-      const el = (performance.now() - L.t0) / 1000;
+      let L = G.liveSig, el;
+      if (rp) {
+        // Replay: the recorded signal of that referee, at the replay time
+        const I = RP.info;
+        const x = I && activeSig(I, role, rp.t);
+        if (!x) return null;
+        L = { steps: x.sig.steps, sides: sidesFor(role) };
+        el = rp.t - x.t;
+      } else {
+        if (!L || L.role !== role) return null;
+        el = (performance.now() - L.t0) / 1000;
+      }
       const total = L.steps.reduce((a, x) => a + (x.dur || 1.6), 0);
-      if (el > total + 0.5) { G.liveSig = null; return null; }
+      if (el > total + 0.5) { if (!rp) G.liveSig = null; return null; }
       const a = SimGestures.liveArms(L.steps, el);
       // Which way the drawing's left arm points on screen: towards the team the signal puts on the left
       const x = role === '1' ? firstX : (mode === '2' ? G.refX : G.partnerX), y = role === '1' ? -5.6 : 5.25;
@@ -2069,12 +2456,24 @@
       a.flip = pr && pt && pt.x > pr.x ? -1 : 1;
       return a;
     };
-    people.push({ x: firstX, y: -5.6, z: 1.55, pose: 'stand', live: live('1'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#2b2420', h: 1.8, skin: 0, label: '1° arbitro', hiddenIn: mode === '2' ? null : 'first' });
+    people.push({ x: firstX, y: -5.6, z: 1.55, pose: 'stand', live: live('1'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#2b2420', h: 1.8, skin: 0, label: '1° arbitro', hiddenIn: 'first' });
     if (mode !== 'solo') {
-      const sx = mode === '2' ? G.refX : G.partnerX;
-      people.push({ x: sx, y: 5.25, pose: 'stand', live: live('2'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#4a3426', hairStyle: 1, h: 1.78, skin: 1, label: '2° arbitro', hiddenIn: mode === '2' ? 'second' : null });
+      let sx = mode === '2' ? G.refX : G.partnerX;
+      // Replay: the 2nd referee moves to the side of the team at fault before the signal, as in the recording
+      if (rp) { const mx = replay2X(rp.t, sx); if (mx != null) sx = mx; }
+      const atPost = !rp && timeoutStill() && Math.abs(sx) < 0.25;
+      people.push({ x: sx, y: 5.25, pose: 'stand', back: atPost, live: live('2'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#4a3426', hairStyle: 1, h: 1.78, skin: 1, label: '2° arbitro', hiddenIn: 'second' });
     }
-    people.push({ x: 0, y: 7.55, pose: 'sit', jersey: '#5b6b88', shorts: '#2a3140', outfit: 'staff', collar: '#cfd6e2', hair: '#1f1712', hairStyle: 2, h: 1.74, skin: 2, label: 'Segnapunti' });
+    const scorer = { x: 0, y: 7.55, pose: 'sit', jersey: '#5b6b88', shorts: '#2a3140', outfit: 'staff', collar: '#cfd6e2', hair: '#1f1712', hairStyle: 2, h: 1.74, skin: 2, label: 'Segnapunti' };
+    // "All in order" of the scorer (arms raised, seated)
+    if (!rp && G.allOk) {
+      const el = (performance.now() - G.allOk.t0) / 1000;
+      if (el < 2.1) { scorer.live = SimGestures.liveArms(ALL_OK, el); scorer.live.flip = 1; } else G.allOk = null;
+    }
+    // The scorer's check of the request on the score sheet
+    if (event && event.scorerSays === 'ok') { scorer.bubble = '✓ Regolare'; scorer.bubbleColor = '#c8f0d4'; }
+    if (event && event.scorerSays === 'ko') { scorer.bubble = '✕ Irregolare'; scorer.bubbleColor = '#ffcdd2'; }
+    people.push(scorer);
 
     // Ball
     let ball = null;
@@ -2098,8 +2497,9 @@
     let netShake = null;
     const shake = rp ? (() => { if (!R) return null; const n = R.events.filter(ev => ev.kind === 'net' && ev.t <= t).pop(); return n ? { y: n.y, t0: n.t, amp: n.strong ? 0.09 : 0.05 } : null; })() : G.netShake;
     if (shake && R) {
-      const age = t - shake.t0;
-      if (age < 0.9) netShake = { y: shake.y, amp: shake.amp * Math.exp(-age * 4), phase: age * 38 };
+      // The net keeps swinging for a few seconds, slowly settling (live: real time, so it goes on after the whistle)
+      const age = !rp && shake.w0 ? (performance.now() - shake.w0) / 1000 * (G.speed || 1) : t - shake.t0;
+      if (age >= 0 && age < 3.2) netShake = { y: shake.y, amp: shake.amp * Math.exp(-age * 1.25) * Math.min(1, age / 0.06 + 0.3), phase: age * 21 };
     }
     const markers = [];
     if (R && M.opts.aids && R.natural && R.natural.land && R.natural.borderline && t >= R.natural.t) {
@@ -2109,11 +2509,20 @@
     // The referee turns their head to follow the play (the server before the service, then the ball)
     if (rp ? !RP.top : !G.top) {
       let lx = 0;
-      if (ball) lx = ball.x * 0.4;
+      // At the service the 1st referee watches the serving team, the 2nd the receiving team (positions)
+      const serviceTime = R && (phase === 'prep' || t < R.tHit + 0.25);
+      if (serviceTime && (rp ? RP.view : G.view) === 'second') lx = M.side[R.receiving] * 3.2;
+      else if (ball) lx = ball.x * 0.4;
       else if (R) lx = M.side[R.server.team] * 3.2;
       const dt = Math.min(0.05, (performance.now() - ((rp ? RP.lastLook : G.lastLook) || performance.now())) / 1000);
       if (rp) RP.lastLook = performance.now(); else G.lastLook = performance.now();
-      renderer.lookAt(clamp(lx, -3.6, 3.6), rp ? dt : (G.paused || G.modal ? 0 : dt));
+      renderer.lookAt(clamp(Number.isFinite(lx) ? lx : 0, -3.6, 3.6), rp ? dt : (G.paused || G.modal ? 0 : dt));
+      // You as 2nd referee: during a time-out you face the scorer (back to the post); authorising a substitution
+      // you turn towards the team that asked for it
+      if (!rp && G.view === 'second' && renderer.setGaze) {
+        const gz = timeoutStill() ? { scorer: true } : (G.r2Face && performance.now() < G.r2Face.until ? { x: G.r2Face.x } : null);
+        renderer.setGaze(gz, G.paused || G.modal ? 0 : dt);
+      }
     }
     if (!rp && PP.active) people.forEach(q => {
       if (!q.id) return;
@@ -2136,6 +2545,13 @@
     $('btn-authorize').addEventListener('click', authorize);
     $('btn-collab').addEventListener('click', openCollab);
     $('btn-pause').addEventListener('click', pause);
+    $('btn-opts').addEventListener('click', openOptions);
+    $('btn-allok').addEventListener('click', userAllOk);
+    ['a', 'b'].forEach(x => $('slip-btn-' + x).addEventListener('click', () => openSlip(x.toUpperCase())));
+    $('slip-close').addEventListener('click', () => { $('slip-card').hidden = true; });
+    $('pause-opts').addEventListener('click', openOptions);
+    $('opts-apply').addEventListener('click', () => closeOptions(true));
+    $('opts-cancel').addEventListener('click', () => closeOptions(false));
     $('pause-resume').addEventListener('click', resume);
     $('pause-end').addEventListener('click', () => { closeModals(); endMatch(true); });
     $('btn-view').addEventListener('click', () => { G.top = !G.top; applyView(); });
@@ -2165,7 +2581,9 @@
     $('rp-close').addEventListener('click', closeReplay);
     $('rp-play').addEventListener('click', () => { RP.playing = !RP.playing; replayButtons(); });
     $('rp-slow').addEventListener('click', () => { RP.slow = !RP.slow; replayButtons(); });
-    $('rp-top').addEventListener('click', () => { RP.top = !RP.top; RP.renderer.setView(RP.top ? 'top' : G.view); replayButtons(); });
+    $('rp-top').addEventListener('click', () => { RP.top = !RP.top; RP.renderer.setView(RP.top ? 'top' : RP.view); replayButtons(); });
+    $('rp-v1').addEventListener('click', () => { RP.top = false; RP.view = 'first'; RP.renderer.setView('first'); replayButtons(); });
+    $('rp-v2').addEventListener('click', () => { RP.top = false; RP.view = 'second'; RP.renderer.setView('second'); replayButtons(); });
     $('rp-range').addEventListener('input', e => { RP.t = parseFloat(e.target.value); RP.playing = false; replayButtons(); });
     $('report-cancel').addEventListener('click', () => closeModal('report-modal'));
     $('report-send').addEventListener('click', sendReport);
@@ -2192,12 +2610,15 @@
       else if ((e.key === 'Escape' || e.key === 'Enter') && !$('peek-bar').hidden) { e.preventDefault(); endPeek(); }
       else if (e.key === 'Escape' && PP.active) { e.preventDefault(); endPick(); }
       else if (e.key === ' ' && G.modal === 'replay-modal') { e.preventDefault(); RP.playing = !RP.playing; replayButtons(); }
+      else if (e.key === 'Escape' && G.modal === 'opts-modal') closeOptions(false);
+      else if (G.modal === 'opts-modal') return;
       else if (e.key === 'Escape' && G.modal === 'pause-modal') resume();
       else if (k === 'p') pause();
       else if (k === 'v' && !G.modal) { G.top = !G.top; applyView(); }
       else if (k === 'r') toggleSheet();
       else if (k === 'c') toggleLog();
       else if (k === 'h' && !G.modal) openHelp();
+      else if (k === 'o' && (!G.modal || G.modal === 'pause-modal')) openOptions();
       else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); keysDown[e.key] = true; updateMoveDir(); }
     });
     document.addEventListener('keyup', e => {
@@ -2242,7 +2663,7 @@
       requestAnimationFrame(frame);
       if (location.hash === '#replay') openReportedReplay();
       // Exposed for automated tests
-      window.SimDebug = { G, startMatch, userWhistle, authorize, evaluateRally, endMatch, updateScore };
+      window.SimDebug = { G, startMatch, userWhistle, authorize, evaluateRally, endMatch, updateScore, askCaptain, RP };
     } catch (e) {
       $('boot-message').textContent = e.message || 'Errore durante il caricamento.';
     }

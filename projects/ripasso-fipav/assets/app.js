@@ -232,6 +232,7 @@ function initSubTabs(containerId) {
 
 initSubTabs('quiz-sub-tabs');
 initSubTabs('theory-sub-tabs');
+initSubTabs('stats-sub-tabs');
 
 // ======= QUIZ =======
 let quizState = null;
@@ -1830,7 +1831,44 @@ function renderOverview() {
 }
 
 // ======= STATS =======
+// Statistics of the match simulation (saved by the simulation page in the same user state, key "fipav-sim")
+function renderSimStats() {
+  let d = null;
+  try { d = JSON.parse(Store.getItem('fipav-sim') || 'null'); } catch (e) { d = null; }
+  d = d || {};
+  // Category names: saved with the data by the simulation (fallback for data saved before that)
+  const SIM_CATS = { servizio: 'Servizio', posizione: 'Falli di posizione', tocco: 'Tocchi di palla', rete: 'Rete e linea centrale', attacco: 'Attacchi irregolari', muro: 'Falli di muro', esito: 'Palla dentro, fuori, toccata', richieste: 'Tempi e sostituzioni', libero: 'Libero', condotta: 'Condotta e sanzioni', fischio: 'Fischi senza fallo' };
+  const byCat = d.byCat || {}, games = Array.isArray(d.games) ? d.games : [], labels = Object.assign({}, SIM_CATS, d.catLabels || {});
+  let c = 0, w = 0;
+  Object.keys(byCat).forEach(k => { c += byCat[k].c || 0; w += byCat[k].w || 0; });
+  const total = c + w, pct = total ? Math.round(c / total * 100) : 0;
+  document.getElementById('sim-stat-games').textContent = games.length;
+  document.getElementById('sim-stat-total').textContent = total;
+  document.getElementById('sim-stat-correct').innerHTML = total ? c + '<small>' + pct + '%</small>' : '0';
+  document.getElementById('sim-stat-wrong').innerHTML = total ? w + '<small>' + (100 - pct) + '%</small>' : '0';
+  document.getElementById('sim-stats-ring').style.setProperty('--p', pct);
+  document.getElementById('sim-stats-ring-label').textContent = total ? pct + '%' : '–';
+  const order = Object.keys(labels).length ? Object.keys(labels) : Object.keys(byCat);
+  const cats = order.filter(k => byCat[k]);
+  document.getElementById('sim-stats-by-cat').innerHTML = cats.length ? cats.map(k => {
+    const s = byCat[k], t = (s.c || 0) + (s.w || 0), p = t ? Math.round(s.c / t * 100) : 0;
+    return '<div class="source-stat">' +
+      '<div class="source-stat-name">' + escapeHtml(labels[k] || k) + '</div>' +
+      '<div class="source-stat-bar' + (t ? '' : ' empty') + '"><span style="width:' + p + '%"></span></div>' +
+      '<div class="source-stat-num">' + (t ? '<strong>' + p + '%</strong>' + s.c + '/' + t : 'Nessun dato') + '</div>' +
+    '</div>';
+  }).join('') : '<div class="stats-empty">Nessuna decisione ancora</div>';
+  const ROLE = { '1': '1° arbitro', '2': '2° arbitro', solo: 'Arbitro unico' };
+  document.getElementById('sim-stats-games').innerHTML = games.length ? games.slice(-10).reverse().map(g => {
+    const n = (g.c || 0) + (g.w || 0), p = n ? Math.round(g.c / n * 100) : 0;
+    const day = g.date ? new Date(g.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    return '<div class="stats-ref-item"><span class="stats-ref-code">' + escapeHtml(day + ' · ' + (ROLE[g.mode] || '') + ' · ' + (g.score || '').replace('-', '–') + (g.early ? ' · interrotta' : '')) + '</span>' +
+      '<span class="stats-ref-count ' + (p >= 70 ? 'green' : 'red') + '">' + p + '% · ' + n + '</span></div>';
+  }).join('') : '<div class="stats-empty">Nessuna partita ancora</div>';
+}
+
 function renderStats() {
+  renderSimStats();
   const s = appData.stats;
   const total = s.correct + s.wrong;
   const pct = total > 0 ? Math.round((s.correct / total) * 100) : 0;
@@ -2303,6 +2341,8 @@ if (!location.hash) history.replaceState(null, '', '#quiz');
   // Match simulation: in beta, administrators only
   $('btn-sim').hidden = (user.permissions || 0) < 9;
   $('nav-sim').hidden = (user.permissions || 0) < 9;
+  // Statistics: the simulation section only for who can use the simulation
+  $('stats-sub-tabs').hidden = (user.permissions || 0) < 9;
   $('nav-admin').hidden = !user.canEdit;
 
   const ROLE_PERMS = [

@@ -32,8 +32,9 @@
     out: () => ({ L: [90, 90, 'flat'], R: [90, 90, 'flat'] }),
     // Ball touched: like the time-out but higher, the vertical hand with its back towards the courts; the other
     // hand brushes its fingertips once, from back to front
-    touched: s => (s === 'L' ? { R: [35, 147, 'flat', 1, 1.25, 180], L: [20, -152.5, 'palmDown', 0.9, 2.54, -90] }
-      : { L: [35, 147, 'flat', 1, 1.25, 180], R: [20, -152.5, 'palmDown', 0.9, 2.54, -90] }),
+    // The vertical hand is on the side of the team that touched the ball (s); the other hand brushes it
+    touched: s => (s === 'L' ? { L: [35, 147, 'flat', 1, 1.25, 180], R: [20, -152.5, 'palmDown', 0.9, 2.54, -90] }
+      : { R: [35, 147, 'flat', 1, 1.25, 180], L: [20, -152.5, 'palmDown', 0.9, 2.54, -90] }),
     four: s => one(s, [26, 150, 'f4']),
     double: s => one(s, [26, 150, 'f2']),
     catch: s => one(s, [14, 70, 'palmUp']),
@@ -96,8 +97,10 @@
     },
     brush: (p, side, u) => {
       const k0 = Math.max(0, Math.min(1, (u - 0.1) / 0.55)), k = k0 * k0 * (3 - 2 * k0);
-      const a = p[side];
-      p[side] = [a[0], a[1], k < 0.5 ? 'palmDownBack' : 'palmDown', a[3], a[4] * (0.9 + 0.16 * k), a[5]];
+      // The brushing hand is the one opposite to the side of the signal
+      const b = side === 'L' ? 'R' : 'L';
+      const a = p[b];
+      p[b] = [a[0], a[1], k < 0.5 ? 'palmDownBack' : 'palmDown', a[3], a[4] * (0.9 + 0.16 * k), a[5]];
     },
     roll: (p, side, u) => { const a = Math.min(1, u) * Math.PI * 2; p.L = [26 + Math.sin(a) * 10, -100 + Math.cos(a) * 18, 'fist']; p.R = [26 - Math.sin(a) * 10, -100 - Math.cos(a) * 18, 'fist']; },
     // Authorization to serve: after the whistle the extended arm bends and the hand goes to the opposite shoulder
@@ -340,6 +343,15 @@
     return { L: wristOf('L', s.arms.L), R: wristOf('R', s.arms.R), done: s.done, whistle: s.whistle };
   }
 
+  /** Draws the signal as it is `el` seconds after its start (replay); returns the caption of that step. */
+  function frame(box, steps, el, sides) {
+    const s = sampleArms(steps, Math.max(0, el));
+    box.innerHTML = figureSvg(s.arms, { sides, whistleOn: s.whistle });
+    let t = Math.max(0, el);
+    for (let i = 0; i < steps.length; i++) { const d = steps[i].dur || 1.6; if (t < d || i === steps.length - 1) return steps[i].caption || ''; t -= d; }
+    return '';
+  }
+
   /** Steps of the authorization to serve towards the team on side s ('L' / 'R'). */
   function authorizeSteps(s, prefix) {
     return [
@@ -349,5 +361,5 @@
     ];
   }
 
-  window.SimGestures = { play, stop, POSES, authorizeSteps, liveArms };
+  window.SimGestures = { play, stop, POSES, authorizeSteps, liveArms, frame };
 })();

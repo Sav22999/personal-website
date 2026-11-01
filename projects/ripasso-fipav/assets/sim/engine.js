@@ -137,6 +137,7 @@
       improper: 0,
       conduct: { verbal: false, yellow: false, members: {} },
       sanctions: [],
+      out: {},            // expelled ('set') or disqualified ('match') members: in the locker room
     };
   };
 
@@ -403,6 +404,7 @@
   Match.prototype.liberoNeed = function (T) {
     const t = this.teams[T];
     const L = t.libero;
+    if (t.out[L.num]) return null;
     const serving = this.serving === T;
     if (L.on !== null) {
       const k = t.lineup.indexOf(L.on);
@@ -457,7 +459,7 @@
     const irregular = chance(0.3 + this.opts.freq * 0.4);
     if (S.count >= MAX_SUBS) {
       const out = pick(onCourt);
-      const inn = pick(t.reserves.filter(n => !S.reserveIn[n] && !S.reserveDone[n]).concat([0])) || 0;
+      const inn = pick(t.reserves.filter(n => !S.reserveIn[n] && !S.reserveDone[n] && !t.out[n]).concat([0])) || 0;
       if (inn) return { kind: 'sub', team: T, comp: '2', sit: 'sub_seventh', out, inn,
         text: lbl + ': il n. ' + inn + ' è nella zona di sostituzione per il n. ' + out + '.',
         expected: t.improper === 0 ? 'reject_improper' : delayExp };
@@ -496,7 +498,7 @@
       return Object.assign({ kind: 'sub', team: T, comp: '2', expected: delayExp }, c);
     }
     // Regular: a reserve goes back out for its starter, or a fresh reserve comes in for a starter
-    const reserveOnCourt = Object.keys(S.reserveIn).map(Number).filter(n => onCourt.includes(n));
+    const reserveOnCourt = Object.keys(S.reserveIn).map(Number).filter(n => onCourt.includes(n) && !t.out[S.reserveIn[n]]);
     if (reserveOnCourt.length && chance(0.5)) {
       const y = pick(reserveOnCourt);
       const x = S.reserveIn[y];
@@ -504,7 +506,7 @@
         text: lbl + ': il n. ' + x + ' è nella zona di sostituzione per il n. ' + y + '.' };
     }
     const starters = onCourt.filter(n => !S.starterOut[n] && !S.starterBack[n] && !S.reserveIn[n] && this.roleOf(T, n) !== 'S');
-    const fresh = t.reserves.filter(n => !S.reserveIn[n] && !S.reserveDone[n]);
+    const fresh = t.reserves.filter(n => !S.reserveIn[n] && !S.reserveDone[n] && !t.out[n]);
     if (!starters.length || !fresh.length) return null;
     const out = pick(starters), inn = pick(fresh);
     return { kind: 'sub', team: T, comp: '2', sit: 'sub_ok', out, inn, expected: 'authorize',
@@ -548,22 +550,27 @@
   Match.prototype.conductEvent = function (T) {
     const t = this.teams[T];
     const onCourt = [0, 1, 2, 3, 4, 5].map(k => this.onCourt(T, k));
-    const bench = t.def.roster.filter(n => !onCourt.includes(n));
+    const bench = t.def.roster.filter(n => !onCourt.includes(n) && !t.out[n]);
     const roll = Math.random();
     const level = roll < 0.45 ? 'minor' : roll < 0.78 ? 'rude' : roll < 0.93 ? 'offensive' : 'aggression';
     const c = pick(CONDUCT_CASES[level]);
     const who = c.bench && bench.length ? pick(bench) : pick(onCourt);
-    const m = t.conduct.members[who] || { rude: 0 };
+    const m = t.conduct.members[who] || { rude: 0, offensive: 0 };
     const text = 'Il n. ' + who + ' della ' + t.def.label + (c.bench ? ' (in panchina)' : '') +
       (c.say ? ', rivolto agli arbitri: «' + c.say + '»' : ' ' + c.act + '.');
     const base = { kind: 'conduct', team: T, comp: '1', who, level, text };
     if (level === 'minor') {
       // Phase 1 verbal warning, phase 2 official warning (yellow card); after that, rude conduct for the team
-      if (t.conduct.yellow) return Object.assign(base, { sit: m.rude ? 'conduct_rude_second' : 'conduct_rude', level: 'rude', expected: m.rude ? 'expulsion' : 'red' });
+      // After the official warning, every further minor misconduct (of any member, also the same one) is a
+      // penalty: it does not escalate to expulsion (Figure 9 «qualsiasi ripetizione», IT 3.3.1)
+      if (t.conduct.yellow) return Object.assign(base, { sit: 'conduct_minor_repeat', expected: 'red' });
       return Object.assign(base, { sit: t.conduct.verbal ? 'conduct_minor_second' : 'conduct_minor_first', expected: t.conduct.verbal ? 'yellow' : 'verbal' });
     }
-    if (level === 'rude') return Object.assign(base, { sit: m.rude ? 'conduct_rude_second' : 'conduct_rude', expected: m.rude ? 'expulsion' : 'red' });
-    if (level === 'offensive') return Object.assign(base, { sit: 'conduct_offensive', expected: 'expulsion' });
+    // Rude conduct of the same member: penalty, then expulsion, then disqualification (Rule 21.3, 21.4.2)
+    if (level === 'rude') return Object.assign(base, m.rude >= 2 ? { sit: 'conduct_rude_third', expected: 'disqualification' }
+      : { sit: m.rude ? 'conduct_rude_second' : 'conduct_rude', expected: m.rude ? 'expulsion' : 'red' });
+    // Offensive conduct: expulsion, then disqualification for the second one of the same member (Rule 21.3.3.3)
+    if (level === 'offensive') return Object.assign(base, m.offensive ? { sit: 'conduct_offensive_second', expected: 'disqualification' } : { sit: 'conduct_offensive', expected: 'expulsion' });
     return Object.assign(base, { sit: 'conduct_aggression', expected: 'disqualification' });
   };
 
@@ -602,12 +609,17 @@
       }
     }
     if (e.kind === 'conduct') {
-      const m = t.conduct.members[e.who] || (t.conduct.members[e.who] = { rude: 0 });
+      const m = t.conduct.members[e.who] || (t.conduct.members[e.who] = { rude: 0, offensive: 0 });
+      // The count of rude / offensive conduct of the member drives the scale of sanctions
+      if (e.level === 'rude' && (exp === 'red' || exp === 'expulsion' || exp === 'disqualification')) m.rude++;
+      if (e.level === 'offensive' && (exp === 'expulsion' || exp === 'disqualification')) m.offensive = (m.offensive || 0) + 1;
       if (exp === 'verbal') { t.conduct.verbal = true; t.sanctions.push('Avvertimento verbale (n. ' + e.who + ')'); }
       if (exp === 'yellow') { t.conduct.yellow = true; t.sanctions.push('Cartellino giallo (n. ' + e.who + ')'); }
-      if (exp === 'red') { m.rude++; t.sanctions.push('Penalizzazione (n. ' + e.who + ')'); res.point = other(e.team); }
-      if (exp === 'expulsion') { t.sanctions.push('Espulsione (n. ' + e.who + ')'); res.expelled = e.who; }
-      if (exp === 'disqualification') { t.sanctions.push('Squalifica (n. ' + e.who + ')'); res.expelled = e.who; }
+      if (exp === 'red') { t.sanctions.push('Penalizzazione (n. ' + e.who + ')'); res.point = other(e.team); }
+      // Expelled (for the set) or disqualified (for the match): to the locker room; on court he must be
+      // substituted straight away (done by forcedSub, after the card has been shown)
+      if (exp === 'expulsion') { t.sanctions.push('Espulsione (n. ' + e.who + ')'); res.expelled = e.who; res.outFor = 'set'; }
+      if (exp === 'disqualification') { t.sanctions.push('Squalifica (n. ' + e.who + ')'); res.expelled = e.who; res.outFor = 'match'; }
     }
     if (res.point) {
       this.addPoint(res.point);
@@ -616,6 +628,52 @@
       res.followUp.forEach(x => { x.user = this.userDecides(x.comp) && this.opts.libero; });
     }
     return res;
+  };
+
+  /**
+   * Substitution of an expelled or disqualified member (Rule 15.8, 21.3.2.1, 21.3.3.1; Casistica 15.5):
+   * a legal substitution if possible, otherwise an exceptional one (any bench player but the Libero and the
+   * player he replaces), otherwise the team is incomplete. Returns what happened.
+   */
+  Match.prototype.forcedSub = function (T, who, outFor) {
+    const t = this.teams[T], S = t.subs, L = t.libero;
+    t.out[who] = outFor || 'set';
+    // The Libero: the player he was replacing goes back on court; the Libero no longer plays
+    if (who === L.num) {
+      const back = L.on;
+      L.on = null;
+      return back != null ? { kind: 'libero', inn: back } : { kind: 'bench' };
+    }
+    const k = t.lineup.indexOf(who);
+    if (k < 0) return { kind: 'bench' };              // a member not on court just leaves
+    if (L.on === who) L.on = null;                     // he was off court, replaced by the Libero: the Libero leaves too
+    const onCourt = t.lineup.slice();
+    let inn = null, kind = 'regular';
+    if (S.count < MAX_SUBS) {
+      if (S.reserveIn[who] !== undefined && !t.out[S.reserveIn[who]]) inn = S.reserveIn[who];
+      else if (TEAM_DEF[T].lineup.includes(who) && !S.starterOut[who] && !S.starterBack[who]) {
+        const fresh = t.reserves.filter(n => !S.reserveIn[n] && !S.reserveDone[n] && !t.out[n] && !onCourt.includes(n));
+        // The coach sends in a reserve of the same role when there is one
+        const same = fresh.filter(n => this.roleOf(T, n) === this.roleOf(T, who));
+        inn = same.length ? pick(same) : fresh.length ? pick(fresh) : null;
+      }
+    }
+    if (inn != null) { this.doSub(T, who, inn); return { kind, inn }; }
+    // Exceptional substitution: any player on the bench, except the Libero and the player he replaces
+    const benchPl = t.def.roster.filter(n => !onCourt.includes(n) && !t.out[n] && n !== L.num && n !== L.on);
+    if (benchPl.length) {
+      inn = pick(benchPl);
+      t.lineup[k] = inn;
+      S.list.push(inn + ' ⇄ ' + who + ' (eccezionale)');
+      S.exceptional = (S.exceptional || 0) + 1;
+      this.swapPos(T, who, inn);
+      return { kind: 'exceptional', inn };
+    }
+    // No substitution possible: the team is incomplete for the set (Rule 6.4.3)
+    const O = other(T);
+    this.score[O] = Math.max(this.opts.target, this.score[T] + 2, this.score[O]);
+    this.over = true;
+    return { kind: 'incomplete' };
   };
 
   Match.prototype.doSub = function (T, out, inn) {
@@ -971,7 +1029,7 @@
       else if (backAttack) {
         const bk = back.filter(n => n !== L && n !== setBy && M.roleOf(T, n) !== 'S');
         attacker = bk.length ? pick(bk) : back[0];
-        aD = rnd(2.0, 2.7); aL = rnd(-1.2, 1.2); aZ = NET_H + rnd(0.5, 0.8);
+        aD = rnd(1.7, 2.3); aL = rnd(-1.2, 1.2); aZ = NET_H + rnd(0.5, 0.8);
       } else {
         const opts = front.filter(n => n !== setBy && n !== L);
         attacker = pick(opts.length ? opts : front);
@@ -1034,13 +1092,21 @@
         return this.finishRally(R);
       }
       ball(setEnd, t2, setStart, aP, liberoSets ? 2.4 : 1.9);
-      at(T, attacker, t2 - 0.6, aD + 1.8, aL, 'walk');
-      at(T, attacker, t2 - 0.05, aD, aL, 'attack');
+      if (backAttack) {
+        // The back-row player runs in from the back zone, crosses the attack line and takes off clearly inside the
+        // front zone (Rule 13.2.3, 13.3.3): the take-off point is well in front of the 3 m line
+        at(T, attacker, t2 - 1.05, 4.6, aL, 'walk');
+        at(T, attacker, t2 - 0.45, aD + 0.15, aL, 'walk');
+        at(T, attacker, t2 - 0.05, aD, aL, 'attack');
+      } else {
+        at(T, attacker, t2 - 0.6, aD + 1.8, aL, 'walk');
+        at(T, attacker, t2 - 0.05, aD, aL, 'attack');
+      }
       jump(T, attacker, t2, aZ - 2.25 > 0 ? Math.min(0.95, aZ - 2.1) : 0.6, 0.85);
       pose(T, attacker, t2 + 0.5, 'ready');
       ev({ t: t2, kind: 'contact', team: T, num: attacker, what: 'attack' });
       if (liberoAttack) fault({ t: t2 + 0.12, key: 'libero_attack', team: T, comp: 'both', sit: s, text: 'Il Libero n. ' + L + ' completa un attacco con la palla interamente sopra il bordo superiore della rete.' });
-      if (backAttack) fault({ t: t2 + 0.12, key: 'back_attack', team: T, comp: 'both', sit: s, text: 'Il difensore n. ' + attacker + ' attacca dalla zona d’attacco con la palla sopra il bordo della rete.' });
+      if (backAttack) fault({ t: t2 + 0.12, key: 'back_attack', team: T, comp: 'both', sit: s, text: 'Il difensore n. ' + attacker + ' (in seconda linea) stacca davanti alla linea d’attacco, dentro la zona d’attacco, e colpisce la palla interamente sopra il bordo superiore della rete.' });
       if (liberoSets) {
         if (aZ > NET_H + 0.2) fault({ t: t2 + 0.12, key: 'libero_set', team: T, comp: '1', sit: s, text: 'Il n. ' + attacker + ' attacca sopra la rete una palla alzata in palleggio dal Libero n. ' + L + ' che si trova nella zona d’attacco.' });
       }
@@ -1109,6 +1175,10 @@
         const tm = byBlock ? O : T, who = byBlock ? blockers[0] : attacker;
         const wy = byBlock ? bY : aP[1];
         if (s === 'net_touch') {
+          // Clearly visible: the player comes down against the net (body and arm into it), then steps back
+          const lw = clamp(M.local(tm, 0, wy).l, -4.2, 4.2);
+          at(tm, who, t2 + 0.15, 0.1, lw, byBlock ? 'block' : 'attack');
+          at(tm, who, t2 + 1.0, 0.9, lw, 'ready');
           ev({ t: t2 + 0.15, kind: 'net', y: wy, strong: true });
           fault({ t: t2 + 0.15, key: 'net_touch', team: tm, comp: 'both', sit: s, text: 'Il n. ' + who + ' tocca la rete tra le antenne durante l’azione di ' + (byBlock ? 'muro' : 'attacco') + '.' });
         } else {
@@ -1148,10 +1218,14 @@
         ball(t2, t2 + 0.1, aP, bp, 0);
         ev({ t: t2 + 0.1, kind: 'block-touch', team: O, num: blockers[0] });
         R.slow.push(t2 + 0.05);
-        const land = this.outPoint(O, true);
+        // Realistic deflection ("mani-out"): off the blockers' hands the ball flies out close to the block,
+        // over the nearer side line of the blockers' court or long behind them, not across the whole court
+        const bl = M.local(O, 0, bp[1]).l, sg = Math.sign(bl) || (chance(0.5) ? 1 : -1);
+        const land = chance(0.65) ? { d: rnd(0.8, 5.0), l: sg * rnd(4.9, 6.4) } : { d: rnd(9.4, 11.2), l: clamp(bl + rnd(-1.8, 1.8), -4.2, 4.2) };
         const lp = M.w(O, land.d, land.l);
-        const tl = t2 + rnd(0.9, 1.2);
-        ball(t2 + 0.1, tl, bp, [lp[0], lp[1], BALL_R], 1.2);
+        const dist = Math.hypot(lp[0] - bp[0], lp[1] - bp[1]);
+        const tl = t2 + 0.1 + clamp(dist / 8.5, 0.55, 1.3);
+        ball(t2 + 0.1, tl, bp, [lp[0], lp[1], BALL_R], clamp(dist * 0.18, 0.5, 1.6));
         ev({ t: tl, kind: 'land', x: lp[0], y: lp[1] });
         R.natural = { t: tl, key: 'touched_out', team: O, land: lp };
         R.endT = tl;

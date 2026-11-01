@@ -100,8 +100,8 @@
     centre_line: {
       title: 'Invasione oltre la linea centrale', cat: 'rete',
       help: 'Guarda i piedi dei giocatori a rete in ricaduta: una parte del piede deve restare sulla linea centrale o sopra di essa.',
-      solution: 'Invasione: punto e servizio alla squadra avversaria. È competenza di entrambi gli arbitri: il 1° indica la linea centrale; se fischia il 2°, si sposta dal lato della squadra in fallo e fa il gesto, poi ripete l’assegnazione del servizio.',
-      refs: ['RG-11.2.2', 'RG-24.3.2', 'IT-4.3.15'],
+      solution: 'Invasione: punto e servizio alla squadra avversaria. È competenza di entrambi gli arbitri, ma la visuale migliore è quella del 2°, che segue la squadra in difesa guardando tra il muro e la rete: dal seggiolone il 1° la vede con difficoltà. Se fischia il 2°, si sposta dal lato della squadra in fallo e indica la linea centrale, poi ripete l’assegnazione del servizio; se fischia il 1°, indica lui la linea centrale.',
+      refs: ['RG-11.2.2', 'RG-24.3.2', 'IT-1.2.3', 'IT-4.3.15'],
     },
     reach_beyond: {
       title: 'Invasione aerea a muro', cat: 'rete',
@@ -148,7 +148,7 @@
     },
     back_attack: {
       title: 'Attacco del difensore dalla zona d’attacco', cat: 'attacco',
-      help: 'Un difensore può attaccare sopra il bordo della rete solo se salta da dietro la linea d’attacco: guarda dove stacca.',
+      help: 'Un difensore può attaccare sopra il bordo della rete solo se stacca da dietro la linea d’attacco (anche se poi ricade davanti): guarda il piede di stacco rispetto alla linea dei 3 m.',
       solution: 'Attacco irregolare del difensore: punto e servizio alla squadra avversaria.',
       refs: ['RG-13.2.2', 'RG-13.3.3', 'RG-23.3.2'],
     },
@@ -303,19 +303,37 @@
     conduct_rude_second: {
       title: 'Seconda condotta maleducata', cat: 'condotta',
       help: 'Controlla sul referto se lo stesso componente è già stato penalizzato per condotta maleducata.',
-      solution: 'Seconda condotta maleducata dello stesso componente: espulsione (cartellini giallo e rosso insieme).',
-      refs: ['RG-21.3.2', 'RG-21.4.2', 'RG-21.6', 'IT-3.6.2'],
+      solution: 'Seconda condotta maleducata dello stesso componente: espulsione (cartellini giallo e rosso insieme). Va negli spogliatoi fino alla fine del set e, se è in campo, va sostituito subito in modo regolamentare o, se non è possibile, eccezionale.',
+      refs: ['RG-21.3.2', 'RG-21.4.2', 'RG-15.8', 'RG-21.6', 'IT-3.6.2'],
+    },
+    conduct_rude_third: {
+      title: 'Terza condotta maleducata', cat: 'condotta',
+      help: 'Controlla sul referto le sanzioni già date allo stesso componente.',
+      solution: 'Terza condotta maleducata dello stesso componente: squalifica (cartellini giallo e rosso separati). Va negli spogliatoi per il resto della gara e, se è in campo, va sostituito subito.',
+      refs: ['RG-21.3.3', 'RG-21.4.2', 'RG-15.8', 'RG-21.6', 'IT-3.6.2'],
+    },
+    conduct_minor_repeat: {
+      title: 'Lieve condotta dopo l’avvertimento ufficiale', cat: 'condotta',
+      help: 'Controlla sul referto se la squadra ha già ricevuto il cartellino giallo.',
+      solution: 'Dopo l’avvertimento ufficiale (giallo) della squadra, ogni ulteriore lieve condotta scorretta, di qualsiasi componente, è una penalizzazione (rosso): punto e servizio agli avversari. Ripetere la lieve condotta non porta all’espulsione: la scala penalizzazione → espulsione → squalifica vale per le condotte maleducate dello stesso componente.',
+      refs: ['RG-21.1', 'RG-21.3.1', 'RG-21.6', 'IT-3.3.1'],
+    },
+    conduct_offensive_second: {
+      title: 'Seconda condotta offensiva', cat: 'condotta',
+      help: 'Controlla sul referto se lo stesso componente è già stato espulso per condotta offensiva.',
+      solution: 'Seconda condotta offensiva dello stesso componente: squalifica (cartellini giallo e rosso separati), per il resto della gara.',
+      refs: ['RG-21.3.3', 'RG-21.4.2', 'RG-21.6', 'IT-3.6.2'],
     },
     conduct_aggression: {
       title: 'Minacce o aggressione', cat: 'condotta',
       help: 'Un’aggressione fisica o un comportamento aggressivo o minaccioso («Ti aspetto fuori!») è la condotta più grave.',
-      solution: 'Aggressione / minaccia: squalifica (cartellini giallo e rosso separati), senza altre conseguenze.',
+      solution: 'Aggressione / minaccia: squalifica (cartellini giallo e rosso separati), senza altre conseguenze di punteggio. Lo squalificato va negli spogliatoi per il resto della gara e, se è in campo, va sostituito subito in modo regolamentare o, se non è possibile, eccezionale.',
       refs: ['RG-21.2.3', 'RG-21.3.3', 'RG-21.6', 'IT-3.6.2'],
     },
     conduct_offensive: {
       title: 'Condotta offensiva', cat: 'condotta',
       help: 'Gesti o parole insultanti o diffamatori sono condotta offensiva.',
-      solution: 'Prima condotta offensiva: espulsione (cartellini giallo e rosso insieme), senza altre conseguenze.',
+      solution: 'Prima condotta offensiva: espulsione (cartellini giallo e rosso insieme), senza altre conseguenze di punteggio. L’espulso va negli spogliatoi fino alla fine del set e, se è in campo, va sostituito subito in modo regolamentare o, se non è possibile, eccezionale.',
       refs: ['RG-21.2.2', 'RG-21.3.2', 'RG-21.6', 'IT-3.6.2'],
     },
   };

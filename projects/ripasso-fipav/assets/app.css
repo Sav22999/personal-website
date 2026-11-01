@@ -1162,3 +1162,7 @@ button.profile-stat:hover, a.profile-stat:hover { background: color-mix(in srgb,
   .bottomnav-item span { display: none; }
   .topbar { position: static; }
 }
+
+/* Statistiche › Simulazione partita: four tiles */
+#sub-stats-sim .stats-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 640px) { #sub-stats-sim .stats-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

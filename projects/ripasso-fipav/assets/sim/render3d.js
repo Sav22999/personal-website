@@ -140,6 +140,17 @@
       target[0] += this.look;
       pos[0] += this.look * 0.06;
     }
+    // The 2nd referee turning away from the court (towards the scorer, or towards a team): the yaw turns
+    if (this.view === 'second' && (this.gazeK || 0) > 0.002 && this.gazeLast) {
+      const g = this.gazeLast;
+      const gt = g.scorer ? [pos[0], pos[1] + 10, pos[2] - 0.6] : [g.x, pos[1] - 5.5, 0.6];
+      const y0 = Math.atan2(target[1] - pos[1], target[0] - pos[0]), y1 = Math.atan2(gt[1] - pos[1], gt[0] - pos[0]);
+      let d = y1 - y0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+      const yaw = y0 + d * this.gazeK;
+      const h = Math.hypot(target[0] - pos[0], target[1] - pos[1]);
+      const z = target[2] + (gt[2] - target[2]) * this.gazeK;
+      target = [pos[0] + Math.cos(yaw) * h, pos[1] + Math.sin(yaw) * h, z];
+    }
     // Narrow screens (portrait phones): widen the field of view so both half-courts stay visible
     const aspect = this.cssW / this.cssH;
     let fov = v.fov;
@@ -149,10 +160,22 @@
     this.cam.resize(this.cssW, this.cssH);
   };
 
+  /**
+   * Where the 2nd referee is facing when not following the play: { scorer: true } (back to the net post,
+   * facing the scorer) or { x } (towards a team's half). null goes back to the court. Smooth turn.
+   */
+  Renderer.prototype.setGaze = function (g, dt) {
+    if (g) this.gazeLast = g;
+    const k = 1 - Math.exp(-(dt || 0.016) * 2.6);
+    this.gazeK = (this.gazeK || 0) + ((g ? 1 : 0) - (this.gazeK || 0)) * k;
+    if (this.view === 'second') this.applyView();
+  };
+
   /** Smoothly turns the view towards x (metres along the court). */
   Renderer.prototype.lookAt = function (x, dt) {
     const k = 1 - Math.exp(-(dt || 0.016) * 3.2);
-    this.look += (x - this.look) * k;
+    if (!Number.isFinite(this.look)) this.look = 0;
+    if (Number.isFinite(x)) this.look += (x - this.look) * k;
     if (this.view !== 'top') this.applyView();
   };
 
@@ -680,7 +703,12 @@
       ctx.beginPath(); ctx.ellipse(cx + headR * 0.35, hy + headR * 0.1, headR * 0.5, headR * 0.85, 0, -Math.PI / 2, Math.PI / 2); ctx.fill();
     }
     const hair = p.hair || (outfit === 'player' ? null : '#2b2420');
-    if (hair) {
+    if (hair && p.back) {
+      // Seen from behind (facing away): the hair covers the back of the head
+      ctx.fillStyle = hair;
+      ctx.beginPath(); ctx.ellipse(cx, hy - headR * 0.05, headR * 0.93, headR * 0.98, 0, 0, Math.PI * 2); ctx.fill();
+      if ((p.hairStyle || 0) === 1) { ctx.beginPath(); ctx.ellipse(cx, hy + headR * 0.9, headR * 0.3, headR * 0.55, 0, 0, Math.PI * 2); ctx.fill(); }
+    } else if (hair) {
       ctx.fillStyle = hair;
       const st = p.hairStyle || 0;
       ctx.beginPath();

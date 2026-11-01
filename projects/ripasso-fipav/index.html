@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=3.6.0">
+<link rel="stylesheet" href="assets/app.css?v=4.0.0-13">
 <script>
   try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -441,6 +441,12 @@
     <h1>Statistiche</h1>
     <p>Come stai andando, in totale e fonte per fonte.</p>
   </div>
+  <div class="segmented sub-tabs" id="stats-sub-tabs" hidden>
+    <button class="sub-tab active" data-sub="stats-quiz">Quiz</button>
+    <button class="sub-tab" data-sub="stats-sim">Simulazione partita</button>
+  </div>
+
+  <div class="sub-section active" id="sub-stats-quiz">
   <div class="stats-hero">
     <div class="ring-wrap" aria-hidden="true"><div class="stats-ring" id="stats-ring"></div><span class="ring-label scoreboard" id="stats-ring-label">–</span></div>
     <div class="stats-tiles" id="stats-tiles">
@@ -462,6 +468,25 @@
       <h2 class="block-title">Riferimenti corretti</h2>
       <div class="stats-ref-list" id="stats-correct-refs"><div class="stats-empty">Nessun dato ancora</div></div>
     </div>
+  </div>
+  </div>
+
+  <!-- Match simulation (beta, administrators): decisions taken while refereeing -->
+  <div class="sub-section" id="sub-stats-sim">
+    <div class="stats-hero">
+      <div class="ring-wrap" aria-hidden="true"><div class="stats-ring" id="sim-stats-ring"></div><span class="ring-label scoreboard" id="sim-stats-ring-label">–</span></div>
+      <div class="stats-tiles">
+        <div class="stat-tile"><div class="stat-tile-value scoreboard" id="sim-stat-games">0</div><div class="stat-tile-label">Partite</div></div>
+        <div class="stat-tile"><div class="stat-tile-value scoreboard" id="sim-stat-total">0</div><div class="stat-tile-label">Decisioni</div></div>
+        <div class="stat-tile"><div class="stat-tile-value green scoreboard" id="sim-stat-correct">0</div><div class="stat-tile-label">Corrette</div></div>
+        <div class="stat-tile"><div class="stat-tile-value red scoreboard" id="sim-stat-wrong">0</div><div class="stat-tile-label">Da rivedere</div></div>
+      </div>
+    </div>
+    <h2 class="block-title">Per tipo di situazione</h2>
+    <div class="source-stats" id="sim-stats-by-cat"></div>
+    <h2 class="block-title">Ultime partite</h2>
+    <div class="stats-ref-list" id="sim-stats-games"><div class="stats-empty">Nessuna partita ancora</div></div>
+    <p class="form-hint" style="margin-top:14px"><a href="simulazione.html">Apri la simulazione partita ›</a></p>
   </div>
 </section>
 
@@ -660,8 +685,8 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/version.js?v=3.6.0"></script>
-<script src="assets/api.js?v=3.6.0"></script>
-<script src="assets/boot.js?v=3.6.0"></script>
+<script src="assets/version.js?v=4.0.0-13"></script>
+<script src="assets/api.js?v=4.0.0-13"></script>
+<script src="assets/boot.js?v=4.0.0-13"></script>
 </body>
 </html>

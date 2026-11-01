@@ -138,6 +138,10 @@
   async function loadFlags() {
     const d = await Api.get('admin.flags');
     S.flags = d.flags;
+    updateFlagsCount();
+  }
+  /** Badge of the Segnalazioni tab: codes with open reports. Updated whenever a report is closed or reopened. */
+  function updateFlagsCount() {
     const open = new Set(S.flags.filter(f => !f.resolved).map(f => f.code));
     const el = $('flags-count');
     el.textContent = open.size;
@@ -1020,6 +1024,7 @@
     const openOnly = $('flags-open-only').checked;
     const kindBtn = $('flags-kind').querySelector('.active');
     const kind = kindBtn ? kindBtn.dataset.v : 'quiz';
+    updateFlagsCount();
     $('flags-n-quiz').textContent = '(' + S.flags.filter(f => f.kind !== 'sim' && !f.resolved).length + ')';
     $('flags-n-sim').textContent = '(' + S.flags.filter(f => f.kind === 'sim' && !f.resolved).length + ')';
     $('flags-desc').textContent = kind === 'sim'
@@ -1054,7 +1059,7 @@
             (f.detail ? simDetailHtml(f.detail) : (f.context ? '<div class="f-note" style="opacity:.75">' + esc(f.context) + '</div>' : '')) +
             '<div class="f-actions">' +
               (f.detail && f.detail.action && f.detail.action.moves ? '<button class="btn btn-primary btn-sm" data-replay="' + esc(f.id) + '">▶ Rivedi azione</button>' : '') +
-              (f.detail ? '<button class="btn btn-ghost btn-sm" data-copy="' + esc(f.id) + '">Copia i dati dell’azione (JSON)</button>' : '') +
+              (f.detail ? '<button class="btn btn-ghost btn-sm" data-copy="' + esc(f.id) + '">Copia segnalazione e dati (JSON)</button>' : '') +
               '<button class="btn btn-secondary btn-sm" data-close="' + esc(f.id) + '" data-closed="' + (f.resolved ? '0' : '1') + '">' + (f.resolved ? 'Riapri' : 'Chiudi segnalazione') + '</button>' +
             '</div></div>'
           ).join('');
@@ -1076,7 +1081,9 @@
         }));
         card.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
           const f = S.flags.find(x => x.id === b.dataset.copy);
-          try { await navigator.clipboard.writeText(JSON.stringify(f.detail, null, 2)); b.textContent = 'Copiati ✓'; }
+          // The report itself (comment, who, when) first, then the recorded data of the action
+          const data = Object.assign({ report: { code: f.code || code, comment: f.text || '', user: f.user ? f.user.name : '', date: f.date || '', closed: !!f.resolved } }, f.detail);
+          try { await navigator.clipboard.writeText(JSON.stringify(data, null, 2)); b.textContent = 'Copiati ✓'; }
           catch (e) { b.textContent = 'Copia non riuscita'; }
         }));
         box.appendChild(card);
