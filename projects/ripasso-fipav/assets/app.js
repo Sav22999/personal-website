@@ -2300,6 +2300,9 @@ if (!location.hash) history.replaceState(null, '', '#quiz');
   }
   paintUser();
   $('btn-admin').hidden = !user.canEdit;
+  // Match simulation: in beta, administrators only
+  $('btn-sim').hidden = (user.permissions || 0) < 9;
+  $('nav-sim').hidden = (user.permissions || 0) < 9;
   $('nav-admin').hidden = !user.canEdit;
 
   const ROLE_PERMS = [

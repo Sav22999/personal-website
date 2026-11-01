@@ -86,7 +86,7 @@
    * Store: replaces localStorage for personal data.
    * Synchronous reads from a cache loaded at startup, debounced writes to the server.
    */
-  const KEY_MAP = { 'fipav-data': 'data', 'fipav-suspended': 'suspended', 'fipav-autosave': 'autosave' };
+  const KEY_MAP = { 'fipav-data': 'data', 'fipav-suspended': 'suspended', 'fipav-autosave': 'autosave', 'fipav-sim': 'sim' };
   const cache = {};
   const dirty = new Set();
   let timer = null;

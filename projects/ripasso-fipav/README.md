@@ -10,6 +10,7 @@ Online: `https://www.saveriomorelli.com/projects/ripasso-fipav/`
 ripasso-fipav/
 ├── index.html            portale (accesso, quiz, ripasso, documenti, statistiche, profilo)
 ├── admin.html            pannello di gestione (panoramica, utenti, domande, riferimenti, segnalazioni, documenti)
+├── simulazione.html      simulazione partita (beta, solo amministratori)
 ├── manifest.webmanifest  nome, icone e avvio dell'app installabile
 ├── sw.js                 service worker (app installabile, interfaccia disponibile anche con rete scarsa)
 ├── api/index.php         API JSON (?r=azione): unico punto che legge e scrive i dati
@@ -140,6 +141,18 @@ Chiunque può registrarsi, ma l'account resta **in attesa** finché un amministr
 - `lib/`, `install/`, `sql/` e i file `.md`, `.json`, `.sql` e nascosti non sono raggiungibili dal browser (`.htaccess`).
 - Query sempre con prepared statement.
 - I commenti nel codice sono in inglese; i testi mostrati agli utenti restano in italiano.
+
+## Simulazione partita (beta)
+
+`simulazione.html` è una partita animata in 2.5D da arbitrare in tempo reale, come 1° arbitro (vista dal seggiolone), 2° arbitro (vista sotto la rete, lato segnapunti) o arbitro unico. Per ora è riservata agli amministratori (`SIM_MIN_LEVEL` in `assets/sim/ui.js`); il link è nel menu dell'account.
+
+- `assets/sim/render3d.js`: disegno del campo, dei giocatori e della palla (canvas, senza librerie), con le tre viste.
+- `assets/sim/engine.js`: stato della partita (punteggio, rotazioni, referto, sanzioni), costruzione di ogni azione con le situazioni da regolamento e valutazione delle decisioni.
+- `assets/sim/situations.js`: catalogo delle situazioni con aiuto, decisione corretta e riferimenti (i codici delle segnalazioni sono `SIM-<situazione>`).
+- `assets/sim/gestures.js`: animazione della segnaletica ufficiale (Regole 22.2.3 e 30.1, Indicazioni tecniche 4).
+- `assets/sim/ui.js`: impostazioni, ciclo di gioco, comandi, decisioni, esiti, statistiche.
+
+È aggiornata alle sperimentazioni FIPAV 2026/27 (Normative federali 4.1, 4.2, 4.3 e 4.7). Statistiche e segnalazioni sono salvate nello spazio `sim` dei dati personali; le segnalazioni compaiono in Gestione › Segnalazioni insieme a quelle dei quiz.
 
 ## Email agli utenti
 

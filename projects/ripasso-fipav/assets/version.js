@@ -6,6 +6,83 @@
  */
 window.APP_RELEASES = [
   {
+    version: '3.5.0',
+    date: '2026-11-01',
+    title: 'Simulazione: nuovi falli di rete, muro e attacco',
+    groups: [
+      {
+        title: 'Novità',
+        items: [
+          'Nuove situazioni in partita: invasione aerea a muro, palla passata sotto la rete, attacco sull’antenna, attacco sul servizio avversario, muro sul servizio avversario, muro di un difensore.',
+          'Nuova segnaletica: invasione aerea (avambraccio orizzontale davanti al petto, palmo in basso) e fallo di muro (braccia alzate in verticale, palmi in avanti).',
+          'Dopo ogni decisione compare la segnaletica che hai fatto (anche se sbagliata) con «Mostra dettagli» per aprire il riepilogo; tra le impostazioni puoi scegliere di aprire sempre il riepilogo completo.',
+          'Nel riepilogo, se la decisione è sbagliata, c’è anche la tua segnaletica su sfondo rosso, accanto a quella corretta.',
+          'Cronologia: tutte le azioni e le decisioni della partita, con chi le ha prese (1° o 2° arbitro, oppure tu). Si apre dalla barra in alto (tasto C) e anche dalle finestre di decisione.',
+          'Sotto il punteggio: tempi di riposo usati, sostituzioni usate su 8 e sanzioni di ciascuna squadra.',
+          '«Rivedi l’azione»: la registrazione dell’ultima azione in una finestra, con barra per scorrere, rallenty, vista dall’alto e il momento del fallo evidenziato.',
+          'Dalla cronologia (anche a fine set) ogni voce ha «▶ Rivedi» per riguardarla a posteriori, anche quelle gestite dall’altro arbitro (azioni, tempi, sostituzioni, Libero, condotta).',
+        ],
+      },
+      {
+        title: 'Miglioramenti',
+        items: [
+          'Richiesta impropria rifatta: braccio teso verso la squadra ma più in basso della spalla, palmo verso l’esterno e dorso verso il campo.',
+          'Tempo di riposo ridisegnato: la T è più leggibile, davanti al petto.',
+          'Mentre decidi, Referto e Cronologia si aprono come pannelli laterali sopra la finestra di decisione; «Vista dall’alto» nasconde la finestra per guardare il campo, con «Torna alla decisione».',
+          'Il 1° arbitro sul seggiolone si sposta molto meno: solo una leggera inclinazione verso la squadra in attacco.',
+          'Attacco irregolare rifatto: braccio teso in alto che, con un unico movimento, si piega e «cade» verso il lato opposto, finendo sopra la testa col palmo in basso.',
+        ],
+      },
+    ],
+  },
+  {
+    version: '3.4.2',
+    date: '2026-10-31',
+    title: 'Simulazione: segnaletica e assegnazione del punto',
+    groups: [
+      {
+        title: 'Miglioramenti',
+        items: [
+          'La segnaletica ufficiale è mostrata a specchio, con sotto la squadra che hai a sinistra e quella a destra.',
+          'Per assegnare il punto tocchi direttamente la metà campo della squadra che lo vince (anche con i tasti A e B).',
+          'Il fischio ha sempre lo stesso suono, come in partita.',
+          'Autorizzazione al servizio rifatta: braccio teso verso la squadra al servizio, fischio, poi un’unica piegatura del braccio all’altezza della spalla, dorso verso il campo e palmo sulla spalla opposta.',
+          'Palla fuori rifatta: braccia piegate a 90°, avambracci verticali, palmi verso il campo e dita unite.',
+          'Rifatti anche doppio fallo (braccia tese verso il segnapunti, pollici alzati), tempo di riposo (T con una mano verticale e l’altra sopra col palmo in basso), tocco della rete (braccio teso dritto verso il segnapunti all’altezza della spalla), sostituzione (un giro completo dei pugni) e palla toccata (mano in alto, l’altra che sfiora le dita una volta da dietro in avanti).',
+          'A fine set, la sezione «Segnaletica della partita» permette di rivedere il gesto corretto di ogni decisione (prima quelle sbagliate).',
+        ],
+      },
+    ],
+  },
+  {
+    version: '3.4.1',
+    date: '2026-10-31',
+    title: 'Simulazione nella barra in alto',
+    groups: [
+      { title: 'Miglioramenti', items: ['Per gli amministratori la Simulazione partita ha un pulsante nella barra in alto, accanto a Gestione.'] },
+    ],
+  },
+  {
+    version: '3.4.0',
+    date: '2026-10-31',
+    title: 'Simulazione partita (beta, solo amministratori)',
+    groups: [
+      {
+        title: 'Novità',
+        items: [
+          'Simulazione partita: arbitra una partita animata in tempo reale come 1° arbitro (vista dal seggiolone), 2° arbitro (vista sotto la rete, lato segnapunti) o arbitro unico. Si apre dal menu dell’account.',
+          'Autorizzi il servizio, fischi quando vedi un fallo (anche per errore: il fischio ferma sempre l’azione) e scegli la decisione. Tra le azioni gestisci tempi di riposo, sostituzioni, rimpiazzi del Libero e condotta, con il referto sempre consultabile.',
+          'Situazioni da regolamento: falli di posizione, servizio (piede sulla linea, 8 secondi, servizio prima del fischio, in rete), quattro tocchi, palla trattenuta, doppio tocco, rete, linea centrale, attacchi irregolari di difensori e Libero, palla dentro, fuori e toccata, sostituzioni irregolari, richieste improprie, sanzioni. Ci sono anche situazioni “trappola” in cui la decisione giusta è non fischiare.',
+          'Aggiornata alle sperimentazioni FIPAV 2026/27: squadra al servizio libera di posizionarsi, otto sostituzioni per set, doppio contatto in palleggio, nessun fischio sui servizi senza tocchi.',
+          'Dopo ogni decisione: esito con la spiegazione, i riferimenti normativi e l’animazione della segnaletica ufficiale corretta, nell’ordine giusto per il 1° o il 2° arbitro.',
+          'Pulsante Aiuto, pausa, vista dall’alto al volo, rallenty e punto d’impatto (facoltativi) per tocchi e palle sulla linea.',
+          'L’arbitro si sposta: automaticamente (1° verso la squadra in attacco, 2° verso la squadra in ricezione) o con le frecce ← → e con i comandi a schermo sul telefono.',
+          'Statistiche per tipo di situazione e pulsante «Segnala» per correggere una situazione: le segnalazioni arrivano nel pannello di gestione.',
+        ],
+      },
+    ],
+  },
+  {
     version: '3.3.2',
     date: '2026-10-31',
     title: 'Installazione solo su telefono e tablet',

@@ -462,10 +462,11 @@ function admin_user_stats(int $id): array
 function admin_list_flags(): array
 {
     $out = [];
-    $rows = db()->query('SELECT s.user_id, s.value, u.name, u.email FROM ' . t('user_state') . ' s JOIN ' . t('users') . " u ON u.id = s.user_id WHERE s.state_key = 'data'");
+    // Quiz reports live in the "data" slot; match simulation reports (codes "SIM-...") in the "sim" slot
+    $rows = db()->query('SELECT s.user_id, s.state_key, s.value, u.name, u.email FROM ' . t('user_state') . ' s JOIN ' . t('users') . " u ON u.id = s.user_id WHERE s.state_key IN ('data', 'sim')");
     foreach ($rows as $r) {
         $d = json_decode($r['value'], true);
-        $flags = $d['bookmarks']['flagged'] ?? [];
+        $flags = $r['state_key'] === 'sim' ? ($d['flagged'] ?? []) : ($d['bookmarks']['flagged'] ?? []);
         if (!is_array($flags)) continue;
         foreach ($flags as $f) {
             if (!is_array($f) || empty($f['code'])) continue;
@@ -474,6 +475,7 @@ function admin_list_flags(): array
                 'text'     => (string)($f['text'] ?? ''),
                 'date'     => (string)($f['date'] ?? ''),
                 'resolved' => !empty($f['resolved']),
+                'context'  => mb_substr((string)($f['context'] ?? ''), 0, 600),
                 'user'     => ['id' => (int)$r['user_id'], 'name' => $r['name'], 'email' => $r['email']],
             ];
         }

@@ -1000,6 +1000,26 @@
     box.innerHTML = '';
     if (!codes.length) { box.innerHTML = '<div class="admin-empty">' + (openOnly ? 'Nessuna segnalazione aperta.' : 'Nessuna segnalazione.') + '</div>'; return; }
     codes.forEach(code => {
+      // Match simulation reports: situation title and the context saved with each report
+      if (code.indexOf('SIM-') === 0) {
+        const id = code.slice(4);
+        const sit = window.SimSituations && window.SimSituations.S[id];
+        const card = document.createElement('div');
+        card.className = 'a-card';
+        card.innerHTML =
+          '<div class="a-card-top"><span class="a-code">' + esc(code) + '</span><span class="pill blue">Simulazione partita</span>' +
+            '<span class="pill gold">⚑ ' + groups[code].length + '</span></div>' +
+          '<div class="a-text">' + esc(sit ? sit.title : id) + (sit ? ' · ' + esc(sit.refs.join(', ')) : '') + '</div>' +
+          (sit ? '<div class="a-meta"><span>Decisione indicata come corretta: ' + esc(sit.solution) + '</span></div>' : '') +
+          groups[code].map(f =>
+            '<div class="f-item"><div class="f-item-head"><strong>' + esc(f.user.name) + '</strong><span>' + esc(f.user.email) + '</span><span>' + fmtIso(f.date) + '</span>' +
+              (f.resolved ? '<span class="flag-status-badge resolved">Chiusa</span>' : '<span class="flag-status-badge open">Aperta</span>') + '</div>' +
+            (f.text ? '<div class="f-note">' + esc(f.text) + '</div>' : '<div class="f-note"><em>Nessuna descrizione</em></div>') +
+            (f.context ? '<div class="f-note" style="opacity:.75">' + esc(f.context) + '</div>' : '') + '</div>'
+          ).join('');
+        box.appendChild(card);
+        return;
+      }
       const q = S.questions.find(x => x['question-code'] === code);
       const card = document.createElement('div');
       card.className = 'a-card';

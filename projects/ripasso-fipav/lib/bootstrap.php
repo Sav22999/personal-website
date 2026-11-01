@@ -27,7 +27,7 @@ const USER_STATUSES = ['pending', 'active', 'disabled'];
 const SOURCES = ['Regole di gioco', 'Casistica', 'Indicazioni tecniche', 'Normative federali', 'Vademecum'];
 const QUESTION_TYPES = ['multiple-choice', 'yes-no', 'multi-select'];
 const DIFFICULTIES = ['e', 'm', 'd', 'dd'];
-const STATE_KEYS = ['data', 'suspended', 'autosave'];
+const STATE_KEYS = ['data', 'suspended', 'autosave', 'sim'];
 
 const AUTH_COOKIE = 'fipav_auth';
 
