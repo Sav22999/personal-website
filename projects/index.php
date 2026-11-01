@@ -34,7 +34,6 @@ $canonical = '/projects/';
             <p>Take notes on any website. Private, open-source, with sync across devices.</p>
             <ul class="project-tags">
                 <li>Browser extension</li>
-                <li>Open source</li>
             </ul>
         </a>
         <a class="card" href="/projects/sav-pdf-viewer/">

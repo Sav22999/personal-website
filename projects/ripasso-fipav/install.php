@@ -26,9 +26,15 @@ try {
     db();
 } catch (Throwable $e) {
     $state = 'config';
-    $errors[] = $e instanceof PDOException
-        ? 'Connessione al database non riuscita: controlla host, nome, utente e password in lib/config.php. (' . $e->getMessage() . ')'
-        : $e->getMessage();
+    // Details (host, user, server messages) only go to the server log, never to the page
+    error_log('[fipav-ripasso] install: ' . get_class($e) . ': ' . $e->getMessage());
+    if ($e instanceof PDOException) {
+        $errors[] = 'Connessione al database non riuscita: controlla host, nome, utente e password in lib/config.php.';
+    } elseif ($e instanceof RuntimeException && preg_match('/^(Manca lib\/config\.php|table_prefix non valido)/', $e->getMessage())) {
+        $errors[] = $e->getMessage(); // our own messages, with no data from the configuration
+    } else {
+        $errors[] = 'Configurazione non valida: controlla lib/config.php.';
+    }
 }
 
 $adminExists = false;
@@ -83,7 +89,8 @@ if ($state === 'form' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $done = ['imported' => $imported, 'email' => $email];
             $state = 'done';
         } catch (Throwable $e) {
-            $errors[] = 'Installazione non riuscita: ' . $e->getMessage();
+            error_log('[fipav-ripasso] install: ' . get_class($e) . ': ' . $e->getMessage());
+            $errors[] = 'Installazione non riuscita: si è verificato un errore durante la creazione delle tabelle o l’importazione dei dati. I dettagli sono nel log degli errori del server.';
         }
     }
 }

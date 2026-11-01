@@ -1093,6 +1093,11 @@ nav.menu-open .nav-toggle span:nth-child(3) {
     color: #ba93dc;
 }
 
+.badge-award {
+    background: rgba(255, 215, 0, 0.12);
+    color: #ffd740;
+}
+
 /* ── Contact Form ── */
 
 .form-dynamic-fields[hidden],
@@ -1411,6 +1416,7 @@ altcha-widget {
 .book-btn svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
 }
 
 .book-btn-primary {
@@ -1735,6 +1741,12 @@ altcha-widget {
 .timeline-list .timeline-item p {
     color: var(--text-secondary);
     line-height: 1.5;
+}
+
+.timeline-list .timeline-item .book-btn {
+    grid-column: 1 / -1;
+    width: auto;
+    justify-self: start;
 }
 
 /* ── Services ── */
@@ -2616,6 +2628,11 @@ footer {
     .timeline-list .timeline-item {
         grid-template-columns: 1fr;
         gap: 4px;
+    }
+
+    .timeline-list .timeline-item .book-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .portfolio-hero {

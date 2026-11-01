@@ -106,6 +106,33 @@ $canonical = '/projects/cv-project/';
 </section>
 
 <section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">Awards</h2>
+        <div class="timeline-list">
+            <div class="timeline-item">
+                <span class="timeline-version">$5,000</span>
+                <span class="timeline-date">September 2022</span>
+                <p>Winner of the Mozilla Foundation &amp; NVIDIA open call for enabling voice data donation in low and no internet contexts. CV Project was one of two projects selected globally for advancing offline contributions to the Common Voice open-source dataset.</p>
+                <a href="https://www.mozillafoundation.org/en/blog/common-voice-for-everyone-mozilla-advances-projects-with-nvidia-enabling-voice-data-donation-in-low-internet-contexts/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    Mozilla Foundation blog
+                </a>
+            </div>
+            <hr style="grid-column:1/-1; border:none; border-top:1px solid var(--border-light); margin:8px 0;">
+            <div class="timeline-item">
+                <span class="timeline-version">€2,000</span>
+                <span class="timeline-date">September 2021</span>
+                <p>Awarded by Italian Linux Society in recognition of the work on CV Project, described as the most popular Common Voice app, used by contributors on every continent and in every language.</p>
+                <a href="https://www.ils.org/2021/09/20/sostegno-common-voice/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    Italian Linux Society
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid portrait">

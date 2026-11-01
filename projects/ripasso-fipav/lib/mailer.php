@@ -61,7 +61,11 @@ class SmtpClient
         $remote = ($enc === 'ssl' ? 'ssl://' : 'tcp://') . $c['smtp_host'] . ':' . $port;
         $timeout = (int)($c['timeout'] ?? 15);
         $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $ctx);
-        if (!$fp) throw new RuntimeException('connessione al server di posta non riuscita (' . $errstr . ')');
+        if (!$fp) {
+            // The system message may contain the server name: it goes to the log only
+            error_log('Fischietto SMTP: connessione non riuscita (' . $errno . ' ' . $errstr . ')');
+            throw new RuntimeException('connessione al server di posta non riuscita');
+        }
         stream_set_timeout($fp, $timeout);
         $this->fp = $fp;
         $this->expect(220);
