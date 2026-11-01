@@ -58,6 +58,11 @@ $canonical = '/about-me/';
                     Italiana Pallavolo — FIPAV</a>)</p>
         </div>
         <div class="timeline-item">
+            <span class="timeline-badge badge-award">Award</span>
+            <p class="timeline-date">October 2025</p>
+            <p class="timeline-text"><a href="/projects/notefox/">Notefox</a> earned the Recommended badge by Mozilla Firefox and was Featured on Chrome Web Store</p>
+        </div>
+        <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
             <p class="timeline-date">September 2024</p>
             <p class="timeline-text">Started the Master's degree in <a
@@ -114,6 +119,11 @@ $canonical = '/about-me/';
             <span class="timeline-badge badge-award">Award</span>
             <p class="timeline-date">September 2021</p>
             <p class="timeline-text">Received a €2,000 award from <a href="https://www.ils.org/2021/09/20/sostegno-common-voice/" target="_blank" rel="noopener">Italian Linux Society</a> in recognition of the work on <a href="/projects/cv-project/">CV Project</a></p>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-badge badge-award">Award</span>
+            <p class="timeline-date">September 2021</p>
+            <p class="timeline-text"><a href="/projects/emoji/">Emoji</a> earned the Recommended badge by Mozilla Firefox, and was Featured on Chrome Web Store and Microsoft Edge Add-ons</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">July 2021</p>

@@ -174,6 +174,43 @@ $canonical = '/projects/emoji/';
 </section>
 
 <section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">Awards</h2>
+        <div class="timeline-list">
+            <div class="timeline-item">
+                <span class="timeline-version">Recommended</span>
+                <span class="timeline-date">Firefox</span>
+                <p>Editorially reviewed and approved as a Recommended Extension by Mozilla, a recognition given to extensions that meet the highest standards of security, utility and user experience.</p>
+                <a href="https://addons.mozilla.org/firefox/addon/emoji-sav/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    View on Firefox Add-ons
+                </a>
+            </div>
+            <hr style="grid-column:1/-1; border:none; border-top:1px solid var(--border-light); margin:8px 0;">
+            <div class="timeline-item">
+                <span class="timeline-version">Featured</span>
+                <span class="timeline-date">Chrome</span>
+                <p>Selected as a Featured extension on the Chrome Web Store by Google's editorial team.</p>
+                <a href="https://chromewebstore.google.com/detail/emoji/kjepehkgbooeigeflhiogplnckadlife" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    View on Chrome Web Store
+                </a>
+            </div>
+            <hr style="grid-column:1/-1; border:none; border-top:1px solid var(--border-light); margin:8px 0;">
+            <div class="timeline-item">
+                <span class="timeline-version">Featured</span>
+                <span class="timeline-date">Edge</span>
+                <p>Selected as a Featured add-on on Microsoft Edge Add-ons.</p>
+                <a href="https://microsoftedge.microsoft.com/addons/detail/emoji/ejcgfbaipbelddlbokgcfajefbnnagfm" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    View on Edge Add-ons
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
