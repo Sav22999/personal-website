@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=3.5.0">
-<link rel="stylesheet" href="assets/sim/sim.css?v=3.5.0">
+<link rel="stylesheet" href="assets/app.css?v=3.6.0">
+<link rel="stylesheet" href="assets/sim/sim.css?v=3.6.0">
 <script>
   try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -96,6 +96,43 @@
             <button type="button" data-v="0.65">Tante</button>
           </div>
         </div>
+        <div class="sim-opt">
+          <span class="sim-opt-label">Fallosità dei giocatori</span>
+          <div class="segmented" id="opt-fouls">
+            <button type="button" data-v="0">Nessuna</button>
+            <button type="button" data-v="0.4">Bassa</button>
+            <button type="button" data-v="1" class="active">Media</button>
+            <button type="button" data-v="1.7">Alta</button>
+          </div>
+          <small class="sim-opt-hint">Quanto spesso i giocatori commettono falli durante il gioco.</small>
+        </div>
+        <div class="sim-opt">
+          <span class="sim-opt-label">Posizioni delle squadre</span>
+          <div class="segmented" id="opt-forms">
+            <button type="button" data-v="easy" class="active">Semplici</button>
+            <button type="button" data-v="pro">Realistiche</button>
+          </div>
+          <small class="sim-opt-hint">Semplici: ognuno nella sua zona, ben distanziato. Realistiche: formazioni di ricezione come in una partita vera (palleggiatore che si nasconde a rete, giocatori sovrapposti al limite, ricezione a tre) e cambi di posizione dopo il servizio.</small>
+        </div>
+        <div class="sim-opt">
+          <span class="sim-opt-label">Condotta scorretta</span>
+          <div class="segmented" id="opt-conduct">
+            <button type="button" data-v="auto" class="active">Auto</button>
+            <button type="button" data-v="0">Nessuna</button>
+            <button type="button" data-v="0.4">Bassa</button>
+            <button type="button" data-v="1">Media</button>
+            <button type="button" data-v="1.7">Alta</button>
+          </div>
+          <small class="sim-opt-hint">Quanto spesso giocatori e allenatori hanno comportamenti da sanzionare. Auto si adatta a te: più decidi bene e più le squadre si calmano; gli errori aumentano il malcontento e quindi i comportamenti scorretti.</small>
+        </div>
+        <div class="sim-opt">
+          <span class="sim-opt-label">Dopo una decisione sbagliata</span>
+          <div class="segmented" id="opt-score">
+            <button type="button" data-v="right" class="active">Si corregge</button>
+            <button type="button" data-v="mine">Vale la mia decisione</button>
+          </div>
+          <small class="sim-opt-hint">«Si corregge»: il punteggio segue sempre la decisione giusta. «Vale la mia decisione»: come in partita, punto, sanzioni e richieste seguono quello che hai deciso tu, anche se sbagliato.</small>
+        </div>
         <label class="toggle-row">
           <input type="checkbox" id="opt-aids" checked>
           <span class="toggle-track"></span>
@@ -110,6 +147,16 @@
           <input type="checkbox" id="opt-summary">
           <span class="toggle-track"></span>
           <span><strong>Riepilogo dopo ogni decisione</strong><small>Apre subito la scheda con quanto è successo, la decisione corretta e i riferimenti. Se è spento vedi la segnaletica che hai fatto, con il pulsante «Mostra dettagli» per aprire il riepilogo solo quando vuoi.</small></span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="opt-timeout">
+          <span class="toggle-track"></span>
+          <span><strong>Attendi i 30 secondi del tempo di riposo</strong><small>Quando concedi un tempo di riposo, il gioco riprende solo dopo 30 secondi, con il conto alla rovescia (puoi comunque riprendere prima).</small></span>
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="opt-subanim">
+          <span class="toggle-track"></span>
+          <span><strong>Animazione di sostituzioni e rimpiazzi</strong><small>I giocatori escono ed entrano camminando dalla zona di sostituzione (o dalla zona di rimpiazzo del Libero).</small></span>
         </label>
         <label class="toggle-row" id="opt-libero-row">
           <input type="checkbox" id="opt-libero" checked>
@@ -144,10 +191,17 @@
     <div class="sim-badges">
       <div class="sim-badge slow" id="badge-slow" hidden>Rallenty</div>
       <div class="sim-badge" id="badge-role"></div>
+      <div class="sim-badge" id="badge-clock" title="Tempo di gioco">⏱ 0:00</div>
+      <div class="sim-badge serve" id="badge-serve" hidden title="Secondi dall’autorizzazione del servizio"></div>
     </div>
 
     <div class="sim-banner" id="sim-banner" hidden></div>
     <div class="pick-layer" id="pick-layer" hidden></div>
+    <div class="to-wait" id="to-wait" hidden><strong>Tempo di riposo</strong><span id="to-wait-team"></span><b id="to-wait-left">30</b><button class="btn btn-ghost btn-sm" id="to-wait-skip">Riprendi subito</button></div>
+    <div class="person-bar" id="person-bar" hidden>
+      <p><strong id="pb-sanction">Sanzione</strong> · tocca sul campo il giocatore o l’allenatore da sanzionare</p>
+      <button class="btn btn-ghost btn-sm" id="pb-cancel">Indietro</button>
+    </div>
     <div class="peek-bar" id="peek-bar" hidden><span>Gioco in pausa: guarda il campo</span><button class="btn btn-ghost btn-sm" id="peek-view">Vista dall’alto</button><button class="btn btn-primary btn-sm" id="peek-back">Torna alla decisione</button></div>
     <div class="dcard" id="dcard" hidden role="dialog" aria-labelledby="dc-title">
       <div class="dc-head"><span class="dc-icon" id="dc-icon"></span><div><h4 id="dc-title"></h4><p id="dc-yours"></p></div></div>
@@ -158,7 +212,7 @@
       </div>
       <div class="dc-actions"><button class="btn btn-ghost btn-sm" id="dc-replay" hidden>▶ Rivedi l’azione</button><button class="btn btn-ghost btn-sm" id="dc-details">Mostra dettagli</button><button class="btn btn-primary btn-sm" id="dc-continue">Continua</button></div>
     </div>
-    <div class="gesture-mini" id="gesture-mini" hidden><div class="gm-fig" id="gm-fig"></div><span id="gm-cap"></span></div>
+    <div class="gesture-mini" id="gesture-mini" hidden><small class="gm-who" id="gm-who"></small><div class="gm-fig" id="gm-fig"></div><span id="gm-cap"></span></div>
 
     <div class="move-pad" aria-label="Spostati">
       <button type="button" class="move-btn" data-move="-1" aria-label="Spostati a sinistra">
@@ -176,11 +230,20 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           Autorizza servizio
         </button>
+        <button class="sim-btn collab" id="btn-collab" hidden title="Segnale di collaborazione al 1° arbitro">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5.5a1.5 1.5 0 013 0V14a6 6 0 01-6 6h-1a5 5 0 01-4-2l-2.5-3.5a1.5 1.5 0 012.3-1.9L8 14"/></svg>
+          Segnala al 1°
+        </button>
         <button class="sim-btn whistle" id="btn-whistle">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a5 5 0 005 5h1l5 4v-6h4a3 3 0 000-6H8a5 5 0 00-5 3z"/><circle cx="8" cy="11" r="1.6"/></svg>
           Fischia
         </button>
       </div>
+    </div>
+
+    <div class="collab-panel" id="collab-panel" hidden>
+      <p>Segnale di collaborazione al 1° arbitro (al petto, non ufficiale)</p>
+      <div class="cp-grid" id="cp-grid"></div>
     </div>
 
     <!-- Game log -->
@@ -286,7 +349,8 @@
     <div class="rp-head"><h3 class="modal-title" id="replay-title">Registrazione dell’azione</h3><button class="icon-btn" id="rp-close" aria-label="Chiudi">✕</button></div>
     <p class="form-hint" id="rp-note"></p>
     <div class="rp-stage"><canvas id="rp-canvas"></canvas><span class="rp-badge" id="rp-badge" hidden></span><span class="rp-rec">● REC</span></div>
-    <div class="rp-bar"><input type="range" id="rp-range" aria-label="Momento dell’azione"><span class="rp-mark" id="rp-mark"></span></div>
+    <div class="rp-bar"><input type="range" id="rp-range" aria-label="Momento dell’azione"><span class="rp-mark" id="rp-mark"></span><span class="rp-mark w" id="rp-mark-w" title="Fischio"></span></div>
+    <div class="rp-legend"><span><i class="f"></i><span id="rp-legend-f">Momento del fallo</span></span><span id="rp-legend-w"><i class="w"></i>Fischio</span></div>
     <div class="rp-controls">
       <button class="btn btn-primary btn-sm" id="rp-play">❚❚ Pausa</button>
       <button class="btn btn-ghost btn-sm" id="rp-slow">Rallenty</button>
@@ -295,12 +359,12 @@
   </div>
 </div>
 
-<script src="assets/version.js?v=3.5.0"></script>
-<script src="assets/api.js?v=3.5.0"></script>
-<script src="assets/sim/render3d.js?v=3.5.0"></script>
-<script src="assets/sim/engine.js?v=3.5.0"></script>
-<script src="assets/sim/situations.js?v=3.5.0"></script>
-<script src="assets/sim/gestures.js?v=3.5.0"></script>
-<script src="assets/sim/ui.js?v=3.5.0"></script>
+<script src="assets/version.js?v=3.6.0"></script>
+<script src="assets/api.js?v=3.6.0"></script>
+<script src="assets/sim/render3d.js?v=3.6.0"></script>
+<script src="assets/sim/engine.js?v=3.6.0"></script>
+<script src="assets/sim/situations.js?v=3.6.0"></script>
+<script src="assets/sim/gestures.js?v=3.6.0"></script>
+<script src="assets/sim/ui.js?v=3.6.0"></script>
 </body>
 </html>

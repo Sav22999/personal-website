@@ -462,6 +462,8 @@ function admin_user_stats(int $id): array
 function admin_list_flags(): array
 {
     $out = [];
+    // Simulation reports closed by an admin (kept apart from the users' own state, which their app rewrites)
+    $closed = json_decode((string)meta_get('sim_flags_closed', '{}'), true) ?: [];
     // Quiz reports live in the "data" slot; match simulation reports (codes "SIM-...") in the "sim" slot
     $rows = db()->query('SELECT s.user_id, s.state_key, s.value, u.name, u.email FROM ' . t('user_state') . ' s JOIN ' . t('users') . " u ON u.id = s.user_id WHERE s.state_key IN ('data', 'sim')");
     foreach ($rows as $r) {
@@ -470,18 +472,40 @@ function admin_list_flags(): array
         if (!is_array($flags)) continue;
         foreach ($flags as $f) {
             if (!is_array($f) || empty($f['code'])) continue;
+            $sim = $r['state_key'] === 'sim';
+            $id = $sim ? sim_flag_id((int)$r['user_id'], (string)($f['date'] ?? ''), (string)$f['code']) : null;
             $out[] = [
+                'kind'     => $sim ? 'sim' : 'quiz',
+                'id'       => $id,
                 'code'     => (string)$f['code'],
                 'text'     => (string)($f['text'] ?? ''),
                 'date'     => (string)($f['date'] ?? ''),
-                'resolved' => !empty($f['resolved']),
+                'resolved' => $sim ? isset($closed[$id]) : !empty($f['resolved']),
+                'closedAt' => $sim && isset($closed[$id]) ? (string)$closed[$id] : null,
                 'context'  => mb_substr((string)($f['context'] ?? ''), 0, 600),
+                // Simulation: everything needed to understand (and recreate) the action
+                'detail'   => $sim && isset($f['detail']) && is_array($f['detail']) ? $f['detail'] : null,
                 'user'     => ['id' => (int)$r['user_id'], 'name' => $r['name'], 'email' => $r['email']],
             ];
         }
     }
     usort($out, function ($a, $b) { return strcmp($b['date'], $a['date']); });
     return $out;
+}
+
+/** Stable id of a simulation report: user, date and code. */
+function sim_flag_id(int $userId, string $date, string $code): string
+{
+    return substr(sha1($userId . '|' . $date . '|' . $code), 0, 16);
+}
+
+/** Closes (or reopens) a simulation report. */
+function admin_close_sim_flag(string $id, bool $closed): void
+{
+    if (!preg_match('/^[0-9a-f]{16}$/', $id)) fail('Segnalazione non valida.', 400, 'bad_request');
+    $map = json_decode((string)meta_get('sim_flags_closed', '{}'), true) ?: [];
+    if ($closed) $map[$id] = gmdate('c'); else unset($map[$id]);
+    meta_set('sim_flags_closed', json_encode($map));
 }
 
 /**

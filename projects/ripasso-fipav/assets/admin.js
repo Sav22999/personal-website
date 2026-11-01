@@ -988,10 +988,46 @@
   // REPORTS
   // ====================================================================
 
+  // Simulation details: a readable summary of the reported action
+  const SIM_ROLE = { '1': '1° arbitro', '2': '2° arbitro', solo: 'Arbitro unico' };
+  function simDetailHtml(d) {
+    if (!d) return '';
+    const row = (k, v) => v === undefined || v === null || v === '' ? '' : '<div class="sd-row"><span>' + esc(k) + '</span><span>' + esc(String(v)) + '</span></div>';
+    const a = d.action, ev = d.event;
+    const t = x => (Math.round(x * 100) / 100).toFixed(2).replace('.', ',') + ' s';
+    let h = '<div class="sim-detail">';
+    h += row('Ruolo', SIM_ROLE[d.mode] || d.mode) + row('Punteggio', d.score + ' (set a ' + d.target + '), azione n. ' + d.rally) + row('Al servizio', 'Squadra ' + d.serving);
+    h += row('Formazioni (I→VI)', 'A: ' + d.lineups.A.join(' · ') + ' — B: ' + d.lineups.B.join(' · '));
+    h += row('Libero in campo al posto del n.', 'A: ' + (d.libero.A || '—') + ' · B: ' + (d.libero.B || '—'));
+    h += row('Tempi / sostituzioni', 'A: ' + d.timeouts.A + ' / ' + d.subs.A + ' · B: ' + d.timeouts.B + ' / ' + d.subs.B);
+    if ((d.sanctions.A || []).length || (d.sanctions.B || []).length) h += row('Sanzioni', 'A: ' + (d.sanctions.A.join(', ') || '—') + ' · B: ' + (d.sanctions.B.join(', ') || '—'));
+    if (a) {
+      h += row('Situazione pianificata', a.plan && a.plan.sit ? a.plan.sit : 'azione normale');
+      h += row('Colpo di servizio', t(a.tHit) + ' dall’autorizzazione');
+      (a.faults || []).forEach(f => { h += row('Fallo', f.key + ' della Squadra ' + f.team + ' a ' + t(f.t) + ' (competenza: ' + f.comp + ') — ' + f.text); });
+      if (a.trap) h += row('Situazione regolare (trappola)', a.trap.text);
+      if (a.natural) h += row('Esito naturale', a.natural.key + ' (squadra ' + a.natural.team + ') a ' + t(a.natural.t) + (a.natural.borderline ? ', palla vicino alla linea' : ''));
+      if (a.whistle != null) h += row('Fischio', t(a.whistle));
+    }
+    if (ev) h += row('Evento tra le azioni', ev.kind + ' della Squadra ' + ev.team + ' — ' + ev.text);
+    h += row('Che cosa è successo', d.happened) + row('Decisione dell’utente', d.yours) + row('Indicata come corretta', d.right) + row('Nota', d.note);
+    h += row('Opzioni', 'situazioni ' + d.options.freq + ', fallosità ' + d.options.fouls + ', condotta ' + d.options.conduct + (d.options.scoreMine ? ', vale la decisione dell’utente' : '') + (d.options.aids ? ', aiuti visivi' : ''));
+    h += '</div>';
+    return h;
+  }
+
   function renderFlags() {
     const openOnly = $('flags-open-only').checked;
+    const kindBtn = $('flags-kind').querySelector('.active');
+    const kind = kindBtn ? kindBtn.dataset.v : 'quiz';
+    $('flags-n-quiz').textContent = '(' + S.flags.filter(f => f.kind !== 'sim' && !f.resolved).length + ')';
+    $('flags-n-sim').textContent = '(' + S.flags.filter(f => f.kind === 'sim' && !f.resolved).length + ')';
+    $('flags-desc').textContent = kind === 'sim'
+      ? 'Le segnalazioni inviate durante la simulazione partita, raggruppate per situazione, con tutti i dati per capire e ricreare l’azione. Le chiudi tu quando le hai gestite.'
+      : 'Le segnalazioni inviate dagli utenti durante i quiz, raggruppate per domanda. Una segnalazione risulta chiusa quando l’utente la segna come risolta.';
     const groups = {};
     S.flags.forEach(f => {
+      if ((f.kind === 'sim') !== (kind === 'sim')) return;
       if (openOnly && f.resolved) return;
       (groups[f.code] = groups[f.code] || []).push(f);
     });
@@ -1015,8 +1051,34 @@
             '<div class="f-item"><div class="f-item-head"><strong>' + esc(f.user.name) + '</strong><span>' + esc(f.user.email) + '</span><span>' + fmtIso(f.date) + '</span>' +
               (f.resolved ? '<span class="flag-status-badge resolved">Chiusa</span>' : '<span class="flag-status-badge open">Aperta</span>') + '</div>' +
             (f.text ? '<div class="f-note">' + esc(f.text) + '</div>' : '<div class="f-note"><em>Nessuna descrizione</em></div>') +
-            (f.context ? '<div class="f-note" style="opacity:.75">' + esc(f.context) + '</div>' : '') + '</div>'
+            (f.detail ? simDetailHtml(f.detail) : (f.context ? '<div class="f-note" style="opacity:.75">' + esc(f.context) + '</div>' : '')) +
+            '<div class="f-actions">' +
+              (f.detail && f.detail.action && f.detail.action.moves ? '<button class="btn btn-primary btn-sm" data-replay="' + esc(f.id) + '">▶ Rivedi azione</button>' : '') +
+              (f.detail ? '<button class="btn btn-ghost btn-sm" data-copy="' + esc(f.id) + '">Copia i dati dell’azione (JSON)</button>' : '') +
+              '<button class="btn btn-secondary btn-sm" data-close="' + esc(f.id) + '" data-closed="' + (f.resolved ? '0' : '1') + '">' + (f.resolved ? 'Riapri' : 'Chiudi segnalazione') + '</button>' +
+            '</div></div>'
           ).join('');
+        card.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', async () => {
+          b.disabled = true;
+          try {
+            await Api.post('admin.flag.close', { id: b.dataset.close, closed: b.dataset.closed === '1' });
+            const f = S.flags.find(x => x.id === b.dataset.close);
+            if (f) f.resolved = b.dataset.closed === '1';
+            renderFlags();
+          } catch (e) { b.disabled = false; alert(e.message || 'Errore'); }
+        }));
+        // Replay of the reported rally: the simulation page opens in a new tab and plays the recorded action
+        card.querySelectorAll('[data-replay]').forEach(b => b.addEventListener('click', () => {
+          const f = S.flags.find(x => x.id === b.dataset.replay);
+          try { localStorage.setItem('fipav-sim-replay', JSON.stringify(Object.assign({}, f.detail, { code: f.code || code, reporter: f.user && f.user.name, reportText: f.text }))); }
+          catch (e) { alert('Non riesco a preparare la registrazione: ' + (e.message || e)); return; }
+          window.open('simulazione.html#replay', '_blank');
+        }));
+        card.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+          const f = S.flags.find(x => x.id === b.dataset.copy);
+          try { await navigator.clipboard.writeText(JSON.stringify(f.detail, null, 2)); b.textContent = 'Copiati ✓'; }
+          catch (e) { b.textContent = 'Copia non riuscita'; }
+        }));
         box.appendChild(card);
         return;
       }
@@ -1043,6 +1105,10 @@
     });
   }
   $('flags-open-only').addEventListener('change', renderFlags);
+  $('flags-kind').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    $('flags-kind').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    renderFlags();
+  }));
 
 
   // ====================================================================

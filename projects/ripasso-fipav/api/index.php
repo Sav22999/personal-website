@@ -200,6 +200,15 @@ switch ($route) {
         require_user(PERM_EDITOR);
         send_json(['ok' => true, 'flags' => admin_list_flags()]);
 
+    case 'admin.flag.close':
+        // Simulation reports only: quiz reports are closed by the users themselves
+        only('POST');
+        $s = require_user(PERM_EDITOR);
+        require_csrf($s);
+        $b = request_body();
+        admin_close_sim_flag(str_param($b, 'id', 16, true), !empty($b['closed']));
+        send_json(['ok' => true]);
+
     // ---------- User management (permissions >= 9; administrators only by the master admin) ----------
 
     case 'admin.users':

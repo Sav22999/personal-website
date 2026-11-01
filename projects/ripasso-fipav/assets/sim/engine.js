@@ -50,7 +50,7 @@
   const DECISIONS = {
     in: { label: 'Palla dentro', group: 'Esito', team: true },
     out: { label: 'Palla fuori', group: 'Esito', team: true },
-    touched_out: { label: 'Toccata dal muro e fuori', group: 'Esito', team: true },
+    touched_out: { label: 'Palla toccata', group: 'Esito', team: true },
     serve_foot: { label: 'Fallo del giocatore al servizio', group: 'Servizio', team: true },
     serve_8s: { label: 'Servizio oltre gli 8 secondi', group: 'Servizio', team: true },
     serve_net: { label: 'Servizio in rete', group: 'Servizio', team: true },
@@ -71,7 +71,7 @@
     block_serve: { label: 'Muro sul servizio avversario', group: 'Muro', team: true },
     back_block: { label: 'Muro di un difensore', group: 'Muro', team: true },
     double_fault: { label: 'Doppio fallo: si rigioca', group: 'Altro', team: false },
-    no_fault: { label: 'Nessun fallo: ho fischiato per errore', group: 'Altro', team: false },
+    no_fault: { label: 'Ho fischiato per errore: si ripete (doppio fallo)', group: 'Altro', team: false },
   };
 
   /** Who decides each fault: '1' first referee, '2' second referee, 'both'. */
@@ -79,8 +79,8 @@
     in: '1', out: '1', touched_out: '1', serve_foot: '1', serve_8s: '1', serve_net: '1', serve_early: '1',
     pos_fault_serving: '1', pos_fault_receiving: '2',
     four_hits: '1', catch: '1', double_contact: '1',
-    net_touch: 'both', centre_line: '2', back_attack: 'both', libero_attack: 'both', libero_set: 'both',
-    attack_serve: '1', reach_beyond: '1', under_net: 'both', antenna: 'both', block_serve: '1', back_block: 'both',
+    net_touch: 'both', centre_line: 'both', back_attack: 'both', libero_attack: 'both', libero_set: '1',
+    attack_serve: 'both', reach_beyond: '1', under_net: '1', antenna: 'both', block_serve: 'both', back_block: 'both',
   };
 
   const REQUEST_DECISIONS = {
@@ -108,7 +108,8 @@
    * freq (0..1, how often an irregular situation appears), target (points to win the set), libero (check Libero replacements)
    */
   function Match(opts) {
-    this.opts = Object.assign({ mode: '1', aids: true, freq: 0.45, target: 25, libero: true }, opts || {});
+    this.opts = Object.assign({ mode: '1', aids: true, freq: 0.45, target: 25, libero: true, fouls: 1, formations: 'easy', conduct: 'auto' }, opts || {});
+    this.autoConduct = 1;
     this.score = { A: 0, B: 0 };
     this.side = { A: -1, B: 1 };
     this.serving = chance(0.5) ? 'A' : 'B';
@@ -165,6 +166,35 @@
     return t.libero.on === n ? t.libero.num : n;
   };
   Match.prototype.isFront = k => k === 1 || k === 2 || k === 3;
+  /**
+   * How "fault-prone" the players are: a multiplier of the faults during the play (0 = never, 1 = normal).
+   */
+  Match.prototype.foulLevel = function () {
+    const f = this.opts.fouls;
+    return typeof f === 'number' ? f : 1;
+  };
+  /**
+   * Misconduct (players and coaches): a multiplier like the one above. With 'auto' it follows the referee:
+   * good decisions calm the teams down, mistakes raise their discontent and so their misconduct.
+   */
+  Match.prototype.conductLevel = function () {
+    return this.opts.conduct === 'auto' ? this.autoConduct : this.opts.conduct;
+  };
+  Match.prototype.adaptConduct = function (ok) {
+    if (this.opts.conduct !== 'auto') return;
+    this.autoConduct = clamp(this.autoConduct + (ok ? -0.06 : 0.18), 0.35, 1.8);
+  };
+  /**
+   * Game captain (Rule 5.1.2): the team captain while on court; otherwise a player on court designated by the
+   * coach (kept while still on court). Not marked on the jersey: the referee has to ask for it.
+   */
+  Match.prototype.gameCaptain = function (team) {
+    const t = this.teams[team];
+    const on = [0, 1, 2, 3, 4, 5].map(k => this.onCourt(team, k));
+    if (on.includes(t.def.captain)) return t.def.captain;
+    if (!t.gc || !on.includes(t.gc) || t.gc === t.def.libero) t.gc = pick(on.filter(n => n !== t.def.libero));
+    return t.gc;
+  };
   Match.prototype.roleOf = function (team, num) {
     const t = this.teams[team];
     if (num === t.libero.num) return 'L';
@@ -190,6 +220,7 @@
   // ---------- Formations ----------
   /** Random legal positions for the 6 players (local coords, index = position - 1). */
   Match.prototype.legalFormation = function (team, serving) {
+    if (this.opts.formations === 'pro') { const p = this.proFormation(team, serving); if (p) return p; }
     const f = [];
     const fd = [rnd(0.9, 2.4), rnd(0.7, 2.0), rnd(0.9, 2.4)];
     // Front row: II (right), III (centre), IV (left)
@@ -221,6 +252,81 @@
       }
     }
     return null;
+  };
+
+  /**
+   * Realistic formations (5-1 system). Receiving: three-player reception (the two outside hitters and the
+   * Libero / back-row middle), the setter hiding close to the net or behind the player in front, the opposite
+   * and the front-row middle at the net; players stacked as close as the overlap rule allows. Serving: everyone
+   * already near their blocking / defensive spots. Then made legal with the smallest moves (Rule 7.4.3).
+   */
+  Match.prototype.proFormation = function (team, serving) {
+    const f = [], role = k => this.roleOf(team, this.onCourt(team, k));
+    const zoneL = [-2.9, -2.9, 0, 2.9, 2.9, 0];
+    const front = k => this.isFront(k);
+    if (!serving) {
+      // Receivers: the back-row outside hitter, the back-row middle (or Libero), the front-row outside hitter
+      const recv = [0, 1, 2, 3, 4, 5].filter(k => role(k) === 'L' || (role(k) === 'OH') || (!front(k) && role(k) === 'M'));
+      recv.sort((a, b) => zoneL[a] - zoneL[b] || (front(a) ? 1 : -1));
+      const lanes = recv.length >= 3 ? [-2.7, 0, 2.7] : [-1.6, 1.6];
+      recv.forEach((k, i) => { f[k] = { d: rnd(5.8, 7.0), l: (lanes[i] !== undefined ? lanes[i] : 0) + rnd(-0.4, 0.4) }; });
+      for (let k = 0; k < 6; k++) {
+        if (f[k]) continue;
+        const r = role(k);
+        if (front(k)) f[k] = { d: rnd(0.5, 1.2), l: zoneL[k] * 0.8 + rnd(-0.6, 0.6) };            // at the net
+        else if (r === 'S') f[k] = { d: rnd(1.4, 2.6), l: rnd(-2.4, -0.8) };                       // setter ready to penetrate
+        else f[k] = { d: rnd(7.6, 8.5), l: zoneL[k] * 1.25 + rnd(-0.3, 0.3) };                     // opposite out of the reception
+      }
+    } else {
+      for (let k = 0; k < 6; k++) {
+        const r = role(k);
+        // Front row close to the net, already a little towards their blocking spots; back row in defence
+        if (front(k)) f[k] = { d: rnd(0.6, 1.1), l: zoneL[k] * 0.7 + (r === 'S' || r === 'O' ? -0.5 : r === 'OH' ? 0.5 : 0) + rnd(-0.3, 0.3) };
+        else f[k] = { d: rnd(5.8, 7.2), l: zoneL[k] + rnd(-0.5, 0.5) };
+      }
+      f[0] = { d: rnd(9.5, 10.6), l: rnd(-3.6, 3.0), server: true };
+    }
+    // Smallest moves that make the formation legal, with players left as close to each other as the rule allows
+    const gap = () => rnd(0.28, 0.5);
+    for (let it = 0; it < 80; it++) {
+      let changed = false;
+      for (const [b, fr] of PAIRS_DEPTH) {
+        if (serving && b === 0) continue;
+        if (f[b].d < f[fr].d + 0.15) {
+          const need = f[fr].d + gap() - f[b].d;
+          // The front player steps towards the net only as far as it can, the back player goes behind
+          const mvF = Math.min(need * 0.5, f[fr].d - 0.45);
+          f[fr].d -= Math.max(0, mvF); f[b].d = f[fr].d + gap(); changed = true;
+        }
+      }
+      for (const row of ROWS) {
+        for (let i = 0; i < 2; i++) {
+          const r = row[i], c = row[i + 1];
+          if (serving && (r === 0 || c === 0)) continue;
+          if (f[r].l > f[c].l - 0.15) {
+            const mid = (f[r].l + f[c].l) / 2, g = rnd(0.35, 0.65) / 2;
+            f[r].l = mid - g; f[c].l = mid + g; changed = true;
+          }
+        }
+      }
+      if (!changed) break;
+    }
+    for (let k = 0; k < 6; k++) {
+      if (f[k].server) continue;
+      f[k].d = clamp(f[k].d, 0.35, 8.8); f[k].l = clamp(f[k].l, -4.3, 4.3);
+    }
+    return this.checkFormation(f, serving) ? null : f;
+  };
+
+  /**
+   * Positions after the service in the realistic mode: the players switch to their specialist spots
+   * (setter / opposite on the right, outside hitter on the left, middle in the centre; at the back the
+   * setter or opposite in I, the outside hitter in VI, the Libero or middle in V).
+   */
+  Match.prototype.proBase = function (team, k) {
+    const r = this.roleOf(team, this.onCourt(team, k));
+    if (this.isFront(k)) return r === 'S' ? [0.9, -1.4] : r === 'O' ? [1.2, -3.0] : r === 'OH' ? [1.2, 3.0] : [1.0, 0];
+    return r === 'S' || r === 'O' ? [6.4, -2.9] : r === 'OH' ? [7.0, 0] : [6.4, 2.9];
   };
 
   /** A formation with one clear positional fault (about half a metre, visible from the right angle). */
@@ -281,10 +387,12 @@
       const T = chance(0.5) ? 'A' : 'B';
       const roll = Math.random();
       let e = null;
-      if (roll < 0.28) e = this.timeoutRequest(T);
+      // Very fault-prone players: more misconduct
+      if (this.conductLevel() > 1 && chance((this.conductLevel() - 1) * 0.35)) e = this.conductEvent(T);
+      else if (roll < 0.28) e = this.timeoutRequest(T);
       else if (roll < 0.66) e = this.subRequest(T);
       else if (roll < 0.82 && this.opts.libero) e = this.liberoIrregular(T);
-      else e = this.conductEvent(T);
+      else if (chance(Math.min(1, this.conductLevel()))) e = this.conductEvent(T);
       if (e) ev.push(e);
     }
     ev.forEach(e => { e.user = this.userDecides(e.comp) && !(e.kind === 'libero' && e.regular && !this.opts.libero); });
@@ -404,27 +512,59 @@
   };
 
   /** Misconduct: the expected decision follows the scale of sanctions. */
+  /**
+   * Misconduct cases, from the examples used by the referees' committees: minor misconduct (verbal warning, then
+   * official warning), rude conduct (penalty), offensive conduct (expulsion), threats / aggression (disqualification).
+   * `bench`: done by a member who is not on court (warm-up area / bench).
+   */
+  const CONDUCT_CASES = {
+    minor: [
+      { say: 'Loro possono invadere e noi no?' },
+      { say: 'La reteeeeee!' },
+      { act: 'alza il braccio agitando un dito, come a dire «no, non è possibile»' },
+      { act: 'applaude ironicamente dopo il fischio' },
+      { act: 'allarga le braccia e commenta a voce alta la decisione appena presa' },
+      { act: 'esce dall’area di riscaldamento e si ferma nella zona libera durante un’azione per protestare contro una decisione', bench: true },
+    ],
+    rude: [
+      { say: 'Ma ce li hai gli occhi?' },
+      { say: 'Stai arbitrando col c…!' },
+      { say: 'Ma che caz… fischi?' },
+      { say: 'Ammettilo, caz…!' },
+      { act: 'bestemmia ad alta voce' },
+      { act: 'si muove con fare minaccioso verso un avversario, ma poi ci ripensa' },
+      { act: 'calcia con rabbia il pallone verso la tribuna dopo il fischio' },
+    ],
+    offensive: [
+      { say: 'Sei un pagliaccio!' },
+      { say: 'Vaffan…!' },
+      { act: 'rivolge al 1° arbitro un gesto offensivo' },
+    ],
+    aggression: [
+      { say: 'Ti aspetto fuori!' },
+    ],
+  };
+
   Match.prototype.conductEvent = function (T) {
     const t = this.teams[T];
     const onCourt = [0, 1, 2, 3, 4, 5].map(k => this.onCourt(T, k));
-    const who = pick(onCourt);
-    const m = t.conduct.members[who] || { rude: 0 };
+    const bench = t.def.roster.filter(n => !onCourt.includes(n));
     const roll = Math.random();
-    if (roll < 0.5) {
-      // Minor misconduct: phase 1 verbal warning, phase 2 official warning (yellow card)
-      if (t.conduct.yellow) return null;
-      return { kind: 'conduct', team: T, comp: '1', who, sit: t.conduct.verbal ? 'conduct_minor_second' : 'conduct_minor_first', level: 'minor',
-        text: 'Il n. ' + who + ' della ' + t.def.label + ' allarga le braccia e commenta a voce alta la decisione appena presa.',
-        expected: t.conduct.verbal ? 'yellow' : 'verbal' };
+    const level = roll < 0.45 ? 'minor' : roll < 0.78 ? 'rude' : roll < 0.93 ? 'offensive' : 'aggression';
+    const c = pick(CONDUCT_CASES[level]);
+    const who = c.bench && bench.length ? pick(bench) : pick(onCourt);
+    const m = t.conduct.members[who] || { rude: 0 };
+    const text = 'Il n. ' + who + ' della ' + t.def.label + (c.bench ? ' (in panchina)' : '') +
+      (c.say ? ', rivolto agli arbitri: «' + c.say + '»' : ' ' + c.act + '.');
+    const base = { kind: 'conduct', team: T, comp: '1', who, level, text };
+    if (level === 'minor') {
+      // Phase 1 verbal warning, phase 2 official warning (yellow card); after that, rude conduct for the team
+      if (t.conduct.yellow) return Object.assign(base, { sit: m.rude ? 'conduct_rude_second' : 'conduct_rude', level: 'rude', expected: m.rude ? 'expulsion' : 'red' });
+      return Object.assign(base, { sit: t.conduct.verbal ? 'conduct_minor_second' : 'conduct_minor_first', expected: t.conduct.verbal ? 'yellow' : 'verbal' });
     }
-    if (roll < 0.82) {
-      return { kind: 'conduct', team: T, comp: '1', who, sit: m.rude ? 'conduct_rude_second' : 'conduct_rude', level: 'rude',
-        text: 'Il n. ' + who + ' della ' + t.def.label + ' calcia con rabbia il pallone verso la tribuna dopo il fischio.',
-        expected: m.rude ? 'expulsion' : 'red' };
-    }
-    return { kind: 'conduct', team: T, comp: '1', who, sit: 'conduct_offensive', level: 'offensive',
-      text: 'Il n. ' + who + ' della ' + t.def.label + ' rivolge al 1° arbitro un gesto offensivo.',
-      expected: 'expulsion' };
+    if (level === 'rude') return Object.assign(base, { sit: m.rude ? 'conduct_rude_second' : 'conduct_rude', expected: m.rude ? 'expulsion' : 'red' });
+    if (level === 'offensive') return Object.assign(base, { sit: 'conduct_offensive', expected: 'expulsion' });
+    return Object.assign(base, { sit: 'conduct_aggression', expected: 'disqualification' });
   };
 
   /** An event prepared at the start of the break may no longer make sense (e.g. after a penalty rotated the team). */
@@ -467,6 +607,7 @@
       if (exp === 'yellow') { t.conduct.yellow = true; t.sanctions.push('Cartellino giallo (n. ' + e.who + ')'); }
       if (exp === 'red') { m.rude++; t.sanctions.push('Penalizzazione (n. ' + e.who + ')'); res.point = other(e.team); }
       if (exp === 'expulsion') { t.sanctions.push('Espulsione (n. ' + e.who + ')'); res.expelled = e.who; }
+      if (exp === 'disqualification') { t.sanctions.push('Squalifica (n. ' + e.who + ')'); res.expelled = e.who; }
     }
     if (res.point) {
       this.addPoint(res.point);
@@ -527,11 +668,15 @@
     add('net_touch', 1); add('centre_line', 0.8);
     add('back_attack', 0.7); add('libero_attack', 0.6); add('libero_set', 0.6);
     add('no_fault_close', 0.8);
-    add('reach_beyond', 0.6); add('back_block', 0.5); add('under_net', 0.4); add('antenna', 0.5);
+    add('reach_beyond', 0.6); add('back_block', 0.5); add('back_block_try', 0.35); add('under_net', 0.4); add('antenna', 0.5);
     add('attack_serve', 0.4); add('block_serve', 0.4);
     if (o.aids) { add('catch', 0.8); add('double_contact', 0.8); add('double_first', 0.6); add('touched_out', 0.9); }
+    // Faults (and errors that end the rally) follow the players' fault-proneness; tricky legal situations do not
+    const legal = ['pos_serving', 'block_plus_three', 'double_first', 'no_fault_close', 'touched_out', 'back_block_try'];
+    const m = this.foulLevel();
+    sits.forEach(x => { if (!legal.includes(x[0])) x[1] *= m; });
     let sit = null;
-    if (chance(o.freq)) {
+    if (chance(Math.min(0.9, o.freq * (0.55 + 0.45 * Math.min(m, 1.6))))) {
       // Avoid repeating the same situation too often
       const total = sits.reduce((s, x) => s + x[1] / (1 + (this.lastSit[x[0]] || 0)), 0);
       let r = Math.random() * total;
@@ -627,7 +772,7 @@
     R.server = { team: sv, num: server };
 
     // Base defensive/attacking positions after the service
-    const base = (T, k) => [[6.6, -2.9], [1.1, -2.9], [1.1, 0], [1.1, 2.9], [6.6, 2.9], [7.0, 0]][k];
+    const base = (T, k) => M.opts.formations === 'pro' ? M.proBase(T, k) : [[6.6, -2.9], [1.1, -2.9], [1.1, 0], [1.1, 2.9], [6.6, 2.9], [7.0, 0]][k];
     const nAt = (T, k) => M.onCourt(T, k);
     const kOf = (T, n) => players[T].indexOf(n);
 
@@ -680,7 +825,7 @@
     const serveOut = !sit && chance(0.06);
     const ace = !sit && !serveOut && chance(0.05);
     // Receiver: a back-row non-setter (or the Libero), close to where the serve lands
-    const recvCands = [0, 4, 5].map(k => nAt(rc, k)).filter(n => M.roleOf(rc, n) !== 'S' && !((sit === 'libero_attack' || sit === 'libero_set') && M.roleOf(rc, n) === 'L'));
+    const recvCands = [0, 4, 5].map(k => nAt(rc, k)).filter(n => M.roleOf(rc, n) !== 'S' && !(M.opts.formations === 'pro' && M.roleOf(rc, n) === 'O') && !((sit === 'libero_attack' || sit === 'libero_set') && M.roleOf(rc, n) === 'L'));
     let receiver = pick(recvCands.length ? recvCands : [0, 4, 5].map(k => nAt(rc, k)).filter(n => M.roleOf(rc, n) !== 'S'));
     // If only the Libero can receive, the Libero situations give way to a normal rally
     if ((sit === 'libero_attack' || sit === 'libero_set') && M.roleOf(rc, receiver) === 'L') sit = plan.sit = null;
@@ -725,7 +870,7 @@
       const tl = tC + (blk ? 0.6 : 0.45);
       ball(tC, tl, hitP, [lp[0], lp[1], BALL_R], blk ? 0.25 : 0.05);
       ev({ t: tl, kind: 'land', x: lp[0], y: lp[1] });
-      fault({ t: tC, key: sit, team: rc, comp: '1', sit, text: blk
+      fault({ t: tC, key: sit, team: rc, comp: 'both', sit, text: blk
         ? 'Il n. ' + who + ' mura il servizio della squadra avversaria.'
         : 'Il n. ' + who + ' attacca la palla di servizio avversaria nella zona d’attacco, quando è interamente sopra il bordo superiore della rete.' });
       R.slow.push(tC - 0.05);
@@ -780,7 +925,7 @@
         ball(touchT, tU, touchP, [pass[0], pass[1], BALL_R], 0.2, true);
         ev({ t: tU, kind: 'land', x: pass[0], y: pass[1] });
         const uC = touchP[0] / (touchP[0] - pass[0]);
-        fault({ t: touchT + (tU - touchT) * uC + 0.05, key: 'under_net', team: T, comp: 'both', sit: s, text: 'Il tocco del n. ' + firstBy + ' manda la palla completamente sotto la rete, nel campo avversario.' });
+        fault({ t: touchT + (tU - touchT) * uC + 0.05, key: 'under_net', team: T, comp: '1', sit: s, text: 'Il tocco del n. ' + firstBy + ' manda la palla completamente sotto la rete, nel campo avversario.' });
         R.slow.push(touchT + (tU - touchT) * uC - 0.1);
         R.natural = { t: tU, key: 'in', team: O, land: pass };
         R.endT = tU + 0.3;
@@ -897,7 +1042,7 @@
       if (liberoAttack) fault({ t: t2 + 0.12, key: 'libero_attack', team: T, comp: 'both', sit: s, text: 'Il Libero n. ' + L + ' completa un attacco con la palla interamente sopra il bordo superiore della rete.' });
       if (backAttack) fault({ t: t2 + 0.12, key: 'back_attack', team: T, comp: 'both', sit: s, text: 'Il difensore n. ' + attacker + ' attacca dalla zona d’attacco con la palla sopra il bordo della rete.' });
       if (liberoSets) {
-        if (aZ > NET_H + 0.2) fault({ t: t2 + 0.12, key: 'libero_set', team: T, comp: 'both', sit: s, text: 'Il n. ' + attacker + ' attacca sopra la rete una palla alzata in palleggio dal Libero n. ' + L + ' che si trova nella zona d’attacco.' });
+        if (aZ > NET_H + 0.2) fault({ t: t2 + 0.12, key: 'libero_set', team: T, comp: '1', sit: s, text: 'Il n. ' + attacker + ' attacca sopra la rete una palla alzata in palleggio dal Libero n. ' + L + ' che si trova nella zona d’attacco.' });
       }
 
       if (injectHere && s === 'antenna') {
@@ -910,7 +1055,7 @@
         const fall = [rnd(-1.2, 1.2), ap[1] + Math.sign(ap[1]) * rnd(0.9, 1.6), BALL_R];
         ball(t2 + 0.28, t2 + 0.95, hitA, fall, 0.25, true);
         ev({ t: t2 + 0.95, kind: 'land', x: fall[0], y: fall[1] });
-        fault({ t: t2 + 0.28, key: 'antenna', team: T, comp: 'both', sit: s, text: 'L’attacco del n. ' + attacker + ' colpisce l’antenna.' });
+        fault({ t: t2 + 0.28, key: 'antenna', team: T, comp: hitA[1] > 0 ? 'both' : '1', sit: s, text: 'L’attacco del n. ' + attacker + ' colpisce l’antenna.' });
         R.slow.push(t2 + 0.2);
         R.natural = { t: t2 + 0.95, key: 'out', team: T, land: fall };
         R.endT = t2 + 1.1;
@@ -921,28 +1066,38 @@
       const oFront = [1, 2, 3].map(k => nAt(O, k)).filter(n => n !== M.teams[O].libero.num);
       const bY = aP[1];
       const blockers = oFront.slice().sort((a, b) => Math.abs((M.pos[O + a] || { y: 0 }).y - bY) - Math.abs((M.pos[O + b] || { y: 0 }).y - bY)).slice(0, chance(0.5) ? 2 : 1);
-      blockers.forEach((n, i) => {
+      const backBlockSit = injectHere && (s === 'back_block' || s === 'back_block_try');
+      if (!backBlockSit) blockers.forEach((n, i) => {
         const l = M.local(O, 0.35, bY + (i ? (i % 2 ? 0.55 : -0.55) : 0)).l;
         at(O, n, t2 - 0.35, 0.35, clamp(l, -4.2, 4.2), 'block');
         jump(O, n, t2 + 0.02, 0.7, 0.8);
         pose(O, n, t2 + 0.7, 'ready');
       });
-      if (injectHere && s === 'back_block') {
-        // A back-row player runs to the net and takes part in a completed block
+      if (backBlockSit) {
+        // A back-row player runs from the back zone to the net and blocks alone (the front-row players stay down)
         const oBack = [0, 4, 5].map(k => nAt(O, k)).filter(n => n !== M.teams[O].libero.num);
         const bb = pick(oBack);
-        const bl = clamp(M.local(O, 0, bY).l + (chance(0.5) ? 0.6 : -0.6), -4.2, 4.2);
-        at(O, bb, t2 - 0.9, 3.0, bl, 'walk');
+        const bl = clamp(M.local(O, 0, bY).l, -4.2, 4.2);
+        at(O, bb, t2 - 1.1, 4.5, bl, 'walk');
         at(O, bb, t2 - 0.35, 0.35, bl, 'block');
-        jump(O, bb, t2 + 0.02, 0.7, 0.8);
+        jump(O, bb, t2 + 0.02, 0.75, 0.8);
         pose(O, bb, t2 + 0.7, 'ready');
+        R.backBlocker = bb;
+        if (s === 'back_block_try') {
+          // Block attempt without touching the ball: legal (Rule 14.1.3, 14.6.2)
+          R.trap = { sit: 'back_block_try', team: O, text: 'Il difensore n. ' + bb + ' salta a muro ma la palla non lo tocca: è solo un tentativo di muro, non è fallo.' };
+          blockTouchedBefore = false;
+        }
+      }
+      if (injectHere && s === 'back_block') {
+        const bb = R.backBlocker;
         const bp = [0, bY, NET_H + 0.3];
         ball(t2, t2 + 0.08, aP, bp, 0);
         ev({ t: t2 + 0.08, kind: 'block-touch', team: O, num: bb });
         const lp = M.w(T, rnd(1, 3.5), clamp(aL + rnd(-1.5, 1.5), -4, 4));
         ball(t2 + 0.08, t2 + 0.75, bp, [lp[0], lp[1], BALL_R], 0.4);
         ev({ t: t2 + 0.75, kind: 'land', x: lp[0], y: lp[1] });
-        fault({ t: t2 + 0.08, key: 'back_block', team: O, comp: 'both', sit: s, text: 'Il difensore n. ' + bb + ' partecipa a un muro completato: la palla tocca il muro.' });
+        fault({ t: t2 + 0.08, key: 'back_block', team: O, comp: 'both', sit: s, text: 'Il difensore n. ' + bb + ' (in seconda linea) salta a muro a rete e tocca la palla: muro effettivo di un difensore.' });
         R.slow.push(t2);
         R.natural = { t: t2 + 0.75, key: 'in', team: T, land: lp };
         R.endT = t2 + 0.9;
@@ -959,10 +1114,12 @@
         } else {
           // Lands with the whole foot beyond the centre line
           // ...while the ball is still in play: landing over the line after the rally has ended is not a fault (Rule 11.2.3)
-          const pIn = M.w(tm, -rnd(0.25, 0.45), M.local(tm, 0, wy).l);
+          // The foot lands beyond the line, under the net; the body cannot go through it: it presses on the net
+          const pIn = M.w(tm, -rnd(0.12, 0.2), M.local(tm, 0, wy).l);
           atW(tm, who, t2 + 0.38, pIn[0], pIn[1], 'stand');
+          ev({ t: t2 + 0.38, kind: 'net', y: pIn[1], strong: false });
           at(tm, who, t2 + 1.4, 1.0, M.local(tm, 0, wy).l, 'ready');
-          fault({ t: t2 + 0.38, key: 'centre_line', team: tm, comp: '2', sit: s, text: 'Il n. ' + who + ' ricade con il piede interamente oltre la linea centrale mentre la palla è ancora in gioco.' });
+          fault({ t: t2 + 0.38, key: 'centre_line', team: tm, comp: 'both', sit: s, text: 'Il n. ' + who + ' ricade con il piede interamente oltre la linea centrale mentre la palla è ancora in gioco.' });
           R.minLand = t2 + 0.9;
         }
       }
@@ -1132,6 +1289,8 @@
     const first = R.faults[0] || null;
     if (whistleT !== null && whistleT !== undefined) {
       if (first && first.t <= whistleT + 0.05) return { fault: first, late: whistleT - first.t > 2.5 };
+      // Whistling once the ball is already dead (landed, out...) just ends the rally: it is not a wrong whistle
+      if (!first && R.natural && whistleT >= R.natural.t - 0.1) return { natural: R.natural };
       // Whistled with no fault yet (an 8-second fault only exists from second 8)
       return { wrongWhistle: true };
     }

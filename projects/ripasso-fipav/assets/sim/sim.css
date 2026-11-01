@@ -354,3 +354,69 @@ kbd { font-family: var(--font); font-size: .75rem; padding: 1px 6px; border-radi
 #replay-modal { z-index: 75; }
 .lg-replay { margin-left: auto; border: 0; background: var(--blue-soft); color: var(--text); font: inherit; font-weight: 600; font-size: .74rem; padding: 3px 9px; border-radius: 999px; cursor: pointer; }
 .lg-replay:hover, .lg-replay:focus-visible { background: color-mix(in srgb, var(--blue-soft) 70%, var(--text) 12%); }
+
+/* Sanctions: chosen sanction, team and member */
+.dec-btn.on { background: var(--blue-soft); border-color: var(--focus); color: var(--text); box-shadow: inset 0 0 0 1px var(--focus); }
+.dec-btn .sh-dot { display: inline-block; vertical-align: middle; margin-right: 4px; }
+.ask-cap { border: 1px dashed var(--line); }
+.mem-h { margin: 10px 0 4px; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 700; }
+.mem-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.mem-wide { margin-top: 8px; margin-bottom: 8px; }
+.mem-btn { min-width: 46px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.mem-btn b { font-family: var(--font-score, inherit); font-size: 1.05rem; }
+.mem-btn i { font-style: normal; font-size: .64rem; color: var(--text-2); }
+.mem-btn.cap b { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.mem-btn.lib { background: color-mix(in srgb, #ffd54f 25%, var(--surface-2)); }
+.mem-btn.on { background: var(--blue-soft); border-color: var(--focus); box-shadow: inset 0 0 0 1px var(--focus); }
+.mem-btn:hover { border-color: var(--text-3); }
+.dec-confirm { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.sh-cap { padding: 2px 8px; min-height: 0; }
+.sim-opt-hint { flex-basis: 100%; font-size: .8rem; color: var(--text-3); line-height: 1.4; }
+#opt-fouls { flex-wrap: wrap; }
+
+/* Picking who gets a sanction on the court */
+.person-bar {
+  position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 6; width: min(560px, calc(100% - 24px));
+  background: var(--surface); color: var(--text); border-radius: 14px; padding: 10px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  display: flex; align-items: center; gap: 10px;
+}
+.person-bar[hidden] { display: none; }
+.person-bar p { flex: 1; }
+.person-bar p { margin: 0; font-size: .86rem; color: var(--text-2); }
+.person-bar strong { color: var(--text); }
+.pb-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick-target { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: var(--blue-soft); font-weight: 600; }
+.rp-mark.w { background: #1e88e5; }
+.rp-mark[hidden] { display: none; }
+.rp-legend { display: flex; justify-content: center; gap: 16px; margin-top: 8px; font-size: .78rem; color: var(--text-2); }
+.rp-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.rp-legend > span[hidden] { display: none; }
+.rp-legend i { width: 3px; height: 14px; border-radius: 2px; display: inline-block; }
+.rp-legend i.f { background: #e53935; }
+.rp-legend i.w { background: #1e88e5; }
+.rp-badge.w { background: #1e88e5; color: #fff; }
+.gm-who { font-size: .64rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: #4b5b78; }
+
+/* Game clock, seconds since the service authorisation, time-out countdown */
+.sim-badge.serve { background: rgba(30,136,229,.9); font-variant-numeric: tabular-nums; }
+.sim-badge.serve.late { background: #e53935; }
+#badge-clock { font-variant-numeric: tabular-nums; }
+.to-wait {
+  position: absolute; left: 50%; top: 96px; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 10px;
+  background: var(--surface); color: var(--text); border-radius: 14px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.to-wait[hidden] { display: none; }
+.to-wait span { color: var(--text-2); font-size: .86rem; }
+.to-wait b { font-family: var(--font-score, inherit); font-size: 1.6rem; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* Collaboration signals of the 2nd referee (you) to the 1st */
+.sim-btn.collab { background: rgba(255,255,255,.92); color: #14264a; }
+.collab-panel {
+  position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 6; width: min(520px, calc(100% - 24px));
+  background: var(--surface); color: var(--text); border-radius: 14px; padding: 10px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.collab-panel[hidden] { display: none; }
+.collab-panel p { margin: 0 0 8px; font-size: .82rem; color: var(--text-2); }
+.cp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cp-btn { border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 10px; padding: 8px 10px; font: inherit; font-weight: 600; font-size: .86rem; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 6px; }
+.cp-btn:hover { border-color: var(--focus); }

@@ -11,7 +11,7 @@ function schema_statements(): array
     return [
         'meta' => 'CREATE TABLE IF NOT EXISTS ' . t('meta') . " (
             `k` VARCHAR(64) NOT NULL PRIMARY KEY,
-            `v` VARCHAR(255) NOT NULL
+            `v` MEDIUMTEXT NOT NULL
         ) $opts",
 
         'users' => 'CREATE TABLE IF NOT EXISTS ' . t('users') . " (

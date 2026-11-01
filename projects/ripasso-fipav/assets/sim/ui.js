@@ -40,6 +40,7 @@
     if (ok) { c.c++; s.c++; } else { c.w++; s.w++; }
     if (helped) c.h++;
     G.decisions.push({ sit: sitId, ok, helped: !!helped });
+    if (G.M) G.M.adaptConduct(ok);
     saveSimData();
   }
 
@@ -110,7 +111,7 @@
   };
 
   // The 1st referee only leans slightly on the stand (a few tens of centimetres); the 2nd walks along the side line
-  const MOVE = { '1': { max: 0.3, speed: 0.45 }, '2': { max: 3.6, speed: 2.6 } };
+  const MOVE = { '1': { max: 0.3, speed: 0.45 }, '2': { max: 2.0, speed: 1.4 } };
 
   /**
    * Where a referee would stand by themselves: the 1st leans towards the attacking team (the side the ball is on),
@@ -132,6 +133,9 @@
     return side * MOVE[role].max * (role === '1' ? 0.85 : 0.75);
   }
 
+  /** Where the 2nd referee stands to signal towards a team: on that team's side of the net. */
+  function sideOfTeam2(T) { return clamp(G.M.side[T] * 1.6, -MOVE['2'].max, MOVE['2'].max); }
+
   function updateMovement(dt) {
     const M = G.M;
     if (!M || G.phase === 'idle' || G.phase === 'over') return;
@@ -143,6 +147,9 @@
       const screenSign = G.view === 'second' ? -1 : 1;
       target = clamp(G.refX + G.moveDir * screenSign * mv.speed * 0.5, -mv.max, mv.max);
       G.manualUntil = performance.now() + 1800;
+    } else if (G.selfNudge && performance.now() < G.selfNudge.until) {
+      // After your own whistle as 2nd referee: you move to the side of the team at fault, then signal
+      target = G.selfNudge.x;
     } else if (M.opts.autoMove && performance.now() > G.manualUntil) {
       target = autoRefX(myRole);
     } else {
@@ -155,7 +162,9 @@
     // The automatic partner always moves by themselves
     if (M.opts.mode !== 'solo') {
       const pr = myRole === '1' ? '2' : '1';
-      const pt = autoRefX(pr);
+      let pt = autoRefX(pr);
+      // A small step towards the team at fault, while signalling to the 1st referee
+      if (G.partnerNudge && performance.now() < G.partnerNudge.until) pt = G.partnerNudge.x;
       const ps = MOVE[pr].speed * dt;
       G.partnerX += clamp(pt - G.partnerX, -ps, ps);
     }
@@ -173,7 +182,7 @@
       $('opt-libero-row').hidden = b.dataset.mode === '1';
     }));
     $('opt-libero-row').hidden = true;
-    ['opt-target', 'opt-freq'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    ['opt-target', 'opt-freq', 'opt-fouls', 'opt-forms', 'opt-conduct', 'opt-score'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       $(id).querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
     })));
     $('btn-start').addEventListener('click', () => {
@@ -182,9 +191,15 @@
         mode,
         target: parseInt($('opt-target').querySelector('.active').dataset.v, 10),
         freq: parseFloat($('opt-freq').querySelector('.active').dataset.v),
+        fouls: parseFloat($('opt-fouls').querySelector('.active').dataset.v),
+        formations: $('opt-forms').querySelector('.active').dataset.v,
+        conduct: (v => v === 'auto' ? 'auto' : parseFloat(v))($('opt-conduct').querySelector('.active').dataset.v),
         aids: $('opt-aids').checked,
         libero: $('opt-libero').checked,
         autoMove: $('opt-automove').checked,
+        waitTimeout: $('opt-timeout').checked,
+        scoreMine: $('opt-score').querySelector('.active').dataset.v === 'mine',
+        subAnim: $('opt-subanim').checked,
         summary: $('opt-summary').checked,
       });
     });
@@ -218,6 +233,8 @@
     G.M = new E.Match(opts);
     G.decisions = [];
     G.log = [];
+    G.clock = 0;
+    G.toWait = null;
     G.lastCall = null;
     G.refX = 0; G.partnerX = 0; G.moveDir = 0; G.manualUntil = 0; G.refTarget = 0; G.timers = [];
     G.view = opts.mode === '2' ? 'second' : 'first';
@@ -261,6 +278,9 @@
         '<div class="ss-tile"><b>' + ok + '</b><span>corrette</span></div>' +
         '<div class="ss-tile"><b>' + pct + '%</b><span>precisione</span></div>' +
         '<div class="ss-tile"><b>' + G.decisions.filter(d => d.helped).length + '</b><span>con l’aiuto</span></div></div>';
+    const lvl = v => v === 0 ? 'nessuna' : v < 0.7 ? 'bassa' : v < 1.3 ? 'media' : 'alta';
+    html += '<p class="form-hint" style="margin-top:10px">Fallosità dei giocatori: ' + lvl(M.foulLevel()) + ' · Condotta scorretta: ' +
+      (M.opts.conduct === 'auto' ? 'automatica, a fine set ' : '') + lvl(M.conductLevel()) + '.</p>';
     if (wrong.length) {
       html += '<h2 class="sim-h2">Da ripassare</h2>';
       Object.keys(bySit).forEach(id => {
@@ -432,19 +452,107 @@
     if (!M.stillValid(e)) return nextEvent();
     G.event = e;
     G.eventT = 0;
-    if (e.user) {
-      hint(e.kind === 'conduct' ? 'Che provvedimento prendi?' : 'Decidi sulla richiesta');
+    // Irregular requests are spotted by the scorer (checks on the score sheet), who tells the 2nd referee
+    if ((e.kind === 'sub' || e.kind === 'timeout') && e.expected && e.expected !== 'authorize' && !e.scorer) {
+      e.scorer = true;
+      e.text += ' Il segnapunti avvisa a voce il 2° arbitro: dal referto la richiesta risulta irregolare.';
+      banner('Segnapunti', 'Avvisa il 2° arbitro: richiesta irregolare della ' + E.TEAM_DEF[e.team].label + '.', 2200);
+    }
+    if (e.user && (e.kind === 'conduct' || e.kind === 'sub' || e.kind === 'timeout')) {
+      // Misconduct and requests are whistled by the referee first (then the decision, with its signal)
+      G.pendingConduct = e;
+      hint(e.kind === 'conduct' ? 'Comportamento scorretto: fischia e sanziona' : e.kind === 'sub' ? 'Richiesta di sostituzione: fischia e decidi' : 'Richiesta di tempo di riposo: fischia e decidi');
+      $('btn-whistle').classList.add('pulse');
+      later(() => { if (G.pendingConduct === e && !G.modal) { e.lateWhistle = true; whistle(); openPendingEvent(e); } }, 7000);
+    } else if (e.user) {
+      hint('Decidi sulla richiesta');
       later(() => openEventDecision(e), e.kind === 'libero' ? 700 : 500);
     } else {
       // Handled by the automatic referee
-      later(() => {
-        const exp = e.expected || (e.regular ? 'authorize' : null);
-        const txt = aiEventText(e, exp);
-        G.lastCall = { by: e.comp === '1' ? '1° arbitro' : '2° arbitro', user: false, right: txt, happened: e.text, quiet: e.kind === 'libero' && e.regular };
-        if (txt) banner(e.comp === '1' ? '1° arbitro' : '2° arbitro', txt, 2400);
-        finishEvent(e, txt ? 1700 : 500);
-      }, e.kind === 'libero' && e.regular ? 300 : 900);
+      later(() => aiHandleEvent(e), e.kind === 'libero' && e.regular ? 300 : 900);
     }
+  }
+
+  const isDelay = k => k === 'delay_warning' || k === 'delay_penalty';
+  /** Why a request was rejected (or a Libero replacement is irregular): from the situation's explanation. */
+  function reasonOf(e) { const sit = SIT[e.sit]; return sit ? sit.solution : ''; }
+  /** The 2nd referee's signal on a request: authorise (time-out / substitution) or reject. */
+  function secondSignal(e, k) {
+    const W = c => ({ pose: 'whistle', whistle: true, caption: c || 'Fischio', dur: 1.0 });
+    if (k === 'authorize') return eventSignal(e, 'authorize');
+    if (e.kind === 'libero') return { role: '2', steps: [W('Fischio: rimpiazzo irregolare, va corretto')], note: null };
+    return eventSignal(e, 'reject_improper');
+  }
+  /** A request or misconduct handled by the automatic referee: motivated, with the official signal. */
+  function aiHandleEvent(e) {
+    const M = G.M, mode = M.opts.mode;
+    const exp = e.expected || (e.regular ? 'authorize' : null);
+    const who = e.comp === '1' ? '1° arbitro' : '2° arbitro';
+    // With you as 1st referee: the 2nd rejects the request, then the delay sanction is yours
+    if (mode === '1' && e.comp === '2' && isDelay(exp)) {
+      whistle();
+      banner('2° arbitro · fischio', (e.kind === 'libero' ? 'Rimpiazzo del Libero irregolare' : 'Richiesta respinta') + ': ' + reasonOf(e), 3400);
+      miniSignal(secondSignal(e, 'reject'), '2° arbitro');
+      later(() => openDelayDecision(e), 2200);
+      return;
+    }
+    const quiet = e.kind === 'libero' && e.regular;
+    let txt = aiEventText(e, exp);
+    if (txt && exp !== 'authorize' && e.kind !== 'conduct') txt += ' ' + reasonOf(e);
+    G.lastCall = { by: who, user: false, right: aiEventText(e, exp), happened: e.text, quiet };
+    if (txt) banner(who, txt, 3000);
+    const sig = e.comp === '2' ? (exp === 'authorize' ? secondSignal(e, 'authorize') : secondSignal(e, 'reject')) : eventSignal(e, exp);
+    // The 2nd referee first moves to the side of the team that made the request, then makes the signal
+    if (e.comp === '2' && mode === '1' && (e.kind === 'sub' || e.kind === 'timeout')) G.partnerNudge = { x: clamp(M.side[e.team] * 1.6, -MOVE['2'].max, MOVE['2'].max), until: performance.now() + 4500 };
+    if (!quiet) miniSignal(sig, who);
+    const dur = sig && sig.steps ? sig.steps.reduce((a, x) => a + (x.dur || 1.6), 0) * 1000 : 0;
+    finishEvent(e, txt ? Math.max(1900, dur * 0.85) : 500);
+  }
+  /** You are the 1st referee: after the 2nd rejected a request, decide the delay sanction. */
+  function openDelayDecision(e) {
+    const opts = { reject_improper: 'Nessuna sanzione (richiesta impropria)', delay_warning: 'Avvertimento per ritardo', delay_penalty: 'Penalizzazione per ritardo' };
+    $('decision-title').textContent = 'Il 2° arbitro ha respinto: decidi tu la sanzione';
+    $('decision-sub').textContent = '';
+    let html = '<div class="dec-event">' + esc(e.text) + '<br><small>2° arbitro: ' + esc(reasonOf(e)) + '</small></div><div class="dec-grid" style="margin-top:12px">';
+    Object.keys(opts).forEach(k => { html += '<button class="dec-btn" data-k="' + k + '">' + esc(opts[k]) + '</button>'; });
+    html += '</div><div class="dec-back"><button class="btn btn-ghost btn-sm" id="dec-help">Aiuto</button> <button class="btn btn-ghost btn-sm" id="dec-sheet">Referto</button> <button class="btn btn-ghost btn-sm" id="dec-log">Cronologia</button></div>';
+    $('decision-body').innerHTML = html;
+    bindDecLog();
+    $('decision-body').querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => { closeModal('decision-modal'); evaluateEvent(e, b.dataset.k); }));
+    $('dec-help').addEventListener('click', () => openHelp());
+    $('dec-sheet').addEventListener('click', () => toggleSheet(true));
+    openModal('decision-modal');
+  }
+  /** You are the 2nd referee: authorise or reject; a delay sanction is then given by the 1st. */
+  function evaluateRequest2(e, choice) {
+    const exp = e.expected || 'authorize';
+    const expC = exp === 'authorize' ? 'authorize' : 'reject';
+    const ok = choice === expC;
+    record(e.sit, ok, e.helped);
+    const L = e.kind === 'libero' ? { authorize: 'Regolare: lascia proseguire', reject: 'Irregolare: fischia e fai correggere' } : { authorize: 'Autorizza', reject: 'Respingi la richiesta' };
+    const lbl = E.TEAM_DEF[e.team].label;
+    if (choice === 'authorize' && (e.kind === 'sub' || e.kind === 'timeout')) G.selfNudge = { x: sideOfTeam2(e.team), until: performance.now() + 4200 };
+    showFeedback({
+      ok, sitId: e.sit,
+      quiet: ok && exp === 'authorize',
+      happened: e.text,
+      yours: L[choice],
+      right: L[expC] + (isDelay(exp) ? '; poi il 1° arbitro: ' + (exp === 'delay_warning' ? 'avvertimento' : 'penalizzazione') + ' per ritardo alla ' + lbl : ''),
+      note: [exp !== 'authorize' ? 'Motivo: ' + reasonOf(e) + (isDelay(exp) ? ' La sanzione per ritardo la decide il 1° arbitro.' : '') : '',
+        e.lateWhistle ? 'La richiesta va accolta (o respinta) subito con il fischio.' : ''].filter(Boolean).join(' ') || null,
+      context: e.text,
+      signal: secondSignal(e, expC),
+      yourSignal: secondSignal(e, choice),
+    }, () => {
+      if (G.M.opts.scoreMine && choice !== expC) e.expected = choice === 'authorize' ? 'authorize' : 'reject_improper';
+      if (isDelay(e.expected)) {
+        // The 1st referee gives the delay sanction
+        whistle();
+        banner('1° arbitro', (e.expected === 'delay_warning' ? 'Avvertimento' : 'Penalizzazione') + ' per ritardo alla ' + lbl + '.', 2800);
+        miniSignal(eventSignal(e, e.expected), '1° arbitro');
+        finishEvent(e, 2800);
+      } else finishEvent(e, 400);
+    });
   }
 
   function aiEventText(e, exp) {
@@ -465,11 +573,25 @@
       court: { A: [0, 1, 2, 3, 4, 5].map(k => G.M.onCourt('A', k)), B: [0, 1, 2, 3, 4, 5].map(k => G.M.onCourt('B', k)) } };
     const res = G.M.applyBetween(e);
     updateScore();
+    // Optional animation of substitutions and Libero replacements (the players walk in and out)
+    const swapped = (e.kind === 'sub' || e.kind === 'libero') && (e.expected === 'authorize' || (e.regular && !e.expected));
+    if (G.M.opts.subAnim && swapped && e.inn && G.M.pos[e.team + e.inn]) {
+      const M = G.M, q = M.pos[e.team + e.inn];
+      G.subAnim = { T: e.team, inn: e.inn, out: e.out, court: { x: q.x, y: q.y }, zone: [M.side[e.team] * (e.kind === 'sub' ? 1.6 : 6.2), 5.1], t0: G.clock || 0, dur: 2.6 };
+      delay = Math.max(delay || 0, 2700);
+    }
     logEntry({ kind: e.kind, before, outcome: (G.lastCall && G.lastCall.right) || aiEventText(e, e.expected || (e.regular ? 'authorize' : null)) || e.text,
       replay: { snap, from: 0, to: 4, focus: 1.6, label: LOG_KIND[e.kind] || 'Richiesta', event: true } });
     if (e.kind === 'timeout' && (e.expected === 'authorize')) {
-      banner('Tempo di riposo', E.TEAM_DEF[e.team].label + ' · 30 secondi', 2200);
-      delay = Math.max(delay || 0, 2300);
+      startHuddle();
+      if (G.M.opts.waitTimeout) {
+        // The whole 30 seconds, with a countdown (can be cut short)
+        G.event = null;
+        if (res.followUp && res.followUp.length) G.queue.unshift(...res.followUp);
+        return startTimeoutWait(e.team);
+      }
+      banner('Tempo di riposo', E.TEAM_DEF[e.team].label + ' · 30 secondi', 2600);
+      delay = Math.max(delay || 0, 3800);
     }
     if (res.point) banner('Punto', 'Punto e servizio alla ' + E.TEAM_DEF[res.point].label + '.', 2200);
     if (res.followUp && res.followUp.length) G.queue.unshift(...res.followUp);
@@ -477,9 +599,41 @@
     later(() => { if (G.phase === 'break') nextEvent(); }, delay || 400);
   }
 
+  /**
+   * During a time-out the players of both teams leave the court and gather around their coach, by their bench;
+   * they walk back to their positions before the next service (from these positions).
+   */
+  function startHuddle() {
+    const M = G.M, from = {}, to = {};
+    ['A', 'B'].forEach(T => {
+      const b = BENCH[T], cx = (b.x0 + b.x1) / 2 + M.side[T] * -0.2;
+      const on = [0, 1, 2, 3, 4, 5].map(k => M.onCourt(T, k));
+      on.forEach((n, i) => {
+        const key = T + n, a = (i / on.length) * Math.PI * 2;
+        const q = M.pos[key] || { x: M.side[T] * 4, y: 0 };
+        from[key] = { x: q.x, y: q.y };
+        to[key] = { x: cx + Math.cos(a) * 0.95, y: 5.7 + Math.sin(a) * 0.55 };
+        M.pos[key] = to[key];
+      });
+    });
+    G.huddle = { from, to, t0: G.clock || 0, dur: 1.8 };
+  }
+
+  /** Time-out of 30 seconds, waited in full (option): countdown, then the game goes on. */
+  function startTimeoutWait(team) {
+    const tok = G.toWait = { left: 30, team };
+    $('to-wait').hidden = false;
+    $('to-wait-team').textContent = E.TEAM_DEF[team].label;
+    const end = () => { if (G.toWait !== tok) return; G.toWait = null; $('to-wait').hidden = true; if (G.phase === 'break') nextEvent(); };
+    tok.end = end;
+    later(end, 30000);
+  }
+
   function openEventDecision(e) {
     if (G.phase !== 'break') return;
-    const opts = e.kind === 'conduct' ? E.CONDUCT_DECISIONS
+    const asSecond = G.M.opts.mode === '2' && e.kind !== 'conduct';
+    const opts = asSecond ? (e.kind === 'libero' ? { authorize: 'Regolare: lascia proseguire', reject: 'Irregolare: fischia e fai correggere' } : { authorize: 'Autorizza', reject: 'Respingi la richiesta' })
+      : e.kind === 'conduct' ? E.CONDUCT_DECISIONS
       : e.kind === 'libero' ? { authorize: 'Regolare: lascia proseguire', delay_warning: 'Irregolare: correggi, avvertimento per ritardo', delay_penalty: 'Irregolare: correggi, penalizzazione per ritardo' }
       : E.REQUEST_DECISIONS;
     $('decision-title').textContent = e.kind === 'conduct' ? 'Condotta di un giocatore' : e.kind === 'libero' ? 'Rimpiazzo del Libero' : e.kind === 'timeout' ? 'Richiesta di tempo di riposo' : 'Richiesta di sostituzione';
@@ -491,17 +645,20 @@
     bindDecLog();
     $('decision-body').querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
       closeModal('decision-modal');
-      evaluateEvent(e, b.dataset.k);
+      if (asSecond) evaluateRequest2(e, b.dataset.k); else evaluateEvent(e, b.dataset.k);
     }));
     $('dec-help').addEventListener('click', () => openHelp());
     $('dec-sheet').addEventListener('click', () => toggleSheet(true));
     openModal('decision-modal');
   }
 
-  function evaluateEvent(e, choice) {
+  function evaluateEvent(e, choice, target) {
     trace('evaluateEvent ' + e.kind);
     const exp = e.expected || 'authorize';
-    const ok = choice === exp;
+    const conduct = e.kind === 'conduct';
+    const whoOk = !conduct || choice !== exp || targetOk(e, exp, target);
+    const viaOk = !conduct || !viaChoice(exp) || choice !== exp || !whoOk || !target || target.via === rightVia(target.team, target.who, exp);
+    const ok = choice === exp && whoOk && viaOk;
     const sitId = e.sit;
     record(sitId, ok, e.helped);
     const opts = e.kind === 'conduct' ? E.CONDUCT_DECISIONS : E.REQUEST_DECISIONS;
@@ -511,13 +668,29 @@
       // Routine correct calls (authorised requests, regular Libero replacements) do not stop the game
       quiet: ok && exp === 'authorize',
       happened: e.text,
-      yours: label(choice),
-      right: label(exp),
-      note: null,
+      yours: label(choice) + (conduct && choice !== 'none' ? ' ' + targetLabel(target) : ''),
+      right: label(exp) + (conduct && rightTarget(e, exp) ? ' ' + targetLabel(rightTarget(e, exp)) : ''),
+      note: [
+        conduct && choice === exp && !whoOk ? 'Il provvedimento era giusto, ma il destinatario no: va dato ' + targetLabel(rightTarget(e, exp)) + '.' : '',
+        conduct && choice === exp && whoOk && !viaOk ? (exp === 'verbal'
+          ? 'Il provvedimento era giusto, ma l’hai comunicato direttamente al giocatore: l’avvertimento verbale non è personale, si dà alla squadra tramite il capitano in gioco (n. ' + G.M.gameCaptain(e.team) + ') (Regole di gioco 21.1).'
+          : rightVia(target.team, target.who) === 'player'
+          ? 'Il cartellino a un giocatore in campo si mostra direttamente a lui, invitandolo al seggiolone (Indicazioni tecniche 3.6.2).'
+          : 'A un componente non in campo (panchina, allenatore) la sanzione si comunica tramite il capitano in gioco, poi si mostra il cartellino al componente che si alza (Indicazioni tecniche 3.6.2).') : '',
+        conduct && exp === 'verbal' && viaOk ? 'L’avvertimento verbale non è personale: si dà alla squadra tramite il capitano in gioco (n. ' + G.M.gameCaptain(e.team) + ').' : '',
+        e.lateWhistle ? (conduct ? 'Andava fischiato subito, appena visto il comportamento.' : 'La richiesta va accolta (o respinta) subito con il fischio.') : '',
+      ].filter(Boolean).join(' ') || null,
       context: e.text,
       signal: eventSignal(e, exp),
-      yourSignal: eventSignal(e, choice),
-    }, () => finishEvent(e, 400));
+      yourSignal: conduct && target ? eventSignal(Object.assign({}, e, { team: target.team, who: target.who }), choice) : eventSignal(e, choice),
+    }, () => {
+      // "Vale la mia decisione": your choice is applied, even if wrong
+      if (G.M.opts.scoreMine) {
+        e.expected = choice;
+        if (conduct && target && typeof target.who === 'number') { e.team = target.team; e.who = target.who; }
+      }
+      finishEvent(e, 400);
+    });
   }
 
   // ======================================================================================
@@ -530,10 +703,14 @@
     G.prepT = 0;
     G.whistled = false;
     G.whistleT = null;
+    G.aiWhistleT = null;
+    G.collabSignal = null; G.collabUsed = false; G.firstMisses = undefined;
+    $('collab-panel').hidden = true;
     G.helped = false;
     G.deadAt = null;
     G.netShake = null;
     G.authorized = false;
+    G.huddle = null;
     G.prepFrom = {};
     Object.keys(M.pos).forEach(k => { G.prepFrom[k] = { x: M.pos[k].x, y: M.pos[k].y }; });
     const plan = M.planRally();
@@ -581,9 +758,30 @@
     const dt = Math.min(0.05, (now - (G.lastFrame || now)) / 1000);
     G.lastFrame = now;
     const running = !G.paused && !G.modal;
-    if (running) { step(dt * (G.speed || 1)); updateMovement(dt * (G.speed || 1)); }
+    $('btn-collab').hidden = !(G.M && G.M.opts.mode === '2' && G.phase === 'rally' && !G.whistled);
+    if (running) { step(dt * (G.speed || 1)); updateMovement(dt * (G.speed || 1)); G.clock = (G.clock || 0) + dt * (G.speed || 1); }
+    updateClocks();
     runTimers(dt * (G.speed || 1), running);
     draw();
+  }
+
+  /** Game clock (time played, without pauses and decision windows) and seconds since the service authorisation. */
+  function updateClocks() {
+    const c = Math.floor(G.clock || 0);
+    const txt = Math.floor(c / 60) + ':' + String(c % 60).padStart(2, '0');
+    if ($('badge-clock').textContent !== '⏱ ' + txt) $('badge-clock').textContent = '⏱ ' + txt;
+    const R = G.R;
+    const showServe = R && G.authorized && (G.phase === 'rally' || G.phase === 'decision') && G.t <= R.tHit + 1.2;
+    $('badge-serve').hidden = !showServe;
+    if (showServe) {
+      const sec = Math.min(G.t, R.tHit);
+      $('badge-serve').textContent = 'Servizio: ' + sec.toFixed(1).replace('.', ',') + ' s';
+      $('badge-serve').classList.toggle('late', sec > 8);
+    }
+    if (G.toWait) {
+      const left = Math.max(0, Math.ceil(30 - ((G.clock || 0) - (G.toWait.t0 == null ? (G.toWait.t0 = G.clock || 0) : G.toWait.t0))));
+      $('to-wait-left').textContent = left;
+    }
   }
 
   function slowNow() {
@@ -617,11 +815,40 @@
       G.t += dt * (slow ? 0.28 : 1);
       // Net shakes
       R.events.forEach(ev => { if (ev.kind === 'net' && ev.t > prevT && ev.t <= G.t) G.netShake = { y: ev.y, t0: G.t, amp: ev.strong ? 0.09 : 0.05 }; });
+      // The 2nd referee helps the 1st with ball-handling faults: an unofficial signal at mid-chest, a small step
+      if (M.opts.mode === '1' && !G.whistled) {
+        const hf = R.faults.find(f => HANDLING[f.key] && G.t >= f.t + 0.25 && G.t < f.t + 1.5);
+        if (hf && G.collab !== hf) {
+          G.collab = hf;
+          if (Math.random() < 0.85) {
+            const pose = { four_hits: 'chest4', double_contact: 'chest2' }[hf.key];
+            miniSignal({ role: '2', steps: [{ pose, side: handFor(hf.team, '2'), caption: E.DECISIONS[hf.key].label + ' della ' + E.TEAM_DEF[hf.team].label + ' (segnale non ufficiale, al petto)', dur: 2.4 }] }, '2° arbitro · collaborazione');
+            G.partnerNudge = { x: collabStep(G.partnerX, hf.team), until: performance.now() + 2500 };
+          }
+        }
+      }
+      if (M.opts.mode === '1' && R.natural && R.natural.key === 'touched_out' && !R.faults.length && G.t >= R.natural.t + 0.1 && G.collab !== R.natural) {
+        G.collab = R.natural;
+        if (Math.random() < 0.85) {
+          miniSignal({ role: '2', steps: [{ pose: 'chestTouched', caption: 'Palla toccata dalla ' + E.TEAM_DEF[R.natural.team].label + ' (segnale discreto, al petto)', dur: 2.4 }] }, '2° arbitro · collaborazione');
+          G.partnerNudge = { x: collabStep(G.partnerX, R.natural.team), until: performance.now() + 2500 };
+        }
+      }
       // The automatic referee whistles faults of their competence
       for (const f of R.faults) {
         if (G.whistled) break;
         const userDecides = M.userDecides(f.comp);
         const partner = M.opts.mode !== 'solo';
+        if (!userDecides && HANDLING[f.key] && M.opts.mode === '2') {
+          // The 1st referee sometimes misses a ball-handling fault: your collaboration signal helps
+          if (G.firstMisses === undefined) G.firstMisses = Math.random() < 0.4;
+          const sig = G.collabSignal;
+          const helped = sig && sig.key === f.key && sig.team === f.team && sig.t >= f.t - 0.1;
+          if (helped && G.t >= sig.t + 0.4) { G.collabUsed = true; return aiWhistle(f, false); }
+          if (!G.firstMisses && G.t >= f.t + 0.35) return aiWhistle(f, false);
+          if (f.t > G.t) break;
+          continue;
+        }
         if (!userDecides && G.t >= f.t + 0.35) return aiWhistle(f, false);
         if (userDecides && f.comp === 'both' && partner && G.t >= f.t + G.aiPartnerGrace + 0.35) return aiWhistle(f, true);
         if (f.t > G.t) break;
@@ -647,12 +874,310 @@
       openRallyDecision(G.t);
       return;
     }
-    if (G.phase === 'prep') { toast('Il gioco non è ancora iniziato: prima va autorizzato il servizio.'); return; }
+    // Before the service or between rallies: a whistle to sanction someone, ask for the game captain...
+    if (G.phase === 'break' || G.phase === 'prep') {
+      whistle();
+      $('btn-whistle').classList.remove('pulse');
+      if (G.pendingConduct) return openPendingEvent(G.pendingConduct);
+      return openFreeWhistle();
+    }
+  }
+
+  /** "Why did you whistle?" when the ball is not in play. */
+  function openFreeWhistle() {
+    const M = G.M;
+    $('decision-title').textContent = 'Hai fischiato: perché?';
+    $('decision-sub').textContent = G.phase === 'prep' ? 'Il servizio non è ancora stato autorizzato.' : '';
+    let html = '<div class="dec-grid">';
+    if (M.opts.mode !== '2') html += '<button class="dec-btn" id="fw-sanction">Sanzione (cartellino o altro)…</button>';
+    html += ['A', 'B'].map(T => '<button class="dec-btn" data-cap="' + T + '"><span class="sh-dot" style="background:' + TEAM_COLOR[T] + '"></span> Chiedi il capitano in gioco · ' + esc(E.TEAM_DEF[T].label) + '</button>').join('');
+    html += '<button class="dec-btn" id="fw-none">Niente: riprendi</button></div>';
+    html += '<div class="dec-back"><button class="btn btn-ghost btn-sm" id="dec-help">Aiuto</button> <button class="btn btn-ghost btn-sm" id="dec-sheet">Referto</button> <button class="btn btn-ghost btn-sm" id="dec-log">Cronologia</button></div>';
+    $('decision-body').innerHTML = html;
+    bindDecLog();
+    $('dec-help').addEventListener('click', () => openHelp());
+    $('dec-sheet').addEventListener('click', () => toggleSheet(true));
+    $('fw-none').addEventListener('click', () => closeModal('decision-modal'));
+    $('decision-body').querySelectorAll('[data-cap]').forEach(b => b.addEventListener('click', () => { closeModal('decision-modal'); askCaptain(b.dataset.cap, true); }));
+    if ($('fw-sanction')) $('fw-sanction').addEventListener('click', () => openSanctionPicker({
+      title: 'Hai fischiato: quale sanzione?',
+      options: SANCTIONS,
+      onDone: (k, target) => evaluateFreeSanction(k, target),
+      onBack: () => openFreeWhistle(),
+    }));
+    openModal('decision-modal');
+  }
+
+  // ======================================================================================
+  // Sanctions: choose the sanction and who gets it (a player, the coach, or the team through the game captain)
+  // ======================================================================================
+  const SANCTIONS = {
+    verbal: 'Avvertimento verbale', yellow: 'Cartellino giallo (avvertimento)', red: 'Cartellino rosso (penalizzazione)',
+    expulsion: 'Espulsione (giallo e rosso insieme)', disqualification: 'Squalifica (giallo e rosso separati)',
+    delay_warning: 'Avvertimento per ritardo', delay_penalty: 'Penalizzazione per ritardo',
+  };
+  const sanctionLabel = k => SANCTIONS[k] || E.CONDUCT_DECISIONS[k] || E.REQUEST_DECISIONS[k] || k;
+  function targetLabel(t) {
+    if (!t) return '';
+    const lbl = E.TEAM_DEF[t.team].label;
+    return t.who === 'team' ? 'alla ' + lbl + ' (tramite il capitano in gioco)' : t.who === 'coach' ? 'all’allenatore della ' + lbl : 'al n. ' + t.who + ' della ' + lbl + (t.via === 'captain' ? ' (comunicata tramite il capitano in gioco)' : '');
+  }
+  /** Asks a team who the game captain is (the referee whistles and the team shows it). */
+  function askCaptain(T, silent) {
+    const M = G.M, n = M.gameCaptain(T), d = E.TEAM_DEF[T];
+    if (!silent) whistle();
+    M.teams[T].gcAsked = n;
+    G.capReveal = { T, n, until: performance.now() + 4500 };
+    // Official signal of the request (not a sanction): the index finger touches the chest at the number's height
+    const role = M.opts.mode === '2' ? '2' : '1';
+    miniSignal({ role, steps: [
+      { pose: 'whistle', whistle: true, caption: 'Fischio', dur: 0.9 },
+      { pose: 'askCap', side: handFor(T, role), motion: 'tapChest', once: true, caption: 'Chi è il capitano in gioco? L’indice tocca il petto all’altezza del numero', dur: 2.0 },
+    ] }, 'Richiesta del capitano in gioco');
+    banner('Richiesta del capitano in gioco · ' + d.label, n === d.captain ? 'Il capitano n. ' + n + ' è in campo: è lui il capitano in gioco.' : 'Capitano in gioco: n. ' + n + ' (il capitano n. ' + d.captain + ' non è in campo).', 3200);
+    if (!$('sheet').hidden) renderSheet();
+    return n;
+  }
+  /**
+   * opts: { title, text, options: {key: label}, fixedKey, onDone(key, {team, who}), onBack }.
+   * Uses the decision window: sanction, then team, then member.
+   */
+  function openSanctionPicker(opts) {
+    const st = { key: opts.fixedKey || null, team: null, who: null };
+    const render = () => {
+      $('decision-title').textContent = opts.title;
+      $('decision-sub').textContent = '';
+      let html = opts.text ? '<div class="dec-event">' + esc(opts.text) + '</div>' : '';
+      html += '<div class="dec-group"><h5>Provvedimento</h5><div class="dec-grid">' + Object.keys(opts.options).map(k =>
+        '<button class="dec-btn' + (st.key === k ? ' on' : '') + '" data-s="' + k + '">' + esc(opts.options[k]) + '</button>').join('') + '</div></div>';
+      html += '<div class="dec-group"><h5>A chi</h5><div class="dec-grid"><button class="dec-btn" id="pick-court">' + (st.team ? 'Cambia sul campo…' : 'Scegli sul campo…') + '</button>' +
+        ['A', 'B'].map(T => '<button class="dec-btn" data-askcap="' + T + '"><span class="sh-dot" style="background:' + TEAM_COLOR[T] + '"></span> Chiedi il capitano in gioco · ' + esc(E.TEAM_DEF[T].label) + '</button>').join('') + '</div>';
+      if (st.team) html += '<div class="pick-target">' + esc(targetLabel(st).replace(/^(al|alla|all’) ?/, '')) + '</div>';
+      if (st.team && (typeof st.who === 'number' || st.who === 'coach') && st.key && viaChoice(st.key)) {
+        html += '<div class="dec-group"><h5>Comunica la sanzione</h5><div class="segmented seg-via">' +
+          '<button type="button" data-via="player" class="' + (st.via !== 'captain' ? 'active' : '') + '">Direttamente al giocatore</button>' +
+          '<button type="button" data-via="captain" class="' + (st.via === 'captain' ? 'active' : '') + '">Tramite il capitano in gioco</button></div></div>';
+      }
+      html += '</div>';
+      html += '<div class="dec-confirm"><button class="btn btn-ghost" id="san-back">Indietro</button><button class="btn btn-primary" id="san-ok"' + (st.key && st.team && st.who !== null ? '' : ' disabled') + '>Sanziona</button></div>';
+      html += '<div class="dec-back"><button class="btn btn-ghost btn-sm" id="dec-help">Aiuto</button> <button class="btn btn-ghost btn-sm" id="dec-sheet">Referto</button> <button class="btn btn-ghost btn-sm" id="dec-log">Cronologia</button></div>';
+      $('decision-body').innerHTML = html;
+      bindDecLog();
+      $('dec-help').addEventListener('click', () => openHelp());
+      $('dec-sheet').addEventListener('click', () => toggleSheet(true));
+      $('decision-body').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => { st.key = b.dataset.s; render(); }));
+      $('decision-body').querySelectorAll('[data-via]').forEach(b => b.addEventListener('click', () => { st.via = b.dataset.via; render(); }));
+      const toCourt = () => pickOnCourt(st, () => { render(); openModal('decision-modal'); });
+      $('pick-court').addEventListener('click', toCourt);
+      // Asking who the game captain is (when the captain is not on court): whistle and signal, then back here
+      $('decision-body').querySelectorAll('[data-askcap]').forEach(b => b.addEventListener('click', () => {
+        closeModal('decision-modal');
+        G.modal = 'askcap'; // the game stays still while the team shows its game captain
+        askCaptain(b.dataset.askcap, true);
+        later(() => { render(); openModal('decision-modal'); }, 3000);
+      }));
+
+      // After choosing the sanction, go straight to the court to pick who gets it
+      $('decision-body').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => { if (!st.team) setTimeout(toCourt, 120); }));
+      $('san-back').addEventListener('click', () => { if (opts.onBack) opts.onBack(); });
+      $('san-ok').addEventListener('click', () => { closeModal('decision-modal'); opts.onDone(st.key, { team: st.team, who: st.who, via: st.via === 'captain' ? 'captain' : 'player' }); });
+    };
+    render();
+    openModal('decision-modal');
+  }
+
+  // ---------- Collaboration signals of the 2nd referee (you) to the 1st ----------
+  // Collaboration signals exist only for double contact and four hits (not for a catch), plus the ball touched
+  // by the team on whose side it went out (Indicazioni tecniche 1.3, 4.3.13)
+  const HANDLING = { double_contact: 'Doppio tocco', four_hits: 'Quattro tocchi' };
+  const COLLAB = { double_contact: 'Doppio tocco', four_hits: 'Quattro tocchi', touched: 'Palla toccata' };
+  /**
+   * The 2nd referee's small step while signalling: from where they are, towards the team at fault when it is
+   * the team on the other side; they stay still when the team at fault is the one on their side.
+   */
+  function collabStep(curX, team) {
+    const side = G.M.side[team], mine = Math.abs(curX) < 0.3 ? 0 : Math.sign(curX);
+    return mine === side ? curX : clamp(curX + side * 0.6, -MOVE['2'].max, MOVE['2'].max);
+  }
+  function openCollab() {
+    if (G.phase !== 'rally' || G.whistled) return;
+    const p = $('collab-panel');
+    if (!p.hidden) { p.hidden = true; return; }
+    $('cp-grid').innerHTML = Object.keys(COLLAB).map(k => ['A', 'B'].map(T =>
+      '<button class="cp-btn" data-k="' + k + '" data-t="' + T + '"><span class="sh-dot" style="background:' + TEAM_COLOR[T] + '"></span>' + COLLAB[k] + ' · ' + T + '</button>').join('')).join('');
+    $('cp-grid').querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => sendCollab(b.dataset.k, b.dataset.t)));
+    p.hidden = false;
+  }
+  function sendCollab(key, team) {
+    $('collab-panel').hidden = true;
+    if (G.phase !== 'rally' || G.whistled) return;
+    G.collabSignal = { key, team, t: G.t };
+    const pose = { four_hits: 'chest4', double_contact: 'chest2', touched: 'chestTouched' }[key];
+    miniSignal({ role: '2', steps: [{ pose, side: handFor(team, '2'), caption: COLLAB[key] + ' della ' + E.TEAM_DEF[team].label + ' (al petto, con un passo verso la squadra)', dur: 2.0 }] }, 'Il tuo segnale al 1° arbitro');
+    // A small step towards the team at fault
+    G.refTarget = collabStep(G.refX, team);
+    G.manualUntil = performance.now() + 1500;
+  }
+  /** At the end of the rally: how your collaboration went (mode 2). */
+  function judgeCollab(R) {
+    if (G.M.opts.mode !== '2') return;
+    const sig = G.collabSignal;
+    const hf = R.faults.find(f => HANDLING[f.key]);
+    const touched = R.natural && R.natural.key === 'touched_out' && !R.faults.length;
+    if (sig && sig.key === 'touched') {
+      const ok = touched && sig.team === R.natural.team;
+      record(ok ? 'collab_ok' : 'collab_wrong', !!ok, false);
+      if (!ok) toast('Il tuo segnale di palla toccata non era corretto: il 1° arbitro lo ha ignorato.');
+    } else if (sig) {
+      const ok = hf && sig.key === hf.key && sig.team === hf.team && sig.t >= hf.t - 0.1;
+      record(ok ? 'collab_ok' : 'collab_wrong', !!ok, false);
+      if (!ok) toast('Il tuo segnale di collaborazione non corrispondeva a un fallo: il 1° arbitro lo ha ignorato.');
+    } else if ((hf || touched) && G.firstMisses && !G.collabUsed) {
+      record('collab_missed', false, false);
+    }
+  }
+
+  // ---------- Picking a person on the court (players, bench, coaches), with a light hover ----------
+  const PP = { active: false, hover: null, chosen: null, st: null, done: null };
+  function pickOnCourt(st, done) {
+    PP.active = true; PP.hover = null;
+    PP.chosen = st.team && st.who !== 'team' ? (st.who === 'coach' ? 'coach' + st.team : st.team + st.who) : null;
+    PP.st = st; PP.done = done;
+    $('decision-modal').hidden = true;
+    G.modal = 'person';
+    $('person-bar').hidden = false;
+    $('pb-sanction').textContent = st.key ? sanctionLabel(st.key) : 'Sanzione';
+  }
+  function endPick(apply) {
+    PP.active = false;
+    $('person-bar').hidden = true;
+    $('sim-canvas').style.cursor = '';
+    if (apply !== false && PP.done) PP.done();
+  }
+  function choosePerson(id) {
+    const st = PP.st;
+    if (/^coach/.test(id)) { st.team = id.slice(5); st.who = 'coach'; }
+    else { st.team = id[0]; st.who = +id.slice(1); }
+    PP.chosen = id;
+    endPick();
+  }
+  function canvasPoint(ev) {
+    const r = $('sim-canvas').getBoundingClientRect();
+    return [ev.clientX - r.left, ev.clientY - r.top];
+  }
+  function bindPersonPicking() {
+    const cv = $('sim-canvas');
+    cv.addEventListener('pointermove', ev => {
+      if (!PP.active) return;
+      const [x, y] = canvasPoint(ev);
+      PP.hover = G.renderer.hitTest(x, y);
+      cv.style.cursor = PP.hover ? 'pointer' : '';
+    });
+    cv.addEventListener('pointerleave', () => { PP.hover = null; });
+    cv.addEventListener('click', ev => {
+      if (!PP.active) return;
+      const [x, y] = canvasPoint(ev);
+      const id = G.renderer.hitTest(x, y);
+      if (id) choosePerson(id);
+    });
+    $('pb-cancel').addEventListener('click', () => endPick());
+  }
+
+  function openPendingEvent(e) {
+    if (e.kind === 'conduct') return openConductPicker(e);
+    G.pendingConduct = null;
+    $('btn-whistle').classList.remove('pulse');
+    hint('');
+    openEventDecision(e);
+  }
+
+  function openConductPicker(e) {
+    G.pendingConduct = null;
+    $('btn-whistle').classList.remove('pulse');
+    hint('');
+    openSanctionPicker({
+      title: 'Condotta di un giocatore: che provvedimento prendi?',
+      text: e.text,
+      options: E.CONDUCT_DECISIONS,
+      onDone: (k, target) => evaluateEvent(e, k, target),
+      onBack: null,
+    });
+  }
+
+  /** Who should get the sanction: the offender for cards, the team (through the game captain) for warnings and delays. */
+  function rightTarget(e, exp) {
+    if (exp === 'none') return null;
+    if (exp === 'verbal' || exp === 'delay_warning' || exp === 'delay_penalty') return { team: e.team, who: 'team' };
+    return { team: e.team, who: e.who };
+  }
+  function targetOk(e, exp, t) {
+    const r = rightTarget(e, exp);
+    if (!r) return true;
+    if (!t || t.team !== r.team) return false;
+    if (r.who === 'team') return true;   // a team warning: whoever you point at, it is given through the game captain
+    return t.who === r.who;
+  }
+  const CARDS = { yellow: 1, red: 1, expulsion: 1, disqualification: 1 };
+  /**
+   * How a card is communicated (Indicazioni tecniche 3.3.1, 3.6.2): directly to an athlete on court; through the
+   * game captain for a member who is not on court (bench, coach, staff). The verbal warning always goes through
+   * the game captain (3.6.1).
+   */
+  /** Sanctions for which you choose how to communicate them: the cards and the verbal warning. */
+  const viaChoice = k => !!CARDS[k] || k === 'verbal';
+  function rightVia(team, who, key) {
+    // The verbal warning is not personal: it is always given to the team through the game captain
+    if (key === 'verbal' || typeof who !== 'number') return 'captain';
+    return [0, 1, 2, 3, 4, 5].map(k => G.M.onCourt(team, k)).includes(who) ? 'player' : 'captain';
+  }
+
+  /** A sanction whistled between rallies when nothing happened. */
+  function evaluateFreeSanction(k, target) {
+    record('sanction_no_misconduct', false, false);
+    showFeedback({
+      ok: false, sitId: 'sanction_no_misconduct',
+      happened: 'Nessun componente delle squadre ha avuto un comportamento scorretto.',
+      yours: sanctionLabel(k) + ' ' + targetLabel(target),
+      right: 'Nessun provvedimento',
+      note: null,
+      signal: { role: '1', steps: [], note: 'Nessuna segnaletica: non c’era nulla da sanzionare.' },
+      yourSignal: eventSignal({ kind: 'conduct', team: target.team, who: target.who }, k),
+    }, () => {});
+  }
+
+  /** A sanction chosen after whistling during a rally: there was no misconduct during the play. */
+  function evaluateRallySanction(k, target, whistleT) {
+    const M = G.M, R = G.R;
+    const tr = M.truth(R, whistleT);
+    const exp = M.expected(R, tr);
+    const sitId = tr.fault ? tr.fault.sit : 'sanction_no_misconduct';
+    record(sitId, false, G.helped);
+    showFeedback({
+      ok: false, sitId,
+      happened: tr.fault ? tr.fault.text + ' Nessuno ha avuto un comportamento da sanzionare.' : 'Durante l’azione nessuno ha avuto un comportamento da sanzionare.',
+      yours: sanctionLabel(k) + ' ' + targetLabel(target),
+      right: decisionLabel(exp),
+      note: tr.fault ? null : 'Fischio senza fallo: l’azione va rigiocata.',
+      signal: rallySignal(exp, tr.fault ? tr.fault.comp : null),
+      yourSignal: eventSignal({ kind: 'conduct', team: target.team, who: target.who }, k),
+      replay: replayInfo(R, tr.fault, false),
+    }, () => afterRally(applied(exp, { key: 'no_fault', point: null })));
+  }
+
+  /**
+   * What happens on the scoreboard: the correct decision (default) or, with the option "Vale la mia decisione",
+   * the one you took, even if wrong.
+   */
+  function applied(exp, dec) {
+    if (!G.M.opts.scoreMine || !dec) return exp;
+    if (dec.key === 'no_fault' || dec.key === 'double_fault' || dec.key === 'serve_early') return { key: dec.key, point: null };
+    return { key: dec.key, point: dec.point || null };
   }
 
   function aiWhistle(f, userMissed) {
     const M = G.M;
     G.whistled = true;
+    G.aiWhistleT = G.t;
     whistle();
     const who = M.opts.mode === '2' ? '1° arbitro' : '2° arbitro';
     const tr = { fault: f };
@@ -673,13 +1198,17 @@
       return;
     }
     G.lastCall = { by: who, user: false, happened: f.text };
-    banner(who + ' · fischio', E.DECISIONS[f.key].label + (exp.point ? ': punto alla ' + E.TEAM_DEF[exp.point].label : '') + '. ' + f.text, 3200);
-    later(() => afterRally(exp), 2400);
+    banner(who + ' · fischio', E.DECISIONS[f.key].label + (exp.point ? ': punto alla ' + E.TEAM_DEF[exp.point].label : '') + '. ' + f.text, 3600);
+    const sig = rallySignal(exp, f.comp, false, M.opts.mode === '2' ? '1' : '2');
+    if (sig.role === '2' && exp.point) G.partnerNudge = { x: sideOfTeam2(E.other(exp.point)), until: performance.now() + 4200 };
+    miniSignal(sig, who);
+    later(() => afterRally(exp), Math.max(2400, sig.steps.reduce((a, x) => a + (x.dur || 1.6), 0) * 1000 * 0.8));
   }
 
   function ballDead() {
     const M = G.M, R = G.R;
     G.whistled = true;
+    G.aiWhistleT = G.t;
     const tr = M.truth(R, null);
     const exp = M.expected(R, tr);
     if (M.opts.mode === '2') {
@@ -691,9 +1220,20 @@
         return;
       }
       whistle();
-      G.lastCall = { by: '1° arbitro', user: false, happened: R.natural ? naturalText(R.natural) : '' };
-      banner('1° arbitro', decisionLabel(exp) + '.', 2200);
-      later(() => afterRally(exp), 1800);
+      // A ball-handling fault the 1st referee did not see (and you did not signal): the rally counts as played
+      const unseen = tr.fault && HANDLING[tr.fault.key] && G.firstMisses && !G.collabUsed && R.natural;
+      // A ball touched by the block that the 1st did not see: without your signal he calls it out
+      if (G.firstMisses === undefined) G.firstMisses = Math.random() < 0.4;
+      const sigT = G.collabSignal && G.collabSignal.key === 'touched' && G.collabSignal.team === (R.natural && R.natural.team);
+      const touchUnseen = !tr.fault && R.natural && R.natural.key === 'touched_out' && G.firstMisses && !sigT;
+      if (sigT) G.collabUsed = true;
+      let res = unseen ? M.expected(R, { natural: R.natural }) : exp;
+      if (touchUnseen) res = { key: 'out', point: R.natural.team };
+      G.lastCall = { by: '1° arbitro', user: false, happened: unseen ? tr.fault.text + ' Il 1° arbitro non l’ha visto.' : R.natural ? naturalText(R.natural) : '' };
+      banner('1° arbitro', decisionLabel(res) + '.' + (unseen ? ' Non ha visto: ' + tr.fault.text + ' Il tuo segnale di collaborazione l’avrebbe aiutato.' : '') +
+        (touchUnseen ? ' Non ha visto il tocco del muro: con il segnale di palla toccata l’avresti aiutato.' : ''), unseen || touchUnseen ? 4200 : 2200);
+      miniSignal(rallySignal(res, null, !unseen && !tr.fault && R.natural && R.natural.noWhistle, '1'), '1° arbitro');
+      later(() => afterRally(res), unseen || touchUnseen ? 3200 : 1800);
       return;
     }
     // 1st referee / sole referee: you end the rally
@@ -729,10 +1269,16 @@
       html += '<div class="dec-group"><h5>' + esc(g) + '</h5><div class="dec-grid">' +
         groups[g].map(k => '<button class="dec-btn" data-k="' + k + '">' + esc(E.DECISIONS[k].label) + '</button>').join('') + '</div></div>';
     });
+    if (whistleT !== null && M.opts.mode !== '2') html += '<div class="dec-group"><h5>Sanzioni</h5><div class="dec-grid"><button class="dec-btn" id="dec-sanction">Cartellino o altra sanzione…</button></div></div>';
     html += '<div class="dec-back"><button class="btn btn-ghost btn-sm" id="dec-help">Aiuto</button> <button class="btn btn-ghost btn-sm" id="dec-sheet">Referto</button> <button class="btn btn-ghost btn-sm" id="dec-top">Vista dall’alto</button> <button class="btn btn-ghost btn-sm" id="dec-log">Cronologia</button></div>';
     $('decision-body').innerHTML = html;
     bindDecLog();
     $('decision-body').querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => chooseTeam(b.dataset.k, whistleT)));
+    if ($('dec-sanction')) $('dec-sanction').addEventListener('click', () => openSanctionPicker({
+      title: 'Hai fischiato: quale sanzione?', options: SANCTIONS,
+      onDone: (k, target) => evaluateRallySanction(k, target, whistleT),
+      onBack: () => openRallyDecision(whistleT),
+    }));
     $('dec-help').addEventListener('click', () => openHelp());
     $('dec-sheet').addEventListener('click', () => toggleSheet(true));
     $('dec-top').addEventListener('click', () => { G.top = !G.top; applyView(); peekCourt(); });
@@ -807,8 +1353,14 @@
       sitId = n.key === 'touched_out' ? 'touched_out' : n.borderline ? 'no_fault_close' : n.key === 'serve_net' ? 'serve_net' : exp.key === 'in' ? 'rally_in' : 'rally_out';
       happened = naturalText(n);
     }
-    const ok = dec.key === exp.key && (exp.point === null || dec.point === exp.point);
+    // A whistle without a fault is always an error, even when it is then handled correctly (rally replayed)
+    const handled = tr.wrongWhistle && (dec.key === 'no_fault' || dec.key === 'double_fault');
+    const ok = !tr.wrongWhistle && dec.key === exp.key && (exp.point === null || dec.point === exp.point);
+    if (tr.wrongWhistle) note = (note ? note + ' ' : '') + (handled
+      ? 'Hai gestito bene il fischio sbagliato (azione da ripetere), ma fischiare senza fallo resta un errore grave.'
+      : 'Fischiare senza fallo è un errore grave: va riconosciuto e l’azione si ripete con la segnaletica del doppio fallo.');
     record(sitId, ok, G.helped);
+    if (M.opts.mode === '2' && whistleT != null && dec.point && FAULT_SIGNAL[dec.key]) G.selfNudge = { x: sideOfTeam2(E.other(dec.point)), until: performance.now() + 4200 };
     showFeedback({
       ok, sitId, happened, note,
       yours: E.DECISIONS[dec.key].label + (dec.point ? ' · punto alla ' + E.TEAM_DEF[dec.point].label : ''),
@@ -817,9 +1369,9 @@
       quiet: ok && !tr.fault && !tr.wrongWhistle && !R.trap && !(R.natural && R.natural.borderline) && sitId !== 'touched_out',
       signal: rallySignal(exp, tr.fault ? tr.fault.comp : null, !tr.fault && !tr.wrongWhistle && R.natural && R.natural.noWhistle),
       // The signal for the decision the user took (shown even when it is wrong)
-      yourSignal: rallySignal(dec, null, !whistleT && (dec.key === 'in' || dec.key === 'out') && R.natural && R.natural.noWhistle),
+      yourSignal: rallySignal(dec, null, !whistleT && (dec.key === 'in' || dec.key === 'out') && R.natural && R.natural.noWhistle, M.opts.mode === '2' ? '2' : null),
       replay: replayInfo(R, tr.fault, !!tr.missed),
-    }, () => afterRally(exp));
+    }, () => afterRally(applied(exp, dec)));
   }
 
   function naturalText(n) {
@@ -840,6 +1392,8 @@
   function afterRally(exp) {
     trace('afterRally');
     const M = G.M, R = G.R;
+    judgeCollab(R);
+    $('collab-panel').hidden = true;
     // Positions at the end of the rally become the start of the next one
     Object.keys(R.moves).forEach(k => {
       const p = M.playerAt(R, k, G.t);
@@ -853,6 +1407,15 @@
       M.applyRally(exp);
     }
     const f0 = R.faults[0];
+    // When you are the 2nd referee and you whistled, the 1st then shows the team to serve. (The 2nd repeats the
+    // team-to-serve signal only after their own whistle, and never makes the authorisation signal.)
+    if (exp.point && M.opts.mode === '2' && G.whistleT != null && !G.liveSig) {
+      const pr = '1';
+      G.liveSig = { role: pr, t0: performance.now(), sides: sidesFor(pr), steps: [
+        { pose: 'rest', caption: '', dur: 0.4 },
+        { pose: 'serve', side: handFor(exp.point, pr), caption: '', dur: 1.6 },
+        { pose: 'rest', caption: '', dur: 0.4 }] };
+    }
     logEntry({ kind: 'rally', before, outcome: replay ? decisionLabel(exp) + ' · si ripete' : decisionLabel(exp),
       replay: replayInfo(R, f0 && f0.key === exp.key ? f0 : null, false) });
     updateScore();
@@ -874,7 +1437,7 @@
     serve_foot: { pose: 'line', name: 'Fallo del giocatore al servizio: indica la linea di fondo, senza oscillare il braccio' },
     serve_8s: { pose: 'eight', name: 'Ritardo al servizio: otto dita divaricate' },
     serve_net: { pose: 'net', name: 'Palla di servizio che non supera la rete: braccio teso dritto verso il segnapunti all’altezza della spalla, mano aperta in prosecuzione del braccio' },
-    pos_fault: { pose: 'position', motion: 'circle', name: 'Fallo di posizione: movimento circolare con l’indice' },
+    pos_fault: { pose: 'position', motion: 'circle', name: 'Fallo di posizione: indice rivolto verso il pavimento, con un movimento circolare' },
     four_hits: { pose: 'four', name: 'Quattro tocchi: quattro dita divaricate' },
     catch: { pose: 'catch', motion: 'lift', name: 'Palla trattenuta: solleva lentamente l’avambraccio, palmo in alto' },
     double_contact: { pose: 'double', name: 'Doppio tocco: due dita divaricate' },
@@ -905,10 +1468,15 @@
     return comp === '2' || comp === 'both' ? '2' : '1';
   }
 
-  function rallySignal(exp, faultComp, noWhistle) {
+  function rallySignal(exp, faultComp, noWhistle, roleOverride) {
     const M = G.M;
     const lbl = T => E.TEAM_DEF[T].label;
-    if (exp.key === 'no_fault') return { role: '1', steps: [], note: 'Nessuna segnaletica: non c’era nulla da fischiare.' };
+    // Whistle by mistake: the rally is replayed, with the double-fault signal (Casistica: errore arbitrale)
+    if (exp.key === 'no_fault') return { role: '1', steps: [
+      { pose: 'whistle', whistle: true, caption: 'Fischio (per errore)', dur: 1.0 },
+      { pose: 'doubleFault', caption: 'Azione da ripetere: segnaletica del doppio fallo, pollici alzati', dur: 1.8 },
+      { pose: 'serve', side: handFor(M.serving, '1'), caption: 'Servizio alla squadra che aveva servito', dur: 1.6 },
+    ], note: 'Fischiare senza fallo è un errore grave: l’azione si ripete, con la segnaletica del doppio fallo.' };
     if (exp.key === 'serve_early') return { role: '1', steps: [
       { pose: 'whistle', whistle: true, caption: 'Fischio: il servizio è annullato', dur: 1.1 },
       ...SimGestures.authorizeSteps(handFor(M.serving, '1'), 'Nuova autorizzazione: '),
@@ -921,7 +1489,7 @@
     const sig = FAULT_SIGNAL[exp.key];
     if (!sig) return { role: '1', steps: [] };
     const faultTeam = E.other(exp.point);
-    const role = signalRole(exp.key, faultComp);
+    const role = roleOverride || signalRole(exp.key, faultComp);
     const steps = [];
     if (!noWhistle) steps.push({ pose: 'whistle', whistle: true, caption: 'Fischio di fine azione', dur: 1.0 });
     if (role === '1') {
@@ -937,29 +1505,34 @@
     return { role, steps, note: noWhistle ? 'Servizio senza tocchi: nel 2026/27 non si fischia, si esegue solo la segnaletica (Normative federali 4.7).' : null };
   }
 
-  function eventSignal(e, exp) {
+  function eventSignalRaw(e, exp) {
     const lbl = E.TEAM_DEF[e.team].label;
     const W = c => ({ pose: 'whistle', whistle: true, caption: c || 'Fischio', dur: 1.0 });
-    if (e.kind === 'libero' && exp === 'authorize') return { role: '2', steps: [], note: 'Nessun gesto: i rimpiazzi regolari del Libero non si autorizzano con il fischio.' };
+    if (e.kind === 'libero' && exp === 'authorize') return { role: R2(), steps: [], note: 'Nessun gesto: i rimpiazzi regolari del Libero non si autorizzano con il fischio.' };
     if (e.kind === 'conduct') {
       const s = handFor(e.team, '1');
       if (exp === 'verbal') return { role: '1', steps: [], note: 'Avvertimento verbale: nessun cartellino, si comunica al capitano in gioco.' };
       if (exp === 'none') return { role: '1', steps: [] };
-      const steps = [W('Fischio'), { pose: exp === 'yellow' ? 'yellow' : exp === 'red' ? 'red' : exp === 'expulsion' ? 'expulsion' : 'disqualification', side: s,
-        caption: { yellow: 'Cartellino giallo (avvertimento ufficiale) al n. ' + e.who, red: 'Cartellino rosso (penalizzazione) al n. ' + e.who, expulsion: 'Giallo e rosso insieme (espulsione) al n. ' + e.who, disqualification: 'Giallo e rosso separati (squalifica) al n. ' + e.who }[exp], dur: 2.2 }];
-      if (exp === 'red') steps.push({ pose: 'serve', side: handFor(E.other(e.team), '1'), caption: 'Servizio alla squadra avversaria', dur: 1.5 });
+      const steps = [W('Fischio'), { pose: ({ yellow: 'yellow', red: 'red', expulsion: 'expulsion', disqualification: 'disqualification', delay_warning: 'delayY', delay_penalty: 'delayR' })[exp] || 'yellow', side: s,
+        caption: (({ yellow: 'Cartellino giallo (avvertimento ufficiale)', red: 'Cartellino rosso (penalizzazione)', expulsion: 'Giallo e rosso insieme (espulsione)', disqualification: 'Giallo e rosso separati (squalifica)', delay_warning: 'Avvertimento per ritardo: cartellino giallo al polso', delay_penalty: 'Penalizzazione per ritardo: cartellino rosso al polso' }[exp]) || sanctionLabel(exp)) + ' ' + (e.who === 'team' ? 'alla squadra' : e.who === 'coach' ? 'all’allenatore' : 'al n. ' + e.who), dur: 2.2 }];
+      if (exp === 'red' || exp === 'delay_penalty') steps.push({ pose: 'serve', side: handFor(E.other(e.team), '1'), caption: 'Servizio alla squadra avversaria', dur: 1.5 });
       return { role: '1', steps };
     }
-    if (exp === 'authorize' && e.kind === 'timeout') return { role: '2', steps: [W('Fischio'), { pose: 'timeout', caption: 'Tempo di riposo: una mano verticale col palmo verso l’interno, l’altra sopra col palmo in basso (T)', dur: 1.8 }, { pose: 'serve', side: handFor(e.team, '2'), caption: 'Indica la squadra che lo ha chiesto (' + lbl + ')', dur: 1.4 }] };
-    if (exp === 'authorize' && e.kind === 'sub') return { role: '2', steps: [W('Fischio'), { pose: 'sub', motion: 'roll', once: true, caption: 'Sostituzione: pugni chiusi, gli avambracci fanno un giro completo uno intorno all’altro', dur: 2.0 }] };
-    if (exp === 'reject_improper') return { role: '2', steps: [W('Fischio'), { pose: 'improper', side: handFor(e.team, '2'), caption: 'Richiesta impropria respinta: braccio teso verso la squadra ma più in basso della spalla, palmo verso l’esterno e dorso verso il campo', dur: 2.0 }] };
+    const MOVE2 = R2() === '1' ? [] : [{ pose: 'rest', caption: 'Si sposta dal lato della squadra che ha fatto la richiesta (' + lbl + ')', dur: 0.9 }];
+    if (exp === 'authorize' && e.kind === 'timeout') return { role: R2(), steps: [W('Fischio'), ...MOVE2, { pose: 'timeout', caption: 'Tempo di riposo: una mano verticale col palmo verso l’interno, l’altra sopra col palmo in basso (T)', dur: 1.8 }, { pose: 'serve', side: handFor(e.team, R2()), caption: 'Indica la squadra che lo ha chiesto (' + lbl + ')', dur: 1.4 }] };
+    if (exp === 'authorize' && e.kind === 'sub') return { role: R2(), steps: [W('Fischio'), ...MOVE2, { pose: 'sub', motion: 'roll', once: true, caption: 'Sostituzione: pugni chiusi, gli avambracci fanno un giro completo uno intorno all’altro', dur: 2.0 }] };
+    if (exp === 'reject_improper') return { role: R2(), steps: [W('Fischio'), { pose: 'improper', side: handFor(e.team, R2()), caption: 'Richiesta impropria respinta: braccio teso verso la squadra ma più in basso della spalla, palmo verso l’esterno e dorso verso il campo', dur: 2.0 }] };
     if (exp === 'delay_warning' || exp === 'delay_penalty') {
       const steps = [W('Il 1° arbitro fischia'), { pose: exp === 'delay_warning' ? 'delayY' : 'delayR', side: handFor(e.team, '1'), caption: (exp === 'delay_warning' ? 'Avvertimento per ritardo: cartellino giallo' : 'Penalizzazione per ritardo: cartellino rosso') + ' al polso dal lato della ' + lbl, dur: 2.2 }];
       if (exp === 'delay_penalty') steps.push({ pose: 'serve', side: handFor(E.other(e.team), '1'), caption: 'Servizio alla squadra avversaria', dur: 1.5 });
       return { role: '1', steps };
     }
-    return { role: '2', steps: [] };
+    return { role: R2(), steps: [] };
   }
+  /** Role whose view the 2nd referee's signals are drawn from: the 1st's when refereeing alone. */
+  function R2() { return G.M.opts.mode === 'solo' ? '1' : '2'; }
+  function eventSignal(e, exp) { return eventSignalRaw(e, exp); }
+
 
   /** Which team the referee of `role` sees on the left and on the right (1st: A left; 2nd: the opposite). */
   function sidesFor(role) {
@@ -968,10 +1541,14 @@
   }
 
   /** Small animated referee in a corner, for routine calls that do not open the feedback. */
-  function miniSignal(sig) {
+  function miniSignal(sig, who) {
     if (!sig || !sig.steps.length) return;
     const box = $('gesture-mini');
     box.hidden = false;
+    $('gm-who').textContent = who || (sig.role === '2' ? '2° arbitro' : '1° arbitro');
+    // The automatic referee also makes the signal "live", on their character in the scene
+    const mode = G.M.opts.mode, mine = mode === '2' ? '2' : '1';
+    if (mode !== 'solo' && sig.role !== mine) G.liveSig = { role: sig.role, steps: sig.steps, t0: performance.now(), sides: sidesFor(sig.role) };
     SimGestures.play($('gm-fig'), sig.steps, $('gm-cap'), null, sidesFor(sig.role));
     const total = sig.steps.reduce((s, x) => s + (x.dur || 1.6), 0);
     clearTimeout(box._t);
@@ -1006,19 +1583,28 @@
   // ======================================================================================
   // Replay of the last rally ("registrazione"), in a window of its own
   // ======================================================================================
-  function replayInfo(R, fault, missed) {
+  function replayInfo(R, fault, missed, whistleAt) {
     if (!R) return null;
     const focus = fault ? fault.t : (R.natural ? R.natural.t : R.endT);
-    const start = Math.max(0, Math.min(focus - 3.2, R.tHit - 0.6));
-    return { R, focus, from: Math.max(start, focus - 4.5), to: Math.min(R.endT + 0.4, focus + 1.6), missed, label: fault ? 'Momento del fallo' : 'Fine dell’azione' };
+    // When the whistle came: the user's, or (rally ended without it / another referee) the current game time
+    const wT = whistleAt != null ? whistleAt : R === G.R ? (G.whistleT != null ? G.whistleT : G.aiWhistleT != null ? G.aiWhistleT : G.t) : null;
+    const start = Math.max(0, Math.min(focus - 3.2, R.tHit - 0.6, wT != null ? wT - 1 : Infinity));
+    const end = Math.max(Math.min(R.endT + 0.4, focus + 1.6), wT != null ? wT + 0.8 : 0);
+    return { R, focus, whistle: wT, from: Math.max(start, Math.min(focus, wT != null ? wT : focus) - 4.5), to: end, missed,
+      label: fault ? 'Momento del fallo' : 'Fine dell’azione' };
   }
   const RP = { raf: 0, playing: true, slow: false, top: false, t: 0, renderer: null, info: null, last: 0 };
   function openReplay(info) {
     if (!info) return;
     RP.info = info; RP.t = info.from; RP.playing = true; RP.last = performance.now(); RP.top = false;
     $('rp-range').min = info.from; $('rp-range').max = info.to; $('rp-range').step = 0.01;
-    $('rp-mark').style.left = ((info.focus - info.from) / (info.to - info.from) * 100) + '%';
+    const pos = t => ((t - info.from) / (info.to - info.from) * 100) + '%';
+    $('rp-mark').style.left = pos(info.focus);
     $('rp-mark').title = info.label;
+    $('rp-mark-w').hidden = info.whistle == null;
+    if (info.whistle != null) $('rp-mark-w').style.left = pos(info.whistle);
+    $('rp-legend-f').textContent = info.label;
+    $('rp-legend-w').hidden = info.whistle == null;
     $('replay-title').textContent = info.title || 'Registrazione dell’azione';
     $('rp-note').textContent = info.event ? info.snap.event.text : info.missed ? 'Il fallo non è stato fischiato: guarda il momento evidenziato sulla barra.' : 'Rivedi l’azione: il segno sulla barra indica il momento decisivo.';
     openModal('replay-modal');
@@ -1047,11 +1633,45 @@
       if (RP.t > info.to) RP.t = info.from;
     }
     $('rp-range').value = RP.t;
-    $('rp-badge').hidden = !(Math.abs(RP.t - info.focus) < 0.35);
-    $('rp-badge').textContent = info.label;
+    const nearF = Math.abs(RP.t - info.focus) < 0.35, nearW = info.whistle != null && Math.abs(RP.t - info.whistle) < 0.35;
+    $('rp-badge').hidden = !(nearF || nearW);
+    $('rp-badge').textContent = nearW && (!nearF || Math.abs(RP.t - info.whistle) < Math.abs(RP.t - info.focus)) ? 'Fischio' : info.label;
+    $('rp-badge').classList.toggle('w', !$('rp-badge').hidden && $('rp-badge').textContent === 'Fischio');
     draw({ renderer: RP.renderer, R: info.R || null, t: RP.t, snap: info.snap });
     RP.raf = requestAnimationFrame(replayTick);
   }
+  /**
+   * Replay of a reported rally (from Gestione › Segnalazioni): the report holds the whole recorded action
+   * (formations, movements, ball, faults, whistle), so it is rebuilt here and played in the replay window.
+   */
+  function openReportedReplay() {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem('fipav-sim-replay') || 'null'); } catch (e) { d = null; }
+    if (!d || !d.action || !d.action.moves) {
+      $('boot-message').textContent = '';
+      banner('Registrazione non disponibile', 'Apri «Rivedi azione» dalla segnalazione nel pannello di gestione.', 5000);
+      return;
+    }
+    const o = d.options || {};
+    const M = new E.Match({ mode: d.mode || '1', freq: o.freq, fouls: o.fouls, formations: o.formations || 'easy', conduct: o.conduct, libero: o.libero !== false, target: d.target || 25 });
+    ['A', 'B'].forEach(T => {
+      const t = M.teams[T];
+      if (d.lineups && d.lineups[T]) { t.lineup = d.lineups[T].slice(); t.libero.on = null; }
+      if (d.sides) M.side[T] = d.sides[T];
+    });
+    if (d.score) { const [a, b] = String(d.score).split('-').map(Number); M.score = { A: a || 0, B: b || 0 }; }
+    G.M = M; G.R = null; G.view = d.mode === '2' ? 'second' : 'first'; G.refX = 0; G.partnerX = 0; G.prepFrom = {};
+    const a = d.action;
+    const R = { plan: a.plan || {}, tHit: a.tHit, endT: a.endT, server: a.server, faults: a.faults || [], natural: a.natural, trap: a.trap,
+      formations: a.formations || {}, events: a.events || [], ball: a.ball || [], keys: a.keys || {}, moves: a.moves || {}, slow: [] };
+    const fault = (a.faults || [])[0] || null;
+    const info = replayInfo(R, fault && Math.abs(fault.t - a.focus) < 0.01 ? fault : null, false, a.whistle != null ? a.whistle : null);
+    if (a.focus != null) info.focus = a.focus;
+    info.title = 'Azione segnalata · ' + (d.code || ('SIM-' + d.sit)) + ' · ' + (d.role || '') + ' · ' + (d.score || '');
+    openReplay(info);
+    $('rp-note').textContent = [d.happened, d.yours ? 'Decisione presa: ' + d.yours : '', d.right ? 'Indicata come corretta: ' + d.right : '', d.reportText ? 'Segnalazione: «' + d.reportText + '»' : ''].filter(Boolean).join(' · ');
+  }
+
   function closeReplay() {
     cancelAnimationFrame(RP.raf);
     closeModal('replay-modal');
@@ -1179,6 +1799,36 @@
     openModal('report-modal');
     setTimeout(() => $('report-text').focus(), 50);
   }
+  /**
+   * Everything an admin needs to understand (and recreate) the reported action: match state, decisions and,
+   * for a rally, its whole timeline (ball, players, faults), since the recording is not available later.
+   */
+  function reportDetail(info) {
+    const M = G.M;
+    const lineup = T => [0, 1, 2, 3, 4, 5].map(k => M.onCourt(T, k));
+    const d = {
+      v: 1, mode: M.opts.mode, role: roleName(M.opts.mode), score: M.score.A + '-' + M.score.B, target: M.opts.target,
+      serving: M.serving, sit: info.sitId, happened: info.happened || '', yours: info.yours || '', right: info.right || '', note: info.note || null,
+      lineups: { A: lineup('A'), B: lineup('B') }, libero: { A: M.teams.A.libero.on, B: M.teams.B.libero.on }, sides: { A: M.side.A, B: M.side.B },
+      timeouts: { A: M.teams.A.timeouts, B: M.teams.B.timeouts }, subs: { A: M.teams.A.subs.count, B: M.teams.B.subs.count },
+      sanctions: { A: M.teams.A.sanctions.slice(), B: M.teams.B.sanctions.slice() },
+      options: { freq: M.opts.freq, fouls: M.opts.fouls, formations: M.opts.formations || 'easy', conduct: M.opts.conduct, aids: M.opts.aids, scoreMine: !!M.opts.scoreMine, libero: M.opts.libero },
+      clock: Math.round(G.clock || 0), rally: M.completedRallies + 1,
+    };
+    const rp = info.replay, R = rp && rp.R;
+    if (R) {
+      d.action = {
+        plan: R.plan, tHit: R.tHit, endT: R.endT, whistle: rp.whistle, focus: rp.focus, server: R.server,
+        faults: R.faults, natural: R.natural, trap: R.trap || null, formations: R.formations,
+        events: R.events, ball: R.ball, keys: R.keys, moves: R.moves,
+      };
+    } else if (G.event) {
+      const e = G.event;
+      d.event = { kind: e.kind, team: e.team, who: e.who, out: e.out, inn: e.inn, expected: e.expected, text: e.text, comp: e.comp };
+    }
+    return d;
+  }
+
   function sendReport() {
     const text = $('report-text').value.trim();
     const M = G.M;
@@ -1189,6 +1839,7 @@
       resolved: false,
       resolvedDate: null,
       context: roleName(M.opts.mode) + ' · ' + M.score.A + '-' + M.score.B + ' · ' + fbInfo.context + ' · Tua decisione: ' + fbInfo.yours + ' · Indicata come corretta: ' + fbInfo.right,
+      detail: reportDetail(fbInfo),
     });
     saveSimData();
     Store.flush && Store.flush();
@@ -1204,7 +1855,7 @@
     let html = '';
     const mode = M.opts.mode;
     const general = {
-      '1': ['Prima del servizio: le squadre sono pronte e il giocatore al servizio ha la palla? Allora fischia e autorizza.', 'Al colpo di servizio: piedi del giocatore al servizio e posizioni della squadra al servizio.', 'Durante l’azione: tocchi di palla (trattenuta, doppio, quattro tocchi), rete dal lato dell’attacco, attacchi di difensori e Libero.', 'Alla fine: palla dentro, fuori o toccata dal muro.'],
+      '1': ['Prima del servizio: le squadre sono pronte e il giocatore al servizio ha la palla? Allora fischia e autorizza.', 'Al colpo di servizio: piedi del giocatore al servizio e posizioni della squadra al servizio.', 'Durante l’azione: tocchi di palla (trattenuta, doppio, quattro tocchi), rete dal lato dell’attacco, attacchi di difensori e Libero.', 'Alla fine: palla dentro, fuori o toccata.'],
       '2': ['Prima del servizio: controlla la formazione della squadra in ricezione con il referto.', 'Al colpo di servizio: posizioni della squadra in ricezione (avanti-difensori e ordine nelle linee).', 'Durante l’azione: linea centrale, rete soprattutto dal lato del muro, attacchi di difensori e Libero.', 'Tra le azioni: tempi di riposo, sostituzioni e rimpiazzi del Libero, controllando il referto.'],
       solo: ['Sei solo: svolgi i compiti del 1° e del 2° arbitro.', 'Prima del servizio: squadre pronte, formazioni, poi autorizza.', 'Durante l’azione: tocchi, rete, linea centrale, attacchi irregolari.', 'Tra le azioni: richieste, sostituzioni, Libero e condotta.'],
     }[mode];
@@ -1256,6 +1907,9 @@
       }).join('') + '</div>';
       const line = (a, b) => '<div class="sh-line"><span>' + a + '</span><span>' + b + '</span></div>';
       html += line('A referto', d.roster.join(', ') + ' · Libero ' + d.libero + ' · Capitano ' + d.captain);
+      const onC = [0, 1, 2, 3, 4, 5].map(k => M.onCourt(T, k)).includes(d.captain);
+      html += line('Capitano in gioco', onC ? 'n. ' + d.captain + ' (il capitano, in campo)'
+        : (t.gcAsked && t.gcAsked === M.gameCaptain(T) ? 'n. ' + t.gcAsked + ' · ' : 'capitano n. ' + d.captain + ' non in campo · ') + '<button class="btn btn-ghost btn-sm sh-cap" data-cap="' + T + '">Fischia e chiedi</button>');
       html += line('Formazione iniziale', d.lineup.map((n, i) => roman[i] + ' ' + n).join(' · '));
       html += line('Tempi di riposo', t.timeouts + ' di 2');
       html += line('Sostituzioni', t.subs.count + ' di ' + E.MAX_SUBS + (t.subs.list.length ? ': ' + t.subs.list.join(', ') : ''));
@@ -1265,6 +1919,7 @@
       html += '</div>';
     });
     $('sheet-body').innerHTML = html;
+    $('sheet-body').querySelectorAll('[data-cap]').forEach(b => b.addEventListener('click', () => askCaptain(b.dataset.cap)));
   }
 
   // ======================================================================================
@@ -1274,9 +1929,9 @@
   function closeModal(id) {
     $(id).hidden = true;
     const still = ['replay-modal', 'decision-modal', 'feedback-modal', 'help-modal', 'pause-modal', 'report-modal'].find(m => !$(m).hidden);
-    G.modal = still || (!$('pick-layer').hidden ? 'pick' : !$('dcard').hidden ? 'dcard' : null);
+    G.modal = still || (!$('pick-layer').hidden ? 'pick' : !$('dcard').hidden ? 'dcard' : PP.active ? 'person' : null);
   }
-  function closeModals() { cancelAnimationFrame(RP.raf); $('peek-bar').hidden = true; ['replay-modal', 'decision-modal', 'feedback-modal', 'help-modal', 'pause-modal', 'report-modal'].forEach(m => { $(m).hidden = true; }); closeCard(); G.modal = null; }
+  function closeModals() { if (G.toWait) { G.toWait = null; $('to-wait').hidden = true; } cancelAnimationFrame(RP.raf); $('peek-bar').hidden = true; G.pendingConduct = null; if (PP.active) endPick(false); ['replay-modal', 'decision-modal', 'feedback-modal', 'help-modal', 'pause-modal', 'report-modal'].forEach(m => { $(m).hidden = true; }); closeCard(); G.modal = null; }
 
   function pause() {
     if (G.phase === 'over' || G.phase === 'idle') return;
@@ -1296,10 +1951,10 @@
     const d = E.TEAM_DEF[T];
     const isL = num === d.libero;
     return {
-      x: p.x, y: p.y, z: p.z || 0, pose: p.pose || 'ready', number: num,
+      id: T + num, x: p.x, y: p.y, z: p.z || 0, pose: p.pose || 'ready', number: num,
       jersey: isL ? d.liberoJersey : d.jersey, numberColor: isL ? d.liberoNumber : '#fff',
       shorts: d.shorts, trim: isL ? null : d.trim, hair: d.hair, skin: (num * 7) % 4,
-      captain: num === d.captain, h: 1.82 + ((num * 13) % 9) / 50,
+      captain: num === d.captain, h: 1.82 + ((num * 13) % 9) / 50, hairStyle: (num * 5) % 3,
     };
   }
 
@@ -1320,6 +1975,7 @@
     // Players on court
     ['A', 'B'].forEach(T => {
       courtNums(T).forEach(n => {
+        if (event && event.team === T && (event.kind === 'sub' || event.kind === 'libero') && event.inn === n) return;
         const key = T + n;
         onCourtKeys.add(key);
         let p = null;
@@ -1333,8 +1989,25 @@
         } else {
           const q = posOf[key] || { x: M.side[T] * 4, y: 0 };
           p = { x: q.x, y: q.y, z: 0, pose: 'stand' };
+          // Walking to the bench for a time-out
+          const H = !rp && G.huddle;
+          if (H && H.from[key] && phase === 'break') {
+            const k = clamp(((G.clock || 0) - H.t0) / H.dur, 0, 1), e2 = k * k * (3 - 2 * k);
+            p = { x: H.from[key].x + (H.to[key].x - H.from[key].x) * e2, y: H.from[key].y + (H.to[key].y - H.from[key].y) * e2, z: 0, pose: k < 1 ? 'walk' : 'stand' };
+          }
+        }
+        const SA = !rp && G.subAnim;
+        if (SA && SA.T === T && SA.inn === n) {
+          const k = clamp(((G.clock || 0) - SA.t0) / SA.dur, 0, 1), e2 = k * k * (3 - 2 * k);
+          p = { x: SA.zone[0] + (SA.court.x - SA.zone[0]) * e2, y: SA.zone[1] + (SA.court.y - SA.zone[1]) * e2, z: 0, pose: k < 1 ? 'walk' : 'ready' };
         }
         const person = personFor(T, n, p);
+        if (R && (person.pose === 'attack' || person.pose === 'serve') && R.moves[key]) {
+          // Arm swing: cocked while rising, hitting at the top of the jump, following through while landing
+          const a = M.playerAt(R, key, t - 0.08), b2 = M.playerAt(R, key, t + 0.08);
+          person.swing = clamp(0.5 - ((b2 ? b2.z : 0) - (a ? a.z : 0)) * 3.2, 0, 1);
+        }
+        if (!rp && G.capReveal && G.capReveal.T === T && G.capReveal.n === n && performance.now() < G.capReveal.until) { person.bubble = 'Capitano in gioco'; person.highlight = 'rgba(255,213,79,.55)'; }
         // Break events: highlight who is involved
         const e = event;
         if (e && e.team === T && (e.out === n || e.who === n || e.swap === n)) person.highlight = 'rgba(255,213,79,.55)';
@@ -1351,11 +2024,23 @@
       if (!onCourtNums.includes(d.libero)) bench.push(d.libero);
       const e = event;
       bench = bench.filter(n => !(e && e.team === T && e.inn === n));
+      // Substitution animation: the player going out walks from the court to the zone
+      const SA = !rp && G.subAnim;
+      if (SA && SA.T === T) {
+        const k = clamp(((G.clock || 0) - SA.t0) / SA.dur, 0, 1);
+        if (k < 1) {
+          bench = bench.filter(n => n !== SA.out);
+          const e2 = k * k * (3 - 2 * k);
+          people.push(personFor(T, SA.out, { x: SA.court.x + (SA.zone[0] - SA.court.x) * e2 + M.side[T] * 0.5 * e2, y: SA.court.y + (SA.zone[1] - SA.court.y) * e2, pose: 'walk' }));
+        }
+      }
       bench.forEach((n, i) => {
         const x = b.x0 + (b.x1 - b.x0) * (i + 0.5) / Math.max(bench.length, 1);
-        people.push(personFor(T, n, { x, y: 7.65, pose: 'sit' }));
+        const q = personFor(T, n, { x, y: 7.65, pose: 'sit' });
+        if (e && e.kind === 'conduct' && e.team === T && e.who === n) { q.bubble = '!!'; q.bubbleColor = '#ffcdd2'; q.pose = 'stand'; q.highlight = 'rgba(255,213,79,.55)'; }
+        people.push(q);
       });
-      const coach = { x: b.coach, y: 6.9, pose: 'stand', jersey: '#3a4252', shorts: '#3a4252', h: 1.8, skin: T === 'A' ? 1 : 2, label: 'All. ' + T };
+      const coach = { id: 'coach' + T, x: b.coach, y: 6.9, pose: 'stand', jersey: d.jersey, shorts: '#262c38', outfit: 'staff', collar: '#ffffff', hair: '#2b2420', h: 1.8, skin: T === 'A' ? 1 : 2, label: 'All. ' + T };
       if (e && e.team === T && e.kind === 'timeout') { coach.pose = 'gesture-t'; coach.bubble = 'T'; }
       people.push(coach);
       // Incoming player (substitution or Libero) waiting at the side line
@@ -1371,12 +2056,25 @@
     // Referees and scorer
     const mode = M.opts.mode;
     const firstX = mode === '2' ? G.partnerX : G.refX;
-    people.push({ x: firstX, y: -5.6, z: 1.55, pose: 'stand', jersey: '#1b1b1b', shorts: '#1b1b1b', h: 1.8, skin: 0, label: '1° arbitro', hiddenIn: mode === '2' ? null : 'first' });
+    const live = role => {
+      const L = G.liveSig;
+      if (rp || !L || L.role !== role) return null;
+      const el = (performance.now() - L.t0) / 1000;
+      const total = L.steps.reduce((a, x) => a + (x.dur || 1.6), 0);
+      if (el > total + 0.5) { G.liveSig = null; return null; }
+      const a = SimGestures.liveArms(L.steps, el);
+      // Which way the drawing's left arm points on screen: towards the team the signal puts on the left
+      const x = role === '1' ? firstX : (mode === '2' ? G.refX : G.partnerX), y = role === '1' ? -5.6 : 5.25;
+      const pr = renderer.cam.project([x, y, 1.6]), pt = renderer.cam.project([M.side[L.sides.left] * 5, y, 1.6]);
+      a.flip = pr && pt && pt.x > pr.x ? -1 : 1;
+      return a;
+    };
+    people.push({ x: firstX, y: -5.6, z: 1.55, pose: 'stand', live: live('1'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#2b2420', h: 1.8, skin: 0, label: '1° arbitro', hiddenIn: mode === '2' ? null : 'first' });
     if (mode !== 'solo') {
       const sx = mode === '2' ? G.refX : G.partnerX;
-      people.push({ x: sx, y: 5.25, pose: 'stand', jersey: '#1b1b1b', shorts: '#1b1b1b', h: 1.78, skin: 1, label: '2° arbitro', hiddenIn: mode === '2' ? 'second' : null });
+      people.push({ x: sx, y: 5.25, pose: 'stand', live: live('2'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#4a3426', hairStyle: 1, h: 1.78, skin: 1, label: '2° arbitro', hiddenIn: mode === '2' ? 'second' : null });
     }
-    people.push({ x: 0, y: 7.55, pose: 'sit', jersey: '#5b6b88', shorts: '#2a3140', h: 1.74, skin: 2, label: 'Segnapunti' });
+    people.push({ x: 0, y: 7.55, pose: 'sit', jersey: '#5b6b88', shorts: '#2a3140', outfit: 'staff', collar: '#cfd6e2', hair: '#1f1712', hairStyle: 2, h: 1.74, skin: 2, label: 'Segnapunti' });
 
     // Ball
     let ball = null;
@@ -1417,6 +2115,11 @@
       if (rp) RP.lastLook = performance.now(); else G.lastLook = performance.now();
       renderer.lookAt(clamp(lx, -3.6, 3.6), rp ? dt : (G.paused || G.modal ? 0 : dt));
     }
+    if (!rp && PP.active) people.forEach(q => {
+      if (!q.id) return;
+      if (q.id === PP.chosen) q.highlight = 'rgba(255,213,79,.7)';
+      else if (q.id === PP.hover) q.highlight = 'rgba(255,255,255,.5)';
+    });
     renderer.render({ people, ball, netHeight: E.NET_H, netShake, markers });
   }
 
@@ -1431,6 +2134,7 @@
   function bindControls() {
     $('btn-whistle').addEventListener('click', userWhistle);
     $('btn-authorize').addEventListener('click', authorize);
+    $('btn-collab').addEventListener('click', openCollab);
     $('btn-pause').addEventListener('click', pause);
     $('pause-resume').addEventListener('click', resume);
     $('pause-end').addEventListener('click', () => { closeModals(); endMatch(true); });
@@ -1439,6 +2143,8 @@
     $('sheet-close').addEventListener('click', () => toggleSheet(false));
     $('btn-log').addEventListener('click', () => toggleLog());
     $('peek-back').addEventListener('click', endPeek);
+    $('to-wait-skip').addEventListener('click', () => { if (G.toWait && G.toWait.end) G.toWait.end(); });
+    bindPersonPicking();
     // "Rivedi" on any rally of the log (drawer or end-of-set report)
     document.addEventListener('click', e => {
       const b = e.target.closest('.lg-replay');
@@ -1484,6 +2190,7 @@
       else if (e.key === 'Escape' && G.modal === 'help-modal') closeModal('help-modal');
       else if (e.key === 'Escape' && G.modal === 'replay-modal') closeReplay();
       else if ((e.key === 'Escape' || e.key === 'Enter') && !$('peek-bar').hidden) { e.preventDefault(); endPeek(); }
+      else if (e.key === 'Escape' && PP.active) { e.preventDefault(); endPick(); }
       else if (e.key === ' ' && G.modal === 'replay-modal') { e.preventDefault(); RP.playing = !RP.playing; replayButtons(); }
       else if (e.key === 'Escape' && G.modal === 'pause-modal') resume();
       else if (k === 'p') pause();
@@ -1533,6 +2240,7 @@
       initSetup();
       bindControls();
       requestAnimationFrame(frame);
+      if (location.hash === '#replay') openReportedReplay();
       // Exposed for automated tests
       window.SimDebug = { G, startMatch, userWhistle, authorize, evaluateRally, endMatch, updateScore };
     } catch (e) {

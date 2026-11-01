@@ -95,31 +95,31 @@
       title: 'Tocco della rete', cat: 'rete',
       help: 'Durante l’azione di giocare la palla (salto, colpo e ricaduta) il contatto con la rete tra le antenne è fallo. Guarda la banda superiore: si muove?',
       solution: 'Fallo di contatto con la rete: punto e servizio alla squadra avversaria. Il 1° arbitro lo valuta soprattutto dal lato dell’attacco, il 2° dal lato del muro.',
-      refs: ['RG-11.3.1', 'RG-23.3.2', 'RG-24.3.2'],
+      refs: ['RG-11.3.1', 'RG-23.3.2', 'RG-24.3.2', 'IT-4.3.17'],
     },
     centre_line: {
       title: 'Invasione oltre la linea centrale', cat: 'rete',
       help: 'Guarda i piedi dei giocatori a rete in ricaduta: una parte del piede deve restare sulla linea centrale o sopra di essa.',
-      solution: 'Invasione: punto e servizio alla squadra avversaria. È competenza del 2° arbitro.',
-      refs: ['RG-11.2.2', 'RG-24.3.2'],
+      solution: 'Invasione: punto e servizio alla squadra avversaria. È competenza di entrambi gli arbitri: il 1° indica la linea centrale; se fischia il 2°, si sposta dal lato della squadra in fallo e fa il gesto, poi ripete l’assegnazione del servizio.',
+      refs: ['RG-11.2.2', 'RG-24.3.2', 'IT-4.3.15'],
     },
     reach_beyond: {
       title: 'Invasione aerea a muro', cat: 'rete',
       help: 'Sulle alzate attaccate alla rete guarda le mani del muro: possono passare oltre la rete solo se non interferiscono con il gioco avversario prima o durante il colpo d’attacco.',
       solution: 'Fallo di muro (tocco della palla nello spazio avversario prima dell’attacco): punto e servizio alla squadra avversaria.',
-      refs: ['RG-14.6.1', 'RG-11.1.1', 'RG-11.4.1', 'RG-14.3'],
+      refs: ['RG-14.6.1', 'RG-11.1.1', 'RG-11.4.1', 'RG-14.3', 'IT-4.3.14'],
     },
     under_net: {
       title: 'Palla passata sotto la rete', cat: 'rete',
       help: 'Segui i palloni bassi vicino alla rete: la palla che attraversa completamente lo spazio inferiore sotto la rete è «fuori».',
-      solution: 'Palla nello spazio inferiore: punto e servizio alla squadra avversaria.',
-      refs: ['RG-10.1.3', 'RG-24.3.2'],
+      solution: 'Palla nello spazio inferiore: punto e servizio alla squadra avversaria. È competenza del solo 1° arbitro, che indica la linea centrale.',
+      refs: ['RG-10.1.3', 'IT-4.3.16'],
     },
     antenna: {
       title: 'Attacco sull’antenna', cat: 'rete',
       help: 'Sugli attacchi dalle zone 4 e 2 guarda l’antenna: se la palla la tocca, è «fuori».',
-      solution: 'Palla fuori (tocca l’antenna): punto e servizio alla squadra avversaria.',
-      refs: ['RG-8.4.3', 'RG-24.3.2'],
+      solution: 'Palla fuori (tocca l’antenna): punto e servizio alla squadra avversaria. Lo fischia il 1° arbitro; il 2° solo se l’antenna è dal suo lato.',
+      refs: ['RG-8.4.3', 'RG-24.3.2', 'IT-4.3.18'],
     },
     // ---------- Attacks ----------
     attack_serve: {
@@ -134,10 +134,16 @@
       solution: 'Fallo di muro (muro sul servizio): punto e servizio alla squadra avversaria.',
       refs: ['RG-14.6.3'],
     },
+    back_block_try: {
+      title: 'Tentativo di muro di un difensore', cat: 'muro',
+      help: 'Un difensore può saltare a rete: è fallo solo se il muro è effettivo, cioè se la palla lo tocca.',
+      solution: 'Tentativo di muro senza tocco: nessun fallo, si giudica l’esito dell’attacco.',
+      refs: ['RG-14.1.3', 'RG-14.6.2'],
+    },
     back_block: {
       title: 'Muro di un difensore', cat: 'muro',
-      help: 'Conta chi salta a muro: un difensore (o il Libero) non può partecipare a un muro completato, cioè toccato dalla palla.',
-      solution: 'Fallo di muro (difensore che partecipa a un muro completato): punto e servizio alla squadra avversaria.',
+      help: 'Guarda chi salta a muro: un difensore (giocatore di seconda linea) o il Libero non può fare un muro effettivo, cioè toccare la palla a muro. Il solo tentativo, senza tocco, non è fallo.',
+      solution: 'Fallo di muro: un difensore ha fatto muro effettivo (ha toccato la palla a muro). Punto e servizio alla squadra avversaria.',
       refs: ['RG-14.6.2', 'RG-14.1.3'],
     },
     back_attack: {
@@ -160,9 +166,9 @@
     },
     // ---------- Ball in / out ----------
     touched_out: {
-      title: 'Palla toccata dal muro e fuori', cat: 'esito', aid: true,
+      title: 'Palla toccata', cat: 'esito', aid: true,
       help: 'Guarda se la palla d’attacco cambia traiettoria sulle mani del muro prima di uscire.',
-      solution: 'La palla è toccata dal muro e poi fuori: punto alla squadra che ha attaccato.',
+      solution: 'Palla toccata: la palla esce dopo il tocco di un giocatore della squadra che la riceve (qui il muro), quindi punto alla squadra avversaria, che l’aveva attaccata. Vale per qualunque tocco, non solo del muro.',
       refs: ['RG-8.4.1', 'RG-14.1.3', 'RG-14.6.4'],
     },
     no_fault_close: {
@@ -188,6 +194,30 @@
       help: 'Si fischia la fine dell’azione solo quando si è certi che sia stato commesso un fallo e se ne è individuata la natura.',
       solution: 'Non c’era alcun fallo: il gioco doveva proseguire.',
       refs: ['RG-22.2.1'],
+    },
+    sanction_no_misconduct: {
+      title: 'Sanzione senza comportamento scorretto', cat: 'condotta',
+      help: 'Si sanziona solo un comportamento scorretto realmente avvenuto, scegliendo il provvedimento secondo la scala delle sanzioni e il destinatario giusto.',
+      solution: 'Non c’era alcun comportamento da sanzionare.',
+      refs: ['RG-21.1', 'RG-21.2'],
+    },
+    collab_ok: {
+      title: 'Collaborazione con il 1° arbitro', cat: 'tocco',
+      help: 'Da 2° arbitro, sui falli di tocco di competenza del 1° (doppio tocco, quattro tocchi, palla trattenuta) puoi aiutarlo con un segnale non ufficiale al petto e un passo verso la squadra in fallo.',
+      solution: 'Segnale di collaborazione corretto: il 1° arbitro ha potuto fischiare il fallo.',
+      refs: ['RG-24.2.2', 'IT-1.3', 'IT-4.4'],
+    },
+    collab_wrong: {
+      title: 'Segnale di collaborazione sbagliato', cat: 'tocco',
+      help: 'Il segnale di collaborazione va dato solo se si è certi del fallo e della squadra che l’ha commesso.',
+      solution: 'Il segnale non corrispondeva a un fallo: il 1° arbitro lo ignora, ma un segnale sbagliato può indurlo in errore.',
+      refs: ['RG-24.2.2', 'IT-1.3', 'IT-4.4'],
+    },
+    collab_missed: {
+      title: 'Fallo sfuggito al 1° arbitro', cat: 'tocco',
+      help: 'Il 1° arbitro può non vedere un fallo di tocco: il 2° può aiutarlo con il segnale di collaborazione.',
+      solution: 'Il 1° arbitro non ha visto il fallo e il gioco è proseguito: con il segnale di collaborazione l’avresti aiutato.',
+      refs: ['RG-24.2.2', 'IT-1.3', 'IT-4.4'],
     },
     // ---------- Requests ----------
     timeout_ok: {
@@ -262,25 +292,31 @@
       title: 'Lieve condotta scorretta dopo l’avvertimento verbale', cat: 'condotta',
       help: 'Controlla sul referto se la squadra ha già ricevuto l’avvertimento verbale.',
       solution: 'La squadra è già stata avvertita verbalmente: avvertimento ufficiale con il cartellino giallo (fase 2). Non è una sanzione, ma viene registrato a referto.',
-      refs: ['RG-21.1', 'RG-21.6', 'IT-3.6.2'],
+      refs: ['RG-21.1', 'RG-21.6', 'IT-3.3.1', 'IT-3.6.2'],
     },
     conduct_rude: {
       title: 'Condotta maleducata', cat: 'condotta',
       help: 'Un’azione contraria alle buone maniere o ai principi morali è condotta maleducata.',
       solution: 'Prima condotta maleducata del componente: penalizzazione (cartellino rosso), punto e servizio alla squadra avversaria.',
-      refs: ['RG-21.2.1', 'RG-21.3.1', 'RG-21.6'],
+      refs: ['RG-21.2.1', 'RG-21.3.1', 'RG-21.6', 'IT-3.6.2'],
     },
     conduct_rude_second: {
       title: 'Seconda condotta maleducata', cat: 'condotta',
       help: 'Controlla sul referto se lo stesso componente è già stato penalizzato per condotta maleducata.',
       solution: 'Seconda condotta maleducata dello stesso componente: espulsione (cartellini giallo e rosso insieme).',
-      refs: ['RG-21.3.2', 'RG-21.4.2', 'RG-21.6'],
+      refs: ['RG-21.3.2', 'RG-21.4.2', 'RG-21.6', 'IT-3.6.2'],
+    },
+    conduct_aggression: {
+      title: 'Minacce o aggressione', cat: 'condotta',
+      help: 'Un’aggressione fisica o un comportamento aggressivo o minaccioso («Ti aspetto fuori!») è la condotta più grave.',
+      solution: 'Aggressione / minaccia: squalifica (cartellini giallo e rosso separati), senza altre conseguenze.',
+      refs: ['RG-21.2.3', 'RG-21.3.3', 'RG-21.6', 'IT-3.6.2'],
     },
     conduct_offensive: {
       title: 'Condotta offensiva', cat: 'condotta',
       help: 'Gesti o parole insultanti o diffamatori sono condotta offensiva.',
       solution: 'Prima condotta offensiva: espulsione (cartellini giallo e rosso insieme), senza altre conseguenze.',
-      refs: ['RG-21.2.2', 'RG-21.3.2', 'RG-21.6'],
+      refs: ['RG-21.2.2', 'RG-21.3.2', 'RG-21.6', 'IT-3.6.2'],
     },
   };
 

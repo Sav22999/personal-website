@@ -295,7 +295,7 @@ function ensure_schema(): void
     } catch (Throwable $e) {
         return; // portal not installed yet
     }
-    if ($version >= 5) return;
+    if ($version >= 6) return;
 
     $pdo = db();
     if ($version < 2) {
@@ -332,6 +332,11 @@ function ensure_schema(): void
             $pdo->exec('ALTER TABLE ' . t('users') . " ADD COLUMN `activation_mail_at` DATETIME NULL AFTER `approved_by`");
         }
         $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '5') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
+    }
+    if ($version < 6) {
+        // v6: longer values in meta (e.g. the list of simulation reports closed by the admins)
+        $pdo->exec('ALTER TABLE ' . t('meta') . ' MODIFY `v` MEDIUMTEXT NOT NULL');
+        $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
     }
 }
 
