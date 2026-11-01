@@ -312,7 +312,7 @@
     window.APP_CONTENT = content;
     window.Store.load(state.state || {});
     appRoot.hidden = false;
-    await loadScript('assets/app.js?v=4.0.0-17');
+    await loadScript('assets/app.js?v=4.0.0-19');
     appStarted = true;
     bootScreen.hidden = true;
   }

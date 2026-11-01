@@ -244,7 +244,7 @@
     }));
     $('opt-libero-row').hidden = true;
     $('opt-allok-row').hidden = true;
-    ['opt-target', 'opt-freq', 'opt-fouls', 'opt-forms', 'opt-conduct', 'opt-score'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    ['opt-target', 'opt-freq', 'opt-fouls', 'opt-forms', 'opt-conduct', 'opt-score', 'opt-anim', 'opt-graphics'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       $(id).querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
     })));
     $('btn-start').addEventListener('click', () => {
@@ -286,6 +286,8 @@
         subAnim: $('opt-subanim').checked,
         summary: $('opt-summary').checked,
         allOkAuto: $('opt-allok').checked,
+        animSpeed: parseFloat($('opt-anim').querySelector('.active').dataset.v),
+        graphics: $('opt-graphics').querySelector('.active').dataset.v,
     };
   }
 
@@ -294,6 +296,7 @@
     const seg = (id, v) => $(id).querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === String(v)));
     seg('opt-target', o.target); seg('opt-freq', o.freq); seg('opt-fouls', o.fouls); seg('opt-forms', o.formations || 'easy');
     seg('opt-conduct', o.conduct); seg('opt-score', o.scoreMine ? 'mine' : 'right');
+    seg('opt-anim', o.animSpeed || 1); seg('opt-graphics', o.graphics || 'high');
     $('opt-aids').checked = !!o.aids; $('opt-libero').checked = !!o.libero; $('opt-automove').checked = !!o.autoMove;
     $('opt-timeout').checked = !!o.waitTimeout; $('opt-subanim').checked = !!o.subAnim; $('opt-summary').checked = !!o.summary;
     $('opt-allok').checked = o.allOkAuto !== false;
@@ -321,6 +324,7 @@
     if (apply && G.M) {
       const o = readOptions();
       Object.assign(G.M.opts, o);
+      applyGraphics();
       banner('Impostazioni aggiornate', 'Valgono dalla prossima azione.', 1800);
       updateScore();
     }
@@ -361,6 +365,7 @@
     $('badge-role').textContent = roleName(opts.mode);
     $('sb-set').textContent = 'Set a ' + opts.target;
     if (!G.renderer) G.renderer = new SimRender.Renderer($('sim-canvas'));
+    applyGraphics();
     G.renderer.resize();
     applyView();
     updateScore();
@@ -458,6 +463,14 @@
   // ======================================================================================
   // Views
   // ======================================================================================
+  /** Level of detail of the drawing (option «Grafica»), for the game and for the replays. */
+  function applyGraphics() {
+    const q = (G.M && G.M.opts.graphics) || 'high';
+    [G.renderer, RP.renderer].forEach(r => { if (r) r.setQuality(q); });
+  }
+  /** Speed of the players' animations between rallies (option «Velocità delle animazioni»): durations are divided by it. */
+  function animK() { return (G.M && G.M.opts.animSpeed) || 1; }
+
   function applyView() {
     const v = G.top ? 'top' : G.view;
     G.renderer.setView(v);
@@ -716,8 +729,8 @@
     const swapped = (e.kind === 'sub' || e.kind === 'libero') && (e.expected === 'authorize' || (e.regular && !e.expected));
     if (G.M.opts.subAnim && swapped && e.inn && G.M.pos[e.team + e.inn]) {
       const M = G.M, q = M.pos[e.team + e.inn];
-      G.subAnim = { T: e.team, inn: e.inn, out: e.out, court: { x: q.x, y: q.y }, zone: [M.side[e.team] * (e.kind === 'sub' ? 1.6 : 6.2), 5.1], t0: G.clock || 0, dur: 2.6 };
-      delay = Math.max(delay || 0, 2700);
+      G.subAnim = { T: e.team, inn: e.inn, out: e.out, court: { x: q.x, y: q.y }, zone: [M.side[e.team] * (e.kind === 'sub' ? 1.6 : 6.2), 5.1], t0: G.clock || 0, dur: 2.6 / animK() };
+      delay = Math.max(delay || 0, Math.round(G.subAnim.dur * 1000) + 100);
     }
     logEntry({ kind: e.kind, before, outcome: (G.lastCall && G.lastCall.right) || aiEventText(e, e.expected || (e.regular ? 'authorize' : null)) || e.text,
       replay: { snap, from: 0, to: 4, focus: 1.6, label: LOG_KIND[e.kind] || 'Richiesta', event: true } });
@@ -767,7 +780,7 @@
     const key = T + walker, q = M.pos[key];
     if (!q) return false;
     const to = { x: M.side[T] * 0.9, y: -4.7 };
-    const walk = clamp(Math.hypot(to.x - q.x, to.y - q.y) / 3.2, 0.8, 2.2), hold = 2.0;
+    const walk = clamp(Math.hypot(to.x - q.x, to.y - q.y) / 3.2, 0.8, 2.2) / animK(), hold = 2.0 / animK();
     const standing = !direct && k !== 'verbal' ? e.who : null;
     G.approach = { key, T, from: { x: q.x, y: q.y }, to, t0: G.clock || 0, walk, hold, total: walk * 2 + hold, standing };
     const who = direct ? 'Il n. ' + walker : 'Il capitano in gioco (n. ' + walker + ')';
@@ -793,7 +806,7 @@
         M.pos[key] = to[key];
       });
     });
-    G.huddle = { from, to, t0: G.clock || 0, dur: 1.8 };
+    G.huddle = { from, to, t0: G.clock || 0, dur: 1.8 / animK() };
   }
 
   /** Time-out of 30 seconds, waited in full (option): countdown, then the game goes on. */
@@ -937,18 +950,24 @@
   function frame(now) {
     requestAnimationFrame(frame);
     if (!G.M || G.phase === 'idle' || G.phase === 'over') return;
-    const dt = Math.min(0.05, (now - (G.lastFrame || now)) / 1000);
+    // Real time since the last frame (capped, e.g. after the tab was in the background), played in steps of at
+    // most 50 ms: on a slow device the frames are fewer but the game keeps its real pace
+    let left = Math.min(0.25, (now - (G.lastFrame || now)) / 1000);
     G.lastFrame = now;
-    const running = !G.paused && !G.modal;
     const canCollab = G.M && G.M.opts.mode === '2' && G.phase === 'rally' && !G.whistled;
     $('btn-collab').hidden = !canCollab;
     // The collaboration panel belongs to the rally: it closes as soon as the rally is over
     if (!canCollab && !$('collab-panel').hidden) $('collab-panel').hidden = true;
     // While choosing the collaboration signal the play goes on in slow motion
     const k = (G.speed || 1) * (canCollab && !$('collab-panel').hidden ? 0.3 : 1);
-    if (running) { step(dt * k); updateMovement(dt * k); G.clock = (G.clock || 0) + dt * k; }
+    do {
+      const dt = Math.min(0.05, left);
+      left -= dt;
+      const running = !G.paused && !G.modal;
+      if (running) { step(dt * k); updateMovement(dt * k); G.clock = (G.clock || 0) + dt * k; }
+      runTimers(dt * k, running);
+    } while (left > 1e-6 && G.M && G.phase !== 'idle' && G.phase !== 'over');
     updateClocks();
-    runTimers(dt * k, running);
     draw();
   }
 
@@ -1137,7 +1156,7 @@
     banner(outFor === 'match' ? 'Squalifica' : 'Espulsione', txt, 3200);
     G.lastSubLog = txt;
     if ((r.kind === 'regular' || r.kind === 'exceptional') && before && M.opts.subAnim) {
-      G.subAnim = { T, inn: r.inn, out: who, court: before, zone: [M.side[T] * 1.6, 5.1], t0: G.clock || 0, dur: 2.6 };
+      G.subAnim = { T, inn: r.inn, out: who, court: before, zone: [M.side[T] * 1.6, 5.1], t0: G.clock || 0, dur: 2.6 / animK() };
     }
     G.lastCall = { by: '2° arbitro', user: false, happened: txt };
     logEntry({ kind: 'sub', before: M.score.A + '–' + M.score.B, outcome: txt, replay: null });
@@ -1937,6 +1956,7 @@
     $('rp-note').textContent = info.event ? info.snap.event.text : info.missed ? 'Il fallo non è stato fischiato: guarda il momento evidenziato sulla barra.' : 'Rivedi l’azione: il segno sulla barra indica il momento decisivo.';
     openModal('replay-modal');
     if (!RP.renderer) RP.renderer = new SimRender.Renderer($('rp-canvas'));
+    applyGraphics();
     RP.renderer.resize();
     RP.renderer.setView(G.view);
     RP.baseX = G.refX || 0;
@@ -1955,7 +1975,7 @@
   function replayTick(now) {
     const info = RP.info;
     if (!info || $('replay-modal').hidden) return;
-    const dt = Math.min(0.05, (now - RP.last) / 1000);
+    const dt = Math.min(0.25, (now - RP.last) / 1000);
     RP.last = now;
     if (RP.playing) {
       // Slower around the decisive moment, and always when "Rallenty" is on

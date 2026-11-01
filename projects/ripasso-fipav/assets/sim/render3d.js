@@ -96,11 +96,20 @@
     this.view = 'first';
     this.refX = 0;  // the referee's own position along the court (x, metres): 1st leans on the stand, 2nd walks along the side line
     this.look = 0; // where the referee is looking along the court (x, metres): the view turns towards the play
+    this.quality = 'high'; // level of detail: 'high' (whole hall), 'medium' (empty stands), 'low' (court and people only)
     this.resize();
   }
 
+  /** Level of detail of the drawing; the lower ones also draw fewer pixels on high-density screens. */
+  const MAX_DPR = { high: 2, medium: 1.5, low: 1 };
+  Renderer.prototype.setQuality = function (q) {
+    if (!MAX_DPR[q] || q === this.quality) return;
+    this.quality = q;
+    this.resize();
+  };
+
   Renderer.prototype.resize = function () {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR[this.quality] || 2);
     const r = this.canvas.getBoundingClientRect();
     this.cssW = Math.max(1, r.width);
     this.cssH = Math.max(1, r.height);
@@ -239,25 +248,46 @@
     return 'rgb(' + f((n >> 16) & 255) + ',' + f((n >> 8) & 255) + ',' + f(n & 255) + ')';
   }
 
-  Renderer.prototype.drawBackground = function () {
-    const ctx = this.ctx, W = this.cssW, H = this.cssH;
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0b1222');
-    g.addColorStop(0.45, C.wall1);
-    g.addColorStop(1, C.wall2);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-    // Hall lights: soft glows high up (not in the top view)
-    if (this.view !== 'top') {
-      [0.18, 0.5, 0.82].forEach(fx => {
-        const lg = ctx.createRadialGradient(W * fx, -H * 0.05, 0, W * fx, -H * 0.05, H * 0.55);
-        lg.addColorStop(0, 'rgba(255,244,214,0.22)');
-        lg.addColorStop(0.4, 'rgba(255,244,214,0.06)');
-        lg.addColorStop(1, 'rgba(255,244,214,0)');
-        ctx.fillStyle = lg;
-        ctx.fillRect(0, 0, W, H);
-      });
+  /**
+   * Screen-space layers that only depend on the canvas size and the view (background, vignette): painted once
+   * on an offscreen canvas and then copied every frame, since full-screen gradients are slow to fill (mostly on
+   * phones) and a slow frame would slow down the whole game.
+   */
+  Renderer.prototype.cachedLayer = function (name, paint) {
+    const W = this.canvas.width, H = this.canvas.height, key = W + 'x' + H + ':' + this.cssW + 'x' + this.cssH + ':' + this.view + ':' + this.quality;
+    const layers = this.layers || (this.layers = {});
+    let L = layers[name];
+    if (!L || L.key !== key) {
+      const c = L ? L.canvas : document.createElement('canvas');
+      c.width = W; c.height = H;
+      const lctx = c.getContext('2d');
+      lctx.setTransform(W / this.cssW, 0, 0, H / this.cssH, 0, 0);
+      paint(lctx, this.cssW, this.cssH);
+      L = layers[name] = { canvas: c, key };
     }
+    this.ctx.drawImage(L.canvas, 0, 0, this.cssW, this.cssH);
+  };
+
+  Renderer.prototype.drawBackground = function () {
+    this.cachedLayer('background', (ctx, W, H) => {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#0b1222');
+      g.addColorStop(0.45, C.wall1);
+      g.addColorStop(1, C.wall2);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      // Hall lights: soft glows high up (not in the top view, nor in the simple graphics)
+      if (this.view !== 'top' && this.quality !== 'low') {
+        [0.18, 0.5, 0.82].forEach(fx => {
+          const lg = ctx.createRadialGradient(W * fx, -H * 0.05, 0, W * fx, -H * 0.05, H * 0.55);
+          lg.addColorStop(0, 'rgba(255,244,214,0.22)');
+          lg.addColorStop(0.4, 'rgba(255,244,214,0.06)');
+          lg.addColorStop(1, 'rgba(255,244,214,0)');
+          ctx.fillStyle = lg;
+          ctx.fillRect(0, 0, W, H);
+        });
+      }
+    });
   };
 
   /**
@@ -277,7 +307,10 @@
         // Riser and tread of the tier
         this.poly([[-16, ya, z - 0.48], [16, ya, z - 0.48], [16, ya, z], [-16, ya, z]], shadeColor(seat[i % 2], 0.8));
         this.poly([[-16, ya, z], [16, ya, z], [16, yb, z], [-16, yb, z]], seat[i % 2]);
-        // Spectators (not every seat taken)
+        // Spectators (not every seat taken), one path per colour for the whole tier (hundreds of small shapes);
+        // the stands stay empty below the detailed graphics
+        if (this.quality !== 'high') continue;
+        const body = shirts.map(() => new Path2D()), heads = C.skin.map(() => new Path2D());
         for (let j = 0; j < 46; j++) {
           const hsh = (j * 73 + i * 151 + (side > 0 ? 7 : 31)) % 997;
           if (hsh % 5 === 0) continue;
@@ -285,11 +318,12 @@
           const p = this.cam.project([x, ya + side * 0.45, z + 0.62]);
           if (!p || p.s < 1.2) continue;
           const r = Math.max(0.6, 0.11 * p.s);
-          ctx.fillStyle = shirts[hsh % shirts.length];
-          ctx.fillRect(p.x - r * 1.5, p.y + r * 0.6, r * 3, r * 3.2);
-          ctx.fillStyle = ['#f1c7a3', '#d9a27a', '#a8714d', '#7b4a2e'][hsh % 4];
-          ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+          body[hsh % shirts.length].rect(p.x - r * 1.5, p.y + r * 0.6, r * 3, r * 3.2);
+          const hd = heads[hsh % 4];
+          hd.moveTo(p.x + r, p.y); hd.arc(p.x, p.y, r, 0, Math.PI * 2);
         }
+        body.forEach((path, k) => { ctx.fillStyle = shirts[k]; ctx.fill(path); });
+        heads.forEach((path, k) => { ctx.fillStyle = C.skin[k]; ctx.fill(path); });
       }
     });
   };
@@ -333,24 +367,23 @@
     const c = this.cam.project([0, 0, 0]);
     if (!pts || !c) return;
     const ctx = this.ctx;
-    ctx.save();
-    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); pts.slice(1).forEach(q => ctx.lineTo(q.x, q.y)); ctx.closePath(); ctx.clip();
+    // The court itself filled with the gradient (cheaper than clipping a full-screen fill)
     const R = Math.max(this.cssW, this.cssH) * 0.75;
     const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, R);
     g.addColorStop(0, 'rgba(255,236,200,0.16)');
     g.addColorStop(0.6, 'rgba(255,236,200,0.03)');
     g.addColorStop(1, 'rgba(60,20,0,0.18)');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, this.cssW, this.cssH);
-    ctx.restore();
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); pts.slice(1).forEach(q => ctx.lineTo(q.x, q.y)); ctx.closePath(); ctx.fill();
   };
   Renderer.prototype.vignette = function () {
-    const ctx = this.ctx, W = this.cssW, H = this.cssH;
-    const g = ctx.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.35, W / 2, H * 0.55, Math.max(W, H) * 0.8);
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, 'rgba(0,0,0,0.32)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+    this.cachedLayer('vignette', (ctx, W, H) => {
+      const g = ctx.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.35, W / 2, H * 0.55, Math.max(W, H) * 0.8);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,0.32)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    });
   };
 
   Renderer.prototype.drawFloor = function () {
@@ -358,7 +391,7 @@
     this.rect(-17, -10.4, 17, 10.4, 0, '#1a4257');
     this.rect(-13, -7.5, 13, 9.5, 0, C.floor);
     this.rect(-9, -4.5, 9, 4.5, 0, C.court);
-    this.courtLight();
+    if (this.quality === 'high') this.courtLight();
     const w = 0.05;
     // Perimeter lines (inside the court), centre line, attack lines and their dashed extensions
     this.floorLine(-9, -4.5 + w / 2, 9, -4.5 + w / 2, w);
@@ -386,9 +419,10 @@
     this.hits = [];   // screen boxes of the people drawn, in drawing order (for picking someone on the court)
     ctx.save();
     this.drawBackground();
-    if (this.view !== 'top') this.drawHall();
+    const hall = this.view !== 'top' && this.quality !== 'low';
+    if (hall) this.drawHall();
     this.drawFloor();
-    if (this.view !== 'top') this.drawBoards();
+    if (hall) this.drawBoards();
 
     const items = [];
     const push = (p, fn) => { const c = this.cam.toCam(p); if (c[2] > NEAR) items.push({ z: c[2], fn }); };
@@ -418,7 +452,7 @@
 
     items.sort((a, b) => b.z - a.z);
     items.forEach(it => it.fn());
-    if (this.view !== 'top') this.vignette();
+    if (hall) this.vignette();
     ctx.restore();
   };
 
@@ -584,7 +618,13 @@
     if (sh) {
       // Soft contact shadow (darker under the feet, fading outwards)
       const k = 1 / (1 + zf * 1.2), r = 0.4 * sh.s * k;
-      if (r > 0.5) {
+      if (this.quality !== 'high') {
+        // Lighter graphics: a flat shadow
+        ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * k).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.ellipse(sh.x, sh.y, 0.34 * sh.s * k, 0.34 * sh.s * k * this.flatten(p), 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (r > 0.5) {
         ctx.save();
         ctx.translate(sh.x, sh.y);
         ctx.scale(1, this.flatten(p));
@@ -613,7 +653,7 @@
     const shY = top + hpx * 0.19;                       // shoulder line
     const hipY = top + hpx * 0.53;
     const kneeY = hipY + (foot.y - hipY) * 0.5;
-    const detail = hpx > 26;                            // small figures: fewer details
+    const detail = hpx > 26 && this.quality !== 'low';  // small figures (and simple graphics): fewer details
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 

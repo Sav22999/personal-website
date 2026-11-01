@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=4.0.0-17">
-<link rel="stylesheet" href="assets/sim/sim.css?v=4.0.0-17">
+<link rel="stylesheet" href="assets/app.css?v=4.0.0-19">
+<link rel="stylesheet" href="assets/sim/sim.css?v=4.0.0-19">
 <script>
   try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -137,6 +137,25 @@
             <button type="button" data-v="mine">Vale la mia decisione</button>
           </div>
           <small class="sim-opt-hint">«Si corregge»: il punteggio segue sempre la decisione giusta. «Vale la mia decisione»: come in partita, punto, sanzioni e richieste seguono quello che hai deciso tu, anche se sbagliato.</small>
+        </div>
+        <div class="sim-opt">
+          <span class="sim-opt-label">Velocità delle animazioni</span>
+          <div class="segmented" id="opt-anim">
+            <button type="button" data-v="0.7">Lente</button>
+            <button type="button" data-v="1" class="active">Normali</button>
+            <button type="button" data-v="1.5">Veloci</button>
+            <button type="button" data-v="2.5">Molto veloci</button>
+          </div>
+          <small class="sim-opt-hint">Quanto si muovono in fretta i giocatori fra un’azione e l’altra: sostituzioni, rimpiazzi del Libero, squadre che vanno in panchina per il tempo di riposo, giocatori che vengono al seggiolone per una sanzione. Il gioco durante l’azione resta a velocità reale.</small>
+        </div>
+        <div class="sim-opt">
+          <span class="sim-opt-label">Grafica</span>
+          <div class="segmented" id="opt-graphics">
+            <button type="button" data-v="high" class="active">Dettagliata</button>
+            <button type="button" data-v="medium">Normale</button>
+            <button type="button" data-v="low">Semplice</button>
+          </div>
+          <small class="sim-opt-hint">Dettagliata: palazzetto con pubblico, luci e ombre morbide. Normale: tribune vuote, senza luce sul campo, ombre semplici. Semplice: solo campo e persone, con meno dettagli e a risoluzione ridotta; la più leggera, per telefoni e computer lenti.</small>
         </div>
         <label class="toggle-row">
           <input type="checkbox" id="opt-aids" checked>
@@ -404,12 +423,12 @@
   </div>
 </div>
 
-<script src="assets/version.js?v=4.0.0-17"></script>
-<script src="assets/api.js?v=4.0.0-17"></script>
-<script src="assets/sim/render3d.js?v=4.0.0-17"></script>
-<script src="assets/sim/engine.js?v=4.0.0-17"></script>
-<script src="assets/sim/situations.js?v=4.0.0-17"></script>
-<script src="assets/sim/gestures.js?v=4.0.0-17"></script>
-<script src="assets/sim/ui.js?v=4.0.0-17"></script>
+<script src="assets/version.js?v=4.0.0-19"></script>
+<script src="assets/api.js?v=4.0.0-19"></script>
+<script src="assets/sim/render3d.js?v=4.0.0-19"></script>
+<script src="assets/sim/engine.js?v=4.0.0-19"></script>
+<script src="assets/sim/situations.js?v=4.0.0-19"></script>
+<script src="assets/sim/gestures.js?v=4.0.0-19"></script>
+<script src="assets/sim/ui.js?v=4.0.0-19"></script>
 </body>
 </html>
