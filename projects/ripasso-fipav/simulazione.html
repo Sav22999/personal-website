@@ -13,8 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=4.0.0-15">
-<link rel="stylesheet" href="assets/sim/sim.css?v=4.0.0-15">
+<link rel="stylesheet" href="assets/app.css?v=4.0.0-17">
+<link rel="stylesheet" href="assets/sim/sim.css?v=4.0.0-17">
 <script>
   try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -189,6 +189,11 @@
   <!-- ====== GAME ====== -->
   <main class="sim-game" id="sim-game" hidden>
     <canvas id="sim-canvas" aria-label="Campo di gioco"></canvas>
+    <div class="rotate-tip" id="rotate-tip" role="note">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+      <span>Gira il telefono in orizzontale: il campo è più grande.</span>
+      <button type="button" id="rot-dismiss">Ok</button>
+    </div>
 
     <div class="sb-holder">
     <button class="sb-slip" id="slip-btn-a" data-team="A" title="Formazione iniziale della squadra A" aria-label="Formazione iniziale della squadra A" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>A</span></button>
@@ -399,12 +404,12 @@
   </div>
 </div>
 
-<script src="assets/version.js?v=4.0.0-15"></script>
-<script src="assets/api.js?v=4.0.0-15"></script>
-<script src="assets/sim/render3d.js?v=4.0.0-15"></script>
-<script src="assets/sim/engine.js?v=4.0.0-15"></script>
-<script src="assets/sim/situations.js?v=4.0.0-15"></script>
-<script src="assets/sim/gestures.js?v=4.0.0-15"></script>
-<script src="assets/sim/ui.js?v=4.0.0-15"></script>
+<script src="assets/version.js?v=4.0.0-17"></script>
+<script src="assets/api.js?v=4.0.0-17"></script>
+<script src="assets/sim/render3d.js?v=4.0.0-17"></script>
+<script src="assets/sim/engine.js?v=4.0.0-17"></script>
+<script src="assets/sim/situations.js?v=4.0.0-17"></script>
+<script src="assets/sim/gestures.js?v=4.0.0-17"></script>
+<script src="assets/sim/ui.js?v=4.0.0-17"></script>
 </body>
 </html>

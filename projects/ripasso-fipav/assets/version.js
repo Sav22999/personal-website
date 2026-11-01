@@ -13,6 +13,7 @@ window.APP_RELEASES = [
       {
         title: 'Novità',
         items: [
+          'Il mio profilo › Azzera statistiche: si apre una finestra in cui scegli con le caselle cosa cancellare (statistiche dei quiz, statistiche della simulazione, domande salvate, riferimenti salvati, note personali, quiz sospesi), con quanti dati ci sono per ognuna. Le segnalazioni inviate non si cancellano.',
           'La registrazione dell’azione si può guardare dal seggiolone del 1° arbitro, dal posto del 2° arbitro (se c’è) o dall’alto; nella registrazione il 2° arbitro si porta dal lato della squadra in fallo prima della segnaletica.',
           'Espulsione e squalifica: dopo il cartellino l’espulso va negli spogliatoi fino alla fine del set, lo squalificato per il resto della gara; se è in campo viene sostituito subito con una sostituzione regolamentare (dello stesso ruolo, quando possibile) o, se non è possibile, eccezionale; altrimenti la squadra è incompleta e perde il set.',
           'Nella registrazione dell’azione c’è anche la segnaletica dell’arbitro, sincronizzata con la barra: momento del fallo (rosso), fischio (blu) e segnaletica (verde), ognuno come una fascia che ne copre tutta la durata, con il gesto in un riquadro e sul personaggio in campo.',
@@ -66,6 +67,8 @@ window.APP_RELEASES = [
         items: [
           'Giocatori più curati: viso (occhi, sopracciglia, naso, bocca), ciuffo e riflesso sui capelli, contorni e luce su braccia e gambe, maglia con luce dall’alto e bordino, numero contornato, polsini e strisce dei pantaloncini nel colore della squadra, numero piccolo sui pantaloncini, ginocchiere con riflesso, calzettoni con la fascia della squadra, scarpe con suola e dettaglio colorato.',
           'Palazzetto più realistico: tribune con il pubblico su entrambi i lati, cartelloni a bordo campo, luci dall’alto, campo illuminato al centro, ombre morbide sotto i giocatori e una leggera vignettatura.',
+          'Segnaletica della palla toccata corretta: la mano che sfiora passa sulla punta delle dita della mano verticale, da vicino al corpo verso l’esterno (in avanti).',
+          'Più comoda sul telefono: in orizzontale barra e punteggio compatti, scheda della decisione e finestre (replay compreso) che stanno nello schermo e scorrono; in verticale i pulsanti del replay vanno a capo e un suggerimento propone di girare il telefono.',
           'Da 2° arbitro hai più tempo: il 1° fischia la fine dell’azione circa un secondo dopo (così puoi segnalare palla toccata o fuori, o fischiare un fallo tuo), e sui falli di competenza di entrambi ti lascia più tempo prima di fischiare lui.',
           'Scala delle sanzioni: condotta maleducata dello stesso componente → penalizzazione, poi espulsione, poi squalifica; seconda condotta offensiva → squalifica; dopo il giallo della squadra ogni ulteriore lieve condotta è sempre una penalizzazione (non diventa espulsione).',
           'Palla toccata: corretto il lato del gesto (la mano verticale è dal lato della squadra che ha toccato, opposto a quello del servizio).',

@@ -229,6 +229,13 @@
   // Setup screen
   // ======================================================================================
   function initSetup() {
+    // Portrait phone tip ("turn the phone"): dismissed once, remembered on this browser
+    try { if (localStorage.getItem('fipav-sim-rot') === '1') document.body.classList.add('rot-dismissed'); } catch (e) {}
+    const rot = $('rot-dismiss');
+    if (rot) rot.addEventListener('click', () => {
+      document.body.classList.add('rot-dismissed');
+      try { localStorage.setItem('fipav-sim-rot', '1'); } catch (e) {}
+    });
     const grid = $('role-grid');
     grid.querySelectorAll('.role-card').forEach(b => b.addEventListener('click', () => {
       grid.querySelectorAll('.role-card').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
@@ -1677,7 +1684,7 @@
   const FAULT_SIGNAL = {
     in: { pose: 'in', name: 'Palla dentro: braccio teso verso il campo, palmo aperto' },
     out: { pose: 'out', name: 'Palla fuori: braccia piegate a 90°, avambracci verticali, palmi verso il campo, dita unite' },
-    touched_out: { pose: 'touched', motion: 'brush', name: 'Palla toccata: mano verticale in alto, dorso verso i campi; l’altra mano, palmo in basso, sfiora le dita una volta da dietro in avanti' },
+    touched_out: { pose: 'touched', motion: 'brush', name: 'Palla toccata: mano verticale in alto, dorso verso i campi; l’altra mano, palmo in basso, sfiora le dita una volta, da vicino al corpo verso l’esterno (in avanti)' },
     serve_foot: { pose: 'line', name: 'Fallo del giocatore al servizio: indica la linea di fondo, senza oscillare il braccio' },
     serve_8s: { pose: 'eight', name: 'Ritardo al servizio: otto dita divaricate' },
     serve_net: { pose: 'net', name: 'Palla di servizio che non supera la rete: braccio teso dritto verso il segnapunti all’altezza della spalla, mano aperta in prosecuzione del braccio' },

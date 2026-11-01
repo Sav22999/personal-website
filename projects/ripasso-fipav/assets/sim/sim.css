@@ -487,3 +487,66 @@ kbd { font-family: var(--font); font-size: .75rem; padding: 1px 6px; border-radi
 .rp-sig-text small { font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: #2e9e5b; font-weight: 700; }
 .rp-sig-text p { margin: 2px 0 0; font-size: .8rem; line-height: 1.3; }
 @media (max-width: 520px) { .rp-sig-fig { width: 70px; height: 68px; } .rp-sig-text p { font-size: .72rem; } }
+
+/* ================= Phones ================= */
+/* Portrait: the replay buttons wrap; a tip suggests turning the phone (the court is much bigger in landscape) */
+@media (max-width: 640px) {
+  .rp-controls { flex-wrap: wrap; }
+  .rp-controls .btn { padding-left: 10px; padding-right: 10px; }
+  .sim-badges { top: 60px; left: 8px; }
+  .sim-banner { top: 108px; max-width: calc(100% - 24px); }
+}
+@media (max-width: 420px) {
+  .sim-top:has(.sim-top-right:not([hidden])) .sim-title { display: none; } /* during the match the chips need the room */
+}
+.rotate-tip {
+  position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 4; display: none;
+  align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; width: max-content; max-width: calc(100% - 32px);
+  background: rgba(10, 18, 34, .88); color: #fff; font-size: .86rem; box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+.rotate-tip svg { flex: none; animation: rot-tip 2.4s ease-in-out infinite; }
+.rotate-tip button { margin-left: 4px; background: rgba(255,255,255,.14); color: #fff; border: 0; border-radius: 8px; padding: 6px 10px; font-weight: 700; cursor: pointer; }
+@keyframes rot-tip { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) and (max-width: 640px) {
+  body:not(.rot-dismissed) .sim-game .rotate-tip { display: flex; }
+}
+
+/* Landscape phones (little height): slimmer bar, icon-only chips, compact cards and windows */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sim-top { padding: 4px 10px; padding-top: max(4px, env(safe-area-inset-top)); padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); gap: 8px; }
+  .sim-top > img { width: 22px; height: 22px; }
+  .sim-title span { display: none; }
+  .sim-chip span { display: none; }
+  .sim-chip { height: 30px; padding: 0 9px; }
+  .sim-back { width: 30px; height: 30px; }
+  .sb-holder { top: 6px; }
+  .sb-score { font-size: 1.35rem; }
+  .sb-team { padding: 3px 9px; }
+  .sbx { font-size: .6rem; padding: 2px 8px; }
+  .sb-slip span { display: none; }
+  .sb-slip { padding: 5px; }
+  .sim-badges { top: 8px; left: max(8px, env(safe-area-inset-left)); }
+  .sim-banner { top: 64px; font-size: .78rem; padding: 6px 12px; max-width: 56%; }
+  .sim-controls { padding: 6px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); gap: 4px; }
+  .sim-hint { font-size: .76rem; }
+  .sim-btn { min-height: 42px; padding: 0 18px; font-size: .94rem; }
+  .sim-btn.whistle { min-width: 140px; }
+  .gesture-mini { transform: scale(.82); transform-origin: bottom right; }
+  /* Decision card: compact, never taller than the screen */
+  .dcard { bottom: 58px; padding: 10px 12px; max-height: calc(100% - 70px); overflow-y: auto; width: min(560px, calc(100% - 24px)); }
+  .dc-head h4 { font-size: .92rem; }
+  .dc-head p { font-size: .78rem; }
+  .dc-sig { grid-template-columns: 84px 1fr; margin-top: 6px; padding: 6px; }
+  .dc-sig .fg-fig { width: 84px; height: 80px; }
+  .dc-actions { margin-top: 6px; }
+  .slip-card { bottom: 58px; max-height: calc(100% - 70px); overflow-y: auto; }
+  .slip-court-wrap { display: none; }
+  /* Windows: use the whole height, scroll inside */
+  .sim-modal .modal-box { max-height: calc(100dvh - 12px); overflow-y: auto; padding: 14px 16px; }
+  #replay-modal .modal-box { width: min(760px, calc(100vw - 16px)); }
+  .rp-stage { aspect-ratio: auto; height: 52dvh; }
+  .rp-head h3 { font-size: .95rem; }
+  #rp-note { display: none; }
+  .rp-controls { flex-wrap: wrap; margin-top: 4px; }
+  .rp-legend { margin-top: 4px; }
+}

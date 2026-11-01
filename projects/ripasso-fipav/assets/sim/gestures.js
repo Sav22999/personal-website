@@ -31,10 +31,10 @@
     // Ball out: both arms bent at 90° at the elbow, forearms up, palms towards the court, fingers together
     out: () => ({ L: [90, 90, 'flat'], R: [90, 90, 'flat'] }),
     // Ball touched: like the time-out but higher, the vertical hand with its back towards the courts; the other
-    // hand brushes its fingertips once, from back to front
+    // hand brushes its fingertips once, from close to the body to away from it (forwards)
     // The vertical hand is on the side of the team that touched the ball (s); the other hand brushes it
-    touched: s => (s === 'L' ? { L: [35, 147, 'flat', 1, 1.25, 180], R: [20, -152.5, 'palmDown', 0.9, 2.54, -90] }
-      : { R: [35, 147, 'flat', 1, 1.25, 180], L: [20, -152.5, 'palmDown', 0.9, 2.54, -90] }),
+    touched: s => (s === 'L' ? { L: [35, 147, 'flat', 1, 1.25, 180], R: [20, -156, 'palmDown', 0.9, 2.69, -90] }
+      : { R: [35, 147, 'flat', 1, 1.25, 180], L: [20, -156, 'palmDown', 0.9, 2.69, -90] }),
     four: s => one(s, [26, 150, 'f4']),
     double: s => one(s, [26, 150, 'f2']),
     catch: s => one(s, [14, 70, 'palmUp']),
@@ -100,7 +100,11 @@
       // The brushing hand is the one opposite to the side of the signal
       const b = side === 'L' ? 'R' : 'L';
       const a = p[b];
-      p[b] = [a[0], a[1], k < 0.5 ? 'palmDownBack' : 'palmDown', a[3], a[4] * (0.9 + 0.16 * k), a[5]];
+      // Corrected by a referee: the hand goes from close to the body to away from it (forwards), passing over
+      // the fingertips of the vertical hand. Seen from the front this is depth, not a sideways slide: the hand
+      // stays over the fingertips, starts small and behind them, and grows as it comes towards the viewer.
+      // 7th value: scale of the hand (depth)
+      p[b] = [a[0], a[1], k < 0.45 ? 'palmDownBack' : 'palmDown', a[3], a[4] * (1.0 - 0.04 * k), a[5], 0.72 + 0.5 * k];
     },
     roll: (p, side, u) => { const a = Math.min(1, u) * Math.PI * 2; p.L = [26 + Math.sin(a) * 10, -100 + Math.cos(a) * 18, 'fist']; p.R = [26 - Math.sin(a) * 10, -100 - Math.cos(a) * 18, 'fist']; },
     // Authorization to serve: after the whistle the extended arm bends and the hand goes to the opposite shoulder
@@ -135,7 +139,7 @@
     let s = '<line x1="' + sh[0] + '" y1="' + sh[1] + '" x2="' + el[0].toFixed(1) + '" y2="' + el[1].toFixed(1) + '" stroke="' + SKIN + '" stroke-width="13" stroke-linecap="round"/>' +
       '<line x1="' + sh[0] + '" y1="' + sh[1] + '" x2="' + mid[0].toFixed(1) + '" y2="' + mid[1].toFixed(1) + '" stroke="' + SLEEVE + '" stroke-width="17" stroke-linecap="round"/>' +
       '<line x1="' + el[0].toFixed(1) + '" y1="' + el[1].toFixed(1) + '" x2="' + wr[0].toFixed(1) + '" y2="' + wr[1].toFixed(1) + '" stroke="' + SKIN + '" stroke-width="11" stroke-linecap="round"/>';
-    s += handSvg(wr, dh, hand, side);
+    s += handSvg(wr, dh, hand, side, arm[6]);
     return s;
   }
 
@@ -163,7 +167,7 @@
    * side: the arm ('L' / 'R' of the drawing). The figure faces the viewer, so with the palm visible the thumb
    * points towards the middle of the body, with the back visible it points outwards.
    */
-  function handSvg(c, d, hand, side) {
+  function handSvg(c, d, hand, side, scale) {
     const out = side === 'L' ? -1 : 1;     // outwards, in drawing x
     let deg = Math.atan2(d[1], d[0]) * 180 / Math.PI + 90;
     // Thumb side in the local frame for a palm facing the viewer (towards the body's middle)
@@ -224,7 +228,7 @@
         g = '<ellipse cx="0" cy="0" rx="11" ry="5.5" fill="' + PALM + '" stroke="' + OUT + '" stroke-width=".7"/><path d="M-6 -1 Q0 2 6 -1" stroke="' + OUT + '" fill="none" stroke-width=".6"/>'; break;
       default: g = fist(SKIN);
     }
-    return '<g transform="translate(' + f1(c[0]) + ' ' + f1(c[1]) + ') rotate(' + f1(deg) + ') scale(1.25)">' + g + '</g>';
+    return '<g transform="translate(' + f1(c[0]) + ' ' + f1(c[1]) + ') rotate(' + f1(deg) + ') scale(' + (1.25 * (scale || 1)).toFixed(3) + ')">' + g + '</g>';
   }
 
   function figureSvg(pose, opts) {
@@ -246,7 +250,8 @@
     // Whistle on a lanyard, always in the mouth
     svg += '<path d="M122 70q8 16 16 0" fill="none" stroke="#3a4558" stroke-width="1.5"/><rect x="125" y="58" width="10" height="6" rx="2.5" fill="#c9ced8"/>';
     // Arms in front of the body when raised, the body covering them when down
-    svg += armSvg('L', pose.L) + armSvg('R', pose.R);
+    // A hand coming towards the viewer (palm down, in front) is drawn over the other arm
+    svg += pose.L && pose.L[2] === 'palmDown' ? armSvg('R', pose.R) + armSvg('L', pose.L) : armSvg('L', pose.L) + armSvg('R', pose.R);
     if (o.whistleOn) svg += '<g fill="none" stroke="#ffd54f" stroke-width="3" stroke-linecap="round"><path d="M164 30l12-8M168 42l15 0M164 54l12 8"/></g>';
     svg += '</svg>';
     return svg;

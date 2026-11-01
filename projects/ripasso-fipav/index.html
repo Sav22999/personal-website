@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=4.0.0-15">
+<link rel="stylesheet" href="assets/app.css?v=4.0.0-17">
 <script>
   try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -615,7 +615,7 @@
           <button type="button" class="btn btn-secondary" id="btn-logout-profile">Esci</button>
         </div>
         <div class="profile-row danger">
-          <span class="profile-row-text"><strong>Azzera statistiche</strong><small>Cancella risposte e percentuali. Domande e riferimenti salvati restano.</small></span>
+          <span class="profile-row-text"><strong>Azzera statistiche</strong><small>Scegli tu cosa cancellare: statistiche, domande e riferimenti salvati, note, quiz sospesi.</small></span>
           <button type="button" class="btn btn-danger-ghost" id="btn-reset">Azzera</button>
         </div>
       </div>
@@ -683,10 +683,23 @@
 </div>
 </div>
 
+<div class="modal-overlay" id="reset-modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+    <h3 class="modal-title" id="reset-title">Cosa vuoi azzerare?</h3>
+    <p class="modal-text">Seleziona i dati da cancellare. L’operazione è definitiva e vale su tutti i tuoi dispositivi.</p>
+    <div class="reset-head"><button type="button" class="link-btn" id="reset-all">Seleziona tutto</button></div>
+    <div class="reset-list" id="reset-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="reset-cancel">Annulla</button>
+      <button class="btn btn-danger" id="reset-confirm">Azzera</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/version.js?v=4.0.0-15"></script>
-<script src="assets/api.js?v=4.0.0-15"></script>
-<script src="assets/boot.js?v=4.0.0-15"></script>
+<script src="assets/version.js?v=4.0.0-17"></script>
+<script src="assets/api.js?v=4.0.0-17"></script>
+<script src="assets/boot.js?v=4.0.0-17"></script>
 </body>
 </html>

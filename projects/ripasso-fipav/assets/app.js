@@ -1976,15 +1976,103 @@ document.getElementById('modal-confirm').addEventListener('click', () => {
   if (modalResolve) { modalResolve(true); modalResolve = null; }
 });
 
-document.getElementById('btn-reset').addEventListener('click', async () => {
-  const ok = await showModal('Azzerare le statistiche?', 'Risposte e percentuali verranno cancellate definitivamente. Domande e riferimenti salvati restano.', 'Azzera');
-  if (ok) {
-    appData.stats = { correct: 0, wrong: 0, refCorrect: {}, refWrong: {} };
-    saveData();
-    renderStats();
-    if (window.renderProfile) window.renderProfile();
-    showToast('Statistiche azzerate');
+// Profile › Azzera statistiche: a window with a checkbox for each kind of personal data
+function readSimData() {
+  try { const d = JSON.parse(Store.getItem('fipav-sim') || 'null'); return d && typeof d === 'object' ? d : {}; } catch (e) { return {}; }
+}
+function resetOptions() {
+  const user = window.APP_USER || {};
+  const s = appData.stats || {}, answers = (s.correct || 0) + (s.wrong || 0);
+  const sim = readSimData(), games = Array.isArray(sim.games) ? sim.games.length : 0;
+  let decisions = 0;
+  Object.keys(sim.byCat || {}).forEach(k => { decisions += (sim.byCat[k].c || 0) + (sim.byCat[k].w || 0); });
+  const bq = appData.bookmarks.questions.length, br = appData.bookmarks.refs.length;
+  const notes = Object.keys(appData.bookmarks.questionNotes || {}).length + Object.keys(appData.bookmarks.refNotes || {}).length;
+  const susp = loadSuspendedSessions().length;
+  const n = (v, one, many) => v + ' ' + (v === 1 ? one : many);
+  const opts = [
+    { id: 'quiz', title: 'Statistiche dei quiz', info: answers ? n(answers, 'risposta data', 'risposte date') + ', con le percentuali per riferimento' : 'Nessuna risposta', count: answers, checked: true },
+  ];
+  // The simulation is in beta for administrators only
+  if ((user.permissions || 0) >= 9) {
+    opts.push({ id: 'sim', title: 'Statistiche della simulazione partita', info: games || decisions ? n(games, 'partita', 'partite') + ', ' + n(decisions, 'decisione', 'decisioni') + '. Le segnalazioni inviate restano' : 'Nessuna partita', count: games + decisions, checked: true });
   }
+  opts.push(
+    { id: 'questions', title: 'Domande salvate', info: bq ? n(bq, 'domanda', 'domande') : 'Nessuna domanda salvata', count: bq },
+    { id: 'refs', title: 'Riferimenti salvati', info: br ? n(br, 'riferimento', 'riferimenti') : 'Nessun riferimento salvato', count: br },
+    { id: 'notes', title: 'Note personali', info: notes ? n(notes, 'nota', 'note') + ' su domande e riferimenti' : 'Nessuna nota', count: notes },
+    { id: 'suspended', title: 'Quiz sospesi', info: susp ? n(susp, 'quiz da riprendere', 'quiz da riprendere') : 'Nessun quiz sospeso', count: susp },
+  );
+  return opts;
+}
+function resetChecked() {
+  return Array.from(document.querySelectorAll('#reset-list input:checked')).map(i => i.value);
+}
+function updateResetButtons() {
+  const sel = resetChecked();
+  const btn = document.getElementById('reset-confirm');
+  btn.disabled = sel.length === 0;
+  btn.textContent = sel.length > 1 ? 'Azzera (' + sel.length + ')' : 'Azzera';
+  const free = Array.from(document.querySelectorAll('#reset-list input:not(:disabled)'));
+  document.getElementById('reset-all').textContent = free.length && free.every(i => i.checked) ? 'Deseleziona tutto' : 'Seleziona tutto';
+}
+function openResetModal() {
+  const list = document.getElementById('reset-list');
+  list.innerHTML = resetOptions().map(o =>
+    '<label class="reset-opt' + (o.count ? '' : ' empty') + '"><input type="checkbox" value="' + o.id + '"' + (o.count && o.checked ? ' checked' : '') + (o.count ? '' : ' disabled') + '>' +
+    '<span><strong>' + escapeHtml(o.title) + '</strong><small>' + escapeHtml(o.info) + '</small></span></label>').join('');
+  updateResetButtons();
+  document.getElementById('reset-modal').hidden = false;
+  const first = list.querySelector('input:not(:disabled)');
+  if (first) first.focus();
+}
+function closeResetModal() {
+  document.getElementById('reset-modal').hidden = true;
+  document.getElementById('btn-reset').focus();
+}
+function applyReset(sel) {
+  const has = k => sel.includes(k);
+  if (has('quiz')) appData.stats = { correct: 0, wrong: 0, refCorrect: {}, refWrong: {} };
+  if (has('questions')) appData.bookmarks.questions = [];
+  if (has('refs')) appData.bookmarks.refs = [];
+  if (has('notes')) { appData.bookmarks.questionNotes = {}; appData.bookmarks.refNotes = {}; }
+  saveData();
+  if (has('sim')) {
+    // Statistics only: reports sent from the simulation stay, the team still needs them
+    const d = readSimData();
+    d.byCat = {}; d.bySit = {}; d.games = [];
+    try { Store.setItem('fipav-sim', JSON.stringify(d)); } catch (e) {}
+  }
+  if (has('suspended')) {
+    clearAllSuspendedSessions();
+    if (!quizState) clearAutoSave();
+  }
+  renderStats();
+  updateSavedCount();
+  renderSuspendedSessions();
+  try { renderSavedQuestions(); } catch (e) {}
+  try { renderTheorySavedRefs(); } catch (e) {}
+  if (has('refs') || has('notes')) { try { renderTheory(); } catch (e) {} }
+  if (has('questions')) { try { updateMaxCount(); } catch (e) {} }
+  if (window.renderProfile) window.renderProfile();
+}
+document.getElementById('btn-reset').addEventListener('click', openResetModal);
+document.getElementById('reset-list').addEventListener('change', updateResetButtons);
+document.getElementById('reset-all').addEventListener('click', () => {
+  const free = Array.from(document.querySelectorAll('#reset-list input:not(:disabled)'));
+  const all = free.every(i => i.checked);
+  free.forEach(i => { i.checked = !all; });
+  updateResetButtons();
+});
+document.getElementById('reset-cancel').addEventListener('click', closeResetModal);
+document.getElementById('reset-modal').addEventListener('click', e => { if (e.target.id === 'reset-modal') closeResetModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('reset-modal').hidden) closeResetModal(); });
+document.getElementById('reset-confirm').addEventListener('click', () => {
+  const sel = resetChecked();
+  if (!sel.length) return;
+  applyReset(sel);
+  closeResetModal();
+  showToast(sel.length === 1 && sel[0] === 'quiz' ? 'Statistiche azzerate' : 'Dati azzerati');
 });
 
 // ======= SAVED QUESTIONS & REFS =======

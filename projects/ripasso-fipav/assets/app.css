@@ -529,6 +529,19 @@ body.quiz-running #sec-quiz .page-head, body.quiz-running #quiz-sub-tabs { displ
 .modal-text { color: var(--text-2); margin-bottom: 16px; font-size: .93rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
 
+/* Profile › Azzera statistiche: choose what to delete */
+.reset-head { display: flex; justify-content: flex-end; margin: -6px 0 4px; }
+.link-btn { background: none; border: 0; padding: 4px 2px; color: var(--blue); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+.reset-list { display: grid; gap: 2px; border: 1px solid var(--line); border-radius: var(--r-md, 12px); padding: 4px; }
+.reset-opt { display: flex; align-items: flex-start; gap: 12px; padding: 10px 10px; border-radius: 10px; cursor: pointer; }
+.reset-opt:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
+.reset-opt input { width: 19px; height: 19px; margin: 2px 0 0; flex: none; accent-color: var(--red); cursor: pointer; }
+.reset-opt strong { display: block; font-weight: 600; font-size: .94rem; }
+.reset-opt small { display: block; color: var(--text-3); font-size: .8rem; line-height: 1.4; }
+.reset-opt.empty { opacity: .55; }
+.reset-opt.empty input { cursor: not-allowed; }
+
 /* ---------- Quiz: setup ---------- */
 .quiz-setup { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
 .setup-main { display: grid; gap: 14px; }
