@@ -64,6 +64,8 @@ window.APP_RELEASES = [
       {
         title: 'Segnaletica, regole e grafica',
         items: [
+          'Giocatori più curati: viso (occhi, sopracciglia, naso, bocca), ciuffo e riflesso sui capelli, contorni e luce su braccia e gambe, maglia con luce dall’alto e bordino, numero contornato, polsini e strisce dei pantaloncini nel colore della squadra, numero piccolo sui pantaloncini, ginocchiere con riflesso, calzettoni con la fascia della squadra, scarpe con suola e dettaglio colorato.',
+          'Palazzetto più realistico: tribune con il pubblico su entrambi i lati, cartelloni a bordo campo, luci dall’alto, campo illuminato al centro, ombre morbide sotto i giocatori e una leggera vignettatura.',
           'Da 2° arbitro hai più tempo: il 1° fischia la fine dell’azione circa un secondo dopo (così puoi segnalare palla toccata o fuori, o fischiare un fallo tuo), e sui falli di competenza di entrambi ti lascia più tempo prima di fischiare lui.',
           'Scala delle sanzioni: condotta maleducata dello stesso componente → penalizzazione, poi espulsione, poi squalifica; seconda condotta offensiva → squalifica; dopo il giallo della squadra ogni ulteriore lieve condotta è sempre una penalizzazione (non diventa espulsione).',
           'Palla toccata: corretto il lato del gesto (la mano verticale è dal lato della squadra che ha toccato, opposto a quello del servizio).',
