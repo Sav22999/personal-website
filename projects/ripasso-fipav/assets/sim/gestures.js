@@ -333,14 +333,17 @@
     }
     return { arms: rest(), done: true, whistle: false };
   }
-  /** Wrist position (drawing units, figure 260 wide, head top at y = 30, feet at y = 232) and hand shape. */
+  /**
+   * Wrist position (drawing units, figure 260 wide, head top at y = 30, feet at y = 232), hand shape and the
+   * direction the hand points to (hd: unit vector in drawing units, as in the signal drawings).
+   */
   function wristOf(side, arm) {
     const [a, b, hand] = arm;
     const sh = SH[side];
     const su = arm[3] == null ? 1 : arm[3], sf = arm[4] == null ? 1 : arm[4];
     const d1 = dir(side, a), d2 = dir(side, a + b);
     const el = [sh[0] + d1[0] * UPPER * su, sh[1] + d1[1] * UPPER * su];
-    return { x: el[0] + d2[0] * FORE * sf, y: el[1] + d2[1] * FORE * sf, ex: el[0], ey: el[1], hand };
+    return { x: el[0] + d2[0] * FORE * sf, y: el[1] + d2[1] * FORE * sf, ex: el[0], ey: el[1], hand, hd: arm[5] == null ? d2 : dir(side, arm[5]) };
   }
   /** For the 3D renderer: where the two hands of a referee are while making the signal. */
   function liveArms(steps, el) {

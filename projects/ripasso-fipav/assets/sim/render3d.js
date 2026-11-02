@@ -424,6 +424,7 @@
     this.drawFloor();
     if (hall) this.drawBoards();
 
+    this.ballNow = scene.ball || null; // players' hands reach for it (detailed graphics)
     const items = [];
     const push = (p, fn) => { const c = this.cam.toCam(p); if (c[2] > NEAR) items.push({ z: c[2], fn }); };
 
@@ -593,6 +594,264 @@
 
 
   // ---------- People ----------
+  const clamp01 = u => Math.max(0, Math.min(1, u));
+  const ease = u => { u = clamp01(u); return u * u * (3 - 2 * u); };
+  const mix = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  const pulse = (dt, wid) => Math.exp(-(dt / wid) * (dt / wid));
+
+  /**
+   * Steps of a person (detailed graphics), from how they move between frames: smoothed speed (m/s), stride phase
+   * (radians, one stride every ~1.5 m) and direction. A jump (replay scrubbing, a new rally) starts again from rest.
+   */
+  Renderer.prototype.gaitOf = function (p) {
+    const key = p.id || p.label;
+    if (!key) return null;
+    const now = performance.now() / 1000, G = this.gaits || (this.gaits = new Map());
+    let g = G.get(key);
+    if (!g || now - g.t > 1 || Math.hypot(p.x - g.x, p.y - g.y) > 2) {
+      g = { x: p.x, y: p.y, t: now, v: 0, ph: 0, ux: null, uy: null };
+      G.set(key, g);
+      return g;
+    }
+    const dt = now - g.t;
+    if (dt < 0.008) return g;
+    const dx = p.x - g.x, dy = p.y - g.y, d = Math.hypot(dx, dy), k = 1 - Math.exp(-dt * 9);
+    g.v += (Math.min(8, d / dt) - g.v) * k;
+    g.ph += d * 4.2;
+    if (d > 1e-4) {
+      g.ux = g.ux == null ? dx / d : g.ux + (dx / d - g.ux) * k;
+      g.uy = g.uy == null ? dy / d : g.uy + (dy / d - g.uy) * k;
+    }
+    g.x = p.x; g.y = p.y; g.t = now;
+    return g;
+  };
+
+  /**
+   * Body of a player for the detailed graphics, from the pose and from what they are doing (p.act: contacts close
+   * in time, the jump around now, the held ball): crouch (0..0.25, knees bent), tuck (legs folded in the air),
+   * feet spread, how much they are running, and the phase of the action used by the arms.
+   */
+  Renderer.prototype.poseRig = function (p, g) {
+    const a = p.act || {}, pose = p.pose || 'stand', j = a.jump;
+    const run = g ? clamp01((g.v - 0.25) / 3) : 0;
+    const bob = 0.025 * run * Math.abs(Math.cos(g ? g.ph : 0));
+    const r = { g, kind: pose, crouch: (pose === 'ready' || pose === 'pass' || pose === 'set' ? 0.12 * (1 - run * 0.5) : 0) + bob, tuck: 0, run, ph: g ? g.ph : 0, spread: null };
+    if (p.outfit && p.outfit !== 'player') { r.kind = 'other'; return r; }
+    const touch = list => (a.touches || []).filter(q => list.includes(q.what)).sort((x, y) => Math.abs(x.dt) - Math.abs(y.dt))[0];
+    // Landing: the knees take the weight, then straighten
+    const land = (u, k) => k * Math.min(1, u * 5) * (1 - clamp01(u));
+    if (j && (j.kind === 'attack' || j.kind === 'serve')) {
+      const s = j.dt, rise = j.rise, fall = j.fall, sc = j.kind === 'serve' ? 0.6 : 1;
+      Object.assign(r, { kind: j.kind === 'serve' ? 'serveJ' : 'attackJ', s, rise, fall });
+      if (s < -rise) r.crouch = Math.max(r.crouch, (0.04 + 0.18 * ease((s + rise + 0.35) / 0.35)) * sc); // last steps: lower for the take-off
+      else if (s < -rise * 0.55) { r.crouch = 0.22 * sc * (1 - ease((s + rise) / (rise * 0.45))); r.run = 0; } // take-off: legs push
+      else if (s < fall) { r.crouch = 0; r.run = 0; r.tuck = 0.45 * sc * (s < 0 ? ease((s + rise * 0.55) / (rise * 0.55)) : 1 - ease(s / fall)); }
+      else { r.crouch = land((s - fall) / 0.45, 0.2 * sc); r.run = 0; }
+      if (s > -rise && s < fall) r.spread = 0.16;
+      return r;
+    }
+    if (j && j.kind === 'block') {
+      const s = j.dt, rise = j.rise, fall = j.fall;
+      Object.assign(r, { kind: 'blockJ', s, rise, fall, c: touch(['block']) });
+      if (s < -rise - 0.2) r.crouch = 0.08 + bob;
+      else if (s < -rise) r.crouch = 0.08 + 0.14 * ease((s + rise + 0.2) / 0.2); // squat before the jump
+      else if (s < -rise * 0.5) { r.crouch = 0.22 * (1 - ease((s + rise) / (rise * 0.5))); r.run = 0; }
+      else if (s < fall) { r.crouch = 0; r.tuck = 0.12; r.run = 0; }
+      else { r.crouch = land((s - fall) / 0.45, 0.16); r.run = 0; }
+      r.spread = s > -rise && s < fall ? 0.14 : 0.34;
+      return r;
+    }
+    // Ready just before or after a touch: the hands already go to (or come back from) the set or the pass
+    const SETS = ['set', 'libero-set', 'second-touch', 'fourth'], PASSES = ['reception', 'dig', 'cover', 'third', 'double-first'];
+    if (pose === 'ready') {
+      const cs = touch(SETS), cp = touch(PASSES);
+      if ((cs && cs.dt > -0.7 && cs.dt < 0.8) || a.hold != null || a.released != null) r.kind = 'set';
+      else if (cp && cp.dt > -0.6 && cp.dt < 0.55) r.kind = 'pass';
+    }
+    if (r.kind === 'set') {
+      r.c = touch(SETS);
+      // Legs push with the set: almost straight at the contact
+      if (r.c && r.c.dt > -0.6) r.crouch = r.c.dt < 0 ? 0.12 - 0.1 * ease((r.c.dt + 0.3) / 0.3) : 0.02 * (1 - ease(r.c.dt / 0.3));
+      if (a.hold != null) r.crouch = 0.02 + 0.1 * Math.sin(Math.PI * a.hold); // the held ball sinks with the body
+      else if (a.released != null) r.crouch = 0.02 * (1 - ease(a.released / 0.3));
+    } else if (r.kind === 'pass') {
+      r.c = touch(PASSES);
+      r.crouch = r.c && Math.abs(r.c.dt) < 0.6 ? (r.c.dt < 0 ? 0.2 : 0.2 - 0.08 * ease(r.c.dt / 0.3)) : 0.12;
+    }
+    return r;
+  };
+
+  /**
+   * Arms of a player for the detailed graphics: hand positions on screen for the action (run-up and spike, serve,
+   * block over the net, set and pass with the hands on the ball, held ball, double contact, dribble), as entries
+   * [side, x from the middle, y, hand style, elbow, in front of the body]; null keeps the plain pose.
+   */
+  Renderer.prototype.rigArms = function (p, r, G) {
+    const { cx, top, hpx, w, sh0, hipY, zf } = G;
+    const a = p.act || {}, ball = this.ballNow, k = r.kind;
+    if (!['stand', 'walk', 'ready', 'set', 'pass', 'attackJ', 'serveJ', 'blockJ'].includes(k) && !(a.dribble && k === 'serve')) return null;
+    const pt = (x, y) => [x, y];
+    const proj = q => { const s = this.cam.project(q); return s ? G.toBody([s.x, s.y]) : null; };
+    const near = ball && Math.hypot(ball.x - p.x, ball.y - p.y) < 1.3;
+    const R = this.cam.right;
+    const atBall = (lat, dz) => (near ? proj([ball.x + R[0] * lat, ball.y + R[1] * lat, ball.z + dz]) : null);
+    const out = [];
+    const put = (side, P, hand, front, elb) => out.push([side, P[0] - cx, P[1], hand, elb || null, !!front]);
+    // Relaxed arms swinging with the steps (opposite to the leg on the same side), and the ready position
+    const relaxed = sd => {
+      const sw = Math.sin(r.ph + (sd > 0 ? 0 : Math.PI)) * r.run;
+      return pt(cx + sd * w * (0.58 - 0.12 * r.run - Math.max(0, sw) * 0.12), sh0 + hpx * (0.29 - 0.07 * r.run - Math.max(0, sw) * 0.08 - Math.max(0, -sw) * 0.03));
+    };
+    const readyH = sd => mix(pt(cx + sd * w * 0.4, sh0 + hpx * 0.21), relaxed(sd), r.run);
+    // Ready position: elbows bent outwards, forearms forwards (for the plain ready arms)
+    const readyE = sd => [cx + sd * w * 0.66, sh0 + hpx * 0.16];
+    const netP = proj([0, p.y, zf + 1.6]);
+    // Hitting arm: the one towards the net on screen; serving, the one on the side of the tossed ball
+    let hs = netP && netP[0] < cx ? -1 : 1;
+    // (the ball goes straight up from the tossing hand: its side is kept until the end of the follow-through)
+    if (k === 'serveJ' && r.g) {
+      if (r.s < 0 && ball && near) { const bs = this.cam.project([ball.x, ball.y, ball.z]); if (bs && Math.abs(bs.x - cx) > w * 0.08) r.g.serveSide = bs.x < cx ? -1 : 1; }
+      if (r.g.serveSide) hs = r.g.serveSide;
+    }
+    const ls = -hs;
+
+    if (k === 'attackJ' || (k === 'serveJ' && r.s >= -0.75)) {
+      const s = r.s, rise = r.rise, fall = r.fall, serve = k === 'serveJ';
+      const backLow = sd => pt(cx + sd * w * 0.8, hipY + hpx * 0.03);
+      const over = sd => pt(cx + sd * w * 0.28, top - hpx * 0.24);
+      const cock = pt(cx + hs * w * 0.6, top + hpx * 0.05), cockE = [cx + hs * w * 0.88, sh0 - hpx * 0.1];
+      const leadUp = pt(cx + hs * w * 0.1, top - hpx * 0.27);
+      const hitP = pt(cx + hs * w * 0.22, top - hpx * 0.3);
+      const chest = pt(cx - hs * w * 0.22, sh0 + hpx * 0.1);
+      const follow = pt(cx - hs * w * 0.32, hipY + hpx * 0.02);
+      const leadDown = pt(cx + ls * w * 0.55, sh0 + hpx * 0.24);
+      let H, L, hF = true, lF = true, hE = null, hHand = 'reach', lHand = 'reach', u;
+      if (serve && s < -0.45) {
+        // Toss: the hand rises with the ball and lets it go, the hitting arm draws back
+        u = ease((s + 0.75) / 0.3);
+        const bp = atBall(0, -0.13);
+        L = bp && u < 0.5 ? mix(bp, leadUp, u * 0.6) : mix(relaxed(ls), leadUp, u);
+        H = mix(relaxed(hs), cock, u); hE = u > 0.5 ? cockE : null; hF = u < 0.5; lHand = u < 0.4 ? 'grip' : 'reach';
+      } else if (serve && s < -0.07) { H = cock; hE = cockE; hF = false; L = leadUp; }
+      else if (s < -rise - 0.35) { H = relaxed(hs); L = relaxed(ls); hF = lF = false; hHand = lHand = 'relax'; }
+      else if (s < -rise) {
+        // Last steps of the run-up: both arms swing down and back
+        u = ease((s + rise + 0.35) / 0.35);
+        H = mix(relaxed(hs), backLow(hs), u); L = mix(relaxed(ls), backLow(ls), u); hF = lF = false; hHand = lHand = 'relax';
+      } else if (s < -rise * 0.45) {
+        // Take-off: both arms swing forwards and up
+        u = ease((s + rise) / (rise * 0.55));
+        H = mix(backLow(hs), over(hs), u); L = mix(backLow(ls), over(ls), u); hF = lF = u > 0.35;
+      } else if (s < -0.07) {
+        // Rising: the hitting arm draws back like a bow (elbow high, hand behind the head), the other points at the ball
+        u = ease((s + rise * 0.45) / Math.max(0.05, rise * 0.45 - 0.07));
+        H = mix(over(hs), cock, u); hE = u > 0.5 ? cockE : null; hF = u < 0.6; L = mix(over(ls), leadUp, u);
+      } else if (s < 0.05) {
+        // The hit: the arm whips up to the ball, the other one comes down to the chest
+        u = ease((s + 0.07) / 0.12);
+        H = mix(cock, hitP, u); hE = u < 0.3 ? cockE : null; L = mix(leadUp, chest, u);
+      } else if (s < fall) {
+        // Follow-through across the body
+        u = ease((s - 0.05) / Math.max(0.05, fall - 0.05));
+        H = mix(hitP, follow, u); L = mix(chest, leadDown, u);
+      } else {
+        u = ease((s - fall) / 0.4);
+        H = mix(follow, readyH(hs), u); L = mix(leadDown, readyH(ls), u);
+      }
+      // At the contact the palm is on the ball (it leaves fast: only for an instant)
+      const bp = atBall(0, -0.04);
+      if (bp && s > -0.12 && s < 0.08) H = mix(H, bp, pulse(s, 0.035));
+      put(hs, H, hHand, hF, hE); put(ls, L, lHand, lF);
+      return out;
+    }
+
+    if (k === 'blockJ') {
+      const s = r.s, rise = r.rise, fall = r.fall, nx = p.x > 0 ? -1 : 1;
+      // Hands up in front of the shoulders, then over the net: reaching into the opponents' space, then pulled back
+      const rb = sd => pt(cx + sd * w * 0.52, sh0 - hpx * 0.03);
+      const sq = sd => pt(cx + sd * w * 0.48, sh0 + hpx * 0.02);
+      const ext = sd => proj([p.x + nx * 0.42 + R[0] * sd * 0.2, p.y + R[1] * sd * 0.2, zf + G.bodyH + 0.3]) || pt(cx + sd * w * 0.3, top - hpx * 0.28);
+      const back = sd => pt(cx + sd * w * 0.3, top - hpx * 0.2);
+      [-1, 1].forEach(sd => {
+        let P;
+        if (s < -rise - 0.2) P = rb(sd);
+        else if (s < -rise) P = mix(rb(sd), sq(sd), ease((s + rise + 0.2) / 0.2));
+        else if (s < -rise * 0.15) P = mix(sq(sd), ext(sd), ease((s + rise) / (rise * 0.85)));
+        else if (s < fall * 0.5) P = ext(sd);
+        else if (s < fall) P = mix(ext(sd), back(sd), ease((s - fall * 0.5) / (fall * 0.5)));
+        else P = mix(back(sd), readyH(sd), ease((s - fall) / 0.4));
+        // Touching the ball: the hands close on it
+        const bp = r.c && Math.abs(r.c.dt) < 0.2 && atBall(sd * 0.1, 0);
+        if (bp) P = mix(P, bp, 0.7 * pulse(r.c.dt, 0.08));
+        put(sd, P, 'spread', true);
+      });
+      return out;
+    }
+
+    if (k === 'set' && r.c && r.c.dt > -0.7 && (r.c.dt < 0.8 || a.released != null)) {
+      // Set: the hands go above the forehead in a window, fingers spread, meet the ball and push it up
+      const ts = (a.touches || []).filter(q => ['set', 'libero-set', 'second-touch', 'fourth'].includes(q.what));
+      const dbl = ts.find(q => q.what === 'second-touch'), first = dbl && ts.find(q => q !== dbl);
+      // The push follows the last touch (for a held ball: when it is let go)
+      const ref = a.released != null ? { dt: a.released } : a.hold != null ? { dt: -0.01 } : dbl || r.c;
+      const base0 = sd => pt(cx + sd * w * 0.18, top - hpx * 0.16);
+      const ext = sd => pt(cx + sd * w * 0.15, top - hpx * 0.32);
+      // Wrists under the sides of the ball, so the fingers are on it
+      const bl = atBall(-0.1, -0.16), br = atBall(0.1, -0.16);
+      const pair = bl && br && bl[0] > br[0] ? [br, bl] : [bl, br];
+      [-1, 1].forEach(sd => {
+        const d0 = (first || r.c).dt;
+        let B;
+        if (d0 < -0.35) B = mix(readyH(sd), base0(sd), ease((d0 + 0.7) / 0.35));
+        else if (ref.dt < 0) B = base0(sd);
+        else B = mix(mix(base0(sd), ext(sd), ease(ref.dt / 0.25)), readyH(sd), ease((ref.dt - 0.32) / 0.35));
+        let wgt;
+        if (a.hold != null) wgt = 1; // held ball: the hands stay on it, fingers closed around
+        else if (a.released != null) wgt = pulse(a.released, 0.1);
+        else if (dbl) {
+          // Double contact: two separate touches, the first mostly with one hand, the second with the other;
+          // in between the hands come off the ball
+          // (the ball slips away from the net: the second hand is the one on that side)
+          const p1 = first ? pulse(first.dt, 0.075) : 0, p2 = pulse(dbl.dt, 0.075);
+          wgt = sd === hs ? Math.max(p1, p2 * 0.4) : Math.max(p2, p1 * 0.4);
+          if (first && first.dt > 0 && dbl.dt < 0) B = [B[0] + sd * w * 0.06, B[1] + hpx * 0.05 * Math.sin(Math.PI * first.dt / (first.dt - dbl.dt))];
+        } else wgt = pulse(r.c.dt, r.c.dt < 0 ? 0.14 : 0.1);
+        const T = pair[sd < 0 ? 0 : 1];
+        put(sd, T ? mix(B, T, wgt) : B, a.hold != null || (a.released != null && a.released < 0.06) ? 'grip' : 'set', true);
+      });
+      return out;
+    }
+
+    if (k === 'pass' && r.c && r.c.dt > -0.6 && r.c.dt < 0.55) {
+      // Pass: forearms joined in a platform under the ball, legs pushing a little at the contact
+      const dt = r.c.dt;
+      const plat = pt(cx, hipY + hpx * (dt > 0 ? 0.06 - 0.06 * ease(dt / 0.25) : 0.06));
+      const bp = atBall(0, -0.13);
+      [-1, 1].forEach(sd => {
+        let P = pt(plat[0] + sd * w * 0.035, plat[1]);
+        if (dt < -0.35) P = mix(readyH(sd), P, ease((dt + 0.6) / 0.25));
+        if (dt > 0.3) P = mix(P, readyH(sd), ease((dt - 0.3) / 0.25));
+        if (bp) P = mix(P, [bp[0] + sd * w * 0.035, bp[1]], pulse(dt, 0.13));
+        put(sd, P, dt > -0.4 && dt < 0.35 ? 'clasp' : 'reach', true);
+      });
+      return out;
+    }
+
+    if (a.dribble && near && ball.z < zf + 1.3) {
+      // Bouncing the ball before the service: the hand on its side pats it down
+      const bs = this.cam.project([ball.x, ball.y, ball.z]);
+      const sd = bs && bs.x < cx ? -1 : 1;
+      const hp = proj([ball.x, ball.y, Math.max(ball.z + 0.1, zf + 0.78)]);
+      if (hp) put(sd, hp, 'spread', true);
+      put(-sd, relaxed(-sd), 'relax', false);
+      return out;
+    }
+    if (k === 'serve') return null;
+    const rd = k === 'ready' || k === 'set' || k === 'pass';
+    [-1, 1].forEach(sd => put(sd, rd ? readyH(sd) : relaxed(sd), rd ? 'reach' : 'relax', rd && r.run < 0.5, rd && r.run < 0.3 ? readyE(sd) : null));
+    return out;
+  };
+
   /**
    * p: { x, y, z (jump height), h (height), jersey, shorts, number, pose, skin, role, label, bubble, highlight, facing }
    * pose: stand | ready | pass | set | attack | block | serve | sit | gesture-t | gesture-sub | ref | walk
@@ -604,7 +863,11 @@
     const H = p.h || 1.9;
     const sitting = p.pose === 'sit';
     const pose = p.pose || 'stand';
-    const crouch = pose === 'ready' || pose === 'pass' ? 0.12 : 0;
+    // Detailed graphics: the body follows what the player is doing (steps, run-up, jumps, touches), with fingers
+    const anim = this.quality === 'high' && !sitting;
+    const gait = anim ? this.gaitOf(p) : null;
+    const rig = anim ? this.poseRig(p, gait) : null;
+    const crouch = rig ? rig.crouch : pose === 'ready' || pose === 'pass' ? 0.12 : 0;
     const bodyH = H * (1 - crouch);
     const zf = p.z || 0;
     // Sitting on a bench: hips at seat height, knees and feet towards the court
@@ -637,8 +900,10 @@
         ctx.restore();
       }
     }
-    const hpx = sitting ? (seat.y - head.y) / 0.53 : foot.y - head.y;
+    let hpx = sitting ? (seat.y - head.y) / 0.53 : foot.y - head.y;
     if (hpx < 3) return;
+    // Crouching (detailed graphics) bends the knees: the torso keeps most of its size, the legs get shorter
+    if (rig && crouch > 0) hpx *= 1 + 0.6 * crouch / (1 - crouch);
     const w = Math.max(3, hpx * 0.26);                 // shoulder width
     const cx = sitting ? seat.x : foot.x, top = head.y;
     if (p.id) this.hits.push({ id: p.id, x0: cx - w * 0.75, x1: cx + w * 0.75, y0: top - 4, y1: foot.y + 3 });
@@ -687,12 +952,21 @@
     };
 
     // ---- Legs: thigh, knee (bent when ready), calf, sock, shoe ----
-    const spread = w * (pose === 'ready' || pose === 'pass' || pose === 'block' ? 0.34 : pose === 'walk' ? 0.26 : 0.2);
+    let spread = w * (pose === 'ready' || pose === 'pass' || pose === 'block' ? 0.34 : pose === 'walk' ? 0.26 : 0.2);
+    if (rig) spread = w * Math.max(rig.spread != null ? rig.spread : spread / w, 0.24 * rig.run);
     const legW = Math.max(1.6, w * 0.25);
     [-1, 1].forEach(sd => {
       const hip = [cx + sd * w * 0.17, hipY];
       let ft = [cx + sd * spread, foot.y - legW * 0.25];
       let knee = [(hip[0] + ft[0]) / 2 + sd * (crouch ? w * 0.16 : w * 0.03), kneeY];
+      if (rig) {
+        // Knees out as much as the crouch; steps: the feet lift in turn; in the air the legs fold
+        const LL = foot.y - hipY, tk = rig.tuck;
+        const lift = rig.run > 0.05 ? Math.max(0, Math.sin(rig.ph + (sd > 0 ? Math.PI : 0))) * rig.run : 0;
+        ft[0] += (cx - ft[0]) * tk * 0.35;
+        ft[1] -= LL * (lift * 0.2 + tk * 0.24);
+        knee = [(hip[0] + ft[0]) / 2 + sd * w * (0.03 + crouch * 1.1 + lift * 0.05 + tk * 0.1), kneeY - LL * (lift * 0.07 + tk * 0.06)];
+      }
       if (sitting) {
         const kp = this.cam.project([p.x, p.y + toCourt * 0.45, zf + SEAT + 0.04]);
         knee = kp ? [kp.x + sd * w * 0.18, kp.y] : knee;
@@ -722,7 +996,7 @@
       }
       // Shoe: upper, sole and (players) a stripe in the team colour
       const shoe = outfit === 'player' ? '#f4f5f7' : '#15171c';
-      const sx0 = ft[0] + sd * legW * 0.15, sy0 = foot.y - legW * 0.14;
+      const sx0 = ft[0] + sd * legW * 0.15, sy0 = ft[1] + legW * 0.11;
       if (detail) {
         ctx.fillStyle = outfit === 'player' ? '#b9bec8' : '#0a0b0e';
         ctx.beginPath(); ctx.ellipse(sx0, sy0 + legW * 0.16, legW * 0.78, legW * 0.3, 0, 0, Math.PI * 2); ctx.fill();
@@ -744,12 +1018,23 @@
     const arm = (side, ex, ey, hand, elb) => arms.push([side, ex, ey, hand, elb]);
     const up = top - hpx * 0.26;
     const sh0 = shY + hpx * 0.02;
-    if (p.live) {
+    // Running: the upper body leans a little towards where the person is going (around the hips)
+    let lean = 0;
+    if (rig && rig.run > 0.1 && gait && gait.ux != null) {
+      const q = this.cam.project([p.x + gait.ux * 0.6, p.y + gait.uy * 0.6, zf]);
+      if (q) lean = Math.max(-0.13, Math.min(0.13, (q.x - foot.x) / hpx * 0.5)) * rig.run;
+    }
+    const cl = Math.cos(lean), sl = Math.sin(lean);
+    const toBody = q => (lean ? [cx + (q[0] - cx) * cl + (q[1] - hipY) * sl, hipY - (q[0] - cx) * sl + (q[1] - hipY) * cl] : q);
+    const rigged = rig && !p.live && this.rigArms(p, rig, { cx, top, hpx, w, sh0, hipY, zf, bodyH, toBody });
+    if (rigged) rigged.forEach(a => arms.push(a));
+    else if (p.live) {
       // A referee making an official signal: hands placed from the signal drawings (figure units, 202 tall)
       const u = hpx / 202, f = p.live.flip || 1;
       ['L', 'R'].forEach(k => {
         const a = p.live[k];
-        arm((k === 'L' ? -1 : 1) * f, (a.x - 130) * u * f, top + (a.y - 30) * u, a.hand, [cx + (a.ex - 130) * u * f, top + (a.ey - 30) * u]);
+        // (7th value: where the hand points, as in the drawing: e.g. the index towards the chest)
+        arms.push([(k === 'L' ? -1 : 1) * f, (a.x - 130) * u * f, top + (a.y - 30) * u, a.hand, [cx + (a.ex - 130) * u * f, top + (a.ey - 30) * u], undefined, a.hd ? [a.hd[0] * f, a.hd[1]] : null]);
       });
     } else if (pose === 'block') { arm(-1, -w * 0.42, up); arm(1, w * 0.42, up); }
     else if (pose === 'set') { arm(-1, -w * 0.22, top - hpx * 0.08); arm(1, w * 0.22, top - hpx * 0.08); }
@@ -771,9 +1056,16 @@
     else if (pose === 'point') { arm(1, w * 1.1, sh0 - hpx * 0.06); arm(-1, -w * 0.5, sh0 + hpx * 0.25); }
     else if (pose === 'sit') { arm(-1, -w * 0.32, sh0 + hpx * 0.27); arm(1, w * 0.32, sh0 + hpx * 0.27); }
     else { arm(-1, -w * 0.58, sh0 + hpx * 0.29); arm(1, w * 0.58, sh0 + hpx * 0.29); }
-    const drawArm = ([side, ex, ey, handType, elb]) => {
+    const fine = anim && hpx * 0.1 > 4.5; // hands with fingers
+    const drawArm = ([side, ex, ey, handType, elb, rigFront, hdir]) => {
       const s0 = [cx + side * w * 0.44, sh0];
-      const hand = [cx + ex, ey];
+      let hand = [cx + ex, ey];
+      if (rigFront != null) {
+        // Animated arms: the shoulder rises with a hand above the head; they never stretch beyond their length
+        if (hand[1] < top) s0[1] -= hpx * 0.035 * Math.min(1, (top - hand[1]) / (hpx * 0.1));
+        const dx = hand[0] - s0[0], dy = hand[1] - s0[1], l = Math.hypot(dx, dy), mx = hpx * 0.46;
+        if (l > mx) hand = [s0[0] + dx / l * mx, s0[1] + dy / l * mx];
+      }
       const len = Math.hypot(hand[0] - s0[0], hand[1] - s0[1]);
       const reach = hpx * 0.4;
       // Elbow: halfway, pushed outwards when the arm is bent (or given, for the live signals)
@@ -790,18 +1082,35 @@
           ctx.lineCap = 'butt'; line([c0, sl], p.trim, armW * 1.28); ctx.lineCap = 'round';
         }
       }
-      // Hand: a small mitten along the forearm, with the thumb on the inner side
-      const ang = Math.atan2(hand[1] - mid[1], hand[0] - mid[0]);
-      ctx.fillStyle = skin;
-      ctx.beginPath(); ctx.ellipse(hand[0] + Math.cos(ang) * armW * 0.35, hand[1] + Math.sin(ang) * armW * 0.35, armW * 0.78, armW * 0.55, ang, 0, Math.PI * 2); ctx.fill();
+      // Hand: along the forearm (or where the signal points it), with the thumb on the inner side
+      // (the fist of the thumbs up is held upright, as in the drawing)
+      const ang = hdir ? (handType === 'thumb' ? -Math.PI / 2 : Math.atan2(hdir[1], hdir[0])) : Math.atan2(hand[1] - mid[1], hand[0] - mid[0]);
+      if (fine) {
+        // The thumb on the side of the body's middle
+        const inn = Math.sign(-Math.sin(ang) * (Math.abs(cx - hand[0]) > w * 0.05 ? cx - hand[0] : -side)) || 1;
+        drawHand(ctx, hand, ang, HAND_STYLE[handType] || 'relax', hpx * 0.1, inn, skin);
+      } else {
+        ctx.fillStyle = skin;
+        ctx.beginPath(); ctx.ellipse(hand[0] + Math.cos(ang) * armW * 0.35, hand[1] + Math.sin(ang) * armW * 0.35, armW * 0.78, armW * 0.55, ang, 0, Math.PI * 2); ctx.fill();
+      }
       if (handType === 'f2' || handType === 'f4' || handType === 'point' || handType === 'thumb') {
-        // Fingers held up (collaboration signals at the chest, double contact, four hits, eight seconds...)
+        // Fingers held out from the fist, where the hand points (the index on the chest for the game captain,
+        // two / four fingers up for double contact and four hits...); the thumb of the double fault stays up
         const n = handType === 'f4' ? 4 : handType === 'f2' ? 2 : 1;
-        ctx.strokeStyle = skin; ctx.lineWidth = Math.max(1, armW * 0.28); ctx.lineCap = 'round';
-        for (let i = 0; i < n; i++) {
-          const dx = (i - (n - 1) / 2) * armW * 0.42;
-          ctx.beginPath(); ctx.moveTo(hand[0] + dx, hand[1] - armW * 0.3); ctx.lineTo(hand[0] + dx * 1.35, hand[1] - armW * 1.35); ctx.stroke();
-        }
+        const fa = handType === 'thumb' ? -Math.PI / 2 : ang, ux = Math.cos(fa), uy = Math.sin(fa);
+        // Base, length and spacing of the fingers: from the detailed fist, or from the small mitten
+        const hs = fine ? hpx * 0.1 : armW * 2.1, fb = [hand[0] + ux * hs * 0.15, hand[1] + uy * hs * 0.15];
+        const fw = fine ? Math.max(1, hs * 0.13) : Math.max(1, armW * 0.28);
+        (fine ? [[tone(skin, -0.38), fw + Math.max(0.8, fw * 0.35)], [skin, fw]] : [[skin, fw]]).forEach(([col, lw]) => {
+          ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineCap = 'round';
+          for (let i = 0; i < n; i++) {
+            const o = (i - (n - 1) / 2) * hs * (fine ? 0.17 : 0.2), b = [fb[0] + ux * hs * 0.15, fb[1] + uy * hs * 0.15];
+            ctx.beginPath();
+            ctx.moveTo(b[0] - uy * o, b[1] + ux * o);
+            ctx.lineTo(b[0] - uy * o * 1.5 + ux * hs * 0.5, b[1] + ux * o * 1.5 + uy * hs * 0.5);
+            ctx.stroke();
+          }
+        });
       }
       if (handType && /^card/.test(handType)) {
         // Cards held up
@@ -810,14 +1119,16 @@
         cards.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(hand[0] - cw / 2 + (i - (cards.length - 1) / 2) * cw * 0.8, hand[1] - ch - armW * 0.4, cw, ch); });
         ctx.fillStyle = skin;
       }
-      if (detail) {
+      if (detail && !fine) {
+        ctx.fillStyle = skin;
         ctx.beginPath(); ctx.ellipse(hand[0] - side * armW * 0.35, hand[1], armW * 0.3, armW * 0.2, ang + side * 0.8, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = Math.max(0.6, armW * 0.1);
         ctx.beginPath(); ctx.ellipse(hand[0] + Math.cos(ang) * armW * 0.35, hand[1] + Math.sin(ang) * armW * 0.35, armW * 0.78, armW * 0.55, ang, 0, Math.PI * 2); ctx.stroke();
       }
     };
     // Raised arms go in front of the body, lowered ones behind it (except while passing)
-    const front = arms.filter(a => a[2] < sh0 || pose === 'pass' || pose === 'sit' || (p.live && Math.abs(a[1]) < w * 0.6));
+    const front = arms.filter(a => (a[5] != null ? a[5] : a[2] < sh0 || pose === 'pass' || pose === 'sit' || (p.live && Math.abs(a[1]) < w * 0.6)));
+    if (lean) { ctx.save(); ctx.translate(cx, hipY); ctx.rotate(lean); ctx.translate(-cx, -hipY); }
     arms.filter(a => !front.includes(a)).forEach(drawArm);
 
     // ---- Shorts / trousers top ----
@@ -896,27 +1207,42 @@
     // ---- Neck and head ----
     line([[cx, neckY - headR * 0.3], [cx, shY + hpx * 0.01]], skinDark, Math.max(1.5, w * 0.2));
     const hy = top + headR;
+    // Head turned towards what the person is watching (p.lookX: a point along the court, e.g. the referees at the
+    // service: the 1st watches the serving team, the 2nd the receiving team): -1 .. 1, to the left / right on screen
+    let turn = 0;
+    if (p.lookX != null && !p.back) {
+      const q = this.cam.project([p.lookX, p.y * 0.3, 1.2]);
+      if (q) turn = Math.max(-1, Math.min(1, (q.x - cx) / (hpx * 1.4)));
+      if (gait) { gait.turn = gait.turn == null ? turn : gait.turn + (turn - gait.turn) * 0.2; turn = gait.turn; }
+    }
+    const fcx = cx + turn * headR * 0.34; // middle of the face
     ctx.fillStyle = skin;
     ctx.beginPath(); ctx.ellipse(cx, hy, headR * 0.9, headR, 0, 0, Math.PI * 2); ctx.fill();
     if (detail) {
-      // Ears and a soft shadow on the right
-      ctx.beginPath(); ctx.arc(cx - headR * 0.9, hy + headR * 0.1, headR * 0.2, 0, Math.PI * 2); ctx.arc(cx + headR * 0.9, hy + headR * 0.1, headR * 0.2, 0, Math.PI * 2); ctx.fill();
+      // Ears (the one on the side the head turns to goes out of sight) and a soft shadow on the right
+      ctx.beginPath();
+      ctx.ellipse(cx - headR * 0.9, hy + headR * 0.1, headR * 0.2 * (1 + Math.min(0, turn) * 0.8), headR * 0.2, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + headR * 0.9, hy + headR * 0.1, headR * 0.2 * (1 - Math.max(0, turn) * 0.8), headR * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = 'rgba(0,0,0,.12)';
       ctx.beginPath(); ctx.ellipse(cx + headR * 0.35, hy + headR * 0.1, headR * 0.5, headR * 0.85, 0, -Math.PI / 2, Math.PI / 2); ctx.fill();
     }
     const hair = p.hair || (outfit === 'player' ? null : '#2b2420');
     // Face (on bigger figures, when seen from the front): eyes, brows, nose and mouth
     if (detail && !p.back && headR > 3.2) {
-      const ey = hy + headR * 0.08, ex = headR * 0.36;
+      // (turned: the features move to that side and get closer together)
+      const ey = hy + headR * 0.08, ex = headR * 0.36 * (1 - 0.22 * Math.abs(turn)), nd = turn >= 0 ? 1 : -1;
       ctx.fillStyle = '#1d1a18';
-      ctx.beginPath(); ctx.ellipse(cx - ex, ey, headR * 0.1, headR * 0.13, 0, 0, Math.PI * 2); ctx.ellipse(cx + ex, ey, headR * 0.1, headR * 0.13, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(fcx - ex, ey, headR * 0.1, headR * 0.13, 0, 0, Math.PI * 2); ctx.ellipse(fcx + ex, ey, headR * 0.1, headR * 0.13, 0, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = hair || '#2b2420'; ctx.lineWidth = Math.max(0.8, headR * 0.1);
-      ctx.beginPath(); ctx.moveTo(cx - ex - headR * 0.16, ey - headR * 0.24); ctx.lineTo(cx - ex + headR * 0.14, ey - headR * 0.28);
-      ctx.moveTo(cx + ex - headR * 0.14, ey - headR * 0.28); ctx.lineTo(cx + ex + headR * 0.16, ey - headR * 0.24); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fcx - ex - headR * 0.16, ey - headR * 0.24); ctx.lineTo(fcx - ex + headR * 0.14, ey - headR * 0.28);
+      ctx.moveTo(fcx + ex - headR * 0.14, ey - headR * 0.28); ctx.lineTo(fcx + ex + headR * 0.16, ey - headR * 0.24); ctx.stroke();
       ctx.strokeStyle = tone(skin, -0.28); ctx.lineWidth = Math.max(0.7, headR * 0.08);
-      ctx.beginPath(); ctx.moveTo(cx + headR * 0.04, ey + headR * 0.08); ctx.lineTo(cx + headR * 0.1, ey + headR * 0.36); ctx.lineTo(cx - headR * 0.04, ey + headR * 0.38); ctx.stroke();
+      const nt = Math.abs(turn) > 0.25 ? nd : 1; // the nose tip points where the head turns
+      ctx.beginPath(); ctx.moveTo(fcx + nt * headR * 0.04, ey + headR * 0.08); ctx.lineTo(fcx + nt * headR * (0.1 + 0.08 * Math.abs(turn)), ey + headR * 0.36); ctx.lineTo(fcx - nt * headR * 0.04, ey + headR * 0.38); ctx.stroke();
       ctx.strokeStyle = tone(skin, -0.4); ctx.lineWidth = Math.max(0.7, headR * 0.09);
-      ctx.beginPath(); ctx.moveTo(cx - headR * 0.2, hy + headR * 0.62); ctx.quadraticCurveTo(cx, hy + headR * 0.7, cx + headR * 0.2, hy + headR * 0.62); ctx.stroke();
+      const mw = headR * 0.2 * (1 - 0.2 * Math.abs(turn));
+      ctx.beginPath(); ctx.moveTo(fcx - mw, hy + headR * 0.62); ctx.quadraticCurveTo(fcx, hy + headR * 0.7, fcx + mw, hy + headR * 0.62); ctx.stroke();
     }
     if (hair && p.back) {
       // Seen from behind (facing away): the hair covers the back of the head
@@ -931,7 +1257,7 @@
       ctx.fill();
       if (detail && headR > 3.2) {
         // Fringe over the forehead and a soft shine
-        ctx.beginPath(); ctx.ellipse(cx - headR * 0.25, hy - headR * 0.2, headR * 0.55, headR * 0.22, -0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx - headR * 0.25 + (fcx - cx) * 0.6, hy - headR * 0.2, headR * 0.55, headR * 0.22, -0.25, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = Math.max(0.8, headR * 0.12);
         ctx.beginPath(); ctx.arc(cx - headR * 0.1, hy - headR * 0.2, headR * 0.62, Math.PI * 1.15, Math.PI * 1.45); ctx.stroke();
       }
@@ -944,6 +1270,8 @@
         ctx.fillRect(cx + headR * 0.65, hy - headR * 0.2, headR * 0.3, headR * 0.9);
       }
     }
+
+    if (lean) ctx.restore();
 
     // Speech bubble (requests, protests) and label
     if (p.bubble) this.drawBubble(cx, top - 4, p.bubble, p.bubbleColor);
@@ -1018,6 +1346,75 @@
     ctx.textBaseline = 'middle';
     ctx.fillText(text, x, y - h / 2 - 6);
   };
+
+  /** Hand shapes of the referees' signals (and of the players' actions) for the detailed hands. */
+  const HAND_STYLE = {
+    open: 'flat', palm: 'flat', palmBody: 'flat', back: 'flat', palmBack: 'flat', flat: 'flat', blade: 'flat',
+    palmDown: 'flat', palmDownBack: 'flat', tips: 'reach', tipsV: 'flat', palmUp: 'reach',
+    fist: 'fist', cardY: 'fist', cardR: 'fist', cardYR: 'fist', point: 'fist', f2: 'fist', f4: 'fist', thumb: 'fist',
+    relax: 'relax', reach: 'reach', set: 'set', spread: 'spread', grip: 'grip', clasp: 'clasp',
+  };
+  /** Fingers of each hand shape: spread (radians, index to little finger), length, curl (shorter, bent tips), thumb angle. */
+  const FINGERS = {
+    relax: { sp: 0.1, len: 0.82, curl: 0.55, th: 0.55 },
+    reach: { sp: 0.18, len: 1, curl: 0.12, th: 0.9 },
+    set: { sp: 0.34, len: 1, curl: 0.3, th: 1.45 },
+    spread: { sp: 0.44, len: 1.04, curl: 0, th: 1.15 },
+    grip: { sp: 0.36, len: 0.9, curl: 1, th: 1.3 },
+    flat: { sp: 0.04, len: 1, curl: 0, th: 0.35 },
+  };
+  /**
+   * A hand with fingers (detailed graphics). wr: the wrist; ang: direction of the forearm (the hand continues it);
+   * s: length of the hand in pixels; inn: the side of the thumb (+1 / -1 across the hand).
+   */
+  function drawHand(ctx, wr, ang, style, s, inn, skin) {
+    const dark = tone(skin, -0.38), pl = s * 0.5, pw = s * 0.44;
+    const fw = Math.max(0.9, s * 0.12), ow = fw + Math.max(0.7, fw * 0.35);
+    ctx.save();
+    ctx.translate(wr[0], wr[1]);
+    ctx.rotate(ang);
+    ctx.lineCap = 'round';
+    const palm = (rx, ry) => {
+      ctx.fillStyle = skin; ctx.strokeStyle = dark; ctx.lineWidth = Math.max(0.6, s * 0.035);
+      ctx.beginPath(); ctx.ellipse(pl * 0.5, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    };
+    const strokes = (segs) => {
+      [[dark, ow], [skin, fw]].forEach(([c, lw]) => {
+        ctx.strokeStyle = c; ctx.lineWidth = lw;
+        segs.forEach(q => { ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.quadraticCurveTo(q[2], q[3], q[4], q[5]); ctx.stroke(); });
+      });
+    };
+    if (style === 'fist' || style === 'clasp') {
+      // Fist: knuckles at the end; clasped hands (pass): the thumbs side by side along the forearms
+      palm(pl * 0.52, pw * 0.52);
+      ctx.fillStyle = skin; ctx.strokeStyle = dark; ctx.lineWidth = Math.max(0.5, s * 0.03);
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(pl * 0.92, inn * pw * (0.3 - i * 0.2), s * 0.07, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+      if (style === 'clasp') strokes([[pl * 0.15, inn * pw * 0.12, pl * 0.6, inn * pw * 0.14, pl * 1.0, inn * pw * 0.1], [pl * 0.15, -inn * pw * 0.12, pl * 0.6, -inn * pw * 0.14, pl * 1.0, -inn * pw * 0.1]]);
+      else strokes([[pl * 0.3, inn * pw * 0.45, pl * 0.55, inn * pw * 0.35, pl * 0.75, inn * pw * 0.08]]);
+      ctx.restore();
+      return;
+    }
+    const F = FINGERS[style] || FINGERS.relax;
+    const lens = [0.47, 0.52, 0.49, 0.39];
+    const segs = lens.map((l0, i) => {
+      const y0 = inn * pw * (0.33 - i * 0.22), a = inn * F.sp * (1.5 - i) / 1.5;
+      const L = s * l0 * F.len * (1 - 0.4 * F.curl), kx = pl * 0.9;
+      // Curled fingers are shorter and bent
+      const bend = F.curl * L * 0.14;
+      return [kx, y0, kx + Math.cos(a) * L * 0.55 - Math.sin(a) * bend, y0 + Math.sin(a) * L * 0.55 + Math.cos(a) * bend, kx + Math.cos(a) * L, y0 + Math.sin(a) * L];
+    });
+    // Thumb from the base of the palm, on the inner side
+    const tb = [pl * 0.25, inn * pw * 0.42], ta = inn * F.th, tl = s * 0.36 * (1 - 0.25 * F.curl);
+    segs.push([tb[0], tb[1], tb[0] + Math.cos(ta) * tl * 0.55, tb[1] + Math.sin(ta) * tl * 0.55, tb[0] + Math.cos(ta * 0.8) * tl, tb[1] + Math.sin(ta * 0.8) * tl]);
+    strokes(segs);
+    palm(pl * 0.58, pw * 0.52);
+    if (style === 'flat' && s > 9) {
+      // Fingers together: thin lines between them
+      ctx.strokeStyle = dark; ctx.lineWidth = Math.max(0.4, s * 0.02);
+      for (let i = 0; i < 3; i++) { const y = inn * pw * (0.22 - i * 0.22); ctx.beginPath(); ctx.moveTo(pl * 0.98, y); ctx.lineTo(pl * 0.98 + s * 0.3, y); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
 
   function roundRect(ctx, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);

@@ -802,6 +802,35 @@
       tr.z.push({ t: t - dur * 0.45, z: 0 }, { t, z: h }, { t: t + dur * 0.55, z: 0 });
     };
     const pose = (T, n, t, p) => track(keyOf(T, n)).pose.push({ t, pose: p });
+    /** The latest position keyframe of a player (where they stand from then on). */
+    const lastKey = (T, n) => track(keyOf(T, n)).p.reduce((a, q) => (q.t > a.t ? q : a), { t: -1, x: 0, y: 0 });
+    /**
+     * Attack run-up: the hitter backs off to the start of the approach, waits, runs in (a little from outside for
+     * the wings), plants at the take-off and drifts forward in the air to the hit at t2 (jump peak).
+     */
+    const approach = (T, n, t2, aD, aL, middle) => {
+      const run = middle ? 1.6 : 2.4, tTake = t2 - 0.38;
+      const lS = clamp(aL + (Math.abs(aL) > 2 ? Math.sign(aL) * 0.5 : 0), -4.4, 4.4);
+      const lk = lastKey(T, n);
+      const tRun = Math.min(Math.max(tTake - (0.45 + run * 0.13), lk.t + 0.35), tTake - 0.3);
+      const tReady = Math.max(tRun - 0.3, lk.t + 0.3);
+      if (tReady < tRun - 0.08) at(T, n, tReady, aD + run, lS, 'ready');
+      at(T, n, tRun, aD + run, lS, 'walk');
+      at(T, n, tTake, aD + 0.3, aL, 'attack');
+      at(T, n, t2 - 0.05, aD, aL, 'attack');
+    };
+    /**
+     * Blocker: waits where they are and reads the set, then moves along the net (earlier if the way is long), plants
+     * at the block spot a moment before the jump, so the squat and the take-off are visible.
+     */
+    const blockMove = (T, n, t2, l, setEnd) => {
+      const lk = lastKey(T, n), dest = M.w(T, 0.35, l);
+      const dist = Math.hypot(dest[0] - lk.x, dest[1] - lk.y);
+      const tArr = t2 - 0.5;
+      const tGo = Math.max(lk.t + 0.05, Math.min(setEnd + 0.05, tArr - 0.25 - dist / 4.5));
+      if (lk.t >= 0 && tGo < tArr - 0.12) atW(T, n, tGo, lk.x, lk.y);
+      at(T, n, tArr, 0.35, l, 'block');
+    };
     const ball = (t0, t1, p0, p1, h, under) => {
       h = h || 0;
       // A flight that crosses the net always clears it (by at least 25 cm), unless it is meant to pass under it
@@ -921,7 +950,7 @@
       ball(t, tC, handP, hitP, 1.0);
       at(rc, who, tC - 0.45, dC + (blk ? 0 : 0.8), yl, blk ? 'block' : 'walk');
       at(rc, who, tC - 0.05, dC, yl, blk ? 'block' : 'attack');
-      jump(rc, who, tC, 0.75, 0.8);
+      jump(rc, who, tC, blk ? 0.5 : 0.35, 0.8);
       at(rc, who, tC + 0.7, dC + 0.4, yl, 'ready');
       ev({ t: tC, kind: 'contact', team: rc, num: who, what: blk ? 'block' : 'attack' });
       const lp = M.w(sv, blk ? rnd(0.8, 2.5) : rnd(2, 6), rnd(-3.5, 3.5));
@@ -996,14 +1025,14 @@
       let liberoSets = false;
       if (injectHere && s === 'libero_set' && players[T].includes(L) && firstBy !== L) { setBy = L; liberoSets = true; }
       const setD = liberoSets ? rnd(1.6, 2.6) : 0.8, setL = -1.1;
-      const setP3 = (() => { const w = M.w(T, setD, setL); return [w[0], w[1], liberoSets ? 2.2 : 2.55]; })();
+      const setP3 = (() => { const w = M.w(T, setD, setL); return [w[0], w[1], liberoSets ? 2.2 : 2.45]; })();
       const t1 = touchT + rnd(1.0, 1.25);
       ball(touchT, t1, touchP, setP3, 2.2);
       at(T, setBy, t1 - 0.2, setD + 0.15, setL, 'set');
       at(T, setBy, t1 + 0.3, setD + 0.15, setL, 'set');
       pose(T, setBy, t1 + 0.6, 'ready');
       ev({ t: t1, kind: 'contact', team: T, num: setBy, what: liberoSets ? 'libero-set' : 'set' });
-      let setEnd = t1;
+      let setEnd = t1, setStart = setP3;
       if (injectHere && s === 'catch') {
         R.holdUntil = { t0: t1, t1: t1 + 0.42, p: setP3 };
         setEnd = t1 + 0.42;
@@ -1011,14 +1040,15 @@
         R.slow.push(t1);
       }
       if (injectHere && s === 'double_contact') {
-        const p2 = [setP3[0], setP3[1], setP3[2] + 0.35];
-        ball(t1, t1 + 0.22, setP3, p2, 0.05);
+        // The ball comes off one hand and slips away from the net, a little higher, to the other hand
+        const w2 = M.w(T, setD + 0.3, setL), p2 = [w2[0], w2[1], setP3[2] + 0.12];
+        ball(t1, t1 + 0.22, setP3, p2, 0.1);
+        setStart = p2;
         setEnd = t1 + 0.22;
         ev({ t: setEnd, kind: 'contact', team: T, num: setBy, what: 'second-touch' });
         fault({ t: setEnd, key: 'double_contact', team: T, comp: '1', sit: s, text: 'Il n. ' + setBy + ' tocca la palla due volte di seguito in palleggio.' });
         R.slow.push(t1);
       }
-      const setStart = s === 'double_contact' && injectHere ? [setP3[0], setP3[1], setP3[2] + 0.35] : setP3;
 
       // --- Attack (or free ball / fourth touch) ---
       const fourHits = injectHere && s === 'four_hits';
@@ -1071,9 +1101,8 @@
         const O = other(T);
         const tp = (() => { const w = M.w(T, 0.25, aL); return [w[0], w[1], NET_H + 0.3]; })();
         ball(setEnd, t2, setStart, tp, 1.4);
-        at(T, attacker, t2 - 0.6, aD + 1.8, aL, 'walk');
-        at(T, attacker, t2 - 0.05, 0.7, aL, 'attack');
-        jump(T, attacker, t2 + 0.1, 0.8, 0.85);
+        approach(T, attacker, t2 + 0.1, 0.7, aL, kOf(T, attacker) === 2);
+        jump(T, attacker, t2 + 0.1, 0.6, 0.85);
         pose(T, attacker, t2 + 0.6, 'ready');
         const oF = [1, 2, 3].map(k => nAt(O, k)).filter(n => n !== M.teams[O].libero.num);
         const who = oF.slice().sort((a, b) => Math.abs((M.pos[O + a] || { y: 0 }).y - tp[1]) - Math.abs((M.pos[O + b] || { y: 0 }).y - tp[1]))[0];
@@ -1098,11 +1127,9 @@
         at(T, attacker, t2 - 1.05, 4.6, aL, 'walk');
         at(T, attacker, t2 - 0.45, aD + 0.15, aL, 'walk');
         at(T, attacker, t2 - 0.05, aD, aL, 'attack');
-      } else {
-        at(T, attacker, t2 - 0.6, aD + 1.8, aL, 'walk');
-        at(T, attacker, t2 - 0.05, aD, aL, 'attack');
-      }
-      jump(T, attacker, t2, aZ - 2.25 > 0 ? Math.min(0.95, aZ - 2.1) : 0.6, 0.85);
+      } else approach(T, attacker, t2, aD, aL, kOf(T, attacker) === 2 && !liberoAttack);
+      // Jump: the hitting hand (about 2.45 m standing, arm up) meets the ball at the top of the jump
+      jump(T, attacker, t2, clamp(aZ - 2.45, 0.3, 0.8), 0.85);
       pose(T, attacker, t2 + 0.5, 'ready');
       ev({ t: t2, kind: 'contact', team: T, num: attacker, what: 'attack' });
       if (liberoAttack) fault({ t: t2 + 0.12, key: 'libero_attack', team: T, comp: 'both', sit: s, text: 'Il Libero n. ' + L + ' completa un attacco con la palla interamente sopra il bordo superiore della rete.' });
@@ -1135,7 +1162,7 @@
       const backBlockSit = injectHere && (s === 'back_block' || s === 'back_block_try');
       if (!backBlockSit) blockers.forEach((n, i) => {
         const l = M.local(O, 0.35, bY + (i ? (i % 2 ? 0.55 : -0.55) : 0)).l;
-        at(O, n, t2 - 0.35, 0.35, clamp(l, -4.2, 4.2), 'block');
+        blockMove(O, n, t2, clamp(l, -4.2, 4.2), setEnd);
         jump(O, n, t2 + 0.02, 0.7, 0.8);
         pose(O, n, t2 + 0.7, 'ready');
       });
@@ -1317,7 +1344,8 @@
   Match.prototype.ballAt = function (R, t) {
     if (R.holdUntil && t >= R.holdUntil.t0 && t <= R.holdUntil.t1) {
       const p = R.holdUntil.p;
-      return { x: p[0], y: p[1], z: p[2] - 0.05 * Math.sin((t - R.holdUntil.t0) / (R.holdUntil.t1 - R.holdUntil.t0) * Math.PI), spin: 0 };
+      // Held ball: it sinks into the setter's hands (arms bending) and is then pushed out again
+      return { x: p[0], y: p[1], z: p[2] - 0.17 * Math.sin((t - R.holdUntil.t0) / (R.holdUntil.t1 - R.holdUntil.t0) * Math.PI), spin: 0 };
     }
     let seg = null;
     for (const s of R.ball) { if (t >= s.t0 && t <= s.t1) seg = s; }

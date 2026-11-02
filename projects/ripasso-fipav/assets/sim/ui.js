@@ -221,6 +221,49 @@
       const ps = MOVE[pr].speed * dt;
       G.partnerX += clamp(pt - G.partnerX, -ps, ps);
     }
+    recordRefs();
+  }
+
+  /**
+   * Where the two referees were during each rally (x along the court by rally time: x1 the 1st, x2 the 2nd), so its
+   * replay shows them there and not where they are now (after a side-out the 2nd is already on the other side).
+   * Kept aside, not in the rally: a reported rally (rebuilt from the report) gets the automatic positions instead.
+   */
+  const REFLOG = new WeakMap();
+  function recordRefs() {
+    const M = G.M, R = G.R;
+    if (!M || !R) return;
+    const m = M.opts.mode, x1 = m === '2' ? G.partnerX : G.refX, x2 = m === '2' ? G.refX : G.partnerX;
+    let log = REFLOG.get(R);
+    if (!log) REFLOG.set(R, log = []);
+    if (G.phase === 'prep') log[0] = { t: 0, x1, x2 }; // where they are at the service
+    else if ((G.phase === 'rally' || G.phase === 'decision') && (!log.length || G.t - log[log.length - 1].t >= 0.05)) log.push({ t: G.t, x1, x2 });
+  }
+  /** The automatic referees' movement through a rally (as autoRefX): at the service the 2nd on the receiving team's side. */
+  function simRefs(R, whistleT) {
+    const M = G.M, out = [], dt = 0.05, rc = R.receiving;
+    const m1 = MOVE['1'], m2 = MOVE['2'], stop = whistleT != null ? whistleT : R.endT;
+    let x1 = M.side[R.serving] * 0.4 * m1.max * 0.85, x2 = M.side[rc] * m2.max * 0.75;
+    for (let t = 0; t <= (R.endT || 0) + 4; t += dt) {
+      out.push({ t, x1, x2 });
+      const b = M.ballAt(R, t), bx = b ? b.x : M.side[R.serving];
+      const s2 = t < R.tHit + 0.3 ? M.side[rc] : -(Math.sign(bx) || 1);
+      x1 += clamp((Math.sign(bx) || 0) * m1.max * 0.85 - x1, -m1.speed * dt, m1.speed * dt);
+      // After the whistle the 2nd stays where he is until the players at the net have landed
+      if (t < stop) x2 += clamp(s2 * m2.max * 0.75 - x2, -m2.speed * dt, m2.speed * dt);
+    }
+    return out;
+  }
+  /** The referees' positions at time t of a rally's replay ({ x1, x2 }), or null when they are not known. */
+  function refsAt(R, t, whistleT) {
+    if (!R || !R.ball || !R.ball.length) return null;
+    let log = REFLOG.get(R);
+    if (!log || !log.length) REFLOG.set(R, log = simRefs(R, whistleT));
+    let i = 0;
+    while (i < log.length - 1 && log[i + 1].t <= t) i++;
+    const a = log[i], b = log[Math.min(i + 1, log.length - 1)];
+    const u = b.t > a.t ? clamp((t - a.t) / (b.t - a.t), 0, 1) : 0;
+    return { x1: a.x1 + (b.x1 - a.x1) * u, x2: a.x2 + (b.x2 - a.x2) * u };
   }
 
   function roleName(m) { return m === '1' ? '1° arbitro' : m === '2' ? '2° arbitro' : 'Arbitro unico'; }
@@ -1990,7 +2033,8 @@
     $('rp-badge').classList.toggle('w', !$('rp-badge').hidden && $('rp-badge').textContent === 'Fischio');
     // The camera stands where the referee of that view is (the 2nd moving to a side if his signal says so)
     if (G.M && RP.renderer.setRefX && !RP.top) {
-      const m = G.M.opts.mode, x1 = m === '2' ? G.partnerX : G.refX, x2 = m === '2' ? G.refX : G.partnerX;
+      const rx = !info.snap && refsAt(info.R, RP.t, info.whistle);
+      const m = G.M.opts.mode, x1 = rx ? rx.x1 : m === '2' ? G.partnerX : G.refX, x2 = rx ? rx.x2 : m === '2' ? G.refX : G.partnerX;
       if (RP.view === 'second') { const mx = replay2X(RP.t, x2 || 0); RP.renderer.setRefX(mx != null ? mx : (x2 || 0)); }
       else RP.renderer.setRefX(x1 || 0);
     }
@@ -2030,7 +2074,7 @@
     const a = d.action;
     const sv = (a.server && a.server.team) || d.serving || 'A';
     const R = { plan: a.plan || {}, tHit: a.tHit, endT: a.endT, server: a.server, serving: sv, receiving: E.other(sv), faults: a.faults || [], natural: a.natural, trap: a.trap,
-      formations: a.formations || {}, events: a.events || [], ball: a.ball || [], keys: a.keys || {}, moves: a.moves || {}, slow: [] };
+      formations: a.formations || {}, events: a.events || [], ball: a.ball || [], keys: a.keys || {}, moves: a.moves || {}, holdUntil: a.holdUntil || null, slow: [] };
     const fault = (a.faults || [])[0] || null;
     const info = replayInfo(R, fault && Math.abs(fault.t - a.focus) < 0.01 ? fault : null, false, a.whistle != null ? a.whistle : null);
     if (a.focus != null) info.focus = a.focus;
@@ -2196,7 +2240,7 @@
       d.action = {
         plan: R.plan, tHit: R.tHit, endT: R.endT, whistle: rp.whistle, focus: rp.focus, server: R.server, serving: R.serving, receiving: R.receiving,
         faults: R.faults, natural: R.natural, trap: R.trap || null, formations: R.formations,
-        events: R.events, ball: R.ball, keys: R.keys, moves: R.moves,
+        events: R.events, ball: R.ball, keys: R.keys, moves: R.moves, holdUntil: R.holdUntil || null,
       };
     } else if (G.event) {
       const e = G.event;
@@ -2348,6 +2392,41 @@
     };
   }
 
+  /** Ball contacts of each player in a rally (key -> [{ t, what }]), built once per rally (not stored in it). */
+  const CONTACTS = new WeakMap();
+  /**
+   * What a player is doing around time t, for the detailed graphics (hands on the ball, run-up, jumps):
+   * the contacts close in time (dt = t - contact), the jump around t (dt from its peak, its kind from the pose),
+   * the held ball (k from 0 to 1 while the setter holds it).
+   */
+  function actOf(R, key, t) {
+    let c = CONTACTS.get(R);
+    if (!c) {
+      c = {};
+      R.events.forEach(e => {
+        if ((e.kind === 'contact' || e.kind === 'block-touch') && e.team) (c[e.team + e.num] = c[e.team + e.num] || []).push({ t: e.t, what: e.kind === 'block-touch' ? 'block' : e.what });
+      });
+      CONTACTS.set(R, c);
+    }
+    const tr = R.moves[key], a = { touches: (c[key] || []).map(q => ({ dt: t - q.t, what: q.what })).filter(q => q.dt > -1.6 && q.dt < 1.2) };
+    const z = tr.z;
+    for (let i = 1; i < z.length - 1; i++) {
+      if (!(z[i].z > 0)) continue;
+      const t0 = z[i - 1].t, tp = z[i].t, t1 = z[i + 1].t;
+      if (t < t0 - 0.7 || t > t1 + 0.45) continue;
+      let kind = 'ready';
+      for (const q of tr.pose) if (q.t <= tp) kind = q.pose;
+      a.jump = { dt: t - tp, rise: tp - t0, fall: t1 - tp, kind };
+      break;
+    }
+    const h = R.holdUntil;
+    if (h && t >= h.t0 && t <= h.t1 + 0.6 && (c[key] || []).some(q => Math.abs(q.t - h.t0) < 0.01)) {
+      if (t <= h.t1) a.hold = (t - h.t0) / Math.max(0.01, h.t1 - h.t0);
+      else a.released = t - h.t1;
+    }
+    return a;
+  }
+
   /** Draws the scene; with `rp` ({ renderer, R, t }) it draws a moment of a rally in the replay window instead. */
   function draw(rp) {
     const M = G.M, R = rp ? rp.R : G.R;
@@ -2400,6 +2479,9 @@
           p = { x: SA.zone[0] + (SA.court.x - SA.zone[0]) * e2, y: SA.zone[1] + (SA.court.y - SA.zone[1]) * e2, z: 0, pose: k < 1 ? 'walk' : 'ready' };
         }
         const person = personFor(T, n, p);
+        if (R && (phase === 'rally' || phase === 'decision') && R.moves[key]) person.act = actOf(R, key, t);
+        // The server bouncing the ball before the toss
+        if (R && R.server.team === T && R.server.num === n && (phase === 'prep' || ((phase === 'rally' || phase === 'decision') && t < R.ball[0].t0))) (person.act = person.act || {}).dribble = true;
         if (R && (person.pose === 'attack' || person.pose === 'serve') && R.moves[key]) {
           // Arm swing: cocked while rising, hitting at the top of the jump, following through while landing
           const a = M.playerAt(R, key, t - 0.08), b2 = M.playerAt(R, key, t + 0.08);
@@ -2460,7 +2542,10 @@
 
     // Referees and scorer
     const mode = M.opts.mode;
-    const firstX = mode === '2' ? G.partnerX : G.refX;
+    // Replay: where the referees were at that moment of the rally
+    const rx = rp && !snap ? refsAt(R, t, RP.info && RP.info.whistle) : null;
+    const firstX = rx ? rx.x1 : mode === '2' ? G.partnerX : G.refX;
+    const secondX = rx ? rx.x2 : mode === '2' ? G.refX : G.partnerX;
     const live = role => {
       let L = G.liveSig, el;
       if (rp) {
@@ -2478,18 +2563,21 @@
       if (el > total + 0.5) { if (!rp) G.liveSig = null; return null; }
       const a = SimGestures.liveArms(L.steps, el);
       // Which way the drawing's left arm points on screen: towards the team the signal puts on the left
-      const x = role === '1' ? firstX : (mode === '2' ? G.refX : G.partnerX), y = role === '1' ? -5.6 : 5.25;
+      const x = role === '1' ? firstX : secondX, y = role === '1' ? -5.6 : 5.25;
       const pr = renderer.cam.project([x, y, 1.6]), pt = renderer.cam.project([M.side[L.sides.left] * 5, y, 1.6]);
       a.flip = pr && pt && pt.x > pr.x ? -1 : 1;
       return a;
     };
-    people.push({ x: firstX, y: -5.6, z: 1.55, pose: 'stand', live: live('1'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#2b2420', h: 1.8, skin: 0, label: '1° arbitro', hiddenIn: 'first' });
+    const ref1 = { x: firstX, y: -5.6, z: 1.55, pose: 'stand', live: live('1'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#2b2420', h: 1.8, skin: 0, label: '1° arbitro', hiddenIn: 'first' };
+    people.push(ref1);
+    let ref2 = null;
     if (mode !== 'solo') {
-      let sx = mode === '2' ? G.refX : G.partnerX;
+      let sx = secondX;
       // Replay: the 2nd referee moves to the side of the team at fault before the signal, as in the recording
       if (rp) { const mx = replay2X(rp.t, sx); if (mx != null) sx = mx; }
       const atPost = !rp && timeoutStill() && Math.abs(sx) < 0.25;
-      people.push({ x: sx, y: 5.25, pose: 'stand', back: atPost, live: live('2'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#4a3426', hairStyle: 1, h: 1.78, skin: 1, label: '2° arbitro', hiddenIn: 'second' });
+      ref2 = { x: sx, y: 5.25, pose: 'stand', back: atPost, live: live('2'), jersey: '#1f2633', shorts: '#14171d', outfit: 'ref', collar: '#e9edf3', hair: '#4a3426', hairStyle: 1, h: 1.78, skin: 1, label: '2° arbitro', hiddenIn: 'second' };
+      people.push(ref2);
     }
     const scorer = { x: 0, y: 7.55, pose: 'sit', jersey: '#5b6b88', shorts: '#2a3140', outfit: 'staff', collar: '#cfd6e2', hair: '#1f1712', hairStyle: 2, h: 1.74, skin: 2, label: 'Segnapunti' };
     // "All in order" of the scorer (arms raised, seated)
@@ -2518,6 +2606,11 @@
         if (b) ball = b;
       }
       if (ball && (rp ? Math.abs(t - RP.info.focus) < 0.35 : slowNow())) ball.highlight = '#ffd54f';
+      // Where the referees look: at the service the 1st watches the serving team, the 2nd the receiving team
+      // (positions); then both follow the ball
+      const svc = phase === 'prep' || ((phase === 'rally' || phase === 'decision') && t < R.tHit + 0.25);
+      ref1.lookX = svc ? M.side[R.serving] * 7 : ball ? ball.x : null;
+      if (ref2) ref2.lookX = svc ? M.side[R.receiving] * 4.5 : ball ? ball.x : null;
     }
 
     // Net shake and impact mark (visual aids)
