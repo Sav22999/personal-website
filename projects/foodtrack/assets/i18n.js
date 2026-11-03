@@ -49,6 +49,9 @@
         "Change password": "Cambia password",
         "Choose a new password": "Scegli una nuova password",
         "Close": "Chiudi",
+        "Write to us through the contact form, from the email address of your account: an administrator will send you a temporary password, to be changed at the first sign-in.": "Scrivici tramite il modulo di contatto, indicando l’indirizzo email del tuo account: un amministratore ti invierà una password temporanea, da cambiare al primo accesso.",
+        "If it is a Google account email, you can also sign in with “Continue with Google”.": "Se è l’email di un account Google, puoi anche accedere con «Continua con Google».",
+        "Open the contact form": "Apri il modulo di contatto",
         // ---- admin portal
         "+{n} in the last 7 days": "+{n} negli ultimi 7 giorni",
         "Access denied": "Accesso negato",

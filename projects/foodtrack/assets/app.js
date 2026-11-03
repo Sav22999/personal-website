@@ -6,6 +6,7 @@
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
 
   const VERSION = '1.1.0';
+  const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
   const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
   const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
   const SORTS = [
@@ -1410,7 +1411,7 @@
       mode === 'register' ? h('label.check', privacy, h('span', t('I have read and accept the '), h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, t('privacy policy')))) : null,
       err, h('div.spacer'), submit,
       mode === 'login' ? h('div.center', { style: { marginTop: '6px' } }, btn(t('Forgot your password?'), { kind: 'text', onclick: () => {
-        const s = sheet({ title: t('Forgot password'), body: [h('p.sheet-text', 'Scrivi a ', h('a', { href: 'mailto:info@saveriomorelli.com' }, 'info@saveriomorelli.com'), ' dall’indirizzo email del tuo account: un amministratore ti invierà una password temporanea, da cambiare al primo accesso.', S.config.googleClientId ? ' Se l’email è quella di un account Google, puoi anche accedere con «Continua con Google».' : '')], actions: [btn(t('Got it'), { onclick: () => s.close() })] });
+        const s = sheet({ title: t('Forgot password'), body: [h('p.sheet-text', t('Write to us through the contact form, from the email address of your account: an administrator will send you a temporary password, to be changed at the first sign-in.'), S.config.googleClientId ? ' ' + t('If it is a Google account email, you can also sign in with “Continue with Google”.') : ''), h('div.btn-row', h('a.btn.btn-tonal', { href: CONTACT_URL, target: '_blank', rel: 'noopener' }, icon('open'), h('span', t('Open the contact form'))))], actions: [btn(t('Got it'), { onclick: () => s.close() })] });
       } })) : null,
     );
 
