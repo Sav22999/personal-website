@@ -1,0 +1,25 @@
+{
+  "name": "FoodTrack",
+  "short_name": "FoodTrack",
+  "description": "Gestisci gli alimenti di casa, ricevi avvisi sulle scadenze, crea liste della spesa condivise e scopri ricette con ciò che hai già.",
+  "lang": "it",
+  "id": "./",
+  "start_url": "./#/spazi",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#4CAF50",
+  "theme_color": "#4CAF50",
+  "categories": ["food", "lifestyle", "productivity"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Spazi della casa", "url": "./#/spazi", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Liste della spesa", "url": "./#/liste", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Ricette", "url": "./#/ricette", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

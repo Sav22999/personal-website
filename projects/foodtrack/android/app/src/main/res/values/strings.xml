@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FoodTrack</string>
+    <string name="host_name">www.saveriomorelli.com</string>
+    <string name="launch_url">https://www.saveriomorelli.com/projects/foodtrack/</string>
+    <string name="provider_authority">com.saveriomorelli.foodtrack.fileprovider</string>
+    <!-- Digital Asset Links: the site must publish /.well-known/assetlinks.json with the SHA-256 of the signing key -->
+    <string name="asset_statements" translatable="false">[{ \"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": { \"namespace\": \"web\", \"site\": \"https://www.saveriomorelli.com\" } }]</string>
+</resources>

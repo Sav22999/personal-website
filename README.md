@@ -21,6 +21,7 @@ Personal website of Saverio Morelli — frontend developer & UX designer.
    - `old/include/variables-sample.php` → `old/include/variables.php` (database for the legacy `/old/` projects)
    - `old/api/emoticolor/credentials-sample.php` → `old/api/emoticolor/credentials.php`
    - `projects/ripasso-fipav/lib/config.example.php` → `projects/ripasso-fipav/lib/config.php`
+   - `projects/foodtrack/credentials-sample.php` → `projects/foodtrack/credentials.php` (FoodTrack database; or open `projects/foodtrack/install-db.php`, which creates it)
    - `.maintenance-sample` → `.maintenance` (only when you want to enable maintenance mode)
 4. Deploy to a PHP-capable web server
 

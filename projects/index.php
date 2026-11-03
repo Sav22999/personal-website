@@ -144,6 +144,21 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
+        <a class="card" href="/projects/foodtrack/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/foodtrack.png" alt="">
+            </div>
+            <h3>FoodTrack</h3>
+            <p>Keep track of the food in your fridge, freezer and pantry, get alerts before it expires, share shopping lists with your household and find recipes with what you already have.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>Android</li>
+                <li>Italian</li>
+            </ul>
+        </a>
         <a class="card" href="/projects/faceguess/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
