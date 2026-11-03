@@ -412,7 +412,9 @@ button.list-row, a.list-row { cursor: pointer; }
 .tour { width: 100%; max-width: 420px; max-height: calc(100dvh - 32px); background: var(--surface); border-radius: 28px; padding: 14px 20px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; box-shadow: 0 24px 64px rgba(0,0,0,.3); transform: translateY(12px); transition: transform .2s; overflow: hidden; }
 .tour-ovl.open .tour { transform: none; }
 @media (max-width: 480px) { .tour-ovl { padding: 0; align-items: stretch; } .tour { max-width: none; max-height: none; border-radius: 0; padding-top: calc(14px + env(safe-area-inset-top)); } }
-.tour-top { display: flex; justify-content: flex-end; min-height: 40px; }
+.tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 10px; }
+.tour-lang { margin: 0; height: 36px; flex: 0 1 auto; }
+.tour-lang button { padding: 0 10px; }
 .tour-stage { flex: 1; overflow-y: auto; touch-action: pan-y; }
 .tour-slide { animation: tourIn .25s ease; text-align: center; }
 @keyframes tourIn { from { opacity: 0; transform: translateX(16px); } }

@@ -1443,8 +1443,11 @@
   /** Shown at the first sign-in on a device and the first time a new major version is opened. */
   function maybeShowTutorial() {
     const key = 'tutorial.' + S.user.id;
-    if (store.get(key, '') === MAJOR) return;
-    setTimeout(() => openTutorial(() => store.set(key, MAJOR)), 400);
+    // After a language change inside the tutorial the page reloads: reopen it on the same slide.
+    let resume = null;
+    try { resume = sessionStorage.getItem('ft.tourResume'); sessionStorage.removeItem('ft.tourResume'); } catch (e) { /* no storage */ }
+    if (resume === null && store.get(key, '') === MAJOR) return;
+    setTimeout(() => openTutorial(() => store.set(key, MAJOR), +resume || 0), resume === null ? 400 : 0);
   }
 
   /** Small illustrations built with the app's own components (tiles, chips, icons). */
@@ -1468,7 +1471,7 @@
     }
   }
 
-  function openTutorial(onDone) {
+  function openTutorial(onDone, start) {
     const steps = [
       ['welcome', t('Welcome to FoodTrack'), t('Keep track of the food you have at home, avoid waste and find ideas for what to cook.')],
       ['spaces', t('1 · Create your spaces'), t('Fridge, freezer and pantry are ready. Add your own (cellar, cupboard…) with the “New space” button.')],
@@ -1478,13 +1481,20 @@
       ['recipes', t('5 · Cook with what you have'), t('Recipes show which ingredients you already have; add the missing ones to a list or plan your week.')],
       ['share', t('6 · Share your household'), t('Invite family or flatmates from the Profile: you will all see and edit the same spaces and lists.')],
     ];
-    let i = 0;
+    let i = Math.min(Math.max(0, start || 0), steps.length - 1);
     const stage = h('div.tour-stage');
+    // Language choice, available on every slide (the page reloads in the new language and resumes here)
+    const langSeg = h('div.seg.tour-lang', { role: 'group', 'aria-label': t('Language') }, I18N.langs.map(([k, label]) =>
+      h('button' + (k === I18N.lang ? '.sel' : ''), { type: 'button', lang: k, 'aria-pressed': String(k === I18N.lang), onclick: () => {
+        if (k === I18N.lang) return;
+        try { sessionStorage.setItem('ft.tourResume', String(i)); } catch (e) { /* no storage */ }
+        I18N.set(k);
+      } }, icon('globe'), label)));
     const dots = h('div.tour-dots');
     const next = btn('', { onclick: () => go(i + 1) });
     const back = btn(t('Back'), { kind: 'text', onclick: () => go(i - 1) });
     const skip = btn(t('Skip'), { kind: 'text', onclick: () => finish() });
-    const box = h('div.tour', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('App tutorial') }, h('div.tour-top', skip), stage, dots, h('div.tour-actions', back, next));
+    const box = h('div.tour', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('App tutorial') }, h('div.tour-top', langSeg, skip), stage, dots, h('div.tour-actions', back, next));
     const ovl = h('div.tour-ovl', box);
     function paintT() {
       const [kind, title, text] = steps[i];
