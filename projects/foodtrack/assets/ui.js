@@ -19,6 +19,7 @@
         else if (k === 'class') node.className += (node.className ? ' ' : '') + v;
         else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
         else if (k === 'html') node.innerHTML = v;
+        else if (k === 'value' && node.tagName === 'TEXTAREA') node.value = String(v); // a textarea ignores the value attribute
         else if (k in node && typeof v !== 'string') node[k] = v;
         else node.setAttribute(k, v === true ? '' : v);
       }
