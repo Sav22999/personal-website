@@ -71,6 +71,10 @@ L'app e il portale admin mostrano il pulsante ufficiale «Continua con Google» 
 
 Nell'app Android (TWA) l'accesso con Google funziona perché la pagina gira in Chrome. Nel raro caso in cui il telefono non abbia Chrome e l'app usi la WebView, Google blocca l'accesso: resta disponibile email e password.
 
+## Tutorial
+
+Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versione principale, cioè quando cambia il primo numero di `VERSION` in `assets/app.js`) l'app mostra un breve tutorial illustrato: spazi, prodotti, avvisi di scadenza, liste, ricette e case condivise. Si può rivedere da Profilo → Preferenze → «Tutorial dell'app».
+
 ## Lingue
 
 - L'interfaccia (app e portale) è in **italiano** e **inglese**: la lingua si sceglie in automatico dal browser e si cambia dal Profilo (o dal menu laterale del portale). I testi sorgente sono in inglese, le traduzioni sono in `assets/i18n.js` (client) e `lib/i18n.php` (messaggi dell'API).

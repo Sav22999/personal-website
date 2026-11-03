@@ -1246,6 +1246,7 @@
           else { store.set('notifiedOn', ''); notifyExpiry(); }
           render(true);
         }, { trail: h('div.trail', h('span.switch' + (notif ? '.on' : ''))) }) : null,
+        groupRow('school', t('App tutorial'), t('A quick tour of how FoodTrack works'), () => openTutorial()),
         groupRow('bulb', t('Show tips again'), null, () => { ['tip.cart', 'tip.spaces'].forEach(k => store.set(k, false)); store.set('hide.expired', ''); store.set('hide.expiring', ''); toast(t('Tips and alerts restored')); }),
       ),
 
@@ -1436,6 +1437,75 @@
     if (!UI.sheetsOpen()) openChangePassword(true);
   }
 
+  // ===================================================== tutorial
+
+  const MAJOR = VERSION.split('.')[0];
+  /** Shown at the first sign-in on a device and the first time a new major version is opened. */
+  function maybeShowTutorial() {
+    const key = 'tutorial.' + S.user.id;
+    if (store.get(key, '') === MAJOR) return;
+    setTimeout(() => openTutorial(() => store.set(key, MAJOR)), 400);
+  }
+
+  /** Small illustrations built with the app's own components (tiles, chips, icons). */
+  function illo(kind) {
+    const T = (f, n, size) => tile(f, n, size);
+    const mini = (lead, title, sub, meta) => h('div.tour-card', lead, h('div', h('strong', title), sub ? h('small', sub) : null, meta ? h('div.meta', meta) : null));
+    switch (kind) {
+      case 'welcome': return h('div.illo', h('div.tour-logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' })),
+        h('div.float.f1', T('products', 'apple', 'sm')), h('div.float.f2', T('products', 'milk', 'sm')), h('div.float.f3', T('products', 'carrot', 'sm')), h('div.float.f4', T('products', 'bread', 'sm')));
+      case 'spaces': return h('div.illo.col', mini(T('spaces', 'fridge'), t('Fridge'), null, [chip(plural(5, 'product', 'products'), 'neutral')]), mini(T('spaces', 'pantry'), t('Pantry'), null, [chip(plural(8, 'product', 'products'), 'neutral')]), mini(T('spaces', 'freezer'), t('Freezer'), null, [chip(t('Empty'), 'neutral')]));
+      case 'products': return h('div.illo.col', mini(T('products', 'milk'), t('Whole milk'), t('Expires on ') + UI.fmtDate(UI.addDays(UI.todayStr(), 1)), [chip(t('Expires tomorrow'), 'warn', 'warning')]),
+        mini(T('products', 'egg'), t('Eggs'), t('Expires on ') + UI.fmtDate(UI.addDays(UI.todayStr(), 9)), [chip(t('In {n} days', { n: 9 }), 'ok')]), h('div.tour-pill', icon('scan'), t('Scan barcode')));
+      case 'alerts': return h('div.illo.col', h('div.banner.warn.tour-banner', icon('warning'), h('div.b-body', h('h3', t('2 expiring products')), h('p', t('Don’t let them expire: find out how to use them in great recipes!')))),
+        h('div.banner.info.tour-banner', icon('info'), h('div.b-body', h('h3', t('About the expiry')), h('p', t('Some people test freshness by putting the egg in a glass of water…')))));
+      case 'lists': return h('div.illo.col', mini(T('products', 'banana'), t('Bananas'), '4 ' + UI.unitLabel('pz'), null).appendChild(icon('cartAdd')).parentNode,
+        h('div.tour-card.done', T('products', 'butter'), h('div', h('strong', t('Butter')), h('small', '250 g')), icon('cartRemove')), h('div.tour-pill', icon('move'), t('Move to a space')));
+      case 'recipes': return h('div.illo.col', h('div.tour-recipe', h('div.cover', { style: { backgroundImage: 'url("assets/img/recipes/pancakes.jpg")' } }), h('div.meta', chip(t('You have all the ingredients'), 'ok', 'check'), chip(t('Uses expiring products'), 'warn'))),
+        h('div.tour-pill', icon('calendar'), t('Weekly plan')));
+      case 'share': return h('div.illo.col', h('div.tour-avatars', ['LV', 'MR', 'PB'].map(x => h('span.avatar', x))), h('div.code-box.tour-code', 'K7M2Q9XA'), h('div.tour-pill', icon('share'), t('Invite someone')));
+      default: return h('div.illo');
+    }
+  }
+
+  function openTutorial(onDone) {
+    const steps = [
+      ['welcome', t('Welcome to FoodTrack'), t('Keep track of the food you have at home, avoid waste and find ideas for what to cook.')],
+      ['spaces', t('1 · Create your spaces'), t('Fridge, freezer and pantry are ready. Add your own (cellar, cupboard…) with the “New space” button.')],
+      ['products', t('2 · Add your products'), t('Open a space and tap “Add product”: pick it from the catalogue or scan the barcode, then set the expiry date.')],
+      ['alerts', t('3 · Get alerts on expiry'), t('Expiring and expired products are highlighted, with tips to tell whether they are still good.')],
+      ['lists', t('4 · Make shopping lists'), t('Add what you need, put it in the cart while shopping, then move it into a space once home.')],
+      ['recipes', t('5 · Cook with what you have'), t('Recipes show which ingredients you already have; add the missing ones to a list or plan your week.')],
+      ['share', t('6 · Share your household'), t('Invite family or flatmates from the Profile: you will all see and edit the same spaces and lists.')],
+    ];
+    let i = 0;
+    const stage = h('div.tour-stage');
+    const dots = h('div.tour-dots');
+    const next = btn('', { onclick: () => go(i + 1) });
+    const back = btn(t('Back'), { kind: 'text', onclick: () => go(i - 1) });
+    const skip = btn(t('Skip'), { kind: 'text', onclick: () => finish() });
+    const box = h('div.tour', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('App tutorial') }, h('div.tour-top', skip), stage, dots, h('div.tour-actions', back, next));
+    const ovl = h('div.tour-ovl', box);
+    function paintT() {
+      const [kind, title, text] = steps[i];
+      stage.replaceChildren(h('div.tour-slide', illo(kind), h('h2', title), h('p', text)));
+      dots.replaceChildren(...steps.map((_, k) => h('button' + (k === i ? '.on' : ''), { type: 'button', 'aria-label': String(k + 1), onclick: () => go(k) })));
+      back.style.visibility = i ? 'visible' : 'hidden';
+      skip.style.visibility = i < steps.length - 1 ? 'visible' : 'hidden';
+      next.querySelector('span') ? next.querySelector('span').textContent = (i === steps.length - 1 ? t('Get started') : t('Next')) : next.appendChild(h('span', i === steps.length - 1 ? t('Get started') : t('Next')));
+    }
+    function go(k) { if (k >= steps.length) return finish(); i = Math.max(0, k); paintT(); }
+    function finish() { document.removeEventListener('keydown', key); ovl.classList.remove('open'); setTimeout(() => ovl.remove(), 200); if (onDone) onDone(); }
+    const key = e => { if (e.key === 'ArrowRight') go(i + 1); else if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'Escape') finish(); };
+    document.addEventListener('keydown', key);
+    let x0 = null;
+    stage.addEventListener('pointerdown', e => { x0 = e.clientX; });
+    stage.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 50) go(i + (dx < 0 ? 1 : -1)); });
+    document.body.appendChild(ovl);
+    paintT();
+    requestAnimationFrame(() => ovl.classList.add('open'));
+  }
+
   // ===================================================== notifications & sync
 
   function notifyExpiry() {
@@ -1489,6 +1559,7 @@
       S.loaded = true;
       render();
       notifyExpiry();
+      maybeShowTutorial();
     } catch (e) {
       fatal(t('Could not load the data'), e.message);
     }
