@@ -362,17 +362,33 @@
 
   const COUNTRY_CODES = 'AD AE AF AG AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FR GA GB GD GE GH GM GN GQ GR GT GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KM KN KP KR KW KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MK ML MM MN MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NZ OM PA PE PG PH PK PL PR PS PT PY QA RO RS RU RW SA SC SD SE SG SI SK SL SM SN SO SR SS SV SY SZ TD TG TH TJ TL TM TN TO TR TT TW TZ UA UG US UY UZ VA VE VN YE ZA ZM ZW'.split(' ');
   let regionNames = null;
+  // UK nations (ISO 3166-2 codes): Intl has no names for them
+  const NATIONS = { 'GB-ENG': 'England', 'GB-SCT': 'Scotland', 'GB-WLS': 'Wales', 'GB-NIR': 'Northern Ireland' };
   function countryName(code) {
+    if (NATIONS[code]) return t(NATIONS[code]);
     try { regionNames = regionNames || new Intl.DisplayNames([locale()], { type: 'region' }); return regionNames.of(code) || code; } catch (e) { return code; }
   }
   /** Flag emoji of an ISO 3166 code. */
   function flag(code) {
+    // England, Scotland, Wales: flag tag sequences (🏴 + tag letters + cancel tag)
+    if (/^GB-(ENG|SCT|WLS)$/.test(code || '')) return String.fromCodePoint(0x1F3F4, ...[...('gb' + code.slice(3).toLowerCase())].map(c => 0xE0000 + c.charCodeAt(0)), 0xE007F);
+    if (code === 'GB-NIR') return flag('GB');
     return /^[A-Z]{2}$/.test(code || '') ? String.fromCodePoint(...[...code].map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : '';
   }
   /** All countries sorted by name in the user's language. */
   function countryList() {
-    return COUNTRY_CODES.map(c => ({ code: c, name: countryName(c) })).sort((a, b) => a.name.localeCompare(b.name, locale()));
+    return COUNTRY_CODES.concat(Object.keys(NATIONS)).map(c => ({ code: c, name: countryName(c) })).sort((a, b) => a.name.localeCompare(b.name, locale()));
   }
+  /** Cover of a recipe: its photo, or an illustration with the flags of its countries. */
+  function recipeCover(r, cls) {
+    if (r.image) return h('div.' + (cls || 'cover'), { style: { backgroundImage: `url("${r.image}")` } });
+    const flags = (r.origin || []).slice(0, 3).map(flag).join(' ');
+    const ill = h('div.' + (cls || 'cover') + '.cover-ill', h('span.ci-icon', icon('restaurant')), flags ? h('span.ci-flags', flags) : null);
+    let hash = 0; for (const ch of String(r.name || '')) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+    ill.style.setProperty('--hue', String(hash));
+    return ill;
+  }
+
   /** "🇮🇹 Italy, 🇫🇷 France" — or "Not defined" when the list is empty. */
   function originLabel(list, short) {
     if (!list || !list.length) return t('Not defined');
@@ -399,7 +415,7 @@
     h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
     sheet, actionSheet, confirm, closeTop, closeAllSheets, toast,
     todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime,
-    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, norm, store, applyTheme,
+    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, recipeCover, norm, store, applyTheme,
     sheetsOpen: () => stack.length,
   };
 })();

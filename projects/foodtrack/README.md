@@ -38,7 +38,7 @@ foodtrack/
    - host (`$localhost_db`), utente (`$username_db`), password (`$password_db`) e nome del database (`$database_name`) presi dal pannello Aruba;
    - prefisso tabelle (predefinito `ft_`);
    - nome, email e password del **master admin**.
-3. La pagina crea le tabelle, carica 13 categorie, 68 prodotti e 7 ricette, crea il master admin (con la sua casa) e scrive `credentials.php`.
+3. La pagina crea le tabelle, carica 13 categorie, 116 prodotti e 56 ricette (in italiano e inglese, da oltre 20 paesi), crea il master admin (con la sua casa) e scrive `credentials.php`.
    Se PHP non può scrivere il file, la pagina mostra il contenuto da creare a mano via FTP.
 4. **Elimina `install-db.php` dal server** (ricaricalo solo quando serve aggiornare le tabelle: in quel caso chiede la password del database già salvata).
 5. PHP deve poter scrivere in `uploads/recipes/` (permessi `755`) per caricare le immagini delle ricette dal portale.
@@ -85,6 +85,10 @@ Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versi
 ## Codici a barre
 
 La scansione usa il `BarcodeDetector` nativo quando c'è (Chrome su Android) e altrimenti la libreria **ZXing** inclusa nel progetto (`assets/vendor/`), quindi funziona anche su Firefox, Safari e Chrome desktop. Serve HTTPS e il permesso della fotocamera (il `.htaccess` di FoodTrack lo consente: `Permissions-Policy: camera=(self)`). Il codice viene cercato su Open Food Facts tramite il server.
+
+## Ricette iniziali
+
+56 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Germania, Austria, Grecia, Francia, Spagna, Portogallo, Cina, Giappone, India, Messico, Turchia, Libano, Tunisia, Ungheria e Brasile (`lib/seed.php` e `lib/seed-recipes-2.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). Le ricette senza foto mostrano una copertina illustrata con le bandiere dei paesi d'origine; la foto si aggiunge dal portale.
 
 ## Ruoli
 

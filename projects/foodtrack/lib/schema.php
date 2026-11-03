@@ -276,6 +276,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v4: multilingual content (i18n JSON column on categories, products, recipes, ingredients)
  *  v5: countries of origin of the recipes (one or more)
  *  v6: publication status per language (existing translations become published)
+ *  v7: second batch of content (new catalog products and recipes from many countries)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -314,6 +315,11 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
             foreach ($d as $lg => $tr) if (is_array($tr) && !empty($tr['name']) && empty($tr['status'])) { $d[$lg]['status'] = 'published'; $changed = true; }
             if ($changed) $up->execute([json_encode($d, JSON_UNESCAPED_UNICODE), $r['id']]);
         }
+    }
+    if ($from < 7) {
+        require_once __DIR__ . '/seed.php';
+        $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
+        seed_database($pdo, $p, $admin ? (int)$admin : null);
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

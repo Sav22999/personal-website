@@ -7,6 +7,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/seed-recipes-2.php';
+
 function seed_categories(): array
 {
     // name => generic expiry tip shown when a product of this category is expiring or expired
@@ -30,6 +32,11 @@ function seed_categories(): array
 function seed_products(): array
 {
     // [name, icon, category, default unit, specific expiry tip (optional)]
+    return array_merge(seed_products_1(), array_map(function ($p) { return [$p[0], $p[2], $p[3], $p[4], null]; }, seed2_products()));
+}
+
+function seed_products_1(): array
+{
     return [
         ['Mele', 'apple', 'Frutta', 'pz', 'Le mele durano a lungo in frigorifero. Se sono un po’ raggrinzite ma sane sono perfette per torte e composte.'],
         ['Banane', 'banana', 'Frutta', 'pz', 'Le banane con la buccia scura sono più dolci: ideali per banana bread, pancake e frullati. Puoi anche sbucciarle e congelarle.'],
@@ -102,7 +109,22 @@ function seed_products(): array
     ];
 }
 
+/** All the initial recipes: batch 1 (first version) + batch 2 (recipes from many countries). */
 function seed_recipes(): array
+{
+    $b2 = array_map(function ($r) {
+        return [
+            'name' => $r['it'], 'origin' => implode(',', $r['origin']), 'image' => '', 'description' => $r['desc'][0],
+            'prep' => $r['prep'], 'cook' => $r['cook'], 'cook_notes' => $r['cookN'][0], 'servings' => $r['serv'], 'difficulty' => $r['diff'],
+            'ingredients' => array_map(function ($i) { return [$i[0], $i[1], $i[2], $i[3]]; }, $r['ing']),
+            'steps' => array_map(function ($st) { return $st[0]; }, $r['steps']),
+            'batch' => 2,
+        ];
+    }, seed2_recipes());
+    return array_merge(seed_recipes_1(), $b2);
+}
+
+function seed_recipes_1(): array
 {
     // ingredients: [product name (catalog) or free text, quantity, unit, notes]
     return [
@@ -244,21 +266,31 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
     $prods = [];
     foreach ($pdo->query("SELECT id, name FROM `{$p}products`") as $r) $prods[mb_strtolower($r['name'])] = (int)$r['id'];
 
+    // Recipes: everything on a new installation; on an existing one only the batches added later
+    // (once: a recipe deleted by an admin is not brought back).
     $hasRecipes = (int)$pdo->query("SELECT COUNT(*) FROM `{$p}recipes`")->fetchColumn() > 0;
-    if (!$hasRecipes) {
-        $insRec = $pdo->prepare("INSERT INTO `{$p}recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,?,?,?)");
-        $insIng = $pdo->prepare("INSERT INTO `{$p}recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (?,?,?,?,?,?,?)");
-        $insStep = $pdo->prepare("INSERT INTO `{$p}recipe_steps` (recipe_id, sort, text) VALUES (?,?,?)");
-        foreach (seed_recipes() as $r) {
-            $insRec->execute([$r['name'], $r['description'], $r['image'], $r['prep'], $r['cook'], $r['cook_notes'], $r['servings'], $r['difficulty'], $r['origin'] ?? '', $adminId, $now, $now]);
-            $rid = (int)$pdo->lastInsertId();
-            foreach ($r['ingredients'] as $i => [$name, $qty, $unit, $notes]) {
-                $insIng->execute([$rid, $prods[mb_strtolower($name)] ?? null, $name, $qty, $unit, $notes, $i]);
-            }
-            foreach ($r['steps'] as $i => $text) $insStep->execute([$rid, $i, $text]);
-            $added['recipes']++;
+    $doneBatch = 0;
+    try { $doneBatch = (int)$pdo->query("SELECT v FROM `{$p}meta` WHERE k = 'seed_batch'")->fetchColumn(); } catch (Throwable $e) { $doneBatch = 0; }
+    if (!$hasRecipes) $doneBatch = 0; elseif ($doneBatch === 0) $doneBatch = 1;
+    $existing = [];
+    foreach ($pdo->query("SELECT name FROM `{$p}recipes`") as $row) $existing[mb_strtolower($row['name'])] = true;
+    $insRec = $pdo->prepare("INSERT INTO `{$p}recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,?,?,?)");
+    $insIng = $pdo->prepare("INSERT INTO `{$p}recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (?,?,?,?,?,?,?)");
+    $insStep = $pdo->prepare("INSERT INTO `{$p}recipe_steps` (recipe_id, sort, text) VALUES (?,?,?)");
+    $maxBatch = 1;
+    foreach (seed_recipes() as $r) {
+        $batch = $r['batch'] ?? 1;
+        $maxBatch = max($maxBatch, $batch);
+        if ($batch <= $doneBatch || isset($existing[mb_strtolower($r['name'])])) continue;
+        $insRec->execute([$r['name'], $r['description'], $r['image'], $r['prep'], $r['cook'], $r['cook_notes'], $r['servings'], $r['difficulty'], $r['origin'] ?? '', $adminId, $now, $now]);
+        $rid = (int)$pdo->lastInsertId();
+        foreach ($r['ingredients'] as $i => [$name, $qty, $unit, $notes]) {
+            $insIng->execute([$rid, $prods[mb_strtolower($name)] ?? null, $name, $qty, $unit, $notes, $i]);
         }
+        foreach ($r['steps'] as $i => $text) $insStep->execute([$rid, $i, $text]);
+        $added['recipes']++;
     }
+    $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('seed_batch', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)$maxBatch]);
     require_once __DIR__ . '/seed-en.php';
     seed_translations($pdo, $p);
     return $added;

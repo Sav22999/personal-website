@@ -6,6 +6,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/seed-recipes-2.php';
+
 function seed_en_categories(): array
 {
     return [
@@ -26,6 +28,13 @@ function seed_en_categories(): array
 }
 
 function seed_en_products(): array
+{
+    $b2 = [];
+    foreach (seed2_products() as $p) $b2[$p[0]] = [$p[1], null];
+    return array_merge(seed_en_products_1(), $b2);
+}
+
+function seed_en_products_1(): array
 {
     return [
         'Mele' => ['Apples', 'Apples keep for a long time in the fridge. If they are a bit wrinkled but sound, they are perfect for cakes and compotes.'],
@@ -100,6 +109,17 @@ function seed_en_products(): array
 }
 
 function seed_en_recipes(): array
+{
+    $b2 = [];
+    foreach (seed2_recipes() as $r) {
+        $notes = [];
+        foreach ($r['ing'] as $i) if ($i[3] !== '' && $i[4] !== '') $notes[$i[3]] = $i[4];
+        $b2[$r['it']] = [$r['en'], $r['desc'][1], $r['cookN'][1], array_map(function ($st) { return $st[1]; }, $r['steps']), $notes];
+    }
+    return array_merge(seed_en_recipes_1(), $b2);
+}
+
+function seed_en_recipes_1(): array
 {
     // Italian name => [name, description, cooking notes, steps, ingredient notes (Italian => English)]
     return [

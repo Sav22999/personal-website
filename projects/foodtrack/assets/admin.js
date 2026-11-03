@@ -247,7 +247,7 @@
       const rows = d.recipes.filter(r => (!n || norm(r.name).includes(n) || norm((r.i18n.en || {}).name || '').includes(n))
         && (!recipeState.status || (recipeState.status === 'pub') === anyPublished(r)));
       table.replaceChildren(dataTable([
-        { key: 'img', label: '', render: r => h('div.thumb', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } }) },
+        { key: 'img', label: '', render: r => UI.recipeCover(r, 'thumb') },
         { key: 'name', label: t('Recipe'), sort: r => r.name, render: r => [h('div.title', r.name), h('div.sub', (r.i18n.en || {}).name ? '🇬🇧 ' + r.i18n.en.name : r.description)] },
         { key: 'ing', label: t('Content'), sort: r => r.ingredients.length, render: r => t('{a} ingredients · {b} steps', { a: r.ingredients.length, b: r.steps.length }) },
         { key: 'origin', label: t('Origin'), sort: r => UI.originLabel(r.origin), render: r => r.origin && r.origin.length ? UI.originLabel(r.origin, true) : h('span.muted', '—') },

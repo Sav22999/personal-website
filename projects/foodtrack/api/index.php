@@ -1164,7 +1164,7 @@ switch ($route) {
         $diff = in_array($b['difficulty'] ?? '', DIFFICULTIES, true) ? $b['difficulty'] : 'facile';
         // Countries of origin: one or more ISO 3166 codes (none = not defined)
         $origin = is_array($b['origin'] ?? null) ? $b['origin'] : explode(',', (string)($b['origin'] ?? ''));
-        $origin = array_values(array_unique(array_filter(array_map(function ($c) { return strtoupper(trim((string)$c)); }, $origin), function ($c) { return (bool)preg_match('/^[A-Z]{2}$/', $c); })));
+        $origin = array_values(array_unique(array_filter(array_map(function ($c) { return strtoupper(trim((string)$c)); }, $origin), function ($c) { return (bool)preg_match('/^[A-Z]{2}(-(ENG|SCT|WLS|NIR))?$/', $c); })));
         $origin = implode(',', array_slice($origin, 0, 20));
         $pub = !empty($b['published']) ? 1 : 0;
         $i18n = i18n_input($b['i18n'] ?? null, ['name', 'description', 'cook_notes', 'steps', 'status']);

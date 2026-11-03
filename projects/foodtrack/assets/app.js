@@ -5,7 +5,7 @@
   const t = I18N.t;
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
 
-  const VERSION = '1.2.0';
+  const VERSION = '1.3.0';
   const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
   const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
   const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
@@ -935,7 +935,7 @@
   function recipeCard(r) {
     const st = recipeStats(r);
     return h('div.card.clickable.recipe-card', { role: 'button', tabindex: 0, onclick: () => go('ricetta/' + r.id), onkeydown: e => { if (e.key === 'Enter') go('ricetta/' + r.id); } },
-      h('div.cover', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } }),
+      UI.recipeCover(r),
       listRow({
         title: r.name, sub: [r.origin.length ? UI.originLabel(r.origin, true) : null, totalTime(r) ? totalTime(r) + ' min' : null, diffLabel(r.difficulty), plural(r.servings, 'serving', 'servings')].filter(Boolean).join(' · '),
         meta: [st.ok === st.total ? chip(t('You have all the ingredients'), 'ok', 'check') : chip(t('{a} of {b} ingredients', { a: st.ok, b: st.total }), 'neutral'),
@@ -992,7 +992,7 @@
     const r = recipeById(Number(id));
     if (!r) { go('ricette'); return null; }
     const body = [];
-    if (r.image) body.push(h('div.hero-img', { style: { backgroundImage: `url("${r.image}")` } }));
+    body.push(UI.recipeCover(r, 'hero-img'));
     body.push(h('h2.page-title', r.name));
     if (r.description) body.push(h('p.lead.muted', r.description));
     body.push(h('div.meta-row', ...(r.origin || []).map(c => chip(UI.flag(c) + ' ' + UI.countryName(c), 'neutral')), chip(totalTime(r) + ' min', 'neutral', 'timer'), chip(t('Difficulty: {d}', { d: diffLabel(r.difficulty).toLowerCase() }), 'neutral'), chip(plural(r.servings, 'serving', 'servings'), 'neutral', 'group')));
@@ -1055,7 +1055,7 @@
             { icon: 'edit', label: t('Edit'), onclick: () => openPlanForm(p) },
             { icon: 'delete', label: t('Remove from plan'), danger: true, onclick: () => act('plan.delete', { id: p.id }) },
           ], r ? r.name : p.title) },
-          r && r.image ? h('span.tile.tile-sm.photo', { style: { backgroundImage: `url("${r.image}")` } }) : tile('icon', r ? 'restaurant' : 'edit', 'sm'),
+          r && r.image ? h('span.tile.tile-sm.photo', { style: { backgroundImage: `url("${r.image}")` } }) : r && r.origin.length ? h('span.tile.tile-sm.flag-tile', UI.flag(r.origin[0])) : tile('icon', r ? 'restaurant' : 'edit', 'sm'),
           h('div.body', h('p.title', r ? r.name : (p.title || t('Recipe not available in your language'))), h('div.sub', slot)), h('div.trail', icon('more')));
         }) : h('div.none', t('No meals planned'))));
     }
