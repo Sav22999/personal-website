@@ -109,7 +109,7 @@
   }
 
   /** Pictogram of a product / space / list from the SVG sprite (follows currentColor, any size). */
-  const SPRITE = 'assets/img/icons.svg?v=2';
+  const SPRITE = 'assets/img/icons.svg?v=3';
   function pic(folder, name, cls) {
     const ns = 'http://www.w3.org/2000/svg';
     const known = iconNames(folder);
