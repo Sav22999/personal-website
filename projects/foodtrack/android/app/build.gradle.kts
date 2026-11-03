@@ -19,8 +19,8 @@ android {
         applicationId = "com.saverio.foodtrack"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -48,6 +48,9 @@ android {
 }
 
 dependencies {
-    // Trusted Web Activity: opens the FoodTrack web app full screen, using Chrome (or a WebView as a fallback)
-    implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.5.0")
+    // "Continue with Google" through the system account picker (Credential Manager):
+    // Google sign-in does not run inside a WebView, so the app gets the ID token natively
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 }

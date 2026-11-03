@@ -6,8 +6,8 @@
  */
 'use strict';
 
-const CACHE = 'foodtrack-1.4.4';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.4.4', 'assets/i18n.js?v=1.4.4', 'assets/img/icons.js?v=1.4.4', 'assets/img/icons.svg?v=3', 'assets/api.js?v=1.4.4', 'assets/ui.js?v=1.4.4', 'assets/app.js?v=1.4.4', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
+const CACHE = 'foodtrack-1.4.5';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.4.5', 'assets/i18n.js?v=1.4.5', 'assets/img/icons.js?v=1.4.5', 'assets/img/icons.svg?v=3', 'assets/api.js?v=1.4.5', 'assets/ui.js?v=1.4.5', 'assets/app.js?v=1.4.5', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

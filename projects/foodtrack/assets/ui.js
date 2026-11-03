@@ -146,7 +146,43 @@
     return gisPromise;
   }
   /** Renders the official "Continue with Google" button; onCredential receives the ID token. */
+  // ---------- Android app bridge ----------
+  // Inside the FoodTrack Android app (native WebView shell) window.FoodTrackAndroid is injected:
+  // Google sign-in goes through the system account picker (Credential Manager) and notifications are native.
+  const native = window.FoodTrackAndroid || null;
+  const nativeWait = {};
+  window.FoodTrackNative = {
+    // Called by the app: (kind, value, error)
+    result(kind, value, error) { const w = nativeWait[kind]; delete nativeWait[kind]; if (w) (error ? w.reject(new Error(error)) : w.resolve(value)); },
+  };
+  function nativeCall(kind, fn) {
+    return new Promise((resolve, reject) => { nativeWait[kind] = { resolve, reject }; try { fn(); } catch (e) { delete nativeWait[kind]; reject(e); } });
+  }
+  const app = {
+    isAndroidApp: !!native,
+    hasNativeGoogle: !!(native && native.googleSignIn),
+    googleSignIn: clientId => nativeCall('google', () => native.googleSignIn(clientId)),
+    notificationsSupported: () => !!native || 'Notification' in window,
+    notificationPermission: () => native ? String(native.notificationPermission()) : ('Notification' in window ? Notification.permission : 'denied'),
+    requestNotifications: () => native ? nativeCall('notify', () => native.requestNotificationPermission()) : Notification.requestPermission(),
+    notify: (title, body) => { if (native) { native.notify(title, body); return true; } return false; },
+  };
+
+  const G_LOGO = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+
   async function googleButton(slot, clientId, onCredential, text) {
+    if (app.hasNativeGoogle) {
+      // Android app: Google Identity Services does not run in a WebView, the system account picker does
+      const label = { signup_with: t('Sign up with Google'), signin_with: t('Sign in with Google') }[text] || t('Continue with Google');
+      const b = h('button.btn.btn-google', { type: 'button', onclick: async () => {
+        b.disabled = true;
+        try { const token = await app.googleSignIn(clientId); if (token) onCredential(token); }
+        catch (e) { if (e.message && e.message !== 'cancelled') toast(t('Google sign-in is not available right now.') + ' (' + e.message + ')', 'error'); }
+        finally { b.disabled = false; }
+      } }, h('span.g', { html: G_LOGO }), h('span', label));
+      slot.replaceChildren(b);
+      return;
+    }
     try {
       const g = await loadGis();
       g.accounts.id.initialize({ client_id: clientId, callback: r => onCredential(r.credential), ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_button: true });
@@ -429,7 +465,7 @@
   }
 
   window.UI = {
-    h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
+    app, h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
     sheet, actionSheet, confirm, closeTop, closeAllSheets, toast,
     todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime,
     toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, originText, recipeCover, norm, store, applyTheme,

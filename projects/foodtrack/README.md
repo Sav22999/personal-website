@@ -146,18 +146,27 @@ In più: paesi d’origine delle ricette (uno o più, oppure non definito), inte
 
 ## App Android (Google Play)
 
-La cartella `android/` è un progetto **Android Studio** che impacchetta la web app come **Trusted Web Activity** (TWA): l'app si apre a schermo intero usando Chrome (o una WebView se Chrome manca), con splash screen, icona, notifiche e link d'invito che aprono direttamente l'app. Aggiornando il sito si aggiorna anche l'app, senza pubblicare nuove versioni sul Play Store.
+La cartella `android/` è un progetto **Android Studio** (Java, nessun plugin Kotlin) con un'app nativa che mostra la web app in una **WebView a schermo intero**. Funziona allo stesso modo su ogni telefono, qualunque browser sia installato (prima era una Trusted Web Activity, che senza Chrome mostrava la barra del browser). Aggiornando il sito si aggiorna anche l'app, senza pubblicare nuove versioni sul Play Store.
+
+Parti native (`MainActivity.java`, esposte alla pagina come `window.FoodTrackAndroid`, solo sulle pagine di FoodTrack):
+
+- **«Continua con Google»** con il selettore di account di sistema (Credential Manager): il login Google non funziona dentro una WebView, quindi l'app ottiene il token e lo passa alla pagina, che lo verifica sul server come sul sito;
+- **notifiche** dei prodotti in scadenza (permesso chiesto quando le attivi dal Profilo);
+- **fotocamera** per la scansione dei codici a barre (permesso chiesto al primo «Scansiona»);
+- selezione dei file (caricamento immagini nel portale), tasto indietro, link d'invito che aprono l'app, link esterni (modulo di contatto, Open Food Facts…) nel browser, pagina «Nessuna connessione», tema chiaro/scuro come il sistema.
+
+Passaggi:
 
 1. Apri `android/` in Android Studio (File → Open) e attendi la sincronizzazione di Gradle.
-2. **Package name**: `com.saverio.foodtrack` (in `app/build.gradle.kts`). Se vuoi cambiarlo fallo ora: dopo la prima pubblicazione non si può più modificare.
-3. Crea la chiave di caricamento: Build → Generate Signed App Bundle / APK → Android App Bundle → Create new… Salva il file `.jks` fuori dal repository e conservalo con le password.
-   Oppure copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e poi usa Build → Build App Bundle(s).
-4. Carica l'`.aab` (app/release/app-release.aab) nella Google Play Console. Come icona dello store usa `android/play-store-icon-512.png`; come privacy policy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`.
-5. **Digital Asset Links** (senza questo passaggio l'app mostra la barra dell'indirizzo in alto):
-   - Play Console → la tua app → Test e rilascio → Integrità dell'app → Firma dell'app (nelle versioni meno recenti: Release → Configurazione → Integrità dell'app; in alternativa cerca «firma» nella barra di ricerca; la chiave compare dopo il primo AAB caricato, anche solo in Test interno): copia l'impronta **SHA-256** della chiave di firma dell'app;
-   - copia `android/assetlinks.sample.json`, sostituisci l'impronta e caricalo sul server come `https://www.saveriomorelli.com/.well-known/assetlinks.json` (se il file esiste già per altre app, aggiungi l'oggetto all'array);
-   - per provare un APK firmato con la tua chiave locale, aggiungi anche la sua SHA-256 (`keytool -list -v -keystore foodtrack-upload.jks`).
-6. Ad ogni aggiornamento dell'app Android (raro) incrementa `versionCode` e `versionName`.
+2. **Package name**: `com.saverio.foodtrack` (in `app/build.gradle.kts`): dopo la prima pubblicazione non si può più modificare.
+3. Crea la chiave di caricamento: Build → Generate Signed App Bundle / APK → Android App Bundle → Create new… Salva il file `.jks` fuori dal repository e conservalo con le password. Oppure copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e usa Build → Build App Bundle(s).
+4. **Login con Google nell'app** — in Google Cloud Console, nello **stesso progetto** del client «Applicazione web» già usato dal sito, crea un altro *ID client OAuth* di tipo **Android**: package `com.saverio.foodtrack` e impronta **SHA-1**. Serve un client Android per ogni chiave che firma l'app:
+   - chiave di debug (Android Studio → Gradle → app → Tasks → android → `signingReport`, variante debug);
+   - chiave di firma di Google Play (Play Console → Test e rilascio → Integrità dell'app → Firma dell'app → SHA-1).
+   Nel codice non cambia nulla: l'app usa il Client ID **web** che legge dal server (`$google_client_id`), e il token resta verificato dal server come sul sito.
+5. Carica l'`.aab` (app/release/app-release.aab) nella Google Play Console. Come icona dello store usa `android/play-store-icon-512.png`; come privacy policy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`. Le immagini per la scheda dello store sono in `store/` (vedi sotto).
+6. **Digital Asset Links** (facoltativo ma consigliato, per aprire i link d'invito direttamente nell'app): `/.well-known/assetlinks.json` nella radice del sito, con le impronte **SHA-256** delle chiavi (debug, caricamento, firma di Google Play).
+7. Ad ogni aggiornamento dell'app Android (raro) incrementa `versionCode` e `versionName`.
 
 ## Sicurezza
 

@@ -657,3 +657,6 @@ img.flag.big { border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
 .sn-admin { border: 1px solid var(--outline-variant); margin-bottom: 8px; color: var(--text); }
 .sn-admin > .ic:last-child { width: 18px; height: 18px; color: var(--muted); }
 .sn-admin span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-google { width: 100%; max-width: 400px; height: 44px; background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--outline-variant); font-weight: 600; }
+.btn-google:hover { background: var(--surface-2); }
+.btn-google .g { display: inline-grid; margin-left: -4px; }

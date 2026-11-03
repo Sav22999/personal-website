@@ -1359,7 +1359,7 @@
     const hh = S.household;
     const isOwner = hh.role === 'owner';
     const theme = store.get('theme', 'auto');
-    const notif = store.get('notify', false) && 'Notification' in window && Notification.permission === 'granted';
+    const notif = store.get('notify', false) && UI.app.notificationsSupported() && UI.app.notificationPermission() === 'granted';
     const u = S.user;
 
     const body = [
@@ -1397,9 +1397,10 @@
         groupRow('globe', t('Language'), (I18N.langs.find(l => l[0] === I18N.lang) || [, ''])[1], () => actionSheet(I18N.langs.map(([k, label]) => ({ icon: 'globe', label, selected: k === I18N.lang, onclick: () => I18N.set(k) })), t('Language'))),
         groupRow('theme', t('Theme'), { auto: t('Automatic'), light: t('Light'), dark: t('Dark') }[theme], () => actionSheet([['auto', t('Automatic (like the system)')], ['light', t('Light')], ['dark', t('Dark')]].map(([k, label]) => ({ icon: 'theme', label, selected: k === theme, onclick: () => { store.set('theme', k); UI.applyTheme(); render(true); } })), t('Theme'))),
         groupRow('warning', t('“Expiring soon” alert'), t('{what} before expiry', { what: plural(noticeDays(), 'day', 'days') }), () => actionSheet([1, 2, 3, 5, 7].map(n => ({ icon: 'timer', label: t('{what} before', { what: plural(n, 'day', 'days') }), selected: n === noticeDays(), onclick: () => { store.set('noticeDays', n); render(true); } })), t('Remind me'))),
-        'Notification' in window ? groupRow('bell', t('Notifications'), notif ? t('On for this device') : t('Off'), async () => {
+        UI.app.notificationsSupported() ? groupRow('bell', t('Notifications'), notif ? t('On for this device') : t('Off'), async () => {
           if (notif) { store.set('notify', false); render(true); return; }
-          const p = await Notification.requestPermission();
+          let p = 'denied';
+          try { p = await UI.app.requestNotifications(); } catch (e) { /* not allowed */ }
           store.set('notify', p === 'granted');
           if (p !== 'granted') toast(t('Permission denied: you can turn them on in the browser settings.'), 'error');
           else { store.set('notifiedOn', ''); notifyExpiry(); }
@@ -1687,7 +1688,7 @@
   // ===================================================== notifications & sync
 
   function notifyExpiry() {
-    if (!store.get('notify', false) || !('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!store.get('notify', false) || !UI.app.notificationsSupported() || UI.app.notificationPermission() !== 'granted') return;
     const today = UI.todayStr();
     if (store.get('notifiedOn', '') === today) return;
     const a = expiredItems().length, b = expiringItems().length;
@@ -1697,6 +1698,7 @@
     if (b) parts.push(plural(b, 'expiring product', 'expiring products'));
     if (a) parts.push(plural(a, 'expired product', 'expired products'));
     const opts = { body: t('You have {what}. Find out how to use them before throwing them away!', { what: parts.join(t(' and ')) }), icon: 'assets/icons/icon-192.png', badge: 'assets/icons/icon-mono.png', tag: 'ft-expiry' };
+    if (UI.app.notify('FoodTrack', opts.body)) return; // Android app: native notification
     if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification('FoodTrack', opts)).catch(() => {});
     else try { new Notification('FoodTrack', opts); } catch (e) { /* not allowed */ }
   }
