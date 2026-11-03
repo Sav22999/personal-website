@@ -558,6 +558,7 @@
         "Uses expired products": "Usa prodotti scaduti",
         "Uses expiring products": "Usa prodotti in scadenza",
         "Weekly plan": "Piano della settimana",
+        "Today": "Oggi",
         "Weekly shopping": "Spesa settimanale",
         "Welcome to “{home}”!": "Benvenuto in «{home}»!",
         "What are you eating?": "Cosa mangi?",

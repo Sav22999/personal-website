@@ -74,7 +74,11 @@ Nell'app Android (TWA) l'accesso con Google funziona perché la pagina gira in C
 
 ## Tutorial
 
-Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versione principale, cioè quando cambia il primo numero di `VERSION` in `assets/app.js`) l'app mostra un breve tutorial illustrato: spazi, prodotti, avvisi di scadenza, liste, ricette e case condivise. Si può rivedere da Profilo → Preferenze → «Tutorial dell'app».
+Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versione principale, cioè quando cambia il primo numero di `VERSION` in `assets/app.js`) l'app mostra un breve tutorial illustrato: spazi, prodotti, avvisi di scadenza, liste, ricette e case condivise. Si può rivedere da Profilo → Preferenze → «Tutorial dell'app». Nel tutorial si può scegliere la lingua; le illustrazioni sono animate (le animazioni si disattivano se il sistema chiede di ridurre il movimento).
+
+## Versione desktop
+
+Da 960 px di larghezza in su (computer, tablet in orizzontale) l'app usa componenti adatti al desktop: barra laterale di navigazione (con casa attiva, contatori di prodotti in scadenza e da comprare, profilo), azione principale come pulsante nella barra in alto, schede in griglia, dettaglio ricetta su due colonne, settimana in griglia, finestre di dialogo centrate al posto dei pannelli dal basso, menu a comparsa vicino al puntatore e accesso su due colonne. Scorciatoie: `/` per cercare, `Esc` per chiudere una finestra.
 
 ## Lingue
 
