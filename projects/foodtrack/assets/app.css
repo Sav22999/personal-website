@@ -298,7 +298,7 @@ button.list-row, a.list-row { cursor: pointer; }
 .chip .x { display: inline-grid; margin-right: -6px; opacity: .7; }
 
 /* Icon picker & Nutri-Score */
-.icon-picker { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; margin: 4px 0; scrollbar-width: thin; }
+.icon-picker { max-width: 100%; display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; margin: 4px 0; scrollbar-width: thin; }
 .icon-picker button { flex: none; width: 56px; height: 56px; border-radius: var(--r-md); border: 0; background: var(--surface-2); display: grid; place-items: center; cursor: pointer; }
 .icon-picker button.sel { background: var(--primary-container); box-shadow: inset 0 0 0 2px var(--primary); }
 .icon-picker svg.pic { width: 32px; height: 32px; }
@@ -331,18 +331,18 @@ button.list-row, a.list-row { cursor: pointer; }
 .sheet-backdrop.open .sheet { transform: translateY(0); }
 .sheet-handle { width: 32px; height: 4px; border-radius: 2px; background: var(--outline); opacity: .6; margin: 0 auto; padding: 11px 24px; background-clip: content-box; box-sizing: content-box; cursor: grab; touch-action: none; }
 .sheet-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em; margin: 2px 0 14px; text-align: left; }
-.sheet-body { overflow-y: auto; flex: 1; padding: 2px; margin: 0 -2px; }
+.sheet-body { overflow-y: auto; overflow-x: hidden; flex: 1; padding: 2px; margin: 0 -2px; min-width: 0; }
 .sheet-text { margin: 0 0 12px; font-size: .92rem; color: var(--muted); }
 .sheet-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 14px; flex-wrap: wrap; }
 .sheet-actions .btn-danger-text, .sheet-actions .push-left { margin-right: auto; }
-.menu { margin: 0 -8px; }
-.menu-item { display: flex; align-items: center; gap: 16px; width: 100%; border: 0; background: transparent; padding: 0 12px; height: 52px; font-size: 1rem; cursor: pointer; border-radius: var(--r-md); text-align: left; }
+.menu { margin: 0; }
+.menu-item { display: flex; align-items: center; gap: 16px; width: 100%; min-width: 0; border: 0; background: transparent; padding: 0 12px; height: 52px; font-size: 1rem; cursor: pointer; border-radius: var(--r-md); text-align: left; }
 .menu-item:hover { background: var(--surface-2); }
 .menu-item .ic { color: var(--muted); }
 .menu-item.danger, .menu-item.danger .ic { color: var(--danger); }
 .menu-item.selected { font-weight: 600; color: var(--primary); }
 .menu-item.selected .ic { color: var(--primary); }
-.menu-item span { flex: 1; }
+.menu-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pick-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
 /* ---------- Plan ---------- */
