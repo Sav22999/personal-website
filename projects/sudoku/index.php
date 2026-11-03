@@ -303,9 +303,9 @@ $ICON_UNDO = '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </div>
 
-<script src="i18n.js?v=<?= $v ?>"></script>
-<script src="releases.js?v=<?= $v ?>"></script>
-<script src="rules.js?v=<?= $v ?>"></script>
-<script src="game.js?v=<?= $v ?>"></script>
+<script src="i18n.js?v=<?= $v ?>" defer></script>
+<script src="releases.js?v=<?= $v ?>" defer></script>
+<script src="rules.js?v=<?= $v ?>" defer></script>
+<script src="game.js?v=<?= $v ?>" defer></script>
 </body>
 </html>

@@ -28,14 +28,14 @@ function formatReleases() {
             date: formattedDate,
             notes: release.notes.map(note => {
                 // Simple translation mapping for release notes
-                const translations = {
+                const noteTranslations = {
                     en: note,
-                    it: note.replace('Sudoku', 'Sudoku').replace('Easy, Medium, Hard', 'Facile, Media, Difficile'),
-                    es: note.replace('Sudoku', 'Sudoku').replace('Easy, Medium, Hard', 'Fácil, Media, Difícil'),
-                    fr: note.replace('Sudoku', 'Sudoku').replace('Easy, Medium, Hard', 'Facile, Moyenne, Difficile'),
-                    de: note.replace('Sudoku', 'Sudoku').replace('Easy, Medium, Hard', 'Leicht, Mittel, Schwer')
+                    it: note.replace('Easy, Medium, Hard', 'Facile, Media, Difficile'),
+                    es: note.replace('Easy, Medium, Hard', 'Fácil, Media, Difícil'),
+                    fr: note.replace('Easy, Medium, Hard', 'Facile, Moyenne, Difficile'),
+                    de: note.replace('Easy, Medium, Hard', 'Leicht, Mittel, Schwer')
                 };
-                return translations[lang] || translations.en || note;
+                return noteTranslations[lang] || noteTranslations.en || note;
             })
         };
     });
