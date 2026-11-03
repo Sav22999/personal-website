@@ -204,6 +204,7 @@ function schema_statements(string $p = 'ft_'): array
   `cook_notes` VARCHAR(255) NOT NULL DEFAULT '',
   `servings` TINYINT UNSIGNED NOT NULL DEFAULT 2,
   `difficulty` ENUM('facile','media','difficile') NOT NULL DEFAULT 'facile',
+  `origin` VARCHAR(120) NOT NULL DEFAULT '' COMMENT 'countries of origin: comma-separated ISO 3166 codes, empty = not defined',
   `published` TINYINT(1) NOT NULL DEFAULT 1,
   `i18n` MEDIUMTEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `created_by` INT UNSIGNED NULL,
@@ -273,6 +274,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v2: Sign in with Google (users.google_sub, password optional)
  *  v3: new SVG icon set (more specific icons for some catalog products)
  *  v4: multilingual content (i18n JSON column on categories, products, recipes, ingredients)
+ *  v5: countries of origin of the recipes (one or more)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -295,6 +297,13 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         }
         require_once __DIR__ . '/seed-en.php';
         seed_translations($pdo, $p);
+    }
+    if ($from < 5) {
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}recipes`")->fetchAll(), 'Field');
+        if (!in_array('origin', $cols, true)) $pdo->exec("ALTER TABLE `{$p}recipes` ADD COLUMN `origin` VARCHAR(120) NOT NULL DEFAULT '' AFTER `difficulty`");
+        require_once __DIR__ . '/seed.php';
+        $st = $pdo->prepare("UPDATE `{$p}recipes` SET origin = ? WHERE name = ? AND origin = ''");
+        foreach (seed_recipes() as $r) $st->execute([$r['origin'], $r['name']]);
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

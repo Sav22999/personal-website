@@ -119,7 +119,7 @@ Ogni utente ha almeno una «casa» (creata alla registrazione con Frigorifero, F
 | 13 | Piano dei pasti della settimana | Ricette → «Piano della settimana» → ingredienti mancanti in lista |
 | 14 | Condivisione multi-utente | Case condivise |
 
-In più: interfaccia multilingua, accesso con Google, «Aggiungi i mancanti alla lista della spesa» dalla ricetta (rimossa nel prototipo Flutter), ordinamento dei prodotti, tema chiaro/scuro, consumo parziale di un prodotto.
+In più: paesi d’origine delle ricette (uno o più, oppure non definito), interfaccia multilingua, accesso con Google, «Aggiungi i mancanti alla lista della spesa» dalla ricetta (rimossa nel prototipo Flutter), ordinamento dei prodotti, tema chiaro/scuro, consumo parziale di un prodotto.
 
 ## App Android (Google Play)
 

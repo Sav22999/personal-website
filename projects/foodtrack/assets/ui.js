@@ -357,6 +357,28 @@
 
   function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").trim(); }
 
+  // ---------- Countries (origin of the recipes) ----------
+
+  const COUNTRY_CODES = 'AD AE AF AG AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FR GA GB GD GE GH GM GN GQ GR GT GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KM KN KP KR KW KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MK ML MM MN MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NZ OM PA PE PG PH PK PL PR PS PT PY QA RO RS RU RW SA SC SD SE SG SI SK SL SM SN SO SR SS SV SY SZ TD TG TH TJ TL TM TN TO TR TT TW TZ UA UG US UY UZ VA VE VN YE ZA ZM ZW'.split(' ');
+  let regionNames = null;
+  function countryName(code) {
+    try { regionNames = regionNames || new Intl.DisplayNames([locale()], { type: 'region' }); return regionNames.of(code) || code; } catch (e) { return code; }
+  }
+  /** Flag emoji of an ISO 3166 code. */
+  function flag(code) {
+    return /^[A-Z]{2}$/.test(code || '') ? String.fromCodePoint(...[...code].map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : '';
+  }
+  /** All countries sorted by name in the user's language. */
+  function countryList() {
+    return COUNTRY_CODES.map(c => ({ code: c, name: countryName(c) })).sort((a, b) => a.name.localeCompare(b.name, locale()));
+  }
+  /** "🇮🇹 Italy, 🇫🇷 France" — or "Not defined" when the list is empty. */
+  function originLabel(list, short) {
+    if (!list || !list.length) return t('Not defined');
+    if (short && list.length > 2) return list.map(flag).join(' ');
+    return list.map(c => flag(c) + ' ' + countryName(c)).join(', ');
+  }
+
   // ---------- Storage (per device preferences) ----------
 
   const store = {
@@ -376,7 +398,7 @@
     h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
     sheet, actionSheet, confirm, closeTop, closeAllSheets, toast,
     todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime,
-    toBase, fmtNum, fmtQty, unitLabel, norm, store, applyTheme,
+    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, norm, store, applyTheme,
     sheetsOpen: () => stack.length,
   };
 })();

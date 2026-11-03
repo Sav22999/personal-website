@@ -107,7 +107,7 @@ function seed_recipes(): array
     // ingredients: [product name (catalog) or free text, quantity, unit, notes]
     return [
         [
-            'name' => 'Pizza Margherita', 'image' => 'assets/img/recipes/pizza_margherita.jpg',
+            'name' => 'Pizza Margherita', 'origin' => 'IT', 'image' => 'assets/img/recipes/pizza_margherita.jpg',
             'description' => 'La classica pizza fatta in casa con pomodoro, mozzarella di bufala e basilico.',
             'prep' => 30, 'cook' => 15, 'cook_notes' => 'Forno statico, 250 °C per 15 minuti', 'servings' => 4, 'difficulty' => 'media',
             'ingredients' => [
@@ -125,7 +125,7 @@ function seed_recipes(): array
             ],
         ],
         [
-            'name' => 'Banana Bread', 'image' => 'assets/img/recipes/banana_bread.jpg',
+            'name' => 'Banana Bread', 'origin' => 'US', 'image' => 'assets/img/recipes/banana_bread.jpg',
             'description' => 'Un dolce soffice perfetto per usare le banane troppo mature.',
             'prep' => 15, 'cook' => 50, 'cook_notes' => 'Forno statico, 180 °C per 45–50 minuti', 'servings' => 8, 'difficulty' => 'facile',
             'ingredients' => [
@@ -141,7 +141,7 @@ function seed_recipes(): array
             ],
         ],
         [
-            'name' => 'Pancake', 'image' => 'assets/img/recipes/pancakes.jpg',
+            'name' => 'Pancake', 'origin' => 'US', 'image' => 'assets/img/recipes/pancakes.jpg',
             'description' => 'Pancake soffici per una colazione speciale.',
             'prep' => 10, 'cook' => 15, 'cook_notes' => 'Cottura in padella a fuoco medio', 'servings' => 4, 'difficulty' => 'facile',
             'ingredients' => [
@@ -157,7 +157,7 @@ function seed_recipes(): array
             ],
         ],
         [
-            'name' => 'Pasta al pesto', 'image' => 'assets/img/recipes/pasta_pesto.jpg',
+            'name' => 'Pasta al pesto', 'origin' => 'IT', 'image' => 'assets/img/recipes/pasta_pesto.jpg',
             'description' => 'Pasta con pesto di basilico fatto in casa, pronta in 25 minuti.',
             'prep' => 15, 'cook' => 10, 'cook_notes' => 'Cottura in pentola con acqua bollente', 'servings' => 4, 'difficulty' => 'facile',
             'ingredients' => [
@@ -172,7 +172,7 @@ function seed_recipes(): array
             ],
         ],
         [
-            'name' => 'Pasta con le cipolle', 'image' => 'assets/img/recipes/pasta_cipolle.jpg',
+            'name' => 'Pasta con le cipolle', 'origin' => 'IT', 'image' => 'assets/img/recipes/pasta_cipolle.jpg',
             'description' => 'Un primo semplice ed economico, dolce e saporito.',
             'prep' => 10, 'cook' => 25, 'cook_notes' => 'Cottura in padella a fuoco basso', 'servings' => 4, 'difficulty' => 'facile',
             'ingredients' => [
@@ -188,7 +188,7 @@ function seed_recipes(): array
             ],
         ],
         [
-            'name' => 'Piadina con pomodori e prosciutto', 'image' => 'assets/img/recipes/piadina.jpg',
+            'name' => 'Piadina con pomodori e prosciutto', 'origin' => 'IT', 'image' => 'assets/img/recipes/piadina.jpg',
             'description' => 'Un pranzo veloce, pronto in 10 minuti.',
             'prep' => 5, 'cook' => 4, 'cook_notes' => 'Cottura in padella', 'servings' => 2, 'difficulty' => 'facile',
             'ingredients' => [
@@ -203,7 +203,7 @@ function seed_recipes(): array
             ],
         ],
         [
-            'name' => 'Cheesecake', 'image' => 'assets/img/recipes/cheesecake.jpg',
+            'name' => 'Cheesecake', 'origin' => 'US', 'image' => 'assets/img/recipes/cheesecake.jpg',
             'description' => 'Cheesecake senza cottura, fresca e cremosa.',
             'prep' => 30, 'cook' => null, 'cook_notes' => 'Senza cottura: raffreddare in frigo almeno 4 ore', 'servings' => 8, 'difficulty' => 'media',
             'ingredients' => [
@@ -246,11 +246,11 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
 
     $hasRecipes = (int)$pdo->query("SELECT COUNT(*) FROM `{$p}recipes`")->fetchColumn() > 0;
     if (!$hasRecipes) {
-        $insRec = $pdo->prepare("INSERT INTO `{$p}recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, published, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,1,?,?,?)");
+        $insRec = $pdo->prepare("INSERT INTO `{$p}recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,?,?,?)");
         $insIng = $pdo->prepare("INSERT INTO `{$p}recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (?,?,?,?,?,?,?)");
         $insStep = $pdo->prepare("INSERT INTO `{$p}recipe_steps` (recipe_id, sort, text) VALUES (?,?,?)");
         foreach (seed_recipes() as $r) {
-            $insRec->execute([$r['name'], $r['description'], $r['image'], $r['prep'], $r['cook'], $r['cook_notes'], $r['servings'], $r['difficulty'], $adminId, $now, $now]);
+            $insRec->execute([$r['name'], $r['description'], $r['image'], $r['prep'], $r['cook'], $r['cook_notes'], $r['servings'], $r['difficulty'], $r['origin'] ?? '', $adminId, $now, $now]);
             $rid = (int)$pdo->lastInsertId();
             foreach ($r['ingredients'] as $i => [$name, $qty, $unit, $notes]) {
                 $insIng->execute([$rid, $prods[mb_strtolower($name)] ?? null, $name, $qty, $unit, $notes, $i]);

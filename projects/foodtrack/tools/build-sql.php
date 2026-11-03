@@ -60,8 +60,8 @@ $out[] = '';
 
 $out[] = '-- ---------------------------------------------------------------- recipes';
 foreach (seed_recipes() as $r) {
-    $out[] = "INSERT INTO `{$p}recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, published, created_at, updated_at) VALUES ("
-        . implode(', ', [q($r['name']), q($r['description']), q($r['image']), q($r['prep']), q($r['cook']), q($r['cook_notes']), q($r['servings']), q($r['difficulty'])]) . ', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());';
+    $out[] = "INSERT INTO `{$p}recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ("
+        . implode(', ', [q($r['name']), q($r['description']), q($r['image']), q($r['prep']), q($r['cook']), q($r['cook_notes']), q($r['servings']), q($r['difficulty']), q($r['origin'] ?? '')]) . ', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());';
     $out[] = 'SET @rid = LAST_INSERT_ID();';
     foreach ($r['ingredients'] as $i => [$name, $qty, $unit, $notes]) {
         $out[] = "INSERT INTO `{$p}recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `{$p}products` WHERE name = " . q($name) . '), '

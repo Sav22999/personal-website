@@ -246,6 +246,7 @@
         { key: 'img', label: '', render: r => h('div.thumb', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } }) },
         { key: 'name', label: t('Recipe'), sort: r => r.name, render: r => [h('div.title', r.name), h('div.sub', (r.i18n.en || {}).name ? '🇬🇧 ' + r.i18n.en.name : r.description)] },
         { key: 'ing', label: t('Content'), sort: r => r.ingredients.length, render: r => t('{a} ingredients · {b} steps', { a: r.ingredients.length, b: r.steps.length }) },
+        { key: 'origin', label: t('Origin'), sort: r => UI.originLabel(r.origin), render: r => r.origin && r.origin.length ? UI.originLabel(r.origin, true) : h('span.muted', '—') },
         { key: 'time', label: t('Time'), num: true, sort: r => (r.prepMinutes || 0) + (r.cookMinutes || 0), render: r => ((r.prepMinutes || 0) + (r.cookMinutes || 0)) + ' min' },
         { key: 'lang', label: t('Languages'), render: r => translatedFlags(r, ['name']) },
         { key: 'fav', label: '♥', num: true, sort: r => d.favorites[r.id] || 0, render: r => String(d.favorites[r.id] || 0) },
@@ -271,7 +272,7 @@
   function saveRecipe(r) {
     return Api.post('admin.recipe.save', {
       id: r.id, name: r.name, description: r.description, image: r.image, prepMinutes: r.prepMinutes, cookMinutes: r.cookMinutes, cookNotes: r.cookNotes,
-      servings: r.servings, difficulty: r.difficulty, published: r.published, i18n: r.i18n, steps: r.steps,
+      servings: r.servings, difficulty: r.difficulty, origin: r.origin || [], published: r.published, i18n: r.i18n, steps: r.steps,
       ingredients: r.ingredients.map(i => ({ productId: i.productId, name: i.name, quantity: i.quantity, unit: i.unit, notes: i.notes, i18n: i.i18n })),
     });
   }
@@ -282,7 +283,7 @@
   }
 
   function openRecipe(src, d) {
-    const r = src ? JSON.parse(JSON.stringify(src)) : { id: 0, name: '', description: '', image: '', prepMinutes: 15, cookMinutes: null, cookNotes: '', servings: 2, difficulty: 'facile', published: true, ingredients: [], steps: [], i18n: {} };
+    const r = src ? JSON.parse(JSON.stringify(src)) : { id: 0, name: '', description: '', image: '', prepMinutes: 15, cookMinutes: null, cookNotes: '', servings: 2, difficulty: 'facile', origin: [], published: true, ingredients: [], steps: [], i18n: {} };
     r.i18n = (r.i18n && !Array.isArray(r.i18n)) ? r.i18n : {};
     if (!r.i18n.en) r.i18n.en = {};
     r.ingredients.forEach(i => { if (!i.i18n || Array.isArray(i.i18n)) i.i18n = {}; });
@@ -294,6 +295,7 @@
     const cook = inp({ type: 'number', min: 0, value: r.cookMinutes ?? '' });
     const servings = inp({ type: 'number', min: 1, max: 50, value: r.servings });
     const diff = sel(Object.entries(DIFFICULTY).map(([v, l]) => ({ value: v, label: t(l) })), r.difficulty);
+    const origin = countryPicker(r.origin);
     const pub = toggle(t('Published (visible to all users)'), r.published);
     const prev = h('div.prev');
     const paintImg = () => { prev.style.backgroundImage = r.image ? `url("${r.image}")` : 'none'; UI.clear(prev); if (!r.image) prev.appendChild(icon('image')); };
@@ -313,6 +315,7 @@
         trField(r, r.i18n, 'cookNotes', 'cook_notes', t('Cooking notes'), 0, t('For example: “Conventional oven, 180 °C for 45 minutes”'))(lang))),
       h('div.f', h('span.lbl', t('Image')), h('div.img-drop', prev, h('div', h('div.row', up, btn(t('Remove'), { kind: 'text', onclick: () => { r.image = ''; paintImg(); } })), h('div.help', t('JPG, PNG or WebP, up to 6 MB. It is resized automatically.'))), file)),
       h('div.f-row', f(t('Preparation (min)'), prep), f(t('Cooking (min)'), cook), f(t('Servings'), servings), f(t('Difficulty'), diff)),
+      h('div.f', h('span.lbl', t('Countries of origin')), origin.el, h('div.help', t('Add one or more countries (for example for fusion dishes). With none, the origin is “not defined”.'))),
       pub.el);
 
     // --- Ingredients
@@ -375,7 +378,7 @@
 
     const save = btn(t('Save recipe'), { icon: 'save', onclick: async () => {
       if (!(r.name || '').trim()) { toast(t('Enter the recipe name.'), 'error'); return; }
-      r.prepMinutes = prep.value; r.cookMinutes = cook.value; r.servings = servings.value; r.difficulty = diff.value; r.published = pub.checked;
+      r.prepMinutes = prep.value; r.cookMinutes = cook.value; r.servings = servings.value; r.difficulty = diff.value; r.origin = origin.value; r.published = pub.checked;
       r.ingredients = [...ingBody.children].map(tr => tr._get()).filter(Boolean);
       r.steps = stepsBy.it.filter(s => s.trim());
       r.i18n.en.steps = stepsBy.en.filter(s => s.trim());
@@ -431,6 +434,23 @@
   async function deleteProduct(p) {
     if (!await confirmDlg(t('Delete the product?'), t('Products already in users’ spaces stay, but they will no longer be linked to the catalogue. To only hide it, turn “Active” off.'), t('Delete'), true)) return;
     try { await Api.post('admin.product.delete', { id: p.id }); toast(t('Product deleted')); render(); } catch (e) { toast(e.message, 'error'); }
+  }
+
+  /** Multi-select of countries: chips of the chosen ones + a select to add more (none = not defined). */
+  function countryPicker(value) {
+    const chosen = (value || []).slice();
+    const wrap = h('div.country-picker');
+    function paintC() {
+      const chips = chosen.length ? chosen.map(c => h('span.cchip', UI.flag(c) + ' ' + UI.countryName(c),
+        h('button', { type: 'button', title: t('Remove'), 'aria-label': t('Remove'), onclick: () => { chosen.splice(chosen.indexOf(c), 1); paintC(); } }, icon('close'))))
+        : [h('span.muted.small', t('Not defined'))];
+      const add = sel([{ value: '', label: '+ ' + t('Add a country') }].concat(UI.countryList().filter(x => !chosen.includes(x.code)).map(x => ({ value: x.code, label: UI.flag(x.code) + ' ' + x.name }))), '', {
+        onchange: e => { if (e.target.value) { chosen.push(e.target.value); paintC(); } }, 'aria-label': t('Add a country'),
+      });
+      wrap.replaceChildren(h('div.cchips', chips), add);
+    }
+    paintC();
+    return { el: wrap, get value() { return chosen.slice(); } };
   }
 
   function iconGrid(names, value, onchange) {

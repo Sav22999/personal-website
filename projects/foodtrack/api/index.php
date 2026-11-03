@@ -153,7 +153,7 @@ function load_recipes(bool $onlyPublished, bool $raw = false): array
             'description' => $raw ? $r['description'] : loc($r, 'description', $r['description']), 'image' => $r['image'],
             'prepMinutes' => $r['prep_minutes'] !== null ? (int)$r['prep_minutes'] : null,
             'cookMinutes' => $r['cook_minutes'] !== null ? (int)$r['cook_minutes'] : null,
-            'cookNotes' => $raw ? $r['cook_notes'] : loc($r, 'cook_notes', $r['cook_notes']), 'servings' => (int)$r['servings'], 'difficulty' => $r['difficulty'],
+            'cookNotes' => $raw ? $r['cook_notes'] : loc($r, 'cook_notes', $r['cook_notes']), 'servings' => (int)$r['servings'], 'difficulty' => $r['difficulty'], 'origin' => array_values(array_filter(explode(',', (string)($r['origin'] ?? '')))),
             'published' => (bool)$r['published'], 'updatedAt' => $r['updated_at'], 'ingredients' => [], 'steps' => [],
         ];
         if ($raw) $recipes[(int)$r['id']]['i18n'] = (object)i18n_of($r);
@@ -1142,6 +1142,10 @@ switch ($route) {
         $cookNotes = s($b, 'cookNotes', 255, false, 'Cooking notes');
         $servings = max(1, min(50, (int)($b['servings'] ?? 2)));
         $diff = in_array($b['difficulty'] ?? '', DIFFICULTIES, true) ? $b['difficulty'] : 'facile';
+        // Countries of origin: one or more ISO 3166 codes (none = not defined)
+        $origin = is_array($b['origin'] ?? null) ? $b['origin'] : explode(',', (string)($b['origin'] ?? ''));
+        $origin = array_values(array_unique(array_filter(array_map(function ($c) { return strtoupper(trim((string)$c)); }, $origin), function ($c) { return (bool)preg_match('/^[A-Z]{2}$/', $c); })));
+        $origin = implode(',', array_slice($origin, 0, 20));
         $pub = !empty($b['published']) ? 1 : 0;
         $i18n = i18n_input($b['i18n'] ?? null, ['name', 'description', 'cook_notes', 'steps']);
         $ings = is_array($b['ingredients'] ?? null) ? array_slice($b['ingredients'], 0, 60) : [];
@@ -1155,13 +1159,13 @@ switch ($route) {
             $old = $st->fetchColumn();
             if ($old === false) { db()->rollBack(); fail('Recipe not found.', 404, 'not_found'); }
             $oldImage = (string)$old;
-            db()->prepare('UPDATE ' . t('recipes') . ' SET name = ?, description = ?, image = ?, prep_minutes = ?, cook_minutes = ?, cook_notes = ?, servings = ?, difficulty = ?, published = ?, i18n = ?, updated_at = ? WHERE id = ?')
-                ->execute([$name, $desc, $image, $prep, $cook, $cookNotes, $servings, $diff, $pub, $i18n, now_utc(), $id]);
+            db()->prepare('UPDATE ' . t('recipes') . ' SET name = ?, description = ?, image = ?, prep_minutes = ?, cook_minutes = ?, cook_notes = ?, servings = ?, difficulty = ?, origin = ?, published = ?, i18n = ?, updated_at = ? WHERE id = ?')
+                ->execute([$name, $desc, $image, $prep, $cook, $cookNotes, $servings, $diff, $origin, $pub, $i18n, now_utc(), $id]);
             db()->prepare('DELETE FROM ' . t('recipe_ingredients') . ' WHERE recipe_id = ?')->execute([$id]);
             db()->prepare('DELETE FROM ' . t('recipe_steps') . ' WHERE recipe_id = ?')->execute([$id]);
         } else {
-            db()->prepare('INSERT INTO ' . t('recipes') . ' (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, published, i18n, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                ->execute([$name, $desc, $image, $prep, $cook, $cookNotes, $servings, $diff, $pub, $i18n, $me['id'], now_utc(), now_utc()]);
+            db()->prepare('INSERT INTO ' . t('recipes') . ' (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, i18n, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+                ->execute([$name, $desc, $image, $prep, $cook, $cookNotes, $servings, $diff, $origin, $pub, $i18n, $me['id'], now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
         }
         $insI = db()->prepare('INSERT INTO ' . t('recipe_ingredients') . ' (recipe_id, product_id, name, quantity, unit, notes, i18n, sort) VALUES (?,?,?,?,?,?,?,?)');
