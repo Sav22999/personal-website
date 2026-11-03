@@ -625,3 +625,31 @@ img.flag.big { border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   .illo *, .illo *::before, .illo *::after, .illo.col > * { animation: none !important; }
   .ill-lists .tour-card.done strong { background-size: 100% 2px; }
 }
+
+/* ---------- Recipe picker (meal plan) ---------- */
+.recipe-thumb { width: 56px; height: 56px; border-radius: 14px; flex: none; background: var(--surface-2) center/cover no-repeat; }
+.recipe-thumb.cover-ill { gap: 3px; flex-direction: column; }
+.recipe-thumb.cover-ill .ci-icon { display: none; }
+.recipe-thumb.cover-ill .ci-flags { gap: 2px; flex-wrap: wrap; justify-content: center; max-width: 48px; }
+.recipe-thumb.cover-ill .ci-flags img.flag { width: 22px; height: 16px; border-radius: 3px; }
+.recipe-thumb.cover-ill:not(:has(.ci-flags)) .ci-icon { display: grid; width: 30px; height: 30px; border-radius: 9px; box-shadow: none; }
+.recipe-thumb.cover-ill .ci-icon .ic { width: 18px; height: 18px; }
+.recipe-picked { margin: 4px 0 8px; }
+.recipe-picked .card { background: var(--surface-2); border-color: transparent; box-shadow: none; }
+.recipe-picked .list-row .trail .btn { height: 36px; pointer-events: none; }
+.pick-empty { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; border-radius: 20px; border: 1.5px dashed var(--outline); background: transparent; color: inherit; cursor: pointer; text-align: left; }
+.pick-empty:hover { background: var(--surface-2); border-color: var(--primary); }
+.pick-empty strong { display: block; font-size: 1rem; }
+.pick-empty small { color: var(--muted); font-size: .82rem; }
+.pick-empty > .ic { color: var(--muted); }
+.recipe-pick-list .label { margin: 16px 4px 8px; }
+.recipe-pick-list .group { background: var(--surface); }
+.pick-row { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.group > .pick-row + .pick-row { border-top: 1px solid var(--outline-variant); }
+.pick-row:hover, .pick-row:focus-visible { background: var(--surface-2); outline: none; }
+.pick-row.sel { background: color-mix(in srgb, var(--primary-container) 55%, transparent); }
+.pick-row.sel .trail { color: var(--primary); }
+.pick-row .list-row { padding: 10px 12px; min-height: 0; }
+.pick-row .list-row .meta { margin-top: 4px; }
+.sheet.tall { height: 92vh; height: 92dvh; }
+@media (min-width: 960px) { .sheet.tall { height: 82vh; max-width: 640px; } }

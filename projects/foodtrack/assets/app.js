@@ -1108,21 +1108,99 @@
     const isEdit = !!p.id;
     const date = input({ type: 'date', value: p.date || UI.todayStr() });
     let slot = p.slot || (new Date().getHours() < 15 ? 'pranzo' : 'cena');
-    const recipe = select([{ value: '', label: t('Other (write it yourself)') }].concat(S.recipes.map(r => ({ value: r.id, label: r.name }))), p.recipeId || '');
+    let recipeId = p.recipeId && recipeById(p.recipeId) ? p.recipeId : null;
+    let mode = recipeId || !p.title ? 'recipe' : 'other';
     const title = input({ value: p.title || '', maxlength: 120 });
     const titleField = field(t('What are you eating?'), title, { hint: t('For example: “Takeaway pizza” or “Yesterday’s leftovers”') });
-    titleField.hidden = !!recipe.value;
-    recipe.addEventListener('change', () => { titleField.hidden = !!recipe.value; });
+    const picked = h('div.recipe-picked');
+    function paintPicked() {
+      UI.clear(picked);
+      picked.hidden = mode !== 'recipe';
+      titleField.hidden = mode !== 'other';
+      const r = recipeId ? recipeById(recipeId) : null;
+      if (!r) {
+        picked.appendChild(h('button.pick-empty', { type: 'button', onclick: choose }, tile('icon', 'restaurant'), h('span.grow', h('strong', t('Choose a recipe')), h('small', t('Search by name, ingredient or country'))), icon('right')));
+        return;
+      }
+      picked.appendChild(h('div.card.clickable', { role: 'button', tabindex: 0, onclick: choose, onkeydown: e => { if (e.key === 'Enter') choose(); } },
+        recipePickRow(r, { trail: h('span.btn.btn-text', h('span', t('Change'))) })));
+    }
+    function choose() { openRecipePicker(recipeId, id => { recipeId = id; paintPicked(); }); }
+    const modeSeg = seg([['recipe', t('Recipe')], ['other', t('Other (write it yourself)')]], mode, v => { mode = v; paintPicked(); if (v === 'other') setTimeout(() => title.focus(), 50); });
+    paintPicked();
     const save = btn(isEdit ? t('Save') : t('Add'), { icon: 'check', onclick: async () => {
-      await act('plan.save', { id: p.id || 0, date: date.value, slot, recipeId: recipe.value ? Number(recipe.value) : null, title: recipe.value ? '' : title.value }, save);
+      if (mode === 'recipe' && !recipeId) { toast(t('Choose a recipe'), 'error'); choose(); return; }
+      const useRecipe = mode === 'recipe';
+      await act('plan.save', { id: p.id || 0, date: date.value, slot, recipeId: useRecipe ? recipeId : null, title: useRecipe ? '' : title.value }, save);
       s.close();
       toast(isEdit ? t('Meal updated') : t('Added to the weekly plan'), null, route().name !== 'piano' ? { label: t('Open'), onclick: () => go('piano') } : null);
     } });
     const s = sheet({
       title: isEdit ? t('Edit meal') : t('Add a meal'),
-      body: [field(t('Day'), date), seg(SLOTS, slot, v => { slot = v; }), field(t('Recipe'), recipe), titleField],
+      body: [field(t('Day'), date), seg(SLOTS, slot, v => { slot = v; }), h('div.label', t('What are you eating?')), modeSeg, picked, titleField],
       actions: [cancelBtn(), save],
+      autofocus: false,
     });
+    // Opened from the plan without a recipe: go straight to the choice
+    if (!isEdit && !recipeId && mode === 'recipe') setTimeout(choose, 260);
+  }
+
+  /** Compact recipe row: cover thumbnail, name, countries · time · difficulty, ingredient availability. */
+  function recipePickRow(r, o) {
+    o = o || {};
+    const st = recipeStats(r);
+    return listRow({
+      lead: UI.recipeCover(r, 'recipe-thumb'), title: r.name, cls: o.cls,
+      sub: [r.origin.length ? [UI.originLabel(r.origin, true), ' · '] : null, [totalTime(r) ? totalTime(r) + ' min' : null, diffLabel(r.difficulty)].filter(Boolean).join(' · ')],
+      meta: [st.ok === st.total ? chip(t('You have all the ingredients'), 'ok', 'check') : chip(t('{a} of {b} ingredients', { a: st.ok, b: st.total }), 'neutral'),
+        st.usesExpired ? chip(t('Uses expired products'), 'danger') : st.usesExpiring ? chip(t('Uses expiring products'), 'warn') : null,
+        S.favorites.has(r.id) ? chip(t('Favourite'), 'neutral', 'heart') : null],
+      trail: o.trail,
+    });
+  }
+
+  /** Searchable recipe chooser (stacked over the meal form): suggestions, recently planned, filters. */
+  function openRecipePicker(current, onpick) {
+    let query = '';
+    const filters = { fav: false, cookable: false, expiring: false };
+    const labels = { fav: t('Favourites'), cookable: t('I can cook them now'), expiring: t('With expiring products') };
+    const q = input({ type: 'search', placeholder: t('Search by name, ingredient or country'), enterkeyhint: 'search', 'aria-label': t('Search recipe') });
+    const chips = h('div.chips');
+    const results = h('div.recipe-pick-list');
+    const matches = r => {
+      const n = norm(query);
+      if (n && !norm(r.name).includes(n) && !r.ingredients.some(i => norm(i.name).includes(n)) && !(r.origin || []).some(c => norm(UI.countryName(c)).includes(n))) return false;
+      if (filters.fav && !S.favorites.has(r.id)) return false;
+      if (filters.cookable || filters.expiring) {
+        const st = recipeStats(r);
+        if (filters.cookable && st.ok < st.total) return false;
+        if (filters.expiring && !(st.usesExpiring || st.usesExpired)) return false;
+      }
+      return true;
+    };
+    const row = r => h('button.pick-row' + (r.id === current ? '.sel' : ''), { type: 'button', onclick: () => { s.close(); onpick(r.id); } },
+      recipePickRow(r, { trail: r.id === current ? icon('check') : null }));
+    const score = r => { const st = recipeStats(r); return (st.usesExpired || st.usesExpiring ? 2 : 0) + st.ok / (st.total || 1) + (S.favorites.has(r.id) ? .5 : 0); };
+    function paint() {
+      UI.clear(chips); UI.clear(results);
+      for (const k of Object.keys(labels)) chips.appendChild(h('button.chip' + (filters[k] ? '.sel' : ''), { type: 'button', onclick: () => { filters[k] = !filters[k]; paint(); } }, filters[k] ? icon('check') : null, labels[k]));
+      const list = S.recipes.filter(matches);
+      if (!list.length) { results.appendChild(empty('icon', 'restaurant', t('No recipes found'), t('Try another ingredient or remove some filters.'))); return; }
+      const section = (label, items) => { if (items.length) results.append(h('div.label', label), h('div.group', items.map(row))); };
+      if (!query && !Object.values(filters).some(Boolean)) {
+        const recentIds = [...new Set(S.plan.slice().sort((a, b) => (b.date > a.date ? 1 : -1)).map(x => x.recipeId).filter(Boolean))].slice(0, 4);
+        const recent = recentIds.map(recipeById).filter(Boolean);
+        const sugg = list.filter(r => !recentIds.includes(r.id)).sort((a, b) => score(b) - score(a)).slice(0, 5);
+        section(t('Recommended for you'), sugg);
+        section(t('Recently planned'), recent);
+        section(t('All recipes'), list.slice().sort((a, b) => a.name.localeCompare(b.name)));
+      } else {
+        section(t('Results') + ' · ' + list.length, list.sort((a, b) => score(b) - score(a)));
+      }
+    }
+    q.addEventListener('input', () => { query = q.value; paint(); });
+    paint();
+    const s = sheet({ title: t('Choose a recipe'), cls: 'tall', body: [searchbar(q), chips, results], actions: [cancelBtn()] });
   }
 
   // ===================================================== SEARCH
