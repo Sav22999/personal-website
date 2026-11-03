@@ -78,7 +78,7 @@ $j = function (array $a): string { return q(json_encode(['en' => array_filter($a
 foreach (seed_en_categories() as $it => [$name, $tip]) $out[] = "UPDATE `{$p}categories` SET i18n = " . $j(['name' => $name, 'expiry_tip' => $tip]) . ' WHERE name = ' . q($it) . ';';
 foreach (seed_en_products() as $it => [$name, $tip]) $out[] = "UPDATE `{$p}products` SET i18n = " . $j(['name' => $name, 'expiry_tip' => $tip]) . ' WHERE name = ' . q($it) . ';';
 foreach (seed_en_recipes() as $it => [$name, $desc, $cook, $steps, $notes]) {
-    $out[] = "UPDATE `{$p}recipes` SET i18n = " . q(json_encode(['en' => ['name' => $name, 'description' => $desc, 'cook_notes' => $cook, 'steps' => $steps]], JSON_UNESCAPED_UNICODE)) . ' WHERE name = ' . q($it) . ';';
+    $out[] = "UPDATE `{$p}recipes` SET i18n = " . q(json_encode(['en' => ['name' => $name, 'description' => $desc, 'cook_notes' => $cook, 'steps' => $steps, 'status' => 'published']], JSON_UNESCAPED_UNICODE)) . ' WHERE name = ' . q($it) . ';';
     foreach ($notes as $n_it => $n_en) {
         $out[] = "UPDATE `{$p}recipe_ingredients` i JOIN `{$p}recipes` r ON r.id = i.recipe_id SET i.i18n = " . $j(['notes' => $n_en]) . ' WHERE r.name = ' . q($it) . ' AND i.notes = ' . q($n_it) . ';';
     }

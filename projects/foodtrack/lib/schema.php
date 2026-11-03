@@ -275,6 +275,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v3: new SVG icon set (more specific icons for some catalog products)
  *  v4: multilingual content (i18n JSON column on categories, products, recipes, ingredients)
  *  v5: countries of origin of the recipes (one or more)
+ *  v6: publication status per language (existing translations become published)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -304,6 +305,15 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         require_once __DIR__ . '/seed.php';
         $st = $pdo->prepare("UPDATE `{$p}recipes` SET origin = ? WHERE name = ? AND origin = ''");
         foreach (seed_recipes() as $r) $st->execute([$r['origin'], $r['name']]);
+    }
+    if ($from < 6) {
+        $up = $pdo->prepare("UPDATE `{$p}recipes` SET i18n = ? WHERE id = ?");
+        foreach ($pdo->query("SELECT id, i18n FROM `{$p}recipes` WHERE i18n IS NOT NULL")->fetchAll() as $r) {
+            $d = json_decode((string)$r['i18n'], true) ?: [];
+            $changed = false;
+            foreach ($d as $lg => $tr) if (is_array($tr) && !empty($tr['name']) && empty($tr['status'])) { $d[$lg]['status'] = 'published'; $changed = true; }
+            if ($changed) $up->execute([json_encode($d, JSON_UNESCAPED_UNICODE), $r['id']]);
+        }
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

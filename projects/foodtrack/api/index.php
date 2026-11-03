@@ -110,6 +110,10 @@ function i18n_input($raw, array $fields, int $max = 2000): ?string
         if ($lg === 'it' || !isset($raw[$lg]) || !is_array($raw[$lg])) continue;
         foreach ($fields as $f) {
             $v = $raw[$lg][$f] ?? null;
+            if ($f === 'status') {
+                if (in_array($v, ['published', 'draft'], true)) $out[$lg][$f] = $v;
+                continue;
+            }
             if ($f === 'steps') {
                 $v = is_array($v) ? array_values(array_filter(array_map(function ($x) { return mb_substr(trim((string)$x), 0, 1000); }, array_slice($v, 0, 60)), 'strlen')) : [];
                 if ($v) $out[$lg][$f] = $v;
@@ -140,13 +144,25 @@ function fmt_category(array $r, bool $raw = false): array
     return $o;
 }
 
-/** Recipes with ingredients and steps; $raw = base fields + translations (admin portal). */
+/**
+ * Publication status of a recipe in a language: 'published' | 'draft' | 'none' (not translated).
+ * The base language (Italian) uses the `published` column, the others i18n[lang].status.
+ */
+function recipe_status(array $r, string $lg): string
+{
+    if ($lg === 'it') return !empty($r['published']) ? 'published' : 'draft';
+    $tr = i18n_of($r)[$lg] ?? null;
+    if (!is_array($tr) || !$tr) return 'none';
+    return ($tr['status'] ?? 'draft') === 'published' ? 'published' : 'draft';
+}
+
+/** Recipes with ingredients and steps; $onlyPublished = only those published in the request language; $raw = base fields + translations (admin portal). */
 function load_recipes(bool $onlyPublished, bool $raw = false): array
 {
-    $where = $onlyPublished ? 'WHERE published = 1' : '';
     $recipes = [];
     $rows = [];
-    foreach (db()->query('SELECT * FROM ' . t('recipes') . " $where ORDER BY name") as $r) {
+    foreach (db()->query('SELECT * FROM ' . t('recipes') . ' ORDER BY name') as $r) {
+        if ($onlyPublished && recipe_status($r, lang()) !== 'published') continue;
         $rows[(int)$r['id']] = $r;
         $recipes[(int)$r['id']] = [
             'id' => (int)$r['id'], 'name' => $raw ? $r['name'] : loc($r, 'name', $r['name']),
@@ -156,7 +172,10 @@ function load_recipes(bool $onlyPublished, bool $raw = false): array
             'cookNotes' => $raw ? $r['cook_notes'] : loc($r, 'cook_notes', $r['cook_notes']), 'servings' => (int)$r['servings'], 'difficulty' => $r['difficulty'], 'origin' => array_values(array_filter(explode(',', (string)($r['origin'] ?? '')))),
             'published' => (bool)$r['published'], 'updatedAt' => $r['updated_at'], 'ingredients' => [], 'steps' => [],
         ];
-        if ($raw) $recipes[(int)$r['id']]['i18n'] = (object)i18n_of($r);
+        if ($raw) {
+            $recipes[(int)$r['id']]['i18n'] = (object)i18n_of($r);
+            $recipes[(int)$r['id']]['status'] = array_combine(LANGS, array_map(function ($lg) use ($r) { return recipe_status($r, $lg); }, LANGS));
+        }
     }
     if (!$recipes) return [];
     $prodNames = [];
@@ -858,9 +877,10 @@ switch ($route) {
     case 'favorite.toggle':
         $u = writer();
         $rid = (int)(body()['recipeId'] ?? 0);
-        $st = db()->prepare('SELECT 1 FROM ' . t('recipes') . ' WHERE id = ? AND published = 1');
+        $st = db()->prepare('SELECT * FROM ' . t('recipes') . ' WHERE id = ?');
         $st->execute([$rid]);
-        if (!$st->fetchColumn()) fail('Recipe not found.', 404, 'not_found');
+        $rec = $st->fetch();
+        if (!$rec || recipe_status($rec, lang()) !== 'published') fail('Recipe not found.', 404, 'not_found');
         $st = db()->prepare('DELETE FROM ' . t('favorites') . ' WHERE user_id = ? AND recipe_id = ?');
         $st->execute([$u['id'], $rid]);
         $fav = false;
@@ -945,7 +965,7 @@ switch ($route) {
             'expired' => $c('SELECT COUNT(*) FROM ' . t('items') . ' WHERE expiry_date < UTC_DATE()'),
             'lists' => $c('SELECT COUNT(*) FROM ' . t('lists')),
             'recipes' => $c('SELECT COUNT(*) FROM ' . t('recipes')),
-            'recipesPublished' => $c('SELECT COUNT(*) FROM ' . t('recipes') . ' WHERE published = 1'),
+            'recipesPublished' => count(array_filter(db()->query('SELECT * FROM ' . t('recipes'))->fetchAll(), function ($r) { foreach (LANGS as $lg) if (recipe_status($r, $lg) === 'published') return true; return false; })),
             'products' => $c('SELECT COUNT(*) FROM ' . t('products')),
             'favorites' => $c('SELECT COUNT(*) FROM ' . t('favorites')),
         ], 'topRecipes' => db()->query('SELECT r.name, COUNT(*) AS n FROM ' . t('favorites') . ' f JOIN ' . t('recipes') . ' r ON r.id = f.recipe_id GROUP BY r.id, r.name ORDER BY n DESC LIMIT 5')->fetchAll(),
@@ -1147,7 +1167,13 @@ switch ($route) {
         $origin = array_values(array_unique(array_filter(array_map(function ($c) { return strtoupper(trim((string)$c)); }, $origin), function ($c) { return (bool)preg_match('/^[A-Z]{2}$/', $c); })));
         $origin = implode(',', array_slice($origin, 0, 20));
         $pub = !empty($b['published']) ? 1 : 0;
-        $i18n = i18n_input($b['i18n'] ?? null, ['name', 'description', 'cook_notes', 'steps']);
+        $i18n = i18n_input($b['i18n'] ?? null, ['name', 'description', 'cook_notes', 'steps', 'status']);
+        // A translation needs at least a name: without it the language counts as "not translated"
+        if ($i18n !== null) {
+            $tmp = json_decode($i18n, true);
+            foreach ($tmp as $lg => $fields) if (empty($fields['name'])) unset($tmp[$lg]);
+            $i18n = $tmp ? json_encode($tmp, JSON_UNESCAPED_UNICODE) : null;
+        }
         $ings = is_array($b['ingredients'] ?? null) ? array_slice($b['ingredients'], 0, 60) : [];
         $steps = is_array($b['steps'] ?? null) ? array_slice($b['steps'], 0, 60) : [];
         $id = (int)($b['id'] ?? 0);

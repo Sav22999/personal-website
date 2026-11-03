@@ -1056,7 +1056,7 @@
             { icon: 'delete', label: t('Remove from plan'), danger: true, onclick: () => act('plan.delete', { id: p.id }) },
           ], r ? r.name : p.title) },
           r && r.image ? h('span.tile.tile-sm.photo', { style: { backgroundImage: `url("${r.image}")` } }) : tile('icon', r ? 'restaurant' : 'edit', 'sm'),
-          h('div.body', h('p.title', r ? r.name : p.title), h('div.sub', slot)), h('div.trail', icon('more')));
+          h('div.body', h('p.title', r ? r.name : (p.title || t('Recipe not available in your language'))), h('div.sub', slot)), h('div.trail', icon('more')));
         }) : h('div.none', t('No meals planned'))));
     }
     const weekRecipes = S.plan.filter(p => days.includes(p.date) && p.recipeId).map(p => recipeById(p.recipeId)).filter(Boolean);

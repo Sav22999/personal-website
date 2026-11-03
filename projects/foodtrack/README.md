@@ -75,6 +75,7 @@ Nell'app Android (TWA) l'accesso con Google funziona perché la pagina gira in C
 
 - L'interfaccia (app e portale) è in **italiano** e **inglese**: la lingua si sceglie in automatico dal browser e si cambia dal Profilo (o dal menu laterale del portale). I testi sorgente sono in inglese, le traduzioni sono in `assets/i18n.js` (client) e `lib/i18n.php` (messaggi dell'API).
 - Anche i **contenuti** sono traducibili: categorie, prodotti del catalogo, ricette (nome, descrizione, note di cottura, passaggi) e note degli ingredienti. La lingua principale dei contenuti è l'italiano; dal portale ogni editor ha le schede «Italiano · principale» / «English». Se una traduzione manca si mostra il testo italiano.
+- **Pubblicazione per lingua** delle ricette: per ogni lingua lo stato è *Pubblicata*, *Bozza* o *Non tradotta* (es. pubblicata in italiano, bozza in inglese). Nell'app una ricetta compare solo nelle lingue in cui è pubblicata; nel portale la colonna «Pubblicazione» mostra lo stato di ogni lingua (verde, giallo, barrato).
 - I prodotti aggiunti dagli utenti mostrano il nome del catalogo nella lingua dell'utente finché non vengono rinominati.
 
 ## Codici a barre

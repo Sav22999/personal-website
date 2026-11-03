@@ -92,6 +92,13 @@ table.dt { width: 100%; border-collapse: separate; border-spacing: 0; font-size:
 .flag { display: inline-flex; gap: 4px; }
 .flag span { font-size: .68rem; font-weight: 800; padding: 1px 5px; border-radius: 4px; background: var(--surface-2); color: var(--muted); }
 .flag span.on { background: var(--primary-container); color: var(--on-primary-container); }
+.flag span.draft { background: var(--warn-container); color: var(--on-warn-container); }
+.flag span.off { background: var(--surface-2); color: var(--muted); text-decoration: line-through; opacity: .7; }
+.status-seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; align-self: flex-start; }
+.status-seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; font-weight: 650; font-size: .82rem; color: var(--muted); cursor: pointer; }
+.status-seg button.sel { background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); color: var(--text); }
+.status-seg button.sel.published { color: var(--primary); }
+.status-seg button.sel.draft { color: var(--warn); }
 
 /* ---------- KPI cards & panels ---------- */
 .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }

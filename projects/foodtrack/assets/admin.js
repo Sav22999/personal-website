@@ -168,6 +168,10 @@
       return f(label + (isBase ? '' : ' (' + LANG_NAMES[lang] + ')'), c, isBase ? help : t('Leave empty to use the Italian text.'));
     };
   }
+  const STATUS_LABEL = { published: 'Published', draft: 'Draft', none: 'Not translated' };
+  /** Per-language publication badges of a recipe: green = published, amber = draft, grey = not translated. */
+  const statusFlags = r => h('span.flag', CONTENT_LANGS.map(l => { const st = (r.status || {})[l] || 'none'; return h('span.' + (st === 'published' ? 'on' : st === 'draft' ? 'draft' : 'off'), { title: LANG_NAMES[l] + ': ' + t(STATUS_LABEL[st]) }, l.toUpperCase()); }));
+  const anyPublished = r => CONTENT_LANGS.some(l => (r.status || {})[l] === 'published');
   const translatedFlags = (row, fields) => h('span.flag', CONTENT_LANGS.map(l => h('span' + (l === CONTENT_BASE || fields.every(fl => ((row.i18n || {})[l] || {})[fl]) ? '.on' : ''), l.toUpperCase())));
 
   // ================================================================ shell
@@ -241,20 +245,23 @@
     function paint() {
       const n = norm(recipeState.q);
       const rows = d.recipes.filter(r => (!n || norm(r.name).includes(n) || norm((r.i18n.en || {}).name || '').includes(n))
-        && (!recipeState.status || (recipeState.status === 'pub') === r.published));
+        && (!recipeState.status || (recipeState.status === 'pub') === anyPublished(r)));
       table.replaceChildren(dataTable([
         { key: 'img', label: '', render: r => h('div.thumb', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } }) },
         { key: 'name', label: t('Recipe'), sort: r => r.name, render: r => [h('div.title', r.name), h('div.sub', (r.i18n.en || {}).name ? '🇬🇧 ' + r.i18n.en.name : r.description)] },
         { key: 'ing', label: t('Content'), sort: r => r.ingredients.length, render: r => t('{a} ingredients · {b} steps', { a: r.ingredients.length, b: r.steps.length }) },
         { key: 'origin', label: t('Origin'), sort: r => UI.originLabel(r.origin), render: r => r.origin && r.origin.length ? UI.originLabel(r.origin, true) : h('span.muted', '—') },
         { key: 'time', label: t('Time'), num: true, sort: r => (r.prepMinutes || 0) + (r.cookMinutes || 0), render: r => ((r.prepMinutes || 0) + (r.cookMinutes || 0)) + ' min' },
-        { key: 'lang', label: t('Languages'), render: r => translatedFlags(r, ['name']) },
+        { key: 'lang', label: t('Publication'), sort: r => CONTENT_LANGS.filter(l => (r.status || {})[l] === 'published').length, render: statusFlags },
         { key: 'fav', label: '♥', num: true, sort: r => d.favorites[r.id] || 0, render: r => String(d.favorites[r.id] || 0) },
-        { key: 'pub', label: t('Status'), sort: r => r.published ? 1 : 0, render: r => r.published ? chip(t('Published'), 'ok') : chip(t('Draft'), 'neutral') },
         { key: 'act', label: '', cls: 'actions', render: r => [iconBtn('edit', t('Edit'), () => openRecipe(r, d)), menuBtn([
           { icon: 'edit', label: t('Edit'), onclick: () => openRecipe(r, d) },
-          { icon: 'copy', label: t('Duplicate'), onclick: () => openRecipe(Object.assign(JSON.parse(JSON.stringify(r)), { id: 0, name: r.name + ' (' + t('copy') + ')', published: false }), d) },
-          { icon: r.published ? 'eye' : 'check', label: r.published ? t('Unpublish') : t('Publish'), onclick: () => saveRecipe(Object.assign({}, r, { published: !r.published })).then(render) },
+          { icon: 'copy', label: t('Duplicate'), onclick: () => {
+            const c = JSON.parse(JSON.stringify(r));
+            c.id = 0; c.name = r.name + ' (' + t('copy') + ')'; c.published = false;
+            c.status = Object.fromEntries(Object.entries(c.status || {}).map(([l, st]) => [l, st === 'none' ? 'none' : 'draft']));
+            openRecipe(c, d);
+          } },
           canDelete() ? '-' : null,
           canDelete() ? { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteRecipe(r) } : null,
         ])] },
@@ -264,7 +271,7 @@
     return h('div',
       pageHead(t('Recipes'), t('Recipes shown to every user, with ingredients linked to the catalogue so the app can tell what they already have.'), [btn(t('New recipe'), { icon: 'add', onclick: () => openRecipe(null, d) })]),
       h('div.toolbar', searchInput(recipeState.q, t('Search recipe'), v => { recipeState.q = v; paint(); }),
-        sel([{ value: '', label: t('All statuses') }, { value: 'pub', label: t('Published') }, { value: 'draft', label: t('Drafts') }], recipeState.status, { onchange: e => { recipeState.status = e.target.value; paint(); } }),
+        sel([{ value: '', label: t('All statuses') }, { value: 'pub', label: t('Published in at least one language') }, { value: 'draft', label: t('Not published in any language') }], recipeState.status, { onchange: e => { recipeState.status = e.target.value; paint(); } }),
         h('span.meta', t('{n} recipes', { n: d.recipes.length }))),
       table);
   }
@@ -296,7 +303,15 @@
     const servings = inp({ type: 'number', min: 1, max: 50, value: r.servings });
     const diff = sel(Object.entries(DIFFICULTY).map(([v, l]) => ({ value: v, label: t(l) })), r.difficulty);
     const origin = countryPicker(r.origin);
-    const pub = toggle(t('Published (visible to all users)'), r.published);
+    // Publication status per language: base language published/draft, the others also "not translated"
+    r.status = Object.assign({}, r.status || {});
+    for (const l of CONTENT_LANGS) if (!r.status[l]) r.status[l] = l === CONTENT_BASE ? (r.published ? 'published' : 'draft') : ((r.i18n[l] || {}).name ? ((r.i18n[l] || {}).status || 'draft') : 'none');
+    const statusSeg = lang => {
+      const opts = ['published', 'draft'].concat(lang === CONTENT_BASE ? [] : ['none']);
+      const wrap = h('div.status-seg', opts.map(st => h('button' + (r.status[lang] === st ? '.sel.' + st : ''), { type: 'button', onclick: () => { r.status[lang] = st; details.querySelector('.lang-tabs .sel').click(); } }, t(STATUS_LABEL[st]))));
+      return h('div.f', h('span.lbl', t('Status in {lang}', { lang: LANG_NAMES[lang] })), wrap,
+        h('div.help', r.status[lang] === 'published' ? t('Visible to users who use the app in this language.') : r.status[lang] === 'draft' ? t('Saved but hidden from users in this language.') : t('Not translated: the recipe is not shown to users in this language.')));
+    };
     const prev = h('div.prev');
     const paintImg = () => { prev.style.backgroundImage = r.image ? `url("${r.image}")` : 'none'; UI.clear(prev); if (!r.image) prev.appendChild(icon('image')); };
     paintImg();
@@ -309,14 +324,14 @@
       file.value = '';
     });
     const details = h('div',
-      langTabs(lang => h('div',
+      langTabs(lang => r.status[lang] === 'none' ? h('div', statusSeg(lang)) : h('div',
+        statusSeg(lang),
         trField(r, r.i18n, 'name', 'name', t('Name'))(lang),
         trField(r, r.i18n, 'description', 'description', t('Short description'), 2)(lang),
         trField(r, r.i18n, 'cookNotes', 'cook_notes', t('Cooking notes'), 0, t('For example: “Conventional oven, 180 °C for 45 minutes”'))(lang))),
       h('div.f', h('span.lbl', t('Image')), h('div.img-drop', prev, h('div', h('div.row', up, btn(t('Remove'), { kind: 'text', onclick: () => { r.image = ''; paintImg(); } })), h('div.help', t('JPG, PNG or WebP, up to 6 MB. It is resized automatically.'))), file)),
       h('div.f-row', f(t('Preparation (min)'), prep), f(t('Cooking (min)'), cook), f(t('Servings'), servings), f(t('Difficulty'), diff)),
-      h('div.f', h('span.lbl', t('Countries of origin')), origin.el, h('div.help', t('Add one or more countries (for example for fusion dishes). With none, the origin is “not defined”.'))),
-      pub.el);
+      h('div.f', h('span.lbl', t('Countries of origin')), origin.el, h('div.help', t('Add one or more countries (for example for fusion dishes). With none, the origin is “not defined”.'))));
 
     // --- Ingredients
     const ingBody = h('tbody');
@@ -378,10 +393,16 @@
 
     const save = btn(t('Save recipe'), { icon: 'save', onclick: async () => {
       if (!(r.name || '').trim()) { toast(t('Enter the recipe name.'), 'error'); return; }
-      r.prepMinutes = prep.value; r.cookMinutes = cook.value; r.servings = servings.value; r.difficulty = diff.value; r.origin = origin.value; r.published = pub.checked;
+      r.prepMinutes = prep.value; r.cookMinutes = cook.value; r.servings = servings.value; r.difficulty = diff.value; r.origin = origin.value; r.published = r.status[CONTENT_BASE] === 'published';
+      for (const l of CONTENT_LANGS) {
+        if (l === CONTENT_BASE) continue;
+        if (r.status[l] === 'none') { r.i18n[l] = {}; continue; }
+        r.i18n[l] = Object.assign(r.i18n[l] || {}, { status: r.status[l] });
+        if (!(r.i18n[l].name || '').trim()) { toast(t('Enter the name in {lang}, or set it as “Not translated”.', { lang: LANG_NAMES[l] }), 'error'); return; }
+      }
       r.ingredients = [...ingBody.children].map(tr => tr._get()).filter(Boolean);
       r.steps = stepsBy.it.filter(s => s.trim());
-      r.i18n.en.steps = stepsBy.en.filter(s => s.trim());
+      if (r.status.en !== 'none') r.i18n.en.steps = stepsBy.en.filter(s => s.trim());
       const unlinked = r.ingredients.filter(i => !i.productId).map(i => i.name);
       await busy(save, () => saveRecipe(r));
       dlg.close();

@@ -175,7 +175,7 @@ function seed_translations(PDO $pdo, string $p): void
     foreach ($pdo->query("SELECT id, name, i18n FROM `{$p}recipes`") as $r) {
         if (!isset($recs[$r['name']])) continue;
         [$name, $desc, $cook, $steps, $notes] = $recs[$r['name']];
-        $setI('recipes', (int)$r['id'], $r['i18n'], ['name' => $name, 'description' => $desc, 'cook_notes' => $cook, 'steps' => $steps]);
+        $setI('recipes', (int)$r['id'], $r['i18n'], ['name' => $name, 'description' => $desc, 'cook_notes' => $cook, 'steps' => $steps, 'status' => 'published']);
         $st = $pdo->prepare("SELECT id, notes, i18n FROM `{$p}recipe_ingredients` WHERE recipe_id = ?");
         $st->execute([$r['id']]);
         foreach ($st->fetchAll() as $ing) {
