@@ -226,22 +226,32 @@
 
   const stack = [];
   let ignorePop = 0;
+  let lastPointer = null;
+  document.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') lastPointer = { x: e.clientX, y: e.clientY, at: Date.now() }; }, true);
 
   function sheet(opts) {
     const handle = h('div.sheet-handle');
-    const panel = h('div.sheet', { role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title || '' },
+    const panel = h('div.sheet' + (opts.cls ? '.' + opts.cls : ''), { role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title || '' },
       handle,
       opts.title ? h('h2.sheet-title', opts.title) : null,
       h('div.sheet-body', opts.body || []),
       opts.actions && opts.actions.length ? h('div.sheet-actions', opts.actions) : null,
     );
     const backdrop = h('div.sheet-backdrop', { onclick: e => { if (e.target === backdrop && !opts.persistent) close(); } }, panel);
+    // Desktop: a menu opened with the mouse becomes a popover next to the pointer
+    const pop = opts.popover && lastPointer && Date.now() - lastPointer.at < 800 && matchMedia('(min-width: 960px) and (pointer: fine)').matches;
+    if (pop) backdrop.classList.add('popover');
     document.body.appendChild(backdrop);
+    if (pop) {
+      const r = panel.getBoundingClientRect(), m = 12;
+      panel.style.left = Math.max(m, Math.min(lastPointer.x - r.width + 24, innerWidth - r.width - m)) + 'px';
+      panel.style.top = (lastPointer.y + 12 + r.height > innerHeight - m ? Math.max(m, lastPointer.y - r.height - 12) : lastPointer.y + 12) + 'px';
+    }
     document.body.classList.add('no-scroll');
     requestAnimationFrame(() => backdrop.classList.add('open'));
 
     let closed = false;
-    const entry = { close: () => doClose(false) };
+    const entry = { close: () => doClose(false), persistent: !!opts.persistent };
     stack.push(entry);
     history.pushState({ ftSheet: stack.length }, '');
 
@@ -273,13 +283,16 @@
     if (stack.length) { e.stopImmediatePropagation(); stack[stack.length - 1].fromHistory(); }
   });
 
+  // Esc closes the topmost sheet (dialogs on desktop)
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && stack.length && !stack[stack.length - 1].persistent && !document.querySelector('.tour-ovl')) { e.preventDefault(); closeTop(); } });
+
   function closeTop() { if (stack.length) stack[stack.length - 1].close(); }
   function closeAllSheets() { while (stack.length) stack[stack.length - 1].close(); }
 
   /** Menu of actions as a bottom sheet (the "Altre azioni" pattern of the app). */
   function actionSheet(items) {
     const s = sheet({
-      title: arguments[1] || null,
+      title: arguments[1] || null, cls: 'menu-sheet', popover: true,
       body: [h('div.menu', items.filter(Boolean).map(it => h('button.menu-item' + (it.danger ? '.danger' : '') + (it.selected ? '.selected' : ''), { type: 'button', onclick: () => { s.close(); setTimeout(it.onclick, 230); } }, icon(it.icon), h('span', it.label), it.selected ? icon('check', 'trail') : null)))],
     });
     return s;

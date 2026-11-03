@@ -5,7 +5,7 @@
   const t = I18N.t;
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
 
-  const VERSION = '1.3.0';
+  const VERSION = '1.4.0';
   const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
   const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
   const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
@@ -266,17 +266,24 @@
     const views = { liste: viewLists, lista: viewList, spazi: viewSpaces, spazio: viewSpace, ricette: viewRecipes, ricetta: viewRecipe, piano: viewPlan, cerca: viewSearch, profilo: viewProfile, unisciti: viewJoin };
     const v = (views[r.name] || viewSpaces)(r.id);
     if (!v) return;
-    const bar = v.back
+    // On desktop, screens listed in the side navigation are top-level: no back arrow
+    const showBack = v.back && !(DESK.matches && ['profilo', 'piano', 'cerca'].includes(r.name));
+    const bar = showBack
       ? h('header.appbar.small', iconBtn('back', t('Back'), () => { if (curDepth > 0) history.back(); else location.replace('#/' + v.back); }), h('div.titles', h('h1', v.title)), v.actions || [])
       : h('header.appbar',
           h('div.titles', h('div.brand', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), 'FoodTrack', householdChip()), h('h1', v.title)),
           v.actions || [],
           h('button.avatar', { type: 'button', title: t('Profile'), 'aria-label': t('Profile and settings'), onclick: () => go('profilo') }, initials(S.user.name)));
     const nav = v.nav !== false;
-    const main = h('main.view' + (!nav ? '.no-nav' : '') + (nav && !v.fab ? '.no-fab' : ''), v.body);
-    const nodes = [bar, main];
-    if (nav) nodes.push(bottomNav(v.tab));
-    if (v.fab) { if (!nav) v.fab.classList.add('low'); nodes.push(v.fab); }
+    const main = h('main.view' + (!nav ? '.no-nav' : '') + (nav && !v.fab ? '.no-fab' : '') + (v.cls ? '.' + v.cls : ''), v.body);
+    const content = h('div.content', bar, main);
+    const nodes = [sideNav(NAV_OF[r.name] || r.name), content];
+    if (nav) content.appendChild(bottomNav(v.tab));
+    if (v.fab) {
+      // Desktop: the main action is a button in the app bar; mobile: a floating action button
+      if (DESK.matches) bar.appendChild(v.fab);
+      else { if (!nav) v.fab.classList.add('low'); content.appendChild(v.fab); }
+    }
     root.replaceChildren(...nodes);
     document.title = v.title + ' · FoodTrack';
     if (keepScroll && key === lastRouteKey) window.scrollTo(0, y); else window.scrollTo(0, 0);
@@ -292,6 +299,34 @@
     if (!S.household) return null;
     return h('button.household-chip', { type: 'button', title: t('Switch household'), onclick: e => { e.stopPropagation(); openHouseholdSwitcher(); } },
       icon(S.household.members.length > 1 ? 'group' : 'home'), h('span', S.household.name), icon('chevronDown'));
+  }
+
+  /** Which side-navigation entry is highlighted for each route. */
+  const NAV_OF = { lista: 'liste', spazio: 'spazi', ricetta: 'ricette', unisciti: 'profilo' };
+  /** Wide screens (desktop, landscape tablets): side navigation, grids, dialogs instead of bottom sheets. */
+  const DESK = matchMedia('(min-width: 960px)');
+  DESK.addEventListener('change', () => { if (S.user && S.loaded) { UI.closeAllSheets(); render(true); } });
+
+  /** Navigation drawer shown on wide screens (hidden on phones, where the bottom bar is used). */
+  function sideNav(active) {
+    const nExp = expiredItems().length + expiringItems().length;
+    const nBuy = S.listItems.filter(x => !x.inCart).length;
+    const link = (name, label, ic, badge, tone) => h('a.sn-link' + (active === name ? '.active' : ''), { href: '#/' + name, 'aria-current': active === name ? 'page' : null },
+      icon(ic), h('span', label), badge ? h('span.sn-badge' + (tone ? '.' + tone : ''), String(badge)) : null);
+    const hh = S.household;
+    return h('nav.sidenav', { 'aria-label': t('Sections') },
+      h('a.sn-brand', { href: '#/spazi' }, h('img', { src: 'assets/icons/icon-color.png', alt: '' }), h('strong', 'FoodTrack')),
+      hh ? h('button.sn-household', { type: 'button', title: t('Switch household'), onclick: () => openHouseholdSwitcher() },
+        icon(hh.members.length > 1 ? 'group' : 'home'), h('span.grow', h('small', t('Household')), h('span', hh.name)), icon('chevronDown')) : null,
+      h('div.sn-links',
+        link('spazi', t('Spaces'), 'spaces', nExp, 'warn'),
+        link('liste', t('Lists'), 'list', nBuy),
+        link('ricette', t('Recipes'), 'restaurant'),
+        link('piano', t('Weekly plan'), 'calendar'),
+        link('cerca', t('Search'), 'search')),
+      h('div.grow'),
+      h('a.sn-user' + (active === 'profilo' ? '.active' : ''), { href: '#/profilo', title: t('Profile and settings') },
+        h('span.avatar', initials(S.user.name)), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
   }
 
   function bottomNav(active) {
@@ -1013,6 +1048,7 @@
       ? btn(t('Add {what} to the list', { what: plural(missing.length, 'missing item', 'missing items') }), { kind: 'tonal', icon: 'cartAdd', onclick: () => addToListSheet(missing, r.name) })
       : chip(t('You have all {n} ingredients', { n: st.total }), 'ok', 'check')));
 
+    const colA = body.splice(0);
     body.push(sectionTitle(t('Time needed')));
     body.push(h('div.details',
       h('div.d', h('span', t('Preparation')), h('span', r.prepMinutes != null ? r.prepMinutes + ' min' : '—')),
@@ -1020,8 +1056,9 @@
       r.cookNotes ? h('div.d', h('span', t('Notes')), h('span', r.cookNotes)) : null));
     body.push(sectionTitle(t('Method'), r.steps.length));
     body.push(h('div.group', r.steps.map((t, i) => h('div.step', h('span.num', String(i + 1)), h('p', t)))));
+    const layout = [h('div.recipe-layout', h('div.col-a', colA), h('div.col-b', body))];
     return {
-      tab: 'ricette', title: r.name, back: 'ricette', body, actions: [favBtn(r)],
+      tab: 'ricette', title: r.name, back: 'ricette', body: layout, actions: [favBtn(r)],
       fab: fab(t('Add to plan'), 'calendar', () => openPlanForm({ recipeId: r.id, date: UI.todayStr() })),
     };
   }
@@ -1043,10 +1080,12 @@
       iconBtn('left', t('Previous week'), () => { if (weekOffset > -1) { weekOffset--; render(); } }),
       h('div.center', h('strong', label), h('span.small.muted', `${UI.fmtDate(days[0]).slice(0, 5)} – ${UI.fmtDate(days[6])}`)),
       iconBtn('right', t('Following week'), () => { if (weekOffset < 4) { weekOffset++; render(); } }))];
+    const week = h('div.week-grid');
+    body.push(week);
     for (const d of days) {
       const entries = S.plan.filter(p => p.date === d);
-      body.push(h('div.card.day' + (d === today ? '.today' : ''),
-        h('div.day-head', h('strong', (d === today ? 'Oggi, ' : '') + UI.longDate(d)), iconBtn('add', t('Add a meal'), () => openPlanForm({ date: d }), 'sm')),
+      week.appendChild(h('div.card.day' + (d === today ? '.today' : ''),
+        h('div.day-head', h('strong', (d === today ? t('Today') + ', ' : '') + UI.longDate(d)), iconBtn('add', t('Add a meal'), () => openPlanForm({ date: d }), 'sm')),
         entries.length ? entries.map(p => {
           const r = recipeById(p.recipeId);
           const slot = (SLOTS.find(x => x[0] === p.slot) || [, p.slot])[1];
@@ -1267,7 +1306,7 @@
         groupRow('delete', t('Delete my account'), t('Permanently delete account and data'), deleteAccount, { danger: true }),
       ),
     ];
-    return { tab: null, title: t('Profile'), back: 'spazi', body };
+    return { tab: null, title: t('Profile'), back: 'spazi', body, cls: 'narrow' };
   }
 
   function openChangePassword(forced) {
@@ -1382,6 +1421,14 @@
     start();
   }
 
+  function features(cls) {
+    return h('ul.features.' + cls,
+      h('li', tile('icon', 'spaces', 'sm'), t('Keep track of what is in your fridge, freezer and pantry')),
+      h('li', tile('icon', 'bell', 'sm'), t('Get an alert before products expire')),
+      h('li', tile('icon', 'group', 'sm'), t('Shopping lists shared with the people you live with')),
+      h('li', tile('icon', 'restaurant', 'sm'), t('Recipes with the ingredients you already have')));
+  }
+
   function renderAuth(mode) {
     const pending = (location.hash.match(/^#\/unisciti\/([A-Za-z0-9]+)/) || [])[1] || '';
     mode = mode || (pending ? 'register' : store.get('authMode', 'login'));
@@ -1417,17 +1464,13 @@
     );
 
     root.replaceChildren(h('div.auth',
-      h('div.auth-top', h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' })), h('h1', 'FoodTrack'), h('p', t('The food at home, under control'))),
+      h('div.auth-top', h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' })), h('h1', 'FoodTrack'), h('p', t('The food at home, under control')), features('desk-only')),
       h('div.auth-body',
         pending ? banner('info', 'group', t('You have been invited!'), t('Create an account (or sign in) to join the shared household.')) : null,
         seg([['login', t('Sign in')], ['register', t('Create account')]], mode, v => { store.set('authMode', v); renderAuth(v); }),
         S.config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
         form,
-        h('ul.features',
-          h('li', tile('icon', 'spaces', 'sm'), t('Keep track of what is in your fridge, freezer and pantry')),
-          h('li', tile('icon', 'bell', 'sm'), t('Get an alert before products expire')),
-          h('li', tile('icon', 'group', 'sm'), t('Shopping lists shared with the people you live with')),
-          h('li', tile('icon', 'restaurant', 'sm'), t('Recipes with the ingredients you already have'))))));
+        features('mob-only'))));
     document.title = 'FoodTrack';
     if (S.config.googleClientId) googleButton(gslot, cred => googleSignIn(cred, pending), mode === 'login' ? 'continue_with' : 'signup_with');
   }
@@ -1452,6 +1495,11 @@
 
   /** Small illustrations built with the app's own components (tiles, chips, icons). */
   function illo(kind) {
+    const el = illoContent(kind);
+    el.classList.add('ill-' + kind); // per-slide animations (app.css, "Tutorial animations")
+    return el;
+  }
+  function illoContent(kind) {
     const T = (f, n, size) => tile(f, n, size);
     const mini = (lead, title, sub, meta) => h('div.tour-card', lead, h('div', h('strong', title), sub ? h('small', sub) : null, meta ? h('div.meta', meta) : null));
     switch (kind) {
@@ -1574,6 +1622,12 @@
       fatal(t('Could not load the data'), e.message);
     }
   }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || UI.sheetsOpen() || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')) return;
+    const q = document.querySelector('main.view input[type=search]');
+    if (q) { e.preventDefault(); q.focus(); } else if (S.user && S.loaded) { e.preventDefault(); go('cerca'); }
+  });
 
   Api.onUnauthenticated(() => { S.user = null; S.loaded = false; UI.closeAllSheets(); render(); });
   window.addEventListener('hashchange', () => { trackDepth(); if (!UI.sheetsOpen()) render(); else { UI.closeAllSheets(); setTimeout(render, 130); } });
