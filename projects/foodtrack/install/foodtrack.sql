@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS `ft_users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(80) NOT NULL,
   `email` VARCHAR(190) NOT NULL,
-  `password_hash` VARCHAR(255) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'empty = account created with Google, no password',
+  `google_sub` VARCHAR(64) NULL COMMENT 'Google account id (Sign in with Google)',
   `role` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 utente, 9 amministratore, 10 master admin (uno solo)',
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS `ft_users` (
   `last_seen_at` DATETIME NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_email` (`email`),
+  UNIQUE KEY `uq_google` (`google_sub`),
   KEY `idx_role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -84,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `ft_categories` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(60) NOT NULL,
   `expiry_tip` TEXT NULL,
+  `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `sort` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_name` (`name`)
@@ -96,6 +99,7 @@ CREATE TABLE IF NOT EXISTS `ft_products` (
   `category_id` INT UNSIGNED NULL,
   `default_unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
   `expiry_tip` TEXT NULL,
+  `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
@@ -153,7 +157,7 @@ CREATE TABLE IF NOT EXISTS `ft_lists` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `name` VARCHAR(60) NOT NULL,
-  `icon` VARCHAR(40) NOT NULL DEFAULT 'home',
+  `icon` VARCHAR(40) NOT NULL DEFAULT 'cart',
   `notes` VARCHAR(500) NOT NULL DEFAULT '',
   `created_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
@@ -195,6 +199,7 @@ CREATE TABLE IF NOT EXISTS `ft_recipes` (
   `servings` TINYINT UNSIGNED NOT NULL DEFAULT 2,
   `difficulty` ENUM('facile','media','difficile') NOT NULL DEFAULT 'facile',
   `published` TINYINT(1) NOT NULL DEFAULT 1,
+  `i18n` MEDIUMTEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `created_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
@@ -211,6 +216,7 @@ CREATE TABLE IF NOT EXISTS `ft_recipe_ingredients` (
   `quantity` DECIMAL(10,3) NULL,
   `unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
   `notes` VARCHAR(255) NOT NULL DEFAULT '',
+  `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `sort` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_recipe` (`recipe_id`),
@@ -253,7 +259,7 @@ CREATE TABLE IF NOT EXISTS `ft_meal_plan` (
   CONSTRAINT `fk_ft_mp_user` FOREIGN KEY (`created_by`) REFERENCES `ft_users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `ft_meta` (k, v) VALUES ('schema_version', '1') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `ft_meta` (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v);
 
 -- ---------------------------------------------------------------- categories
 INSERT IGNORE INTO `ft_categories` (name, expiry_tip, sort) VALUES ('Frutta', 'La frutta fresca non ha una vera data di scadenza: controlla aspetto, odore e consistenza. Piccole ammaccature si possono eliminare; muffa, odore fermentato o polpa molle e scura indicano che è meglio non consumarla. La frutta troppo matura è perfetta per frullati, dolci e marmellate.', 10);
@@ -276,7 +282,7 @@ INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Anguria', 'watermelon', (SELECT id FROM `ft_categories` WHERE name = 'Frutta'), 'kg', 'Una volta tagliata, l’anguria va coperta e conservata in frigorifero per non più di 3–4 giorni.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Olive', 'olive', (SELECT id FROM `ft_categories` WHERE name = 'Conserve e scatolame'), 'g', 'Le olive in salamoia durano a lungo se restano coperte dal liquido. Elimina quelle molli o con patina biancastra in superficie.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Pomodori', 'tomato', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'pz', 'I pomodori molto maturi sono ottimi per sughi e salse: elimina solo le parti ammaccate.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Passata di pomodoro', 'tomato', (SELECT id FROM `ft_categories` WHERE name = 'Conserve e scatolame'), 'g', 'Chiusa si conserva a lungo; una volta aperta va tenuta in frigorifero e consumata entro 4–5 giorni.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Passata di pomodoro', 'sauce', (SELECT id FROM `ft_categories` WHERE name = 'Conserve e scatolame'), 'g', 'Chiusa si conserva a lungo; una volta aperta va tenuta in frigorifero e consumata entro 4–5 giorni.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Patate', 'potato', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'kg', 'Elimina i germogli e le parti verdi (contengono solanina) prima di cucinarle. Se sono molli o raggrinzite in modo marcato, buttale.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Patate dolci', 'sweet_potato', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'kg', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Carote', 'carrot', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'pz', 'Le carote un po’ molli possono essere usate in brodi, soffritti e vellutate.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
@@ -295,7 +301,7 @@ INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Fagioli', 'bean', (SELECT id FROM `ft_categories` WHERE name = 'Conserve e scatolame'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Barbabietole', 'beet', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'pz', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Ravanelli', 'radish', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'pz', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Basilico', 'vegetable', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'g', 'Il basilico annerisce in fretta: puoi conservarlo frullato con olio, oppure congelato in cubetti.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Basilico', 'herbs', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'g', 'Il basilico annerisce in fretta: puoi conservarlo frullato con olio, oppure congelato in cubetti.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Insalata', 'vegetable', (SELECT id FROM `ft_categories` WHERE name = 'Verdura'), 'pz', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Latte intero', 'milk', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'l', 'Il latte fresco riporta «da consumarsi entro»; quello UHT «preferibilmente entro» e, se chiuso, è spesso buono anche qualche giorno dopo. Se ha odore acido o grumi, non berlo.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Latte UHT', 'milk', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'l', 'Il latte UHT chiuso è spesso buono anche oltre il «preferibilmente entro»: annusalo e assaggialo. Una volta aperto si conserva in frigo per circa 3 giorni.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
@@ -304,8 +310,8 @@ INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Mozzarella di bufala', 'cheese', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', 'La mozzarella va consumata entro la data «da consumarsi entro». Se è acida, gonfia o ha una consistenza viscida, buttala.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Parmigiano', 'cheese', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', 'I formaggi stagionati durano a lungo: una piccola muffa superficiale si può eliminare tagliando almeno 1 cm attorno.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Formaggio spalmabile', 'cheese', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Burro', 'cheese', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', 'Il burro irrancidisce con il tempo (odore e sapore pungente): conservato in frigo e ben chiuso dura settimane; si può anche congelare.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Panna fresca', 'milk', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'ml', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Burro', 'butter', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', 'Il burro irrancidisce con il tempo (odore e sapore pungente): conservato in frigo e ben chiuso dura settimane; si può anche congelare.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Panna fresca', 'cream', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'ml', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Uova', 'egg', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'pz', 'Alcune persone verificano la freschezza mettendo l’uovo in un bicchiere d’acqua: se va a fondo è fresco, se resta a galla è vecchio ed è meglio non consumarlo. Le uova scadute da pochi giorni vanno comunque consumate ben cotte.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Uova biologiche', 'egg', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'pz', 'Alcune persone verificano la freschezza mettendo l’uovo in un bicchiere d’acqua: se va a fondo è fresco, se resta a galla è vecchio ed è meglio non consumarlo. Le uova scadute da pochi giorni vanno comunque consumate ben cotte.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Gelato', 'icecream', (SELECT id FROM `ft_categories` WHERE name = 'Surgelati'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
@@ -318,12 +324,12 @@ INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Tonno in scatola', 'tuna', (SELECT id FROM `ft_categories` WHERE name = 'Conserve e scatolame'), 'g', 'Il tonno in scatola dura anni se la latta è integra. Una volta aperto, trasferiscilo in un contenitore e consumalo entro 2–3 giorni.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Pane integrale', 'bread', (SELECT id FROM `ft_categories` WHERE name = 'Pane e prodotti da forno'), 'g', 'Il pane raffermo è perfetto per bruschette, pangrattato o panzanella. Se compare muffa va buttato tutto.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Piadina', 'bread', (SELECT id FROM `ft_categories` WHERE name = 'Pane e prodotti da forno'), 'pz', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Farina', 'generic', (SELECT id FROM `ft_categories` WHERE name = 'Pasta, riso e cereali'), 'g', 'La farina dura a lungo anche dopo il «preferibilmente entro» se conservata asciutta; buttala se ha odore di rancido o se ci sono farfalline.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Zucchero', 'generic', (SELECT id FROM `ft_categories` WHERE name = 'Condimenti e spezie'), 'g', 'Lo zucchero non scade se conservato all’asciutto.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Sale', 'generic', (SELECT id FROM `ft_categories` WHERE name = 'Condimenti e spezie'), 'g', 'Il sale non scade.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Lievito di birra', 'generic', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', 'Il lievito di birra fresco scaduto perde forza: prova a scioglierlo in acqua tiepida con un pizzico di zucchero, se dopo 10 minuti fa schiuma funziona ancora.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Lievito per dolci', 'generic', (SELECT id FROM `ft_categories` WHERE name = 'Snack e dolci'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Pinoli', 'generic', (SELECT id FROM `ft_categories` WHERE name = 'Snack e dolci'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Farina', 'flour', (SELECT id FROM `ft_categories` WHERE name = 'Pasta, riso e cereali'), 'g', 'La farina dura a lungo anche dopo il «preferibilmente entro» se conservata asciutta; buttala se ha odore di rancido o se ci sono farfalline.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Zucchero', 'sugar', (SELECT id FROM `ft_categories` WHERE name = 'Condimenti e spezie'), 'g', 'Lo zucchero non scade se conservato all’asciutto.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Sale', 'salt', (SELECT id FROM `ft_categories` WHERE name = 'Condimenti e spezie'), 'g', 'Il sale non scade.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Lievito di birra', 'yeast', (SELECT id FROM `ft_categories` WHERE name = 'Latticini e uova'), 'g', 'Il lievito di birra fresco scaduto perde forza: prova a scioglierlo in acqua tiepida con un pizzico di zucchero, se dopo 10 minuti fa schiuma funziona ancora.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Lievito per dolci', 'yeast', (SELECT id FROM `ft_categories` WHERE name = 'Snack e dolci'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Pinoli', 'nuts', (SELECT id FROM `ft_categories` WHERE name = 'Snack e dolci'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Pasta di semola', 'pasta', (SELECT id FROM `ft_categories` WHERE name = 'Pasta, riso e cereali'), 'g', 'La pasta secca riporta «da consumarsi preferibilmente entro»: se conservata bene è buona anche molti mesi dopo.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Pasta all’uovo', 'noodles', (SELECT id FROM `ft_categories` WHERE name = 'Pasta, riso e cereali'), 'g', 'La pasta all’uovo fresca va consumata entro la data indicata; quella secca si conserva a lungo.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Riso integrale', 'rice', (SELECT id FROM `ft_categories` WHERE name = 'Pasta, riso e cereali'), 'g', 'Il riso integrale contiene più grassi del riso bianco e può irrancidire: se ha odore di stantio, buttalo.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
@@ -332,7 +338,7 @@ INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Patatine fritte surgelate', 'chips', (SELECT id FROM `ft_categories` WHERE name = 'Surgelati'), 'g', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Caffè macinato', 'coffee', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'g', 'Il caffè macinato scaduto non è dannoso ma perde aroma: conservalo chiuso, al riparo da luce e umidità.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Acqua', 'water', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'l', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
-INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Succo di frutta', 'water', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'l', 'Spesso i succhi riportano la scritta «da consumarsi preferibilmente entro»: se non è passato troppo tempo e la confezione è chiusa e integra, il prodotto potrebbe essere comunque buono.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Succo di frutta', 'juice', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'l', 'Spesso i succhi riportano la scritta «da consumarsi preferibilmente entro»: se non è passato troppo tempo e la confezione è chiusa e integra, il prodotto potrebbe essere comunque buono.', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Vino rosso', 'wine', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'ml', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Vino bianco', 'wine2', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'ml', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 INSERT IGNORE INTO `ft_products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ('Spumante', 'champagne', (SELECT id FROM `ft_categories` WHERE name = 'Bevande'), 'ml', NULL, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
@@ -437,4 +443,103 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Versare 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Mescolare il ripieno: formaggio, yogurt e zucchero, poi incorporare la panna montata.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Versare la crema sulla base e livellare.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 4, 'Raffreddare in frigo per almeno 4 ore prima di servire.');
+
+-- ---------------------------------------------------------------- English translations of the content
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Fruit","expiry_tip":"Fresh fruit has no real expiry date: check its look, smell and texture. Small bruises can be cut away; mould, a fermented smell or soft dark flesh mean it is better not to eat it. Overripe fruit is perfect for smoothies, cakes and jams."}}' WHERE name = 'Frutta';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Vegetables","expiry_tip":"Wilted vegetables without mould can still be used cooked (soups, purées, sauces). Remove soft or dark parts; if you see mould, a bad smell or a slimy texture, throw them away."}}' WHERE name = 'Verdura';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Dairy and eggs","expiry_tip":"For dairy and eggs the difference between “use by” and “best before” matters: the first is a safety limit, the second is only about quality. Always check smell, taste and look before eating."}}' WHERE name = 'Latticini e uova';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Meat and cold cuts","expiry_tip":"Fresh meat and sliced cold cuts usually say “use by”: after that date they should not be eaten. If they are about to expire, cook or freeze them right away to make them last longer."}}' WHERE name = 'Carne e salumi';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Fish","expiry_tip":"Fresh fish is among the most delicate foods: respect the “use by” date. A strong ammonia smell, cloudy eyes or soft flesh mean it is no longer fresh. If you will not eat it soon, freeze it."}}' WHERE name = 'Pesce';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Bread and bakery","expiry_tip":"Stale bread is still great: toast it, turn it into breadcrumbs or croutons, or use it in recipes like panzanella. If you see mould, throw the whole loaf away, not only the visible part."}}' WHERE name = 'Pane e prodotti da forno';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Pasta, rice and cereals","expiry_tip":"Dry pasta, rice and cereals say “best before”: kept dry and closed they are usually fine even months after the date. Check for insects, rancid smells or moisture."}}' WHERE name = 'Pasta, riso e cereali';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Canned and preserved","expiry_tip":"Canned food lasts a long time, even past the “best before” date, if the can is intact. Throw away swollen, rusty or deeply dented cans, or those that spurt or smell odd when opened."}}' WHERE name = 'Conserve e scatolame';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Condiments and spices","expiry_tip":"Oil, vinegar, salt and spices last very long. Spices lose aroma over time but do not become dangerous; oil can turn rancid (it smells and tastes like paint or stale)."}}' WHERE name = 'Condimenti e spezie';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Drinks","expiry_tip":"Drinks often say “best before”: if not much time has passed and the package is closed and intact, the product may still be fine. Once opened, drink them within a few days."}}' WHERE name = 'Bevande';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Frozen food","expiry_tip":"Frozen food always kept at −18 °C stays safe for a long time, even if after the date the quality (taste, texture) may get worse. Never refreeze raw food once thawed."}}' WHERE name = 'Surgelati';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Snacks and sweets","expiry_tip":"Packaged biscuits, snacks and sweets almost always say “best before”: after the date they may be less crunchy but are generally still fine if the package is intact and there is no rancid smell."}}' WHERE name = 'Snack e dolci';
+UPDATE `ft_categories` SET i18n = '{"en":{"name":"Other","expiry_tip":"Check the label: “use by” is a safety limit, “best before” only means that after that date the product may lose quality."}}' WHERE name = 'Altro';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Apples","expiry_tip":"Apples keep for a long time in the fridge. If they are a bit wrinkled but sound, they are perfect for cakes and compotes."}}' WHERE name = 'Mele';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Bananas","expiry_tip":"Bananas with dark skin are sweeter: ideal for banana bread, pancakes and smoothies. You can also peel and freeze them."}}' WHERE name = 'Banane';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Watermelon","expiry_tip":"Once cut, cover the watermelon and keep it in the fridge for no more than 3–4 days."}}' WHERE name = 'Anguria';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Olives","expiry_tip":"Olives in brine last long if they stay covered by the liquid. Throw away soft ones or those with a whitish film."}}' WHERE name = 'Olive';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Tomatoes","expiry_tip":"Very ripe tomatoes are great for sauces: just remove the bruised parts."}}' WHERE name = 'Pomodori';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Tomato purée","expiry_tip":"Closed, it lasts long; once opened keep it in the fridge and use it within 4–5 days."}}' WHERE name = 'Passata di pomodoro';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Potatoes","expiry_tip":"Remove sprouts and green parts (they contain solanine) before cooking. If they are soft or very wrinkled, throw them away."}}' WHERE name = 'Patate';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Sweet potatoes"}}' WHERE name = 'Patate dolci';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Carrots","expiry_tip":"Slightly soft carrots can be used in broths, sautés and soups."}}' WHERE name = 'Carote';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Onions"}}' WHERE name = 'Cipolle';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Garlic","expiry_tip":"Sprouted garlic is still edible: remove the green germ in the middle, which is more bitter."}}' WHERE name = 'Aglio';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Leeks"}}' WHERE name = 'Porri';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Courgettes"}}' WHERE name = 'Zucchine';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Aubergines"}}' WHERE name = 'Melanzane';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Pumpkin"}}' WHERE name = 'Zucca';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Broccoli"}}' WHERE name = 'Broccoli';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Cauliflower"}}' WHERE name = 'Cavolfiore';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Asparagus"}}' WHERE name = 'Asparagi';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Mushrooms","expiry_tip":"Fresh mushrooms should be eaten within a few days: if they become slimy or dark, throw them away."}}' WHERE name = 'Funghi';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Sweetcorn"}}' WHERE name = 'Mais';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Peas"}}' WHERE name = 'Piselli';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Beans"}}' WHERE name = 'Fagioli';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Beetroot"}}' WHERE name = 'Barbabietole';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Radishes"}}' WHERE name = 'Ravanelli';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Basil","expiry_tip":"Basil darkens quickly: you can keep it blended with oil, or frozen in ice cubes."}}' WHERE name = 'Basilico';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Salad"}}' WHERE name = 'Insalata';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Whole milk","expiry_tip":"Fresh milk says “use by”; UHT milk “best before” and, if closed, is often fine a few days later. If it smells sour or has lumps, do not drink it."}}' WHERE name = 'Latte intero';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"UHT milk","expiry_tip":"Closed UHT milk is often fine even past the “best before” date: smell and taste it. Once opened it keeps in the fridge for about 3 days."}}' WHERE name = 'Latte UHT';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Plain yogurt","expiry_tip":"Closed yogurt is often fine a few days after the date: if it is not swollen and has no mould or odd smell, taste it before throwing it away."}}' WHERE name = 'Yogurt bianco';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Greek yogurt","expiry_tip":"Closed yogurt is often fine a few days after the date: if it is not swollen and has no mould or odd smell, taste it before throwing it away."}}' WHERE name = 'Yogurt greco';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Buffalo mozzarella","expiry_tip":"Mozzarella must be eaten by its “use by” date. If it is sour, swollen or slimy, throw it away."}}' WHERE name = 'Mozzarella di bufala';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Parmesan","expiry_tip":"Aged cheeses last long: a small surface mould can be removed by cutting at least 1 cm around it."}}' WHERE name = 'Parmigiano';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Cream cheese"}}' WHERE name = 'Formaggio spalmabile';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Butter","expiry_tip":"Butter turns rancid over time (sharp smell and taste): in the fridge and well wrapped it keeps for weeks; it can also be frozen."}}' WHERE name = 'Burro';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Fresh cream"}}' WHERE name = 'Panna fresca';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Eggs","expiry_tip":"Some people test freshness by putting the egg in a glass of water: if it sinks it is fresh, if it floats it is old and better not eaten. Eggs a few days past the date should be cooked thoroughly."}}' WHERE name = 'Uova';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Organic eggs","expiry_tip":"Some people test freshness by putting the egg in a glass of water: if it sinks it is fresh, if it floats it is old and better not eaten. Eggs a few days past the date should be cooked thoroughly."}}' WHERE name = 'Uova biologiche';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Ice cream"}}' WHERE name = 'Gelato';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Chicken","expiry_tip":"Raw chicken is very delicate: do not eat it after the “use by” date. If it is about to expire, cook or freeze it right away."}}' WHERE name = 'Carne di pollo';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Prosciutto","expiry_tip":"Sliced prosciutto in trays must be eaten by the date; if it loses colour or smells bad, throw it away."}}' WHERE name = 'Prosciutto crudo';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Cooked ham","expiry_tip":"Sliced cooked ham is delicate: if it becomes slimy or smells sour, do not eat it."}}' WHERE name = 'Prosciutto cotto';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Salami","expiry_tip":"Whole aged salami lasts long; a white “noble” mould on the casing is normal."}}' WHERE name = 'Salame';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Fresh fish"}}' WHERE name = 'Pesce fresco';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Smoked salmon","expiry_tip":"Smoked salmon must be eaten by its “use by” date and, once opened, within 1–2 days."}}' WHERE name = 'Salmone affumicato';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Canned tuna","expiry_tip":"Canned tuna lasts years if the can is intact. Once opened, move it to a container and eat it within 2–3 days."}}' WHERE name = 'Tonno in scatola';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Wholemeal bread","expiry_tip":"Stale bread is perfect for bruschetta, breadcrumbs or panzanella. If you see mould, throw it all away."}}' WHERE name = 'Pane integrale';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Piadina flatbread"}}' WHERE name = 'Piadina';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Flour","expiry_tip":"Flour lasts long even past the “best before” date if kept dry; throw it away if it smells rancid or has moths."}}' WHERE name = 'Farina';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Sugar","expiry_tip":"Sugar does not expire if kept dry."}}' WHERE name = 'Zucchero';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Salt","expiry_tip":"Salt does not expire."}}' WHERE name = 'Sale';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Fresh yeast","expiry_tip":"Expired fresh yeast loses strength: dissolve it in warm water with a pinch of sugar; if it foams after 10 minutes, it still works."}}' WHERE name = 'Lievito di birra';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Baking powder"}}' WHERE name = 'Lievito per dolci';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Pine nuts"}}' WHERE name = 'Pinoli';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Dry pasta","expiry_tip":"Dry pasta says “best before”: if stored well it is fine even many months later."}}' WHERE name = 'Pasta di semola';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Egg pasta","expiry_tip":"Fresh egg pasta must be eaten by its date; dry egg pasta keeps for a long time."}}' WHERE name = 'Pasta all’uovo';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Brown rice","expiry_tip":"Brown rice has more fat than white rice and can turn rancid: if it smells stale, throw it away."}}' WHERE name = 'Riso integrale';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Wholemeal biscuits"}}' WHERE name = 'Biscotti integrali';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Crisps"}}' WHERE name = 'Patatine';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Frozen fries"}}' WHERE name = 'Patatine fritte surgelate';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Ground coffee","expiry_tip":"Expired ground coffee is not harmful but loses aroma: keep it closed, away from light and moisture."}}' WHERE name = 'Caffè macinato';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Water"}}' WHERE name = 'Acqua';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Fruit juice","expiry_tip":"Juices often say “best before”: if not much time has passed and the package is closed and intact, the product may still be fine."}}' WHERE name = 'Succo di frutta';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Red wine"}}' WHERE name = 'Vino rosso';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"White wine"}}' WHERE name = 'Vino bianco';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Sparkling wine"}}' WHERE name = 'Spumante';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Extra virgin olive oil"}}' WHERE name = 'Olio extravergine d’oliva';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Seed oil"}}' WHERE name = 'Olio di semi';
+UPDATE `ft_products` SET i18n = '{"en":{"name":"Balsamic vinegar","expiry_tip":"Vinegar practically never expires: a deposit at the bottom is normal."}}' WHERE name = 'Aceto balsamico';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Margherita pizza","description":"The classic home-made pizza with tomato, buffalo mozzarella and basil.","cook_notes":"Conventional oven, 250 °C for 15 minutes","steps":["Make the dough: dissolve the yeast in the warm water, add the flour, then the salt and the oil, and knead for 10 minutes.","Let the dough rise, covered, for at least 2 hours, until it doubles in size.","Roll out the dough on an oiled baking tray.","Spread the tomato, seasoned with a drizzle of oil and a pinch of salt.","Bake for 10 minutes, then add the mozzarella and bake for 5 more minutes.","Finish with fresh basil."]}}' WHERE name = 'Pizza Margherita';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"warm"}}' WHERE r.name = 'Pizza Margherita' AND i.notes = 'tiepida';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"well drained"}}' WHERE r.name = 'Pizza Margherita' AND i.notes = 'ben scolata';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Banana bread","description":"A soft cake, perfect to use up overripe bananas.","cook_notes":"Conventional oven, 180 °C for 45–50 minutes","steps":["Mash the bananas in a bowl with a fork.","Add eggs, sugar and oil, and mix well.","Add the sifted flour and baking powder, and mix until smooth.","Pour the batter into a loaf tin lined with baking paper.","Bake: check with a toothpick before taking it out."]}}' WHERE name = 'Banana Bread';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"the bananas must be ripe"}}' WHERE r.name = 'Banana Bread' AND i.notes = 'le banane devono essere mature';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Pancakes","description":"Fluffy pancakes for a special breakfast.","cook_notes":"Cooked in a pan over medium heat","steps":["Mix the dry ingredients: flour, sugar and baking powder.","In another bowl whisk eggs, milk and melted butter.","Combine the two mixtures without forming lumps.","Pour a small ladle of batter into a hot non-stick pan.","Flip the pancake when bubbles appear on the surface and cook for one more minute."]}}' WHERE name = 'Pancake';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"melted"}}' WHERE r.name = 'Pancake' AND i.notes = 'fuso';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Pasta with pesto","description":"Pasta with home-made basil pesto, ready in 25 minutes.","cook_notes":"Cooked in a pot of boiling water","steps":["Make the pesto: blend basil, pine nuts, garlic, parmesan and oil with a pinch of salt.","Cook the pasta in plenty of salted water.","Drain the pasta, keeping a little cooking water aside.","Toss with the pesto, adding a spoonful of cooking water to make it creamy."]}}' WHERE name = 'Pasta al pesto';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"fresh leaves"}}' WHERE r.name = 'Pasta al pesto' AND i.notes = 'foglie fresche';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"grated"}}' WHERE r.name = 'Pasta al pesto' AND i.notes = 'grattugiato';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"one clove"}}' WHERE r.name = 'Pasta al pesto' AND i.notes = 'uno spicchio';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Pasta with onions","description":"A simple, cheap first course, sweet and tasty.","cook_notes":"Cooked in a pan over low heat","steps":["Slice the onions thinly.","Cook the onions in a pan with the oil over low heat for 20 minutes, adding a little water if needed.","Cook the pasta in plenty of salted water.","Drain the pasta and toss it with the onions.","Finish with grated parmesan."]}}' WHERE name = 'Pasta con le cipolle';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"grated"}}' WHERE r.name = 'Pasta con le cipolle' AND i.notes = 'grattugiato';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Piadina with tomatoes and prosciutto","description":"A quick lunch, ready in 10 minutes.","cook_notes":"Cooked in a pan","steps":["Warm the piadina in a pan, one minute per side.","Add the prosciutto and the sliced mozzarella.","Add the thinly sliced tomatoes.","Fold the piadina in half and serve right away."]}}' WHERE name = 'Piadina con pomodori e prosciutto';
+UPDATE `ft_recipes` SET i18n = '{"en":{"name":"Cheesecake","description":"No-bake cheesecake, fresh and creamy.","cook_notes":"No baking: chill in the fridge for at least 4 hours","steps":["Make the base: crush the biscuits and mix them with the melted butter.","Press into the tin and chill for 30 minutes.","Mix the filling: cream cheese, yogurt and sugar, then fold in the whipped cream.","Pour the cream over the base and level it.","Chill for at least 4 hours before serving."]}}' WHERE name = 'Cheesecake';
+UPDATE `ft_recipe_ingredients` i JOIN `ft_recipes` r ON r.id = i.recipe_id SET i.i18n = '{"en":{"notes":"melted"}}' WHERE r.name = 'Cheesecake' AND i.notes = 'fuso';
 

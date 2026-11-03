@@ -16,4 +16,8 @@ $database_name = "<YOUR DATABASE NAME>";
 
 $table_prefix  = "ft_";   // every FoodTrack table starts with this prefix
 
+// Optional: "Sign in with Google". Client ID of a Google Cloud "OAuth client ID" of type "Web application"
+// (e.g. 1234567890-abc123.apps.googleusercontent.com). Empty = Google login disabled. It is not a secret.
+$google_client_id = "";
+
 $debug = false;           // true only for local tests: shows error details in the API responses

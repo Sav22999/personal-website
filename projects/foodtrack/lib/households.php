@@ -28,7 +28,7 @@ function create_household(int $userId, string $name): int
     db()->prepare('INSERT INTO ' . t('household_members') . " (household_id, user_id, role, joined_at) VALUES (?,?, 'owner', ?)")
         ->execute([$hid, $userId, $now]);
     $ins = db()->prepare('INSERT INTO ' . t('spaces') . ' (household_id, name, icon, notes, sort, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)');
-    foreach (default_spaces() as $i => [$sname, $icon, $notes]) $ins->execute([$hid, $sname, $icon, $notes, $i * 10, $userId, $now, $now]);
+    foreach (default_spaces() as $i => [$sname, $icon, $notes]) $ins->execute([$hid, tr($sname), $icon, tr($notes), $i * 10, $userId, $now, $now]);
     db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $userId]);
     return $hid;
 }
@@ -69,7 +69,7 @@ function active_household(array $u): int
         db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $u['id']]);
         return $hid;
     }
-    return create_household($u['id'], 'Casa di ' . first_name($u['name']));
+    return create_household($u['id'], tr("{name}'s home", ['name' => first_name($u['name'])]));
 }
 
 function first_name(string $name): string
@@ -112,8 +112,8 @@ function delete_user_account(int $userId): void
 
 function validate_password(string $pw): void
 {
-    if (mb_strlen($pw) < 8) fail('La password deve avere almeno 8 caratteri.', 422, 'validation');
-    if (mb_strlen($pw) > 200) fail('La password è troppo lunga.', 422, 'validation');
+    if (mb_strlen($pw) < 8) fail('The password must be at least 8 characters long.', 422, 'validation');
+    if (mb_strlen($pw) > 200) fail('The password is too long.', 422, 'validation');
 }
 
 function temp_password(): string

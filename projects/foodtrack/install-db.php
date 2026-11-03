@@ -25,7 +25,7 @@ header('Referrer-Policy: no-referrer');
 
 function h($s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-function credentials_php(string $host, string $user, string $pass, string $name, string $prefix): string
+function credentials_php(string $host, string $user, string $pass, string $name, string $prefix, string $google = ''): string
 {
     $q = function (string $v): string { return '"' . addcslashes($v, "\\\"\$") . '"'; };
     return "<?php\n"
@@ -36,6 +36,8 @@ function credentials_php(string $host, string $user, string $pass, string $name,
         . '$password_db   = ' . $q($pass) . ";\n"
         . '$database_name = ' . $q($name) . ";\n\n"
         . '$table_prefix  = ' . $q($prefix) . ";\n\n"
+        . "// Sign in with Google (optional): OAuth client ID of type \"Web application\"\n"
+        . '$google_client_id = ' . $q($google) . ";\n\n"
         . "\$debug = false;\n";
 }
 
@@ -62,6 +64,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $pass   = (string)($_POST['password_db'] ?? '');
     $name   = trim((string)($_POST['database_name'] ?? ''));
     $prefix = trim((string)($_POST['table_prefix'] ?? 'ft_')) ?: 'ft_';
+    $google = trim((string)($_POST['google_client_id'] ?? ''));
+    if ($google !== '' && !preg_match('/^[A-Za-z0-9\-_.]{3,200}\.apps\.googleusercontent\.com$/', $google)) $errors[] = 'Client ID di Google non valido: deve terminare con .apps.googleusercontent.com.';
 
     if ($mode === 'update') {
         // Locked: only whoever knows the saved database password can run it again
@@ -114,13 +118,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             $added = seed_database($pdo, $p, $adminId ? (int)$adminId : null);
 
+            if ($mode === 'update' && $google !== '' && $google !== ($existing['google_client_id'] ?? '')) {
+                $content = credentials_php($host, $user, $pass, $name, $prefix, $google);
+                if (@file_put_contents(credentials_file(), $content, LOCK_EX) === false) $manualFile = $content;
+            }
             if ($mode === 'install') {
                 // Personal household (with the default spaces) for the master admin
                 $st = $pdo->prepare("SELECT COUNT(*) FROM `{$p}household_members` WHERE user_id = ?");
                 $st->execute([$adminId]);
-                if ((int)$st->fetchColumn() === 0) create_household_raw($pdo, $p, (int)$adminId, 'Casa di ' . first_name($adminName));
+                if ((int)$st->fetchColumn() === 0) create_household_raw($pdo, $p, (int)$adminId, tr("{name}'s home", ['name' => first_name($adminName)]));
 
-                $content = credentials_php($host, $user, $pass, $name, $prefix);
+                $content = credentials_php($host, $user, $pass, $name, $prefix, $google);
                 if (@file_put_contents(credentials_file(), $content, LOCK_EX) === false) {
                     $manualFile = $content;
                 } else {
@@ -148,7 +156,7 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
     $hid = (int)$pdo->lastInsertId();
     $pdo->prepare("INSERT INTO `{$p}household_members` (household_id, user_id, role, joined_at) VALUES (?,?, 'owner', ?)")->execute([$hid, $userId, $now]);
     $ins = $pdo->prepare("INSERT INTO `{$p}spaces` (household_id, name, icon, notes, sort, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)");
-    foreach (default_spaces() as $i => [$sname, $icon, $notes]) $ins->execute([$hid, $sname, $icon, $notes, $i * 10, $userId, $now, $now]);
+    foreach (default_spaces() as $i => [$sname, $icon, $notes]) $ins->execute([$hid, tr($sname), $icon, tr($notes), $i * 10, $userId, $now, $now]);
     $pdo->prepare("UPDATE `{$p}users` SET active_household_id = ? WHERE id = ?")->execute([$hid, $userId]);
 }
 ?><!doctype html>
@@ -158,7 +166,7 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>FoodTrack · Installazione</title>
-<link rel="icon" href="assets/icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
 <style>
   :root { --green:#4CAF50; --green-dark:#2E7D32; --bg:#F3F6F3; --card:#fff; --text:#1C1B1F; --muted:#5F6368; --border:#DADCE0; --red:#C62828; }
   @media (prefers-color-scheme: dark) { :root { --bg:#121412; --card:#1E211E; --text:#E6E1E5; --muted:#A8ADA8; --border:#353935; } }
@@ -188,7 +196,7 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
 </head>
 <body>
 <main>
-  <div class="brand"><img src="assets/icons/icon-192.png" alt=""> FoodTrack</div>
+  <div class="brand"><img src="assets/icons/favicon.svg" alt=""> FoodTrack</div>
   <h1><?= $mode === 'update' && !$done ? 'Aggiorna il database' : 'Installazione' ?></h1>
   <p class="lead">Crea le tabelle (prefisso <code>ft_</code>), carica categorie, prodotti e ricette e configura il master admin.</p>
 
@@ -213,6 +221,9 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
       <label for="password_db">Password del database ($password_db)</label>
       <input id="password_db" name="password_db" type="password" required>
       <p class="hint">È la password salvata in <code>credentials.php</code>: serve a confermare che sei il proprietario.</p>
+      <label for="google_client_id">Client ID di Google (facoltativo)</label>
+      <input id="google_client_id" name="google_client_id" placeholder="1234567890-xxxx.apps.googleusercontent.com" value="<?= h($existing['google_client_id'] ?? '') ?>">
+      <p class="hint">Per attivare «Continua con Google». Lascia vuoto per non cambiarlo.</p>
       <button type="submit">Verifica e aggiorna le tabelle</button>
     </form>
 
@@ -253,6 +264,10 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
           <input id="admin_password2" name="admin_password2" type="password" minlength="10" required autocomplete="new-password">
         </div>
       </div>
+      <h2>3 · Accesso con Google (facoltativo)</h2>
+      <label for="google_client_id">Client ID di Google</label>
+      <input id="google_client_id" name="google_client_id" placeholder="1234567890-xxxx.apps.googleusercontent.com" value="<?= h($_POST['google_client_id'] ?? '') ?>">
+      <p class="hint">Se lo lasci vuoto puoi aggiungerlo dopo in <code>credentials.php</code> (variabile <code>$google_client_id</code>).</p>
       <button type="submit">Crea le tabelle e installa FoodTrack</button>
     </form>
   <?php endif; ?>

@@ -20,3 +20,4 @@ android/captures/
 .DS_Store
 # The SQL scripts for phpMyAdmin are part of the project (they contain no data or credentials)
 !install/*.sql
+tools/icons-preview.html

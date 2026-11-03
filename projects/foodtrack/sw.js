@@ -6,8 +6,8 @@
  */
 'use strict';
 
-const CACHE = 'foodtrack-1.0.0';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.0.0', 'assets/api.js?v=1.0.0', 'assets/ui.js?v=1.0.0', 'assets/app.js?v=1.0.0', 'assets/icons/icon-192.png', 'assets/icons/icon-mono.png'];
+const CACHE = 'foodtrack-1.1.0';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.1.0', 'assets/i18n.js?v=1.1.0', 'assets/img/icons.js?v=1.1.0', 'assets/img/icons.svg?v=2', 'assets/api.js?v=1.1.0', 'assets/ui.js?v=1.1.0', 'assets/app.js?v=1.1.0', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -33,7 +33,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (/\.(css|js|png|jpg|jpeg|webp|svg|webmanifest)$/.test(url.pathname)) {
+  if (/\.(css|js|png|jpg|jpeg|webp|svg|webmanifest|woff2)$/.test(url.pathname)) {
     event.respondWith(caches.open(CACHE).then(cache => cache.match(req).then(cached => {
       const network = fetch(req).then(res => { if (res.ok) cache.put(req, res.clone()); return res; }).catch(() => cached);
       return cached || network;

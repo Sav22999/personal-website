@@ -1,433 +1,682 @@
-/* FoodTrack — admin portal (administrators and master admin only). */
+/* FoodTrack — admin portal (administrators and master admin only). Desktop layout. */
 (function () {
   'use strict';
 
-  const { h, icon, pic, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, norm } = UI;
+  const t = I18N.t;
+  const { h, icon, tile, chip, btn, iconBtn, busy, toast, norm } = UI;
   const root = document.getElementById('admin');
   let me = null;
+  let config = { googleClientId: '' };
+  let counts = {};
 
   const TABS = [
-    ['panoramica', 'Panoramica', 'dashboard'],
-    ['ricette', 'Ricette', 'restaurant'],
-    ['prodotti', 'Prodotti', 'spaces'],
-    ['categorie', 'Categorie', 'category'],
-    ['utenti', 'Utenti', 'person'],
-    ['case', 'Case', 'home'],
+    ['overview', 'Overview', 'dashboard'],
+    ['recipes', 'Recipes', 'restaurant'],
+    ['products', 'Products', 'spaces'],
+    ['categories', 'Categories', 'category'],
+    ['users', 'Users', 'person'],
+    ['households', 'Households', 'home'],
   ];
-  const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
+  const DIFFICULTY = { facile: 'Easy', media: 'Medium', difficile: 'Hard' };
+  const LANG_NAMES = { it: 'Italiano', en: 'English' };
+  const CONTENT_BASE = 'it';                  // language of the main content columns
+  const CONTENT_LANGS = ['it', 'en'];
 
-  const tabName = () => (location.hash.replace(/^#\/?/, '') || 'panoramica').split('/')[0];
+  const tabName = () => (location.hash.replace(/^#\/?/, '') || 'overview').split('/')[0];
+
+  // ================================================================ components
+
+  /** Labelled form field (desktop: label above the control). */
+  function f(label, control, help) {
+    if (!control.id) control.id = 'c' + Math.random().toString(36).slice(2, 9);
+    return h('div.f', h('label', { for: control.id }, label), control, help ? h('div.help', help) : null);
+  }
+  const ctl = (tag, attrs) => h(tag + '.ctl', attrs || {});
+  const inp = attrs => ctl('input', Object.assign({ type: 'text', autocomplete: 'off' }, attrs || {}));
+  const area = attrs => ctl('textarea', Object.assign({ rows: 3 }, attrs || {}));
+  function sel(options, value, attrs) {
+    const s = ctl('select', attrs);
+    for (const o of options) {
+      const opt = h('option', { value: String(o.value) }, o.label);
+      if (String(o.value) === String(value ?? '')) opt.selected = true;
+      s.appendChild(opt);
+    }
+    return s;
+  }
+  function toggle(label, checked) {
+    const cb = h('input', { type: 'checkbox', checked });
+    const sw = h('span.switch' + (checked ? '.on' : ''));
+    cb.addEventListener('change', () => sw.classList.toggle('on', cb.checked));
+    return { el: h('label.switch-row', cb, sw, h('span', label)), get checked() { return cb.checked; } };
+  }
+
+  /** Centered modal dialog (or a right-side drawer). Returns { close, body }. */
+  function dialog(opts) {
+    const body = h('div.dlg-body', opts.body || []);
+    const box = h('div.dlg' + (opts.size ? '.' + opts.size : ''), { role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title },
+      h('div.dlg-head', h('h2', opts.title), iconBtn('close', t('Close'), () => close())),
+      body,
+      opts.actions && opts.actions.length ? h('div.dlg-foot', opts.actions) : null);
+    const ovl = h('div.ovl' + (opts.drawer ? '.drawer' : ''), { onmousedown: e => { if (e.target === ovl && !opts.persistent) close(); } }, box);
+    document.body.appendChild(ovl);
+    document.body.classList.add('no-scroll');
+    requestAnimationFrame(() => ovl.classList.add('open'));
+    const onKey = e => { if (e.key === 'Escape' && !opts.persistent) close(); };
+    document.addEventListener('keydown', onKey);
+    let closed = false;
+    function close() {
+      if (closed) return;
+      closed = true;
+      document.removeEventListener('keydown', onKey);
+      ovl.classList.remove('open');
+      setTimeout(() => { ovl.remove(); if (!document.querySelector('.ovl')) document.body.classList.remove('no-scroll'); }, 180);
+      if (opts.onclose) opts.onclose();
+    }
+    setTimeout(() => { const first = box.querySelector('.dlg-body input:not([type=checkbox]):not([type=file]), .dlg-body textarea, .dlg-body select'); if (first) first.focus(); }, 60);
+    return { close, body, box };
+  }
+
+  function confirmDlg(title, text, okLabel, danger) {
+    return new Promise(resolve => {
+      let done = false;
+      const d = dialog({
+        title, size: 'sm', body: [h('p.text', text)], onclose: () => { if (!done) resolve(false); },
+        actions: [btn(t('Cancel'), { kind: 'text', onclick: () => d.close() }),
+          btn(okLabel || t('Confirm'), { kind: danger ? 'danger' : 'filled', onclick: () => { done = true; d.close(); resolve(true); } })],
+      });
+    });
+  }
+
+  /** Dropdown menu anchored to a button. */
+  function menu(anchor, items) {
+    document.querySelectorAll('.menu-pop').forEach(m => m.remove());
+    const pop = h('div.menu-pop', { role: 'menu' }, items.filter(Boolean).map(it => it === '-' ? h('hr') :
+      h('button' + (it.danger ? '.danger' : ''), { type: 'button', role: 'menuitem', onclick: () => { pop.remove(); it.onclick(); } }, icon(it.icon), it.label)));
+    document.body.appendChild(pop);
+    const r = anchor.getBoundingClientRect();
+    const w = pop.offsetWidth, hgt = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px';
+    pop.style.top = (r.bottom + 4 + hgt > innerHeight ? r.top - hgt - 4 : r.bottom + 4) + 'px';
+    setTimeout(() => document.addEventListener('mousedown', function away(e) { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('mousedown', away); } }), 0);
+  }
+  const menuBtn = items => iconBtn('more', t('More actions'), e => menu(e.currentTarget, items));
+
+  /**
+   * Sortable data table.
+   * cols: [{ key, label, sort?: row => value, num?, cls?, render: row => node }]
+   */
+  function dataTable(cols, rows, opts) {
+    opts = opts || {};
+    const state = opts.state || { key: opts.sortKey || null, dir: opts.sortDir || 1 };
+    const thead = h('thead'), tbody = h('tbody');
+    function paint() {
+      const list = rows.slice();
+      const c = cols.find(x => x.key === state.key);
+      if (c && c.sort) list.sort((a, b) => { const A = c.sort(a), B = c.sort(b); return (typeof A === 'string' ? A.localeCompare(B, I18N.locale) : (A > B) - (A < B)) * state.dir; });
+      UI.clear(thead).appendChild(h('tr', cols.map(col => h('th' + (col.sort ? '.sortable' : '') + (col.num ? '.num' : '') + (col.cls ? '.' + col.cls : ''), {
+        onclick: col.sort ? () => { state.dir = state.key === col.key ? -state.dir : 1; state.key = col.key; paint(); } : null,
+        'aria-sort': state.key === col.key ? (state.dir > 0 ? 'ascending' : 'descending') : null,
+      }, col.label, col.sort ? h('span.arrow', state.key === col.key ? (state.dir > 0 ? ' ↑' : ' ↓') : '') : null))));
+      UI.clear(tbody);
+      for (const r of list) tbody.appendChild(h('tr' + (opts.onrow ? '.click' : ''), { onclick: opts.onrow ? e => { if (!e.target.closest('button, a, input')) opts.onrow(r); } : null },
+        cols.map(col => h('td' + (col.num ? '.num' : '') + (col.cls ? '.' + col.cls : ''), col.render(r)))));
+      if (!list.length) tbody.appendChild(h('tr', h('td', { colspan: cols.length }, h('div.dt-empty', opts.empty || t('Nothing to show')))));
+    }
+    paint();
+    return h('div.table-card', h('div.table-scroll', h('table.dt', thead, tbody)));
+  }
+
+  function searchInput(value, placeholder, oninput) {
+    const i = inp({ type: 'search', value, placeholder });
+    i.addEventListener('input', () => oninput(i.value));
+    return h('div.search', icon('search'), i);
+  }
+
+  function pageHead(title, sub, actions) {
+    return h('div.page-head', h('div.titles', h('h1', title), sub ? h('p', sub) : null), actions ? h('div.actions', actions) : null);
+  }
+
+  /** Language tabs for translatable fields: renders fields for the selected content language. */
+  function langTabs(render) {
+    let cur = CONTENT_BASE;
+    const holder = h('div');
+    const tabs = h('div.lang-tabs', CONTENT_LANGS.map(l => h('button' + (l === cur ? '.sel' : ''), { type: 'button', onclick: e => {
+      cur = l; tabs.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b === e.currentTarget)); paintL();
+    } }, LANG_NAMES[l] + (l === CONTENT_BASE ? ' · ' + t('main') : ''))));
+    function paintL() { UI.clear(holder); holder.appendChild(render(cur)); }
+    paintL();
+    return h('div', tabs, holder);
+  }
+
+  /** Two-way binding for a translatable text: base value + translations object ({en: {...}}). */
+  function trField(model, i18n, key, field, label, multiline, help) {
+    return lang => {
+      const isBase = lang === CONTENT_BASE;
+      const cur = isBase ? model[key] : ((i18n[lang] || {})[field] || '');
+      const c = multiline ? area({ value: cur || '', rows: multiline }) : inp({ value: cur || '' });
+      if (!isBase) c.placeholder = model[key] || '';
+      c.addEventListener('input', () => {
+        if (isBase) model[key] = c.value;
+        else { i18n[lang] = i18n[lang] || {}; i18n[lang][field] = c.value; }
+      });
+      return f(label + (isBase ? '' : ' (' + LANG_NAMES[lang] + ')'), c, isBase ? help : t('Leave empty to use the Italian text.'));
+    };
+  }
+  const translatedFlags = (row, fields) => h('span.flag', CONTENT_LANGS.map(l => h('span' + (l === CONTENT_BASE || fields.every(fl => ((row.i18n || {})[l] || {})[fl]) ? '.on' : ''), l.toUpperCase())));
+
+  // ================================================================ shell
 
   function shell(content) {
-    const t = tabName();
-    root.replaceChildren(
-      h('header.adm-top', h('div.adm-top-inner',
-        h('div.adm-head', h('img', { src: 'assets/icons/icon-mono.png', alt: '' }), h('h1', 'FoodTrack · Portale admin'),
-          h('div.who', me.name, h('br'), h('span', { style: { opacity: .85 } }, me.roleLabel), ' · ', h('a', { href: './' }, 'Apri l’app'))),
-        h('nav.adm-tabs', TABS.map(([k, label, ic]) => h('a' + (k === t ? '.active' : ''), { href: '#/' + k }, icon(ic), label))))),
-      h('main.adm-main', content));
+    const tab = tabName();
+    root.replaceChildren(h('div.adm',
+      h('aside.adm-side',
+        h('div.adm-logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), h('span', 'FoodTrack', h('small', t('Admin portal')))),
+        h('nav.adm-nav', TABS.map(([k, label, ic]) => h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label) }, icon(ic), h('span', t(label)), counts[k] != null ? h('span.count', String(counts[k])) : null))),
+        h('div.grow'),
+        h('div.adm-side-tools',
+          sel(I18N.langs.map(([v, l]) => ({ value: v, label: l })), I18N.lang, { onchange: e => I18N.set(e.target.value), 'aria-label': t('Language') }),
+          iconBtn('theme', t('Theme'), () => {
+            const next = { auto: 'light', light: 'dark', dark: 'auto' }[UI.store.get('theme', 'auto')];
+            UI.store.set('theme', next); UI.applyTheme(); toast(t('Theme') + ': ' + t({ auto: 'Automatic', light: 'Light', dark: 'Dark' }[next]));
+          })),
+        h('div.adm-user', h('span.avatar', initials(me.name)), h('div.who', h('strong', me.name), h('span', me.roleLabel)),
+          iconBtn('more', t('More actions'), e => menu(e.currentTarget, [
+            { icon: 'open', label: t('Open the app'), onclick: () => { location.href = './'; } },
+            { icon: 'logout', label: t('Sign out'), onclick: logout },
+          ])))),
+      h('main.adm-content', content)));
+    document.title = t((TABS.find(x => x[0] === tab) || TABS[0])[1]) + ' · FoodTrack Admin';
   }
+
+  function initials(name) { return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase(); }
 
   async function render() {
     shell(h('div.loader'));
-    const views = { panoramica: vOverview, ricette: vRecipes, prodotti: vProducts, categorie: vCategories, utenti: vUsers, case: vHouseholds };
-    try {
-      const node = await (views[tabName()] || vOverview)();
-      shell(node);
-    } catch (e) {
-      shell(h('div.err-box', e.message));
-    }
+    const views = { overview: vOverview, recipes: vRecipes, products: vProducts, categories: vCategories, users: vUsers, households: vHouseholds };
+    try { shell(await (views[tabName()] || vOverview)()); }
+    catch (e) { shell(h('div.err-box', icon('error'), h('span', e.message))); }
   }
 
-  const tbl = (head, rows) => h('div.tbl-wrap', h('table.tbl', h('thead', h('tr', head.map(x => h('th', { class: x[1] || '' }, x[0])))), rows instanceof Node ? rows : h('tbody', rows)));
-
-  // ---------------------------------------------------------------- overview
+  // ================================================================ overview
 
   async function vOverview() {
     const d = await Api.get('admin.overview');
     const s = d.stats;
-    const stat = (n, l, sub) => h('div.stat', h('div.n', String(n)), h('div.l', l), sub ? h('div.s', sub) : null);
+    counts = { recipes: s.recipes, products: s.products, users: s.users, households: s.households };
+    const kpi = (ic, n, l, sub) => h('div.kpi', tile('icon', ic), h('div', h('div.n', String(n)), h('div.l', l), sub ? h('div.s', sub) : null));
+    const bars = (rows, label) => {
+      const max = Math.max(1, ...rows.map(r => Number(r.n)));
+      return rows.length ? h('div.bars', rows.map(r => h('div.bar', h('span', r.name), h('strong', label(r.n)), h('div.track', h('i', { style: { width: (100 * r.n / max) + '%' } }))))) : h('p.muted', t('No data yet.'));
+    };
     return h('div',
-      h('div.adm-toolbar', h('h2', 'Panoramica')),
-      h('div.stats',
-        stat(s.users, 'Utenti registrati', `+${s.usersNew7} negli ultimi 7 giorni`),
-        stat(s.usersActive30, 'Utenti attivi (30 giorni)'),
-        stat(s.admins, 'Amministratori', 'incluso il master admin'),
-        stat(s.households, 'Case', `${s.sharedHouseholds} condivise tra più utenti`),
-        stat(s.items, 'Prodotti negli spazi', `${s.expired} scaduti`),
-        stat(s.lists, 'Liste della spesa'),
-        stat(s.recipes, 'Ricette', `${s.recipesPublished} pubblicate`),
-        stat(s.products, 'Prodotti nel catalogo'),
-        stat(s.favorites, 'Ricette salvate tra le preferite')),
-      h('div.two-col',
-        h('div.panel', h('h3', 'Ricette più amate'), d.topRecipes.length ? h('ol', d.topRecipes.map(r => h('li', `${r.name} — ${r.n} ❤`))) : h('p.muted.small', 'Ancora nessuna preferita.')),
-        h('div.panel', h('h3', 'Prodotti più presenti negli spazi'), d.topProducts.length ? h('ol', d.topProducts.map(r => h('li', `${r.name} (${r.n})`))) : h('p.muted.small', 'Ancora nessun prodotto.'))),
-      h('p.small.muted', { style: { marginTop: '16px' } }, 'I dati sono aggregati: il portale non mostra il contenuto degli spazi e delle liste dei singoli utenti.'));
+      pageHead(t('Overview'), t('Aggregated numbers: the portal never shows the content of users’ spaces and lists.')),
+      h('div.kpis',
+        kpi('person', s.users, t('Registered users'), t('+{n} in the last 7 days', { n: s.usersNew7 })),
+        kpi('timer', s.usersActive30, t('Active users (30 days)')),
+        kpi('shield', s.admins, t('Administrators'), t('including the master admin')),
+        kpi('home', s.households, t('Households'), t('{n} shared by several users', { n: s.sharedHouseholds })),
+        kpi('spaces', s.items, t('Products in spaces'), t('{n} expired', { n: s.expired })),
+        kpi('list', s.lists, t('Shopping lists')),
+        kpi('restaurant', s.recipes, t('Recipes'), t('{n} published', { n: s.recipesPublished })),
+        kpi('category', s.products, t('Catalogue products')),
+        kpi('heart', s.favorites, t('Recipes saved as favourites'))),
+      h('div.panels',
+        h('div.panel', h('h3', t('Most loved recipes')), bars(d.topRecipes, n => n + ' ♥')),
+        h('div.panel', h('h3', t('Most common products in spaces')), bars(d.topProducts, n => String(n)))));
   }
 
-  // ---------------------------------------------------------------- recipes
+  // ================================================================ recipes
 
-  let recipeQuery = '';
+  const recipeState = { q: '', status: '', sort: { key: 'name', dir: 1 } };
   async function vRecipes() {
     const d = await Api.get('admin.recipes');
-    const q = input({ type: 'search', value: recipeQuery, placeholder: 'Cerca ricetta' });
-    const body = h('tbody');
+    counts.recipes = d.recipes.length;
+    const table = h('div');
     function paint() {
-      UI.clear(body);
-      const n = norm(recipeQuery);
-      d.recipes.filter(r => !n || norm(r.name).includes(n)).forEach(r => body.appendChild(h('tr.click', { onclick: () => openRecipe(r, d) },
-        h('td', h('div.thumb', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } })),
-        h('td', h('strong', r.name), h('div.small.muted', r.description)),
-        h('td.hide-sm', `${r.ingredients.length} ingr. · ${r.steps.length} passaggi`),
-        h('td.hide-sm', ((r.prepMinutes || 0) + (r.cookMinutes || 0)) + ' min'),
-        h('td.num', String(d.favorites[r.id] || 0) + ' ❤'),
-        h('td', r.published ? h('span.tag.green', 'Pubblicata') : h('span.tag', 'Bozza')))));
-      if (!body.children.length) body.appendChild(h('tr', h('td', { colspan: 6 }, h('p.muted.center', 'Nessuna ricetta'))));
+      const n = norm(recipeState.q);
+      const rows = d.recipes.filter(r => (!n || norm(r.name).includes(n) || norm((r.i18n.en || {}).name || '').includes(n))
+        && (!recipeState.status || (recipeState.status === 'pub') === r.published));
+      table.replaceChildren(dataTable([
+        { key: 'img', label: '', render: r => h('div.thumb', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } }) },
+        { key: 'name', label: t('Recipe'), sort: r => r.name, render: r => [h('div.title', r.name), h('div.sub', (r.i18n.en || {}).name ? '🇬🇧 ' + r.i18n.en.name : r.description)] },
+        { key: 'ing', label: t('Content'), sort: r => r.ingredients.length, render: r => t('{a} ingredients · {b} steps', { a: r.ingredients.length, b: r.steps.length }) },
+        { key: 'time', label: t('Time'), num: true, sort: r => (r.prepMinutes || 0) + (r.cookMinutes || 0), render: r => ((r.prepMinutes || 0) + (r.cookMinutes || 0)) + ' min' },
+        { key: 'lang', label: t('Languages'), render: r => translatedFlags(r, ['name']) },
+        { key: 'fav', label: '♥', num: true, sort: r => d.favorites[r.id] || 0, render: r => String(d.favorites[r.id] || 0) },
+        { key: 'pub', label: t('Status'), sort: r => r.published ? 1 : 0, render: r => r.published ? chip(t('Published'), 'ok') : chip(t('Draft'), 'neutral') },
+        { key: 'act', label: '', cls: 'actions', render: r => [iconBtn('edit', t('Edit'), () => openRecipe(r, d)), menuBtn([
+          { icon: 'edit', label: t('Edit'), onclick: () => openRecipe(r, d) },
+          { icon: 'copy', label: t('Duplicate'), onclick: () => openRecipe(Object.assign(JSON.parse(JSON.stringify(r)), { id: 0, name: r.name + ' (' + t('copy') + ')', published: false }), d) },
+          { icon: r.published ? 'eye' : 'check', label: r.published ? t('Unpublish') : t('Publish'), onclick: () => saveRecipe(Object.assign({}, r, { published: !r.published })).then(render) },
+          '-',
+          { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteRecipe(r) },
+        ])] },
+      ], rows, { state: recipeState.sort, onrow: r => openRecipe(r, d), empty: t('No recipes') }));
     }
-    q.addEventListener('input', () => { recipeQuery = q.value; paint(); });
     paint();
     return h('div',
-      h('div.adm-toolbar', h('h2', `Ricette (${d.recipes.length})`), h('div.search-box', icon('search'), q), btn('Nuova ricetta', { icon: 'add', onclick: () => openRecipe(null, d) })),
-      h('div.tbl-wrap', h('table.tbl', h('thead', h('tr', h('th', ''), h('th', 'Ricetta'), h('th.hide-sm', 'Contenuto'), h('th.hide-sm', 'Tempo'), h('th', 'Preferite'), h('th', 'Stato'))), body)));
+      pageHead(t('Recipes'), t('Recipes shown to every user, with ingredients linked to the catalogue so the app can tell what they already have.'), [btn(t('New recipe'), { icon: 'add', onclick: () => openRecipe(null, d) })]),
+      h('div.toolbar', searchInput(recipeState.q, t('Search recipe'), v => { recipeState.q = v; paint(); }),
+        sel([{ value: '', label: t('All statuses') }, { value: 'pub', label: t('Published') }, { value: 'draft', label: t('Drafts') }], recipeState.status, { onchange: e => { recipeState.status = e.target.value; paint(); } }),
+        h('span.meta', t('{n} recipes', { n: d.recipes.length }))),
+      table);
   }
 
-  function openRecipe(r, d) {
-    r = r ? JSON.parse(JSON.stringify(r)) : { id: 0, name: '', description: '', image: '', prepMinutes: 15, cookMinutes: null, cookNotes: '', servings: 2, difficulty: 'facile', published: true, ingredients: [], steps: [] };
-    const name = input({ value: r.name, maxlength: 120 });
-    const desc = textarea({ value: r.description, maxlength: 500, rows: 2 });
-    const prep = input({ type: 'number', min: 0, value: r.prepMinutes ?? '' });
-    const cook = input({ type: 'number', min: 0, value: r.cookMinutes ?? '' });
-    const cookNotes = input({ value: r.cookNotes, maxlength: 255 });
-    const servings = input({ type: 'number', min: 1, max: 50, value: r.servings });
-    const diff = select([['facile', 'Facile'], ['media', 'Media'], ['difficile', 'Difficile']].map(([v, l]) => ({ value: v, label: l })), r.difficulty);
-    const pub = h('input', { type: 'checkbox', checked: r.published });
-    let image = r.image;
-    const preview = h('div.img-preview');
-    const paintImg = () => { preview.style.backgroundImage = image ? `url("${image}")` : 'none'; preview.textContent = image ? '' : 'Nessuna immagine'; };
+  function saveRecipe(r) {
+    return Api.post('admin.recipe.save', {
+      id: r.id, name: r.name, description: r.description, image: r.image, prepMinutes: r.prepMinutes, cookMinutes: r.cookMinutes, cookNotes: r.cookNotes,
+      servings: r.servings, difficulty: r.difficulty, published: r.published, i18n: r.i18n, steps: r.steps,
+      ingredients: r.ingredients.map(i => ({ productId: i.productId, name: i.name, quantity: i.quantity, unit: i.unit, notes: i.notes, i18n: i.i18n })),
+    });
+  }
+
+  async function deleteRecipe(r) {
+    if (!await confirmDlg(t('Delete the recipe?'), t('“{name}” will be deleted, also from users’ favourites and meal plans.', { name: r.name }), t('Delete'), true)) return;
+    try { await Api.post('admin.recipe.delete', { id: r.id }); toast(t('Recipe deleted')); render(); } catch (e) { toast(e.message, 'error'); }
+  }
+
+  function openRecipe(src, d) {
+    const r = src ? JSON.parse(JSON.stringify(src)) : { id: 0, name: '', description: '', image: '', prepMinutes: 15, cookMinutes: null, cookNotes: '', servings: 2, difficulty: 'facile', published: true, ingredients: [], steps: [], i18n: {} };
+    r.i18n = (r.i18n && !Array.isArray(r.i18n)) ? r.i18n : {};
+    if (!r.i18n.en) r.i18n.en = {};
+    r.ingredients.forEach(i => { if (!i.i18n || Array.isArray(i.i18n)) i.i18n = {}; });
+    const prodByName = name => d.products.find(p => norm(p.name) === norm(name));
+    const datalist = h('datalist#ft-prod', d.products.map(p => h('option', { value: p.name })));
+
+    // --- Details
+    const prep = inp({ type: 'number', min: 0, value: r.prepMinutes ?? '' });
+    const cook = inp({ type: 'number', min: 0, value: r.cookMinutes ?? '' });
+    const servings = inp({ type: 'number', min: 1, max: 50, value: r.servings });
+    const diff = sel(Object.entries(DIFFICULTY).map(([v, l]) => ({ value: v, label: t(l) })), r.difficulty);
+    const pub = toggle(t('Published (visible to all users)'), r.published);
+    const prev = h('div.prev');
+    const paintImg = () => { prev.style.backgroundImage = r.image ? `url("${r.image}")` : 'none'; UI.clear(prev); if (!r.image) prev.appendChild(icon('image')); };
     paintImg();
     const file = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp', hidden: true });
-    const upBtn = btn('Carica immagine', { kind: 'tonal', icon: 'upload', onclick: () => file.click() });
+    const up = btn(t('Upload image'), { kind: 'tonal', icon: 'upload', onclick: () => file.click() });
     file.addEventListener('change', async () => {
       if (!file.files[0]) return;
       const fd = new FormData(); fd.append('image', file.files[0]);
-      try { const res = await busy(upBtn, () => Api.upload('admin.recipe.image', fd)); image = res.image; paintImg(); toast('Immagine caricata: ricordati di salvare la ricetta'); }
-      catch (e) { /* toast shown */ }
+      try { const res = await busy(up, () => Api.upload('admin.recipe.image', fd)); r.image = res.image; paintImg(); toast(t('Image uploaded: remember to save the recipe')); } catch (e) { /* toast already shown */ }
       file.value = '';
     });
+    const details = h('div',
+      langTabs(lang => h('div',
+        trField(r, r.i18n, 'name', 'name', t('Name'))(lang),
+        trField(r, r.i18n, 'description', 'description', t('Short description'), 2)(lang),
+        trField(r, r.i18n, 'cookNotes', 'cook_notes', t('Cooking notes'), 0, t('For example: “Conventional oven, 180 °C for 45 minutes”'))(lang))),
+      h('div.f', h('span.lbl', t('Image')), h('div.img-drop', prev, h('div', h('div.row', up, btn(t('Remove'), { kind: 'text', onclick: () => { r.image = ''; paintImg(); } })), h('div.help', t('JPG, PNG or WebP, up to 6 MB. It is resized automatically.'))), file)),
+      h('div.f-row', f(t('Preparation (min)'), prep), f(t('Cooking (min)'), cook), f(t('Servings'), servings), f(t('Difficulty'), diff)),
+      pub.el);
 
-    const prodNames = h('datalist#ft-prod-list', d.products.map(p => h('option', { value: p.name })));
-    const ingWrap = h('div');
-    const ingRows = [];
-    function addIng(ing) {
-      ing = ing || { name: '', quantity: null, unit: 'g', notes: '' };
-      const nm = input({ value: ing.name, list: 'ft-prod-list', maxlength: 80 });
-      const qt = input({ type: 'number', min: 0, step: 'any', value: ing.quantity ?? '' });
-      const un = select(UNITS.concat(UNITS.includes(ing.unit) ? [] : [ing.unit]).map(u => ({ value: u, label: u })), ing.unit);
-      const nt = input({ value: ing.notes || '', maxlength: 255 });
-      const row = { nm, qt, un, nt };
-      const el = h('div.ed-row', field('Ingrediente', nm), field('Q.tà', qt), field('Unità', un), field('Note', nt),
-        h('div.acts', iconBtn('delete', 'Rimuovi', () => { ingRows.splice(ingRows.indexOf(row), 1); el.remove(); }, 'sm')));
-      nm.addEventListener('change', () => { const p = d.products.find(x => norm(x.name) === norm(nm.value)); if (p && !qt.value) un.value = p.unit; });
-      row.el = el; ingRows.push(row); ingWrap.appendChild(el);
+    // --- Ingredients
+    const ingBody = h('tbody');
+    function ingRow(ing) {
+      const name = inp({ value: ing.name, list: 'ft-prod', placeholder: t('Catalogue product or free text') });
+      const qty = inp({ type: 'number', min: 0, step: 'any', value: ing.quantity ?? '' });
+      const unit = sel(d.units.concat(d.units.includes(ing.unit) ? [] : [ing.unit]).map(u => ({ value: u, label: UI.unitLabel(u) })), ing.unit || 'g');
+      const notes = inp({ value: ing.notes || '', placeholder: t('Notes (Italian)') });
+      const notesEn = inp({ value: (ing.i18n.en || {}).notes || '', placeholder: t('Notes (English)') });
+      const linked = h('span');
+      const paintLink = () => { const p = prodByName(name.value); linked.replaceChildren(p ? tile('products', p.icon, 'sm') : h('span.tile.tile-sm', { title: t('Not linked to the catalogue') }, icon('link'))); };
+      paintLink();
+      name.addEventListener('input', paintLink);
+      name.addEventListener('change', () => { const p = prodByName(name.value); if (p && !qty.value) unit.value = p.unit; });
+      const tr = h('tr', h('td.drag', linked), h('td', name), h('td', { style: { width: '90px' } }, qty), h('td', { style: { width: '120px' } }, unit), h('td', notes), h('td', notesEn),
+        h('td.del', iconBtn('delete', t('Remove'), () => tr.remove())));
+      tr._get = () => {
+        const p = prodByName(name.value);
+        return name.value.trim() ? { productId: p ? p.id : null, name: name.value.trim(), quantity: qty.value, unit: unit.value, notes: notes.value, i18n: notesEn.value.trim() ? { en: { notes: notesEn.value.trim() } } : {} } : null;
+      };
+      ingBody.appendChild(tr);
     }
-    r.ingredients.forEach(addIng);
+    r.ingredients.forEach(ingRow);
+    if (!r.ingredients.length) ingRow({ name: '', unit: 'g', i18n: {} });
+    const ingredients = h('div',
+      h('div.notice', icon('info'), h('span', t('Pick names from the catalogue (suggested while typing): linked ingredients show an icon and let the app check what users already have.'))),
+      datalist,
+      h('table.ed-table', h('thead', h('tr', h('th', ''), h('th', t('Ingredient')), h('th', t('Qty')), h('th', t('Unit')), h('th', t('Notes') + ' (IT)'), h('th', t('Notes') + ' (EN)'), h('th', ''))), ingBody),
+      h('div', { style: { marginTop: '8px' } }, btn(t('Add ingredient'), { kind: 'text', icon: 'add', onclick: () => ingRow({ name: '', unit: 'g', i18n: {} }) })));
 
-    const stepWrap = h('div');
-    const stepRows = [];
-    function renumber() { stepRows.forEach((s, i) => { s.n.textContent = (i + 1) + '.'; }); }
-    function addStep(text) {
-      const ta = textarea({ value: text || '', rows: 2, maxlength: 1000 });
-      const n = h('span.n');
-      const row = { ta, n };
-      const el = h('div.step-row', n, field('Passaggio', ta),
-        h('div', { style: { paddingTop: '8px' } },
-          iconBtn('left', 'Sposta su', () => { const i = stepRows.indexOf(row); if (i > 0) { stepRows.splice(i, 1); stepRows.splice(i - 1, 0, row); stepWrap.insertBefore(el, el.previousSibling); renumber(); } }, 'sm'),
-          iconBtn('delete', 'Rimuovi', () => { stepRows.splice(stepRows.indexOf(row), 1); el.remove(); renumber(); }, 'sm')));
-      row.el = el; stepRows.push(row); stepWrap.appendChild(el); renumber();
-    }
-    r.steps.forEach(addStep);
-    if (!r.id) { addIng(); addStep(''); }
-
-    const save = btn('Salva ricetta', { icon: 'save', onclick: async () => {
-      if (!name.value.trim()) { toast('Inserisci il nome della ricetta.', 'error'); return; }
-      const ingredients = ingRows.filter(x => x.nm.value.trim()).map(x => {
-        const p = d.products.find(pp => norm(pp.name) === norm(x.nm.value));
-        return { productId: p ? p.id : null, name: x.nm.value.trim(), quantity: x.qt.value, unit: x.un.value, notes: x.nt.value };
-      });
-      const unlinked = ingredients.filter(i => !i.productId).map(i => i.name);
-      await busy(save, () => Api.post('admin.recipe.save', {
-        id: r.id, name: name.value, description: desc.value, image, prepMinutes: prep.value, cookMinutes: cook.value, cookNotes: cookNotes.value,
-        servings: servings.value, difficulty: diff.value, published: pub.checked, ingredients, steps: stepRows.map(s => s.ta.value),
-      }));
-      s.close();
-      toast(unlinked.length ? `Salvata. Non collegati al catalogo: ${unlinked.join(', ')} (la disponibilità verrà calcolata solo per nome)` : 'Ricetta salvata');
-      setTimeout(render, 250);
-    } });
-
-    const s = sheet({
-      title: r.id ? 'Modifica ricetta' : 'Nuova ricetta', persistent: true,
-      body: [
-        prodNames,
-        field('Nome', name), field('Descrizione breve', desc),
-        preview, h('div.row', { style: { gap: '8px' } }, upBtn, image ? btn('Rimuovi immagine', { kind: 'text', onclick: () => { image = ''; paintImg(); } }) : null, file),
-        h('div.field-row', field('Preparazione (min)', prep), field('Cottura (min)', cook)),
-        field('Note di cottura', cookNotes, { hint: 'Ad esempio: «Forno statico, 180 °C per 45 minuti»' }),
-        h('div.field-row', field('Porzioni', servings), field('Difficoltà', diff)),
-        h('label.check', pub, h('span', 'Pubblicata (visibile a tutti gli utenti nell’app)')),
-        h('h3.sub', 'Ingredienti'),
-        h('p.small.muted', 'Scegli il nome dal catalogo dei prodotti (suggerito mentre scrivi): così l’app può calcolare cosa l’utente ha già in casa.'),
-        ingWrap, btn('Aggiungi ingrediente', { kind: 'text', icon: 'add', onclick: () => addIng() }),
-        h('h3.sub', 'Procedimento'),
-        stepWrap, btn('Aggiungi passaggio', { kind: 'text', icon: 'add', onclick: () => addStep('') }),
-      ],
-      actions: [
-        r.id ? btn('Elimina', { kind: 'danger-text', icon: 'delete', onclick: async () => {
-          if (!await confirm('Eliminare la ricetta?', `«${r.name}» verrà eliminata, anche dalle preferite e dai piani degli utenti.`, 'Elimina', true)) return;
-          await Api.post('admin.recipe.delete', { id: r.id }); s.close(); toast('Ricetta eliminata'); setTimeout(render, 250);
-        } }) : null,
-        btn('Annulla', { kind: 'text', onclick: () => s.close() }), save,
-      ].filter(Boolean),
+    // --- Steps (per language)
+    const stepsBy = { it: r.steps.slice(), en: (r.i18n.en.steps || []).slice() };
+    const steps = langTabs(lang => {
+      const wrap = h('div');
+      const list = stepsBy[lang];
+      function paintS() {
+        UI.clear(wrap);
+        if (lang !== CONTENT_BASE) wrap.appendChild(h('div.notice', icon('info'), h('span', t('Leave the steps empty to show the Italian ones.'))));
+        list.forEach((text, i) => {
+          const ta = area({ value: text, rows: 2, placeholder: lang !== CONTENT_BASE ? (stepsBy.it[i] || '') : '' });
+          ta.addEventListener('input', () => { list[i] = ta.value; });
+          wrap.appendChild(h('table.ed-table', h('tbody', h('tr', h('td.drag', String(i + 1)), h('td', ta), h('td.del',
+            iconBtn('up', t('Move up'), () => { if (i > 0) { [list[i - 1], list[i]] = [list[i], list[i - 1]]; paintS(); } }),
+            iconBtn('delete', t('Remove'), () => { list.splice(i, 1); paintS(); }))))));
+        });
+        wrap.appendChild(btn(t('Add step'), { kind: 'text', icon: 'add', onclick: () => { list.push(''); paintS(); setTimeout(() => { const all = wrap.querySelectorAll('textarea'); if (all.length) all[all.length - 1].focus(); }, 0); } }));
+      }
+      paintS();
+      return wrap;
     });
-    s.panel.classList.add('wide');
+
+    const sections = { details: [t('Details'), details], ingredients: [t('Ingredients'), ingredients], steps: [t('Method'), steps] };
+    let cur = 'details';
+    const holder = h('div');
+    const tabsEl = h('div.tabs-h', Object.entries(sections).map(([k, [label]]) => h('button' + (k === cur ? '.sel' : ''), { type: 'button', onclick: e => {
+      cur = k; tabsEl.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b === e.currentTarget)); holder.replaceChildren(sections[k][1]);
+    } }, label)));
+    holder.appendChild(details);
+
+    const save = btn(t('Save recipe'), { icon: 'save', onclick: async () => {
+      if (!(r.name || '').trim()) { toast(t('Enter the recipe name.'), 'error'); return; }
+      r.prepMinutes = prep.value; r.cookMinutes = cook.value; r.servings = servings.value; r.difficulty = diff.value; r.published = pub.checked;
+      r.ingredients = [...ingBody.children].map(tr => tr._get()).filter(Boolean);
+      r.steps = stepsBy.it.filter(s => s.trim());
+      r.i18n.en.steps = stepsBy.en.filter(s => s.trim());
+      const unlinked = r.ingredients.filter(i => !i.productId).map(i => i.name);
+      await busy(save, () => saveRecipe(r));
+      dlg.close();
+      toast(unlinked.length ? t('Saved. Not linked to the catalogue: {list}', { list: unlinked.join(', ') }) : t('Recipe saved'));
+      render();
+    } });
+    const dlg = dialog({
+      title: r.id ? t('Edit recipe') : t('New recipe'), drawer: true, persistent: true,
+      body: [tabsEl, holder],
+      actions: [r.id ? btn(t('Delete'), { kind: 'danger-text', icon: 'delete', cls: 'left', onclick: () => { dlg.close(); deleteRecipe(r); } }) : null, btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save].filter(Boolean),
+    });
   }
 
-  // ---------------------------------------------------------------- products
+  // ================================================================ products
 
-  let prodQuery = '', prodCat = '';
+  const prodState = { q: '', cat: '', sort: { key: 'name', dir: 1 } };
   async function vProducts() {
     const d = await Api.get('admin.catalog');
+    counts.products = d.products.length;
     const catName = id => (d.categories.find(c => c.id === id) || {}).name || '—';
-    const q = input({ type: 'search', value: prodQuery, placeholder: 'Cerca prodotto' });
-    const cat = select([{ value: '', label: 'Tutte le categorie' }].concat(d.categories.map(c => ({ value: c.id, label: c.name }))), prodCat);
-    const body = h('tbody');
+    const table = h('div');
     function paint() {
-      UI.clear(body);
-      const n = norm(prodQuery);
-      d.products.filter(p => (!n || norm(p.name).includes(n)) && (!prodCat || String(p.categoryId) === String(prodCat))).forEach(p => body.appendChild(h('tr.click', { onclick: () => openProduct(p, d) },
-        h('td', pic('products', p.icon, 'sm')), h('td', h('strong', p.name)), h('td', catName(p.categoryId)), h('td.hide-sm', p.unit),
-        h('td.hide-sm', p.expiryTip ? h('span.tag.green', 'Sì') : h('span.tag', 'Categoria')),
-        h('td.num.hide-sm', String(d.usage[p.id] || 0)),
-        h('td', p.active ? h('span.tag.green', 'Attivo') : h('span.tag', 'Nascosto')))));
+      const n = norm(prodState.q);
+      const rows = d.products.filter(p => (!n || norm(p.name).includes(n) || norm((p.i18n.en || {}).name || '').includes(n)) && (!prodState.cat || String(p.categoryId) === prodState.cat));
+      table.replaceChildren(dataTable([
+        { key: 'icon', label: '', render: p => tile('products', p.icon, 'sm') },
+        { key: 'name', label: t('Name'), sort: p => p.name, render: p => [h('div.title', p.name), (p.i18n.en || {}).name ? h('div.sub', p.i18n.en.name) : null] },
+        { key: 'cat', label: t('Category'), sort: p => catName(p.categoryId), render: p => catName(p.categoryId) },
+        { key: 'unit', label: t('Unit'), sort: p => p.unit, render: p => UI.unitLabel(p.unit) },
+        { key: 'tip', label: t('Expiry info'), sort: p => p.expiryTip ? 1 : 0, render: p => p.expiryTip ? chip(t('Specific'), 'ok') : chip(t('From category'), 'neutral') },
+        { key: 'lang', label: t('Languages'), render: p => translatedFlags(p, ['name']) },
+        { key: 'use', label: t('In recipes'), num: true, sort: p => d.usage[p.id] || 0, render: p => String(d.usage[p.id] || 0) },
+        { key: 'act', label: t('Status'), sort: p => p.active ? 1 : 0, render: p => p.active ? chip(t('Active'), 'ok') : chip(t('Hidden'), 'neutral') },
+        { key: 'menu', label: '', cls: 'actions', render: p => [iconBtn('edit', t('Edit'), () => openProduct(p, d)), menuBtn([
+          { icon: 'edit', label: t('Edit'), onclick: () => openProduct(p, d) },
+          '-',
+          { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteProduct(p) },
+        ])] },
+      ], rows, { state: prodState.sort, onrow: p => openProduct(p, d), empty: t('No products') }));
     }
-    q.addEventListener('input', () => { prodQuery = q.value; paint(); });
-    cat.addEventListener('change', () => { prodCat = cat.value; paint(); });
     paint();
     return h('div',
-      h('div.adm-toolbar', h('h2', `Catalogo prodotti (${d.products.length})`), h('div.search-box', icon('search'), q), field('Categoria', cat), btn('Nuovo prodotto', { icon: 'add', onclick: () => openProduct(null, d) })),
-      h('div.notice', 'Il catalogo serve a suggerire i prodotti quando gli utenti li aggiungono (con icona, categoria e unità), a collegare gli ingredienti delle ricette e a mostrare le informazioni sulla scadenza.'),
-      tbl([['', ''], ['Nome'], ['Categoria'], ['Unità', 'hide-sm'], ['Info scadenza', 'hide-sm'], ['Nelle ricette', 'hide-sm num'], ['Stato']], body));
+      pageHead(t('Product catalogue'), t('Suggested when users add products (with icon, category and unit), linked to recipe ingredients and used for the expiry information.'), [btn(t('New product'), { icon: 'add', onclick: () => openProduct(null, d) })]),
+      h('div.toolbar', searchInput(prodState.q, t('Search product'), v => { prodState.q = v; paint(); }),
+        sel([{ value: '', label: t('All categories') }].concat(d.categories.map(c => ({ value: c.id, label: c.name }))), prodState.cat, { onchange: e => { prodState.cat = e.target.value; paint(); } }),
+        h('span.meta', t('{n} products', { n: d.products.length }))),
+      table);
   }
 
-  function openProduct(p, d) {
-    p = p || { id: 0, name: '', icon: 'generic', categoryId: null, unit: 'pz', expiryTip: '', active: true };
-    let ic = p.icon;
-    const name = input({ value: p.name, maxlength: 80 });
-    const cat = select([{ value: '', label: '—' }].concat(d.categories.map(c => ({ value: c.id, label: c.name }))), p.categoryId ?? '');
-    const unit = select(d.units.map(u => ({ value: u, label: u })), p.unit);
-    const tip = textarea({ value: p.expiryTip || '', rows: 4, maxlength: 2000 });
-    const active = h('input', { type: 'checkbox', checked: p.active });
-    const save = btn('Salva', { icon: 'save', onclick: async () => {
-      await busy(save, () => Api.post('admin.product.save', { id: p.id, name: name.value, icon: ic, categoryId: cat.value || null, unit: unit.value, expiryTip: tip.value, active: active.checked }));
-      s.close(); toast('Prodotto salvato'); setTimeout(render, 250);
+  async function deleteProduct(p) {
+    if (!await confirmDlg(t('Delete the product?'), t('Products already in users’ spaces stay, but they will no longer be linked to the catalogue. To only hide it, turn “Active” off.'), t('Delete'), true)) return;
+    try { await Api.post('admin.product.delete', { id: p.id }); toast(t('Product deleted')); render(); } catch (e) { toast(e.message, 'error'); }
+  }
+
+  function iconGrid(names, value, onchange) {
+    let cur = value;
+    const g = h('div.icon-grid', { role: 'radiogroup' });
+    for (const n of names) {
+      const b = h('button' + (n === cur ? '.sel' : ''), { type: 'button', title: UI.iconLabel('products', n), onclick: () => { cur = n; g.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b)); onchange(n); } }, UI.pic('products', n));
+      g.appendChild(b);
+    }
+    return g;
+  }
+
+  function openProduct(src, d) {
+    const p = src ? JSON.parse(JSON.stringify(src)) : { id: 0, name: '', icon: 'generic', categoryId: null, unit: 'pz', expiryTip: '', active: true, i18n: {} };
+    if (!p.i18n || Array.isArray(p.i18n)) p.i18n = {};
+    const cat = sel([{ value: '', label: '—' }].concat(d.categories.map(c => ({ value: c.id, label: c.name }))), p.categoryId ?? '');
+    const unit = sel(d.units.map(u => ({ value: u, label: UI.unitLabel(u) })), p.unit);
+    const active = toggle(t('Active (suggested to users)'), p.active);
+    const save = btn(t('Save'), { icon: 'save', onclick: async () => {
+      if (!(p.name || '').trim()) { toast(t('Enter the product name.'), 'error'); return; }
+      await busy(save, () => Api.post('admin.product.save', { id: p.id, name: p.name, icon: p.icon, categoryId: cat.value || null, unit: unit.value, expiryTip: p.expiryTip, active: active.checked, i18n: p.i18n }));
+      dlg.close(); toast(t('Product saved')); render();
     } });
-    const s = sheet({
-      title: p.id ? 'Modifica prodotto' : 'Nuovo prodotto',
-      body: [field('Nome', name), h('div.field-row', field('Categoria', cat), field('Unità predefinita', unit)),
-        h('p.small.muted', { style: { margin: '6px 2px' } }, 'Icona'),
-        (() => { const w = h('div.icon-picker.products'); d.icons.forEach(x => { const b = h('button' + (x === ic ? '.sel' : ''), { type: 'button', title: x, onclick: () => { ic = x; w.querySelectorAll('button').forEach(y => y.classList.toggle('sel', y === b)); } }, pic('products', x)); w.appendChild(b); }); return w; })(),
-        field('Informazioni sulla scadenza', tip, { hint: 'Consigli mostrati quando il prodotto è in scadenza o scaduto. Se vuoto, si usano quelli della categoria.' }),
-        h('label.check', active, h('span', 'Attivo (suggerito agli utenti)'))],
-      actions: [
-        p.id ? btn('Elimina', { kind: 'danger-text', icon: 'delete', onclick: async () => {
-          if (!await confirm('Eliminare il prodotto?', 'I prodotti già presenti negli spazi degli utenti restano, ma non saranno più collegati al catalogo. Per nasconderlo soltanto, togli la spunta «Attivo».', 'Elimina', true)) return;
-          await Api.post('admin.product.delete', { id: p.id }); s.close(); toast('Prodotto eliminato'); setTimeout(render, 250);
-        } }) : null,
-        btn('Annulla', { kind: 'text', onclick: () => s.close() }), save].filter(Boolean),
+    const dlg = dialog({
+      title: p.id ? t('Edit product') : t('New product'), size: 'lg',
+      body: [
+        langTabs(lang => h('div',
+          trField(p, p.i18n, 'name', 'name', t('Name'))(lang),
+          trField(p, p.i18n, 'expiryTip', 'expiry_tip', t('Expiry information'), 3, t('Tips shown when the product is expiring or expired. If empty, the category ones are used.'))(lang))),
+        h('div.f-row', f(t('Category'), cat), f(t('Default unit'), unit)),
+        h('div.f', h('span.lbl', t('Icon')), iconGrid(d.icons, p.icon, v => { p.icon = v; })),
+        active.el,
+      ],
+      actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save],
     });
   }
 
-  // ---------------------------------------------------------------- categories
+  // ================================================================ categories
 
   async function vCategories() {
     const d = await Api.get('admin.catalog');
     const count = id => d.products.filter(p => p.categoryId === id).length;
     return h('div',
-      h('div.adm-toolbar', h('h2', `Categorie (${d.categories.length})`), btn('Nuova categoria', { icon: 'add', onclick: () => openCategory(null) })),
-      tbl([['Ordine', 'num'], ['Nome'], ['Prodotti', 'num'], ['Informazioni sulla scadenza']],
-        d.categories.map(c => h('tr.click', { onclick: () => openCategory(c) }, h('td.num', String(c.sort)), h('td', h('strong', c.name)), h('td.num', String(count(c.id))), h('td.small', (c.expiryTip || '—').slice(0, 140) + ((c.expiryTip || '').length > 140 ? '…' : ''))))));
+      pageHead(t('Categories'), t('Groups of the catalogue, each with general expiry tips used when a product has none.'), [btn(t('New category'), { icon: 'add', onclick: () => openCategory(null) })]),
+      dataTable([
+        { key: 'sort', label: t('Order'), num: true, sort: c => c.sort, render: c => String(c.sort) },
+        { key: 'name', label: t('Name'), sort: c => c.name, render: c => [h('div.title', c.name), (c.i18n.en || {}).name ? h('div.sub', c.i18n.en.name) : null] },
+        { key: 'n', label: t('Products'), num: true, sort: c => count(c.id), render: c => String(count(c.id)) },
+        { key: 'tip', label: t('Expiry information'), render: c => h('div.sub', { style: { whiteSpace: 'normal', maxWidth: '560px' } }, c.expiryTip || '—') },
+        { key: 'lang', label: t('Languages'), render: c => translatedFlags(c, ['name', 'expiry_tip']) },
+        { key: 'menu', label: '', cls: 'actions', render: c => [iconBtn('edit', t('Edit'), () => openCategory(c)), menuBtn([
+          { icon: 'edit', label: t('Edit'), onclick: () => openCategory(c) }, '-',
+          { icon: 'delete', label: t('Delete'), danger: true, onclick: async () => {
+            if (!await confirmDlg(t('Delete the category?'), t('The products of this category will have no category.'), t('Delete'), true)) return;
+            try { await Api.post('admin.category.delete', { id: c.id }); render(); } catch (e) { toast(e.message, 'error'); }
+          } },
+        ])] },
+      ], d.categories, { sortKey: 'sort', onrow: openCategory }));
   }
 
-  function openCategory(c) {
-    c = c || { id: 0, name: '', sort: 100, expiryTip: '' };
-    const name = input({ value: c.name, maxlength: 60 });
-    const sort = input({ type: 'number', value: c.sort });
-    const tip = textarea({ value: c.expiryTip || '', rows: 5, maxlength: 2000 });
-    const save = btn('Salva', { icon: 'save', onclick: async () => {
-      await busy(save, () => Api.post('admin.category.save', { id: c.id, name: name.value, sort: sort.value, expiryTip: tip.value }));
-      s.close(); toast('Categoria salvata'); setTimeout(render, 250);
+  function openCategory(src) {
+    const c = src ? JSON.parse(JSON.stringify(src)) : { id: 0, name: '', sort: 100, expiryTip: '', i18n: {} };
+    if (!c.i18n || Array.isArray(c.i18n)) c.i18n = {};
+    const sort = inp({ type: 'number', value: c.sort });
+    const save = btn(t('Save'), { icon: 'save', onclick: async () => {
+      await busy(save, () => Api.post('admin.category.save', { id: c.id, name: c.name, sort: sort.value, expiryTip: c.expiryTip, i18n: c.i18n }));
+      dlg.close(); toast(t('Category saved')); render();
     } });
-    const s = sheet({
-      title: c.id ? 'Modifica categoria' : 'Nuova categoria',
-      body: [h('div.field-row', field('Nome', name), field('Ordine', sort)), field('Informazioni generiche sulla scadenza', tip)],
-      actions: [
-        c.id ? btn('Elimina', { kind: 'danger-text', icon: 'delete', onclick: async () => {
-          if (!await confirm('Eliminare la categoria?', 'I prodotti di questa categoria resteranno senza categoria.', 'Elimina', true)) return;
-          await Api.post('admin.category.delete', { id: c.id }); s.close(); setTimeout(render, 250);
-        } }) : null,
-        btn('Annulla', { kind: 'text', onclick: () => s.close() }), save].filter(Boolean),
+    const dlg = dialog({
+      title: c.id ? t('Edit category') : t('New category'), size: 'lg',
+      body: [langTabs(lang => h('div', trField(c, c.i18n, 'name', 'name', t('Name'))(lang), trField(c, c.i18n, 'expiryTip', 'expiry_tip', t('General expiry information'), 5)(lang))),
+        h('div.f-row', f(t('Order'), sort, t('Lower numbers come first.')))],
+      actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save],
     });
   }
 
-  // ---------------------------------------------------------------- users
+  // ================================================================ users
 
-  let userQuery = '', userRole = '';
+  const userState = { q: '', role: '', sort: { key: 'role', dir: -1 } };
   async function vUsers() {
     const d = await Api.get('admin.users');
-    const q = input({ type: 'search', value: userQuery, placeholder: 'Cerca nome o email' });
-    const role = select([{ value: '', label: 'Tutti' }, { value: '1', label: 'Utenti' }, { value: '9', label: 'Amministratori' }, { value: 'disabled', label: 'Disabilitati' }], userRole);
-    const body = h('tbody');
-    const roleTag = u => u.role >= 10 ? h('span.tag.gold', 'Master admin') : u.role >= 9 ? h('span.tag.green', 'Amministratore') : h('span.tag', 'Utente');
+    counts.users = d.users.length;
+    const roleChip = u => u.role >= 10 ? chip(t('Master admin'), 'warn', 'shield') : u.role >= 9 ? chip(t('Administrator'), 'ok', 'shield') : chip(t('User'), 'neutral');
+    const table = h('div');
     function paint() {
-      UI.clear(body);
-      const n = norm(userQuery);
-      d.users.filter(u => (!n || norm(u.name + ' ' + u.email).includes(n))
-        && (!userRole || (userRole === 'disabled' ? u.status === 'disabled' : userRole === '9' ? u.role >= 9 : u.role < 9)))
-        .forEach(u => body.appendChild(h('tr.click', { onclick: () => userActions(u) },
-          h('td', h('strong', u.name + (u.isMe ? ' (tu)' : '')), h('div.small.muted', u.email)),
-          h('td', roleTag(u)),
-          h('td', u.status === 'active' ? h('span.tag.green', 'Attivo') : h('span.tag.red', 'Disabilitato'), u.mustChangePassword ? h('div.small.muted', 'deve cambiare password') : null),
-          h('td.hide-sm', UI.fmtDateTime(u.createdAt)),
-          h('td.hide-sm', UI.fmtDateTime(u.lastSeenAt || u.lastLoginAt)),
-          h('td.num.hide-sm', String(u.households)))));
-      if (!body.children.length) body.appendChild(h('tr', h('td', { colspan: 6 }, h('p.muted.center', 'Nessun utente'))));
+      const n = norm(userState.q);
+      const rows = d.users.filter(u => (!n || norm(u.name + ' ' + u.email).includes(n))
+        && (!userState.role || (userState.role === 'disabled' ? u.status === 'disabled' : userState.role === '9' ? u.role >= 9 : u.role < 9)));
+      table.replaceChildren(dataTable([
+        { key: 'name', label: t('User'), sort: u => u.name, render: u => h('div.person', h('span.avatar', initials(u.name)), h('div', h('div.title', u.name + (u.isMe ? ' (' + t('you') + ')' : '')), h('div.sub', u.email))) },
+        { key: 'role', label: t('Role'), sort: u => u.role, render: roleChip },
+        { key: 'status', label: t('Status'), sort: u => u.status, render: u => [u.status === 'active' ? chip(t('Active'), 'ok') : chip(t('Disabled'), 'danger'), u.mustChangePassword ? h('div.sub', t('must change password')) : null] },
+        { key: 'login', label: t('Sign-in'), render: u => h('span.flag', h('span' + (u.hasPassword ? '.on' : ''), t('Password')), h('span' + (u.google ? '.on' : ''), 'Google')) },
+        { key: 'created', label: t('Registered'), sort: u => u.createdAt || '', render: u => UI.fmtDateTime(u.createdAt).split(' ')[0] },
+        { key: 'seen', label: t('Last seen'), sort: u => u.lastSeenAt || u.lastLoginAt || '', render: u => UI.fmtDateTime(u.lastSeenAt || u.lastLoginAt) },
+        { key: 'hh', label: t('Households'), num: true, sort: u => u.households, render: u => String(u.households) },
+        { key: 'menu', label: '', cls: 'actions', render: u => userMenu(u) },
+      ], rows, { state: userState.sort, onrow: u => { if (u.canManage) editUser(u); } }));
     }
-    q.addEventListener('input', () => { userQuery = q.value; paint(); });
-    role.addEventListener('change', () => { userRole = role.value; paint(); });
     paint();
     return h('div',
-      h('div.adm-toolbar', h('h2', `Utenti (${d.users.length})`), h('div.search-box', icon('search'), q), field('Ruolo', role), btn('Nuovo utente', { icon: 'add', onclick: createUser })),
-      h('div.notice', me.isMaster
-        ? 'Sei il master admin: puoi gestire utenti e amministratori, e cedere il ruolo di master admin a un altro account (ce n’è sempre uno solo).'
-        : 'Come amministratore puoi gestire gli utenti. Solo il master admin può nominare, modificare o rimuovere gli amministratori.'),
-      tbl([['Utente'], ['Ruolo'], ['Stato'], ['Registrato', 'hide-sm'], ['Ultimo accesso', 'hide-sm'], ['Case', 'num hide-sm']], body));
+      pageHead(t('Users'), me.isMaster
+        ? t('You are the master admin: you manage users and administrators and can hand over the master role (there is always exactly one).')
+        : t('As an administrator you manage users. Only the master admin can appoint, edit or remove administrators.'),
+        [btn(t('New user'), { icon: 'add', onclick: createUser })]),
+      h('div.toolbar', searchInput(userState.q, t('Search name or email'), v => { userState.q = v; paint(); }),
+        sel([{ value: '', label: t('All roles') }, { value: '1', label: t('Users') }, { value: '9', label: t('Administrators') }, { value: 'disabled', label: t('Disabled') }], userState.role, { onchange: e => { userState.role = e.target.value; paint(); } }),
+        h('span.meta', t('{n} users', { n: d.users.length }))),
+      table);
+  }
+
+  function userMenu(u) {
+    const items = [
+      u.canManage ? { icon: 'edit', label: t('Edit'), onclick: () => editUser(u) } : null,
+      u.canManage ? { icon: 'lock', label: t('Reset password'), onclick: async () => {
+        if (!await confirmDlg(t('Reset the password?'), t('{name} will be signed out of every device and will have to sign in with a temporary password.', { name: u.name }), t('Reset'))) return;
+        try { const d = await Api.post('admin.user.reset_password', { id: u.id }); showPassword(t('Temporary password'), d.password, u.name); } catch (e) { toast(e.message, 'error'); }
+      } } : null,
+      me.isMaster && u.status === 'active' && !u.isMe ? { icon: 'shield', label: t('Make master admin'), onclick: () => transferMaster(u) } : null,
+      u.canManage ? '-' : null,
+      u.canManage ? { icon: 'delete', label: t('Delete account'), danger: true, onclick: async () => {
+        if (!await confirmDlg(t('Delete the account?'), t('The account of {name} ({email}) will be deleted permanently, together with the households where they are the only member.', { name: u.name, email: u.email }), t('Delete'), true)) return;
+        try { await Api.post('admin.user.delete', { id: u.id }); toast(t('Account deleted')); render(); } catch (e) { toast(e.message, 'error'); }
+      } } : null,
+    ].filter(Boolean);
+    if (!items.length) return h('span.muted.small', u.isMe ? t('you') : '—');
+    return menuBtn(items);
   }
 
   function showPassword(title, pw, who) {
-    sheet({
-      title,
-      body: [h('p.sheet-text', `Comunica a ${who} questa password temporanea: al primo accesso dovrà sceglierne una nuova. Non verrà mostrata di nuovo.`),
-        h('div.code-box', { style: { fontSize: '1.2rem', letterSpacing: '.08em' } }, pw),
-        h('div.center-btn', btn('Copia', { kind: 'tonal', icon: 'copy', onclick: () => navigator.clipboard.writeText(pw).then(() => toast('Copiata')).catch(() => {}) }))],
+    const d = dialog({
+      title, size: 'sm',
+      body: [h('p.text', t('Give {name} this temporary password: they will have to choose a new one at the first sign-in. It will not be shown again.', { name: who })),
+        h('div.code-box', { style: { fontSize: '1.2rem', letterSpacing: '.08em' } }, pw)],
+      actions: [btn(t('Copy'), { kind: 'text', icon: 'copy', onclick: () => navigator.clipboard.writeText(pw).then(() => toast(t('Copied'))).catch(() => {}) }), btn(t('Done'), { onclick: () => d.close() })],
     });
   }
 
-  function userActions(u) {
-    if (!u.canManage && !(me.isMaster && !u.isMe && u.role < 10)) {
-      toast(u.isMe ? 'Il tuo account si gestisce dal Profilo nell’app.' : u.role >= 10 ? 'Il master admin non può essere modificato da qui.' : 'Solo il master admin può gestire gli amministratori.');
-      return;
-    }
-    actionSheet([
-      u.canManage ? { icon: 'edit', label: 'Modifica', onclick: () => editUser(u) } : null,
-      u.canManage ? { icon: 'lock', label: 'Reimposta la password', onclick: async () => {
-        if (!await confirm('Reimpostare la password?', `${u.name} verrà disconnesso da tutti i dispositivi e dovrà accedere con una password temporanea.`, 'Reimposta')) return;
-        try { const d = await Api.post('admin.user.reset_password', { id: u.id }); showPassword('Password temporanea', d.password, u.name); } catch (e) { toast(e.message, 'error'); }
-      } } : null,
-      me.isMaster && u.status === 'active' && !u.isMe ? { icon: 'shield', label: 'Rendi master admin', onclick: () => transferMaster(u) } : null,
-      u.canManage ? { icon: 'delete', label: 'Elimina account', danger: true, onclick: async () => {
-        if (!await confirm('Eliminare l’account?', `L’account di ${u.name} (${u.email}) verrà eliminato definitivamente, insieme alle case in cui è l’unico membro.`, 'Elimina', true)) return;
-        try { await Api.post('admin.user.delete', { id: u.id }); toast('Account eliminato'); render(); } catch (e) { toast(e.message, 'error'); }
-      } } : null,
-    ]);
-  }
-
   function editUser(u) {
-    const name = input({ value: u.name, maxlength: 80 });
-    const email = input({ type: 'email', value: u.email, maxlength: 190 });
-    const status = select([{ value: 'active', label: 'Attivo' }, { value: 'disabled', label: 'Disabilitato (non può accedere)' }], u.status);
-    const role = select([{ value: 1, label: 'Utente' }, { value: 9, label: 'Amministratore' }], u.role);
-    const save = btn('Salva', { icon: 'save', onclick: async () => {
+    const name = inp({ value: u.name, maxlength: 80 });
+    const email = inp({ type: 'email', value: u.email, maxlength: 190 });
+    const status = sel([{ value: 'active', label: t('Active') }, { value: 'disabled', label: t('Disabled (cannot sign in)') }], u.status);
+    const role = sel([{ value: 1, label: t('User') }, { value: 9, label: t('Administrator') }], u.role);
+    const save = btn(t('Save'), { icon: 'save', onclick: async () => {
       await busy(save, () => Api.post('admin.user.update', { id: u.id, name: name.value, email: email.value, status: status.value, role: Number(role.value) }));
-      s.close(); toast('Utente aggiornato'); setTimeout(render, 250);
+      dlg.close(); toast(t('User updated')); render();
     } });
-    const s = sheet({
-      title: 'Modifica utente',
-      body: [field('Nome', name), field('Email', email), field('Stato', status), me.isMaster ? field('Ruolo', role, { hint: 'Gli amministratori possono gestire ricette, catalogo e utenti.' }) : null],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+    const dlg = dialog({
+      title: t('Edit user'),
+      body: [f(t('Name'), name), f(t('Email'), email), h('div.f-row', f(t('Status'), status), me.isMaster ? f(t('Role'), role, t('Administrators manage recipes, catalogue and users.')) : null)],
+      actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save],
     });
   }
 
   function createUser() {
-    const name = input({ maxlength: 80 });
-    const email = input({ type: 'email', maxlength: 190 });
-    const role = select([{ value: 1, label: 'Utente' }, { value: 9, label: 'Amministratore' }], 1);
-    const save = btn('Crea', { icon: 'add', onclick: async () => {
+    const name = inp({ maxlength: 80 });
+    const email = inp({ type: 'email', maxlength: 190 });
+    const role = sel([{ value: 1, label: t('User') }, { value: 9, label: t('Administrator') }], 1);
+    const save = btn(t('Create'), { icon: 'add', onclick: async () => {
       const d = await busy(save, () => Api.post('admin.user.create', { name: name.value, email: email.value, role: Number(role.value) }));
-      s.close(); setTimeout(() => { showPassword('Account creato', d.password, name.value); render(); }, 250);
+      dlg.close(); showPassword(t('Account created'), d.password, name.value); render();
     } });
-    const s = sheet({
-      title: 'Nuovo utente',
-      body: [h('p.sheet-text', 'Gli utenti di solito si registrano da soli dall’app. Qui puoi creare un account con una password temporanea.'), field('Nome', name), field('Email', email), me.isMaster ? field('Ruolo', role) : null],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+    const dlg = dialog({
+      title: t('New user'),
+      body: [h('p.text', t('Users usually sign up by themselves from the app. Here you can create an account with a temporary password.')), f(t('Name'), name), f(t('Email'), email), me.isMaster ? f(t('Role'), role) : null],
+      actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save],
     });
   }
 
   function transferMaster(u) {
-    const pw = input({ type: 'password', autocomplete: 'current-password' });
-    const ok = btn('Cedi il ruolo', { kind: 'danger', icon: 'shield', onclick: async () => {
+    const pw = inp({ type: 'password', autocomplete: 'current-password' });
+    const ok = btn(t('Hand over the role'), { kind: 'danger', icon: 'shield', onclick: async () => {
       await busy(ok, () => Api.post('admin.user.transfer_master', { id: u.id, password: pw.value }));
-      s.close(); toast(`${u.name} è il nuovo master admin`);
-      const m = await Api.get('auth.me'); me = m.user; setTimeout(render, 250);
+      dlg.close(); toast(t('{name} is the new master admin', { name: u.name }));
+      me = (await Api.get('auth.me')).user; render();
     } });
-    const s = sheet({
-      title: 'Cedere il ruolo di master admin?',
-      body: [h('p.sheet-text', `${u.name} diventerà l’unico master admin e tu diventerai un amministratore. Non potrai annullare l’operazione da solo.`), field('La tua password', pw)],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), ok],
+    const dlg = dialog({
+      title: t('Hand over the master admin role?'), size: 'sm',
+      body: [h('p.text', t('{name} will become the only master admin and you will become an administrator. You cannot undo this by yourself.', { name: u.name })), f(t('Your password'), pw)],
+      actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), ok],
     });
   }
 
-  // ---------------------------------------------------------------- households
+  // ================================================================ households
 
   async function vHouseholds() {
     const d = await Api.get('admin.households');
+    counts.households = d.households.length;
     return h('div',
-      h('div.adm-toolbar', h('h2', `Case (${d.households.length})`)),
-      h('div.notice', 'Le case sono gli spazi condivisi: ogni utente ne ha almeno una e può invitare altre persone. Qui vedi solo i numeri, non il contenuto.'),
-      tbl([['Casa'], ['Proprietario'], ['Membri', 'num'], ['Spazi', 'num hide-sm'], ['Prodotti', 'num hide-sm'], ['Liste', 'num hide-sm'], ['Creata', 'hide-sm']],
-        d.households.map(x => h('tr', h('td', h('strong', x.name)), h('td', x.owner || '—', h('div.small.muted', x.ownerEmail || '')), h('td.num', x.members > 1 ? h('span.tag.green', String(x.members)) : '1'),
-          h('td.num.hide-sm', String(x.spaces)), h('td.num.hide-sm', String(x.items)), h('td.num.hide-sm', String(x.lists)), h('td.hide-sm', UI.fmtDateTime(x.createdAt))))));
+      pageHead(t('Households'), t('Households are the shared workspaces: every user has at least one and can invite other people. Only numbers are shown here, never the content.')),
+      dataTable([
+        { key: 'name', label: t('Household'), sort: x => x.name, render: x => h('div.title', x.name) },
+        { key: 'owner', label: t('Owner'), sort: x => x.owner || '', render: x => [h('div', x.owner || '—'), h('div.sub', x.ownerEmail || '')] },
+        { key: 'members', label: t('Members'), num: true, sort: x => x.members, render: x => x.members > 1 ? chip(String(x.members), 'ok', 'group') : '1' },
+        { key: 'spaces', label: t('Spaces'), num: true, sort: x => x.spaces, render: x => String(x.spaces) },
+        { key: 'items', label: t('Products'), num: true, sort: x => x.items, render: x => String(x.items) },
+        { key: 'lists', label: t('Lists'), num: true, sort: x => x.lists, render: x => String(x.lists) },
+        { key: 'created', label: t('Created'), sort: x => x.createdAt, render: x => UI.fmtDateTime(x.createdAt).split(' ')[0] },
+      ], d.households, { sortKey: 'created', sortDir: -1 }));
   }
 
-  // ---------------------------------------------------------------- start
+  // ================================================================ sign-in
+
+  async function logout() {
+    try { await Api.post('auth.logout', {}); } catch (e) { /* already signed out */ }
+    me = null; loginForm();
+  }
 
   function loginForm(msg) {
-    const email = input({ type: 'email', autocomplete: 'email' });
-    const pw = input({ type: 'password', autocomplete: 'current-password' });
-    const err = h('div.err-box', { hidden: !msg }, msg || '');
-    const sub = btn('Accedi', { type: 'submit', cls: 'btn-block' });
-    root.replaceChildren(h('div.auth', h('div.auth-top', h('img', { src: 'assets/icons/icon-mono.png', alt: '' }), h('h1', 'Portale admin'), h('p', 'FoodTrack')),
-      h('div.auth-body', h('form', { onsubmit: async e => {
+    const email = inp({ type: 'email', autocomplete: 'email' });
+    const pw = inp({ type: 'password', autocomplete: 'current-password' });
+    const err = h('div.err-box', { hidden: !msg }, icon('error'), h('span', msg || ''));
+    const showErr = m => { err.lastChild.textContent = m; err.hidden = false; };
+    const sub = btn(t('Sign in'), { type: 'submit', cls: 'btn-block' });
+    const gslot = h('div.google-slot');
+    root.replaceChildren(h('div.adm-login', h('div.card-l',
+      h('div.logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), 'FoodTrack'),
+      h('p.lead', t('Admin portal')),
+      config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
+      h('form', { onsubmit: async e => {
         e.preventDefault(); err.hidden = true;
         try { await busy(sub, () => Api.post('auth.login', { email: email.value, password: pw.value }, { silentAuth: true })); start(); }
-        catch (ex) { err.textContent = ex.message; err.hidden = false; }
-      } }, field('Email', email), field('Password', pw), err, h('div.spacer'), sub), h('p.center', h('a', { href: './' }, 'Torna all’app')))));
+        catch (ex) { showErr(ex.message); }
+      } }, f(t('Email'), email), f(t('Password'), pw), err, h('div.spacer'), sub),
+      h('p.center', h('a', { href: './' }, t('Back to the app'))))));
+    if (config.googleClientId) UI.googleButton(gslot, config.googleClientId, async credential => {
+      try {
+        await Api.post('auth.google', { credential }, { silentAuth: true });
+        start();
+      } catch (e) { showErr(e.code === 'needs_signup' ? t('No FoodTrack account uses this Google account.') : e.message); }
+    }, 'signin_with');
   }
 
   async function start() {
     UI.applyTheme();
     try {
-      const d = await Api.get('auth.me', { silentAuth: true });
+      const [d, cfg] = await Promise.all([Api.get('auth.me', { silentAuth: true }), Api.get('auth.config', { silentAuth: true }).catch(() => null)]);
       me = d.user;
-    } catch (e) { root.replaceChildren(h('div.adm-main', h('div.err-box', e.message))); return; }
+      if (cfg) config = cfg;
+    } catch (e) { root.replaceChildren(h('div.adm-login', h('div.err-box', icon('error'), h('span', e.message)))); return; }
     if (!me) return loginForm();
-    if (me.mustChangePassword) return loginForm('Devi prima cambiare la password temporanea dall’app.');
+    if (me.mustChangePassword) return loginForm(t('First change your temporary password from the app.'));
     if (!me.isAdmin) {
-      root.replaceChildren(h('div.auth', h('div.auth-top', h('h1', 'Accesso negato')), h('div.auth-body', h('p', 'Il portale è riservato agli amministratori di FoodTrack.'), h('p', h('a', { href: './' }, 'Torna all’app')))));
+      root.replaceChildren(h('div.adm-login', h('div.card-l', h('div.logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), t('Access denied')),
+        h('p.lead', t('The portal is reserved to FoodTrack administrators.')), h('a.btn.btn-filled', { href: './' }, t('Back to the app')))));
       return;
     }
     render();
   }
 
-  Api.onUnauthenticated(() => loginForm('Sessione scaduta: accedi di nuovo.'));
-  window.addEventListener('hashchange', () => { if (!UI.sheetsOpen()) render(); });
+  Api.onUnauthenticated(() => loginForm(t('Session expired: sign in again.')));
+  window.addEventListener('hashchange', render);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', UI.applyTheme);
   start();
 })();

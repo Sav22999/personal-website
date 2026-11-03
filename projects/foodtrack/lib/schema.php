@@ -21,7 +21,8 @@ function schema_statements(string $p = 'ft_'): array
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(80) NOT NULL,
   `email` VARCHAR(190) NOT NULL,
-  `password_hash` VARCHAR(255) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL DEFAULT '' COMMENT 'empty = account created with Google, no password',
+  `google_sub` VARCHAR(64) NULL COMMENT 'Google account id (Sign in with Google)',
   `role` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 utente, 9 amministratore, 10 master admin (uno solo)',
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
@@ -31,6 +32,7 @@ function schema_statements(string $p = 'ft_'): array
   `last_seen_at` DATETIME NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_email` (`email`),
+  UNIQUE KEY `uq_google` (`google_sub`),
   KEY `idx_role` (`role`)
 ) $opts",
 
@@ -85,6 +87,7 @@ function schema_statements(string $p = 'ft_'): array
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(60) NOT NULL,
   `expiry_tip` TEXT NULL,
+  `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `sort` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_name` (`name`)
@@ -98,6 +101,7 @@ function schema_statements(string $p = 'ft_'): array
   `category_id` INT UNSIGNED NULL,
   `default_unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
   `expiry_tip` TEXT NULL,
+  `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
@@ -158,7 +162,7 @@ function schema_statements(string $p = 'ft_'): array
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `name` VARCHAR(60) NOT NULL,
-  `icon` VARCHAR(40) NOT NULL DEFAULT 'home',
+  `icon` VARCHAR(40) NOT NULL DEFAULT 'cart',
   `notes` VARCHAR(500) NOT NULL DEFAULT '',
   `created_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
@@ -201,6 +205,7 @@ function schema_statements(string $p = 'ft_'): array
   `servings` TINYINT UNSIGNED NOT NULL DEFAULT 2,
   `difficulty` ENUM('facile','media','difficile') NOT NULL DEFAULT 'facile',
   `published` TINYINT(1) NOT NULL DEFAULT 1,
+  `i18n` MEDIUMTEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `created_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
@@ -217,6 +222,7 @@ function schema_statements(string $p = 'ft_'): array
   `quantity` DECIMAL(10,3) NULL,
   `unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
   `notes` VARCHAR(255) NOT NULL DEFAULT '',
+  `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `sort` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_recipe` (`recipe_id`),
@@ -262,10 +268,44 @@ function schema_statements(string $p = 'ft_'): array
     ];
 }
 
-/** Creates the tables (idempotent) and records the schema version. */
+/**
+ * Upgrades a database created by an older version. Every step is idempotent.
+ *  v2: Sign in with Google (users.google_sub, password optional)
+ *  v3: new SVG icon set (more specific icons for some catalog products)
+ *  v4: multilingual content (i18n JSON column on categories, products, recipes, ingredients)
+ */
+function migrate_schema(PDO $pdo, string $p, int $from): void
+{
+    if ($from < 2) {
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}users`")->fetchAll(), 'Field');
+        if (!in_array('google_sub', $cols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}users` ADD COLUMN `google_sub` VARCHAR(64) NULL AFTER `password_hash`, ADD UNIQUE KEY `uq_google` (`google_sub`)");
+        }
+        $pdo->exec("ALTER TABLE `{$p}users` MODIFY `password_hash` VARCHAR(255) NOT NULL DEFAULT ''");
+    }
+    if ($from < 3) {
+        require_once __DIR__ . '/seed.php';
+        $st = $pdo->prepare("UPDATE `{$p}products` SET icon = ? WHERE name = ? AND icon <> ?");
+        foreach (seed_products() as $row) $st->execute([$row[1], $row[0], $row[1]]);
+    }
+    if ($from < 4) {
+        foreach (['categories' => 'TEXT', 'products' => 'TEXT', 'recipes' => 'MEDIUMTEXT', 'recipe_ingredients' => 'TEXT'] as $table => $type) {
+            $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}{$table}`")->fetchAll(), 'Field');
+            if (!in_array('i18n', $cols, true)) $pdo->exec("ALTER TABLE `{$p}{$table}` ADD COLUMN `i18n` {$type} NULL");
+        }
+        require_once __DIR__ . '/seed-en.php';
+        seed_translations($pdo, $p);
+    }
+    $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
+}
+
+/** Creates the tables (idempotent), upgrades older ones and records the schema version. */
 function install_schema(PDO $pdo, string $prefix): void
 {
+    $from = 0;
+    try { $from = (int)$pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn(); } catch (Throwable $e) { $from = 0; }
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    if ($from > 0) migrate_schema($pdo, $prefix, $from);
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")
         ->execute([(string)SCHEMA_VERSION]);
 }

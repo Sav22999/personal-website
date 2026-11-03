@@ -36,7 +36,7 @@ function seed_products(): array
         ['Anguria', 'watermelon', 'Frutta', 'kg', 'Una volta tagliata, l’anguria va coperta e conservata in frigorifero per non più di 3–4 giorni.'],
         ['Olive', 'olive', 'Conserve e scatolame', 'g', 'Le olive in salamoia durano a lungo se restano coperte dal liquido. Elimina quelle molli o con patina biancastra in superficie.'],
         ['Pomodori', 'tomato', 'Verdura', 'pz', 'I pomodori molto maturi sono ottimi per sughi e salse: elimina solo le parti ammaccate.'],
-        ['Passata di pomodoro', 'tomato', 'Conserve e scatolame', 'g', 'Chiusa si conserva a lungo; una volta aperta va tenuta in frigorifero e consumata entro 4–5 giorni.'],
+        ['Passata di pomodoro', 'sauce', 'Conserve e scatolame', 'g', 'Chiusa si conserva a lungo; una volta aperta va tenuta in frigorifero e consumata entro 4–5 giorni.'],
         ['Patate', 'potato', 'Verdura', 'kg', 'Elimina i germogli e le parti verdi (contengono solanina) prima di cucinarle. Se sono molli o raggrinzite in modo marcato, buttale.'],
         ['Patate dolci', 'sweet_potato', 'Verdura', 'kg', null],
         ['Carote', 'carrot', 'Verdura', 'pz', 'Le carote un po’ molli possono essere usate in brodi, soffritti e vellutate.'],
@@ -55,7 +55,7 @@ function seed_products(): array
         ['Fagioli', 'bean', 'Conserve e scatolame', 'g', null],
         ['Barbabietole', 'beet', 'Verdura', 'pz', null],
         ['Ravanelli', 'radish', 'Verdura', 'pz', null],
-        ['Basilico', 'vegetable', 'Verdura', 'g', 'Il basilico annerisce in fretta: puoi conservarlo frullato con olio, oppure congelato in cubetti.'],
+        ['Basilico', 'herbs', 'Verdura', 'g', 'Il basilico annerisce in fretta: puoi conservarlo frullato con olio, oppure congelato in cubetti.'],
         ['Insalata', 'vegetable', 'Verdura', 'pz', null],
         ['Latte intero', 'milk', 'Latticini e uova', 'l', 'Il latte fresco riporta «da consumarsi entro»; quello UHT «preferibilmente entro» e, se chiuso, è spesso buono anche qualche giorno dopo. Se ha odore acido o grumi, non berlo.'],
         ['Latte UHT', 'milk', 'Latticini e uova', 'l', 'Il latte UHT chiuso è spesso buono anche oltre il «preferibilmente entro»: annusalo e assaggialo. Una volta aperto si conserva in frigo per circa 3 giorni.'],
@@ -64,8 +64,8 @@ function seed_products(): array
         ['Mozzarella di bufala', 'cheese', 'Latticini e uova', 'g', 'La mozzarella va consumata entro la data «da consumarsi entro». Se è acida, gonfia o ha una consistenza viscida, buttala.'],
         ['Parmigiano', 'cheese', 'Latticini e uova', 'g', 'I formaggi stagionati durano a lungo: una piccola muffa superficiale si può eliminare tagliando almeno 1 cm attorno.'],
         ['Formaggio spalmabile', 'cheese', 'Latticini e uova', 'g', null],
-        ['Burro', 'cheese', 'Latticini e uova', 'g', 'Il burro irrancidisce con il tempo (odore e sapore pungente): conservato in frigo e ben chiuso dura settimane; si può anche congelare.'],
-        ['Panna fresca', 'milk', 'Latticini e uova', 'ml', null],
+        ['Burro', 'butter', 'Latticini e uova', 'g', 'Il burro irrancidisce con il tempo (odore e sapore pungente): conservato in frigo e ben chiuso dura settimane; si può anche congelare.'],
+        ['Panna fresca', 'cream', 'Latticini e uova', 'ml', null],
         ['Uova', 'egg', 'Latticini e uova', 'pz', 'Alcune persone verificano la freschezza mettendo l’uovo in un bicchiere d’acqua: se va a fondo è fresco, se resta a galla è vecchio ed è meglio non consumarlo. Le uova scadute da pochi giorni vanno comunque consumate ben cotte.'],
         ['Uova biologiche', 'egg', 'Latticini e uova', 'pz', 'Alcune persone verificano la freschezza mettendo l’uovo in un bicchiere d’acqua: se va a fondo è fresco, se resta a galla è vecchio ed è meglio non consumarlo. Le uova scadute da pochi giorni vanno comunque consumate ben cotte.'],
         ['Gelato', 'icecream', 'Surgelati', 'g', null],
@@ -78,12 +78,12 @@ function seed_products(): array
         ['Tonno in scatola', 'tuna', 'Conserve e scatolame', 'g', 'Il tonno in scatola dura anni se la latta è integra. Una volta aperto, trasferiscilo in un contenitore e consumalo entro 2–3 giorni.'],
         ['Pane integrale', 'bread', 'Pane e prodotti da forno', 'g', 'Il pane raffermo è perfetto per bruschette, pangrattato o panzanella. Se compare muffa va buttato tutto.'],
         ['Piadina', 'bread', 'Pane e prodotti da forno', 'pz', null],
-        ['Farina', 'generic', 'Pasta, riso e cereali', 'g', 'La farina dura a lungo anche dopo il «preferibilmente entro» se conservata asciutta; buttala se ha odore di rancido o se ci sono farfalline.'],
-        ['Zucchero', 'generic', 'Condimenti e spezie', 'g', 'Lo zucchero non scade se conservato all’asciutto.'],
-        ['Sale', 'generic', 'Condimenti e spezie', 'g', 'Il sale non scade.'],
-        ['Lievito di birra', 'generic', 'Latticini e uova', 'g', 'Il lievito di birra fresco scaduto perde forza: prova a scioglierlo in acqua tiepida con un pizzico di zucchero, se dopo 10 minuti fa schiuma funziona ancora.'],
-        ['Lievito per dolci', 'generic', 'Snack e dolci', 'g', null],
-        ['Pinoli', 'generic', 'Snack e dolci', 'g', null],
+        ['Farina', 'flour', 'Pasta, riso e cereali', 'g', 'La farina dura a lungo anche dopo il «preferibilmente entro» se conservata asciutta; buttala se ha odore di rancido o se ci sono farfalline.'],
+        ['Zucchero', 'sugar', 'Condimenti e spezie', 'g', 'Lo zucchero non scade se conservato all’asciutto.'],
+        ['Sale', 'salt', 'Condimenti e spezie', 'g', 'Il sale non scade.'],
+        ['Lievito di birra', 'yeast', 'Latticini e uova', 'g', 'Il lievito di birra fresco scaduto perde forza: prova a scioglierlo in acqua tiepida con un pizzico di zucchero, se dopo 10 minuti fa schiuma funziona ancora.'],
+        ['Lievito per dolci', 'yeast', 'Snack e dolci', 'g', null],
+        ['Pinoli', 'nuts', 'Snack e dolci', 'g', null],
         ['Pasta di semola', 'pasta', 'Pasta, riso e cereali', 'g', 'La pasta secca riporta «da consumarsi preferibilmente entro»: se conservata bene è buona anche molti mesi dopo.'],
         ['Pasta all’uovo', 'noodles', 'Pasta, riso e cereali', 'g', 'La pasta all’uovo fresca va consumata entro la data indicata; quella secca si conserva a lungo.'],
         ['Riso integrale', 'rice', 'Pasta, riso e cereali', 'g', 'Il riso integrale contiene più grassi del riso bianco e può irrancidire: se ha odore di stantio, buttalo.'],
@@ -92,7 +92,7 @@ function seed_products(): array
         ['Patatine fritte surgelate', 'chips', 'Surgelati', 'g', null],
         ['Caffè macinato', 'coffee', 'Bevande', 'g', 'Il caffè macinato scaduto non è dannoso ma perde aroma: conservalo chiuso, al riparo da luce e umidità.'],
         ['Acqua', 'water', 'Bevande', 'l', null],
-        ['Succo di frutta', 'water', 'Bevande', 'l', 'Spesso i succhi riportano la scritta «da consumarsi preferibilmente entro»: se non è passato troppo tempo e la confezione è chiusa e integra, il prodotto potrebbe essere comunque buono.'],
+        ['Succo di frutta', 'juice', 'Bevande', 'l', 'Spesso i succhi riportano la scritta «da consumarsi preferibilmente entro»: se non è passato troppo tempo e la confezione è chiusa e integra, il prodotto potrebbe essere comunque buono.'],
         ['Vino rosso', 'wine', 'Bevande', 'ml', null],
         ['Vino bianco', 'wine2', 'Bevande', 'ml', null],
         ['Spumante', 'champagne', 'Bevande', 'ml', null],
@@ -259,15 +259,17 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
             $added['recipes']++;
         }
     }
+    require_once __DIR__ . '/seed-en.php';
+    seed_translations($pdo, $p);
     return $added;
 }
 
-/** Default spaces created for every new household. */
+/** Default spaces created for every new household (English source, translated with tr()). */
 function default_spaces(): array
 {
     return [
-        ['Frigorifero', 'fridge', 'Spazio per conservare alimenti freschi'],
-        ['Freezer', 'freezer', 'Spazio per conservare alimenti surgelati'],
-        ['Dispensa', 'pantry', 'Spazio per conservare alimenti secchi e a lunga conservazione'],
+        ['Fridge', 'fridge', 'For fresh food'],
+        ['Freezer', 'freezer', 'For frozen food'],
+        ['Pantry', 'pantry', 'For dry and long-life food'],
     ];
 }

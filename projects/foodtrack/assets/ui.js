@@ -2,6 +2,8 @@
 (function () {
   'use strict';
 
+  const t = (s, v) => (window.I18N ? I18N.t(s, v) : s);
+
   // ---------- DOM ----------
 
   /** h('div.card#id', {onclick, ...attrs}, ...children) */
@@ -80,6 +82,16 @@
     dashboard: 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z',
     category: 'M12 2l-5.5 9h11L12 2zm5.5 11c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zM3 21.5h8v-8H3v8z',
     open: 'M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z',
+    globe: 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z',
+    bulb: 'M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z',
+    error: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
+    menu: 'M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z',
+    chevronDown: 'M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z',
+    up: 'M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z',
+    down: 'M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z',
+    image: 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
+    theme: 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z',
+    link: 'M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z',
   };
 
   function icon(name, cls) {
@@ -94,9 +106,73 @@
     return svg;
   }
 
-  /** Picture icon of a product / space / list (black outline PNG, inverted in dark mode). */
+  /** Pictogram of a product / space / list from the SVG sprite (follows currentColor, any size). */
+  const SPRITE = 'assets/img/icons.svg?v=2';
   function pic(folder, name, cls) {
-    return h('img.pic' + (cls ? '.' + cls : ''), { src: `assets/img/${folder}/${name || (folder === 'products' ? 'generic' : 'home')}.png`, alt: '', loading: 'lazy', onerror: e => { e.target.style.visibility = 'hidden'; } });
+    const ns = 'http://www.w3.org/2000/svg';
+    const known = iconNames(folder);
+    if (!known.includes(name)) name = folder === 'products' ? 'generic' : folder === 'spaces' ? 'pantry' : 'cart';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'pic' + (cls ? ' ' + cls : ''));
+    svg.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS(ns, 'use');
+    use.setAttribute('href', SPRITE + '#' + folder + '-' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  function iconNames(folder) { return ((window.FT_ICONS || {})[folder] || []).map(x => x[0]); }
+  function iconLabel(folder, name) {
+    const hit = ((window.FT_ICONS || {})[folder] || []).find(x => x[0] === name);
+    if (window.I18N && I18N.lang !== 'it') return name.replace(/_/g, ' ').replace(/\d+$/, '');
+    return hit ? hit[1] : name;
+  }
+
+  // ---------- Sign in with Google (Google Identity Services) ----------
+
+  let gisPromise = null;
+  function loadGis() {
+    if (!gisPromise) {
+      gisPromise = new Promise((resolve, reject) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://accounts.google.com/gsi/client';
+        sc.async = true;
+        sc.onload = () => resolve(window.google);
+        sc.onerror = () => { gisPromise = null; reject(new Error('Google unreachable')); };
+        document.head.appendChild(sc);
+      });
+    }
+    return gisPromise;
+  }
+  /** Renders the official "Continue with Google" button; onCredential receives the ID token. */
+  async function googleButton(slot, clientId, onCredential, text) {
+    try {
+      const g = await loadGis();
+      g.accounts.id.initialize({ client_id: clientId, callback: r => onCredential(r.credential), ux_mode: 'popup', auto_select: false, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_button: true });
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.hasAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+      clear(slot);
+      g.accounts.id.renderButton(slot, { type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', text: text || 'continue_with', shape: 'pill', logo_alignment: 'center', locale: (window.I18N ? I18N.lang : 'it'), width: Math.min(Math.max(slot.clientWidth, 220), 400) });
+    } catch (e) {
+      slot.replaceChildren(h('p.helper.center', t('Google sign-in is not available right now.')));
+    }
+  }
+
+  // ---------- Shared components ----------
+
+  /** Leading icon tile: a pictogram (products/spaces/lists) or a Material icon, always in the same rounded container. */
+  function tile(kind, name, size) {
+    const t = h('span.tile' + (size ? '.tile-' + size : ''));
+    t.appendChild(kind === 'icon' ? icon(name) : pic(kind, name));
+    return t;
+  }
+
+  /** Status chip: tone = danger | warn | ok | neutral */
+  function chip(text, tone, ic) {
+    return h('span.status.' + (tone || 'neutral'), ic ? icon(ic) : null, text);
+  }
+
+  /** Extended floating action button (main "add" action of a screen). */
+  function fab(label, ic, onclick) {
+    return h('button.fab', { type: 'button', onclick }, icon(ic || 'add'), h('span', label));
   }
 
   // ---------- Buttons ----------
@@ -118,7 +194,7 @@
   async function busy(button, fn) {
     if (button) { button.disabled = true; button.classList.add('loading'); }
     try { return await fn(); }
-    catch (e) { toast(e.message || 'Si è verificato un errore.', 'error'); throw e; }
+    catch (e) { toast(e.message || t('Something went wrong.'), 'error'); throw e; }
     finally { if (button) { button.disabled = false; button.classList.remove('loading'); } }
   }
 
@@ -129,7 +205,7 @@
     input.classList.add('input');
     if (!input.id) input.id = 'f' + Math.random().toString(36).slice(2, 9);
     if (!input.placeholder) input.placeholder = ' ';
-    return h('div.field' + (opts.cls ? '.' + opts.cls : ''), input, h('label', { for: input.id }, label), opts.hint ? h('p.hint', opts.hint) : null);
+    return h('div.field' + (opts.cls ? '.' + opts.cls : ''), input, h('label', { for: input.id }, label), input.tagName === 'SELECT' ? icon('chevronDown', 'chev') : null, opts.hint ? h('p.hint', opts.hint) : null);
   }
 
   function input(attrs) { return h('input', Object.assign({ type: 'text', autocomplete: 'off' }, attrs || {})); }
@@ -195,12 +271,14 @@
     if (stack.length) { e.stopImmediatePropagation(); stack[stack.length - 1].fromHistory(); }
   });
 
+  function closeTop() { if (stack.length) stack[stack.length - 1].close(); }
   function closeAllSheets() { while (stack.length) stack[stack.length - 1].close(); }
 
   /** Menu of actions as a bottom sheet (the "Altre azioni" pattern of the app). */
   function actionSheet(items) {
     const s = sheet({
-      body: items.filter(Boolean).map(it => h('button.menu-item' + (it.danger ? '.danger' : ''), { type: 'button', onclick: () => { s.close(); setTimeout(it.onclick, 230); } }, icon(it.icon), h('span', it.label))),
+      title: arguments[1] || null,
+      body: [h('div.menu', items.filter(Boolean).map(it => h('button.menu-item' + (it.danger ? '.danger' : '') + (it.selected ? '.selected' : ''), { type: 'button', onclick: () => { s.close(); setTimeout(it.onclick, 230); } }, icon(it.icon), h('span', it.label), it.selected ? icon('check', 'trail') : null)))],
     });
     return s;
   }
@@ -212,8 +290,8 @@
         title, body: [h('p.sheet-text', text)],
         onclose: () => { if (!answered) resolve(false); },
         actions: [
-          btn('Annulla', { kind: 'text', onclick: () => s.close() }),
-          btn(okLabel || 'Conferma', { kind: danger ? 'danger' : 'filled', icon: danger ? 'delete' : 'check', onclick: () => { answered = true; s.close(); resolve(true); } }),
+          btn(t('Cancel'), { kind: 'text', onclick: () => s.close() }),
+          btn(okLabel || t('Confirm'), { kind: danger ? 'danger' : 'filled', icon: danger ? 'delete' : 'check', onclick: () => { answered = true; s.close(); resolve(true); } }),
         ],
       });
     });
@@ -245,19 +323,19 @@
   function daysUntil(s) { return Math.round((parseDate(s) - parseDate(todayStr())) / 86400000); }
   function fmtDate(s) { if (!s) return ''; const [y, m, d] = s.split('-'); return `${d}/${m}/${y}`; }
   function relDays(n) {
-    if (n < -1) return `scaduto da ${-n} giorni`;
-    if (n === -1) return 'scaduto ieri';
-    if (n === 0) return 'scade oggi';
-    if (n === 1) return 'domani';
-    return `tra ${n} giorni`;
+    if (n < -1) return t('expired {n} days ago', { n: -n });
+    if (n === -1) return t('expired yesterday');
+    if (n === 0) return t('expires today');
+    if (n === 1) return t('tomorrow');
+    return t('in {n} days', { n });
   }
-  const WEEKDAYS = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
-  const MONTHS = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-  function longDate(s) { const d = parseDate(s); return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+  const locale = () => (window.I18N ? I18N.locale : 'it-IT');
+  /** "Monday 3 November" in the user's language. */
+  function longDate(s) { return parseDate(s).toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }); }
   function fmtDateTime(s) {
     if (!s) return '—';
     const d = new Date(s.replace(' ', 'T') + 'Z');
-    return d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(locale()) + ' ' + d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
   }
 
   // ---------- Quantities ----------
@@ -267,11 +345,14 @@
     const b = UNIT_BASE[unit];
     return b ? { base: b[0], value: qty * b[1] } : { base: unit, value: qty };
   }
-  function fmtNum(n) { return (Math.round(n * 1000) / 1000).toLocaleString('it-IT', { maximumFractionDigits: 3 }); }
+  function fmtNum(n) { return (Math.round(n * 1000) / 1000).toLocaleString(locale(), { maximumFractionDigits: 3 }); }
+  /** Display label of a stored unit (stored values are language independent). */
+  const UNIT_EN = { pz: 'pcs', conf: 'pack', cucchiai: 'tbsp', cucchiaini: 'tsp', 'q.b.': 'to taste' };
+  function unitLabel(u) { return window.I18N && I18N.lang !== 'it' && UNIT_EN[u] ? UNIT_EN[u] : u; }
   function fmtQty(qty, unit) {
-    if (unit === 'q.b.') return 'q.b.';
-    if (qty === null || qty === undefined) return unit && unit !== 'pz' ? unit : '';
-    return fmtNum(qty) + (unit ? ' ' + unit : '');
+    if (unit === 'q.b.') return unitLabel('q.b.');
+    if (qty === null || qty === undefined) return unit && unit !== 'pz' ? unitLabel(unit) : '';
+    return fmtNum(qty) + (unit ? ' ' + unitLabel(unit) : '');
   }
 
   function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").trim(); }
@@ -288,15 +369,14 @@
     if (t === 'auto') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', t);
     const dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-    const meta = document.querySelector('meta[name=theme-color]');
-    if (meta) meta.setAttribute('content', dark ? '#1B5E20' : '#4CAF50');
+    document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.setAttribute('content', dark ? '#0F120F' : '#F5F7F4'); });
   }
 
   window.UI = {
-    h, append, clear, icon, pic, btn, iconBtn, busy, field, input, textarea, select,
-    sheet, actionSheet, confirm, closeAllSheets, toast,
-    todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime, WEEKDAYS, MONTHS,
-    toBase, fmtNum, fmtQty, norm, store, applyTheme,
+    h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
+    sheet, actionSheet, confirm, closeTop, closeAllSheets, toast,
+    todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime,
+    toBase, fmtNum, fmtQty, unitLabel, norm, store, applyTheme,
     sheetsOpen: () => stack.length,
   };
 })();

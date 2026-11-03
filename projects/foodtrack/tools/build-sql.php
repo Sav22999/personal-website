@@ -13,9 +13,10 @@ if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/schema.php';
 require __DIR__ . '/../lib/seed.php';
+require __DIR__ . '/../lib/seed-en.php';
 
 $p = $argv[1] ?? 'ft_';
-if (!preg_match('/^[A-Za-z0-9_]{1,20}$/', $p)) { fwrite(STDERR, "Prefisso non valido\n"); exit(1); }
+if (!preg_match('/^[A-Za-z0-9_]{1,20}$/', $p)) { fwrite(STDERR, "Invalid prefix\n"); exit(1); }
 
 function q($v): string
 {
@@ -72,6 +73,18 @@ foreach (seed_recipes() as $r) {
     $out[] = '';
 }
 
+$out[] = '-- ---------------------------------------------------------------- English translations of the content';
+$j = function (array $a): string { return q(json_encode(['en' => array_filter($a, function ($v) { return $v !== null && $v !== ''; })], JSON_UNESCAPED_UNICODE)); };
+foreach (seed_en_categories() as $it => [$name, $tip]) $out[] = "UPDATE `{$p}categories` SET i18n = " . $j(['name' => $name, 'expiry_tip' => $tip]) . ' WHERE name = ' . q($it) . ';';
+foreach (seed_en_products() as $it => [$name, $tip]) $out[] = "UPDATE `{$p}products` SET i18n = " . $j(['name' => $name, 'expiry_tip' => $tip]) . ' WHERE name = ' . q($it) . ';';
+foreach (seed_en_recipes() as $it => [$name, $desc, $cook, $steps, $notes]) {
+    $out[] = "UPDATE `{$p}recipes` SET i18n = " . q(json_encode(['en' => ['name' => $name, 'description' => $desc, 'cook_notes' => $cook, 'steps' => $steps]], JSON_UNESCAPED_UNICODE)) . ' WHERE name = ' . q($it) . ';';
+    foreach ($notes as $n_it => $n_en) {
+        $out[] = "UPDATE `{$p}recipe_ingredients` i JOIN `{$p}recipes` r ON r.id = i.recipe_id SET i.i18n = " . $j(['notes' => $n_en]) . ' WHERE r.name = ' . q($it) . ' AND i.notes = ' . q($n_it) . ';';
+    }
+}
+$out[] = '';
+
 $file = __DIR__ . '/../install/foodtrack.sql';
 file_put_contents($file, implode("\n", $out) . "\n");
-echo "Scritto " . realpath($file) . "\n";
+echo "Written " . realpath($file) . "\n";

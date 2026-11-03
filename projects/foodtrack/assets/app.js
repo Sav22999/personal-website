@@ -2,25 +2,24 @@
 (function () {
   'use strict';
 
-  const { h, icon, pic, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
+  const t = I18N.t;
+  const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
 
-  const VERSION = '1.0.0';
-  const SPACE_ICONS = ['fridge', 'freezer', 'pantry', 'kitchen', 'cellar', 'shelf', 'garage', 'laundry', 'snow'];
-  const LIST_ICONS = ['home', 'cake', 'restaurant', 'book', 'pizza', 'box', 'car', 'tree'];
+  const VERSION = '1.1.0';
   const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
-  const SLOTS = [['colazione', 'Colazione'], ['pranzo', 'Pranzo'], ['merenda', 'Merenda'], ['cena', 'Cena']];
+  const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
   const SORTS = [
-    ['exp-asc', 'Data scadenza: dalla più vicina alla più distante'],
-    ['exp-desc', 'Data scadenza: dalla più distante alla più vicina'],
-    ['qty-asc', 'Quantità: dalla minore alla maggiore'],
-    ['qty-desc', 'Quantità: dalla maggiore alla minore'],
-    ['name-asc', 'Nome: A a Z'],
-    ['name-desc', 'Nome: Z a A'],
+    ['exp-asc', t('Expiry: soonest first')],
+    ['exp-desc', t('Expiry: latest first')],
+    ['qty-asc', t('Quantity: smallest first')],
+    ['qty-desc', t('Quantity: largest first')],
+    ['name-asc', t('Name: A to Z')],
+    ['name-desc', t('Name: Z to A')],
   ];
-  const DISCLAIMER = 'Queste informazioni sono indicative e basate su pratiche comuni: non sostituiscono il tuo giudizio e FoodTrack non garantisce che il prodotto sia sicuro da consumare.';
+  const DISCLAIMER = t('Indicative information based on common practice: it does not replace your judgement and FoodTrack does not guarantee that the product is safe to eat.');
 
   const S = {
-    user: null, loaded: false,
+    user: null, loaded: false, config: { googleClientId: '' },
     catalog: { categories: [], products: [] }, recipes: [],
     household: null, households: [], spaces: [], items: [], lists: [], listItems: [], plan: [], favorites: new Set(),
     signature: '',
@@ -29,7 +28,7 @@
   let weekOffset = 0;
   let recipeQuery = '';
   let recipeFilters = { fav: false, expiring: false, expired: false, cookable: false };
-  let searchState = { q: '', spaceId: '', categoryId: '', exp: 'all' };
+  const searchState = { q: '', spaceId: '', categoryId: '', exp: 'all' };
 
   // ===================================================== state
 
@@ -56,6 +55,12 @@
   const listById = id => S.lists.find(l => l.id === id) || null;
   const recipeById = id => S.recipes.find(r => r.id === id) || null;
   const noticeDays = () => store.get('noticeDays', 3);
+  /** Name of an item/list item: the catalog name in the user's language when it was not renamed. */
+  function itemName(x) {
+    const p = productById(x.productId);
+    return p && p.nameBase && x.name === p.nameBase ? p.name : x.name;
+  }
+  const plural = (n, one, many) => `${n} ${t(n === 1 ? one : many)}`;
 
   function expiryState(item) {
     if (!item.expiryDate) return null;
@@ -64,11 +69,18 @@
     if (d <= noticeDays()) return 'expiring';
     return 'ok';
   }
-  function expiryText(item) {
-    if (!item.expiryDate) return 'Nessuna data di scadenza';
+  /** Chip with the expiry status of a product. */
+  function expiryChip(item) {
+    if (!item.expiryDate) return chip(t('No expiry'), 'neutral');
     const d = UI.daysUntil(item.expiryDate);
-    const pre = item.expiryType === 'best_before' ? 'Preferibilmente entro il ' : 'Scade il ';
-    return `${pre}${UI.fmtDate(item.expiryDate)}  (${d < 0 ? 'scaduto' : UI.relDays(d)})`;
+    if (d < 0) return chip(d === -1 ? t('Expired yesterday') : t('Expired {n} days ago', { n: -d }), 'danger', 'error');
+    if (d === 0) return chip(t('Expires today'), 'warn', 'warning');
+    if (d <= noticeDays()) return chip(d === 1 ? t('Expires tomorrow') : t('Expires in {n} days', { n: d }), 'warn', 'warning');
+    return chip(t('In {n} days', { n: d }), 'ok');
+  }
+  function expiryLine(item) {
+    if (!item.expiryDate) return t('No expiry date');
+    return (item.expiryType === 'best_before' ? t('Best before ') : t('Expires on ')) + UI.fmtDate(item.expiryDate);
   }
   const expiredItems = () => S.items.filter(i => expiryState(i) === 'expired');
   const expiringItems = () => S.items.filter(i => expiryState(i) === 'expiring');
@@ -79,8 +91,8 @@
     const c = categoryById(item.categoryId != null ? item.categoryId : (p && p.categoryId));
     if (c && c.expiryTip) return c.expiryTip;
     return item.expiryType === 'best_before'
-      ? '«Da consumarsi preferibilmente entro» indica la data entro cui il prodotto mantiene le sue qualità. Se non è passato troppo tempo e la confezione è integra, verifica direttamente il prodotto: potrebbe essere ancora consumabile se non presenta muffe o alterazioni di colore, odore e sapore.'
-      : '«Da consumarsi entro» indica un limite di sicurezza: dopo questa data è sconsigliato consumare il prodotto, soprattutto se fresco (carne, pesce, latticini freschi).';
+      ? t('“Best before” is the date until which the product keeps its quality. If not much time has passed and the package is intact, check the product yourself: it may still be fine if there is no mould and no change in colour, smell or taste.')
+      : t('“Use by” is a safety limit: after this date you should not eat the product, especially if fresh (meat, fish, fresh dairy).');
   }
 
   // ---------- Recipes: ingredient availability ----------
@@ -101,19 +113,16 @@
       const b = UI.toBase(m.quantity, m.unit);
       if (b.base === need.base) { have += b.value; comparable = true; }
     }
-    if (!comparable || have >= need.value) return { status: 'ok', matches, uncertain: !comparable };
+    if (!comparable || have >= need.value) return { status: 'ok', matches };
     return { status: 'partial', matches, missing: need.value - have, unit: need.base };
   }
 
   function recipeStats(r) {
-    let ok = 0;
-    const expiring = new Set(expiringItems().map(i => i.id));
-    const expired = new Set(expiredItems().map(i => i.id));
-    let usesExpiring = false, usesExpired = false;
+    let ok = 0, usesExpiring = false, usesExpired = false;
     for (const ing of r.ingredients) {
       const a = availability(ing);
       if (a.status === 'ok') ok++;
-      for (const m of a.matches) { if (expiring.has(m.id)) usesExpiring = true; if (expired.has(m.id)) usesExpired = true; }
+      for (const m of a.matches) { const st = expiryState(m); if (st === 'expiring') usesExpiring = true; if (st === 'expired') usesExpired = true; }
     }
     return { ok, total: r.ingredients.length, usesExpiring, usesExpired };
   }
@@ -121,14 +130,6 @@
   /** Missing ingredients of some recipes, merged by product and unit. */
   function missingFor(recipes) {
     const map = new Map();
-    for (const r of recipes) {
-      for (const ing of r.ingredients) {
-        if (ing.unit === 'q.b.') { if (availability(ing).status === 'missing') add(ing, null, 'q.b.'); continue; }
-        const a = availability(ing);
-        if (a.status === 'missing') add(ing, ing.quantity, ing.unit);
-        else if (a.status === 'partial') add(ing, a.missing, a.unit);
-      }
-    }
     function add(ing, qty, unit) {
       const key = (ing.productId || norm(ing.name)) + '|' + (unit ? UI.toBase(1, unit).base : '');
       const cur = map.get(key);
@@ -138,8 +139,98 @@
       }
       if (!cur) map.set(key, { productId: ing.productId, name: ing.name, quantity: qty, unit: unit || 'pz' });
     }
+    for (const r of recipes) {
+      for (const ing of r.ingredients) {
+        const a = availability(ing);
+        if (ing.unit === 'q.b.') { if (a.status === 'missing') add(ing, null, 'q.b.'); continue; }
+        if (a.status === 'missing') add(ing, ing.quantity, ing.unit);
+        else if (a.status === 'partial') add(ing, a.missing, a.unit);
+      }
+    }
     return [...map.values()];
   }
+
+  // ===================================================== components
+
+  /** List row: leading tile, title, subtitle, chips, trailing actions. */
+  function listRow(o) {
+    return h('div.list-row' + (o.big ? '.big' : '') + (o.cls ? '.' + o.cls : ''),
+      o.lead || null,
+      h('div.body', h('p.title', o.title), o.sub ? h('div.sub', o.sub) : null, o.meta && o.meta.filter(Boolean).length ? h('div.meta', o.meta) : null),
+      o.trail ? h('div.trail', o.trail) : null);
+  }
+  /** Card with a list row inside; clickable when onclick is given. */
+  function cardRow(o, onclick) {
+    return h('div.card' + (onclick ? '.clickable' : ''), onclick ? { role: 'button', tabindex: 0, onclick, onkeydown: e => { if (e.key === 'Enter' && e.target === e.currentTarget) onclick(); } } : null, listRow(o));
+  }
+  /** Row of a settings group (profile). */
+  function groupRow(ic, title, sub, onclick, opts) {
+    opts = opts || {};
+    const tag = opts.href ? 'a' : onclick ? 'button' : 'div';
+    return h(tag + '.list-row' + (opts.danger ? '.danger' : ''), { type: tag === 'button' ? 'button' : undefined, href: opts.href, onclick },
+      opts.lead || tile('icon', ic, 'sm'), h('div.body', h('p.title', title), sub ? h('div.sub', sub) : null),
+      opts.trail !== undefined ? opts.trail : (onclick || opts.href ? h('div.trail', icon(opts.href && opts.external ? 'open' : 'right')) : null));
+  }
+  function sectionTitle(text, count, action) {
+    return h('h2.section-title', h('span', text), count != null ? h('span.count', String(count)) : null, action ? h('span.grow') : null, action || null);
+  }
+  function banner(tone, ic, title, text, actions) {
+    return h('div.banner.' + tone, icon(ic), h('div.b-body', h('h3', title), h('p', text), actions && actions.length ? h('div.b-actions', actions) : null));
+  }
+  function empty(kind, name, title, text) {
+    return h('div.empty', tile(kind, name, 'xl'), h('strong', title), text ? h('p', text) : null);
+  }
+  function moreBtn(items, title) { return iconBtn('more', t('More actions'), () => actionSheet(items, title)); }
+  function searchbar(inp, trailing) { return h('div.searchbar', icon('search'), inp, trailing || null); }
+
+  function iconPicker(folder, icons, value, onchange, grid) {
+    let cur = value;
+    const wrap = h('div.icon-picker' + (grid ? '.grid' : ''), { role: 'radiogroup' });
+    for (const ic of icons) {
+      const b = h('button' + (ic === cur ? '.sel' : ''), { type: 'button', role: 'radio', 'aria-checked': String(ic === cur), title: UI.iconLabel(folder, ic), onclick: () => {
+        cur = ic; wrap.querySelectorAll('button').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-checked', String(x === b)); }); onchange(ic);
+      } }, UI.pic(folder, ic));
+      wrap.appendChild(b);
+    }
+    return wrap;
+  }
+
+  function nutriPicker(value, onchange, readonly) {
+    let cur = value || null;
+    const wrap = h('div.nutri' + (cur ? '' : '.none'), { role: 'radiogroup', 'aria-label': 'Nutri-Score' });
+    for (const g of ['A', 'B', 'C', 'D', 'E']) {
+      wrap.appendChild(h('button.' + g + (g === cur ? '.sel' : ''), { type: 'button', disabled: !!readonly, role: 'radio', 'aria-checked': String(g === cur), onclick: () => {
+        cur = cur === g ? null : g;
+        wrap.classList.toggle('none', !cur);
+        wrap.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x.textContent === cur));
+        onchange(cur);
+      } }, g));
+    }
+    return wrap;
+  }
+
+  function seg(options, value, onchange) {
+    const wrap = h('div.seg', { role: 'tablist' });
+    for (const [v, label] of options) {
+      const b = h('button' + (v === value ? '.sel' : ''), { type: 'button', role: 'tab', onclick: () => { wrap.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b)); onchange(v); } }, label);
+      wrap.appendChild(b);
+    }
+    return wrap;
+  }
+
+  function unitSelect(value) {
+    const opts = UNITS.slice();
+    if (value && !opts.includes(value)) opts.push(value);
+    return select(opts.map(u => ({ value: u, label: UI.unitLabel(u) })), value || 'pz');
+  }
+
+  function tipBanner(key, text) {
+    if (store.get('tip.' + key, false)) return null;
+    const b = banner('info', 'bulb', t('Tip'), text, [btn(t('Got it'), { kind: 'text', onclick: () => { store.set('tip.' + key, true); b.remove(); } })]);
+    return b;
+  }
+
+  const cancelBtn = () => btn(t('Cancel'), { kind: 'text', onclick: UI.closeTop });
 
   // ===================================================== routing
 
@@ -162,6 +253,7 @@
     curDepth = curDepth < 0 ? 0 : curDepth + 1;
     history.replaceState({ ftDepth: curDepth }, '');
   }
+
   function render(keepScroll) {
     if (!S.user) return renderAuth();
     if (S.user.mustChangePassword) return renderForcePassword();
@@ -173,93 +265,40 @@
     const views = { liste: viewLists, lista: viewList, spazi: viewSpaces, spazio: viewSpace, ricette: viewRecipes, ricetta: viewRecipe, piano: viewPlan, cerca: viewSearch, profilo: viewProfile, unisciti: viewJoin };
     const v = (views[r.name] || viewSpaces)(r.id);
     if (!v) return;
-    const tab = v.tab;
     const bar = v.back
-      ? h('header.appbar.detail', iconBtn('back', 'Indietro', () => { if (curDepth > 0) history.back(); else location.replace('#/' + v.back); }), h('div.titles', h('h1', v.title)), v.actions || [])
+      ? h('header.appbar.small', iconBtn('back', t('Back'), () => { if (curDepth > 0) history.back(); else location.replace('#/' + v.back); }), h('div.titles', h('h1', v.title)), v.actions || [])
       : h('header.appbar',
-          h('div.titles', h('div.brand', h('img', { src: 'assets/icons/icon-mono.png', alt: '' }), 'FoodTrack', householdChip()), h('h1', v.title)),
+          h('div.titles', h('div.brand', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), 'FoodTrack', householdChip()), h('h1', v.title)),
           v.actions || [],
-          h('button.avatar', { type: 'button', title: 'Profilo', 'aria-label': 'Profilo e impostazioni', onclick: () => go('profilo') }, initials(S.user.name)));
-    const main = h('main.view' + (v.nav === false ? '.no-nav' : ''), v.body);
+          h('button.avatar', { type: 'button', title: t('Profile'), 'aria-label': t('Profile and settings'), onclick: () => go('profilo') }, initials(S.user.name)));
+    const nav = v.nav !== false;
+    const main = h('main.view' + (!nav ? '.no-nav' : '') + (nav && !v.fab ? '.no-fab' : ''), v.body);
     const nodes = [bar, main];
-    if (v.nav !== false) nodes.push(bottomNav(tab));
+    if (nav) nodes.push(bottomNav(v.tab));
+    if (v.fab) { if (!nav) v.fab.classList.add('low'); nodes.push(v.fab); }
     root.replaceChildren(...nodes);
-    document.title = v.title === 'FoodTrack' ? 'FoodTrack' : v.title + ' · FoodTrack';
+    document.title = v.title + ' · FoodTrack';
     if (keepScroll && key === lastRouteKey) window.scrollTo(0, y); else window.scrollTo(0, 0);
+    onScroll();
     lastRouteKey = key;
     if (v.after) v.after();
   }
 
+  function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 4); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
   function householdChip() {
     if (!S.household) return null;
-    const shared = S.household.members.length > 1;
-    return h('button.household-chip', { type: 'button', title: 'Cambia casa', onclick: openHouseholdSwitcher }, icon(shared ? 'group' : 'home'), h('span', S.household.name));
+    return h('button.household-chip', { type: 'button', title: t('Switch household'), onclick: e => { e.stopPropagation(); openHouseholdSwitcher(); } },
+      icon(S.household.members.length > 1 ? 'group' : 'home'), h('span', S.household.name), icon('chevronDown'));
   }
 
   function bottomNav(active) {
-    const tab = (name, label, ic) => h('a' + (active === name ? '.active' : ''), { href: '#/' + name }, h('span.pill', icon(ic)), label);
-    return h('nav.bottomnav', { 'aria-label': 'Sezioni' }, tab('liste', 'Liste', 'list'), tab('spazi', 'Spazi', 'spaces'), tab('ricette', 'Ricette', 'restaurant'));
+    const tab = (name, label, ic) => h('a' + (active === name ? '.active' : ''), { href: '#/' + name, 'aria-current': active === name ? 'page' : null }, h('span.pill', icon(ic)), label);
+    return h('nav.bottomnav', { 'aria-label': t('Sections') }, tab('liste', t('Lists'), 'list'), tab('spazi', t('Spaces'), 'spaces'), tab('ricette', t('Recipes'), 'restaurant'));
   }
 
-  function initials(name) {
-    return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  }
-
-  // ===================================================== reusable pieces
-
-  function moreBtn(items) { return iconBtn('more', 'Altre azioni', () => actionSheet(items)); }
-
-  function iconPicker(folder, icons, value, onchange) {
-    let cur = value;
-    const wrap = h('div.icon-picker' + (folder === 'products' ? '.products' : ''), { role: 'radiogroup' });
-    for (const ic of icons) {
-      const b = h('button' + (ic === cur ? '.sel' : ''), { type: 'button', role: 'radio', 'aria-checked': String(ic === cur), title: ic, onclick: () => {
-        cur = ic; wrap.querySelectorAll('button').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-checked', String(x === b)); }); onchange(ic);
-      } }, pic(folder, ic));
-      wrap.appendChild(b);
-    }
-    return wrap;
-  }
-
-  function nutriPicker(value, onchange, readonly) {
-    let cur = value || null;
-    const wrap = h('div.nutri' + (readonly ? '.readonly' : ''), { role: 'radiogroup', 'aria-label': 'Nutri-Score' });
-    for (const g of ['A', 'B', 'C', 'D', 'E']) {
-      const b = h('button.' + g + (g === cur ? '.sel' : ''), { type: 'button', disabled: !!readonly, role: 'radio', 'aria-checked': String(g === cur), onclick: () => {
-        cur = cur === g ? null : g;
-        wrap.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x.textContent === cur));
-        onchange(cur);
-      } }, g);
-      wrap.appendChild(b);
-    }
-    return wrap;
-  }
-
-  function seg(options, value, onchange) {
-    const wrap = h('div.seg');
-    for (const [v, label] of options) {
-      const b = h('button' + (v === value ? '.sel' : ''), { type: 'button', onclick: () => { wrap.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b)); onchange(v); } }, label);
-      wrap.appendChild(b);
-    }
-    return wrap;
-  }
-
-  function unitSelect(value) {
-    const opts = UNITS.slice();
-    if (value && !opts.includes(value)) opts.push(value);
-    return select(opts.map(u => ({ value: u, label: u })), value || 'pz');
-  }
-
-  function empty(text, img) {
-    return h('div.empty', img ? h('img', { src: img, alt: '' }) : null, h('p', text));
-  }
-
-  function tipBanner(key, text) {
-    if (store.get('tip.' + key, false)) return null;
-    const b = h('div.banner.tip', h('h3', 'Suggerimento'), h('p', text),
-      h('div.banner-actions', btn('OK, nascondi', { onclick: () => { store.set('tip.' + key, true); b.remove(); } })));
-    return b;
-  }
+  function initials(name) { return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase(); }
 
   // ===================================================== SPACES
 
@@ -268,83 +307,74 @@
     const exp = expiredItems(), soon = expiringItems();
     const sig = a => a.map(i => i.id).sort().join(',');
     if (exp.length && store.get('hide.expired', '') !== sig(exp)) {
-      body.push(h('div.banner.danger',
-        h('h3', icon('warning'), 'Prodotti scaduti'),
-        h('p', 'Hai dei prodotti che sono scaduti. Alcuni prodotti anche se scaduti possono essere ugualmente consumati, nel breve periodo successivo alla scadenza. Scopri di più!'),
-        h('div.banner-actions',
-          btn('OK, nascondi', { kind: 'text', onclick: () => { store.set('hide.expired', sig(exp)); render(true); } }),
-          btn('Scopri di più', { onclick: () => openExpirySheet('expired') }))));
+      body.push(banner('danger', 'error', plural(exp.length, 'expired product', 'expired products'),
+        t('Some products can still be eaten for a short time after they expire. Find out which ones.'),
+        [btn(t('Hide'), { kind: 'text', onclick: () => { store.set('hide.expired', sig(exp)); render(true); } }), btn(t('Learn more'), { onclick: () => openExpirySheet('expired') })]));
     }
     if (soon.length && store.get('hide.expiring', '') !== sig(soon)) {
-      body.push(h('div.banner.warn',
-        h('h3', icon('warning'), 'Prodotti in scadenza'),
-        h('p', 'Hai dei prodotti che scadranno a breve. Non lasciare che scadano, scopri subito come utilizzarli per cucinare delle fantastiche ricette!'),
-        h('div.banner-actions',
-          btn('OK, nascondi', { kind: 'text', onclick: () => { store.set('hide.expiring', sig(soon)); render(true); } }),
-          btn('Scopri di più', { onclick: () => openExpirySheet('expiring') }))));
+      body.push(banner('warn', 'warning', plural(soon.length, 'expiring product', 'expiring products'),
+        t('Don’t let them expire: find out how to use them in great recipes!'),
+        [btn(t('Hide'), { kind: 'text', onclick: () => { store.set('hide.expiring', sig(soon)); render(true); } }), btn(t('Learn more'), { onclick: () => openExpirySheet('expiring') })]));
     }
 
-    if (!S.spaces.length) body.push(empty('Nessuno spazio creato', 'assets/img/spaces/fridge.png'));
-    const list = h('div.stack');
-    for (const sp of S.spaces) {
+    if (!S.spaces.length) body.push(empty('spaces', 'fridge', t('No spaces'), t('Create a space (fridge, pantry, cellar…) to start adding products.')));
+    body.push(h('div.stack', S.spaces.map(sp => {
       const items = S.items.filter(i => i.spaceId === sp.id);
       const nExp = items.filter(i => expiryState(i) === 'expired').length;
       const nSoon = items.filter(i => expiryState(i) === 'expiring').length;
-      list.appendChild(h('div.card', { role: 'button', tabindex: 0, onclick: () => go('spazio/' + sp.id), onkeydown: e => { if (e.key === 'Enter') go('spazio/' + sp.id); } },
-        h('div.card-head', h('h3.card-title', sp.name), moreBtn([
-          { icon: 'edit', label: 'Modifica', onclick: () => openSpaceForm(sp) },
-          { icon: 'delete', label: 'Elimina', danger: true, onclick: () => deleteSpace(sp) },
-        ])),
-        sp.notes ? h('p.card-notes', sp.notes) : null,
-        h('div.card-foot',
-          h('span', items.length ? `${items.length} ${items.length === 1 ? 'prodotto' : 'prodotti'}` : 'Nessun prodotto in questo spazio',
-            nExp ? h('span.badge-danger', ` · ${nExp} scadut${nExp === 1 ? 'o' : 'i'}`) : null,
-            nSoon ? h('span.badge-warn', ` · ${nSoon} in scadenza`) : null),
-          pic('spaces', sp.icon))));
-    }
-    body.push(list);
-    body.push(h('div.center-btn', btn('Crea un nuovo spazio', { icon: 'addCircle', onclick: () => openSpaceForm(null) })));
-    return { tab: 'spazi', title: 'Spazi della casa', body, actions: [iconBtn('search', 'Cerca un alimento', () => go('cerca'))] };
+      return cardRow({
+        big: true, lead: tile('spaces', sp.icon, 'lg'), title: sp.name, sub: sp.notes || null,
+        meta: [chip(items.length ? plural(items.length, 'product', 'products') : t('Empty'), 'neutral'),
+          nExp ? chip(nExp === 1 ? t('1 expired') : t('{n} expired', { n: nExp }), 'danger') : null, nSoon ? chip(t('{n} expiring', { n: nSoon }), 'warn') : null],
+        trail: moreBtn([
+          { icon: 'edit', label: t('Edit'), onclick: () => openSpaceForm(sp) },
+          { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteSpace(sp) },
+        ], sp.name),
+      }, () => go('spazio/' + sp.id));
+    })));
+    return {
+      tab: 'spazi', title: t('Home spaces'), body,
+      actions: [iconBtn('search', t('Find a food'), () => go('cerca'))],
+      fab: fab(t('New space'), 'add', () => openSpaceForm(null)),
+    };
   }
 
   function openExpirySheet(kind) {
     const items = kind === 'expired' ? expiredItems() : expiringItems();
     const text = kind === 'expired'
-      ? 'Alcuni prodotti presenti nei tuoi spazi sono scaduti. Se riportano la dicitura «Da consumare preferibilmente entro il…» verifica direttamente i prodotti: potrebbero essere ancora consumabili se non presentano evidenti muffe, alterazioni di colore, di odore e di sapore. Scopri nuove ricette per evitare di buttarli! I prodotti scaduti sono i seguenti.'
-      : 'Alcuni prodotti presenti nei tuoi spazi scadranno a breve. Scopri nuove ricette per evitare di buttarli! I prodotti in scadenza sono i seguenti.';
+      ? t('If they say “best before”, check the products yourself: they may still be fine if there is no mould and no change in colour, smell or taste.')
+      : t('These products will expire soon. Discover recipes so you don’t throw them away!');
     const s = sheet({
-      title: kind === 'expired' ? 'Prodotti scaduti' : 'Prodotti in scadenza',
+      title: kind === 'expired' ? t('Expired products') : t('Expiring products'),
       body: [h('p.sheet-text', text), h('div.stack', items.map(i => {
         const sp = spaceById(i.spaceId);
-        return h('button.card.item', { type: 'button', onclick: () => openItemDetail(i) }, pic('products', i.icon),
-          h('div.item-main', h('p.item-name', i.name), h('div.item-sub', 'in ' + (sp ? sp.name : '—')), h('div.item-sub.' + kind, expiryText(i))));
+        return cardRow({ lead: tile('products', i.icon), title: itemName(i), sub: `${expiryLine(i)} · ${sp ? sp.name : '—'}`, meta: [expiryChip(i)], trail: icon('right') }, () => openItemDetail(i));
       }))],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }),
-        btn('Scopri nuove ricette', { icon: 'restaurant', onclick: () => { recipeFilters = { fav: false, expiring: kind === 'expiring', expired: kind === 'expired', cookable: false }; recipeQuery = ''; go('ricette'); } })],
+      actions: [cancelBtn(), btn(t('Discover recipes'), { icon: 'restaurant', onclick: () => { recipeFilters = { fav: false, expiring: kind === 'expiring', expired: kind === 'expired', cookable: false }; recipeQuery = ''; go('ricette'); } })],
     });
   }
 
   function openSpaceForm(sp) {
     let iconSel = sp ? sp.icon : 'fridge';
     const name = input({ value: sp ? sp.name : '', maxlength: 60 });
-    const notes = textarea({ value: sp ? sp.notes : '', maxlength: 500 });
-    const save = btn(sp ? 'Salva e modifica' : 'Salva e aggiungi', { icon: 'save', onclick: async () => {
-      if (!name.value.trim()) { toast('Inserisci il nome dello spazio.', 'error'); name.focus(); return; }
+    const notes = textarea({ value: sp ? sp.notes : '', maxlength: 500, rows: 2 });
+    const save = btn(sp ? t('Save') : t('Create space'), { icon: 'check', onclick: async () => {
+      if (!name.value.trim()) { toast(t('Enter the space name.'), 'error'); name.focus(); return; }
       await act('space.save', { id: sp ? sp.id : 0, name: name.value, icon: iconSel, notes: notes.value }, save);
       s.close();
     } });
     const s = sheet({
-      title: sp ? 'Modifica spazio della casa' : 'Nuovo spazio della casa',
-      body: [field('Nome', name), iconPicker('spaces', SPACE_ICONS, iconSel, v => { iconSel = v; }), field('Note', notes)],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+      title: sp ? t('Edit space') : t('New space'),
+      body: [field(t('Name'), name), h('div.label', t('Icon')), iconPicker('spaces', UI.iconNames('spaces'), iconSel, v => { iconSel = v; }), field(t('Notes (optional)'), notes)],
+      actions: [cancelBtn(), save],
     });
   }
 
   async function deleteSpace(sp) {
     const n = S.items.filter(i => i.spaceId === sp.id).length;
-    if (!await confirm('Eliminare lo spazio?', n ? `«${sp.name}» contiene ${n} prodotti: verranno eliminati anche loro, per tutti i membri della casa.` : `Lo spazio «${sp.name}» verrà eliminato.`, 'Elimina', true)) return;
+    if (!await confirm(t('Delete the space?'), n ? t('“{name}” contains {what}: they will be deleted too, for all household members.', { name: sp.name, what: plural(n, 'product', 'products') }) : t('The space “{name}” will be deleted.', { name: sp.name }), t('Delete'), true)) return;
     await act('space.delete', { id: sp.id });
-    toast('Spazio eliminato');
+    toast(t('Space deleted'));
   }
 
   function sortItems(items, mode) {
@@ -355,27 +385,25 @@
       'qty-desc': (a, b) => (b.quantity ?? -Infinity) - (a.quantity ?? -Infinity),
       'name-asc': (a, b) => a.name.localeCompare(b.name, 'it'),
       'name-desc': (a, b) => b.name.localeCompare(a.name, 'it'),
-    }[mode] || ((a, b) => 0);
+    }[mode] || (() => 0);
     return items.slice().sort(by);
   }
 
   function itemCard(i, opts) {
     opts = opts || {};
-    const st = expiryState(i);
     const sp = spaceById(i.spaceId);
     const qty = UI.fmtQty(i.quantity, i.unit);
-    return h('div.card.item', { role: 'button', tabindex: 0, onclick: () => openItemDetail(i), onkeydown: e => { if (e.key === 'Enter') openItemDetail(i); } },
-      pic('products', i.icon),
-      h('div.item-main',
-        h('p.item-name', i.name, i.brand ? h('span.muted.small', ' · ' + i.brand) : null),
-        h('div.item-sub' + (st === 'expired' ? '.expired' : st === 'expiring' ? '.expiring' : ''), expiryText(i)),
-        (qty || opts.showSpace) ? h('div.item-sub.muted', [qty ? 'Quantità: ' + qty : null, opts.showSpace && sp ? 'in ' + sp.name : null].filter(Boolean).join(' · ')) : null),
-      moreBtn([
-        { icon: 'edit', label: 'Modifica', onclick: () => openItemForm({ item: i }) },
-        { icon: 'check', label: 'Segna come consumato', onclick: () => consumeItem(i) },
-        { icon: 'cartAdd', label: 'Aggiungi alla lista della spesa', onclick: () => addToListSheet([{ productId: i.productId, name: i.name, quantity: i.quantity, unit: i.unit }]) },
-        { icon: 'delete', label: 'Elimina', danger: true, onclick: () => deleteItem(i) },
-      ]));
+    return cardRow({
+      lead: tile('products', i.icon), title: itemName(i) + (i.brand ? ' · ' + i.brand : ''),
+      sub: [expiryLine(i), qty, opts.showSpace && sp ? sp.name : null].filter(Boolean).join(' · '),
+      meta: [expiryChip(i)],
+      trail: moreBtn([
+        { icon: 'edit', label: t('Edit'), onclick: () => openItemForm({ item: i }) },
+        { icon: 'check', label: t('Mark as used'), onclick: () => consumeItem(i) },
+        { icon: 'cartAdd', label: t('Add to shopping list'), onclick: () => addToListSheet([{ productId: i.productId, name: i.name, quantity: i.quantity, unit: i.unit }]) },
+        { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteItem(i) },
+      ], i.name),
+    }, () => openItemDetail(i));
   }
 
   function viewSpace(id) {
@@ -384,15 +412,22 @@
     const mode = store.get('sort', 'exp-asc');
     const items = sortItems(S.items.filter(i => i.spaceId === sp.id), mode);
     const body = [];
-    if (!items.length) body.push(empty('Non sono presenti prodotti in questo spazio', 'assets/img/spaces/' + sp.icon + '.png'));
+    if (!items.length) body.push(empty('spaces', sp.icon, t('No products'), t('Add the products you keep here: we will alert you before they expire.')));
+    else body.push(sectionTitle(t('Products'), items.length, btn(SORTS.find(x => x[0] === mode)[1].split(':')[0], { kind: 'text', icon: 'sort', onclick: () => openSort(mode) })));
     body.push(h('div.stack', items.map(i => itemCard(i))));
-    body.push(h('div.center-btn', btn('Aggiungi un prodotto', { icon: 'addCircle', onclick: () => openProductSearch({ spaceId: sp.id }) })));
     return {
       tab: 'spazi', title: sp.name, back: 'spazi', body,
-      actions: [iconBtn('sort', 'Ordina per', () => {
-        const s = sheet({ body: SORTS.map(([k, label]) => h('button.sort-option' + (k === mode ? '.active' : ''), { type: 'button', onclick: () => { store.set('sort', k); s.close(); render(true); } }, label)) });
-      })],
+      actions: [moreBtn([
+        { icon: 'sort', label: t('Sort products'), onclick: () => openSort(mode) },
+        { icon: 'edit', label: t('Edit space'), onclick: () => openSpaceForm(sp) },
+        { icon: 'delete', label: t('Delete space'), danger: true, onclick: () => deleteSpace(sp).then(() => { if (!spaceById(sp.id)) go('spazi'); }) },
+      ], sp.name)],
+      fab: fab(t('Add product'), 'add', () => openProductSearch({ spaceId: sp.id })),
     };
+  }
+
+  function openSort(mode) {
+    actionSheet(SORTS.map(([k, label]) => ({ icon: k.startsWith('exp') ? 'timer' : k.startsWith('qty') ? 'filter' : 'sort', label, selected: k === mode, onclick: () => { store.set('sort', k); render(true); } })), t('Sort by'));
   }
 
   // ---------- Item detail / forms ----------
@@ -401,79 +436,80 @@
     const st = expiryState(i);
     const sp = spaceById(i.spaceId);
     const cat = categoryById(i.categoryId);
-    const ro = (label, value) => field(label, input({ value: value || '—', readonly: true }));
+    const d = (label, value) => value ? h('div.d', h('span', label), h('span', value)) : null;
     const body = [
-      h('div.field-row', ro('Quantità', i.quantity != null ? UI.fmtNum(i.quantity) : ''), ro('Unità', i.unit)),
-      ro(i.expiryType === 'best_before' ? 'Da consumarsi preferibilmente entro' : 'Data di scadenza', i.expiryDate ? UI.fmtDate(i.expiryDate) + (st ? '  (' + (st === 'expired' ? 'scaduto' : UI.relDays(UI.daysUntil(i.expiryDate))) + ')' : '') : ''),
-      nutriPicker(i.nutriscore, () => {}, true),
-      h('div.field-row', ro('Spazio', sp && sp.name), ro('Categoria', cat && cat.name)),
-      i.brand ? ro('Marca', i.brand) : null,
-      i.notes ? field('Note', textarea({ value: i.notes, readonly: true })) : null,
-      h('p.small.muted', `Aggiunto ${i.createdBy ? 'da ' + i.createdBy + ' ' : ''}il ${UI.fmtDateTime(i.createdAt)}`),
+      h('div.row', { style: { marginBottom: '14px' } }, tile('products', i.icon, 'lg'), h('div.grow', h('div.meta-row', expiryChip(i), i.nutriscore ? chip('Nutri-Score ' + i.nutriscore, 'neutral') : null))),
     ];
-    if (st === 'expired' || st === 'expiring') {
-      body.unshift(h('div.banner.info', h('h3', icon('info'), 'Informazioni sulla scadenza'), h('p', expiryTip(i)), h('p.small', { style: { marginTop: '8px', opacity: .8 } }, DISCLAIMER)));
-    }
+    if (st === 'expired' || st === 'expiring') body.push(banner('info', 'info', t('About the expiry'), expiryTip(i)), h('p.helper', { style: { margin: '-6px 4px 14px' } }, DISCLAIMER));
+    body.push(h('div.details',
+      d(i.expiryType === 'best_before' ? t('Best before') : t('Expiry'), i.expiryDate ? UI.fmtDate(i.expiryDate) : t('None')),
+      d(t('Quantity'), UI.fmtQty(i.quantity, i.unit) || '—'),
+      d(t('Space'), sp && sp.name), d(t('Category'), cat && cat.name), d(t('Brand'), i.brand), d(t('Barcode'), i.barcode),
+      d(t('Added'), (i.createdBy ? i.createdBy + ', ' : '') + UI.fmtDateTime(i.createdAt).split(' ')[0])));
+    if (i.notes) body.push(h('div.details', h('div.d', h('span', t('Notes')), h('span', i.notes))));
     const s = sheet({
-      title: i.name, body,
+      title: itemName(i), body,
       actions: [
-        btn('Chiudi', { kind: 'text', onclick: () => s.close() }),
-        btn('Modifica', { kind: 'tonal', icon: 'edit', onclick: () => { s.close(); setTimeout(() => openItemForm({ item: i }), 240); } }),
-        btn('Segna come consumato', { icon: 'check', onclick: () => { s.close(); setTimeout(() => consumeItem(i), 240); } }),
+        btn(t('Edit'), { kind: 'text', icon: 'edit', onclick: () => { s.close(); setTimeout(() => openItemForm({ item: i }), 240); } }),
+        btn(t('Mark as used'), { icon: 'check', onclick: () => { s.close(); setTimeout(() => consumeItem(i), 240); } }),
       ],
     });
   }
 
   function consumeItem(i) {
-    if (i.quantity == null || i.quantity <= 1 && i.unit === 'pz') {
-      return act('item.consume', { id: i.id }).then(() => toast(`«${i.name}» segnato come consumato`));
+    if (i.quantity == null || (i.quantity <= 1 && i.unit === 'pz')) {
+      return act('item.consume', { id: i.id }).then(() => toast(t('“{name}” marked as used', { name: itemName(i) })));
     }
-    const qty = input({ type: 'number', inputmode: 'decimal', min: 0, step: 'any', value: String(i.quantity) });
+    let mode = 'all';
+    const qty = input({ type: 'number', inputmode: 'decimal', min: 0, step: 'any', value: '' });
+    const qtyField = field(t('Quantity used') + ` (${UI.unitLabel(i.unit)})`, qty);
+    qtyField.hidden = true;
+    const ok = btn(t('Confirm'), { icon: 'check', onclick: async () => {
+      if (mode === 'part' && !(Number(qty.value) > 0)) { toast(t('Enter how much you used.'), 'error'); return; }
+      await act('item.consume', mode === 'all' ? { id: i.id } : { id: i.id, quantity: qty.value }, ok);
+      s.close(); toast(mode === 'all' ? t('“{name}” used', { name: itemName(i) }) : t('Quantity updated'));
+    } });
     const s = sheet({
-      title: 'Segna come consumato',
-      body: [h('p.sheet-text', `Quanto hai consumato di «${i.name}»? Disponibile: ${UI.fmtQty(i.quantity, i.unit)}.`), field('Quantità consumata (' + i.unit + ')', qty)],
-      actions: [
-        btn('Annulla', { kind: 'text', onclick: () => s.close() }),
-        btn('Tutto', { kind: 'tonal', onclick: async e => { await act('item.consume', { id: i.id }, e.currentTarget); s.close(); toast(`«${i.name}» consumato`); } }),
-        btn('Conferma', { icon: 'check', onclick: async e => { await act('item.consume', { id: i.id, quantity: qty.value }, e.currentTarget); s.close(); toast('Quantità aggiornata'); } }),
-      ],
+      title: t('Mark as used'),
+      body: [h('p.sheet-text', t('Available: {qty} of “{name}”.', { qty: UI.fmtQty(i.quantity, i.unit), name: itemName(i) })),
+        seg([['all', t('All of it')], ['part', t('Only some')]], mode, v => { mode = v; qtyField.hidden = v !== 'part'; if (v === 'part') qty.focus(); }), qtyField],
+      actions: [cancelBtn(), ok],
     });
   }
 
   async function deleteItem(i) {
-    if (!await confirm('Eliminare il prodotto?', `«${i.name}» verrà eliminato dallo spazio.`, 'Elimina', true)) return;
+    if (!await confirm(t('Delete the product?'), t('“{name}” will be removed from the space.', { name: itemName(i) }), t('Delete'), true)) return;
     await act('item.delete', { id: i.id });
-    toast('Prodotto eliminato');
+    toast(t('Product deleted'));
   }
 
   /** Product search sheet ("Aggiungi un prodotto"), used both for spaces and shopping lists. */
   function openProductSearch(ctx) {
-    const q = input({ type: 'search', placeholder: 'Cerca prodotto', enterkeyhint: 'search' });
-    const results = h('div.pick-list');
-    const create = btn('Crea un nuovo prodotto', { icon: 'addCircle', onclick: () => choose({ name: q.value.trim() }) });
-    const scanBtn = btn('Scansiona codice a barre', { kind: 'tonal', icon: 'scan', onclick: () => { s.close(); setTimeout(() => openScanner(ctx), 240); } });
+    const q = input({ type: 'search', placeholder: t('Search the catalogue'), enterkeyhint: 'search', 'aria-label': t('Search product') });
+    const results = h('div.stack', { style: { marginTop: '12px' } });
+    const createBtn = btn(t('Create new product'), { kind: 'tonal', icon: 'add', onclick: () => choose({ name: q.value.trim() }) });
     function choose(prefill) {
       s.close();
       setTimeout(() => ctx.listId ? openListItemForm({ listId: ctx.listId, prefill }) : openItemForm({ spaceId: ctx.spaceId, prefill }), 240);
     }
     function refresh() {
       const n = norm(q.value);
+      createBtn.querySelector('span').textContent = n ? t('Create “{name}”', { name: q.value.trim() }) : t('Create new product');
       let prods = S.catalog.products;
       if (n) prods = prods.filter(p => norm(p.name).includes(n)).sort((a, b) => norm(a.name).indexOf(n) - norm(b.name).indexOf(n));
       UI.clear(results);
       for (const p of prods.slice(0, 60)) {
         const cat = categoryById(p.categoryId);
-        results.appendChild(h('button.pick', { type: 'button', onclick: () => choose({ productId: p.id, name: p.name, icon: p.icon, unit: p.unit, categoryId: p.categoryId }) },
-          pic('products', p.icon, 'sm'), h('span', p.name, cat ? h('small', cat.name) : null)));
+        results.appendChild(cardRow({ lead: tile('products', p.icon, 'sm'), title: p.name, sub: cat ? cat.name : null, trail: icon('add') },
+          () => choose({ productId: p.id, name: p.name, icon: p.icon, unit: p.unit, categoryId: p.categoryId })));
       }
-      if (n && !prods.length) results.appendChild(h('p.center.muted', 'Nessun prodotto trovato'));
+      if (n && !prods.length) results.appendChild(h('p.helper.center', t('Not in the catalogue: you can create a new product.')));
     }
     q.addEventListener('input', refresh);
-    q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const first = results.querySelector('.pick'); if (first) first.click(); else if (q.value.trim()) create.click(); } });
+    q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const first = results.querySelector('.card'); if (first) first.click(); else if (q.value.trim()) createBtn.click(); } });
     const s = sheet({
-      title: 'Aggiungi un prodotto',
-      body: [h('div.search-box', icon('search'), q), h('p.small.muted', { style: { margin: '6px 2px 0' } }, 'Ricerca il prodotto che vuoi aggiungere. Se non lo trovi, puoi crearne uno nuovo.'),
-        h('div.row', { style: { justifyContent: 'center', gap: '8px', flexWrap: 'wrap', margin: '10px 0 0' } }, create, ctx.listId ? null : scanBtn), results],
+      title: t('Add a product'),
+      body: [searchbar(q), h('div.btn-row', createBtn, ctx.listId ? null : btn(t('Scan'), { kind: 'outline', icon: 'scan', onclick: () => { s.close(); setTimeout(() => openScanner(ctx), 240); } })), results],
     });
     refresh();
   }
@@ -483,6 +519,7 @@
     const it = opts.item || null;
     const pre = Object.assign({}, opts.prefill || {});
     const li = opts.fromListItem || null;
+    if (!S.spaces.length) { toast(t('Create a space first.'), 'error'); return; }
     const v = it ? Object.assign({}, it) : {
       productId: pre.productId || (li && li.productId) || null,
       name: pre.name || (li && li.name) || '', icon: pre.icon || (li && li.icon) || null,
@@ -491,9 +528,9 @@
       expiryDate: '', expiryType: 'use_by', notes: pre.notes || (li && li.notes) || '',
       spaceId: opts.spaceId || (S.spaces[0] && S.spaces[0].id),
     };
-    if (!v.icon) { const p = productById(v.productId); v.icon = p ? p.icon : 'generic'; }
-    if (v.categoryId == null && v.productId) { const p = productById(v.productId); if (p) v.categoryId = p.categoryId; }
-    if (!S.spaces.length) { toast('Crea prima uno spazio della casa.', 'error'); return; }
+    const p0 = productById(v.productId);
+    if (!v.icon) v.icon = p0 ? p0.icon : 'generic';
+    if (v.categoryId == null && p0) v.categoryId = p0.categoryId;
 
     const space = select(S.spaces.map(sp => ({ value: sp.id, label: sp.name })), v.spaceId);
     const name = input({ value: v.name, maxlength: 80 });
@@ -505,48 +542,40 @@
     let iconSel = v.icon;
     const brand = input({ value: v.brand || '', maxlength: 80 });
     const cat = select([{ value: '', label: '—' }].concat(S.catalog.categories.map(c => ({ value: c.id, label: c.name }))), v.categoryId ?? '');
-    const notes = textarea({ value: v.notes || '', maxlength: 500 });
+    const notes = textarea({ value: v.notes || '', maxlength: 500, rows: 2 });
     const barcode = input({ value: v.barcode || '', inputmode: 'numeric', maxlength: 32 });
-    const more = h('div', { hidden: !(v.brand || v.barcode) && !it },
-      h('div.field-row', field('Marca', brand), field('Categoria', cat)),
-      h('p.small.muted', { style: { margin: '4px 2px' } }, 'Icona'),
-      iconPicker('products', iconList(), iconSel, x => { iconSel = x; }),
-      field('Codice a barre', barcode));
-    const moreToggle = btn(more.hidden ? 'Altri dettagli (marca, categoria, icona)' : '', { kind: 'text', icon: 'add', onclick: () => { more.hidden = false; moreToggle.remove(); } });
-    if (!more.hidden) moreToggle.hidden = true;
+    const open = !!(it || v.brand || v.barcode);
+    const more = h('div', { hidden: !open },
+      h('div.field-row', field(t('Brand'), brand), field(t('Category'), cat)),
+      h('div.label', t('Icon')), iconPicker('products', UI.iconNames('products'), iconSel, x => { iconSel = x; }, true),
+      field(t('Barcode'), barcode), field(t('Notes'), notes));
+    const moreToggle = btn(t('More details'), { kind: 'text', icon: 'chevronDown', onclick: () => { more.hidden = false; moreToggle.remove(); } });
+    if (open) moreToggle.hidden = true;
 
-    const title = it ? 'Modifica prodotto' : li ? 'Sposta prodotto in uno spazio' : 'Nuovo prodotto';
-    const saveLabel = it ? 'Salva e modifica' : li ? 'Sposta in questo spazio' : 'Salva e aggiungi';
-    const save = btn(saveLabel, { icon: li ? 'move' : 'save', onclick: async () => {
-      if (!name.value.trim()) { toast('Inserisci il nome del prodotto.', 'error'); name.focus(); return; }
+    const title = it ? t('Edit product') : li ? t('Move to a space') : t('New product');
+    const save = btn(it ? t('Save') : li ? t('Move') : t('Add'), { icon: li ? 'move' : 'check', onclick: async () => {
+      if (!name.value.trim()) { toast(t('Enter the product name.'), 'error'); name.focus(); return; }
       const payload = {
         id: it ? it.id : 0, spaceId: Number(space.value), productId: matchProduct(name.value, v.productId),
         name: name.value, quantity: qty.value, unit: unit.value, expiryDate: date.value, expiryType: expType,
         nutriscore: ns, brand: brand.value, categoryId: cat.value || null, icon: iconSel, barcode: barcode.value, notes: notes.value,
       };
-      if (li) { payload.id = li.id; await act('listitem.tospace', payload, save); toast(`«${payload.name}» spostato in ${spaceById(payload.spaceId).name}`); }
-      else { await act('item.save', payload, save); toast(it ? 'Prodotto modificato' : `«${payload.name}» aggiunto`); }
+      if (li) { payload.id = li.id; await act('listitem.tospace', payload, save); toast(t('“{name}” moved to {space}', { name: payload.name, space: spaceById(payload.spaceId).name })); }
+      else { await act('item.save', payload, save); toast(it ? t('Product updated') : t('“{name}” added', { name: payload.name })); }
       s.close();
     } });
     const s = sheet({
       title,
       body: [
-        field(li ? 'Seleziona uno spazio' : 'Spazio', space), field('Nome', name),
-        h('div.field-row', field('Quantità', qty), field('Unità', unit)),
-        field('Data di scadenza', date),
-        seg([['use_by', 'Da consumarsi entro'], ['best_before', 'Preferibilmente entro']], expType, x => { expType = x; }),
-        nutriPicker(ns, x => { ns = x; }),
+        field(t('Name'), name), field(t('Space'), space),
+        h('div.field-row', field(t('Quantity'), qty), field(t('Unit'), unit)),
+        field(t('Expiry date'), date),
+        seg([['use_by', t('Use by')], ['best_before', t('Best before')]], expType, x => { expType = x; }),
+        h('div.label', t('Nutri-Score (optional)')), nutriPicker(ns, x => { ns = x; }),
         moreToggle, more,
-        field('Note', notes),
       ],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+      actions: [cancelBtn(), save],
     });
-  }
-
-  function iconList() {
-    const set = new Set(['generic']);
-    S.catalog.products.forEach(p => set.add(p.icon));
-    return [...set].sort();
   }
 
   /** Keeps the catalog link only if the name still matches a catalog product. */
@@ -560,20 +589,44 @@
 
   // ---------- Barcode scanner (BarcodeDetector + Open Food Facts) ----------
 
+  let zxingPromise = null;
+  /** Loads the ZXing barcode reader (self-hosted) for browsers without the native BarcodeDetector. */
+  function loadZxing() {
+    if (!zxingPromise) {
+      zxingPromise = new Promise((resolve, reject) => {
+        const sc = document.createElement('script');
+        sc.src = 'assets/vendor/zxing-0.21.3.min.js';
+        sc.onload = () => (window.ZXing ? resolve(window.ZXing) : reject(new Error('ZXing')));
+        sc.onerror = () => { zxingPromise = null; reject(new Error('ZXing')); };
+        document.head.appendChild(sc);
+      });
+    }
+    return zxingPromise;
+  }
+
+  async function nativeDetector() {
+    if (!('BarcodeDetector' in window)) return null;
+    try {
+      const formats = await window.BarcodeDetector.getSupportedFormats();
+      const wanted = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'].filter(f => formats.includes(f));
+      return wanted.length ? new window.BarcodeDetector({ formats: wanted }) : null;
+    } catch (e) { return null; }
+  }
+
   function openScanner(ctx) {
-    const code = input({ inputmode: 'numeric', placeholder: ' ', maxlength: 14 });
-    const status = h('p.small.muted.center', '');
+    const code = input({ inputmode: 'numeric', maxlength: 14 });
+    const status = h('p.helper.center', t('Starting the camera…'));
     const video = h('video', { playsinline: true, muted: true, autoplay: true });
     const cam = h('div.scanner', video);
-    let stream = null, stopped = false;
-    const supported = 'BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
-    if (!supported) { cam.hidden = true; status.textContent = 'La scansione con la fotocamera non è supportata da questo browser: inserisci il codice a mano.'; }
+    let stream = null, stopped = false, zxReader = null, busyLookup = false;
 
     async function lookup(c) {
       c = String(c || '').replace(/\D/g, '');
-      if (c.length < 6) { toast('Codice non valido.', 'error'); return; }
+      if (c.length < 6) { toast(t('Invalid code.'), 'error'); return; }
+      if (busyLookup) return;
+      busyLookup = true;
       stop();
-      status.textContent = 'Cerco il prodotto…';
+      status.textContent = t('Looking up the product…');
       try {
         const d = await Api.get('barcode.lookup&code=' + c);
         s.close();
@@ -582,108 +635,132 @@
           const p = d.product;
           Object.assign(prefill, { name: p.name, brand: p.brand, nutriscore: p.nutriscore });
           if (p.quantity) { prefill.quantity = p.quantity; prefill.unit = p.unit; }
-          const match = S.catalog.products.find(x => p.name && norm(p.name).includes(norm(x.name)));
+          const match = S.catalog.products.find(x => p.name && (norm(p.name).includes(norm(x.name)) || norm(p.name).includes(norm(x.nameBase))));
           if (match) Object.assign(prefill, { productId: match.id, icon: match.icon, categoryId: match.categoryId });
-          toast('Prodotto trovato: ricordati di impostare la data di scadenza');
+          toast(t('Product found: set the expiry date'));
         } else {
-          toast('Prodotto non trovato: inserisci i dati a mano');
+          toast(t('Product not found: enter the details manually'));
         }
         setTimeout(() => openItemForm({ spaceId: ctx.spaceId, prefill }), 240);
-      } catch (e) { status.textContent = e.message; }
+      } catch (e) { status.textContent = e.message; busyLookup = false; }
     }
-    function stop() { stopped = true; if (stream) stream.getTracks().forEach(t => t.stop()); }
+    function stop() {
+      stopped = true;
+      if (zxReader) { try { zxReader.reset(); } catch (e) { /* already stopped */ } }
+      if (stream) stream.getTracks().forEach(tr => tr.stop());
+    }
+    function noCamera(msg) { cam.hidden = true; status.textContent = msg; }
 
     const s = sheet({
-      title: 'Scansiona codice a barre',
-      body: [cam, status, field('Oppure inserisci il codice a barre', code)],
+      title: t('Scan barcode'),
+      body: [cam, status, field(t('Barcode'), code, { hint: t('Or type the number under the bars') })],
       onclose: stop,
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), btn('Cerca', { icon: 'search', onclick: () => lookup(code.value) })],
+      actions: [cancelBtn(), btn(t('Search'), { icon: 'search', onclick: () => lookup(code.value) })],
     });
     code.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(code.value); });
-    if (supported) {
-      (async () => {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      noCamera(t('The camera needs a secure (HTTPS) connection: type the code manually.'));
+      return;
+    }
+    (async () => {
+      const detector = await nativeDetector();
+      try {
+        if (detector) {
+          // Native scanner (Chrome on Android, Edge, …)
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
           if (stopped) return stop();
           video.srcObject = stream;
-          const detector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
-          status.textContent = 'Inquadra il codice a barre del prodotto';
+          status.textContent = t('Point the camera at the product barcode');
           const tick = async () => {
             if (stopped) return;
             try {
               const codes = await detector.detect(video);
               if (codes.length) { if (navigator.vibrate) navigator.vibrate(60); code.value = codes[0].rawValue; return lookup(codes[0].rawValue); }
             } catch (e) { /* frame not ready */ }
-            setTimeout(tick, 250);
+            setTimeout(tick, 200);
           };
           video.addEventListener('loadeddata', tick, { once: true });
-        } catch (e) {
-          cam.hidden = true;
-          status.textContent = 'Fotocamera non disponibile (permesso negato?). Inserisci il codice a mano.';
+        } else {
+          // Fallback for every other browser (Firefox, Safari, desktop Chrome): ZXing
+          const ZX = await loadZxing();
+          if (stopped) return;
+          const hints = new Map();
+          hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E, ZX.BarcodeFormat.CODE_128]);
+          hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+          zxReader = new ZX.BrowserMultiFormatReader(hints, 250);
+          status.textContent = t('Point the camera at the product barcode');
+          await zxReader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } }, audio: false }, video, result => {
+            if (result && !stopped) { if (navigator.vibrate) navigator.vibrate(60); code.value = result.getText(); lookup(result.getText()); }
+          });
+          if (stopped) stop();
         }
-      })();
-    }
+      } catch (e) {
+        noCamera(e && e.name === 'NotAllowedError'
+          ? t('Camera permission denied: allow it in the browser settings, or type the code manually.')
+          : t('Camera not available (permission denied?). Type the code manually.'));
+      }
+    })();
   }
 
   // ===================================================== SHOPPING LISTS
 
   function viewLists() {
     const body = [];
-    if (!S.lists.length) body.push(empty('Nessuna lista creata', 'assets/img/lists/home.png'));
+    if (!S.lists.length) body.push(empty('lists', 'cart', t('No lists'), t('Create a shopping list: you can share it with the people you live with.')));
     body.push(h('div.stack', S.lists.map(l => {
       const items = S.listItems.filter(x => x.listId === l.id);
       const inCart = items.filter(x => x.inCart).length;
-      const txt = !items.length ? 'Nessun prodotto in questa lista'
-        : `${items.length} ${items.length === 1 ? 'prodotto' : 'prodotti'}, ${inCart ? 'di cui ' + inCart + ' nel carrello' : 'nessuno nel carrello'}`;
-      return h('div.card', { role: 'button', tabindex: 0, onclick: () => go('lista/' + l.id), onkeydown: e => { if (e.key === 'Enter') go('lista/' + l.id); } },
-        h('div.card-head', h('h3.card-title', l.name), moreBtn([
-          { icon: 'edit', label: 'Modifica', onclick: () => openListForm(l) },
-          { icon: 'delete', label: 'Elimina', danger: true, onclick: () => deleteList(l) },
-        ])),
-        l.notes ? h('p.card-notes', l.notes) : null,
-        h('div.card-foot', h('span', txt), pic('lists', l.icon)));
+      const toBuy = items.length - inCart;
+      return cardRow({
+        big: true, lead: tile('lists', l.icon, 'lg'), title: l.name, sub: l.notes || null,
+        meta: !items.length ? [chip(t('Empty list'), 'neutral')] : [chip(t('{n} to buy', { n: toBuy }), toBuy ? 'ok' : 'neutral'), inCart ? chip(t('{n} in the cart', { n: inCart }), 'neutral', 'cartAdd') : null],
+        trail: moreBtn([
+          { icon: 'edit', label: t('Edit'), onclick: () => openListForm(l) },
+          { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteList(l) },
+        ], l.name),
+      }, () => go('lista/' + l.id));
     })));
-    body.push(h('div.center-btn', btn('Crea una nuova lista', { icon: 'addCircle', onclick: () => openListForm(null) })));
-    return { tab: 'liste', title: 'Liste della spesa', body };
+    return { tab: 'liste', title: t('Shopping lists'), body, fab: fab(t('New list'), 'add', () => openListForm(null)) };
   }
 
-  function openListForm(l, then) {
+  function openListForm(l) {
     let iconSel = l ? l.icon : 'home';
     const name = input({ value: l ? l.name : '', maxlength: 60 });
-    const notes = textarea({ value: l ? l.notes : '', maxlength: 500 });
-    const save = btn(l ? 'Salva e modifica' : 'Salva e aggiungi', { icon: 'save', onclick: async () => {
-      if (!name.value.trim()) { toast('Inserisci il nome della lista.', 'error'); name.focus(); return; }
-      const d = await act('list.save', { id: l ? l.id : 0, name: name.value, icon: iconSel, notes: notes.value }, save);
+    const notes = textarea({ value: l ? l.notes : '', maxlength: 500, rows: 2 });
+    const save = btn(l ? t('Save') : t('Create list'), { icon: 'check', onclick: async () => {
+      if (!name.value.trim()) { toast(t('Enter the list name.'), 'error'); name.focus(); return; }
+      await act('list.save', { id: l ? l.id : 0, name: name.value, icon: iconSel, notes: notes.value }, save);
       s.close();
-      if (then) setTimeout(() => then(d.id), 240);
     } });
     const s = sheet({
-      title: l ? 'Modifica lista della spesa' : 'Nuova lista della spesa',
-      body: [field('Nome', name), iconPicker('lists', LIST_ICONS, iconSel, v => { iconSel = v; }), field('Note', notes)],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+      title: l ? t('Edit list') : t('New shopping list'),
+      body: [field(t('Name'), name), h('div.label', t('Icon')), iconPicker('lists', UI.iconNames('lists'), iconSel, v => { iconSel = v; }), field(t('Notes (optional)'), notes)],
+      actions: [cancelBtn(), save],
     });
   }
 
   async function deleteList(l) {
-    if (!await confirm('Eliminare la lista?', `La lista «${l.name}» e i suoi prodotti verranno eliminati per tutti i membri della casa.`, 'Elimina', true)) return;
+    if (!await confirm(t('Delete the list?'), t('The list “{name}” and its products will be deleted for all household members.', { name: l.name }), t('Delete'), true)) return;
     await act('list.delete', { id: l.id });
     if (route().name === 'lista') go('liste');
-    toast('Lista eliminata');
+    toast(t('List deleted'));
   }
 
   function listItemCard(x) {
-    return h('div.card.item' + (x.inCart ? '.in-cart' : ''), { role: 'button', tabindex: 0, onclick: () => openListItemDetail(x) },
-      pic('products', x.icon),
-      h('div.item-main', h('p.item-name', x.name),
-        h('div.item-sub', 'Quantità: ' + (UI.fmtQty(x.quantity, x.unit) || '—')),
-        x.notes ? h('div.item-sub.muted', x.notes) : null),
-      h('div.item-actions',
+    const qty = UI.fmtQty(x.quantity, x.unit);
+    return cardRow({
+      cls: x.inCart ? 'done' : '', lead: tile('products', x.icon), title: itemName(x),
+      sub: [qty || null, x.notes || null].filter(Boolean).join(' · ') || null,
+      trail: [
         moreBtn([
-          { icon: 'edit', label: 'Modifica', onclick: () => openListItemForm({ listId: x.listId, item: x }) },
-          x.inCart ? { icon: 'move', label: 'Sposta in uno spazio', onclick: () => openItemForm({ fromListItem: x }) } : null,
-          { icon: 'delete', label: 'Elimina', danger: true, onclick: () => act('listitem.delete', { id: x.id }).then(() => toast('Prodotto rimosso dalla lista')) },
-        ]),
-        iconBtn(x.inCart ? 'cartRemove' : 'cartAdd', x.inCart ? 'Togli dal carrello' : 'Metti nel carrello', () => act('listitem.cart', { id: x.id, inCart: !x.inCart }), 'sm')));
+          { icon: 'edit', label: t('Edit'), onclick: () => openListItemForm({ listId: x.listId, item: x }) },
+          x.inCart ? { icon: 'move', label: t('Move to a space'), onclick: () => openItemForm({ fromListItem: x }) } : null,
+          { icon: 'delete', label: t('Remove from list'), danger: true, onclick: () => act('listitem.delete', { id: x.id }).then(() => toast(t('Product removed from the list'))) },
+        ], x.name),
+        iconBtn(x.inCart ? 'cartRemove' : 'cartAdd', x.inCart ? t('Take out of cart') : t('Put in cart'), () => act('listitem.cart', { id: x.id, inCart: !x.inCart }), x.inCart ? '' : 'tonal'),
+      ],
+    }, () => openListItemDetail(x));
   }
 
   function viewList(id) {
@@ -691,48 +768,52 @@
     if (!l) { go('liste'); return null; }
     const items = S.listItems.filter(x => x.listId === l.id);
     const toBuy = items.filter(x => !x.inCart), cart = items.filter(x => x.inCart);
-    const body = [h('h2.section', 'Prodotti da acquistare')];
-    if (toBuy.length) body.push(tipBanner('cart', 'Fai tap sull’icona del carrello per inserire un prodotto nel carrello'));
-    if (!toBuy.length) body.push(empty('Non sono presenti prodotti da acquistare'));
-    body.push(h('div.stack', toBuy.map(listItemCard)));
-    body.push(h('div.center-btn', btn('Aggiungi un prodotto', { icon: 'addCircle', onclick: () => openProductSearch({ listId: l.id }) })));
-    body.push(h('h2.section', 'Prodotti nel carrello'));
-    if (cart.length) body.push(tipBanner('spaces', 'Ricordati di spostare i prodotti acquistati negli spazi, una volta tornato a casa!'));
-    if (!cart.length) body.push(empty('Non hai ancora inserito prodotti nel carrello'));
-    body.push(h('div.stack', cart.map(listItemCard)));
-    if (cart.length) {
-      body.push(h('div.center-btn', { style: { gap: '8px', flexWrap: 'wrap' } },
-        btn('Sposta tutti in uno spazio', { kind: 'tonal', icon: 'move', onclick: () => moveAllToSpace(cart) }),
-        btn('Svuota carrello', { kind: 'text', icon: 'cartRemove', onclick: async e => {
-          if (await confirm('Svuotare il carrello?', 'I prodotti nel carrello verranno rimossi dalla lista senza essere spostati negli spazi.', 'Svuota', true)) act('list.clearcart', { id: l.id }, e.target.closest('button'));
-        } })));
+    const body = [];
+    if (!items.length) {
+      body.push(empty('lists', l.icon, t('The list is empty'), t('Add the products to buy, then put them in the cart while shopping.')));
+    } else {
+      body.push(sectionTitle(t('To buy'), toBuy.length));
+      if (toBuy.length) body.push(tipBanner('cart', t('Tap the cart icon to mark a product as picked up.')));
+      else body.push(h('p.helper', { style: { margin: '0 4px 8px' } }, t('You got everything! 🎉')));
+      body.push(h('div.stack', toBuy.map(listItemCard)));
+      if (cart.length) {
+        body.push(sectionTitle(t('In the cart'), cart.length));
+        body.push(tipBanner('spaces', t('Once home, move the products you bought into your spaces to track their expiry.')));
+        body.push(h('div.stack', cart.map(listItemCard)));
+        body.push(h('div.btn-row', { style: { justifyContent: 'flex-end' } },
+          btn(t('Empty cart'), { kind: 'text', onclick: async e => {
+            const b = e.currentTarget;
+            if (await confirm(t('Empty the cart?'), t('The products in the cart will be removed from the list without being moved to a space.'), t('Empty it'), true)) act('list.clearcart', { id: l.id }, b);
+          } }),
+          btn(t('Move all to a space'), { kind: 'tonal', icon: 'move', onclick: () => moveAllToSpace(cart) })));
+      }
     }
     return {
       tab: 'liste', title: l.name, back: 'liste', body,
-      actions: [iconBtn('more', 'Altre azioni', () => actionSheet([
-        { icon: 'edit', label: 'Modifica lista', onclick: () => openListForm(l) },
-        { icon: 'share', label: 'Condividi come testo', onclick: () => shareListText(l, toBuy) },
-        { icon: 'delete', label: 'Elimina lista', danger: true, onclick: () => deleteList(l) },
-      ]))],
+      actions: [moreBtn([
+        { icon: 'edit', label: t('Edit list'), onclick: () => openListForm(l) },
+        { icon: 'share', label: t('Share as text'), onclick: () => shareListText(l, toBuy) },
+        { icon: 'delete', label: t('Delete list'), danger: true, onclick: () => deleteList(l) },
+      ], l.name)],
+      fab: fab(t('Add product'), 'add', () => openProductSearch({ listId: l.id })),
     };
   }
 
   function moveAllToSpace(cart) {
     const space = select(S.spaces.map(sp => ({ value: sp.id, label: sp.name })), S.spaces[0] && S.spaces[0].id);
-    const go2 = btn('Sposta tutti', { icon: 'move', onclick: async () => {
-      await busy(go2, async () => {
+    const ok = btn(t('Move all'), { icon: 'move', onclick: async () => {
+      await busy(ok, async () => {
         for (const x of cart) {
-          const d = await Api.post('listitem.tospace', { id: x.id, spaceId: Number(space.value), productId: x.productId, name: x.name, icon: x.icon, quantity: x.quantity, unit: x.unit, notes: x.notes });
-          applyState(d);
+          applyState(await Api.post('listitem.tospace', { id: x.id, spaceId: Number(space.value), productId: x.productId, name: x.name, icon: x.icon, quantity: x.quantity, unit: x.unit, notes: x.notes }));
         }
       });
       render(true); s.close();
-      toast(`${cart.length} prodotti spostati. Ricordati di impostare le date di scadenza!`);
+      toast(t('{what}: remember the expiry dates!', { what: plural(cart.length, 'product moved', 'products moved') }));
     } });
     const s = sheet({
-      title: 'Sposta tutti in uno spazio',
-      body: [h('p.sheet-text', `Sposta i ${cart.length} prodotti nel carrello nello stesso spazio. Potrai impostare la data di scadenza di ciascuno in seguito.`), field('Seleziona uno spazio', space)],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), go2],
+      title: t('Move all to a space'),
+      body: [h('p.sheet-text', t('The {n} products in the cart will be moved to the same space. You can set each expiry date later.', { n: cart.length })), field(t('Space'), space)],
+      actions: [cancelBtn(), ok],
     });
   }
 
@@ -740,20 +821,21 @@
     const text = `${l.name}\n` + items.map(x => `• ${x.name}${UI.fmtQty(x.quantity, x.unit) ? ' — ' + UI.fmtQty(x.quantity, x.unit) : ''}`).join('\n');
     try {
       if (navigator.share) await navigator.share({ title: l.name, text });
-      else { await navigator.clipboard.writeText(text); toast('Lista copiata negli appunti'); }
+      else { await navigator.clipboard.writeText(text); toast(t('List copied to the clipboard')); }
     } catch (e) { /* cancelled */ }
   }
 
   function openListItemDetail(x) {
-    const ro = (label, value) => field(label, input({ value: value || '—', readonly: true }));
+    const d = (label, value) => value ? h('div.d', h('span', label), h('span', value)) : null;
     const s = sheet({
-      title: x.name,
-      body: [h('div.field-row', ro('Quantità', x.quantity != null ? UI.fmtNum(x.quantity) : ''), ro('Unità', x.unit)), field('Note', textarea({ value: x.notes || '', readonly: true, placeholder: ' ' }))],
+      title: itemName(x),
+      body: [h('div.row', { style: { marginBottom: '14px' } }, tile('products', x.icon, 'lg'), h('div.grow', x.inCart ? chip(t('In the cart'), 'ok', 'cartAdd') : chip(t('To buy'), 'neutral'))),
+        h('div.details', d(t('Quantity'), UI.fmtQty(x.quantity, x.unit) || '—'), d(t('Notes'), x.notes))],
       actions: [
-        btn('Chiudi', { kind: 'text', onclick: () => s.close() }),
+        btn(t('Edit'), { kind: 'text', icon: 'edit', onclick: () => { s.close(); setTimeout(() => openListItemForm({ listId: x.listId, item: x }), 240); } }),
         x.inCart
-          ? btn('Sposta in uno spazio', { icon: 'move', onclick: () => { s.close(); setTimeout(() => openItemForm({ fromListItem: x }), 240); } })
-          : btn('Sposta nel carrello', { icon: 'cartAdd', onclick: async e => { await act('listitem.cart', { id: x.id, inCart: true }, e.currentTarget); s.close(); } }),
+          ? btn(t('Move to a space'), { icon: 'move', onclick: () => { s.close(); setTimeout(() => openItemForm({ fromListItem: x }), 240); } })
+          : btn(t('Put in cart'), { icon: 'cartAdd', onclick: async e => { await act('listitem.cart', { id: x.id, inCart: true }, e.currentTarget); s.close(); } }),
       ],
     });
   }
@@ -761,58 +843,61 @@
   function openListItemForm(opts) {
     const x = opts.item || null;
     const pre = opts.prefill || {};
-    const name = input({ value: x ? x.name : (pre.name || ''), maxlength: 80 });
     const p = productById(x ? x.productId : pre.productId);
+    const name = input({ value: x ? x.name : (pre.name || ''), maxlength: 80 });
     const qty = input({ type: 'number', inputmode: 'decimal', min: 0, step: 'any', value: x && x.quantity != null ? String(x.quantity) : '' });
     const unit = unitSelect(x ? x.unit : (pre.unit || (p && p.unit) || 'pz'));
-    const notes = textarea({ value: x ? x.notes : '', maxlength: 500 });
-    const save = btn(x ? 'Salva e modifica' : 'Salva e aggiungi', { icon: 'save', onclick: async () => {
-      if (!name.value.trim()) { toast('Inserisci il nome del prodotto.', 'error'); name.focus(); return; }
+    const notes = textarea({ value: x ? x.notes : '', maxlength: 500, rows: 2 });
+    const save = btn(x ? t('Save') : t('Add'), { icon: 'check', onclick: async () => {
+      if (!name.value.trim()) { toast(t('Enter the product name.'), 'error'); name.focus(); return; }
       const pid = matchProduct(name.value, x ? x.productId : pre.productId);
       const pp = productById(pid);
       await act('listitem.save', { id: x ? x.id : 0, listId: opts.listId, productId: pid, name: name.value, icon: pp ? pp.icon : (x ? x.icon : 'generic'), quantity: qty.value, unit: unit.value, notes: notes.value }, save);
       s.close();
     } });
     const s = sheet({
-      title: x ? 'Modifica prodotto' : 'Nuovo prodotto',
-      body: [field('Nome', name), h('div.field-row', field('Quantità', qty), field('Unità', unit)), field('Note', notes)],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+      title: x ? t('Edit product') : t('Add to list'),
+      body: [field(t('Name'), name), h('div.field-row', field(t('Quantity'), qty), field(t('Unit'), unit)), field(t('Notes (optional)'), notes)],
+      actions: [cancelBtn(), save],
     });
   }
 
   /** Adds some products to a shopping list (existing or new). rows: [{productId, name, quantity, unit}] */
   function addToListSheet(rows, title) {
-    if (!rows.length) { toast('Hai già tutto il necessario!'); return; }
+    if (!rows.length) { toast(t('You already have everything!')); return; }
     const checks = rows.map(r => ({ r, cb: h('input', { type: 'checkbox', checked: true }) }));
     const NEW = '__new__';
-    const listSel = select(S.lists.map(l => ({ value: l.id, label: l.name })).concat([{ value: NEW, label: '+ Nuova lista…' }]), S.lists[0] ? S.lists[0].id : NEW);
-    const newName = input({ value: title ? title : 'Spesa', maxlength: 60 });
-    const newField = field('Nome della nuova lista', newName);
+    const listSel = select(S.lists.map(l => ({ value: l.id, label: l.name })).concat([{ value: NEW, label: t('+ New list…') }]), S.lists[0] ? S.lists[0].id : NEW);
+    const newName = input({ value: title || t('Shopping'), maxlength: 60 });
+    const newField = field(t('Name of the new list'), newName);
     newField.hidden = listSel.value !== NEW;
     listSel.addEventListener('change', () => { newField.hidden = listSel.value !== NEW; });
-    const ok = btn('Aggiungi alla lista', { icon: 'cartAdd', onclick: async () => {
+    const ok = btn(t('Add'), { icon: 'cartAdd', onclick: async () => {
       const chosen = checks.filter(c => c.cb.checked).map(c => c.r);
-      if (!chosen.length) { toast('Seleziona almeno un prodotto.', 'error'); return; }
+      if (!chosen.length) { toast(t('Select at least one product.'), 'error'); return; }
       await busy(ok, async () => {
         let listId = listSel.value;
         if (listId === NEW) {
-          if (!newName.value.trim()) throw new Error('Inserisci il nome della lista.');
-          const d = await Api.post('list.save', { name: newName.value, icon: 'home' });
+          if (!newName.value.trim()) throw new Error(t('Enter the list name.'));
+          const d = await Api.post('list.save', { name: newName.value, icon: 'cart' });
           applyState(d); listId = d.id;
         }
         const d = await Api.post('listitem.addmany', { listId: Number(listId), items: chosen });
         applyState(d);
         s.close(); render(true);
-        toast(`${d.added} prodott${d.added === 1 ? 'o aggiunto' : 'i aggiunti'} alla lista`, null, { label: 'Apri', onclick: () => go('lista/' + listId) });
+        toast(t('{what} to the list', { what: plural(d.added, 'product added', 'products added') }), null, { label: t('Open'), onclick: () => go('lista/' + listId) });
       });
     } });
     const s = sheet({
-      title: 'Aggiungi alla lista della spesa',
+      title: t('Add to shopping list'),
       body: [
-        h('div', checks.map(({ r, cb }) => h('label.check', cb, h('span', h('strong', r.name), UI.fmtQty(r.quantity, r.unit) ? ' — ' + UI.fmtQty(r.quantity, r.unit) : '')))),
-        field('Lista della spesa', listSel), newField,
+        h('div.group', checks.map(({ r, cb }) => {
+          const p = productById(r.productId);
+          return h('label.list-row', { style: { cursor: 'pointer' } }, tile('products', p ? p.icon : 'generic', 'sm'), h('div.body', h('p.title', r.name), UI.fmtQty(r.quantity, r.unit) ? h('div.sub', UI.fmtQty(r.quantity, r.unit)) : null), h('div.trail', { style: { paddingRight: '10px' } }, cb));
+        })),
+        field(t('Shopping list'), listSel), newField,
       ],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), ok],
+      actions: [cancelBtn(), ok],
     });
   }
 
@@ -833,7 +918,7 @@
 
   function favBtn(r) {
     const on = S.favorites.has(r.id);
-    return iconBtn(on ? 'heart' : 'heartOutline', on ? 'Rimuovi dalle preferite' : 'Aggiungi alle preferite', async () => {
+    return iconBtn(on ? 'heart' : 'heartOutline', on ? t('Remove from favourites') : t('Add to favourites'), async () => {
       try {
         const d = await Api.post('favorite.toggle', { recipeId: r.id });
         if (d.favorite) S.favorites.add(r.id); else S.favorites.delete(r.id);
@@ -842,49 +927,56 @@
     }, on ? 'fav-on' : '');
   }
 
+  const DIFFICULTY = { facile: 'Easy', media: 'Medium', difficile: 'Hard' };
+  const diffLabel = d => t(DIFFICULTY[d] || d);
+  const totalTime = r => (r.prepMinutes || 0) + (r.cookMinutes || 0);
+
   function recipeCard(r) {
     const st = recipeStats(r);
-    const time = (r.prepMinutes || 0) + (r.cookMinutes || 0);
-    return h('div.card.recipe-card', { role: 'button', tabindex: 0, onclick: () => go('ricetta/' + r.id), onkeydown: e => { if (e.key === 'Enter') go('ricetta/' + r.id); } },
+    return h('div.card.clickable.recipe-card', { role: 'button', tabindex: 0, onclick: () => go('ricetta/' + r.id), onkeydown: e => { if (e.key === 'Enter') go('ricetta/' + r.id); } },
       h('div.cover', { style: { backgroundImage: r.image ? `url("${r.image}")` : 'none' } }),
-      h('div.recipe-info',
-        h('div.grow', { style: { flex: 1, minWidth: 0 } },
-          h('p.recipe-name', r.name),
-          h('div.recipe-meta', [time ? time + ' min' : null, r.difficulty, r.servings ? r.servings + ' porzioni' : null].filter(Boolean).join(' · ')),
-          h('span.avail' + (st.ok < st.total ? '.warn' : ''), st.ok === st.total ? 'Hai tutti gli ingredienti' : `Hai ${st.ok} ingredienti su ${st.total}`),
-          st.usesExpiring || st.usesExpired ? h('span.avail', { style: { marginLeft: '6px', background: 'var(--warn-bg)', color: 'var(--warn-text)' } }, st.usesExpired ? 'Usa prodotti scaduti' : 'Usa prodotti in scadenza') : null),
-        favBtn(r)));
+      listRow({
+        title: r.name, sub: [totalTime(r) ? totalTime(r) + ' min' : null, diffLabel(r.difficulty), plural(r.servings, 'serving', 'servings')].filter(Boolean).join(' · '),
+        meta: [st.ok === st.total ? chip(t('You have all the ingredients'), 'ok', 'check') : chip(t('{a} of {b} ingredients', { a: st.ok, b: st.total }), 'neutral'),
+          st.usesExpired ? chip(t('Uses expired products'), 'danger') : st.usesExpiring ? chip(t('Uses expiring products'), 'warn') : null],
+        trail: favBtn(r),
+      }));
   }
 
   function viewRecipes() {
-    const q = input({ type: 'search', value: recipeQuery, placeholder: 'Cerca ricetta', enterkeyhint: 'search' });
-    const results = h('div.stack');
-    const chips = h('div.chips');
+    const q = input({ type: 'search', value: recipeQuery, placeholder: t('Search by name or ingredient'), enterkeyhint: 'search', 'aria-label': t('Search recipe') });
+    const results = h('div');
+    const chips = h('div.chips.scroll');
+    const labels = { fav: t('Favourites'), expiring: t('With expiring products'), expired: t('With expired products'), cookable: t('I can cook them now') };
     function paint() {
       UI.clear(results); UI.clear(chips);
-      const labels = { fav: 'Preferite', expiring: 'Con prodotti in scadenza', expired: 'Con prodotti scaduti', cookable: 'Posso prepararle ora' };
-      for (const k of Object.keys(labels)) if (recipeFilters[k]) chips.appendChild(h('button.chip.sel', { type: 'button', onclick: () => { recipeFilters[k] = false; paint(); } }, labels[k], icon('close', 'x')));
+      for (const k of Object.keys(labels)) {
+        chips.appendChild(h('button.chip' + (recipeFilters[k] ? '.sel' : ''), { type: 'button', onclick: () => { recipeFilters[k] = !recipeFilters[k]; paint(); } }, recipeFilters[k] ? icon('check') : null, labels[k]));
+      }
       const list = S.recipes.filter(recipeMatches);
       const filtering = recipeQuery || Object.values(recipeFilters).some(Boolean);
-      if (!list.length) { results.appendChild(empty('Nessuna ricetta trovata')); return; }
+      if (!list.length) { results.appendChild(empty('icon', 'restaurant', t('No recipes found'), t('Try another ingredient or remove some filters.'))); return; }
       if (!filtering) {
         const fav = list.filter(r => S.favorites.has(r.id));
-        if (fav.length) { results.appendChild(h('h2.section', 'Preferite')); fav.forEach(r => results.appendChild(recipeCard(r))); results.appendChild(h('h2.section', 'Tutte le ricette')); }
-        // Recipes that use expiring products first: they help avoid waste
-        list.sort((a, b) => (recipeStats(b).usesExpiring - recipeStats(a).usesExpiring) || (recipeStats(b).ok / (recipeStats(b).total || 1) - recipeStats(a).ok / (recipeStats(a).total || 1)));
+        if (fav.length) { results.appendChild(sectionTitle(t('Favourites'), fav.length)); results.appendChild(h('div.stack', fav.map(recipeCard))); }
+        list.sort((a, b) => {
+          const A = recipeStats(a), B = recipeStats(b);
+          return (B.usesExpiring - A.usesExpiring) || (B.ok / (B.total || 1) - A.ok / (A.total || 1));
+        });
+        results.appendChild(sectionTitle(fav.length ? t('All recipes') : t('Recommended for you'), list.length));
+      } else {
+        results.appendChild(sectionTitle(t('Results'), list.length));
       }
-      list.forEach(r => results.appendChild(recipeCard(r)));
+      results.appendChild(h('div.stack', list.map(recipeCard)));
     }
     q.addEventListener('input', () => { recipeQuery = q.value; paint(); });
     paint();
-    const planCard = h('button.card.item', { type: 'button', onclick: () => go('piano'), style: { marginBottom: '6px' } }, h('span.member-avatar', icon('calendar')),
-      h('div.item-main', h('p.item-name', 'Piano della settimana'), h('div.item-sub.muted', planSummary())), icon('right'));
     return {
-      tab: 'ricette', title: 'Ricette',
+      tab: 'ricette', title: t('Recipes'),
       body: [
-        h('div.row', h('div.search-box', icon('search'), q), iconBtn('filter', 'Filtra le ricette', openRecipeFilters)),
-        h('p.small.muted', { style: { margin: '4px 2px 8px' } }, 'Puoi cercare per nome o ingredienti'),
-        chips, planCard, results,
+        searchbar(q), chips,
+        h('div', { style: { marginTop: '12px' } }, cardRow({ lead: tile('icon', 'calendar'), title: t('Weekly plan'), sub: planSummary(), trail: icon('right') }, () => go('piano'))),
+        results,
       ],
     };
   }
@@ -892,17 +984,7 @@
   function planSummary() {
     const today = UI.todayStr();
     const n = S.plan.filter(p => p.date >= today && p.date <= UI.addDays(today, 6)).length;
-    return n ? `${n} past${n === 1 ? 'o pianificato' : 'i pianificati'} nei prossimi 7 giorni` : 'Organizza i pasti e la spesa della settimana';
-  }
-
-  function openRecipeFilters() {
-    const f = Object.assign({}, recipeFilters);
-    const row = (k, label) => { const cb = h('input', { type: 'checkbox', checked: f[k], onchange: () => { f[k] = cb.checked; } }); return h('label.check', h('span', { style: { flex: 1 } }, label), cb); };
-    const s = sheet({
-      title: 'Filtra le ricette',
-      body: [row('fav', 'Mostra solo le ricette preferite'), row('expiring', 'Mostra solo le ricette contenenti prodotti in scadenza'), row('expired', 'Mostra solo le ricette contenenti prodotti scaduti'), row('cookable', 'Mostra solo le ricette che posso preparare con ciò che ho')],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), btn('Applica filtri', { icon: 'filter', onclick: () => { recipeFilters = f; s.close(); render(true); } })],
-    });
+    return n ? t('{what} in the next 7 days', { what: plural(n, 'meal planned', 'meals planned') }) : t('Plan the week’s meals and shopping');
   }
 
   function viewRecipe(id) {
@@ -910,44 +992,44 @@
     if (!r) { go('ricette'); return null; }
     const body = [];
     if (r.image) body.push(h('div.hero-img', { style: { backgroundImage: `url("${r.image}")` } }));
-    if (r.description) body.push(h('p', { style: { margin: '0 0 6px' } }, r.description));
-    body.push(h('div.meta-chips',
-      h('span', icon('timer'), ((r.prepMinutes || 0) + (r.cookMinutes || 0)) + ' min'),
-      h('span', 'Difficoltà: ' + r.difficulty),
-      h('span', icon('group'), r.servings + ' porzioni')));
-    body.push(h('h2.section', 'Ingredienti'));
+    body.push(h('h2.page-title', r.name));
+    if (r.description) body.push(h('p.lead.muted', r.description));
+    body.push(h('div.meta-row', chip(totalTime(r) + ' min', 'neutral', 'timer'), chip(t('Difficulty: {d}', { d: diffLabel(r.difficulty).toLowerCase() }), 'neutral'), chip(plural(r.servings, 'serving', 'servings'), 'neutral', 'group')));
+
     const missing = missingFor([r]);
-    body.push(h('div.stack', r.ingredients.map(ing => {
+    const st = recipeStats(r);
+    body.push(sectionTitle(t('Ingredients'), r.ingredients.length));
+    body.push(h('div.group', r.ingredients.map(ing => {
       const a = availability(ing);
       const p = productById(ing.productId);
-      const where = a.matches.length ? ' (in ' + [...new Set(a.matches.map(m => (spaceById(m.spaceId) || {}).name).filter(Boolean))].join(', ') + ')' : '';
-      const av = a.status === 'ok' ? h('span.ok', 'Già disponi di questa quantità' + where)
-        : a.status === 'partial' ? h('span.part', `Hai bisogno di altri ${UI.fmtQty(a.missing, a.unit)}` + where)
-        : h('span.miss', 'Non presente nei tuoi spazi');
-      return h('div.card.ingredient', pic('products', p ? p.icon : 'generic', 'sm'),
-        h('div', h('div.ing-name', ing.name),
-          h('div.ing-sub', 'Quantità: ' + (UI.fmtQty(ing.quantity, ing.unit) || '—')),
-          ing.notes ? h('div.ing-sub', 'Note: ' + ing.notes) : null,
-          h('div.ing-sub', 'Disponibilità: ', av)));
+      const where = [...new Set(a.matches.map(m => (spaceById(m.spaceId) || {}).name).filter(Boolean))].join(', ');
+      const av = a.status === 'ok' ? chip(where ? 'In ' + where : t('Available'), 'ok', 'check')
+        : a.status === 'partial' ? chip(t('{qty} missing', { qty: UI.fmtQty(a.missing, a.unit) }), 'warn')
+        : chip(t('To get'), 'danger');
+      return listRow({ lead: tile('products', p ? p.icon : 'generic', 'sm'), title: ing.name, sub: [UI.fmtQty(ing.quantity, ing.unit), ing.notes].filter(Boolean).join(' · ') || null, meta: [av] });
     })));
-    body.push(h('div.center-btn', missing.length
-      ? btn('Aggiungi i mancanti alla lista della spesa', { icon: 'cartAdd', onclick: () => addToListSheet(missing, r.name) })
-      : h('p.muted.center', 'Hai tutti gli ingredienti necessari!')));
-    body.push(h('h2.section', 'Tempo richiesto'));
-    body.push(h('div.info-card', h('strong', 'Preparazione: ' + (r.prepMinutes != null ? r.prepMinutes + ' min' : '—'))));
-    body.push(h('div.info-card', h('strong', 'Cottura: ' + (r.cookMinutes != null ? r.cookMinutes + ' min' : 'nessuna')), r.cookNotes ? h('div.small', r.cookNotes) : null));
-    body.push(h('h2.section', 'Procedimento'));
-    body.push(h('div', r.steps.map((t, i) => h('div.step', h('span.n', String(i + 1)), h('p', t)))));
-    body.push(h('div.center-btn', btn('Aggiungi al piano settimanale', { kind: 'tonal', icon: 'calendar', onclick: () => openPlanForm({ recipeId: r.id, date: UI.todayStr() }) })));
-    return { tab: 'ricette', title: r.name, back: 'ricette', body, actions: [favBtn(r)] };
+    body.push(h('div.btn-row', { style: { justifyContent: 'flex-end' } }, missing.length
+      ? btn(t('Add {what} to the list', { what: plural(missing.length, 'missing item', 'missing items') }), { kind: 'tonal', icon: 'cartAdd', onclick: () => addToListSheet(missing, r.name) })
+      : chip(t('You have all {n} ingredients', { n: st.total }), 'ok', 'check')));
+
+    body.push(sectionTitle(t('Time needed')));
+    body.push(h('div.details',
+      h('div.d', h('span', t('Preparation')), h('span', r.prepMinutes != null ? r.prepMinutes + ' min' : '—')),
+      h('div.d', h('span', t('Cooking')), h('span', r.cookMinutes != null ? r.cookMinutes + ' min' : t('None'))),
+      r.cookNotes ? h('div.d', h('span', t('Notes')), h('span', r.cookNotes)) : null));
+    body.push(sectionTitle(t('Method'), r.steps.length));
+    body.push(h('div.group', r.steps.map((t, i) => h('div.step', h('span.num', String(i + 1)), h('p', t)))));
+    return {
+      tab: 'ricette', title: r.name, back: 'ricette', body, actions: [favBtn(r)],
+      fab: fab(t('Add to plan'), 'calendar', () => openPlanForm({ recipeId: r.id, date: UI.todayStr() })),
+    };
   }
 
   // ===================================================== MEAL PLAN
 
   function weekStart(offset) {
     const d = UI.parseDate(UI.todayStr());
-    const dow = (d.getDay() + 6) % 7; // Monday = 0
-    d.setDate(d.getDate() - dow + offset * 7);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + offset * 7);
     return UI.dateStr(d);
   }
 
@@ -955,61 +1037,62 @@
     const start = weekStart(weekOffset);
     const days = Array.from({ length: 7 }, (_, i) => UI.addDays(start, i));
     const today = UI.todayStr();
-    const label = weekOffset === 0 ? 'Questa settimana' : weekOffset === 1 ? 'Settimana prossima' : weekOffset === -1 ? 'Settimana scorsa' : `${UI.fmtDate(days[0])} – ${UI.fmtDate(days[6])}`;
+    const label = weekOffset === 0 ? t('This week') : weekOffset === 1 ? t('Next week') : weekOffset === -1 ? t('Last week') : t('In {n} weeks', { n: weekOffset });
     const body = [h('div.week-nav',
-      iconBtn('left', 'Settimana precedente', () => { if (weekOffset > -1) { weekOffset--; render(); } }),
-      h('div.center', h('strong', label), h('div.small.muted', `${UI.fmtDate(days[0])} – ${UI.fmtDate(days[6])}`)),
-      iconBtn('right', 'Settimana successiva', () => { if (weekOffset < 4) { weekOffset++; render(); } }))];
+      iconBtn('left', t('Previous week'), () => { if (weekOffset > -1) { weekOffset--; render(); } }),
+      h('div.center', h('strong', label), h('span.small.muted', `${UI.fmtDate(days[0]).slice(0, 5)} – ${UI.fmtDate(days[6])}`)),
+      iconBtn('right', t('Following week'), () => { if (weekOffset < 4) { weekOffset++; render(); } }))];
     for (const d of days) {
       const entries = S.plan.filter(p => p.date === d);
-      body.push(h('div.day' + (d === today ? '.today' : ''),
-        h('div.day-head', h('strong', UI.longDate(d)), iconBtn('add', 'Aggiungi un pasto', () => openPlanForm({ date: d }), 'sm')),
+      body.push(h('div.card.day' + (d === today ? '.today' : ''),
+        h('div.day-head', h('strong', (d === today ? 'Oggi, ' : '') + UI.longDate(d)), iconBtn('add', t('Add a meal'), () => openPlanForm({ date: d }), 'sm')),
         entries.length ? entries.map(p => {
           const r = recipeById(p.recipeId);
           const slot = (SLOTS.find(x => x[0] === p.slot) || [, p.slot])[1];
-          return h('div.meal', { role: 'button', tabindex: 0, onclick: () => actionSheet([
-            r ? { icon: 'restaurant', label: 'Apri la ricetta', onclick: () => go('ricetta/' + r.id) } : null,
-            { icon: 'edit', label: 'Modifica', onclick: () => openPlanForm(p) },
-            { icon: 'delete', label: 'Elimina', danger: true, onclick: () => act('plan.delete', { id: p.id }) },
-          ]) }, h('span.slot', slot), h('span.what', r ? r.name : p.title), r ? icon('restaurant') : null);
-        }) : h('div.small.muted', { style: { padding: '4px 0 2px' } }, 'Nessun pasto pianificato')));
+          return h('div.list-row', { role: 'button', tabindex: 0, style: { cursor: 'pointer' }, onclick: () => actionSheet([
+            r ? { icon: 'restaurant', label: t('Open recipe'), onclick: () => go('ricetta/' + r.id) } : null,
+            { icon: 'edit', label: t('Edit'), onclick: () => openPlanForm(p) },
+            { icon: 'delete', label: t('Remove from plan'), danger: true, onclick: () => act('plan.delete', { id: p.id }) },
+          ], r ? r.name : p.title) },
+          r && r.image ? h('span.tile.tile-sm.photo', { style: { backgroundImage: `url("${r.image}")` } }) : tile('icon', r ? 'restaurant' : 'edit', 'sm'),
+          h('div.body', h('p.title', r ? r.name : p.title), h('div.sub', slot)), h('div.trail', icon('more')));
+        }) : h('div.none', t('No meals planned'))));
     }
     const weekRecipes = S.plan.filter(p => days.includes(p.date) && p.recipeId).map(p => recipeById(p.recipeId)).filter(Boolean);
-    body.push(h('div.center-btn', btn('Aggiungi gli ingredienti mancanti alla lista', { icon: 'cartAdd', disabled: !weekRecipes.length, onclick: () => addToListSheet(missingFor(weekRecipes), 'Spesa settimanale') })));
-    if (!weekRecipes.length) body.push(h('p.small.muted.center', 'Aggiungi delle ricette al piano per creare in automatico la lista della spesa della settimana.'));
-    return { tab: 'ricette', title: 'Piano della settimana', back: 'ricette', body };
+    body.push(h('div.btn-row', { style: { justifyContent: 'flex-end' } }, btn(t('Missing ingredients to list'), { kind: 'tonal', icon: 'cartAdd', disabled: !weekRecipes.length, onclick: () => addToListSheet(missingFor(weekRecipes), t('Weekly shopping')) })));
+    if (!weekRecipes.length) body.push(h('p.helper', { style: { textAlign: 'right' } }, t('Add recipes to the plan to build the week’s shopping list automatically.')));
+    return { tab: 'ricette', title: t('Weekly plan'), back: 'ricette', body, fab: fab(t('Add meal'), 'add', () => openPlanForm({ date: weekOffset === 0 ? today : days[0] })) };
   }
 
   function openPlanForm(p) {
     const isEdit = !!p.id;
     const date = input({ type: 'date', value: p.date || UI.todayStr() });
     let slot = p.slot || (new Date().getHours() < 15 ? 'pranzo' : 'cena');
-    const OTHER = '';
-    const recipe = select([{ value: OTHER, label: 'Altro (scrivi tu)' }].concat(S.recipes.map(r => ({ value: r.id, label: r.name }))), p.recipeId || OTHER);
-    const title = input({ value: p.title || '', maxlength: 120, placeholder: ' ' });
-    const titleField = field('Cosa mangi?', title, { hint: 'Ad esempio: «Pizza da asporto» o «Avanzi di ieri»' });
+    const recipe = select([{ value: '', label: t('Other (write it yourself)') }].concat(S.recipes.map(r => ({ value: r.id, label: r.name }))), p.recipeId || '');
+    const title = input({ value: p.title || '', maxlength: 120 });
+    const titleField = field(t('What are you eating?'), title, { hint: t('For example: “Takeaway pizza” or “Yesterday’s leftovers”') });
     titleField.hidden = !!recipe.value;
     recipe.addEventListener('change', () => { titleField.hidden = !!recipe.value; });
-    const save = btn(isEdit ? 'Salva e modifica' : 'Aggiungi al piano', { icon: 'calendar', onclick: async () => {
+    const save = btn(isEdit ? t('Save') : t('Add'), { icon: 'check', onclick: async () => {
       await act('plan.save', { id: p.id || 0, date: date.value, slot, recipeId: recipe.value ? Number(recipe.value) : null, title: recipe.value ? '' : title.value }, save);
       s.close();
-      toast(isEdit ? 'Pasto modificato' : 'Aggiunto al piano della settimana', null, route().name !== 'piano' ? { label: 'Apri', onclick: () => go('piano') } : null);
+      toast(isEdit ? t('Meal updated') : t('Added to the weekly plan'), null, route().name !== 'piano' ? { label: t('Open'), onclick: () => go('piano') } : null);
     } });
     const s = sheet({
-      title: isEdit ? 'Modifica pasto' : 'Aggiungi un pasto',
-      body: [field('Giorno', date), seg(SLOTS, slot, v => { slot = v; }), field('Ricetta', recipe), titleField],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), save],
+      title: isEdit ? t('Edit meal') : t('Add a meal'),
+      body: [field(t('Day'), date), seg(SLOTS, slot, v => { slot = v; }), field(t('Recipe'), recipe), titleField],
+      actions: [cancelBtn(), save],
     });
   }
 
   // ===================================================== SEARCH
 
   function viewSearch() {
-    const q = input({ type: 'search', value: searchState.q, placeholder: 'Cerca un alimento', enterkeyhint: 'search' });
+    const q = input({ type: 'search', value: searchState.q, placeholder: t('Name, brand, category, space…'), enterkeyhint: 'search', 'aria-label': t('Find a food') });
     const results = h('div');
-    const spaceSel = select([{ value: '', label: 'Tutti gli spazi' }].concat(S.spaces.map(s => ({ value: s.id, label: s.name }))), searchState.spaceId);
-    const catSel = select([{ value: '', label: 'Tutte le categorie' }].concat(S.catalog.categories.map(c => ({ value: c.id, label: c.name }))), searchState.categoryId);
-    const expSeg = seg([['all', 'Tutti'], ['expiring', 'In scadenza'], ['expired', 'Scaduti'], ['none', 'Senza data']], searchState.exp, v => { searchState.exp = v; paint(); });
+    const spaceSel = select([{ value: '', label: t('All spaces') }].concat(S.spaces.map(s => ({ value: s.id, label: s.name }))), searchState.spaceId);
+    const catSel = select([{ value: '', label: t('All categories') }].concat(S.catalog.categories.map(c => ({ value: c.id, label: c.name }))), searchState.categoryId);
+    const expSeg = seg([['all', t('All')], ['expiring', t('Expiring')], ['expired', t('Expired')], ['none', t('No date')]], searchState.exp, v => { searchState.exp = v; paint(); });
 
     function saveRecent(text) {
       text = text.trim();
@@ -1026,13 +1109,13 @@
       if (!filtering) {
         const rec = store.get('recentSearches', []);
         if (rec.length) {
-          results.appendChild(h('h3.sub', 'Ricerche recenti'));
-          results.appendChild(h('div.chips', rec.map(t => h('button.chip', { type: 'button', onclick: () => { q.value = t; searchState.q = t; paint(); } }, icon('search'), t,
-            h('span.x', { role: 'button', 'aria-label': 'Rimuovi', onclick: e => { e.stopPropagation(); store.set('recentSearches', store.get('recentSearches', []).filter(x => x !== t)); paint(); } }, icon('close'))))));
+          results.appendChild(sectionTitle(t('Recent searches')));
+          results.appendChild(h('div.chips', rec.map(t => h('button.chip', { type: 'button', onclick: () => { q.value = t; searchState.q = t; paint(); } }, icon('timer'), t,
+            h('span.x', { role: 'button', 'aria-label': t('Remove'), onclick: e => { e.stopPropagation(); store.set('recentSearches', store.get('recentSearches', []).filter(x => x !== t)); paint(); } }, icon('close'))))));
         }
         const recent = S.items.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10);
-        results.appendChild(h('h3.sub', 'Aggiunti di recente'));
-        if (!recent.length) results.appendChild(empty('Non hai ancora aggiunto prodotti'));
+        results.appendChild(sectionTitle(t('Recently added')));
+        if (!recent.length) results.appendChild(empty('icon', 'search', t('No products yet'), t('Products you add to your spaces will appear here.')));
         results.appendChild(h('div.stack', recent.map(i => itemCard(i, { showSpace: true }))));
         return;
       }
@@ -1047,7 +1130,8 @@
         const sp = spaceById(i.spaceId), cat = categoryById(i.categoryId);
         return [i.name, i.brand, i.notes, sp && sp.name, cat && cat.name, i.expiryDate && UI.fmtDate(i.expiryDate)].some(x => x && norm(x).includes(n));
       });
-      results.appendChild(h('h3.sub', found.length ? `${found.length} risultat${found.length === 1 ? 'o' : 'i'}` : 'Nessun prodotto trovato'));
+      results.appendChild(sectionTitle(t('Results'), found.length));
+      if (!found.length) results.appendChild(empty('icon', 'search', t('No products found'), t('Try another word or change the filters.')));
       results.appendChild(h('div.stack', sortItems(found, 'exp-asc').map(i => h('div', { onclick: () => saveRecent(searchState.q) }, itemCard(i, { showSpace: true })))));
     }
 
@@ -1058,13 +1142,8 @@
     catSel.addEventListener('change', () => { searchState.categoryId = catSel.value; paint(); });
     paint();
     return {
-      tab: 'spazi', title: 'Cerca un alimento', back: 'spazi',
-      body: [
-        h('div.search-box', icon('search'), q),
-        h('p.small.muted', { style: { margin: '4px 2px 4px' } }, 'Cerca per nome, marca, categoria, spazio o data di scadenza (gg/mm/aaaa)'),
-        h('div.field-row', field('Spazio', spaceSel), field('Categoria', catSel)),
-        expSeg, results,
-      ],
+      tab: 'spazi', title: t('Find a food'), back: 'spazi',
+      body: [searchbar(q), h('div.field-row', field(t('Space'), spaceSel), field(t('Category'), catSel)), expSeg, results],
       after: () => { if (!searchState.q && !matchMedia('(pointer: coarse)').matches) q.focus(); },
     };
   }
@@ -1073,36 +1152,39 @@
 
   function openHouseholdSwitcher() {
     const s = sheet({
-      title: 'Le tue case',
+      title: t('Your households'),
       body: [
-        h('p.sheet-text', 'Ogni casa ha i suoi spazi, prodotti, liste della spesa e piano dei pasti, condivisi con i membri che inviti.'),
-        h('div.pick-list', S.households.map(hh => h('button.pick', { type: 'button', onclick: async () => {
-          if (hh.id === S.household.id) { s.close(); return; }
-          s.close(); await act('household.switch', { id: hh.id }); toast('Ora sei in «' + hh.name + '»');
-        } }, icon(hh.members > 1 ? 'group' : 'home'), h('span', { style: { flex: 1 } }, hh.name, h('small', `${hh.members} ${hh.members === 1 ? 'membro' : 'membri'} · ${hh.role === 'owner' ? 'proprietario' : 'membro'}`)), hh.id === S.household.id ? icon('check') : null))),
+        h('p.sheet-text', t('Each household has its own spaces, products, lists and meal plan, shared with the members you invite.')),
+        h('div.stack', S.households.map(hh => cardRow({
+          lead: tile('icon', hh.members > 1 ? 'group' : 'home'), title: hh.name,
+          sub: `${plural(hh.members, 'member', 'members')} · ${hh.role === 'owner' ? t('owner') : t('member')}`,
+          trail: hh.id === S.household.id ? chip(t('Active'), 'ok', 'check') : icon('right'),
+        }, async () => {
+          s.close();
+          if (hh.id === S.household.id) return;
+          await act('household.switch', { id: hh.id }); toast(t('You are now in “{home}”', { home: hh.name }));
+        }))),
       ],
-      actions: [btn('Gestisci e invita', { kind: 'tonal', icon: 'group', onclick: () => go('profilo') })],
+      actions: [btn(t('Manage and invite'), { kind: 'tonal', icon: 'group', onclick: () => go('profilo') })],
     });
   }
 
-  function inviteLink() {
-    return location.origin + location.pathname.replace(/[^/]*$/, '') + '#/unisciti/' + S.household.inviteCode;
-  }
+  function inviteLink() { return location.origin + location.pathname.replace(/[^/]*$/, '') + '#/unisciti/' + S.household.inviteCode; }
 
   function openInvite() {
     const link = inviteLink();
     const isOwner = S.household.role === 'owner';
     const s = sheet({
-      title: 'Invita nella casa',
+      title: t('Invite to the household'),
       body: [
-        h('p.sheet-text', `Chi si unisce a «${S.household.name}» vedrà e potrà modificare spazi, prodotti, liste della spesa e piano dei pasti. Condividi questo codice o il link:`),
+        h('p.sheet-text', t('Whoever joins “{home}” will see and edit spaces, products, shopping lists and meal plan. Share the code or the link.', { home: S.household.name })),
         h('div.code-box', S.household.inviteCode),
-        h('div.row', { style: { justifyContent: 'center', margin: '12px 0', flexWrap: 'wrap', gap: '8px' } },
-          btn('Copia link', { kind: 'tonal', icon: 'copy', onclick: async () => { try { await navigator.clipboard.writeText(link); toast('Link copiato'); } catch (e) { toast(link); } } }),
-          navigator.share ? btn('Condividi', { icon: 'share', onclick: () => navigator.share({ title: 'FoodTrack', text: `Unisciti alla mia casa «${S.household.name}» su FoodTrack con il codice ${S.household.inviteCode}`, url: link }).catch(() => {}) }) : null),
-        isOwner ? h('p.small.muted', 'Se il codice è finito nelle mani sbagliate puoi generarne uno nuovo: quello vecchio smetterà di funzionare.') : null,
+        isOwner ? h('div.btn-row', { style: { justifyContent: 'center' } }, btn(t('Generate a new code'), { kind: 'text', icon: 'swap', onclick: async e => { await act('household.code', {}, e.currentTarget); s.close(); openInvite(); } })) : null,
       ],
-      actions: isOwner ? [btn('Genera un nuovo codice', { kind: 'text', icon: 'swap', onclick: async e => { await act('household.code', {}, e.currentTarget); s.close(); openInvite(); } })] : [],
+      actions: [
+        btn(t('Copy link'), { kind: 'text', icon: 'copy', onclick: async () => { try { await navigator.clipboard.writeText(link); toast(t('Link copied')); } catch (e) { toast(link); } } }),
+        navigator.share ? btn(t('Share'), { icon: 'share', onclick: () => navigator.share({ title: 'FoodTrack', text: t('Join my household “{home}” on FoodTrack with the code {code}', { home: S.household.name, code: S.household.inviteCode }), url: link }).catch(() => {}) }) : null,
+      ].filter(Boolean),
     });
   }
 
@@ -1110,108 +1192,121 @@
     const inp = input({ value: value || '', maxlength: 80 });
     const ok = btn(okLabel, { icon: 'check', onclick: async () => { if (!inp.value.trim()) { inp.focus(); return; } await busy(ok, () => onok(inp.value.trim())); s.close(); } });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
-    const s = sheet({ title, body: [extra ? h('p.sheet-text', extra) : null, field(label, inp)], actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), ok] });
+    const s = sheet({ title, body: [extra ? h('p.sheet-text', extra) : null, field(label, inp)], actions: [cancelBtn(), ok] });
   }
 
   function viewProfile() {
     const hh = S.household;
     const isOwner = hh.role === 'owner';
-    const row = (ic, label, sub, onclick, cls) => h('button.list-row' + (cls ? '.' + cls : ''), { type: 'button', onclick }, icon(ic), h('span.grow', label, sub ? h('small', sub) : null));
     const theme = store.get('theme', 'auto');
     const notif = store.get('notify', false) && 'Notification' in window && Notification.permission === 'granted';
+    const u = S.user;
 
     const body = [
-      h('div.row', { style: { margin: '4px 0 16px' } }, h('span.member-avatar', { style: { width: '52px', height: '52px', fontSize: '1.3rem' } }, initials(S.user.name)),
-        h('div.grow', h('strong', { style: { fontSize: '1.2rem' } }, S.user.name), h('div.small.muted', S.user.email), S.user.isAdmin ? h('span.small', { style: { color: 'var(--primary-dark)', fontWeight: 700 } }, S.user.roleLabel) : null)),
+      h('div.card', listRow({ big: true, lead: h('span.avatar.lg', initials(u.name)), title: u.name, sub: u.email, meta: [u.isAdmin ? chip(u.roleLabel, 'ok', 'shield') : null, u.googleLinked ? chip('Google', 'neutral', 'link') : null] })),
 
-      h('h3.sub', 'Casa condivisa'),
-      h('div.list-group',
-        h('div.list-row', { style: { cursor: 'default' } }, icon(hh.members.length > 1 ? 'group' : 'home'), h('span.grow', h('strong', hh.name), h('small', `${hh.members.length} ${hh.members.length === 1 ? 'membro' : 'membri'} · sei ${isOwner ? 'il proprietario' : 'un membro'}`))),
-        row('share', 'Invita qualcuno', 'Condividi spazi, prodotti e liste con familiari e coinquilini', openInvite),
-        ...hh.members.map(m => h('div.list-row', { style: { cursor: 'default' } }, h('span.member-avatar', initials(m.name)), h('span.grow', m.name + (m.id === S.user.id ? ' (tu)' : ''), h('small', m.role === 'owner' ? 'Proprietario' : 'Membro dal ' + UI.fmtDateTime(m.joinedAt).split(' ')[0])),
-          isOwner && m.id !== S.user.id ? moreBtn([
-            { icon: 'swap', label: 'Rendi proprietario', onclick: async () => { if (await confirm('Cedere la casa?', `${m.name} diventerà il proprietario di «${hh.name}» e tu resterai un membro.`, 'Cedi')) act('household.transfer', { userId: m.id }); } },
-            { icon: 'delete', label: 'Rimuovi dalla casa', danger: true, onclick: async () => { if (await confirm('Rimuovere il membro?', `${m.name} non potrà più vedere né modificare i dati di «${hh.name}».`, 'Rimuovi', true)) act('household.member.remove', { userId: m.id }); } },
-          ]) : null)),
-        isOwner ? row('edit', 'Rinomina la casa', null, () => promptSheet('Rinomina la casa', 'Nome', hh.name, 'Salva', name => act('household.rename', { name }))) : null,
+      sectionTitle(t('Shared household')),
+      h('div.group',
+        groupRow(hh.members.length > 1 ? 'group' : 'home', hh.name, `${plural(hh.members.length, 'member', 'members')} · ${isOwner ? t('you are the owner') : t('you are a member')}`, null, {
+          trail: isOwner ? h('div.trail', iconBtn('edit', t('Rename household'), () => promptSheet(t('Rename household'), t('Name'), hh.name, t('Save'), name => act('household.rename', { name })))) : null,
+        }),
+        ...hh.members.map(m => groupRow(null, m.name + (m.id === u.id ? ' (tu)' : ''), m.role === 'owner' ? t('Owner') : t('Member since {d}', { d: UI.fmtDateTime(m.joinedAt).split(' ')[0] }), null, {
+          lead: h('span.avatar', initials(m.name)),
+          trail: isOwner && m.id !== u.id ? h('div.trail', moreBtn([
+            { icon: 'swap', label: t('Make owner'), onclick: async () => { if (await confirm(t('Hand over the household?'), t('{name} will become the owner of “{home}” and you will stay a member.', { name: m.name, home: hh.name }), t('Hand over'))) act('household.transfer', { userId: m.id }); } },
+            { icon: 'delete', label: t('Remove from household'), danger: true, onclick: async () => { if (await confirm(t('Remove the member?'), t('{name} will no longer see or edit the data of “{home}”.', { name: m.name, home: hh.name }), t('Remove'), true)) act('household.member.remove', { userId: m.id }); } },
+          ], m.name)) : null,
+        })),
+        groupRow('share', t('Invite someone'), t('Family, partner or flatmates'), openInvite),
       ),
-      h('div.list-group',
-        S.households.length > 1 ? row('swap', 'Cambia casa', `Fai parte di ${S.households.length} case`, openHouseholdSwitcher) : null,
-        row('group', 'Unisciti a una casa', 'Inserisci il codice invito che ti hanno mandato', () => promptSheet('Unisciti a una casa', 'Codice invito', '', 'Unisciti', async code => { await act('household.join', { code }); toast('Benvenuto in «' + S.household.name + '»!'); })),
-        row('add', 'Crea una nuova casa', 'Ad esempio per la casa al mare o l’ufficio', () => promptSheet('Nuova casa', 'Nome', '', 'Crea', async name => { await act('household.create', { name }); toast('Casa creata'); })),
-        hh.members.length > 1 || S.households.length > 1 ? row('logout', 'Esci da questa casa', isOwner ? 'La proprietà passerà a un altro membro' : null, async () => {
-          if (await confirm('Uscire dalla casa?', `Non vedrai più spazi, prodotti e liste di «${hh.name}».` + (hh.members.length === 1 ? ' Sei l’unico membro: la casa e tutti i suoi dati verranno eliminati.' : ''), 'Esci', true)) { await act('household.leave', {}); toast('Sei uscito dalla casa'); }
-        }, 'danger') : null,
-        isOwner ? row('delete', 'Elimina questa casa', 'Elimina spazi, prodotti, liste e piano per tutti i membri', async () => {
-          if (await confirm('Eliminare la casa?', `«${hh.name}» e tutti i suoi dati verranno eliminati definitivamente per tutti i ${hh.members.length} membri.`, 'Elimina', true)) { await act('household.delete', {}); toast('Casa eliminata'); }
-        }, 'danger') : null,
+      h('div.spacer'),
+      h('div.group',
+        S.households.length > 1 ? groupRow('swap', t('Switch household'), t('You belong to {n} households', { n: S.households.length }), openHouseholdSwitcher) : null,
+        groupRow('link', t('Join a household'), t('With the invite code you received'), () => promptSheet(t('Join a household'), t('Invite code'), '', t('Join'), async code => { await act('household.join', { code }); toast(t('Welcome to “{home}”!', { home: S.household.name })); })),
+        groupRow('add', t('Create a new household'), t('For example a holiday home or the office'), () => promptSheet(t('New household'), t('Name'), '', t('Create'), async name => { await act('household.create', { name }); toast(t('Household created')); })),
+        hh.members.length > 1 || S.households.length > 1 ? groupRow('logout', t('Leave this household'), isOwner ? t('Ownership will pass to another member') : null, async () => {
+          if (await confirm(t('Leave the household?'), t('You will no longer see the spaces, products and lists of “{home}”.', { home: hh.name }) + (hh.members.length === 1 ? ' Sei l’unico membro: la casa e tutti i suoi dati verranno eliminati.' : ''), t('Sign out'), true)) { await act('household.leave', {}); toast(t('You left the household')); }
+        }, { danger: true }) : null,
+        isOwner ? groupRow('delete', t('Delete this household'), t('For all members, with all the data'), async () => {
+          if (await confirm(t('Delete the household?'), t('“{home}” and all its data will be permanently deleted for {what}.', { home: hh.name, what: plural(hh.members.length, 'member', 'members') }), t('Delete'), true)) { await act('household.delete', {}); toast(t('Household deleted')); }
+        }, { danger: true }) : null,
       ),
 
-      h('h3.sub', 'Preferenze'),
-      h('div.list-group',
-        row('eye', 'Tema', { auto: 'Automatico (come il sistema)', light: 'Chiaro', dark: 'Scuro' }[theme], () => actionSheet([
-          { icon: 'check', label: 'Automatico (come il sistema)', onclick: () => { store.set('theme', 'auto'); UI.applyTheme(); render(true); } },
-          { icon: 'check', label: 'Chiaro', onclick: () => { store.set('theme', 'light'); UI.applyTheme(); render(true); } },
-          { icon: 'check', label: 'Scuro', onclick: () => { store.set('theme', 'dark'); UI.applyTheme(); render(true); } },
-        ])),
-        row('warning', 'Avviso «in scadenza»', `${noticeDays()} giorn${noticeDays() === 1 ? 'o' : 'i'} prima della scadenza`, () => actionSheet([1, 2, 3, 5, 7].map(n => ({ icon: n === noticeDays() ? 'check' : 'timer', label: `${n} giorn${n === 1 ? 'o' : 'i'} prima`, onclick: () => { store.set('noticeDays', n); render(true); } })))),
-        'Notification' in window ? row('bell', 'Notifiche sui prodotti in scadenza', notif ? 'Attive su questo dispositivo' : 'Disattivate', async () => {
+      sectionTitle(t('Preferences')),
+      h('div.group',
+        groupRow('globe', t('Language'), (I18N.langs.find(l => l[0] === I18N.lang) || [, ''])[1], () => actionSheet(I18N.langs.map(([k, label]) => ({ icon: 'globe', label, selected: k === I18N.lang, onclick: () => I18N.set(k) })), t('Language'))),
+        groupRow('theme', t('Theme'), { auto: t('Automatic'), light: t('Light'), dark: t('Dark') }[theme], () => actionSheet([['auto', t('Automatic (like the system)')], ['light', t('Light')], ['dark', t('Dark')]].map(([k, label]) => ({ icon: 'theme', label, selected: k === theme, onclick: () => { store.set('theme', k); UI.applyTheme(); render(true); } })), t('Theme'))),
+        groupRow('warning', t('“Expiring soon” alert'), t('{what} before expiry', { what: plural(noticeDays(), 'day', 'days') }), () => actionSheet([1, 2, 3, 5, 7].map(n => ({ icon: 'timer', label: t('{what} before', { what: plural(n, 'day', 'days') }), selected: n === noticeDays(), onclick: () => { store.set('noticeDays', n); render(true); } })), t('Remind me'))),
+        'Notification' in window ? groupRow('bell', t('Notifications'), notif ? t('On for this device') : t('Off'), async () => {
           if (notif) { store.set('notify', false); render(true); return; }
           const p = await Notification.requestPermission();
           store.set('notify', p === 'granted');
-          if (p !== 'granted') toast('Permesso negato: puoi attivarle dalle impostazioni del browser.', 'error');
+          if (p !== 'granted') toast(t('Permission denied: you can turn them on in the browser settings.'), 'error');
           else { store.set('notifiedOn', ''); notifyExpiry(); }
           render(true);
-        }) : null,
-        row('info', 'Mostra di nuovo i suggerimenti', null, () => { store.set('tip.cart', false); store.set('tip.spaces', false); store.set('hide.expired', ''); store.set('hide.expiring', ''); toast('Suggerimenti e avvisi ripristinati'); }),
+        }, { trail: h('div.trail', h('span.switch' + (notif ? '.on' : ''))) }) : null,
+        groupRow('bulb', t('Show tips again'), null, () => { ['tip.cart', 'tip.spaces'].forEach(k => store.set(k, false)); store.set('hide.expired', ''); store.set('hide.expiring', ''); toast(t('Tips and alerts restored')); }),
       ),
 
-      h('h3.sub', 'Account'),
-      h('div.list-group',
-        row('edit', 'Modifica il nome', null, () => promptSheet('Modifica il nome', 'Nome e cognome', S.user.name, 'Salva', async name => { const d = await Api.post('auth.profile', { name }); S.user = d.user; render(true); })),
-        row('lock', 'Cambia password', null, openChangePassword),
-        S.user.isAdmin ? h('a.list-row', { href: 'admin.html' }, icon('shield'), h('span.grow', 'Portale di amministrazione', h('small', 'Ricette, prodotti, categorie e utenti')), icon('open')) : null,
-        h('a.list-row', { href: 'privacy.html' }, icon('info'), h('span.grow', 'Privacy e informazioni', h('small', 'FoodTrack ' + VERSION))),
-        row('logout', 'Esci', null, logout),
-        row('delete', 'Elimina il mio account', 'Elimina definitivamente il tuo account', deleteAccount, 'danger'),
+      sectionTitle(t('Account and security')),
+      h('div.group',
+        groupRow('edit', t('Edit name'), null, () => promptSheet(t('Edit name'), t('Full name'), u.name, t('Save'), async name => { const d = await Api.post('auth.profile', { name }); S.user = d.user; render(true); })),
+        groupRow('lock', u.hasPassword ? t('Change password') : t('Set a password'), u.hasPassword ? null : t('To sign in with email and password too'), openChangePassword),
+        S.config.googleClientId ? groupRow('link', t('Google account'), u.googleLinked ? t('Linked: you can sign in with “Continue with Google”') : t('Not linked'), u.googleLinked ? (u.hasPassword ? async () => {
+          if (!await confirm(t('Unlink Google?'), t('You will only be able to sign in with email and password.'), t('Unlink'), true)) return;
+          try { const d = await Api.post('auth.google.unlink', {}); S.user = d.user; render(true); toast(t('Google account unlinked')); } catch (e) { toast(e.message, 'error'); }
+        } : null) : openLinkGoogle, { trail: u.googleLinked && !u.hasPassword ? h('div.trail', { style: { paddingRight: '12px' } }, chip(t('Linked'), 'ok', 'check')) : undefined }) : null,
+        u.isAdmin ? groupRow('shield', t('Admin portal'), t('Recipes, products, categories and users'), null, { href: 'admin.html', external: true }) : null,
+        groupRow('info', t('Privacy and info'), 'FoodTrack ' + VERSION, null, { href: 'privacy.html', external: true }),
+      ),
+      h('div.spacer'),
+      h('div.group',
+        groupRow('logout', t('Sign out'), null, logout),
+        groupRow('delete', t('Delete my account'), t('Permanently delete account and data'), deleteAccount, { danger: true }),
       ),
     ];
-    return { tab: null, title: 'Profilo', back: 'spazi', body };
+    return { tab: null, title: t('Profile'), back: 'spazi', body };
   }
 
   function openChangePassword(forced) {
+    forced = forced === true;
+    const needsCurrent = S.user.hasPassword || forced;
     const cur = input({ type: 'password', autocomplete: 'current-password' });
     const p1 = input({ type: 'password', autocomplete: 'new-password', minlength: 8 });
     const p2 = input({ type: 'password', autocomplete: 'new-password', minlength: 8 });
-    const ok = btn('Cambia password', { icon: 'lock', onclick: async () => {
-      if (p1.value.length < 8) { toast('La nuova password deve avere almeno 8 caratteri.', 'error'); return; }
-      if (p1.value !== p2.value) { toast('Le due password non coincidono.', 'error'); return; }
+    const ok = btn(t('Save password'), { icon: 'lock', onclick: async () => {
+      if (p1.value.length < 8) { toast(t('The new password must be at least 8 characters long.'), 'error'); return; }
+      if (p1.value !== p2.value) { toast(t('The two passwords do not match.'), 'error'); return; }
       const d = await busy(ok, () => Api.post('auth.password', { current: cur.value, password: p1.value }));
-      S.user = d.user; s.close(); toast('Password aggiornata'); start();
+      S.user = d.user; s.close(); toast(t('Password updated'));
+      if (forced) start(); else render(true);
     } });
     const s = sheet({
-      title: 'Cambia password', persistent: forced === true,
-      body: [forced === true ? h('p.sheet-text', 'Un amministratore ha reimpostato la tua password: scegline una nuova per continuare.') : null,
-        field(forced === true ? 'Password temporanea' : 'Password attuale', cur), field('Nuova password (min. 8 caratteri)', p1), field('Ripeti la nuova password', p2)],
-      actions: [forced === true ? btn('Esci', { kind: 'text', onclick: () => { s.close(); logout(); } }) : btn('Annulla', { kind: 'text', onclick: () => s.close() }), ok],
+      title: forced ? t('Choose a new password') : S.user.hasPassword ? t('Change password') : t('Set a password'), persistent: forced,
+      body: [forced ? h('p.sheet-text', t('An administrator reset your password: choose a new one to continue.')) : null,
+        needsCurrent ? field(forced ? t('Temporary password') : t('Current password'), cur) : null, field(t('New password (min. 8 characters)'), p1), field(t('Repeat the new password'), p2)],
+      actions: [forced ? btn(t('Sign out'), { kind: 'text', onclick: () => { s.close(); logout(); } }) : cancelBtn(), ok],
     });
   }
 
   async function deleteAccount() {
-    const pw = input({ type: 'password', autocomplete: 'current-password' });
-    const ok = btn('Elimina definitivamente', { kind: 'danger', icon: 'delete', onclick: async () => {
-      await busy(ok, () => Api.post('auth.delete', { password: pw.value }));
-      s.close(); S.user = null; S.loaded = false; toast('Account eliminato'); render();
+    const hasPw = S.user.hasPassword;
+    const pw = input({ type: hasPw ? 'password' : 'text', autocomplete: hasPw ? 'current-password' : 'off' });
+    const ok = btn(t('Delete permanently'), { kind: 'danger', icon: 'delete', onclick: async () => {
+      await busy(ok, () => Api.post('auth.delete', hasPw ? { password: pw.value } : { confirm: pw.value }));
+      s.close(); S.user = null; S.loaded = false; toast(t('Account deleted')); render();
     } });
     const s = sheet({
-      title: 'Eliminare l’account?',
-      body: [h('p.sheet-text', 'Il tuo account verrà eliminato definitivamente. Le case in cui sei l’unico membro verranno eliminate con tutti i loro dati; in quelle condivise la proprietà passerà a un altro membro.'), field('Password', pw)],
-      actions: [btn('Annulla', { kind: 'text', onclick: () => s.close() }), ok],
+      title: t('Delete the account?'),
+      body: [h('p.sheet-text', t('Your account will be deleted permanently. Households where you are the only member will be deleted with all their data; in shared ones ownership will pass to another member.')),
+        field(hasPw ? 'Password' : t('Type DELETE to confirm'), pw)],
+      actions: [cancelBtn(), ok],
     });
   }
 
   async function logout() {
     try { await Api.post('auth.logout', {}); } catch (e) { /* already signed out */ }
+    try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch (e) { /* not loaded */ }
     S.user = null; S.loaded = false;
     location.hash = '#/spazi';
     render();
@@ -1221,30 +1316,83 @@
     code = String(code || '').toUpperCase();
     setTimeout(async () => {
       if (!code) return go('spazi');
-      if (S.households.some(x => x.id === S.household.id) && S.household.inviteCode === code) { toast('Fai già parte di questa casa'); return go('spazi'); }
-      if (await confirm('Unirti alla casa?', `Stai per unirti alla casa con codice ${code}: vedrai e potrai modificare i suoi spazi, prodotti e liste della spesa.`, 'Unisciti')) {
-        try { const d = await Api.post('household.join', { code }); applyState(d); toast('Benvenuto in «' + S.household.name + '»!'); }
+      if (S.household.inviteCode === code) { toast(t('You are already in this household')); return go('spazi'); }
+      if (await confirm(t('Join the household?'), t('You are about to join the household with code {code}: you will see and edit its spaces, products and shopping lists.', { code }), t('Join'))) {
+        try { applyState(await Api.post('household.join', { code })); toast(t('Welcome to “{home}”!', { home: S.household.name })); }
         catch (e) { toast(e.message, 'error'); }
       }
       go('spazi');
     }, 50);
-    return { tab: 'spazi', title: 'Invito', back: 'spazi', body: [h('div.loader')] };
+    return { tab: 'spazi', title: t('Invitation'), back: 'spazi', body: [h('div.loader')] };
+  }
+
+  // ===================================================== Google Identity Services
+
+  async function googleButton(slot, onCredential, text) {
+    if (!S.config.googleClientId) { slot.hidden = true; return; }
+    await UI.googleButton(slot, S.config.googleClientId, onCredential, text);
+  }
+
+  async function googleSignIn(credential, pending) {
+    try {
+      const d = await Api.post('auth.google', { credential, inviteCode: pending || '' }, { silentAuth: true });
+      S.user = d.user; afterLogin(pending, true);
+    } catch (e) {
+      if (e.code !== 'needs_signup') { toast(e.message, 'error'); return; }
+      // New account: privacy consent (and optional invite code) before creating it
+      const privacy = h('input', { type: 'checkbox' });
+      const code = input({ value: pending || '', maxlength: 12, autocapitalize: 'characters' });
+      const ok = btn(t('Create account'), { icon: 'check', onclick: async () => {
+        if (!privacy.checked) { toast(t('To continue, accept the privacy policy.'), 'error'); return; }
+        const d = await busy(ok, () => Api.post('auth.google', { credential, acceptPrivacy: true, inviteCode: code.value }, { silentAuth: true }));
+        s.close(); S.user = d.user; setTimeout(() => afterLogin(code.value, true), 150);
+      } });
+      const s = sheet({
+        title: t('Create your account'),
+        body: [
+          h('div.card', { style: { marginBottom: '8px' } }, listRow({ lead: h('span.avatar', initials(e.data.name || e.data.email)), title: e.data.name || t('New account'), sub: e.data.email })),
+          field(t('Invite code (optional)'), code, { hint: t('If someone invited you to their household') }),
+          h('label.check', privacy, h('span', t('I have read and accept the '), h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, t('privacy policy')))),
+        ],
+        actions: [cancelBtn(), ok],
+      });
+    }
+  }
+
+  function openLinkGoogle() {
+    const slot = h('div.google-slot');
+    const s = sheet({
+      title: t('Link your Google account'),
+      body: [h('p.sheet-text', t('Once linked, you can sign in to FoodTrack with one tap, without a password.')), slot],
+      actions: [cancelBtn()],
+    });
+    googleButton(slot, async credential => {
+      try { const d = await Api.post('auth.google.link', { credential }); S.user = d.user; s.close(); render(true); toast(t('Google account linked')); }
+      catch (e) { toast(e.message, 'error'); }
+    }, 'signin_with');
   }
 
   // ===================================================== AUTH
+
+  function afterLogin(pending, viaGoogle) {
+    if (pending && !viaGoogle) location.hash = '#/unisciti/' + pending;
+    else if (pending) location.hash = '#/spazi';
+    start();
+  }
 
   function renderAuth(mode) {
     const pending = (location.hash.match(/^#\/unisciti\/([A-Za-z0-9]+)/) || [])[1] || '';
     mode = mode || (pending ? 'register' : store.get('authMode', 'login'));
     const err = h('div.err-box', { hidden: true });
-    const showErr = m => { err.textContent = m; err.hidden = false; };
+    const showErr = m => { UI.clear(err); err.append(icon('error'), h('span', m)); err.hidden = false; };
     const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', maxlength: 190 });
     const pw = input({ type: 'password', autocomplete: mode === 'login' ? 'current-password' : 'new-password' });
     const name = input({ autocomplete: 'name', maxlength: 80 });
     const code = input({ value: pending, maxlength: 12, autocapitalize: 'characters' });
     const privacy = h('input', { type: 'checkbox' });
+    const gslot = h('div.google-slot');
 
-    const submit = btn(mode === 'login' ? 'Accedi' : 'Crea account', { type: 'submit', cls: 'btn-block' });
+    const submit = btn(mode === 'login' ? t('Sign in') : t('Create account'), { type: 'submit', cls: 'btn-block' });
     const form = h('form', { novalidate: true, onsubmit: async e => {
       e.preventDefault(); err.hidden = true;
       try {
@@ -1252,36 +1400,38 @@
           ? Api.post('auth.login', { email: email.value, password: pw.value }, { silentAuth: true })
           : Api.post('auth.register', { name: name.value, email: email.value, password: pw.value, inviteCode: code.value, acceptPrivacy: privacy.checked }, { silentAuth: true }));
         S.user = d.user;
-        if (pending && mode === 'login') location.hash = '#/unisciti/' + pending; else if (pending) location.hash = '#/spazi';
-        start();
+        afterLogin(pending && mode === 'login' ? pending : '', false);
       } catch (ex) { showErr(ex.message); }
     } },
-      mode === 'register' ? field('Nome', name) : null,
+      mode === 'register' ? field(t('Name'), name) : null,
       field('Email', email),
-      field(mode === 'login' ? 'Password' : 'Password (min. 8 caratteri)', pw),
-      mode === 'register' ? field('Codice invito (facoltativo)', code, { hint: 'Se qualcuno ti ha invitato nella sua casa, inserisci il suo codice' }) : null,
-      mode === 'register' ? h('label.check', privacy, h('span', 'Ho letto e accetto l’', h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'informativa sulla privacy'))) : null,
+      field(mode === 'login' ? 'Password' : t('Password (min. 8 characters)'), pw),
+      mode === 'register' ? field(t('Invite code (optional)'), code, { hint: t('If someone invited you to their household') }) : null,
+      mode === 'register' ? h('label.check', privacy, h('span', t('I have read and accept the '), h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, t('privacy policy')))) : null,
       err, h('div.spacer'), submit,
-      mode === 'login' ? h('div.center', { style: { marginTop: '10px' } }, btn('Password dimenticata?', { kind: 'text', onclick: () => sheet({ title: 'Password dimenticata', body: [h('p.sheet-text', 'Per motivi di sicurezza la password può essere reimpostata da un amministratore di FoodTrack: scrivi a ', h('a', { href: 'mailto:info@saveriomorelli.com' }, 'info@saveriomorelli.com'), ' dall’indirizzo email del tuo account. Riceverai una password temporanea da cambiare al primo accesso.')] }) })) : null,
+      mode === 'login' ? h('div.center', { style: { marginTop: '6px' } }, btn(t('Forgot your password?'), { kind: 'text', onclick: () => {
+        const s = sheet({ title: t('Forgot password'), body: [h('p.sheet-text', 'Scrivi a ', h('a', { href: 'mailto:info@saveriomorelli.com' }, 'info@saveriomorelli.com'), ' dall’indirizzo email del tuo account: un amministratore ti invierà una password temporanea, da cambiare al primo accesso.', S.config.googleClientId ? ' Se l’email è quella di un account Google, puoi anche accedere con «Continua con Google».' : '')], actions: [btn(t('Got it'), { onclick: () => s.close() })] });
+      } })) : null,
     );
 
-    const tabs = h('div.tabs',
-      h('button' + (mode === 'login' ? '.sel' : ''), { type: 'button', onclick: () => { store.set('authMode', 'login'); renderAuth('login'); } }, 'Accedi'),
-      h('button' + (mode === 'register' ? '.sel' : ''), { type: 'button', onclick: () => { store.set('authMode', 'register'); renderAuth('register'); } }, 'Crea account'));
-
     root.replaceChildren(h('div.auth',
-      h('div.auth-top', h('img', { src: 'assets/icons/icon-mono.png', alt: '' }), h('h1', 'FoodTrack'), h('p', 'Il cibo di casa, sotto controllo')),
-      h('div.auth-body', pending ? h('div.banner.info', h('h3', icon('group'), 'Sei stato invitato!'), h('p', 'Crea un account (o accedi) per unirti alla casa condivisa.')) : null, tabs, form,
+      h('div.auth-top', h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' })), h('h1', 'FoodTrack'), h('p', t('The food at home, under control'))),
+      h('div.auth-body',
+        pending ? banner('info', 'group', t('You have been invited!'), t('Create an account (or sign in) to join the shared household.')) : null,
+        seg([['login', t('Sign in')], ['register', t('Create account')]], mode, v => { store.set('authMode', v); renderAuth(v); }),
+        S.config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
+        form,
         h('ul.features',
-          h('li', icon('spaces'), 'Tieni traccia di ciò che hai in frigo, freezer e dispensa'),
-          h('li', icon('warning'), 'Ricevi un avviso prima che i prodotti scadano'),
-          h('li', icon('list'), 'Liste della spesa condivise con chi vive con te'),
-          h('li', icon('restaurant'), 'Ricette con gli ingredienti che hai già')))));
+          h('li', tile('icon', 'spaces', 'sm'), t('Keep track of what is in your fridge, freezer and pantry')),
+          h('li', tile('icon', 'bell', 'sm'), t('Get an alert before products expire')),
+          h('li', tile('icon', 'group', 'sm'), t('Shopping lists shared with the people you live with')),
+          h('li', tile('icon', 'restaurant', 'sm'), t('Recipes with the ingredients you already have'))))));
     document.title = 'FoodTrack';
+    if (S.config.googleClientId) googleButton(gslot, cred => googleSignIn(cred, pending), mode === 'login' ? 'continue_with' : 'signup_with');
   }
 
   function renderForcePassword() {
-    root.replaceChildren(h('div.auth', h('div.auth-top', h('img', { src: 'assets/icons/icon-mono.png', alt: '' }), h('h1', 'FoodTrack'), h('p', 'Scegli una nuova password'))));
+    root.replaceChildren(h('div.auth', h('div.auth-top', h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' })), h('h1', 'FoodTrack'), h('p', t('Choose a new password')))));
     if (!UI.sheetsOpen()) openChangePassword(true);
   }
 
@@ -1295,9 +1445,9 @@
     if (!a && !b) return;
     store.set('notifiedOn', today);
     const parts = [];
-    if (b) parts.push(`${b} prodott${b === 1 ? 'o' : 'i'} in scadenza`);
-    if (a) parts.push(`${a} prodott${a === 1 ? 'o scaduto' : 'i scaduti'}`);
-    const opts = { body: 'Hai ' + parts.join(' e ') + '. Scopri come usarli prima di buttarli!', icon: 'assets/icons/icon-192.png', badge: 'assets/icons/icon-mono.png', tag: 'ft-expiry' };
+    if (b) parts.push(plural(b, 'expiring product', 'expiring products'));
+    if (a) parts.push(plural(a, 'expired product', 'expired products'));
+    const opts = { body: t('You have {what}. Find out how to use them before throwing them away!', { what: parts.join(t(' and ')) }), icon: 'assets/icons/icon-192.png', badge: 'assets/icons/icon-mono.png', tag: 'ft-expiry' };
     if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification('FoodTrack', opts)).catch(() => {});
     else try { new Notification('FoodTrack', opts); } catch (e) { /* not allowed */ }
   }
@@ -1316,27 +1466,30 @@
     }
   }
 
+  function fatal(title, text, action) {
+    root.replaceChildren(h('div.auth', h('div.auth-top', h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' })), h('h1', 'FoodTrack'), h('p', title)),
+      h('div.auth-body.center', h('p', text), action || btn(t('Try again'), { icon: 'swap', onclick: start }))));
+  }
+
   async function start() {
     try {
-      const me = await Api.get('auth.me', { silentAuth: true });
+      const [me, cfg] = await Promise.all([Api.get('auth.me', { silentAuth: true }), Api.get('auth.config', { silentAuth: true }).catch(() => null)]);
       S.user = me.user;
+      if (cfg) S.config = cfg;
     } catch (e) {
-      if (e.code === 'not_installed') { root.replaceChildren(h('div.auth', h('div.auth-top', h('h1', 'FoodTrack'), h('p', 'Installazione non completata')), h('div.auth-body', h('p', 'Apri ', h('a', { href: 'install-db.php' }, 'install-db.php'), ' per configurare il database.')))); return; }
-      root.replaceChildren(h('div.auth', h('div.auth-top', h('h1', 'FoodTrack'), h('p', e.message)), h('div.auth-body.center', btn('Riprova', { icon: 'swap', onclick: start }))));
-      return;
+      if (e.code === 'not_installed') return fatal(t('Installation not completed'), t('The database is not configured yet.'), h('a.btn.btn-filled', { href: 'install-db.php' }, t('Open install-db.php')));
+      return fatal(t('Could not connect'), e.message);
     }
     if (!S.user) { S.loaded = false; render(); return; }
     if (S.user.mustChangePassword) { render(); return; }
     render();
     try {
-      const d = await Api.get('bootstrap');
-      applyState(d);
+      applyState(await Api.get('bootstrap'));
       S.loaded = true;
       render();
       notifyExpiry();
     } catch (e) {
-      toast(e.message, 'error');
-      root.replaceChildren(h('div.auth', h('div.auth-top', h('h1', 'FoodTrack'), h('p', e.message)), h('div.auth-body.center', btn('Riprova', { icon: 'swap', onclick: start }))));
+      fatal(t('Could not load the data'), e.message);
     }
   }
 

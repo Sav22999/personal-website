@@ -1,6 +1,6 @@
 # FoodTrack
 
-Web app (installabile come app Android) per gestire gli alimenti di casa: spazi (frigo, freezer, dispensa…), prodotti con scadenza, avvisi su prodotti in scadenza e scaduti con informazioni utili, liste della spesa, ricette con calcolo degli ingredienti disponibili, piano settimanale dei pasti e **case condivise** tra più utenti. Include un **portale di amministrazione** per ricette, catalogo prodotti, categorie e utenti.
+Web app multilingua (italiano e inglese), installabile come app Android, per gestire gli alimenti di casa: spazi (frigo, freezer, dispensa…), prodotti con scadenza, avvisi su prodotti in scadenza e scaduti con informazioni utili, liste della spesa, ricette con calcolo degli ingredienti disponibili, piano settimanale dei pasti e **case condivise** tra più utenti. Include un **portale di amministrazione** per ricette, catalogo prodotti, categorie e utenti.
 
 Nato come progetto del corso di Progettazione di Applicazioni Mobili (Università di Udine) — prototipo Flutter — e riscritto come web app con backend PHP/MySQL.
 
@@ -21,8 +21,12 @@ foodtrack/
 ├── api/index.php           API JSON (?r=azione): unico punto che legge e scrive i dati
 ├── lib/                    PHP: bootstrap, schema delle tabelle, dati iniziali, case condivise
 ├── install/foodtrack.sql   query SQL per phpMyAdmin (tabelle + dati iniziali)
-├── tools/build-sql.php     rigenera install/foodtrack.sql da lib/schema.php e lib/seed.php
-├── assets/                 CSS, JavaScript, icone e immagini (prodotti, spazi, liste, ricette)
+├── tools/build-sql.php     rigenera install/foodtrack.sql da lib/schema.php, lib/seed.php e lib/seed-en.php
+├── tools/build-icons.py    rigenera lo sprite SVG delle icone (anteprima: tools/icons-preview.html)
+├── assets/                 CSS (design system in app.css), JavaScript, traduzioni (i18n.js), font Inter
+│   ├── img/icons.svg       set di icone SVG di prodotti, spazi e liste (generato da tools/build-icons.py)
+│   ├── img/recipes/        foto delle ricette iniziali
+│   └── vendor/             ZXing (lettore di codici a barre per i browser senza BarcodeDetector)
 ├── uploads/recipes/        immagini delle ricette caricate dal portale (non su git)
 └── android/                progetto Android Studio (Trusted Web Activity) per APK/AAB del Play Store
 ```
@@ -48,6 +52,34 @@ UPDATE ft_users SET role = 10 WHERE email = 'tua@email.it';
 ```
 
 Dopo aver modificato `lib/schema.php` o `lib/seed.php`, rigenera il file SQL con `php tools/build-sql.php`.
+
+## Accesso con Google (facoltativo)
+
+L'app e il portale admin mostrano il pulsante ufficiale «Continua con Google» quando in `credentials.php` è impostato `$google_client_id`. Non serve nessun segreto: il server verifica il token di Google, controlla che sia destinato al tuo Client ID e che l'email sia verificata.
+
+1. Vai su [Google Cloud Console](https://console.cloud.google.com/) e crea un progetto (es. «FoodTrack»).
+2. **Google Auth Platform → Branding** (schermata di consenso OAuth): tipo *Esterno*, nome app «FoodTrack», email di assistenza, logo (`android/play-store-icon-512.png`), dominio autorizzato `saveriomorelli.com`, link alla privacy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`. Ambiti: solo `openid`, `email`, `profile` (non sensibili, quindi nessuna verifica lunga da parte di Google). Pubblica l'app («In produzione»).
+3. **Google Auth Platform → Clients → Crea client**: tipo **Applicazione web**, nome «FoodTrack Web».
+   - *Origini JavaScript autorizzate*: `https://www.saveriomorelli.com` (e anche `https://saveriomorelli.com` se il sito risponde senza www).
+   - *URI di reindirizzamento*: non servono (si usa il popup).
+4. Copia il **Client ID** (finisce con `.apps.googleusercontent.com`) e mettilo in `credentials.php`:
+   ```php
+   $google_client_id = "1234567890-xxxx.apps.googleusercontent.com";
+   ```
+   oppure inseriscilo in `install-db.php` (anche in modalità aggiornamento).
+5. Fatto: chi accede con Google per la prima volta deve solo accettare l'informativa privacy; se esiste già un account con la stessa email, viene collegato automaticamente. Dal Profilo si può collegare/scollegare Google e impostare una password.
+
+Nell'app Android (TWA) l'accesso con Google funziona perché la pagina gira in Chrome. Nel raro caso in cui il telefono non abbia Chrome e l'app usi la WebView, Google blocca l'accesso: resta disponibile email e password.
+
+## Lingue
+
+- L'interfaccia (app e portale) è in **italiano** e **inglese**: la lingua si sceglie in automatico dal browser e si cambia dal Profilo (o dal menu laterale del portale). I testi sorgente sono in inglese, le traduzioni sono in `assets/i18n.js` (client) e `lib/i18n.php` (messaggi dell'API).
+- Anche i **contenuti** sono traducibili: categorie, prodotti del catalogo, ricette (nome, descrizione, note di cottura, passaggi) e note degli ingredienti. La lingua principale dei contenuti è l'italiano; dal portale ogni editor ha le schede «Italiano · principale» / «English». Se una traduzione manca si mostra il testo italiano.
+- I prodotti aggiunti dagli utenti mostrano il nome del catalogo nella lingua dell'utente finché non vengono rinominati.
+
+## Codici a barre
+
+La scansione usa il `BarcodeDetector` nativo quando c'è (Chrome su Android) e altrimenti la libreria **ZXing** inclusa nel progetto (`assets/vendor/`), quindi funziona anche su Firefox, Safari e Chrome desktop. Serve HTTPS e il permesso della fotocamera (il `.htaccess` di FoodTrack lo consente: `Permissions-Policy: camera=(self)`). Il codice viene cercato su Open Food Facts tramite il server.
 
 ## Ruoli
 
@@ -86,7 +118,7 @@ Ogni utente ha almeno una «casa» (creata alla registrazione con Frigorifero, F
 | 13 | Piano dei pasti della settimana | Ricette → «Piano della settimana» → ingredienti mancanti in lista |
 | 14 | Condivisione multi-utente | Case condivise |
 
-In più: «Aggiungi i mancanti alla lista della spesa» dalla ricetta (rimossa nel prototipo Flutter), ordinamento dei prodotti, tema chiaro/scuro, consumo parziale di un prodotto.
+In più: interfaccia multilingua, accesso con Google, «Aggiungi i mancanti alla lista della spesa» dalla ricetta (rimossa nel prototipo Flutter), ordinamento dei prodotti, tema chiaro/scuro, consumo parziale di un prodotto.
 
 ## App Android (Google Play)
 

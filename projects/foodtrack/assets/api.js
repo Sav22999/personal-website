@@ -2,13 +2,16 @@
 (function () {
   'use strict';
 
+  const t = (s, v) => (window.I18N ? I18N.t(s, v) : s);
+  const lang = () => (window.I18N ? I18N.lang : 'it');
+
   const API_URL = 'api/index.php';
   let csrfToken = null;
   let onUnauthenticated = null;
 
   class ApiError extends Error {
     constructor(status, data) {
-      super((data && data.message) || ('Errore ' + status));
+      super((data && data.message) || t('Error {code}', { code: status }));
       this.status = status;
       this.code = (data && data.error) || 'error';
       this.data = data || {};
@@ -31,7 +34,7 @@
   }
 
   async function request(route, body, opts) {
-    const headers = { 'Accept': 'application/json' };
+    const headers = { 'Accept': 'application/json', 'X-Lang': lang() };
     const init = { method: body === undefined ? 'GET' : 'POST', headers, credentials: 'same-origin', cache: 'no-store' };
     if (body !== undefined) {
       headers['Content-Type'] = 'application/json';
@@ -42,7 +45,7 @@
     try {
       res = await fetch(apiUrl(route), init);
     } catch (e) {
-      throw new ApiError(0, { error: 'network', message: 'Connessione non disponibile. Controlla la rete e riprova.' });
+      throw new ApiError(0, { error: 'network', message: t('Connection unavailable. Check your network and try again.') });
     }
     let data = null;
     try { data = await res.json(); } catch (e) { data = null; }
@@ -58,12 +61,12 @@
     async upload(route, formData) {
       let res;
       try {
-        res = await fetch(apiUrl(route), { method: 'POST', body: formData, credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrfToken || '' } });
+        res = await fetch(apiUrl(route), { method: 'POST', body: formData, credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-Lang': lang(), 'X-CSRF-Token': csrfToken || '' } });
       } catch (e) {
-        throw new ApiError(0, { error: 'network', message: 'Connessione non disponibile. Controlla la rete e riprova.' });
+        throw new ApiError(0, { error: 'network', message: t('Connection unavailable. Check your network and try again.') });
       }
       let data = null;
-      try { data = await res.json(); } catch (e) { data = res.status === 413 ? { error: 'too_large', message: 'Il file è troppo grande per il server.' } : null; }
+      try { data = await res.json(); } catch (e) { data = res.status === 413 ? { error: 'too_large', message: t('The file is too large for the server.') } : null; }
       return handle(res.status, data);
     },
   };

@@ -18,7 +18,7 @@ RedirectMatch 404 ^/projects/foodtrack/(lib|install|tools|android)(/|$)
 
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
-  Header set Referrer-Policy "same-origin"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set X-Frame-Options "SAMEORIGIN"
   # The camera is needed by the barcode scanner (the main site disables it)
   Header set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
