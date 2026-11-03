@@ -685,11 +685,19 @@
       if (zxReader) { try { zxReader.reset(); } catch (e) { /* already stopped */ } }
       if (stream) stream.getTracks().forEach(tr => tr.stop());
     }
-    function noCamera(msg) { cam.hidden = true; status.textContent = msg; }
+    const retryBox = h('div.btn-row', { hidden: true, style: { justifyContent: 'center' } });
+    function noCamera(msg, detail) {
+      cam.hidden = true;
+      UI.clear(status);
+      status.append(msg, detail ? h('small.scan-detail', detail) : '');
+      UI.clear(retryBox);
+      retryBox.hidden = false;
+      retryBox.appendChild(btn(t('Try again'), { kind: 'tonal', icon: 'scan', onclick: () => { retryBox.hidden = true; cam.hidden = false; status.textContent = t('Starting the camera…'); startCamera(); } }));
+    }
 
     const s = sheet({
       title: t('Scan barcode'),
-      body: [cam, status, field(t('Barcode'), code, { hint: t('Or type the number under the bars') })],
+      body: [cam, status, retryBox, field(t('Barcode'), code, { hint: t('Or type the number under the bars') })],
       onclose: stop,
       actions: [cancelBtn(), btn(t('Search'), { icon: 'search', onclick: () => lookup(code.value) })],
     });
@@ -699,15 +707,21 @@
       noCamera(t('The camera needs a secure (HTTPS) connection: type the code manually.'));
       return;
     }
-    (async () => {
-      const detector = await nativeDetector();
+    startCamera();
+
+    /** Opens the rear camera (falling back to any camera) and starts decoding: native BarcodeDetector or ZXing. */
+    async function startCamera() {
+      stopped = false;
       try {
+        stream = await getCameraStream();
+        if (stopped) return stop();
+        video.srcObject = stream;
+        video.play().catch(() => { /* autoplay is muted: plays anyway on most browsers */ });
+        status.textContent = t('Point the camera at the product barcode');
+        const detector = await nativeDetector();
+        if (stopped) return;
         if (detector) {
           // Native scanner (Chrome on Android, Edge, …)
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-          if (stopped) return stop();
-          video.srcObject = stream;
-          status.textContent = t('Point the camera at the product barcode');
           const tick = async () => {
             if (stopped) return;
             try {
@@ -716,27 +730,52 @@
             } catch (e) { /* frame not ready */ }
             setTimeout(tick, 200);
           };
-          video.addEventListener('loadeddata', tick, { once: true });
+          if (video.readyState >= 2) tick(); else video.addEventListener('loadeddata', tick, { once: true });
         } else {
-          // Fallback for every other browser (Firefox, Safari, desktop Chrome): ZXing
+          // Fallback for every other browser (Firefox, Safari, desktop Chrome): ZXing on the same stream
           const ZX = await loadZxing();
           if (stopped) return;
           const hints = new Map();
           hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E, ZX.BarcodeFormat.CODE_128]);
           hints.set(ZX.DecodeHintType.TRY_HARDER, true);
           zxReader = new ZX.BrowserMultiFormatReader(hints, 250);
-          status.textContent = t('Point the camera at the product barcode');
-          await zxReader.decodeFromConstraints({ video: { facingMode: { ideal: 'environment' } }, audio: false }, video, result => {
+          await zxReader.decodeFromStream(stream, video, result => {
             if (result && !stopped) { if (navigator.vibrate) navigator.vibrate(60); code.value = result.getText(); lookup(result.getText()); }
           });
           if (stopped) stop();
         }
       } catch (e) {
-        noCamera(e && e.name === 'NotAllowedError'
-          ? t('Camera permission denied: allow it in the browser settings, or type the code manually.')
-          : t('Camera not available (permission denied?). Type the code manually.'));
+        if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+        if (stopped) return;
+        const [msg, detail] = await cameraErrorMessage(e);
+        noCamera(msg, detail);
       }
-    })();
+    }
+  }
+
+  /** Asks for the rear camera; if that exact request cannot be satisfied, retries with any camera. */
+  async function getCameraStream() {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    } catch (e) {
+      if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) throw e;
+      return navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    }
+  }
+
+  /** Explains why the camera could not start, telling a real refusal apart from a camera that is busy, missing or blocked. */
+  async function cameraErrorMessage(e) {
+    const name = (e && e.name) || 'Error';
+    const detail = name + (e && e.message ? ': ' + e.message : '');
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+      let state = '';
+      try { state = (await navigator.permissions.query({ name: 'camera' })).state; } catch (x) { /* not supported */ }
+      if (state === 'denied') return [t('Camera permission denied: allow it in the browser settings, or type the code manually.'), detail];
+      return [t('The camera is blocked by the system: check that the browser is allowed to use the camera in the phone settings (Settings → Apps → browser → Permissions), then try again.'), detail];
+    }
+    if (name === 'NotReadableError' || name === 'AbortError' || name === 'TrackStartError') return [t('The camera is in use by another app or could not start: close the other apps using it and try again.'), detail];
+    if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'DevicesNotFoundError') return [t('No camera found on this device: type the code manually.'), detail];
+    return [t('Could not start the camera. Type the code manually or try again.'), detail];
   }
 
   // ===================================================== SHOPPING LISTS

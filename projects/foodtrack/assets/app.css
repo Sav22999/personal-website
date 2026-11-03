@@ -653,3 +653,4 @@ img.flag.big { border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
 .pick-row .list-row .meta { margin-top: 4px; }
 .sheet.tall { height: 92vh; height: 92dvh; }
 @media (min-width: 960px) { .sheet.tall { height: 82vh; max-width: 640px; } }
+.scan-detail { display: block; margin-top: 6px; font-size: .72rem; color: var(--muted); opacity: .8; font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
