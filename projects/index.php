@@ -174,6 +174,21 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
+        <a class="card" href="/projects/sudoku/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/sudoku.png" alt="">
+            </div>
+            <h3>Sudoku</h3>
+            <p>Classic number puzzle game. Play against the computer with three difficulty levels: Easy, Medium, Hard. No sign-up needed.</p>
+            <ul class="project-tags">
+                <li>Web game</li>
+                <li>Multilingual</li>
+                <li>Built with AI</li>
+            </ul>
+        </a>
     </div>
 
     <div class="projects-divider">

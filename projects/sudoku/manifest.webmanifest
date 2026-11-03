@@ -1,0 +1,26 @@
+{
+    "name": "Sudoku",
+    "short_name": "Sudoku",
+    "description": "Classic number puzzle game",
+    "start_url": "/projects/sudoku/",
+    "display": "standalone",
+    "background_color": "#0C110E",
+    "theme_color": "#0C110E",
+    "icons": [
+        {
+            "src": "icons/favicon-32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "icons/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ]
+}
