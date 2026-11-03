@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.foodtrack",
+      "sha256_cert_fingerprints": [
+        "71:C0:D2:51:6B:31:58:88:8E:4D:E6:10:01:8B:83:44:CE:2D:ED:0E:13:60:B6:58:51:F7:CC:2A:3B:BC:7F:F2"
+      ]
+    }
+  }
+]
