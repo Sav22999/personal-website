@@ -20,4 +20,15 @@ $table_prefix  = "ft_";   // every FoodTrack table starts with this prefix
 // (e.g. 1234567890-abc123.apps.googleusercontent.com). Empty = Google login disabled. It is not a secret.
 $google_client_id = "";
 
+// Optional: emails (welcome message on sign-up, notice of new accounts to the master admin).
+// Leave null to use the site's contact-form settings (/.mail-config.php in the site root), if present;
+// with neither, no email is sent. The SMTP password is a secret: this file is never committed.
+$mail_config = null;
+// $mail_config = [
+//     'smtp_host' => 'smtps.aruba.it', 'smtp_port' => 465, 'smtp_encryption' => 'ssl',   // or 587 + 'tls'
+//     'smtp_user' => 'noreply@example.com', 'smtp_password' => '<SMTP PASSWORD>',
+//     'from_email' => 'noreply@example.com', 'from_name' => 'FoodTrack',
+// ];
+$mail_notify_admin = true;   // false = do not email the master admin when a new account is created
+
 $debug = false;           // true only for local tests: shows error details in the API responses

@@ -180,7 +180,7 @@
     const tab = tabName();
     root.replaceChildren(h('div.adm',
       h('aside.adm-side',
-        h('div.adm-logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), h('span', 'FoodTrack', h('small', t('Admin portal')))),
+        h('div.adm-logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), h('span', 'FoodTrack', h('small', t('Admin portal')))),
         h('nav.adm-nav', TABS.map(([k, label, ic]) => h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label) }, icon(ic), h('span', t(label)), counts[k] != null ? h('span.count', String(counts[k])) : null))),
         h('div.grow'),
         h('div.adm-side-tools',
@@ -695,7 +695,7 @@
     const sub = btn(t('Sign in'), { type: 'submit', cls: 'btn-block' });
     const gslot = h('div.google-slot');
     root.replaceChildren(h('div.adm-login', h('div.card-l',
-      h('div.logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), 'FoodTrack'),
+      h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), 'FoodTrack'),
       h('p.lead', t('Admin portal')),
       config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
       h('form', { onsubmit: async e => {
@@ -723,7 +723,7 @@
     if (me.mustChangePassword) return loginForm(t('First change your temporary password from the app.'));
     TABS = ALL_TABS.filter(x => me.role >= x[3]);
     if (!me.isEditor) {
-      root.replaceChildren(h('div.adm-login', h('div.card-l', h('div.logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), t('Access denied')),
+      root.replaceChildren(h('div.adm-login', h('div.card-l', h('div.logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), t('Access denied')),
         h('p.lead', t('The portal is reserved to FoodTrack administrators.')), h('a.btn.btn-filled', { href: './' }, t('Back to the app')))));
       return;
     }

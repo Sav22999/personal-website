@@ -76,9 +76,18 @@ Nell'app Android (TWA) l'accesso con Google funziona perché la pagina gira in C
 
 Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versione principale, cioè quando cambia il primo numero di `VERSION` in `assets/app.js`) l'app mostra un breve tutorial illustrato: spazi, prodotti, avvisi di scadenza, liste, ricette e case condivise. Si può rivedere da Profilo → Preferenze → «Tutorial dell'app». Nel tutorial si può scegliere la lingua; le illustrazioni sono animate (le animazioni si disattivano se il sistema chiede di ridurre il movimento).
 
+## Email
+
+FoodTrack invia due email quando viene creato un account (con email e password, con Google o dal portale):
+
+- all'utente, un messaggio di benvenuto nella sua lingua (italiano o inglese) con il link all'app;
+- al master admin, un avviso con nome, email e modalità di registrazione (disattivabile con `$mail_notify_admin = false;` in `credentials.php`; non viene inviato per gli account creati dal portale).
+
+Configurazione SMTP: se in `credentials.php` c'è `$mail_config` (vedi `credentials-sample.php`) si usa quella; altrimenti FoodTrack usa le stesse impostazioni del modulo di contatto del sito (`/.mail-config.php` nella radice). Senza nessuna delle due non parte nessuna email e l'app funziona lo stesso. Le email vengono inviate dopo aver risposto all'app, quindi la registrazione non rallenta; un errore di invio finisce solo nel log del server.
+
 ## Versione desktop
 
-Da 960 px di larghezza in su (computer, tablet in orizzontale) l'app usa componenti adatti al desktop: barra laterale di navigazione (con casa attiva, contatori di prodotti in scadenza e da comprare, profilo), azione principale come pulsante nella barra in alto, schede in griglia, dettaglio ricetta su due colonne, settimana in griglia, finestre di dialogo centrate al posto dei pannelli dal basso, menu a comparsa vicino al puntatore e accesso su due colonne. Scorciatoie: `/` per cercare, `Esc` per chiudere una finestra.
+Da 960 px di larghezza in su (computer, tablet in orizzontale) l'app usa componenti adatti al desktop: barra laterale di navigazione (con casa attiva, contatori di prodotti in scadenza e da comprare, profilo), azione principale come pulsante nella barra in alto, schede in griglia, dettaglio ricetta su due colonne, settimana in griglia, finestre di dialogo centrate al posto dei pannelli dal basso, menu a comparsa vicino al puntatore e accesso su due colonne. Scorciatoie: `/` per cercare, `Esc` per chiudere una finestra. Per admin e moderatori contenuti la barra laterale ha anche il collegamento al «Portale gestionale». Il portale usa gli stessi componenti e la stessa grafica dell'app desktop.
 
 ## Lingue
 

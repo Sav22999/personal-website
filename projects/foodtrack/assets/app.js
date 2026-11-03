@@ -325,6 +325,9 @@
         link('piano', t('Weekly plan'), 'calendar'),
         link('cerca', t('Search'), 'search')),
       h('div.grow'),
+      // Admins and content moderators: shortcut to the management portal
+      S.user.isEditor ? h('a.sn-link.sn-admin', { href: 'admin.html', target: '_blank', rel: 'noopener', title: S.user.isAdmin ? t('Recipes, products, categories and users') : t('Recipes and products') },
+        icon('shield'), h('span', t('Management portal')), icon('open')) : null,
       h('a.sn-user' + (active === 'profilo' ? '.active' : ''), { href: '#/profilo', title: t('Profile and settings') },
         h('span.avatar', initials(S.user.name)), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
   }

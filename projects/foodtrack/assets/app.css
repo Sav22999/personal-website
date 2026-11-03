@@ -654,3 +654,6 @@ img.flag.big { border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
 .sheet.tall { height: 92vh; height: 92dvh; }
 @media (min-width: 960px) { .sheet.tall { height: 82vh; max-width: 640px; } }
 .scan-detail { display: block; margin-top: 6px; font-size: .72rem; color: var(--muted); opacity: .8; font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.sn-admin { border: 1px solid var(--outline-variant); margin-bottom: 8px; color: var(--text); }
+.sn-admin > .ic:last-child { width: 18px; height: 18px; color: var(--muted); }
+.sn-admin span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -559,6 +559,7 @@
         "Uses expiring products": "Usa prodotti in scadenza",
         "Weekly plan": "Piano della settimana",
         "Today": "Oggi",
+        "Management portal": "Portale gestionale",
         "The camera is blocked by the system: check that the browser is allowed to use the camera in the phone settings (Settings → Apps → browser → Permissions), then try again.": "La fotocamera è bloccata dal sistema: controlla che il browser possa usare la fotocamera nelle impostazioni del telefono (Impostazioni → App → browser → Autorizzazioni), poi riprova.",
         "The camera is in use by another app or could not start: close the other apps using it and try again.": "La fotocamera è usata da un’altra app o non si è avviata: chiudi le altre app che la usano e riprova.",
         "No camera found on this device: type the code manually.": "Nessuna fotocamera trovata su questo dispositivo: inserisci il codice a mano.",

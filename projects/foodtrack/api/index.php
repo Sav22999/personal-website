@@ -16,6 +16,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/households.php';
+require __DIR__ . '/../lib/mail.php';
 
 set_exception_handler(function (Throwable $e) {
     error_log('[foodtrack] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
@@ -445,6 +446,7 @@ switch ($route) {
                 }
             }
             $row = user_row($uid);
+            mail_account_created($row, 'google');
         }
         if ($row['status'] !== 'active') fail('Your account has been disabled. Contact the administrator.', 403, 'disabled');
         db()->prepare('UPDATE ' . t('users') . ' SET last_login_at = ? WHERE id = ?')->execute([now_utc(), $row['id']]);
@@ -497,6 +499,7 @@ switch ($route) {
                 db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $uid]);
             }
         }
+        mail_account_created(user_row($uid), 'email');
         $csrf = create_auth_session($uid);
         send_json(['ok' => true, 'user' => public_user(user_row($uid)), 'csrf' => $csrf], 201);
 
@@ -1042,6 +1045,7 @@ switch ($route) {
             ->execute([$name, $email, password_hash($pw, PASSWORD_DEFAULT), $role, now_utc()]);
         $uid = (int)db()->lastInsertId();
         create_household($uid, tr("{name}'s home", ['name' => first_name($name)]));
+        mail_account_created(user_row($uid), 'admin');
         send_json(['ok' => true, 'password' => $pw]);
 
     case 'admin.user.transfer_master':

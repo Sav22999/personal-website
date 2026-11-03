@@ -49,6 +49,8 @@ function credentials(): ?array
     $table_prefix = 'ft_';
     $debug = false;
     $google_client_id = '';
+    $mail_config = null;
+    $mail_notify_admin = true;
     require $file;
     if (!$localhost_db || !$username_db || !$database_name) return $cfg = null;
     return $cfg = [
@@ -59,6 +61,8 @@ function credentials(): ?array
         'prefix' => (string)($table_prefix ?: 'ft_'),
         'debug'  => (bool)$debug,
         'google_client_id' => trim((string)$google_client_id),
+        'mail' => is_array($mail_config) ? $mail_config : null,
+        'mail_notify_admin' => $mail_notify_admin !== false,
     ];
 }
 
