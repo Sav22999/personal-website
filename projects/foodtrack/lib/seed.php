@@ -8,6 +8,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/seed-recipes-2.php';
+require_once __DIR__ . '/seed-recipes-3.php';
 
 function seed_categories(): array
 {
@@ -32,7 +33,7 @@ function seed_categories(): array
 function seed_products(): array
 {
     // [name, icon, category, default unit, specific expiry tip (optional)]
-    return array_merge(seed_products_1(), array_map(function ($p) { return [$p[0], $p[2], $p[3], $p[4], null]; }, seed2_products()));
+    return array_merge(seed_products_1(), array_map(function ($p) { return [$p[0], $p[2], $p[3], $p[4], null]; }, array_merge(seed2_products(), seed3_products())));
 }
 
 function seed_products_1(): array
@@ -109,19 +110,21 @@ function seed_products_1(): array
     ];
 }
 
-/** All the initial recipes: batch 1 (first version) + batch 2 (recipes from many countries). */
+/** All the initial recipes: batch 1 (first version) + batches 2 and 3 (recipes from many countries). */
 function seed_recipes(): array
 {
-    $b2 = array_map(function ($r) {
+    $conv = function (array $list, int $batch) {
+        return array_map(function ($r) use ($batch) {
         return [
             'name' => $r['it'], 'origin' => implode(',', $r['origin']), 'image' => '', 'description' => $r['desc'][0],
             'prep' => $r['prep'], 'cook' => $r['cook'], 'cook_notes' => $r['cookN'][0], 'servings' => $r['serv'], 'difficulty' => $r['diff'],
             'ingredients' => array_map(function ($i) { return [$i[0], $i[1], $i[2], $i[3]]; }, $r['ing']),
             'steps' => array_map(function ($st) { return $st[0]; }, $r['steps']),
-            'batch' => 2,
+            'batch' => $batch,
         ];
-    }, seed2_recipes());
-    return array_merge(seed_recipes_1(), $b2);
+        }, $list);
+    };
+    return array_merge(seed_recipes_1(), $conv(seed2_recipes(), 2), $conv(seed3_recipes(), 3));
 }
 
 function seed_recipes_1(): array

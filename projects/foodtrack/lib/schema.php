@@ -277,6 +277,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v5: countries of origin of the recipes (one or more)
  *  v6: publication status per language (existing translations become published)
  *  v7: second batch of content (new catalog products and recipes from many countries)
+ *  v8: third batch of content (more products and recipes)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -316,7 +317,7 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
             if ($changed) $up->execute([json_encode($d, JSON_UNESCAPED_UNICODE), $r['id']]);
         }
     }
-    if ($from < 7) {
+    if ($from < 8) {
         require_once __DIR__ . '/seed.php';
         $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
         seed_database($pdo, $p, $admin ? (int)$admin : null);

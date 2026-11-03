@@ -38,7 +38,7 @@ foodtrack/
    - host (`$localhost_db`), utente (`$username_db`), password (`$password_db`) e nome del database (`$database_name`) presi dal pannello Aruba;
    - prefisso tabelle (predefinito `ft_`);
    - nome, email e password del **master admin**.
-3. La pagina crea le tabelle, carica 13 categorie, 116 prodotti e 56 ricette (in italiano e inglese, da oltre 20 paesi), crea il master admin (con la sua casa) e scrive `credentials.php`.
+3. La pagina crea le tabelle, carica 13 categorie, 153 prodotti e 103 ricette (in italiano e inglese, da oltre 35 paesi), crea il master admin (con la sua casa) e scrive `credentials.php`.
    Se PHP non può scrivere il file, la pagina mostra il contenuto da creare a mano via FTP.
 4. **Elimina `install-db.php` dal server** (ricaricalo solo quando serve aggiornare le tabelle: in quel caso chiede la password del database già salvata).
 5. PHP deve poter scrivere in `uploads/recipes/` (permessi `755`) per caricare le immagini delle ricette dal portale.
@@ -89,7 +89,7 @@ La scansione usa il `BarcodeDetector` nativo quando c'è (Chrome su Android) e a
 
 ## Ricette iniziali
 
-56 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Germania, Austria, Grecia, Francia, Spagna, Portogallo, Cina, Giappone, India, Messico, Turchia, Libano, Tunisia, Ungheria e Brasile (`lib/seed.php` e `lib/seed-recipes-2.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). Le ricette senza foto mostrano una copertina illustrata con le bandiere dei paesi d'origine; la foto si aggiunge dal portale.
+103 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizzera, Francia, Belgio, Paesi Bassi, Svezia, Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud, Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). Le ricette senza foto mostrano una copertina illustrata con le bandiere dei paesi d'origine; la foto si aggiunge dal portale.
 
 ## Ruoli
 
@@ -141,7 +141,7 @@ La cartella `android/` è un progetto **Android Studio** che impacchetta la web 
    Oppure copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e poi usa Build → Build App Bundle(s).
 4. Carica l'`.aab` (app/release/app-release.aab) nella Google Play Console. Come icona dello store usa `android/play-store-icon-512.png`; come privacy policy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`.
 5. **Digital Asset Links** (senza questo passaggio l'app mostra la barra dell'indirizzo in alto):
-   - Play Console → la tua app → Configurazione → Integrità dell'app → Firma dell'app: copia l'impronta **SHA-256** della chiave di firma dell'app;
+   - Play Console → la tua app → Test e rilascio → Integrità dell'app → Firma dell'app (nelle versioni meno recenti: Release → Configurazione → Integrità dell'app; in alternativa cerca «firma» nella barra di ricerca; la chiave compare dopo il primo AAB caricato, anche solo in Test interno): copia l'impronta **SHA-256** della chiave di firma dell'app;
    - copia `android/assetlinks.sample.json`, sostituisci l'impronta e caricalo sul server come `https://www.saveriomorelli.com/.well-known/assetlinks.json` (se il file esiste già per altre app, aggiungi l'oggetto all'array);
    - per provare un APK firmato con la tua chiave locale, aggiungi anche la sua SHA-256 (`keytool -list -v -keystore foodtrack-upload.jks`).
 6. Ad ogni aggiornamento dell'app Android (raro) incrementa `versionCode` e `versionName`.

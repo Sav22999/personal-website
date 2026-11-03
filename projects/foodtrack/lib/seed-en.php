@@ -7,6 +7,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/seed-recipes-2.php';
+require_once __DIR__ . '/seed-recipes-3.php';
 
 function seed_en_categories(): array
 {
@@ -30,7 +31,7 @@ function seed_en_categories(): array
 function seed_en_products(): array
 {
     $b2 = [];
-    foreach (seed2_products() as $p) $b2[$p[0]] = [$p[1], null];
+    foreach (array_merge(seed2_products(), seed3_products()) as $p) $b2[$p[0]] = [$p[1], null];
     return array_merge(seed_en_products_1(), $b2);
 }
 
@@ -111,7 +112,7 @@ function seed_en_products_1(): array
 function seed_en_recipes(): array
 {
     $b2 = [];
-    foreach (seed2_recipes() as $r) {
+    foreach (array_merge(seed2_recipes(), seed3_recipes()) as $r) {
         $notes = [];
         foreach ($r['ing'] as $i) if ($i[3] !== '' && $i[4] !== '') $notes[$i[3]] = $i[4];
         $b2[$r['it']] = [$r['en'], $r['desc'][1], $r['cookN'][1], array_map(function ($st) { return $st[1]; }, $r['steps']), $notes];
