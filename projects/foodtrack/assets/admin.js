@@ -248,9 +248,9 @@
         && (!recipeState.status || (recipeState.status === 'pub') === anyPublished(r)));
       table.replaceChildren(dataTable([
         { key: 'img', label: '', render: r => UI.recipeCover(r, 'thumb') },
-        { key: 'name', label: t('Recipe'), sort: r => r.name, render: r => [h('div.title', r.name), h('div.sub', (r.i18n.en || {}).name ? '🇬🇧 ' + r.i18n.en.name : r.description)] },
+        { key: 'name', label: t('Recipe'), sort: r => r.name, render: r => [h('div.title', r.name), h('div.sub', (r.i18n.en || {}).name ? [UI.flag('GB'), ' ', r.i18n.en.name] : r.description)] },
         { key: 'ing', label: t('Content'), sort: r => r.ingredients.length, render: r => t('{a} ingredients · {b} steps', { a: r.ingredients.length, b: r.steps.length }) },
-        { key: 'origin', label: t('Origin'), sort: r => UI.originLabel(r.origin), render: r => r.origin && r.origin.length ? UI.originLabel(r.origin, true) : h('span.muted', '—') },
+        { key: 'origin', label: t('Origin'), sort: r => UI.originText(r.origin), render: r => r.origin && r.origin.length ? UI.originLabel(r.origin, true) : h('span.muted', '—') },
         { key: 'time', label: t('Time'), num: true, sort: r => (r.prepMinutes || 0) + (r.cookMinutes || 0), render: r => ((r.prepMinutes || 0) + (r.cookMinutes || 0)) + ' min' },
         { key: 'lang', label: t('Publication'), sort: r => CONTENT_LANGS.filter(l => (r.status || {})[l] === 'published').length, render: statusFlags },
         { key: 'fav', label: '♥', num: true, sort: r => d.favorites[r.id] || 0, render: r => String(d.favorites[r.id] || 0) },
@@ -462,10 +462,10 @@
     const chosen = (value || []).slice();
     const wrap = h('div.country-picker');
     function paintC() {
-      const chips = chosen.length ? chosen.map(c => h('span.cchip', UI.flag(c) + ' ' + UI.countryName(c),
+      const chips = chosen.length ? chosen.map(c => h('span.cchip', UI.flag(c), UI.countryName(c),
         h('button', { type: 'button', title: t('Remove'), 'aria-label': t('Remove'), onclick: () => { chosen.splice(chosen.indexOf(c), 1); paintC(); } }, icon('close'))))
         : [h('span.muted.small', t('Not defined'))];
-      const add = sel([{ value: '', label: '+ ' + t('Add a country') }].concat(UI.countryList().filter(x => !chosen.includes(x.code)).map(x => ({ value: x.code, label: UI.flag(x.code) + ' ' + x.name }))), '', {
+      const add = sel([{ value: '', label: '+ ' + t('Add a country') }].concat(UI.countryList().filter(x => !chosen.includes(x.code)).map(x => ({ value: x.code, label: x.name }))), '', {
         onchange: e => { if (e.target.value) { chosen.push(e.target.value); paintC(); } }, 'aria-label': t('Add a country'),
       });
       wrap.replaceChildren(h('div.cchips', chips), add);

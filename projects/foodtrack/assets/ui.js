@@ -368,12 +368,13 @@
     if (NATIONS[code]) return t(NATIONS[code]);
     try { regionNames = regionNames || new Intl.DisplayNames([locale()], { type: 'region' }); return regionNames.of(code) || code; } catch (e) { return code; }
   }
-  /** Flag emoji of an ISO 3166 code. */
-  function flag(code) {
-    // England, Scotland, Wales: flag tag sequences (🏴 + tag letters + cancel tag)
-    if (/^GB-(ENG|SCT|WLS)$/.test(code || '')) return String.fromCodePoint(0x1F3F4, ...[...('gb' + code.slice(3).toLowerCase())].map(c => 0xE0000 + c.charCodeAt(0)), 0xE007F);
-    if (code === 'GB-NIR') return flag('GB');
-    return /^[A-Z]{2}$/.test(code || '') ? String.fromCodePoint(...[...code].map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : '';
+  /**
+   * Flag of an ISO 3166 code as an SVG image (assets/flags, from the flag-icons project, MIT):
+   * the same drawing on every device, unlike emoji flags (Windows shows only the letters).
+   */
+  function flag(code, cls) {
+    if (!/^[A-Z]{2}(-[A-Z]{3})?$/.test(code || '')) return null;
+    return h('img.flag' + (cls ? '.' + cls : ''), { src: 'assets/flags/' + code.toLowerCase() + '.svg', alt: '', width: 20, height: 15, loading: 'lazy', title: countryName(code) });
   }
   /** All countries sorted by name in the user's language. */
   function countryList() {
@@ -382,19 +383,21 @@
   /** Cover of a recipe: its photo, or an illustration with the flags of its countries. */
   function recipeCover(r, cls) {
     if (r.image) return h('div.' + (cls || 'cover'), { style: { backgroundImage: `url("${r.image}")` } });
-    const flags = (r.origin || []).slice(0, 3).map(flag).join(' ');
-    const ill = h('div.' + (cls || 'cover') + '.cover-ill', h('span.ci-icon', icon('restaurant')), flags ? h('span.ci-flags', flags) : null);
+    const flags = (r.origin || []).slice(0, 3).map(c => flag(c, 'big'));
+    const ill = h('div.' + (cls || 'cover') + '.cover-ill', h('span.ci-icon', icon('restaurant')), flags.length ? h('span.ci-flags', flags) : null);
     let hash = 0; for (const ch of String(r.name || '')) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
     ill.style.setProperty('--hue', String(hash));
     return ill;
   }
 
-  /** "🇮🇹 Italy, 🇫🇷 France" — or "Not defined" when the list is empty. */
+  /** Flag + name of each country (only the flags when short and more than two), or "Not defined". */
   function originLabel(list, short) {
-    if (!list || !list.length) return t('Not defined');
-    if (short && list.length > 2) return list.map(flag).join(' ');
-    return list.map(c => flag(c) + ' ' + countryName(c)).join(', ');
+    if (!list || !list.length) return h('span.origin', t('Not defined'));
+    if (short && list.length > 2) return h('span.origin', list.map(c => flag(c)));
+    return h('span.origin', list.map((c, i) => h('span.oc', flag(c), countryName(c) + (i < list.length - 1 ? ',' : ''))));
   }
+  /** Plain-text version (sorting, search). */
+  function originText(list) { return (list || []).map(countryName).join(', '); }
 
   // ---------- Storage (per device preferences) ----------
 
@@ -415,7 +418,7 @@
     h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
     sheet, actionSheet, confirm, closeTop, closeAllSheets, toast,
     todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime,
-    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, recipeCover, norm, store, applyTheme,
+    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, originText, recipeCover, norm, store, applyTheme,
     sheetsOpen: () => stack.length,
   };
 })();

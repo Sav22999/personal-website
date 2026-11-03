@@ -11,12 +11,12 @@ val keystoreProps = Properties().apply {
 }
 
 android {
-    namespace = "com.saveriomorelli.foodtrack"
+    namespace = "com.saverio.foodtrack"
     compileSdk = 36
 
     defaultConfig {
         // The applicationId is the identity of the app on Google Play: it can never change after the first upload
-        applicationId = "com.saveriomorelli.foodtrack"
+        applicationId = "com.saverio.foodtrack"
         minSdk = 23
         targetSdk = 36
         versionCode = 1

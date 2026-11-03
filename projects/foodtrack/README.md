@@ -58,16 +58,17 @@ Dopo aver modificato `lib/schema.php` o `lib/seed.php`, rigenera il file SQL con
 L'app e il portale admin mostrano il pulsante ufficiale «Continua con Google» quando in `credentials.php` è impostato `$google_client_id`. Non serve nessun segreto: il server verifica il token di Google, controlla che sia destinato al tuo Client ID e che l'email sia verificata.
 
 1. Vai su [Google Cloud Console](https://console.cloud.google.com/) e crea un progetto (es. «FoodTrack»).
-2. **Google Auth Platform → Branding** (schermata di consenso OAuth): tipo *Esterno*, nome app «FoodTrack», email di assistenza, logo (`android/play-store-icon-512.png`), dominio autorizzato `saveriomorelli.com`, link alla privacy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`. Ambiti: solo `openid`, `email`, `profile` (non sensibili, quindi nessuna verifica lunga da parte di Google). Pubblica l'app («In produzione»).
-3. **Google Auth Platform → Clients → Crea client**: tipo **Applicazione web**, nome «FoodTrack Web».
+2. Nota: per l'accesso con Google serve **solo un client di tipo «Applicazione web»**, anche per l'app Android: la TWA apre il sito in Chrome, quindi Google vede l'origine `https://www.saveriomorelli.com`. Un client «Android» (che chiede package name e impronta SHA-1) non serve.
+3. **Google Auth Platform → Branding** (schermata di consenso OAuth): tipo *Esterno*, nome app «FoodTrack», email di assistenza, logo (`android/play-store-icon-512.png`), dominio autorizzato `saveriomorelli.com`, link alla privacy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`. Ambiti: solo `openid`, `email`, `profile` (non sensibili, quindi nessuna verifica lunga da parte di Google). Pubblica l'app («In produzione»).
+4. **Google Auth Platform → Clients → Crea client**: tipo **Applicazione web**, nome «FoodTrack Web».
    - *Origini JavaScript autorizzate*: `https://www.saveriomorelli.com` (e anche `https://saveriomorelli.com` se il sito risponde senza www).
    - *URI di reindirizzamento*: non servono (si usa il popup).
-4. Copia il **Client ID** (finisce con `.apps.googleusercontent.com`) e mettilo in `credentials.php`:
+5. Copia il **Client ID** (finisce con `.apps.googleusercontent.com`) e mettilo in `credentials.php`:
    ```php
    $google_client_id = "1234567890-xxxx.apps.googleusercontent.com";
    ```
    oppure inseriscilo in `install-db.php` (anche in modalità aggiornamento).
-5. Fatto: chi accede con Google per la prima volta deve solo accettare l'informativa privacy; se esiste già un account con la stessa email, viene collegato automaticamente. Dal Profilo si può collegare/scollegare Google e impostare una password.
+6. Fatto: chi accede con Google per la prima volta deve solo accettare l'informativa privacy; se esiste già un account con la stessa email, viene collegato automaticamente. Dal Profilo si può collegare/scollegare Google e impostare una password.
 
 Nell'app Android (TWA) l'accesso con Google funziona perché la pagina gira in Chrome. Nel raro caso in cui il telefono non abbia Chrome e l'app usi la WebView, Google blocca l'accesso: resta disponibile email e password.
 
@@ -135,7 +136,7 @@ In più: paesi d’origine delle ricette (uno o più, oppure non definito), inte
 La cartella `android/` è un progetto **Android Studio** che impacchetta la web app come **Trusted Web Activity** (TWA): l'app si apre a schermo intero usando Chrome (o una WebView se Chrome manca), con splash screen, icona, notifiche e link d'invito che aprono direttamente l'app. Aggiornando il sito si aggiorna anche l'app, senza pubblicare nuove versioni sul Play Store.
 
 1. Apri `android/` in Android Studio (File → Open) e attendi la sincronizzazione di Gradle.
-2. **Package name**: `com.saveriomorelli.foodtrack` (in `app/build.gradle.kts`). Se vuoi cambiarlo fallo ora: dopo la prima pubblicazione non si può più modificare.
+2. **Package name**: `com.saverio.foodtrack` (in `app/build.gradle.kts`). Se vuoi cambiarlo fallo ora: dopo la prima pubblicazione non si può più modificare.
 3. Crea la chiave di caricamento: Build → Generate Signed App Bundle / APK → Android App Bundle → Create new… Salva il file `.jks` fuori dal repository e conservalo con le password.
    Oppure copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e poi usa Build → Build App Bundle(s).
 4. Carica l'`.aab` (app/release/app-release.aab) nella Google Play Console. Come icona dello store usa `android/play-store-icon-512.png`; come privacy policy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`.

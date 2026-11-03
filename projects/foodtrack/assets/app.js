@@ -937,7 +937,7 @@
     return h('div.card.clickable.recipe-card', { role: 'button', tabindex: 0, onclick: () => go('ricetta/' + r.id), onkeydown: e => { if (e.key === 'Enter') go('ricetta/' + r.id); } },
       UI.recipeCover(r),
       listRow({
-        title: r.name, sub: [r.origin.length ? UI.originLabel(r.origin, true) : null, totalTime(r) ? totalTime(r) + ' min' : null, diffLabel(r.difficulty), plural(r.servings, 'serving', 'servings')].filter(Boolean).join(' · '),
+        title: r.name, sub: [r.origin.length ? [UI.originLabel(r.origin, true), ' · '] : null, [totalTime(r) ? totalTime(r) + ' min' : null, diffLabel(r.difficulty), plural(r.servings, 'serving', 'servings')].filter(Boolean).join(' · ')],
         meta: [st.ok === st.total ? chip(t('You have all the ingredients'), 'ok', 'check') : chip(t('{a} of {b} ingredients', { a: st.ok, b: st.total }), 'neutral'),
           st.usesExpired ? chip(t('Uses expired products'), 'danger') : st.usesExpiring ? chip(t('Uses expiring products'), 'warn') : null],
         trail: favBtn(r),
@@ -995,7 +995,7 @@
     body.push(UI.recipeCover(r, 'hero-img'));
     body.push(h('h2.page-title', r.name));
     if (r.description) body.push(h('p.lead.muted', r.description));
-    body.push(h('div.meta-row', ...(r.origin || []).map(c => chip(UI.flag(c) + ' ' + UI.countryName(c), 'neutral')), chip(totalTime(r) + ' min', 'neutral', 'timer'), chip(t('Difficulty: {d}', { d: diffLabel(r.difficulty).toLowerCase() }), 'neutral'), chip(plural(r.servings, 'serving', 'servings'), 'neutral', 'group')));
+    body.push(h('div.meta-row', ...(r.origin || []).map(c => h('span.status.neutral', UI.flag(c), UI.countryName(c))), chip(totalTime(r) + ' min', 'neutral', 'timer'), chip(t('Difficulty: {d}', { d: diffLabel(r.difficulty) }), 'neutral'), chip(plural(r.servings, 'serving', 'servings'), 'neutral', 'group')));
 
     const missing = missingFor([r]);
     const st = recipeStats(r);
@@ -1055,7 +1055,7 @@
             { icon: 'edit', label: t('Edit'), onclick: () => openPlanForm(p) },
             { icon: 'delete', label: t('Remove from plan'), danger: true, onclick: () => act('plan.delete', { id: p.id }) },
           ], r ? r.name : p.title) },
-          r && r.image ? h('span.tile.tile-sm.photo', { style: { backgroundImage: `url("${r.image}")` } }) : r && r.origin.length ? h('span.tile.tile-sm.flag-tile', UI.flag(r.origin[0])) : tile('icon', r ? 'restaurant' : 'edit', 'sm'),
+          r && r.image ? h('span.tile.tile-sm.photo', { style: { backgroundImage: `url("${r.image}")` } }) : r && r.origin.length ? h('span.tile.tile-sm.flag-tile', UI.flag(r.origin[0], 'big')) : tile('icon', r ? 'restaurant' : 'edit', 'sm'),
           h('div.body', h('p.title', r ? r.name : (p.title || t('Recipe not available in your language'))), h('div.sub', slot)), h('div.trail', icon('more')));
         }) : h('div.none', t('No meals planned'))));
     }
