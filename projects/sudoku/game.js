@@ -489,8 +489,10 @@
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
-    if (/^[1-9]$/.test(k)) { input(Number(k)); return; }
-    if (k === 'Backspace' || k === 'Delete' || k === '0') { erase(); return; }
+    // Every key the game uses is consumed, so the browser does not react to it too
+    // (e.g. Firefox "search for text when you start typing" opening the find bar)
+    if (/^[1-9]$/.test(k)) { e.preventDefault(); input(Number(k)); return; }
+    if (k === 'Backspace' || k === 'Delete' || k === '0') { e.preventDefault(); erase(); return; }
     const mv = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 }[k];
     if (mv !== undefined) {
       e.preventDefault();
@@ -499,6 +501,7 @@
       paint(); return;
     }
     const lk = k.toLowerCase();
+    if (['p', 'n', 'i', 'h', 'c'].includes(lk)) e.preventDefault();
     if (lk === 'p' || lk === 'n') { pencil = !pencil; choosing = false; paint(); }
     else if (lk === 'i') ink();
     else if (lk === 'h') showTip();

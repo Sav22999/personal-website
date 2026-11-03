@@ -1,6 +1,17 @@
 /* Sudoku — release notes (newest first). Each note is translated in the five languages. */
 window.SudokuReleases = [
   {
+    version: '2.0.1',
+    date: '2026-11-03',
+    notes: {
+      en: ['Typing numbers on the keyboard no longer opens the browser’s find bar'],
+      it: ['Scrivere i numeri con la tastiera non apre più la ricerca del browser'],
+      es: ['Escribir números con el teclado ya no abre la búsqueda del navegador'],
+      fr: ['Taper des chiffres au clavier n’ouvre plus la recherche du navigateur'],
+      de: ['Das Eintippen von Zahlen öffnet nicht mehr die Suchleiste des Browsers'],
+    },
+  },
+  {
     version: '2.0.0',
     date: '2026-11-03',
     notes: {
