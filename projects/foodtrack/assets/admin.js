@@ -9,20 +9,26 @@
   let config = { googleClientId: '' };
   let counts = {};
 
-  const TABS = [
-    ['overview', 'Overview', 'dashboard'],
-    ['recipes', 'Recipes', 'restaurant'],
-    ['products', 'Products', 'spaces'],
-    ['categories', 'Categories', 'category'],
-    ['users', 'Users', 'person'],
-    ['households', 'Households', 'home'],
+  // [route, label, icon, minimum role] — content moderators (5) only see recipes and products
+  const ALL_TABS = [
+    ['overview', 'Overview', 'dashboard', 9],
+    ['recipes', 'Recipes', 'restaurant', 5],
+    ['products', 'Products', 'spaces', 5],
+    ['categories', 'Categories', 'category', 9],
+    ['users', 'Users', 'person', 9],
+    ['households', 'Households', 'home', 9],
   ];
+  let TABS = ALL_TABS;
+  const canDelete = () => me && me.isAdmin;
   const DIFFICULTY = { facile: 'Easy', media: 'Medium', difficile: 'Hard' };
   const LANG_NAMES = { it: 'Italiano', en: 'English' };
   const CONTENT_BASE = 'it';                  // language of the main content columns
   const CONTENT_LANGS = ['it', 'en'];
 
-  const tabName = () => (location.hash.replace(/^#\/?/, '') || 'overview').split('/')[0];
+  const tabName = () => {
+    const n = (location.hash.replace(/^#\/?/, '') || '').split('/')[0];
+    return TABS.some(x => x[0] === n) ? n : TABS[0][0];
+  };
 
   // ================================================================ components
 
@@ -213,7 +219,7 @@
       h('div.kpis',
         kpi('person', s.users, t('Registered users'), t('+{n} in the last 7 days', { n: s.usersNew7 })),
         kpi('timer', s.usersActive30, t('Active users (30 days)')),
-        kpi('shield', s.admins, t('Administrators'), t('including the master admin')),
+        kpi('shield', s.admins, t('Administrators'), t('including the master admin') + (s.editors ? ' · ' + t('{n} content moderators', { n: s.editors }) : '')),
         kpi('home', s.households, t('Households'), t('{n} shared by several users', { n: s.sharedHouseholds })),
         kpi('spaces', s.items, t('Products in spaces'), t('{n} expired', { n: s.expired })),
         kpi('list', s.lists, t('Shopping lists')),
@@ -248,8 +254,8 @@
           { icon: 'edit', label: t('Edit'), onclick: () => openRecipe(r, d) },
           { icon: 'copy', label: t('Duplicate'), onclick: () => openRecipe(Object.assign(JSON.parse(JSON.stringify(r)), { id: 0, name: r.name + ' (' + t('copy') + ')', published: false }), d) },
           { icon: r.published ? 'eye' : 'check', label: r.published ? t('Unpublish') : t('Publish'), onclick: () => saveRecipe(Object.assign({}, r, { published: !r.published })).then(render) },
-          '-',
-          { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteRecipe(r) },
+          canDelete() ? '-' : null,
+          canDelete() ? { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteRecipe(r) } : null,
         ])] },
       ], rows, { state: recipeState.sort, onrow: r => openRecipe(r, d), empty: t('No recipes') }));
     }
@@ -382,7 +388,7 @@
     const dlg = dialog({
       title: r.id ? t('Edit recipe') : t('New recipe'), drawer: true, persistent: true,
       body: [tabsEl, holder],
-      actions: [r.id ? btn(t('Delete'), { kind: 'danger-text', icon: 'delete', cls: 'left', onclick: () => { dlg.close(); deleteRecipe(r); } }) : null, btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save].filter(Boolean),
+      actions: [r.id && canDelete() ? btn(t('Delete'), { kind: 'danger-text', icon: 'delete', cls: 'left', onclick: () => { dlg.close(); deleteRecipe(r); } }) : null, btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save].filter(Boolean),
     });
   }
 
@@ -408,8 +414,8 @@
         { key: 'act', label: t('Status'), sort: p => p.active ? 1 : 0, render: p => p.active ? chip(t('Active'), 'ok') : chip(t('Hidden'), 'neutral') },
         { key: 'menu', label: '', cls: 'actions', render: p => [iconBtn('edit', t('Edit'), () => openProduct(p, d)), menuBtn([
           { icon: 'edit', label: t('Edit'), onclick: () => openProduct(p, d) },
-          '-',
-          { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteProduct(p) },
+          canDelete() ? '-' : null,
+          canDelete() ? { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteProduct(p) } : null,
         ])] },
       ], rows, { state: prodState.sort, onrow: p => openProduct(p, d), empty: t('No products') }));
     }
@@ -507,12 +513,12 @@
   async function vUsers() {
     const d = await Api.get('admin.users');
     counts.users = d.users.length;
-    const roleChip = u => u.role >= 10 ? chip(t('Master admin'), 'warn', 'shield') : u.role >= 9 ? chip(t('Administrator'), 'ok', 'shield') : chip(t('User'), 'neutral');
+    const roleChip = u => u.role >= 10 ? chip(t('Master admin'), 'warn', 'shield') : u.role >= 9 ? chip(t('Administrator'), 'ok', 'shield') : u.role >= 5 ? chip(t('Content moderator'), 'ok', 'edit') : chip(t('User'), 'neutral');
     const table = h('div');
     function paint() {
       const n = norm(userState.q);
       const rows = d.users.filter(u => (!n || norm(u.name + ' ' + u.email).includes(n))
-        && (!userState.role || (userState.role === 'disabled' ? u.status === 'disabled' : userState.role === '9' ? u.role >= 9 : u.role < 9)));
+        && (!userState.role || (userState.role === 'disabled' ? u.status === 'disabled' : userState.role === '9' ? u.role >= 9 : userState.role === '5' ? u.role === 5 : u.role < 5)));
       table.replaceChildren(dataTable([
         { key: 'name', label: t('User'), sort: u => u.name, render: u => h('div.person', h('span.avatar', initials(u.name)), h('div', h('div.title', u.name + (u.isMe ? ' (' + t('you') + ')' : '')), h('div.sub', u.email))) },
         { key: 'role', label: t('Role'), sort: u => u.role, render: roleChip },
@@ -527,11 +533,11 @@
     paint();
     return h('div',
       pageHead(t('Users'), me.isMaster
-        ? t('You are the master admin: you manage users and administrators and can hand over the master role (there is always exactly one).')
-        : t('As an administrator you manage users. Only the master admin can appoint, edit or remove administrators.'),
+        ? t('You are the master admin: you manage users, content moderators and administrators and can hand over the master role (there is always exactly one).')
+        : t('As an administrator you manage users and content moderators. Only the master admin can appoint, edit or remove administrators.'),
         [btn(t('New user'), { icon: 'add', onclick: createUser })]),
       h('div.toolbar', searchInput(userState.q, t('Search name or email'), v => { userState.q = v; paint(); }),
-        sel([{ value: '', label: t('All roles') }, { value: '1', label: t('Users') }, { value: '9', label: t('Administrators') }, { value: 'disabled', label: t('Disabled') }], userState.role, { onchange: e => { userState.role = e.target.value; paint(); } }),
+        sel([{ value: '', label: t('All roles') }, { value: '1', label: t('Users') }, { value: '5', label: t('Content moderators') }, { value: '9', label: t('Administrators') }, { value: 'disabled', label: t('Disabled') }], userState.role, { onchange: e => { userState.role = e.target.value; paint(); } }),
         h('span.meta', t('{n} users', { n: d.users.length }))),
       table);
   }
@@ -554,6 +560,13 @@
     return menuBtn(items);
   }
 
+  /** Roles the signed-in admin can assign: users and content moderators; administrators only by the master admin. */
+  function roleOptions() {
+    const o = [{ value: 1, label: t('User') }, { value: 5, label: t('Content moderator') }];
+    if (me.isMaster) o.push({ value: 9, label: t('Administrator') });
+    return o;
+  }
+
   function showPassword(title, pw, who) {
     const d = dialog({
       title, size: 'sm',
@@ -567,14 +580,14 @@
     const name = inp({ value: u.name, maxlength: 80 });
     const email = inp({ type: 'email', value: u.email, maxlength: 190 });
     const status = sel([{ value: 'active', label: t('Active') }, { value: 'disabled', label: t('Disabled (cannot sign in)') }], u.status);
-    const role = sel([{ value: 1, label: t('User') }, { value: 9, label: t('Administrator') }], u.role);
+    const role = sel(roleOptions(), u.role);
     const save = btn(t('Save'), { icon: 'save', onclick: async () => {
       await busy(save, () => Api.post('admin.user.update', { id: u.id, name: name.value, email: email.value, status: status.value, role: Number(role.value) }));
       dlg.close(); toast(t('User updated')); render();
     } });
     const dlg = dialog({
       title: t('Edit user'),
-      body: [f(t('Name'), name), f(t('Email'), email), h('div.f-row', f(t('Status'), status), me.isMaster ? f(t('Role'), role, t('Administrators manage recipes, catalogue and users.')) : null)],
+      body: [f(t('Name'), name), f(t('Email'), email), h('div.f-row', f(t('Status'), status), u.role < 9 || me.isMaster ? f(t('Role'), role, t('Content moderators add and edit recipes and products; administrators also manage categories and users.')) : null)],
       actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save],
     });
   }
@@ -582,14 +595,14 @@
   function createUser() {
     const name = inp({ maxlength: 80 });
     const email = inp({ type: 'email', maxlength: 190 });
-    const role = sel([{ value: 1, label: t('User') }, { value: 9, label: t('Administrator') }], 1);
+    const role = sel(roleOptions(), 1);
     const save = btn(t('Create'), { icon: 'add', onclick: async () => {
       const d = await busy(save, () => Api.post('admin.user.create', { name: name.value, email: email.value, role: Number(role.value) }));
       dlg.close(); showPassword(t('Account created'), d.password, name.value); render();
     } });
     const dlg = dialog({
       title: t('New user'),
-      body: [h('p.text', t('Users usually sign up by themselves from the app. Here you can create an account with a temporary password.')), f(t('Name'), name), f(t('Email'), email), me.isMaster ? f(t('Role'), role) : null],
+      body: [h('p.text', t('Users usually sign up by themselves from the app. Here you can create an account with a temporary password.')), f(t('Name'), name), f(t('Email'), email), f(t('Role'), role)],
       actions: [btn(t('Cancel'), { kind: 'text', onclick: () => dlg.close() }), save],
     });
   }
@@ -667,7 +680,8 @@
     } catch (e) { root.replaceChildren(h('div.adm-login', h('div.err-box', icon('error'), h('span', e.message)))); return; }
     if (!me) return loginForm();
     if (me.mustChangePassword) return loginForm(t('First change your temporary password from the app.'));
-    if (!me.isAdmin) {
+    TABS = ALL_TABS.filter(x => me.role >= x[3]);
+    if (!me.isEditor) {
       root.replaceChildren(h('div.adm-login', h('div.card-l', h('div.logo', h('img', { src: 'assets/icons/favicon.svg', alt: '' }), t('Access denied')),
         h('p.lead', t('The portal is reserved to FoodTrack administrators.')), h('a.btn.btn-filled', { href: './' }, t('Back to the app')))));
       return;

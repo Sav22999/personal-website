@@ -6,7 +6,8 @@
  * Public:      auth.me, auth.register, auth.login, auth.logout
  * User:        auth.profile, auth.password, auth.delete, bootstrap, state, recipes,
  *              household.*, space.*, item.*, list.*, listitem.*, favorite.toggle, plan.*, barcode.lookup
- * Admin (9):   admin.overview, admin.users, admin.user.*, admin.recipes, admin.recipe.*, admin.product.*,
+ * Content moderator (5): admin.catalog, admin.recipes, admin.recipe.save|image, admin.product.save (create and edit only)
+ * Admin (9):   + admin.overview, admin.users, admin.user.*, admin.recipe.delete, admin.product.delete,
  *              admin.category.*, admin.households
  * Master (10): also manages administrators (role changes) and admin.user.transfer_master
  */
@@ -937,6 +938,7 @@ switch ($route) {
             'usersActive30' => $c('SELECT COUNT(*) FROM ' . t('users') . ' WHERE last_seen_at > (UTC_TIMESTAMP() - INTERVAL 30 DAY) OR last_login_at > (UTC_TIMESTAMP() - INTERVAL 30 DAY)'),
             'usersNew7' => $c('SELECT COUNT(*) FROM ' . t('users') . ' WHERE created_at > (UTC_TIMESTAMP() - INTERVAL 7 DAY)'),
             'admins' => $c('SELECT COUNT(*) FROM ' . t('users') . ' WHERE role >= ' . ROLE_ADMIN),
+            'editors' => $c('SELECT COUNT(*) FROM ' . t('users') . ' WHERE role = ' . ROLE_EDITOR),
             'households' => $c('SELECT COUNT(*) FROM ' . t('households')),
             'sharedHouseholds' => $c('SELECT COUNT(*) FROM (SELECT household_id FROM ' . t('household_members') . ' GROUP BY household_id HAVING COUNT(*) > 1) x'),
             'items' => $c('SELECT COUNT(*) FROM ' . t('items')),
@@ -980,8 +982,9 @@ switch ($route) {
         if ($st->fetchColumn()) fail('This email is already used by another account.', 409, 'email_taken');
         $status = ($b['status'] ?? 'active') === 'disabled' ? 'disabled' : 'active';
         $role = (int)($b['role'] ?? $target['role']);
-        if (!in_array($role, [ROLE_USER, ROLE_ADMIN], true)) $role = (int)$target['role'];
-        if ($role !== (int)$target['role'] && $me['role'] < ROLE_MASTER) fail('Only the master admin can appoint or remove administrators.', 403, 'forbidden');
+        if (!in_array($role, [ROLE_USER, ROLE_EDITOR, ROLE_ADMIN], true)) $role = (int)$target['role'];
+        // Administrators can appoint content moderators; only the master admin appoints or removes administrators
+        if ($role !== (int)$target['role'] && ($role >= ROLE_ADMIN || (int)$target['role'] >= ROLE_ADMIN) && $me['role'] < ROLE_MASTER) fail('Only the master admin can appoint or remove administrators.', 403, 'forbidden');
         db()->prepare('UPDATE ' . t('users') . ' SET name = ?, email = ?, status = ?, role = ? WHERE id = ?')->execute([$name, $email, $status, $role, $target['id']]);
         if ($status === 'disabled') db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$target['id']]);
         send_json(['ok' => true]);
@@ -1011,7 +1014,8 @@ switch ($route) {
         $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ?');
         $st->execute([$email]);
         if ($st->fetchColumn()) fail('An account with this email already exists.', 409, 'email_taken');
-        $role = (int)($b['role'] ?? ROLE_USER) === ROLE_ADMIN ? ROLE_ADMIN : ROLE_USER;
+        $role = (int)($b['role'] ?? ROLE_USER);
+        if (!in_array($role, [ROLE_USER, ROLE_EDITOR, ROLE_ADMIN], true)) $role = ROLE_USER;
         if ($role === ROLE_ADMIN && $me['role'] < ROLE_MASTER) fail('Only the master admin can create administrators.', 403, 'forbidden');
         $pw = temp_password();
         db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, role, status, must_change_password, created_at) VALUES (?,?,?,?, 'active', 1, ?)")
@@ -1052,14 +1056,14 @@ switch ($route) {
 
     case 'admin.catalog':
         only('GET');
-        require_user(ROLE_ADMIN);
+        require_user(ROLE_EDITOR);
         $usage = [];
         foreach (db()->query('SELECT product_id, COUNT(*) AS n FROM ' . t('recipe_ingredients') . ' WHERE product_id IS NOT NULL GROUP BY product_id') as $r) $usage[(int)$r['product_id']] = (int)$r['n'];
         $icons = sprite_icons('products');
         send_json(['ok' => true, 'usage' => $usage, 'icons' => $icons, 'units' => UNITS, 'langs' => LANGS] + load_catalog(true));
 
     case 'admin.product.save':
-        $me = writer(ROLE_ADMIN);
+        $me = writer(ROLE_EDITOR);
         $b = body();
         $name = s($b, 'name', 80, true, 'Name');
         $icon = icon_name($b['icon'] ?? '', 'products', 'generic');
@@ -1114,20 +1118,20 @@ switch ($route) {
 
     case 'admin.recipes':
         only('GET');
-        require_user(ROLE_ADMIN);
+        require_user(ROLE_EDITOR);
         $favs = [];
         foreach (db()->query('SELECT recipe_id, COUNT(*) AS n FROM ' . t('favorites') . ' GROUP BY recipe_id') as $r) $favs[(int)$r['recipe_id']] = (int)$r['n'];
         send_json(['ok' => true, 'recipes' => load_recipes(false, true), 'favorites' => $favs, 'units' => UNITS, 'langs' => LANGS] + load_catalog(true));
 
     case 'admin.recipe.image':
         only('POST');
-        $me = require_user(ROLE_ADMIN);
+        $me = require_user(ROLE_EDITOR);
         require_csrf($me);
         if (empty($_FILES['image'])) fail('No image received.', 422, 'upload');
         send_json(['ok' => true, 'image' => save_recipe_image($_FILES['image'])]);
 
     case 'admin.recipe.save':
-        $me = writer(ROLE_ADMIN);
+        $me = writer(ROLE_EDITOR);
         $b = body();
         $name = s($b, 'name', 120, true, 'Name');
         $desc = s($b, 'description', 500, false, 'Description');

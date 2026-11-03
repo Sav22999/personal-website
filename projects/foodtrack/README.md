@@ -86,6 +86,7 @@ La scansione usa il `BarcodeDetector` nativo quando c'è (Chrome su Android) e a
 | Ruolo | `role` | Cosa può fare |
 |---|---|---|
 | Utente | 1 | Usa l'app: le sue case, spazi, prodotti, liste, ricette preferite, piano |
+| Moderatore contenuti | 5 | + portale admin limitato: **crea e modifica** ricette (con immagini e traduzioni) e prodotti del catalogo/ingredienti. Non può eliminare, né vedere panoramica, categorie, utenti e case. Lo nominano amministratori e master admin |
 | Amministratore | 9 | + portale admin: ricette (con immagini), catalogo prodotti, categorie e informazioni sulla scadenza, utenti (modifica, disabilita, reimposta password, elimina) |
 | Master admin | 10 | + nomina e rimuove gli amministratori, cede il proprio ruolo. **Ce n'è sempre uno solo** |
 

@@ -1204,7 +1204,7 @@
     const u = S.user;
 
     const body = [
-      h('div.card', listRow({ big: true, lead: h('span.avatar.lg', initials(u.name)), title: u.name, sub: u.email, meta: [u.isAdmin ? chip(u.roleLabel, 'ok', 'shield') : null, u.googleLinked ? chip('Google', 'neutral', 'link') : null] })),
+      h('div.card', listRow({ big: true, lead: h('span.avatar.lg', initials(u.name)), title: u.name, sub: u.email, meta: [u.isEditor ? chip(u.roleLabel, 'ok', 'shield') : null, u.googleLinked ? chip('Google', 'neutral', 'link') : null] })),
 
       sectionTitle(t('Shared household')),
       h('div.group',
@@ -1257,7 +1257,7 @@
           if (!await confirm(t('Unlink Google?'), t('You will only be able to sign in with email and password.'), t('Unlink'), true)) return;
           try { const d = await Api.post('auth.google.unlink', {}); S.user = d.user; render(true); toast(t('Google account unlinked')); } catch (e) { toast(e.message, 'error'); }
         } : null) : openLinkGoogle, { trail: u.googleLinked && !u.hasPassword ? h('div.trail', { style: { paddingRight: '12px' } }, chip(t('Linked'), 'ok', 'check')) : undefined }) : null,
-        u.isAdmin ? groupRow('shield', t('Admin portal'), t('Recipes, products, categories and users'), null, { href: 'admin.html', external: true }) : null,
+        u.isEditor ? groupRow('shield', t('Admin portal'), u.isAdmin ? t('Recipes, products, categories and users') : t('Recipes and products'), null, { href: 'admin.html', external: true }) : null,
         groupRow('info', t('Privacy and info'), 'FoodTrack ' + VERSION, null, { href: 'privacy.html', external: true }),
       ),
       h('div.spacer'),

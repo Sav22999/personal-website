@@ -9,11 +9,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/i18n.php';
 
 const ROLE_USER   = 1;   // normal user: uses the app
-const ROLE_ADMIN  = 9;   // administrator: manages recipes, catalog and users
+const ROLE_EDITOR = 5;   // content moderator: admin portal limited to recipes and catalog products (no delete)
+const ROLE_ADMIN  = 9;   // administrator: manages recipes, catalog, categories and users
 const ROLE_MASTER = 10;  // master admin (exactly one): also manages administrators
 
 const ROLE_LABELS = [
     ROLE_USER   => 'User',
+    ROLE_EDITOR => 'Content moderator',
     ROLE_ADMIN  => 'Administrator',
     ROLE_MASTER => 'Master admin',
 ];
@@ -282,6 +284,7 @@ function public_user(array $u): array
         'email'     => $u['email'],
         'role'      => $role,
         'roleLabel' => tr(ROLE_LABELS[$role] ?? ROLE_LABELS[ROLE_USER]),
+        'isEditor'  => $role >= ROLE_EDITOR,
         'isAdmin'   => $role >= ROLE_ADMIN,
         'isMaster'  => $role >= ROLE_MASTER,
         'status'    => $u['status'],

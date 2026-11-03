@@ -127,6 +127,7 @@ function translations_it(): array
         '{name}\'s home' => 'Casa di {name}',
         'User' => 'Utente',
         'Administrator' => 'Amministratore',
+        'Content moderator' => 'Moderatore contenuti',
         'Master admin' => 'Master admin',
         'Fridge' => 'Frigorifero',
         'Freezer' => 'Freezer',
