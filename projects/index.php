@@ -197,7 +197,7 @@ $canonical = '/projects/';
                 <img src="/images/projects/sudoku.png" alt="">
             </div>
             <h3>Sudoku</h3>
-            <p>Classic number puzzle game. Play against the computer with three difficulty levels: Easy, Medium, Hard. No sign-up needed.</p>
+            <p>The classic number puzzle with four difficulty levels, pencil notes you can turn into ink, tips that explain the next logical move and a single-cell check. No sign-up needed.</p>
             <ul class="project-tags">
                 <li>Web game</li>
                 <li>Multilingual</li>

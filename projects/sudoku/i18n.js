@@ -1,174 +1,214 @@
-const translations = {
+/* Sudoku — translations (en, it, es, fr, de). English is the fallback. */
+(function () {
+  'use strict';
+
+  const T = {
     en: {
-        lobby_subtitle: 'Classic number puzzle. Fill the grid with logic.',
-        howto_title: 'How to play', rules_title: 'Game rules',
-        appearance: 'Customise', got_it: 'Got it!',
-        howto1_title: 'Fill the grid', howto1_text: 'Each row, column, and 3x3 box must contain all numbers from 1 to 9.',
-        howto2_title: 'No repeats', howto2_text: 'A number cannot appear twice in the same row, column, or 3x3 box.',
-        howto3_title: 'Use logic', howto3_text: 'Use the given numbers to deduce the missing ones. Try different difficulties!',
-        step_label_name: 'Your name', step_label_game: 'Game', step_label_difficulty: 'Difficulty',
-        step1_title: "What's your name?", step1_hint: 'Your name will be shown during the game.', name_placeholder: 'e.g. Alex',
-        continue: 'Continue', greeting: 'Hi, {name}!', change_name: 'Change name', step2_hint: 'Choose your difficulty level.',
-        ai_title: 'Play Sudoku', ai_desc: 'Solve the puzzle at your own pace. Choose from three difficulty levels.',
-        level_label: 'Difficulty', level_easy: 'Easy', level_medium: 'Medium', level_hard: 'Hard',
-        start_game: 'Start game', computer: 'Computer',
-        credit_by: 'A project by', credit_ai: 'Built with AI', release_notes: 'Release notes',
-        language_title: 'Language', close: 'Close',
-        lang_en: 'English', lang_it: 'Italian', lang_es: 'Spanish', lang_fr: 'French', lang_de: 'German',
-        leave: 'Leave', cancel: 'Cancel',
-        check: 'Check', hint: 'Hint', undo: 'Undo', new_game: 'New game',
-        back_home: 'Back to start',
-        you_win: 'You solved it!', you_lose: 'Game over',
-        new_game: 'New game',
-        err_generic: 'Something went wrong. Try again.',
-        rules_text: 'Sudoku is played on a 9x9 grid divided into nine 3x3 subgrids. The objective is to fill the grid so that each row, each column, and each of the nine 3x3 subgrids contains all of the digits from 1 to 9. No number can appear twice in the same row, column, or subgrid.'
+      subtitle: 'The classic number puzzle. Clean, private, no sign-up.',
+      play: 'Play', continue_game: 'Continue game', new_game: 'New game', level: 'Difficulty',
+      easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
+      best: 'Best', played: 'Solved', none_yet: '—',
+      howto_title: 'How to play', rules_title: 'Game rules', got_it: 'Got it!', close: 'Close', cancel: 'Cancel',
+      howto1_t: 'Fill the grid', howto1: 'Each row, column and 3×3 box must contain the numbers 1 to 9 exactly once.',
+      howto2_t: 'Pencil and pen', howto2: 'Use the pencil to jot down candidates, then turn a note into ink when you are sure.',
+      howto3_t: 'Ask for help', howto3: 'Check a single cell or ask for a tip: it explains the next logical move.',
+      rules: [
+        ['The grid', 'The board is a 9×9 grid divided into nine 3×3 boxes. Some cells are already filled (the givens): they cannot be changed.'],
+        ['The goal', 'Fill every empty cell with a number from 1 to 9 so that each row, each column and each box contains every number exactly once.'],
+        ['Pencil marks', 'Turn on the pencil to write small candidate numbers in a cell. Tap “Ink” to turn a note into the final number: if the cell has several notes, pick which one.'],
+        ['Tips', 'A tip shows a cell you can solve with logic (the only number that fits, or the only place for a number) and explains why. If there is a mistake on the board, the tip points it out first.'],
+        ['Check', '“Check cell” tells you whether the number in the selected cell is right. The puzzle always has exactly one solution.'],
+        ['Keyboard', 'Arrows to move, 1–9 to write, Backspace to erase, P for pencil, I for ink, H for a tip, C to check, Ctrl+Z to undo.'],
+      ],
+      undo: 'Undo', erase: 'Erase', pencil: 'Pencil', pen: 'Pen', ink: 'Ink', check: 'Check cell', tip: 'Tip', notes_auto: 'Auto notes',
+      check_board: 'Check the whole board', restart: 'Restart this puzzle', settings: 'Settings', leave: 'Back to menu', pause: 'Pause', resume: 'Resume',
+      paused: 'Paused', paused_text: 'The board is hidden while the game is paused.',
+      set_conflicts: 'Highlight conflicts', set_same: 'Highlight same numbers', set_autoclear: 'Remove notes automatically', set_timer: 'Show timer', theme: 'Theme', theme_auto: 'Automatic', theme_light: 'Light', theme_dark: 'Dark', language: 'Language',
+      mistakes: 'Mistakes', hints: 'Tips', time: 'Time',
+      select_cell: 'Select an empty cell first.', given_cell: 'This number is part of the puzzle.', empty_cell: 'This cell is empty.',
+      correct: 'Correct!', wrong: 'Not right: try again.', no_notes: 'This cell has no pencil notes.', choose_note: 'Choose which note to ink',
+      board_ok: 'No mistakes so far, keep going!', board_errors: '{n} wrong cells highlighted.',
+      tip_error_t: 'There is a mistake', tip_error: 'The number in the highlighted cell is not right. Erase it and try again.',
+      tip_naked_t: 'Only one number fits', tip_naked: 'In the highlighted cell only {d} can go: every other number is already in its row, column or box.',
+      tip_hidden_t: '{d} has only one place', tip_hidden: 'In this {unit}, the number {d} can only go in the highlighted cell.',
+      tip_reveal_t: 'A little help', tip_reveal: 'No simple move was found: the highlighted cell is {d}.',
+      unit_row: 'row', unit_col: 'column', unit_box: 'box',
+      fill_it: 'Fill it in', show_me: 'Show me',
+      win_t: 'Solved!', win: 'You solved a {level} puzzle in {time}.', new_record: 'New personal best!',
+      stats_line: '{m} mistakes · {h} tips', play_again: 'New puzzle', back_home: 'Back to menu',
+      confirm_new: 'Start a new puzzle?', confirm_new_text: 'The current game will be lost.', confirm_restart: 'Restart this puzzle?', confirm_restart_text: 'All your numbers and notes will be erased.',
+      start: 'Start', restart_btn: 'Restart',
+      credit_by: 'A project by', credit_ai: 'Built with AI', release_notes: 'Release notes', version: 'Version',
+      generating: 'Creating a new puzzle…', saved: 'Game saved automatically',
     },
     it: {
-        lobby_subtitle: 'Il classico gioco di numeri. Riempi la griglia con la logica.',
-        howto_title: 'Come si gioca', rules_title: 'Regole di gioco',
-        appearance: 'Personalizza', got_it: 'Ho capito!',
-        howto1_title: 'Riempi la griglia', howto1_text: 'Ogni riga, colonna e quadrato 3x3 deve contenere tutti i numeri da 1 a 9.',
-        howto2_title: 'Nessun doppio', howto2_text: 'Un numero non può apparire due volte nella stessa riga, colonna o quadrato 3x3.',
-        howto3_title: 'Usa la logica', howto3_text: 'Usa i numeri dati per dedurre quelli mancanti. Prova le diverse difficoltà!',
-        step_label_name: 'Il tuo nome', step_label_game: 'Partita', step_label_difficulty: 'Difficoltà',
-        step1_title: 'Come ti chiami?', step1_hint: 'Il tuo nome verrà mostrato durante il gioco.', name_placeholder: 'es. Alex',
-        continue: 'Continua', greeting: 'Ciao, {name}!', change_name: 'Cambia nome', step2_hint: 'Scegli il livello di difficoltà.',
-        ai_title: 'Gioca a Sudoku', ai_desc: 'Risolvi il puzzle con calma. Scegli tra tre livelli di difficoltà.',
-        level_label: 'Difficoltà', level_easy: 'Facile', level_medium: 'Media', level_hard: 'Difficile',
-        start_game: 'Inizia partita', computer: 'Computer',
-        credit_by: 'Un progetto di', credit_ai: 'Realizzato con AI', release_notes: 'Note di rilascio',
-        language_title: 'Lingua', close: 'Chiudi',
-        lang_en: 'Inglese', lang_it: 'Italiano', lang_es: 'Spagnolo', lang_fr: 'Francese', lang_de: 'Tedesco',
-        leave: 'Esci', cancel: 'Annulla',
-        check: 'Controlla', hint: 'Suggerimento', undo: 'Annulla', new_game: 'Nuova partita',
-        back_home: 'Torna all\'inizio',
-        you_win: 'Complimenti! L\'hai risolto!', you_lose: 'Partita terminata',
-        new_game: 'Nuova partita',
-        err_generic: 'Qualcosa è andato storto. Riprova.',
-        rules_text: 'Il Sudoku si gioca su una griglia 9x9 divisa in nove sottomatrici 3x3. L\'obbiettivo è riempire la griglia in modo che ogni riga, ogni colonna e ogni sottomatrice 3x3 contenga tutti i numeri da 1 a 9. Nessun numero può apparire due volte nella stessa riga, colonna o sottomatrice.'
+      subtitle: 'Il classico rompicapo di numeri. Pulito, privato, senza registrazione.',
+      play: 'Gioca', continue_game: 'Continua la partita', new_game: 'Nuova partita', level: 'Difficoltà',
+      easy: 'Facile', medium: 'Media', hard: 'Difficile', expert: 'Esperto',
+      best: 'Record', played: 'Risolti', none_yet: '—',
+      howto_title: 'Come si gioca', rules_title: 'Regole di gioco', got_it: 'Ho capito!', close: 'Chiudi', cancel: 'Annulla',
+      howto1_t: 'Riempi la griglia', howto1: 'Ogni riga, colonna e riquadro 3×3 deve contenere i numeri da 1 a 9, una sola volta.',
+      howto2_t: 'Matita e penna', howto2: 'Usa la matita per annotare i candidati, poi passa la nota a penna quando sei sicuro.',
+      howto3_t: 'Chiedi aiuto', howto3: 'Controlla una singola cella o chiedi un suggerimento: ti spiega la prossima mossa logica.',
+      rules: [
+        ['La griglia', 'Il tabellone è una griglia 9×9 divisa in nove riquadri 3×3. Alcune celle sono già compilate (i numeri dati): non si possono modificare.'],
+        ['L’obiettivo', 'Riempi ogni cella vuota con un numero da 1 a 9 in modo che ogni riga, ogni colonna e ogni riquadro contenga tutti i numeri una sola volta.'],
+        ['Note a matita', 'Attiva la matita per scrivere piccoli numeri candidati in una cella. Tocca «A penna» per trasformare una nota nel numero definitivo: se la cella ha più note, scegli quale.'],
+        ['Suggerimenti', 'Un suggerimento mostra una cella che puoi risolvere con la logica (l’unico numero possibile, o l’unico posto per un numero) e spiega perché. Se sul tabellone c’è un errore, il suggerimento lo segnala per primo.'],
+        ['Controllo', '«Controlla cella» ti dice se il numero nella cella selezionata è giusto. Il puzzle ha sempre una sola soluzione.'],
+        ['Tastiera', 'Frecce per spostarti, 1–9 per scrivere, Backspace per cancellare, P per la matita, I per passare a penna, H per un suggerimento, C per controllare, Ctrl+Z per annullare.'],
+      ],
+      undo: 'Annulla', erase: 'Cancella', pencil: 'Matita', pen: 'Penna', ink: 'A penna', check: 'Controlla cella', tip: 'Suggerimento', notes_auto: 'Note automatiche',
+      check_board: 'Controlla tutto il tabellone', restart: 'Ricomincia questo puzzle', settings: 'Impostazioni', leave: 'Torna al menu', pause: 'Pausa', resume: 'Riprendi',
+      paused: 'In pausa', paused_text: 'Il tabellone è nascosto mentre la partita è in pausa.',
+      set_conflicts: 'Evidenzia i conflitti', set_same: 'Evidenzia i numeri uguali', set_autoclear: 'Rimuovi le note automaticamente', set_timer: 'Mostra il tempo', theme: 'Tema', theme_auto: 'Automatico', theme_light: 'Chiaro', theme_dark: 'Scuro', language: 'Lingua',
+      mistakes: 'Errori', hints: 'Suggerimenti', time: 'Tempo',
+      select_cell: 'Seleziona prima una cella vuota.', given_cell: 'Questo numero fa parte del puzzle.', empty_cell: 'Questa cella è vuota.',
+      correct: 'Giusto!', wrong: 'Non è giusto: riprova.', no_notes: 'Questa cella non ha note a matita.', choose_note: 'Scegli quale nota passare a penna',
+      board_ok: 'Nessun errore finora, continua così!', board_errors: '{n} celle sbagliate evidenziate.',
+      tip_error_t: 'C’è un errore', tip_error: 'Il numero nella cella evidenziata non è giusto. Cancellalo e riprova.',
+      tip_naked_t: 'Ci sta un solo numero', tip_naked: 'Nella cella evidenziata può andare solo il numero {d}: tutti gli altri numeri sono già nella sua riga, colonna o riquadro.',
+      tip_hidden_t: 'Il numero {d} ha un solo posto', tip_hidden: 'In questa {unit}, il numero {d} può andare solo nella cella evidenziata.',
+      tip_reveal_t: 'Un piccolo aiuto', tip_reveal: 'Non c’è una mossa semplice: la cella evidenziata è {d}.',
+      unit_row: 'riga', unit_col: 'colonna', unit_box: 'riquadro',
+      fill_it: 'Inseriscilo', show_me: 'Mostrami',
+      win_t: 'Risolto!', win: 'Hai risolto un puzzle {level} in {time}.', new_record: 'Nuovo record personale!',
+      stats_line: '{m} errori · {h} suggerimenti', play_again: 'Nuovo puzzle', back_home: 'Torna al menu',
+      confirm_new: 'Iniziare un nuovo puzzle?', confirm_new_text: 'La partita in corso andrà persa.', confirm_restart: 'Ricominciare questo puzzle?', confirm_restart_text: 'Tutti i tuoi numeri e le note verranno cancellati.',
+      start: 'Inizia', restart_btn: 'Ricomincia',
+      credit_by: 'Un progetto di', credit_ai: 'Realizzato con AI', release_notes: 'Note di rilascio', version: 'Versione',
+      generating: 'Creo un nuovo puzzle…', saved: 'Partita salvata automaticamente',
     },
     es: {
-        lobby_subtitle: 'El clásico juego de números. Llena la cuadrícula con lógica.',
-        howto_title: 'Cómo jugar', rules_title: 'Reglas del juego',
-        appearance: 'Personalizar', got_it: '¡Entendido!',
-        howto1_title: 'Llena la cuadrícula', howto1_text: 'Cada fila, columna y recuadro de 3x3 debe contener todos los números del 1 al 9.',
-        howto2_title: 'Sin repeticiones', howto2_text: 'Un número no puede aparecer dos veces en la misma fila, columna o recuadro de 3x3.',
-        howto3_title: 'Usa la lógica', howto3_text: 'Usa los números dados para deducir los que faltan. ¡Prueba diferentes niveles de dificultad!',
-        step_label_name: 'Tu nombre', step_label_game: 'Juego', step_label_difficulty: 'Dificultad',
-        step1_title: '¿Cómo te llamas?', step1_hint: 'Tu nombre se mostrará durante el juego.', name_placeholder: 'ej. Alex',
-        continue: 'Continuar', greeting: '¡Hola, {name}!', change_name: 'Cambiar nombre', step2_hint: 'Elige tu nivel de dificultad.',
-        ai_title: 'Juega al Sudoku', ai_desc: 'Resuelve el rompecabezas a tu propio ritmo. Elige entre tres niveles de dificultad.',
-        level_label: 'Dificultad', level_easy: 'Fácil', level_medium: 'Media', level_hard: 'Difícil',
-        start_game: 'Empezar juego', computer: 'Computadora',
-        credit_by: 'Un proyecto de', credit_ai: 'Creado con IA', release_notes: 'Notas de la versión',
-        language_title: 'Idioma', close: 'Cerrar',
-        lang_en: 'Inglés', lang_it: 'Italiano', lang_es: 'Español', lang_fr: 'Francés', lang_de: 'Alemán',
-        leave: 'Salir', cancel: 'Cancelar',
-        check: 'Verificar', hint: 'Pista', undo: 'Deshacer', new_game: 'Nuevo juego',
-        back_home: 'Volver al inicio',
-        you_win: '¡Lo resolviste!', you_lose: 'Juego terminado',
-        new_game: 'Nuevo juego',
-        err_generic: 'Algo salió mal. Inténtalo de nuevo.',
-        rules_text: 'El Sudoku se juega en una cuadrícula de 9x9 dividida en nueve subcuadrículas de 3x3. El objetivo es llenar la cuadrícula para que cada fila, columna y subcuadrícula de 3x3 contenga todos los dígitos del 1 al 9. Ningún número puede aparecer dos veces en la misma fila, columna o subcuadrícula.'
+      subtitle: 'El clásico rompecabezas de números. Limpio, privado y sin registro.',
+      play: 'Jugar', continue_game: 'Continuar partida', new_game: 'Nueva partida', level: 'Dificultad',
+      easy: 'Fácil', medium: 'Media', hard: 'Difícil', expert: 'Experto',
+      best: 'Récord', played: 'Resueltos', none_yet: '—',
+      howto_title: 'Cómo se juega', rules_title: 'Reglas del juego', got_it: '¡Entendido!', close: 'Cerrar', cancel: 'Cancelar',
+      howto1_t: 'Rellena la cuadrícula', howto1: 'Cada fila, columna y caja de 3×3 debe contener los números del 1 al 9 una sola vez.',
+      howto2_t: 'Lápiz y bolígrafo', howto2: 'Usa el lápiz para anotar candidatos y pásalo a tinta cuando estés seguro.',
+      howto3_t: 'Pide ayuda', howto3: 'Comprueba una celda o pide una pista: te explica el siguiente paso lógico.',
+      rules: [
+        ['La cuadrícula', 'El tablero es una cuadrícula de 9×9 dividida en nueve cajas de 3×3. Algunas celdas ya están rellenas y no se pueden cambiar.'],
+        ['El objetivo', 'Rellena cada celda vacía con un número del 1 al 9 de modo que cada fila, columna y caja contenga todos los números una sola vez.'],
+        ['Notas a lápiz', 'Activa el lápiz para escribir candidatos pequeños. Pulsa «A tinta» para convertir una nota en el número definitivo; si hay varias notas, elige cuál.'],
+        ['Pistas', 'Una pista muestra una celda que puedes resolver con lógica y explica por qué. Si hay un error en el tablero, la pista lo señala primero.'],
+        ['Comprobar', '«Comprobar celda» te dice si el número de la celda seleccionada es correcto. El puzle siempre tiene una sola solución.'],
+        ['Teclado', 'Flechas para moverte, 1–9 para escribir, Retroceso para borrar, P lápiz, I tinta, H pista, C comprobar, Ctrl+Z deshacer.'],
+      ],
+      undo: 'Deshacer', erase: 'Borrar', pencil: 'Lápiz', pen: 'Tinta', ink: 'A tinta', check: 'Comprobar celda', tip: 'Pista', notes_auto: 'Notas automáticas',
+      check_board: 'Comprobar todo el tablero', restart: 'Reiniciar este puzle', settings: 'Ajustes', leave: 'Volver al menú', pause: 'Pausa', resume: 'Continuar',
+      paused: 'En pausa', paused_text: 'El tablero está oculto mientras la partida está en pausa.',
+      set_conflicts: 'Resaltar conflictos', set_same: 'Resaltar números iguales', set_autoclear: 'Borrar notas automáticamente', set_timer: 'Mostrar el tiempo', theme: 'Tema', theme_auto: 'Automático', theme_light: 'Claro', theme_dark: 'Oscuro', language: 'Idioma',
+      mistakes: 'Errores', hints: 'Pistas', time: 'Tiempo',
+      select_cell: 'Selecciona primero una celda vacía.', given_cell: 'Este número forma parte del puzle.', empty_cell: 'Esta celda está vacía.',
+      correct: '¡Correcto!', wrong: 'No es correcto: inténtalo de nuevo.', no_notes: 'Esta celda no tiene notas.', choose_note: 'Elige qué nota pasar a tinta',
+      board_ok: '¡Ningún error por ahora, sigue así!', board_errors: '{n} celdas incorrectas resaltadas.',
+      tip_error_t: 'Hay un error', tip_error: 'El número de la celda resaltada no es correcto. Bórralo e inténtalo de nuevo.',
+      tip_naked_t: 'Solo cabe un número', tip_naked: 'En la celda resaltada solo puede ir el {d}: los demás ya están en su fila, columna o caja.',
+      tip_hidden_t: 'El {d} tiene un solo sitio', tip_hidden: 'En esta {unit}, el {d} solo puede ir en la celda resaltada.',
+      tip_reveal_t: 'Una pequeña ayuda', tip_reveal: 'No hay un paso sencillo: la celda resaltada es {d}.',
+      unit_row: 'fila', unit_col: 'columna', unit_box: 'caja',
+      fill_it: 'Rellenar', show_me: 'Muéstrame',
+      win_t: '¡Resuelto!', win: 'Has resuelto un puzle {level} en {time}.', new_record: '¡Nuevo récord personal!',
+      stats_line: '{m} errores · {h} pistas', play_again: 'Nuevo puzle', back_home: 'Volver al menú',
+      confirm_new: '¿Empezar un nuevo puzle?', confirm_new_text: 'Se perderá la partida actual.', confirm_restart: '¿Reiniciar este puzle?', confirm_restart_text: 'Se borrarán todos tus números y notas.',
+      start: 'Empezar', restart_btn: 'Reiniciar',
+      credit_by: 'Un proyecto de', credit_ai: 'Creado con IA', release_notes: 'Notas de la versión', version: 'Versión',
+      generating: 'Creando un nuevo puzle…', saved: 'Partida guardada automáticamente',
     },
     fr: {
-        lobby_subtitle: 'Le jeu de nombres classique. Remplissez la grille avec de la logique.',
-        howto_title: 'Comment jouer', rules_title: 'Règles du jeu',
-        appearance: 'Personnaliser', got_it: 'Compris !',
-        howto1_title: 'Remplissez la grille', howto1_text: 'Chaque ligne, colonne et carré de 3x3 doit contenir tous les chiffres de 1 à 9.',
-        howto2_title: 'Pas de répétitions', howto2_text: 'Un chiffre ne peut pas apparaître deux fois dans la même ligne, colonne ou carré de 3x3.',
-        howto3_title: 'Utilisez la logique', howto3_text: 'Utilisez les chiffres donnés pour déduire ceux qui manquent. Essayez différents niveaux de difficulté !',
-        step_label_name: 'Votre nom', step_label_game: 'Jeu', step_label_difficulty: 'Difficulté',
-        step1_title: 'Comment vous appelez-vous ?', step1_hint: 'Votre nom sera affiché pendant le jeu.', name_placeholder: 'ex. Alex',
-        continue: 'Continuer', greeting: 'Bonjour, {name} !', change_name: 'Changer de nom', step2_hint: 'Choisissez votre niveau de difficulté.',
-        ai_title: 'Jouer au Sudoku', ai_desc: 'Résolvez l\'énigme à votre rythme. Choisissez parmi trois niveaux de difficulté.',
-        level_label: 'Difficulté', level_easy: 'Facile', level_medium: 'Moyenne', level_hard: 'Difficile',
-        start_game: 'Commencer le jeu', computer: 'Ordinateur',
-        credit_by: 'Un projet de', credit_ai: 'Conçu avec IA', release_notes: 'Notes de version',
-        language_title: 'Langue', close: 'Fermer',
-        lang_en: 'Anglais', lang_it: 'Italien', lang_es: 'Espagnol', lang_fr: 'Français', lang_de: 'Allemand',
-        leave: 'Quitter', cancel: 'Annuler',
-        check: 'Vérifier', hint: 'Indice', undo: 'Annuler', new_game: 'Nouveau jeu',
-        back_home: 'Retour à l\'accueil',
-        you_win: 'Vous l\'avez résolu !', you_lose: 'Jeu terminé',
-        new_game: 'Nouveau jeu',
-        err_generic: 'Quelque chose a mal tourné. Réessayez.',
-        rules_text: 'Le Sudoku se joue sur une grille de 9x9 divisée en neuf sous-grilles de 3x3. Le but est de remplir la grille de sorte que chaque ligne, chaque colonne et chaque sous-grille de 3x3 contienne tous les chiffres de 1 à 9. Aucun chiffre ne peut apparaître deux fois dans la même ligne, colonne ou sous-grille.'
+      subtitle: 'Le grand classique des casse-têtes chiffrés. Épuré, privé, sans inscription.',
+      play: 'Jouer', continue_game: 'Reprendre la partie', new_game: 'Nouvelle partie', level: 'Difficulté',
+      easy: 'Facile', medium: 'Moyen', hard: 'Difficile', expert: 'Expert',
+      best: 'Record', played: 'Résolus', none_yet: '—',
+      howto_title: 'Comment jouer', rules_title: 'Règles du jeu', got_it: 'Compris !', close: 'Fermer', cancel: 'Annuler',
+      howto1_t: 'Remplis la grille', howto1: 'Chaque ligne, colonne et carré 3×3 doit contenir les chiffres de 1 à 9 une seule fois.',
+      howto2_t: 'Crayon et stylo', howto2: 'Note les candidats au crayon, puis passe-les à l’encre quand tu es sûr.',
+      howto3_t: 'Demande de l’aide', howto3: 'Vérifie une case ou demande un indice : il explique le prochain coup logique.',
+      rules: [
+        ['La grille', 'Le plateau est une grille 9×9 divisée en neuf carrés 3×3. Certaines cases sont déjà remplies et ne peuvent pas être modifiées.'],
+        ['Le but', 'Remplis chaque case vide avec un chiffre de 1 à 9 pour que chaque ligne, colonne et carré contienne tous les chiffres une seule fois.'],
+        ['Notes au crayon', 'Active le crayon pour écrire de petits candidats. Touche « À l’encre » pour transformer une note en chiffre définitif ; s’il y a plusieurs notes, choisis laquelle.'],
+        ['Indices', 'Un indice montre une case que tu peux résoudre par la logique et explique pourquoi. S’il y a une erreur sur le plateau, l’indice la signale d’abord.'],
+        ['Vérifier', '« Vérifier la case » te dit si le chiffre de la case sélectionnée est juste. La grille a toujours une seule solution.'],
+        ['Clavier', 'Flèches pour te déplacer, 1–9 pour écrire, Retour arrière pour effacer, P crayon, I encre, H indice, C vérifier, Ctrl+Z annuler.'],
+      ],
+      undo: 'Annuler', erase: 'Effacer', pencil: 'Crayon', pen: 'Stylo', ink: 'À l’encre', check: 'Vérifier la case', tip: 'Indice', notes_auto: 'Notes automatiques',
+      check_board: 'Vérifier tout le plateau', restart: 'Recommencer cette grille', settings: 'Réglages', leave: 'Retour au menu', pause: 'Pause', resume: 'Reprendre',
+      paused: 'En pause', paused_text: 'Le plateau est masqué pendant la pause.',
+      set_conflicts: 'Surligner les conflits', set_same: 'Surligner les chiffres identiques', set_autoclear: 'Effacer les notes automatiquement', set_timer: 'Afficher le temps', theme: 'Thème', theme_auto: 'Automatique', theme_light: 'Clair', theme_dark: 'Sombre', language: 'Langue',
+      mistakes: 'Erreurs', hints: 'Indices', time: 'Temps',
+      select_cell: 'Sélectionne d’abord une case vide.', given_cell: 'Ce chiffre fait partie de la grille.', empty_cell: 'Cette case est vide.',
+      correct: 'Correct !', wrong: 'Ce n’est pas juste : réessaie.', no_notes: 'Cette case n’a pas de notes.', choose_note: 'Choisis la note à passer à l’encre',
+      board_ok: 'Aucune erreur pour l’instant, continue !', board_errors: '{n} cases fausses surlignées.',
+      tip_error_t: 'Il y a une erreur', tip_error: 'Le chiffre de la case surlignée n’est pas juste. Efface-le et réessaie.',
+      tip_naked_t: 'Un seul chiffre possible', tip_naked: 'Dans la case surlignée, seul le {d} est possible : les autres sont déjà dans sa ligne, sa colonne ou son carré.',
+      tip_hidden_t: 'Le {d} n’a qu’une place', tip_hidden: 'Dans cette {unit}, le {d} ne peut aller que dans la case surlignée.',
+      tip_reveal_t: 'Un petit coup de pouce', tip_reveal: 'Aucun coup simple trouvé : la case surlignée est {d}.',
+      unit_row: 'ligne', unit_col: 'colonne', unit_box: 'carré',
+      fill_it: 'Le placer', show_me: 'Montre-moi',
+      win_t: 'Résolu !', win: 'Tu as résolu une grille {level} en {time}.', new_record: 'Nouveau record personnel !',
+      stats_line: '{m} erreurs · {h} indices', play_again: 'Nouvelle grille', back_home: 'Retour au menu',
+      confirm_new: 'Commencer une nouvelle grille ?', confirm_new_text: 'La partie en cours sera perdue.', confirm_restart: 'Recommencer cette grille ?', confirm_restart_text: 'Tous tes chiffres et tes notes seront effacés.',
+      start: 'Commencer', restart_btn: 'Recommencer',
+      credit_by: 'Un projet de', credit_ai: 'Créé avec l’IA', release_notes: 'Notes de version', version: 'Version',
+      generating: 'Création d’une nouvelle grille…', saved: 'Partie enregistrée automatiquement',
     },
     de: {
-        lobby_subtitle: 'Das klassische Zahlenspiel. Füllen Sie das Gitter mit Logik.',
-        howto_title: 'Wie man spielt', rules_title: 'Spielregeln',
-        appearance: 'Anpassen', got_it: 'Verstanden!',
-        howto1_title: 'Füllen Sie das Gitter', howto1_text: 'Jede Zeile, Spalte und jedes 3x3-Feld muss alle Zahlen von 1 bis 9 enthalten.',
-        howto2_title: 'Keine Wiederholungen', howto2_text: 'Eine Zahl darf nicht zweimal in derselben Zeile, Spalte oder 3x3-Box vorkommen.',
-        howto3_title: 'Nutzen Sie die Logik', howto3_text: 'Nutzen Sie die gegebenen Zahlen, um die fehlenden zu ermitteln. Probieren Sie verschiedene Schwierigkeitsgrade aus!',
-        step_label_name: 'Ihr Name', step_label_game: 'Spiel', step_label_difficulty: 'Schwierigkeit',
-        step1_title: 'Wie heißen Sie?', step1_hint: 'Ihr Name wird während des Spiels angezeigt.', name_placeholder: 'z.B. Alex',
-        continue: 'Weiter', greeting: 'Hallo, {name}!', change_name: 'Namen ändern', step2_hint: 'Wählen Sie Ihren Schwierigkeitsgrad.',
-        ai_title: 'Sudoku spielen', ai_desc: 'Lösen Sie das Rätsel in Ihrem eigenen Tempo. Wählen Sie aus drei Schwierigkeitsgraden.',
-        level_label: 'Schwierigkeit', level_easy: 'Leicht', level_medium: 'Mittel', level_hard: 'Schwer',
-        start_game: 'Spiel starten', computer: 'Computer',
-        credit_by: 'Ein Projekt von', credit_ai: 'Mit KI erstellt', release_notes: 'Versionshinweise',
-        language_title: 'Sprache', close: 'Schließen',
-        lang_en: 'Englisch', lang_it: 'Italienisch', lang_es: 'Spanisch', lang_fr: 'Französisch', lang_de: 'Deutsch',
-        leave: 'Verlassen', cancel: 'Abbrechen',
-        check: 'Überprüfen', hint: 'Tipp', undo: 'Rückgängig', new_game: 'Neues Spiel',
-        back_home: 'Zurück zum Start',
-        you_win: 'Gelöst!', you_lose: 'Spiel beendet',
-        new_game: 'Neues Spiel',
-        err_generic: 'Etwas ist schiefgelaufen. Versuchen Sie es erneut.',
-        rules_text: 'Sudoku wird auf einem 9x9-Gitter gespielt, das in neun 3x3-Untergittern unterteilt ist. Das Ziel ist es, das Gitter so zu füllen, dass jede Zeile, jede Spalte und jedes der neun 3x3-Untergittern alle Ziffern von 1 bis 9 enthält. Keine Zahl darf zweimal in derselben Zeile, Spalte oder Untergittern vorkommen.'
-    }
-};
+      subtitle: 'Das klassische Zahlenrätsel. Übersichtlich, privat, ohne Anmeldung.',
+      play: 'Spielen', continue_game: 'Spiel fortsetzen', new_game: 'Neues Spiel', level: 'Schwierigkeit',
+      easy: 'Leicht', medium: 'Mittel', hard: 'Schwer', expert: 'Experte',
+      best: 'Bestzeit', played: 'Gelöst', none_yet: '—',
+      howto_title: 'So wird gespielt', rules_title: 'Spielregeln', got_it: 'Verstanden!', close: 'Schließen', cancel: 'Abbrechen',
+      howto1_t: 'Fülle das Gitter', howto1: 'Jede Zeile, Spalte und jedes 3×3-Feld muss die Zahlen 1 bis 9 genau einmal enthalten.',
+      howto2_t: 'Bleistift und Stift', howto2: 'Notiere Kandidaten mit dem Bleistift und übertrage sie mit Tinte, wenn du sicher bist.',
+      howto3_t: 'Hilfe holen', howto3: 'Prüfe eine einzelne Zelle oder hol dir einen Tipp: Er erklärt den nächsten logischen Schritt.',
+      rules: [
+        ['Das Gitter', 'Das Spielfeld ist ein 9×9-Gitter, aufgeteilt in neun 3×3-Blöcke. Einige Zellen sind vorgegeben und können nicht geändert werden.'],
+        ['Das Ziel', 'Fülle jede leere Zelle mit einer Zahl von 1 bis 9, sodass jede Zeile, Spalte und jeder Block alle Zahlen genau einmal enthält.'],
+        ['Bleistiftnotizen', 'Aktiviere den Bleistift, um kleine Kandidaten zu notieren. Tippe auf „Mit Tinte“, um eine Notiz zur endgültigen Zahl zu machen; bei mehreren Notizen wählst du eine aus.'],
+        ['Tipps', 'Ein Tipp zeigt eine Zelle, die du logisch lösen kannst, und erklärt warum. Gibt es einen Fehler auf dem Feld, zeigt der Tipp ihn zuerst.'],
+        ['Prüfen', '„Zelle prüfen“ sagt dir, ob die Zahl in der gewählten Zelle stimmt. Das Rätsel hat immer genau eine Lösung.'],
+        ['Tastatur', 'Pfeile zum Bewegen, 1–9 zum Schreiben, Rücktaste zum Löschen, P Bleistift, I Tinte, H Tipp, C prüfen, Strg+Z rückgängig.'],
+      ],
+      undo: 'Rückgängig', erase: 'Löschen', pencil: 'Bleistift', pen: 'Stift', ink: 'Mit Tinte', check: 'Zelle prüfen', tip: 'Tipp', notes_auto: 'Automatische Notizen',
+      check_board: 'Ganzes Feld prüfen', restart: 'Dieses Rätsel neu starten', settings: 'Einstellungen', leave: 'Zurück zum Menü', pause: 'Pause', resume: 'Weiter',
+      paused: 'Pausiert', paused_text: 'Das Spielfeld ist während der Pause ausgeblendet.',
+      set_conflicts: 'Konflikte hervorheben', set_same: 'Gleiche Zahlen hervorheben', set_autoclear: 'Notizen automatisch entfernen', set_timer: 'Zeit anzeigen', theme: 'Design', theme_auto: 'Automatisch', theme_light: 'Hell', theme_dark: 'Dunkel', language: 'Sprache',
+      mistakes: 'Fehler', hints: 'Tipps', time: 'Zeit',
+      select_cell: 'Wähle zuerst eine leere Zelle.', given_cell: 'Diese Zahl gehört zum Rätsel.', empty_cell: 'Diese Zelle ist leer.',
+      correct: 'Richtig!', wrong: 'Nicht richtig: versuch es noch einmal.', no_notes: 'Diese Zelle hat keine Notizen.', choose_note: 'Wähle die Notiz für die Tinte',
+      board_ok: 'Bisher keine Fehler, weiter so!', board_errors: '{n} falsche Zellen hervorgehoben.',
+      tip_error_t: 'Da ist ein Fehler', tip_error: 'Die Zahl in der markierten Zelle stimmt nicht. Lösche sie und versuch es erneut.',
+      tip_naked_t: 'Nur eine Zahl passt', tip_naked: 'In die markierte Zelle passt nur die {d}: Alle anderen Zahlen stehen schon in ihrer Zeile, Spalte oder ihrem Block.',
+      tip_hidden_t: 'Die Zahl {d} hat nur einen Platz', tip_hidden: 'In dieser {unit} kann die {d} nur in die markierte Zelle.',
+      tip_reveal_t: 'Ein kleiner Schubs', tip_reveal: 'Kein einfacher Schritt gefunden: Die markierte Zelle ist {d}.',
+      unit_row: 'Zeile', unit_col: 'Spalte', unit_box: 'Block',
+      fill_it: 'Eintragen', show_me: 'Zeig mir',
+      win_t: 'Gelöst!', win: 'Du hast ein Rätsel ({level}) in {time} gelöst.', new_record: 'Neue persönliche Bestzeit!',
+      stats_line: '{m} Fehler · {h} Tipps', play_again: 'Neues Rätsel', back_home: 'Zurück zum Menü',
+      confirm_new: 'Neues Rätsel starten?', confirm_new_text: 'Das aktuelle Spiel geht verloren.', confirm_restart: 'Dieses Rätsel neu starten?', confirm_restart_text: 'Alle deine Zahlen und Notizen werden gelöscht.',
+      start: 'Starten', restart_btn: 'Neu starten',
+      credit_by: 'Ein Projekt von', credit_ai: 'Mit KI erstellt', release_notes: 'Versionshinweise', version: 'Version',
+      generating: 'Neues Rätsel wird erstellt…', saved: 'Spiel automatisch gespeichert',
+    },
+  };
 
-let lang = 'en';
+  const LANGS = { en: 'English', it: 'Italiano', es: 'Español', fr: 'Français', de: 'Deutsch' };
+  let lang = (function () {
+    try { const s = localStorage.getItem('sudoku.lang'); if (s && T[s]) return s; } catch (e) { /* no storage */ }
+    const nav = ((navigator.languages && navigator.languages[0]) || navigator.language || 'en').slice(0, 2).toLowerCase();
+    return T[nav] ? nav : 'en';
+  })();
 
-function translate() {
-    const elements = document.querySelectorAll('[data-i18n]');
-    elements.forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        const translation = translations[lang]?.[key] ?? translations.en[key] ?? key;
-        
-        if (el.hasAttribute('data-i18n-placeholder')) {
-            el.placeholder = translation;
-        } else if (el.hasAttribute('data-i18n-title')) {
-            el.title = translation;
-        } else if (el.tagName === 'OPTION') {
-            el.textContent = translation;
-        } else if (el.tagName === 'INPUT' && el.type === 'button') {
-            el.value = translation;
-        } else {
-            el.textContent = translation;
-        }
-    });
-    
-    // Update language-specific text
-    document.getElementById('lang-current')?.textContent = lang.toUpperCase();
-    
-    // Update greeting if it exists
-    const greetingEl = document.getElementById('greeting-text');
-    if (greetingEl) {
-        const name = localStorage.getItem('sudoku_name') || 'there';
-        greetingEl.textContent = (translations[lang]?.greeting || translations.en.greeting).replace('{name}', name);
-    }
-}
+  function t(key, vars) {
+    let s = (T[lang] && T[lang][key] !== undefined) ? T[lang][key] : (T.en[key] !== undefined ? T.en[key] : key);
+    if (vars && typeof s === 'string') s = s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+    return s;
+  }
+  function setLang(l) { if (!T[l]) return; lang = l; try { localStorage.setItem('sudoku.lang', l); } catch (e) { /* no storage */ } document.documentElement.lang = l; }
+  document.documentElement.lang = lang;
 
-function setLang(newLang) {
-    if (translations[newLang]) {
-        lang = newLang;
-        localStorage.setItem('sudoku_lang', lang);
-        translate();
-    }
-}
-
-// Initialize language
-(function initLang() {
-    const savedLang = localStorage.getItem('sudoku_lang');
-    if (savedLang && translations[savedLang]) {
-        lang = savedLang;
-    }
-    translate();
+  window.SudokuI18n = { t, setLang, getLang: () => lang, LANGS };
 })();
-
-// Export for use in other modules
-window.SudokuI18n = { translate, setLang, getLang: () => lang, translations };

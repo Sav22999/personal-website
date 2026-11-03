@@ -1,938 +1,513 @@
-// ============================================
-// Sudoku Game
-// ============================================
+/* Sudoku — game UI: home, board, pencil/pen, tips, checks, undo, timer, saved games and best times. */
+(function () {
+  'use strict';
 
-// Game state
-let gameState = {
-    grid: [],           // Current grid state (9x9)
-    solution: [],       // Solution grid (9x9)
-    initial: [],        // Initial puzzle (9x9) - givens
-    difficulty: 'medium',
-    selectedCell: null, // {row, col}
-    selectedNumber: null, // 1-9
-    history: [],        // For undo functionality
-    notes: [],          // Pencil marks (9x9, each is array of notes)
-    playerName: '',
-    errors: [],         // Track errors
-    isChecking: false
-};
+  const E = window.SudokuEngine;
+  const I = window.SudokuI18n;
+  const t = I.t;
+  const app = document.getElementById('app');
+  const LEVELS = ['easy', 'medium', 'hard', 'expert'];
+  const VERSION = (window.SudokuReleases && window.SudokuReleases[0].version) || '2.0.0';
 
-// Difficulty settings
-const DIFFICULTY_SETTINGS = {
-    easy: { name: 'Easy', emptyCells: 35, hints: 54 },
-    medium: { name: 'Medium', emptyCells: 45, hints: 45 },
-    hard: { name: 'Hard', emptyCells: 55, hints: 35 }
-};
+  // ---------- storage ----------
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('sudoku.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('sudoku.' + k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
+    del(k) { try { localStorage.removeItem('sudoku.' + k); } catch (e) { /* private mode */ } },
+  };
+  const settings = Object.assign({ conflicts: true, same: true, autoclear: true, timer: true }, store.get('settings', {}));
+  const saveSettings = () => store.set('settings', settings);
 
-// ============================================
-// Initialization
-// ============================================
-
-function initGame() {
-    // Load saved preferences
-    loadPreferences();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Show lobby first
-    showScreen('lobby');
-    
-    // Update version
-    updateVersion();
-}
-
-function loadPreferences() {
-    const savedName = localStorage.getItem('sudoku_name');
-    if (savedName) {
-        document.getElementById('player-name')?.setAttribute('value', savedName);
+  // ---------- DOM helpers ----------
+  function h(tag, attrs, ...kids) {
+    const m = /^([a-z0-9]+)?((?:[.#][\w-]+)*)$/i.exec(tag);
+    const el = document.createElement(m[1] || 'div');
+    m[2].replace(/([.#])([\w-]+)/g, (_, k, v) => { if (k === '.') el.classList.add(v); else el.id = v; });
+    if (attrs && (attrs instanceof Node || Array.isArray(attrs) || typeof attrs !== 'object')) { kids.unshift(attrs); attrs = null; }
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else if (k === 'html') el.innerHTML = v;
+      else el.setAttribute(k, v === true ? '' : v);
     }
-}
+    for (const c of kids.flat(Infinity)) if (c != null && c !== false) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    return el;
+  }
+  const P = {
+    back: '<path d="M15 18l-6-6 6-6"/>',
+    more: '<circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/>',
+    undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/>',
+    erase: '<path d="M20 20H9L4 15a2 2 0 010-2.8L13.2 3a2 2 0 012.8 0L21 8a2 2 0 010 2.8L12 20"/><path d="M8.5 9.5l6 6"/>',
+    pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+    pen: '<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/>',
+    check: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',
+    bulb: '<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0012 2z"/>',
+    pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+    play: '<path d="M6 4l14 8-14 8z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    restart: '<path d="M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.7L3 8"/><path d="M3 3v5h5"/>',
+    grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+    magic: '<path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M15 9h0M17.8 6.2L19 5M3 21l9-9M12.2 6.2L11 5"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+    book: '<path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5A2.5 2.5 0 014 18.5"/>',
+    home: '<path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/>',
+    moon: '<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>',
+    trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>',
+    tick: '<path d="M5 12l5 5L20 7"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  };
+  const icon = name => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'i'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = P[name]; return s; };
 
-function saveName(name) {
-    localStorage.setItem('sudoku_name', name);
-}
+  let toastTimer;
+  function toast(msg, kind) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'toast show' + (kind ? ' ' + kind : '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = 'toast'; }, 2200);
+  }
 
-function updateVersion() {
-    const versionEl = document.getElementById('app-version');
-    if (versionEl) {
-        versionEl.textContent = 'v1';
+  function modal(content, opts) {
+    opts = opts || {};
+    const box = h('div.box', { role: 'dialog', 'aria-modal': 'true' }, content);
+    const m = h('div.modal', { onclick: e => { if (e.target === m && !opts.persistent) close(); } }, box);
+    document.body.appendChild(m);
+    const key = e => { if (e.key === 'Escape' && !opts.persistent) close(); };
+    document.addEventListener('keydown', key, true);
+    function close() { document.removeEventListener('keydown', key, true); m.remove(); if (opts.onclose) opts.onclose(); }
+    return { close, box };
+  }
+  function confirmBox(title, text, okLabel) {
+    return new Promise(res => {
+      const m = modal([h('h3', title), h('p.muted', text), h('div.actions',
+        h('button.btn.btn-ghost', { onclick: () => { m.close(); res(false); } }, t('cancel')),
+        h('button.btn.btn-primary', { onclick: () => { m.close(); res(true); } }, okLabel))], { onclose: () => res(false) });
+    });
+  }
+
+  const fmtTime = s => { s = Math.floor(s); const hh = Math.floor(s / 3600), mm = Math.floor(s / 60) % 60, ss = s % 60; return (hh ? hh + ':' + String(mm).padStart(2, '0') : mm) + ':' + String(ss).padStart(2, '0'); };
+
+  // ---------- theme ----------
+  function applyTheme() {
+    const th = store.get('theme', 'auto');
+    if (th === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', th);
+    const dark = th === 'dark' || (th === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.content = dark ? '#0B1120' : '#F4F7FC'; });
+  }
+  try { localStorage.setItem('sudoku.theme', store.get('theme', 'auto')); } catch (e) { /* no storage */ }
+
+  // =================================================================== state
+  let G = null;           // current game
+  let sel = -1;           // selected cell
+  let pencil = false;     // pencil mode
+  let choosing = false;   // choosing which note to ink
+  let tip = null;         // current tip
+  let flash = {};         // index -> 'ok' | 'bad' (temporary)
+  let badCells = null;    // cells highlighted by "check the whole board"
+  let timer = null;
+
+  function newGame(level) {
+    const { puzzle, solution } = E.generate(level);
+    G = { level, puzzle, solution, values: puzzle.slice(), notes: new Array(81).fill(0), history: [], elapsed: 0, mistakes: 0, hints: 0, checks: 0, paused: false, done: false, started: Date.now() };
+    sel = -1; pencil = false; choosing = false; tip = null; badCells = null;
+    store.set('level', level);
+    save();
+  }
+  function save() { if (G && !G.done) store.set('game', Object.assign({}, G, { history: G.history.slice(-200) })); }
+  function loadSaved() { const g = store.get('game', null); return g && g.puzzle && g.puzzle.length === 81 && !g.done ? g : null; }
+
+  const isGiven = i => G.puzzle[i] !== 0;
+  const noteHas = (i, d) => (G.notes[i] >> d) & 1;
+
+  /** Records the previous state of some cells, for Undo. */
+  function record(cells) { G.history.push(cells.map(i => ({ i, v: G.values[i], n: G.notes[i] }))); }
+
+  function undo() {
+    const step = G.history.pop();
+    if (!step) return;
+    for (const c of step) { G.values[c.i] = c.v; G.notes[c.i] = c.n; }
+    sel = step[0].i; tip = null; choosing = false;
+    save(); paint();
+  }
+
+  function input(d) {
+    if (G.done || G.paused) return;
+    if (sel < 0) { toast(t('select_cell')); return; }
+    if (isGiven(sel)) { toast(t('given_cell')); return; }
+    if (choosing) {
+      choosing = false;
+      if (noteHas(sel, d)) placeValue(sel, d); else paint();
+      return;
     }
-}
-
-// ============================================
-// Event Listeners
-// ============================================
-
-function setupEventListeners() {
-    // Language menu
-    document.getElementById('btn-lang-menu')?.addEventListener('click', () => {
-        showOverlay('lang-overlay');
-    });
-    
-    // Language selector buttons
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lang = btn.dataset.lang;
-            if (window.SudokuI18n?.setLang) {
-                window.SudokuI18n.setLang(lang);
-            }
-        });
-    });
-    
-    // Language overlay options
-    document.querySelectorAll('.lang-option').forEach(option => {
-        option.addEventListener('click', () => {
-            const lang = option.dataset.lang;
-            if (window.SudokuI18n?.setLang) {
-                window.SudokuI18n.setLang(lang);
-            }
-            hideOverlay('lang-overlay');
-        });
-    });
-    
-    // Close overlays
-    document.querySelectorAll('[id^="btn-close-"]').forEach(btn => {
-        const overlayId = btn.id.replace('btn-close-', '') + '-overlay';
-        btn.addEventListener('click', () => hideOverlay(overlayId));
-    });
-    
-    // Name form
-    const nameForm = document.getElementById('step-name');
-    nameForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nameInput = document.getElementById('player-name');
-        const name = nameInput?.value.trim();
-        if (name && name.length > 0) {
-            saveName(name);
-            goToStep(2);
-        }
-    });
-    
-    // Name input validation
-    const nameInput = document.getElementById('player-name');
-    const continueBtn = document.getElementById('btn-continue');
-    nameInput?.addEventListener('input', () => {
-        const name = nameInput.value.trim();
-        if (continueBtn) {
-            continueBtn.disabled = name.length === 0;
-        }
-    });
-    
-    // Change name
-    document.getElementById('btn-change-name')?.addEventListener('click', () => {
-        goToStep(1);
-    });
-    
-    // Start AI game
-    document.getElementById('btn-start-ai')?.addEventListener('click', () => {
-        const difficulty = document.querySelector('input[name="ai-level"]:checked')?.value || 'medium';
-        startNewGame(difficulty);
-    });
-    
-    // How to play
-    document.getElementById('btn-howto')?.addEventListener('click', () => {
-        showHowTo();
-    });
-    
-    // Open rules
-    document.querySelectorAll('[data-open-rules]').forEach(btn => {
-        btn.addEventListener('click', () => showOverlay('rules-overlay'));
-    });
-    
-    // Open release notes
-    document.getElementById('btn-version')?.addEventListener('click', () => {
-        showOverlay('release-overlay');
-    });
-    
-    // Leave game
-    document.getElementById('btn-leave-game')?.addEventListener('click', () => {
-        showConfirm('Leave the game?', 'The current game will be lost.', () => {
-            hideOverlay('confirm-overlay');
-            showScreen('lobby');
-        });
-    });
-    
-    // New game button
-    document.getElementById('btn-new-game')?.addEventListener('click', () => {
-        const difficulty = gameState.difficulty || 'medium';
-        startNewGame(difficulty);
-    });
-    
-    // Game over new game
-    document.getElementById('btn-new-game-over')?.addEventListener('click', () => {
-        hideOverlay('gameover-overlay');
-        const difficulty = gameState.difficulty || 'medium';
-        startNewGame(difficulty);
-    });
-    
-    // Game over back home
-    document.getElementById('btn-gameover-home')?.addEventListener('click', () => {
-        hideOverlay('gameover-overlay');
-        showScreen('lobby');
-    });
-    
-    // Confirm overlay buttons
-    document.getElementById('btn-confirm-no')?.addEventListener('click', () => {
-        hideOverlay('confirm-overlay');
-    });
-    
-    // Check button
-    document.getElementById('btn-check')?.addEventListener('click', () => {
-        checkSolution();
-    });
-    
-    // Hint button
-    document.getElementById('btn-hint')?.addEventListener('click', () => {
-        provideHint();
-    });
-    
-    // Undo button
-    document.getElementById('btn-undo')?.addEventListener('click', () => {
-        undoMove();
-    });
-}
-
-// ============================================
-// Navigation
-// ============================================
-
-function goToStep(step) {
-    // Update step indicators
-    document.querySelectorAll('.step').forEach((s, idx) => {
-        s.classList.remove('active', 'completed');
-        if (idx + 1 < step) s.classList.add('completed');
-        if (idx + 1 === step) s.classList.add('active');
-    });
-    
-    // Show the step
-    document.querySelectorAll('.lobby-step').forEach(s => {
-        s.classList.remove('active');
-    });
-    
-    const stepElement = step === 1 ? document.getElementById('step-name') : document.getElementById('step-mode');
-    stepElement?.classList.add('active');
-    
-    // Update greeting if step 2
-    if (step === 2) {
-        const name = localStorage.getItem('sudoku_name') || 'there';
-        const greetingEl = document.getElementById('greeting-text');
-        if (greetingEl) {
-            const lang = window.SudokuI18n?.getLang() || 'en';
-            const t = window.SudokuI18n?.translations[lang] || {};
-            greetingEl.textContent = (t.greeting || 'Hi, {name}!').replace('{name}', name);
-        }
+    if (pencil) {
+      if (G.values[sel]) return;
+      record([sel]);
+      G.notes[sel] ^= 1 << d;
+      tip = null; save(); paint();
+      return;
     }
-}
+    placeValue(sel, d);
+  }
 
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-    document.getElementById(screenId)?.classList.add('active');
-}
-
-function showOverlay(overlayId) {
-    document.getElementById(overlayId)?.classList.remove('hidden');
-}
-
-function hideOverlay(overlayId) {
-    document.getElementById(overlayId)?.classList.add('hidden');
-}
-
-function showConfirm(title, text, onConfirm) {
-    const titleEl = document.getElementById('confirm-title');
-    const textEl = document.getElementById('confirm-text');
-    const yesBtn = document.getElementById('btn-confirm-yes');
-    
-    if (titleEl) titleEl.textContent = title;
-    if (textEl) textEl.textContent = text;
-    if (yesBtn) {
-        yesBtn.onclick = () => {
-            onConfirm();
-        };
+  function placeValue(i, d) {
+    const clearing = G.values[i] === d;
+    const touched = [i];
+    if (!clearing && settings.autoclear) for (const p of E.PEERS[i]) if (!G.values[p] && noteHas(p, d)) touched.push(p);
+    record(touched);
+    G.values[i] = clearing ? 0 : d;
+    G.notes[i] = 0;
+    if (!clearing) {
+      if (settings.autoclear) for (const p of touched.slice(1)) G.notes[p] &= ~(1 << d);
+      if (G.solution[i] !== d) G.mistakes++;
     }
-    
-    showOverlay('confirm-overlay');
-}
+    tip = null; badCells = null;
+    save();
+    if (G.values.every((v, k) => v === G.solution[k])) return win();
+    paint();
+  }
 
-function showHowTo() {
-    const container = document.getElementById('howto-sheet-body');
-    if (!container) return;
-    
-    const lang = window.SudokuI18n?.getLang() || 'en';
-    const t = window.SudokuI18n?.translations[lang] || {};
-    
-    container.innerHTML = `
-        <ol class="howto-list" id="howto-list">
-            <li>
-                <span class="howto-num">1</span>
-                <div>
-                    <strong>${t.howto1_title || 'Fill the grid'}</strong>
-                    <p>${t.howto1_text || 'Each row, column, and 3x3 box must contain all numbers from 1 to 9.'}</p>
-                </div>
-            </li>
-            <li>
-                <span class="howto-num">2</span>
-                <div>
-                    <strong>${t.howto2_title || 'No repeats'}</strong>
-                    <p>${t.howto2_text || 'A number cannot appear twice in the same row, column, or 3x3 box.'}</p>
-                </div>
-            </li>
-            <li>
-                <span class="howto-num">3</span>
-                <div>
-                    <strong>${t.howto3_title || 'Use logic'}</strong>
-                    <p>${t.howto3_text || 'Use the given numbers to deduce the missing ones. Try different difficulties!'}</p>
-                </div>
-            </li>
-        </ol>
-    `;
-    
-    showOverlay('howto-overlay');
-}
+  function erase() {
+    if (sel < 0 || isGiven(sel) || G.done) return;
+    if (!G.values[sel] && !G.notes[sel]) return;
+    record([sel]);
+    G.values[sel] = 0; G.notes[sel] = 0; tip = null; choosing = false;
+    save(); paint();
+  }
 
-// ============================================
-// Sudoku Generator
-// ============================================
+  /** "Ink": turns the pencil note of the selected cell into the final number. */
+  function ink() {
+    if (G.done || G.paused) return;
+    if (sel < 0 || isGiven(sel) || G.values[sel]) { toast(t('select_cell')); return; }
+    const ds = E.digitsOf(G.notes[sel]);
+    if (!ds.length) { toast(t('no_notes')); return; }
+    if (ds.length === 1) { choosing = false; placeValue(sel, ds[0]); return; }
+    choosing = !choosing;
+    paint();
+  }
 
-function generateSudoku(difficulty) {
-    // Start with an empty grid
-    const grid = createEmptyGrid();
-    
-    // Fill the diagonal boxes (which are independent)
-    fillDiagonalBoxes(grid);
-    
-    // Solve the grid completely
-    solveSudoku(grid);
-    
-    // Create the puzzle by removing cells based on difficulty
-    const puzzle = createPuzzle(grid, difficulty);
-    
-    return {
-        puzzle: puzzle,
-        solution: grid
-    };
-}
+  function checkCell() {
+    if (G.done) return;
+    if (sel < 0) { toast(t('select_cell')); return; }
+    if (isGiven(sel)) { toast(t('given_cell')); return; }
+    if (!G.values[sel]) { toast(t('empty_cell')); return; }
+    G.checks++;
+    const ok = G.values[sel] === G.solution[sel];
+    flash[sel] = ok ? 'ok' : 'bad';
+    const idx = sel;
+    setTimeout(() => { delete flash[idx]; paint(); }, 950);
+    toast(t(ok ? 'correct' : 'wrong'), ok ? 'ok' : 'bad');
+    save(); paint();
+  }
 
-function createEmptyGrid() {
-    return Array(9).fill().map(() => Array(9).fill(0));
-}
+  function checkBoard() {
+    const bad = [];
+    for (let i = 0; i < 81; i++) if (G.values[i] && G.values[i] !== G.solution[i]) bad.push(i);
+    G.checks++;
+    badCells = new Set(bad);
+    toast(bad.length ? t('board_errors', { n: bad.length }) : t('board_ok'), bad.length ? 'bad' : 'ok');
+    setTimeout(() => { badCells = null; paint(); }, 3500);
+    save(); paint();
+  }
 
-function fillDiagonalBoxes(grid) {
-    for (let i = 0; i < 9; i += 3) {
-        fillBox(grid, i, i);
+  /** Next tip: a mistake on the board first, then a logical single, otherwise a revealed cell. */
+  function showTip() {
+    if (G.done || G.paused) return;
+    if (tip) { tip = null; paint(); return; }
+    const wrong = G.values.findIndex((v, i) => v && v !== G.solution[i]);
+    if (wrong >= 0) tip = { type: 'error', index: wrong };
+    else {
+      const s = E.findSingle(G.values);
+      if (s && s.digit === G.solution[s.index]) tip = s;
+      else {
+        const empty = G.values.map((v, i) => (v ? -1 : i)).filter(i => i >= 0);
+        const i = empty[Math.floor(Math.random() * empty.length)];
+        tip = { type: 'reveal', index: i, digit: G.solution[i] };
+      }
     }
-}
+    G.hints++;
+    sel = tip.index; choosing = false;
+    save(); paint();
+  }
 
-function fillBox(grid, row, col) {
-    const numbers = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            grid[row + i][col + j] = numbers[i * 3 + j];
-        }
-    }
-}
+  function applyTip() {
+    if (!tip) return;
+    const tp = tip; tip = null;
+    sel = tp.index;
+    if (tp.type === 'error') { erase(); return; }
+    placeValue(tp.index, tp.digit);
+  }
 
-function solveSudoku(grid) {
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            if (grid[row][col] === 0) {
-                for (let num = 1; num <= 9; num++) {
-                    if (isValidPlacement(grid, row, col, num)) {
-                        grid[row][col] = num;
-                        if (solveSudoku(grid)) {
-                            return true;
-                        }
-                        grid[row][col] = 0;
-                    }
-                }
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-function isValidPlacement(grid, row, col, num) {
-    // Check row
-    for (let c = 0; c < 9; c++) {
-        if (grid[row][c] === num) return false;
-    }
-    
-    // Check column
-    for (let r = 0; r < 9; r++) {
-        if (grid[r][col] === num) return false;
-    }
-    
-    // Check 3x3 box
-    const boxRow = Math.floor(row / 3) * 3;
-    const boxCol = Math.floor(col / 3) * 3;
-    for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-            if (grid[boxRow + r][boxCol + c] === num) return false;
-        }
-    }
-    
-    return true;
-}
-
-function createPuzzle(solution, difficulty) {
-    const puzzle = JSON.parse(JSON.stringify(solution));
-    const settings = DIFFICULTY_SETTINGS[difficulty] || DIFFICULTY_SETTINGS.medium;
-    const cellsToRemove = settings.emptyCells;
-    
-    // Create a list of all cells
+  function autoNotes() {
     const cells = [];
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            cells.push({ row, col });
-        }
-    }
-    
-    // Shuffle cells
-    shuffle(cells);
-    
-    // Remove cells
-    let removed = 0;
-    for (const cell of cells) {
-        if (removed >= cellsToRemove) break;
-        
-        const backup = puzzle[cell.row][cell.col];
-        puzzle[cell.row][cell.col] = 0;
-        
-        // Make sure the puzzle still has a unique solution
-        if (!hasUniqueSolution(puzzle)) {
-            puzzle[cell.row][cell.col] = backup;
-        } else {
-            removed++;
-        }
-    }
-    
-    return puzzle;
-}
+    for (let i = 0; i < 81; i++) if (!G.values[i]) cells.push(i);
+    record(cells);
+    for (const i of cells) G.notes[i] = E.candidates(G.values, i);
+    save(); paint();
+  }
 
-function hasUniqueSolution(puzzle) {
-    const gridCopy = JSON.parse(JSON.stringify(puzzle));
-    let solutionCount = 0;
-    
-    function countSolutions(grid) {
-        for (let row = 0; row < 9; row++) {
-            for (let col = 0; col < 9; col++) {
-                if (grid[row][col] === 0) {
-                    for (let num = 1; num <= 9; num++) {
-                        if (isValidPlacement(grid, row, col, num)) {
-                            grid[row][col] = num;
-                            countSolutions(grid);
-                            grid[row][col] = 0;
-                        }
-                    }
-                    return;
-                }
-            }
-        }
-        solutionCount++;
-    }
-    
-    countSolutions(gridCopy);
-    return solutionCount === 1;
-}
+  async function restart() {
+    if (!await confirmBox(t('confirm_restart'), t('confirm_restart_text'), t('restart_btn'))) return;
+    Object.assign(G, { values: G.puzzle.slice(), notes: new Array(81).fill(0), history: [], elapsed: 0, mistakes: 0, hints: 0, checks: 0 });
+    sel = -1; tip = null; choosing = false; save(); paint();
+  }
 
-function shuffle(array) {
-    const arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
-// ============================================
-// Game Logic
-// ============================================
-
-function startNewGame(difficulty) {
-    gameState.difficulty = difficulty;
-    gameState.isChecking = false;
-    gameState.errors = [];
-    
-    // Generate puzzle
-    const sudoku = generateSudoku(difficulty);
-    gameState.grid = JSON.parse(JSON.stringify(sudoku.puzzle));
-    gameState.solution = JSON.parse(JSON.stringify(sudoku.solution));
-    gameState.initial = JSON.parse(JSON.stringify(sudoku.puzzle));
-    gameState.history = [];
-    gameState.notes = createEmptyNotes();
-    gameState.selectedCell = null;
-    gameState.selectedNumber = null;
-    
-    // Show game screen
-    showScreen('game');
-    
-    // Update difficulty badge
-    updateDifficultyBadge();
-    
-    // Render board
-    renderBoard();
-    
-    // Show toast
-    showToast('New game started!');
-}
-
-function createEmptyNotes() {
-    return Array(9).fill().map(() => 
-        Array(9).fill().map(() => [])
-    );
-}
-
-function updateDifficultyBadge() {
-    const badge = document.getElementById('difficulty-badge');
-    const modeBadge = document.getElementById('mode-badge');
-    
-    if (badge) {
-        const lang = window.SudokuI18n?.getLang() || 'en';
-        const t = window.SudokuI18n?.translations[lang] || {};
-        const difficultyNames = {
-            easy: t.level_easy || 'Easy',
-            medium: t.level_medium || 'Medium',
-            hard: t.level_hard || 'Hard'
-        };
-        badge.textContent = difficultyNames[gameState.difficulty] || gameState.difficulty;
-    }
-    
-    if (modeBadge) {
-        modeBadge.textContent = 'Computer';
-    }
-}
-
-function renderBoard() {
-    const container = document.getElementById('sudoku-board');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'sudoku-cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-            
-            // Check if it's a given cell
-            if (gameState.initial[row][col] !== 0) {
-                cell.classList.add('given');
-                cell.textContent = gameState.initial[row][col];
-            } else if (gameState.grid[row][col] !== 0) {
-                cell.classList.add('user');
-                cell.textContent = gameState.grid[row][col];
-            }
-            
-            // Check for errors
-            if (gameState.errors.some(e => e.row === row && e.col === col)) {
-                cell.classList.add('error');
-            }
-            
-            // Check if selected
-            if (gameState.selectedCell && gameState.selectedCell.row === row && gameState.selectedCell.col === col) {
-                cell.classList.add('selected');
-            }
-            
-            // Highlight same number
-            if (gameState.selectedNumber && gameState.grid[row][col] === gameState.selectedNumber) {
-                cell.classList.add('same-number');
-            }
-            
-            // Add notes
-            if (gameState.notes[row][col].length > 0) {
-                cell.classList.add('has-note');
-                const notesEl = document.createElement('div');
-                notesEl.className = 'notes';
-                for (let num = 1; num <= 9; num++) {
-                    const noteEl = document.createElement('span');
-                    noteEl.textContent = gameState.notes[row][col].includes(num) ? num : '';
-                    notesEl.appendChild(noteEl);
-                }
-                cell.appendChild(notesEl);
-            }
-            
-            // Click handler
-            cell.addEventListener('click', () => handleCellClick(row, col));
-            
-            container.appendChild(cell);
-        }
-    }
-}
-
-function handleCellClick(row, col) {
-    // If cell is given, ignore
-    if (gameState.initial[row][col] !== 0) return;
-    
-    const prevSelected = gameState.selectedCell;
-    
-    // If clicking the same cell, deselect
-    if (prevSelected && prevSelected.row === row && prevSelected.col === col) {
-        gameState.selectedCell = null;
-        gameState.selectedNumber = null;
-    } else {
-        gameState.selectedCell = { row, col };
-        gameState.selectedNumber = gameState.grid[row][col] || null;
-    }
-    
-    renderBoard();
-    
-    // Show number input
-    if (gameState.selectedCell) {
-        showNumberInput();
-    } else {
-        hideNumberInput();
-    }
-}
-
-function showNumberInput() {
-    const overlay = document.createElement('div');
-    overlay.className = 'number-input-overlay';
-    overlay.innerHTML = `
-        <div class="number-input-panel">
-            <h3>Select a number</h3>
-            <div class="number-grid" id="number-grid"></div>
-            <div class="number-actions">
-                <button class="btn btn-ghost" id="btn-note-toggle">Toggle Notes</button>
-                <button class="btn btn-primary" id="btn-clear-cell">Clear</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(overlay);
-    
-    // Populate number grid
-    const grid = overlay.querySelector('.number-grid');
-    for (let num = 1; num <= 9; num++) {
-        const btn = document.createElement('button');
-        btn.className = 'number-btn';
-        btn.textContent = num;
-        btn.dataset.num = num;
-        
-        // Highlight if this is the current number
-        if (gameState.selectedNumber === num) {
-            btn.classList.add('selected');
-        }
-        
-        // Check if number is in notes
-        const { row, col } = gameState.selectedCell;
-        if (gameState.notes[row][col].includes(num)) {
-            btn.classList.add('in-notes');
-        }
-        
-        btn.addEventListener('click', () => {
-            selectNumber(num);
-            hideNumberInput();
-        });
-        
-        grid.appendChild(btn);
-    }
-    
-    // Toggle notes button
-    overlay.querySelector('#btn-note-toggle').addEventListener('click', () => {
-        toggleNoteMode();
-        hideNumberInput();
-    });
-    
-    // Clear button
-    overlay.querySelector('#btn-clear-cell').addEventListener('click', () => {
-        clearCell();
-        hideNumberInput();
-    });
-    
-    setTimeout(() => overlay.classList.add('show'), 10);
-}
-
-function hideNumberInput() {
-    const overlay = document.querySelector('.number-input-overlay');
-    if (overlay) {
-        overlay.classList.remove('show');
-        setTimeout(() => overlay.remove(), 250);
-    }
-}
-
-let noteMode = false;
-
-function toggleNoteMode() {
-    noteMode = !noteMode;
-    showToast(noteMode ? 'Note mode: ON' : 'Note mode: OFF');
-}
-
-function selectNumber(num) {
-    const { row, col } = gameState.selectedCell;
-    if (!row || !col) return;
-    
-    // Save to history
-    saveToHistory(row, col);
-    
-    if (noteMode) {
-        // Toggle note
-        const notes = gameState.notes[row][col];
-        const index = notes.indexOf(num);
-        if (index > -1) {
-            notes.splice(index, 1);
-        } else {
-            notes.push(num);
-            notes.sort((a, b) => a - b);
-        }
-        showToast(`Added note: ${num}`);
-    } else {
-        // Place number
-        gameState.grid[row][col] = num;
-        gameState.selectedNumber = num;
-        showToast(`Placed: ${num}`);
-        
-        // Check if complete
-        checkCompletion();
-    }
-    
-    renderBoard();
-}
-
-function clearCell() {
-    const { row, col } = gameState.selectedCell;
-    if (!row || !col) return;
-    
-    // Save to history
-    saveToHistory(row, col);
-    
-    if (noteMode) {
-        gameState.notes[row][col] = [];
-        showToast('Notes cleared');
-    } else {
-        gameState.grid[row][col] = 0;
-        gameState.selectedNumber = null;
-        showToast('Cell cleared');
-    }
-    
-    renderBoard();
-}
-
-function saveToHistory(row, col) {
-    gameState.history.push({
-        row,
-        col,
-        value: gameState.grid[row][col],
-        notes: [...gameState.notes[row][col]]
-    });
-    
-    // Limit history to 50 moves
-    if (gameState.history.length > 50) {
-        gameState.history.shift();
-    }
-}
-
-function undoMove() {
-    if (gameState.history.length === 0) {
-        showToast('Nothing to undo');
-        return;
-    }
-    
-    const lastMove = gameState.history.pop();
-    gameState.grid[lastMove.row][lastMove.col] = lastMove.value;
-    gameState.notes[lastMove.row][lastMove.col] = lastMove.notes;
-    
-    // Update selected cell if it was the one we undid
-    if (gameState.selectedCell && 
-        gameState.selectedCell.row === lastMove.row && 
-        gameState.selectedCell.col === lastMove.col) {
-        gameState.selectedNumber = lastMove.value;
-    }
-    
-    renderBoard();
-    showToast('Move undone');
-}
-
-// ============================================
-// Game Features
-// ============================================
-
-function checkSolution() {
-    gameState.isChecking = true;
-    let hasErrors = false;
-    gameState.errors = [];
-    
-    // Check all cells
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            const value = gameState.grid[row][col];
-            if (value === 0) continue; // Empty cell
-            
-            if (value !== gameState.solution[row][col]) {
-                gameState.errors.push({ row, col });
-                hasErrors = true;
-            }
-        }
-    }
-    
-    renderBoard();
-    
-    if (!hasErrors) {
-        showToast('Correct! Well done!', 'success');
-        // Check completion
-        checkCompletion();
-    } else {
-        showToast(`${gameState.errors.length} error(s) found`, 'error');
-    }
-    
-    gameState.isChecking = false;
-}
-
-function checkCompletion() {
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            if (gameState.grid[row][col] !== gameState.solution[row][col]) {
-                return; // Not complete
-            }
-        }
-    }
-    
-    // Game is complete!
-    showGameOver(true);
-}
-
-function provideHint() {
-    // Find first empty cell
-    for (let row = 0; row < 9; row++) {
-        for (let col = 0; col < 9; col++) {
-            if (gameState.grid[row][col] === 0 && gameState.initial[row][col] === 0) {
-                // Found empty cell, reveal the solution
-                gameState.grid[row][col] = gameState.solution[row][col];
-                gameState.selectedCell = { row, col };
-                gameState.selectedNumber = gameState.grid[row][col];
-                
-                // Save to history
-                saveToHistory(row, col);
-                
-                renderBoard();
-                showToast(`Hint: ${gameState.solution[row][col]}`);
-                return;
-            }
-        }
-    }
-    
-    // No empty cells found
-    showToast('No hints available');
-}
-
-// ============================================
-// Game Over
-// ============================================
-
-function showGameOver(isWin) {
-    const icon = document.getElementById('gameover-icon');
-    const title = document.getElementById('gameover-title');
-    const text = document.getElementById('gameover-text');
-    
-    const lang = window.SudokuI18n?.getLang() || 'en';
-    const t = window.SudokuI18n?.translations[lang] || {};
-    
-    if (icon) {
-        icon.className = isWin ? 'win' : 'lose';
-        icon.innerHTML = isWin ? '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>' : 
-                                    '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>';
-    }
-    
-    if (title) title.textContent = isWin ? (t.you_win || 'You solved it!') : (t.you_lose || 'Game over');
-    if (text) {
-        const difficulty = DIFFICULTY_SETTINGS[gameState.difficulty]?.name || gameState.difficulty;
-        text.textContent = isWin ? `You solved the ${difficulty.toLowerCase()} puzzle!` : 'The game is over.';
-    }
-    
-    showOverlay('gameover-overlay');
-}
-
-// ============================================
-// Toast Notifications
-// ============================================
-
-function showToast(message, type = '') {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    
-    toast.textContent = message;
-    toast.className = 'toast';
-    if (type) {
-        toast.classList.add(type);
-    }
-    
+  function win() {
+    G.done = true; stopTimer();
+    const stats = store.get('stats', {});
+    const st = stats[G.level] || { solved: 0, best: null };
+    st.solved++;
+    const record = st.best == null || G.elapsed < st.best;
+    if (record) st.best = Math.floor(G.elapsed);
+    stats[G.level] = st; store.set('stats', stats);
+    store.del('game');
+    sel = -1; paint();
     setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 2500);
-}
+      const m = modal(h('div.win-box', h('div.trophy', icon('trophy')), h('h3', t('win_t')),
+        h('p.muted', t('win', { level: t(G.level).toLowerCase(), time: fmtTime(G.elapsed) })),
+        h('p.muted', t('stats_line', { m: G.mistakes, h: G.hints })),
+        record ? h('div.record', t('new_record')) : null,
+        h('div.stack', { style: 'margin-top:18px' },
+          h('button.btn.btn-primary.btn-block', { onclick: () => { m.close(); startGame(G.level); } }, icon('plus'), t('play_again')),
+          h('button.btn.btn-ghost.btn-block', { onclick: () => { m.close(); showHome(); } }, t('back_home')))), { persistent: true });
+    }, 350);
+  }
 
-// ============================================
-// Keyboard Support
-// ============================================
+  // ---------- timer ----------
+  function startTimer() {
+    stopTimer();
+    let last = Date.now();
+    timer = setInterval(() => {
+      const now = Date.now();
+      if (G && !G.paused && !G.done && document.visibilityState === 'visible') {
+        G.elapsed += (now - last) / 1000;
+        const el = document.getElementById('time');
+        if (el) el.textContent = fmtTime(G.elapsed);
+        if (Math.floor(G.elapsed) % 5 === 0) save();
+      }
+      last = now;
+    }, 500);
+  }
+  function stopTimer() { clearInterval(timer); timer = null; }
+  function setPaused(p) { if (!G || G.done) return; G.paused = p; save(); paint(); }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && G && !G.done && screen === 'game') { G.paused = true; save(); paint(); } });
 
-document.addEventListener('keydown', (e) => {
-    // Only handle if we're in the game screen
-    if (!document.getElementById('screen-game')?.classList.contains('active')) return;
-    
-    // Number keys 1-9
-    if (e.key >= '1' && e.key <= '9') {
-        const num = parseInt(e.key);
-        if (gameState.selectedCell) {
-            selectNumber(num);
-            e.preventDefault();
-        }
-    }
-    
-    // Backspace or Delete
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-        if (gameState.selectedCell) {
-            clearCell();
-            e.preventDefault();
-        }
-    }
-    
-    // Escape
-    if (e.key === 'Escape') {
-        if (gameState.selectedCell) {
-            gameState.selectedCell = null;
-            gameState.selectedNumber = null;
-            renderBoard();
-            e.preventDefault();
-        }
-        hideNumberInput();
-    }
-    
-    // Arrow keys for navigation
-    if (e.key.startsWith('Arrow')) {
-        const { row, col } = gameState.selectedCell || { row: 0, col: 0 };
-        let newRow = row;
-        let newCol = col;
-        
-        switch (e.key) {
-            case 'ArrowUp': newRow = Math.max(0, row - 1); break;
-            case 'ArrowDown': newRow = Math.min(8, row + 1); break;
-            case 'ArrowLeft': newCol = Math.max(0, col - 1); break;
-            case 'ArrowRight': newCol = Math.min(8, col + 1); break;
-        }
-        
-        // Only select if it's not a given cell
-        if (gameState.initial[newRow][newCol] === 0) {
-            gameState.selectedCell = { row: newRow, col: newCol };
-            gameState.selectedNumber = gameState.grid[newRow][newCol] || null;
-            renderBoard();
-            e.preventDefault();
-        }
-    }
-});
+  // =================================================================== screens
+  let screen = 'home';
 
-// ============================================
-// Initialize on load
-// ============================================
+  function startGame(level) {
+    app.replaceChildren(h('div.loading', t('generating')));
+    setTimeout(() => { newGame(level); screen = 'game'; renderGame(); startTimer(); }, 30);
+  }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGame);
-} else {
-    initGame();
-}
+  function showHome() {
+    screen = 'home'; stopTimer();
+    const saved = loadSaved();
+    const stats = store.get('stats', {});
+    let level = store.get('level', 'medium');
+    const levels = h('div.levels', { role: 'radiogroup' });
+    LEVELS.forEach((lv, k) => {
+      const st = stats[lv];
+      const b = h('button.level' + (lv === level ? '.sel' : ''), { type: 'button', role: 'radio', 'aria-checked': String(lv === level), onclick: () => {
+        level = lv; store.set('level', lv); levels.querySelectorAll('.level').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-checked', String(x === b)); });
+      } }, h('strong', t(lv)), h('div.dots', [0, 1, 2, 3].map(j => h('i' + (j <= k ? '.on' : '')))),
+        h('small', st ? `${t('best')} ${st.best != null ? fmtTime(st.best) : t('none_yet')} · ${t('played')} ${st.solved}` : `${t('best')} ${t('none_yet')}`));
+      levels.appendChild(b);
+    });
+    app.replaceChildren(h('div.home',
+      h('div.topbar', langButton(), h('button.icon-btn', { title: t('theme'), 'aria-label': t('theme'), onclick: cycleTheme }, icon('moon'))),
+      h('section.hero', h('img.logo', { src: 'icons/favicon.svg', alt: '' }), h('h1', 'Sudoku'), h('p', t('subtitle'))),
+      h('div.home-grid',
+        h('section.panel',
+          saved ? h('button.resume-card', { type: 'button', onclick: () => resume(saved) }, h('img.mini', { src: 'icons/favicon.svg', alt: '' }),
+            h('div', h('strong', t('continue_game')), h('span', `${t(saved.level)} · ${fmtTime(saved.elapsed)}`))) : null,
+          h('h2', t('level')), levels,
+          h('button.btn.btn-primary.btn-block', { type: 'button', onclick: async () => {
+            if (saved && !await confirmBox(t('confirm_new'), t('confirm_new_text'), t('start'))) return;
+            startGame(level);
+          } }, icon('play'), saved ? t('new_game') : t('play'))),
+        h('section.panel.howto', h('h2', t('howto_title')),
+          h('ol', [1, 2, 3].map(n => h('li', h('span.n', String(n)), h('div', h('strong', t('howto' + n + '_t')), h('p', t('howto' + n)))))),
+          h('div.links', h('button.btn.btn-soft', { type: 'button', onclick: showRules }, icon('book'), t('rules_title'))))),
+      h('footer.footer',
+        h('a', { href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener' }, t('credit_by'), ' ', h('strong', 'Saverio Morelli'), ' · ', t('credit_ai')),
+        h('button.version-btn', { type: 'button', onclick: showReleases }, `${t('version')} ${VERSION}`))));
+    document.title = 'Sudoku – Saverio Morelli';
+  }
+
+  function resume(saved) { G = saved; G.paused = false; sel = -1; tip = null; pencil = false; choosing = false; screen = 'game'; renderGame(); startTimer(); }
+
+  function langButton() {
+    return h('button.lang-pill', { type: 'button', onclick: showLanguages }, icon('globe'), I.getLang().toUpperCase());
+  }
+  function showLanguages() {
+    const m = modal([h('h3', t('language')), h('div.menu-list.lang-list', Object.entries(I.LANGS).map(([k, label]) =>
+      h('button', { type: 'button', onclick: () => { I.setLang(k); m.close(); screen === 'game' ? renderGame() : showHome(); } }, h('span', label), k === I.getLang() ? icon('tick') : null)))]);
+  }
+  function cycleTheme() {
+    const next = { auto: 'light', light: 'dark', dark: 'auto' }[store.get('theme', 'auto')];
+    store.set('theme', next); applyTheme(); toast(t('theme') + ': ' + t('theme_' + next));
+  }
+  function showRules() {
+    modal([h('h3', t('rules_title')), h('div.rules', t('rules').map(([a, b]) => [h('h4', a), h('p', b)])),
+      h('div.actions', h('button.btn.btn-primary', { onclick: e => e.target.closest('.modal').remove() }, t('got_it')))]);
+  }
+  function showReleases() {
+    const L = I.getLang();
+    modal([h('h3', t('release_notes')), h('div.release', (window.SudokuReleases || []).map(r => [h('h4', `${r.version} · ${new Date(r.date).toLocaleDateString(L, { year: 'numeric', month: 'short', day: 'numeric' })}`), h('ul', (r.notes[L] || r.notes.en).map(n => h('li', n)))]))]);
+  }
+
+  // =================================================================== game screen
+  let boardEl, sideEl;
+
+  function renderGame() {
+    boardEl = h('div.board', { role: 'grid', 'aria-label': 'Sudoku' });
+    for (let i = 0; i < 81; i++) {
+      const r = E.ROW(i), c = E.COL(i);
+      boardEl.appendChild(h('button.cell' + (c === 3 || c === 6 ? '.c' + c : '') + (r === 3 || r === 6 ? '.r' + r : ''), { type: 'button', 'data-i': i, role: 'gridcell', onclick: () => select(i) }));
+    }
+    sideEl = h('div.side');
+    app.replaceChildren(h('div.game',
+      h('header.game-bar',
+        h('button.icon-btn', { type: 'button', title: t('leave'), 'aria-label': t('leave'), onclick: () => { save(); showHome(); } }, icon('back')),
+        h('div.title', h('img', { src: 'icons/favicon.svg', alt: '' }), h('strong', 'Sudoku'), h('span.badge', t(G.level))),
+        h('button.icon-btn', { type: 'button', id: 'pause-btn', title: t('pause'), 'aria-label': t('pause'), onclick: () => setPaused(!G.paused) }, icon('pause')),
+        h('button.icon-btn', { type: 'button', title: t('settings'), 'aria-label': t('settings'), onclick: showMenu }, icon('more'))),
+      h('div.stats', h('span', `${t('mistakes')}: `, h('b#mist', '0')), h('span', `${t('hints')}: `, h('b#hint', '0')), settings.timer ? h('span', `${t('time')}: `, h('b#time', fmtTime(G.elapsed))) : null),
+      h('div.game-main', h('div.board-wrap', boardEl), sideEl)));
+    paint();
+  }
+
+  function select(i) { if (G.done) return; if (G.paused) { setPaused(false); return; } sel = i; if (choosing && (G.values[i] || !G.notes[i])) choosing = false; paint(); }
+
+  function paint() {
+    if (screen !== 'game' || !boardEl) return;
+    const v = G.values;
+    const conf = settings.conflicts ? E.conflicts(v) : new Set();
+    const selVal = sel >= 0 ? v[sel] : 0;
+    const peers = sel >= 0 ? new Set(E.PEERS[sel]) : new Set();
+    boardEl.classList.toggle('paused', !!G.paused);
+    [...boardEl.children].forEach((cell, i) => {
+      const val = v[i];
+      cell.className = cell.className.replace(/\b(given|peer|same|sel|conflict|bad|good|tip|flash-ok|flash-bad)\b/g, '').replace(/\s+/g, ' ').trim();
+      if (isGiven(i)) cell.classList.add('given');
+      if (i === sel) cell.classList.add('sel');
+      else if (settings.same && selVal && val === selVal) cell.classList.add('same');
+      else if (peers.has(i)) cell.classList.add('peer');
+      if (conf.has(i) && !isGiven(i)) cell.classList.add('conflict');
+      if (badCells && badCells.has(i)) cell.classList.add('bad');
+      if (G.done) cell.classList.add('good');
+      if (tip && tip.index === i) cell.classList.add('tip');
+      if (flash[i]) cell.classList.add('flash-' + flash[i]);
+      cell.replaceChildren();
+      if (val) cell.textContent = val;
+      else if (G.notes[i]) cell.appendChild(h('div.notes', [1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => h('span' + (settings.same && selVal === d && noteHas(i, d) ? '.hl' : ''), noteHas(i, d) ? String(d) : ''))));
+      cell.setAttribute('aria-label', `${E.ROW(i) + 1},${E.COL(i) + 1}: ${val || ''}`);
+    });
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) pauseBtn.replaceChildren(icon(G.paused ? 'play' : 'pause'));
+    const wrap = boardEl.parentElement;
+    const cover = wrap.querySelector('.pause-cover');
+    if (G.paused && !cover) wrap.appendChild(h('div.pause-cover', h('div', h('h3', t('paused')), h('p', t('paused_text')), h('button.btn.btn-primary', { onclick: () => setPaused(false) }, icon('play'), t('resume')))));
+    if (!G.paused && cover) cover.remove();
+    const mi = document.getElementById('mist'), hi = document.getElementById('hint');
+    if (mi) mi.textContent = G.mistakes;
+    if (hi) hi.textContent = G.hints;
+    paintSide();
+  }
+
+  function paintSide() {
+    const counts = new Array(10).fill(0);
+    G.values.forEach((x, i) => { if (x && x === G.solution[i]) counts[x]++; });
+    const selNotes = sel >= 0 && !G.values[sel] ? G.notes[sel] : 0;
+    const tool = (name, label, onclick, extra) => h('button.tool' + (extra && extra.on ? '.on' : ''), { type: 'button', onclick, disabled: extra && extra.disabled, title: label }, icon(name), label, extra && extra.pill ? h('span.pill', extra.pill) : null);
+    const tools = h('div.tools',
+      tool('undo', t('undo'), undo, { disabled: !G.history.length || G.done }),
+      tool('erase', t('erase'), erase, { disabled: G.done }),
+      tool('pencil', t('pencil'), () => { pencil = !pencil; choosing = false; paint(); }, { on: pencil, pill: pencil ? 'ON' : 'OFF' }),
+      tool('pen', t('ink'), ink, { on: choosing, disabled: G.done || !selNotes }),
+      tool('check', t('check'), checkCell, { disabled: G.done }),
+      tool('bulb', t('tip'), showTip, { on: !!tip, disabled: G.done }));
+    const pad = h('div.pad', [1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => {
+      const left = 9 - counts[d];
+      const isChoice = choosing && ((selNotes >> d) & 1);
+      return h('button.key' + (left === 0 ? '.done' : '') + (pencil && !choosing ? '.pencil' : '') + (isChoice ? '.choice' : ''), { type: 'button', 'aria-label': String(d), onclick: () => input(d), disabled: choosing && !isChoice },
+        String(d), h('small', left > 0 ? String(left) : ''));
+    }));
+    const parts = [];
+    if (tip) parts.push(tipCard());
+    if (choosing) parts.push(h('div.choose-card', icon('pen'), t('choose_note')));
+    parts.push(tools, pad);
+    sideEl.replaceChildren(...parts);
+  }
+
+  function tipCard() {
+    const d = tip.digit;
+    let title, text;
+    if (tip.type === 'error') { title = t('tip_error_t'); text = t('tip_error'); }
+    else if (tip.type === 'naked') { title = t('tip_naked_t'); text = t('tip_naked', { d }); }
+    else if (tip.type === 'hidden') { title = t('tip_hidden_t', { d }); text = t('tip_hidden', { d, unit: t('unit_' + tip.unit) }); }
+    else { title = t('tip_reveal_t'); text = t('tip_reveal', { d }); }
+    return h('div.tip-card', h('h3', icon('bulb'), title), h('p', text),
+      h('div.row', h('button.btn.btn-ghost', { type: 'button', onclick: () => { tip = null; paint(); } }, t('close')),
+        h('button.btn.btn-primary', { type: 'button', onclick: applyTip }, tip.type === 'error' ? t('erase') : t('fill_it'))));
+  }
+
+  function showMenu() {
+    const item = (ic, label, fn) => h('button', { type: 'button', onclick: () => { m.close(); fn(); } }, icon(ic), label);
+    const m = modal([h('h3', 'Sudoku'), h('div.menu-list',
+      item('plus', t('new_game'), async () => { if (await confirmBox(t('confirm_new'), t('confirm_new_text'), t('start'))) startGame(G.level); }),
+      item('restart', t('restart'), restart),
+      h('hr'),
+      item('grid', t('check_board'), checkBoard),
+      item('magic', t('notes_auto'), autoNotes),
+      h('hr'),
+      item('gear', t('settings'), showSettings),
+      item('book', t('rules_title'), showRules),
+      item('home', t('leave'), () => { save(); showHome(); }))]);
+  }
+
+  function showSettings() {
+    const row = (key, label) => {
+      const sw = h('span.switch' + (settings[key] ? '.on' : ''));
+      return h('div.setting', { role: 'switch', tabindex: 0, 'aria-checked': String(settings[key]), onclick: e => {
+        settings[key] = !settings[key]; saveSettings(); sw.classList.toggle('on', settings[key]); e.currentTarget.setAttribute('aria-checked', String(settings[key]));
+        if (key === 'timer') renderGame(); else paint();
+      } }, h('span', label), sw);
+    };
+    const th = store.get('theme', 'auto');
+    const seg = h('div.seg', ['auto', 'light', 'dark'].map(k => h('button' + (k === th ? '.sel' : ''), { type: 'button', onclick: e => {
+      store.set('theme', k); applyTheme(); seg.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b === e.currentTarget));
+    } }, t('theme_' + k))));
+    modal([h('h3', t('settings')), row('conflicts', t('set_conflicts')), row('same', t('set_same')), row('autoclear', t('set_autoclear')), row('timer', t('set_timer')),
+      h('div.setting', { style: 'display:block' }, h('div', { style: 'margin-bottom:8px' }, t('theme')), seg),
+      h('div.setting', { onclick: showLanguages }, h('span', t('language')), h('span', { style: 'color:var(--muted)' }, I.LANGS[I.getLang()]))]);
+  }
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown', e => {
+    if (screen !== 'game' || !G || document.querySelector('.modal')) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    if (/^[1-9]$/.test(k)) { input(Number(k)); return; }
+    if (k === 'Backspace' || k === 'Delete' || k === '0') { erase(); return; }
+    const mv = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 }[k];
+    if (mv !== undefined) {
+      e.preventDefault();
+      if (sel < 0) sel = 40;
+      else { const r = E.ROW(sel), c = E.COL(sel); sel = mv === -9 ? ((r + 8) % 9) * 9 + c : mv === 9 ? ((r + 1) % 9) * 9 + c : mv === -1 ? r * 9 + (c + 8) % 9 : r * 9 + (c + 1) % 9; }
+      paint(); return;
+    }
+    const lk = k.toLowerCase();
+    if (lk === 'p' || lk === 'n') { pencil = !pencil; choosing = false; paint(); }
+    else if (lk === 'i') ink();
+    else if (lk === 'h') showTip();
+    else if (lk === 'c') checkCell();
+    else if (k === ' ' || k === 'Escape') { e.preventDefault(); if (k === 'Escape' && (tip || choosing)) { tip = null; choosing = false; paint(); } else if (k === ' ') setPaused(!G.paused); }
+  });
+
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  window.addEventListener('beforeunload', save);
+  applyTheme();
+  showHome();
+})();
