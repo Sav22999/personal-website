@@ -220,6 +220,15 @@
   const LLM = {
     lib: null, engine: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false,
     supported() { return 'gpu' in navigator && window.isSecureContext; },
+    /** WebLLM needs at least 10 storage buffers per shader stage (Firefox gives 9): checked before downloading. */
+    async gpuProblem() {
+      try {
+        const ad = await navigator.gpu.requestAdapter();
+        if (!ad) return 'Il browser non ha trovato una scheda grafica compatibile con WebGPU.';
+        if ((ad.limits.maxStorageBuffersPerShaderStage || 0) < 10) return 'La WebGPU di questo browser è troppo limitata per il modello (succede per esempio con Firefox).';
+        return '';
+      } catch (e) { return 'WebGPU non disponibile.'; }
+    },
     choice() { try { return localStorage.getItem('fischietto-chatbot-model') || 'standard'; } catch (e) { return 'standard'; } },
     setChoice(k) { try { localStorage.setItem('fischietto-chatbot-model', k); } catch (e) { /* private mode */ } },
     async fullId(k) {
@@ -410,6 +419,11 @@
     if (!box) return;
     if (!LLM.supported()) {
       box.innerHTML = '<span class="cb-st-dot off"></span><span><strong>Modalità ricerca.</strong> Questo browser non supporta WebGPU: l’assistente AI locale non può funzionare qui (prova con Chrome o Edge aggiornati, anche su Android). Le risposte arrivano dai riferimenti più pertinenti.</span>';
+      return;
+    }
+    const problem = LLM.state === 'ready' ? '' : await LLM.gpuProblem();
+    if (problem) {
+      box.innerHTML = '<span class="cb-st-dot off"></span><span><strong>Modalità ricerca.</strong> ' + esc(problem) + ' Per l’assistente AI locale usa <strong>Chrome</strong> o <strong>Edge</strong> aggiornati (computer o Android). Le risposte arrivano comunque dai riferimenti più pertinenti.</span>';
       return;
     }
     const k = LLM.choice(), M = MODELS[k];
