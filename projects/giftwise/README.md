@@ -55,6 +55,26 @@ Email di benvenuto, «X vuole seguirti» (quando serve la tua approvazione) e «
 
 L'anteprima del link la fa il server (`lib/preview.php`): legge Open Graph, Twitter card, JSON-LD e microdati; protezioni contro le richieste alla rete interna (solo porte 80/443, IP pubblici, connessione vincolata all'IP controllato, redirect verificati uno per uno, timeout brevi, massimo 1,5 MB). Alcuni negozi (per esempio Amazon) a volte rispondono con una pagina di verifica: in quel caso il titolo viene ricavato dall'indirizzo e il resto si compila a mano.
 
+## App Android (Google Play)
+
+La cartella `android/` è un progetto **Android Studio** (Java) con un'app nativa che mostra la web app in una WebView a schermo intero, come FoodTrack: funziona allo stesso modo su ogni telefono e si aggiorna da sola aggiornando il sito.
+
+Parti native (`MainActivity.java`, esposte alla pagina come `window.GiftwiseAndroid`, solo sulle pagine di Giftwise):
+
+- **«Continua con Google»** con il selettore di account di sistema (Credential Manager): il login Google non funziona dentro una WebView;
+- **«Condividi» da qualsiasi app** (un negozio, Amazon, il browser…): Giftwise compare nel menu Condividi di Android come «Aggiungi a Giftwise» e apre «Aggiungi un desiderio» con il link già compilato;
+- tasto indietro, link d'invito che aprono l'app, link esterni (pagine dei prodotti, modulo di contatto) nel browser, pagina «Nessuna connessione», tema chiaro/scuro come il sistema, rotazione libera su tablet.
+
+Passaggi:
+
+1. Apri `android/` in Android Studio (File → Open) e attendi la sincronizzazione di Gradle.
+2. **Package name**: `com.saverio.giftwise` (in `app/build.gradle.kts`): dopo la prima pubblicazione non si può più cambiare.
+3. Chiave di caricamento: Build → Generate Signed App Bundle / APK → Android App Bundle → Create new… (salva il `.jks` fuori dal repository), oppure copia `keystore.properties.sample` in `keystore.properties` (ignorato da git).
+4. **Login con Google nell'app**: in Google Cloud Console, nello **stesso progetto** del client «Applicazione web», crea un *ID client OAuth* di tipo **Android** con package `com.saverio.giftwise` e l'impronta **SHA-1** di ogni chiave che firma l'app (debug e firma di Google Play). Il codice non cambia: l'app usa il Client ID web letto dal server.
+5. Carica l'`.aab` in Play Console. Icona dello store: `android/play-store-icon-512.png`; privacy policy: `https://www.saveriomorelli.com/projects/giftwise/privacy.html`. Testi, screenshot (1080×1920) e immagine in primo piano (1024×500) sono in `android/store/` (`listing.md`).
+6. **Digital Asset Links** (per aprire i link d'invito nell'app): aggiungi a `/.well-known/assetlinks.json` un secondo oggetto con `package_name` `com.saverio.giftwise` e le impronte **SHA-256** delle sue chiavi (vedi `android/assetlinks.sample.json`).
+7. Ad ogni aggiornamento dell'app Android (raro) incrementa `versionCode` e `versionName`.
+
 ## Sicurezza
 
 Password con `password_hash`, sessione con token casuale in cookie HttpOnly/Secure/SameSite (nel database solo l'hash SHA-256), token CSRF su ogni modifica, limiti ai tentativi (accesso, registrazione, inviti, anteprime, messaggi), `credentials.php`, `lib/`, `install/` e `tools/` bloccati dal browser.

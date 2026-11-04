@@ -67,7 +67,8 @@
 :root[data-theme="dark"] .claim-seg .claim-taken.sel { background: #1F4D27; color: #CDEFD0; }
 .claims-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .claim-line { display: flex; align-items: center; gap: 10px; font-size: .88rem; }
-.claim-line span { flex: 1; min-width: 0; }
+.claim-line > span:not(.avatar) { flex: 1; min-width: 0; }
+.claim-line .avatar { flex: none; }
 
 /* Chat between friends (hidden from the owner) */
 .chat-wrap { background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 20px; padding: 12px; box-shadow: var(--card-shadow); }

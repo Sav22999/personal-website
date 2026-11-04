@@ -3,7 +3,7 @@ Options -Indexes
 DirectoryIndex index.html
 
 # Block credentials, samples, SQL, docs and hidden files anywhere in this folder
-<FilesMatch "(^\.|^credentials.*\.php$|\.(md|sql|log|bak)$)">
+<FilesMatch "(^\.|^credentials.*\.php$|\.(md|sql|log|bak|jks|keystore|properties|gradle|kts)$)">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
@@ -14,7 +14,7 @@ DirectoryIndex index.html
 </FilesMatch>
 
 # PHP libraries, installer data and tools are not reachable from the browser
-RedirectMatch 404 ^/projects/giftwise/(lib|install|tools)(/|$)
+RedirectMatch 404 ^/projects/giftwise/(lib|install|tools|android)(/|$)
 
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
