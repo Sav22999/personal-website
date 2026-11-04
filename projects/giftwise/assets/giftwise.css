@@ -1,0 +1,129 @@
+/* Giftwise — components specific to the app (on top of the shared design system in app.css). */
+
+/* Avatars (colour from the name) */
+.avatar { color: #fff; }
+.avatar.sm { width: 30px; height: 30px; font-size: .72rem; }
+.avatar.lg { width: 56px; height: 56px; font-size: 1.2rem; }
+.avatar-btn { border: 0; padding: 0; background: transparent; cursor: pointer; border-radius: 50%; margin: 0 4px 2px 6px; flex: none; }
+.avatar-btn .avatar { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--primary-container); }
+.appbar .brand img { border-radius: 5px; }
+
+/* Occasion badge */
+.occ { --oc: #E84A7F; width: 44px; height: 44px; border-radius: var(--r-md); display: grid; place-items: center; flex: none; color: #fff; background: var(--oc); }
+.occ .ic { width: 24px; height: 24px; }
+.occ-lg { width: 64px; height: 64px; border-radius: 20px; } .occ-lg .ic { width: 34px; height: 34px; }
+.occ-mini { width: 22px; height: 22px; border-radius: 7px; box-shadow: 0 0 0 2px var(--surface-1); } .occ-mini .ic { width: 13px; height: 13px; }
+.occ-birthday { --oc: #E84A7F; } .occ-christmas { --oc: #2E7D32; } .occ-wedding { --oc: #8E5BD1; } .occ-baby { --oc: #3E9BD6; }
+.occ-graduation { --oc: #E0A100; } .occ-anniversary { --oc: #D84343; } .occ-housewarming { --oc: #E8792F; } .occ-other { --oc: #6D6A8A; }
+.occ-wrap { position: relative; flex: none; display: inline-flex; }
+.occ-wrap .occ-mini { position: absolute; right: -4px; bottom: -4px; }
+.occ-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 2px 0 8px; }
+.occ-picker button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border: 1px solid var(--outline-variant); border-radius: var(--r-lg); background: var(--surface); color: var(--text); cursor: pointer; font-size: .76rem; font-weight: 600; min-width: 0; }
+.occ-picker button span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.occ-picker button .occ { width: 36px; height: 36px; border-radius: 11px; }
+.occ-picker button.sel { border-color: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); background: color-mix(in srgb, var(--primary-container) 45%, var(--surface)); }
+
+/* Wish thumbnails (product pictures from the shops) */
+.thumb { width: 56px; height: 56px; border-radius: 14px; overflow: hidden; flex: none; background: #fff; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--card-border); }
+.thumb img { width: 100%; height: 100%; object-fit: contain; }
+.thumb.noimg { background: var(--primary-container); color: var(--on-primary-container); }
+.thumb.sm { width: 40px; height: 40px; border-radius: 10px; } .thumb.sm .ic { width: 18px; height: 18px; }
+.thumb.lg { width: 72px; height: 72px; border-radius: 16px; }
+.thumb.xl { width: 100%; height: 220px; border-radius: 20px; }
+.thumb.xl.noimg .ic { width: 56px; height: 56px; }
+
+.list-card .covers { display: flex; gap: 6px; padding: 0 16px 14px 76px; margin-top: -6px; }
+.list-card.archived { opacity: .7; }
+.list-card .vis { display: inline-flex; align-items: center; gap: 3px; } .list-card .vis .ic { width: 14px; height: 14px; }
+.wish-card.top { border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+.wish-card .title .star { display: inline-flex; color: #E0A100; vertical-align: -3px; margin-right: 4px; } .wish-card .title .star .ic { width: 18px; height: 18px; }
+.price { font-weight: 700; color: var(--text); }
+.price.big { font-size: 1.5rem; margin: 0; letter-spacing: -.02em; }
+.note { font-size: .82rem; color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.status.taken { background: #D7F0D9; color: #0B3D16; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .status.taken { background: #1F4D27; color: #CDEFD0; } }
+:root[data-theme="dark"] .status.taken { background: #1F4D27; color: #CDEFD0; }
+
+/* Heads of the list pages */
+.list-head { display: flex; gap: 16px; align-items: flex-start; margin: 4px 0 14px; }
+.list-head .lead { margin: 8px 0 0; }
+.owner-line { margin: 2px 0 6px; font-weight: 650; }
+.secret-note { display: flex; align-items: center; gap: 10px; background: var(--surface-2); color: var(--muted); border-radius: var(--r-lg); padding: 10px 14px; font-size: .86rem; margin-bottom: 12px; }
+.secret-note .ic { color: var(--primary); width: 20px; height: 20px; }
+
+/* Wish details & "your plan" */
+.wish-detail { display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; }
+.wd-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.wd-meta p { margin: 0; }
+.wd-notes { background: var(--surface-2); border-radius: var(--r-lg); padding: 10px 14px; margin: 0 0 12px; white-space: pre-wrap; }
+.claim-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.claim-seg button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border-radius: var(--r-lg); border: 1px solid var(--outline-variant); background: var(--surface); color: var(--muted); cursor: pointer; font-weight: 650; font-size: .82rem; }
+.claim-seg button .ic { width: 22px; height: 22px; }
+.claim-seg button.sel { color: var(--text); }
+.claim-seg .claim-none.sel { background: var(--surface-2); border-color: var(--outline); }
+.claim-seg .claim-considering.sel { background: var(--warn-container); color: var(--on-warn-container); border-color: transparent; }
+.claim-seg .claim-taken.sel { background: #D7F0D9; color: #0B3D16; border-color: transparent; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .claim-seg .claim-taken.sel { background: #1F4D27; color: #CDEFD0; } }
+:root[data-theme="dark"] .claim-seg .claim-taken.sel { background: #1F4D27; color: #CDEFD0; }
+.claims-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.claim-line { display: flex; align-items: center; gap: 10px; font-size: .88rem; }
+.claim-line span { flex: 1; min-width: 0; }
+
+/* Chat between friends (hidden from the owner) */
+.chat-wrap { background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 20px; padding: 12px; box-shadow: var(--card-shadow); }
+.sheet .chat-wrap { background: var(--surface-2); border: 0; box-shadow: none; }
+.chat { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding: 2px 2px 8px; }
+.chat-empty { color: var(--muted); font-size: .88rem; margin: 4px 4px 8px; }
+.msg { display: flex; gap: 8px; align-items: flex-end; max-width: 88%; }
+.msg.mine { align-self: flex-end; flex-direction: row-reverse; }
+.bubble { background: var(--surface-2); border-radius: 16px 16px 16px 4px; padding: 7px 12px 6px; min-width: 0; }
+.sheet .bubble { background: var(--surface); }
+.msg.mine .bubble { background: var(--primary-container); color: var(--on-primary-container); border-radius: 16px 16px 4px 16px; }
+.bubble strong { display: block; font-size: .74rem; color: var(--primary); }
+.bubble p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92rem; }
+.bubble small { display: flex; gap: 8px; justify-content: flex-end; font-size: .68rem; opacity: .7; margin-top: 2px; }
+.msg-del { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; padding: 0; text-decoration: underline; }
+.chat-input { display: flex; gap: 8px; align-items: flex-end; }
+.chat-input textarea { flex: 1; min-width: 0; resize: none; border: 1px solid transparent; border-radius: 22px; background: var(--surface-2); padding: 10px 16px; min-height: 44px; max-height: 140px; outline: none; font-size: .95rem; line-height: 1.4; }
+.sheet .chat-input textarea { background: var(--surface); }
+.chat-input textarea:focus { border-color: var(--primary); }
+.chat-input .icon-btn { width: 44px; height: 44px; }
+
+/* Friends */
+.invite-card { padding: 16px; }
+.invite-card .ic-top { display: flex; gap: 14px; align-items: center; }
+.invite-card .ic-top strong { font-size: 1.05rem; }
+.invite-card .ic-top p { margin: 2px 0 0; color: var(--muted); font-size: .88rem; }
+.code-line { margin: 12px 0 2px; background: var(--surface-2); border-radius: var(--r-md); padding: 8px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-line code { font-size: .82rem; color: var(--muted); }
+.trail.gap { gap: 4px; }
+.pick-friends { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.friend-check { gap: 10px; padding: 6px 2px; }
+
+/* Add a wish */
+.url-actions { display: flex; justify-content: flex-end; margin: -4px 0 6px; }
+.url-actions .btn { height: 36px; padding: 0 16px; }
+.link-preview { display: flex; gap: 12px; align-items: center; background: var(--surface-2); border-radius: var(--r-lg); padding: 10px; margin: 4px 0 6px; }
+.link-preview strong { display: block; font-size: .95rem; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.link-preview small { color: var(--muted); }
+.field.narrow { flex: 0 0 96px !important; }
+
+/* How it works */
+.how-step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+.how-step strong { display: block; margin-bottom: 2px; }
+.how-step p { margin: 0; color: var(--muted); font-size: .9rem; }
+
+/* Bottom bar badge, desktop sidebar */
+.bottomnav a .pill { position: relative; }
+.bottomnav .dot { position: absolute; top: 0; right: 12px; min-width: 18px; height: 18px; border-radius: 999px; background: var(--danger); color: #fff; font-size: .66rem; font-weight: 800; display: grid; place-items: center; padding: 0 5px; }
+.sn-cta { width: 100%; height: 48px; margin: 0 0 12px; justify-content: flex-start; padding: 0 20px; }
+.sn-help { border: 0; background: transparent; cursor: pointer; width: 100%; font: inherit; text-align: left; margin-bottom: 6px; }
+.sn-brand img { border-radius: 8px; }
+
+@media (min-width: 960px) {
+  .occ-picker { grid-template-columns: repeat(8, 1fr); }
+  .thumb.xl { height: 260px; }
+  .chat { max-height: 520px; }
+}
+@media (min-width: 960px) { .appbar > .avatar-btn { display: none; } }
+@media (min-width: 960px) { .sheet.tall { height: auto; } }
