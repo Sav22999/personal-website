@@ -1,6 +1,17 @@
 /* Sudoku — release notes (newest first). Each note is translated in the five languages. */
 window.SudokuReleases = [
   {
+    version: '2.0.2',
+    date: '2026-11-04',
+    notes: {
+      en: ['New footer, like the other games'],
+      it: ['Nuovo piè di pagina, come negli altri giochi'],
+      es: ['Nuevo pie de página, como en los otros juegos'],
+      fr: ['Nouveau pied de page, comme dans les autres jeux'],
+      de: ['Neue Fußzeile, wie in den anderen Spielen'],
+    },
+  },
+  {
     version: '2.0.1',
     date: '2026-11-03',
     notes: {

@@ -38,7 +38,7 @@
       stats_line: '{m} mistakes · {h} tips', play_again: 'New puzzle', back_home: 'Back to menu',
       confirm_new: 'Start a new puzzle?', confirm_new_text: 'The current game will be lost.', confirm_restart: 'Restart this puzzle?', confirm_restart_text: 'All your numbers and notes will be erased.',
       start: 'Start', restart_btn: 'Restart',
-      credit_by: 'A project by', credit_ai: 'Built with AI', release_notes: 'Release notes', version: 'Version',
+      credit_by: 'A project by', credit_ai: 'Built with Claude AI', release_notes: 'Release notes', version: 'Version',
       generating: 'Creating a new puzzle…', saved: 'Game saved automatically',
     },
     it: {
@@ -76,7 +76,7 @@
       stats_line: '{m} errori · {h} suggerimenti', play_again: 'Nuovo puzzle', back_home: 'Torna al menu',
       confirm_new: 'Iniziare un nuovo puzzle?', confirm_new_text: 'La partita in corso andrà persa.', confirm_restart: 'Ricominciare questo puzzle?', confirm_restart_text: 'Tutti i tuoi numeri e le note verranno cancellati.',
       start: 'Inizia', restart_btn: 'Ricomincia',
-      credit_by: 'Un progetto di', credit_ai: 'Realizzato con AI', release_notes: 'Note di rilascio', version: 'Versione',
+      credit_by: 'Un progetto di', credit_ai: 'Realizzato con Claude AI', release_notes: 'Note di rilascio', version: 'Versione',
       generating: 'Creo un nuovo puzzle…', saved: 'Partita salvata automaticamente',
     },
     es: {
@@ -114,7 +114,7 @@
       stats_line: '{m} errores · {h} pistas', play_again: 'Nuevo puzle', back_home: 'Volver al menú',
       confirm_new: '¿Empezar un nuevo puzle?', confirm_new_text: 'Se perderá la partida actual.', confirm_restart: '¿Reiniciar este puzle?', confirm_restart_text: 'Se borrarán todos tus números y notas.',
       start: 'Empezar', restart_btn: 'Reiniciar',
-      credit_by: 'Un proyecto de', credit_ai: 'Creado con IA', release_notes: 'Notas de la versión', version: 'Versión',
+      credit_by: 'Un proyecto de', credit_ai: 'Creado con Claude AI', release_notes: 'Notas de la versión', version: 'Versión',
       generating: 'Creando un nuevo puzle…', saved: 'Partida guardada automáticamente',
     },
     fr: {
@@ -152,7 +152,7 @@
       stats_line: '{m} erreurs · {h} indices', play_again: 'Nouvelle grille', back_home: 'Retour au menu',
       confirm_new: 'Commencer une nouvelle grille ?', confirm_new_text: 'La partie en cours sera perdue.', confirm_restart: 'Recommencer cette grille ?', confirm_restart_text: 'Tous tes chiffres et tes notes seront effacés.',
       start: 'Commencer', restart_btn: 'Recommencer',
-      credit_by: 'Un projet de', credit_ai: 'Créé avec l’IA', release_notes: 'Notes de version', version: 'Version',
+      credit_by: 'Un projet de', credit_ai: 'Réalisé avec Claude AI', release_notes: 'Notes de version', version: 'Version',
       generating: 'Création d’une nouvelle grille…', saved: 'Partie enregistrée automatiquement',
     },
     de: {
@@ -190,7 +190,7 @@
       stats_line: '{m} Fehler · {h} Tipps', play_again: 'Neues Rätsel', back_home: 'Zurück zum Menü',
       confirm_new: 'Neues Rätsel starten?', confirm_new_text: 'Das aktuelle Spiel geht verloren.', confirm_restart: 'Dieses Rätsel neu starten?', confirm_restart_text: 'Alle deine Zahlen und Notizen werden gelöscht.',
       start: 'Starten', restart_btn: 'Neu starten',
-      credit_by: 'Ein Projekt von', credit_ai: 'Mit KI erstellt', release_notes: 'Versionshinweise', version: 'Version',
+      credit_by: 'Ein Projekt von', credit_ai: 'Erstellt mit Claude AI', release_notes: 'Versionshinweise', version: 'Version',
       generating: 'Neues Rätsel wird erstellt…', saved: 'Spiel automatisch gespeichert',
     },
   };
