@@ -1,7 +1,7 @@
 /* Giftwise — single page app.
  *
  * Tabs: My lists · Friends' lists · Friends. Routes (hash): #/lists, #/list/<id>, #/gifts, #/gift/<id>,
- * #/friends, #/friend/<id>, #/profile, #/invite/<code>.
+ * #/friends (search by username, requests, who I follow, my followers), #/user/<id>, #/profile, #/invite/<code>.
  * Sharing a product link to the installed app (Web Share Target) opens "Add a wish" with the link.
  *
  * The surprise: on a friend's list you can mark a wish ("I'm thinking about it" / "I'll get it") and chat
@@ -10,11 +10,11 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store } = UI;
   const t = (s, v) => I18N.t(s, v);
   const root = document.getElementById('app');
-  const S = { user: null, loaded: false, config: {}, friends: [], requests: { incoming: [], outgoing: [] }, myLists: [], friendLists: [], views: {}, signature: '' };
+  const S = { user: null, loaded: false, config: {}, following: [], followers: [], requests: { incoming: [], outgoing: [] }, myLists: [], friendLists: [], views: {}, signature: '' };
   const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
 
   const OCCASIONS = {
@@ -28,8 +28,8 @@
   // ===================================================== small helpers
 
   function applyState(d) {
-    for (const k of ['user', 'friends', 'requests', 'myLists', 'friendLists']) if (d[k] !== undefined) S[k] = d[k];
-    S.signature = JSON.stringify([S.friends, S.requests, S.myLists, S.friendLists.map(l => [l.id, l.updatedAt, l.takenCount, l.consideringCount, l.commentCount, l.itemCount])]);
+    for (const k of ['user', 'following', 'followers', 'requests', 'myLists', 'friendLists']) if (d[k] !== undefined) S[k] = d[k];
+    S.signature = JSON.stringify([S.following, S.followers, S.requests, S.myLists, S.friendLists.map(l => [l.id, l.updatedAt, l.takenCount, l.consideringCount, l.commentCount, l.itemCount])]);
   }
   async function act(route, body, button) {
     const d = await busy(button || null, () => Api.post(route, body));
@@ -38,7 +38,6 @@
     return d;
   }
   const myList = id => S.myLists.find(l => l.id === Number(id));
-  const friendById = id => S.friends.find(f => f.id === Number(id));
   function initials(name) { return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase(); }
   function avatar(name, cls) {
     let hash = 0; for (const ch of String(name || '')) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
@@ -126,7 +125,7 @@
   }
   const DESK = matchMedia('(min-width: 960px)');
   DESK.addEventListener('change', () => { if (S.user && S.loaded) { UI.closeAllSheets(); render(true); } });
-  const NAV_OF = { list: 'lists', gift: 'gifts', friend: 'friends', invite: 'friends' };
+  const NAV_OF = { list: 'lists', gift: 'gifts', user: 'friends', invite: 'friends' };
 
   let lastKey = '';
   function render(keepScroll) {
@@ -135,7 +134,7 @@
     const r = route();
     const key = r.name + '/' + (r.id || '');
     const y = window.scrollY;
-    const views = { lists: viewLists, list: viewList, gifts: viewGifts, gift: viewGift, friends: viewFriends, friend: viewFriend, profile: viewProfile, invite: viewInvite };
+    const views = { lists: viewLists, list: viewList, gifts: viewGifts, gift: viewGift, friends: viewFriends, user: viewPerson, profile: viewProfile, invite: viewInvite };
     const v = (views[r.name] || viewLists)(r.id);
     if (!v) return;
     const showBack = v.back && !(DESK.matches && ['profile'].includes(r.name));
@@ -188,9 +187,9 @@
   function viewLists() {
     const body = [];
     const active = S.myLists.filter(l => !l.archived), archived = S.myLists.filter(l => l.archived);
-    if (!S.friends.length && !store.get('hide.nofriends', false)) {
-      body.push(banner('info', 'personAdd', t('Invite your friends'), t('Your lists are visible only to your friends on Giftwise. Send them your invite link: you will be friends as soon as they open it.'),
-        [btn(t('Later'), { kind: 'text', onclick: () => { store.set('hide.nofriends', true); render(true); } }), btn(t('Invite'), { icon: 'share', onclick: () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()) })]));
+    if (!S.following.length && !S.followers.length && !store.get('hide.nofriends', false)) {
+      body.push(banner('info', 'personAdd', t('Invite your friends'), t('Only the people who follow you see your lists. Find your friends by username, or send them your invite link: whoever opens it and you will follow each other.'),
+        [btn(t('Later'), { kind: 'text', onclick: () => { store.set('hide.nofriends', true); render(true); } }), btn(t('Find friends'), { icon: 'search', onclick: () => go('friends') })]));
     }
     if (!active.length) {
       body.push(empty('gift', t('No wish lists yet'), t('Create a list for your birthday, Christmas, your wedding… and add everything you would like to receive.'),
@@ -205,7 +204,7 @@
   }
 
   function listCard(l) {
-    const vis = l.visibility === 'friends' ? t('All friends') : plural(l.viewers.length, 'friend', 'friends');
+    const vis = l.visibility === 'friends' ? t('All followers') : plural(l.viewers.length, 'follower', 'followers');
     const covers = l.items.filter(i => i.image).slice(0, 3);
     return h('div.card.clickable.list-card' + (l.archived ? '.archived' : ''), { role: 'button', tabindex: 0, onclick: () => go('list/' + l.id), onkeydown: e => { if (e.key === 'Enter' && e.target === e.currentTarget) go('list/' + l.id); } },
       listRow({
@@ -248,10 +247,10 @@
     const viewersBox = h('div.pick-friends');
     function paintViewers() {
       viewersBox.hidden = visibility !== 'selected';
-      viewersBox.replaceChildren(...(S.friends.length ? S.friends.map(f => {
+      viewersBox.replaceChildren(...(S.followers.length ? S.followers.map(f => {
         const cb = h('input', { type: 'checkbox', checked: chosen.has(f.id), onchange: () => { cb.checked ? chosen.add(f.id) : chosen.delete(f.id); } });
         return h('label.check.friend-check', cb, avatar(f.name, 'sm'), h('span', f.name));
-      }) : [h('p.helper', t('You have no friends on Giftwise yet: add them from the Friends tab.'))]));
+      }) : [h('p.helper', t('Nobody follows you yet: find your friends in the Friends tab.'))]));
     }
     paintViewers();
     const save = btn(isEdit ? t('Save') : t('Create list'), { icon: 'check', onclick: async () => {
@@ -268,7 +267,7 @@
         field(t('Date of the event (optional)'), date, { hint: t('Friends see how many days are left') }),
         field(t('Message for your friends (optional)'), desc),
         h('div.label', t('Who can see it')),
-        seg([['friends', t('All my friends'), 'group'], ['selected', t('Only some friends'), 'lock']], visibility, v => { visibility = v; paintViewers(); }),
+        seg([['friends', t('All my followers'), 'group'], ['selected', t('Only some of them'), 'lock']], visibility, v => { visibility = v; paintViewers(); }),
         viewersBox,
       ],
       actions: [cancelBtn(), save],
@@ -281,7 +280,7 @@
     const body = [];
     body.push(h('div.list-head',
       h('span.occ.occ-lg.occ-' + l.occasion, icon(occIcon(l.occasion))),
-      h('div', h('div.meta-row', chip(occLabel(l.occasion), 'neutral'), dateChip(l.eventDate), chip(l.visibility === 'friends' ? t('All friends') : plural(l.viewers.length, 'friend', 'friends'), 'neutral', l.visibility === 'friends' ? 'group' : 'lock')),
+      h('div', h('div.meta-row', chip(occLabel(l.occasion), 'neutral'), dateChip(l.eventDate), chip(l.visibility === 'friends' ? t('All followers') : plural(l.viewers.length, 'follower', 'followers'), 'neutral', l.visibility === 'friends' ? 'group' : 'lock')),
         l.description ? h('p.lead.muted', l.description) : null)));
     if (!store.get('hide.surprise', false)) {
       body.push(banner('info', 'visibilityOff', t('Your surprise is safe'), t('Friends can mark what they are going to give you and talk about it, but you will never see it. Keep your list up to date and leave the rest to them.'),
@@ -417,9 +416,9 @@
   function viewGifts() {
     const body = [];
     const lists = S.friendLists;
-    if (!S.friends.length) {
-      body.push(empty('group', t('No friends yet'), t('Add your friends to see their wish lists and agree with the others on who gives what.'),
-        btn(t('Add friends'), { icon: 'personAdd', onclick: () => go('friends') })));
+    if (!S.following.length) {
+      body.push(empty('group', t('You don’t follow anyone yet'), t('Follow your friends to see their wish lists and agree with the others on who gives what.'),
+        btn(t('Find friends'), { icon: 'search', onclick: () => go('friends') })));
       return { tab: 'gifts', title: t('Friends’ lists'), body };
     }
     if (!lists.length) body.push(empty('gift', t('Nothing here yet'), t('When your friends create a wish list, you will find it here.')));
@@ -550,62 +549,126 @@
     try { applyState(await Api.get('state')); } catch (e) { /* offline */ }
   }
 
-  // ===================================================== FRIENDS
+  // ===================================================== PEOPLE (follow / followers)
+
+  const at = u => (u && u.username ? '@' + u.username : '');
+  let searchQ = '', searchResults = null, searchTimer = null, searchSeq = 0;
+
+  /** Follow button for a person, from the relation (following: none | pending | accepted). */
+  function followBtn(p, small) {
+    const kind = p.following === 'accepted' ? 'tonal' : p.following === 'pending' ? 'text' : 'filled';
+    const label = p.following === 'accepted' ? t('Following') : p.following === 'pending' ? t('Requested') : (p.followsMe === 'accepted' ? t('Follow back') : t('Follow'));
+    const b = btn(label, { kind, icon: p.following === 'accepted' ? 'check' : p.following === 'pending' ? 'timer' : 'personAdd', cls: small ? 'btn-sm' : '', onclick: async e => {
+      e.stopPropagation();
+      if (p.following === 'none') {
+        const d = await act('follow', { userId: p.id }, b);
+        p.following = d.result === 'following' ? 'accepted' : 'pending';
+        toast(d.result === 'following' ? t('You now follow {name}', { name: p.name.split(' ')[0] }) : t('Request sent: {name} has to accept it', { name: p.name.split(' ')[0] }));
+      } else if (p.following === 'pending') {
+        await act('unfollow', { userId: p.id }, b); p.following = 'none'; toast(t('Request cancelled'));
+      } else if (await confirm(t('Stop following {name}?', { name: p.name }), t('You will no longer see their wish lists. Your plans and messages on their lists stay, but you will not see them unless you follow them again.'), t('Unfollow'), true)) {
+        await act('unfollow', { userId: p.id }); p.following = 'none'; toast(t('You no longer follow {name}', { name: p.name.split(' ')[0] }));
+      }
+      paintSearch();
+    } });
+    return b;
+  }
+
+  function personRow(p, trail, sub) {
+    return h('div.list-row.person-row', { role: 'button', tabindex: 0, onclick: () => go('user/' + p.id), onkeydown: e => { if (e.key === 'Enter' && e.target === e.currentTarget) go('user/' + p.id); } },
+      avatar(p.name), h('div.body', h('p.title', p.name), h('div.sub', sub || at(p))), trail ? h('div.trail.gap', trail) : null);
+  }
+
+  const resultsBox = h('div.search-results');
+  function paintSearch() {
+    UI.clear(resultsBox);
+    if (!searchQ.trim()) return;
+    if (searchResults === null) { resultsBox.appendChild(h('p.helper', t('Searching…'))); return; }
+    if (!searchResults.length) {
+      resultsBox.appendChild(h('div.card.empty-search', h('p', t('Nobody found with “{q}”.', { q: searchQ })), h('p.small.muted', t('Check the username, or invite them with your link.')),
+        btn(t('Share invite link'), { kind: 'tonal', icon: 'share', onclick: () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()) })));
+      return;
+    }
+    resultsBox.appendChild(h('div.group', searchResults.map(p => personRow(p, followBtn(p, true), [at(p), p.followsMe === 'accepted' ? ' · ' + t('follows you') : ''].join('')))));
+  }
 
   function viewFriends() {
     const body = [];
     const inc = S.requests.incoming, out = S.requests.outgoing;
-    body.push(h('div.card.invite-card',
-      h('div.ic-top', tile('icon', 'personAdd', 'lg'), h('div', h('strong', t('Invite your friends')), h('p', t('Whoever opens your link becomes your friend on Giftwise (they can sign up in a few seconds).')))),
-      h('div.code-line', h('code', inviteUrl().replace(/^https?:\/\//, ''))),
-      h('div.btn-row', btn(t('Share invite link'), { icon: 'share', onclick: () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()) }),
-        btn(t('Add by email'), { kind: 'tonal', icon: 'personAdd', onclick: openAddFriend }))));
+    const q = input({ type: 'search', value: searchQ, placeholder: t('Search by username or email'), enterkeyhint: 'search', autocapitalize: 'none', autocomplete: 'off', 'aria-label': t('Search people') });
+    q.addEventListener('input', () => {
+      searchQ = q.value; searchResults = null; clearTimeout(searchTimer); paintSearch();
+      const term = q.value.trim();
+      if (term.replace(/^@/, '').length < 2) { searchResults = []; if (!term) UI.clear(resultsBox); else paintSearch(); return; }
+      const seq = ++searchSeq;
+      searchTimer = setTimeout(async () => {
+        try { const d = await Api.get('user.search&q=' + encodeURIComponent(term)); if (seq === searchSeq) { searchResults = d.results; paintSearch(); } }
+        catch (e) { if (seq === searchSeq) { searchResults = []; paintSearch(); } }
+      }, 250);
+    });
+    body.push(h('div.searchbar', icon('search'), q));
+    body.push(resultsBox);
+    paintSearch();
     if (inc.length) {
-      body.push(sectionTitle(t('Friend requests'), inc.length));
-      body.push(h('div.group', inc.map(p => h('div.list-row', avatar(p.name), h('div.body', h('p.title', p.name), h('div.sub', p.email)),
-        h('div.trail.gap', btn(t('Decline'), { kind: 'text', onclick: e => act('friend.decline', { userId: p.id }, e.currentTarget) }), btn(t('Accept'), { icon: 'check', onclick: e => act('friend.accept', { userId: p.id }, e.currentTarget).then(() => toast(t('You and {name} are now friends', { name: p.name.split(' ')[0] }))) }))))));
+      body.push(sectionTitle(t('Requests to follow you'), inc.length));
+      body.push(h('div.group', inc.map(p => personRow(p, [
+        btn(t('Decline'), { kind: 'text', cls: 'btn-sm', onclick: e => { e.stopPropagation(); act('follow.decline', { userId: p.id }, e.currentTarget); } }),
+        btn(t('Accept'), { icon: 'check', cls: 'btn-sm', onclick: e => { e.stopPropagation(); act('follow.accept', { userId: p.id }, e.currentTarget).then(() => toast(t('{name} now follows you', { name: p.name.split(' ')[0] }))); } }),
+      ]))));
     }
-    body.push(sectionTitle(t('Your friends'), S.friends.length));
-    if (!S.friends.length) body.push(h('p.helper', t('No friends yet: share your invite link.')));
-    else body.push(h('div.group', S.friends.map(f => {
+    body.push(sectionTitle(t('You follow'), S.following.length));
+    if (!S.following.length) body.push(h('p.helper', t('You don’t follow anyone yet: search for your friends by username.')));
+    else body.push(h('div.group', S.following.map(f => {
       const n = S.friendLists.filter(l => l.owner.id === f.id).length;
-      return h('a.list-row', { href: '#/friend/' + f.id }, avatar(f.name), h('div.body', h('p.title', f.name), h('div.sub', n ? plural(n, 'wish list', 'wish lists') : t('No lists shared with you'))), h('div.trail', icon('right')));
+      return personRow(f, icon('right'), [at(f), n ? plural(n, 'wish list', 'wish lists') : t('No lists shared with you')].filter(Boolean).join(' · '));
     })));
+    body.push(sectionTitle(t('Your followers'), S.followers.length));
+    if (!S.followers.length) body.push(h('p.helper', t('Nobody follows you yet. Share your invite link: who opens it and you will follow each other.')));
+    else body.push(h('div.group', S.followers.map(f => personRow(f, icon('right'), [at(f), S.following.some(x => x.id === f.id) ? t('you follow each other') : ''].filter(Boolean).join(' · ')))));
     if (out.length) {
       body.push(sectionTitle(t('Waiting for an answer'), out.length));
-      body.push(h('div.group', out.map(p => h('div.list-row', avatar(p.name), h('div.body', h('p.title', p.name), h('div.sub', t('Request sent {when}', { when: UI.ago(p.at) }))),
-        h('div.trail', btn(t('Cancel'), { kind: 'text', onclick: e => act('friend.decline', { userId: p.id }, e.currentTarget) }))))));
+      body.push(h('div.group', out.map(p => personRow(p, btn(t('Cancel'), { kind: 'text', cls: 'btn-sm', onclick: e => { e.stopPropagation(); act('unfollow', { userId: p.id }, e.currentTarget); } }), at(p) + ' · ' + t('Request sent {when}', { when: UI.ago(p.at) })))));
     }
-    return { tab: 'friends', title: t('Friends'), body, fab: fab(t('Invite'), 'personAdd', () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl())) };
+    body.push(h('div.card.invite-card',
+      h('div.ic-top', tile('icon', 'share', 'lg'), h('div', h('strong', t('Invite your friends')), h('p', t('Not on Giftwise yet? Send them your link: when they open it you will follow each other (they can sign up in a few seconds).')))),
+      h('div.code-line', h('code', inviteUrl().replace(/^https?:\/\//, ''))),
+      h('div.btn-row', btn(t('Share invite link'), { icon: 'share', onclick: () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()) }))));
+    return { tab: 'friends', title: t('Friends'), body, fab: fab(t('Invite'), 'share', () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl())), after: () => { if (searchQ && document.activeElement === document.body) {} } };
   }
 
-  function openAddFriend() {
-    const email = input({ type: 'email', inputmode: 'email', maxlength: 190, autocomplete: 'off' });
-    const send = btn(t('Send request'), { icon: 'send', onclick: async () => {
-      try {
-        const d = await busy(send, () => Api.post('friend.request', { email: email.value }));
-        applyState(d); render(true); s.close();
-        toast(d.result === 'accepted' ? t('You are now friends!') : t('Request sent: you will be friends once accepted'));
-      } catch (e) {
-        if (e.code === 'no_user') { s.close(); setTimeout(() => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()), 250); }
-      }
+  const people = {};
+  function viewPerson(id) {
+    id = Number(id);
+    if (id === S.user.id) { go('profile'); return null; }
+    const known = S.following.find(x => x.id === id) || S.followers.find(x => x.id === id) || S.requests.incoming.find(x => x.id === id) || S.requests.outgoing.find(x => x.id === id);
+    const p = people[id];
+    if (!p) {
+      Api.get('user.get&id=' + id).then(d => { people[id] = d.person; render(true); }).catch(e => { toast(e.message, 'error'); go('friends'); });
+      return { tab: 'friends', title: known ? known.name : t('Profile'), back: 'friends', body: [h('div.loader')] };
+    }
+    // Keep the relation in sync with the latest state
+    p.following = S.following.some(x => x.id === id) ? 'accepted' : S.requests.outgoing.some(x => x.id === id) ? 'pending' : 'none';
+    p.followsMe = S.followers.some(x => x.id === id) ? 'accepted' : S.requests.incoming.some(x => x.id === id) ? 'pending' : 'none';
+    const lists = S.friendLists.filter(l => l.owner.id === id);
+    const first = p.name.split(' ')[0];
+    const body = [h('div.card.person-card', listRow({ big: true, lead: avatar(p.name, 'lg'), title: p.name, sub: at(p),
+      meta: [p.followsMe === 'accepted' ? chip(t('Follows you'), 'neutral', 'group') : null, p.following === 'accepted' && p.followsMe === 'accepted' ? chip(t('You follow each other'), 'ok', 'check') : null] }),
+      h('div.btn-row', followBtn(p))) ];
+    if (p.followsMe === 'pending') {
+      body.push(banner('info', 'personAdd', t('{name} wants to follow you', { name: first }), t('If you accept, {name} will see your wish lists.', { name: first }),
+        [btn(t('Decline'), { kind: 'text', onclick: e => act('follow.decline', { userId: id }, e.currentTarget) }), btn(t('Accept'), { icon: 'check', onclick: e => act('follow.accept', { userId: id }, e.currentTarget) })]));
+    }
+    if (p.following === 'accepted') {
+      body.push(sectionTitle(t('Wish lists'), lists.length));
+      body.push(lists.length ? h('div.stack', lists.map(giftCard)) : h('p.helper', t('{name} has not shared any wish list with you yet.', { name: first })));
+    } else {
+      body.push(h('div.locked', icon('lock'), h('p', p.following === 'pending' ? t('Waiting for {name} to accept your request.', { name: first }) : t('Follow {name} to see their wish lists.', { name: first }))));
+    }
+    const menu = [];
+    if (p.followsMe === 'accepted') menu.push({ icon: 'delete', label: t('Remove from your followers'), danger: true, onclick: async () => {
+      if (await confirm(t('Remove {name} from your followers?', { name: p.name }), t('{name} will no longer see your wish lists (they are not notified).', { name: first }), t('Remove'), true)) { await act('follower.remove', { userId: id }); toast(t('Removed from your followers')); }
     } });
-    email.addEventListener('keydown', e => { if (e.key === 'Enter') send.click(); });
-    const s = sheet({ title: t('Add a friend'), body: [h('p.sheet-text', t('Enter the email they use on Giftwise. If they are not on Giftwise yet, send them your invite link instead.')), field('Email', email)], actions: [cancelBtn(), send] });
-  }
-
-  function viewFriend(id) {
-    const f = friendById(id);
-    if (!f) { go('friends'); return null; }
-    const lists = S.friendLists.filter(l => l.owner.id === f.id);
-    const body = [
-      h('div.card', listRow({ big: true, lead: avatar(f.name, 'lg'), title: f.name, sub: f.email, meta: [f.since ? chip(t('Friends since {d}', { d: UI.fmtDateTime(f.since).split(' ')[0] }), 'neutral', 'group') : null] })),
-      sectionTitle(t('Wish lists'), lists.length),
-      lists.length ? h('div.stack', lists.map(giftCard)) : h('p.helper', t('{name} has not shared any wish list with you yet.', { name: f.name.split(' ')[0] })),
-    ];
-    return { tab: 'friends', title: f.name, back: 'friends', body, actions: [moreBtn([{ icon: 'delete', label: t('Remove friend'), danger: true, onclick: async () => {
-      if (await confirm(t('Remove {name}?', { name: f.name }), t('You will no longer see each other’s lists. Your plans and messages on their lists stay, but you will not see them unless you become friends again.'), t('Remove'), true)) { await act('friend.remove', { userId: f.id }); goLater('friends'); }
-    } }], f.name)] };
+    return { tab: 'friends', title: p.name, back: 'friends', body, actions: menu.length ? [moreBtn(menu, p.name)] : [] };
   }
 
   function viewInvite(code) {
@@ -613,23 +676,32 @@
     if (code === S.user.inviteCode) { setTimeout(() => { toast(t('This is your own invite link: share it with your friends.')); go('friends'); }, 0); return null; }
     Api.post('invite.accept', { code }).then(d => {
       applyState(d); location.replace('#/friends');
-      toast(d.already ? t('You and {name} are already friends', { name: d.friendName.split(' ')[0] }) : t('You and {name} are now friends!', { name: d.friendName.split(' ')[0] }));
+      toast(d.already ? t('You and {name} already follow each other', { name: d.friendName.split(' ')[0] }) : t('You and {name} now follow each other!', { name: d.friendName.split(' ')[0] }));
     }).catch(e => { toast(e.message, 'error'); location.replace('#/friends'); });
     return { tab: 'friends', title: t('Invite'), back: 'friends', body: [h('div.loader')] };
   }
 
   // ===================================================== PROFILE
 
+  /** "Developed with ♥ by Saverio Morelli" at the bottom of the profile, in the font of the website (heart as SVG). */
+  function devCredit() {
+    return h('a.dev-credit', { href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener', 'aria-label': t('Developed with love by Saverio Morelli') },
+      h('span', t('Developed with')), h('span.dev-heart', { html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#E5484D" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' }), h('span', t('by')), h('span.dev-name', 'Saverio Morelli'));
+  }
+
   function viewProfile() {
     const u = S.user;
     const theme = store.get('theme', 'auto');
     const body = [
-      h('div.card', listRow({ big: true, lead: avatar(u.name, 'lg'), title: u.name, sub: u.email, meta: [u.googleLinked ? chip('Google', 'neutral', 'link') : null] })),
+      h('div.card', listRow({ big: true, lead: avatar(u.name, 'lg'), title: u.name, sub: '@' + (u.username || '') + ' · ' + u.email,
+        meta: [chip(plural(S.followers.length, 'follower', 'followers'), 'neutral', 'group'), chip(t('{n} following', { n: S.following.length }), 'neutral'), u.googleLinked ? chip('Google', 'neutral', 'link') : null] })),
       sectionTitle(t('Account')),
       h('div.group',
+        groupRow('person', t('Username'), '@' + (u.username || '—'), openUsernameForm),
         groupRow('edit', t('Name and email'), u.name + ' · ' + u.email, openProfileForm),
+        groupRow('lock', t('Who can follow you'), u.followPolicy === 'open' ? t('Everyone, without asking') : t('Only people you approve'), openPrivacy),
         groupRow('lock', u.hasPassword ? t('Change password') : t('Set a password'), u.hasPassword ? null : t('Sign in also without Google'), openPasswordForm),
-        groupRow('personAdd', t('Your invite link'), t('Share it to add friends'), () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()))),
+        groupRow('personAdd', t('Your invite link'), t('Whoever opens it and you will follow each other'), () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()))),
       sectionTitle(t('Preferences')),
       h('div.group',
         groupRow('globe', t('Language'), (I18N.langs.find(l => l[0] === I18N.lang) || [, ''])[1], () => actionSheet(I18N.langs.map(([k, label]) => ({ icon: 'globe', label, selected: k === I18N.lang, onclick: () => I18N.set(k) })), t('Language'))),
@@ -642,6 +714,7 @@
         groupRow('logout', t('Sign out'), null, async () => { try { await Api.post('auth.logout', {}); } catch (e) { /* ignore */ } S.user = null; S.loaded = false; render(); }),
         groupRow('delete', t('Delete my account'), t('Lists, wishes and friendships are deleted'), openDeleteAccount, { danger: true })),
     ];
+    body.push(devCredit());
     return { tab: null, title: t('Profile'), back: 'lists', body, cls: 'narrow' };
   }
 
@@ -650,6 +723,20 @@
     const email = input({ type: 'email', value: S.user.email, maxlength: 190, autocomplete: 'email' });
     const save = btn(t('Save'), { icon: 'check', onclick: async () => { await act('auth.profile', { name: name.value, email: email.value }, save); s.close(); toast(t('Profile updated')); } });
     const s = sheet({ title: t('Name and email'), body: [field(t('Name'), name), field('Email', email)], actions: [cancelBtn(), save] });
+  }
+
+  function openUsernameForm() {
+    const v = input({ value: S.user.username || '', maxlength: 20, autocapitalize: 'none', spellcheck: 'false', placeholder: ' ', class: 'input' });
+    const save = btn(t('Save'), { icon: 'check', onclick: async () => { await act('account.username', { username: v.value }, save); s.close(); toast(t('Username updated')); } });
+    const s = sheet({ title: t('Username'), body: [h('p.sheet-text', t('It is public: your friends search for you with it. 3–20 letters, digits, dots and underscores.')), h('div.field.uname-field', h('span.at', '@'), v, h('label', { for: (v.id = 'f-uname2') }, t('Username')))], actions: [cancelBtn(), save] });
+  }
+
+  function openPrivacy() {
+    const cur = S.user.followPolicy || 'approve';
+    actionSheet([
+      { icon: 'lock', label: t('Only people you approve'), selected: cur === 'approve', onclick: () => act('account.privacy', { followPolicy: 'approve' }).then(() => toast(t('New followers will need your approval'))) },
+      { icon: 'group', label: t('Everyone, without asking'), selected: cur === 'open', onclick: () => act('account.privacy', { followPolicy: 'open' }).then(() => toast(t('Anyone can now follow you'))) },
+    ], t('Who can follow you (and see your lists)'));
   }
 
   function openPasswordForm() {
@@ -677,7 +764,7 @@
       title: t('How Giftwise works'),
       body: [
         step('list', t('1 · Make your wish lists'), t('One for your birthday, one for Christmas, one for your wedding… Add anything: paste or share a link from any shop and Giftwise fills in the details.')),
-        step('personAdd', t('2 · Add your friends'), t('Send your invite link. Your friends see your lists, you see theirs (you can also share a list with only some friends).')),
+        step('personAdd', t('2 · Follow your friends'), t('Search them by username and follow them: you see the lists of the people you follow, and your followers see yours. You decide who can follow you (and you can share a list with only some followers).')),
         step('visibilityOff', t('3 · The surprise stays a surprise'), t('On a friend’s list you can mark a wish as “Thinking about it” or “I’ll get it” and chat with the others. The owner of the list never sees any of it.')),
         step('gift', t('4 · No more doubles'), t('Everyone knows what has already been taken: no duplicate presents, and splitting a big gift is easy.')),
       ],
@@ -690,7 +777,7 @@
   function features(cls) {
     return h('ul.features.' + cls,
       h('li', tile('icon', 'list', 'sm'), t('Wish lists for every occasion, with links, pictures and prices')),
-      h('li', tile('icon', 'group', 'sm'), t('Your friends see your lists, you see theirs')),
+      h('li', tile('icon', 'group', 'sm'), t('Follow your friends with their username and see their lists')),
       h('li', tile('icon', 'visibilityOff', 'sm'), t('They agree on who gives what: you never see it')),
       h('li', tile('icon', 'gift', 'sm'), t('No more duplicate or unwanted presents')));
   }
@@ -705,21 +792,44 @@
     const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', maxlength: 190 });
     const pw = input({ type: 'password', autocomplete: mode === 'login' ? 'current-password' : 'new-password' });
     const name = input({ autocomplete: 'name', maxlength: 80 });
+    const uname = input({ autocomplete: 'username', maxlength: 20, autocapitalize: 'none', spellcheck: 'false', placeholder: ' ', class: 'input' });
+    const unameHint = h('p.hint');
+    let unameTouched = false;
+    const slug = v => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '').slice(0, 20);
+    let checkTimer = null;
+    function checkUsername() {
+      clearTimeout(checkTimer);
+      const v = uname.value.trim().replace(/^@/, '').toLowerCase();
+      if (!v) { unameHint.textContent = t('Public: your friends find you with it. You can change it later.'); unameHint.className = 'hint'; return; }
+      checkTimer = setTimeout(async () => {
+        try {
+          const d = await Api.get('username.check&u=' + encodeURIComponent(v), { silentAuth: true });
+          // The username suggested from the name is taken: propose a free one straight away
+          if (!unameTouched && d.valid && !d.available && d.suggestion) { uname.value = d.suggestion; d.username = d.suggestion; d.available = true; }
+          unameHint.textContent = !d.valid ? t('3–20 letters, digits, dots and underscores') : d.available ? t('@{u} is available', { u: d.username }) : t('@{u} is already taken', { u: d.username });
+          unameHint.className = 'hint ' + (d.valid && d.available ? 'ok' : 'bad');
+        } catch (e) { /* offline */ }
+      }, 300);
+    }
+    name.addEventListener('input', () => { if (!unameTouched) { uname.value = slug(name.value); checkUsername(); } });
+    uname.addEventListener('input', () => { unameTouched = true; checkUsername(); });
+    checkUsername();
     const privacy = h('input', { type: 'checkbox' });
     const gslot = h('div.google-slot');
     const invited = h('div');
-    if (pending) Api.get('invite.info&code=' + pending, { silentAuth: true }).then(d => invited.replaceChildren(banner('info', 'gift', t('{name} invited you!', { name: d.name }), t('Create an account (or sign in): you and {name} will be friends straight away.', { name: d.name })))).catch(() => {});
+    if (pending) Api.get('invite.info&code=' + pending, { silentAuth: true }).then(d => invited.replaceChildren(banner('info', 'gift', t('{name} invited you!', { name: d.name }), t('Create an account (or sign in): you and {name} will follow each other straight away.', { name: d.name })))).catch(() => {});
     const submit = btn(mode === 'login' ? t('Sign in') : t('Create account'), { type: 'submit', cls: 'btn-block' });
     const form = h('form', { novalidate: true, onsubmit: async e => {
       e.preventDefault(); err.hidden = true;
       try {
         const d = await busy(submit, () => mode === 'login'
           ? Api.post('auth.login', { email: email.value, password: pw.value, inviteCode: pending }, { silentAuth: true })
-          : Api.post('auth.register', { name: name.value, email: email.value, password: pw.value, inviteCode: pending, acceptPrivacy: privacy.checked }, { silentAuth: true }));
+          : Api.post('auth.register', { name: name.value, username: uname.value, email: email.value, password: pw.value, inviteCode: pending, acceptPrivacy: privacy.checked }, { silentAuth: true }));
         S.user = d.user; afterLogin(pending);
       } catch (ex) { showErr(ex.message); }
     } },
       mode === 'register' ? field(t('Name'), name) : null,
+      mode === 'register' ? h('div.field.uname-field', h('span.at', '@'), uname, h('label', { for: (uname.id = 'f-uname') }, t('Username')), unameHint) : null,
       field('Email', email),
       field(mode === 'login' ? 'Password' : t('Password (min. 8 characters)'), pw),
       mode === 'register' ? h('label.check', privacy, h('span', t('I have read and accept the '), h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, t('privacy policy')))) : null,

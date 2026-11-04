@@ -1365,6 +1365,12 @@
     const s = sheet({ title, body: [extra ? h('p.sheet-text', extra) : null, field(label, inp)], actions: [cancelBtn(), ok] });
   }
 
+  /** "Developed with ♥ by Saverio Morelli" at the bottom of the profile, in the font of the website (heart as SVG). */
+  function devCredit() {
+    return h('a.dev-credit', { href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener', 'aria-label': t('Developed with love by Saverio Morelli') },
+      h('span', t('Developed with')), h('span.dev-heart', { html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#E5484D" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' }), h('span', t('by')), h('span.dev-name', 'Saverio Morelli'));
+  }
+
   function viewProfile() {
     const hh = S.household;
     const isOwner = hh.role === 'owner';
@@ -1437,6 +1443,7 @@
         groupRow('delete', t('Delete my account'), t('Permanently delete account and data'), deleteAccount, { danger: true }),
       ),
     ];
+    body.push(devCredit());
     return { tab: null, title: t('Profile'), back: 'spaces', body, cls: 'narrow' };
   }
 

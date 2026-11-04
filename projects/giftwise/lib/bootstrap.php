@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 
 const APP_NAME = 'Giftwise';
 const AUTH_COOKIE = 'giftwise_auth';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const OCCASIONS = ['birthday', 'christmas', 'wedding', 'baby', 'graduation', 'anniversary', 'housewarming', 'other'];
 const CURRENCIES = ['EUR', 'GBP', 'USD', 'CHF'];
@@ -244,6 +244,8 @@ function public_user(array $u): array
         'name' => $u['name'],
         'email' => $u['email'],
         'inviteCode' => $u['invite_code'],
+        'username' => $u['username'] ?? null,
+        'followPolicy' => $u['follow_policy'] ?? 'approve',
         'hasPassword' => ($u['password_hash'] ?? 'x') !== '',
         'googleLinked' => !empty($u['google_sub']),
         'createdAt' => $u['created_at'] ?? null,

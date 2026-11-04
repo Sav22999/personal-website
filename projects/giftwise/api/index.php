@@ -4,11 +4,13 @@
  *
  * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout, invite.info
  * Account:  state, auth.profile, auth.password, auth.delete
- * Friends:  friend.request, friend.accept, friend.decline, friend.remove, invite.accept
+ * People:   user.search, user.get, username.check, follow, unfollow, follow.accept, follow.decline, follower.remove,
+ *           invite.accept, account.username, account.privacy
+ *           (you see the lists of the people you follow; following needs their approval unless they accept everyone)
  * Lists:    list.save, list.delete, list.archive, item.save, item.delete, link.preview
  * Friends' lists (secret coordination): list.view, claim.set, comment.add, comment.delete
  *
- * THE RULE: claims and comments are about a list the user does NOT own. The owner never receives them:
+ * THE RULE: claims and comments are about a list the user does NOT own (only followers of the owner see it). The owner never receives them:
  * state/list.view build the owner's data without them, and claim/comment actions refuse the owner.
  * Every POST needs the X-CSRF-Token header (given at sign-in).
  */
@@ -55,34 +57,70 @@ function user_row(int $id): ?array
     return $st->fetch() ?: null;
 }
 
-function friendship(int $me, int $other): ?array
+function follow_row(int $follower, int $followee): ?array
 {
-    [$a, $b] = pair($me, $other);
-    $st = db()->prepare('SELECT * FROM ' . t('friendships') . ' WHERE user_a = ? AND user_b = ?');
-    $st->execute([$a, $b]);
+    $st = db()->prepare('SELECT * FROM ' . t('follows') . ' WHERE follower_id = ? AND followee_id = ?');
+    $st->execute([$follower, $followee]);
     return $st->fetch() ?: null;
 }
 
-function are_friends(int $me, int $other): bool
+/** $follower follows $followee (accepted). */
+function follows(int $follower, int $followee): bool
 {
-    $f = friendship($me, $other);
+    $f = follow_row($follower, $followee);
     return $f && $f['status'] === 'accepted';
 }
 
-function make_friends(int $x, int $y, bool $accepted, int $requestedBy): void
+function set_follow(int $follower, int $followee, string $status): void
 {
-    if ($x === $y) return;
-    [$a, $b] = pair($x, $y);
-    db()->prepare('INSERT INTO ' . t('friendships') . ' (user_a, user_b, status, requested_by, created_at, accepted_at) VALUES (?,?,?,?,?,?)
-        ON DUPLICATE KEY UPDATE status = IF(VALUES(status) = \'accepted\', \'accepted\', status), accepted_at = IF(VALUES(status) = \'accepted\', VALUES(accepted_at), accepted_at)')
-        ->execute([$a, $b, $accepted ? 'accepted' : 'pending', $requestedBy, now_utc(), $accepted ? now_utc() : null]);
+    if ($follower === $followee) return;
+    db()->prepare('INSERT INTO ' . t('follows') . ' (follower_id, followee_id, status, created_at, accepted_at) VALUES (?,?,?,?,?)
+        ON DUPLICATE KEY UPDATE status = IF(status = \'accepted\', status, VALUES(status)), accepted_at = IF(status = \'accepted\' AND accepted_at IS NOT NULL, accepted_at, VALUES(accepted_at))')
+        ->execute([$follower, $followee, $status, now_utc(), $status === 'accepted' ? now_utc() : null]);
 }
 
-function friend_ids(int $me): array
+/** Stops $follower following $followee and drops the lists $followee had shared with them specifically. */
+function drop_follow(int $follower, int $followee): void
 {
-    $st = db()->prepare('SELECT IF(user_a = ?, user_b, user_a) AS id FROM ' . t('friendships') . " WHERE (user_a = ? OR user_b = ?) AND status = 'accepted'");
-    $st->execute([$me, $me, $me]);
-    return array_map('intval', array_column($st->fetchAll(), 'id'));
+    db()->prepare('DELETE FROM ' . t('follows') . ' WHERE follower_id = ? AND followee_id = ?')->execute([$follower, $followee]);
+    db()->prepare('DELETE v FROM ' . t('list_viewers') . ' v JOIN ' . t('lists') . ' l ON l.id = v.list_id WHERE l.owner_id = ? AND v.user_id = ?')->execute([$followee, $follower]);
+}
+
+/** Accepted followers of $me (the people who can see my lists). */
+function follower_ids(int $me): array
+{
+    $st = db()->prepare('SELECT follower_id FROM ' . t('follows') . " WHERE followee_id = ? AND status = 'accepted'");
+    $st->execute([$me]);
+    return array_map('intval', array_column($st->fetchAll(), 'follower_id'));
+}
+
+/** Username: 3–20 characters, lower case letters, digits, dot and underscore, starting/ending with a letter or digit. */
+function valid_username($v): string
+{
+    $u = strtolower(trim(ltrim((string)$v, '@')));
+    if (!preg_match('/^[a-z0-9](?:[a-z0-9._]{1,18})[a-z0-9]$/', $u) || strpos($u, '..') !== false) fail('The username can have 3–20 letters, digits, dots and underscores (no accents or spaces).', 422, 'validation');
+    if (in_array($u, ['admin', 'giftwise', 'support', 'help', 'root', 'system', 'api', 'null', 'undefined'], true)) fail('This username is not available.', 409, 'username_taken');
+    return $u;
+}
+
+function username_taken(string $u, int $exceptId = 0): bool
+{
+    $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE username = ? AND id <> ?');
+    $st->execute([$u, $exceptId]);
+    return (bool)$st->fetchColumn();
+}
+
+/** What $me and $other are to each other: following = me → other, followsMe = other → me ('none' | 'pending' | 'accepted'). */
+function relation(int $me, int $other): array
+{
+    $a = follow_row($me, $other);
+    $b = follow_row($other, $me);
+    return ['following' => $a ? $a['status'] : 'none', 'followsMe' => $b ? $b['status'] : 'none'];
+}
+
+function person_out(array $u, int $me): array
+{
+    return ['id' => (int)$u['id'], 'name' => $u['name'], 'username' => $u['username']] + relation($me, (int)$u['id']);
 }
 
 function unique_invite_code(): string
@@ -113,7 +151,7 @@ function own_list(int $id, int $me): array
     return $l;
 }
 
-/** A friend's list that $me can see — never the owner (the owner must not see the coordination). */
+/** A list of someone $me follows — never the owner's own list (the owner must not see the coordination). */
 function friend_list(int $id, int $me): array
 {
     $l = list_row($id);
@@ -125,7 +163,7 @@ function friend_list(int $id, int $me): array
 function can_view(array $l, int $me): bool
 {
     if ((int)$l['owner_id'] === $me) return true;
-    if (!empty($l['archived']) || !are_friends($me, (int)$l['owner_id'])) return false;
+    if (!empty($l['archived']) || !follows($me, (int)$l['owner_id'])) return false;
     if ($l['visibility'] === 'friends') return true;
     $st = db()->prepare('SELECT 1 FROM ' . t('list_viewers') . ' WHERE list_id = ? AND user_id = ?');
     $st->execute([$l['id'], $me]);
@@ -160,16 +198,16 @@ function items_of(array $listIds): array
 function state_payload(array $u): array
 {
     $me = (int)$u['id'];
-    $friends = [];
-    $incoming = [];
-    $outgoing = [];
-    $st = db()->prepare('SELECT f.*, u.id AS uid, u.name, u.email FROM ' . t('friendships') . ' f JOIN ' . t('users') . ' u ON u.id = IF(f.user_a = ?, f.user_b, f.user_a)
-        WHERE (f.user_a = ? OR f.user_b = ?) AND u.status = \'active\' ORDER BY u.name');
+    // People: who I follow, who follows me, requests waiting
+    $following = $followers = $incoming = $outgoing = [];
+    $st = db()->prepare('SELECT f.*, u.id AS uid, u.name, u.username FROM ' . t('follows') . ' f JOIN ' . t('users') . ' u ON u.id = IF(f.follower_id = ?, f.followee_id, f.follower_id)
+        WHERE (f.follower_id = ? OR f.followee_id = ?) AND u.status = \'active\' ORDER BY u.name');
     $st->execute([$me, $me, $me]);
     foreach ($st->fetchAll() as $f) {
-        $p = ['id' => (int)$f['uid'], 'name' => $f['name'], 'email' => $f['email']];
-        if ($f['status'] === 'accepted') $friends[] = $p + ['since' => $f['accepted_at']];
-        elseif ((int)$f['requested_by'] === $me) $outgoing[] = $p + ['at' => $f['created_at']];
+        $p = ['id' => (int)$f['uid'], 'name' => $f['name'], 'username' => $f['username']];
+        $mine = (int)$f['follower_id'] === $me;
+        if ($f['status'] === 'accepted') { if ($mine) $following[] = $p + ['since' => $f['accepted_at']]; else $followers[] = $p + ['since' => $f['accepted_at']]; }
+        elseif ($mine) $outgoing[] = $p + ['at' => $f['created_at']];
         else $incoming[] = $p + ['at' => $f['created_at']];
     }
 
@@ -185,8 +223,8 @@ function state_payload(array $u): array
     $myLists = array_map(fn($l) => list_out($l) + ['items' => $items[(int)$l['id']] ?? [], 'viewers' => $viewers[(int)$l['id']] ?? []], $mine);
 
     // Friends' lists I can see, with a summary of the coordination
-    $friendLists = [];
-    $fids = array_map(fn($f) => $f['id'], $friends);
+    $friendLists = []; // lists of the people I follow
+    $fids = array_map(fn($f) => $f['id'], $following);
     if ($fids) {
         $in = implode(',', $fids);
         $st = db()->prepare('SELECT l.*, u.name AS owner_name FROM ' . t('lists') . ' l JOIN ' . t('users') . " u ON u.id = l.owner_id
@@ -216,7 +254,7 @@ function state_payload(array $u): array
             ];
         }
     }
-    return ['user' => public_user(user_row($me)), 'friends' => $friends, 'requests' => ['incoming' => $incoming, 'outgoing' => $outgoing], 'myLists' => $myLists, 'friendLists' => $friendLists];
+    return ['user' => public_user(user_row($me)), 'following' => $following, 'followers' => $followers, 'requests' => ['incoming' => $incoming, 'outgoing' => $outgoing], 'myLists' => $myLists, 'friendLists' => $friendLists];
 }
 
 /** A friend's list with items, claims and the friends' conversation. */
@@ -248,14 +286,16 @@ function validate_password(string $pw): void
     if (mb_strlen($pw) > 200) fail('The password is too long.', 422, 'validation');
 }
 
-function new_user(string $name, string $email, string $hash, ?string $googleSub): int
+function new_user(string $name, string $email, string $hash, ?string $googleSub, string $username = ''): int
 {
-    db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, google_sub, invite_code, lang, status, created_at, last_login_at) VALUES (?,?,?,?,?,?, 'active', ?, ?)")
-        ->execute([$name, $email, $hash, $googleSub, unique_invite_code(), lang(), now_utc(), now_utc()]);
+    require_once __DIR__ . '/../lib/schema.php';
+    if ($username === '' || username_taken($username)) $username = suggest_username_raw(db(), (string)config_value('prefix', 'gw_'), $name, $email);
+    db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, google_sub, invite_code, username, lang, status, created_at, last_login_at) VALUES (?,?,?,?,?,?,?, 'active', ?, ?)")
+        ->execute([$name, $email, $hash, $googleSub, unique_invite_code(), $username, lang(), now_utc(), now_utc()]);
     return (int)db()->lastInsertId();
 }
 
-/** Sign-up through someone's invite link: you become friends straight away. */
+/** Through someone's invite link you follow each other straight away. */
 function apply_invite(int $uid, string $code): void
 {
     $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
@@ -264,8 +304,9 @@ function apply_invite(int $uid, string $code): void
     $st->execute([$code]);
     $inviter = (int)$st->fetchColumn();
     if ($inviter && $inviter !== $uid) {
-        make_friends($uid, $inviter, true, $inviter);
-        mail_friend_joined(user_row($inviter), user_row($uid));
+        $was = follows($uid, $inviter) && follows($inviter, $uid);
+        set_follow($uid, $inviter, 'accepted'); set_follow($inviter, $uid, 'accepted');
+        if (!$was) mail_friend_joined(user_row($inviter), user_row($uid));
     }
 }
 
@@ -295,11 +336,13 @@ switch ($r) {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Invalid email address.', 422, 'validation');
         validate_password($pw);
         if (empty($b['acceptPrivacy'])) fail('To create the account you must accept the privacy policy.', 422, 'validation');
+        $username = trim((string)($b['username'] ?? '')) !== '' ? valid_username($b['username']) : '';
+        if ($username !== '' && username_taken($username)) fail('This username is already taken.', 409, 'username_taken');
         $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ?');
         $st->execute([$email]);
         if ($st->fetchColumn()) fail('An account with this email already exists: sign in.', 409, 'email_taken');
         record_attempt('register');
-        $uid = new_user($name, $email, password_hash($pw, PASSWORD_DEFAULT), null);
+        $uid = new_user($name, $email, password_hash($pw, PASSWORD_DEFAULT), null, $username);
         apply_invite($uid, (string)($b['inviteCode'] ?? ''));
         mail_account_created(user_row($uid), 'email');
         $csrf = create_auth_session($uid);
@@ -392,7 +435,7 @@ switch ($r) {
         $b = body();
         $row = user_row($u['id']);
         if ($row['password_hash'] !== '' && !password_verify((string)($b['password'] ?? ''), $row['password_hash'])) fail('The password is not correct.', 422, 'bad_password');
-        db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$u['id']]); // lists, items, friendships, claims and comments follow (ON DELETE CASCADE)
+        db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$u['id']]); // lists, items, follows, claims and comments follow (ON DELETE CASCADE)
         set_auth_cookie('', time() - 3600);
         send_json(['ok' => true]);
 
@@ -426,54 +469,98 @@ switch ($r) {
         $inviter = $st->fetch();
         if (!$inviter) fail('This invite link is not valid.', 404, 'bad_code');
         if ((int)$inviter['id'] === $u['id']) fail('This is your own invite link: share it with your friends.', 422, 'own_code');
-        $was = are_friends($u['id'], (int)$inviter['id']);
-        make_friends($u['id'], (int)$inviter['id'], true, (int)$inviter['id']);
+        $iid = (int)$inviter['id'];
+        $was = follows($u['id'], $iid) && follows($iid, $u['id']);
+        set_follow($u['id'], $iid, 'accepted'); set_follow($iid, $u['id'], 'accepted');
         if (!$was) mail_friend_joined($inviter, user_row($u['id']));
         send_json(['ok' => true, 'friendName' => $inviter['name'], 'already' => $was] + state_payload($u));
 
-    case 'friend.request':
-        $u = writer();
-        if (too_many_attempts('friendreq', 30, 60)) fail('Too many requests: try again later.', 429, 'rate_limited');
-        record_attempt('friendreq');
-        $email = mb_strtolower(s(body(), 'email', 190, true, 'Email'));
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Invalid email address.', 422, 'validation');
-        $st = db()->prepare('SELECT * FROM ' . t('users') . " WHERE email = ? AND status = 'active'");
-        $st->execute([$email]);
-        $other = $st->fetch();
-        if (!$other) fail('Nobody uses Giftwise with this email yet: send them your invite link.', 404, 'no_user');
-        $oid = (int)$other['id'];
-        if ($oid === $u['id']) fail('That is your own email.', 422, 'self');
-        $f = friendship($u['id'], $oid);
-        if ($f && $f['status'] === 'accepted') fail('You are already friends.', 409, 'already');
-        if ($f && (int)$f['requested_by'] === $oid) {
-            make_friends($u['id'], $oid, true, $oid); // they had already asked: now you are friends
-            send_json(['ok' => true, 'result' => 'accepted'] + state_payload($u));
-        }
-        if (!$f) {
-            make_friends($u['id'], $oid, false, $u['id']);
-            mail_friend_request($other, user_row($u['id']));
-        }
-        send_json(['ok' => true, 'result' => 'sent'] + state_payload($u));
+    case 'username.check':
+        only('GET');
+        $u = current_user();
+        $name = strtolower(trim(ltrim((string)($_GET['u'] ?? ''), '@')));
+        $okFormat = (bool)preg_match('/^[a-z0-9](?:[a-z0-9._]{1,18})[a-z0-9]$/', $name) && strpos($name, '..') === false;
+        $available = $okFormat && !username_taken($name, $u ? (int)$u['id'] : 0);
+        $suggestion = '';
+        if ($okFormat && !$available) { require_once __DIR__ . '/../lib/schema.php'; $suggestion = suggest_username_raw(db(), (string)config_value('prefix', 'gw_'), str_replace(['.', '_'], ' ', $name), ''); }
+        send_json(['ok' => true, 'username' => $name, 'valid' => $okFormat, 'available' => $available, 'suggestion' => $suggestion]);
 
-    case 'friend.accept':
+    case 'user.search':
+        // By username (beginning of it, "@" optional) or by exact email. Disabled accounts and myself are left out.
+        only('GET');
+        $u = require_user();
+        if (too_many_attempts('search', 120, 10)) fail('Too many requests: try again in a few minutes.', 429, 'rate_limited');
+        record_attempt('search');
+        $q = trim((string)($_GET['q'] ?? ''));
+        $out = [];
+        if (filter_var($q, FILTER_VALIDATE_EMAIL)) {
+            $st = db()->prepare('SELECT * FROM ' . t('users') . " WHERE email = ? AND status = 'active' AND id <> ?");
+            $st->execute([mb_strtolower($q), $u['id']]);
+        } else {
+            $n = strtolower(ltrim($q, '@'));
+            if (!preg_match('/^[a-z0-9._]{2,20}$/', $n)) send_json(['ok' => true, 'results' => []]);
+            $st = db()->prepare('SELECT * FROM ' . t('users') . " WHERE username LIKE ? AND status = 'active' AND id <> ? ORDER BY (username = ?) DESC, CHAR_LENGTH(username), username LIMIT 10");
+            $st->execute([addcslashes($n, '%_\\') . '%', $u['id'], $n]);
+        }
+        foreach ($st->fetchAll() as $row) $out[] = person_out($row, $u['id']);
+        send_json(['ok' => true, 'results' => $out]);
+
+    case 'user.get':
+        only('GET');
+        $u = require_user();
+        $row = user_row((int)($_GET['id'] ?? 0));
+        if (!$row || $row['status'] !== 'active') fail('User not found.', 404, 'not_found');
+        send_json(['ok' => true, 'person' => person_out($row, $u['id']) + ['followPolicy' => $row['follow_policy']]]);
+
+    case 'follow':
         $u = writer();
+        if (too_many_attempts('follow', 60, 60)) fail('Too many requests: try again later.', 429, 'rate_limited');
+        record_attempt('follow');
         $oid = (int)(body()['userId'] ?? 0);
-        $f = friendship($u['id'], $oid);
-        if (!$f || $f['status'] !== 'pending' || (int)$f['requested_by'] === $u['id']) fail('Request not found.', 404, 'not_found');
-        make_friends($u['id'], $oid, true, $oid);
+        $other = user_row($oid);
+        if (!$other || $other['status'] !== 'active') fail('User not found.', 404, 'not_found');
+        if ($oid === $u['id']) fail('You cannot follow yourself.', 422, 'self');
+        $f = follow_row($u['id'], $oid);
+        if ($f && $f['status'] === 'accepted') fail('You already follow this person.', 409, 'already');
+        // Accepted right away when they accept everyone, or when they already follow me
+        $auto = $other['follow_policy'] === 'open' || follows($oid, $u['id']);
+        set_follow($u['id'], $oid, $auto ? 'accepted' : 'pending');
+        if (!$auto && !$f) mail_friend_request($other, user_row($u['id']));
+        send_json(['ok' => true, 'result' => $auto ? 'following' : 'requested'] + state_payload($u));
+
+    case 'unfollow':
+        // Stop following, or cancel a request sent
+        $u = writer();
+        drop_follow($u['id'], (int)(body()['userId'] ?? 0));
         send_json(['ok' => true] + state_payload($u));
 
-    case 'friend.decline':
-    case 'friend.remove':
-        // Decline an incoming request, cancel a sent one or remove a friend
+    case 'follow.accept':
         $u = writer();
         $oid = (int)(body()['userId'] ?? 0);
-        [$a, $c] = pair($u['id'], $oid);
-        db()->prepare('DELETE FROM ' . t('friendships') . ' WHERE user_a = ? AND user_b = ?')->execute([$a, $c]);
-        if ($r === 'friend.remove') {
-            // They no longer see each other's lists: also drop the specific sharing
-            db()->prepare('DELETE v FROM ' . t('list_viewers') . ' v JOIN ' . t('lists') . ' l ON l.id = v.list_id WHERE (l.owner_id = ? AND v.user_id = ?) OR (l.owner_id = ? AND v.user_id = ?)')->execute([$u['id'], $oid, $oid, $u['id']]);
-        }
+        $f = follow_row($oid, $u['id']);
+        if (!$f || $f['status'] !== 'pending') fail('Request not found.', 404, 'not_found');
+        db()->prepare('UPDATE ' . t('follows') . " SET status = 'accepted', accepted_at = ? WHERE follower_id = ? AND followee_id = ?")->execute([now_utc(), $oid, $u['id']]);
+        send_json(['ok' => true] + state_payload($u));
+
+    case 'follow.decline':
+    case 'follower.remove':
+        // Refuse a request, or remove someone from my followers (they no longer see my lists)
+        $u = writer();
+        drop_follow((int)(body()['userId'] ?? 0), $u['id']);
+        send_json(['ok' => true] + state_payload($u));
+
+    case 'account.username':
+        $u = writer();
+        $name = valid_username(body()['username'] ?? '');
+        if (username_taken($name, $u['id'])) fail('This username is already taken.', 409, 'username_taken');
+        db()->prepare('UPDATE ' . t('users') . ' SET username = ? WHERE id = ?')->execute([$name, $u['id']]);
+        send_json(['ok' => true] + state_payload($u));
+
+    case 'account.privacy':
+        $u = writer();
+        $policy = (body()['followPolicy'] ?? '') === 'open' ? 'open' : 'approve';
+        db()->prepare('UPDATE ' . t('users') . ' SET follow_policy = ? WHERE id = ?')->execute([$policy, $u['id']]);
+        if ($policy === 'open') db()->prepare('UPDATE ' . t('follows') . " SET status = 'accepted', accepted_at = ? WHERE followee_id = ? AND status = 'pending'")->execute([now_utc(), $u['id']]);
         send_json(['ok' => true] + state_payload($u));
 
     // ======================================================== my lists
@@ -487,7 +574,7 @@ switch ($r) {
         $date = date_or_null($b['eventDate'] ?? null);
         $desc = s($b, 'description', 500, false, 'Description');
         $vis = ($b['visibility'] ?? '') === 'selected' ? 'selected' : 'friends';
-        $fr = friend_ids($u['id']);
+        $fr = follower_ids($u['id']);
         $viewers = array_values(array_unique(array_filter(array_map('intval', is_array($b['viewers'] ?? null) ? $b['viewers'] : []), fn($v) => in_array($v, $fr, true))));
         if ($id) {
             own_list($id, $u['id']);

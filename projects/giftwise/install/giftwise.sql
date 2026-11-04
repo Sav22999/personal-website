@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS `gw_users` (
   `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
   `google_sub` VARCHAR(64) NULL,
   `invite_code` CHAR(10) NOT NULL,
+  `username` VARCHAR(20) NULL,
+  `follow_policy` ENUM('approve','open') NOT NULL DEFAULT 'approve',
   `lang` CHAR(2) NOT NULL DEFAULT 'en',
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
   `created_at` DATETIME NOT NULL,
@@ -20,7 +22,8 @@ CREATE TABLE IF NOT EXISTS `gw_users` (
   `last_seen_at` DATETIME NULL,
   UNIQUE KEY `uq_email` (`email`),
   UNIQUE KEY `uq_google` (`google_sub`),
-  UNIQUE KEY `uq_invite` (`invite_code`)
+  UNIQUE KEY `uq_invite` (`invite_code`),
+  UNIQUE KEY `uq_username` (`username`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gw_auth_tokens` (
@@ -44,17 +47,16 @@ CREATE TABLE IF NOT EXISTS `gw_attempts` (
   KEY `ix_kind_ip` (`kind`, `ip`, `created_at`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `gw_friendships` (
-  `user_a` INT UNSIGNED NOT NULL,
-  `user_b` INT UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `gw_follows` (
+  `follower_id` INT UNSIGNED NOT NULL,
+  `followee_id` INT UNSIGNED NOT NULL,
   `status` ENUM('pending','accepted') NOT NULL DEFAULT 'pending',
-  `requested_by` INT UNSIGNED NOT NULL,
   `created_at` DATETIME NOT NULL,
   `accepted_at` DATETIME NULL,
-  PRIMARY KEY (`user_a`, `user_b`),
-  KEY `ix_b` (`user_b`),
-  CONSTRAINT `fk_gw_fr_a` FOREIGN KEY (`user_a`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_gw_fr_b` FOREIGN KEY (`user_b`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE
+  PRIMARY KEY (`follower_id`, `followee_id`),
+  KEY `ix_followee` (`followee_id`, `status`),
+  CONSTRAINT `fk_gw_fo_er` FOREIGN KEY (`follower_id`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_gw_fo_ee` FOREIGN KEY (`followee_id`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gw_lists` (
@@ -124,4 +126,4 @@ CREATE TABLE IF NOT EXISTS `gw_comments` (
   CONSTRAINT `fk_gw_cm_user` FOREIGN KEY (`user_id`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `gw_meta` (k, v) VALUES ('schema_version', '1') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `gw_meta` (k, v) VALUES ('schema_version', '2') ON DUPLICATE KEY UPDATE v = VALUES(v);

@@ -66,7 +66,6 @@ function translations_it(): array
         'This account uses Google: sign in with “Continue with Google”.' => 'Questo account usa Google: accedi con «Continua con Google».',
         'This email is already used by another account.' => 'Questa email è già usata da un altro account.',
         'This invite link is not valid.' => 'Questo link d’invito non è valido.',
-        'This is your list: what your friends decide stays a surprise.' => 'È la tua lista: quello che decidono i tuoi amici resta una sorpresa.',
         'This is your own invite link: share it with your friends.' => 'È il tuo link d’invito: condividilo con i tuoi amici.',
         'This list is full (300 wishes).' => 'Questa lista è piena (300 desideri).',
         'This wish has been removed from the list.' => 'Questo desiderio è stato tolto dalla lista.',
@@ -85,6 +84,13 @@ function translations_it(): array
         'Your account has been disabled.' => 'Il tuo account è stato disabilitato.',
         '{field} is required.' => '{field}: campo obbligatorio.',
         '{field} is too long (max {max} characters).' => '{field}: testo troppo lungo (massimo {max} caratteri).',
+        'The username can have 3–20 letters, digits, dots and underscores (no accents or spaces).' => 'Lo username può avere da 3 a 20 caratteri tra lettere, numeri, punti e trattini bassi (senza accenti né spazi).',
+        'This username is not available.' => 'Questo username non è disponibile.',
+        'This username is already taken.' => 'Questo username è già usato.',
+        'User not found.' => 'Utente non trovato.',
+        'You cannot follow yourself.' => 'Non puoi seguire te stesso.',
+        'You already follow this person.' => 'Segui già questa persona.',
+        'This is your list: what your friends decide stays a surprise.' => 'È la tua lista: quello che decidono i tuoi amici resta una sorpresa.',
         'Name' => 'Nome', 'Email' => 'Email', 'Title' => 'Titolo', 'Description' => 'Descrizione', 'Notes' => 'Note', 'Message' => 'Messaggio',
     ];
 }

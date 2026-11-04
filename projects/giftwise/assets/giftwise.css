@@ -141,3 +141,25 @@
   main.view .stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .sheet { max-width: 680px; }
 }
+
+/* Username field and people */
+.uname-field .at { position: absolute; left: 14px; top: 22px; color: var(--muted); font-size: .98rem; pointer-events: none; }
+.uname-field .input { padding-left: 30px; }
+.uname-field label { left: 14px; }
+.hint.ok { color: var(--ok); } .hint.bad { color: var(--danger); }
+.search-results { margin: 8px 0 6px; }
+.search-results .empty-search { padding: 14px 16px; } .search-results .empty-search p { margin: 0 0 6px; }
+.person-row { cursor: pointer; }
+.group > .person-row:hover { background: var(--surface-2); }
+.person-row .btn-sm, .btn.btn-sm { height: 34px; padding: 0 14px; font-size: .82rem; }
+.person-card .btn-row { padding: 0 16px 14px; margin: 0; }
+.locked { display: flex; gap: 12px; align-items: center; background: var(--surface-2); border-radius: var(--r-lg); padding: 14px 16px; color: var(--muted); margin-top: 14px; }
+.locked p { margin: 0; }
+
+/* "Developed with ♥ by Saverio Morelli" (profile): the font of saveriomorelli.com */
+@font-face { font-family: 'Stack Sans Notch'; src: url('/fonts/StackSansNotch.ttf') format('truetype'); font-weight: normal; font-style: normal; font-display: swap; }
+.dev-credit { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 30px auto 8px; padding: 8px 12px; width: fit-content; font-family: 'Stack Sans Notch', 'Inter', sans-serif; font-size: 1rem; color: var(--muted); text-decoration: none; border-radius: 999px; letter-spacing: .01em; }
+.dev-credit:hover { color: var(--text); background: var(--surface-2); }
+.dev-credit .dev-name { color: var(--text); }
+.dev-heart { display: inline-flex; transition: transform .2s; }
+.dev-credit:hover .dev-heart { transform: scale(1.2); }

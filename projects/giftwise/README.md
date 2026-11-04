@@ -4,12 +4,18 @@ Liste dei desideri da condividere con gli amici, che si organizzano tra loro **s
 
 - Ogni utente crea le sue **liste dei desideri** (compleanno, Natale, nozze, nascita, laurea, anniversario, casa nuova, altro), con data dell'evento e un messaggio per gli amici.
 - In ogni lista aggiunge i **desideri**: nome, link al prodotto, immagine, prezzo, quantità, note e «il più desiderato». Incollando (o condividendo dall'app di un negozio) un link, Giftwise compila da solo nome, immagine e prezzo.
-- Aggiunge gli **amici** con il proprio link d'invito (chi lo apre diventa subito amico, anche registrandosi in quel momento) o con l'email (richiesta da accettare).
-- Sulle liste degli amici ognuno può segnare un desiderio come **«Ci sto pensando»** o **«Lo prendo io»** e **chattare** con gli altri amici, per ogni desiderio o per tutta la lista.
+- Ogni utente ha uno **username pubblico** (3–20 caratteri: lettere, numeri, `.` e `_`), proposto dal nome alla registrazione e modificabile dal Profilo. Con lo username (o con l'email esatta) si **cercano le persone** e le si **segue**; si può smettere di seguire o togliere qualcuno dai propri follower in qualsiasi momento.
+- **Si vedono le liste di chi si segue.** Di default chi vuole seguirti deve essere approvato (le liste dei desideri sono personali); dal Profilo si può scegliere «Chiunque, senza chiedere».
+- Il **link d'invito** resta: chi lo apre (anche registrandosi in quel momento) e chi l'ha mandato si seguono subito a vicenda.
+- Sulle liste di chi segui puoi segnare un desiderio come **«Ci sto pensando»** o **«Lo prendo io»** e **chattare** con gli altri follower, per ogni desiderio o per tutta la lista.
 - **Chi ha creato la lista non vede niente di tutto questo.** La regola è applicata dal server: le API non restituiscono mai prenotazioni e messaggi al proprietario della lista, e rifiutano le sue richieste di vederli o crearli (vedi il commento in testa a `api/index.php`).
-- Una lista può essere visibile a tutti gli amici o solo ad alcuni; si può archiviare (sparisce per gli amici) o eliminare.
+- Una lista può essere visibile a tutti i follower o solo ad alcuni; si può archiviare (sparisce per gli amici) o eliminare.
 
 Web app in PHP + MySQL con lo stesso design system di FoodTrack (rosa lampone, chiaro e scuro, mobile e desktop), in italiano e inglese, installabile come app (PWA).
+
+## Aggiornamenti del database
+
+Al primo accesso dopo un aggiornamento il database si aggiorna da solo (`migrate_schema` in `lib/schema.php`). Versione 2: username per tutti gli account esistenti (generati dal nome, modificabili) e le vecchie amicizie diventano «follow» nei due sensi.
 
 ## Struttura
 
@@ -40,7 +46,7 @@ Si può usare lo **stesso client OAuth «Applicazione web» di FoodTrack**: l'or
 
 ## Email
 
-Email di benvenuto, richiesta di amicizia ricevuta e «X si è unito con il tuo invito», nella lingua di chi le riceve. Usa `$mail_config` in `credentials.php` se presente, altrimenti le impostazioni del modulo di contatto del sito (`/.mail-config.php`). Senza configurazione non parte nessuna email e l'app funziona lo stesso.
+Email di benvenuto, «X vuole seguirti» (quando serve la tua approvazione) e «X ha aperto il tuo invito», nella lingua di chi le riceve. Usa `$mail_config` in `credentials.php` se presente, altrimenti le impostazioni del modulo di contatto del sito (`/.mail-config.php`). Senza configurazione non parte nessuna email e l'app funziona lo stesso.
 
 ## Aggiungere un desiderio da un'altra app
 
