@@ -244,6 +244,7 @@
     }
     const suggestTitle = o => ({ birthday: t('My birthday'), christmas: t('Christmas {y}', { y: new Date().getFullYear() }), wedding: t('Our wedding'), baby: t('Baby shower'), graduation: t('My graduation'), anniversary: t('Our anniversary'), housewarming: t('New home') }[o] || '');
     paintOcc();
+    if (!isEdit && !title.value) title.value = suggestTitle(occasion);
     const viewersBox = h('div.pick-friends');
     function paintViewers() {
       viewersBox.hidden = visibility !== 'selected';
