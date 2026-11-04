@@ -25,7 +25,7 @@ foodtrack/
 ├── tools/build-icons.py    rigenera lo sprite SVG delle icone (anteprima: tools/icons-preview.html)
 ├── assets/                 CSS (design system in app.css), JavaScript, traduzioni (i18n.js), font Inter
 │   ├── img/icons.svg       set di icone SVG di prodotti, spazi e liste (generato da tools/build-icons.py)
-│   ├── img/recipes/        foto delle ricette iniziali
+│   ├── img/recipes/        foto delle ricette iniziali (crediti in CREDITS.md)
 │   └── vendor/             ZXing (lettore di codici a barre per i browser senza BarcodeDetector)
 ├── uploads/recipes/        immagini delle ricette caricate dal portale (non su git)
 └── android/                progetto Android Studio (Trusted Web Activity) per APK/AAB del Play Store
@@ -102,7 +102,7 @@ La scansione usa il `BarcodeDetector` nativo quando c'è (Chrome su Android) e a
 
 ## Ricette iniziali
 
-103 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizzera, Francia, Belgio, Paesi Bassi, Svezia, Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud, Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). Le ricette senza foto mostrano una copertina illustrata con le bandiere dei paesi d'origine; la foto si aggiunge dal portale.
+103 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizzera, Francia, Belgio, Paesi Bassi, Svezia, Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud, Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). **95 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in `lib/seed-images.php`): quelle dei lotti 2 e 3 sono tutte in **pubblico dominio o CC0** (Wikimedia Commons, Flickr), ritagliate a 1200×800; fonti e autori in `assets/img/recipes/CREDITS.md`. Sulle installazioni esistenti la versione 9 del database assegna le foto alle ricette iniziali che non hanno ancora un'immagine (non tocca quelle caricate dal portale). Le ricette senza foto (Caldo verde, Arroz de tomate, Menemen, Panzanella, Stovies, Shortbread, Coleslaw, Spanakorizo) mostrano una copertina illustrata con le bandiere dei paesi d'origine; la foto si aggiunge dal portale.
 
 ## Ruoli
 

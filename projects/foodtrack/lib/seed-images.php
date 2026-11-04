@@ -1,0 +1,109 @@
+<?php
+/**
+ * Cover images of the initial recipes of batches 2 and 3 (assets/img/recipes/), by Italian recipe name.
+ * Every photo is in the public domain or released under CC0: sources and authors in assets/img/recipes/CREDITS.md.
+ * Recipes without a photo keep the generated cover (icon and flags of the countries).
+ */
+
+declare(strict_types=1);
+
+function seed_recipe_images(): array
+{
+    return [
+        'Aloo gobi' => 'aloo_gobi.jpg',
+        'Apfelstrudel veloce' => 'quick_apple_strudel.jpg',
+        'Bacalhau à Brás' => 'bacalhau_a_bras.jpg',
+        'Beans on toast' => 'beans_on_toast.jpg',
+        'Biscotti con gocce di cioccolato' => 'chocolate_chip_cookies.jpg',
+        'Boxty' => 'boxty.jpg',
+        'Bratkartoffeln' => 'bratkartoffeln.jpg',
+        'Brigadeiro' => 'brigadeiro.jpg',
+        'Bruschetta al pomodoro' => 'tomato_bruschetta.jpg',
+        'Cacio e pepe' => 'cacio_e_pepe.jpg',
+        'Cawl' => 'cawl.jpg',
+        'Cetrioli schiacciati' => 'smashed_cucumber_salad.jpg',
+        'Ceviche' => 'ceviche.jpg',
+        'Chana masala' => 'chana_masala.jpg',
+        'Chili con carne' => 'chili_con_carne.jpg',
+        'Cock-a-leekie' => 'cock_a_leekie_soup.jpg',
+        'Colcannon' => 'colcannon.jpg',
+        'Cottage pie' => 'cottage_pie.jpg',
+        'Cranachan' => 'cranachan.jpg',
+        'Croque-monsieur' => 'croque_monsieur.jpg',
+        'Crêpes' => 'crepes.jpg',
+        'Curry thai di pollo' => 'thai_chicken_curry.jpg',
+        'Currywurst' => 'currywurst.jpg',
+        'Cuscus di verdure' => 'vegetable_couscous.jpg',
+        'Dal di lenticchie' => 'lentil_dal.jpg',
+        'Eton mess' => 'eton_mess.jpg',
+        'Falafel al forno' => 'baked_falafel.jpg',
+        'Fasolada' => 'fasolada.jpg',
+        'Fish finger sandwich' => 'fish_finger_sandwich.jpg',
+        'Frittata di zucchine' => 'courgette_frittata.jpg',
+        'Full English breakfast' => 'full_english_breakfast.jpg',
+        'Gambas al ajillo' => 'garlic_prawns.jpg',
+        'Gazpacho' => 'gazpacho.jpg',
+        'Glamorgan sausages' => 'glamorgan_sausages.jpg',
+        'Grilled cheese sandwich' => 'grilled_cheese_sandwich.jpg',
+        'Guacamole' => 'guacamole.jpg',
+        'Gulasch' => 'goulash.jpg',
+        'Hummus' => 'hummus.jpg',
+        'Insalata caprese' => 'caprese_salad.jpg',
+        'Insalata greca' => 'greek_salad.jpg',
+        'Involtini primavera freschi' => 'fresh_spring_rolls.jpg',
+        'Irish soda bread' => 'irish_soda_bread.jpg',
+        'Irish stew' => 'irish_stew.jpg',
+        'Kaiserschmarrn' => 'kaiserschmarrn.jpg',
+        'Kartoffelsalat' => 'german_potato_salad.jpg',
+        'Lángos' => 'langos.jpg',
+        'Mac and cheese' => 'mac_and_cheese.jpg',
+        'Moules-frites (cozze al vino)' => 'moules_frites.jpg',
+        'Onigiri' => 'onigiri.jpg',
+        'Oyakodon' => 'oyakodon.jpg',
+        'Pad thai' => 'pad_thai.jpg',
+        'Pan con tomate' => 'pan_con_tomate.jpg',
+        'Pancake allo sciroppo d’acero' => 'buttermilk_style_pancakes_with_maple_syrup.jpg',
+        'Pannenkoeken' => 'dutch_pancakes.jpg',
+        'Pasta al pomodoro' => 'pasta_with_tomato_sauce.jpg',
+        'Pasta e fagioli' => 'pasta_and_beans.jpg',
+        'Pasta ricotta e spinaci' => 'pasta_with_ricotta_and_spinach.jpg',
+        'Patatas bravas' => 'patatas_bravas.jpg',
+        'Pierogi patate e formaggio' => 'potato_and_cheese_pierogi.jpg',
+        'Polenta con funghi' => 'polenta_with_mushrooms.jpg',
+        'Pollo kung pao' => 'kung_pao_chicken.jpg',
+        'Polpette svedesi' => 'swedish_meatballs.jpg',
+        'Porridge scozzese' => 'scottish_porridge.jpg',
+        'Pão de queijo' => 'pao_de_queijo.jpg',
+        'Quesadillas' => 'quesadillas.jpg',
+        'Quiche lorraine' => 'quiche_lorraine.jpg',
+        'Raita di cetriolo' => 'cucumber_raita.jpg',
+        'Ratatouille' => 'ratatouille.jpg',
+        'Riso fritto al kimchi' => 'kimchi_fried_rice.jpg',
+        'Riso fritto con uova' => 'egg_fried_rice.jpg',
+        'Rösti' => 'rosti.jpg',
+        'Scones' => 'scones.jpg',
+        'Shakshuka' => 'shakshuka.jpg',
+        'Soupe à l’oignon' => 'french_onion_soup.jpg',
+        'Spaghetti aglio, olio e peperoncino' => 'spaghetti_with_garlic_oil_and_chilli.jpg',
+        'Tabbouleh' => 'tabbouleh.jpg',
+        'Tacos di pollo' => 'chicken_tacos.jpg',
+        'Tamagoyaki' => 'tamagoyaki.jpg',
+        'Tiramisù' => 'tiramisu.jpg',
+        'Tortilla de patatas' => 'spanish_omelette.jpg',
+        'Tzatziki' => 'tzatziki.jpg',
+        'Uova e pomodori saltati' => 'tomato_and_egg_stir_fry.jpg',
+        'Welsh cakes' => 'welsh_cakes.jpg',
+        'Welsh rarebit' => 'welsh_rarebit.jpg',
+        'Wiener Schnitzel' => 'wiener_schnitzel.jpg',
+        'Yakitori di pollo' => 'chicken_yakitori.jpg',
+        'Zuppa di miso' => 'miso_soup.jpg',
+        'Çılbır (uova con yogurt)' => 'clbr.jpg',
+    ];
+}
+
+/** Path of the cover image of an initial recipe ('' when it has none). */
+function seed_recipe_image(string $name): string
+{
+    $f = seed_recipe_images()[$name] ?? '';
+    return $f === '' ? '' : 'assets/img/recipes/' . $f;
+}

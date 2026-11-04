@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/seed-recipes-2.php';
 require_once __DIR__ . '/seed-recipes-3.php';
+require_once __DIR__ . '/seed-images.php';
 
 function seed_categories(): array
 {
@@ -116,7 +117,7 @@ function seed_recipes(): array
     $conv = function (array $list, int $batch) {
         return array_map(function ($r) use ($batch) {
         return [
-            'name' => $r['it'], 'origin' => implode(',', $r['origin']), 'image' => '', 'description' => $r['desc'][0],
+            'name' => $r['it'], 'origin' => implode(',', $r['origin']), 'image' => seed_recipe_image($r['it']), 'description' => $r['desc'][0],
             'prep' => $r['prep'], 'cook' => $r['cook'], 'cook_notes' => $r['cookN'][0], 'servings' => $r['serv'], 'difficulty' => $r['diff'],
             'ingredients' => array_map(function ($i) { return [$i[0], $i[1], $i[2], $i[3]]; }, $r['ing']),
             'steps' => array_map(function ($st) { return $st[0]; }, $r['steps']),

@@ -2,6 +2,6 @@
 <resources>
     <color name="primary">#B4235A</color>
     <color name="ic_launcher_background">#D63A73</color>
-    <!-- Same background as the web app (--bg), so the system bars blend with the page -->
+    <!-- Same background as the web app (bg variable), so the system bars blend with the page -->
     <color name="background">#FBF6F7</color>
 </resources>

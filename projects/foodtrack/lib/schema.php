@@ -278,6 +278,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v6: publication status per language (existing translations become published)
  *  v7: second batch of content (new catalog products and recipes from many countries)
  *  v8: third batch of content (more products and recipes)
+ *  v9: cover images of the initial recipes of batches 2 and 3 (only where the recipe still has no image)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -321,6 +322,12 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         require_once __DIR__ . '/seed.php';
         $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
         seed_database($pdo, $p, $admin ? (int)$admin : null);
+    }
+    if ($from < 9) {
+        require_once __DIR__ . '/seed.php';
+        $now = gmdate('Y-m-d H:i:s');
+        $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
+        foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }
