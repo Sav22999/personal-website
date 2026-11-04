@@ -7,7 +7,8 @@
       "namespace": "android_app",
       "package_name": "com.saverio.foodtrack",
       "sha256_cert_fingerprints": [
-        "71:C0:D2:51:6B:31:58:88:8E:4D:E6:10:01:8B:83:44:CE:2D:ED:0E:13:60:B6:58:51:F7:CC:2A:3B:BC:7F:F2"
+        "71:C0:D2:51:6B:31:58:88:8E:4D:E6:10:01:8B:83:44:CE:2D:ED:0E:13:60:B6:58:51:F7:CC:2A:3B:BC:7F:F2",
+        "D3:95:6C:F2:68:12:5B:50:0A:95:78:F2:40:21:18:19:57:6F:A3:A8:6D:A7:21:32:B9:1D:36:E9:B7:FB:6E:30"
       ]
     }
   }
