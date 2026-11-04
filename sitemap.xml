@@ -88,6 +88,11 @@
         <priority>0.7</priority>
     </url>
     <url>
+        <loc>https://www.saveriomorelli.com/projects/giftwise/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
         <loc>https://www.saveriomorelli.com/projects/sudoku/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>

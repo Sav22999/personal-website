@@ -138,7 +138,7 @@ $canonical = '/projects/';
                 <img src="/images/projects/ripasso-fipav.png" alt="">
             </div>
             <h3>Fischietto</h3>
-            <p>Personal, unofficial web app with quizzes, rule references and official documents to help volleyball referees study, revise and stay up to date with the FIPAV rulebook.</p>
+            <p>Personal, unofficial web app to help volleyball referees study, revise and stay up to date with the FIPAV rulebook: quizzes, rule references, official documents, personal stats and a match simulation to referee in real time.</p>
             <ul class="project-tags">
                 <li>Web app</li>
                 <li>Italian</li>
@@ -152,10 +152,27 @@ $canonical = '/projects/';
                 <img src="/images/projects/foodtrack.png" alt="">
             </div>
             <h3>FoodTrack</h3>
-            <p>Keep track of the food in your fridge, freezer and pantry, get alerts before it expires, share shopping lists with your household and find recipes with what you already have.</p>
+            <p>Keep track of the food in your fridge, freezer and pantry, get alerts before it expires, share spaces and shopping lists with your household, plan your weekly meals and find recipes with what you already have.</p>
             <ul class="project-tags">
                 <li>Web app</li>
                 <li>Android</li>
+                <li>English</li>
+                <li>Italian</li>
+            </ul>
+        </a>
+        <a class="card" href="/projects/giftwise/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/giftwise.png" alt="">
+            </div>
+            <h3>Giftwise</h3>
+            <p>Wish lists for every occasion, shared with the people who follow you. Your friends agree among themselves on who gives what and chat about it, without spoiling the surprise.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>Android</li>
+                <li>English</li>
                 <li>Italian</li>
             </ul>
         </a>
