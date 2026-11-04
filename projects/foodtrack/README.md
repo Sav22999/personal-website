@@ -164,7 +164,7 @@ Passaggi:
    - chiave di debug (Android Studio → Gradle → app → Tasks → android → `signingReport`, variante debug);
    - chiave di firma di Google Play (Play Console → Test e rilascio → Integrità dell'app → Firma dell'app → SHA-1).
    Nel codice non cambia nulla: l'app usa il Client ID **web** che legge dal server (`$google_client_id`), e il token resta verificato dal server come sul sito.
-5. Carica l'`.aab` (app/release/app-release.aab) nella Google Play Console. Come icona dello store usa `android/play-store-icon-512.png`; come privacy policy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`. Le immagini per la scheda dello store sono in `store/` (vedi sotto).
+5. Carica l'`.aab` (app/release/app-release.aab) nella Google Play Console. Come icona dello store usa `android/play-store-icon-512.png`; come privacy policy `https://www.saveriomorelli.com/projects/foodtrack/privacy.html`. Testi e immagini per la scheda dello store (screenshot 1080×1920 e immagine in primo piano 1024×500) sono in `android/store/` (`listing.md`).
 6. **Digital Asset Links** (facoltativo ma consigliato, per aprire i link d'invito direttamente nell'app): `/.well-known/assetlinks.json` nella radice del sito, con le impronte **SHA-256** delle chiavi (debug, caricamento, firma di Google Play).
 7. Ad ogni aggiornamento dell'app Android (raro) incrementa `versionCode` e `versionName`.
 

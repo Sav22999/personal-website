@@ -1370,7 +1370,7 @@
         groupRow(hh.members.length > 1 ? 'group' : 'home', hh.name, `${plural(hh.members.length, 'member', 'members')} · ${isOwner ? t('you are the owner') : t('you are a member')}`, null, {
           trail: isOwner ? h('div.trail', iconBtn('edit', t('Rename household'), () => promptSheet(t('Rename household'), t('Name'), hh.name, t('Save'), name => act('household.rename', { name })))) : null,
         }),
-        ...hh.members.map(m => groupRow(null, m.name + (m.id === u.id ? ' (tu)' : ''), m.role === 'owner' ? t('Owner') : t('Member since {d}', { d: UI.fmtDateTime(m.joinedAt).split(' ')[0] }), null, {
+        ...hh.members.map(m => groupRow(null, m.name + (m.id === u.id ? ' ' + t('(you)') : ''), m.role === 'owner' ? t('Owner') : t('Member since {d}', { d: UI.fmtDateTime(m.joinedAt).split(' ')[0] }), null, {
           lead: h('span.avatar', initials(m.name)),
           trail: isOwner && m.id !== u.id ? h('div.trail', moreBtn([
             { icon: 'swap', label: t('Make owner'), onclick: async () => { if (await confirm(t('Hand over the household?'), t('{name} will become the owner of “{home}” and you will stay a member.', { name: m.name, home: hh.name }), t('Hand over'))) act('household.transfer', { userId: m.id }); } },

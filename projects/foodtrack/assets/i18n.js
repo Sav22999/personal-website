@@ -559,6 +559,7 @@
         "Uses expiring products": "Usa prodotti in scadenza",
         "Weekly plan": "Piano della settimana",
         "Today": "Oggi",
+        "(you)": "(tu)",
         "Continue with Google": "Continua con Google",
         "Sign up with Google": "Registrati con Google",
         "Sign in with Google": "Accedi con Google",
