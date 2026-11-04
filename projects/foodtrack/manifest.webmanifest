@@ -4,7 +4,7 @@
   "description": "Gestisci gli alimenti di casa, ricevi avvisi sulle scadenze, crea liste della spesa condivise e scopri ricette con ciò che hai già.",
   "lang": "it",
   "id": "./",
-  "start_url": "./#/spazi",
+  "start_url": "./#/spaces",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -18,8 +18,8 @@
     { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Spazi della casa", "url": "./#/spazi", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Liste della spesa", "url": "./#/liste", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Ricette", "url": "./#/ricette", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Spazi della casa", "url": "./#/spaces", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Liste della spesa", "url": "./#/lists", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Ricette", "url": "./#/recipes", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

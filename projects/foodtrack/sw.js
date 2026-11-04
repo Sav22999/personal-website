@@ -6,8 +6,8 @@
  */
 'use strict';
 
-const CACHE = 'foodtrack-1.4.7';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.4.7', 'assets/i18n.js?v=1.4.7', 'assets/img/icons.js?v=1.4.7', 'assets/img/icons.svg?v=3', 'assets/api.js?v=1.4.7', 'assets/ui.js?v=1.4.7', 'assets/app.js?v=1.4.7', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
+const CACHE = 'foodtrack-1.5.0';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.5.0', 'assets/i18n.js?v=1.5.0', 'assets/img/icons.js?v=1.5.0', 'assets/img/icons.svg?v=3', 'assets/api.js?v=1.5.0', 'assets/ui.js?v=1.5.0', 'assets/app.js?v=1.5.0', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -45,7 +45,7 @@ self.addEventListener('fetch', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-    for (const c of list) if ('focus' in c) { c.navigate && c.navigate('./#/spazi'); return c.focus(); }
-    return self.clients.openWindow('./#/spazi');
+    for (const c of list) if ('focus' in c) { c.navigate && c.navigate('./#/spaces'); return c.focus(); }
+    return self.clients.openWindow('./#/spaces');
   }));
 });

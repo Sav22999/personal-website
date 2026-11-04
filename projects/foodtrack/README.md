@@ -119,7 +119,7 @@ Il portale mostra solo dati aggregati: non permette di leggere il contenuto di s
 
 Ogni utente ha almeno una «casa» (creata alla registrazione con Frigorifero, Freezer e Dispensa). Spazi, prodotti, liste della spesa e piano dei pasti appartengono alla casa e sono condivisi con tutti i suoi membri.
 
-- Invito: dal Profilo → «Invita qualcuno» si condivide un codice di 8 caratteri o il link `…/#/unisciti/CODICE` (il codice si può inserire anche in fase di registrazione).
+- Invito: dal Profilo → «Invita qualcuno» si condivide un codice di 8 caratteri o il link `…/#/join/CODICE` (i vecchi link `#/unisciti/…` continuano a funzionare) (il codice si può inserire anche in fase di registrazione).
 - Il proprietario può rinominare la casa, rigenerare il codice, rimuovere membri, cedere la proprietà o eliminare la casa.
 - Si può far parte di più case (es. casa e casa al mare) e passare dall'una all'altra dal chip in alto.
 - L'app si sincronizza ogni 30 secondi e quando torna in primo piano, così le modifiche degli altri membri compaiono da sole.

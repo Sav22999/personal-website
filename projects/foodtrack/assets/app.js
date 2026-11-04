@@ -5,7 +5,7 @@
   const t = I18N.t;
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
 
-  const VERSION = '1.4.0';
+  const VERSION = '1.5.0';
   const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
   const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
   const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
@@ -235,8 +235,18 @@
 
   // ===================================================== routing
 
+  /** Routes used before 1.5.0 (Italian): old links and invitations keep working. */
+  const LEGACY_ROUTES = { liste: 'lists', lista: 'list', spazi: 'spaces', spazio: 'space', ricette: 'recipes', ricetta: 'recipe', piano: 'plan', cerca: 'search', profilo: 'profile', unisciti: 'join' };
+  (function upgradeLegacyHash() {
+    const m = location.hash.match(/^#\/?([a-z]+)(\/.*)?$/);
+    if (m && LEGACY_ROUTES[m[1]]) history.replaceState(history.state, '', '#/' + LEGACY_ROUTES[m[1]] + (m[2] || ''));
+  })();
+  window.addEventListener('hashchange', () => {
+    const m = location.hash.match(/^#\/?([a-z]+)(\/.*)?$/);
+    if (m && LEGACY_ROUTES[m[1]]) location.replace('#/' + LEGACY_ROUTES[m[1]] + (m[2] || ''));
+  }, true);
   function route() {
-    const parts = (location.hash.replace(/^#\/?/, '') || 'spazi').split('/');
+    const parts = (location.hash.replace(/^#\/?/, '') || 'spaces').split('/');
     return { name: parts[0], id: parts[1] ? decodeURIComponent(parts[1]) : null };
   }
   function go(path) {
@@ -263,17 +273,17 @@
     const r = route();
     const key = r.name + '/' + (r.id || '');
     const y = window.scrollY;
-    const views = { liste: viewLists, lista: viewList, spazi: viewSpaces, spazio: viewSpace, ricette: viewRecipes, ricetta: viewRecipe, piano: viewPlan, cerca: viewSearch, profilo: viewProfile, unisciti: viewJoin };
+    const views = { lists: viewLists, list: viewList, spaces: viewSpaces, space: viewSpace, recipes: viewRecipes, recipe: viewRecipe, plan: viewPlan, search: viewSearch, profile: viewProfile, join: viewJoin };
     const v = (views[r.name] || viewSpaces)(r.id);
     if (!v) return;
     // On desktop, screens listed in the side navigation are top-level: no back arrow
-    const showBack = v.back && !(DESK.matches && ['profilo', 'piano', 'cerca'].includes(r.name));
+    const showBack = v.back && !(DESK.matches && ['profile', 'plan', 'search'].includes(r.name));
     const bar = showBack
       ? h('header.appbar.small', iconBtn('back', t('Back'), () => { if (curDepth > 0) history.back(); else location.replace('#/' + v.back); }), h('div.titles', h('h1', v.title)), v.actions || [])
       : h('header.appbar',
           h('div.titles', h('div.brand', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), 'FoodTrack', householdChip()), h('h1', v.title)),
           v.actions || [],
-          h('button.avatar', { type: 'button', title: t('Profile'), 'aria-label': t('Profile and settings'), onclick: () => go('profilo') }, initials(S.user.name)));
+          h('button.avatar', { type: 'button', title: t('Profile'), 'aria-label': t('Profile and settings'), onclick: () => go('profile') }, initials(S.user.name)));
     const nav = v.nav !== false;
     const main = h('main.view' + (!nav ? '.no-nav' : '') + (nav && !v.fab ? '.no-fab' : '') + (v.cls ? '.' + v.cls : ''), v.body);
     const content = h('div.content', bar, main);
@@ -302,7 +312,7 @@
   }
 
   /** Which side-navigation entry is highlighted for each route. */
-  const NAV_OF = { lista: 'liste', spazio: 'spazi', ricetta: 'ricette', unisciti: 'profilo' };
+  const NAV_OF = { list: 'lists', space: 'spaces', recipe: 'recipes', join: 'profile' };
   /** Wide screens (desktop, landscape tablets): side navigation, grids, dialogs instead of bottom sheets. */
   const DESK = matchMedia('(min-width: 960px)');
   DESK.addEventListener('change', () => { if (S.user && S.loaded) { UI.closeAllSheets(); render(true); } });
@@ -315,26 +325,26 @@
       icon(ic), h('span', label), badge ? h('span.sn-badge' + (tone ? '.' + tone : ''), String(badge)) : null);
     const hh = S.household;
     return h('nav.sidenav', { 'aria-label': t('Sections') },
-      h('a.sn-brand', { href: '#/spazi' }, h('img', { src: 'assets/icons/icon-color.png', alt: '' }), h('strong', 'FoodTrack')),
+      h('a.sn-brand', { href: '#/spaces' }, h('img', { src: 'assets/icons/icon-color.png', alt: '' }), h('strong', 'FoodTrack')),
       hh ? h('button.sn-household', { type: 'button', title: t('Switch household'), onclick: () => openHouseholdSwitcher() },
         icon(hh.members.length > 1 ? 'group' : 'home'), h('span.grow', h('small', t('Household')), h('span', hh.name)), icon('chevronDown')) : null,
       h('div.sn-links',
-        link('spazi', t('Spaces'), 'spaces', nExp, 'warn'),
-        link('liste', t('Lists'), 'list', nBuy),
-        link('ricette', t('Recipes'), 'restaurant'),
-        link('piano', t('Weekly plan'), 'calendar'),
-        link('cerca', t('Search'), 'search')),
+        link('spaces', t('Spaces'), 'spaces', nExp, 'warn'),
+        link('lists', t('Lists'), 'list', nBuy),
+        link('recipes', t('Recipes'), 'restaurant'),
+        link('plan', t('Weekly plan'), 'calendar'),
+        link('search', t('Search'), 'search')),
       h('div.grow'),
       // Admins and content moderators: shortcut to the management portal
       S.user.isEditor ? h('a.sn-link.sn-admin', { href: 'admin.html', target: '_blank', rel: 'noopener', title: S.user.isAdmin ? t('Recipes, products, categories and users') : t('Recipes and products') },
         icon('shield'), h('span', t('Management portal')), icon('open')) : null,
-      h('a.sn-user' + (active === 'profilo' ? '.active' : ''), { href: '#/profilo', title: t('Profile and settings') },
+      h('a.sn-user' + (active === 'profile' ? '.active' : ''), { href: '#/profile', title: t('Profile and settings') },
         h('span.avatar', initials(S.user.name)), h('span.grow', h('strong', S.user.name), h('small', S.user.email)), icon('right')));
   }
 
   function bottomNav(active) {
     const tab = (name, label, ic) => h('a' + (active === name ? '.active' : ''), { href: '#/' + name, 'aria-current': active === name ? 'page' : null }, h('span.pill', icon(ic)), label);
-    return h('nav.bottomnav', { 'aria-label': t('Sections') }, tab('liste', t('Lists'), 'list'), tab('spazi', t('Spaces'), 'spaces'), tab('ricette', t('Recipes'), 'restaurant'));
+    return h('nav.bottomnav', { 'aria-label': t('Sections') }, tab('lists', t('Lists'), 'list'), tab('spaces', t('Spaces'), 'spaces'), tab('recipes', t('Recipes'), 'restaurant'));
   }
 
   function initials(name) { return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase(); }
@@ -369,11 +379,11 @@
           { icon: 'edit', label: t('Edit'), onclick: () => openSpaceForm(sp) },
           { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteSpace(sp) },
         ], sp.name),
-      }, () => go('spazio/' + sp.id));
+      }, () => go('space/' + sp.id));
     })));
     return {
-      tab: 'spazi', title: t('Home spaces'), body,
-      actions: [iconBtn('search', t('Find a food'), () => go('cerca'))],
+      tab: 'spaces', title: t('Home spaces'), body,
+      actions: [iconBtn('search', t('Find a food'), () => go('search'))],
       fab: fab(t('New space'), 'add', () => openSpaceForm(null)),
     };
   }
@@ -389,7 +399,7 @@
         const sp = spaceById(i.spaceId);
         return cardRow({ lead: tile('products', i.icon), title: itemName(i), sub: `${expiryLine(i)} · ${sp ? sp.name : '—'}`, meta: [expiryChip(i)], trail: icon('right') }, () => openItemDetail(i));
       }))],
-      actions: [cancelBtn(), btn(t('Discover recipes'), { icon: 'restaurant', onclick: () => { recipeFilters = { fav: false, expiring: kind === 'expiring', expired: kind === 'expired', cookable: false }; recipeQuery = ''; go('ricette'); } })],
+      actions: [cancelBtn(), btn(t('Discover recipes'), { icon: 'restaurant', onclick: () => { recipeFilters = { fav: false, expiring: kind === 'expiring', expired: kind === 'expired', cookable: false }; recipeQuery = ''; go('recipes'); } })],
     });
   }
 
@@ -447,7 +457,7 @@
 
   function viewSpace(id) {
     const sp = spaceById(Number(id));
-    if (!sp) { go('spazi'); return null; }
+    if (!sp) { go('spaces'); return null; }
     const mode = store.get('sort', 'exp-asc');
     const items = sortItems(S.items.filter(i => i.spaceId === sp.id), mode);
     const body = [];
@@ -455,11 +465,11 @@
     else body.push(sectionTitle(t('Products'), items.length, btn(SORTS.find(x => x[0] === mode)[1].split(':')[0], { kind: 'text', icon: 'sort', onclick: () => openSort(mode) })));
     body.push(h('div.stack', items.map(i => itemCard(i))));
     return {
-      tab: 'spazi', title: sp.name, back: 'spazi', body,
+      tab: 'spaces', title: sp.name, back: 'spaces', body,
       actions: [moreBtn([
         { icon: 'sort', label: t('Sort products'), onclick: () => openSort(mode) },
         { icon: 'edit', label: t('Edit space'), onclick: () => openSpaceForm(sp) },
-        { icon: 'delete', label: t('Delete space'), danger: true, onclick: () => deleteSpace(sp).then(() => { if (!spaceById(sp.id)) go('spazi'); }) },
+        { icon: 'delete', label: t('Delete space'), danger: true, onclick: () => deleteSpace(sp).then(() => { if (!spaceById(sp.id)) go('spaces'); }) },
       ], sp.name)],
       fab: fab(t('Add product'), 'add', () => openProductSearch({ spaceId: sp.id })),
     };
@@ -797,9 +807,9 @@
           { icon: 'edit', label: t('Edit'), onclick: () => openListForm(l) },
           { icon: 'delete', label: t('Delete'), danger: true, onclick: () => deleteList(l) },
         ], l.name),
-      }, () => go('lista/' + l.id));
+      }, () => go('list/' + l.id));
     })));
-    return { tab: 'liste', title: t('Shopping lists'), body, fab: fab(t('New list'), 'add', () => openListForm(null)) };
+    return { tab: 'lists', title: t('Shopping lists'), body, fab: fab(t('New list'), 'add', () => openListForm(null)) };
   }
 
   function openListForm(l) {
@@ -821,7 +831,7 @@
   async function deleteList(l) {
     if (!await confirm(t('Delete the list?'), t('The list “{name}” and its products will be deleted for all household members.', { name: l.name }), t('Delete'), true)) return;
     await act('list.delete', { id: l.id });
-    if (route().name === 'lista') go('liste');
+    if (route().name === 'list') go('lists');
     toast(t('List deleted'));
   }
 
@@ -843,7 +853,7 @@
 
   function viewList(id) {
     const l = listById(Number(id));
-    if (!l) { go('liste'); return null; }
+    if (!l) { go('lists'); return null; }
     const items = S.listItems.filter(x => x.listId === l.id);
     const toBuy = items.filter(x => !x.inCart), cart = items.filter(x => x.inCart);
     const body = [];
@@ -867,7 +877,7 @@
       }
     }
     return {
-      tab: 'liste', title: l.name, back: 'liste', body,
+      tab: 'lists', title: l.name, back: 'lists', body,
       actions: [moreBtn([
         { icon: 'edit', label: t('Edit list'), onclick: () => openListForm(l) },
         { icon: 'share', label: t('Share as text'), onclick: () => shareListText(l, toBuy) },
@@ -963,7 +973,7 @@
         const d = await Api.post('listitem.addmany', { listId: Number(listId), items: chosen });
         applyState(d);
         s.close(); render(true);
-        toast(t('{what} to the list', { what: plural(d.added, 'product added', 'products added') }), null, { label: t('Open'), onclick: () => go('lista/' + listId) });
+        toast(t('{what} to the list', { what: plural(d.added, 'product added', 'products added') }), null, { label: t('Open'), onclick: () => go('list/' + listId) });
       });
     } });
     const s = sheet({
@@ -1011,7 +1021,7 @@
 
   function recipeCard(r) {
     const st = recipeStats(r);
-    return h('div.card.clickable.recipe-card', { role: 'button', tabindex: 0, onclick: () => go('ricetta/' + r.id), onkeydown: e => { if (e.key === 'Enter') go('ricetta/' + r.id); } },
+    return h('div.card.clickable.recipe-card', { role: 'button', tabindex: 0, onclick: () => go('recipe/' + r.id), onkeydown: e => { if (e.key === 'Enter') go('recipe/' + r.id); } },
       UI.recipeCover(r),
       listRow({
         title: r.name, sub: [r.origin.length ? [UI.originLabel(r.origin, true), ' · '] : null, [totalTime(r) ? totalTime(r) + ' min' : null, diffLabel(r.difficulty), plural(r.servings, 'serving', 'servings')].filter(Boolean).join(' · ')],
@@ -1050,10 +1060,10 @@
     q.addEventListener('input', () => { recipeQuery = q.value; paint(); });
     paint();
     return {
-      tab: 'ricette', title: t('Recipes'),
+      tab: 'recipes', title: t('Recipes'),
       body: [
         searchbar(q), chips,
-        h('div', { style: { marginTop: '12px' } }, cardRow({ lead: tile('icon', 'calendar'), title: t('Weekly plan'), sub: planSummary(), trail: icon('right') }, () => go('piano'))),
+        h('div', { style: { marginTop: '12px' } }, cardRow({ lead: tile('icon', 'calendar'), title: t('Weekly plan'), sub: planSummary(), trail: icon('right') }, () => go('plan'))),
         results,
       ],
     };
@@ -1067,7 +1077,7 @@
 
   function viewRecipe(id) {
     const r = recipeById(Number(id));
-    if (!r) { go('ricette'); return null; }
+    if (!r) { go('recipes'); return null; }
     const body = [];
     body.push(UI.recipeCover(r, 'hero-img'));
     body.push(h('h2.page-title', r.name));
@@ -1100,7 +1110,7 @@
     body.push(h('div.group', r.steps.map((t, i) => h('div.step', h('span.num', String(i + 1)), h('p', t)))));
     const layout = [h('div.recipe-layout', h('div.col-a', colA), h('div.col-b', body))];
     return {
-      tab: 'ricette', title: r.name, back: 'ricette', body: layout, actions: [favBtn(r)],
+      tab: 'recipes', title: r.name, back: 'recipes', body: layout, actions: [favBtn(r)],
       fab: fab(t('Add to plan'), 'calendar', () => openPlanForm({ recipeId: r.id, date: UI.todayStr() })),
     };
   }
@@ -1132,7 +1142,7 @@
           const r = recipeById(p.recipeId);
           const slot = (SLOTS.find(x => x[0] === p.slot) || [, p.slot])[1];
           return h('div.list-row', { role: 'button', tabindex: 0, style: { cursor: 'pointer' }, onclick: () => actionSheet([
-            r ? { icon: 'restaurant', label: t('Open recipe'), onclick: () => go('ricetta/' + r.id) } : null,
+            r ? { icon: 'restaurant', label: t('Open recipe'), onclick: () => go('recipe/' + r.id) } : null,
             { icon: 'edit', label: t('Edit'), onclick: () => openPlanForm(p) },
             { icon: 'delete', label: t('Remove from plan'), danger: true, onclick: () => act('plan.delete', { id: p.id }) },
           ], r ? r.name : p.title) },
@@ -1143,7 +1153,7 @@
     const weekRecipes = S.plan.filter(p => days.includes(p.date) && p.recipeId).map(p => recipeById(p.recipeId)).filter(Boolean);
     body.push(h('div.btn-row', { style: { justifyContent: 'flex-end' } }, btn(t('Missing ingredients to list'), { kind: 'tonal', icon: 'cartAdd', disabled: !weekRecipes.length, onclick: () => addToListSheet(missingFor(weekRecipes), t('Weekly shopping')) })));
     if (!weekRecipes.length) body.push(h('p.helper', { style: { textAlign: 'right' } }, t('Add recipes to the plan to build the week’s shopping list automatically.')));
-    return { tab: 'ricette', title: t('Weekly plan'), back: 'ricette', body, fab: fab(t('Add meal'), 'add', () => openPlanForm({ date: weekOffset === 0 ? today : days[0] })) };
+    return { tab: 'recipes', title: t('Weekly plan'), back: 'recipes', body, fab: fab(t('Add meal'), 'add', () => openPlanForm({ date: weekOffset === 0 ? today : days[0] })) };
   }
 
   function openPlanForm(p) {
@@ -1175,7 +1185,7 @@
       const useRecipe = mode === 'recipe';
       await act('plan.save', { id: p.id || 0, date: date.value, slot, recipeId: useRecipe ? recipeId : null, title: useRecipe ? '' : title.value }, save);
       s.close();
-      toast(isEdit ? t('Meal updated') : t('Added to the weekly plan'), null, route().name !== 'piano' ? { label: t('Open'), onclick: () => go('piano') } : null);
+      toast(isEdit ? t('Meal updated') : t('Added to the weekly plan'), null, route().name !== 'plan' ? { label: t('Open'), onclick: () => go('plan') } : null);
     } });
     const s = sheet({
       title: isEdit ? t('Edit meal') : t('Add a meal'),
@@ -1302,7 +1312,7 @@
     catSel.addEventListener('change', () => { searchState.categoryId = catSel.value; paint(); });
     paint();
     return {
-      tab: 'spazi', title: t('Find a food'), back: 'spazi',
+      tab: 'spaces', title: t('Find a food'), back: 'spaces',
       body: [searchbar(q), h('div.field-row', field(t('Space'), spaceSel), field(t('Category'), catSel)), expSeg, results],
       after: () => { if (!searchState.q && !matchMedia('(pointer: coarse)').matches) q.focus(); },
     };
@@ -1325,11 +1335,11 @@
           await act('household.switch', { id: hh.id }); toast(t('You are now in “{home}”', { home: hh.name }));
         }))),
       ],
-      actions: [btn(t('Manage and invite'), { kind: 'tonal', icon: 'group', onclick: () => go('profilo') })],
+      actions: [btn(t('Manage and invite'), { kind: 'tonal', icon: 'group', onclick: () => go('profile') })],
     });
   }
 
-  function inviteLink() { return location.origin + location.pathname.replace(/[^/]*$/, '') + '#/unisciti/' + S.household.inviteCode; }
+  function inviteLink() { return location.origin + location.pathname.replace(/[^/]*$/, '') + '#/join/' + S.household.inviteCode; }
 
   function openInvite() {
     const link = inviteLink();
@@ -1427,7 +1437,7 @@
         groupRow('delete', t('Delete my account'), t('Permanently delete account and data'), deleteAccount, { danger: true }),
       ),
     ];
-    return { tab: null, title: t('Profile'), back: 'spazi', body, cls: 'narrow' };
+    return { tab: null, title: t('Profile'), back: 'spaces', body, cls: 'narrow' };
   }
 
   function openChangePassword(forced) {
@@ -1470,22 +1480,22 @@
     try { await Api.post('auth.logout', {}); } catch (e) { /* already signed out */ }
     try { if (window.google && google.accounts) google.accounts.id.disableAutoSelect(); } catch (e) { /* not loaded */ }
     S.user = null; S.loaded = false;
-    location.hash = '#/spazi';
+    location.hash = '#/spaces';
     render();
   }
 
   function viewJoin(code) {
     code = String(code || '').toUpperCase();
     setTimeout(async () => {
-      if (!code) return go('spazi');
-      if (S.household.inviteCode === code) { toast(t('You are already in this household')); return go('spazi'); }
+      if (!code) return go('spaces');
+      if (S.household.inviteCode === code) { toast(t('You are already in this household')); return go('spaces'); }
       if (await confirm(t('Join the household?'), t('You are about to join the household with code {code}: you will see and edit its spaces, products and shopping lists.', { code }), t('Join'))) {
         try { applyState(await Api.post('household.join', { code })); toast(t('Welcome to “{home}”!', { home: S.household.name })); }
         catch (e) { toast(e.message, 'error'); }
       }
-      go('spazi');
+      go('spaces');
     }, 50);
-    return { tab: 'spazi', title: t('Invitation'), back: 'spazi', body: [h('div.loader')] };
+    return { tab: 'spaces', title: t('Invitation'), back: 'spaces', body: [h('div.loader')] };
   }
 
   // ===================================================== Google Identity Services
@@ -1537,8 +1547,8 @@
   // ===================================================== AUTH
 
   function afterLogin(pending, viaGoogle) {
-    if (pending && !viaGoogle) location.hash = '#/unisciti/' + pending;
-    else if (pending) location.hash = '#/spazi';
+    if (pending && !viaGoogle) location.hash = '#/join/' + pending;
+    else if (pending) location.hash = '#/spaces';
     start();
   }
 
@@ -1551,7 +1561,7 @@
   }
 
   function renderAuth(mode) {
-    const pending = (location.hash.match(/^#\/unisciti\/([A-Za-z0-9]+)/) || [])[1] || '';
+    const pending = (location.hash.match(/^#\/(?:join|unisciti)\/([A-Za-z0-9]+)/) || [])[1] || '';
     mode = mode || (pending ? 'register' : store.get('authMode', 'login'));
     const err = h('div.err-box', { hidden: true });
     const showErr = m => { UI.clear(err); err.append(icon('error'), h('span', m)); err.hidden = false; };
@@ -1748,7 +1758,7 @@
   document.addEventListener('keydown', e => {
     if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || UI.sheetsOpen() || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '')) return;
     const q = document.querySelector('main.view input[type=search]');
-    if (q) { e.preventDefault(); q.focus(); } else if (S.user && S.loaded) { e.preventDefault(); go('cerca'); }
+    if (q) { e.preventDefault(); q.focus(); } else if (S.user && S.loaded) { e.preventDefault(); go('search'); }
   });
 
   Api.onUnauthenticated(() => { S.user = null; S.loaded = false; UI.closeAllSheets(); render(); });
