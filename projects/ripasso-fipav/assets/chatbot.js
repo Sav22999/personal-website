@@ -7,7 +7,7 @@
  * Two layers:
  *  A. Retrieval (always available, instant): finds the references that answer the question.
  *  B. Assistant (optional, needs WebGPU): a small language model (Qwen2.5 Instruct via WebLLM) runs
- *     ON THE DEVICE, reads only the references found in step A and writes the answer in its own words,
+ *     ON THE DEVICE reads only the references found in step A and writes the answer in its own words,
  *     citing the codes. The model files are downloaded once (≈ 0.4–2 GB, kept in the browser cache);
  *     the questions never leave the device.
  *
@@ -211,57 +211,112 @@
 
   // ---------------------------------------------------------------- B. local language model (WebLLM)
 
+  // Two engines, chosen automatically:
+  //  - "gpu": WebLLM on WebGPU (fast; Chrome/Edge, also Android);
+  //  - "cpu": Transformers.js on WebAssembly (slower, but works everywhere, Firefox included).
   const WEBLLM_URL = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js';
+  const TFJS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.web.min.js';
   const MODELS = {
-    light: { label: 'Leggero', size: '≈ 0,4 GB', id: 'Qwen2.5-0.5B-Instruct', note: 'veloce, risposte più semplici' },
-    standard: { label: 'Standard', size: '≈ 1 GB', id: 'Qwen2.5-1.5B-Instruct', note: 'consigliato' },
-    quality: { label: 'Qualità', size: '≈ 2 GB', id: 'Qwen2.5-3B-Instruct', note: 'risposte migliori, serve un dispositivo potente' },
+    gpu: {
+      light: { label: 'Leggero', size: '≈ 0,4 GB', id: 'Qwen2.5-0.5B-Instruct', note: 'veloce, risposte più semplici' },
+      standard: { label: 'Standard', size: '≈ 1 GB', id: 'Qwen2.5-1.5B-Instruct', note: 'consigliato' },
+      quality: { label: 'Qualità', size: '≈ 2 GB', id: 'Qwen2.5-3B-Instruct', note: 'risposte migliori, serve un dispositivo potente' },
+    },
+    cpu: {
+      light: { label: 'Leggero', size: '≈ 0,5 GB', id: 'onnx-community/Qwen2.5-0.5B-Instruct', note: 'consigliato con il processore' },
+      standard: { label: 'Standard', size: '≈ 1,2 GB', id: 'onnx-community/Qwen2.5-1.5B-Instruct', note: 'più preciso ma lento (meglio su computer)' },
+    },
   };
   const LLM = {
-    lib: null, engine: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false,
-    supported() { return 'gpu' in navigator && window.isSecureContext; },
-    /** WebLLM needs at least 10 storage buffers per shader stage (Firefox gives 9): checked before downloading. */
-    async gpuProblem() {
+    kind: null, lib: null, engine: null, gen: null, stopper: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false, files: {},
+    /** Which engine this browser can use: 'gpu', 'cpu' or '' (none), with the reason when WebGPU is not usable. */
+    async detect() {
+      if (this.kind !== null) return this.kind;
+      this.gpuNote = '';
+      if ('gpu' in navigator && window.isSecureContext) {
+        try {
+          const ad = await navigator.gpu.requestAdapter();
+          // WebLLM needs at least 10 storage buffers per shader stage (Firefox gives 9)
+          if (ad && (ad.limits.maxStorageBuffersPerShaderStage || 0) >= 10) { this.f16 = ad.features.has('shader-f16'); return (this.kind = 'gpu'); }
+          this.gpuNote = ad ? 'La WebGPU di questo browser è troppo limitata per il motore veloce (succede per esempio con Firefox)' : 'Nessuna scheda grafica compatibile con WebGPU';
+        } catch (e) { this.gpuNote = 'WebGPU non disponibile'; }
+      } else this.gpuNote = 'Questo browser non ha WebGPU';
+      return (this.kind = typeof WebAssembly === 'object' ? 'cpu' : '');
+    },
+    models() { return MODELS[this.kind] || MODELS.cpu; },
+    choice() {
+      let k = 'standard';
+      try { k = localStorage.getItem('fischietto-chatbot-model-' + this.kind) || (this.kind === 'cpu' ? 'light' : 'standard'); } catch (e) { /* private mode */ }
+      return this.models()[k] ? k : Object.keys(this.models())[0];
+    },
+    setChoice(k) { try { localStorage.setItem('fischietto-chatbot-model-' + this.kind, k); } catch (e) { /* private mode */ } },
+    async gpuId(k) {
+      if (!this.lib) this.lib = await import(WEBLLM_URL);
+      return MODELS.gpu[k].id + (this.f16 ? '-q4f16_1-MLC' : '-q4f32_1-MLC');
+    },
+    async cached(k) {
       try {
-        const ad = await navigator.gpu.requestAdapter();
-        if (!ad) return 'Il browser non ha trovato una scheda grafica compatibile con WebGPU.';
-        if ((ad.limits.maxStorageBuffersPerShaderStage || 0) < 10) return 'La WebGPU di questo browser è troppo limitata per il modello (succede per esempio con Firefox).';
-        return '';
-      } catch (e) { return 'WebGPU non disponibile.'; }
+        if (this.kind === 'gpu') return await this.lib.hasModelInCache(await this.gpuId(k));
+        const c = await caches.open('transformers-cache');
+        const keys = await c.keys();
+        return keys.some(r => r.url.includes(MODELS.cpu[k].id + '/') && /\.onnx/.test(r.url));
+      } catch (e) { return false; }
     },
-    choice() { try { return localStorage.getItem('fischietto-chatbot-model') || 'standard'; } catch (e) { return 'standard'; } },
-    setChoice(k) { try { localStorage.setItem('fischietto-chatbot-model', k); } catch (e) { /* private mode */ } },
-    async fullId(k) {
-      if (this.lib === null) this.lib = await import(WEBLLM_URL);
-      try { const ad = await navigator.gpu.requestAdapter(); this.f16 = !!(ad && ad.features.has('shader-f16')); } catch (e) { this.f16 = false; }
-      return MODELS[k].id + (this.f16 ? '-q4f16_1-MLC' : '-q4f32_1-MLC');
-    },
-    async cached(k) { try { const id = await this.fullId(k); return await this.lib.hasModelInCache(id); } catch (e) { return false; } },
     async load(k, onProgress) {
-      this.state = 'loading'; this.progress = 0; this.text = 'Preparazione…'; onProgress();
+      this.state = 'loading'; this.progress = 0; this.text = 'Preparazione…'; this.files = {}; onProgress();
       try {
-        const id = await this.fullId(k);
-        if (this.engine) { try { await this.engine.unload(); } catch (e) { /* ignore */ } }
-        this.engine = await this.lib.CreateMLCEngine(id, { initProgressCallback: r => { this.progress = r.progress || 0; this.text = r.text || ''; onProgress(); } });
-        this.modelId = id; this.state = 'ready';
+        if (this.kind === 'gpu') {
+          const id = await this.gpuId(k);
+          if (this.engine) { try { await this.engine.unload(); } catch (e) { /* ignore */ } }
+          this.engine = await this.lib.CreateMLCEngine(id, { initProgressCallback: r => { this.progress = r.progress || 0; this.text = r.text || ''; onProgress(); } });
+          this.modelId = id;
+        } else {
+          const T = this.tf || (this.tf = await import(TFJS_URL));
+          T.env.allowLocalModels = false;
+          if (this.gen && this.gen.dispose) { try { await this.gen.dispose(); } catch (e) { /* ignore */ } }
+          let last = 0;
+          this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
+            dtype: 'q4', device: 'wasm',
+            progress_callback: p => {
+              if (p.status === 'progress' && p.file) this.files[p.file] = [p.loaded || 0, p.total || 0];
+              const v = Object.values(this.files), tot = v.reduce((a, x) => a + x[1], 0), done = v.reduce((a, x) => a + x[0], 0);
+              this.progress = tot ? done / tot : 0;
+              this.text = p.file ? 'Scarico ' + p.file + (tot ? ' — ' + (done / 1048576).toFixed(0) + ' / ' + (tot / 1048576).toFixed(0) + ' MB' : '') : 'Avvio del modello…';
+              if (Date.now() - last > 150) { last = Date.now(); onProgress(); }
+            },
+          });
+          this.modelId = MODELS.cpu[k].id;
+        }
+        this.state = 'ready';
       } catch (e) {
-        this.engine = null; this.state = 'error'; this.text = (e && e.message) || String(e);
+        this.engine = null; this.gen = null; this.state = 'error'; this.text = (e && e.message) || String(e);
       }
       onProgress();
     },
     async generate(messages, onToken) {
       this.busy = true;
       try {
-        const chunks = await this.engine.chat.completions.create({ messages, stream: true, temperature: 0.2, top_p: 0.9, max_tokens: 420 });
         let out = '';
-        for await (const c of chunks) {
-          const d = c.choices && c.choices[0] && c.choices[0].delta && c.choices[0].delta.content;
-          if (d) { out += d; onToken(out); }
+        if (this.kind === 'gpu') {
+          const chunks = await this.engine.chat.completions.create({ messages, stream: true, temperature: 0.2, top_p: 0.9, max_tokens: 420 });
+          for await (const c of chunks) {
+            const d = c.choices && c.choices[0] && c.choices[0].delta && c.choices[0].delta.content;
+            if (d) { out += d; onToken(out); }
+          }
+        } else {
+          const T = this.tf;
+          this.stopper = new T.InterruptableStoppingCriteria();
+          const streamer = new T.TextStreamer(this.gen.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: txt => { out += txt; onToken(out); } });
+          await this.gen(messages, { max_new_tokens: 320, do_sample: false, repetition_penalty: 1.1, streamer, stopping_criteria: this.stopper });
         }
         return out;
       } finally { this.busy = false; }
     },
-    stop() { if (this.engine && this.busy) this.engine.interruptGenerate(); },
+    stop() {
+      if (!this.busy) return;
+      if (this.kind === 'gpu' && this.engine) this.engine.interruptGenerate();
+      else if (this.stopper) this.stopper.interrupt();
+    },
   };
 
   const SYSTEM_PROMPT = 'Sei l’assistente di Fischietto, un portale per arbitri di pallavolo FIPAV. ' +
@@ -272,11 +327,11 @@
 
   /** Messages for the model: system prompt, the last exchanges (for follow-up questions), the references found. */
   function buildMessages(question, found, prev) {
-    let ctx = '', budget = 6500;
+    let ctx = '', budget = LLM.kind === 'cpu' ? 3600 : 6500;
     if (found.quiz) ctx += '[QUIZ] Domanda: ' + found.quiz.q['question-text'] + ' — Risposta corretta: ' + found.quiz.answer + '\n\n';
     for (const r of found.refs) {
       const body = (r.ref['ref-full-text'] || r.ref['ref-text'] || '').replace(/\s+/g, ' ').trim();
-      const piece = '[' + r.ref['ref-code'] + '] ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + ')\n' + body.slice(0, 1100) + '\n\n';
+      const piece = '[' + r.ref['ref-code'] + '] ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + ')\n' + body.slice(0, LLM.kind === 'cpu' ? 800 : 1100) + '\n\n';
       if (ctx.length + piece.length > budget) break;
       ctx += piece;
     }
@@ -417,30 +472,29 @@
   async function paintStatus() {
     const box = document.getElementById('cb-status');
     if (!box) return;
-    if (!LLM.supported()) {
-      box.innerHTML = '<span class="cb-st-dot off"></span><span><strong>Modalità ricerca.</strong> Questo browser non supporta WebGPU: l’assistente AI locale non può funzionare qui (prova con Chrome o Edge aggiornati, anche su Android). Le risposte arrivano dai riferimenti più pertinenti.</span>';
+    const kind = await LLM.detect();
+    if (!kind) {
+      box.innerHTML = '<span class="cb-st-dot off"></span><span><strong>Modalità ricerca.</strong> Questo browser non può far girare l’assistente AI locale. Le risposte arrivano dai riferimenti più pertinenti.</span>';
       return;
     }
-    const problem = LLM.state === 'ready' ? '' : await LLM.gpuProblem();
-    if (problem) {
-      box.innerHTML = '<span class="cb-st-dot off"></span><span><strong>Modalità ricerca.</strong> ' + esc(problem) + ' Per l’assistente AI locale usa <strong>Chrome</strong> o <strong>Edge</strong> aggiornati (computer o Android). Le risposte arrivano comunque dai riferimenti più pertinenti.</span>';
-      return;
-    }
-    const k = LLM.choice(), M = MODELS[k];
+    const MS = LLM.models(), k = LLM.choice(), M = MS[k];
+    const engine = kind === 'gpu' ? 'scheda grafica (WebGPU)' : 'processore (compatibile con tutti i browser, più lento)';
     if (LLM.state === 'loading') {
       const pct = Math.round(LLM.progress * 100);
       box.innerHTML = '<span class="cb-st-dot load"></span><span><strong>Preparo l’assistente (' + M.label + ')… ' + pct + '%</strong><br><small>' + esc(LLM.text).slice(0, 140) + '</small><span class="cb-bar"><i style="width:' + pct + '%"></i></span></span>';
       return;
     }
     if (LLM.state === 'ready') {
-      box.innerHTML = '<span class="cb-st-dot on"></span><span><strong>Assistente attivo</strong> · modello ' + M.label + ' sul tuo dispositivo. Interpreta la domanda e risponde usando solo i riferimenti di Fischietto.</span>' +
+      box.innerHTML = '<span class="cb-st-dot on"></span><span><strong>Assistente attivo</strong> · modello ' + M.label + ' sul tuo dispositivo, con il ' + engine + '. Interpreta la domanda e risponde usando solo i riferimenti di Fischietto.' +
+        (kind === 'cpu' ? '<br><small>Con il processore la prima parola può arrivare dopo qualche secondo: poi la risposta si scrive man mano.</small>' : '') + '</span>' +
         '<button type="button" class="cb-link" id="cb-model">Cambia modello</button>';
       document.getElementById('cb-model').onclick = chooseModel;
       return;
     }
     const cached = await LLM.cached(k).catch(() => false);
     box.innerHTML = '<span class="cb-st-dot off"></span><span>' + (LLM.state === 'error' ? '<strong>Assistente non avviato:</strong> ' + esc(LLM.text).slice(0, 200) + '<br>' : '<strong>Modalità ricerca.</strong> ') +
-      'Attiva l’<strong>assistente AI locale</strong> per risposte scritte che interpretano la domanda: il modello gira sul tuo dispositivo' + (cached ? ' ed è già scaricato.' : ' e va scaricato una volta (' + M.size + ').') + '</span>' +
+      'Attiva l’<strong>assistente AI locale</strong> per risposte scritte che interpretano la domanda: il modello gira sul tuo dispositivo, con il ' + engine + (cached ? ', ed è già scaricato.' : ', e va scaricato una volta (' + M.size + ').') +
+      (kind === 'cpu' && LLM.gpuNote ? '<br><small>' + esc(LLM.gpuNote) + ': uso il motore compatibile. Con Chrome o Edge le risposte sono più rapide.</small>' : '') + '</span>' +
       '<span class="cb-st-actions"><button type="button" class="btn btn-primary btn-sm" id="cb-enable">' + (cached ? 'Attiva' : 'Scarica e attiva') + '</button><button type="button" class="cb-link" id="cb-model">Modello: ' + M.label + '</button></span>';
     document.getElementById('cb-enable').onclick = () => LLM.load(LLM.choice(), paintStatusAndLog);
     document.getElementById('cb-model').onclick = chooseModel;
@@ -450,7 +504,7 @@
   function chooseModel() {
     const cur = LLM.choice();
     const box = document.getElementById('cb-status');
-    box.innerHTML = '<span><strong>Scegli il modello</strong> (resta salvato nel browser):</span><span class="cb-models">' + Object.entries(MODELS).map(([k, M]) =>
+    box.innerHTML = '<span><strong>Scegli il modello</strong> (resta salvato nel browser):</span><span class="cb-models">' + Object.entries(LLM.models()).map(([k, M]) =>
       '<button type="button" class="cb-model' + (k === cur ? ' sel' : '') + '" data-model="' + k + '"><strong>' + M.label + '</strong><small>' + M.size + ' · ' + M.note + '</small></button>').join('') + '</span>';
     box.querySelectorAll('[data-model]').forEach(b => b.onclick = () => {
       LLM.setChoice(b.dataset.model);
