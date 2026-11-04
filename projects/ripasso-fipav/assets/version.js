@@ -19,6 +19,15 @@ window.APP_RELEASES = [
           'Chatbot › Funziona anche su Firefox: dove la WebGPU non basta, l’assistente usa il processore (più lento, ma compatibile con tutti i browser). Su Chrome ed Edge usa la scheda grafica ed è più rapido.',
         ],
       },
+      {
+        title: 'Miglioramenti',
+        items: [
+          'Chatbot › Interfaccia rinnovata: lo stato dell’assistente sta in una riga (i dettagli e la scelta del modello si aprono da «Dettagli»), il riferimento più pertinente è in evidenza e gli altri si aprono toccandoli.',
+          'Chatbot › Toccando un codice (per esempio RG-15.1) il riferimento si apre in una finestra, senza lasciare la conversazione; da lì «Apri nel Ripasso» porta alla scheda completa.',
+          'Chatbot › Mentre l’assistente scrive, il pulsante di invio diventa «Ferma» (anche con Esc) e la domanda che stai scrivendo non si perde più.',
+          'Chatbot › Sotto ogni risposta: «Copia», «Rigenera» e, sulle risposte della ricerca, «Chiedi all’assistente». Se nei riferimenti non c’è niente di pertinente risponde subito la ricerca, senza far lavorare il modello.',
+        ],
+      },
     ],
   },
   {

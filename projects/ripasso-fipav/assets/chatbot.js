@@ -6,8 +6,9 @@
  *
  * Two layers:
  *  A. Retrieval (always available, instant): finds the references that answer the question.
- *  B. Assistant (optional, needs WebGPU): a small language model (Qwen2.5 Instruct via WebLLM) runs
- *     ON THE DEVICE reads only the references found in step A and writes the answer in its own words,
+ *  B. Assistant (optional): a small language model (Qwen2.5 Instruct) runs ON THE DEVICE — WebLLM on
+ *     WebGPU, or Transformers.js on WebAssembly where WebGPU is not enough —, reads only the references
+ *     found in step A and writes the answer in its own words,
  *     citing the codes. The model files are downloaded once (≈ 0.4–2 GB, kept in the browser cache);
  *     the questions never leave the device.
  *
@@ -236,7 +237,8 @@
       this.gpuNote = '';
       if ('gpu' in navigator && window.isSecureContext) {
         try {
-          const ad = await navigator.gpu.requestAdapter();
+          // requestAdapter can hang on some drivers: after 4 s it counts as "no adapter"
+          const ad = await Promise.race([navigator.gpu.requestAdapter(), new Promise(r => setTimeout(() => r(null), 4000))]);
           // WebLLM needs at least 10 storage buffers per shader stage (Firefox gives 9)
           if (ad && (ad.limits.maxStorageBuffersPerShaderStage || 0) >= 10) { this.f16 = ad.features.has('shader-f16'); return (this.kind = 'gpu'); }
           this.gpuNote = ad ? 'La WebGPU di questo browser è troppo limitata per il motore veloce (succede per esempio con Firefox)' : 'Nessuna scheda grafica compatibile con WebGPU';
@@ -361,15 +363,32 @@
   // ---------------------------------------------------------------- UI
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const $ = id => document.getElementById(id);
+  const CITE_RE = /\[((?:RG|CAS|IT|NF|VAD)-[0-9][0-9A-Za-z.]*)\]/g;
+  const svg = (d, size, fill) => '<svg width="' + (size || 16) + '" height="' + (size || 16) + '" viewBox="0 0 24 24" ' + (fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"') + ' aria-hidden="true">' + d + '</svg>';
+  const ICON = {
+    send: svg('<path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>', 18, true),
+    stop: svg('<rect x="6" y="6" width="12" height="12" rx="2"/>', 16, true),
+    copy: svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>', 14),
+    check: svg('<path d="M20 6 9 17l-5-5"/>', 14),
+    redo: svg('<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/>', 14),
+    spark: svg('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7z"/>', 14),
+    search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 14),
+    plus: svg('<path d="M12 5v14M5 12h14"/>', 16),
+    chevron: svg('<path d="m6 9 6 6 6-6"/>', 16),
+  };
+
   /** Highlights the words of the question in a sentence. */
   function highlight(text, qt) {
-    return esc(text).replace(/[A-Za-zÀ-ÿ0-9]+/g, w => (qt.has(stem(norm(w))) && w.length > 2 ? '<mark>' + w + '</mark>' : w));
+    return esc(text).replace(/[A-Za-zÀ-ÿ0-9]+/g, w => (qt && qt.has(stem(norm(w))) && w.length > 2 ? '<mark>' + w + '</mark>' : w));
   }
   /** Model text → HTML: [RG-15.4] become buttons that open the reference, **bold**, line breaks. */
   function formatAnswer(text) {
     return esc(text)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[((?:RG|CAS|IT|NF|VAD)-[0-9][0-9A-Za-z.]*)\]/g, (m, c) => BY_CODE[c.toUpperCase()] ? '<button type="button" class="cb-cite" data-ref="' + c + '">' + c + '</button>' : '<span class="cb-cite bad" title="Codice non trovato nei riferimenti">' + c + '</span>')
+      .replace(CITE_RE, (m, c) => BY_CODE[c.toUpperCase()]
+        ? '<button type="button" class="cb-cite" data-ref="' + c + '" title="Leggi il riferimento ' + c + '">' + c + '</button>'
+        : '<span class="cb-cite bad" title="Codice non trovato nei riferimenti">' + c + '</span>')
       .replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
   }
   const SRC_CLASS = { 'Regole di gioco': 'rg', 'Casistica': 'cas', 'Indicazioni tecniche': 'it', 'Normative federali': 'nf', 'Vademecum': 'vad' };
@@ -381,159 +400,387 @@
     'Quanto dura un tempo di riposo?',
     'Il battitore può pestare la linea di fondo?',
   ];
+  const ENGINE = { gpu: 'scheda grafica (WebGPU)', cpu: 'processore' };
   const STORE = 'fischietto-chatbot';
-  let history = [];   // { role: 'user', text } | { role: 'bot', q, mode: 'search' | 'ai', a, refs: [codes], done }
+  let history = [];   // { role: 'user', text } | { role: 'bot', q, mode: 'search' | 'ai', a, refs: [codes], done, error, stopped }
   let mounted = false;
+  let statusOpen = false;
+  let stopRequested = false;
 
   function save() { try { sessionStorage.setItem(STORE, JSON.stringify(history.slice(-30))); } catch (e) { /* private mode */ } }
-  function load() { try { history = (JSON.parse(sessionStorage.getItem(STORE) || '[]') || []).map(m => (m.role === 'bot' && m.mode === 'ai' && !m.done ? Object.assign(m, { done: true, a: m.a || '(interrotta)' }) : m)); } catch (e) { history = []; } }
+  function load() {
+    try {
+      history = (JSON.parse(sessionStorage.getItem(STORE) || '[]') || []).map(m => (m.role === 'bot' && m.mode === 'ai' && !m.done ? Object.assign(m, { done: true, stopped: true }) : m));
+    } catch (e) { history = []; }
+  }
+  function announce(text) { const a = $('cb-announce'); if (a) { a.textContent = ''; setTimeout(() => { a.textContent = text; }, 30); } }
 
-  function refCard(ref, sentences, qt, main) {
-    const cls = SRC_CLASS[ref['ref-from']] || 'rg';
-    return '<div class="cb-ref' + (main ? ' cb-main' : '') + '">' +
-      '<div class="cb-ref-head"><span class="cb-src cb-src-' + cls + '">' + esc(ref['ref-code']) + '</span><strong>' + esc(ref['ref-title']) + '</strong><small>' + esc(ref['ref-from']) + '</small></div>' +
-      (sentences || []).map(s => '<p>' + highlight(s, qt) + '</p>').join('') +
-      '<button type="button" class="cb-open" data-ref="' + esc(ref['ref-code']) + '">Apri nel Ripasso →</button></div>';
+  // Search answers are computed from the question (they are not saved): cached per message
+  const FOUND = new WeakMap();
+  function found(m) { if (!FOUND.has(m)) FOUND.set(m, answer(m.q)); return FOUND.get(m); }
+
+  // ---------------------------------------------------------------- UI: messages
+
+  function srcTag(ref) {
+    return '<span class="cb-src cb-src-' + (SRC_CLASS[ref['ref-from']] || 'rg') + '">' + esc(ref['ref-code']) + '</span>';
+  }
+  function refHead(ref) {
+    return srcTag(ref) + '<span class="cb-ref-title"><strong>' + esc(ref['ref-title']) + '</strong><small>' + esc(ref['ref-from']) + '</small></span>';
+  }
+  /** The best reference is shown open; the others are collapsed under their title. */
+  function refBlock(ref, sentences, qt, main) {
+    const body = (sentences || []).map(s => '<p>' + highlight(s, qt) + '</p>').join('') +
+      '<button type="button" class="cb-open" data-ref="' + esc(ref['ref-code']) + '">Leggi tutto il riferimento</button>';
+    if (main) return '<div class="cb-ref cb-main"><div class="cb-ref-head">' + refHead(ref) + '</div>' + body + '</div>';
+    return '<details class="cb-ref"><summary class="cb-ref-head">' + refHead(ref) + '<span class="cb-chev">' + ICON.chevron + '</span></summary><div class="cb-ref-body">' + body + '</div></details>';
+  }
+  function refChip(ref, on) {
+    return '<button type="button" class="cb-chip cb-chip-ref' + (on ? ' on' : '') + '" data-ref="' + esc(ref['ref-code']) + '" title="' + esc(ref['ref-code'] + ' · ' + ref['ref-title']) + '"><b>' + esc(ref['ref-code']) + '</b><span>' + esc(ref['ref-title']) + '</span></button>';
   }
 
-  function renderSearchAnswer(q) {
-    const a = answer(q);
-    const qt = queryTerms(q);
-    if (a.kind === 'none') return '<p>Non ho trovato niente di pertinente nei riferimenti. Prova con altre parole o cerca per codice, come <code>RG-15.4</code>.</p>';
+  function renderSearch(m) {
+    const a = found(m);
+    if (a.kind === 'none') {
+      return '<p>Non ho trovato niente di pertinente nei riferimenti.</p>' +
+        '<p class="cb-hint">Prova con altre parole, magari quelle del regolamento (per esempio «servizio» invece di «battuta»), oppure scrivi direttamente un codice come <button type="button" class="cb-cite" data-ask="RG-15.4">RG-15.4</button>.</p>';
+    }
+    const qt = queryTerms(m.q);
     let html = '';
-    const conf = { high: ['ok', 'Risposta trovata'], medium: ['mid', 'Possibile risposta'], low: ['low', 'Risposta incerta: controlla le fonti'] }[a.confidence];
-    if (conf && a.kind !== 'code') html += '<span class="cb-conf cb-conf-' + conf[0] + '">' + conf[1] + '</span>';
-    if (a.quiz) html += '<div class="cb-quiz"><span class="cb-label">Dal quiz</span><p class="cb-qtext">' + esc(a.quiz.q['question-text']) + '</p><p class="cb-qans">→ <strong>' + esc(a.quiz.answer) + '</strong></p></div>';
-    a.refs.forEach((r, i) => { html += refCard(r.ref, r.sentences, qt, i === 0); });
-    if (a.related && a.related.length) html += '<div class="cb-related"><span class="cb-label">Vedi anche</span>' + a.related.map(r => '<button type="button" class="cb-chip" data-ref="' + esc(r['ref-code']) + '">' + esc(r['ref-code']) + ' · ' + esc(r['ref-title']) + '</button>').join('') + '</div>';
+    if (a.quiz) html += '<div class="cb-quiz"><span class="cb-label">Dal quiz</span><p class="cb-qtext">' + esc(a.quiz.q['question-text']) + '</p><p class="cb-qans">' + ICON.check + '<strong>' + esc(a.quiz.answer) + '</strong></p></div>';
+    a.refs.forEach((r, i) => {
+      if (i === 1) html += '<span class="cb-label cb-label-more">Altri riferimenti</span>';
+      html += refBlock(r.ref, r.sentences, qt, i === 0);
+    });
+    if (a.related && a.related.length) html += '<div class="cb-related"><span class="cb-label">Vedi anche</span>' + a.related.map(r => refChip(r)).join('') + '</div>';
     return html;
   }
 
-  function renderAiAnswer(m) {
-    const cited = new Set((m.a.match(/\[((?:RG|CAS|IT|NF|VAD)-[0-9][0-9A-Za-z.]*)\]/g) || []).map(x => x.slice(1, -1).toUpperCase()));
+  function renderAi(m) {
+    const cited = new Set((m.a.match(CITE_RE) || []).map(x => x.slice(1, -1).toUpperCase()));
     const used = (m.refs || []).map(c => BY_CODE[c]).filter(Boolean);
-    let html = '<span class="cb-conf cb-conf-ai">Assistente · AI locale</span><div class="cb-ai"><p>' + (m.a ? formatAnswer(m.a) : '<span class="cb-typing"><i></i><i></i><i></i></span>') + (m.done ? '' : '<span class="cb-caret"></span>') + '</p></div>';
+    let html;
+    if (m.a) html = '<div class="cb-ai"><p>' + formatAnswer(m.a) + (m.done ? '' : '<span class="cb-caret"></span>') + '</p></div>';
+    else if (!m.done) html = '<p class="cb-thinking"><span class="cb-typing"><i></i><i></i><i></i></span>Leggo ' + (used.length === 1 ? 'il riferimento trovato' : 'i ' + used.length + ' riferimenti trovati') + (LLM.kind === 'cpu' ? '… con il processore la prima parola può arrivare dopo qualche secondo.' : '…') + '</p>';
+    else html = '';
+    if (m.stopped) html += '<p class="cb-note">Risposta interrotta.</p>';
+    if (m.error) html += '<p class="cb-error">L’assistente si è fermato per un errore: ' + esc(m.error) + '</p>';
     if (m.done && used.length) {
-      html += '<details class="cb-sources"' + (cited.size ? '' : ' open') + '><summary>Riferimenti consultati (' + used.length + ')</summary>' +
-        used.map(r => '<button type="button" class="cb-chip' + (cited.has(r['ref-code'].toUpperCase()) ? ' on' : '') + '" data-ref="' + esc(r['ref-code']) + '">' + esc(r['ref-code']) + ' · ' + esc(r['ref-title']) + '</button>').join('') + '</details>';
-      html += '<p class="cb-disclaimer">Risposta generata sul tuo dispositivo: verifica sempre il testo del riferimento.</p>';
+      html += '<details class="cb-sources"' + (cited.size ? '' : ' open') + '><summary>' + ICON.chevron + 'Riferimenti consultati (' + used.length + ')</summary><div class="cb-related">' +
+        used.map(r => refChip(r, cited.has(r['ref-code'].toUpperCase()))).join('') + '</div></details>';
     }
-    if (!m.done) html += '<button type="button" class="cb-stop" data-stop="1">Ferma</button>';
     return html;
   }
 
-  function paint() {
-    const log = document.getElementById('cb-log');
-    if (!history.length) {
-      log.innerHTML = '<div class="cb-welcome"><p><strong>Fai una domanda sul regolamento</strong>, con parole tue. Cerco la risposta nei ' + REFS.length + ' riferimenti e nelle ' + QUESTIONS.length + ' domande del quiz' +
-        (LLM.state === 'ready' ? ' e l’assistente la spiega, citando i riferimenti.' : '.') + ' Niente viene inviato a servizi esterni.</p>' +
-        '<div class="cb-examples">' + EXAMPLES.map(e => '<button type="button" class="cb-chip" data-ask="' + esc(e) + '">' + esc(e) + '</button>').join('') + '</div></div>';
-      return;
-    }
-    log.innerHTML = history.map(m => m.role === 'user'
-      ? '<div class="cb-msg cb-user"><div class="cb-bubble">' + esc(m.text) + '</div></div>'
-      : '<div class="cb-msg cb-bot"><div class="cb-bubble">' + (m.mode === 'ai' ? renderAiAnswer(m) : renderSearchAnswer(m.q)) + '</div></div>').join('');
+  function botMeta(m) {
+    if (m.mode === 'ai') return '<span class="cb-who cb-who-ai">' + ICON.spark + 'Assistente · AI locale</span>';
+    const a = found(m);
+    const conf = a.kind === 'code' ? ['ok', 'Riferimento'] : { high: ['ok', 'Risposta trovata'], medium: ['mid', 'Possibile risposta'], low: ['low', 'Incerta: controlla le fonti'] }[a.confidence];
+    return '<span class="cb-who">' + ICON.search + 'Ricerca nei riferimenti</span>' + (conf ? '<span class="cb-conf cb-conf-' + conf[0] + '">' + conf[1] + '</span>' : '');
   }
-  function scrollToLast() { const log = document.getElementById('cb-log'); if (log.lastElementChild) log.lastElementChild.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
 
-  async function ask(text) {
-    text = String(text || '').trim();
-    if (!text || LLM.busy) return;
-    history.push({ role: 'user', text });
-    if (LLM.state !== 'ready') {
-      history.push({ role: 'bot', q: text, mode: 'search' });
-      save(); paint(); scrollToLast();
-      return;
+  function botActions(m) {
+    if (m.mode === 'ai' && !m.done) return '';
+    const btn = (act, icon, label) => '<button type="button" class="cb-act" data-act="' + act + '">' + icon + '<span>' + label + '</span></button>';
+    let h = '';
+    if (m.mode === 'search' ? found(m).kind !== 'none' : !!m.a) h += btn('copy', ICON.copy, 'Copia');
+    if (m.mode === 'ai') { if (LLM.state === 'ready') h += btn('redo', ICON.redo, m.error ? 'Riprova' : 'Rigenera'); }
+    else if (LLM.state === 'ready' && found(m).kind !== 'none') h += btn('explain', ICON.spark, 'Chiedi all’assistente');
+    return h ? '<div class="cb-actions">' + h + '</div>' : '';
+  }
+
+  function msgInner(m) {
+    if (m.role === 'user') return '<div class="cb-bubble">' + esc(m.text) + '</div>';
+    return '<div class="cb-bubble"><div class="cb-meta">' + botMeta(m) + '</div><div class="cb-body">' + (m.mode === 'ai' ? renderAi(m) : renderSearch(m)) + '</div>' + botActions(m) + '</div>';
+  }
+  const msgHtml = (m, i) => '<div class="cb-msg cb-' + m.role + '" data-i="' + i + '">' + msgInner(m) + '</div>';
+  const msgNode = i => document.querySelector('#cb-log .cb-msg[data-i="' + i + '"]');
+
+  function welcomeHtml() {
+    return '<div class="cb-welcome">' +
+      '<span class="cb-welcome-icon">' + svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', 22) + '</span>' +
+      '<h2>Fai una domanda sul regolamento</h2>' +
+      '<p>Scrivi con parole tue: cerco la risposta nei ' + REFS.length + ' riferimenti e nelle ' + QUESTIONS.length + ' domande del quiz' +
+      (LLM.state === 'ready' ? ' e l’assistente te la spiega, citando i riferimenti.' : ', e ti mostro i passaggi che rispondono.') + ' Puoi anche scrivere un codice, come RG-15.4.</p>' +
+      '<span class="cb-label">Prova con</span><div class="cb-examples">' + EXAMPLES.map(e => '<button type="button" class="cb-chip" data-ask="' + esc(e) + '">' + esc(e) + '</button>').join('') + '</div></div>';
+  }
+
+  /** Full repaint (opening, new conversation, assistant switched on). */
+  function paint() {
+    const log = $('cb-log');
+    log.innerHTML = history.length ? history.map(msgHtml).join('') : welcomeHtml();
+    $('cb-clear').hidden = !history.length;
+  }
+  function appendMsg(i) {
+    const log = $('cb-log');
+    const w = log.querySelector('.cb-welcome');
+    if (w) w.remove();
+    log.insertAdjacentHTML('beforeend', msgHtml(history[i], i));
+    $('cb-clear').hidden = false;
+  }
+  function updateMsg(i, bodyOnly) {
+    const n = msgNode(i);
+    if (!n) return;
+    const m = history[i];
+    if (bodyOnly) { const b = n.querySelector('.cb-body'); if (b) { b.innerHTML = renderAi(m); return; } }
+    n.innerHTML = msgInner(m);
+  }
+  /** Brings the question to the top of the screen, so the answer is read from its beginning. */
+  function reveal(i) { const n = msgNode(i); if (n) n.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+
+  /** Plain text of an answer, for "Copia". */
+  function plainText(m) {
+    if (m.mode === 'ai') {
+      const used = (m.refs || []).map(c => BY_CODE[c]).filter(Boolean);
+      return m.a.trim() + (used.length ? '\n\nRiferimenti consultati: ' + used.map(r => r['ref-code'] + ' (' + r['ref-title'] + ')').join(', ') : '');
     }
-    const prev = history.filter(m => m.role === 'bot' && m.mode === 'ai' && m.done && m.a).map(m => ({ q: m.q, a: m.a }));
-    const found = retrieveFor(text, prev);
-    const m = { role: 'bot', q: text, mode: 'ai', a: '', refs: found.refs.map(r => r.ref['ref-code'].toUpperCase()), done: false };
-    history.push(m);
-    paint(); scrollToLast(); setBusy(true);
+    const a = found(m);
+    let t = '';
+    if (a.quiz) t += 'Dal quiz: ' + a.quiz.q['question-text'] + ' → ' + a.quiz.answer + '\n\n';
+    t += a.refs.map(r => r.ref['ref-code'] + ' · ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + ')\n' + r.sentences.join(' ')).join('\n\n');
+    return t;
+  }
+  async function copy(m, button) {
+    const text = 'Domanda: ' + m.q + '\n\n' + plainText(m);
+    try { await navigator.clipboard.writeText(text); } catch (e) {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) { /* ignore */ } ta.remove();
+    }
+    if (button) {
+      const label = button.querySelector('span');
+      button.classList.add('done'); button.firstElementChild.outerHTML = ICON.check; label.textContent = 'Copiata';
+      setTimeout(() => { if (!button.isConnected) return; button.classList.remove('done'); button.firstElementChild.outerHTML = ICON.copy; label.textContent = 'Copia'; }, 1600);
+    }
+    announce('Risposta copiata');
+  }
+
+  // ---------------------------------------------------------------- UI: asking
+
+  function ask(text) {
+    text = String(text || '').trim().slice(0, 600);
+    if (!text || LLM.busy) return false;
+    history.push({ role: 'user', text });
+    const ui = history.length - 1;
+    appendMsg(ui);
+    // Without the assistant, or when nothing pertinent is found (the model would have nothing to read): search answer
+    const ctx = LLM.state === 'ready' ? retrieveFor(text, aiPrev(ui)) : null;
+    if (!ctx || (!ctx.refs.length && !ctx.quiz)) {
+      const m = { role: 'bot', q: text, mode: 'search' };
+      history.push(m);
+      appendMsg(history.length - 1);
+      save(); reveal(ui);
+      const a = found(m);
+      announce(a.kind === 'none' ? 'Nessun riferimento pertinente' : 'Risposta trovata in ' + a.refs.map(r => r.ref['ref-code']).join(', '));
+      return true;
+    }
+    history.push({ role: 'bot', q: text, mode: 'ai', a: '', refs: [], done: false });
+    appendMsg(history.length - 1);
+    reveal(ui);
+    runAi(history.length - 1);
+    return true;
+  }
+
+  /** The assistant's earlier answers before history[i] (for follow-up questions). */
+  function aiPrev(i) {
+    return history.slice(0, i).filter(x => x.role === 'bot' && x.mode === 'ai' && x.done && x.a && !x.error && !x.stopped).map(x => ({ q: x.q, a: x.a }));
+  }
+
+  /** Writes (or rewrites) the assistant's answer of history[i]. */
+  async function runAi(i) {
+    const m = history[i];
+    const prev = aiPrev(i);
+    const ctx = retrieveFor(m.q, prev);
+    Object.assign(m, { mode: 'ai', a: '', refs: ctx.refs.map(r => r.ref['ref-code'].toUpperCase()), done: false, error: '', stopped: false });
+    stopRequested = false;
+    updateMsg(i); setBusy(true);
+    announce('L’assistente sta scrivendo la risposta');
     try {
       let last = 0;
-      m.a = await LLM.generate(buildMessages(text, found, prev), out => {
+      m.a = await LLM.generate(buildMessages(m.q, ctx, prev), out => {
         m.a = out;
-        if (Date.now() - last > 60) { last = Date.now(); const b = document.querySelector('#cb-log .cb-msg:last-child .cb-bubble'); if (b) b.innerHTML = renderAiAnswer(m); }
+        if (Date.now() - last > 60) { last = Date.now(); updateMsg(i, true); }
       });
     } catch (e) {
-      m.a = (m.a ? m.a + '\n\n' : '') + '(Errore dell’assistente: ' + ((e && e.message) || e) + ')';
+      m.error = (e && e.message) || String(e);
     }
-    m.a = m.a.trim() || 'Non trovo la risposta nei riferimenti di Fischietto.';
+    m.a = (m.a || '').trim();
+    if (!m.a && !m.error && !stopRequested) m.a = 'Non trovo la risposta nei riferimenti di Fischietto.';
+    m.stopped = stopRequested;
     m.done = true;
-    setBusy(false); save(); paint();
+    setBusy(false); save(); updateMsg(i);
+    announce(m.error ? 'Errore dell’assistente' : m.stopped ? 'Risposta interrotta' : 'Risposta pronta');
   }
 
+  function stop() { if (LLM.busy) { stopRequested = true; LLM.stop(); } }
+
+  /** While the assistant writes, the send button becomes "Ferma". */
   function setBusy(on) {
-    const b = document.getElementById('cb-send');
-    if (b) b.disabled = on;
+    const b = $('cb-send'), input = $('cb-input');
+    if (!b) return;
+    b.classList.toggle('cb-send-stop', !!on);
+    b.innerHTML = on ? ICON.stop : ICON.send;
+    b.setAttribute('aria-label', on ? 'Ferma la risposta' : 'Invia');
+    b.title = on ? 'Ferma la risposta (Esc)' : 'Invia (Invio)';
+    b.disabled = on ? false : !input.value.trim();
   }
 
-  /** Status bar of the assistant: unsupported / not downloaded / downloading x% / ready. */
+  // ---------------------------------------------------------------- UI: reference preview
+
+  /** Shows a reference without leaving the chat; "Apri nel Ripasso" goes to the full card. */
+  function openRef(code, q) {
+    const r = BY_CODE[String(code || '').toUpperCase()];
+    if (!r) return;
+    const qt = q ? queryTerms(q) : null;
+    const back = document.activeElement;
+    const full = (r['ref-full-text'] || r['ref-text'] || '').replace(/\r/g, '').trim();
+    const paras = full.split(/\n+/).map(p => p.trim()).filter(Boolean).map(p => '<p>' + highlight(p, qt) + '</p>').join('');
+    const change = r['ref-change'];
+    const ov = document.createElement('div');
+    ov.className = 'modal-overlay cb-ref-modal';
+    ov.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="cb-ref-title">' +
+      '<div class="cb-ref-modal-head">' + srcTag(r) + (typeof changeBadgeHtml === 'function' ? changeBadgeHtml(change) : '') + '<small>' + esc(r['ref-from']) + '</small>' +
+      '<button type="button" class="icon-btn" data-close aria-label="Chiudi">' + svg('<path d="M18 6 6 18M6 6l12 12"/>', 18) + '</button></div>' +
+      '<h2 class="modal-title" id="cb-ref-title">' + esc(r['ref-title']) + '</h2>' +
+      (typeof changeNoteHtml === 'function' ? changeNoteHtml(change) : '') +
+      '<div class="cb-ref-text">' + paras + '</div>' +
+      (typeof docLinkHtml === 'function' ? docLinkHtml(r['ref-from']) : '') +
+      '<div class="modal-actions"><button type="button" class="btn btn-secondary" data-close>Chiudi</button>' +
+      (window.jumpToRef ? '<button type="button" class="btn btn-primary" data-jump>Apri nel Ripasso</button>' : '') + '</div></div>';
+    const close = () => { ov.remove(); document.removeEventListener('keydown', onKey, true); if (back && back.isConnected) back.focus(); };
+    const onKey = e => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (e.key === 'Tab') { // keep the focus inside the dialog
+        const f = [...ov.querySelectorAll('button, a[href]')];
+        if (!f.length) return;
+        const first = f[0], lastF = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); lastF.focus(); }
+        else if (!e.shiftKey && document.activeElement === lastF) { e.preventDefault(); first.focus(); }
+      }
+    };
+    ov.addEventListener('click', e => {
+      if (e.target === ov || e.target.closest('[data-close]')) close();
+      else if (e.target.closest('[data-jump]')) { close(); window.jumpToRef(r['ref-code']); }
+    });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(ov);
+    // The focus goes to the dialog itself (Tab then reaches its buttons)
+    const box = ov.querySelector('.modal-box');
+    box.tabIndex = -1;
+    box.focus({ preventScroll: true });
+  }
+
+  // ---------------------------------------------------------------- UI: assistant status
+
+  function modelPicker(cur) {
+    return '<span class="cb-label">Modello</span><div class="cb-models" role="radiogroup" aria-label="Modello dell’assistente">' + Object.entries(LLM.models()).map(([k, M]) =>
+      '<button type="button" class="cb-model' + (k === cur ? ' sel' : '') + '" role="radio" aria-checked="' + (k === cur) + '" data-model="' + k + '"><strong>' + M.label + '</strong><small>' + M.size + ' · ' + M.note + '</small></button>').join('') + '</div>';
+  }
+
+  /** Status of the assistant: checking / unsupported / off / downloading x% / ready / error. */
   async function paintStatus() {
-    const box = document.getElementById('cb-status');
+    const box = $('cb-status');
     if (!box) return;
     const kind = await LLM.detect();
+    const row = (dot, title, sub, actions) => '<div class="cb-st-row"><span class="cb-st-dot ' + dot + '"></span><div class="cb-st-text"><strong>' + title + '</strong>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>' + (actions ? '<div class="cb-st-actions">' + actions + '</div>' : '') + '</div>';
+    const more = '<button type="button" class="cb-link cb-more" id="cb-more" aria-expanded="' + statusOpen + '" aria-controls="cb-st-more">' + (statusOpen ? 'Meno' : 'Dettagli') + ICON.chevron + '</button>';
     if (!kind) {
-      box.innerHTML = '<span class="cb-st-dot off"></span><span><strong>Modalità ricerca.</strong> Questo browser non può far girare l’assistente AI locale. Le risposte arrivano dai riferimenti più pertinenti.</span>';
+      box.className = 'cb-status';
+      box.innerHTML = row('off', 'Modalità ricerca', 'Rispondo con i passaggi più pertinenti dei riferimenti. Questo browser non può far girare l’assistente AI locale.');
       return;
     }
-    const MS = LLM.models(), k = LLM.choice(), M = MS[k];
-    const engine = kind === 'gpu' ? 'scheda grafica (WebGPU)' : 'processore (compatibile con tutti i browser, più lento)';
+    const k = LLM.choice(), M = LLM.models()[k];
+    box.className = 'cb-status cb-st-' + LLM.state;
     if (LLM.state === 'loading') {
       const pct = Math.round(LLM.progress * 100);
-      box.innerHTML = '<span class="cb-st-dot load"></span><span><strong>Preparo l’assistente (' + M.label + ')… ' + pct + '%</strong><br><small>' + esc(LLM.text).slice(0, 140) + '</small><span class="cb-bar"><i style="width:' + pct + '%"></i></span></span>';
+      box.innerHTML = row('load', 'Preparo l’assistente · ' + M.label + ' · ' + pct + '%', 'Intanto puoi già fare domande: rispondo con la ricerca.') +
+        '<div class="cb-bar" role="progressbar" aria-label="Download del modello" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
+        '<small class="cb-st-file">' + esc(String(LLM.text || '').slice(0, 140)) + '</small>';
       return;
     }
+    let details = '';
     if (LLM.state === 'ready') {
-      box.innerHTML = '<span class="cb-st-dot on"></span><span><strong>Assistente attivo</strong> · modello ' + M.label + ' sul tuo dispositivo, con il ' + engine + '. Interpreta la domanda e risponde usando solo i riferimenti di Fischietto.' +
-        (kind === 'cpu' ? '<br><small>Con il processore la prima parola può arrivare dopo qualche secondo: poi la risposta si scrive man mano.</small>' : '') + '</span>' +
-        '<button type="button" class="cb-link" id="cb-model">Cambia modello</button>';
-      document.getElementById('cb-model').onclick = chooseModel;
-      return;
+      box.innerHTML = row('on', 'Assistente AI attivo', 'Modello ' + M.label + ' sul tuo dispositivo, con il ' + ENGINE[kind] + '.', more);
+      details = '<p>Interpreta la domanda (anche le domande di seguito, come «e per il Libero?») e risponde usando solo i riferimenti trovati, citandone i codici.' +
+        (kind === 'cpu' ? ' Con il processore la prima parola può arrivare dopo qualche secondo, poi la risposta si scrive man mano.' : '') + '</p>' + modelPicker(k);
+    } else {
+      // Whether the model is already downloaded: checked in the background (WebLLM comes from the CDN)
+      const cached = CACHED[kind + k];
+      if (cached === undefined) {
+        CACHED[kind + k] = null;
+        Promise.race([LLM.cached(k), new Promise(r => setTimeout(() => r(false), 8000))]).catch(() => false)
+          .then(v => { CACHED[kind + k] = !!v; if (LLM.state === 'off' || LLM.state === 'error') paintStatus(); });
+      }
+      const err = LLM.state === 'error';
+      box.innerHTML = row(err ? 'err' : 'off', err ? 'L’assistente non si è avviato' : 'Modalità ricerca',
+        err ? esc(String(LLM.text || '').slice(0, 200)) : 'Rispondo con i passaggi dei riferimenti. L’assistente AI scrive la risposta con parole sue' + (cached === true ? ' (il modello è già scaricato).' : cached === false ? ' (al primo avvio scarica ' + M.size + ').' : '.'),
+        '<button type="button" class="btn btn-primary btn-sm" id="cb-enable">' + ICON.spark + (err ? 'Riprova' : 'Attiva l’assistente') + '</button>' + more);
+      details = '<p>L’assistente è un piccolo modello linguistico che gira <strong>sul tuo dispositivo</strong>, con il ' + ENGINE[kind] + ': legge solo i riferimenti trovati e scrive la risposta citandoli. Le domande non lasciano mai il dispositivo.</p>' +
+        '<p>' + (cached ? 'Il modello ' + M.label + ' è già scaricato.' : 'Il modello si scarica una volta sola (' + M.label + ': ' + M.size + ') e resta nel browser: le volte successive si avvia in pochi secondi.') + '</p>' +
+        (kind === 'cpu' && LLM.gpuNote ? '<p class="cb-st-note">' + esc(LLM.gpuNote) + ': uso il motore compatibile, più lento. Con Chrome o Edge le risposte arrivano prima.</p>' : '') +
+        modelPicker(k);
+      $('cb-enable').onclick = () => LLM.load(LLM.choice(), onLlmProgress);
     }
-    const cached = await LLM.cached(k).catch(() => false);
-    box.innerHTML = '<span class="cb-st-dot off"></span><span>' + (LLM.state === 'error' ? '<strong>Assistente non avviato:</strong> ' + esc(LLM.text).slice(0, 200) + '<br>' : '<strong>Modalità ricerca.</strong> ') +
-      'Attiva l’<strong>assistente AI locale</strong> per risposte scritte che interpretano la domanda: il modello gira sul tuo dispositivo, con il ' + engine + (cached ? ', ed è già scaricato.' : ', e va scaricato una volta (' + M.size + ').') +
-      (kind === 'cpu' && LLM.gpuNote ? '<br><small>' + esc(LLM.gpuNote) + ': uso il motore compatibile. Con Chrome o Edge le risposte sono più rapide.</small>' : '') + '</span>' +
-      '<span class="cb-st-actions"><button type="button" class="btn btn-primary btn-sm" id="cb-enable">' + (cached ? 'Attiva' : 'Scarica e attiva') + '</button><button type="button" class="cb-link" id="cb-model">Modello: ' + M.label + '</button></span>';
-    document.getElementById('cb-enable').onclick = () => LLM.load(LLM.choice(), paintStatusAndLog);
-    document.getElementById('cb-model').onclick = chooseModel;
-  }
-  function paintStatusAndLog() { paintStatus(); if (LLM.state === 'ready' && !history.length) paint(); }
-
-  function chooseModel() {
-    const cur = LLM.choice();
-    const box = document.getElementById('cb-status');
-    box.innerHTML = '<span><strong>Scegli il modello</strong> (resta salvato nel browser):</span><span class="cb-models">' + Object.entries(LLM.models()).map(([k, M]) =>
-      '<button type="button" class="cb-model' + (k === cur ? ' sel' : '') + '" data-model="' + k + '"><strong>' + M.label + '</strong><small>' + M.size + ' · ' + M.note + '</small></button>').join('') + '</span>';
+    box.insertAdjacentHTML('beforeend', '<div class="cb-st-more" id="cb-st-more"' + (statusOpen ? '' : ' hidden') + '>' + details + '</div>');
+    $('cb-more').onclick = () => { statusOpen = !statusOpen; paintStatus(); };
     box.querySelectorAll('[data-model]').forEach(b => b.onclick = () => {
+      const was = LLM.choice();
       LLM.setChoice(b.dataset.model);
-      if (LLM.state === 'ready' && b.dataset.model !== cur) LLM.load(b.dataset.model, paintStatusAndLog);
+      if (LLM.state === 'ready' && b.dataset.model !== was) LLM.load(b.dataset.model, onLlmProgress);
       else paintStatus();
     });
   }
+  const CACHED = {}; // engine + model → downloaded already? (undefined: not checked, null: checking)
+  let wasReady = false;
+  function onLlmProgress() {
+    paintStatus();
+    const ready = LLM.state === 'ready';
+    if (ready !== wasReady) {
+      wasReady = ready;
+      if (LLM.state !== 'loading') announce(ready ? 'Assistente attivo' : 'L’assistente non si è avviato');
+      if (ready) { CACHED[LLM.kind + LLM.choice()] = true; statusOpen = false; paintStatus(); paint(); } // "Chiedi all’assistente" on the earlier answers
+    }
+  }
+
+  // ---------------------------------------------------------------- mount
 
   function mount() {
     if (mounted) return;
     mounted = true;
     load();
-    const form = document.getElementById('cb-form');
-    const input = document.getElementById('cb-input');
-    form.addEventListener('submit', e => { e.preventDefault(); const v = input.value; input.value = ''; input.style.height = ''; ask(v); });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
-    input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; });
-    document.getElementById('cb-clear').addEventListener('click', () => { if (LLM.busy) LLM.stop(); history = []; save(); paint(); input.focus(); });
-    document.getElementById('cb-log').addEventListener('click', e => {
-      const b = e.target.closest('[data-ask],[data-ref],[data-stop]');
+    const form = $('cb-form');
+    const input = $('cb-input');
+    const fit = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; };
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (LLM.busy) { stop(); return; }
+      if (ask(input.value)) { input.value = ''; fit(); setBusy(LLM.busy); }
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!LLM.busy) form.requestSubmit(); }
+      else if (e.key === 'Escape' && LLM.busy) { e.preventDefault(); stop(); }
+    });
+    input.addEventListener('input', () => { fit(); setBusy(LLM.busy); });
+    $('cb-clear').addEventListener('click', () => { stop(); history = []; save(); paint(); input.focus(); announce('Nuova conversazione'); });
+    $('cb-log').addEventListener('click', e => {
+      const b = e.target.closest('[data-ask],[data-ref],[data-act]');
       if (!b) return;
-      if (b.dataset.stop) LLM.stop();
-      else if (b.dataset.ask) ask(b.dataset.ask);
-      else if (window.jumpToRef) window.jumpToRef(b.dataset.ref);
+      const node = b.closest('.cb-msg');
+      const i = node ? +node.dataset.i : -1;
+      const m = history[i];
+      if (b.dataset.ask) { if (!ask(b.dataset.ask)) input.focus(); }
+      else if (b.dataset.ref) openRef(b.dataset.ref, m && m.q);
+      else if (m && b.dataset.act === 'copy') copy(m, b);
+      else if (m && (b.dataset.act === 'redo' || b.dataset.act === 'explain') && !LLM.busy && LLM.state === 'ready') runAi(i);
     });
     paint();
+    setBusy(false);
     paintStatus();
   }
 
-  window.Chatbot = { open() { mount(); setTimeout(() => { const i = document.getElementById('cb-input'); if (i && matchMedia('(pointer: fine)').matches) i.focus(); }, 50); }, answer, retrieveFor, buildMessages };
+  window.Chatbot = {
+    open() {
+      mount();
+      setTimeout(() => { const i = $('cb-input'); if (i && matchMedia('(pointer: fine)').matches) i.focus({ preventScroll: true }); }, 50);
+    },
+    answer, retrieveFor, buildMessages,
+  };
 })();
