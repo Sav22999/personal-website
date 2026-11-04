@@ -170,13 +170,25 @@ function showToast(msg) {
 }
 
 // ======= SECTIONS (addressable as #quiz, #ripasso, #documenti, #statistiche, #profilo, #novita) =======
-const SECTION_HASH = { quiz: 'quiz', theory: 'ripasso', docs: 'documenti', stats: 'statistiche', profile: 'profilo', news: 'novita' };
-const HASH_SECTION = { quiz: 'quiz', ripasso: 'theory', documenti: 'docs', statistiche: 'stats', profilo: 'profile', novita: 'news' };
+const SECTION_HASH = { quiz: 'quiz', theory: 'ripasso', docs: 'documenti', stats: 'statistiche', profile: 'profilo', news: 'novita', chat: 'chatbot' };
+const HASH_SECTION = { quiz: 'quiz', ripasso: 'theory', documenti: 'docs', statistiche: 'stats', profilo: 'profile', novita: 'news', chatbot: 'chat' };
+// Chatbot (alpha): administrators only; its code is loaded the first time the section is opened
+const canChat = () => ((window.APP_USER || {}).permissions || 0) >= 9;
+let chatbotLoading = null;
+function openChatbot() {
+  if (!chatbotLoading) chatbotLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'assets/chatbot.js?v=4.1.0-1';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  chatbotLoading.then(() => window.Chatbot.open()).catch(() => showToast('Impossibile caricare il chatbot'));
+}
 let currentSection = 'quiz';
 
 function showSection(tab, opts) {
   opts = opts || {};
-  if (!SECTION_HASH[tab]) tab = 'quiz';
+  if (!SECTION_HASH[tab] || (tab === 'chat' && !canChat())) tab = 'quiz';
   const prev = currentSection;
   currentSection = tab;
   document.body.dataset.section = tab;
@@ -191,6 +203,7 @@ function showSection(tab, opts) {
   if (tab === 'stats') renderStats();
   if (tab === 'docs') renderDocuments();
   if (tab === 'news') renderReleases();
+  if (tab === 'chat') openChatbot();
   if (tab === 'profile' && window.renderProfile) window.renderProfile();
   document.getElementById('btn-settings').classList.toggle('active', tab === 'profile');
   if (tab === 'quiz') { renderSuspendedSessions(); refreshQuizBookmarkState(); }
@@ -1993,8 +2006,8 @@ function resetOptions() {
   const opts = [
     { id: 'quiz', title: 'Statistiche dei quiz', info: answers ? n(answers, 'risposta data', 'risposte date') + ', con le percentuali per riferimento' : 'Nessuna risposta', count: answers, checked: true },
   ];
-  // The simulation is in beta for administrators only
-  if ((user.permissions || 0) >= 9) {
+  // The simulation is in beta, for every user
+  {
     opts.push({ id: 'sim', title: 'Statistiche della simulazione partita', info: games || decisions ? n(games, 'partita', 'partite') + ', ' + n(decisions, 'decisione', 'decisioni') + '. Le segnalazioni inviate restano' : 'Nessuna partita', count: games + decisions, checked: true });
   }
   opts.push(
@@ -2426,11 +2439,13 @@ if (!location.hash) history.replaceState(null, '', '#quiz');
   }
   paintUser();
   $('btn-admin').hidden = !user.canEdit;
-  // Match simulation: in beta, administrators only
-  $('btn-sim').hidden = (user.permissions || 0) < 9;
-  $('nav-sim').hidden = (user.permissions || 0) < 9;
-  // Statistics: the simulation section only for who can use the simulation
-  $('stats-sub-tabs').hidden = (user.permissions || 0) < 9;
+  // Match simulation: in beta, for every user
+  $('btn-sim').hidden = false;
+  $('nav-sim').hidden = false;
+  $('stats-sub-tabs').hidden = false;
+  // Chatbot: alpha, administrators only
+  $('nav-chat').hidden = (user.permissions || 0) < 9;
+  $('btn-chat').hidden = (user.permissions || 0) < 9;
   $('nav-admin').hidden = !user.canEdit;
 
   const ROLE_PERMS = [

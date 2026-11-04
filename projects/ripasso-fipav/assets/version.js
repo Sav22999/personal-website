@@ -6,6 +6,21 @@
  */
 window.APP_RELEASES = [
   {
+    version: '4.1.0',
+    date: '2026-11-04',
+    title: 'Simulazione partita per tutti (beta) · Chatbot (alpha, amministratori)',
+    groups: [
+      {
+        title: 'Novità',
+        items: [
+          'Simulazione partita: ora è disponibile per tutti gli utenti, sempre in beta. Si apre dalla barra in alto («Simulazione») e dal menu dell’account; le statistiche sono nella pagina Statistiche.',
+          'Chatbot (alpha, solo amministratori): fai una domanda sul regolamento con parole tue e ricevi la risposta con i riferimenti da cui è tratta. Usa solo i riferimenti e le domande di Fischietto e funziona tutto nel browser, senza servizi esterni.',
+          'Chatbot › Assistente AI locale: sui browser con WebGPU (Chrome ed Edge aggiornati, anche su Android) puoi attivare un piccolo modello linguistico che gira sul tuo dispositivo, interpreta la domanda e scrive la risposta citando i riferimenti. Il modello si scarica una volta sola (leggero, standard o qualità); le domande non lasciano mai il dispositivo.',
+        ],
+      },
+    ],
+  },
+  {
     version: '4.0.0',
     date: '2026-11-01',
     title: 'Simulazione partita (beta, solo amministratori)',

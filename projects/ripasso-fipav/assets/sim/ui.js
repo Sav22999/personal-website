@@ -9,8 +9,8 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  /** Minimum permission level to use the simulation (beta: administrators only). */
-  const SIM_MIN_LEVEL = 9;
+  /** Minimum permission level to use the simulation (beta, open to every user). */
+  const SIM_MIN_LEVEL = 1;
   const STORE_KEY = 'fipav-sim';
   const TEAM_COLOR = { A: '#2f6fd0', B: '#e2552b' };
 
@@ -2769,7 +2769,7 @@
       const me = await Api.me();
       if (!me.user || !me.user.canUse || me.user.mustChangePassword) { window.location.replace('./'); return; }
       if ((me.user.permissions || 0) < SIM_MIN_LEVEL) {
-        $('boot-message').textContent = 'La simulazione partita è in prova ed è disponibile solo per gli amministratori.';
+        $('boot-message').textContent = 'La simulazione partita non è disponibile per il tuo account.';
         return;
       }
       const [content, state] = await Promise.all([Api.get('content'), Api.get('state.get')]);

@@ -10,7 +10,7 @@ Online: `https://www.saveriomorelli.com/projects/ripasso-fipav/`
 ripasso-fipav/
 ├── index.html            portale (accesso, quiz, ripasso, documenti, statistiche, profilo)
 ├── admin.html            pannello di gestione (panoramica, utenti, domande, riferimenti, segnalazioni, documenti)
-├── simulazione.html      simulazione partita (beta, solo amministratori)
+├── simulazione.html      simulazione partita (beta, per tutti gli utenti)
 ├── manifest.webmanifest  nome, icone e avvio dell'app installabile
 ├── sw.js                 service worker (app installabile, interfaccia disponibile anche con rete scarsa)
 ├── api/index.php         API JSON (?r=azione): unico punto che legge e scrive i dati
@@ -72,6 +72,19 @@ Ogni riferimento può indicare la **stagione** in cui la regola è stata introdo
   - Normative federali 2026/27 «con modifiche evidenziate»: le sezioni evidenziate in giallo nel PDF (2.8 e 4.2–4.8, con 4.6.1 e 4.7.1) come «Modificata 2026/27»;
   - Precisazioni sperimentazioni 2026/27 (NF-PR.1–4) come «Nuova 2026/27».
 - Da verificare a mano: il Vademecum 2026/27 ha molte parti evidenziate (sezioni 2, 4, 5.8–5.8.2, 6.1, 7, 10, 13, 14) ma il documento non dice che siano modifiche; nelle Normative federali c'è «UNDER 23» in rosso a margine della 2.3.1.
+
+## Chatbot (alpha, solo amministratori)
+
+Sezione «Chatbot» del portale (`#chatbot`, visibile dal livello 9 in su): domande sul regolamento in linguaggio naturale. Codice in `assets/chatbot.js`, caricato solo quando si apre la sezione. **Nessun servizio esterno riceve le domande**: tutto gira nel browser.
+
+1. **Ricerca** (sempre disponibile, istantanea): la domanda viene normalizzata, ridotta alle radici delle parole e arricchita con sinonimi del gergo (battuta → servizio, cambio → sostituzione, «3 metri» → linea di attacco, «quante» → numero massimo…). I riferimenti sono indicizzati con titolo, testo, testo completo e testo delle domande del quiz che li citano; l'ordinamento è BM25. Se una domanda del quiz è molto simile, ne mostra anche la risposta corretta. La risposta è fatta dalle frasi più pertinenti dei riferimenti, con i codici e «Apri nel Ripasso».
+2. **Assistente AI locale** (facoltativo, browser con WebGPU: Chrome/Edge aggiornati, anche su Android): un piccolo modello linguistico (Qwen2.5 Instruct, con la libreria WebLLM 0.2.85) gira **sul dispositivo**, legge solo i riferimenti trovati al passo 1 e scrive la risposta interpretando la domanda (anche le domande di seguito, come «e per il Libero?»), citando i codici tra parentesi quadre (cliccabili; un codice inesistente viene barrato). Tre modelli: Leggero (≈ 0,4 GB), Standard (≈ 1 GB, predefinito), Qualità (≈ 2 GB). Il modello si scarica una volta sola e resta nella cache del browser; la libreria arriva da jsDelivr e i file del modello da Hugging Face (solo download: nessuna domanda viene inviata).
+
+Limiti dell'alpha: un modello piccolo può sbagliare o semplificare, perciò ogni risposta mostra i riferimenti consultati e un avviso. Per non dipendere da jsDelivr/Hugging Face si possono ospitare libreria e modello sul sito (attenzione: il `.htaccess` di Fischietto blocca i file `.json`, che il modello usa).
+
+## Simulazione partita (beta)
+
+Dalla versione 4.1.0 la simulazione è disponibile per tutti gli utenti (resta in beta): barra in alto, menu dell'account e statistiche nella pagina Statistiche. La soglia è `SIM_MIN_LEVEL` in `assets/sim/ui.js`.
 
 ## Profilo e menu
 
