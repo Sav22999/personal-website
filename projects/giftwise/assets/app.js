@@ -19,7 +19,7 @@
 
   const OCCASIONS = {
     birthday: ['cake', 'Birthday'], christmas: ['tree', 'Christmas'], wedding: ['rings', 'Wedding'], baby: ['baby', 'Baby'],
-    graduation: ['grad', 'Graduation'], anniversary: ['heart', 'Anniversary'], housewarming: ['house', 'Housewarming'], other: ['gift', 'Other'],
+    graduation: ['grad', 'Graduation'], anniversary: ['heart', 'Anniversary'], housewarming: ['house', 'New home'], other: ['gift', 'Other'],
   };
   const occIcon = o => (OCCASIONS[o] || OCCASIONS.other)[0];
   const occLabel = o => t((OCCASIONS[o] || OCCASIONS.other)[1]);

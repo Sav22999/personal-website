@@ -121,9 +121,10 @@
 .sn-brand img { border-radius: 8px; }
 
 @media (min-width: 600px) {
-  /* Tablet and desktop: icon and full name side by side, 4 per row */
-  .occ-picker button { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 8px 10px; font-size: .86rem; text-align: left; }
-  .occ-picker button span:last-child { white-space: normal; overflow: visible; line-height: 1.2; }
+  /* Tablet and desktop: icon and full name side by side; as many columns as fit, so long names are never cut */
+  .occ-picker { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .occ-picker button { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 8px 10px; font-size: .88rem; text-align: left; }
+  .occ-picker button span:last-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 }
 @media (min-width: 960px) {
   .thumb.xl { height: 260px; }
