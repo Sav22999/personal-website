@@ -178,7 +178,7 @@ let chatbotLoading = null;
 function openChatbot() {
   if (!chatbotLoading) chatbotLoading = new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = 'assets/chatbot.js?v=4.1.0-3';
+    s.src = 'assets/chatbot.js?v=4.1.0-4';
     s.onload = resolve; s.onerror = reject;
     document.head.appendChild(s);
   });

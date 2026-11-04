@@ -215,7 +215,8 @@
   //  - "gpu": WebLLM on WebGPU (fast; Chrome/Edge, also Android);
   //  - "cpu": Transformers.js on WebAssembly (slower, but works everywhere, Firefox included).
   const WEBLLM_URL = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js';
-  const TFJS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.web.min.js';
+  // dist/transformers.min.js is the self-contained build (the .web build needs a bundler for onnxruntime)
+  const TFJS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.min.js';
   const MODELS = {
     gpu: {
       light: { label: 'Leggero', size: '≈ 0,4 GB', id: 'Qwen2.5-0.5B-Instruct', note: 'veloce, risposte più semplici' },
