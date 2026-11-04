@@ -183,6 +183,8 @@
         h('div.adm-logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), h('span', 'FoodTrack', h('small', t('Admin portal')))),
         h('nav.adm-nav', TABS.map(([k, label, ic]) => h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label) }, icon(ic), h('span', t(label)), counts[k] != null ? h('span.count', String(counts[k])) : null))),
         h('div.grow'),
+        // Like "Management portal" in the app's sidebar: back to the FoodTrack app
+        h('a.adm-app-link', { href: './', title: t('Open the app') }, icon('home'), h('span', t('Go to the app')), icon('right')),
         h('div.adm-side-tools',
           sel(I18N.langs.map(([v, l]) => ({ value: v, label: l })), I18N.lang, { onchange: e => I18N.set(e.target.value), 'aria-label': t('Language') }),
           iconBtn('theme', t('Theme'), () => {
