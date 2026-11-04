@@ -329,7 +329,10 @@
           h('ol', [1, 2, 3].map(n => h('li', h('span.n', String(n)), h('div', h('strong', t('howto' + n + '_t')), h('p', t('howto' + n)))))),
           h('div.links', h('button.btn.btn-soft', { type: 'button', onclick: showRules }, icon('book'), t('rules_title'))))),
       h('footer.footer',
-        h('a', { href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener' }, t('credit_by'), ' ', h('strong', 'Saverio Morelli'), ' · ', t('credit_ai')),
+        // Same credit block as Chess and FaceGuess
+        h('div.credit-block',
+          h('a.credit', { href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener' }, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
+          h('span.credit-ai', { html: '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg>' }, h('span', t('credit_ai')))),
         h('button.version-btn', { type: 'button', onclick: showReleases }, `${t('version')} ${VERSION}`))));
     document.title = 'Sudoku – Saverio Morelli';
   }
