@@ -1,60 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Squircle Gradient (Rich Fuchsia to Deep Royal Lilac) -->
+    <!-- Background Gradient (2-stop Linear: Fuchsia to Royal Lilac) -->
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#E879F9"/>
-      <stop offset="35%" stop-color="#D946EF"/>
-      <stop offset="70%" stop-color="#9333EA"/>
-      <stop offset="100%" stop-color="#581C87"/>
+      <stop offset="100%" stop-color="#7E22CE"/>
     </linearGradient>
-
-    <!-- Clean Soft Drop Shadow -->
-    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#3B0754" flood-opacity="0.35"/>
-    </filter>
-
-    <!-- Winning Fuchsia Disc Gradient -->
-    <radialGradient id="discFuchsia" cx="35%" cy="30%" r="65%">
-      <stop offset="0%" stop-color="#FDF4FF"/>
-      <stop offset="30%" stop-color="#F472B6"/>
-      <stop offset="70%" stop-color="#D946EF"/>
-      <stop offset="100%" stop-color="#86198F"/>
-    </radialGradient>
   </defs>
 
-  <!-- Background Squircle (rx="112") -->
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Background Squircle (Flat Modern, rx="116") -->
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
 
-  <!-- Centered White Board (344x344, rx="40") -->
-  <rect x="84" y="84" width="344" height="344" rx="40" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <!-- Centered White Board (320x320, rx="36", Pure Flat) -->
+  <rect x="96" y="96" width="320" height="320" rx="36" fill="#FFFFFF"/>
 
-  <!-- Quiet Background Apertures (12 empty slots) -->
-  <circle cx="130" cy="130" r="32" fill="#F2ECF7"/>
-  <circle cx="214" cy="130" r="32" fill="#F2ECF7"/>
-  <circle cx="298" cy="130" r="32" fill="#F2ECF7"/>
+  <!-- 12 Flat Empty Sockets (Soft Pastel Lilac) -->
+  <circle cx="142" cy="142" r="30" fill="#E9D5FF"/>
+  <circle cx="218" cy="142" r="30" fill="#E9D5FF"/>
+  <circle cx="294" cy="142" r="30" fill="#E9D5FF"/>
 
-  <circle cx="130" cy="214" r="32" fill="#F2ECF7"/>
-  <circle cx="214" cy="214" r="32" fill="#F2ECF7"/>
-  <circle cx="382" cy="214" r="32" fill="#F2ECF7"/>
+  <circle cx="142" cy="218" r="30" fill="#E9D5FF"/>
+  <circle cx="218" cy="218" r="30" fill="#E9D5FF"/>
+  <circle cx="370" cy="218" r="30" fill="#E9D5FF"/>
 
-  <circle cx="130" cy="298" r="32" fill="#F2ECF7"/>
-  <circle cx="298" cy="298" r="32" fill="#F2ECF7"/>
-  <circle cx="382" cy="298" r="32" fill="#F2ECF7"/>
+  <circle cx="142" cy="294" r="30" fill="#E9D5FF"/>
+  <circle cx="294" cy="294" r="30" fill="#E9D5FF"/>
+  <circle cx="370" cy="294" r="30" fill="#E9D5FF"/>
 
-  <circle cx="214" cy="382" r="32" fill="#F2ECF7"/>
-  <circle cx="298" cy="382" r="32" fill="#F2ECF7"/>
-  <circle cx="382" cy="382" r="32" fill="#F2ECF7"/>
+  <circle cx="218" cy="370" r="30" fill="#E9D5FF"/>
+  <circle cx="294" cy="370" r="30" fill="#E9D5FF"/>
+  <circle cx="370" cy="370" r="30" fill="#E9D5FF"/>
 
-  <!-- 4 Connected Winning Discs (Ascending Diagonal) -->
-  <circle cx="130" cy="382" r="32" fill="url(#discFuchsia)"/>
-  <circle cx="130" cy="382" r="19" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.5"/>
+  <!-- 4 Connected Winning Discs (Ascending Diagonal, Pure Flat Two-Tone) -->
+  <circle cx="142" cy="370" r="30" fill="#D946EF"/>
+  <circle cx="142" cy="370" r="18" fill="#C026D3"/>
 
-  <circle cx="214" cy="298" r="32" fill="url(#discFuchsia)"/>
-  <circle cx="214" cy="298" r="19" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.5"/>
+  <circle cx="218" cy="294" r="30" fill="#D946EF"/>
+  <circle cx="218" cy="294" r="18" fill="#C026D3"/>
 
-  <circle cx="298" cy="214" r="32" fill="url(#discFuchsia)"/>
-  <circle cx="298" cy="214" r="19" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.5"/>
+  <circle cx="294" cy="218" r="30" fill="#D946EF"/>
+  <circle cx="294" cy="218" r="18" fill="#C026D3"/>
 
-  <circle cx="382" cy="130" r="32" fill="url(#discFuchsia)"/>
-  <circle cx="382" cy="130" r="19" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.5"/>
+  <circle cx="370" cy="142" r="30" fill="#D946EF"/>
+  <circle cx="370" cy="142" r="18" fill="#C026D3"/>
 </svg>
