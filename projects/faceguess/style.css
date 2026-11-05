@@ -817,6 +817,47 @@ input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rg
     .modal-actions .btn { flex: 1; }
     .modal-avatar { width: 150px; height: 150px; }
     .modal-avatar.small { width: 104px; height: 104px; }
+
+    /* Game over sheet compact layout on mobile */
+    .modal-content.gameover-content {
+        padding: 18px 18px calc(16px + var(--safe-bottom));
+    }
+    .modal-content.gameover-content::before {
+        margin: -10px auto 10px;
+    }
+    .gameover-content #gameover-icon svg {
+        width: 44px; height: 44px; margin: 0 auto;
+    }
+    .gameover-content h2 {
+        font-size: 21px; margin: 6px 0 2px;
+    }
+    .gameover-content #gameover-text {
+        font-size: 13.5px; margin-bottom: 8px; line-height: 1.35;
+    }
+    .gameover-content .reveal-row {
+        display: flex; justify-content: center; gap: 14px; margin-bottom: 8px;
+    }
+    .gameover-content .reveal-row .modal-avatar.small {
+        width: 68px; height: 68px; border-radius: 12px;
+    }
+    .gameover-content .reveal-row figcaption {
+        margin-top: 4px; font-size: 12px;
+    }
+    .gameover-content .score-line {
+        font-size: 13px; margin-bottom: 6px; gap: 8px;
+    }
+    .gameover-content .score-line strong {
+        font-size: 17px; padding: 2px 10px;
+    }
+    .gameover-content .rematch-status {
+        min-height: 18px; font-size: 13px; margin-bottom: 6px;
+    }
+    .gameover-actions {
+        display: flex; flex-direction: column; gap: 6px;
+    }
+    .gameover-actions .btn {
+        min-height: 44px; font-size: 14.5px;
+    }
     .zoom-close { top: 16px; }
     .mode-options { grid-template-columns: 1fr; }
     .mode-card-wide { flex-direction: column; align-items: stretch; }
@@ -852,4 +893,16 @@ input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rg
 @media (max-width: 380px) {
     .turn-indicator { max-width: 38vw; }
     .mode-badge { display: none; }
+    .modal-content.gameover-content {
+        padding: 14px 14px calc(14px + var(--safe-bottom));
+    }
+    .gameover-content .reveal-row .modal-avatar.small {
+        width: 58px; height: 58px;
+    }
+    .gameover-content h2 {
+        font-size: 19px;
+    }
+    .gameover-actions .btn {
+        min-height: 40px; font-size: 13.5px;
+    }
 }

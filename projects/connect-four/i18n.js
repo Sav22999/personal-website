@@ -372,7 +372,7 @@ const translations = {
         // End Game
         game_over: 'Partita conclusa',
         you_won: 'Hai vinto!',
-        you_lost: 'Hai perso',
+        you_lost: 'Hai perso!',
         won_the_game: '{name} ha vinto!',
         game_draw: 'È patta!',
         reason_connect4: 'Quattro in fila completato!',

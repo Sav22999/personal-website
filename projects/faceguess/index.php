@@ -1,5 +1,6 @@
 <?php
 $description = 'FaceGuess – a two-player face-guessing game with brand-new characters every match. Play with a friend online, no sign-up needed.';
+$v = 18;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +74,7 @@ $description = 'FaceGuess – a two-player face-guessing game with brand-new cha
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=<?= $v ?>">
 </head>
 <body>
 
@@ -578,10 +579,10 @@ $description = 'FaceGuess – a two-player face-guessing game with brand-new cha
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </div>
 
-<script src="i18n.js?v=17"></script>
-<script src="characters.js?v=17"></script>
-<script src="releases.js?v=17"></script>
-<script src="rules.js?v=17"></script>
-<script src="game.js?v=17"></script>
+<script src="i18n.js?v=<?= $v ?>"></script>
+<script src="characters.js?v=<?= $v ?>"></script>
+<script src="releases.js?v=<?= $v ?>"></script>
+<script src="rules.js?v=<?= $v ?>"></script>
+<script src="game.js?v=<?= $v ?>"></script>
 </body>
 </html>

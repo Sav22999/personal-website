@@ -1,6 +1,6 @@
 <?php
 $description = 'Free online Connect Four (Forza Quattro): play a friend with a room code, a random opponent, on the same device or against the computer. Customise disc colors, clock and chat. No sign-up.';
-$v = 7;
+$v = 10;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';

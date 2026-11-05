@@ -881,6 +881,13 @@ function setupGameScreenUI() {
 }
 
 // --- End Game Flow ---
+const GAMEOVER_ICONS = {
+    win: `<svg viewBox="0 0 60 60" width="56" height="56"><circle cx="30" cy="30" r="28" fill="none" stroke="var(--green)" stroke-width="3"/><path d="M18 30l8 8 16-16" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    lose: `<svg viewBox="0 0 60 60" width="56" height="56"><circle cx="30" cy="30" r="28" fill="none" stroke="var(--red)" stroke-width="3"/><path d="M20 20l20 20M40 20l-20 20" fill="none" stroke="var(--red)" stroke-width="3" stroke-linecap="round"/></svg>`,
+    draw: `<svg viewBox="0 0 60 60" width="56" height="56"><circle cx="30" cy="30" r="28" fill="none" stroke="var(--yellow)" stroke-width="3"/><path d="M19 25h22M19 35h22" fill="none" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/></svg>`,
+    trophy: `<svg viewBox="0 0 60 60" width="56" height="56" fill="none" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10h20v14a10 10 0 01-20 0z"/><path d="M20 14h-7a6 6 0 006 8M40 14h7a6 6 0 01-6 8M30 34v8M22 50h16M24 42h12v8H24z"/></svg>`,
+};
+
 function endGame(winner, reason, winLine = null) {
     if (!session) return;
     session.status = 'finished';
@@ -899,19 +906,29 @@ function endGame(winner, reason, winLine = null) {
     const p1 = session.p1Name;
     const p2 = session.p2Name;
 
+    let isMe = false;
+    let winName = '';
+
     if (winner === 0) {
         titleEl.textContent = t('game_draw');
         textEl.textContent = t('reason_' + reason) || '';
-        iconEl.innerHTML = `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+        iconEl.innerHTML = GAMEOVER_ICONS.draw;
     } else {
-        const winName = winner === 1 ? p1 : p2;
-        const isMe = (session.mode === 'online' && winner === session.mySlot) ||
-                     (session.mode === 'ai' && winner === session.playerSlot);
+        winName = winner === 1 ? p1 : p2;
+        isMe = (session.mode === 'online' && winner === session.mySlot) ||
+               (session.mode === 'ai' && winner === session.playerSlot);
 
-        titleEl.textContent = (session.mode !== 'local' && isMe) ? t('you_won') :
-                              (session.mode !== 'local' ? t('you_lost') : t('won_the_game', { name: winName }));
+        if (session.mode === 'local') {
+            titleEl.textContent = t('won_the_game', { name: winName });
+            iconEl.innerHTML = GAMEOVER_ICONS.trophy;
+        } else if (isMe) {
+            titleEl.textContent = t('you_won');
+            iconEl.innerHTML = GAMEOVER_ICONS.win;
+        } else {
+            titleEl.textContent = t('you_lost');
+            iconEl.innerHTML = GAMEOVER_ICONS.lose;
+        }
         textEl.textContent = t('reason_' + reason, { name: winner === 1 ? p2 : p1 }) || '';
-        iconEl.innerHTML = `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H8c-.55 0-1 .45-1 1v1h10v-1c0-.55-.45-1-1-1h-1c-.55 0-1-.45-1-1v-2.34M7 4h10v5a5 5 0 0 1-10 0V4z"/></svg>`;
 
         if (winner === 1) session.p1Points += 2;
         else session.p2Points += 2;
@@ -924,6 +941,19 @@ function endGame(winner, reason, winLine = null) {
 
     $('btn-rematch').textContent = t('rematch');
     $('rematch-status').textContent = '';
+
+    const ind = $('turn-indicator');
+    if (ind) {
+        if (session.mode !== 'local') {
+            ind.textContent = isMe ? t('you_won') : (winner === 0 ? t('game_draw') : t('you_lost'));
+        } else {
+            ind.textContent = winner === 0 ? t('game_draw') : t('won_the_game', { name: winName });
+        }
+    }
+    const barTop = $('bar-top');
+    const barBottom = $('bar-bottom');
+    if (barTop) barTop.classList.remove('active-turn');
+    if (barBottom) barBottom.classList.remove('active-turn');
 
     setTimeout(() => {
         showModal('gameover-overlay', true);
@@ -1233,6 +1263,11 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-gameover-home').addEventListener('click', () => {
         showModal('gameover-overlay', false);
         showScreen('lobby');
+    });
+    $('turn-indicator')?.addEventListener('click', () => {
+        if (session && session.status === 'finished') {
+            showModal('gameover-overlay', true);
+        }
     });
 
     // Chat form
