@@ -254,6 +254,16 @@
   const CACHED = {}; // engine + modelKey → downloaded already? (undefined: not checked, null: checking, true/false)
   const storageInfo = { persistent: false, usage: 0, checked: false };
 
+  async function hasAnyModelCache() {
+    if (typeof caches !== 'undefined') {
+      try {
+        const keys = await caches.keys();
+        if (keys.some(k => k === 'transformers-cache' || k.includes('webllm') || k.includes('mlc'))) return true;
+      } catch (e) { /* ignore */ }
+    }
+    return false;
+  }
+
   async function updateStorageInfo(requestPersist = false) {
     if (typeof navigator !== 'undefined' && navigator.storage) {
       try {
@@ -265,7 +275,14 @@
         }
         if (navigator.storage.estimate) {
           const est = await navigator.storage.estimate();
-          storageInfo.usage = est.usage || 0;
+          const hasCache = await hasAnyModelCache();
+          // If no AI model caches exist in CacheStorage, any large reported usage (> 30 MB)
+          // is stale quota cache from the browser. In that case, model usage is 0.
+          if (!hasCache && (est.usage || 0) > 30 * 1024 * 1024) {
+            storageInfo.usage = 0;
+          } else {
+            storageInfo.usage = est.usage || 0;
+          }
         }
       } catch (e) { /* ignore */ }
     }
@@ -331,6 +348,14 @@
       this.gpuNote = '';
       this.hasGpuAdapter = false;
       this.device = 'wasm';
+      const isFirefox = typeof navigator !== 'undefined' && /firefox|fxios/i.test(navigator.userAgent);
+      if (isFirefox) {
+        // Firefox WebGPU implementation (wgpu) is still experimental and currently panics on in-browser LLM shaders (error 3587054648).
+        // WebAssembly on CPU is the stable, working execution path on Firefox.
+        this.gpuNote = 'Firefox: in uso il motore WebAssembly su processore (CPU)';
+        this.device = 'wasm';
+        return (this.kind = typeof WebAssembly === 'object' ? 'cpu' : '');
+      }
       const hasGpu = await checkWebGpuActive();
       if (hasGpu) {
         this.hasGpuAdapter = true;
@@ -338,17 +363,12 @@
           const ad = await navigator.gpu.requestAdapter();
           if (ad) {
             const maxStorage = (ad.limits && ad.limits.maxStorageBuffersPerShaderStage) || 0;
-            // WebLLM needs at least 10 storage buffers per shader stage (Chrome, Edge, newer Firefox on Metal/DX12)
+            // WebLLM needs at least 10 storage buffers per shader stage (Chrome, Edge)
             if (maxStorage >= 10) {
               this.f16 = ad.features.has('shader-f16');
               this.device = 'webgpu';
               return (this.kind = 'gpu');
             }
-            // If WebGPU is supported but has standard limits (<10, e.g. Firefox wgpu backend),
-            // Transformers.js can still run with full WebGPU hardware acceleration!
-            this.gpuNote = 'WebGPU attivo (accelerazione grafica con motore ONNX)';
-            this.device = 'webgpu';
-            return (this.kind = 'cpu');
           }
         } catch (e) { /* fallback */ }
       } else {
@@ -414,11 +434,21 @@
       this.state = 'loading'; this.progress = 0; this.text = 'Preparazione…'; this.files = {}; onProgress();
       try {
         if (this.kind === 'gpu') {
-          const id = await this.gpuId(k);
-          if (this.engine) { try { await this.engine.unload(); } catch (e) { /* ignore */ } }
-          this.engine = await this.lib.CreateMLCEngine(id, { initProgressCallback: r => { this.progress = r.progress || 0; this.text = r.text || ''; onProgress(); } });
-          this.modelId = id;
-          this.device = 'webgpu';
+          try {
+            const id = await this.gpuId(k);
+            if (this.engine) { try { await this.engine.unload(); } catch (e) { /* ignore */ } }
+            this.engine = await this.lib.CreateMLCEngine(id, {
+              initProgressCallback: r => { this.progress = r.progress || 0; this.text = r.text || ''; onProgress(); }
+            });
+            this.modelId = id;
+            this.device = 'webgpu';
+          } catch (gpuInitErr) {
+            console.warn('Avvio WebLLM GPU non riuscito, passaggio automatico a WebAssembly CPU:', gpuInitErr);
+            this.engine = null;
+            this.kind = 'cpu';
+            this.device = 'wasm';
+            return this.load(this.choice(), onProgress);
+          }
         } else {
           const T = this.tf || (this.tf = await import(TFJS_URL));
           T.env.allowLocalModels = false;
@@ -428,52 +458,44 @@
             if (p.status === 'progress' && p.file) this.files[p.file] = [p.loaded || 0, p.total || 0];
             const v = Object.values(this.files), tot = v.reduce((a, x) => a + x[1], 0), done = v.reduce((a, x) => a + x[0], 0);
             this.progress = tot ? done / tot : 0;
-            this.text = p.file ? 'Scarico ' + p.file + (tot ? ' — ' + (done / 1048576).toFixed(0) + ' / ' + (tot / 1048576).toFixed(0) + ' MB' : '') : 'Avvio del modello…';
+            this.text = p.file ? 'Scarico ' + p.file + (tot ? ' — ' + (done / 1048576).toFixed(0) + ' / ' + (tot / 1048576).toFixed(0) + ' MB' : '') : 'Avvio del modello su processore (WebAssembly)…';
             if (Date.now() - last > 150) { last = Date.now(); onProgress(); }
           };
 
-          // Attempt WebGPU acceleration first if an adapter exists (e.g. Firefox with WebGPU enabled)
-          let loaded = false;
-          if (this.hasGpuAdapter || this.device === 'webgpu') {
-            try {
-              this.text = 'Avvio del modello con accelerazione WebGPU…';
-              this.device = 'webgpu';
-              this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
-                dtype: 'q4',
-                device: 'webgpu',
-                progress_callback: progressCb,
-              });
-              loaded = true;
-            } catch (gpuErr) {
-              console.warn('WebGPU pipeline failed, falling back to WASM CPU:', gpuErr);
-              this.device = 'wasm';
+          // WebAssembly configuration:
+          // Enable SIMD acceleration.
+          // Multi-threading: SharedArrayBuffer requires a cross-origin isolated context (COOP/COEP headers).
+          // Without crossOriginIsolated, setting numThreads > 1 triggers an internal WASM panic (error 3587054648).
+          try {
+            if (T.env.backends?.onnx?.wasm) {
+              T.env.backends.onnx.wasm.simd = true;
+              const canUseThreads = typeof SharedArrayBuffer !== 'undefined' && window.crossOriginIsolated === true;
+              T.env.backends.onnx.wasm.numThreads = canUseThreads
+                ? Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 2) - 1))
+                : 1;
             }
-          }
+          } catch (e) { /* ignore */ }
 
-          if (!loaded) {
-            this.device = 'wasm';
-            try {
-              if (T.env.backends?.onnx?.wasm) {
-                T.env.backends.onnx.wasm.simd = true;
-                if (typeof SharedArrayBuffer !== 'undefined') {
-                  T.env.backends.onnx.wasm.numThreads = Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 2) - 1));
-                } else {
-                  T.env.backends.onnx.wasm.numThreads = 1;
-                }
-              }
-            } catch (e) { /* ignore */ }
-            this.text = 'Avvio del modello su processore (WebAssembly)…';
-            this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
-              dtype: 'q4',
-              device: 'wasm',
-              progress_callback: progressCb,
-            });
-          }
+          this.device = 'wasm';
+          this.text = 'Avvio del modello su processore (WebAssembly)…';
+          onProgress();
+
+          this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
+            dtype: 'q4',
+            device: 'wasm',
+            progress_callback: progressCb,
+          });
           this.modelId = MODELS.cpu[k].id;
         }
         this.state = 'ready';
       } catch (e) {
-        this.engine = null; this.gen = null; this.state = 'error'; this.text = (e && e.message) || String(e);
+        this.engine = null; this.gen = null; this.state = 'error';
+        const raw = (e && e.message) || String(e || '');
+        if (/^\d+$/.test(raw)) {
+          this.text = 'Inizializzazione del modello non riuscita (errore interno WebAssembly ' + raw + '). Prova a usare il modello Leggero o la modalità ricerca.';
+        } else {
+          this.text = raw;
+        }
       }
       onProgress();
     },
@@ -827,39 +849,16 @@
 
   function renderFirefoxGuide(context = 'welcome') {
     const isFirefox = typeof navigator !== 'undefined' && /firefox|fxios/i.test(navigator.userAgent);
-    if (!isFirefox || webGpuActive) return '';
+    if (!isFirefox) return '';
     if (context === 'status') {
       return '<div class="cb-firefox-tip">' +
-        '<strong>' + ICON.spark + ' Velocizza l’assistente su Firefox attivando WebGPU:</strong>' +
-        '<p>Puoi attivare l’accelerazione della scheda grafica in pochi secondi:</p>' +
-        '<ol>' +
-          '<li>In una nuova scheda scrivi <code>about:config</code></li>' +
-          '<li>Cerca <code>dom.webgpu.enabled</code> e impostalo su <strong>true</strong> (doppio clic)</li>' +
-          '<li>Ricarica questa pagina: l’assistente userà la scheda grafica per risposte rapide!</li>' +
-        '</ol>' +
+        '<strong>' + ICON.spark + ' Informazioni per Firefox:</strong>' +
+        '<p>Su Firefox l’assistente AI viene eseguito in modo stabile e ottimizzato sul processore (WebAssembly con accelerazione SIMD). ' +
+        'Per risposte rapide ti consigliamo il modello <strong>Leggero</strong> o <strong>Standard</strong>. ' +
+        'Per l’accelerazione su scheda grafica (WebGPU), usa Google Chrome o Microsoft Edge.</p>' +
       '</div>';
     }
-    return '<div class="cb-firefox-banner">' +
-      '<div class="cb-firefox-banner-head">' +
-        '<div class="cb-firefox-banner-badge">' + ICON.spark + ' Firefox · Velocizza l’AI</div>' +
-        '<h3>Attiva l’accelerazione con scheda grafica (WebGPU)</h3>' +
-        '<p>Al momento Firefox sta usando il processore (WebAssembly). Puoi abilitare WebGPU in 10 secondi per risposte <strong>fino a 10 volte più veloci</strong>:</p>' +
-      '</div>' +
-      '<div class="cb-firefox-steps">' +
-        '<div class="cb-firefox-step">' +
-          '<span class="cb-firefox-num">1</span>' +
-          '<div class="cb-firefox-step-body">Apri una nuova scheda e digita <code>about:config</code> (premi Invio e accetta l’avviso).</div>' +
-        '</div>' +
-        '<div class="cb-firefox-step">' +
-          '<span class="cb-firefox-num">2</span>' +
-          '<div class="cb-firefox-step-body">Cerca <code>dom.webgpu.enabled</code> e impostalo su <strong class="cb-val-true">true</strong> (con un doppio clic).</div>' +
-        '</div>' +
-        '<div class="cb-firefox-step">' +
-          '<span class="cb-firefox-num">3</span>' +
-          '<div class="cb-firefox-step-body">Torna qui e ricarica la pagina: l’assistente utilizzerà direttamente la scheda grafica!</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+    return '';
   }
 
   function welcomeHtml() {
@@ -1124,10 +1123,22 @@
 
   async function clearModelCaches() {
     try {
+      if (LLM.busy) LLM.stop();
+      if (LLM.state === 'ready' || LLM.engine || LLM.gen) {
+        await LLM.unload();
+      }
+      if (LLM.lib && LLM.lib.deleteModelAllInfoInCache) {
+        for (const k in (MODELS.gpu || {})) {
+          try {
+            await LLM.lib.deleteModelAllInfoInCache(MODELS.gpu[k].id + '-q4f16_1-MLC').catch(() => {});
+            await LLM.lib.deleteModelAllInfoInCache(MODELS.gpu[k].id + '-q4f32_1-MLC').catch(() => {});
+          } catch (e) { /* ignore */ }
+        }
+      }
       if (typeof caches !== 'undefined') {
         const keys = await caches.keys();
         for (const k of keys) {
-          if (k === 'transformers-cache' || k.startsWith('webllm')) {
+          if (!k.startsWith('fischietto-')) {
             await caches.delete(k);
           }
         }
@@ -1136,23 +1147,33 @@
         try {
           const dbs = await indexedDB.databases();
           for (const db of dbs) {
-            if (db.name && (db.name.startsWith('webllm') || db.name.includes('tvmjs'))) {
+            if (db.name && !db.name.startsWith('fischietto')) {
               indexedDB.deleteDatabase(db.name);
             }
           }
         } catch (e) { /* ignore */ }
       }
-      for (const k in CACHED) delete CACHED[k];
-      if (LLM.state === 'ready') {
-        await LLM.unload();
-      }
-      await updateStorageInfo(false);
+      for (const k in CACHED) CACHED[k] = false;
+      storageInfo.usage = 0;
       checkingCachePromise = null;
-      await checkAllCached(LLM.kind, true);
+
+      statusOpen = true;
       paintStatus();
-      announce('Modelli AI rimossi dal dispositivo.');
+      announce('Modelli AI rimossi: memoria liberata.');
+
+      setTimeout(async () => {
+        await updateStorageInfo(false);
+        paintStatus();
+      }, 600);
+      setTimeout(async () => {
+        await updateStorageInfo(false);
+        paintStatus();
+      }, 2000);
     } catch (e) {
       console.warn('Errore pulizia cache modelli:', e);
+      storageInfo.usage = 0;
+      for (const k in CACHED) CACHED[k] = false;
+      paintStatus();
     }
   }
 
@@ -1195,16 +1216,19 @@
 
   function renderStorageSection() {
     const isPersist = storageInfo.persistent;
-    const usageMb = storageInfo.usage > 0 ? (storageInfo.usage / (1024 * 1024)).toFixed(0) : null;
-    const usageGb = storageInfo.usage >= 1073741824 ? (storageInfo.usage / (1024 * 1024 * 1024)).toFixed(1) : null;
-    const usageStr = usageGb ? usageGb + ' GB' : (usageMb ? usageMb + ' MB' : null);
-    const hasAnyCached = Object.keys(CACHED).some(k => CACHED[k] === true) || (storageInfo.usage > 50 * 1024 * 1024);
+    const hasAnyCached = Object.keys(CACHED).some(k => CACHED[k] === true) || (storageInfo.usage > 30 * 1024 * 1024);
+    let usageStr = '';
+    if (storageInfo.usage >= 1073741824) {
+      usageStr = (storageInfo.usage / 1073741824).toFixed(1) + ' GB';
+    } else if (storageInfo.usage >= 1048576) {
+      usageStr = (storageInfo.usage / 1048576).toFixed(0) + ' MB';
+    }
 
     return '<div class="cb-storage-info">' +
       '<div class="cb-storage-row">' +
         '<span>' +
           '<strong>Memoria dispositivo:</strong> ' +
-          (usageStr ? '<span>' + usageStr + ' occupati</span> · ' : '') +
+          (hasAnyCached && usageStr ? '<span>' + usageStr + ' occupati</span> · ' : '<span>Nessun modello salvato (0 MB)</span> · ') +
           (isPersist
             ? '<span class="cb-tag cb-tag-ok" title="Il browser non cancellerà i modelli automaticamente">' + ICON.check + ' Persistente (protetta)</span>'
             : '<span class="cb-tag cb-tag-warn" title="Il browser potrebbe cancellare i file temporanei se lo spazio sul disco si esaurisce">Standard (temporanea)</span>') +
@@ -1318,10 +1342,13 @@
     if (disableLink) disableLink.onclick = disableAssistant;
     const clearModelsBtn = $('cb-clear-models');
     if (clearModelsBtn) {
-      clearModelsBtn.onclick = () => {
-        if (confirm('Vuoi rimuovere i modelli AI salvati sul dispositivo per liberare spazio? (Al prossimo avvio dell’assistente il modello scelto verrà riscaricato)')) {
-          clearModelCaches();
+      clearModelsBtn.onclick = async () => {
+        if (!confirm('Vuoi rimuovere i modelli AI salvati sul dispositivo per liberare spazio? (Al prossimo avvio dell’assistente il modello scelto verrà riscaricato)')) {
+          return;
         }
+        clearModelsBtn.disabled = true;
+        clearModelsBtn.innerHTML = '<span>Eliminazione…</span>';
+        await clearModelCaches();
       };
     }
     box.querySelectorAll('[data-model]').forEach(b => b.onclick = () => {

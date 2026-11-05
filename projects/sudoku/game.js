@@ -57,6 +57,7 @@
     help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>',
     tick: '<path d="M5 12l5 5L20 7"/>',
     info: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+    heart: '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>',
   };
   const icon = name => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'i'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = P[name]; return s; };
 
@@ -333,7 +334,9 @@
         h('div.credit-block',
           h('a.credit', { href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener' }, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
           h('span.credit-ai', { html: '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg>' }, h('span', t('credit_ai')))),
-        h('button.version-btn', { type: 'button', onclick: showReleases }, `${t('version')} ${VERSION}`))));
+        h('div.footer-actions',
+          h('button.donate-btn', { type: 'button', onclick: showDonate, title: t('donate_title') }, icon('heart'), h('span', t('donate'))),
+          h('button.version-btn', { type: 'button', onclick: showReleases }, `${t('version')} ${VERSION}`)))));
     document.title = 'Sudoku – Saverio Morelli';
   }
 
@@ -357,6 +360,26 @@
   function showReleases() {
     const L = I.getLang();
     modal([h('h3', t('release_notes')), h('div.release', (window.SudokuReleases || []).map(r => [h('h4', `${r.version} · ${new Date(r.date).toLocaleDateString(L, { year: 'numeric', month: 'short', day: 'numeric' })}`), h('ul', (r.notes[L] || r.notes.en).map(n => h('li', n)))]))]);
+  }
+  function showDonate() {
+    modal([
+      h('div.donate-modal-icon', icon('heart')),
+      h('h3', t('donate_modal_title')),
+      h('p.muted', t('donate_modal_intro')),
+      h('div.donate-reasons',
+        h('div.donate-reason',
+          h('div.donate-reason-icon', icon('check')),
+          h('div', h('strong', t('donate_reason_ads_title')), h('p', t('donate_reason_ads_desc')))),
+        h('div.donate-reason',
+          h('div.donate-reason-icon', icon('magic')),
+          h('div', h('strong', t('donate_reason_oss_title')), h('p', t('donate_reason_oss_desc')))),
+        h('div.donate-reason',
+          h('div.donate-reason-icon', icon('globe')),
+          h('div', h('strong', t('donate_reason_server_title')), h('p', t('donate_reason_server_desc'))))),
+      h('div.actions',
+        h('a.btn.btn-primary.btn-block.donate-cta-btn', { href: 'https://www.saveriomorelli.com/donate/', target: '_blank', rel: 'noopener' },
+          icon('heart'), h('span', t('donate_cta'))))
+    ]);
   }
 
   // =================================================================== game screen
@@ -466,6 +489,7 @@
       h('hr'),
       item('gear', t('settings'), showSettings),
       item('book', t('rules_title'), showRules),
+      item('heart', t('donate'), showDonate),
       item('home', t('leave'), () => { save(); showHome(); }))]);
   }
 

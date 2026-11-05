@@ -107,7 +107,28 @@ svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor;
 .credit-ai { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); opacity: .8; }
 .credit-ai svg { color: var(--primary); }
 @media (max-width: 560px) { .footer { flex-direction: column; } .credit-block { align-items: center; } }
-.version-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: .8rem; color: var(--muted); }
+.footer-actions { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.donate-btn {
+  display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: var(--surface);
+  border-radius: 999px; padding: 4px 12px; text-decoration: none; cursor: pointer; font-size: .8rem; color: var(--muted);
+  transition: color .2s, border-color .2s, background .2s;
+}
+.donate-btn svg.i { width: 14px; height: 14px; color: #E5484D; stroke-width: 2.2; transition: transform .2s; }
+.donate-btn:hover { color: var(--text); border-color: #E5484D; background: rgba(229, 72, 77, 0.12); }
+.donate-btn:hover svg.i { transform: scale(1.15); }
+.version-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: .8rem; color: var(--muted); transition: color .2s, border-color .2s; }
+.version-btn:hover { color: var(--text); border-color: var(--primary); }
+
+/* Donate modal */
+.donate-modal-icon { width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 50%; background: rgba(229, 72, 77, 0.12); display: flex; align-items: center; justify-content: center; color: #E5484D; }
+.donate-modal-icon svg.i { width: 28px; height: 28px; stroke-width: 2.2; }
+.donate-reasons { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 20px; text-align: left; }
+.donate-reason { display: flex; gap: 12px; align-items: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
+.donate-reason-icon { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; background: rgba(229, 72, 77, 0.12); color: #E5484D; display: flex; align-items: center; justify-content: center; }
+.donate-reason-icon svg.i { width: 17px; height: 17px; }
+.donate-reason strong { display: block; font-size: .88rem; margin-bottom: 2px; }
+.donate-reason p { color: var(--muted); font-size: .8rem; line-height: 1.4; margin: 0; }
+.donate-cta-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; min-height: 44px; font-weight: 800; font-size: .95rem; }
 
 /* ---------- Game ---------- */
 .game { max-width: 1040px; margin: 0 auto; padding: 10px 14px 24px; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }

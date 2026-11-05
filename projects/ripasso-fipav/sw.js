@@ -10,7 +10,7 @@
  */
 'use strict';
 
-const CACHE = 'fischietto-v4.1.0-18';
+const CACHE = 'fischietto-v4.1.0-20';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/icons/icon.svg', 'assets/icons/icon-192.png'];
 
 self.addEventListener('install', event => {

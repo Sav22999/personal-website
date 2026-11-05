@@ -1,6 +1,6 @@
 <?php
 $description = 'Free online Connect Four (Forza Quattro): play a friend with a room code, a random opponent, on the same device or against the computer. Customise disc colors, clock and chat. No sign-up.';
-$v = 5;
+$v = 7;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';
@@ -13,6 +13,7 @@ $ICON_LEAVE = '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12
 $ICON_CHAT = '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>';
 $ICON_SOUND = '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>';
 $ICON_CHECK = $icon('<path d="M5 12l5 5L20 7"/>', 18, 3);
+$ICON_HEART = '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>';
 
 $timeChips = function ($name, $default) {
     $out = '<div class="chips" role="radiogroup">';
@@ -301,10 +302,16 @@ $timeChips = function ($name, $default) {
                 <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
                 <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span data-i18n="credit_ai">Built with Claude AI</span></span>
             </div>
-            <button type="button" class="version-btn" id="btn-version" data-i18n-title="release_notes">
-                <span id="app-version"></span>
-                <?= $icon('<path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="10"/>', 13, 2.4) ?>
-            </button>
+            <div class="footer-actions">
+                <button type="button" class="donate-btn" id="btn-donate" data-i18n-title="donate_title">
+                    <?= $icon($ICON_HEART, 13, 2.2) ?>
+                    <span data-i18n="donate">Donate</span>
+                </button>
+                <button type="button" class="version-btn" id="btn-version" data-i18n-title="release_notes">
+                    <span id="app-version"></span>
+                    <?= $icon('<path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="10"/>', 13, 2.4) ?>
+                </button>
+            </div>
         </footer>
     </div>
 
@@ -532,6 +539,44 @@ $timeChips = function ($name, $default) {
             <button type="button" class="zoom-close" id="btn-close-release" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="release_notes">Release notes</h3>
             <div class="release-list" id="release-list"></div>
+        </div>
+    </div>
+
+    <!-- Donate overlay -->
+    <div id="donate-overlay" class="modal hidden">
+        <div class="modal-content donate-content">
+            <button type="button" class="zoom-close" id="btn-close-donate" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <div class="donate-modal-icon"><?= $icon($ICON_HEART, 28, 2.2) ?></div>
+            <h3 data-i18n="donate_modal_title">Support the project</h3>
+            <p class="donate-modal-intro" data-i18n="donate_modal_intro">All my projects are free and open-source — no ads, no tracking, no subscriptions. A small donation helps cover server and maintenance costs.</p>
+            <div class="donate-reasons">
+                <div class="donate-reason">
+                    <div class="donate-reason-icon"><?= $icon('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 18, 2) ?></div>
+                    <div>
+                        <strong data-i18n="donate_reason_ads_title">100% Free &amp; No ads</strong>
+                        <p data-i18n="donate_reason_ads_desc">No banners, no paywalls, no premium features.</p>
+                    </div>
+                </div>
+                <div class="donate-reason">
+                    <div class="donate-reason-icon"><?= $icon('<path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>', 18, 2) ?></div>
+                    <div>
+                        <strong data-i18n="donate_reason_oss_title">Open source &amp; Private</strong>
+                        <p data-i18n="donate_reason_oss_desc">Code open to everyone and respectful of your privacy.</p>
+                    </div>
+                </div>
+                <div class="donate-reason">
+                    <div class="donate-reason-icon"><?= $icon('<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>', 18, 2) ?></div>
+                    <div>
+                        <strong data-i18n="donate_reason_server_title">Server &amp; Maintenance</strong>
+                        <p data-i18n="donate_reason_server_desc">Keeps multiplayer servers, hosting, and updates running.</p>
+                    </div>
+                </div>
+            </div>
+            <a class="btn btn-primary btn-block donate-cta-btn" href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener">
+                <?= $icon($ICON_HEART, 18, 2.2) ?>
+                <span data-i18n="donate_cta">Make a donation</span>
+                <?= $icon('<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>', 15, 2.2) ?>
+            </a>
         </div>
     </div>
 

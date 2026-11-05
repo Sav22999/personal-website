@@ -1560,6 +1560,8 @@ function init() {
 
     $('btn-version').addEventListener('click', () => { renderReleaseNotes(); showModal('release-overlay', true); });
     $('btn-close-release').addEventListener('click', () => showModal('release-overlay', false));
+    $('btn-donate')?.addEventListener('click', () => showModal('donate-overlay', true));
+    $('btn-close-donate')?.addEventListener('click', () => showModal('donate-overlay', false));
     $('btn-howto').addEventListener('click', () => showModal('howto-overlay', true));
     $('btn-close-howto').addEventListener('click', () => showModal('howto-overlay', false));
     $('btn-step-1').addEventListener('click', () => goToStep(1));

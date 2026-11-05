@@ -1,6 +1,6 @@
 <?php
 $description = 'Sudoku – the classic number puzzle, free in the browser. Four difficulty levels, pencil notes, tips that explain the next move, cell check. No sign-up.';
-$v = '2.0.2';
+$v = '2.0.5';
 ?>
 <!DOCTYPE html>
 <html lang="en">

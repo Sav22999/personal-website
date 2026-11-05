@@ -1068,6 +1068,8 @@ function init() {
     $('app-version').textContent = 'v' + APP_VERSION;
     $('btn-version').addEventListener('click', openReleaseNotes);
     $('btn-close-release').addEventListener('click', () => showModal('release-overlay', false));
+    $('btn-donate')?.addEventListener('click', () => showModal('donate-overlay', true));
+    $('btn-close-donate')?.addEventListener('click', () => showModal('donate-overlay', false));
     $('btn-howto').addEventListener('click', () => showModal('howto-overlay', true));
     $('btn-step-1').addEventListener('click', () => goToStep(1));
     $('btn-lang-menu').addEventListener('click', () => showModal('lang-overlay', true));

@@ -1219,6 +1219,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal('release-overlay', true);
     });
     $('btn-close-release').addEventListener('click', () => showModal('release-overlay', false));
+    $('btn-donate')?.addEventListener('click', () => showModal('donate-overlay', true));
+    $('btn-close-donate')?.addEventListener('click', () => showModal('donate-overlay', false));
 
     $('btn-confirm-no').addEventListener('click', () => showModal('confirm-overlay', false));
     $('btn-confirm-yes').addEventListener('click', () => {
