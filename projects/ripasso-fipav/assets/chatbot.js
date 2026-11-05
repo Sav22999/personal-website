@@ -252,6 +252,26 @@
     },
   };
   const CACHED = {}; // engine + modelKey → downloaded already? (undefined: not checked, null: checking, true/false)
+  const storageInfo = { persistent: false, usage: 0, checked: false };
+
+  async function updateStorageInfo(requestPersist = false) {
+    if (typeof navigator !== 'undefined' && navigator.storage) {
+      try {
+        if (navigator.storage.persisted) {
+          storageInfo.persistent = await navigator.storage.persisted();
+        }
+        if (requestPersist && !storageInfo.persistent && navigator.storage.persist) {
+          storageInfo.persistent = await navigator.storage.persist();
+        }
+        if (navigator.storage.estimate) {
+          const est = await navigator.storage.estimate();
+          storageInfo.usage = est.usage || 0;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    storageInfo.checked = true;
+    return storageInfo;
+  }
 
   let webGpuChecked = false;
   let webGpuActive = false;
@@ -365,10 +385,20 @@
     async cached(k, preloadedKeys) {
       try {
         if (this.kind === 'gpu') {
+          // Fast check in CacheStorage if possible before loading entire WebLLM library
+          if (typeof caches !== 'undefined') {
+            try {
+              const c = await caches.open('webllm/model');
+              const keys = await c.keys();
+              const baseId = MODELS.gpu[k].id;
+              if (keys.some(r => r.url.includes(baseId))) return true;
+            } catch (e) { /* fallback to WebLLM check */ }
+          }
           const id = await this.gpuId(k);
-          if (await this.lib.hasModelInCache(id)) return true;
+          if (this.lib && await this.lib.hasModelInCache(id)) return true;
           const alt = MODELS.gpu[k].id + (this.f16 ? '-q4f32_1-MLC' : '-q4f16_1-MLC');
-          return await this.lib.hasModelInCache(alt);
+          if (this.lib && await this.lib.hasModelInCache(alt)) return true;
+          return false;
         }
         if (typeof caches === 'undefined') return false;
         let keys = preloadedKeys;
@@ -380,6 +410,7 @@
       } catch (e) { return false; }
     },
     async load(k, onProgress) {
+      updateStorageInfo(true);
       this.state = 'loading'; this.progress = 0; this.text = 'Preparazione…'; this.files = {}; onProgress();
       try {
         if (this.kind === 'gpu') {
@@ -1062,9 +1093,9 @@
   // ---------------------------------------------------------------- UI: assistant status
 
   let checkingCachePromise = null;
-  async function checkAllCached(kind) {
+  async function checkAllCached(kind, force = false) {
     if (!kind) return;
-    if (checkingCachePromise) return checkingCachePromise;
+    if (checkingCachePromise && !force) return checkingCachePromise;
     checkingCachePromise = (async () => {
       const models = MODELS[kind] || {};
       let preloadedKeys = null;
@@ -1075,7 +1106,7 @@
         } catch (e) { /* ignore */ }
       }
       await Promise.all(Object.keys(models).map(async k => {
-        if (CACHED[kind + k] === true) return;
+        if (!force && CACHED[kind + k] === true) return;
         try {
           const res = await Promise.race([
             LLM.cached(k, preloadedKeys),
@@ -1086,12 +1117,48 @@
           CACHED[kind + k] = false;
         }
       }));
+      checkingCachePromise = null;
     })();
     return checkingCachePromise;
   }
 
+  async function clearModelCaches() {
+    try {
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        for (const k of keys) {
+          if (k === 'transformers-cache' || k.startsWith('webllm')) {
+            await caches.delete(k);
+          }
+        }
+      }
+      if (typeof indexedDB !== 'undefined' && indexedDB.databases) {
+        try {
+          const dbs = await indexedDB.databases();
+          for (const db of dbs) {
+            if (db.name && (db.name.startsWith('webllm') || db.name.includes('tvmjs'))) {
+              indexedDB.deleteDatabase(db.name);
+            }
+          }
+        } catch (e) { /* ignore */ }
+      }
+      for (const k in CACHED) delete CACHED[k];
+      if (LLM.state === 'ready') {
+        await LLM.unload();
+      }
+      await updateStorageInfo(false);
+      checkingCachePromise = null;
+      await checkAllCached(LLM.kind, true);
+      paintStatus();
+      announce('Modelli AI rimossi dal dispositivo.');
+    } catch (e) {
+      console.warn('Errore pulizia cache modelli:', e);
+    }
+  }
+
   let autoActivated = false;
   async function initAutoActivation() {
+    updateStorageInfo(true);
     try {
       if (sessionStorage.getItem('fischietto-chatbot-mode') === 'search') {
         paintStatus();
@@ -1124,6 +1191,30 @@
   function enableAssistant() {
     try { sessionStorage.removeItem('fischietto-chatbot-mode'); } catch (e) { /* private mode */ }
     LLM.load(LLM.choice(), onLlmProgress);
+  }
+
+  function renderStorageSection() {
+    const isPersist = storageInfo.persistent;
+    const usageMb = storageInfo.usage > 0 ? (storageInfo.usage / (1024 * 1024)).toFixed(0) : null;
+    const usageGb = storageInfo.usage >= 1073741824 ? (storageInfo.usage / (1024 * 1024 * 1024)).toFixed(1) : null;
+    const usageStr = usageGb ? usageGb + ' GB' : (usageMb ? usageMb + ' MB' : null);
+    const hasAnyCached = Object.keys(CACHED).some(k => CACHED[k] === true) || (storageInfo.usage > 50 * 1024 * 1024);
+
+    return '<div class="cb-storage-info">' +
+      '<div class="cb-storage-row">' +
+        '<span>' +
+          '<strong>Memoria dispositivo:</strong> ' +
+          (usageStr ? '<span>' + usageStr + ' occupati</span> · ' : '') +
+          (isPersist
+            ? '<span class="cb-tag cb-tag-ok" title="Il browser non cancellerà i modelli automaticamente">' + ICON.check + ' Persistente (protetta)</span>'
+            : '<span class="cb-tag cb-tag-warn" title="Il browser potrebbe cancellare i file temporanei se lo spazio sul disco si esaurisce">Standard (temporanea)</span>') +
+        '</span>' +
+        (hasAnyCached ? '<button type="button" class="btn btn-ghost btn-sm cb-clear-models-btn" id="cb-clear-models" title="Elimina i modelli AI salvati sul dispositivo per liberare memoria">' + ICON.trash + '<span>Libera spazio</span></button>' : '') +
+      '</div>' +
+      (!isPersist
+        ? '<small class="cb-storage-note">Lo spazio è temporaneo: se il disco scarseggia, il browser potrebbe rimuovere la cache dei modelli. Per proteggerla, aggiungi Fischietto ai preferiti o installalo come app (PWA).</small>'
+        : '<small class="cb-storage-note">I modelli salvati sono protetti dallo svuotamento automatico del browser.</small>') +
+    '</div>';
   }
 
   function modelPicker(cur) {
@@ -1200,7 +1291,8 @@
         (!isGpu ? ' Con il processore la prima parola può arrivare dopo qualche secondo, poi la risposta si scrive man mano.' : '') + '</p>' +
         '<p><button type="button" class="cb-link" id="cb-disable-link">Disattiva l’assistente e usa solo la semplice ricerca</button></p>' +
         firefoxTip +
-        modelPicker(k);
+        modelPicker(k) +
+        renderStorageSection();
     } else {
       const cached = CACHED[kind + k];
       if (cached === undefined) {
@@ -1214,7 +1306,8 @@
         '<p>' + (cached ? 'Il modello ' + M.label + ' è già scaricato.' : 'I modelli con l’etichetta «Scaricato» sono già presenti sul dispositivo e non richiedono download; per gli altri si scaricano i file al primo avvio (' + M.label + ': ' + M.size + ').') + '</p>' +
         (!isGpu && LLM.gpuNote ? '<p class="cb-st-note">' + esc(LLM.gpuNote) + ': in uso il motore WebAssembly su CPU.</p>' : '') +
         firefoxTip +
-        modelPicker(k);
+        modelPicker(k) +
+        renderStorageSection();
       $('cb-enable').onclick = enableAssistant;
     }
     box.insertAdjacentHTML('beforeend', '<div class="cb-st-more" id="cb-st-more"' + (statusOpen ? '' : ' hidden') + '>' + details + '</div>');
@@ -1223,6 +1316,14 @@
     if (disableBtn) disableBtn.onclick = disableAssistant;
     const disableLink = $('cb-disable-link');
     if (disableLink) disableLink.onclick = disableAssistant;
+    const clearModelsBtn = $('cb-clear-models');
+    if (clearModelsBtn) {
+      clearModelsBtn.onclick = () => {
+        if (confirm('Vuoi rimuovere i modelli AI salvati sul dispositivo per liberare spazio? (Al prossimo avvio dell’assistente il modello scelto verrà riscaricato)')) {
+          clearModelCaches();
+        }
+      };
+    }
     box.querySelectorAll('[data-model]').forEach(b => b.onclick = () => {
       const was = LLM.choice();
       LLM.setChoice(b.dataset.model);
@@ -1239,7 +1340,12 @@
     if (ready !== wasReady) {
       wasReady = ready;
       if (LLM.state !== 'loading') announce(ready ? 'Assistente attivo' : 'L’assistente non si è avviato');
-      if (ready) { CACHED[LLM.kind + LLM.choice()] = true; statusOpen = false; paintStatus(); paint(); } // "Chiedi all’assistente" on the earlier answers
+      if (ready) {
+        CACHED[LLM.kind + LLM.choice()] = true;
+        statusOpen = false;
+        updateStorageInfo(true).then(() => paintStatus());
+        paint();
+      }
     }
   }
 
