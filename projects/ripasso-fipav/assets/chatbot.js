@@ -233,8 +233,8 @@
   // ---------------------------------------------------------------- B. local language model (WebLLM)
 
   // Two engines, chosen automatically:
-  //  - "gpu": WebLLM on WebGPU (fast; Chrome/Edge, also Android);
-  //  - "cpu": Transformers.js on WebAssembly (slower, but works everywhere, Firefox included).
+  //  - "gpu": WebLLM on WebGPU (fast; Chrome/Edge, newer Firefox/Safari, Android);
+  //  - "cpu": Transformers.js (supports WebGPU acceleration on Firefox where available, and falls back to WebAssembly CPU).
   const WEBLLM_URL = 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.85/lib/index.js';
   // dist/transformers.min.js is the self-contained build (the .web build needs a bundler for onnxruntime)
   const TFJS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.min.js';
@@ -246,11 +246,50 @@
       ultra: { label: 'Massima precisione', size: '≈ 4,5 GB', id: 'Qwen2.5-7B-Instruct', note: 'qualità superiore, per computer potenti', power: 4 },
     },
     cpu: {
-      light: { label: 'Leggero', size: '≈ 0,5 GB', id: 'onnx-community/Qwen2.5-0.5B-Instruct', note: 'molto rapido, ma risposte meno accurate', power: 1 },
-      standard: { label: 'Standard', size: '≈ 1,2 GB', id: 'onnx-community/Qwen2.5-1.5B-Instruct', note: 'consigliato per risposte affidabili', power: 2 },
+      light: { label: 'Leggero', size: '≈ 0,5 GB', id: 'onnx-community/Qwen2.5-0.5B-Instruct', note: 'molto rapido, per risposte veloci', power: 1 },
+      standard: { label: 'Standard', size: '≈ 1,2 GB', id: 'onnx-community/Qwen2.5-1.5B-Instruct', note: 'consigliato, risposte affidabili e precise', power: 2 },
+      quality: { label: 'Qualità', size: '≈ 3,2 GB', id: 'onnx-community/Llama-3.2-3B-Instruct-ONNX', note: 'risposte più articolate (consigliata GPU)', power: 3 },
     },
   };
   const CACHED = {}; // engine + modelKey → downloaded already? (undefined: not checked, null: checking, true/false)
+
+  let webGpuChecked = false;
+  let webGpuActive = false;
+
+  /** Checks if WebGPU is actually active and able to instantiate a device in this browser. */
+  async function checkWebGpuActive() {
+    if (webGpuChecked) return webGpuActive;
+    if (typeof navigator === 'undefined' || !('gpu' in navigator) || !window.isSecureContext) {
+      webGpuChecked = true;
+      webGpuActive = false;
+      return false;
+    }
+    try {
+      const adapter = await Promise.race([
+        navigator.gpu.requestAdapter(),
+        new Promise(r => setTimeout(() => r(null), 3000))
+      ]);
+      if (!adapter) {
+        webGpuChecked = true;
+        webGpuActive = false;
+        return false;
+      }
+      const device = await Promise.race([
+        adapter.requestDevice(),
+        new Promise(r => setTimeout(() => r(null), 2500))
+      ]);
+      if (device) {
+        webGpuActive = true;
+        try { device.destroy(); } catch (e) { /* ignore */ }
+      } else {
+        webGpuActive = false;
+      }
+    } catch (e) {
+      webGpuActive = false;
+    }
+    webGpuChecked = true;
+    return webGpuActive;
+  }
 
   function getCachedModels(kind) {
     const models = MODELS[kind] || {};
@@ -265,20 +304,36 @@
   }
 
   const LLM = {
-    kind: null, lib: null, libPromise: null, engine: null, gen: null, stopper: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false, files: {},
+    kind: null, device: 'wasm', hasGpuAdapter: false, lib: null, libPromise: null, engine: null, gen: null, stopper: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false, files: {},
     /** Which engine this browser can use: 'gpu', 'cpu' or '' (none), with the reason when WebGPU is not usable. */
     async detect() {
       if (this.kind !== null) return this.kind;
       this.gpuNote = '';
-      if ('gpu' in navigator && window.isSecureContext) {
+      this.hasGpuAdapter = false;
+      this.device = 'wasm';
+      const hasGpu = await checkWebGpuActive();
+      if (hasGpu) {
+        this.hasGpuAdapter = true;
         try {
-          // requestAdapter can hang on some drivers: after 4 s it counts as "no adapter"
-          const ad = await Promise.race([navigator.gpu.requestAdapter(), new Promise(r => setTimeout(() => r(null), 4000))]);
-          // WebLLM needs at least 10 storage buffers per shader stage (Firefox gives 9)
-          if (ad && (ad.limits.maxStorageBuffersPerShaderStage || 0) >= 10) { this.f16 = ad.features.has('shader-f16'); return (this.kind = 'gpu'); }
-          this.gpuNote = ad ? 'La WebGPU di questo browser è troppo limitata per il motore veloce (succede per esempio con Firefox)' : 'Nessuna scheda grafica compatibile con WebGPU';
-        } catch (e) { this.gpuNote = 'WebGPU non disponibile'; }
-      } else this.gpuNote = 'Questo browser non ha WebGPU';
+          const ad = await navigator.gpu.requestAdapter();
+          if (ad) {
+            const maxStorage = (ad.limits && ad.limits.maxStorageBuffersPerShaderStage) || 0;
+            // WebLLM needs at least 10 storage buffers per shader stage (Chrome, Edge, newer Firefox on Metal/DX12)
+            if (maxStorage >= 10) {
+              this.f16 = ad.features.has('shader-f16');
+              this.device = 'webgpu';
+              return (this.kind = 'gpu');
+            }
+            // If WebGPU is supported but has standard limits (<10, e.g. Firefox wgpu backend),
+            // Transformers.js can still run with full WebGPU hardware acceleration!
+            this.gpuNote = 'WebGPU attivo (accelerazione grafica con motore ONNX)';
+            this.device = 'webgpu';
+            return (this.kind = 'cpu');
+          }
+        } catch (e) { /* fallback */ }
+      } else {
+        this.gpuNote = 'Questo browser non ha WebGPU attivo';
+      }
       return (this.kind = typeof WebAssembly === 'object' ? 'cpu' : '');
     },
     models() { return MODELS[this.kind] || MODELS.cpu; },
@@ -332,21 +387,57 @@
           if (this.engine) { try { await this.engine.unload(); } catch (e) { /* ignore */ } }
           this.engine = await this.lib.CreateMLCEngine(id, { initProgressCallback: r => { this.progress = r.progress || 0; this.text = r.text || ''; onProgress(); } });
           this.modelId = id;
+          this.device = 'webgpu';
         } else {
           const T = this.tf || (this.tf = await import(TFJS_URL));
           T.env.allowLocalModels = false;
           if (this.gen && this.gen.dispose) { try { await this.gen.dispose(); } catch (e) { /* ignore */ } }
           let last = 0;
-          this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
-            dtype: 'q4', device: 'wasm',
-            progress_callback: p => {
-              if (p.status === 'progress' && p.file) this.files[p.file] = [p.loaded || 0, p.total || 0];
-              const v = Object.values(this.files), tot = v.reduce((a, x) => a + x[1], 0), done = v.reduce((a, x) => a + x[0], 0);
-              this.progress = tot ? done / tot : 0;
-              this.text = p.file ? 'Scarico ' + p.file + (tot ? ' — ' + (done / 1048576).toFixed(0) + ' / ' + (tot / 1048576).toFixed(0) + ' MB' : '') : 'Avvio del modello…';
-              if (Date.now() - last > 150) { last = Date.now(); onProgress(); }
-            },
-          });
+          const progressCb = p => {
+            if (p.status === 'progress' && p.file) this.files[p.file] = [p.loaded || 0, p.total || 0];
+            const v = Object.values(this.files), tot = v.reduce((a, x) => a + x[1], 0), done = v.reduce((a, x) => a + x[0], 0);
+            this.progress = tot ? done / tot : 0;
+            this.text = p.file ? 'Scarico ' + p.file + (tot ? ' — ' + (done / 1048576).toFixed(0) + ' / ' + (tot / 1048576).toFixed(0) + ' MB' : '') : 'Avvio del modello…';
+            if (Date.now() - last > 150) { last = Date.now(); onProgress(); }
+          };
+
+          // Attempt WebGPU acceleration first if an adapter exists (e.g. Firefox with WebGPU enabled)
+          let loaded = false;
+          if (this.hasGpuAdapter || this.device === 'webgpu') {
+            try {
+              this.text = 'Avvio del modello con accelerazione WebGPU…';
+              this.device = 'webgpu';
+              this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
+                dtype: 'q4',
+                device: 'webgpu',
+                progress_callback: progressCb,
+              });
+              loaded = true;
+            } catch (gpuErr) {
+              console.warn('WebGPU pipeline failed, falling back to WASM CPU:', gpuErr);
+              this.device = 'wasm';
+            }
+          }
+
+          if (!loaded) {
+            this.device = 'wasm';
+            try {
+              if (T.env.backends?.onnx?.wasm) {
+                T.env.backends.onnx.wasm.simd = true;
+                if (typeof SharedArrayBuffer !== 'undefined') {
+                  T.env.backends.onnx.wasm.numThreads = Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 2) - 1));
+                } else {
+                  T.env.backends.onnx.wasm.numThreads = 1;
+                }
+              }
+            } catch (e) { /* ignore */ }
+            this.text = 'Avvio del modello su processore (WebAssembly)…';
+            this.gen = await T.pipeline('text-generation', MODELS.cpu[k].id, {
+              dtype: 'q4',
+              device: 'wasm',
+              progress_callback: progressCb,
+            });
+          }
           this.modelId = MODELS.cpu[k].id;
         }
         this.state = 'ready';
@@ -379,10 +470,11 @@
             skip_special_tokens: true,
             callback_function: txt => { out += txt; onToken(out); }
           });
+          const maxTokens = (this.kind === 'cpu' && this.device === 'wasm') ? 250 : 380;
           const res = await this.gen(messages, {
-            max_new_tokens: 380,
+            max_new_tokens: maxTokens,
             do_sample: false,
-            repetition_penalty: 1.0,
+            repetition_penalty: 1.1,
             streamer,
             stopping_criteria: this.stopper
           });
@@ -439,7 +531,8 @@
 
   /** Messages for the model: system prompt, the last exchange (for follow-up questions), the references found. */
   function buildMessages(question, found, prev = []) {
-    let ctx = '', budget = LLM.kind === 'cpu' ? 3800 : 7000;
+    const isCpuWasm = LLM.kind === 'cpu' && LLM.device === 'wasm';
+    let ctx = '', budget = isCpuWasm ? 2400 : 7000;
     if (found.quiz) {
       ctx += 'ESEMPIO DA CASISTICA / QUIZ UFFICIALE FIPAV:\n' +
         'Quesito: ' + found.quiz.q['question-text'] + '\n' +
@@ -450,7 +543,7 @@
       const short = (r.ref['ref-text'] || '').trim();
       const text = full ? (short && !full.includes(short) ? short + '\n' + full : full) : short;
       const clean = text.replace(/\s+/g, ' ').trim();
-      const maxLen = LLM.kind === 'cpu' ? 950 : 1500;
+      const maxLen = isCpuWasm ? 650 : 1500;
       const piece = 'RIFERIMENTO [' + r.ref['ref-code'] + '] ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + '):\n' +
         (clean.length > maxLen ? clean.slice(0, maxLen) + '…' : clean) + '\n\n';
       if (ctx.length + piece.length > budget) break;
@@ -485,7 +578,8 @@
     const { list, qt } = rank(q);
     const quiz = similarQuestion(question);
     const top = list[0] ? list[0].score : 0;
-    const maxRefs = LLM.kind === 'cpu' ? 4 : 5;
+    const isCpuWasm = LLM.kind === 'cpu' && LLM.device === 'wasm';
+    const maxRefs = isCpuWasm ? 3 : 5;
     const chosen = list.filter(x => x.score >= top * 0.32).slice(0, maxRefs);
     if (quiz) for (const rc of quiz.q['question-ref'] || []) {
       const r = BY_CODE[rc.toUpperCase()];
@@ -660,7 +754,8 @@
       const M = models[modelKey] || {};
       const label = m.modelLabel || M.label || 'Standard';
       const techId = (m.modelId || M.id || '').replace('onnx-community/', '');
-      const engineText = m.engineKind === 'gpu' ? 'GPU' : m.engineKind === 'cpu' ? 'CPU' : (LLM.kind === 'gpu' ? 'GPU' : 'CPU');
+      const isGpu = m.deviceKind === 'webgpu' || m.engineKind === 'gpu' || (m.engineKind !== 'cpu' && LLM.kind === 'gpu') || (m.engineKind === 'cpu' && LLM.device === 'webgpu');
+      const engineText = isGpu ? 'GPU' : 'CPU';
       return '<div class="cb-meta-pills">' +
         '<span class="cb-pill cb-pill-ai">' + ICON.spark + ' <span>Assistente AI</span></span>' +
         '<span class="cb-pill cb-pill-model" title="' + (techId ? esc(techId) + ' · ' : '') + engineText + '"><strong>' + esc(label) + '</strong>' + (techId ? ' <small class="cb-model-tech">(' + esc(techId) + ')</small>' : '') + '</span>' +
@@ -699,6 +794,43 @@
   const msgHtml = (m, i) => '<div class="cb-msg cb-' + m.role + '" data-i="' + i + '">' + msgInner(m) + '</div>';
   const msgNode = i => document.querySelector('#cb-log .cb-msg[data-i="' + i + '"]');
 
+  function renderFirefoxGuide(context = 'welcome') {
+    const isFirefox = typeof navigator !== 'undefined' && /firefox|fxios/i.test(navigator.userAgent);
+    if (!isFirefox || webGpuActive) return '';
+    if (context === 'status') {
+      return '<div class="cb-firefox-tip">' +
+        '<strong>' + ICON.spark + ' Velocizza l’assistente su Firefox attivando WebGPU:</strong>' +
+        '<p>Puoi attivare l’accelerazione della scheda grafica in pochi secondi:</p>' +
+        '<ol>' +
+          '<li>In una nuova scheda scrivi <code>about:config</code></li>' +
+          '<li>Cerca <code>dom.webgpu.enabled</code> e impostalo su <strong>true</strong> (doppio clic)</li>' +
+          '<li>Ricarica questa pagina: l’assistente userà la scheda grafica per risposte rapide!</li>' +
+        '</ol>' +
+      '</div>';
+    }
+    return '<div class="cb-firefox-banner">' +
+      '<div class="cb-firefox-banner-head">' +
+        '<div class="cb-firefox-banner-badge">' + ICON.spark + ' Firefox · Velocizza l’AI</div>' +
+        '<h3>Attiva l’accelerazione con scheda grafica (WebGPU)</h3>' +
+        '<p>Al momento Firefox sta usando il processore (WebAssembly). Puoi abilitare WebGPU in 10 secondi per risposte <strong>fino a 10 volte più veloci</strong>:</p>' +
+      '</div>' +
+      '<div class="cb-firefox-steps">' +
+        '<div class="cb-firefox-step">' +
+          '<span class="cb-firefox-num">1</span>' +
+          '<div class="cb-firefox-step-body">Apri una nuova scheda e digita <code>about:config</code> (premi Invio e accetta l’avviso).</div>' +
+        '</div>' +
+        '<div class="cb-firefox-step">' +
+          '<span class="cb-firefox-num">2</span>' +
+          '<div class="cb-firefox-step-body">Cerca <code>dom.webgpu.enabled</code> e impostalo su <strong class="cb-val-true">true</strong> (con un doppio clic).</div>' +
+        '</div>' +
+        '<div class="cb-firefox-step">' +
+          '<span class="cb-firefox-num">3</span>' +
+          '<div class="cb-firefox-step-body">Torna qui e ricarica la pagina: l’assistente utilizzerà direttamente la scheda grafica!</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
   function welcomeHtml() {
     const isAi = LLM.state === 'ready';
     const curModel = LLM.models()[LLM.choice()] || {};
@@ -712,6 +844,7 @@
       '<p class="cb-welcome-desc">Scrivi una domanda con parole tue o inserisci un codice regolamentare (es. <button type="button" class="cb-cite cb-cite-rg" data-ask="RG-15.4">RG-15.4</button>). ' +
       'Le risposte sono elaborate sul tuo dispositivo da <strong>' + REFS.length + ' riferimenti</strong> e <strong>' + QUESTIONS.length + ' quiz</strong> ufficiali FIPAV.</p>' +
       '</div>' +
+      '<div id="cb-firefox-welcome-guide">' + renderFirefoxGuide('welcome') + '</div>' +
       '<div class="cb-welcome-pills">' +
       '<span class="cb-pill-item">' + ICON.shield + ' 100% in locale</span>' +
       '<span class="cb-pill-item">' + ICON.check + ' Nessun dato condiviso</span>' +
@@ -812,6 +945,7 @@
       modelLabel: curM.label || 'Standard',
       modelId: (LLM.modelId || curM.id || '').replace('onnx-community/', ''),
       engineKind: LLM.kind || 'gpu',
+      deviceKind: LLM.device || (LLM.kind === 'gpu' ? 'webgpu' : 'wasm'),
       a: '',
       refs: ctx.refs.map(r => r.ref['ref-code']),
       done: false
@@ -840,6 +974,7 @@
       modelLabel: curM.label || 'Standard',
       modelId: (LLM.modelId || curM.id || '').replace('onnx-community/', ''),
       engineKind: LLM.kind || 'gpu',
+      deviceKind: LLM.device || (LLM.kind === 'gpu' ? 'webgpu' : 'wasm'),
       a: '',
       refs: ctx.refs.map(r => r.ref['ref-code'].toUpperCase()),
       done: false,
@@ -1050,13 +1185,21 @@
       paintComposerMode();
       return;
     }
+    const isGpu = LLM.kind === 'gpu' || LLM.device === 'webgpu';
+    const engineLabel = isGpu ? 'la scheda grafica (WebGPU)' : 'il processore (WebAssembly)';
+    const firefoxTip = renderFirefoxGuide('status');
+    const guideEl = $('cb-firefox-welcome-guide');
+    if (guideEl) {
+      guideEl.innerHTML = renderFirefoxGuide('welcome');
+    }
     let details = '';
     if (LLM.state === 'ready') {
-      box.innerHTML = row('on', 'Assistente AI attivo', 'Modello ' + M.label + ' sul tuo dispositivo, con il ' + ENGINE[kind] + '.',
+      box.innerHTML = row('on', 'Assistente AI attivo', 'Modello ' + M.label + ' sul tuo dispositivo, con ' + engineLabel + '.',
         '<button type="button" class="btn btn-secondary btn-sm" id="cb-disable" title="Disattiva l’assistente AI e passa alla semplice ricerca">' + ICON.search + '<span>Passa alla ricerca</span></button>' + more);
       details = '<p>Interpreta la domanda (anche le domande di seguito, come «e per il Libero?») e risponde usando solo i riferimenti trovati, citandone i codici.' +
-        (kind === 'cpu' ? ' Con il processore la prima parola può arrivare dopo qualche secondo, poi la risposta si scrive man mano.' : '') + '</p>' +
+        (!isGpu ? ' Con il processore la prima parola può arrivare dopo qualche secondo, poi la risposta si scrive man mano.' : '') + '</p>' +
         '<p><button type="button" class="cb-link" id="cb-disable-link">Disattiva l’assistente e usa solo la semplice ricerca</button></p>' +
+        firefoxTip +
         modelPicker(k);
     } else {
       const cached = CACHED[kind + k];
@@ -1067,9 +1210,10 @@
       box.innerHTML = row(err ? 'err' : 'off', err ? 'L’assistente non si è avviato' : 'Modalità ricerca',
         err ? esc(String(LLM.text || '').slice(0, 200)) : 'Rispondo con i passaggi dei riferimenti. L’assistente AI scrive la risposta con parole sue' + (cached === true ? ' (il modello è già scaricato).' : cached === false ? ' (al primo avvio scarica ' + M.size + ').' : '.'),
         '<button type="button" class="btn btn-primary btn-sm" id="cb-enable">' + ICON.spark + (err ? 'Riprova' : 'Attiva l’assistente') + '</button>' + more);
-      details = '<p>L’assistente è un modello linguistico che gira <strong>sul tuo dispositivo</strong>, con il ' + ENGINE[kind] + ': riceve domande solo in italiano, legge i riferimenti trovati e scrive la risposta citandoli. Le domande non lasciano mai il dispositivo.</p>' +
+      details = '<p>L’assistente è un modello linguistico che gira <strong>sul tuo dispositivo</strong>, con ' + engineLabel + ': riceve domande solo in italiano, legge i riferimenti trovati e scrive la risposta citandoli. Le domande non lasciano mai il dispositivo.</p>' +
         '<p>' + (cached ? 'Il modello ' + M.label + ' è già scaricato.' : 'I modelli con l’etichetta «Scaricato» sono già presenti sul dispositivo e non richiedono download; per gli altri si scaricano i file al primo avvio (' + M.label + ': ' + M.size + ').') + '</p>' +
-        (kind === 'cpu' && LLM.gpuNote ? '<p class="cb-st-note">' + esc(LLM.gpuNote) + ': uso il motore compatibile, più lento. Con Chrome o Edge le risposte arrivano prima.</p>' : '') +
+        (!isGpu && LLM.gpuNote ? '<p class="cb-st-note">' + esc(LLM.gpuNote) + ': in uso il motore WebAssembly su CPU.</p>' : '') +
+        firefoxTip +
         modelPicker(k);
       $('cb-enable').onclick = enableAssistant;
     }
@@ -1147,6 +1291,10 @@
     updateCounter();
     paintStatus();
     initAutoActivation();
+    checkWebGpuActive().then(() => {
+      const g = $('cb-firefox-welcome-guide');
+      if (g) g.innerHTML = renderFirefoxGuide('welcome');
+    });
   }
 
   window.Chatbot = {
@@ -1154,6 +1302,10 @@
       mount();
       setTimeout(() => { const i = $('cb-input'); if (i && matchMedia('(pointer: fine)').matches) i.focus({ preventScroll: true }); }, 50);
       initAutoActivation();
+      checkWebGpuActive().then(() => {
+        const g = $('cb-firefox-welcome-guide');
+        if (g) g.innerHTML = renderFirefoxGuide('welcome');
+      });
     },
     answer, retrieveFor, buildMessages,
   };

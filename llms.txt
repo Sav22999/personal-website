@@ -18,6 +18,7 @@ Saverio Morelli is a frontend developer and UX designer based in Italy. He build
 - [Giftwise](https://www.saveriomorelli.com/projects/giftwise/): Web app (installable on Android) for wish lists for every occasion. Follow your friends to see their lists, mark a wish as "I'm getting it" and chat with the other followers, without the list owner ever seeing it. In English and Italian.
 - [FaceGuess](https://www.saveriomorelli.com/projects/faceguess/): Free two-player face-guessing web game with new characters every match. Play a friend online or in person. Built with Claude AI.
 - [Sudoku](https://www.saveriomorelli.com/projects/sudoku/): Free Sudoku in the browser with four levels, pencil notes and pen, tips that explain the next move, cell check, timer and saved games. Built with Claude AI.
+- [Connect Four](https://www.saveriomorelli.com/projects/connect-four/): Free online four-in-a-row game (Forza Quattro). Play a friend with a room code, a random opponent, on the same device or against the computer, with custom disc colors and chat. Built with Claude AI.
 - [HTML per tutti](https://www.saveriomorelli.com/htmlpertutti/): A book to learn HTML from scratch, written in Italian. Available on Amazon.
 
 ## Links

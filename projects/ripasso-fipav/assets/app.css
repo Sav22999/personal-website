@@ -1212,6 +1212,13 @@ button.profile-stat:hover, a.profile-stat:hover { background: color-mix(in srgb,
 .cb-st-more[hidden] { display: none; }
 .cb-st-more p { margin: 0 0 10px; line-height: 1.5; max-width: 70ch; }
 .cb-st-note, .cb-st-file { font-size: .8rem; color: var(--text-3); }
+.cb-firefox-tip { margin: 12px 0 14px; padding: 12px 14px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--amber) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--line)); font-size: .84rem; line-height: 1.5; color: var(--text); }
+.cb-firefox-tip strong { display: flex; align-items: center; gap: 6px; color: var(--amber-strong); font-size: .86rem; margin-bottom: 6px; }
+.cb-firefox-tip strong svg { flex: none; width: 14px; height: 14px; }
+.cb-firefox-tip p { margin: 0 0 6px !important; color: var(--text-2); }
+.cb-firefox-tip ol { margin: 6px 0 0 18px; padding: 0; }
+.cb-firefox-tip li { margin-bottom: 3px; }
+.cb-firefox-tip code { background: var(--surface); color: var(--blue-strong); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line); font-family: monospace; font-size: .82rem; }
 .cb-st-file { display: block; margin: 6px 0 0 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cb-bar { display: block; height: 6px; border-radius: 3px; background: var(--inset); margin: 10px 0 0 22px; overflow: hidden; }
 .cb-bar i { display: block; height: 100%; background: var(--blue); transition: width .3s; }
@@ -1336,6 +1343,18 @@ details[open] > summary .cb-chev { transform: rotate(180deg); }
 .cb-welcome-badge { display: inline-flex; align-items: center; gap: 6px; font-size: .76rem; font-weight: 600; padding: 3px 12px; border-radius: 99px; background: color-mix(in srgb, var(--blue) 12%, var(--surface-2)); color: var(--blue-strong); border: 1px solid color-mix(in srgb, var(--blue) 25%, transparent); margin-top: 6px; }
 .cb-welcome h2 { font-size: 1.35rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; margin: 10px 0 6px; }
 .cb-welcome-desc { margin: 0 auto 16px; max-width: 62ch; line-height: 1.55; font-size: .92rem; }
+/* Firefox WebGPU banner inside welcome screen */
+.cb-firefox-banner { margin: 4px auto 20px; max-width: 680px; padding: 18px 20px; border-radius: 14px; background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border: 1.5px solid color-mix(in srgb, var(--amber) 32%, var(--line)); box-shadow: 0 4px 16px rgba(0, 0, 0, .04); text-align: left; }
+.cb-firefox-banner-badge { display: inline-flex; align-items: center; gap: 6px; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 99px; background: var(--amber-soft); color: var(--amber-strong); margin-bottom: 8px; }
+.cb-firefox-banner-badge svg { width: 13px; height: 13px; flex: none; }
+.cb-firefox-banner h3 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.cb-firefox-banner p { margin: 0 0 14px; font-size: .88rem; color: var(--text-2); line-height: 1.5; }
+.cb-firefox-steps { display: flex; flex-direction: column; gap: 8px; }
+.cb-firefox-step { display: flex; align-items: flex-start; gap: 12px; font-size: .86rem; color: var(--text); line-height: 1.5; }
+.cb-firefox-num { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--amber-soft); color: var(--amber-strong); font-weight: 700; font-size: .78rem; display: grid; place-items: center; margin-top: 1px; }
+.cb-firefox-step-body { flex: 1; min-width: 0; }
+.cb-firefox-step-body code { background: var(--surface); color: var(--blue-strong); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); font-family: monospace; font-size: .84rem; font-weight: 600; }
+.cb-val-true { color: var(--green); font-weight: 700; }
 .cb-welcome-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 22px; }
 .cb-pill-item { display: inline-flex; align-items: center; gap: 5px; font-size: .76rem; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: 99px; padding: 4px 11px; }
 .cb-pill-item svg { flex: none; stroke-width: 2.2; color: var(--blue); }
