@@ -22,6 +22,7 @@ window.APP_RELEASES = [
       {
         title: 'Miglioramenti',
         items: [
+          'Simulazione partita › Invasione di rete e linea centrale: aumentata l’ampiezza dell’oscillazione della rete e dell’antenna al contatto, sincronizzato l’inizio dell’animazione esattamente al momento del primo contatto fisico del giocatore con la rete e rifatto il reticolo visivo della rete in 3D (sia bande che maglie verticali e orizzontali), rendendo il movimento e l’invasione chiaramente visibili dalla postazione arbitrale e nei replay.',
           'Pannello di gestione › Ricerca rapida nella barra laterale: nuova casella per cercare e raggiungere al volo riferimenti normativi (per codice o argomento) e funzioni o strumenti del pannello, con redirect diretto alla gestione delle singole parti (apribile anche con tasto / o scorciatoia da tastiera).',
           'Chatbot › Avvio automatico e modelli scaricati: se uno o più modelli sono già stati scaricati in locale, all’apertura l’assistente si attiva automaticamente selezionando il modello più potente tra quelli disponibili. Nella selezione modelli una spunta «Scaricato» indica i modelli già presenti sul dispositivo che non richiedono download.',
           'Chatbot › Passaggio alla semplice ricerca: quando l’assistente AI è attivo (o in fase di preparazione), il pulsante «Passa alla ricerca» permette di disattivarlo con un tocco per usare solo la ricerca diretta nei riferimenti, liberando le risorse del dispositivo.',

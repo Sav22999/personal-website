@@ -1069,7 +1069,7 @@
       const prevT = G.t;
       G.t += dt * (slow ? 0.28 : 1);
       // Net shakes
-      R.events.forEach(ev => { if (ev.kind === 'net' && ev.t > prevT && ev.t <= G.t) G.netShake = { y: ev.y, t0: G.t, w0: performance.now(), amp: ev.strong ? 0.09 : 0.05 }; });
+      R.events.forEach(ev => { if (ev.kind === 'net' && ev.t > prevT && ev.t <= G.t) G.netShake = { y: ev.y, t0: G.t, w0: performance.now(), amp: ev.amp != null ? ev.amp : (ev.strong ? 0.26 : 0.18) }; });
       // The 2nd referee helps the 1st with ball-handling faults: an unofficial signal at mid-chest, a small step
       if (M.opts.mode === '1' && !G.whistled) {
         const hf = R.faults.find(f => HANDLING[f.key] && G.t >= f.t + 0.25 && G.t < f.t + 1.5);
@@ -2615,11 +2615,11 @@
 
     // Net shake and impact mark (visual aids)
     let netShake = null;
-    const shake = rp ? (() => { if (!R) return null; const n = R.events.filter(ev => ev.kind === 'net' && ev.t <= t).pop(); return n ? { y: n.y, t0: n.t, amp: n.strong ? 0.09 : 0.05 } : null; })() : G.netShake;
+    const shake = rp ? (() => { if (!R) return null; const n = R.events.filter(ev => ev.kind === 'net' && ev.t <= t).pop(); return n ? { y: n.y, t0: n.t, amp: n.amp != null ? n.amp : (n.strong ? 0.26 : 0.18) } : null; })() : G.netShake;
     if (shake && R) {
       // The net keeps swinging for a few seconds, slowly settling (live: real time, so it goes on after the whistle)
       const age = !rp && shake.w0 ? (performance.now() - shake.w0) / 1000 * (G.speed || 1) : t - shake.t0;
-      if (age >= 0 && age < 3.2) netShake = { y: shake.y, amp: shake.amp * Math.exp(-age * 1.25) * Math.min(1, age / 0.06 + 0.3), phase: age * 21 };
+      if (age >= 0 && age < 3.8) netShake = { y: shake.y, amp: shake.amp * Math.exp(-age * 0.95) * Math.min(1, age / 0.05 + 0.45), phase: age * 19 };
     }
     const markers = [];
     if (R && M.opts.aids && R.natural && R.natural.land && R.natural.borderline && t >= R.natural.t) {

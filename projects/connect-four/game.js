@@ -31,9 +31,14 @@ const customPrefs = {
 // Preset color pairs
 const PALETTES = {
     fuchsia_gold:   { p1: '#D946EF', p2: '#EAB308', p1G: 'radial-gradient(circle at 35% 30%, #FDF4FF 0%, #F472B6 28%, #D946EF 68%, #A21CAF 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 28%, #EAB308 68%, #CA8A04 100%)' },
+    red_blue:       { p1: '#EF4444', p2: '#2563EB', p1G: 'radial-gradient(circle at 35% 30%, #FFE4E6 0%, #F87171 28%, #EF4444 68%, #B91C1C 100%)', p2G: 'radial-gradient(circle at 35% 30%, #EFF6FF 0%, #60A5FA 28%, #2563EB 68%, #1D4ED8 100%)' },
+    black_white:    { p1: '#F8FAFC', p2: '#18181B', p1G: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #F1F5F9 28%, #E2E8F0 68%, #94A3B8 100%)', p2G: 'radial-gradient(circle at 35% 30%, #71717A 0%, #3F3F46 28%, #18181B 68%, #09090B 100%)' },
     neon_cyan:      { p1: '#FF007F', p2: '#06B6D4', p1G: 'radial-gradient(circle at 35% 30%, #FFF0F7 0%, #FF66B2 30%, #FF007F 70%, #B30059 100%)', p2G: 'radial-gradient(circle at 35% 30%, #ECFEFF 0%, #67E8F9 30%, #06B6D4 70%, #0891B2 100%)' },
     sunset_amber:   { p1: '#F97316', p2: '#FBBF24', p1G: 'radial-gradient(circle at 35% 30%, #FFF7ED 0%, #FB923C 30%, #EA580C 70%, #9A3412 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FCD34D 30%, #F59E0B 70%, #B45309 100%)' },
     emerald_violet: { p1: '#10B981', p2: '#8B5CF6', p1G: 'radial-gradient(circle at 35% 30%, #ECFDF5 0%, #34D399 30%, #059669 70%, #047857 100%)', p2G: 'radial-gradient(circle at 35% 30%, #F5F3FF 0%, #A78BFA 30%, #7C3AED 70%, #5B21B6 100%)' },
+    orange_cobalt:  { p1: '#FF6B4A', p2: '#1D4ED8', p1G: 'radial-gradient(circle at 35% 30%, #FFF1EE 0%, #FF8A65 28%, #FF6B4A 68%, #C2410C 100%)', p2G: 'radial-gradient(circle at 35% 30%, #DBEAFE 0%, #60A5FA 28%, #1D4ED8 68%, #1E3A8A 100%)' },
+    lime_pink:      { p1: '#84CC16', p2: '#EC4899', p1G: 'radial-gradient(circle at 35% 30%, #F7FEE7 0%, #A3E635 28%, #84CC16 68%, #4D7C0F 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FDF2F8 0%, #F472B6 28%, #EC4899 68%, #BE185D 100%)' },
+    gold_silver:    { p1: '#EAB308', p2: '#CBD5E1', p1G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 28%, #EAB308 68%, #A16207 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #E2E8F0 28%, #CBD5E1 68%, #64748B 100%)' },
     ruby_yellow:    { p1: '#EF4444', p2: '#FACC15', p1G: 'radial-gradient(circle at 35% 30%, #FEF2F2 0%, #F87171 30%, #DC2626 70%, #991B1B 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 30%, #EAB308 70%, #A16207 100%)' },
     lilac_mint:     { p1: '#A855F7', p2: '#14B8A6', p1G: 'radial-gradient(circle at 35% 30%, #FAF5FF 0%, #C084FC 30%, #9333EA 70%, #6B21A8 100%)', p2G: 'radial-gradient(circle at 35% 30%, #F0FDFA 0%, #5EEAD4 30%, #0D9488 70%, #115E59 100%)' },
 };
@@ -135,6 +140,8 @@ function openConfirm(title, text, yesLabel, onYes) {
 
 function applyCustomPrefs() {
     document.body.setAttribute('data-board', customPrefs.boardHue);
+    document.body.setAttribute('data-disc-style', customPrefs.discStyle);
+    document.body.setAttribute('data-palette', customPrefs.palette);
     const p = PALETTES[customPrefs.palette] || PALETTES.fuchsia_gold;
     document.documentElement.style.setProperty('--disc-p1-grad', p.p1G);
     document.documentElement.style.setProperty('--disc-p1-color', p.p1);
@@ -852,8 +859,9 @@ function setupGameScreenUI() {
     $('name-top').textContent = nameTop;
     $('name-bottom').textContent = nameBottom;
 
-    $('avatar-top').style.background = `var(--disc-p${topSlot}-grad)`;
-    $('avatar-bottom').style.background = `var(--disc-p${bottomSlot}-grad)`;
+    const isFlat = customPrefs.discStyle === 'flat';
+    $('avatar-top').style.background = isFlat ? `var(--disc-p${topSlot}-color)` : `var(--disc-p${topSlot}-grad)`;
+    $('avatar-bottom').style.background = isFlat ? `var(--disc-p${bottomSlot}-color)` : `var(--disc-p${bottomSlot}-grad)`;
 
     const ptsTop = topSlot === 1 ? session.p1Points : session.p2Points;
     const ptsBottom = bottomSlot === 1 ? session.p1Points : session.p2Points;
@@ -1082,7 +1090,11 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-random').addEventListener('click', findRandomGame);
 
     $('room-code').addEventListener('input', (e) => {
-        $('btn-join').disabled = e.target.value.trim().length !== 6;
+        const input = e.target;
+        const pos = input.selectionStart;
+        input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        input.setSelectionRange(pos, pos);
+        $('btn-join').disabled = input.value.trim().length !== 6;
     });
     $('card-join').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -1157,6 +1169,14 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.addEventListener('click', () => {
         sidePanel.classList.remove('open');
         backdrop.classList.remove('open');
+    });
+
+    // Language selection (desktop and mobile)
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-lang');
+            setLanguage(lang);
+        });
     });
 
     // Mobile language menu
@@ -1238,13 +1258,15 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(t('link_copied'));
     });
 
-    // Check URL params for quick join (e.g. ?join=ABC123)
+    // Check URL params for quick join (e.g. ?join=ABC123 or ?code=ABC123)
     const urlParams = new URLSearchParams(window.location.search);
-    const joinCode = urlParams.get('join');
+    const joinCode = urlParams.get('join') || urlParams.get('code');
     if (joinCode) {
-        $('room-code').value = joinCode.toUpperCase();
+        const clean = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+        $('room-code').value = clean;
         document.querySelector('.mode-tab[data-tab="online"]').click();
-        $('btn-join').disabled = false;
+        $('btn-join').disabled = clean.length !== 6;
+        $('card-join').classList.add('highlight');
     }
 
     // App version in footer
@@ -1312,6 +1334,23 @@ function renderLogoFaces() {
     `;
 }
 
+window.onLanguageChanged = function(lang) {
+    if (playerName) {
+        const greeting = $('greeting-text');
+        if (greeting) greeting.textContent = t('greeting', { name: playerName });
+    }
+    if (session) {
+        const modeBadge = $('mode-badge');
+        if (modeBadge) modeBadge.textContent = t('tab_' + session.mode);
+        updateTurnIndicator();
+    }
+    renderHowToModal();
+    updateCustomPreview();
+    renderCustomiseModal();
+    const appVer = $('app-version');
+    if (appVer) appVer.textContent = 'v' + APP_VERSION;
+};
+
 function renderHowToModal() {
     const list = $('howto-list');
     const target = $('howto-sheet-body');
@@ -1355,6 +1394,7 @@ function updateCustomPreview() {
         [1, 2, 1, 2],
     ];
 
+    const isFlat = customPrefs.discStyle === 'flat';
     for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 4; c++) {
             const cell = document.createElement('div');
@@ -1362,8 +1402,10 @@ function updateCustomPreview() {
             const val = layout[r][c];
             if (val > 0) {
                 const disc = document.createElement('div');
-                disc.className = `preview-disc style-${customPrefs.discStyle}`;
-                disc.style.background = val === 1 ? 'var(--disc-p1-grad)' : 'var(--disc-p2-grad)';
+                disc.className = `preview-disc p${val} style-${customPrefs.discStyle}`;
+                disc.style.background = isFlat
+                    ? (val === 1 ? 'var(--disc-p1-color)' : 'var(--disc-p2-color)')
+                    : (val === 1 ? 'var(--disc-p1-grad)' : 'var(--disc-p2-grad)');
                 cell.appendChild(disc);
             }
             previewBoard.appendChild(cell);
@@ -1375,11 +1417,12 @@ function renderCustomiseModal() {
     const grid = $('palette-grid');
     if (!grid) return;
 
+    const isFlat = customPrefs.discStyle === 'flat';
     grid.innerHTML = Object.entries(PALETTES).map(([key, p]) => `
         <div class="palette-card ${customPrefs.palette === key ? 'active' : ''}" data-palette="${key}">
             <div class="palette-dots">
-                <span class="palette-dot" style="background:${p.p1G};"></span>
-                <span class="palette-dot" style="background:${p.p2G};"></span>
+                <span class="palette-dot" style="background:${isFlat ? p.p1 : p.p1G};"></span>
+                <span class="palette-dot" style="background:${isFlat ? p.p2 : p.p2G};"></span>
             </div>
             <span class="palette-name">${t('preset_' + key)}</span>
         </div>
@@ -1402,6 +1445,7 @@ function renderCustomiseModal() {
             btn.classList.add('active');
             customPrefs.discStyle = btn.dataset.discStyle;
             saveAndApplyCustomPrefs();
+            renderCustomiseModal();
         };
     });
 

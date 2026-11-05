@@ -927,7 +927,7 @@
       ball(t, t + 0.75, handP, netP, 0.6);
       const back = M.w(sv, rnd(0.6, 1.4), sl * 0.6);
       ball(t + 0.75, t + 1.3, netP, [back[0], back[1], BALL_R], 0.15);
-      ev({ t: t + 0.75, kind: 'net', y: netP[1] });
+      ev({ t: t + 0.75, kind: 'net', y: netP[1], strong: true, amp: -M.side[sv] * 0.20 });
       fault({ t: t + 0.75, key: 'serve_net', team: sv, comp: '1', sit, text: 'Il servizio non supera la rete.' });
       R.natural = { t: t + 1.3, key: 'serve_net', team: sv, noWhistle: true };
       R.endT = t + 1.3;
@@ -1144,7 +1144,7 @@
         const ap = M.w(T, 0, sideL);
         const hitA = [0, ap[1], NET_H + 0.45];
         ball(t2, t2 + 0.28, aP, hitA, 0, true);
-        ev({ t: t2 + 0.28, kind: 'net', y: hitA[1], strong: true });
+        ev({ t: t2 + 0.28, kind: 'net', y: hitA[1], strong: true, amp: -M.side[T] * 0.24 });
         const fall = [rnd(-1.2, 1.2), ap[1] + Math.sign(ap[1]) * rnd(0.9, 1.6), BALL_R];
         ball(t2 + 0.28, t2 + 0.95, hitA, fall, 0.25, true);
         ev({ t: t2 + 0.95, kind: 'land', x: fall[0], y: fall[1] });
@@ -1201,22 +1201,31 @@
         const byBlock = chance(0.55);
         const tm = byBlock ? O : T, who = byBlock ? blockers[0] : attacker;
         const wy = byBlock ? bY : aP[1];
+        const lw = clamp(M.local(tm, 0, wy).l, -4.2, 4.2);
+        const dir = -M.side[tm];
         if (s === 'net_touch') {
-          // Clearly visible: the player comes down against the net (body and arm into it), then steps back
-          const lw = clamp(M.local(tm, 0, wy).l, -4.2, 4.2);
-          at(tm, who, t2 + 0.15, 0.1, lw, byBlock ? 'block' : 'attack');
+          // Touch occurs right as the player reaches the net at the peak of the block/attack
+          const tTouch = byBlock ? t2 + 0.02 : t2 + 0.04;
+          at(tm, who, tTouch, 0.02, lw, byBlock ? 'block' : 'attack');
+          at(tm, who, t2 + 0.35, 0.06, lw, byBlock ? 'block' : 'attack');
           at(tm, who, t2 + 1.0, 0.9, lw, 'ready');
-          ev({ t: t2 + 0.15, kind: 'net', y: wy, strong: true });
-          fault({ t: t2 + 0.15, key: 'net_touch', team: tm, comp: 'both', sit: s, text: 'Il n. ' + who + ' tocca la rete tra le antenne durante l’azione di ' + (byBlock ? 'muro' : 'attacco') + '.' });
+          ev({ t: tTouch, kind: 'net', y: wy, strong: true, amp: dir * 0.28 });
+          fault({ t: tTouch, key: 'net_touch', team: tm, comp: 'both', sit: s, text: 'Il n. ' + who + ' tocca la rete tra le antenne durante l’azione di ' + (byBlock ? 'muro' : 'attacco') + '.' });
+          R.slow.push(tTouch - 0.08);
         } else {
           // Lands with the whole foot beyond the centre line
           // ...while the ball is still in play: landing over the line after the rally has ended is not a fault (Rule 11.2.3)
-          // The foot lands beyond the line, under the net; the body cannot go through it: it presses on the net
-          const pIn = M.w(tm, -rnd(0.12, 0.2), M.local(tm, 0, wy).l);
-          atW(tm, who, t2 + 0.38, pIn[0], pIn[1], 'stand');
-          ev({ t: t2 + 0.38, kind: 'net', y: pIn[1], strong: false });
-          at(tm, who, t2 + 1.4, 1.0, M.local(tm, 0, wy).l, 'ready');
-          fault({ t: t2 + 0.38, key: 'centre_line', team: tm, comp: 'both', sit: s, text: 'Il n. ' + who + ' ricade con il piede interamente oltre la linea centrale mentre la palla è ancora in gioco.' });
+          // Player penetrates the net plane as they descend, contacting the net before landing
+          const tNetTouch = byBlock ? t2 + 0.12 : t2 + 0.16;
+          at(tm, who, t2, byBlock ? 0.25 : aD, lw, byBlock ? 'block' : 'attack');
+          at(tm, who, tNetTouch, 0.02, lw, byBlock ? 'block' : 'attack');
+          const pIn = M.w(tm, -rnd(0.24, 0.38), lw);
+          atW(tm, who, t2 + 0.36, pIn[0], pIn[1], 'stand');
+          ev({ t: tNetTouch, kind: 'net', y: pIn[1], strong: true, amp: dir * 0.28 });
+          atW(tm, who, t2 + 0.85, pIn[0] * 0.7, pIn[1], 'stand');
+          at(tm, who, t2 + 1.5, 1.0, lw, 'ready');
+          fault({ t: tNetTouch, key: 'centre_line', team: tm, comp: 'both', sit: s, text: 'Il n. ' + who + ' ricade con il piede interamente oltre la linea centrale mentre la palla è ancora in gioco.' });
+          R.slow.push(tNetTouch - 0.08);
           R.minLand = t2 + 0.9;
         }
       }

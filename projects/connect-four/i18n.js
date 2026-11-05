@@ -126,9 +126,14 @@ const translations = {
         custom_p2_disc: 'Player 2 disc',
         custom_presets: 'Curated Palettes',
         preset_fuchsia_gold: 'Fuchsia & Gold',
+        preset_red_blue: 'Red & Blue',
+        preset_black_white: 'White & Black',
         preset_neon_cyan: 'Magenta & Cyan',
         preset_sunset_amber: 'Sunset & Amber',
         preset_emerald_violet: 'Emerald & Violet',
+        preset_orange_cobalt: 'Coral & Cobalt',
+        preset_lime_pink: 'Lime & Hot Pink',
+        preset_gold_silver: 'Gold & Silver',
         preset_ruby_yellow: 'Ruby & Yellow',
         preset_lilac_mint: 'Lilac & Mint',
         custom_style: 'Disc Finish',
@@ -314,9 +319,14 @@ const translations = {
         custom_p2_disc: 'Fiche Giocatore 2',
         custom_presets: 'Palette consigliate',
         preset_fuchsia_gold: 'Fucsia e Oro',
+        preset_red_blue: 'Rosso e Blu',
+        preset_black_white: 'Bianco e Nero',
         preset_neon_cyan: 'Magenta e Ciano',
         preset_sunset_amber: 'Tramonto e Ambra',
         preset_emerald_violet: 'Smeraldo e Viola',
+        preset_orange_cobalt: 'Corallo e Cobalto',
+        preset_lime_pink: 'Lime e Rosa Shocking',
+        preset_gold_silver: 'Oro e Argento',
         preset_ruby_yellow: 'Rubino e Giallo',
         preset_lilac_mint: 'Lilla e Menta',
         custom_style: 'Stile delle fiches',
@@ -482,9 +492,14 @@ const translations = {
         custom_p2_disc: 'Ficha Jugador 2',
         custom_presets: 'Paletas recomendadas',
         preset_fuchsia_gold: 'Fucsia y Oro',
+        preset_red_blue: 'Rojo y Azul',
+        preset_black_white: 'Blanco y Negro',
         preset_neon_cyan: 'Magenta y Cian',
         preset_sunset_amber: 'Puesta de sol y Ámbar',
         preset_emerald_violet: 'Esmeralda y Violeta',
+        preset_orange_cobalt: 'Coral y Cobalto',
+        preset_lime_pink: 'Lima y Rosa Intenso',
+        preset_gold_silver: 'Oro y Plata',
         preset_ruby_yellow: 'Rubí y Amarillo',
         preset_lilac_mint: 'Lila y Menta',
         custom_style: 'Estilo de las fichas',
@@ -644,9 +659,14 @@ const translations = {
         custom_p2_disc: 'Jeton Joueur 2',
         custom_presets: 'Palettes conseillées',
         preset_fuchsia_gold: 'Fuchsia et Or',
+        preset_red_blue: 'Rouge et Bleu',
+        preset_black_white: 'Blanc et Noir',
         preset_neon_cyan: 'Magenta et Cyan',
         preset_sunset_amber: 'Coucher de soleil et Ambre',
         preset_emerald_violet: 'Émeraude et Violet',
+        preset_orange_cobalt: 'Corail et Cobalt',
+        preset_lime_pink: 'Citron Vert et Rose Vif',
+        preset_gold_silver: 'Or et Argent',
         preset_ruby_yellow: 'Rubis et Jaune',
         preset_lilac_mint: 'Lilas et Menthe',
         custom_style: 'Finition des jetons',
@@ -806,9 +826,14 @@ const translations = {
         custom_p2_disc: 'Chip Spieler 2',
         custom_presets: 'Empfohlene Paletten',
         preset_fuchsia_gold: 'Fuchsia & Gold',
+        preset_red_blue: 'Rot & Blau',
+        preset_black_white: 'Weiß & Schwarz',
         preset_neon_cyan: 'Magenta & Cyan',
         preset_sunset_amber: 'Sonnenuntergang & Bernstein',
         preset_emerald_violet: 'Smaragd & Violett',
+        preset_orange_cobalt: 'Koralle & Kobalt',
+        preset_lime_pink: 'Limette & Knalliges Pink',
+        preset_gold_silver: 'Gold & Silber',
         preset_ruby_yellow: 'Rubin & Gelb',
         preset_lilac_mint: 'Flieder & Minze',
         custom_style: 'Chip-Stil',
@@ -933,4 +958,29 @@ function t(key, vars = {}) {
         str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), v);
     }
     return str;
+}
+
+function initI18n() {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.getAttribute('data-lang');
+            setLanguage(lang);
+        });
+    });
+    document.querySelectorAll('.lang-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            const lang = opt.getAttribute('data-lang');
+            setLanguage(lang);
+            const overlay = document.getElementById('lang-overlay');
+            if (overlay) overlay.classList.add('hidden');
+        });
+    });
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initI18n);
+    } else {
+        initI18n();
+    }
 }

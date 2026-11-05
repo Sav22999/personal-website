@@ -1,7 +1,47 @@
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 
 // Newest first. Each entry lists notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.0.1',
+        notes: {
+            en: [
+                'Simplified and refined minimalist icon highlighting the winning 4 discs',
+                'New color palettes: Red & Blue, White & Black, Coral & Cobalt, Lime & Hot Pink, Gold & Silver',
+                'Refined Flat Modern disc style: completely matte with no reflections, white glares, or specular gradients',
+                'Fixed language selection switcher on desktop devices',
+                'Visual polish for all text input boxes and responsive layout improvements',
+            ],
+            it: [
+                'Icona semplificata e minimale con focus esclusivo sulle 4 fiches vincenti collegate',
+                'Nuove palette di colori per le fiches: Rosso e Blu, Bianco e Nero, Corallo e Cobalto, Lime e Rosa Shocking, Oro e Argento',
+                'Rifinito lo stile "Piatte moderne" (Flat): finitura completamente matte senza riflessi, riflessi bianchi o sfumature speculari',
+                'Risolto il cambio della lingua su desktop',
+                'Perfezionamento visivo delle caselle di testo e ottimizzazioni responsive',
+            ],
+            es: [
+                'Icono simplificado y minimalista centrado en las 4 fichas ganadoras conectadas',
+                'Nuevas paletas de colores: Rojo y Azul, Blanco y Negro, Coral y Cobalto, Lima y Rosa Intenso, Oro y Plata',
+                'Estilo Plano moderno perfeccionado: acabado completamente mate sin brillos, reflejos ni degradados especulares',
+                'Corregido el selector de cambio de idioma en ordenadores de sobremesa',
+                'Mejoras visuales en las casillas de texto y diseño responsivo optimizado',
+            ],
+            fr: [
+                'Icône simplifiée et minimaliste mettant en valeur les 4 jetons gagnants connectés',
+                'Nouvelles palettes de couleurs : Rouge et Bleu, Blanc et Noir, Corail et Cobalt, Citron Vert et Rose Vif, Or et Argent',
+                'Style Moderne plat affiné : finition mate pure, sans reflets blancs ni dégradés spéculaires',
+                'Correction du sélecteur de langue sur ordinateur de bureau',
+                'Améliorations graphiques des champs de saisie et de la disposition réactive',
+            ],
+            de: [
+                'Vereinfachtes, minimalistisches Symbol mit Fokus auf die 4 verbundenen Gewinner-Chips',
+                'Neue Farbpaletten: Rot & Blau, Weiß & Schwarz, Koralle & Kobalt, Limette & Knalliges Pink, Gold & Silber',
+                'Flacher moderner Stil verfeinert: komplett matt ohne Glanz, weiße Reflexionen oder Glanzverläufe',
+                'Sprachauswahl auf Desktop-Geräten behoben',
+                'Visuelle Verfeinerungen für alle Texteingabefelder und responsives Layout',
+            ],
+        },
+    },
     {
         version: '1.0.0',
         notes: {

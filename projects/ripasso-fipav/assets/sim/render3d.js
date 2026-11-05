@@ -459,25 +459,39 @@
 
   Renderer.prototype.drawNetSlice = function (y0, y1, h, shake) {
     const top = h, bottom = h - 1.0;
-    // A touched net wobbles near the contact point (strongest on the top band)
-    const off = y => (shake ? shake.amp * Math.max(0, 1 - Math.abs(y - shake.y) / 2.2) * Math.sin(shake.phase) : 0);
-    const o0 = off(y0), o1 = off(y1);
-    if (shake) {
-      this.poly([[0, y0, bottom], [0, y1, bottom], [o1, y1, top], [o0, y0, top]], C.netMesh);
-      this.poly([[o0, y0, top - 0.07], [o1, y1, top - 0.07], [o1, y1, top], [o0, y0, top]], '#fff8d6');
-      return;
-    }
-    this.poly([[0, y0, bottom], [0, y1, bottom], [0, y1, top], [0, y0, top]], C.netMesh);
-    // Mesh lines
+    // A touched net wobbles near the contact point across the whole height (top band, mesh and bottom band)
+    const off = (y, zFrac) => {
+      if (!shake) return 0;
+      const dist = Math.abs(y - shake.y);
+      const falloff = Math.max(0.2, 1 - dist / 4.8);
+      const zScale = 0.58 + 0.42 * (zFrac !== undefined ? zFrac : 1);
+      return shake.amp * falloff * zScale * Math.sin(shake.phase + 0.35);
+    };
+
+    const b0 = off(y0, 0), b1 = off(y1, 0);
+    const t0 = off(y0, 1), t1 = off(y1, 1);
+
+    this.poly([[b0, y0, bottom], [b1, y1, bottom], [t1, y1, top], [t0, y0, top]], C.netMesh);
+    // Mesh grid lines: both horizontal and vertical lines follow the wave
     const ctx = this.ctx;
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeStyle = shake ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 1;
     for (let k = 1; k < 4; k++) {
-      const a = this.cam.project([0, y0, bottom + k * 0.25]), b = this.cam.project([0, y1, bottom + k * 0.25]);
+      const u = k / 4;
+      const mk0 = off(y0, u), mk1 = off(y1, u);
+      const a = this.cam.project([mk0, y0, bottom + k * 0.25]), b = this.cam.project([mk1, y1, bottom + k * 0.25]);
       if (a && b) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
     }
-    this.poly([[0, y0, top - 0.07], [0, y1, top - 0.07], [0, y1, top], [0, y0, top]], C.netBand);
-    this.poly([[0, y0, bottom], [0, y1, bottom], [0, y1, bottom + 0.05], [0, y0, bottom + 0.05]], '#dcdcdc');
+    for (let v = 0; v <= 4; v++) {
+      const yv = y0 + (y1 - y0) * (v / 4);
+      const bv = off(yv, 0), tv = off(yv, 1);
+      const a = this.cam.project([bv, yv, bottom]), b = this.cam.project([tv, yv, top]);
+      if (a && b) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    }
+
+    const topBandColor = shake ? '#fff9c4' : C.netBand;
+    this.poly([[t0, y0, top - 0.07], [t1, y1, top - 0.07], [t1, y1, top], [t0, y0, top]], topBandColor, shake ? 'rgba(255,213,79,0.75)' : null, 1.5);
+    this.poly([[b0, y0, bottom], [b1, y1, bottom], [b1, y1, bottom + 0.05], [b0, y0, bottom + 0.05]], '#dcdcdc');
   };
 
   Renderer.prototype.drawPost = function (y, h) {
@@ -494,8 +508,9 @@
     const ctx = this.ctx;
     const segs = 8, z0 = h - 1.0, z1 = h + 0.8;
     // A hit on the net (or on the antenna itself) makes the antenna sway too, more at the top
-    const sway = shake ? shake.amp * 1.6 * Math.max(0, 1 - Math.abs(y - shake.y) / 3) * Math.sin(shake.phase) : 0;
-    const xAt = k => sway * Math.max(0, k - 0.25) * 1.3;
+    const dist = shake ? Math.abs(y - shake.y) : 0;
+    const sway = shake ? shake.amp * 2.5 * Math.max(0.35, 1 - dist / 5.5) * Math.sin(shake.phase + 0.35) : 0;
+    const xAt = k => sway * Math.max(0, k - 0.15) * 1.5;
     for (let i = 0; i < segs; i++) {
       const a = this.cam.project([xAt(i / segs), y, z0 + (z1 - z0) * i / segs]), b = this.cam.project([xAt((i + 1) / segs), y, z0 + (z1 - z0) * (i + 1) / segs]);
       if (!a || !b) continue;
