@@ -1150,7 +1150,7 @@
     }
     const genericName = String(p.generic_name_it || p.generic_name || '').trim().slice(0, 120);
     if (!name && brand) name = brand;
-    else if (brand && norm(name) === norm(brand) && genericName) name = genericName.slice(0, 80);
+    if (brand && norm(name) === 'bueno') name = brand + ' Bueno';
     if (!name) return null;
 
     const nsRaw = String(p.nutriscore_grade || '').trim().toUpperCase();
@@ -1201,101 +1201,78 @@
     return null;
   }
 
-  /** Keyword/tag rules mapping scanned products to canonical Italian catalog `nameBase` entries. */
-  const CATALOG_MATCH_RULES = [
-    ['Pasta integrale', ['pasta integrale', 'spaghetti integrali', 'penne integrali', 'fusilli integrali', 'en:wholemeal-pastas']],
-    ['Gnocchi di patate', ['gnocchi', 'gnocchetti', 'en:gnocchi']],
-    ['Pasta di semola', ['spaghetti', 'spaghettini', 'penne', 'pennette', 'fusilli', 'rigatoni', 'maccheroni', 'farfalle', 'bucatini', 'linguine', 'mezze maniche', 'tortiglioni', 'orecchiette', 'ditalini', 'tagliatelle', 'fettuccine', 'lasagne', 'cannelloni', 'tortellini', 'ravioli', 'trofie', 'cavatelli', 'paccheri', 'caserecce', 'pasta di semola', 'grano duro', 'en:pastas', 'en:spaghetti', 'en:penne', 'en:durum-wheat-pasta']],
-    ['Riso Carnaroli', ['riso ', 'carnaroli', 'arborio', 'basmati', 'parboiled', 'vialone', 'originario', 'risotto', 'en:rices']],
-    ['Farina 00', ['farina', 'manitoba', 'semola rimacinata', 'en:flours', 'en:wheat-flours']],
-    ['Pangrattato', ['pangrattato', 'pan grattato', 'chapelure', 'en:breadcrumbs']],
-    ['Cous cous', ['cous cous', 'couscous', 'en:couscous']],
-    ['Farro', ['farro', 'en:spelt']],
-    ['Orzo perlato', ['orzo', 'en:barley']],
-    ['Avena in fiocchi', ['fiocchi di avena', 'avena', 'porridge', 'muesli', 'granola', 'corn flakes', 'cereali', 'en:rolled-oats', 'en:breakfast-cereals']],
-    ['Quinoa', ['quinoa', 'en:quinoa']],
-    ['Polenta', ['polenta', 'en:polenta']],
-    ['Pesto alla genovese', ['pesto', 'en:pestos']],
-    ['Passata di pomodoro', ['passata', 'polpa di pomodoro', 'sugo', 'ragu', 'ragù', 'concentrato di pomodoro', 'en:tomato-sauces', 'en:passata']],
-    ['Pomodori pelati', ['pelati', 'pomodori in scatola', 'datterini', 'en:canned-tomatoes']],
-    ['Tonno in scatola', ['tonno', 'filetti di tonno', 'rio mare', 'en:tunas', 'en:canned-tunas', 'en:canned-fishes']],
-    ['Ceci in scatola', ['ceci', 'hummus', 'en:chickpeas']],
-    ['Fagioli borlotti', ['fagioli', 'borlotti', 'cannellini', 'en:beans']],
-    ['Lenticchie', ['lenticchie', 'en:lentils']],
-    ['Piselli', ['piselli', 'en:peas', 'en:green-peas']],
-    ['Mais dolce', ['mais', 'sweet corn', 'en:sweet-corn']],
-    ['Olive verdi', ['olive', 'en:olives']],
-    ['Capperi', ['capperi', 'en:capers']],
-    ['Olio extravergine d’oliva', ['olio extravergine', 'olio extra vergine', 'olio di oliva', 'olio d oliva', 'olio di semi', 'en:olive-oils', 'en:extra-virgin-olive-oils', 'en:vegetable-oils']],
-    ['Aceto balsamico', ['aceto', 'glassa', 'en:vinegars', 'en:balsamic-vinegars']],
-    ['Salsa di soia', ['salsa di soia', 'soy sauce', 'shoyu', 'tamari', 'en:soy-sauces']],
-    ['Senape', ['senape', 'mostarda', 'mustard', 'en:mustards']],
-    ['Maionese', ['maionese', 'mayonnaise', 'ketchup', 'salsa barbecue', 'salsa rosa', 'en:mayonnaises', 'en:ketchup']],
-    ['Miele', ['miele', 'honey', 'en:honeys']],
-    ['Confettura', ['confettura', 'marmellata', 'composta di frutta', 'en:jams', 'en:marmalades']],
-    ['Latte UHT', ['latte uht', 'lunga conservazione', 'bevanda di soia', 'bevanda di avena', 'bevanda di mandorla', 'latte di soia', 'latte di avena', 'latte di mandorla', 'latte di riso', 'en:uht-milks', 'en:plant-milks']],
-    ['Latte intero', ['latte intero', 'latte fresco', 'latte parzialmente scremato', 'latte scremato', 'en:milks']],
+  function wordMatch(text, word) {
+    if (!text || !word) return false;
+    const esc = norm(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = new RegExp('(?:^|[^a-z0-9])' + esc + '(?:$|[^a-z0-9])', 'i');
+    return rx.test(text);
+  }
+
+  /** Keyword/tag rules mapping scanned products to canonical FoodTrack catalog products. */
+  const CATALOG_RULES = [
+    ['Pasta di semola', ['spaghetti', 'penne', 'fusilli', 'rigatoni', 'farfalle', 'maccheroni', 'tortiglioni', 'bucatini', 'linguine', 'mezze maniche', 'ditalini', 'lasagne', 'tagliatelle', 'paccheri', 'pasta di semola', 'grano duro', 'en:pastas', 'en:spaghetti', 'en:durum-wheat-pasta']],
+    ['Pasta all’uovo', ['pasta all uovo', 'tagliatelle all uovo', 'pappardelle', 'tortellini', 'ravioli', 'agnolotti', 'cappelletti']],
+    ['Passata di pomodoro', ['passata', 'polpa di pomodoro', 'pomodori pelati', 'pelati', 'concentrato di pomodoro', 'sugo di pomodoro', 'en:passata', 'en:tomato-sauces', 'en:canned-tomatoes']],
+    ['Tonno in scatola', ['tonno', 'filetti di tonno', 'rio mare', 'en:tunas', 'en:canned-tunas']],
+    ['Biscotti integrali', ['biscotti', 'frollini', 'gocciole', 'macine', 'pan di stelle', 'tarallucci', 'abbracci', 'molinetti', 'campagnole', 'ringo', 'oreo', 'savoiardi', 'wafer', 'baiocchi', 'pavesini', 'biscotto', 'en:biscuits', 'en:cookies']],
+    ['Caffè macinato', ['caffe', 'espresso', 'moka', 'cialde', 'capsule', 'qualita rossa', 'lavazza', 'illy', 'kimbo', 'en:coffees']],
     ['Yogurt greco', ['yogurt greco', 'fage', 'en:greek-yogurts']],
-    ['Yogurt bianco', ['yogurt', 'kefir', 'skyr', 'actimel', 'activia', 'ymir', 'muller', 'en:yogurts', 'en:fermented-milk-products']],
-    ['Burro', ['burro', 'margarina', 'en:butters']],
-    ['Panna da cucina', ['panna', 'besciamella', 'mascarpone', 'en:creams', 'en:cooking-creams']],
-    ['Uova', ['uova', 'albume', 'en:eggs']],
-    ['Mozzarella', ['mozzarella', 'burrata', 'stracciatella', 'scamorza', 'provola', 'fiordilatte', 'en:mozzarella']],
-    ['Ricotta', ['ricotta', 'fiocchi di latte', 'stracchino', 'crescenza', 'robiola', 'philadelphia', 'spalmabile', 'en:ricotta', 'en:cream-cheeses']],
-    ['Parmigiano Reggiano', ['parmigiano', 'grana padano', 'grattugiato', 'en:parmigiano-reggiano', 'en:grana-padano']],
-    ['Pecorino', ['pecorino', 'gorgonzola', 'asiago', 'fontina', 'emmental', 'edamer', 'cheddar', 'provolone', 'caciotta', 'taleggio', 'brie', 'camembert', 'formaggio', 'galbanino', 'sottilette', 'en:cheeses']],
-    ['Cioccolato fondente', ['cioccolato', 'cioccolata', 'nutella', 'crema spalmabile', 'nocciolata', 'gianduia', 'kinder', 'barretta', 'praline', 'en:chocolates', 'en:dark-chocolates', 'en:milk-chocolates', 'en:sweet-spreads', 'en:hazelnut-spreads', 'en:chocolate-spreads']],
-    ['Biscotti integrali', ['biscotti', 'frollini', 'gocciole', 'macine', 'pan di stelle', 'tarallucci', 'abbracci', 'molinetti', 'campagnole', 'ringo', 'oreo', 'savoiardi', 'wafer', 'pavesini', 'baiocchi', 'orosaiwa', 'en:biscuits', 'en:cookies', 'en:shortbread-cookies', 'en:wafers']],
-    ['Patatine', ['patatine', 'chips', 'nachos', 'tortilla', 'popcorn', 'salatini', 'pretzel', 'taralli', 'fonzies', 'pringles', 'san carlo', 'en:crisps', 'en:potato-crisps', 'en:salty-snacks']],
-    ['Frutta secca', ['mandorle', 'noci', 'nocciole', 'pistacchi', 'arachidi', 'anacardi', 'pinoli', 'frutta secca', 'en:nuts']],
-    ['Cracker', ['cracker', 'gallette', 'schiacciatine', 'crostini', 'granetti', 'tuc', 'en:crackers', 'en:puffed-rice-cakes']],
-    ['Pane casereccio', ['pane', 'pan bauletto', 'pancarre', 'piadina', 'focaccia', 'panini', 'baguette', 'panino', 'en:breads', 'en:sliced-breads', 'en:flatbreads']],
-    ['Fette biscottate', ['fette biscottate', 'brioche', 'cornetti', 'croissant', 'plumcake', 'merendine', 'flauti', 'buondi', 'panettone', 'pandoro', 'colomba', 'torta', 'en:rusks', 'en:pastries', 'en:croissants', 'en:cakes']],
-    ['Grissini', ['grissini', 'friselle', 'en:breadsticks']],
-    ['Base per pizza', ['base per pizza', 'pasta sfoglia', 'pasta brisee', 'pasta frolla', 'en:pizza-doughs', 'en:puff-pastries']],
-    ['Caffè macinato', ['caffe', 'espresso', 'cialde', 'capsule', 'moka', 'nescafe', 'lavazza', 'illy', 'kimbo', 'borbone', 'vergnano', 'pellini', 'en:coffees', 'en:ground-coffees', 'en:coffee-capsules', 'en:instant-coffees']],
-    ['Tè in bustine', ['te ', 'tisana', 'infuso', 'camomilla', 'estathe', 'the freddo', 'en:teas', 'en:herbal-teas', 'en:iced-teas']],
-    ['Acqua naturale', ['acqua', 'lete', 'sant anna', 'levissima', 'ferrarelle', 'san pellegrino', 'uliveto', 'rocchetta', 'en:waters', 'en:spring-waters', 'en:mineral-waters']],
-    ['Birra', ['birra', 'lager', 'peroni', 'moretti', 'ichnusa', 'heineken', 'poretti', 'dreher', 'beck', 'corona', 'en:beers']],
-    ['Vino bianco', ['vino bianco', 'prosecco', 'spumante', 'champagne', 'pinot grigio', 'vermentino', 'falanghina', 'en:white-wines', 'en:sparkling-wines']],
-    ['Vino rosso', ['vino rosso', 'chianti', 'montepulciano', 'primitivo', 'barolo', 'lambrusco', 'negroamaro', 'en:red-wines', 'en:wines']],
-    ['Succo di frutta', ['succo', 'nettare', 'spremuta', 'aranciata', 'cola', 'coca-cola', 'coca cola', 'pepsi', 'fanta', 'sprite', 'chinotto', 'tonica', 'gassosa', 'bibita', 'red bull', 'monster', 'en:fruit-juices', 'en:sodas', 'en:carbonated-drinks', 'en:sweetened-beverages']],
-    ['Prosciutto cotto', ['prosciutto cotto', 'fesa di tacchino', 'arrosto di tacchino', 'wurstel', 'mortadella', 'en:cooked-hams', 'en:sausages']],
-    ['Prosciutto crudo', ['prosciutto crudo', 'bresaola', 'speck', 'culatello', 'en:cured-hams']],
-    ['Pancetta', ['pancetta', 'guanciale', 'bacon', 'lardo', 'en:bacon']],
-    ['Salame', ['salame', 'salamino', 'soppressata', 'nduja', 'coppa', 'en:salami']],
-    ['Petto di pollo', ['pollo', 'tacchino', 'cotoletta', 'nuggets', 'en:chicken', 'en:poultry']],
-    ['Macinato di manzo', ['manzo', 'bovino', 'hamburger', 'svizzera', 'polpette', 'vitello', 'en:beef']],
-    ['Salsiccia', ['salsiccia', 'luganega', 'maiale', 'suino', 'lonza', 'en:pork']],
-    ['Salmone fresco', ['salmone', 'en:salmons', 'en:smoked-salmons']],
-    ['Filetto di merluzzo', ['merluzzo', 'nasello', 'platessa', 'orata', 'branzino', 'spigola', 'sgombro', 'acciughe', 'alici', 'sardine', 'bastoncini', 'findus', 'en:fishes', 'en:cods', 'en:mackerels', 'en:anchovies']],
-    ['Gamberi', ['gamberi', 'gamberetti', 'mazzancolle', 'scampi', 'calamari', 'polpo', 'seppie', 'cozze', 'vongole', 'surimi', 'en:shrimps', 'en:seafood']],
-    ['Pizza surgelata', ['pizza surgelata', 'pizza margherita', 'cameo big americans', 'regina', 'en:frozen-pizzas']],
-    ['Gelato', ['gelato', 'cornetto', 'magnum', 'ghiacciolo', 'sorbetto', 'samkrem', 'algida', 'sammontana', 'en:ice-creams']],
+    ['Yogurt bianco', ['yogurt', 'kefir', 'skyr', 'actimel', 'en:yogurts']],
+    ['Mozzarella di bufala', ['mozzarella', 'burrata', 'stracciatella', 'fiordilatte', 'en:mozzarella']],
+    ['Formaggio spalmabile', ['formaggio spalmabile', 'philadelphia', 'stracchino', 'crescenza', 'robiola', 'ricotta', 'mascarpone', 'en:cream-cheeses', 'en:ricotta']],
+    ['Parmigiano', ['parmigiano', 'grana padano', 'grattugiato', 'parmigiano reggiano', 'en:parmigiano-reggiano', 'en:grana-padano']],
+    ['Latte UHT', ['latte uht', 'lunga conservazione', 'en:uht-milks']],
+    ['Latte intero', ['latte intero', 'latte fresco', 'latte parzialmente scremato', 'latte scremato', 'en:milks']],
+    ['Olio extravergine d’oliva', ['olio extravergine', 'olio extra vergine', 'olio evo', 'olio di oliva', 'olio d oliva', 'en:olive-oils', 'en:extra-virgin-olive-oils']],
+    ['Olio di semi', ['olio di semi', 'olio di girasole', 'olio di mais', 'olio di arachidi']],
+    ['Aceto balsamico', ['aceto balsamico', 'aceto di mele', 'aceto di vino', 'aceto', 'glassa', 'en:vinegars']],
+    ['Patatine', ['patatine', 'chips', 'croccantelle', 'salatini', 'popcorn', 'taralli', 'cracker', 'gallette', 'en:crisps']],
+    ['Pane integrale', ['pane', 'pan bauletto', 'pancarre', 'focaccia', 'baguette', 'ciabatta', 'panini', 'en:breads']],
+    ['Piadina', ['piadina', 'piada', 'tortilla', 'en:flatbreads']],
+    ['Gelato', ['gelato', 'sorbetto', 'ghiacciolo', 'cornetto', 'magnum', 'coppa del nonno', 'en:ice-creams']],
+    ['Prosciutto cotto', ['prosciutto cotto', 'fesa di tacchino', 'mortadella', 'wurstel', 'en:cooked-hams']],
+    ['Prosciutto crudo', ['prosciutto crudo', 'speck', 'bresaola', 'culatello', 'en:cured-hams']],
+    ['Salame', ['salame', 'salamino', 'soppressata', 'nduja', 'en:salami']],
+    ['Carne di pollo', ['pollo', 'petto di pollo', 'tacchino', 'cotoletta', 'nuggets', 'macinato', 'manzo', 'hamburger', 'svizzera', 'salsiccia', 'en:chicken', 'en:poultry', 'en:beef', 'en:meats']],
+    ['Pesce fresco', ['merluzzo', 'orata', 'branzino', 'spigola', 'salmone', 'gamberi', 'calamari', 'polpo', 'bastoncini', 'en:fishes', 'en:seafood']],
+    ['Salmone affumicato', ['salmone affumicato', 'en:smoked-salmons']],
+    ['Birra', ['birra', 'lager', 'ipa', 'pils', 'radler', 'heineken', 'peroni', 'moretti', 'ichnusa', 'en:beers']],
+    ['Vino bianco', ['vino bianco', 'prosecco', 'spumante', 'champagne', 'en:white-wines']],
+    ['Vino rosso', ['vino rosso', 'chianti', 'barolo', 'primitivo', 'en:red-wines']],
+    ['Acqua', ['acqua', 'acqua minerale', 'acqua naturale', 'acqua frizzante', 'en:waters']],
+    ['Riso integrale', ['riso', 'carnaroli', 'arborio', 'basmati', 'vialone', 'risotto', 'en:rices']],
+    ['Farina', ['farina', 'manitoba', 'semola rimacinata', 'en:flours']]
   ];
 
   /** Matches a scanned product to FoodTrack's catalog (`productId`, `icon`, `categoryId`, `expiryType`). */
   function matchScannedProduct(p) {
     const out = { productId: p.productId || null, icon: p.icon || null, categoryId: p.categoryId ?? null, expiryType: null };
-    const hay = ' ' + norm([p.name || '', p.genericName || '', p.brand || ''].join(' ')) + ' ' + (Array.isArray(p.categories) ? p.categories.join(' ') : '');
+    const text = norm([p.name || '', p.genericName || '', p.brand || ''].join(' '));
+    const cats = Array.isArray(p.categories) ? p.categories : [];
 
-    // 1. Direct or substring match against catalog products
+    const catByBase = base => {
+      const c = S.catalog.categories.find(x => norm(x.nameBase || x.name) === norm(base));
+      return c ? c.id : null;
+    };
+
+    // 1. Direct match with a catalog product
     let match = null;
     if (out.productId) match = productById(out.productId);
     if (!match && p.name) {
       const nName = norm(p.name);
-      const nGen = norm(p.genericName || '');
-      match = S.catalog.products.find(x => {
-        const xn = norm(x.name), xb = norm(x.nameBase || x.name);
-        return (xn && (nName === xn || nName.includes(xn) || (nGen && nGen.includes(xn)))) ||
-               (xb && (nName === xb || nName.includes(xb) || (nGen && nGen.includes(xb))));
-      });
+      match = S.catalog.products.find(x => norm(x.name) === nName || norm(x.nameBase) === nName);
     }
 
-    // 2. Keyword & Open Food Facts category-tag rules against catalog `nameBase`
+    // 2. Specific catalog rules
     if (!match) {
-      for (const [baseName, keys] of CATALOG_MATCH_RULES) {
-        if (keys.some(k => hay.includes(k.startsWith('en:') ? k : norm(k)))) {
+      for (const [baseName, keys] of CATALOG_RULES) {
+        const hit = keys.some(k => {
+          if (k.startsWith('en:') || k.startsWith('fr:')) return cats.includes(k);
+          if (k === 'riso' && (wordMatch(text, 'farina di riso') || wordMatch(text, 'latte di riso'))) return false;
+          if (k === 'farina' && wordMatch(text, 'biscotti')) return false;
+          return wordMatch(text, k);
+        });
+        if (hit) {
           match = S.catalog.products.find(x => norm(x.nameBase || x.name) === norm(baseName)) || null;
           if (match) break;
         }
@@ -1309,33 +1286,45 @@
       if (!p.unit && match.unit) p.unit = match.unit;
     }
 
-    // 3. Fallback category & icon mapping when no specific catalog item matched
-    const catByBase = base => {
-      const c = S.catalog.categories.find(x => norm(x.nameBase || x.name) === norm(base));
-      return c ? c.id : null;
-    };
+    // 3. Fallback category & icon for branded products not in catalog
     if (out.categoryId == null) {
-      if (/en:(Frozen|ice-creams|frozen-foods)|surgelat/i.test(hay)) out.categoryId = catByBase('Surgelati');
-      else if (/en:(milks|dairies|cheeses|yogurts|eggs|butters|creams)|latte|formagg|yogurt/i.test(hay)) out.categoryId = catByBase('Latticini e uova');
-      else if (/en:(meats|pork|beef|poultry|chicken|cured-meats|salami|hams)|carne|salum|prosciutto/i.test(hay)) out.categoryId = catByBase('Carne e salumi');
-      else if (/en:(fishes|seafood|tunas|salmons)|pesce|tonno|salmone/i.test(hay)) out.categoryId = catByBase('Pesce');
-      else if (/en:(pastas|rices|cereals|flours|grains)|pasta|riso|cereali|farina/i.test(hay)) out.categoryId = catByBase('Pasta, riso e cereali');
-      else if (/en:(breads|pastries|rusks|breadsticks)|pane|forno|fette biscottate/i.test(hay)) out.categoryId = catByBase('Pane e prodotti da forno');
-      else if (/en:(canned|tinned|legumes|tomato-sauces|passata)|conserv|scatol|passata/i.test(hay)) out.categoryId = catByBase('Conserve e scatolame');
-      else if (/en:(fats|oils|condiments|sauces|spices|vinegars|honeys|jams)|olio|aceto|salsa|spezie|miele|confettura/i.test(hay)) out.categoryId = catByBase('Condimenti e spezie');
-      else if (/en:(beverages|waters|juices|sodas|coffees|teas|beers|wines|drinks)|bevand|acqua|succo|caffe|birra|vino/i.test(hay)) out.categoryId = catByBase('Bevande');
-      else if (/en:(snacks|sweet-snacks|biscuits|chocolates|sweet-spreads|crisps|nuts|desserts)|snack|dolci|biscott|cioccolat|patatine/i.test(hay)) out.categoryId = catByBase('Snack e dolci');
-      else if (/en:(fruits|apples|bananas|citrus)|frutta/i.test(hay)) out.categoryId = catByBase('Frutta');
-      else if (/en:(vegetables|salads|tomatoes|potatoes)|verdur|ortagg/i.test(hay)) out.categoryId = catByBase('Verdura');
+      if (cats.some(c => /sweet-spread|chocolate|biscuit|snack|cookie|confection/i.test(c)) || wordMatch(text, 'nutella') || wordMatch(text, 'cioccolato') || wordMatch(text, 'bueno') || wordMatch(text, 'kinder') || wordMatch(text, 'biscotti')) {
+        out.categoryId = catByBase('Snack e dolci');
+      } else if (cats.some(c => /sauce|pesto|condiment/i.test(c)) || wordMatch(text, 'pesto') || wordMatch(text, 'salsa') || wordMatch(text, 'maionese') || wordMatch(text, 'ketchup')) {
+        out.categoryId = catByBase('Condimenti e spezie');
+      } else if (cats.some(c => /beverage|drink|soda|water|juice|coffee|tea/i.test(c)) || wordMatch(text, 'coca cola') || wordMatch(text, 'cola') || wordMatch(text, 'fanta') || wordMatch(text, 'sprite') || wordMatch(text, 'succo') || wordMatch(text, 'bevanda')) {
+        out.categoryId = catByBase('Bevande');
+      } else if (cats.some(c => /milk|dairy|cheese|yogurt/i.test(c)) || wordMatch(text, 'formaggio') || wordMatch(text, 'latte')) {
+        out.categoryId = catByBase('Latticini e uova');
+      } else if (cats.some(c => /frozen/i.test(c)) || wordMatch(text, 'surgelato') || wordMatch(text, 'surgelati')) {
+        out.categoryId = catByBase('Surgelati');
+      } else if (cats.some(c => /meat|pork|beef|poultry/i.test(c)) || wordMatch(text, 'carne')) {
+        out.categoryId = catByBase('Carne e salumi');
+      } else if (cats.some(c => /fish|seafood/i.test(c)) || wordMatch(text, 'pesce')) {
+        out.categoryId = catByBase('Pesce');
+      } else if (cats.some(c => /pasta|cereal|bread/i.test(c))) {
+        out.categoryId = catByBase('Pasta, riso e cereali');
+      }
     }
 
-    // 4. Default expiryType ('best_before' for shelf-stable categories, 'use_by' for fresh perishables)
+    // 4. Fallback product icon if still generic
+    if (!out.icon) {
+      if (wordMatch(text, 'nutella') || wordMatch(text, 'cioccolato') || wordMatch(text, 'kinder') || wordMatch(text, 'cacao') || cats.some(c => /cocoa|chocolate/i.test(c))) out.icon = 'chocolate';
+      else if (wordMatch(text, 'pesto') || wordMatch(text, 'salsa') || wordMatch(text, 'sugo') || cats.some(c => /sauce|pesto/i.test(c))) out.icon = 'sauce';
+      else if (wordMatch(text, 'cola') || wordMatch(text, 'aranciata') || wordMatch(text, 'limonata') || wordMatch(text, 'succo') || cats.some(c => /juice|soda|carbonated/i.test(c))) out.icon = 'juice';
+      else if (wordMatch(text, 'biscotti') || wordMatch(text, 'frollini') || cats.some(c => /biscuit|cookie/i.test(c))) out.icon = 'biscuit';
+      else if (wordMatch(text, 'patatine') || wordMatch(text, 'chips') || cats.some(c => /crisps/i.test(c))) out.icon = 'crisps';
+      else if (wordMatch(text, 'caffe') || cats.some(c => /coffee/i.test(c))) out.icon = 'coffee';
+      else if (wordMatch(text, 'formaggio') || cats.some(c => /cheese/i.test(c))) out.icon = 'cheese';
+    }
+
+    // 5. Expiry type
     const catObj = categoryById(out.categoryId);
     const catBase = norm((catObj && (catObj.nameBase || catObj.name)) || '');
-    if (['pasta riso e cereali', 'conserve e scatolame', 'condimenti e spezie', 'bevande', 'snack e dolci', 'surgelati'].includes(catBase)) {
+    if (['pasta, riso e cereali', 'conserve e scatolame', 'condimenti e spezie', 'bevande', 'snack e dolci', 'surgelati'].includes(catBase)) {
       out.expiryType = 'best_before';
-    } else if (/latte uht|lunga conservazione|biscott|cioccolat|nutella|pasta|riso|tonno|passata|olio|aceto|caffe|acqua|birra|vino|succo/i.test(hay)) {
-      out.expiryType = 'best_before';
+    } else if (['latticini e uova', 'carne e salumi', 'pesce'].includes(catBase)) {
+      out.expiryType = 'use_by';
     }
     return out;
   }

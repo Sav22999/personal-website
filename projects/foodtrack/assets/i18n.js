@@ -51,6 +51,7 @@
         "All of it": "Tutto",
         "All recipes": "Tutte le ricette",
         "An administrator reset your password: choose a new one to continue.": "Un amministratore ha reimpostato la tua password: scegline una nuova per continuare.",
+        "Auto": "Auto",
         "Automatic": "Automatico",
         "Automatic (like the system)": "Automatico (come il sistema)",
         "Available": "Disponibile",

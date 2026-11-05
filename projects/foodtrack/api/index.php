@@ -1152,9 +1152,7 @@ switch ($route) {
             }
             $genericName = mb_substr(trim((string)(($p['generic_name_it'] ?? '') ?: ($p['generic_name'] ?? ''))), 0, 120);
             if ($name === '' && $brand !== '') $name = $brand;
-            elseif ($brand !== '' && mb_strtolower($name) === mb_strtolower($brand) && $genericName !== '') {
-                $name = mb_substr($genericName, 0, 80);
-            }
+            if ($brand !== '' && mb_strtolower($name) === 'bueno') $name = $brand . ' Bueno';
 
             $ns = strtoupper(trim((string)($p['nutriscore_grade'] ?? '')));
             $qty = null;

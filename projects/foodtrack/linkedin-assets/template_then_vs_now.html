@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px;
+    height: 1200px;
+    background: #0b0f19;
+    color: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 50px 60px 40px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Radial glow lights */
+  .glow-green {
+    position: absolute;
+    width: 650px;
+    height: 650px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.16) 0%, transparent 70%);
+    top: -160px;
+    right: -100px;
+    pointer-events: none;
+  }
+  .glow-orange {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(234, 88, 12, 0.12) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+    pointer-events: none;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+  }
+  .brand-text h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-text p {
+    font-size: 15px;
+    color: #94a3b8;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .pill-badge {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 8px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #cbd5e1;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    align-items: stretch;
+    z-index: 2;
+    margin: 24px 0 16px 0;
+  }
+
+  .card-col {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 24px 24px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(12px);
+  }
+
+  .card-col.now {
+    border-color: rgba(74, 222, 128, 0.3);
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.07) 0%, rgba(255, 255, 255, 0.015) 100%);
+    box-shadow: 0 20px 60px -15px rgba(34, 197, 94, 0.16);
+  }
+
+  .col-header {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  .badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .badge {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-then {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .badge-now {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+  }
+  .year-tag {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 700;
+  }
+  .col-title {
+    font-size: 21px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .col-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+
+  .phone-container {
+    width: 100%;
+    height: 570px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow: hidden;
+    position: relative;
+    padding-top: 6px;
+  }
+
+  .device-frame {
+    width: 290px;
+    height: 560px;
+    border-radius: 36px;
+    border: 9px solid #1e293b;
+    background: #000;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+  }
+
+  .card-col.now .device-frame {
+    border-color: #0f172a;
+    box-shadow: 0 25px 50px -10px rgba(34, 197, 94, 0.2), 0 15px 35px -5px rgba(0, 0, 0, 0.8);
+  }
+
+  .device-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+
+  .feature-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .tag.active {
+    background: rgba(34, 197, 94, 0.12);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 20px;
+    z-index: 2;
+  }
+  .author {
+    font-size: 13.5px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+  .author strong {
+    color: #ffffff;
+  }
+  .live-url {
+    font-size: 14px;
+    font-weight: 700;
+    color: #4ade80;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+  <div class="glow-green"></div>
+  <div class="glow-orange"></div>
+
+  <div class="header">
+    <div class="brand">
+      <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/images/projects/foodtrack.png" class="brand-icon" alt="FoodTrack">
+      <div class="brand-text">
+        <h1>FoodTrack <span>🚀</span></h1>
+        <p>From University Exam to Full-Stack Production App</p>
+      </div>
+    </div>
+    <div class="pill-badge">2-Year Product Journey</div>
+  </div>
+
+  <div class="main-content">
+    <!-- THEN -->
+    <div class="card-col">
+      <div class="col-header">
+        <div class="badge-row">
+          <span class="badge badge-then">Then · University Exam</span>
+          <span class="year-tag">2023</span>
+        </div>
+        <h2 class="col-title">Flutter Prototype (PoC)</h2>
+        <p class="col-desc">Designed in Figma, coded in Flutter. Hardcoded mock data, session-only state, no real backend.</p>
+      </div>
+      <div class="phone-container">
+        <div class="device-frame">
+          <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/flutter_full_phone.png" alt="Early Flutter prototype">
+        </div>
+      </div>
+      <div class="feature-tags">
+        <span class="tag">Static Mock Data</span>
+        <span class="tag">No Database</span>
+        <span class="tag">Solo User Only</span>
+        <span class="tag">Manual Input</span>
+      </div>
+    </div>
+
+    <!-- NOW -->
+    <div class="card-col now">
+      <div class="col-header">
+        <div class="badge-row">
+          <span class="badge badge-now">Now · Production Release</span>
+          <span class="year-tag">2026</span>
+        </div>
+        <h2 class="col-title">Modern Full-Stack App</h2>
+        <p class="col-desc">Rebuilt based on user feedback. Real-time backend, redesigned UI/UX, shared homes & smart recipes.</p>
+      </div>
+      <div class="phone-container">
+        <div class="device-frame">
+          <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/phone1_pure_device.png" alt="Current FoodTrack redesign">
+        </div>
+      </div>
+      <div class="feature-tags">
+        <span class="tag active">Live Cloud Sync</span>
+        <span class="tag active">Shared Households</span>
+        <span class="tag active">Barcode Scanner</span>
+        <span class="tag active">100+ Smart Recipes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="author">
+      Designed & Built by <strong>Saverio Morelli</strong> · UniUd Project Evolution
+    </div>
+    <div class="live-url">
+      saveriomorelli.com/projects/foodtrack
+    </div>
+  </div>
+
+</body>
+</html>

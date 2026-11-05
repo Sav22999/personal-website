@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #000;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1350px;
+    background: #0b0f19;
+    color: #f1f5f9;
+    padding: 60px 70px 50px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative glows */
+  .glow-top {
+    position: absolute;
+    width: 650px;
+    height: 650px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.18) 0%, transparent 70%);
+    top: -160px;
+    right: -100px;
+    pointer-events: none;
+  }
+  .glow-bottom {
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(234, 88, 12, 0.14) 0%, transparent 70%);
+    bottom: -150px;
+    left: -120px;
+    pointer-events: none;
+  }
+
+  .slide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 2;
+  }
+  .slide-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .slide-brand img {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+  }
+  .slide-brand span {
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+  }
+  .slide-num {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+  }
+
+  .slide-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 2;
+    margin: 20px 0;
+  }
+
+  .pill-tag {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 16px;
+  }
+  .pill-tag.green {
+    background: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+  }
+  .pill-tag.orange {
+    background: rgba(249, 115, 22, 0.18);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.35);
+  }
+  .pill-tag.blue {
+    background: rgba(56, 189, 248, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+  }
+  .pill-tag.purple {
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+  }
+
+  .slide-title {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    color: #ffffff;
+    margin-bottom: 14px;
+  }
+  .slide-title span.hl {
+    color: #4ade80;
+  }
+  .slide-subtitle {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 24px;
+    max-width: 880px;
+  }
+
+  .slide-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 20px;
+    font-size: 14px;
+    color: #64748b;
+    z-index: 2;
+  }
+  .slide-footer strong {
+    color: #ffffff;
+  }
+  .swipe-hint {
+    color: #4ade80;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* SLIDE 1 (COVER) */
+  .cover-visual {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 36px;
+    margin-top: 16px;
+    height: 600px;
+  }
+  .cover-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    padding: 18px;
+    box-shadow: 0 25px 50px -15px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cover-card.rotate-left {
+    transform: rotate(-3deg) translateY(20px);
+    opacity: 0.9;
+  }
+  .cover-card.rotate-right {
+    transform: rotate(3deg) translateY(-10px);
+    border-color: rgba(74, 222, 128, 0.4);
+    box-shadow: 0 30px 60px -15px rgba(34, 197, 94, 0.25);
+  }
+  .cover-frame {
+    width: 250px;
+    height: 480px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #000;
+    border: 4px solid #1e293b;
+  }
+  .cover-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cover-card-label {
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* SLIDE 2 (SKETCHES) */
+  .sketch-display {
+    display: flex;
+    gap: 36px;
+    align-items: center;
+  }
+  .sketch-img-wrap {
+    flex: 1.1;
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+  }
+  .sketch-img-wrap img {
+    width: 100%;
+    height: 580px;
+    object-fit: contain;
+    display: block;
+  }
+  .sketch-insights {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .insight-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 20px 22px;
+  }
+  .insight-box h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .insight-box p {
+    font-size: 13.5px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+
+  /* SLIDE 3 (FLUTTER PROTOTYPE) */
+  .proto-display {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+  }
+  .proto-phone-frame {
+    width: 320px;
+    height: 620px;
+    border-radius: 36px;
+    border: 10px solid #1e293b;
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8);
+    flex-shrink: 0;
+  }
+  .proto-phone-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .proto-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* SLIDE 4 (USER TESTING) */
+  .feedback-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .feedback-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 22px 26px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .feedback-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .icon-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+  .icon-orange { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
+  .icon-green { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+  .feedback-content h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 5px;
+  }
+  .feedback-content p {
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+  .feedback-quote {
+    margin-top: 8px;
+    font-style: italic;
+    color: #cbd5e1;
+    font-size: 13.5px;
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+    padding-left: 10px;
+  }
+
+  /* SLIDE 5 (NEW REDESIGN) */
+  .launch-display {
+    display: flex;
+    gap: 36px;
+    align-items: center;
+  }
+  .launch-phones {
+    display: flex;
+    gap: 16px;
+    flex: 1.15;
+    justify-content: center;
+  }
+  .launch-phone-frame {
+    width: 245px;
+    height: 530px;
+    border-radius: 32px;
+    border: 8px solid #0f172a;
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -10px rgba(34, 197, 94, 0.2), 0 15px 35px -5px rgba(0,0,0,0.8);
+  }
+  .launch-phone-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .launch-features {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .feature-row {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 16px;
+    padding: 15px 18px;
+  }
+  .feature-row h4 {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .feature-row p {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1 START -->
+<div class="slide" id="slide-1">
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+
+  <div class="slide-header">
+    <div class="slide-brand">
+      <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/images/projects/foodtrack.png" alt="FoodTrack">
+      <span>FoodTrack</span>
+    </div>
+    <div class="slide-num">01 / 05</div>
+  </div>
+
+  <div class="slide-body">
+    <span class="pill-tag green">Case Study · Product Journey</span>
+    <h1 class="slide-title">From University Exam<br>to <span class="hl">Production App</span></h1>
+    <p class="slide-subtitle">
+      How user testing transformed a simple Flutter prototype with mock data into a full-stack, live application.
+    </p>
+
+    <div class="cover-visual">
+      <div class="cover-card rotate-left">
+        <div class="cover-frame">
+          <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/flutter_full_phone.png" alt="2023 Prototype">
+        </div>
+        <div class="cover-card-label">2023 · Flutter PoC</div>
+      </div>
+      <div class="cover-card rotate-right">
+        <div class="cover-frame">
+          <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/phone1_pure_device.png" alt="2026 Redesign">
+        </div>
+        <div class="cover-card-label">2026 · Live Redesign</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>By <strong>Saverio Morelli</strong> · UniUd Project Evolution</div>
+    <div class="swipe-hint">Swipe to see the evolution ➔</div>
+  </div>
+</div>
+<!-- SLIDE 1 END -->
+
+<!-- SLIDE 2 START -->
+<div class="slide" id="slide-2">
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+
+  <div class="slide-header">
+    <div class="slide-brand">
+      <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/images/projects/foodtrack.png" alt="FoodTrack">
+      <span>FoodTrack</span>
+    </div>
+    <div class="slide-num">02 / 05</div>
+  </div>
+
+  <div class="slide-body">
+    <span class="pill-tag orange">Phase 1 · Early Ideation (2023)</span>
+    <h1 class="slide-title">Paper Sketches & Mental Models</h1>
+    <p class="slide-subtitle">
+      Born in the Mobile Application Design course at Università degli Studi di Udine to solve everyday food waste.
+    </p>
+
+    <div class="sketch-display">
+      <div class="sketch-img-wrap">
+        <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/1_early_sketches.png" alt="Early sketches">
+      </div>
+      <div class="sketch-insights">
+        <div class="insight-box">
+          <h3>✏️ Iterating Mental Models</h3>
+          <p>Initial sketches had a generic "Home" screen that caused confusion. After 3 iterations, we split the app into 3 clear pillars: Spaces, Lists & Recipes.</p>
+        </div>
+        <div class="insight-box">
+          <h3>🎯 User Personas</h3>
+          <p>Designed around real needs: busy professionals, university students living alone, and families struggling to track fridge contents.</p>
+        </div>
+        <div class="insight-box">
+          <h3>🌱 Nature-Inspired Palette</h3>
+          <p>Mood board #4 was chosen: natural greens and warm accents symbolizing food freshness, balance, and vitality.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Designing the foundations</div>
+    <div class="swipe-hint">Next: The Prototype ➔</div>
+  </div>
+</div>
+<!-- SLIDE 2 END -->
+
+<!-- SLIDE 3 START -->
+<div class="slide" id="slide-3">
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+
+  <div class="slide-header">
+    <div class="slide-brand">
+      <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/images/projects/foodtrack.png" alt="FoodTrack">
+      <span>FoodTrack</span>
+    </div>
+    <div class="slide-num">03 / 05</div>
+  </div>
+
+  <div class="slide-body">
+    <span class="pill-tag blue">Phase 2 · Proof of Concept</span>
+    <h1 class="slide-title">The Academic Flutter Prototype</h1>
+    <p class="slide-subtitle">
+      Building a working mobile PoC for the exam to put our design assumptions to the test.
+    </p>
+
+    <div class="proto-display">
+      <div class="proto-phone-frame">
+        <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/flutter_full_phone.png" alt="Flutter Prototype">
+      </div>
+      <div class="proto-details">
+        <div class="insight-box">
+          <h3>📱 Coded in Flutter</h3>
+          <p>Brought the Figma wireframes to life with a native Flutter UI, responsive bottom navigation, and action sheets.</p>
+        </div>
+        <div class="insight-box">
+          <h3>⚠️ Static Mock Data Only</h3>
+          <p>No backend, no database. Everything resided in <code>mockData.dart</code> and reset whenever the app closed.</p>
+        </div>
+        <div class="insight-box">
+          <h3>✂️ Features Cut Due to Complexity</h3>
+          <p>Multi-user household sync, camera barcode scanning, and recipe ingredients sync had to be shelved for the exam deadline.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>A clickable PoC ready for testing</div>
+    <div class="swipe-hint">Next: User Insights ➔</div>
+  </div>
+</div>
+<!-- SLIDE 3 END -->
+
+<!-- SLIDE 4 START -->
+<div class="slide" id="slide-4">
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+
+  <div class="slide-header">
+    <div class="slide-brand">
+      <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/images/projects/foodtrack.png" alt="FoodTrack">
+      <span>FoodTrack</span>
+    </div>
+    <div class="slide-num">04 / 05</div>
+  </div>
+
+  <div class="slide-body">
+    <span class="pill-tag purple">Phase 3 · Usability Testing</span>
+    <h1 class="slide-title">What Real Users <span class="hl">Taught Us</span></h1>
+    <p class="slide-subtitle">
+      Testing the prototype with actual users completely shifted our roadmap and priorities.
+    </p>
+
+    <div class="feedback-grid">
+      <div class="feedback-card">
+        <div class="feedback-icon icon-blue">👥</div>
+        <div class="feedback-content">
+          <h3>Shared Households, Not Solo Tracking</h3>
+          <p>Pantry management is rarely an individual task. Flatmates and families needed to share the same spaces and shopping lists in real time.</p>
+          <div class="feedback-quote">"I need to share the shopping list and fridge with my flatmates, or we'll buy duplicates."</div>
+        </div>
+      </div>
+
+      <div class="feedback-card">
+        <div class="feedback-icon icon-orange">📷</div>
+        <div class="feedback-content">
+          <h3>Frictionless Barcode Scanning</h3>
+          <p>Typing product details manually caused high drop-off. Users needed a quick way to scan items directly with their camera.</p>
+          <div class="feedback-quote">"Typing expiration dates and product names one by one takes way too much time."</div>
+        </div>
+      </div>
+
+      <div class="feedback-card">
+        <div class="feedback-icon icon-green">🍳</div>
+        <div class="feedback-content">
+          <h3>Actionable Anti-Waste Recipes</h3>
+          <p>Users didn't just want to see what is expiring; they wanted instant ideas on what to cook with whatever is available right now.</p>
+          <div class="feedback-quote">"Tell me what dinner I can make with the spinach expiring tomorrow."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Listening to real users</div>
+    <div class="swipe-hint">Next: FoodTrack Today ➔</div>
+  </div>
+</div>
+<!-- SLIDE 4 END -->
+
+<!-- SLIDE 5 START -->
+<div class="slide" id="slide-5">
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+
+  <div class="slide-header">
+    <div class="slide-brand">
+      <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/images/projects/foodtrack.png" alt="FoodTrack">
+      <span>FoodTrack</span>
+    </div>
+    <div class="slide-num">05 / 05</div>
+  </div>
+
+  <div class="slide-body">
+    <span class="pill-tag green">Phase 4 · Production Release (2026)</span>
+    <h1 class="slide-title">FoodTrack Today: <span class="hl">Live & Polished</span></h1>
+    <p class="slide-subtitle">
+      A completely redesigned, full-stack application built to make home food management effortless.
+    </p>
+
+    <div class="launch-display">
+      <div class="launch-phones">
+        <div class="launch-phone-frame">
+          <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/phone1_pure_device.png" alt="Home spaces">
+        </div>
+        <div class="launch-phone-frame">
+          <img src="file:///Users/sav/Documents/Projects/SaverioMorelli/projects/foodtrack/linkedin-assets/phone4_recipes_device.png" alt="Smart recipes">
+        </div>
+      </div>
+      <div class="launch-features">
+        <div class="feature-row">
+          <h4>☁️ Real-Time Cloud Sync</h4>
+          <p>Multi-user shared households with instant invite codes and automatic background sync.</p>
+        </div>
+        <div class="feature-row">
+          <h4>📦 Integrated Barcode Scanner</h4>
+          <p>Native camera scan connected to open food databases for instant product cataloging.</p>
+        </div>
+        <div class="feature-row">
+          <h4>🍲 100+ Global Recipes</h4>
+          <p>Automatically calculates available ingredients: "You have 4 of 6 ingredients ready in your fridge".</p>
+        </div>
+        <div class="feature-row">
+          <h4>⚡ Installable PWA & Android App</h4>
+          <p>English & Italian, offline-ready service worker, smart expiry reminders & dark mode.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Explore the live app: <strong>saveriomorelli.com/projects/foodtrack</strong></div>
+    <div class="swipe-hint" style="color: #ffffff;">Soon on Google Play 📲</div>
+  </div>
+</div>
+<!-- SLIDE 5 END -->
+
+</body>
+</html>

@@ -191,33 +191,101 @@
 
   function shell(content) {
     const tab = tabName();
+    const curTheme = UI.store.get('theme', 'auto');
+    const setTheme = k => {
+      UI.store.set('theme', k);
+      UI.applyTheme();
+      document.querySelectorAll('.sn-theme-tab').forEach(b => {
+        const isMatch = b.dataset.themeKey === k;
+        b.classList.toggle('active', isMatch);
+        b.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+      });
+      toast(t('Theme') + ': ' + t({ auto: 'Automatic', light: 'Light', dark: 'Dark' }[k]));
+    };
     const cycleTheme = () => {
       const next = { auto: 'light', light: 'dark', dark: 'auto' }[UI.store.get('theme', 'auto')];
-      UI.store.set('theme', next); UI.applyTheme(); toast(t('Theme') + ': ' + t({ auto: 'Automatic', light: 'Light', dark: 'Dark' }[next]));
+      setTheme(next);
     };
+
+    // Desktop sidebar (same style as FoodTrack app)
+    const side = h('nav.sidenav.adm-side', { 'aria-label': t('Admin portal') },
+      h('a.sn-brand', { href: '#/' + TABS[0][0] },
+        h('img', { src: 'assets/icons/icon-color.png', alt: '' }),
+        h('div.sn-brand-titles',
+          h('strong', 'FoodTrack'),
+          h('small', t('Admin portal'))
+        )
+      ),
+      h('div.sn-links',
+        TABS.map(([k, label, ic]) =>
+          h('a.sn-link' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label), 'aria-current': k === tab ? 'page' : null },
+            icon(ic),
+            h('span', t(label)),
+            counts[k] != null ? h('span.sn-badge', String(counts[k])) : null
+          )
+        )
+      ),
+      h('div.grow'),
+      // Back to the FoodTrack app (mirrors .sn-admin in FoodTrack app)
+      h('a.sn-link.sn-admin.sn-app-link', { href: './', title: t('Open the app') },
+        icon('home'),
+        h('span', t('Go to the app')),
+        icon('right')
+      ),
+      // Theme segmented tabs: Auto | Light | Dark
+      h('div.sn-theme-tabs', { role: 'tablist', 'aria-label': t('Theme') },
+        [
+          ['auto', t('Auto') || 'Auto'],
+          ['light', t('Light')],
+          ['dark', t('Dark')],
+        ].map(([k, label]) =>
+          h('button.sn-theme-tab' + (curTheme === k ? '.active' : ''), {
+            type: 'button',
+            role: 'tab',
+            'aria-selected': curTheme === k ? 'true' : 'false',
+            'data-theme-key': k,
+            onclick: () => setTheme(k),
+          }, label)
+        )
+      ),
+      // Language selector
+      h('div.sn-lang',
+        sel(I18N.langs.map(([v, l]) => ({ value: v, label: l })), I18N.lang, { onchange: e => I18N.set(e.target.value), 'aria-label': t('Language') })
+      ),
+      h('button.sn-user.adm-user-btn', {
+        type: 'button',
+        title: (me ? me.name : '') + ' (' + (me ? me.roleLabel : '') + ')',
+        onclick: e => menu(e.currentTarget, [
+          { icon: 'home', label: t('Open the app'), onclick: () => { location.href = './'; } },
+          { icon: 'theme', label: t('Theme'), onclick: cycleTheme },
+          ...I18N.langs.map(([v, l]) => ({ icon: 'globe', label: l + (I18N.lang === v ? ' ✓' : ''), onclick: () => I18N.set(v) })),
+          '-',
+          { icon: 'logout', label: t('Sign out'), danger: true, onclick: logout },
+        ]),
+      },
+        h('span.avatar', initials(me ? me.name : '')),
+        h('span.grow',
+          h('strong', me ? me.name : ''),
+          h('small', me ? me.roleLabel : '')
+        ),
+        icon('more')
+      )
+    );
+
+    // Mobile topbar
     const topbar = h('header.adm-topbar',
       h('div.adm-topbar-inner',
         h('a.adm-logo', { href: '#/' + TABS[0][0] },
           h('img', { src: 'assets/icons/icon-color.png', alt: '' }),
           h('span', 'FoodTrack', h('small', t('Admin portal')))
         ),
-        h('nav.adm-nav', { 'aria-label': t('Admin portal') },
-          TABS.map(([k, label, ic]) =>
-            h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label), 'aria-current': k === tab ? 'page' : null },
-              icon(ic),
-              h('span.lbl', t(label)),
-              counts[k] != null ? h('span.count', String(counts[k])) : null
-            )
-          )
-        ),
         h('div.adm-tools',
-          // Back to the FoodTrack app
           h('a.adm-app-link', { href: './', title: t('Open the app') }, icon('home'), h('span', t('Go to the app'))),
           sel(I18N.langs.map(([v, l]) => ({ value: v, label: l })), I18N.lang, { onchange: e => I18N.set(e.target.value), 'aria-label': t('Language') }),
           iconBtn('theme', t('Theme'), cycleTheme),
           h('button.adm-user', {
             type: 'button',
-            title: me.name + ' (' + me.roleLabel + ')',
+            title: (me ? me.name : '') + ' (' + (me ? me.roleLabel : '') + ')',
             onclick: e => menu(e.currentTarget, [
               { icon: 'home', label: t('Open the app'), onclick: () => { location.href = './'; } },
               { icon: 'theme', label: t('Theme'), onclick: cycleTheme },
@@ -226,13 +294,14 @@
               { icon: 'logout', label: t('Sign out'), danger: true, onclick: logout },
             ]),
           },
-            h('span.avatar', initials(me.name)),
-            h('div.who', h('strong', me.name), h('span', me.roleLabel))
+            h('span.avatar', initials(me ? me.name : '')),
+            h('div.who', h('strong', me ? me.name : ''), h('span', me ? me.roleLabel : ''))
           )
         )
       )
     );
 
+    // Mobile bottom navigation
     const bottomNav = h('nav.adm-bottomnav', { 'aria-label': t('Admin portal') },
       TABS.map(([k, label, ic]) =>
         h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label), 'aria-current': k === tab ? 'page' : null },
@@ -242,7 +311,7 @@
       )
     );
 
-    root.replaceChildren(h('div.adm', topbar, h('main.adm-content', content), bottomNav));
+    root.replaceChildren(h('div.adm', side, topbar, h('main.adm-content', content), bottomNav));
     document.title = t((TABS.find(x => x[0] === tab) || TABS[0])[1]) + ' · FoodTrack Admin';
   }
 

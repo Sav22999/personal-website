@@ -1491,6 +1491,618 @@
   });
 
   // ====================================================================
+  // QUICK SEARCH IN SIDEBAR (references and admin functions)
+  // ====================================================================
+
+  const ADMIN_FUNCTIONS = [
+    // Azioni rapide
+    {
+      id: 'act-new-question',
+      category: 'Azione',
+      badge: 'Crea',
+      badgeClass: 'crea',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+      title: 'Nuova domanda',
+      desc: 'Crea e inserisci una nuova domanda nei quiz',
+      keywords: ['nuova domanda', 'crea domanda', 'aggiungi domanda', 'inserisci domanda', 'quiz', 'domande'],
+      action: () => { showTab('domande'); openQuestion(null); },
+    },
+    {
+      id: 'act-new-ref',
+      category: 'Azione',
+      badge: 'Crea',
+      badgeClass: 'crea',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+      title: 'Nuovo riferimento',
+      desc: 'Crea un nuovo punto del regolamento normativo',
+      keywords: ['nuovo riferimento', 'crea riferimento', 'aggiungi regola', 'inserisci regolamento', 'nuova regola', 'norma'],
+      action: () => { showTab('riferimenti'); openRef(null); },
+    },
+    {
+      id: 'act-new-doc',
+      category: 'Azione',
+      badge: 'Crea',
+      badgeClass: 'crea',
+      requiresUsersManage: true,
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+      title: 'Nuovo documento',
+      desc: 'Carica un nuovo PDF negli «Altri documenti utili»',
+      keywords: ['nuovo documento', 'carica documento', 'aggiungi pdf', 'carica pdf', 'file'],
+      action: () => { showTab('documenti'); openDoc(null); },
+    },
+    {
+      id: 'act-export-questions',
+      category: 'Strumento',
+      badge: 'Esporta',
+      badgeClass: 'act',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+      title: 'Esporta domande',
+      desc: 'Scarica un file JSON di backup con tutte le domande',
+      keywords: ['esporta domande', 'download domande', 'backup domande', 'salva json domande'],
+      action: () => { $('q-export').click(); },
+    },
+    {
+      id: 'act-export-refs',
+      category: 'Strumento',
+      badge: 'Esporta',
+      badgeClass: 'act',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+      title: 'Esporta riferimenti',
+      desc: 'Scarica un file JSON di backup con tutti i riferimenti',
+      keywords: ['esporta riferimenti', 'download riferimenti', 'backup regolamento', 'salva json riferimenti'],
+      action: () => { $('r-export').click(); },
+    },
+
+    // Filtri e viste mirate
+    {
+      id: 'filter-ref-changes',
+      category: 'Filtro',
+      badge: 'Novità',
+      badgeClass: 'novita',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>',
+      title: 'Novità del regolamento',
+      desc: 'Regole nuove o modificate della stagione in corso',
+      keywords: ['novita regolamento', 'modifiche regolamento', 'nuove regole', 'regole modificate', 'stagione in corso', 'novita'],
+      action: () => { applyPreset('riferimenti', 'changes'); showTab('riferimenti'); },
+    },
+    {
+      id: 'filter-ref-unused',
+      category: 'Filtro',
+      badge: 'Da coprire',
+      badgeClass: 'da-coprire',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+      title: 'Riferimenti senza domande',
+      desc: 'Punti del regolamento che non hanno ancora domande associate',
+      keywords: ['riferimenti senza domande', 'regole non coperte', 'senza quiz', 'inutilizzati', 'riferimenti vuoti'],
+      action: () => { applyPreset('riferimenti', 'unused'); showTab('riferimenti'); },
+    },
+    {
+      id: 'filter-q-flags',
+      category: 'Filtro',
+      badge: 'Segnalate',
+      badgeClass: 'filtro',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+      title: 'Domande con segnalazioni',
+      desc: 'Visualizza solo le domande che hanno segnalazioni aperte dagli utenti',
+      keywords: ['domande segnalate', 'errori quiz', 'segnalazioni domande', 'quesiti segnalati'],
+      action: () => { applyPreset('domande', 'flag'); showTab('domande'); },
+    },
+    {
+      id: 'filter-q-noref',
+      category: 'Filtro',
+      badge: 'Mancanti',
+      badgeClass: 'filtro',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+      title: 'Domande con riferimenti mancanti',
+      desc: 'Domande collegate a codici di riferimento non trovati',
+      keywords: ['domande riferimenti mancanti', 'riferimenti inesistenti', 'orfane', 'senza riferimento'],
+      action: () => { applyPreset('domande', 'noref'); showTab('domande'); },
+    },
+    {
+      id: 'filter-q-inactive',
+      category: 'Filtro',
+      badge: 'Disattivate',
+      badgeClass: 'filtro',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/></svg>',
+      title: 'Domande disattivate',
+      desc: 'Domande spente o escluse dalla rotazione dei quiz',
+      keywords: ['domande disattivate', 'spente', 'non attive', 'nascoste'],
+      action: () => { applyPreset('domande', 'inactive'); showTab('domande'); },
+    },
+    {
+      id: 'filter-flags-open',
+      category: 'Filtro',
+      badge: 'Aperte',
+      badgeClass: 'filtro',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>',
+      title: 'Segnalazioni aperte',
+      desc: 'Segnalazioni degli utenti ancora da verificare o risolvere',
+      keywords: ['segnalazioni aperte', 'da risolvere', 'ticket aperti', 'errori aperti'],
+      action: () => { $('flags-open-only').checked = true; showTab('segnalazioni'); },
+    },
+    {
+      id: 'filter-flags-sim',
+      category: 'Sezione',
+      badge: 'Simulazione',
+      badgeClass: 'sezione',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+      title: 'Segnalazioni simulazione partita',
+      desc: 'Segnalazioni inviate durante la simulazione arbitro',
+      keywords: ['segnalazioni simulazione', 'simulazione partita', 'segnalazioni gara'],
+      action: () => {
+        showTab('segnalazioni');
+        const b = $('flags-kind').querySelector('[data-v="sim"]');
+        if (b) {
+          $('flags-kind').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+          renderFlags();
+        }
+      },
+    },
+    {
+      id: 'filter-users-pending',
+      category: 'Filtro',
+      badge: 'In attesa',
+      badgeClass: 'filtro',
+      requiresUsersManage: true,
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>',
+      title: 'Utenti in attesa di approvazione',
+      desc: 'Nuove registrazioni da abilitare o rifiutare',
+      keywords: ['utenti in attesa', 'approvazione registrazioni', 'da abilitare', 'nuove registrazioni', 'richieste iscrizione'],
+      action: () => {
+        showTab('utenti');
+        S.userFilter = 'pending';
+        document.querySelectorAll('#users-filters .filter-chip').forEach(x => x.classList.toggle('active', x.dataset.status === 'pending'));
+        $('users-search').value = '';
+        $('users-role').value = '';
+        renderUsers();
+      },
+    },
+
+    // Sezioni principali
+    {
+      id: 'sec-tab-panoramica',
+      category: 'Sezione',
+      badge: 'Home',
+      badgeClass: 'home',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
+      title: 'Panoramica',
+      desc: 'Dashboard con stato dei contenuti, attività e statistiche generali',
+      keywords: ['panoramica', 'home', 'dashboard', 'riassunto', 'stato', 'statistiche'],
+      action: () => { showTab('panoramica'); },
+    },
+    {
+      id: 'sec-tab-domande',
+      category: 'Sezione',
+      badge: 'Domande',
+      badgeClass: 'sezione',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/></svg>',
+      title: 'Gestione domande',
+      desc: 'Elenco completo delle domande dei quiz con filtri avanzati',
+      keywords: ['domande', 'gestione domande', 'quiz', 'quesiti', 'elenco domande'],
+      action: () => { showTab('domande'); },
+    },
+    {
+      id: 'sec-tab-riferimenti',
+      category: 'Sezione',
+      badge: 'Riferimenti',
+      badgeClass: 'sezione',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2z"/><path d="M22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z"/></svg>',
+      title: 'Gestione riferimenti',
+      desc: 'Elenco e modifica di tutti i riferimenti normativi e fonti',
+      keywords: ['riferimenti', 'gestione riferimenti', 'regolamento', 'regole', 'articoli', 'fonti'],
+      action: () => { showTab('riferimenti'); },
+    },
+    {
+      id: 'sec-tab-segnalazioni',
+      category: 'Sezione',
+      badge: 'Segnalazioni',
+      badgeClass: 'sezione',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+      title: 'Gestione segnalazioni',
+      desc: 'Segnalazioni degli utenti per quiz e simulazione partita',
+      keywords: ['segnalazioni', 'gestione segnalazioni', 'errori', 'report', 'correzioni'],
+      action: () => { showTab('segnalazioni'); },
+    },
+    {
+      id: 'sec-tab-utenti',
+      category: 'Sezione',
+      badge: 'Utenti',
+      badgeClass: 'account',
+      requiresUsersManage: true,
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+      title: 'Gestione utenti',
+      desc: 'Gestisci account, permessi, ruoli e reimposta password',
+      keywords: ['utenti', 'gestione utenti', 'account', 'permessi', 'ruoli', 'iscritti', 'password'],
+      action: () => { showTab('utenti'); },
+    },
+    {
+      id: 'sec-tab-documenti',
+      category: 'Sezione',
+      badge: 'PDF',
+      badgeClass: 'sezione',
+      requiresUsersManage: true,
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>',
+      title: 'Gestione documenti',
+      desc: 'Gestisci e ordina gli altri documenti utili in formato PDF',
+      keywords: ['documenti', 'gestione documenti', 'pdf', 'altri documenti', 'allegati', 'materiale'],
+      action: () => { showTab('documenti'); },
+    },
+
+    // Portale
+    {
+      id: 'link-portal',
+      category: 'Portale',
+      badge: 'Vai',
+      badgeClass: 'sezione',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>',
+      title: 'Torna al portale',
+      desc: 'Torna all’area quiz e ripasso di Fischietto',
+      keywords: ['torna al portale', 'esci dalla gestione', 'portale', 'quiz utente', 'home'],
+      action: () => { window.location.href = './'; },
+    },
+    {
+      id: 'link-profile',
+      category: 'Portale',
+      badge: 'Profilo',
+      badgeClass: 'account',
+      icon: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      title: 'Il mio profilo',
+      desc: 'Visualizza e modifica le impostazioni del tuo account',
+      keywords: ['profilo', 'mio account', 'modifica profilo', 'impostazioni personali'],
+      action: () => { window.location.href = './#profilo'; },
+    },
+  ];
+
+  let quickRendered = [];
+  let quickActiveIdx = -1;
+
+  function searchFunctions(term) {
+    const t = norm(term.trim());
+    const canManage = S.me && S.me.canManageUsers;
+    const list = ADMIN_FUNCTIONS.filter(f => !f.requiresUsersManage || canManage);
+    if (!t) return list.slice(0, 6);
+
+    const words = t.split(/\s+/).filter(Boolean);
+    const scored = [];
+    list.forEach(f => {
+      const title = norm(f.title);
+      const desc = norm(f.desc);
+      const category = norm(f.category);
+      const kw = (f.keywords || []).map(norm).join(' ');
+      const full = title + ' ' + desc + ' ' + category + ' ' + kw;
+      if (!words.every(w => full.includes(w))) return;
+
+      let score = 10;
+      if (title === t) score = 0;
+      else if (title.startsWith(t)) score = 1;
+      else if (title.includes(t)) score = 2;
+      else if (kw.includes(t)) score = 3;
+      else score = 4;
+
+      scored.push({ score, f });
+    });
+    scored.sort((a, b) => a.score - b.score);
+    return scored.map(x => x.f);
+  }
+
+  function searchRefs(term) {
+    const t = norm(term.trim());
+    if (!t) return [];
+    const words = t.split(/\s+/).filter(Boolean);
+    const scored = [];
+    S.refs.forEach(r => {
+      const code = norm(r['ref-code']);
+      const title = norm(r['ref-title']);
+      const text = norm(r['ref-text']);
+      const from = norm(r['ref-from']);
+      const full = code + ' ' + title + ' ' + from + ' ' + text;
+      if (!words.every(w => full.includes(w))) return;
+
+      let score = 10;
+      if (code === t) score = 0;
+      else if (code.startsWith(t)) score = 1;
+      else if (code.includes(t)) score = 2;
+      else if (title.startsWith(t)) score = 3;
+      else if (title.includes(t)) score = 4;
+      else if (from.includes(t)) score = 5;
+      else score = 6;
+
+      scored.push({ score, r });
+    });
+    scored.sort((a, b) => a.score - b.score || strnat(a.r['ref-code'], b.r['ref-code']));
+    return scored.slice(0, 10).map(x => x.r);
+  }
+
+  function searchQuestions(term) {
+    const t = norm(term.trim());
+    if (!t || t.length < 2) return [];
+    const words = t.split(/\s+/).filter(Boolean);
+    const scored = [];
+    S.questions.forEach(q => {
+      const code = norm(q['question-code']);
+      const text = norm(q['question-text']);
+      const refs = (q['question-ref'] || []).map(norm).join(' ');
+      const full = code + ' ' + text + ' ' + refs;
+      if (!words.every(w => full.includes(w))) return;
+
+      let score = 10;
+      if (code === t) score = 0;
+      else if (code.startsWith(t)) score = 1;
+      else if (code.includes(t)) score = 2;
+      else if (text.includes(t)) score = 3;
+      else score = 4;
+
+      scored.push({ score, q });
+    });
+    scored.sort((a, b) => a.score - b.score);
+    return scored.slice(0, 4).map(x => x.q);
+  }
+
+  function closeQuickSearch() {
+    const menu = $('side-search-menu');
+    if (menu) menu.hidden = true;
+    const side = $('admin-side');
+    if (side) side.classList.remove('search-open');
+    quickActiveIdx = -1;
+    quickRendered = [];
+    const input = $('side-search-input');
+    const clear = $('side-search-clear');
+    const kbd = $('side-search-kbd');
+    if (input && !input.value.trim()) {
+      if (clear) clear.hidden = true;
+      if (kbd) kbd.hidden = false;
+    }
+  }
+
+  function openQuickSearch() {
+    const side = $('admin-side');
+    if (side) side.classList.add('search-open');
+    const input = $('side-search-input');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+    renderQuickSearch();
+  }
+
+  function updateQuickActive() {
+    quickRendered.forEach((item, idx) => {
+      const on = idx === quickActiveIdx;
+      item.el.classList.toggle('active', on);
+      item.el.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    if (quickRendered[quickActiveIdx]) {
+      quickRendered[quickActiveIdx].el.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function renderQuickSearch() {
+    const input = $('side-search-input');
+    const menu = $('side-search-menu');
+    const clearBtn = $('side-search-clear');
+    const kbd = $('side-search-kbd');
+    if (!input || !menu) return;
+
+    const raw = input.value;
+    const query = raw.trim();
+    if (clearBtn && kbd) {
+      clearBtn.hidden = !raw;
+      kbd.hidden = !!raw;
+    }
+
+    menu.hidden = false;
+    menu.innerHTML = '';
+    quickRendered = [];
+    quickActiveIdx = -1;
+
+    const funcs = searchFunctions(query);
+    const refs = query ? searchRefs(query) : [];
+    const questions = query ? searchQuestions(query) : [];
+
+    const hasResults = funcs.length > 0 || refs.length > 0 || questions.length > 0;
+
+    if (!hasResults) {
+      menu.innerHTML = '<div class="side-search-empty">Nessun riferimento o funzione trovato per «<strong>' + esc(query) + '</strong>».</div>';
+      return;
+    }
+
+    function addItem(iconHtml, codeOrTitle, badgeText, badgeClass, subTitle, desc, onSelect, extraHtml) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'side-search-item';
+      btn.setAttribute('role', 'option');
+
+      let iconContainer = '';
+      if (iconHtml.startsWith('<span class="ref-source-tag') || iconHtml.startsWith('<span class="quick-icon-wrap')) {
+        iconContainer = iconHtml;
+      } else {
+        iconContainer = '<span class="quick-icon-wrap" aria-hidden="true">' + iconHtml + '</span>';
+      }
+
+      let headRight = '';
+      if (extraHtml) headRight += extraHtml;
+      if (badgeText) headRight += '<span class="quick-badge ' + esc(badgeClass || 'act') + '">' + esc(badgeText) + '</span>';
+
+      btn.innerHTML =
+        iconContainer +
+        '<span class="quick-main">' +
+          '<span class="quick-head">' +
+            '<strong class="quick-code">' + esc(codeOrTitle) + '</strong>' +
+            headRight +
+          '</span>' +
+          (subTitle ? '<span class="quick-title">' + esc(subTitle) + '</span>' : '') +
+          (desc ? '<span class="quick-desc">' + esc(desc) + '</span>' : '') +
+        '</span>';
+
+      const itemIdx = quickRendered.length;
+      btn.addEventListener('mouseenter', () => {
+        quickActiveIdx = itemIdx;
+        updateQuickActive();
+      });
+      btn.addEventListener('mousedown', e => {
+        e.preventDefault();
+        onSelect();
+      });
+
+      menu.appendChild(btn);
+      quickRendered.push({ el: btn, onSelect });
+    }
+
+    if (!query) {
+      const gTitle = document.createElement('div');
+      gTitle.className = 'side-search-group-title';
+      gTitle.textContent = 'Funzioni frequenti';
+      menu.appendChild(gTitle);
+
+      funcs.forEach(f => {
+        addItem(f.icon, f.title, f.badge || f.category, f.badgeClass || 'act', '', f.desc, () => {
+          closeQuickSearch();
+          input.value = '';
+          f.action();
+        });
+      });
+
+      const hint = document.createElement('div');
+      hint.className = 'side-search-hint';
+      hint.innerHTML = '<span>Premi <kbd>/</kbd> ovunque</span><span>↑↓ per scorrere</span>';
+      menu.appendChild(hint);
+    } else {
+      if (funcs.length > 0) {
+        const gTitle = document.createElement('div');
+        gTitle.className = 'side-search-group-title';
+        gTitle.textContent = 'Funzioni (' + funcs.length + ')';
+        menu.appendChild(gTitle);
+
+        funcs.forEach(f => {
+          addItem(f.icon, f.title, f.badge || f.category, f.badgeClass || 'act', '', f.desc, () => {
+            closeQuickSearch();
+            input.value = '';
+            f.action();
+          });
+        });
+      }
+
+      if (refs.length > 0) {
+        const gTitle = document.createElement('div');
+        gTitle.className = 'side-search-group-title';
+        gTitle.textContent = 'Riferimenti normativi (' + refs.length + ')';
+        menu.appendChild(gTitle);
+
+        refs.forEach(r => {
+          const sClass = SOURCE_CLASS[r['ref-from']] || 'rg';
+          const sShort = SOURCE_SHORT[r['ref-from']] || 'RG';
+          const iconHtml = '<span class="ref-source-tag ' + sClass + '">' + esc(sShort) + '</span>';
+          const extraBadge = changeBadge(r['ref-change']);
+          const excerpt = (r['ref-text'] || '').replace(/\s+/g, ' ').slice(0, 80);
+          addItem(iconHtml, r['ref-code'], null, null, r['ref-title'], excerpt, () => {
+            closeQuickSearch();
+            input.value = '';
+            $('r-search').value = r['ref-code'];
+            showTab('riferimenti');
+            openRef(r['ref-code']);
+          }, extraBadge);
+        });
+      }
+
+      if (questions.length > 0) {
+        const gTitle = document.createElement('div');
+        gTitle.className = 'side-search-group-title';
+        gTitle.textContent = 'Domande (' + questions.length + ')';
+        menu.appendChild(gTitle);
+
+        questions.forEach(q => {
+          const iconHtml = '<span class="quick-icon-wrap q"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/></svg></span>';
+          const dLabel = DIFF_LABEL[q['question-difficulty']] || 'Quiz';
+          const textPreview = (q['question-text'] || '').replace(/\s+/g, ' ').slice(0, 85);
+          addItem(iconHtml, 'Domanda ' + q['question-code'], dLabel, 'q', '', textPreview, () => {
+            closeQuickSearch();
+            input.value = '';
+            $('q-search').value = q['question-code'];
+            showTab('domande');
+            openQuestion(q['question-code']);
+          });
+        });
+      }
+    }
+
+    if (quickRendered.length > 0) {
+      quickActiveIdx = 0;
+      updateQuickActive();
+    }
+  }
+
+  function initQuickSearch() {
+    const input = $('side-search-input');
+    const menu = $('side-search-menu');
+    const clearBtn = $('side-search-clear');
+    const mobBtn = $('side-search-mobile-btn');
+    const mobClose = $('side-search-close-mobile');
+    if (!input || !menu) return;
+
+    input.addEventListener('input', renderQuickSearch);
+    input.addEventListener('focus', renderQuickSearch);
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (quickRendered.length > 0) {
+          quickActiveIdx = (quickActiveIdx + 1) % quickRendered.length;
+          updateQuickActive();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (quickRendered.length > 0) {
+          quickActiveIdx = (quickActiveIdx - 1 + quickRendered.length) % quickRendered.length;
+          updateQuickActive();
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (quickRendered[quickActiveIdx]) {
+          quickRendered[quickActiveIdx].onSelect();
+        } else if (quickRendered[0]) {
+          quickRendered[0].onSelect();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeQuickSearch();
+        input.blur();
+      }
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        input.focus();
+        renderQuickSearch();
+      });
+    }
+
+    if (mobBtn) mobBtn.addEventListener('click', openQuickSearch);
+    if (mobClose) mobClose.addEventListener('click', closeQuickSearch);
+
+    document.addEventListener('mousedown', e => {
+      const box = $('side-search');
+      if (box && !box.contains(e.target) && (!mobBtn || !mobBtn.contains(e.target))) {
+        closeQuickSearch();
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      const isSlash = e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey;
+      const isCmdK = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k';
+      if (!isSlash && !isCmdK) return;
+
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (document.activeElement && document.activeElement.isContentEditable);
+      const modalOpen = document.querySelector('.modal-overlay:not([hidden])') !== null;
+      if (!isEditable && !modalOpen) {
+        e.preventDefault();
+        openQuickSearch();
+      }
+    });
+  }
+
+  // ====================================================================
   // STARTUP
   // ====================================================================
 
@@ -1525,6 +2137,7 @@
       $('boot-message').textContent = 'Carico domande, riferimenti e utenti…';
       await Promise.all([loadContent(), loadFlags(), loadUsers(), loadDocs(), loadOverview()]);
       initRefFilters();
+      initQuickSearch();
       $('boot-screen').hidden = true;
       $('admin-root').hidden = false;
       showTab(location.hash.slice(1));

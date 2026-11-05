@@ -45,17 +45,27 @@
     timeout: 'tempo riposo', 'time out': 'tempo riposo', 'time-out': 'tempo riposo', pausa: 'tempo riposo intervallo',
     cambio: 'sostituzione', cambi: 'sostituzioni', cambiare: 'sostituzione', sostituire: 'sostituzione', entra: 'sostituzione', esce: 'sostituzione',
     cartellino: 'sanzione cartellino', giallo: 'ammonizione penalizzazione', rosso: 'penalizzazione', ammonito: 'ammonizione', espulso: 'espulsione', squalificato: 'squalifica',
-    invasione: 'linea centrale rete', piede: 'piede linea', calpestare: 'piede linea', pestare: 'linea',
+    invasione: 'linea centrale rete penetrazione interferenza', piede: 'piede linea', calpestare: 'toccare linea piede campo', pestare: 'toccare linea piede campo',
     doppia: 'doppio tocco', doppio: 'doppio tocco', trattenuta: 'palla trattenuta', accompagnata: 'palla trattenuta', portata: 'palla trattenuta',
     campo: 'terreno gioco campo', misure: 'dimensioni', grande: 'dimensioni', lungo: 'lunghezza', largo: 'larghezza', alta: 'altezza', alto: 'altezza',
     pallone: 'palla', fischietto: 'fischio', fischiare: 'fischio', arbitrare: 'arbitro', primo: '1 arbitro', secondo: '2 arbitro',
     rotazione: 'rotazione posizione', ruotare: 'rotazione', posizioni: 'posizione', fallo: 'fallo', falli: 'fallo',
     vince: 'vincere', vinto: 'vincere', vincere: 'vincere set partita', punteggio: 'punto punteggio', punti: 'punto',
-    libero: 'libero', liberi: 'libero', capitano: 'capitano', allenatore: 'allenatore', coach: 'allenatore', panchina: 'panchina',
+    libero: 'libero liberoplayer', liberi: 'libero liberoplayer', capitano: 'capitano squadra capitano gioco responsabili',
+    allenatore: 'allenatore', coach: 'allenatore', panchina: 'panchina',
     ritardo: 'ritardo', perdere: 'perdere tempo ritardo', protesta: 'condotta scorretta', insulto: 'condotta offensiva', offendere: 'condotta offensiva',
     muro: 'muro', murare: 'muro', antenna: 'antenna', asticella: 'antenna', rete: 'rete', nastro: 'rete',
     infortunio: 'infortunio', infortunato: 'infortunio', sangue: 'infortunio', sudore: 'interruzione',
     divisa: 'uniforme', maglia: 'uniforme maglia', numero: 'numero', scarpe: 'uniforme',
+    tocco: 'tocco contatto', tocca: 'tocco contatto', toccare: 'tocco contatto', toccato: 'tocco contatto', contatto: 'contatto tocco',
+    'tocca la rete': 'contatto rete fallo', 'toccare la rete': 'contatto rete fallo', 'tocco la rete': 'contatto rete fallo', 'tocco di rete': 'contatto rete fallo',
+    'fallo di rete': 'contatto rete interferenza',
+    'fare il capitano': 'capitano squadra capitano gioco responsabili', 'essere capitano': 'capitano squadra capitano gioco responsabili',
+    'puo essere capitano': 'capitano squadra capitano gioco responsabili', 'puo fare il capitano': 'capitano squadra capitano gioco responsabili',
+    'pestare la linea': 'toccare linea fondo campo servizio', 'linea di fondo': 'linea fondo campo servizio',
+    'palla lontana': 'azione giocare palla interferenza', 'fuori azione': 'azione giocare palla interferenza',
+    'sotto la rete': 'penetrazione spazio avversario linea centrale', 'sopra la rete': 'spazio aereo piano verticale',
+    salto: 'stacco ricaduta',
     // question words → what the rulebook says ("Quante sostituzioni…" → "numero massimo di sostituzioni")
     quanti: 'numero massimo', quante: 'numero massimo', 'quanto dura': 'durata', 'quanto tempo': 'durata tempo', 'quanto e alta': 'altezza', 'quanto alta': 'altezza', 'quanto e lungo': 'lunghezza dimensioni', 'chi decide': 'competenza arbitro', 'chi deve': 'competenza',
     '3 metri': 'linea attacco zona anteriore', 'tre metri': 'linea attacco zona anteriore', 'linea dei 3': 'linea attacco', 'seconda linea': 'difensore zona difesa', 'prima linea': 'attaccante zona anteriore',
@@ -89,7 +99,7 @@
     const add = (t, w) => { if (t && !STOP.has(t)) out.set(t, Math.max(out.get(t) || 0, w)); };
     for (const w of words(q)) add(stem(w), 1);
     // In a question "libero" almost always means the player
-    if (/(^| )liber[oi]( |$)/.test(n)) { add('liberoplayer', 1.3); out.set(stem('libero'), 0.25); }
+    if (/(^| )liber[oi]( |$)/.test(n)) { add('liberoplayer', 1.3); out.set(stem('libero'), 0.5); }
     for (const [k, v] of Object.entries(SYNONYMS)) {
       const re = new RegExp('(^| )' + k.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&') + '( |$)');
       if (re.test(n)) v.split(' ').forEach(x => add(stem(x), 0.7));
@@ -136,13 +146,15 @@
   /** BM25 ranking of the references for a question. */
   function rank(q) {
     const qt = queryTerms(q);
+    const coreWords = words(q).filter(w => w !== 'liberoplayer');
+    const coreStems = new Set(coreWords.map(stem));
     const seq = terms(q);
     const qBigrams = [];
     for (let i = 0; i < seq.length - 1; i++) qBigrams.push(seq[i] + ' ' + seq[i + 1]);
     const k1 = 1.4, b = 0.7;
     const scored = [];
     for (const d of DOCS) {
-      let s = 0, hit = 0;
+      let s = 0, hit = 0, coreHit = 0;
       qt.forEach((w, t) => {
         const f = d.tf.get(t);
         if (!f) return;
@@ -150,8 +162,16 @@
         s += w * idf(t) * (f * (k1 + 1)) / (f + k1 * (1 - b + b * d.len / AVG));
       });
       if (!s) continue;
-      for (const bg of qBigrams) if (d.bigrams.has(bg)) s += 1.2;
+      for (const cs of coreStems) {
+        if (d.tf.has(cs) || (cs === stem('libero') && d.tf.has('liberoplayer'))) coreHit++;
+      }
+      for (const bg of qBigrams) if (d.bigrams.has(bg)) s += 1.5;
       s *= 0.6 + 0.4 * (hit / Math.max(1, qt.size)); // coverage of the question
+      if (coreStems.size >= 2) {
+        const coreRatio = coreHit / coreStems.size;
+        s *= 0.6 + 0.4 * coreRatio;
+        if (coreRatio === 1) s *= 1.25; // boost references containing all core terms
+      }
       scored.push({ ref: d.ref, score: s });
     }
     return { list: scored.sort((a, b) => b.score - a.score), qt };
@@ -199,15 +219,15 @@
     const quiz = similarQuestion(q);
     if (!list.length && !quiz) return { kind: 'none', refs: [], confidence: 'none' };
     const top = list[0] ? list[0].score : 0;
-    // Keep the references reasonably close to the best one (at most 3)
-    const chosen = list.filter(x => x.score >= top * 0.55).slice(0, 3);
+    // Keep the references reasonably close to the best one (at most 4)
+    const chosen = list.filter(x => x.score >= top * 0.45).slice(0, 4);
     if (quiz) for (const rc of quiz.q['question-ref'] || []) {
       const r = BY_CODE[rc.toUpperCase()];
       if (r && !chosen.some(c => c.ref === r)) chosen.unshift({ ref: r, score: top });
     }
-    const refs = chosen.slice(0, 3).map((c, i) => ({ ref: c.ref, score: c.score, sentences: bestSentences(c.ref, qt, i === 0 ? 3 : 2) }));
+    const refs = chosen.slice(0, 4).map((c, i) => ({ ref: c.ref, score: c.score, sentences: bestSentences(c.ref, qt, i === 0 ? 3 : 2) }));
     const confidence = quiz ? 'high' : top > 9 ? 'high' : top > 4.5 ? 'medium' : 'low';
-    return { kind: 'search', refs, quiz, confidence, related: list.slice(3, 7).map(x => x.ref) };
+    return { kind: 'search', refs, quiz, confidence, related: list.slice(4, 8).map(x => x.ref) };
   }
 
   // ---------------------------------------------------------------- B. local language model (WebLLM)
@@ -220,17 +240,32 @@
   const TFJS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/transformers.min.js';
   const MODELS = {
     gpu: {
-      light: { label: 'Leggero', size: '≈ 0,4 GB', id: 'Qwen2.5-0.5B-Instruct', note: 'veloce, risposte più semplici' },
-      standard: { label: 'Standard', size: '≈ 1 GB', id: 'Qwen2.5-1.5B-Instruct', note: 'consigliato' },
-      quality: { label: 'Qualità', size: '≈ 2 GB', id: 'Qwen2.5-3B-Instruct', note: 'risposte migliori, serve un dispositivo potente' },
+      light: { label: 'Leggero', size: '≈ 0,4 GB', id: 'Qwen2.5-0.5B-Instruct', note: 'molto veloce, risposte minime', power: 1 },
+      standard: { label: 'Standard', size: '≈ 1 GB', id: 'Qwen2.5-1.5B-Instruct', note: 'consigliato, veloce e bilanciato', power: 2 },
+      quality: { label: 'Qualità', size: '≈ 2 GB', id: 'Qwen2.5-3B-Instruct', note: 'risposte più articolate e precise', power: 3 },
+      ultra: { label: 'Massima precisione', size: '≈ 4,5 GB', id: 'Qwen2.5-7B-Instruct', note: 'qualità superiore, per computer potenti', power: 4 },
     },
     cpu: {
-      light: { label: 'Leggero', size: '≈ 0,5 GB', id: 'onnx-community/Qwen2.5-0.5B-Instruct', note: 'consigliato con il processore' },
-      standard: { label: 'Standard', size: '≈ 1,2 GB', id: 'onnx-community/Qwen2.5-1.5B-Instruct', note: 'più preciso ma lento (meglio su computer)' },
+      light: { label: 'Leggero', size: '≈ 0,5 GB', id: 'onnx-community/Qwen2.5-0.5B-Instruct', note: 'molto rapido, ma risposte meno accurate', power: 1 },
+      standard: { label: 'Standard', size: '≈ 1,2 GB', id: 'onnx-community/Qwen2.5-1.5B-Instruct', note: 'consigliato per risposte affidabili', power: 2 },
     },
   };
+  const CACHED = {}; // engine + modelKey → downloaded already? (undefined: not checked, null: checking, true/false)
+
+  function getCachedModels(kind) {
+    const models = MODELS[kind] || {};
+    return Object.keys(models).filter(k => CACHED[kind + k] === true);
+  }
+
+  function bestCachedModel(kind) {
+    const cached = getCachedModels(kind);
+    if (!cached.length) return null;
+    const models = MODELS[kind] || {};
+    return cached.sort((a, b) => (models[b]?.power || 0) - (models[a]?.power || 0))[0];
+  }
+
   const LLM = {
-    kind: null, lib: null, engine: null, gen: null, stopper: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false, files: {},
+    kind: null, lib: null, libPromise: null, engine: null, gen: null, stopper: null, modelId: null, state: 'off', progress: 0, text: '', f16: true, busy: false, files: {},
     /** Which engine this browser can use: 'gpu', 'cpu' or '' (none), with the reason when WebGPU is not usable. */
     async detect() {
       if (this.kind !== null) return this.kind;
@@ -249,19 +284,43 @@
     models() { return MODELS[this.kind] || MODELS.cpu; },
     choice() {
       let k = 'standard';
-      try { k = localStorage.getItem('fischietto-chatbot-model-' + this.kind) || (this.kind === 'cpu' ? 'light' : 'standard'); } catch (e) { /* private mode */ }
-      return this.models()[k] ? k : Object.keys(this.models())[0];
+      try {
+        k = localStorage.getItem('fischietto-chatbot-model-' + this.kind);
+        // If not set, or if it defaulted to light on cpu previously without explicit user choice, upgrade to standard
+        if (!k || (this.kind === 'cpu' && k === 'light' && !localStorage.getItem('fischietto-chatbot-model-explicit'))) {
+          k = 'standard';
+        }
+      } catch (e) { /* private mode */ }
+      return this.models()[k] ? k : (this.models().standard ? 'standard' : Object.keys(this.models())[0]);
     },
-    setChoice(k) { try { localStorage.setItem('fischietto-chatbot-model-' + this.kind, k); } catch (e) { /* private mode */ } },
+    setChoice(k) {
+      try {
+        localStorage.setItem('fischietto-chatbot-model-' + this.kind, k);
+        localStorage.setItem('fischietto-chatbot-model-explicit', '1');
+      } catch (e) { /* private mode */ }
+    },
+    async loadLib() {
+      if (!this.libPromise) this.libPromise = import(WEBLLM_URL).then(m => (this.lib = m));
+      return this.libPromise;
+    },
     async gpuId(k) {
-      if (!this.lib) this.lib = await import(WEBLLM_URL);
+      await this.loadLib();
       return MODELS.gpu[k].id + (this.f16 ? '-q4f16_1-MLC' : '-q4f32_1-MLC');
     },
-    async cached(k) {
+    async cached(k, preloadedKeys) {
       try {
-        if (this.kind === 'gpu') return await this.lib.hasModelInCache(await this.gpuId(k));
-        const c = await caches.open('transformers-cache');
-        const keys = await c.keys();
+        if (this.kind === 'gpu') {
+          const id = await this.gpuId(k);
+          if (await this.lib.hasModelInCache(id)) return true;
+          const alt = MODELS.gpu[k].id + (this.f16 ? '-q4f32_1-MLC' : '-q4f16_1-MLC');
+          return await this.lib.hasModelInCache(alt);
+        }
+        if (typeof caches === 'undefined') return false;
+        let keys = preloadedKeys;
+        if (!keys) {
+          const c = await caches.open('transformers-cache');
+          keys = await c.keys();
+        }
         return keys.some(r => r.url.includes(MODELS.cpu[k].id + '/') && /\.onnx/.test(r.url));
       } catch (e) { return false; }
     },
@@ -301,7 +360,13 @@
       try {
         let out = '';
         if (this.kind === 'gpu') {
-          const chunks = await this.engine.chat.completions.create({ messages, stream: true, temperature: 0.2, top_p: 0.9, max_tokens: 420 });
+          const chunks = await this.engine.chat.completions.create({
+            messages,
+            stream: true,
+            temperature: 0.1,
+            top_p: 0.9,
+            max_tokens: 450,
+          });
           for await (const c of chunks) {
             const d = c.choices && c.choices[0] && c.choices[0].delta && c.choices[0].delta.content;
             if (d) { out += d; onToken(out); }
@@ -309,8 +374,26 @@
         } else {
           const T = this.tf;
           this.stopper = new T.InterruptableStoppingCriteria();
-          const streamer = new T.TextStreamer(this.gen.tokenizer, { skip_prompt: true, skip_special_tokens: true, callback_function: txt => { out += txt; onToken(out); } });
-          await this.gen(messages, { max_new_tokens: 320, do_sample: false, repetition_penalty: 1.1, streamer, stopping_criteria: this.stopper });
+          const streamer = new T.TextStreamer(this.gen.tokenizer, {
+            skip_prompt: true,
+            skip_special_tokens: true,
+            callback_function: txt => { out += txt; onToken(out); }
+          });
+          const res = await this.gen(messages, {
+            max_new_tokens: 380,
+            do_sample: false,
+            repetition_penalty: 1.0,
+            streamer,
+            stopping_criteria: this.stopper
+          });
+          if (!out && res && res[0]) {
+            const genText = res[0].generated_text;
+            if (typeof genText === 'string') out = genText;
+            else if (Array.isArray(genText) && genText.length) {
+              const last = genText[genText.length - 1];
+              if (last && last.content) out = last.content;
+            }
+          }
         }
         return out;
       } finally { this.busy = false; }
@@ -320,51 +403,102 @@
       if (this.kind === 'gpu' && this.engine) this.engine.interruptGenerate();
       else if (this.stopper) this.stopper.interrupt();
     },
+    async unload() {
+      if (this.busy) this.stop();
+      if (this.kind === 'gpu' && this.engine) {
+        try { await this.engine.unload(); } catch (e) { /* ignore */ }
+        this.engine = null;
+      } else if (this.gen) {
+        if (this.gen.dispose) { try { await this.gen.dispose(); } catch (e) { /* ignore */ } }
+        this.gen = null;
+      }
+      this.modelId = null;
+      this.state = 'off';
+      this.text = '';
+      this.progress = 0;
+      this.busy = false;
+    },
   };
 
-  const SYSTEM_PROMPT = 'Sei l’assistente di Fischietto, un portale per arbitri di pallavolo FIPAV. ' +
-    'Rispondi in italiano, in modo chiaro e breve (al massimo 5 frasi), alla domanda dell’arbitro usando SOLO i riferimenti forniti nel messaggio. ' +
-    'Interpreta la domanda anche se è scritta con parole diverse da quelle del regolamento. ' +
-    'Dopo ogni affermazione cita il codice del riferimento tra parentesi quadre, per esempio [RG-15.4]. ' +
-    'Non inventare regole, numeri o codici. Se i riferimenti non contengono la risposta, scrivi soltanto: «Non trovo la risposta nei riferimenti di Fischietto.»';
+  const SYSTEM_PROMPT =
+    'Sei l’assistente virtuale di Fischietto, il portale per arbitri di pallavolo FIPAV.\n\n' +
+    'LINGUA E INTERPRETAZIONE (VINCOLO CATEGORICO):\n' +
+    '- Tutte le domande dell’arbitro e tutte le tue risposte sono e saranno SEMPRE ed ESCLUSIVAMENTE in lingua ITALIANA.\n' +
+    '- Il tuo ambito di interpretazione concettuale, linguistica e terminologica è limitato rigorosamente alla lingua italiana e al regolamento tecnico di pallavolo FIPAV.\n' +
+    '- Non rispondere mai in altre lingue, non tradurre in altre lingue e non interpretare i termini secondo significati estranei alla pallavolo.\n\n' +
+    'COMPRENSIONE DELLA DOMANDA E APPLICAZIONE DELLE REGOLE:\n' +
+    '- L’arbitro formula spesso quesiti usando espressioni colloquiali o descrivendo casistiche pratiche di gara (es. «toccare la rete a palla lontana», «il libero può fare il capitano?», «il battitore può pestare la linea?»).\n' +
+    '- Il tuo compito è COMPRENDERE il senso pratico del quesito, ricondurlo alle regole ufficiali di pallavolo presenti nei documenti forniti e dedurre la decisione corretta (se l’azione è regolare o fallosa, cosa stabilisce il regolamento ed eventuali eccezioni).\n' +
+    '- Collega sempre il linguaggio pratico della domanda ai concetti regolamentari presenti nei riferimenti.\n\n' +
+    'REGOLE DI RISPOSTA:\n' +
+    '1. Rispondi in modo chiaro, diretto, sicuro e autorevole (circa 3-5 frasi in lingua italiana).\n' +
+    '2. Basa la spiegazione sui riferimenti regolamentari e sui quiz ufficiali forniti nel messaggio, applicandoli al caso specifico chiesto dall’arbitro.\n' +
+    '3. Dopo ogni affermazione, regola o decisione, cita SEMPRE il codice del riferimento tra parentesi quadre, per esempio [RG-5], [RG-11.3.1] o [CAS-19.1].\n' +
+    '4. Non inventare mai regole, numeri o codici inesistenti.\n' +
+    '5. Rispondi con «Non trovo la risposta nei riferimenti di Fischietto.» SOLO ED ESCLUSIVAMENTE se i testi forniti non trattano minimamente il tema del quesito e non contengono regole applicabili.';
 
-  /** Messages for the model: system prompt, the last exchanges (for follow-up questions), the references found. */
-  function buildMessages(question, found, prev) {
-    let ctx = '', budget = LLM.kind === 'cpu' ? 3600 : 6500;
-    if (found.quiz) ctx += '[QUIZ] Domanda: ' + found.quiz.q['question-text'] + ' — Risposta corretta: ' + found.quiz.answer + '\n\n';
+  /** Messages for the model: system prompt, the last exchange (for follow-up questions), the references found. */
+  function buildMessages(question, found, prev = []) {
+    let ctx = '', budget = LLM.kind === 'cpu' ? 3800 : 7000;
+    if (found.quiz) {
+      ctx += 'ESEMPIO DA CASISTICA / QUIZ UFFICIALE FIPAV:\n' +
+        'Quesito: ' + found.quiz.q['question-text'] + '\n' +
+        'Soluzione ufficiale: ' + found.quiz.answer + '\n\n';
+    }
     for (const r of found.refs) {
-      const body = (r.ref['ref-full-text'] || r.ref['ref-text'] || '').replace(/\s+/g, ' ').trim();
-      const piece = '[' + r.ref['ref-code'] + '] ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + ')\n' + body.slice(0, LLM.kind === 'cpu' ? 800 : 1100) + '\n\n';
+      const full = (r.ref['ref-full-text'] || '').trim();
+      const short = (r.ref['ref-text'] || '').trim();
+      const text = full ? (short && !full.includes(short) ? short + '\n' + full : full) : short;
+      const clean = text.replace(/\s+/g, ' ').trim();
+      const maxLen = LLM.kind === 'cpu' ? 950 : 1500;
+      const piece = 'RIFERIMENTO [' + r.ref['ref-code'] + '] ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + '):\n' +
+        (clean.length > maxLen ? clean.slice(0, maxLen) + '…' : clean) + '\n\n';
       if (ctx.length + piece.length > budget) break;
       ctx += piece;
     }
     const msgs = [{ role: 'system', content: SYSTEM_PROMPT }];
-    for (const p of prev.slice(-2)) { msgs.push({ role: 'user', content: p.q }); msgs.push({ role: 'assistant', content: p.a }); }
-    msgs.push({ role: 'user', content: 'Riferimenti:\n' + ctx + 'Domanda: ' + question });
+    // Include at most 1 previous exchange for follow-up context without clutter
+    for (const p of (prev || []).slice(-1)) {
+      msgs.push({ role: 'user', content: 'Domanda dell’arbitro: ' + p.q });
+      msgs.push({ role: 'assistant', content: p.a });
+    }
+    const userPrompt =
+      'DOMANDA DELL’ARBITRO (in lingua italiana):\n«' + question + '»\n\n' +
+      'DOCUMENTI E RIFERIMENTI REGOLAMENTARI FIPAV DA CONSULTARE:\n' +
+      (ctx.trim() || 'Nessun riferimento disponibile.') + '\n\n' +
+      'ISTRUZIONI:\n' +
+      '- Rispondi rigorosamente in lingua ITALIANA alla «DOMANDA DELL’ARBITRO» sopra riportata.\n' +
+      '- Interpreta il quesito pratico e applica le regole e i principi presenti nei riferimenti sopra riportati.\n' +
+      '- Cita sempre il codice tra parentesi quadre dopo ogni regola o decisione (es. [RG-5]).\n' +
+      '- Mantieni la risposta chiara, corretta e concisa (3-5 frasi).\n' +
+      '- Se e solo se i documenti forniti non contengono alcuna regola o principio inerente alla domanda, rispondi testualmente: «Non trovo la risposta nei riferimenti di Fischietto.»';
+
+    msgs.push({ role: 'user', content: userPrompt });
     return msgs;
   }
 
   /** Retrieval used by the assistant: more references, and the previous question for short follow-ups. */
-  function retrieveFor(question, prev) {
+  function retrieveFor(question, prev = []) {
     let q = question;
-    if (prev.length && words(question).length < 6) q = prev[prev.length - 1].q + ' ' + question; // "e per il libero?"
+    if (prev && prev.length && words(question).length < 6) q = prev[prev.length - 1].q + ' ' + question; // "e per il libero?"
     if (!DOCS.length) build();
     const { list, qt } = rank(q);
     const quiz = similarQuestion(question);
     const top = list[0] ? list[0].score : 0;
-    const chosen = list.filter(x => x.score >= top * 0.35).slice(0, 6);
+    const maxRefs = LLM.kind === 'cpu' ? 4 : 5;
+    const chosen = list.filter(x => x.score >= top * 0.32).slice(0, maxRefs);
     if (quiz) for (const rc of quiz.q['question-ref'] || []) {
       const r = BY_CODE[rc.toUpperCase()];
       if (r && !chosen.some(c => c.ref === r)) chosen.unshift({ ref: r, score: top });
     }
-    return { refs: chosen.slice(0, 6), quiz, qt };
+    return { refs: chosen.slice(0, maxRefs), quiz, qt };
   }
 
   // ---------------------------------------------------------------- UI
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = id => document.getElementById(id);
-  const CITE_RE = /\[((?:RG|CAS|IT|NF|VAD)-[0-9][0-9A-Za-z.]*)\]/g;
+  const CITE_RE = /\[((?:RG|CAS|IT|NF|VAD)[-\s]?[0-9][0-9A-Za-z.]*)\]/g;
   const svg = (d, size, fill) => '<svg width="' + (size || 16) + '" height="' + (size || 16) + '" viewBox="0 0 24 24" ' + (fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"') + ' aria-hidden="true">' + d + '</svg>';
   const ICON = {
     send: svg('<path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/>', 18, true),
@@ -376,6 +510,10 @@
     search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', 14),
     plus: svg('<path d="M12 5v14M5 12h14"/>', 16),
     chevron: svg('<path d="m6 9 6 6 6-6"/>', 16),
+    trash: svg('<path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>', 14),
+    user: svg('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 14),
+    external: svg('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>', 12),
+    shield: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 12),
   };
 
   /** Highlights the words of the question in a sentence. */
@@ -385,24 +523,61 @@
   /** Model text → HTML: [RG-15.4] become buttons that open the reference, **bold**, line breaks. */
   function formatAnswer(text) {
     return esc(text)
+      .replace(/([A-Za-z0-9À-ÿ])\[/g, '$1 [')
+      .replace(/\]([A-Za-z0-9À-ÿ])/g, '] $1')
+      .replace(/\]\[/g, '] [')
+      .replace(/\s+([,.;:!?])/g, '$1')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(CITE_RE, (m, c) => BY_CODE[c.toUpperCase()]
-        ? '<button type="button" class="cb-cite" data-ref="' + c + '" title="Leggi il riferimento ' + c + '">' + c + '</button>'
-        : '<span class="cb-cite bad" title="Codice non trovato nei riferimenti">' + c + '</span>')
+      .replace(CITE_RE, (m, raw) => {
+        const clean = raw.replace(/\.+$/, '').replace(/\s+/, '-').toUpperCase();
+        const r = BY_CODE[clean];
+        const srcCls = r ? (SRC_CLASS[r['ref-from']] || 'rg') : 'bad';
+        return r
+          ? '<button type="button" class="cb-cite cb-cite-' + srcCls + '" data-ref="' + clean + '" title="Leggi il riferimento ' + clean + ' (' + esc(r['ref-from']) + ' · ' + esc(r['ref-title']) + ')">' + clean + '</button>'
+          : '<span class="cb-cite bad" title="Codice non trovato nei riferimenti">' + esc(raw) + '</span>';
+      })
+      .replace(/\s+([,.;:!?])/g, '$1')
       .replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
   }
   const SRC_CLASS = { 'Regole di gioco': 'rg', 'Casistica': 'cas', 'Indicazioni tecniche': 'it', 'Normative federali': 'nf', 'Vademecum': 'vad' };
-  const EXAMPLES = [
-    'Quanto è alta la rete per le donne?',
-    'Quante sostituzioni può fare una squadra in un set?',
-    'Il libero può alzare in palleggio davanti alla linea dei 3 metri?',
-    'Se un giocatore tocca la rete mentre la palla è dall’altra parte, è fallo?',
-    'Quanto dura un tempo di riposo?',
-    'Il battitore può pestare la linea di fondo?',
+  const EXAMPLE_GROUPS = [
+    {
+      category: 'Regole & Misure',
+      icon: svg('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/>', 14),
+      items: [
+        'Quanto è alta la rete per le donne?',
+        'Quante sostituzioni può fare una squadra in un set?',
+      ],
+    },
+    {
+      category: 'Libero & Ruoli',
+      icon: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 14),
+      items: [
+        'Il libero può fare il capitano?',
+        'Il libero può alzare in palleggio davanti alla linea dei 3 metri?',
+      ],
+    },
+    {
+      category: 'Falli & Rete',
+      icon: svg('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>', 14),
+      items: [
+        'Se un giocatore tocca la rete mentre la palla è dall’altra parte, è fallo?',
+        'Il battitore può pestare la linea di fondo?',
+      ],
+    },
+    {
+      category: 'Tempi & Protocolli',
+      icon: svg('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 14),
+      items: [
+        'Quanto dura un tempo di riposo?',
+        'Cosa succede se la palla tocca l’antenna?',
+      ],
+    },
   ];
+  const EXAMPLES = EXAMPLE_GROUPS.flatMap(g => g.items);
   const ENGINE = { gpu: 'scheda grafica (WebGPU)', cpu: 'processore' };
   const STORE = 'fischietto-chatbot';
-  let history = [];   // { role: 'user', text } | { role: 'bot', q, mode: 'search' | 'ai', a, refs: [codes], done, error, stopped }
+  let history = [];   // { role: 'user', text } | { role: 'bot', q, mode: 'search' | 'ai', modelKey, modelLabel, modelId, engineKind, a, refs: [codes], done, error, stopped }
   let mounted = false;
   let statusOpen = false;
   let stopRequested = false;
@@ -435,23 +610,30 @@
     return '<details class="cb-ref"><summary class="cb-ref-head">' + refHead(ref) + '<span class="cb-chev">' + ICON.chevron + '</span></summary><div class="cb-ref-body">' + body + '</div></details>';
   }
   function refChip(ref, on) {
-    return '<button type="button" class="cb-chip cb-chip-ref' + (on ? ' on' : '') + '" data-ref="' + esc(ref['ref-code']) + '" title="' + esc(ref['ref-code'] + ' · ' + ref['ref-title']) + '"><b>' + esc(ref['ref-code']) + '</b><span>' + esc(ref['ref-title']) + '</span></button>';
+    const srcCls = SRC_CLASS[ref['ref-from']] || 'rg';
+    return '<button type="button" class="cb-chip cb-chip-ref' + (on ? ' on' : '') + '" data-ref="' + esc(ref['ref-code']) + '" title="' + esc(ref['ref-code'] + ' · ' + ref['ref-title']) + '">' +
+      '<span class="cb-src cb-src-' + srcCls + '">' + esc(ref['ref-code']) + '</span>' +
+      '<span class="cb-chip-title">' + esc(ref['ref-title']) + '</span>' +
+      '<span class="cb-chip-icon">' + ICON.external + '</span>' +
+      '</button>';
   }
 
   function renderSearch(m) {
     const a = found(m);
     if (a.kind === 'none') {
-      return '<p>Non ho trovato niente di pertinente nei riferimenti.</p>' +
-        '<p class="cb-hint">Prova con altre parole, magari quelle del regolamento (per esempio «servizio» invece di «battuta»), oppure scrivi direttamente un codice come <button type="button" class="cb-cite" data-ask="RG-15.4">RG-15.4</button>.</p>';
+      return '<div class="cb-empty-search">' +
+        '<p class="cb-empty-title">Nessun passaggio pertinente trovato</p>' +
+        '<p class="cb-hint">Prova a formulare la domanda con parole diverse (es. usando i termini del regolamento), oppure cerca direttamente un codice come <button type="button" class="cb-cite cb-cite-rg" data-ask="RG-15.4">RG-15.4</button>.</p>' +
+        '</div>';
     }
     const qt = queryTerms(m.q);
     let html = '';
-    if (a.quiz) html += '<div class="cb-quiz"><span class="cb-label">Dal quiz</span><p class="cb-qtext">' + esc(a.quiz.q['question-text']) + '</p><p class="cb-qans">' + ICON.check + '<strong>' + esc(a.quiz.answer) + '</strong></p></div>';
+    if (a.quiz) html += '<div class="cb-quiz"><div class="cb-quiz-head">' + ICON.check + '<span class="cb-label">Dal quiz ufficiale FIPAV</span></div><p class="cb-qtext">' + esc(a.quiz.q['question-text']) + '</p><div class="cb-qans"><strong>Soluzione:</strong> <span>' + esc(a.quiz.answer) + '</span></div></div>';
     a.refs.forEach((r, i) => {
-      if (i === 1) html += '<span class="cb-label cb-label-more">Altri riferimenti</span>';
+      if (i === 1) html += '<div class="cb-divider"><span>Altri riferimenti pertinenti</span></div>';
       html += refBlock(r.ref, r.sentences, qt, i === 0);
     });
-    if (a.related && a.related.length) html += '<div class="cb-related"><span class="cb-label">Vedi anche</span>' + a.related.map(r => refChip(r)).join('') + '</div>';
+    if (a.related && a.related.length) html += '<div class="cb-related"><span class="cb-label">Vedi anche nel regolamento</span>' + a.related.map(r => refChip(r)).join('') + '</div>';
     return html;
   }
 
@@ -460,22 +642,38 @@
     const used = (m.refs || []).map(c => BY_CODE[c]).filter(Boolean);
     let html;
     if (m.a) html = '<div class="cb-ai"><p>' + formatAnswer(m.a) + (m.done ? '' : '<span class="cb-caret"></span>') + '</p></div>';
-    else if (!m.done) html = '<p class="cb-thinking"><span class="cb-typing"><i></i><i></i><i></i></span>Leggo ' + (used.length === 1 ? 'il riferimento trovato' : 'i ' + used.length + ' riferimenti trovati') + (LLM.kind === 'cpu' ? '… con il processore la prima parola può arrivare dopo qualche secondo.' : '…') + '</p>';
+    else if (!m.done) html = '<div class="cb-thinking"><span class="cb-typing"><i></i><i></i><i></i></span><span>Consulto ' + (used.length === 1 ? 'il riferimento pertinente' : 'i ' + used.length + ' riferimenti pertinenti') + (m.engineKind === 'cpu' || LLM.kind === 'cpu' ? ' (elaborazione su processore)…' : '…') + '</span></div>';
     else html = '';
-    if (m.stopped) html += '<p class="cb-note">Risposta interrotta.</p>';
-    if (m.error) html += '<p class="cb-error">L’assistente si è fermato per un errore: ' + esc(m.error) + '</p>';
+    if (m.stopped) html += '<p class="cb-note">Risposta interrotta dall’utente.</p>';
+    if (m.error) html += '<div class="cb-error">' + svg('<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>', 16) + '<span>L’assistente si è fermato per un errore: ' + esc(m.error) + '</span></div>';
     if (m.done && used.length) {
-      html += '<details class="cb-sources"' + (cited.size ? '' : ' open') + '><summary>' + ICON.chevron + 'Riferimenti consultati (' + used.length + ')</summary><div class="cb-related">' +
+      html += '<details class="cb-sources"' + (cited.size ? '' : ' open') + '><summary>' + ICON.chevron + '<span>Riferimenti normativi consultati (' + used.length + ')</span></summary><div class="cb-related">' +
         used.map(r => refChip(r, cited.has(r['ref-code'].toUpperCase()))).join('') + '</div></details>';
     }
     return html;
   }
 
   function botMeta(m) {
-    if (m.mode === 'ai') return '<span class="cb-who cb-who-ai">' + ICON.spark + 'Assistente · AI locale</span>';
+    if (m.mode === 'ai') {
+      const modelKey = m.modelKey || LLM.choice();
+      const models = LLM.models();
+      const M = models[modelKey] || {};
+      const label = m.modelLabel || M.label || 'Standard';
+      const techId = (m.modelId || M.id || '').replace('onnx-community/', '');
+      const engineText = m.engineKind === 'gpu' ? 'GPU' : m.engineKind === 'cpu' ? 'CPU' : (LLM.kind === 'gpu' ? 'GPU' : 'CPU');
+      return '<div class="cb-meta-pills">' +
+        '<span class="cb-pill cb-pill-ai">' + ICON.spark + ' <span>Assistente AI</span></span>' +
+        '<span class="cb-pill cb-pill-model" title="' + (techId ? esc(techId) + ' · ' : '') + engineText + '"><strong>' + esc(label) + '</strong>' + (techId ? ' <small class="cb-model-tech">(' + esc(techId) + ')</small>' : '') + '</span>' +
+        '<span class="cb-pill cb-pill-local" title="Elaborato interamente sul tuo dispositivo con ' + engineText + '">' + ICON.shield + ' <span>In locale (' + engineText + ')</span></span>' +
+        '</div>';
+    }
     const a = found(m);
-    const conf = a.kind === 'code' ? ['ok', 'Riferimento'] : { high: ['ok', 'Risposta trovata'], medium: ['mid', 'Possibile risposta'], low: ['low', 'Incerta: controlla le fonti'] }[a.confidence];
-    return '<span class="cb-who">' + ICON.search + 'Ricerca nei riferimenti</span>' + (conf ? '<span class="cb-conf cb-conf-' + conf[0] + '">' + conf[1] + '</span>' : '');
+    const conf = a.kind === 'code' ? ['ok', 'Riferimento diretto'] : { high: ['ok', 'Risposta trovata'], medium: ['mid', 'Possibile risposta'], low: ['low', 'Incerta: verifica le fonti'] }[a.confidence];
+    return '<div class="cb-meta-pills">' +
+      '<span class="cb-pill cb-pill-search">' + ICON.search + ' <span>Ricerca nei riferimenti</span></span>' +
+      '<span class="cb-pill cb-pill-model"><strong>BM25</strong></span>' +
+      (conf ? '<span class="cb-pill cb-conf-' + conf[0] + '"><span>' + conf[1] + '</span></span>' : '') +
+      '</div>';
   }
 
   function botActions(m) {
@@ -489,19 +687,47 @@
   }
 
   function msgInner(m) {
-    if (m.role === 'user') return '<div class="cb-bubble">' + esc(m.text) + '</div>';
-    return '<div class="cb-bubble"><div class="cb-meta">' + botMeta(m) + '</div><div class="cb-body">' + (m.mode === 'ai' ? renderAi(m) : renderSearch(m)) + '</div>' + botActions(m) + '</div>';
+    if (m.role === 'user') {
+      return '<div class="cb-bubble">' + esc(m.text) + '</div>';
+    }
+    return '<div class="cb-bubble">' +
+      botMeta(m) +
+      '<div class="cb-body">' + (m.mode === 'ai' ? renderAi(m) : renderSearch(m)) + '</div>' +
+      botActions(m) +
+      '</div>';
   }
   const msgHtml = (m, i) => '<div class="cb-msg cb-' + m.role + '" data-i="' + i + '">' + msgInner(m) + '</div>';
   const msgNode = i => document.querySelector('#cb-log .cb-msg[data-i="' + i + '"]');
 
   function welcomeHtml() {
+    const isAi = LLM.state === 'ready';
+    const curModel = LLM.models()[LLM.choice()] || {};
     return '<div class="cb-welcome">' +
-      '<span class="cb-welcome-icon">' + svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', 22) + '</span>' +
-      '<h2>Fai una domanda sul regolamento</h2>' +
-      '<p>Scrivi con parole tue: cerco la risposta nei ' + REFS.length + ' riferimenti e nelle ' + QUESTIONS.length + ' domande del quiz' +
-      (LLM.state === 'ready' ? ' e l’assistente te la spiega, citando i riferimenti.' : ', e ti mostro i passaggi che rispondono.') + ' Puoi anche scrivere un codice, come RG-15.4.</p>' +
-      '<span class="cb-label">Prova con</span><div class="cb-examples">' + EXAMPLES.map(e => '<button type="button" class="cb-chip" data-ask="' + esc(e) + '">' + esc(e) + '</button>').join('') + '</div></div>';
+      '<div class="cb-welcome-hero">' +
+      '<div class="cb-welcome-icon-wrap">' +
+      '<span class="cb-welcome-icon">' + (isAi ? ICON.spark : ICON.search) + '</span>' +
+      '</div>' +
+      '<div class="cb-welcome-badge">' + (isAi ? 'Assistente AI attivo · ' + esc(curModel.label || 'Standard') : 'Modalità ricerca diretta') + '</div>' +
+      '<h2>Come posso aiutarti sul regolamento?</h2>' +
+      '<p class="cb-welcome-desc">Scrivi una domanda con parole tue o inserisci un codice regolamentare (es. <button type="button" class="cb-cite cb-cite-rg" data-ask="RG-15.4">RG-15.4</button>). ' +
+      'Le risposte sono elaborate sul tuo dispositivo da <strong>' + REFS.length + ' riferimenti</strong> e <strong>' + QUESTIONS.length + ' quiz</strong> ufficiali FIPAV.</p>' +
+      '</div>' +
+      '<div class="cb-welcome-pills">' +
+      '<span class="cb-pill-item">' + ICON.shield + ' 100% in locale</span>' +
+      '<span class="cb-pill-item">' + ICON.check + ' Nessun dato condiviso</span>' +
+      '<span class="cb-pill-item">' + ICON.check + ' Fonti ufficiali FIPAV</span>' +
+      '</div>' +
+      '<div class="cb-welcome-cards">' +
+      EXAMPLE_GROUPS.map(g =>
+        '<div class="cb-example-card">' +
+        '<div class="cb-example-card-head">' + g.icon + '<strong>' + esc(g.category) + '</strong></div>' +
+        '<div class="cb-example-card-items">' +
+        g.items.map(q => '<button type="button" class="cb-example-btn" data-ask="' + esc(q) + '"><span>' + esc(q) + '</span><span class="cb-example-arrow">→</span></button>').join('') +
+        '</div>' +
+        '</div>'
+      ).join('') +
+      '</div>' +
+      '</div>';
   }
 
   /** Full repaint (opening, new conversation, assistant switched on). */
@@ -529,12 +755,16 @@
 
   /** Plain text of an answer, for "Copia". */
   function plainText(m) {
+    let header = '';
     if (m.mode === 'ai') {
+      const label = m.modelLabel || (LLM.models()[m.modelKey || LLM.choice()] || {}).label || 'Standard';
+      header = '[Fischietto AI · ' + label + ']\n';
       const used = (m.refs || []).map(c => BY_CODE[c]).filter(Boolean);
-      return m.a.trim() + (used.length ? '\n\nRiferimenti consultati: ' + used.map(r => r['ref-code'] + ' (' + r['ref-title'] + ')').join(', ') : '');
+      return header + m.a.trim() + (used.length ? '\n\nRiferimenti consultati: ' + used.map(r => r['ref-code'] + ' (' + r['ref-title'] + ')').join(', ') : '');
     }
+    header = '[Ricerca nei riferimenti · BM25]\n';
     const a = found(m);
-    let t = '';
+    let t = header;
     if (a.quiz) t += 'Dal quiz: ' + a.quiz.q['question-text'] + ' → ' + a.quiz.answer + '\n\n';
     t += a.refs.map(r => r.ref['ref-code'] + ' · ' + r.ref['ref-title'] + ' (' + r.ref['ref-from'] + ')\n' + r.sentences.join(' ')).join('\n\n');
     return t;
@@ -564,7 +794,7 @@
     // Without the assistant, or when nothing pertinent is found (the model would have nothing to read): search answer
     const ctx = LLM.state === 'ready' ? retrieveFor(text, aiPrev(ui)) : null;
     if (!ctx || (!ctx.refs.length && !ctx.quiz)) {
-      const m = { role: 'bot', q: text, mode: 'search' };
+      const m = { role: 'bot', q: text, mode: 'search', engineName: 'Ricerca nei riferimenti' };
       history.push(m);
       appendMsg(history.length - 1);
       save(); reveal(ui);
@@ -572,10 +802,23 @@
       announce(a.kind === 'none' ? 'Nessun riferimento pertinente' : 'Risposta trovata in ' + a.refs.map(r => r.ref['ref-code']).join(', '));
       return true;
     }
-    history.push({ role: 'bot', q: text, mode: 'ai', a: '', refs: [], done: false });
-    appendMsg(history.length - 1);
-    reveal(ui);
-    runAi(history.length - 1);
+    const curKey = LLM.choice();
+    const curM = LLM.models()[curKey] || {};
+    const bi = history.push({
+      role: 'bot',
+      q: text,
+      mode: 'ai',
+      modelKey: curKey,
+      modelLabel: curM.label || 'Standard',
+      modelId: (LLM.modelId || curM.id || '').replace('onnx-community/', ''),
+      engineKind: LLM.kind || 'gpu',
+      a: '',
+      refs: ctx.refs.map(r => r.ref['ref-code']),
+      done: false
+    }) - 1;
+    appendMsg(bi);
+    save(); reveal(ui);
+    runAi(bi, ctx);
     return true;
   }
 
@@ -585,11 +828,24 @@
   }
 
   /** Writes (or rewrites) the assistant's answer of history[i]. */
-  async function runAi(i) {
+  async function runAi(i, precomputedCtx) {
     const m = history[i];
     const prev = aiPrev(i);
-    const ctx = retrieveFor(m.q, prev);
-    Object.assign(m, { mode: 'ai', a: '', refs: ctx.refs.map(r => r.ref['ref-code'].toUpperCase()), done: false, error: '', stopped: false });
+    const ctx = precomputedCtx || retrieveFor(m.q, prev);
+    const curKey = LLM.choice();
+    const curM = LLM.models()[curKey] || {};
+    Object.assign(m, {
+      mode: 'ai',
+      modelKey: curKey,
+      modelLabel: curM.label || 'Standard',
+      modelId: (LLM.modelId || curM.id || '').replace('onnx-community/', ''),
+      engineKind: LLM.kind || 'gpu',
+      a: '',
+      refs: ctx.refs.map(r => r.ref['ref-code'].toUpperCase()),
+      done: false,
+      error: '',
+      stopped: false
+    });
     stopRequested = false;
     updateMsg(i); setBusy(true);
     announce('L’assistente sta scrivendo la risposta');
@@ -602,7 +858,7 @@
     } catch (e) {
       m.error = (e && e.message) || String(e);
     }
-    m.a = (m.a || '').trim();
+    m.a = (m.a || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
     if (!m.a && !m.error && !stopRequested) m.a = 'Non trovo la risposta nei riferimenti di Fischietto.';
     m.stopped = stopRequested;
     m.done = true;
@@ -670,13 +926,105 @@
 
   // ---------------------------------------------------------------- UI: assistant status
 
+  let checkingCachePromise = null;
+  async function checkAllCached(kind) {
+    if (!kind) return;
+    if (checkingCachePromise) return checkingCachePromise;
+    checkingCachePromise = (async () => {
+      const models = MODELS[kind] || {};
+      let preloadedKeys = null;
+      if (kind === 'cpu' && typeof caches !== 'undefined') {
+        try {
+          const c = await caches.open('transformers-cache');
+          preloadedKeys = await c.keys();
+        } catch (e) { /* ignore */ }
+      }
+      await Promise.all(Object.keys(models).map(async k => {
+        if (CACHED[kind + k] === true) return;
+        try {
+          const res = await Promise.race([
+            LLM.cached(k, preloadedKeys),
+            new Promise(r => setTimeout(() => r(false), 7000))
+          ]);
+          CACHED[kind + k] = !!res;
+        } catch (e) {
+          CACHED[kind + k] = false;
+        }
+      }));
+    })();
+    return checkingCachePromise;
+  }
+
+  let autoActivated = false;
+  async function initAutoActivation() {
+    try {
+      if (sessionStorage.getItem('fischietto-chatbot-mode') === 'search') {
+        paintStatus();
+        return;
+      }
+    } catch (e) { /* private mode */ }
+    const kind = await LLM.detect();
+    if (!kind) return;
+    await checkAllCached(kind);
+    paintStatus();
+    if (!autoActivated && LLM.state === 'off' && !LLM.busy) {
+      const best = bestCachedModel(kind);
+      if (best) {
+        autoActivated = true;
+        LLM.setChoice(best);
+        LLM.load(best, onLlmProgress);
+        return;
+      }
+    }
+  }
+
+  async function disableAssistant() {
+    try { sessionStorage.setItem('fischietto-chatbot-mode', 'search'); } catch (e) { /* private mode */ }
+    await LLM.unload();
+    paintStatus();
+    paint();
+    announce('Modalità ricerca attiva. L’assistente è disattivato.');
+  }
+
+  function enableAssistant() {
+    try { sessionStorage.removeItem('fischietto-chatbot-mode'); } catch (e) { /* private mode */ }
+    LLM.load(LLM.choice(), onLlmProgress);
+  }
+
   function modelPicker(cur) {
-    return '<span class="cb-label">Modello</span><div class="cb-models" role="radiogroup" aria-label="Modello dell’assistente">' + Object.entries(LLM.models()).map(([k, M]) =>
-      '<button type="button" class="cb-model' + (k === cur ? ' sel' : '') + '" role="radio" aria-checked="' + (k === cur) + '" data-model="' + k + '"><strong>' + M.label + '</strong><small>' + M.size + ' · ' + M.note + '</small></button>').join('') + '</div>';
+    const list = Object.entries(LLM.models()).sort((a, b) => (a[1].power || 0) - (b[1].power || 0));
+    return '<span class="cb-label">Modello</span><div class="cb-models" role="radiogroup" aria-label="Modello dell’assistente">' + list.map(([k, M]) => {
+      const isCached = CACHED[LLM.kind + k] === true;
+      const tag = isCached
+        ? '<span class="cb-model-tag" title="File già scaricati sul dispositivo: nessun download necessario">' + ICON.check + '<span>Scaricato</span></span>'
+        : '';
+      return '<button type="button" class="cb-model' + (k === cur ? ' sel' : '') + (isCached ? ' cached' : '') + '" role="radio" aria-checked="' + (k === cur) + '" data-model="' + k + '">' +
+        '<div class="cb-model-head"><strong>' + M.label + '</strong>' + tag + '</div>' +
+        '<small>' + M.size + ' · ' + M.note + '</small>' +
+        '</button>';
+    }).join('') + '</div>';
+  }
+
+  function paintComposerMode() {
+    const el = $('cb-mode-indicator');
+    if (!el) return;
+    const k = LLM.choice(), M = (LLM.models() || {})[k] || {};
+    if (LLM.state === 'ready') {
+      el.className = 'cb-mode-indicator is-ai';
+      el.innerHTML = ICON.spark + '<span>Assistente AI · <strong>' + esc(M.label || 'Standard') + '</strong></span>';
+    } else if (LLM.state === 'loading') {
+      const pct = Math.round(LLM.progress * 100);
+      el.className = 'cb-mode-indicator is-load';
+      el.innerHTML = ICON.spark + '<span>Download ' + pct + '% · Ricerca</span>';
+    } else {
+      el.className = 'cb-mode-indicator is-search';
+      el.innerHTML = ICON.search + '<span>Ricerca nei riferimenti</span>';
+    }
   }
 
   /** Status of the assistant: checking / unsupported / off / downloading x% / ready / error. */
   async function paintStatus() {
+    paintComposerMode();
     const box = $('cb-status');
     if (!box) return;
     const kind = await LLM.detect();
@@ -685,50 +1033,61 @@
     if (!kind) {
       box.className = 'cb-status';
       box.innerHTML = row('off', 'Modalità ricerca', 'Rispondo con i passaggi più pertinenti dei riferimenti. Questo browser non può far girare l’assistente AI locale.');
+      paintComposerMode();
       return;
     }
     const k = LLM.choice(), M = LLM.models()[k];
     box.className = 'cb-status cb-st-' + LLM.state;
     if (LLM.state === 'loading') {
       const pct = Math.round(LLM.progress * 100);
-      box.innerHTML = row('load', 'Preparo l’assistente · ' + M.label + ' · ' + pct + '%', 'Intanto puoi già fare domande: rispondo con la ricerca.') +
+      box.innerHTML = row('load', 'Preparo l’assistente · ' + M.label + ' · ' + pct + '%',
+        'Intanto puoi già fare domande: rispondo con la ricerca.',
+        '<button type="button" class="btn btn-secondary btn-sm" id="cb-cancel-load">Passa alla ricerca</button>') +
         '<div class="cb-bar" role="progressbar" aria-label="Download del modello" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>' +
         '<small class="cb-st-file">' + esc(String(LLM.text || '').slice(0, 140)) + '</small>';
+      const cancelBtn = $('cb-cancel-load');
+      if (cancelBtn) cancelBtn.onclick = disableAssistant;
+      paintComposerMode();
       return;
     }
     let details = '';
     if (LLM.state === 'ready') {
-      box.innerHTML = row('on', 'Assistente AI attivo', 'Modello ' + M.label + ' sul tuo dispositivo, con il ' + ENGINE[kind] + '.', more);
+      box.innerHTML = row('on', 'Assistente AI attivo', 'Modello ' + M.label + ' sul tuo dispositivo, con il ' + ENGINE[kind] + '.',
+        '<button type="button" class="btn btn-secondary btn-sm" id="cb-disable" title="Disattiva l’assistente AI e passa alla semplice ricerca">' + ICON.search + '<span>Passa alla ricerca</span></button>' + more);
       details = '<p>Interpreta la domanda (anche le domande di seguito, come «e per il Libero?») e risponde usando solo i riferimenti trovati, citandone i codici.' +
-        (kind === 'cpu' ? ' Con il processore la prima parola può arrivare dopo qualche secondo, poi la risposta si scrive man mano.' : '') + '</p>' + modelPicker(k);
+        (kind === 'cpu' ? ' Con il processore la prima parola può arrivare dopo qualche secondo, poi la risposta si scrive man mano.' : '') + '</p>' +
+        '<p><button type="button" class="cb-link" id="cb-disable-link">Disattiva l’assistente e usa solo la semplice ricerca</button></p>' +
+        modelPicker(k);
     } else {
-      // Whether the model is already downloaded: checked in the background (WebLLM comes from the CDN)
       const cached = CACHED[kind + k];
       if (cached === undefined) {
-        CACHED[kind + k] = null;
-        Promise.race([LLM.cached(k), new Promise(r => setTimeout(() => r(false), 8000))]).catch(() => false)
-          .then(v => { CACHED[kind + k] = !!v; if (LLM.state === 'off' || LLM.state === 'error') paintStatus(); });
+        checkAllCached(kind).then(() => { if (LLM.state === 'off' || LLM.state === 'error') paintStatus(); });
       }
       const err = LLM.state === 'error';
       box.innerHTML = row(err ? 'err' : 'off', err ? 'L’assistente non si è avviato' : 'Modalità ricerca',
         err ? esc(String(LLM.text || '').slice(0, 200)) : 'Rispondo con i passaggi dei riferimenti. L’assistente AI scrive la risposta con parole sue' + (cached === true ? ' (il modello è già scaricato).' : cached === false ? ' (al primo avvio scarica ' + M.size + ').' : '.'),
         '<button type="button" class="btn btn-primary btn-sm" id="cb-enable">' + ICON.spark + (err ? 'Riprova' : 'Attiva l’assistente') + '</button>' + more);
-      details = '<p>L’assistente è un piccolo modello linguistico che gira <strong>sul tuo dispositivo</strong>, con il ' + ENGINE[kind] + ': legge solo i riferimenti trovati e scrive la risposta citandoli. Le domande non lasciano mai il dispositivo.</p>' +
-        '<p>' + (cached ? 'Il modello ' + M.label + ' è già scaricato.' : 'Il modello si scarica una volta sola (' + M.label + ': ' + M.size + ') e resta nel browser: le volte successive si avvia in pochi secondi.') + '</p>' +
+      details = '<p>L’assistente è un modello linguistico che gira <strong>sul tuo dispositivo</strong>, con il ' + ENGINE[kind] + ': riceve domande solo in italiano, legge i riferimenti trovati e scrive la risposta citandoli. Le domande non lasciano mai il dispositivo.</p>' +
+        '<p>' + (cached ? 'Il modello ' + M.label + ' è già scaricato.' : 'I modelli con l’etichetta «Scaricato» sono già presenti sul dispositivo e non richiedono download; per gli altri si scaricano i file al primo avvio (' + M.label + ': ' + M.size + ').') + '</p>' +
         (kind === 'cpu' && LLM.gpuNote ? '<p class="cb-st-note">' + esc(LLM.gpuNote) + ': uso il motore compatibile, più lento. Con Chrome o Edge le risposte arrivano prima.</p>' : '') +
         modelPicker(k);
-      $('cb-enable').onclick = () => LLM.load(LLM.choice(), onLlmProgress);
+      $('cb-enable').onclick = enableAssistant;
     }
     box.insertAdjacentHTML('beforeend', '<div class="cb-st-more" id="cb-st-more"' + (statusOpen ? '' : ' hidden') + '>' + details + '</div>');
     $('cb-more').onclick = () => { statusOpen = !statusOpen; paintStatus(); };
+    const disableBtn = $('cb-disable');
+    if (disableBtn) disableBtn.onclick = disableAssistant;
+    const disableLink = $('cb-disable-link');
+    if (disableLink) disableLink.onclick = disableAssistant;
     box.querySelectorAll('[data-model]').forEach(b => b.onclick = () => {
       const was = LLM.choice();
       LLM.setChoice(b.dataset.model);
+      try { sessionStorage.removeItem('fischietto-chatbot-mode'); } catch (e) { /* private mode */ }
       if (LLM.state === 'ready' && b.dataset.model !== was) LLM.load(b.dataset.model, onLlmProgress);
-      else paintStatus();
+      else { paintStatus(); if (!history.length) paint(); }
     });
+    paintComposerMode();
   }
-  const CACHED = {}; // engine + model → downloaded already? (undefined: not checked, null: checking)
   let wasReady = false;
   function onLlmProgress() {
     paintStatus();
@@ -748,18 +1107,30 @@
     load();
     const form = $('cb-form');
     const input = $('cb-input');
+    const counter = $('cb-counter');
+    const updateCounter = () => {
+      if (!counter || !input) return;
+      const len = input.value.length;
+      if (len > 0) {
+        counter.textContent = len + ' / 600';
+        counter.classList.toggle('is-warn', len > 500);
+      } else {
+        counter.textContent = '';
+        counter.classList.remove('is-warn');
+      }
+    };
     const fit = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; };
     form.addEventListener('submit', e => {
       e.preventDefault();
       if (LLM.busy) { stop(); return; }
-      if (ask(input.value)) { input.value = ''; fit(); setBusy(LLM.busy); }
+      if (ask(input.value)) { input.value = ''; fit(); updateCounter(); setBusy(LLM.busy); }
     });
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!LLM.busy) form.requestSubmit(); }
       else if (e.key === 'Escape' && LLM.busy) { e.preventDefault(); stop(); }
     });
-    input.addEventListener('input', () => { fit(); setBusy(LLM.busy); });
-    $('cb-clear').addEventListener('click', () => { stop(); history = []; save(); paint(); input.focus(); announce('Nuova conversazione'); });
+    input.addEventListener('input', () => { fit(); updateCounter(); setBusy(LLM.busy); });
+    $('cb-clear').addEventListener('click', () => { stop(); history = []; save(); paint(); input.value = ''; fit(); updateCounter(); input.focus(); announce('Nuova conversazione'); });
     $('cb-log').addEventListener('click', e => {
       const b = e.target.closest('[data-ask],[data-ref],[data-act]');
       if (!b) return;
@@ -773,13 +1144,16 @@
     });
     paint();
     setBusy(false);
+    updateCounter();
     paintStatus();
+    initAutoActivation();
   }
 
   window.Chatbot = {
     open() {
       mount();
       setTimeout(() => { const i = $('cb-input'); if (i && matchMedia('(pointer: fine)').matches) i.focus({ preventScroll: true }); }, 50);
+      initAutoActivation();
     },
     answer, retrieveFor, buildMessages,
   };
