@@ -258,7 +258,7 @@ button.list-row, a.list-row { cursor: pointer; }
 }
 .field .input:hover { background: var(--surface-3); }
 .field textarea.input { resize: vertical; min-height: 88px; padding-top: 20px; }
-.field select.input { appearance: none; padding-right: 40px; cursor: pointer; }
+.field select.input { -webkit-appearance: none; appearance: none; padding-right: 36px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .field .chev { position: absolute; right: 12px; top: 15px; pointer-events: none; color: var(--muted); }
 .field select.input option { background: var(--surface); color: var(--text); }
 .field label {
@@ -267,11 +267,15 @@ button.list-row, a.list-row { cursor: pointer; }
 }
 .field .input:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
 .field .input:focus + label, .field .input:not(:placeholder-shown) + label, .field select.input + label, .field input[type=date].input + label { top: 7px; font-size: .72rem; font-weight: 600; }
+.field input[type=date].input { min-width: 0; display: block; }
+.field input[type=date].input::-webkit-date-and-time-value { text-align: left; }
+.field input[type=date].input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .6; }
+.field input[type=date].input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .field .input:focus + label { color: var(--primary); }
 .field .input[readonly] { background: transparent; border-color: var(--outline-variant); }
 .field .hint { font-size: .76rem; margin: 4px 14px 0; color: var(--muted); }
-.field-row { display: flex; gap: 10px; }
-.field-row > .field { flex: 1; min-width: 0; }
+.field-row { display: flex; gap: 10px; margin: 12px 0; }
+.field-row > .field { flex: 1; min-width: 0; margin: 0; }
 .check { display: flex; align-items: center; gap: 14px; padding: 10px 2px; cursor: pointer; font-size: .95rem; }
 .check input { width: 20px; height: 20px; accent-color: var(--primary); flex: none; margin: 0; }
 .check.right { justify-content: space-between; }
@@ -299,13 +303,34 @@ button.list-row, a.list-row { cursor: pointer; }
 .chip .x { display: inline-grid; margin-right: -6px; opacity: .7; }
 
 /* Icon picker & Nutri-Score */
-.icon-picker { max-width: 100%; display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; margin: 4px 0; scrollbar-width: thin; }
-.icon-picker button { flex: none; width: 56px; height: 56px; border-radius: var(--r-md); border: 0; background: var(--surface-2); display: grid; place-items: center; cursor: pointer; }
-.icon-picker button.sel { background: var(--primary-container); box-shadow: inset 0 0 0 2px var(--primary); }
-.icon-picker svg.pic { width: 32px; height: 32px; }
-.icon-picker button { color: var(--muted); }
-.icon-picker button.sel { color: var(--on-primary-container); }
-.icon-picker.grid { flex-wrap: wrap; max-height: 200px; overflow-y: auto; }
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+  width: 100%;
+  padding: 2px 0 8px;
+  margin: 6px 0 12px;
+  max-height: 216px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.icon-picker button {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-md);
+  border: 0;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.icon-picker button:hover { background: var(--surface-3); }
+.icon-picker button.sel { background: var(--primary-container); color: var(--on-primary-container); box-shadow: inset 0 0 0 2px var(--primary); }
+.icon-picker svg.pic { width: 32px; height: 32px; max-width: 60%; max-height: 60%; }
+.icon-picker.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
 .nutri { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 6px 0 12px; }
 .nutri button { border: 0; height: 40px; font-weight: 700; color: #fff; cursor: pointer; font-size: 1rem; border-radius: 6px; opacity: .5; transition: opacity .15s, transform .15s; }
 .nutri button:first-child { border-radius: 999px 6px 6px 999px; } .nutri button:last-child { border-radius: 6px 999px 999px 6px; }

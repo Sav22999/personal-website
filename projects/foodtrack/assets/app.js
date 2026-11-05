@@ -189,7 +189,8 @@
 
   function iconPicker(folder, icons, value, onchange, grid) {
     let cur = value;
-    const wrap = h('div.icon-picker' + (grid ? '.grid' : ''), { role: 'radiogroup' });
+    const isGrid = grid !== false;
+    const wrap = h('div.icon-picker' + (isGrid ? '.grid' : ''), { role: 'radiogroup' });
     for (const ic of icons) {
       const b = h('button' + (ic === cur ? '.sel' : ''), { type: 'button', role: 'radio', 'aria-checked': String(ic === cur), title: UI.iconLabel(folder, ic), onclick: () => {
         cur = ic; wrap.querySelectorAll('button').forEach(x => { x.classList.toggle('sel', x === b); x.setAttribute('aria-checked', String(x === b)); }); onchange(ic);
@@ -424,7 +425,7 @@
     } });
     const s = sheet({
       title: sp ? t('Edit space') : t('New space'),
-      body: [field(t('Name'), name), h('div.label', t('Icon')), iconPicker('spaces', UI.iconNames('spaces'), iconSel, v => { iconSel = v; }), field(t('Notes (optional)'), notes)],
+      body: [field(t('Name'), name), h('div.label', t('Icon')), iconPicker('spaces', UI.iconNames('spaces'), iconSel, v => { iconSel = v; }, true), field(t('Notes (optional)'), notes)],
       actions: [cancelBtn(), save],
     });
   }
@@ -608,18 +609,21 @@
     const qty = input({ type: 'number', inputmode: 'decimal', min: 0, step: 'any', value: v.quantity != null ? String(v.quantity) : '' });
     const unit = unitSelect(v.unit);
     const date = input({ type: 'date', value: v.expiryDate || '' });
-    let expType = v.expiryType || 'use_by';
+    const expType = select([
+      { value: 'use_by', label: t('Use by') },
+      { value: 'best_before', label: t('Best before') },
+    ], v.expiryType || 'use_by');
     let ns = v.nutriscore;
     let iconSel = v.icon;
     const brand = input({ value: v.brand || '', maxlength: 80 });
     const cat = select([{ value: '', label: '—' }].concat(S.catalog.categories.map(c => ({ value: c.id, label: c.name }))), v.categoryId ?? '');
     const notes = textarea({ value: v.notes || '', maxlength: 500, rows: 2 });
     const barcode = input({ value: v.barcode || '', inputmode: 'numeric', maxlength: 32 });
-    const open = !!(it || v.brand || v.barcode);
+    const open = !!(it || v.brand || v.barcode || v.notes);
     const more = h('div', { hidden: !open },
-      h('div.field-row', field(t('Brand'), brand), field(t('Category'), cat)),
+      h('div.field-row', field(t('Brand'), brand), field(t('Barcode'), barcode)),
       h('div.label', t('Icon')), iconPicker('products', UI.iconNames('products'), iconSel, x => { iconSel = x; }, true),
-      field(t('Barcode'), barcode), field(t('Notes'), notes));
+      field(t('Notes'), notes));
     const moreToggle = btn(t('More details'), { kind: 'text', icon: 'chevronDown', onclick: () => { more.hidden = false; moreToggle.remove(); } });
     if (open) moreToggle.hidden = true;
 
@@ -628,8 +632,8 @@
       if (!name.value.trim()) { toast(t('Enter the product name.'), 'error'); name.focus(); return; }
       const payload = {
         id: it ? it.id : 0, spaceId: Number(space.value), productId: matchProduct(name.value, v.productId, v.name),
-        name: name.value, quantity: qty.value, unit: unit.value, expiryDate: date.value, expiryType: expType,
-        nutriscore: ns, brand: brand.value, categoryId: cat.value || null, icon: iconSel, barcode: barcode.value, notes: notes.value,
+        name: name.value, quantity: qty.value, unit: unit.value, expiryDate: date.value, expiryType: expType.value,
+        nutriscore: ns, brand: brand.value, categoryId: cat.value ? Number(cat.value) : null, icon: iconSel, barcode: barcode.value, notes: notes.value,
       };
       if (li) { payload.id = li.id; await act('listitem.tospace', payload, save); toast(t('“{name}” moved to {space}', { name: payload.name, space: spaceById(payload.spaceId).name })); }
       else { await act('item.save', payload, save); toast(it ? t('Product updated') : t('“{name}” added', { name: payload.name })); }
@@ -638,10 +642,10 @@
     const s = sheet({
       title,
       body: [
-        field(t('Name'), name), field(t('Space'), space),
+        field(t('Name'), name),
+        h('div.field-row', field(t('Space'), space), field(t('Category'), cat)),
         h('div.field-row', field(t('Quantity'), qty), field(t('Unit'), unit)),
-        field(t('Expiry date'), date),
-        seg([['use_by', t('Use by')], ['best_before', t('Best before')]], expType, x => { expType = x; }),
+        h('div.field-row', field(t('Expiry date'), date), field(t('Expiry type'), expType)),
         h('div.label', t('Nutri-Score (optional)')), nutriPicker(ns, x => { ns = x; }),
         moreToggle, more,
       ],
@@ -1683,7 +1687,7 @@
     } });
     const s = sheet({
       title: l ? t('Edit list') : t('New shopping list'),
-      body: [field(t('Name'), name), h('div.label', t('Icon')), iconPicker('lists', UI.iconNames('lists'), iconSel, v => { iconSel = v; }), field(t('Notes (optional)'), notes)],
+      body: [field(t('Name'), name), h('div.label', t('Icon')), iconPicker('lists', UI.iconNames('lists'), iconSel, v => { iconSel = v; }, true), field(t('Notes (optional)'), notes)],
       actions: [cancelBtn(), save],
     });
   }

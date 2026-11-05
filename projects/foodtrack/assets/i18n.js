@@ -366,6 +366,7 @@
         "Expiring products": "Prodotti in scadenza",
         "Expiry": "Scadenza",
         "Expiry date": "Data di scadenza",
+        "Expiry type": "Tipo di scadenza",
         "Expiry: latest first": "Scadenza: dalla più lontana",
         "Expiry: soonest first": "Scadenza: dalla più vicina",
         "Family, partner or flatmates": "Familiari, partner o coinquilini",
