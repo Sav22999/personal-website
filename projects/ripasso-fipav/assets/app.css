@@ -1052,7 +1052,7 @@ button.profile-stat:hover, a.profile-stat:hover { background: color-mix(in srgb,
   .site-footer { padding: 18px 16px calc(var(--bottomnav-h) + 24px + env(safe-area-inset-bottom, 0)); }
   .auth-screen .site-footer { padding-bottom: 24px; }
   .bottomnav {
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     height: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0)); padding-bottom: env(safe-area-inset-bottom, 0);
     background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);

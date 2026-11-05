@@ -35,6 +35,8 @@ function translations_it(): array
     return [
         'Google sign-in failed: please try again.' => 'Accesso con Google non riuscito: riprova.',
         'Unknown action.' => 'Azione sconosciuta.',
+        'History entry not found.' => 'Voce della cronologia non trovata.',
+        'Action already undone.' => 'Azione già annullata.',
         'Invalid barcode.' => 'Codice a barre non valido.',
         'Invalid invite code.' => 'Codice invito non valido.',
         'Unsupported Content-Type.' => 'Content-Type non supportato.',

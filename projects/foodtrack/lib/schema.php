@@ -266,6 +266,28 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}mp_rec` FOREIGN KEY (`recipe_id`) REFERENCES `{$p}recipes` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_{$p}mp_user` FOREIGN KEY (`created_by`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
 ) $opts",
+
+// Household activity history (item consume, add, delete, edit) with undo support
+"CREATE TABLE IF NOT EXISTS `{$p}history` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `household_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NULL,
+  `user_name` VARCHAR(80) NOT NULL DEFAULT '',
+  `action` VARCHAR(32) NOT NULL,
+  `item_id` INT UNSIGNED NULL,
+  `item_name` VARCHAR(80) NOT NULL,
+  `space_id` INT UNSIGNED NULL,
+  `space_name` VARCHAR(60) NOT NULL DEFAULT '',
+  `quantity` DECIMAL(10,3) NULL,
+  `unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
+  `details` MEDIUMTEXT NULL,
+  `undone` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_hh_created` (`household_id`, `created_at`),
+  CONSTRAINT `fk_{$p}hist_hh` FOREIGN KEY (`household_id`) REFERENCES `{$p}households` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_{$p}hist_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
+) $opts",
     ];
 }
 
@@ -279,6 +301,8 @@ function schema_statements(string $p = 'ft_'): array
  *  v7: second batch of content (new catalog products and recipes from many countries)
  *  v8: third batch of content (more products and recipes)
  *  v9: cover images of the initial recipes of batches 2 and 3 (only where the recipe still has no image)
+ *  v10: household activity history table (`history`)
+ *  v11: remaining cover images for initial recipes (only where the recipe still has no image)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -329,6 +353,33 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
         foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
     }
+    if ($from < 10) {
+        $opts = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `{$p}history` (
+          `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          `household_id` INT UNSIGNED NOT NULL,
+          `user_id` INT UNSIGNED NULL,
+          `user_name` VARCHAR(80) NOT NULL DEFAULT '',
+          `action` VARCHAR(32) NOT NULL,
+          `item_id` INT UNSIGNED NULL,
+          `item_name` VARCHAR(80) NOT NULL,
+          `space_id` INT UNSIGNED NULL,
+          `space_name` VARCHAR(60) NOT NULL DEFAULT '',
+          `quantity` DECIMAL(10,3) NULL,
+          `unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
+          `details` MEDIUMTEXT NULL,
+          `undone` TINYINT(1) NOT NULL DEFAULT 0,
+          `created_at` DATETIME NOT NULL,
+          PRIMARY KEY (`id`),
+          KEY `idx_hh_created` (`household_id`, `created_at`)
+        ) $opts");
+    }
+    if ($from < 11) {
+        require_once __DIR__ . '/seed.php';
+        $now = gmdate('Y-m-d H:i:s');
+        $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
+        foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
+    }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }
 
@@ -338,7 +389,7 @@ function install_schema(PDO $pdo, string $prefix): void
     $from = 0;
     try { $from = (int)$pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn(); } catch (Throwable $e) { $from = 0; }
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
-    if ($from > 0) migrate_schema($pdo, $prefix, $from);
+    if ($from > 0 && $from < SCHEMA_VERSION) migrate_schema($pdo, $prefix, $from);
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")
         ->execute([(string)SCHEMA_VERSION]);
 }

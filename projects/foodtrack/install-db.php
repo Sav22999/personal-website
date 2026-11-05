@@ -166,7 +166,9 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>FoodTrack · Installazione</title>
-<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <style>
   :root { --green:#4CAF50; --green-dark:#2E7D32; --bg:#F3F6F3; --card:#fff; --text:#1C1B1F; --muted:#5F6368; --border:#DADCE0; --red:#C62828; }
   @media (prefers-color-scheme: dark) { :root { --bg:#121412; --card:#1E211E; --text:#E6E1E5; --muted:#A8ADA8; --border:#353935; } }
@@ -196,7 +198,7 @@ function create_household_raw(PDO $pdo, string $p, int $userId, string $name): v
 </head>
 <body>
 <main>
-  <div class="brand"><img src="assets/icons/favicon.svg" alt=""> FoodTrack</div>
+  <div class="brand"><img src="assets/icons/icon-color.png" alt=""> FoodTrack</div>
   <h1><?= $mode === 'update' && !$done ? 'Aggiorna il database' : 'Installazione' ?></h1>
   <p class="lead">Crea le tabelle (prefisso <code>ft_</code>), carica categorie, prodotti e ricette e configura il master admin.</p>
 

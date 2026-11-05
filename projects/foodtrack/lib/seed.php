@@ -295,6 +295,10 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
         $added['recipes']++;
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('seed_batch', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)$maxBatch]);
+    $upImg = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
+    foreach (seed_recipes() as $r) {
+        if ($r['image'] !== '') $upImg->execute([$r['image'], $now, $r['name']]);
+    }
     require_once __DIR__ . '/seed-en.php';
     seed_translations($pdo, $p);
     return $added;

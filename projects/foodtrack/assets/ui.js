@@ -94,6 +94,8 @@
     image: 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
     theme: 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z',
     link: 'M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z',
+    history: 'M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z',
+    undo: 'M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z',
   };
 
   function icon(name, cls) {
@@ -449,6 +451,29 @@
   /** Plain-text version (sorting, search). */
   function originText(list) { return (list || []).map(countryName).join(', '); }
 
+  /** Generates a skeleton screen placeholder for views. */
+  function skeletonScreen(kind = 'list') {
+    const card = () => h('div.sk-card',
+      h('span.skeleton.sk-tile'),
+      h('div.sk-body', h('span.skeleton.sk-title'), h('span.skeleton.sk-line.w-60')),
+      h('span.skeleton.sk-chip')
+    );
+    return h('div.sk-view',
+      h('div.sk-appbar',
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
+          h('span.skeleton', { style: { width: '80px', height: '14px', borderRadius: '4px' } }),
+          h('span.skeleton', { style: { width: '140px', height: '24px', borderRadius: '6px' } })
+        ),
+        h('span.skeleton.sk-avatar')
+      ),
+      h('div.sk-banner',
+        h('span.skeleton.sk-tile'),
+        h('div.sk-body', h('span.skeleton.sk-line.w-80'), h('span.skeleton.sk-line.w-40'))
+      ),
+      h('div.sk-stack', card(), card(), card(), card())
+    );
+  }
+
   // ---------- Storage (per device preferences) ----------
 
   const store = {
@@ -468,7 +493,7 @@
     app, h, append, clear, icon, pic, iconNames, iconLabel, googleButton, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select,
     sheet, actionSheet, confirm, closeTop, closeAllSheets, toast,
     todayStr, parseDate, dateStr, addDays, daysUntil, fmtDate, relDays, longDate, fmtDateTime,
-    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, originText, recipeCover, norm, store, applyTheme,
+    toBase, fmtNum, fmtQty, unitLabel, countryName, flag, countryList, originLabel, originText, recipeCover, norm, store, applyTheme, skeletonScreen,
     sheetsOpen: () => stack.length,
   };
 })();

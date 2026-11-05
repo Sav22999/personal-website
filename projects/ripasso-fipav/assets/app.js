@@ -178,7 +178,7 @@ let chatbotLoading = null;
 function openChatbot() {
   if (!chatbotLoading) chatbotLoading = new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = 'assets/chatbot.js?v=4.1.0-5';
+    s.src = 'assets/chatbot.js?v=4.1.0-6';
     s.onload = resolve; s.onerror = reject;
     document.head.appendChild(s);
   });
@@ -2445,6 +2445,7 @@ if (!location.hash) history.replaceState(null, '', '#quiz');
   $('stats-sub-tabs').hidden = false;
   // Chatbot: alpha, administrators only
   $('nav-chat').hidden = (user.permissions || 0) < 9;
+  if ($('bottomnav-chat')) $('bottomnav-chat').hidden = (user.permissions || 0) < 9;
   $('btn-chat').hidden = (user.permissions || 0) < 9;
   $('nav-admin').hidden = !user.canEdit;
 

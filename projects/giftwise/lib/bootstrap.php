@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 
 const APP_NAME = 'Giftwise';
 const AUTH_COOKIE = 'giftwise_auth';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const OCCASIONS = ['birthday', 'christmas', 'wedding', 'baby', 'graduation', 'anniversary', 'housewarming', 'other'];
 const CURRENCIES = ['EUR', 'GBP', 'USD', 'CHF'];
@@ -86,6 +86,7 @@ function db(?PDO $set = null): PDO
         $c = credentials();
         if (!$c) throw new RuntimeException('not_installed');
         $pdo = pdo_connect($c['host'], $c['user'], $c['pass'], $c['name']);
+        ensure_schema();
     }
     return $pdo;
 }

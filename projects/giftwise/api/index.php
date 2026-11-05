@@ -38,6 +38,12 @@ function only(string $method): void
     if ($_SERVER['REQUEST_METHOD'] !== $method) fail('Method not allowed.', 405, 'method');
 }
 
+function reader(): array
+{
+    only('GET');
+    return require_user();
+}
+
 function writer(): array
 {
     only('POST');
@@ -47,6 +53,29 @@ function writer(): array
 }
 
 // ---------------------------------------------------------------- helpers
+
+/** Logs an action into the user's activity history (for audit and undo). */
+function log_history(int $userId, string $action, ?int $listId, string $listTitle, ?int $itemId, string $itemTitle, array $details): int
+{
+    $now = now_utc();
+    $sql = 'INSERT INTO ' . t('history') . ' (user_id, action, list_id, list_title, item_id, item_title, details, undone, created_at) VALUES (?,?,?,?,?,?,?,0,?)';
+    $params = [$userId, $action, $listId, $listTitle, $itemId, $itemTitle, json_encode($details, JSON_UNESCAPED_UNICODE), $now];
+    try {
+        $st = db()->prepare($sql);
+        $st->execute($params);
+        return (int)db()->lastInsertId();
+    } catch (Throwable $e) {
+        try {
+            require_once __DIR__ . '/../lib/schema.php';
+            install_schema(db(), (string)config_value('prefix', 'gw_'));
+            $st = db()->prepare($sql);
+            $st->execute($params);
+            return (int)db()->lastInsertId();
+        } catch (Throwable $ignored) {
+            return 0;
+        }
+    }
+}
 
 function pair(int $x, int $y): array { return $x < $y ? [$x, $y] : [$y, $x]; }
 
@@ -577,9 +606,12 @@ switch ($r) {
         $fr = follower_ids($u['id']);
         $viewers = array_values(array_unique(array_filter(array_map('intval', is_array($b['viewers'] ?? null) ? $b['viewers'] : []), fn($v) => in_array($v, $fr, true))));
         if ($id) {
-            own_list($id, $u['id']);
+            $prev = own_list($id, $u['id']);
+            $prevViewers = db()->query('SELECT user_id FROM ' . t('list_viewers') . ' WHERE list_id = ' . $id)->fetchAll(PDO::FETCH_COLUMN);
+            $prev['viewers'] = array_map('intval', $prevViewers);
             db()->prepare('UPDATE ' . t('lists') . ' SET title = ?, occasion = ?, event_date = ?, description = ?, visibility = ?, updated_at = ? WHERE id = ?')
                 ->execute([$title, $occasion, $date, $desc, $vis, now_utc(), $id]);
+            log_history($u['id'], 'list_edit', $id, $title, null, '', ['prev_snapshot' => $prev]);
         } else {
             $st = db()->prepare('SELECT COUNT(*) FROM ' . t('lists') . ' WHERE owner_id = ?');
             $st->execute([$u['id']]);
@@ -587,6 +619,7 @@ switch ($r) {
             db()->prepare('INSERT INTO ' . t('lists') . ' (owner_id, title, occasion, event_date, description, visibility, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)')
                 ->execute([$u['id'], $title, $occasion, $date, $desc, $vis, now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
+            log_history($u['id'], 'list_create', $id, $title, null, '', []);
         }
         db()->prepare('DELETE FROM ' . t('list_viewers') . ' WHERE list_id = ?')->execute([$id]);
         if ($vis === 'selected') {
@@ -598,15 +631,22 @@ switch ($r) {
     case 'list.archive':
         $u = writer();
         $b = body();
-        own_list((int)($b['id'] ?? 0), $u['id']);
-        db()->prepare('UPDATE ' . t('lists') . ' SET archived = ?, updated_at = ? WHERE id = ?')->execute([!empty($b['archived']) ? 1 : 0, now_utc(), (int)$b['id']]);
+        $l = own_list((int)($b['id'] ?? 0), $u['id']);
+        $archived = !empty($b['archived']) ? 1 : 0;
+        db()->prepare('UPDATE ' . t('lists') . ' SET archived = ?, updated_at = ? WHERE id = ?')->execute([$archived, now_utc(), (int)$b['id']]);
+        log_history($u['id'], 'list_archive', (int)$l['id'], (string)$l['title'], null, '', ['archived' => $archived]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'list.delete':
         $u = writer();
         $id = (int)(body()['id'] ?? 0);
-        own_list($id, $u['id']);
+        $l = own_list($id, $u['id']);
+        $items = db()->query('SELECT * FROM ' . t('items') . ' WHERE list_id = ' . $id)->fetchAll();
+        $viewers = db()->query('SELECT user_id FROM ' . t('list_viewers') . ' WHERE list_id = ' . $id)->fetchAll(PDO::FETCH_COLUMN);
+        $l['items'] = $items;
+        $l['viewers'] = array_map('intval', $viewers);
         db()->prepare('DELETE FROM ' . t('lists') . ' WHERE id = ?')->execute([$id]);
+        log_history($u['id'], 'list_delete', $id, (string)$l['title'], null, '', ['list_snapshot' => $l]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'item.save':
@@ -614,14 +654,16 @@ switch ($r) {
         $b = body();
         $id = (int)($b['id'] ?? 0);
         if ($id) {
-            $st = db()->prepare('SELECT list_id FROM ' . t('items') . ' WHERE id = ?');
+            $st = db()->prepare('SELECT * FROM ' . t('items') . ' WHERE id = ?');
             $st->execute([$id]);
-            $lid = (int)$st->fetchColumn();
-            if (!$lid) fail('Wish not found.', 404, 'not_found');
+            $prev = $st->fetch();
+            if (!$prev) fail('Wish not found.', 404, 'not_found');
+            $lid = (int)$prev['list_id'];
         } else {
+            $prev = null;
             $lid = (int)($b['listId'] ?? 0);
         }
-        own_list($lid, $u['id']);
+        $ownL = own_list($lid, $u['id']);
         $newList = (int)($b['listId'] ?? $lid);
         if ($newList !== $lid) own_list($newList, $u['id']); // moved to another of my lists
         $title = s($b, 'title', 160, true, 'Title');
@@ -636,6 +678,7 @@ switch ($r) {
         if ($id) {
             db()->prepare('UPDATE ' . t('items') . ' SET list_id = ?, title = ?, url = ?, image_url = ?, price = ?, currency = ?, notes = ?, priority = ?, quantity = ?, updated_at = ? WHERE id = ?')
                 ->execute([$newList, $title, $url, $img, $price, $cur, $notes, $prio, $qty, now_utc(), $id]);
+            log_history($u['id'], 'wish_edit', $newList, (string)$ownL['title'], $id, $title, ['prev_snapshot' => $prev]);
         } else {
             $st = db()->prepare('SELECT COUNT(*) FROM ' . t('items') . ' WHERE list_id = ?');
             $st->execute([$lid]);
@@ -643,6 +686,7 @@ switch ($r) {
             db()->prepare('INSERT INTO ' . t('items') . ' (list_id, title, url, image_url, price, currency, notes, priority, quantity, sort, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
                 ->execute([$lid, $title, $url, $img, $price, $cur, $notes, $prio, $qty, time(), now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
+            log_history($u['id'], 'wish_add', $lid, (string)$ownL['title'], $id, $title, ['item_snapshot' => ['list_id' => $lid, 'title' => $title, 'url' => $url, 'image_url' => $img, 'price' => $price, 'currency' => $cur, 'notes' => $notes, 'priority' => $prio, 'quantity' => $qty]]);
         }
         db()->prepare('UPDATE ' . t('lists') . ' SET updated_at = ? WHERE id IN (?, ?)')->execute([now_utc(), $lid, $newList]);
         send_json(['ok' => true, 'id' => $id] + state_payload($u));
@@ -650,12 +694,13 @@ switch ($r) {
     case 'item.delete':
         $u = writer();
         $id = (int)(body()['id'] ?? 0);
-        $st = db()->prepare('SELECT list_id FROM ' . t('items') . ' WHERE id = ?');
+        $st = db()->prepare('SELECT i.*, l.title AS list_title FROM ' . t('items') . ' i JOIN ' . t('lists') . ' l ON l.id = i.list_id WHERE i.id = ?');
         $st->execute([$id]);
-        $lid = (int)$st->fetchColumn();
-        if (!$lid) fail('Wish not found.', 404, 'not_found');
-        own_list($lid, $u['id']);
+        $it = $st->fetch();
+        if (!$it) fail('Wish not found.', 404, 'not_found');
+        own_list((int)$it['list_id'], $u['id']);
         db()->prepare('DELETE FROM ' . t('items') . ' WHERE id = ?')->execute([$id]);
+        log_history($u['id'], 'wish_delete', (int)$it['list_id'], (string)$it['list_title'], $id, (string)$it['title'], ['item_snapshot' => $it]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'link.preview':
@@ -684,6 +729,8 @@ switch ($r) {
         $lid = (int)$st->fetchColumn();
         if (!$lid) fail('This wish has been removed from the list.', 404, 'not_found');
         $l = friend_list($lid, $u['id']);
+        $prevClaim = (string)(db()->query('SELECT status FROM ' . t('claims') . ' WHERE item_id = ' . $iid . ' AND user_id = ' . $u['id'])->fetchColumn() ?: '');
+        $itTitle = (string)(db()->query('SELECT title FROM ' . t('items') . ' WHERE id = ' . $iid)->fetchColumn() ?: '');
         $status = (string)($b['status'] ?? '');
         if (in_array($status, CLAIM_STATES, true)) {
             db()->prepare('INSERT INTO ' . t('claims') . ' (item_id, user_id, status, created_at, updated_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE status = VALUES(status), updated_at = VALUES(updated_at)')
@@ -691,6 +738,7 @@ switch ($r) {
         } else {
             db()->prepare('DELETE FROM ' . t('claims') . ' WHERE item_id = ? AND user_id = ?')->execute([$iid, $u['id']]);
         }
+        log_history($u['id'], 'claim_set', $lid, (string)$l['title'], $iid, $itTitle, ['prev_status' => $prevClaim, 'new_status' => $status]);
         send_json(['ok' => true] + friend_view($l, $u['id']));
 
     case 'comment.add':
@@ -719,6 +767,149 @@ switch ($r) {
         db()->prepare('DELETE FROM ' . t('comments') . ' WHERE id = ?')->execute([$id]);
         $l = list_row($lid);
         send_json(['ok' => true] + (can_view($l, $u['id']) && (int)$l['owner_id'] !== $u['id'] ? friend_view($l, $u['id']) : []));
+
+    // ======================================================== activity history & undo
+
+    case 'history.list':
+        only('GET');
+        $u = require_user();
+        try {
+            $st = db()->prepare('SELECT id, user_id, action, list_id, list_title, item_id, item_title, details, undone, created_at FROM ' . t('history') . ' WHERE user_id = ? ORDER BY id DESC LIMIT 100');
+            $st->execute([$u['id']]);
+            $rows = array_map(function ($r) {
+                return [
+                    'id' => (int)$r['id'],
+                    'userId' => (int)$r['user_id'],
+                    'action' => $r['action'],
+                    'listId' => $r['list_id'] ? (int)$r['list_id'] : null,
+                    'listTitle' => $r['list_title'],
+                    'itemId' => $r['item_id'] ? (int)$r['item_id'] : null,
+                    'itemTitle' => $r['item_title'],
+                    'details' => json_decode((string)$r['details'], true) ?: [],
+                    'undone' => (bool)$r['undone'],
+                    'createdAt' => $r['created_at'],
+                ];
+            }, $st->fetchAll());
+        } catch (Throwable $e) {
+            try {
+                require_once __DIR__ . '/../lib/schema.php';
+                install_schema(db(), (string)config_value('prefix', 'gw_'));
+            } catch (Throwable $ignored) {}
+            $rows = [];
+        }
+        send_json(['ok' => true, 'history' => $rows]);
+
+    case 'history.undo':
+        $u = writer();
+        $id = (int)(body()['id'] ?? 0);
+        $st = db()->prepare('SELECT * FROM ' . t('history') . ' WHERE id = ? AND user_id = ?');
+        $st->execute([$id, $u['id']]);
+        $h = $st->fetch();
+        if (!$h) fail('History entry not found.', 404);
+        if ($h['undone']) fail('Action already undone.', 400);
+
+        $act = $h['action'];
+        $details = json_decode((string)$h['details'], true) ?: [];
+
+        db()->beginTransaction();
+        if ($act === 'wish_add') {
+            $itemId = (int)$h['item_id'];
+            if ($itemId) {
+                $st = db()->prepare('SELECT i.id FROM ' . t('items') . ' i JOIN ' . t('lists') . ' l ON l.id = i.list_id WHERE i.id = ? AND l.owner_id = ?');
+                $st->execute([$itemId, $u['id']]);
+                if ($st->fetchColumn()) {
+                    db()->prepare('DELETE FROM ' . t('items') . ' WHERE id = ?')->execute([$itemId]);
+                }
+            }
+        } elseif ($act === 'wish_delete') {
+            $snap = $details['item_snapshot'] ?? [];
+            if ($snap) {
+                $lid = (int)($snap['list_id'] ?? 0);
+                $st = db()->prepare('SELECT id FROM ' . t('lists') . ' WHERE id = ? AND owner_id = ?');
+                $st->execute([$lid, $u['id']]);
+                if (!$st->fetchColumn()) {
+                    $lid = (int)db()->query('SELECT id FROM ' . t('lists') . ' WHERE owner_id = ' . $u['id'] . ' ORDER BY id DESC LIMIT 1')->fetchColumn();
+                }
+                if ($lid) {
+                    db()->prepare('INSERT INTO ' . t('items') . ' (list_id, title, url, image_url, price, currency, notes, priority, quantity, sort, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
+                        ->execute([$lid, $snap['title'], $snap['url'] ?? '', $snap['image_url'] ?? '', $snap['price'] !== null ? $snap['price'] : null, $snap['currency'] ?? 'EUR', $snap['notes'] ?? '', (int)($snap['priority'] ?? 0), (int)($snap['quantity'] ?? 1), time(), now_utc(), now_utc()]);
+                }
+            }
+        } elseif ($act === 'wish_edit') {
+            $prev = $details['prev_snapshot'] ?? [];
+            $itemId = (int)$h['item_id'];
+            if ($prev && $itemId) {
+                $st = db()->prepare('SELECT i.id FROM ' . t('items') . ' i JOIN ' . t('lists') . ' l ON l.id = i.list_id WHERE i.id = ? AND l.owner_id = ?');
+                $st->execute([$itemId, $u['id']]);
+                if ($st->fetchColumn()) {
+                    $prevListId = (int)$prev['list_id'];
+                    $stList = db()->prepare('SELECT id FROM ' . t('lists') . ' WHERE id = ? AND owner_id = ?');
+                    $stList->execute([$prevListId, $u['id']]);
+                    if (!$stList->fetchColumn()) $prevListId = (int)$h['list_id'];
+                    db()->prepare('UPDATE ' . t('items') . ' SET list_id = ?, title = ?, url = ?, image_url = ?, price = ?, currency = ?, notes = ?, priority = ?, quantity = ?, updated_at = ? WHERE id = ?')
+                        ->execute([$prevListId, $prev['title'], $prev['url'] ?? '', $prev['image_url'] ?? '', $prev['price'] !== null ? $prev['price'] : null, $prev['currency'] ?? 'EUR', $prev['notes'] ?? '', (int)($prev['priority'] ?? 0), (int)($prev['quantity'] ?? 1), now_utc(), $itemId]);
+                }
+            }
+        } elseif ($act === 'list_create') {
+            $listId = (int)$h['list_id'];
+            if ($listId) {
+                db()->prepare('DELETE FROM ' . t('lists') . ' WHERE id = ? AND owner_id = ?')->execute([$listId, $u['id']]);
+            }
+        } elseif ($act === 'list_edit') {
+            $prev = $details['prev_snapshot'] ?? [];
+            $listId = (int)$h['list_id'];
+            if ($prev && $listId) {
+                $st = db()->prepare('SELECT id FROM ' . t('lists') . ' WHERE id = ? AND owner_id = ?');
+                $st->execute([$listId, $u['id']]);
+                if ($st->fetchColumn()) {
+                    db()->prepare('UPDATE ' . t('lists') . ' SET title = ?, occasion = ?, event_date = ?, description = ?, visibility = ?, updated_at = ? WHERE id = ?')
+                        ->execute([$prev['title'], $prev['occasion'] ?? 'other', $prev['event_date'] ?? null, $prev['description'] ?? '', $prev['visibility'] ?? 'friends', now_utc(), $listId]);
+                    db()->prepare('DELETE FROM ' . t('list_viewers') . ' WHERE list_id = ?')->execute([$listId]);
+                    if (($prev['visibility'] ?? '') === 'selected' && !empty($prev['viewers'])) {
+                        $ins = db()->prepare('INSERT IGNORE INTO ' . t('list_viewers') . ' (list_id, user_id) VALUES (?,?)');
+                        foreach ($prev['viewers'] as $v) $ins->execute([$listId, (int)$v]);
+                    }
+                }
+            }
+        } elseif ($act === 'list_archive') {
+            $listId = (int)$h['list_id'];
+            $wasArchived = !empty($details['archived']);
+            db()->prepare('UPDATE ' . t('lists') . ' SET archived = ?, updated_at = ? WHERE id = ? AND owner_id = ?')
+                ->execute([$wasArchived ? 0 : 1, now_utc(), $listId, $u['id']]);
+        } elseif ($act === 'list_delete') {
+            $snap = $details['list_snapshot'] ?? [];
+            if ($snap) {
+                db()->prepare('INSERT INTO ' . t('lists') . ' (owner_id, title, occasion, event_date, description, visibility, archived, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)')
+                    ->execute([$u['id'], $snap['title'], $snap['occasion'] ?? 'other', $snap['event_date'] ?? null, $snap['description'] ?? '', $snap['visibility'] ?? 'friends', (int)($snap['archived'] ?? 0), now_utc(), now_utc()]);
+                $newListId = (int)db()->lastInsertId();
+                if (($snap['visibility'] ?? '') === 'selected' && !empty($snap['viewers'])) {
+                    $insV = db()->prepare('INSERT IGNORE INTO ' . t('list_viewers') . ' (list_id, user_id) VALUES (?,?)');
+                    foreach ($snap['viewers'] as $v) $insV->execute([$newListId, (int)$v]);
+                }
+                if (!empty($snap['items'])) {
+                    $insI = db()->prepare('INSERT INTO ' . t('items') . ' (list_id, title, url, image_url, price, currency, notes, priority, quantity, sort, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+                    foreach ($snap['items'] as $it) {
+                        $insI->execute([$newListId, $it['title'], $it['url'] ?? '', $it['image_url'] ?? '', $it['price'] !== null ? $it['price'] : null, $it['currency'] ?? 'EUR', $it['notes'] ?? '', (int)($it['priority'] ?? 0), (int)($it['quantity'] ?? 1), (int)($it['sort'] ?? time()), now_utc(), now_utc()]);
+                    }
+                }
+            }
+        } elseif ($act === 'claim_set') {
+            $prevStatus = (string)($details['prev_status'] ?? '');
+            $itemId = (int)$h['item_id'];
+            if ($itemId) {
+                if (in_array($prevStatus, CLAIM_STATES, true)) {
+                    db()->prepare('INSERT INTO ' . t('claims') . ' (item_id, user_id, status, created_at, updated_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE status = VALUES(status), updated_at = VALUES(updated_at)')
+                        ->execute([$itemId, $u['id'], $prevStatus, now_utc(), now_utc()]);
+                } else {
+                    db()->prepare('DELETE FROM ' . t('claims') . ' WHERE item_id = ? AND user_id = ?')->execute([$itemId, $u['id']]);
+                }
+            }
+        }
+
+        db()->prepare('UPDATE ' . t('history') . ' SET undone = 1 WHERE id = ?')->execute([$id]);
+        db()->commit();
+
+        send_json(['ok' => true] + state_payload($u));
 
     default:
         fail('Unknown action.', 404, 'unknown_route');

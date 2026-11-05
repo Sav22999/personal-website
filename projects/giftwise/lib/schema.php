@@ -131,12 +131,28 @@ function schema_statements(string $p): array
             CONSTRAINT `fk_{$p}cm_item` FOREIGN KEY (`item_id`) REFERENCES `{$p}items` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_{$p}cm_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
+        // User activity history (wish added, edited, deleted, list created, edited, archived, deleted, claim set) with undo support
+        "CREATE TABLE IF NOT EXISTS `{$p}history` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `action` VARCHAR(32) NOT NULL,
+            `list_id` INT UNSIGNED NULL,
+            `list_title` VARCHAR(80) NOT NULL DEFAULT '',
+            `item_id` INT UNSIGNED NULL,
+            `item_title` VARCHAR(160) NOT NULL DEFAULT '',
+            `details` MEDIUMTEXT NULL,
+            `undone` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_user_created` (`user_id`, `created_at`),
+            CONSTRAINT `fk_{$p}hist_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
     ];
 }
 
 /**
  * Upgrades a database created by an older version (every step is idempotent).
  *  v2: public usernames and "follow" instead of mutual friendships (each friendship becomes two follows)
+ *  v3: user activity history table with undo support
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -159,6 +175,26 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
                     $ins->execute([$f['requested_by'], $other, 'pending', $f['created_at'], null]);
                 }
             }
+        }
+    }
+    if ($from < 3) {
+        $has = $pdo->query("SHOW TABLES LIKE '{$p}history'")->fetchColumn();
+        if (!$has) {
+            $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
+            $pdo->exec("CREATE TABLE IF NOT EXISTS `{$p}history` (
+                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT UNSIGNED NOT NULL,
+                `action` VARCHAR(32) NOT NULL,
+                `list_id` INT UNSIGNED NULL,
+                `list_title` VARCHAR(80) NOT NULL DEFAULT '',
+                `item_id` INT UNSIGNED NULL,
+                `item_title` VARCHAR(160) NOT NULL DEFAULT '',
+                `details` MEDIUMTEXT NULL,
+                `undone` TINYINT(1) NOT NULL DEFAULT 0,
+                `created_at` DATETIME NOT NULL,
+                KEY `ix_user_created` (`user_id`, `created_at`),
+                CONSTRAINT `fk_{$p}hist_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+            ) $e");
         }
     }
 }

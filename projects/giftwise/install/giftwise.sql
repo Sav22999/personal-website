@@ -126,4 +126,19 @@ CREATE TABLE IF NOT EXISTS `gw_comments` (
   CONSTRAINT `fk_gw_cm_user` FOREIGN KEY (`user_id`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `gw_meta` (k, v) VALUES ('schema_version', '2') ON DUPLICATE KEY UPDATE v = VALUES(v);
+CREATE TABLE IF NOT EXISTS `gw_history` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL,
+  `action` VARCHAR(32) NOT NULL,
+  `list_id` INT UNSIGNED NULL,
+  `list_title` VARCHAR(80) NOT NULL DEFAULT '',
+  `item_id` INT UNSIGNED NULL,
+  `item_title` VARCHAR(160) NOT NULL DEFAULT '',
+  `details` MEDIUMTEXT NULL,
+  `undone` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL,
+  KEY `ix_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_gw_hist_user` FOREIGN KEY (`user_id`) REFERENCES `gw_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `gw_meta` (k, v) VALUES ('schema_version', '3') ON DUPLICATE KEY UPDATE v = VALUES(v);

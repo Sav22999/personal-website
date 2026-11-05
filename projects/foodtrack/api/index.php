@@ -44,6 +44,13 @@ function only(string $m): void
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== $m) fail('Method not allowed.', 405, 'method');
 }
 
+/** Signed-in user for a GET request. */
+function reader(int $minRole = ROLE_USER, bool $allowPasswordChange = false): array
+{
+    only('GET');
+    return require_user($minRole, $allowPasswordChange);
+}
+
 /** Signed-in user + CSRF check for a POST that changes data. */
 function writer(int $minRole = ROLE_USER, bool $allowPasswordChange = false): array
 {
@@ -298,13 +305,13 @@ function touch_list(int $listId): void
 /** Validated item fields from the request (used by item.save and listitem.tospace). */
 function item_fields(array $b): array
 {
-    $product = product_row(int_or_null($b['productId'] ?? null));
+    $product = product_row(int_or_null($b['productId'] ?? $b['product_id'] ?? null));
     $name = s($b, 'name', 80, false, 'Name');
     if ($name === '' && $product) $name = $product['name'];
     if ($name === '') fail('Enter the product name.', 422, 'validation');
     $ns = strtoupper(s($b, 'nutriscore', 1));
-    $type = ($b['expiryType'] ?? '') === 'best_before' ? 'best_before' : 'use_by';
-    $categoryId = valid_category(int_or_null($b['categoryId'] ?? null));
+    $type = ($b['expiryType'] ?? $b['expiry_type'] ?? '') === 'best_before' ? 'best_before' : 'use_by';
+    $categoryId = valid_category(int_or_null($b['categoryId'] ?? $b['category_id'] ?? null));
     if (!$categoryId && $product && $product['category_id']) $categoryId = (int)$product['category_id'];
     return [
         'product_id' => $product ? (int)$product['id'] : null,
@@ -314,7 +321,7 @@ function item_fields(array $b): array
         'icon' => icon_name($b['icon'] ?? ($product['icon'] ?? ''), 'products', $product['icon'] ?? 'generic'),
         'quantity' => num_or_null($b['quantity'] ?? null),
         'unit' => unit_or_default($b['unit'] ?? ($product['default_unit'] ?? 'pz')),
-        'expiry_date' => date_or_null($b['expiryDate'] ?? null),
+        'expiry_date' => date_or_null($b['expiryDate'] ?? $b['expiry_date'] ?? null),
         'expiry_type' => $type,
         'nutriscore' => in_array($ns, NUTRISCORES, true) ? $ns : null,
         'barcode' => preg_replace('/\D/', '', s($b, 'barcode', 32)),
@@ -328,6 +335,29 @@ function insert_item(int $hid, int $spaceId, array $f, int $userId): int
     db()->prepare('INSERT INTO ' . t('items') . ' (household_id, space_id, product_id, name, brand, category_id, icon, quantity, unit, expiry_date, expiry_type, nutriscore, barcode, notes, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         ->execute([$hid, $spaceId, $f['product_id'], $f['name'], $f['brand'], $f['category_id'], $f['icon'], $f['quantity'], $f['unit'], $f['expiry_date'], $f['expiry_type'], $f['nutriscore'], $f['barcode'], $f['notes'], $userId, $now, $now]);
     return (int)db()->lastInsertId();
+}
+
+/** Logs an action into the household activity history (for audit and undo). */
+function log_history(int $hid, ?int $userId, string $userName, string $action, ?int $itemId, string $itemName, ?int $spaceId, string $spaceName, ?float $quantity, string $unit, array $details): int
+{
+    $now = now_utc();
+    $sql = 'INSERT INTO ' . t('history') . ' (household_id, user_id, user_name, action, item_id, item_name, space_id, space_name, quantity, unit, details, undone, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?)';
+    $params = [$hid, $userId, $userName, $action, $itemId, $itemName, $spaceId, $spaceName, $quantity, $unit, json_encode($details, JSON_UNESCAPED_UNICODE), $now];
+    try {
+        $st = db()->prepare($sql);
+        $st->execute($params);
+        return (int)db()->lastInsertId();
+    } catch (Throwable $e) {
+        try {
+            require_once __DIR__ . '/../lib/schema.php';
+            install_schema(db(), (string)config_value('prefix', 'ft_'));
+            $st = db()->prepare($sql);
+            $st->execute($params);
+            return (int)db()->lastInsertId();
+        } catch (Throwable $ignored) {
+            return 0;
+        }
+    }
 }
 
 // ---------- Admin helpers ----------
@@ -712,15 +742,21 @@ switch ($route) {
         own_row('spaces', $spaceId, $hid);
         $f = item_fields($b);
         $id = (int)($b['id'] ?? 0);
+        $spRow = db()->query('SELECT name FROM ' . t('spaces') . ' WHERE id = ' . $spaceId)->fetch();
+        $spName = $spRow ? $spRow['name'] : '';
         if ($id) {
-            own_row('items', $id, $hid);
+            $prev = own_row('items', $id, $hid);
             db()->prepare('UPDATE ' . t('items') . ' SET space_id = ?, product_id = ?, name = ?, brand = ?, category_id = ?, icon = ?, quantity = ?, unit = ?, expiry_date = ?, expiry_type = ?, nutriscore = ?, barcode = ?, notes = ?, updated_at = ? WHERE id = ?')
                 ->execute([$spaceId, $f['product_id'], $f['name'], $f['brand'], $f['category_id'], $f['icon'], $f['quantity'], $f['unit'], $f['expiry_date'], $f['expiry_type'], $f['nutriscore'], $f['barcode'], $f['notes'], now_utc(), $id]);
+            log_history($hid, $u['id'], $u['name'], 'edit', $id, $f['name'], $spaceId, $spName, $f['quantity'], $f['unit'], ['prev_snapshot' => $prev]);
         } else {
             $st = db()->prepare('SELECT COUNT(*) FROM ' . t('items') . ' WHERE household_id = ?');
             $st->execute([$hid]);
             if ((int)$st->fetchColumn() >= 3000) fail('You reached the maximum number of products (3000).', 422, 'limit');
             $id = insert_item($hid, $spaceId, $f, $u['id']);
+            log_history($hid, $u['id'], $u['name'], 'add', $id, $f['name'], $spaceId, $spName, $f['quantity'], $f['unit'], [
+                'item_snapshot' => array_merge($f, ['id' => $id, 'space_id' => $spaceId, 'household_id' => $hid])
+            ]);
         }
         send_json(['ok' => true, 'id' => $id] + state_payload($u));
 
@@ -728,8 +764,12 @@ switch ($route) {
         $u = writer();
         $hid = active_household($u);
         $id = (int)(body()['id'] ?? 0);
-        own_row('items', $id, $hid);
+        $row = own_row('items', $id, $hid);
+        $spRow = db()->query('SELECT name FROM ' . t('spaces') . ' WHERE id = ' . (int)$row['space_id'])->fetch();
         db()->prepare('DELETE FROM ' . t('items') . ' WHERE id = ?')->execute([$id]);
+        log_history($hid, $u['id'], $u['name'], 'delete', $id, $row['name'], (int)$row['space_id'], $spRow ? $spRow['name'] : '', $row['quantity'] !== null ? (float)$row['quantity'] : null, $row['unit'], [
+            'item_snapshot' => $row
+        ]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'item.consume':
@@ -740,10 +780,22 @@ switch ($route) {
         $id = (int)($b['id'] ?? 0);
         $row = own_row('items', $id, $hid);
         $used = num_or_null($b['quantity'] ?? null);
+        $spRow = db()->query('SELECT name FROM ' . t('spaces') . ' WHERE id = ' . (int)$row['space_id'])->fetch();
+        $spName = $spRow ? $spRow['name'] : '';
         if ($used !== null && $row['quantity'] !== null && $used < (float)$row['quantity']) {
-            db()->prepare('UPDATE ' . t('items') . ' SET quantity = ?, updated_at = ? WHERE id = ?')->execute([round((float)$row['quantity'] - $used, 3), now_utc(), $id]);
+            $newQty = round((float)$row['quantity'] - $used, 3);
+            db()->prepare('UPDATE ' . t('items') . ' SET quantity = ?, updated_at = ? WHERE id = ?')->execute([$newQty, now_utc(), $id]);
+            log_history($hid, $u['id'], $u['name'], 'consume_part', $id, $row['name'], (int)$row['space_id'], $spName, $used, $row['unit'], [
+                'qty_before' => (float)$row['quantity'],
+                'qty_consumed' => $used,
+                'qty_after' => $newQty,
+                'item_snapshot' => $row
+            ]);
         } else {
             db()->prepare('DELETE FROM ' . t('items') . ' WHERE id = ?')->execute([$id]);
+            log_history($hid, $u['id'], $u['name'], 'consume', $id, $row['name'], (int)$row['space_id'], $spName, $row['quantity'] !== null ? (float)$row['quantity'] : null, $row['unit'], [
+                'item_snapshot' => $row
+            ]);
         }
         send_json(['ok' => true] + state_payload($u));
 
@@ -872,6 +924,10 @@ switch ($route) {
         $newId = insert_item($hid, $spaceId, $f, $u['id']);
         db()->prepare('DELETE FROM ' . t('list_items') . ' WHERE id = ?')->execute([$row['id']]);
         db()->commit();
+        $spRow = db()->query('SELECT name FROM ' . t('spaces') . ' WHERE id = ' . $spaceId)->fetch();
+        log_history($hid, $u['id'], $u['name'], 'move_from_list', $newId, $f['name'], $spaceId, $spRow ? $spRow['name'] : '', $f['quantity'], $f['unit'], [
+            'item_snapshot' => array_merge($f, ['id' => $newId, 'space_id' => $spaceId, 'household_id' => $hid])
+        ]);
         touch_list((int)$row['list_id']);
         send_json(['ok' => true, 'id' => $newId] + state_payload($u));
 
@@ -927,6 +983,113 @@ switch ($route) {
         db()->prepare('DELETE FROM ' . t('meal_plan') . ' WHERE id = ?')->execute([$id]);
         send_json(['ok' => true] + state_payload($u));
 
+    // ---------- Activity history & undo ----------
+
+    case 'history.list':
+        only('GET');
+        $u = require_user();
+        $hid = active_household($u);
+        try {
+            $st = db()->prepare('SELECT id, user_id, user_name, action, item_id, item_name, space_id, space_name, quantity, unit, details, undone, created_at FROM ' . t('history') . ' WHERE household_id = ? ORDER BY id DESC LIMIT 100');
+            $st->execute([$hid]);
+            $rows = array_map(function ($r) {
+                return [
+                    'id' => (int)$r['id'],
+                    'userId' => $r['user_id'] ? (int)$r['user_id'] : null,
+                    'userName' => $r['user_name'],
+                    'action' => $r['action'],
+                    'itemId' => $r['item_id'] ? (int)$r['item_id'] : null,
+                    'itemName' => $r['item_name'],
+                    'spaceId' => $r['space_id'] ? (int)$r['space_id'] : null,
+                    'spaceName' => $r['space_name'],
+                    'quantity' => $r['quantity'] !== null ? (float)$r['quantity'] : null,
+                    'unit' => $r['unit'],
+                    'details' => json_decode((string)$r['details'], true) ?: [],
+                    'undone' => (bool)$r['undone'],
+                    'createdAt' => $r['created_at'],
+                ];
+            }, $st->fetchAll());
+        } catch (Throwable $e) {
+            try {
+                require_once __DIR__ . '/../lib/schema.php';
+                install_schema(db(), (string)config_value('prefix', 'ft_'));
+            } catch (Throwable $ignored) {}
+            $rows = [];
+        }
+        send_json(['ok' => true, 'history' => $rows]);
+
+    case 'history.undo':
+        $u = writer();
+        $hid = active_household($u);
+        $id = (int)(body()['id'] ?? 0);
+        $st = db()->prepare('SELECT * FROM ' . t('history') . ' WHERE id = ? AND household_id = ?');
+        $st->execute([$id, $hid]);
+        $h = $st->fetch();
+        if (!$h) fail('History entry not found.', 404);
+        if ($h['undone']) fail('Action already undone.', 400);
+
+        $act = $h['action'];
+        $details = json_decode((string)$h['details'], true) ?: [];
+
+        db()->beginTransaction();
+        if ($act === 'consume_part') {
+            // Restore consumed quantity
+            $consumedQty = (float)$h['quantity'];
+            $itemId = (int)$h['item_id'];
+            $item = db()->query('SELECT id, quantity FROM ' . t('items') . ' WHERE id = ' . $itemId . ' AND household_id = ' . $hid)->fetch();
+            if ($item) {
+                $restored = round((float)$item['quantity'] + $consumedQty, 3);
+                db()->prepare('UPDATE ' . t('items') . ' SET quantity = ?, updated_at = ? WHERE id = ?')->execute([$restored, now_utc(), $itemId]);
+            } else {
+                // Item was deleted later, recreate it from snapshot with the consumed quantity
+                $snap = $details['item_snapshot'] ?? [];
+                if ($snap) {
+                    $snap['quantity'] = $consumedQty;
+                    $spId = (int)($snap['space_id'] ?? 0);
+                    $spExists = (int)db()->query('SELECT COUNT(*) FROM ' . t('spaces') . ' WHERE id = ' . $spId . ' AND household_id = ' . $hid)->fetchColumn();
+                    if (!$spExists) {
+                        $firstSp = (int)db()->query('SELECT id FROM ' . t('spaces') . ' WHERE household_id = ' . $hid . ' ORDER BY sort, id LIMIT 1')->fetchColumn();
+                        if ($firstSp) $snap['space_id'] = $firstSp;
+                    }
+                    insert_item($hid, (int)$snap['space_id'], item_fields($snap), $u['id']);
+                }
+            }
+        } elseif ($act === 'consume' || $act === 'delete') {
+            // Re-create the item from snapshot
+            $snap = $details['item_snapshot'] ?? [];
+            if ($snap) {
+                $spId = (int)($snap['space_id'] ?? 0);
+                $spExists = (int)db()->query('SELECT COUNT(*) FROM ' . t('spaces') . ' WHERE id = ' . $spId . ' AND household_id = ' . $hid)->fetchColumn();
+                if (!$spExists) {
+                    $firstSp = (int)db()->query('SELECT id FROM ' . t('spaces') . ' WHERE household_id = ' . $hid . ' ORDER BY sort, id LIMIT 1')->fetchColumn();
+                    if ($firstSp) $snap['space_id'] = $firstSp;
+                }
+                insert_item($hid, (int)$snap['space_id'], item_fields($snap), $u['id']);
+            }
+        } elseif ($act === 'add' || $act === 'move_from_list') {
+            // Remove the added item if still present
+            $itemId = (int)$h['item_id'];
+            if ($itemId) {
+                db()->prepare('DELETE FROM ' . t('items') . ' WHERE id = ? AND household_id = ?')->execute([$itemId, $hid]);
+            }
+        } elseif ($act === 'edit') {
+            $prev = $details['prev_snapshot'] ?? [];
+            $itemId = (int)$h['item_id'];
+            if ($prev && $itemId) {
+                $itemExists = (int)db()->query('SELECT COUNT(*) FROM ' . t('items') . ' WHERE id = ' . $itemId . ' AND household_id = ' . $hid)->fetchColumn();
+                if ($itemExists) {
+                    $f = item_fields($prev);
+                    db()->prepare('UPDATE ' . t('items') . ' SET space_id = ?, product_id = ?, name = ?, brand = ?, category_id = ?, icon = ?, quantity = ?, unit = ?, expiry_date = ?, expiry_type = ?, nutriscore = ?, barcode = ?, notes = ?, updated_at = ? WHERE id = ?')
+                        ->execute([(int)$prev['space_id'], $f['product_id'], $f['name'], $f['brand'], $f['category_id'], $f['icon'], $f['quantity'], $f['unit'], $f['expiry_date'], $f['expiry_type'], $f['nutriscore'], $f['barcode'], $f['notes'], now_utc(), $itemId]);
+                }
+            }
+        }
+
+        db()->prepare('UPDATE ' . t('history') . ' SET undone = 1 WHERE id = ?')->execute([$id]);
+        db()->commit();
+
+        send_json(['ok' => true] + state_payload($u));
+
     // ---------- Barcode lookup (Open Food Facts) ----------
 
     case 'barcode.lookup':
@@ -934,21 +1097,119 @@ switch ($route) {
         require_user();
         $code = preg_replace('/\D/', '', (string)($_GET['code'] ?? ''));
         if (strlen($code) < 6 || strlen($code) > 14) fail('Invalid barcode.', 422, 'validation');
-        $url = 'https://world.openfoodfacts.org/api/v2/product/' . $code . '.json?fields=product_name,product_name_it,brands,nutriscore_grade,quantity,categories_tags';
-        $ctx = stream_context_create(['http' => ['timeout' => 6, 'header' => "User-Agent: FoodTrack/1.0 (saveriomorelli.com)\r\n"]]);
-        $raw = @file_get_contents($url, false, $ctx);
-        $data = $raw ? json_decode($raw, true) : null;
-        if (!is_array($data) || (int)($data['status'] ?? 0) !== 1) send_json(['ok' => true, 'found' => false]);
-        $p = $data['product'] ?? [];
-        $ns = strtoupper((string)($p['nutriscore_grade'] ?? ''));
-        $qty = null; $unit = null;
-        if (preg_match('/([\d.,]+)\s*(kg|g|ml|cl|l)\b/i', (string)($p['quantity'] ?? ''), $m)) { $qty = (float)str_replace(',', '.', $m[1]); $unit = strtolower($m[2]); }
-        send_json(['ok' => true, 'found' => true, 'product' => [
-            'name' => mb_substr(trim((string)(($p['product_name_it'] ?? '') ?: ($p['product_name'] ?? ''))), 0, 80),
-            'brand' => mb_substr(trim(explode(',', (string)($p['brands'] ?? ''))[0]), 0, 80),
-            'nutriscore' => in_array($ns, NUTRISCORES, true) ? $ns : null,
-            'quantity' => $qty, 'unit' => $unit, 'barcode' => $code,
-        ]]);
+
+        $candidates = [$code];
+        if (strlen($code) === 12) $candidates[] = '0' . $code;
+        elseif (strlen($code) === 13 && $code[0] === '0') $candidates[] = substr($code, 1);
+
+        $fetchOff = static function (string $c): ?array {
+            $fields = 'product_name,product_name_it,product_name_en,generic_name,generic_name_it,abbreviated_product_name,brands,nutriscore_grade,quantity,product_quantity,product_quantity_unit,categories_tags';
+            $url = 'https://world.openfoodfacts.org/api/v2/product/' . $c . '.json?fields=' . $fields;
+            $ua = 'FoodTrack/1.6 (https://www.saveriomorelli.com)';
+            $raw = false;
+            if (function_exists('curl_init')) {
+                $ch = curl_init($url);
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_TIMEOUT => 6,
+                    CURLOPT_CONNECTTIMEOUT => 4,
+                    CURLOPT_USERAGENT => $ua,
+                    CURLOPT_HTTPHEADER => ['Accept: application/json'],
+                ]);
+                $raw = curl_exec($ch);
+                curl_close($ch);
+            }
+            if ($raw === false || $raw === '') {
+                $ctx = stream_context_create(['http' => ['timeout' => 6, 'header' => "User-Agent: $ua\r\nAccept: application/json\r\n"]]);
+                $raw = @file_get_contents($url, false, $ctx);
+            }
+            $data = is_string($raw) && $raw !== '' ? json_decode($raw, true) : null;
+            if (!is_array($data) || (int)($data['status'] ?? 0) !== 1 || empty($data['product']) || !is_array($data['product'])) return null;
+            return $data['product'];
+        };
+
+        $p = null;
+        foreach ($candidates as $cand) {
+            $p = $fetchOff($cand);
+            if ($p !== null) break;
+        }
+
+        if ($p !== null) {
+            $brand = mb_substr(trim(explode(',', (string)($p['brands'] ?? ''))[0]), 0, 80);
+            $nameCandidates = [
+                $p['product_name_it'] ?? '',
+                $p['product_name'] ?? '',
+                $p['product_name_en'] ?? '',
+                $p['abbreviated_product_name'] ?? '',
+                $p['generic_name_it'] ?? '',
+                $p['generic_name'] ?? '',
+            ];
+            $name = '';
+            foreach ($nameCandidates as $nc) {
+                $nc = trim((string)$nc);
+                if ($nc !== '') { $name = mb_substr($nc, 0, 80); break; }
+            }
+            $genericName = mb_substr(trim((string)(($p['generic_name_it'] ?? '') ?: ($p['generic_name'] ?? ''))), 0, 120);
+            if ($name === '' && $brand !== '') $name = $brand;
+            elseif ($brand !== '' && mb_strtolower($name) === mb_strtolower($brand) && $genericName !== '') {
+                $name = mb_substr($genericName, 0, 80);
+            }
+
+            $ns = strtoupper(trim((string)($p['nutriscore_grade'] ?? '')));
+            $qty = null;
+            $unit = null;
+            $qStr = (string)($p['quantity'] ?? '');
+            if (preg_match('/(?:^\s*\d+\s*[x×*]\s*)?([\d.,]+)\s*(kg|g|ml|cl|l)\b/i', $qStr, $m)) {
+                $qty = (float)str_replace(',', '.', $m[1]);
+                $unit = strtolower($m[2]);
+            } elseif (!empty($p['product_quantity'])) {
+                $qty = (float)$p['product_quantity'];
+                $uRaw = strtolower(trim((string)($p['product_quantity_unit'] ?? 'g')));
+                $unit = in_array($uRaw, UNITS, true) ? $uRaw : 'g';
+            }
+            $cats = [];
+            if (!empty($p['categories_tags']) && is_array($p['categories_tags'])) {
+                foreach (array_slice($p['categories_tags'], 0, 25) as $ct) {
+                    if (is_string($ct)) $cats[] = strtolower($ct);
+                }
+            }
+            if ($name !== '') {
+                send_json(['ok' => true, 'found' => true, 'product' => [
+                    'name' => $name,
+                    'genericName' => $genericName,
+                    'brand' => $brand,
+                    'nutriscore' => in_array($ns, NUTRISCORES, true) ? $ns : null,
+                    'quantity' => $qty,
+                    'unit' => $unit,
+                    'categories' => $cats,
+                    'barcode' => $code,
+                ]]);
+            }
+        }
+
+        // Fallback to any previously saved item with the same barcode in the local database
+        $inPlaceholders = implode(',', array_fill(0, count($candidates), '?'));
+        $stLocal = db()->prepare('SELECT name, brand, nutriscore, quantity, unit, icon, category_id, product_id FROM ' . t('items') . " WHERE barcode IN ($inPlaceholders) AND name != '' ORDER BY id DESC LIMIT 1");
+        $stLocal->execute($candidates);
+        $loc = $stLocal->fetch();
+        if ($loc) {
+            send_json(['ok' => true, 'found' => true, 'product' => [
+                'name' => (string)$loc['name'],
+                'genericName' => '',
+                'brand' => (string)($loc['brand'] ?? ''),
+                'nutriscore' => in_array($loc['nutriscore'] ?? '', NUTRISCORES, true) ? $loc['nutriscore'] : null,
+                'quantity' => $loc['quantity'] !== null ? (float)$loc['quantity'] : null,
+                'unit' => $loc['unit'] ?: null,
+                'icon' => $loc['icon'] ?: null,
+                'categoryId' => $loc['category_id'] !== null ? (int)$loc['category_id'] : null,
+                'productId' => $loc['product_id'] !== null ? (int)$loc['product_id'] : null,
+                'categories' => [],
+                'barcode' => $code,
+            ]]);
+        }
+
+        send_json(['ok' => true, 'found' => false]);
 
     // =================== Admin portal ===================
 

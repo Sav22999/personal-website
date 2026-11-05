@@ -5,8 +5,9 @@
   const t = I18N.t;
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store, norm } = UI;
 
-  const VERSION = '1.5.0';
+  const VERSION = '1.6.0';
   const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
+  const DONATE_URL = 'https://www.saveriomorelli.com/donate/';
   const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
   const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
   const SORTS = [
@@ -28,7 +29,8 @@
   const root = document.getElementById('app');
   let weekOffset = 0;
   let recipeQuery = '';
-  let recipeFilters = { fav: false, expiring: false, expired: false, cookable: false };
+  let recipeFilters = { fav: false, inHome: false, cookable: false, expiring: false, expired: false };
+  let recipeIngredients = new Set();
   const searchState = { q: '', spaceId: '', categoryId: '', exp: 'all' };
 
   // ===================================================== state
@@ -119,13 +121,14 @@
   }
 
   function recipeStats(r) {
-    let ok = 0, usesExpiring = false, usesExpired = false;
+    let ok = 0, usesExpiring = false, usesExpired = false, usesAvailable = false;
     for (const ing of r.ingredients) {
       const a = availability(ing);
-      if (a.status === 'ok') ok++;
+      if (a.status === 'ok') { ok++; usesAvailable = true; }
+      else if (a.matches && a.matches.length > 0) { usesAvailable = true; }
       for (const m of a.matches) { const st = expiryState(m); if (st === 'expiring') usesExpiring = true; if (st === 'expired') usesExpired = true; }
     }
-    return { ok, total: r.ingredients.length, usesExpiring, usesExpired };
+    return { ok, total: r.ingredients.length, usesExpiring, usesExpired, usesAvailable };
   }
 
   /** Missing ingredients of some recipes, merged by product and unit. */
@@ -168,7 +171,7 @@
   function groupRow(ic, title, sub, onclick, opts) {
     opts = opts || {};
     const tag = opts.href ? 'a' : onclick ? 'button' : 'div';
-    return h(tag + '.list-row' + (opts.danger ? '.danger' : ''), { type: tag === 'button' ? 'button' : undefined, href: opts.href, onclick },
+    return h(tag + '.list-row' + (opts.danger ? '.danger' : ''), { type: tag === 'button' ? 'button' : undefined, href: opts.href, target: opts.external ? '_blank' : undefined, rel: opts.external ? 'noopener' : undefined, onclick },
       opts.lead || tile('icon', ic, 'sm'), h('div.body', h('p.title', title), sub ? h('div.sub', sub) : null),
       opts.trail !== undefined ? opts.trail : (onclick || opts.href ? h('div.trail', icon(opts.href && opts.external ? 'open' : 'right')) : null));
   }
@@ -268,12 +271,15 @@
   function render(keepScroll) {
     if (!S.user) return renderAuth();
     if (S.user.mustChangePassword) return renderForcePassword();
-    if (!S.loaded) { root.replaceChildren(h('div.loader')); return; }
+    if (!S.loaded) {
+      root.replaceChildren(DESK.matches ? h('div.content', UI.skeletonScreen()) : UI.skeletonScreen());
+      return;
+    }
 
     const r = route();
     const key = r.name + '/' + (r.id || '');
     const y = window.scrollY;
-    const views = { lists: viewLists, list: viewList, spaces: viewSpaces, space: viewSpace, recipes: viewRecipes, recipe: viewRecipe, plan: viewPlan, search: viewSearch, profile: viewProfile, join: viewJoin };
+    const views = { lists: viewLists, list: viewList, spaces: viewSpaces, space: viewSpace, recipes: viewRecipes, recipe: viewRecipe, plan: viewPlan, search: viewSearch, profile: viewProfile, join: viewJoin, history: viewHistory };
     const v = (views[r.name] || viewSpaces)(r.id);
     if (!v) return;
     // On desktop, screens listed in the side navigation are top-level: no back arrow
@@ -312,7 +318,7 @@
   }
 
   /** Which side-navigation entry is highlighted for each route. */
-  const NAV_OF = { list: 'lists', space: 'spaces', recipe: 'recipes', join: 'profile' };
+  const NAV_OF = { list: 'lists', space: 'spaces', recipe: 'recipes', join: 'profile', history: 'history' };
   /** Wide screens (desktop, landscape tablets): side navigation, grids, dialogs instead of bottom sheets. */
   const DESK = matchMedia('(min-width: 960px)');
   DESK.addEventListener('change', () => { if (S.user && S.loaded) { UI.closeAllSheets(); render(true); } });
@@ -333,7 +339,8 @@
         link('lists', t('Lists'), 'list', nBuy),
         link('recipes', t('Recipes'), 'restaurant'),
         link('plan', t('Weekly plan'), 'calendar'),
-        link('search', t('Search'), 'search')),
+        link('search', t('Search'), 'search'),
+        link('history', t('Activity history'), 'history')),
       h('div.grow'),
       // Admins and content moderators: shortcut to the management portal
       S.user.isEditor ? h('a.sn-link.sn-admin', { href: 'admin.html', target: '_blank', rel: 'noopener', title: S.user.isAdmin ? t('Recipes, products, categories and users') : t('Recipes and products') },
@@ -383,7 +390,10 @@
     })));
     return {
       tab: 'spaces', title: t('Home spaces'), body,
-      actions: [iconBtn('search', t('Find a food'), () => go('search'))],
+      actions: [
+        iconBtn('history', t('Activity history'), () => go('history')),
+        iconBtn('search', t('Find a food'), () => go('search'))
+      ],
       fab: fab(t('New space'), 'add', () => openSpaceForm(null)),
     };
   }
@@ -399,7 +409,7 @@
         const sp = spaceById(i.spaceId);
         return cardRow({ lead: tile('products', i.icon), title: itemName(i), sub: `${expiryLine(i)} · ${sp ? sp.name : '—'}`, meta: [expiryChip(i)], trail: icon('right') }, () => openItemDetail(i));
       }))],
-      actions: [cancelBtn(), btn(t('Discover recipes'), { icon: 'restaurant', onclick: () => { recipeFilters = { fav: false, expiring: kind === 'expiring', expired: kind === 'expired', cookable: false }; recipeQuery = ''; go('recipes'); } })],
+      actions: [cancelBtn(), btn(t('Discover recipes'), { icon: 'restaurant', onclick: () => { recipeFilters = { fav: false, inHome: false, expiring: kind === 'expiring', expired: kind === 'expired', cookable: false }; recipeIngredients.clear(); recipeQuery = ''; go('recipes'); } })],
     });
   }
 
@@ -496,6 +506,18 @@
       d(t('Space'), sp && sp.name), d(t('Category'), cat && cat.name), d(t('Brand'), i.brand), d(t('Barcode'), i.barcode),
       d(t('Added'), (i.createdBy ? i.createdBy + ', ' : '') + UI.fmtDateTime(i.createdAt).split(' ')[0])));
     if (i.notes) body.push(h('div.details', h('div.d', h('span', t('Notes')), h('span', i.notes))));
+    body.push(h('div.btn-row', { style: { marginTop: '10px' } },
+      btn(t('Find recipes with this product'), {
+        kind: 'tonal', icon: 'restaurant',
+        onclick: () => {
+          s.close();
+          recipeFilters = { fav: false, inHome: false, cookable: false, expiring: false, expired: false };
+          recipeIngredients = new Set([norm(itemName(i))]);
+          recipeQuery = '';
+          go('recipes');
+        }
+      })
+    ));
     const s = sheet({
       title: itemName(i), body,
       actions: [
@@ -574,7 +596,7 @@
       name: pre.name || (li && li.name) || '', icon: pre.icon || (li && li.icon) || null,
       quantity: pre.quantity ?? (li ? li.quantity : null), unit: pre.unit || (li && li.unit) || 'pz',
       categoryId: pre.categoryId ?? null, brand: pre.brand || '', nutriscore: pre.nutriscore || null, barcode: pre.barcode || '',
-      expiryDate: '', expiryType: 'use_by', notes: pre.notes || (li && li.notes) || '',
+      expiryDate: '', expiryType: pre.expiryType || 'use_by', notes: pre.notes || (li && li.notes) || '',
       spaceId: opts.spaceId || (S.spaces[0] && S.spaces[0].id),
     };
     const p0 = productById(v.productId);
@@ -605,7 +627,7 @@
     const save = btn(it ? t('Save') : li ? t('Move') : t('Add'), { icon: li ? 'move' : 'check', onclick: async () => {
       if (!name.value.trim()) { toast(t('Enter the product name.'), 'error'); name.focus(); return; }
       const payload = {
-        id: it ? it.id : 0, spaceId: Number(space.value), productId: matchProduct(name.value, v.productId),
+        id: it ? it.id : 0, spaceId: Number(space.value), productId: matchProduct(name.value, v.productId, v.name),
         name: name.value, quantity: qty.value, unit: unit.value, expiryDate: date.value, expiryType: expType,
         nutriscore: ns, brand: brand.value, categoryId: cat.value || null, icon: iconSel, barcode: barcode.value, notes: notes.value,
       };
@@ -627,26 +649,34 @@
     });
   }
 
-  /** Keeps the catalog link only if the name still matches a catalog product. */
-  function matchProduct(name, productId) {
+  /** Keeps the catalog link when the name matches a catalog product or was pre-matched by barcode scan. */
+  function matchProduct(name, productId, initialName) {
     const n = norm(name);
     const p = productById(productId);
-    if (p && norm(p.name) === n) return p.id;
-    const q = S.catalog.products.find(x => norm(x.name) === n);
+    if (p && (norm(p.name) === n || norm(p.nameBase) === n || (initialName && norm(initialName) === n))) return p.id;
+    const q = S.catalog.products.find(x => norm(x.name) === n || norm(x.nameBase) === n);
     return q ? q.id : null;
   }
 
-  // ---------- Barcode scanner (BarcodeDetector + Open Food Facts) ----------
+  // ---------- Barcode scanner (Multi-engine: Native BarcodeDetector + Sub-pixel 1D + ZXing + Open Food Facts) ----------
 
   let zxingPromise = null;
   /** Loads the ZXing barcode reader (self-hosted) for browsers without the native BarcodeDetector. */
   function loadZxing() {
     if (!zxingPromise) {
       zxingPromise = new Promise((resolve, reject) => {
+        if (window.ZXing) return resolve(window.ZXing);
         const sc = document.createElement('script');
         sc.src = 'assets/vendor/zxing-0.21.3.min.js';
         sc.onload = () => (window.ZXing ? resolve(window.ZXing) : reject(new Error('ZXing')));
-        sc.onerror = () => { zxingPromise = null; reject(new Error('ZXing')); };
+        sc.onerror = () => {
+          // Fallback to CDN if self-hosted file cannot be loaded
+          const cdn = document.createElement('script');
+          cdn.src = 'https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js';
+          cdn.onload = () => (window.ZXing ? resolve(window.ZXing) : reject(new Error('ZXing')));
+          cdn.onerror = () => { zxingPromise = null; reject(new Error('ZXing')); };
+          document.head.appendChild(cdn);
+        };
         document.head.appendChild(sc);
       });
     }
@@ -662,12 +692,661 @@
     } catch (e) { return null; }
   }
 
+  // --- Sub-pixel 1D EAN-13 / UPC-A / EAN-8 / UPC-E tables & decoders ---
+  const EAN_L = [
+    [3, 2, 1, 1], [2, 2, 2, 1], [2, 1, 2, 2], [1, 4, 1, 1], [1, 1, 3, 2],
+    [1, 2, 3, 1], [1, 1, 1, 4], [1, 3, 1, 2], [1, 2, 1, 3], [3, 1, 1, 2],
+  ];
+  const EAN_G = EAN_L.map(p => [p[3], p[2], p[1], p[0]]);
+  const EAN_LG = EAN_L.concat(EAN_G);
+  const EAN_T = EAN_LG.map(p => [p[0] + p[1], p[1] + p[2], p[2] + p[3]]);
+  const EAN13_FIRST = [0, 11, 13, 14, 19, 25, 28, 21, 22, 26];
+  const UPCE_P0 = [56, 52, 50, 49, 44, 38, 35, 42, 41, 37];
+  const UPCE_P1 = [7, 11, 13, 14, 19, 25, 28, 21, 22, 26];
+  const SHARP_SCALES = [[1.5, 2, 3], [2.5, 3, 5], [3.2, 6, 10]];
+  const SCAN_Y_FRACS = [0.50, 0.45, 0.55, 0.40, 0.60, 0.34, 0.66, 0.28, 0.72, 0.22, 0.78, 0.16, 0.84, 0.48, 0.52];
+
+  /** Verifies the standard GS1 modulo-10 check digit for EAN-8, UPC-A, EAN-13 and GTIN-14 codes. */
+  function checkEanChecksum(code) {
+    if (!code || !/^\d+$/.test(code)) return false;
+    const n = code.length;
+    if (n !== 8 && n !== 12 && n !== 13 && n !== 14) return false;
+    let sum = 0;
+    for (let i = n - 2; i >= 0; i--) {
+      const d = code.charCodeAt(i) - 48;
+      sum += (((n - 2 - i) & 1) === 0 ? 3 : 1) * d;
+    }
+    return ((10 - (sum % 10)) % 10) === (code.charCodeAt(n - 1) - 48);
+  }
+
+  /** Expands an 8-digit UPC-E string (ns + 6 digits + check) into its 12-digit UPC-A equivalent. */
+  function expandUpceToUpca(upce) {
+    if (!upce || upce.length !== 8) return '';
+    const ns = upce[0], d = upce.slice(1, 7), chk = upce[7], last = d.charCodeAt(5) - 48;
+    let body;
+    if (last <= 2) body = d.slice(0, 2) + d[5] + '0000' + d.slice(2, 5);
+    else if (last === 3) body = d.slice(0, 3) + '00000' + d.slice(3, 5);
+    else if (last === 4) body = d.slice(0, 4) + '00000' + d[4];
+    else body = d.slice(0, 5) + '0000' + d[5];
+    return ns + body + chk;
+  }
+
+  /** Validates a raw barcode string before accepting it from any engine. */
+  function isValidBarcode(raw) {
+    const c = String(raw || '').replace(/\D/g, '');
+    if (c.length < 6 || c.length > 14) return false;
+    if (c.length === 13 || c.length === 12 || c.length === 14) return checkEanChecksum(c);
+    if (c.length === 8) return checkEanChecksum(c) || checkEanChecksum(expandUpceToUpca(c));
+    return true;
+  }
+
+  /** Decodes EAN-13 / UPC-A candidates across all black-run positions of a sub-pixel run-length array. */
+  function decodeRunsEAN13(runs, firstBlack, onHit) {
+    const limit = runs.length - 58;
+    for (let i = firstBlack; i < limit; i += 2) {
+      const modS = (runs[i] + runs[i + 1] + runs[i + 2]) / 3;
+      const modM = (runs[i + 27] + runs[i + 28] + runs[i + 29] + runs[i + 30] + runs[i + 31]) / 5;
+      const modE = (runs[i + 56] + runs[i + 57] + runs[i + 58]) / 3;
+      if (modS < 0.85 || modM < 0.85 || modE < 0.85) continue;
+      if (Math.abs(modS - modM) > 0.45 * modM || Math.abs(modE - modM) > 0.45 * modM) continue;
+      const loG = 0.22 * modM, hiG = 2.25 * modM;
+      if (runs[i] < loG || runs[i] > hiG || runs[i + 1] < loG || runs[i + 1] > hiG || runs[i + 2] < loG || runs[i + 2] > hiG ||
+          runs[i + 27] < loG || runs[i + 27] > hiG || runs[i + 28] < loG || runs[i + 28] > hiG || runs[i + 29] < loG || runs[i + 29] > hiG ||
+          runs[i + 30] < loG || runs[i + 30] > hiG || runs[i + 31] < loG || runs[i + 31] > hiG ||
+          runs[i + 56] < loG || runs[i + 56] > hiG || runs[i + 57] < loG || runs[i + 57] > hiG || runs[i + 58] < loG || runs[i + 58] > hiG) continue;
+
+      const bAvg = (runs[i] + runs[i + 2] + runs[i + 28] + runs[i + 30] + runs[i + 56] + runs[i + 58]) / 6;
+      const wAvg = (runs[i + 1] + runs[i + 27] + runs[i + 29] + runs[i + 31] + runs[i + 57]) / 5;
+      const modG = (bAvg + wAvg) * 0.5;
+      const bias = modG > 0 ? Math.max(-0.42, Math.min(0.42, (bAvg - wAvg) / (2 * modG))) : 0;
+
+      let parity = 0, totalErr = 0, ok = true, code = '';
+      for (let d = 0; d < 6; d++) {
+        const idx = i + 3 + (d << 2);
+        const r0 = runs[idx], r1 = runs[idx + 1], r2 = runs[idx + 2], r3 = runs[idx + 3];
+        const tot = r0 + r1 + r2 + r3;
+        const expMod = modS + (modM - modS) * ((d + 0.5) / 6);
+        if (Math.abs(tot - 7 * expMod) > 1.85 * expMod) { ok = false; break; }
+        const sc = 7 / tot;
+        const n0 = r0 * sc + bias, n1 = r1 * sc - bias, n2 = r2 * sc + bias, n3 = r3 * sc - bias;
+        const t1 = (r0 + r1) * sc, t2 = (r1 + r2) * sc, t3 = (r2 + r3) * sc;
+        let bestK = -1, bestErr = 1e9;
+        for (let k = 0; k < 20; k++) {
+          const p = EAN_LG[k], pt = EAN_T[k];
+          const dt1 = t1 - pt[0], dt2 = t2 - pt[1], dt3 = t3 - pt[2];
+          const dr0 = n0 - p[0], dr1 = n1 - p[1], dr2 = n2 - p[2], dr3 = n3 - p[3];
+          const err = 0.65 * (dt1 * dt1 + dt2 * dt2 + dt3 * dt3) + 0.35 * (dr0 * dr0 + dr1 * dr1 + dr2 * dr2 + dr3 * dr3);
+          if (err < bestErr) { bestErr = err; bestK = k; }
+        }
+        if (bestErr > 1.35) { ok = false; break; }
+        totalErr += bestErr;
+        code += String(bestK % 10);
+        if (bestK >= 10) parity |= (1 << (5 - d));
+      }
+      if (!ok) continue;
+      const firstDigit = EAN13_FIRST.indexOf(parity);
+      if (firstDigit < 0) continue;
+
+      for (let d = 0; d < 6; d++) {
+        const idx = i + 32 + (d << 2);
+        const r0 = runs[idx], r1 = runs[idx + 1], r2 = runs[idx + 2], r3 = runs[idx + 3];
+        const tot = r0 + r1 + r2 + r3;
+        const expMod = modM + (modE - modM) * ((d + 0.5) / 6);
+        if (Math.abs(tot - 7 * expMod) > 1.85 * expMod) { ok = false; break; }
+        const sc = 7 / tot;
+        const n0 = r0 * sc - bias, n1 = r1 * sc + bias, n2 = r2 * sc - bias, n3 = r3 * sc + bias;
+        const t1 = (r0 + r1) * sc, t2 = (r1 + r2) * sc, t3 = (r2 + r3) * sc;
+        let bestK = -1, bestErr = 1e9;
+        for (let k = 0; k < 10; k++) {
+          const p = EAN_L[k], pt = EAN_T[k];
+          const dt1 = t1 - pt[0], dt2 = t2 - pt[1], dt3 = t3 - pt[2];
+          const dr0 = n0 - p[0], dr1 = n1 - p[1], dr2 = n2 - p[2], dr3 = n3 - p[3];
+          const err = 0.65 * (dt1 * dt1 + dt2 * dt2 + dt3 * dt3) + 0.35 * (dr0 * dr0 + dr1 * dr1 + dr2 * dr2 + dr3 * dr3);
+          if (err < bestErr) { bestErr = err; bestK = k; }
+        }
+        if (bestErr > 1.35) { ok = false; break; }
+        totalErr += bestErr;
+        code += String(bestK);
+      }
+      if (!ok) continue;
+      const avgErr = totalErr / 12;
+      if (avgErr > 0.48) continue;
+      const qLeft = i === 0 || runs[i - 1] >= 2.2 * modS;
+      const qRight = i + 59 >= runs.length || runs[i + 59] >= 2.2 * modE;
+      if (!qLeft && !qRight) continue;
+      const full = String(firstDigit) + code;
+      if (checkEanChecksum(full)) {
+        onHit(full, qLeft && qRight ? avgErr * 0.75 : avgErr + 0.08);
+      }
+    }
+  }
+
+  /** Decodes EAN-8 candidates across all black-run positions of a sub-pixel run-length array. */
+  function decodeRunsEAN8(runs, firstBlack, onHit) {
+    const limit = runs.length - 42;
+    for (let i = firstBlack; i < limit; i += 2) {
+      const modS = (runs[i] + runs[i + 1] + runs[i + 2]) / 3;
+      const modM = (runs[i + 19] + runs[i + 20] + runs[i + 21] + runs[i + 22] + runs[i + 23]) / 5;
+      const modE = (runs[i + 40] + runs[i + 41] + runs[i + 42]) / 3;
+      if (modS < 0.9 || modM < 0.9 || modE < 0.9) continue;
+      if (Math.abs(modS - modM) > 0.42 * modM || Math.abs(modE - modM) > 0.42 * modM) continue;
+      // Require left & right quiet zones so an inner sub-window of a 13-digit EAN-13 is never misread as EAN-8
+      const qLeft = i === 0 || runs[i - 1] >= 2.8 * modS;
+      const qRight = i + 43 >= runs.length || runs[i + 43] >= 2.8 * modE;
+      if (!qLeft || !qRight) continue;
+      const loG = 0.25 * modM, hiG = 2.15 * modM;
+      if (runs[i] < loG || runs[i] > hiG || runs[i + 1] < loG || runs[i + 1] > hiG || runs[i + 2] < loG || runs[i + 2] > hiG ||
+          runs[i + 19] < loG || runs[i + 19] > hiG || runs[i + 20] < loG || runs[i + 20] > hiG || runs[i + 21] < loG || runs[i + 21] > hiG ||
+          runs[i + 22] < loG || runs[i + 22] > hiG || runs[i + 23] < loG || runs[i + 23] > hiG ||
+          runs[i + 40] < loG || runs[i + 40] > hiG || runs[i + 41] < loG || runs[i + 41] > hiG || runs[i + 42] < loG || runs[i + 42] > hiG) continue;
+
+      const bAvg = (runs[i] + runs[i + 2] + runs[i + 20] + runs[i + 22] + runs[i + 40] + runs[i + 42]) / 6;
+      const wAvg = (runs[i + 1] + runs[i + 19] + runs[i + 21] + runs[i + 23] + runs[i + 41]) / 5;
+      const modG = (bAvg + wAvg) * 0.5;
+      const bias = modG > 0 ? Math.max(-0.4, Math.min(0.4, (bAvg - wAvg) / (2 * modG))) : 0;
+
+      let totalErr = 0, ok = true, code = '';
+      for (let d = 0; d < 4; d++) {
+        const idx = i + 3 + (d << 2);
+        const r0 = runs[idx], r1 = runs[idx + 1], r2 = runs[idx + 2], r3 = runs[idx + 3];
+        const tot = r0 + r1 + r2 + r3;
+        const expMod = modS + (modM - modS) * ((d + 0.5) / 4);
+        if (Math.abs(tot - 7 * expMod) > 1.75 * expMod) { ok = false; break; }
+        const sc = 7 / tot;
+        const n0 = r0 * sc + bias, n1 = r1 * sc - bias, n2 = r2 * sc + bias, n3 = r3 * sc - bias;
+        const t1 = (r0 + r1) * sc, t2 = (r1 + r2) * sc, t3 = (r2 + r3) * sc;
+        let bestK = -1, bestErr = 1e9;
+        for (let k = 0; k < 10; k++) {
+          const p = EAN_L[k], pt = EAN_T[k];
+          const dt1 = t1 - pt[0], dt2 = t2 - pt[1], dt3 = t3 - pt[2];
+          const dr0 = n0 - p[0], dr1 = n1 - p[1], dr2 = n2 - p[2], dr3 = n3 - p[3];
+          const err = 0.65 * (dt1 * dt1 + dt2 * dt2 + dt3 * dt3) + 0.35 * (dr0 * dr0 + dr1 * dr1 + dr2 * dr2 + dr3 * dr3);
+          if (err < bestErr) { bestErr = err; bestK = k; }
+        }
+        if (bestErr > 1.2) { ok = false; break; }
+        totalErr += bestErr;
+        code += String(bestK);
+      }
+      if (!ok) continue;
+      for (let d = 0; d < 4; d++) {
+        const idx = i + 24 + (d << 2);
+        const r0 = runs[idx], r1 = runs[idx + 1], r2 = runs[idx + 2], r3 = runs[idx + 3];
+        const tot = r0 + r1 + r2 + r3;
+        const expMod = modM + (modE - modM) * ((d + 0.5) / 4);
+        if (Math.abs(tot - 7 * expMod) > 1.75 * expMod) { ok = false; break; }
+        const sc = 7 / tot;
+        const n0 = r0 * sc - bias, n1 = r1 * sc + bias, n2 = r2 * sc - bias, n3 = r3 * sc + bias;
+        const t1 = (r0 + r1) * sc, t2 = (r1 + r2) * sc, t3 = (r2 + r3) * sc;
+        let bestK = -1, bestErr = 1e9;
+        for (let k = 0; k < 10; k++) {
+          const p = EAN_L[k], pt = EAN_T[k];
+          const dt1 = t1 - pt[0], dt2 = t2 - pt[1], dt3 = t3 - pt[2];
+          const dr0 = n0 - p[0], dr1 = n1 - p[1], dr2 = n2 - p[2], dr3 = n3 - p[3];
+          const err = 0.65 * (dt1 * dt1 + dt2 * dt2 + dt3 * dt3) + 0.35 * (dr0 * dr0 + dr1 * dr1 + dr2 * dr2 + dr3 * dr3);
+          if (err < bestErr) { bestErr = err; bestK = k; }
+        }
+        if (bestErr > 1.2) { ok = false; break; }
+        totalErr += bestErr;
+        code += String(bestK);
+      }
+      if (!ok) continue;
+      const avgErr = totalErr / 8;
+      if (avgErr > 0.38) continue;
+      if (checkEanChecksum(code)) {
+        onHit(code, avgErr * 0.85);
+      }
+    }
+  }
+
+  /** Decodes UPC-E candidates across all black-run positions of a sub-pixel run-length array. */
+  function decodeRunsUPCE(runs, firstBlack, onHit) {
+    const limit = runs.length - 32;
+    for (let i = firstBlack; i < limit; i += 2) {
+      const modS = (runs[i] + runs[i + 1] + runs[i + 2]) / 3;
+      const modE = (runs[i + 27] + runs[i + 28] + runs[i + 29] + runs[i + 30] + runs[i + 31] + runs[i + 32]) / 6;
+      if (modS < 0.9 || modE < 0.9 || Math.abs(modS - modE) > 0.4 * modE) continue;
+      const qLeft = i === 0 || runs[i - 1] >= 2.8 * modS;
+      const qRight = i + 33 >= runs.length || runs[i + 33] >= 2.8 * modE;
+      if (!qLeft || !qRight) continue;
+      const modM = 0.5 * (modS + modE), loG = 0.25 * modM, hiG = 2.1 * modM;
+      if (runs[i] < loG || runs[i] > hiG || runs[i + 1] < loG || runs[i + 1] > hiG || runs[i + 2] < loG || runs[i + 2] > hiG ||
+          runs[i + 27] < loG || runs[i + 27] > hiG || runs[i + 28] < loG || runs[i + 28] > hiG || runs[i + 29] < loG || runs[i + 29] > hiG ||
+          runs[i + 30] < loG || runs[i + 30] > hiG || runs[i + 31] < loG || runs[i + 31] > hiG || runs[i + 32] < loG || runs[i + 32] > hiG) continue;
+
+      const bAvg = (runs[i] + runs[i + 2] + runs[i + 28] + runs[i + 30] + runs[i + 32]) / 5;
+      const wAvg = (runs[i + 1] + runs[i + 27] + runs[i + 29] + runs[i + 31]) / 4;
+      const modG = (bAvg + wAvg) * 0.5;
+      const bias = modG > 0 ? Math.max(-0.4, Math.min(0.4, (bAvg - wAvg) / (2 * modG))) : 0;
+
+      let parity = 0, totalErr = 0, ok = true, d6 = '';
+      for (let d = 0; d < 6; d++) {
+        const idx = i + 3 + (d << 2);
+        const r0 = runs[idx], r1 = runs[idx + 1], r2 = runs[idx + 2], r3 = runs[idx + 3];
+        const tot = r0 + r1 + r2 + r3;
+        const expMod = modS + (modE - modS) * ((d + 0.5) / 6);
+        if (Math.abs(tot - 7 * expMod) > 1.7 * expMod) { ok = false; break; }
+        const sc = 7 / tot;
+        const n0 = r0 * sc + bias, n1 = r1 * sc - bias, n2 = r2 * sc + bias, n3 = r3 * sc - bias;
+        const t1 = (r0 + r1) * sc, t2 = (r1 + r2) * sc, t3 = (r2 + r3) * sc;
+        let bestK = -1, bestErr = 1e9;
+        for (let k = 0; k < 20; k++) {
+          const p = EAN_LG[k], pt = EAN_T[k];
+          const dt1 = t1 - pt[0], dt2 = t2 - pt[1], dt3 = t3 - pt[2];
+          const dr0 = n0 - p[0], dr1 = n1 - p[1], dr2 = n2 - p[2], dr3 = n3 - p[3];
+          const err = 0.65 * (dt1 * dt1 + dt2 * dt2 + dt3 * dt3) + 0.35 * (dr0 * dr0 + dr1 * dr1 + dr2 * dr2 + dr3 * dr3);
+          if (err < bestErr) { bestErr = err; bestK = k; }
+        }
+        if (bestErr > 1.15) { ok = false; break; }
+        totalErr += bestErr;
+        d6 += String(bestK % 10);
+        if (bestK >= 10) parity |= (1 << (5 - d));
+      }
+      if (!ok) continue;
+      const avgErr = totalErr / 6;
+      if (avgErr > 0.34) continue;
+      let ns = -1, chk = UPCE_P0.indexOf(parity);
+      if (chk >= 0) ns = 0;
+      else { chk = UPCE_P1.indexOf(parity); if (chk >= 0) ns = 1; }
+      if (ns < 0) continue;
+      const upce = String(ns) + d6 + String(chk);
+      if (checkEanChecksum(expandUpceToUpca(upce))) {
+        onHit(upce, avgErr * 0.9);
+      }
+    }
+  }
+
+  /** Extracts sub-pixel run lengths from a 1D luminance scanline across multiple sharpening scales and decodes 1D barcodes. */
+  function scanLine1D(row, n0, onHit) {
+    if (n0 < 80) return;
+    const n = n0 << 1;
+    const up = new Float32Array(n);
+    for (let x = 0; x < n0; x++) {
+      const c = row[x];
+      up[x << 1] = c;
+      const xm1 = row[x > 0 ? x - 1 : 0];
+      const xp1 = row[x + 1 < n0 ? x + 1 : n0 - 1];
+      const xp2 = row[x + 2 < n0 ? x + 2 : n0 - 1];
+      up[(x << 1) + 1] = (-xm1 + 9 * c + 9 * xp1 - xp2) * 0.0625;
+    }
+
+    // O(1) symmetric block min/max envelope to cancel illumination gradients & glare
+    const B = Math.max(6, n >> 6);
+    const nb = Math.ceil(n / B);
+    const bmin = new Float32Array(nb).fill(255);
+    const bmax = new Float32Array(nb);
+    for (let i = 0; i < n; i++) {
+      const bi = (i / B) | 0, v = up[i];
+      if (v < bmin[bi]) bmin[bi] = v;
+      if (v > bmax[bi]) bmax[bi] = v;
+    }
+    const midArr = new Float32Array(n);
+    const rngArr = new Float32Array(n);
+    for (let x = 0; x < n; x++) {
+      const bi = (x / B) | 0;
+      const l0 = bi > 4 ? bi - 4 : 0;
+      const r0 = bi + 4 < nb ? bi + 4 : nb - 1;
+      let loL = up[x], hiL = up[x], loR = up[x], hiR = up[x];
+      for (let k = l0; k <= bi; k++) { if (bmin[k] < loL) loL = bmin[k]; if (bmax[k] > hiL) hiL = bmax[k]; }
+      for (let k = bi; k <= r0; k++) { if (bmin[k] < loR) loR = bmin[k]; if (bmax[k] > hiR) hiR = bmax[k]; }
+      const lo = 0.5 * (loL + loR), hi = 0.5 * (hiL + hiR);
+      midArr[x] = 0.5 * (lo + hi);
+      rngArr[x] = hi - lo;
+    }
+
+    // Deduplicate hits within the same scanline across sharpening scales so one noisy line cannot self-confirm
+    let bestLineCode = null, bestLineErr = 1e9;
+    const lineHit = (code, err) => {
+      const rankErr = code.length >= 12 ? err : err + 0.08;
+      if (rankErr < bestLineErr) { bestLineCode = code; bestLineErr = rankErr; }
+    };
+
+    const diff = new Float32Array(n);
+    for (let sIdx = 0; sIdx < SHARP_SCALES.length; sIdx++) {
+      const [gain, r1, r2] = SHARP_SCALES[sIdx];
+      for (let x = 0; x < n; x++) {
+        if (rngArr[x] <= 8) { diff[x] = -10; continue; }
+        const c = up[x];
+        const blur = (up[x >= r2 ? x - r2 : 0] + 2 * up[x >= r1 ? x - r1 : 0] + 2 * c + 2 * up[x + r1 < n ? x + r1 : n - 1] + up[x + r2 < n ? x + r2 : n - 1]) * 0.125;
+        const sharp = c + gain * (c - blur);
+        diff[x] = midArr[x] - sharp;
+      }
+
+      const runs = [];
+      let prevEdge = 0;
+      const firstState = diff[0] > 0 ? 1 : 0;
+      let cur = firstState;
+      for (let x = 1; x < n; x++) {
+        const s = diff[x] > 0 ? 1 : 0;
+        if (s !== cur) {
+          const d0 = diff[x - 1], d1 = diff[x];
+          let frac = d0 !== d1 ? d0 / (d0 - d1) : 0.5;
+          if (frac < 0) frac = 0; else if (frac > 1) frac = 1;
+          const edge = (x - 1) + frac;
+          runs.push(edge - prevEdge);
+          prevEdge = edge;
+          cur = s;
+        }
+      }
+      runs.push(n - prevEdge);
+      if (runs.length < 33) continue;
+
+      const fb = firstState === 1 ? 0 : 1;
+      decodeRunsEAN13(runs, fb, lineHit);
+      decodeRunsEAN8(runs, fb, lineHit);
+      decodeRunsUPCE(runs, fb, lineHit);
+
+      // Upside-down (180°) pass by reversing the run-length array
+      const rev = runs.slice().reverse();
+      const fbRev = (fb + runs.length - 1) & 1;
+      decodeRunsEAN13(rev, fbRev, lineHit);
+      decodeRunsEAN8(rev, fbRev, lineHit);
+      decodeRunsUPCE(rev, fbRev, lineHit);
+    }
+    if (bestLineCode) onHit(bestLineCode, bestLineErr);
+  }
+
+  /** Runs multi-band horizontal, diagonal and vertical sub-pixel 1D decoding on a grayscale buffer. */
+  function decode1DFromGray(gray, w, h, onHit) {
+    const row = new Float32Array(w);
+    // 1. Horizontal 5-row vertically-averaged bands
+    for (let i = 0; i < SCAN_Y_FRACS.length; i++) {
+      const yc = Math.max(2, Math.min(h - 3, (h * SCAN_Y_FRACS[i]) | 0));
+      const r0 = (yc - 2) * w, r1 = (yc - 1) * w, r2 = yc * w, r3 = (yc + 1) * w, r4 = (yc + 2) * w;
+      for (let x = 0; x < w; x++) {
+        row[x] = (gray[r0 + x] + 2 * gray[r1 + x] + 2 * gray[r2 + x] + 2 * gray[r3 + x] + gray[r4 + x]) * 0.125;
+      }
+      scanLine1D(row, w, onHit);
+    }
+    // 2. Diagonal bands (±10° and ±18° tilt across the center) for angled packages
+    const slopes = [-0.18, 0.18, -0.32, 0.32];
+    const yc = h >> 1;
+    for (let s = 0; s < slopes.length; s++) {
+      const k = slopes[s];
+      for (let x = 0; x < w; x++) {
+        const y = Math.max(1, Math.min(h - 2, Math.round(yc + (x - (w >> 1)) * k)));
+        row[x] = (gray[(y - 1) * w + x] + 2 * gray[y * w + x] + gray[(y + 1) * w + x]) * 0.25;
+      }
+      scanLine1D(row, w, onHit);
+    }
+    // 3. Vertical 5-column averaged bands for vertically held products
+    if (h >= 100) {
+      const col = new Float32Array(h);
+      const xFracs = [0.50, 0.40, 0.60, 0.30, 0.70];
+      for (let i = 0; i < xFracs.length; i++) {
+        const xc = Math.max(2, Math.min(w - 3, (w * xFracs[i]) | 0));
+        for (let y = 0; y < h; y++) {
+          const base = y * w + xc;
+          col[y] = (gray[base - 2] + 2 * gray[base - 1] + 2 * gray[base] + 2 * gray[base + 1] + gray[base + 2]) * 0.125;
+        }
+        scanLine1D(col, h, onHit);
+      }
+    }
+  }
+
+  /** Builds a locally contrast-normalized luminance buffer and runs ZXing's MultiFormatOneDReader (adds Code-128 & extra 1D pass). */
+  function decodeWithZxing(zxOneD, ZX, gray, w, h, hints, onHit) {
+    if (!zxOneD || !ZX) return;
+    try {
+      const normBuf = new Uint8ClampedArray(w * h);
+      const B = Math.max(8, w >> 5);
+      const nb = Math.ceil(w / B);
+      const bmin = new Uint8Array(nb);
+      const bmax = new Uint8Array(nb);
+      for (let y = 0; y < h; y++) {
+        const y0 = (y > 0 ? y - 1 : 0) * w, y1 = y * w, y2 = (y + 1 < h ? y + 1 : h - 1) * w;
+        bmin.fill(255);
+        bmax.fill(0);
+        for (let x = 0; x < w; x++) {
+          const v = (gray[y0 + x] + 2 * gray[y1 + x] + gray[y2 + x]) >> 2;
+          normBuf[y1 + x] = v;
+          const bi = (x / B) | 0;
+          if (v < bmin[bi]) bmin[bi] = v;
+          if (v > bmax[bi]) bmax[bi] = v;
+        }
+        for (let x = 0; x < w; x++) {
+          const bi = (x / B) | 0;
+          const l0 = bi > 2 ? bi - 2 : 0, r0 = bi + 2 < nb ? bi + 2 : nb - 1;
+          let lo = 255, hi = 0;
+          for (let k = l0; k <= r0; k++) { if (bmin[k] < lo) lo = bmin[k]; if (bmax[k] > hi) hi = bmax[k]; }
+          const span = hi - lo;
+          const v = normBuf[y1 + x];
+          normBuf[y1 + x] = span > 10 ? ((v - lo) * 255 / span) : 255;
+        }
+      }
+      const src = new ZX.RGBLuminanceSource(normBuf, w, h);
+      const bmp = new ZX.BinaryBitmap(new ZX.GlobalHistogramBinarizer(src));
+      const res = zxOneD.decode(bmp, hints);
+      if (res && res.getText()) {
+        const txt = res.getText();
+        if (isValidBarcode(txt)) onHit(txt.replace(/\D/g, ''), 0.25);
+      }
+    } catch (e) { /* NotFoundException on this frame */ }
+  }
+
+  /** Returns normalized barcode variants (EAN-13, UPC-A, and expanded UPC-E) to maximize database/Open Food Facts hits. */
+  function barcodeVariants(code) {
+    const c = String(code || '').replace(/\D/g, '');
+    const list = [c];
+    if (c.length === 12) list.push('0' + c);
+    else if (c.length === 13 && c[0] === '0') list.push(c.slice(1));
+    else if (c.length === 8 && (c[0] === '0' || c[0] === '1')) {
+      const upca = expandUpceToUpca(c);
+      if (upca.length === 12 && checkEanChecksum(upca)) {
+        list.push(upca, '0' + upca);
+      }
+    }
+    return [...new Set(list)];
+  }
+
+  /** Extracts structured product info from a raw Open Food Facts v2 `product` payload. */
+  function parseOffProduct(p, barcode) {
+    if (!p || typeof p !== 'object') return null;
+    const brand = String((p.brands || '').split(',')[0] || '').trim().slice(0, 80);
+    const nameCands = [p.product_name_it, p.product_name, p.product_name_en, p.abbreviated_product_name, p.generic_name_it, p.generic_name];
+    let name = '';
+    for (const nc of nameCands) {
+      const s = String(nc || '').trim();
+      if (s) { name = s.slice(0, 80); break; }
+    }
+    const genericName = String(p.generic_name_it || p.generic_name || '').trim().slice(0, 120);
+    if (!name && brand) name = brand;
+    else if (brand && norm(name) === norm(brand) && genericName) name = genericName.slice(0, 80);
+    if (!name) return null;
+
+    const nsRaw = String(p.nutriscore_grade || '').trim().toUpperCase();
+    const nutriscore = ['A', 'B', 'C', 'D', 'E'].includes(nsRaw) ? nsRaw : null;
+
+    let quantity = null, unit = null;
+    const qStr = String(p.quantity || '');
+    const m = qStr.match(/(?:^\s*\d+\s*[x×*]\s*)?([\d.,]+)\s*(kg|g|ml|cl|l)\b/i);
+    if (m) {
+      quantity = parseFloat(m[1].replace(',', '.'));
+      unit = m[2].toLowerCase();
+    } else if (p.product_quantity) {
+      const pq = parseFloat(p.product_quantity);
+      if (pq > 0) {
+        quantity = pq;
+        const uRaw = String(p.product_quantity_unit || 'g').trim().toLowerCase();
+        unit = UNITS.includes(uRaw) ? uRaw : 'g';
+      }
+    }
+
+    const categories = Array.isArray(p.categories_tags) ? p.categories_tags.map(x => String(x || '').toLowerCase()) : [];
+    return { name, genericName, brand, nutriscore, quantity, unit, categories, barcode };
+  }
+
+  /** Direct browser fallback to Open Food Facts API v2 (CORS-enabled) when server-side lookup is unavailable or returns not found. */
+  async function fetchOpenFoodFactsBrowser(code) {
+    const fields = 'product_name,product_name_it,product_name_en,generic_name,generic_name_it,abbreviated_product_name,brands,nutriscore_grade,quantity,product_quantity,product_quantity_unit,categories_tags';
+    for (const cand of barcodeVariants(code)) {
+      const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), 5500) : null;
+      try {
+        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cand}.json?fields=${fields}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          signal: ctrl ? ctrl.signal : undefined,
+        });
+        if (timer) clearTimeout(timer);
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && Number(data.status) === 1 && data.product) {
+          const parsed = parseOffProduct(data.product, code);
+          if (parsed) return parsed;
+        }
+      } catch (e) {
+        if (timer) clearTimeout(timer);
+      }
+    }
+    return null;
+  }
+
+  /** Keyword/tag rules mapping scanned products to canonical Italian catalog `nameBase` entries. */
+  const CATALOG_MATCH_RULES = [
+    ['Pasta integrale', ['pasta integrale', 'spaghetti integrali', 'penne integrali', 'fusilli integrali', 'en:wholemeal-pastas']],
+    ['Gnocchi di patate', ['gnocchi', 'gnocchetti', 'en:gnocchi']],
+    ['Pasta di semola', ['spaghetti', 'spaghettini', 'penne', 'pennette', 'fusilli', 'rigatoni', 'maccheroni', 'farfalle', 'bucatini', 'linguine', 'mezze maniche', 'tortiglioni', 'orecchiette', 'ditalini', 'tagliatelle', 'fettuccine', 'lasagne', 'cannelloni', 'tortellini', 'ravioli', 'trofie', 'cavatelli', 'paccheri', 'caserecce', 'pasta di semola', 'grano duro', 'en:pastas', 'en:spaghetti', 'en:penne', 'en:durum-wheat-pasta']],
+    ['Riso Carnaroli', ['riso ', 'carnaroli', 'arborio', 'basmati', 'parboiled', 'vialone', 'originario', 'risotto', 'en:rices']],
+    ['Farina 00', ['farina', 'manitoba', 'semola rimacinata', 'en:flours', 'en:wheat-flours']],
+    ['Pangrattato', ['pangrattato', 'pan grattato', 'chapelure', 'en:breadcrumbs']],
+    ['Cous cous', ['cous cous', 'couscous', 'en:couscous']],
+    ['Farro', ['farro', 'en:spelt']],
+    ['Orzo perlato', ['orzo', 'en:barley']],
+    ['Avena in fiocchi', ['fiocchi di avena', 'avena', 'porridge', 'muesli', 'granola', 'corn flakes', 'cereali', 'en:rolled-oats', 'en:breakfast-cereals']],
+    ['Quinoa', ['quinoa', 'en:quinoa']],
+    ['Polenta', ['polenta', 'en:polenta']],
+    ['Pesto alla genovese', ['pesto', 'en:pestos']],
+    ['Passata di pomodoro', ['passata', 'polpa di pomodoro', 'sugo', 'ragu', 'ragù', 'concentrato di pomodoro', 'en:tomato-sauces', 'en:passata']],
+    ['Pomodori pelati', ['pelati', 'pomodori in scatola', 'datterini', 'en:canned-tomatoes']],
+    ['Tonno in scatola', ['tonno', 'filetti di tonno', 'rio mare', 'en:tunas', 'en:canned-tunas', 'en:canned-fishes']],
+    ['Ceci in scatola', ['ceci', 'hummus', 'en:chickpeas']],
+    ['Fagioli borlotti', ['fagioli', 'borlotti', 'cannellini', 'en:beans']],
+    ['Lenticchie', ['lenticchie', 'en:lentils']],
+    ['Piselli', ['piselli', 'en:peas', 'en:green-peas']],
+    ['Mais dolce', ['mais', 'sweet corn', 'en:sweet-corn']],
+    ['Olive verdi', ['olive', 'en:olives']],
+    ['Capperi', ['capperi', 'en:capers']],
+    ['Olio extravergine d’oliva', ['olio extravergine', 'olio extra vergine', 'olio di oliva', 'olio d oliva', 'olio di semi', 'en:olive-oils', 'en:extra-virgin-olive-oils', 'en:vegetable-oils']],
+    ['Aceto balsamico', ['aceto', 'glassa', 'en:vinegars', 'en:balsamic-vinegars']],
+    ['Salsa di soia', ['salsa di soia', 'soy sauce', 'shoyu', 'tamari', 'en:soy-sauces']],
+    ['Senape', ['senape', 'mostarda', 'mustard', 'en:mustards']],
+    ['Maionese', ['maionese', 'mayonnaise', 'ketchup', 'salsa barbecue', 'salsa rosa', 'en:mayonnaises', 'en:ketchup']],
+    ['Miele', ['miele', 'honey', 'en:honeys']],
+    ['Confettura', ['confettura', 'marmellata', 'composta di frutta', 'en:jams', 'en:marmalades']],
+    ['Latte UHT', ['latte uht', 'lunga conservazione', 'bevanda di soia', 'bevanda di avena', 'bevanda di mandorla', 'latte di soia', 'latte di avena', 'latte di mandorla', 'latte di riso', 'en:uht-milks', 'en:plant-milks']],
+    ['Latte intero', ['latte intero', 'latte fresco', 'latte parzialmente scremato', 'latte scremato', 'en:milks']],
+    ['Yogurt greco', ['yogurt greco', 'fage', 'en:greek-yogurts']],
+    ['Yogurt bianco', ['yogurt', 'kefir', 'skyr', 'actimel', 'activia', 'ymir', 'muller', 'en:yogurts', 'en:fermented-milk-products']],
+    ['Burro', ['burro', 'margarina', 'en:butters']],
+    ['Panna da cucina', ['panna', 'besciamella', 'mascarpone', 'en:creams', 'en:cooking-creams']],
+    ['Uova', ['uova', 'albume', 'en:eggs']],
+    ['Mozzarella', ['mozzarella', 'burrata', 'stracciatella', 'scamorza', 'provola', 'fiordilatte', 'en:mozzarella']],
+    ['Ricotta', ['ricotta', 'fiocchi di latte', 'stracchino', 'crescenza', 'robiola', 'philadelphia', 'spalmabile', 'en:ricotta', 'en:cream-cheeses']],
+    ['Parmigiano Reggiano', ['parmigiano', 'grana padano', 'grattugiato', 'en:parmigiano-reggiano', 'en:grana-padano']],
+    ['Pecorino', ['pecorino', 'gorgonzola', 'asiago', 'fontina', 'emmental', 'edamer', 'cheddar', 'provolone', 'caciotta', 'taleggio', 'brie', 'camembert', 'formaggio', 'galbanino', 'sottilette', 'en:cheeses']],
+    ['Cioccolato fondente', ['cioccolato', 'cioccolata', 'nutella', 'crema spalmabile', 'nocciolata', 'gianduia', 'kinder', 'barretta', 'praline', 'en:chocolates', 'en:dark-chocolates', 'en:milk-chocolates', 'en:sweet-spreads', 'en:hazelnut-spreads', 'en:chocolate-spreads']],
+    ['Biscotti integrali', ['biscotti', 'frollini', 'gocciole', 'macine', 'pan di stelle', 'tarallucci', 'abbracci', 'molinetti', 'campagnole', 'ringo', 'oreo', 'savoiardi', 'wafer', 'pavesini', 'baiocchi', 'orosaiwa', 'en:biscuits', 'en:cookies', 'en:shortbread-cookies', 'en:wafers']],
+    ['Patatine', ['patatine', 'chips', 'nachos', 'tortilla', 'popcorn', 'salatini', 'pretzel', 'taralli', 'fonzies', 'pringles', 'san carlo', 'en:crisps', 'en:potato-crisps', 'en:salty-snacks']],
+    ['Frutta secca', ['mandorle', 'noci', 'nocciole', 'pistacchi', 'arachidi', 'anacardi', 'pinoli', 'frutta secca', 'en:nuts']],
+    ['Cracker', ['cracker', 'gallette', 'schiacciatine', 'crostini', 'granetti', 'tuc', 'en:crackers', 'en:puffed-rice-cakes']],
+    ['Pane casereccio', ['pane', 'pan bauletto', 'pancarre', 'piadina', 'focaccia', 'panini', 'baguette', 'panino', 'en:breads', 'en:sliced-breads', 'en:flatbreads']],
+    ['Fette biscottate', ['fette biscottate', 'brioche', 'cornetti', 'croissant', 'plumcake', 'merendine', 'flauti', 'buondi', 'panettone', 'pandoro', 'colomba', 'torta', 'en:rusks', 'en:pastries', 'en:croissants', 'en:cakes']],
+    ['Grissini', ['grissini', 'friselle', 'en:breadsticks']],
+    ['Base per pizza', ['base per pizza', 'pasta sfoglia', 'pasta brisee', 'pasta frolla', 'en:pizza-doughs', 'en:puff-pastries']],
+    ['Caffè macinato', ['caffe', 'espresso', 'cialde', 'capsule', 'moka', 'nescafe', 'lavazza', 'illy', 'kimbo', 'borbone', 'vergnano', 'pellini', 'en:coffees', 'en:ground-coffees', 'en:coffee-capsules', 'en:instant-coffees']],
+    ['Tè in bustine', ['te ', 'tisana', 'infuso', 'camomilla', 'estathe', 'the freddo', 'en:teas', 'en:herbal-teas', 'en:iced-teas']],
+    ['Acqua naturale', ['acqua', 'lete', 'sant anna', 'levissima', 'ferrarelle', 'san pellegrino', 'uliveto', 'rocchetta', 'en:waters', 'en:spring-waters', 'en:mineral-waters']],
+    ['Birra', ['birra', 'lager', 'peroni', 'moretti', 'ichnusa', 'heineken', 'poretti', 'dreher', 'beck', 'corona', 'en:beers']],
+    ['Vino bianco', ['vino bianco', 'prosecco', 'spumante', 'champagne', 'pinot grigio', 'vermentino', 'falanghina', 'en:white-wines', 'en:sparkling-wines']],
+    ['Vino rosso', ['vino rosso', 'chianti', 'montepulciano', 'primitivo', 'barolo', 'lambrusco', 'negroamaro', 'en:red-wines', 'en:wines']],
+    ['Succo di frutta', ['succo', 'nettare', 'spremuta', 'aranciata', 'cola', 'coca-cola', 'coca cola', 'pepsi', 'fanta', 'sprite', 'chinotto', 'tonica', 'gassosa', 'bibita', 'red bull', 'monster', 'en:fruit-juices', 'en:sodas', 'en:carbonated-drinks', 'en:sweetened-beverages']],
+    ['Prosciutto cotto', ['prosciutto cotto', 'fesa di tacchino', 'arrosto di tacchino', 'wurstel', 'mortadella', 'en:cooked-hams', 'en:sausages']],
+    ['Prosciutto crudo', ['prosciutto crudo', 'bresaola', 'speck', 'culatello', 'en:cured-hams']],
+    ['Pancetta', ['pancetta', 'guanciale', 'bacon', 'lardo', 'en:bacon']],
+    ['Salame', ['salame', 'salamino', 'soppressata', 'nduja', 'coppa', 'en:salami']],
+    ['Petto di pollo', ['pollo', 'tacchino', 'cotoletta', 'nuggets', 'en:chicken', 'en:poultry']],
+    ['Macinato di manzo', ['manzo', 'bovino', 'hamburger', 'svizzera', 'polpette', 'vitello', 'en:beef']],
+    ['Salsiccia', ['salsiccia', 'luganega', 'maiale', 'suino', 'lonza', 'en:pork']],
+    ['Salmone fresco', ['salmone', 'en:salmons', 'en:smoked-salmons']],
+    ['Filetto di merluzzo', ['merluzzo', 'nasello', 'platessa', 'orata', 'branzino', 'spigola', 'sgombro', 'acciughe', 'alici', 'sardine', 'bastoncini', 'findus', 'en:fishes', 'en:cods', 'en:mackerels', 'en:anchovies']],
+    ['Gamberi', ['gamberi', 'gamberetti', 'mazzancolle', 'scampi', 'calamari', 'polpo', 'seppie', 'cozze', 'vongole', 'surimi', 'en:shrimps', 'en:seafood']],
+    ['Pizza surgelata', ['pizza surgelata', 'pizza margherita', 'cameo big americans', 'regina', 'en:frozen-pizzas']],
+    ['Gelato', ['gelato', 'cornetto', 'magnum', 'ghiacciolo', 'sorbetto', 'samkrem', 'algida', 'sammontana', 'en:ice-creams']],
+  ];
+
+  /** Matches a scanned product to FoodTrack's catalog (`productId`, `icon`, `categoryId`, `expiryType`). */
+  function matchScannedProduct(p) {
+    const out = { productId: p.productId || null, icon: p.icon || null, categoryId: p.categoryId ?? null, expiryType: null };
+    const hay = ' ' + norm([p.name || '', p.genericName || '', p.brand || ''].join(' ')) + ' ' + (Array.isArray(p.categories) ? p.categories.join(' ') : '');
+
+    // 1. Direct or substring match against catalog products
+    let match = null;
+    if (out.productId) match = productById(out.productId);
+    if (!match && p.name) {
+      const nName = norm(p.name);
+      const nGen = norm(p.genericName || '');
+      match = S.catalog.products.find(x => {
+        const xn = norm(x.name), xb = norm(x.nameBase || x.name);
+        return (xn && (nName === xn || nName.includes(xn) || (nGen && nGen.includes(xn)))) ||
+               (xb && (nName === xb || nName.includes(xb) || (nGen && nGen.includes(xb))));
+      });
+    }
+
+    // 2. Keyword & Open Food Facts category-tag rules against catalog `nameBase`
+    if (!match) {
+      for (const [baseName, keys] of CATALOG_MATCH_RULES) {
+        if (keys.some(k => hay.includes(k.startsWith('en:') ? k : norm(k)))) {
+          match = S.catalog.products.find(x => norm(x.nameBase || x.name) === norm(baseName)) || null;
+          if (match) break;
+        }
+      }
+    }
+
+    if (match) {
+      out.productId = match.id;
+      out.icon = out.icon || match.icon;
+      if (out.categoryId == null) out.categoryId = match.categoryId;
+      if (!p.unit && match.unit) p.unit = match.unit;
+    }
+
+    // 3. Fallback category & icon mapping when no specific catalog item matched
+    const catByBase = base => {
+      const c = S.catalog.categories.find(x => norm(x.nameBase || x.name) === norm(base));
+      return c ? c.id : null;
+    };
+    if (out.categoryId == null) {
+      if (/en:(Frozen|ice-creams|frozen-foods)|surgelat/i.test(hay)) out.categoryId = catByBase('Surgelati');
+      else if (/en:(milks|dairies|cheeses|yogurts|eggs|butters|creams)|latte|formagg|yogurt/i.test(hay)) out.categoryId = catByBase('Latticini e uova');
+      else if (/en:(meats|pork|beef|poultry|chicken|cured-meats|salami|hams)|carne|salum|prosciutto/i.test(hay)) out.categoryId = catByBase('Carne e salumi');
+      else if (/en:(fishes|seafood|tunas|salmons)|pesce|tonno|salmone/i.test(hay)) out.categoryId = catByBase('Pesce');
+      else if (/en:(pastas|rices|cereals|flours|grains)|pasta|riso|cereali|farina/i.test(hay)) out.categoryId = catByBase('Pasta, riso e cereali');
+      else if (/en:(breads|pastries|rusks|breadsticks)|pane|forno|fette biscottate/i.test(hay)) out.categoryId = catByBase('Pane e prodotti da forno');
+      else if (/en:(canned|tinned|legumes|tomato-sauces|passata)|conserv|scatol|passata/i.test(hay)) out.categoryId = catByBase('Conserve e scatolame');
+      else if (/en:(fats|oils|condiments|sauces|spices|vinegars|honeys|jams)|olio|aceto|salsa|spezie|miele|confettura/i.test(hay)) out.categoryId = catByBase('Condimenti e spezie');
+      else if (/en:(beverages|waters|juices|sodas|coffees|teas|beers|wines|drinks)|bevand|acqua|succo|caffe|birra|vino/i.test(hay)) out.categoryId = catByBase('Bevande');
+      else if (/en:(snacks|sweet-snacks|biscuits|chocolates|sweet-spreads|crisps|nuts|desserts)|snack|dolci|biscott|cioccolat|patatine/i.test(hay)) out.categoryId = catByBase('Snack e dolci');
+      else if (/en:(fruits|apples|bananas|citrus)|frutta/i.test(hay)) out.categoryId = catByBase('Frutta');
+      else if (/en:(vegetables|salads|tomatoes|potatoes)|verdur|ortagg/i.test(hay)) out.categoryId = catByBase('Verdura');
+    }
+
+    // 4. Default expiryType ('best_before' for shelf-stable categories, 'use_by' for fresh perishables)
+    const catObj = categoryById(out.categoryId);
+    const catBase = norm((catObj && (catObj.nameBase || catObj.name)) || '');
+    if (['pasta riso e cereali', 'conserve e scatolame', 'condimenti e spezie', 'bevande', 'snack e dolci', 'surgelati'].includes(catBase)) {
+      out.expiryType = 'best_before';
+    } else if (/latte uht|lunga conservazione|biscott|cioccolat|nutella|pasta|riso|tonno|passata|olio|aceto|caffe|acqua|birra|vino|succo/i.test(hay)) {
+      out.expiryType = 'best_before';
+    }
+    return out;
+  }
+
   function openScanner(ctx) {
     const code = input({ inputmode: 'numeric', maxlength: 14 });
     const status = h('p.helper.center', t('Starting the camera…'));
     const video = h('video', { playsinline: true, muted: true, autoplay: true });
-    const cam = h('div.scanner', video);
-    let stream = null, stopped = false, zxReader = null, busyLookup = false;
+    const ctrls = h('div.scanner-ctrls');
+    const cam = h('div.scanner', video, ctrls);
+    let stream = null, stopped = false, busyLookup = false, scanTimer = null, zoomLevel = 1, torchOn = false;
 
     async function lookup(c) {
       c = String(c || '').replace(/\D/g, '');
@@ -677,15 +1356,32 @@
       stop();
       status.textContent = t('Looking up the product…');
       try {
-        const d = await Api.get('barcode.lookup&code=' + c);
+        const variants = barcodeVariants(c);
+        let p = null;
+        try {
+          const d = await Api.get('barcode.lookup&code=' + c);
+          if (d && d.found && d.product && d.product.name) p = d.product;
+        } catch (e) { /* fall back to direct browser lookup */ }
+
+        if (!p) {
+          p = await fetchOpenFoodFactsBrowser(c);
+        }
+
         s.close();
         const prefill = { barcode: c };
-        if (d.found) {
-          const p = d.product;
-          Object.assign(prefill, { name: p.name, brand: p.brand, nutriscore: p.nutriscore });
-          if (p.quantity) { prefill.quantity = p.quantity; prefill.unit = p.unit; }
-          const match = S.catalog.products.find(x => p.name && (norm(p.name).includes(norm(x.name)) || norm(p.name).includes(norm(x.nameBase))));
-          if (match) Object.assign(prefill, { productId: match.id, icon: match.icon, categoryId: match.categoryId });
+        const prev = S.items.find(x => x.barcode && variants.includes(String(x.barcode).replace(/\D/g, '')));
+        if (p && p.name) {
+          Object.assign(prefill, { name: p.name, brand: p.brand || '', nutriscore: p.nutriscore || null });
+          if (p.quantity) { prefill.quantity = p.quantity; prefill.unit = p.unit || 'pz'; }
+          const m = matchScannedProduct(p);
+          if (m.productId) prefill.productId = m.productId;
+          if (m.icon) prefill.icon = m.icon;
+          if (m.categoryId != null) prefill.categoryId = m.categoryId;
+          if (m.expiryType) prefill.expiryType = m.expiryType;
+          if (p.unit && !prefill.unit) prefill.unit = p.unit;
+          toast(t('Product found: set the expiry date'));
+        } else if (prev) {
+          Object.assign(prefill, { productId: prev.productId, name: prev.name, brand: prev.brand, nutriscore: prev.nutriscore, icon: prev.icon, categoryId: prev.categoryId, quantity: prev.quantity, unit: prev.unit, expiryType: prev.expiryType });
           toast(t('Product found: set the expiry date'));
         } else {
           toast(t('Product not found: enter the details manually'));
@@ -695,8 +1391,9 @@
     }
     function stop() {
       stopped = true;
-      if (zxReader) { try { zxReader.reset(); } catch (e) { /* already stopped */ } }
-      if (stream) stream.getTracks().forEach(tr => tr.stop());
+      if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
+      if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+      try { video.srcObject = null; } catch (e) { /* ignore */ }
     }
     const retryBox = h('div.btn-row', { hidden: true, style: { justifyContent: 'center' } });
     function noCamera(msg, detail) {
@@ -722,41 +1419,202 @@
     }
     startCamera();
 
-    /** Opens the rear camera (falling back to any camera) and starts decoding: native BarcodeDetector or ZXing. */
+    /** Opens the rear camera, configures continuous autofocus/zoom/torch, and runs the multi-engine decoder loop. */
     async function startCamera() {
       stopped = false;
+      zoomLevel = 1;
+      torchOn = false;
+      video.style.transform = '';
+      UI.clear(ctrls);
       try {
         stream = await getCameraStream();
         if (stopped) return stop();
+        video.muted = true;
+        video.playsInline = true;
+        video.setAttribute('playsinline', '');
         video.srcObject = stream;
-        video.play().catch(() => { /* autoplay is muted: plays anyway on most browsers */ });
+        await video.play().catch(() => { /* muted autoplay fallback */ });
+        if (stopped) return stop();
+
+        const track = stream.getVideoTracks()[0] || null;
+        let caps = {};
+        if (track && track.getCapabilities) {
+          try { caps = track.getCapabilities() || {}; } catch (e) { caps = {}; }
+        }
+        if (track && track.applyConstraints) {
+          const adv = {};
+          if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) adv.focusMode = 'continuous';
+          if (Array.isArray(caps.exposureMode) && caps.exposureMode.includes('continuous')) adv.exposureMode = 'continuous';
+          if (Array.isArray(caps.whiteBalanceMode) && caps.whiteBalanceMode.includes('continuous')) adv.whiteBalanceMode = 'continuous';
+          if (Object.keys(adv).length) track.applyConstraints({ advanced: [adv] }).catch(() => {});
+        }
+
+        // Camera overlay controls: 1x/2x zoom and (when supported) flashlight/torch
+        const zoomBtn = h('button.scan-ctrl', {
+          type: 'button', title: t('Zoom'), 'aria-label': t('Zoom'),
+          onclick: e => {
+            e.stopPropagation();
+            zoomLevel = zoomLevel === 1 ? 2 : 1;
+            zoomBtn.textContent = zoomLevel + '×';
+            zoomBtn.classList.toggle('active', zoomLevel > 1);
+            if (track && track.applyConstraints && caps.zoom && caps.zoom.max > caps.zoom.min) {
+              const targetZ = Math.min(caps.zoom.max, Math.max(caps.zoom.min, zoomLevel * (caps.zoom.min || 1)));
+              track.applyConstraints({ advanced: [{ zoom: targetZ }] }).catch(() => {
+                video.style.transform = zoomLevel > 1 ? `scale(${zoomLevel})` : '';
+              });
+            } else {
+              video.style.transform = zoomLevel > 1 ? `scale(${zoomLevel})` : '';
+            }
+          },
+        }, '1×');
+        ctrls.appendChild(zoomBtn);
+
+        if (caps.torch && track && track.applyConstraints) {
+          const torchBtn = h('button.scan-ctrl', {
+            type: 'button', title: t('Flash'), 'aria-label': t('Flash'),
+            onclick: e => {
+              e.stopPropagation();
+              torchOn = !torchOn;
+              torchBtn.classList.toggle('active', torchOn);
+              track.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => {});
+            },
+          }, icon('bulb'));
+          ctrls.appendChild(torchBtn);
+        }
+
+        // Tap video preview to re-trigger autofocus
+        video.onclick = () => {
+          if (!track || !track.applyConstraints || !Array.isArray(caps.focusMode)) return;
+          if (caps.focusMode.includes('single-shot')) {
+            track.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] }).then(() => {
+              if (caps.focusMode.includes('continuous')) setTimeout(() => { if (!stopped) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); }, 600);
+            }).catch(() => {});
+          }
+        };
+
         status.textContent = t('Point the camera at the product barcode');
-        const detector = await nativeDetector();
+
+        // Prepare both native BarcodeDetector and ZXing reader in parallel (neither blocks the other)
+        const detectorPromise = nativeDetector();
+        let zxModule = null, zxOneD = null, zxHints = null;
+        loadZxing().then(ZX => {
+          if (stopped || !ZX) return;
+          zxModule = ZX;
+          zxHints = new Map();
+          zxHints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E, ZX.BarcodeFormat.CODE_128]);
+          zxHints.set(ZX.DecodeHintType.TRY_HARDER, true);
+          zxOneD = new ZX.MultiFormatOneDReader(zxHints);
+        }).catch(() => { /* custom sub-pixel 1D engine still runs */ });
+
+        const detector = await detectorPromise;
         if (stopped) return;
-        if (detector) {
-          // Native scanner (Chrome on Android, Edge, …)
-          const tick = async () => {
-            if (stopped) return;
+
+        const canvas = document.createElement('canvas');
+        let cctx = null;
+        try { cctx = canvas.getContext('2d', { willReadFrequently: true }); } catch (e) { cctx = canvas.getContext('2d'); }
+
+        const votes = new Map();
+        let frameCount = 0;
+
+        function acceptCode(winner) {
+          if (stopped || busyLookup) return true;
+          if (navigator.vibrate) navigator.vibrate(60);
+          code.value = winner;
+          lookup(winner);
+          return true;
+        }
+
+        function recordVote(candidate, avgErr) {
+          if (!candidate || stopped || busyLookup) return false;
+          const now = Date.now();
+          for (const [k, v] of votes) if (now - v.at > 1600) votes.delete(k);
+          const weight = avgErr < 0.22 ? 1.15 : avgErr < 0.38 ? 0.95 : 0.65;
+          const cur = votes.get(candidate) || { score: 0, hits: 0, at: now };
+          cur.score += weight;
+          cur.hits += 1;
+          cur.at = now;
+          votes.set(candidate, cur);
+          if (cur.hits >= 2 && cur.score >= 1.8) return acceptCode(candidate);
+          return false;
+        }
+
+        const tick = async () => {
+          if (stopped || busyLookup) return;
+          const vw = video.videoWidth || 0, vh = video.videoHeight || 0;
+          if (video.readyState < 2 || vw < 64 || vh < 64) {
+            scanTimer = setTimeout(tick, 80);
+            return;
+          }
+          frameCount++;
+
+          // 1. Native BarcodeDetector pass (full video frame)
+          if (detector) {
             try {
               const codes = await detector.detect(video);
-              if (codes.length) { if (navigator.vibrate) navigator.vibrate(60); code.value = codes[0].rawValue; return lookup(codes[0].rawValue); }
-            } catch (e) { /* frame not ready */ }
-            setTimeout(tick, 200);
-          };
-          if (video.readyState >= 2) tick(); else video.addEventListener('loadeddata', tick, { once: true });
-        } else {
-          // Fallback for every other browser (Firefox, Safari, desktop Chrome): ZXing on the same stream
-          const ZX = await loadZxing();
-          if (stopped) return;
-          const hints = new Map();
-          hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E, ZX.BarcodeFormat.CODE_128]);
-          hints.set(ZX.DecodeHintType.TRY_HARDER, true);
-          zxReader = new ZX.BrowserMultiFormatReader(hints, 250);
-          await zxReader.decodeFromStream(stream, video, result => {
-            if (result && !stopped) { if (navigator.vibrate) navigator.vibrate(60); code.value = result.getText(); lookup(result.getText()); }
-          });
-          if (stopped) stop();
-        }
+              for (const hit of codes) {
+                if (hit && isValidBarcode(hit.rawValue)) {
+                  const cleaned = String(hit.rawValue).replace(/\D/g, '');
+                  if (acceptCode(cleaned)) return;
+                }
+              }
+            } catch (e) { /* fall through to ROI + JS engines */ }
+          }
+          if (stopped || busyLookup) return;
+
+          // 2. Extract high-resolution ROI around the target area (alternating standard & tight zoom crop)
+          if (cctx) {
+            const tight = zoomLevel > 1 || (frameCount & 1) === 0;
+            const cropWFrac = zoomLevel > 1 ? 0.52 : (tight ? 0.68 : 0.88);
+            const cropHFrac = zoomLevel > 1 ? 0.36 : (tight ? 0.44 : 0.58);
+            const sx = Math.round(vw * (1 - cropWFrac) * 0.5);
+            const sy = Math.round(vh * (1 - cropHFrac) * 0.5);
+            const sw = Math.max(64, Math.round(vw * cropWFrac));
+            const sh = Math.max(48, Math.round(vh * cropHFrac));
+            const targetW = Math.min(920, Math.max(640, sw));
+            const targetH = Math.max(48, Math.round(sh * (targetW / sw)));
+
+            if (canvas.width !== targetW || canvas.height !== targetH) {
+              canvas.width = targetW;
+              canvas.height = targetH;
+            }
+            cctx.drawImage(video, sx, sy, sw, sh, 0, 0, targetW, targetH);
+
+            // 2a. Native BarcodeDetector on cropped/upscaled ROI (acts as 2x digital zoom for native detector)
+            if (detector) {
+              try {
+                const roiCodes = await detector.detect(canvas);
+                for (const hit of roiCodes) {
+                  if (hit && isValidBarcode(hit.rawValue)) {
+                    const cleaned = String(hit.rawValue).replace(/\D/g, '');
+                    if (acceptCode(cleaned)) return;
+                  }
+                }
+              } catch (e) { /* ignore */ }
+            }
+            if (stopped || busyLookup) return;
+
+            // 2b. Convert ROI to perceptual grayscale
+            const imgData = cctx.getImageData(0, 0, targetW, targetH).data;
+            const pixelCount = targetW * targetH;
+            const gray = new Uint8Array(pixelCount);
+            for (let p = 0, j = 0; j < pixelCount; p += 4, j++) {
+              gray[j] = (imgData[p] * 77 + imgData[p + 1] * 150 + imgData[p + 2] * 29) >> 8;
+            }
+
+            // 2c. Multi-scale sub-pixel T-sequence 1D decoder (EAN-13, UPC-A, EAN-8, UPC-E)
+            decode1DFromGray(gray, targetW, targetH, recordVote);
+            if (stopped || busyLookup) return;
+
+            // 2d. Locally contrast-normalized ZXing MultiFormatOneDReader pass (Code-128 + extra 1D fallback)
+            if (zxOneD && zxModule) {
+              decodeWithZxing(zxOneD, zxModule, gray, targetW, targetH, zxHints, recordVote);
+            }
+          }
+
+          if (!stopped && !busyLookup) scanTimer = setTimeout(tick, 90);
+        };
+
+        tick();
       } catch (e) {
         if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
         if (stopped) return;
@@ -766,20 +1624,33 @@
     }
   }
 
-  /** Asks for the rear camera; if that exact request cannot be satisfied, retries with any camera. */
+  /** Asks for the rear camera in Full HD with continuous autofocus; falls back gracefully to any available camera. */
   async function getCameraStream() {
-    try {
-      return await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-    } catch (e) {
-      if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) throw e;
-      return navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const attempts = [
+      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, focusMode: { ideal: 'continuous' } }, audio: false },
+      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      { video: true, audio: false },
+    ];
+    let lastErr = null;
+    for (const constraints of attempts) {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        lastErr = e;
+        if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) throw e;
+      }
     }
+    throw lastErr;
   }
 
   /** Explains why the camera could not start, telling a real refusal apart from a camera that is busy, missing or blocked. */
   async function cameraErrorMessage(e) {
     const name = (e && e.name) || 'Error';
-    const detail = name + (e && e.message ? ': ' + e.message : '');
+    const msg = (e && e.message) || '';
+    const detail = name + (msg ? ': ' + msg : '');
+    if (msg === 'ZXing' || name === 'ZXing') {
+      return [t('Barcode reader could not be loaded. Type the code manually or try again.'), detail];
+    }
     if (name === 'NotAllowedError' || name === 'SecurityError') {
       let state = '';
       try { state = (await navigator.permissions.query({ name: 'camera' })).state; } catch (x) { /* not supported */ }
@@ -991,12 +1862,22 @@
 
   // ===================================================== RECIPES
 
+  function recipeHasIngredient(r, key) {
+    return r.ingredients.some(ing => norm(ing.name).includes(key) || matchItems(ing).some(m => norm(itemName(m)) === key));
+  }
+
   function recipeMatches(r) {
     const q = norm(recipeQuery);
     if (q && !norm(r.name).includes(q) && !r.ingredients.some(i => norm(i.name).includes(q)) && !(r.origin || []).some(c => norm(UI.countryName(c)).includes(q))) return false;
+    if (recipeIngredients.size) {
+      for (const k of recipeIngredients) {
+        if (!recipeHasIngredient(r, k)) return false;
+      }
+    }
     if (recipeFilters.fav && !S.favorites.has(r.id)) return false;
-    if (recipeFilters.expiring || recipeFilters.expired || recipeFilters.cookable) {
+    if (recipeFilters.inHome || recipeFilters.expiring || recipeFilters.expired || recipeFilters.cookable) {
       const st = recipeStats(r);
+      if (recipeFilters.inHome && !st.usesAvailable) return false;
       if (recipeFilters.expiring && !st.usesExpiring) return false;
       if (recipeFilters.expired && !st.usesExpired) return false;
       if (recipeFilters.cookable && st.ok < st.total) return false;
@@ -1035,14 +1916,52 @@
     const q = input({ type: 'search', value: recipeQuery, placeholder: t('Search by name, ingredient or country'), enterkeyhint: 'search', 'aria-label': t('Search recipe') });
     const results = h('div');
     const chips = h('div.chips.scroll');
-    const labels = { fav: t('Favourites'), expiring: t('With expiring products'), expired: t('With expired products'), cookable: t('I can cook them now') };
+    const inHomePills = h('div.chips.scroll');
+    const labels = {
+      fav: t('Favourites'),
+      inHome: t('With products at home'),
+      cookable: t('I can cook them now'),
+      expiring: t('With expiring products'),
+      expired: t('With expired products'),
+    };
+    function paintInHomePills() {
+      UI.clear(inHomePills);
+      const seen = new Set();
+      const uniqueInHome = [];
+      for (const it of S.items) {
+        const name = itemName(it);
+        const key = norm(name);
+        if (!name || seen.has(key)) continue;
+        seen.add(key);
+        const p = productById(it.productId);
+        uniqueInHome.push({ name, key, icon: it.icon || (p && p.icon) || 'generic' });
+      }
+      for (const k of recipeIngredients) {
+        if (!seen.has(k)) recipeIngredients.delete(k);
+      }
+      if (!uniqueInHome.length) { inHomePills.hidden = true; return; }
+      inHomePills.hidden = false;
+      for (const { name, key, icon: ic } of uniqueInHome) {
+        const isSel = recipeIngredients.has(key);
+        inHomePills.appendChild(h('button.chip' + (isSel ? '.sel' : ''), {
+          type: 'button',
+          'aria-pressed': String(isSel),
+          onclick: () => {
+            if (isSel) recipeIngredients.delete(key);
+            else recipeIngredients.add(key);
+            paint();
+          }
+        }, isSel ? icon('check') : UI.pic('products', ic), name));
+      }
+    }
     function paint() {
       UI.clear(results); UI.clear(chips);
       for (const k of Object.keys(labels)) {
         chips.appendChild(h('button.chip' + (recipeFilters[k] ? '.sel' : ''), { type: 'button', onclick: () => { recipeFilters[k] = !recipeFilters[k]; paint(); } }, recipeFilters[k] ? icon('check') : null, labels[k]));
       }
+      paintInHomePills();
       const list = S.recipes.filter(recipeMatches);
-      const filtering = recipeQuery || Object.values(recipeFilters).some(Boolean);
+      const filtering = recipeQuery || recipeIngredients.size > 0 || Object.values(recipeFilters).some(Boolean);
       if (!list.length) { results.appendChild(empty('icon', 'restaurant', t('No recipes found'), t('Try another ingredient or remove some filters.'))); return; }
       if (!filtering) {
         const fav = list.filter(r => S.favorites.has(r.id));
@@ -1062,7 +1981,7 @@
     return {
       tab: 'recipes', title: t('Recipes'),
       body: [
-        searchbar(q), chips,
+        searchbar(q), chips, inHomePills,
         h('div', { style: { marginTop: '12px' } }, cardRow({ lead: tile('icon', 'calendar'), title: t('Weekly plan'), sub: planSummary(), trail: icon('right') }, () => go('plan'))),
         results,
       ],
@@ -1318,6 +2237,101 @@
     };
   }
 
+  // ===================================================== ACTIVITY HISTORY & UNDO
+
+  function viewHistory() {
+    let list = null;
+    const body = [h('div.history-box', UI.skeletonScreen())];
+
+    async function load() {
+      try {
+        const d = await Api.get('history.list');
+        list = d.history || [];
+        paint();
+      } catch (e) {
+        list = [];
+        paint();
+        toast(e.message, 'error');
+      }
+    }
+
+    function paint() {
+      const box = body[0];
+      UI.clear(box);
+      if (!list || !list.length) {
+        box.appendChild(empty('icon', 'history', t('No actions recorded yet'), t('Actions such as consuming, adding or deleting products will appear here.')));
+        return;
+      }
+
+      box.appendChild(h('div.stack', list.map(hItem => {
+        let title = '';
+        let ic = 'history';
+        if (hItem.action === 'consume_part') {
+          title = t('Consumed {qty} of “{name}”', { qty: UI.fmtQty(hItem.quantity, hItem.unit), name: hItem.itemName });
+          ic = 'check';
+        } else if (hItem.action === 'consume') {
+          title = t('Consumed “{name}” entirely', { name: hItem.itemName });
+          ic = 'check';
+        } else if (hItem.action === 'add') {
+          title = t('Added “{name}”', { name: hItem.itemName });
+          ic = 'add';
+        } else if (hItem.action === 'delete') {
+          title = t('Deleted “{name}”', { name: hItem.itemName });
+          ic = 'delete';
+        } else if (hItem.action === 'edit') {
+          title = t('Edited “{name}”', { name: hItem.itemName });
+          ic = 'edit';
+        } else if (hItem.action === 'move_from_list') {
+          title = t('Purchased “{name}”', { name: hItem.itemName });
+          ic = 'cartAdd';
+        } else {
+          title = `${hItem.action}: ${hItem.itemName}`;
+        }
+
+        const timeStr = UI.fmtDateTime(hItem.createdAt);
+        const subParts = [hItem.userName || '', timeStr, hItem.spaceName || ''].filter(Boolean);
+        const sub = subParts.join(' · ');
+
+        const meta = [];
+        if (hItem.undone) {
+          meta.push(chip(t('Undone'), 'neutral'));
+        }
+
+        const trail = hItem.undone ? null : btn(t('Undo'), {
+          kind: 'tonal', icon: 'undo',
+          onclick: async () => {
+            const ok = await confirm(t('Undo this action?'), title, t('Undo'), false);
+            if (!ok) return;
+            try {
+              const res = await Api.post('history.undo', { id: hItem.id });
+              applyState(res);
+              toast(t('Action undone: {name} restored', { name: hItem.itemName }));
+              load();
+            } catch (err) {
+              toast(err.message, 'error');
+            }
+          }
+        });
+
+        return cardRow({
+          lead: tile('icon', ic),
+          title,
+          sub,
+          meta,
+          trail,
+        });
+      })));
+    }
+
+    load();
+    return {
+      tab: 'spaces',
+      title: t('Activity history'),
+      back: 'spaces',
+      body,
+    };
+  }
+
   // ===================================================== PROFILE & HOUSEHOLD
 
   function openHouseholdSwitcher() {
@@ -1408,6 +2422,11 @@
         }, { danger: true }) : null,
       ),
 
+      h('div.spacer'),
+      h('div.group',
+        groupRow('history', t('Household activity history'), t('View actions and undo accidental changes'), () => go('history'))
+      ),
+
       sectionTitle(t('Preferences')),
       h('div.group',
         groupRow('globe', t('Language'), (I18N.langs.find(l => l[0] === I18N.lang) || [, ''])[1], () => actionSheet(I18N.langs.map(([k, label]) => ({ icon: 'globe', label, selected: k === I18N.lang, onclick: () => I18N.set(k) })), t('Language'))),
@@ -1436,6 +2455,7 @@
         } : null) : openLinkGoogle, { trail: u.googleLinked && !u.hasPassword ? h('div.trail', { style: { paddingRight: '12px' } }, chip(t('Linked'), 'ok', 'check')) : undefined }) : null,
         u.isEditor ? groupRow('shield', t('Admin portal'), u.isAdmin ? t('Recipes, products, categories and users') : t('Recipes and products'), null, { href: 'admin.html', external: true }) : null,
         groupRow('info', t('Privacy and info'), 'FoodTrack ' + VERSION, null, { href: 'privacy.html', external: true }),
+        groupRow('heart', t('Donation'), t('Free and open-source project, with no ads: a small donation helps cover server and maintenance costs.'), null, { href: DONATE_URL, external: true }),
       ),
       h('div.spacer'),
       h('div.group',
@@ -1653,6 +2673,10 @@
       case 'recipes': return h('div.illo.col', h('div.tour-recipe', h('div.cover', { style: { backgroundImage: 'url("assets/img/recipes/pancakes.jpg")' } }), h('div.meta', chip(t('You have all the ingredients'), 'ok', 'check'), chip(t('Uses expiring products'), 'warn'))),
         h('div.tour-pill', icon('calendar'), t('Weekly plan')));
       case 'share': return h('div.illo.col', h('div.tour-avatars', ['LV', 'MR', 'PB'].map(x => h('span.avatar', x))), h('div.code-box.tour-code', 'K7M2Q9XA'), h('div.tour-pill', icon('share'), t('Invite someone')));
+      case 'donate': return h('div.illo.col',
+        mini(T('icon', 'heart'), t('100% free & open-source'), t('No ads, no subscriptions'), [chip(t('Open-source'), 'ok', 'check')]),
+        mini(T('icon', 'shield'), t('Server and maintenance'), t('Kept alive thanks to your support'), null),
+        h('a.tour-pill', { href: DONATE_URL, target: '_blank', rel: 'noopener' }, icon('heart'), t('Donation')));
       default: return h('div.illo');
     }
   }
@@ -1666,6 +2690,7 @@
       ['lists', t('4 · Make shopping lists'), t('Add what you need, put it in the cart while shopping, then move it into a space once home.')],
       ['recipes', t('5 · Cook with what you have'), t('Recipes show which ingredients you already have; add the missing ones to a list or plan your week.')],
       ['share', t('6 · Share your household'), t('Invite family or flatmates from the Profile: you will all see and edit the same spaces and lists.')],
+      ['donate', t('Support the project'), t('FoodTrack is a free and open-source project. If you find it useful, consider making a small donation in the Profile to help cover server and maintenance costs.')],
     ];
     let i = Math.min(Math.max(0, start || 0), steps.length - 1);
     const stage = h('div.tour-stage');

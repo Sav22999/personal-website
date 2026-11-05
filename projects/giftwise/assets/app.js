@@ -10,12 +10,13 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const { h, icon, tile, chip, fab, btn, iconBtn, busy, field, input, textarea, select, sheet, actionSheet, confirm, toast, store } = UI;
   const t = (s, v) => I18N.t(s, v);
   const root = document.getElementById('app');
   const S = { user: null, loaded: false, config: {}, following: [], followers: [], requests: { incoming: [], outgoing: [] }, myLists: [], friendLists: [], views: {}, signature: '' };
   const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
+  const DONATE_URL = 'https://www.saveriomorelli.com/donate/';
 
   const OCCASIONS = {
     birthday: ['cake', 'Birthday'], christmas: ['tree', 'Christmas'], wedding: ['rings', 'Wedding'], baby: ['baby', 'Baby'],
@@ -125,19 +126,22 @@
   }
   const DESK = matchMedia('(min-width: 960px)');
   DESK.addEventListener('change', () => { if (S.user && S.loaded) { UI.closeAllSheets(); render(true); } });
-  const NAV_OF = { list: 'lists', gift: 'gifts', user: 'friends', invite: 'friends' };
+  const NAV_OF = { list: 'lists', gift: 'gifts', user: 'friends', invite: 'friends', history: 'history' };
 
   let lastKey = '';
   function render(keepScroll) {
     if (!S.user) return renderAuth();
-    if (!S.loaded) { root.replaceChildren(h('div.loader')); return; }
+    if (!S.loaded) {
+      root.replaceChildren(DESK.matches ? h('div.content', UI.skeletonScreen()) : UI.skeletonScreen());
+      return;
+    }
     const r = route();
     const key = r.name + '/' + (r.id || '');
     const y = window.scrollY;
-    const views = { lists: viewLists, list: viewList, gifts: viewGifts, gift: viewGift, friends: viewFriends, user: viewPerson, profile: viewProfile, invite: viewInvite };
+    const views = { lists: viewLists, list: viewList, gifts: viewGifts, gift: viewGift, friends: viewFriends, user: viewPerson, profile: viewProfile, invite: viewInvite, history: viewHistory };
     const v = (views[r.name] || viewLists)(r.id);
     if (!v) return;
-    const showBack = v.back && !(DESK.matches && ['profile'].includes(r.name));
+    const showBack = v.back && !(DESK.matches && ['profile', 'history'].includes(r.name));
     const bar = showBack
       ? h('header.appbar.small', iconBtn('back', t('Back'), () => { if (curDepth > 0) history.back(); else location.replace('#/' + v.back); }), h('div.titles', h('h1', v.title)), v.actions || [])
       : h('header.appbar',
@@ -175,7 +179,8 @@
       h('div.sn-links',
         link('lists', t('My lists'), 'list'),
         link('gifts', t('Friends’ lists'), 'gift'),
-        link('friends', t('Friends'), 'group', S.requests.incoming.length)),
+        link('friends', t('Friends'), 'group', S.requests.incoming.length),
+        link('history', t('Activity history'), 'history')),
       h('div.grow'),
       h('button.sn-link.sn-help', { type: 'button', onclick: openHowItWorks }, icon('help'), h('span', t('How it works'))),
       h('a.sn-user' + (active === 'profile' ? '.active' : ''), { href: '#/profile', title: t('Profile and settings') },
@@ -200,7 +205,7 @@
       body.push(sectionTitle(t('Archived'), archived.length));
       body.push(h('div.stack', archived.map(listCard)));
     }
-    return { tab: 'lists', title: t('My wish lists'), body, fab: fab(t('New list'), 'add', () => openListForm({})) };
+    return { tab: 'lists', title: t('My wish lists'), actions: [iconBtn('history', t('Activity history'), () => go('history'))], body, fab: fab(t('New list'), 'add', () => openListForm({})) };
   }
 
   function listCard(l) {
@@ -221,6 +226,7 @@
       { icon: 'add', label: t('Add a wish'), onclick: () => openWishForm({ listId: l.id }) },
       { icon: 'edit', label: t('Edit list'), onclick: () => openListForm(l) },
       { icon: 'share', label: t('Tell my friends'), onclick: () => shareOrCopy(t('I made a wish list on Giftwise: “{title}”', { title: l.title }), new URL('#/gifts', location.href.split('#')[0]).href) },
+      { icon: 'history', label: t('Activity history'), onclick: () => go('history') },
       { icon: 'archive', label: l.archived ? t('Restore from archive') : t('Archive (hide from friends)'), onclick: () => act('list.archive', { id: l.id, archived: !l.archived }).then(() => toast(l.archived ? t('List restored') : t('List archived'))) },
       { icon: 'delete', label: t('Delete list'), danger: true, onclick: async () => {
         if (await confirm(t('Delete “{title}”?', { title: l.title }), t('The list and all its wishes will be deleted. Your friends will no longer see it.'), t('Delete'), true)) { await act('list.delete', { id: l.id }); goLater('lists'); toast(t('List deleted')); }
@@ -451,7 +457,7 @@
     const v = S.views[id];
     if (!v) {
       loadView(id).then(() => render(true)).catch(e => { toast(e.message, 'error'); go('gifts'); });
-      return { tab: 'gifts', title: summary ? summary.title : t('Wish list'), back: 'gifts', body: [h('div.loader')] };
+      return { tab: 'gifts', title: summary ? summary.title : t('Wish list'), back: 'gifts', body: [UI.skeletonScreen()] };
     }
     const l = v.list, me = S.user.id;
     const body = [];
@@ -644,7 +650,7 @@
     const p = people[id];
     if (!p) {
       Api.get('user.get&id=' + id).then(d => { people[id] = d.person; render(true); }).catch(e => { toast(e.message, 'error'); go('friends'); });
-      return { tab: 'friends', title: known ? known.name : t('Profile'), back: 'friends', body: [h('div.loader')] };
+      return { tab: 'friends', title: known ? known.name : t('Profile'), back: 'friends', body: [UI.skeletonScreen()] };
     }
     // Keep the relation in sync with the latest state
     p.following = S.following.some(x => x.id === id) ? 'accepted' : S.requests.outgoing.some(x => x.id === id) ? 'pending' : 'none';
@@ -678,7 +684,7 @@
       applyState(d); location.replace('#/friends');
       toast(d.already ? t('You and {name} already follow each other', { name: d.friendName.split(' ')[0] }) : t('You and {name} now follow each other!', { name: d.friendName.split(' ')[0] }));
     }).catch(e => { toast(e.message, 'error'); location.replace('#/friends'); });
-    return { tab: 'friends', title: t('Invite'), back: 'friends', body: [h('div.loader')] };
+    return { tab: 'friends', title: t('Invite'), back: 'friends', body: [UI.skeletonScreen()] };
   }
 
   // ===================================================== PROFILE
@@ -699,6 +705,7 @@
       h('div.group',
         groupRow('person', t('Username'), '@' + (u.username || '—'), openUsernameForm),
         groupRow('edit', t('Name and email'), u.name + ' · ' + u.email, openProfileForm),
+        groupRow('history', t('Activity history'), t('View recent actions and undo mistakes'), () => go('history')),
         groupRow('lock', t('Who can follow you'), u.followPolicy === 'open' ? t('Everyone, without asking') : t('Only people you approve'), openPrivacy),
         groupRow('lock', u.hasPassword ? t('Change password') : t('Set a password'), u.hasPassword ? null : t('Sign in also without Google'), openPasswordForm),
         groupRow('personAdd', t('Your invite link'), t('Whoever opens it and you will follow each other'), () => shareOrCopy(t('Join me on Giftwise: let’s make gift giving easy!'), inviteUrl()))),
@@ -706,16 +713,126 @@
       h('div.group',
         groupRow('globe', t('Language'), (I18N.langs.find(l => l[0] === I18N.lang) || [, ''])[1], () => actionSheet(I18N.langs.map(([k, label]) => ({ icon: 'globe', label, selected: k === I18N.lang, onclick: () => I18N.set(k) })), t('Language'))),
         groupRow('theme', t('Theme'), { auto: t('Automatic'), light: t('Light'), dark: t('Dark') }[theme], () => actionSheet([['auto', t('Automatic (like the system)')], ['light', t('Light')], ['dark', t('Dark')]].map(([k, label]) => ({ icon: 'theme', label, selected: k === theme, onclick: () => { store.set('theme', k); UI.applyTheme(); render(true); } })), t('Theme'))),
-        groupRow('help', t('How Giftwise works'), t('Lists, friends and the surprise'), openHowItWorks)),
+        groupRow('school', t('App tutorial'), t('A quick tour of how Giftwise works'), () => openTutorial()),
+        groupRow('bulb', t('Show tips again'), null, () => { ['hide.nofriends', 'hide.surprise'].forEach(k => store.set(k, false)); render(true); toast(t('Tips restored')); })),
       sectionTitle(t('Other')),
       h('div.group',
         groupRow('info', t('Privacy and info'), 'Giftwise ' + VERSION, null, { href: 'privacy.html', external: true }),
         groupRow('chat', t('Contact us'), t('Suggestions or problems'), null, { href: CONTACT_URL, external: true }),
+        groupRow('heart', t('Donation'), t('Free and open-source project, with no ads: a small donation helps cover server and maintenance costs.'), null, { href: DONATE_URL, external: true }),
         groupRow('logout', t('Sign out'), null, async () => { try { await Api.post('auth.logout', {}); } catch (e) { /* ignore */ } S.user = null; S.loaded = false; render(); }),
         groupRow('delete', t('Delete my account'), t('Lists, wishes and friendships are deleted'), openDeleteAccount, { danger: true })),
     ];
     body.push(devCredit());
     return { tab: null, title: t('Profile'), back: 'lists', body, cls: 'narrow' };
+  }
+
+  // ===================================================== ACTIVITY HISTORY
+
+  function viewHistory() {
+    let list = null;
+    const box = h('div.history-box', UI.skeletonScreen());
+    const body = [box];
+
+    async function load() {
+      try {
+        const d = await Api.get('history.list');
+        list = d.history || [];
+        paint();
+      } catch (e) {
+        list = [];
+        paint();
+        toast(e.message, 'error');
+      }
+    }
+
+    function paint() {
+      UI.clear(box);
+      if (!list || !list.length) {
+        box.appendChild(empty('history', t('No actions recorded yet'), t('Actions such as adding, editing or deleting wishes and lists will appear here.')));
+        return;
+      }
+
+      box.appendChild(h('div.stack', list.map(hItem => {
+        let title = '';
+        let ic = 'history';
+        const itemTitle = hItem.itemTitle || t('Untitled');
+        const listTitle = hItem.listTitle || '';
+        const act = hItem.action;
+
+        if (act === 'wish_add') {
+          title = t('Added wish “{title}”', { title: itemTitle });
+          ic = 'add';
+        } else if (act === 'wish_edit') {
+          title = t('Edited wish “{title}”', { title: itemTitle });
+          ic = 'edit';
+        } else if (act === 'wish_delete') {
+          title = t('Deleted wish “{title}”', { title: itemTitle });
+          ic = 'delete';
+        } else if (act === 'list_create') {
+          title = t('Created list “{title}”', { title: listTitle });
+          ic = 'list';
+        } else if (act === 'list_edit') {
+          title = t('Edited list “{title}”', { title: listTitle });
+          ic = 'edit';
+        } else if (act === 'list_archive') {
+          title = hItem.details && hItem.details.archived ? t('Archived list “{title}”', { title: listTitle }) : t('Unarchived list “{title}”', { title: listTitle });
+          ic = 'archive';
+        } else if (act === 'list_delete') {
+          title = t('Deleted list “{title}”', { title: listTitle });
+          ic = 'delete';
+        } else if (act === 'claim_set') {
+          const st = (hItem.details && hItem.details.new_status) || '';
+          if (st === 'taken') title = t('Claimed gift “{title}”', { title: itemTitle });
+          else if (st === 'considering') title = t('Marked “{title}” as idea', { title: itemTitle });
+          else title = t('Released gift “{title}”', { title: itemTitle });
+          ic = 'gift';
+        } else {
+          title = `${act}: ${itemTitle || listTitle}`;
+        }
+
+        const timeStr = UI.fmtDateTime(hItem.createdAt);
+        const subParts = [timeStr, listTitle && act.startsWith('wish_') ? listTitle : ''].filter(Boolean);
+        const sub = subParts.join(' · ');
+
+        const meta = [];
+        if (hItem.undone) {
+          meta.push(chip(t('Undone'), 'neutral'));
+        }
+
+        const trail = hItem.undone ? null : btn(t('Undo'), {
+          kind: 'tonal', icon: 'undo',
+          onclick: async () => {
+            const ok = await confirm(t('Undo this action?'), title, t('Undo'), false);
+            if (!ok) return;
+            try {
+              const res = await Api.post('history.undo', { id: hItem.id });
+              applyState(res);
+              toast(t('Action undone successfully'));
+              load();
+            } catch (err) {
+              toast(err.message, 'error');
+            }
+          }
+        });
+
+        return cardRow({
+          lead: tile('icon', ic),
+          title,
+          sub,
+          meta,
+          trail,
+        });
+      })));
+    }
+
+    load();
+    return {
+      tab: 'lists',
+      title: t('Activity history'),
+      back: 'lists',
+      body,
+    };
   }
 
   function openProfileForm() {
@@ -759,17 +876,108 @@
   }
 
   function openHowItWorks() {
-    const step = (ic, title, text) => h('div.how-step', tile('icon', ic, 'lg'), h('div', h('strong', title), h('p', text)));
-    sheet({
-      title: t('How Giftwise works'),
-      body: [
-        step('list', t('1 · Make your wish lists'), t('One for your birthday, one for Christmas, one for your wedding… Add anything: paste or share a link from any shop and Giftwise fills in the details.')),
-        step('personAdd', t('2 · Follow your friends'), t('Search them by username and follow them: you see the lists of the people you follow, and your followers see yours. You decide who can follow you (and you can share a list with only some followers).')),
-        step('visibilityOff', t('3 · The surprise stays a surprise'), t('On a friend’s list you can mark a wish as “Thinking about it” or “I’ll get it” and chat with the others. The owner of the list never sees any of it.')),
-        step('gift', t('4 · No more doubles'), t('Everyone knows what has already been taken: no duplicate presents, and splitting a big gift is easy.')),
-      ],
-      actions: [btn(t('Got it'), { onclick: UI.closeTop })],
-    });
+    openTutorial();
+  }
+
+  // ===================================================== tutorial
+
+  const MAJOR = VERSION.split('.')[0];
+  /** Shown at the first sign-in on a device and the first time a new major version is opened. */
+  function maybeShowTutorial() {
+    const key = 'tutorial.' + S.user.id;
+    // After a language change inside the tutorial the page reloads: reopen it on the same slide.
+    let resume = null;
+    try { resume = sessionStorage.getItem('gw.tourResume'); sessionStorage.removeItem('gw.tourResume'); } catch (e) { /* no storage */ }
+    if (resume === null && store.get(key, '') === MAJOR) return;
+    setTimeout(() => openTutorial(() => store.set(key, MAJOR), +resume || 0), resume === null ? 400 : 0);
+  }
+
+  /** Small illustrations built with the app's own components (occasion badges, wish cards, chips, chat bubbles). */
+  function illo(kind) {
+    const el = illoContent(kind);
+    el.classList.add('ill-' + kind); // per-slide animations (app.css, "Tutorial animations")
+    return el;
+  }
+  function illoContent(kind) {
+    const occ = o => h('span.occ.occ-' + o, icon(occIcon(o)));
+    const mini = (lead, title, sub, meta) => h('div.tour-card', lead, h('div', h('strong', title), sub ? h('small', sub) : null, meta ? h('div.meta', meta) : null));
+    const cur = I18N.lang === 'it' ? 'EUR' : 'GBP';
+    switch (kind) {
+      case 'welcome': return h('div.illo', h('div.tour-logo', h('img', { src: 'assets/icons/icon-192.png', alt: '' })),
+        h('div.float.f1', occ('birthday')), h('div.float.f2', occ('christmas')), h('div.float.f3', occ('wedding')), h('div.float.f4', occ('graduation')));
+      case 'lists': return h('div.illo.col',
+        mini(occ('birthday'), t('My birthday'), null, [chip(t('in {n} days', { n: 12 }), 'warn', 'calendar'), chip(plural(6, 'wish', 'wishes'), 'neutral')]),
+        mini(occ('christmas'), t('Christmas {y}', { y: new Date().getFullYear() }), null, [chip(t('All followers'), 'neutral', 'group')]),
+        mini(occ('graduation'), t('My graduation'), null, [chip(plural(4, 'follower', 'followers'), 'neutral', 'lock')]));
+      case 'wishes': return h('div.illo.col',
+        mini(h('span.thumb.noimg', icon('gift')), [h('span.star', icon('star')), t('Wireless headphones')], UI.money(89.9, cur), [chip(t('Most wanted'), 'warn', 'star')]),
+        mini(h('span.thumb.noimg', icon('bag')), t('Travel backpack'), UI.money(45, cur), null),
+        h('div.tour-pill', icon('link'), t('Paste a product link')));
+      case 'friends': return h('div.illo.col',
+        h('div.tour-avatars', ['Anna L', 'Marco R', 'Sara B'].map(n => avatar(n))),
+        mini(avatar('Marco Rossi', 'sm'), 'Marco Rossi', '@marco.rossi', [chip(t('You follow each other'), 'ok', 'check')]),
+        h('div.tour-pill', icon('share'), t('Share invite link')));
+      case 'claim': return h('div.illo.col',
+        mini(h('span.thumb.noimg', icon('gift')), t('Wireless headphones'), UI.money(89.9, cur), [chip(t('You are getting it'), 'taken', 'check')]),
+        mini(h('span.thumb.noimg', icon('bag')), t('Travel backpack'), UI.money(45, cur), [chip(t('Thinking about it: {who}', { who: 'Sara' }), 'warn', 'think')]),
+        h('div.tour-pill', icon('visibilityOff'), t('Hidden from the list owner')));
+      case 'chat': return h('div.illo.col',
+        h('div.tour-chat',
+          h('div.msg', avatar('Sara B', 'sm'), h('div.bubble', h('strong', 'Sara'), h('p', t('Shall we split this gift?')))),
+          h('div.msg.mine', h('div.bubble', h('p', t('Great idea, count me in!'))))),
+        h('div.banner.info.tour-banner', icon('visibilityOff'), h('div.b-body', h('h3', t('Your surprise is safe')), h('p', t('{name} can’t see what you mark or write here.', { name: 'Marco' })))));
+      case 'donate': return h('div.illo.col',
+        mini(tile('icon', 'heart'), t('100% free & open-source'), t('No ads, no subscriptions'), [chip(t('Open-source'), 'ok', 'check')]),
+        mini(tile('icon', 'shield'), t('Server and maintenance'), t('Kept alive thanks to your support'), null),
+        h('a.tour-pill', { href: DONATE_URL, target: '_blank', rel: 'noopener' }, icon('heart'), t('Donation')));
+      default: return h('div.illo');
+    }
+  }
+
+  function openTutorial(onDone, start) {
+    if (document.querySelector('.tour-ovl')) return;
+    const steps = [
+      ['welcome', t('Welcome to Giftwise'), t('Create wish lists for every occasion and share them with your friends: they agree on who gives what, without spoiling the surprise.')],
+      ['lists', t('1 · Make your wish lists'), t('Birthday, Christmas, wedding, graduation… Set the date of the event and choose whether to show the list to all your followers or only to some.')],
+      ['wishes', t('2 · Add your wishes'), t('Paste a link from any online shop (or share it from the app): Giftwise fills in name, picture and price for you. Mark the ones you care about most.')],
+      ['friends', t('3 · Follow your friends'), t('Search for your friends by username or share your invite link: you see the lists of the people you follow, and your followers see yours.')],
+      ['claim', t('4 · Claim a gift in secret'), t('On a friend’s list, mark a wish as “Thinking about it” or “I’ll get it”: the other friends see it right away, so nobody buys the same present twice.')],
+      ['chat', t('5 · Coordinate in the secret chat'), t('Every list and every wish has a chat visible only to friends: agree on who gets what or split the cost of a group gift. The surprise is 100% safe!')],
+      ['donate', t('Support the project'), t('Giftwise is a free and open-source project. If you find it useful, consider making a small donation in the Profile to help cover server and maintenance costs.')],
+    ];
+    let i = Math.min(Math.max(0, start || 0), steps.length - 1);
+    const stage = h('div.tour-stage');
+    // Language choice, available on every slide (the page reloads in the new language and resumes here)
+    const langSeg = h('div.seg.tour-lang', { role: 'group', 'aria-label': t('Language') }, I18N.langs.map(([k, label]) =>
+      h('button' + (k === I18N.lang ? '.sel' : ''), { type: 'button', lang: k, 'aria-pressed': String(k === I18N.lang), onclick: () => {
+        if (k === I18N.lang) return;
+        try { sessionStorage.setItem('gw.tourResume', String(i)); } catch (e) { /* no storage */ }
+        I18N.set(k);
+      } }, icon('globe'), label)));
+    const dots = h('div.tour-dots');
+    const next = btn('', { onclick: () => go(i + 1) });
+    const back = btn(t('Back'), { kind: 'text', onclick: () => go(i - 1) });
+    const skip = btn(t('Skip'), { kind: 'text', onclick: () => finish() });
+    const box = h('div.tour', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('App tutorial') }, h('div.tour-top', langSeg, skip), stage, dots, h('div.tour-actions', back, next));
+    const ovl = h('div.tour-ovl', box);
+    function paintT() {
+      const [kind, title, text] = steps[i];
+      stage.replaceChildren(h('div.tour-slide', illo(kind), h('h2', title), h('p', text)));
+      dots.replaceChildren(...steps.map((_, k) => h('button' + (k === i ? '.on' : ''), { type: 'button', 'aria-label': String(k + 1), onclick: () => go(k) })));
+      back.style.visibility = i ? 'visible' : 'hidden';
+      skip.style.visibility = i < steps.length - 1 ? 'visible' : 'hidden';
+      next.querySelector('span') ? next.querySelector('span').textContent = (i === steps.length - 1 ? t('Get started') : t('Next')) : next.appendChild(h('span', i === steps.length - 1 ? t('Get started') : t('Next')));
+    }
+    function go(k) { if (k >= steps.length) return finish(); i = Math.max(0, k); paintT(); }
+    function finish() { document.removeEventListener('keydown', key); ovl.classList.remove('open'); setTimeout(() => ovl.remove(), 200); if (S.user) store.set('tutorial.' + S.user.id, MAJOR); if (onDone) onDone(); }
+    const key = e => { if (e.key === 'ArrowRight') go(i + 1); else if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'Escape') finish(); };
+    document.addEventListener('keydown', key);
+    let x0 = null;
+    stage.addEventListener('pointerdown', e => { x0 = e.clientX; });
+    stage.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 50) go(i + (dx < 0 ? 1 : -1)); });
+    document.body.appendChild(ovl);
+    paintT();
+    requestAnimationFrame(() => ovl.classList.add('open'));
   }
 
   // ===================================================== AUTH
@@ -891,15 +1099,16 @@
     history.replaceState(history.state, '', location.pathname + '#/lists');
   })();
   function consumeShare() {
-    if (!sharedPayload || !S.loaded) return;
+    if (!sharedPayload || !S.loaded) return false;
     const p = sharedPayload; sharedPayload = null;
     setTimeout(() => openWishForm({ url: p.url, title: p.title }, true), 300);
+    return true;
   }
 
   // ===================================================== sync & start
 
   async function sync() {
-    if (!S.user || !S.loaded || document.visibilityState !== 'visible' || UI.sheetsOpen()) return;
+    if (!S.user || !S.loaded || document.visibilityState !== 'visible' || UI.sheetsOpen() || document.querySelector('.tour-ovl')) return;
     try {
       const before = S.signature;
       applyState(await Api.get('state', { silentAuth: true }));
@@ -924,7 +1133,7 @@
       applyState(await Api.get('state'));
       S.loaded = true;
       render();
-      consumeShare();
+      if (!consumeShare()) maybeShowTutorial();
     } catch (e) {
       fatal(t('Could not load the data'), e.message);
     }

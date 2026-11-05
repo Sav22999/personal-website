@@ -87,7 +87,7 @@ Configurazione SMTP: se in `credentials.php` c'è `$mail_config` (vedi `credenti
 
 ## Versione desktop
 
-Da 960 px di larghezza in su (computer, tablet in orizzontale) l'app usa componenti adatti al desktop: barra laterale di navigazione (con casa attiva, contatori di prodotti in scadenza e da comprare, profilo), azione principale come pulsante nella barra in alto, schede in griglia, dettaglio ricetta su due colonne, settimana in griglia, finestre di dialogo centrate al posto dei pannelli dal basso, menu a comparsa vicino al puntatore e accesso su due colonne. Scorciatoie: `/` per cercare, `Esc` per chiudere una finestra. Per admin e moderatori contenuti la barra laterale ha anche il collegamento al «Portale gestionale». Il portale usa gli stessi componenti e la stessa grafica dell'app desktop.
+Da 960 px di larghezza in su (computer, tablet in orizzontale) l'app usa componenti adatti al desktop: barra laterale di navigazione (con casa attiva, contatori di prodotti in scadenza e da comprare, profilo), azione principale come pulsante nella barra in alto, schede in griglia, dettaglio ricetta su due colonne, settimana in griglia, finestre di dialogo centrate al posto dei pannelli dal basso, menu a comparsa vicino al puntatore e accesso su due colonne. Scorciatoie: `/` per cercare, `Esc` per chiudere una finestra. Per admin e moderatori contenuti la barra laterale ha anche il collegamento al «Portale gestionale». Il portale usa gli stessi componenti e la stessa grafica dell'app desktop, ed è completamente responsive e mobile-friendly su qualsiasi dispositivo (con drawer laterale a scomparsa e tabelle ottimizzate).
 
 ## Lingue
 
@@ -102,7 +102,7 @@ La scansione usa il `BarcodeDetector` nativo quando c'è (Chrome su Android) e a
 
 ## Ricette iniziali
 
-103 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizzera, Francia, Belgio, Paesi Bassi, Svezia, Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud, Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). **95 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in `lib/seed-images.php`): quelle dei lotti 2 e 3 sono tutte in **pubblico dominio o CC0** (Wikimedia Commons, Flickr), ritagliate a 1200×800; fonti e autori in `assets/img/recipes/CREDITS.md`. Sulle installazioni esistenti la versione 9 del database assegna le foto alle ricette iniziali che non hanno ancora un'immagine (non tocca quelle caricate dal portale). Le ricette senza foto (Caldo verde, Arroz de tomate, Menemen, Panzanella, Stovies, Shortbread, Coleslaw, Spanakorizo) mostrano una copertina illustrata con le bandiere dei paesi d'origine; la foto si aggiunge dal portale.
+103 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles, Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizzera, Francia, Belgio, Paesi Bassi, Svezia, Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud, Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`). Sulle installazioni esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non ricompare). **Tutte le 103 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in `lib/seed-images.php`): quelle dei lotti 2 e 3 sono tutte in **pubblico dominio o CC0** (Wikimedia Commons, Flickr), ritagliate a 1200×800; fonti e autori in `assets/img/recipes/CREDITS.md`. Sulle installazioni esistenti le versioni 9 e 11 del database assegnano le foto alle ricette iniziali che non hanno ancora un'immagine (non toccano quelle caricate dal portale). Le eventuali nuove ricette create senza foto mostrano una copertina illustrata con le bandiere dei paesi d'origine.
 
 ## Ruoli
 
@@ -142,7 +142,7 @@ Ogni utente ha almeno una «casa» (creata alla registrazione con Frigorifero, F
 | 13 | Piano dei pasti della settimana | Ricette → «Piano della settimana» → ingredienti mancanti in lista |
 | 14 | Condivisione multi-utente | Case condivise |
 
-In più: paesi d’origine delle ricette (uno o più, oppure non definito), interfaccia multilingua, accesso con Google, «Aggiungi i mancanti alla lista della spesa» dalla ricetta (rimossa nel prototipo Flutter), ordinamento dei prodotti, tema chiaro/scuro, consumo parziale di un prodotto.
+In più: paesi d’origine delle ricette (uno o più, oppure non definito), interfaccia multilingua, accesso con Google, «Aggiungi i mancanti alla lista della spesa» dalla ricetta (rimossa nel prototipo Flutter), ordinamento dei prodotti, tema chiaro/scuro, consumo parziale di un prodotto, cronologia delle attività della casa con funzione di annullamento (undo), ricerca ricette con prodotti già presenti in casa, portale admin completamente mobile-friendly.
 
 ## App Android (Google Play)
 

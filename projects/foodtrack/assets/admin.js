@@ -176,34 +176,80 @@
 
   // ================================================================ shell
 
+  function adminSkeleton() {
+    const row = () => h('div.sk-card', { style: { height: '54px' } },
+      h('span.skeleton.sk-tile', { style: { width: '32px', height: '32px' } }),
+      h('div.sk-body', h('span.skeleton.sk-title', { style: { width: '35%' } }), h('span.skeleton.sk-line.w-60')),
+      h('span.skeleton.sk-chip')
+    );
+    return h('div',
+      h('div.page-head', h('div.titles', h('span.skeleton', { style: { width: '180px', height: '32px', borderRadius: '8px' } }), h('span.skeleton.sk-line.w-40', { style: { marginTop: '8px' } }))),
+      h('div.toolbar', h('span.skeleton', { style: { width: '260px', height: '44px', borderRadius: '999px' } })),
+      h('div.sk-stack', row(), row(), row(), row(), row())
+    );
+  }
+
   function shell(content) {
     const tab = tabName();
-    root.replaceChildren(h('div.adm',
-      h('aside.adm-side',
-        h('div.adm-logo', h('img', { src: 'assets/icons/icon-color.png', alt: '' }), h('span', 'FoodTrack', h('small', t('Admin portal')))),
-        h('nav.adm-nav', TABS.map(([k, label, ic]) => h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label) }, icon(ic), h('span', t(label)), counts[k] != null ? h('span.count', String(counts[k])) : null))),
-        h('div.grow'),
-        // Like "Management portal" in the app's sidebar: back to the FoodTrack app
-        h('a.adm-app-link', { href: './', title: t('Open the app') }, icon('home'), h('span', t('Go to the app')), icon('right')),
-        h('div.adm-side-tools',
+    const cycleTheme = () => {
+      const next = { auto: 'light', light: 'dark', dark: 'auto' }[UI.store.get('theme', 'auto')];
+      UI.store.set('theme', next); UI.applyTheme(); toast(t('Theme') + ': ' + t({ auto: 'Automatic', light: 'Light', dark: 'Dark' }[next]));
+    };
+    const topbar = h('header.adm-topbar',
+      h('div.adm-topbar-inner',
+        h('a.adm-logo', { href: '#/' + TABS[0][0] },
+          h('img', { src: 'assets/icons/icon-color.png', alt: '' }),
+          h('span', 'FoodTrack', h('small', t('Admin portal')))
+        ),
+        h('nav.adm-nav', { 'aria-label': t('Admin portal') },
+          TABS.map(([k, label, ic]) =>
+            h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label), 'aria-current': k === tab ? 'page' : null },
+              icon(ic),
+              h('span.lbl', t(label)),
+              counts[k] != null ? h('span.count', String(counts[k])) : null
+            )
+          )
+        ),
+        h('div.adm-tools',
+          // Back to the FoodTrack app
+          h('a.adm-app-link', { href: './', title: t('Open the app') }, icon('home'), h('span', t('Go to the app'))),
           sel(I18N.langs.map(([v, l]) => ({ value: v, label: l })), I18N.lang, { onchange: e => I18N.set(e.target.value), 'aria-label': t('Language') }),
-          iconBtn('theme', t('Theme'), () => {
-            const next = { auto: 'light', light: 'dark', dark: 'auto' }[UI.store.get('theme', 'auto')];
-            UI.store.set('theme', next); UI.applyTheme(); toast(t('Theme') + ': ' + t({ auto: 'Automatic', light: 'Light', dark: 'Dark' }[next]));
-          })),
-        h('div.adm-user', h('span.avatar', initials(me.name)), h('div.who', h('strong', me.name), h('span', me.roleLabel)),
-          iconBtn('more', t('More actions'), e => menu(e.currentTarget, [
-            { icon: 'open', label: t('Open the app'), onclick: () => { location.href = './'; } },
-            { icon: 'logout', label: t('Sign out'), onclick: logout },
-          ])))),
-      h('main.adm-content', content)));
+          iconBtn('theme', t('Theme'), cycleTheme),
+          h('button.adm-user', {
+            type: 'button',
+            title: me.name + ' (' + me.roleLabel + ')',
+            onclick: e => menu(e.currentTarget, [
+              { icon: 'home', label: t('Open the app'), onclick: () => { location.href = './'; } },
+              { icon: 'theme', label: t('Theme'), onclick: cycleTheme },
+              ...I18N.langs.map(([v, l]) => ({ icon: 'globe', label: l + (I18N.lang === v ? ' ✓' : ''), onclick: () => I18N.set(v) })),
+              '-',
+              { icon: 'logout', label: t('Sign out'), danger: true, onclick: logout },
+            ]),
+          },
+            h('span.avatar', initials(me.name)),
+            h('div.who', h('strong', me.name), h('span', me.roleLabel))
+          )
+        )
+      )
+    );
+
+    const bottomNav = h('nav.adm-bottomnav', { 'aria-label': t('Admin portal') },
+      TABS.map(([k, label, ic]) =>
+        h('a' + (k === tab ? '.active' : ''), { href: '#/' + k, title: t(label), 'aria-current': k === tab ? 'page' : null },
+          h('span.pill', icon(ic)),
+          h('span.lbl', t(label))
+        )
+      )
+    );
+
+    root.replaceChildren(h('div.adm', topbar, h('main.adm-content', content), bottomNav));
     document.title = t((TABS.find(x => x[0] === tab) || TABS[0])[1]) + ' · FoodTrack Admin';
   }
 
   function initials(name) { return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase(); }
 
   async function render() {
-    shell(h('div.loader'));
+    shell(adminSkeleton());
     const views = { overview: vOverview, recipes: vRecipes, products: vProducts, categories: vCategories, users: vUsers, households: vHouseholds };
     try { shell(await (views[tabName()] || vOverview)()); }
     catch (e) { shell(h('div.err-box', icon('error'), h('span', e.message))); }

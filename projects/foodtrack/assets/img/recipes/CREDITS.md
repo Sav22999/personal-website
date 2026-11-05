@@ -17,6 +17,7 @@ The 7 photos of the first batch (`banana_bread.jpg`, `cheesecake.jpg`, `pancakes
 | `brigadeiro.jpg` | Brigadeiro | [Ordination of Pastor Bédo Kokora Jean Didier at Evangel Church, Quebec City 04.jpg](https://commons.wikimedia.org/wiki/File:Ordination_of_Pastor_B%C3%A9do_Kokora_Jean_Didier_at_Evangel_Church,_Quebec_City_04.jpg) | Wilfredor | CC0 |
 | `buttermilk_style_pancakes_with_maple_syrup.jpg` | Pancake allo sciroppo d’acero | [Bacon & maple pancakes - Trading Post Coffee Roasters 2026-02-24.jpg](https://commons.wikimedia.org/wiki/File:Bacon_%26_maple_pancakes_-_Trading_Post_Coffee_Roasters_2026-02-24.jpg) | Andy Li | CC0 |
 | `cacio_e_pepe.jpg` | Cacio e pepe | [Spaghetti, cacio e pepe & bitter leaf salad - Tutto 2024-04-04.jpg](https://commons.wikimedia.org/wiki/File:Spaghetti,_cacio_e_pepe_%26_bitter_leaf_salad_-_Tutto_2024-04-04.jpg) | Andy Li | CC0 |
+| `caldo_verde.jpg` | Caldo verde | [Potato soup, Aachen.jpg](https://commons.wikimedia.org/wiki/File:Potato_soup,_Aachen.jpg) | Gerda Arendt | CC0 |
 | `caprese_salad.jpg` | Insalata caprese | [Party food dish 8 salad tomatoes cheese lettuce spinach.jpg](https://commons.wikimedia.org/wiki/File:Party_food_dish_8_salad_tomatoes_cheese_lettuce_spinach.jpg) | Tomwsulcer | CC0 |
 | `cawl.jpg` | Cawl | [Lamb stew - Massachusetts.jpg](https://commons.wikimedia.org/wiki/File:Lamb_stew_-_Massachusetts.jpg) | Daderot | CC0 |
 | `ceviche.jpg` | Ceviche | [Ceviche at the Municipal Market of Sao Paulo.jpg](https://commons.wikimedia.org/wiki/File:Ceviche_at_the_Municipal_Market_of_Sao_Paulo.jpg) | Wilfredor | CC0 |
@@ -28,6 +29,7 @@ The 7 photos of the first batch (`banana_bread.jpg`, `cheesecake.jpg`, `pancakes
 | `clbr.jpg` | Çılbır (uova con yogurt) | [Çılbır - Cafe Rust 2025-03-31.jpg](https://commons.wikimedia.org/wiki/File:%C3%87%C4%B1lb%C4%B1r_-_Cafe_Rust_2025-03-31.jpg) | Andy Li | CC0 |
 | `cock_a_leekie_soup.jpg` | Cock-a-leekie | [Leek Soup.jpg](https://commons.wikimedia.org/wiki/File:Leek_Soup.jpg) | Roundhere44 | CC0 |
 | `colcannon.jpg` | Colcannon | [Colcannon.JPG](https://commons.wikimedia.org/wiki/File:Colcannon.JPG) | Alison Cassidy | Public domain |
+| `coleslaw.jpg` | Coleslaw | [Cabbage Salads.jpg](https://commons.wikimedia.org/wiki/File:Cabbage_Salads.jpg) | Namwanje Sauyah | CC0 |
 | `cottage_pie.jpg` | Cottage pie | [Shepherds pie - The Kew Greenhouse Cafe 2025-05-14.jpg](https://commons.wikimedia.org/wiki/File:Shepherds_pie_-_The_Kew_Greenhouse_Cafe_2025-05-14.jpg) | Andy Li | CC0 |
 | `courgette_frittata.jpg` | Frittata di zucchine | [Omelette aux courgettes du jardin (août 2020).jpg](https://commons.wikimedia.org/wiki/File:Omelette_aux_courgettes_du_jardin_(ao%C3%BBt_2020).jpg) | Benoît Prieur | CC0 |
 | `cranachan.jpg` | Cranachan | [Pudding With Raspberries and Whipped Cream.jpg](https://commons.wikimedia.org/wiki/File:Pudding_With_Raspberries_and_Whipped_Cream.jpg) | Ilikefood at English Wikipedia | Public domain |
@@ -60,12 +62,14 @@ The 7 photos of the first batch (`banana_bread.jpg`, `cheesecake.jpg`, `pancakes
 | `langos.jpg` | Lángos | [Budapest, Békásmegyer, piac, bolognai lángos.jpg](https://commons.wikimedia.org/wiki/File:Budapest,_B%C3%A9k%C3%A1smegyer,_piac,_bolognai_l%C3%A1ngos.jpg) | Random photos 1989 | CC0 |
 | `lentil_dal.jpg` | Dal di lenticchie | [Gujarati Dal..JPG](https://commons.wikimedia.org/wiki/File:Gujarati_Dal..JPG) | Miansari66 | CC0 |
 | `mac_and_cheese.jpg` | Mac and cheese | [Mac and cheese (home cooking) August 2024.JPG](https://commons.wikimedia.org/wiki/File:Mac_and_cheese_(home_cooking)_August_2024.JPG) | Alexis Doine | CC0 |
+| `menemen.jpg` | Menemen | [Egg with tomato, peppers, and naan - Cambridge, MA.jpg](https://commons.wikimedia.org/wiki/File:Egg_with_tomato,_peppers,_and_naan_-_Cambridge,_MA.jpg) | Daderot | CC0 |
 | `miso_soup.jpg` | Zuppa di miso | [Miso Soup 001.jpg](https://commons.wikimedia.org/wiki/File:Miso_Soup_001.jpg) | Ocdp | CC0 |
 | `moules_frites.jpg` | Moules-frites (cozze al vino) | [Barquette de moules-frites.jpg](https://commons.wikimedia.org/wiki/File:Barquette_de_moules-frites.jpg) | Arnaud 25 | CC0 |
 | `onigiri.jpg` | Onigiri | [Onigiri 001.jpg](https://commons.wikimedia.org/wiki/File:Onigiri_001.jpg) | Ocdp | CC0 |
 | `oyakodon.jpg` | Oyakodon | [Oyakodon 003.jpg](https://commons.wikimedia.org/wiki/File:Oyakodon_003.jpg) | Ocdp | CC0 |
 | `pad_thai.jpg` | Pad thai | [Pad Thai with Pork - Unithai.jpg](https://commons.wikimedia.org/wiki/File:Pad_Thai_with_Pork_-_Unithai.jpg) | Andy Li | CC0 |
 | `pan_con_tomate.jpg` | Pan con tomate | [Sevilla - Triana 04.jpg](https://commons.wikimedia.org/wiki/File:Sevilla_-_Triana_04.jpg) | Zarateman | CC0 |
+| `panzanella.jpg` | Panzanella | [Sunflower Caffé - August 2024 - Sarah Stierch 03.jpg](https://commons.wikimedia.org/wiki/File:Sunflower_Caff%C3%A9_-_August_2024_-_Sarah_Stierch_03.jpg) | Sarah Stierch | CC0 |
 | `pao_de_queijo.jpg` | Pão de queijo | [Pães de queijo.jpg](https://commons.wikimedia.org/wiki/File:P%C3%A3es_de_queijo.jpg) | Melsj | CC0 |
 | `pasta_and_beans.jpg` | Pasta e fagioli | [Pasta e fagioli - minestra.jpg](https://commons.wikimedia.org/wiki/File:Pasta_e_fagioli_-_minestra.jpg) | valtercirillo | CC0 |
 | `pasta_with_ricotta_and_spinach.jpg` | Pasta ricotta e spinaci | [Food-pasta-spinach (24218510092).jpg](https://commons.wikimedia.org/wiki/File:Food-pasta-spinach_(24218510092).jpg) | www.Pixel.la Free Stock Photos | CC0 |
@@ -81,9 +85,12 @@ The 7 photos of the first batch (`banana_bread.jpg`, `cheesecake.jpg`, `pancakes
 | `scones.jpg` | Scones | [Cheddar & chive scone with butter - GAIL's 2024-08-18.jpg](https://commons.wikimedia.org/wiki/File:Cheddar_%26_chive_scone_with_butter_-_GAIL%27s_2024-08-18.jpg) | Andy Li | CC0 |
 | `scottish_porridge.jpg` | Porridge scozzese | [Oatmeal (1).jpg](https://commons.wikimedia.org/wiki/File:Oatmeal_(1).jpg) | Renee Comet (Photographer) | Public domain |
 | `shakshuka.jpg` | Shakshuka | [Shakshuka (Unsplash).jpg](https://commons.wikimedia.org/wiki/File:Shakshuka_(Unsplash).jpg) | Jarosław Ceborski jarson | CC0 |
+| `shortbread.jpg` | Shortbread | [Scottisch Shortbread.jpg](https://commons.wikimedia.org/wiki/File:Scottisch_Shortbread.jpg) | Thorsten Alge | Public domain |
 | `smashed_cucumber_salad.jpg` | Cetrioli schiacciati | [Pine and Crane DTLA - smashed cucumber salad.jpg](https://commons.wikimedia.org/wiki/File:Pine_and_Crane_DTLA_-_smashed_cucumber_salad.jpg) | Benoît Prieur | CC0 |
 | `spaghetti_with_garlic_oil_and_chilli.jpg` | Spaghetti aglio, olio e peperoncino | [Peperoncino.jpg](https://commons.wikimedia.org/wiki/File:Peperoncino.jpg) | Akahito Yamabe | CC0 |
+| `spanakorizo.jpg` | Spanakorizo | [Shaak Risotto, Sojne, Smoked Bandel.jpg](https://commons.wikimedia.org/wiki/File:Shaak_Risotto,_Sojne,_Smoked_Bandel.jpg) | TableandTale | CC0 |
 | `spanish_omelette.jpg` | Tortilla de patatas | [Tortilla (bell pepper) - Latina 2023-12-18.jpg](https://commons.wikimedia.org/wiki/File:Tortilla_(bell_pepper)_-_Latina_2023-12-18.jpg) | Andy Li | CC0 |
+| `stovies.jpg` | Stovies | [Stovies.JPG](https://commons.wikimedia.org/wiki/File:Stovies.JPG) | JSL595 | Public domain |
 | `swedish_meatballs.jpg` | Polpette svedesi | [IKEA Swedish-style meatballs.jpg](https://commons.wikimedia.org/wiki/File:IKEA_Swedish-style_meatballs.jpg) | Fumikas Sagisavas | CC0 |
 | `tabbouleh.jpg` | Tabbouleh | [Tabouleh 1.JPG](https://commons.wikimedia.org/wiki/File:Tabouleh_1.JPG) | Miansari66 | CC0 |
 | `tamagoyaki.jpg` | Tamagoyaki | [Cooking crepe in square tamagoyaki frying pan.jpg](https://commons.wikimedia.org/wiki/File:Cooking_crepe_in_square_tamagoyaki_frying_pan.jpg) | Syced | CC0 |
@@ -91,6 +98,7 @@ The 7 photos of the first batch (`banana_bread.jpg`, `cheesecake.jpg`, `pancakes
 | `tiramisu.jpg` | Tiramisù | [Tiramisu at Italian restaurant in Japan.jpg](https://commons.wikimedia.org/wiki/File:Tiramisu_at_Italian_restaurant_in_Japan.jpg) | Syced | CC0 |
 | `tomato_and_egg_stir_fry.jpg` | Uova e pomodori saltati | [トマトの卵炒め.jpg](https://commons.wikimedia.org/wiki/File:%E3%83%88%E3%83%9E%E3%83%88%E3%81%AE%E5%8D%B5%E7%82%92%E3%82%81.jpg) | Suginami | CC0 |
 | `tomato_bruschetta.jpg` | Bruschetta al pomodoro | [Bruschetta](https://www.flickr.com/photos/7633518@N08/54051484391) | sarahstierch | CC0 1.0 |
+| `tomato_rice.jpg` | Arroz de tomate | [Charleston Red Rice.png](https://commons.wikimedia.org/wiki/File:Charleston_Red_Rice.png) | lu3nar | CC0 |
 | `tzatziki.jpg` | Tzatziki | [Préparation d'un tzatzíki maison en mars 2020 (006).jpg](https://commons.wikimedia.org/wiki/File:Pr%C3%A9paration_d%27un_tzatz%C3%ADki_maison_en_mars_2020_(006).jpg) | Benoît Prieur | CC0 |
 | `vegetable_couscous.jpg` | Cuscus di verdure | [Couscous.jpg](https://commons.wikimedia.org/wiki/File:Couscous.jpg) | No machine-readable author provided. Almablackaller assumed (based on copyright claims). | Public domain |
 | `welsh_cakes.jpg` | Welsh cakes | [Welsh Cakes](https://www.flickr.com/photos/195591092@N07/52063523342) | Reid Campbell | CC0 1.0 |

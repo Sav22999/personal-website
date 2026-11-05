@@ -13,6 +13,10 @@ Liste dei desideri da condividere con gli amici, che si organizzano tra loro **s
 
 Web app in PHP + MySQL con lo stesso design system di FoodTrack (rosa lampone, chiaro e scuro, mobile e desktop), in italiano e inglese, installabile come app (PWA).
 
+## Tutorial
+
+Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versione principale, cioè quando cambia il primo numero di `VERSION` in `assets/app.js`) l'app mostra un breve tutorial illustrato: creazione delle liste, aggiunta dei desideri con anteprima automatica dei link, ricerca e follow degli amici, prenotazione segreta dei regali e chat tra amici. Si può rivedere in qualsiasi momento da Profilo → Preferenze → «Tutorial dell'app» (o da «Come funziona» nella barra laterale desktop). Nel tutorial si può scegliere la lingua; le illustrazioni sono animate (le animazioni si disattivano se il sistema chiede di ridurre il movimento).
+
 ## Aggiornamenti del database
 
 Al primo accesso dopo un aggiornamento il database si aggiorna da solo (`migrate_schema` in `lib/schema.php`). Versione 2: username per tutti gli account esistenti (generati dal nome, modificabili) e le vecchie amicizie diventano «follow» nei due sensi.
