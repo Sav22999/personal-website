@@ -42,14 +42,12 @@
     const inp = attrs => ctl('input', Object.assign({type: 'text', autocomplete: 'off'}, attrs || {}));
     const area = attrs => ctl('textarea', Object.assign({rows: 3}, attrs || {}));
 
+    const LANG_FLAGS = {it: 'IT', en: 'GB'};
+    /** Ingredient editor of the recipes: 'v2' = cards and product browser, 'v1' = table with a dropdown in each row. */
+    const INGREDIENT_EDITOR = 'v2';
+
     function sel(options, value, attrs) {
-        const s = ctl('select', attrs);
-        for (const o of options) {
-            const opt = h('option', {value: String(o.value)}, o.label);
-            if (String(o.value) === String(value ?? '')) opt.selected = true;
-            s.appendChild(opt);
-        }
-        return s;
+        return UI.fillSelect(ctl('select', attrs), options, value);
     }
 
     function toggle(label, checked) {
@@ -100,7 +98,7 @@
             if (opts.onclose) opts.onclose();
         }
 
-        setTimeout(() => {
+        if (opts.autofocus !== false) setTimeout(() => {
             const first = box.querySelector('.dlg-body input:not([type=checkbox]):not([type=file]), .dlg-body textarea, .dlg-body select');
             if (first) first.focus();
         }, 60);
@@ -335,7 +333,8 @@
             h('div.sn-lang',
                 sel(I18N.langs.map(([v, l]) => ({
                     value: v,
-                    label: l
+                    label: l,
+                    flag: LANG_FLAGS[v]
                 })), I18N.lang, {onchange: e => I18N.set(e.target.value), 'aria-label': t('Language')})
             ),
             h('button.sn-user.adm-user-btn', {
@@ -380,7 +379,8 @@
                     }, icon('home'), h('span', t('Go to the app'))),
                     sel(I18N.langs.map(([v, l]) => ({
                         value: v,
-                        label: l
+                        label: l,
+                        flag: LANG_FLAGS[v]
                     })), I18N.lang, {onchange: e => I18N.set(e.target.value), 'aria-label': t('Language')}),
                     iconBtn('theme', t('Theme'), cycleTheme),
                     h('button.adm-user', {
@@ -617,6 +617,289 @@
         }
     }
 
+    /**
+     * Ingredient field: a searchable list of the catalogue, which can also create what is missing.
+     * Text that matches nothing stays as it is (older recipes), shown as not linked.
+     */
+    function ingredientPicker(value, d, o) {
+        const input = inp({
+            value,
+            placeholder: t('Search or add an ingredient'),
+            role: 'combobox',
+            'aria-expanded': 'false',
+            'aria-autocomplete': 'list',
+        });
+        const categoryName = id => (d.categories.find(c => c.id === id) || {}).name || '';
+        const english = p => ((p.i18n || {}).en || {}).name || '';
+        let panel = null, rows = [], active = 0;
+
+        function matches(q) {
+            const hit = p => norm(p.name).includes(q) || norm(english(p)).includes(q);
+            const list = q ? d.products.filter(hit) : d.products.slice();
+            return list.sort((a, b) => (norm(a.name).startsWith(q) ? 0 : 1) - (norm(b.name).startsWith(q) ? 0 : 1) || a.name.localeCompare(b.name));
+        }
+
+        function mark(i, block) {
+            active = Math.max(0, Math.min(rows.length - 1, i));
+            rows.forEach((r, n) => r.el.classList.toggle('active', n === active));
+            if (rows[active]) rows[active].el.scrollIntoView({block: block || 'nearest'});
+        }
+
+        function paint() {
+            const text = input.value.trim(), q = norm(text);
+            const exact = d.products.find(p => norm(p.name) === q);
+            const found = matches(exact ? '' : q); // On a chosen ingredient the whole list is there to change it
+            rows = found.map(p => ({
+                product: p,
+                el: h('div.dd-item' + (exact === p ? '.selected' : ''), {role: 'option'}, UI.pic('products', p.icon),
+                    h('span.dd-label', p.name), h('span.dd-meta', categoryName(p.categoryId)), exact === p ? icon('check') : null),
+            }));
+            const list = h('div.dd-list', {role: 'listbox'}, rows.map(r => r.el));
+            if (!rows.length) list.appendChild(h('div.dd-empty', t('No results')));
+            const parts = [list];
+            if (text && !exact) {
+                const create = {el: h('div.dd-item.dd-create', {role: 'option'}, icon('add'), h('span.dd-label', t('Create “{name}”', {name: text})))};
+                rows.push(create);
+                parts.push(create.el);
+            }
+            panel.replaceChildren(...parts);
+            rows.forEach((r, i) => {
+                r.el.addEventListener('mousemove', () => {
+                    if (active !== i) mark(i);
+                });
+                r.el.addEventListener('click', () => choose(r));
+            });
+            UI.placePanel(panel, input); // First the final height, then the scroll to the ingredient already chosen
+            const chosen = rows.findIndex(r => r.product === exact && exact);
+            mark(chosen >= 0 ? chosen : 0, 'center');
+        }
+
+        function outside(e) {
+            if (panel && !panel.contains(e.target)) hide();
+        }
+
+        function show() {
+            if (panel) return;
+            panel = h('div.dd.dd-wide', {
+                onmousedown: e => e.preventDefault(), // Keeps the focus in the field
+            });
+            input.setAttribute('aria-expanded', 'true');
+            document.body.appendChild(panel);
+            window.addEventListener('scroll', outside, true);
+            window.addEventListener('resize', hide);
+            paint();
+        }
+
+        function hide() {
+            if (!panel) return;
+            panel.remove();
+            panel = null;
+            input.setAttribute('aria-expanded', 'false');
+            window.removeEventListener('scroll', outside, true);
+            window.removeEventListener('resize', hide);
+        }
+
+        async function choose(row) {
+            const p = row.product || await o.create(input.value.trim());
+            hide();
+            if (!p) return;
+            input.value = p.name;
+            input.dispatchEvent(new Event('input', {bubbles: true}));
+            hide();
+            o.onpick(p);
+        }
+
+        input.addEventListener('focus', () => {
+            show();
+            input.select(); // Typing replaces the chosen ingredient
+        });
+        input.addEventListener('click', show);
+        input.addEventListener('blur', hide);
+        input.addEventListener('input', () => {
+            show();
+            paint();
+        });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'ArrowDown' && !panel) show();
+            else if (!panel) return;
+            else if (e.key === 'ArrowDown') mark(active + 1);
+            else if (e.key === 'ArrowUp') mark(active - 1);
+            else if (e.key === 'Enter') {
+                if (rows[active]) choose(rows[active]);
+            } else if (e.key === 'Escape') {
+                hide();
+                e.stopPropagation();
+            } else return;
+            e.preventDefault();
+        });
+        return input;
+    }
+
+    /**
+     * Product browser of the recipe form (v2): search, categories and a grid of products, full screen on phones.
+     * o: {selected, unit, onpick(product)} changes one ingredient. With multi, taken() and onremove(product) it stays
+     * open to add several and marks all those already in the recipe.
+     */
+    function ingredientBrowser(d, o) {
+        const uses = new Map();
+        for (const r of d.recipes) for (const i of r.ingredients) if (i.productId) uses.set(i.productId, (uses.get(i.productId) || 0) + 1);
+        const popular = d.products.filter(p => uses.has(p.id)).sort((a, b) => uses.get(b.id) - uses.get(a.id)).slice(0, 12);
+        const english = p => ((p.i18n || {}).en || {}).name || '';
+        const search = inp({type: 'search', placeholder: t('Search a product'), 'aria-label': t('Search a product'), enterkeyhint: 'search'});
+        const chips = h('div.chips.scroll');
+        const results = h('div.pick-results');
+        const finish = btn(t('Done'), {icon: 'check', onclick: () => dlg.close()});
+        let category = null, added = 0, tiles = [], active = -1;
+
+        function refreshFinish() {
+            finish.querySelector('span').textContent = added ? t('Done ({n})', {n: added}) : t('Done');
+        }
+
+        function toggleTile(el, on) {
+            el.classList.toggle('taken', on);
+            el.querySelectorAll('.pick-tick').forEach(x => x.remove());
+            if (on) el.appendChild(h('span.pick-tick', icon('check')));
+        }
+
+        function choose(p) {
+            if (!o.multi) {
+                dlg.close();
+                o.onpick(p);
+                return;
+            }
+            const has = o.taken().has(norm(p.name));
+            if (has) o.onremove(p); else o.onpick(p);
+            added += has ? -1 : 1;
+            refreshFinish();
+            if (search.value) {
+                search.value = '';
+                paint();
+                if (matchMedia('(pointer: fine)').matches) search.focus();
+            } else results.querySelectorAll('.pick-tile').forEach(el => {
+                if (el._product === p) toggleTile(el, !has);
+            });
+        }
+
+        function tile(p) {
+            const el = h('button.pick-tile', {type: 'button', onclick: () => choose(p)},
+                h('span.pick-pic', UI.pic('products', p.icon)), h('span.pick-name', p.name));
+            el._product = p;
+            const isCurrent = !!o.selected && norm(o.selected) === norm(p.name);
+            if (isCurrent) el.classList.add('current');
+            toggleTile(el, o.multi ? o.taken().has(norm(p.name)) : isCurrent); // Changing one ingredient, the others don't count
+            return el;
+        }
+
+        const section = (title, list) => [title ? h('h3.pick-title', title) : null, h('div.pick-grid', list.map(tile))];
+
+        async function createProduct(text) {
+            const p = await newProductDialog(text, d, o.unit || 'pz');
+            if (p) choose(p);
+        }
+
+        function paint() {
+            const text = search.value.trim(), q = norm(text);
+            UI.clear(chips);
+            for (const c of [{id: null, name: t('All')}].concat(d.categories)) {
+                chips.appendChild(h('button.chip' + (category === c.id ? '.sel' : ''), {
+                    type: 'button',
+                    onclick: () => {
+                        category = c.id;
+                        paint();
+                        dlg.body.scrollTop = 0;
+                    }
+                }, c.name));
+            }
+            let list = d.products.filter(p => (!category || p.categoryId === category) && (!q || norm(p.name).includes(q) || norm(english(p)).includes(q)));
+            list = list.slice().sort((a, b) => (norm(a.name).startsWith(q) ? 0 : 1) - (norm(b.name).startsWith(q) ? 0 : 1) || a.name.localeCompare(b.name));
+            const parts = [];
+            if (text && !d.products.some(p => norm(p.name) === q)) {
+                parts.push(h('button.pick-create', {type: 'button', onclick: () => createProduct(text)}, icon('add'), h('span', t('Create “{name}”', {name: text}))));
+            }
+            if (!q && !category && popular.length) parts.push(...section(t('Most used'), popular), ...section(t('All products'), list));
+            else if (list.length) parts.push(...section(null, list));
+            else if (!text) parts.push(h('p.muted', t('No results')));
+            results.replaceChildren(...parts.filter(Boolean));
+            tiles = [...results.querySelectorAll('.pick-tile, .pick-create')];
+            active = -1;
+        }
+
+        function move(i) {
+            active = Math.max(0, Math.min(tiles.length - 1, i));
+            tiles.forEach((el, n) => el.classList.toggle('active', n === active));
+            tiles[active].scrollIntoView({block: 'nearest'});
+        }
+
+        search.addEventListener('input', paint);
+        search.addEventListener('keydown', e => {
+            if (!tiles.length) return;
+            const grid = results.querySelector('.pick-grid');
+            const cols = grid ? getComputedStyle(grid).gridTemplateColumns.split(' ').length : 1;
+            if (e.key === 'ArrowRight' && active >= 0) move(active + 1);
+            else if (e.key === 'ArrowLeft' && active >= 0) move(active - 1);
+            else if (e.key === 'ArrowDown') move(active < 0 ? 0 : active + cols);
+            else if (e.key === 'ArrowUp' && active >= 0) move(active - cols);
+            else if (e.key === 'Enter') tiles[Math.max(active, 0)].click();
+            else return;
+            e.preventDefault();
+        });
+
+        const dlg = dialog({
+            title: o.multi ? t('Add ingredients') : t('Choose an ingredient'), size: 'picker', autofocus: false,
+            body: [h('div.pick-head', search), chips, results],
+            actions: o.multi ? [finish] : [btn(t('Cancel'), {kind: 'text', onclick: () => dlg.close()})],
+        });
+        paint();
+        requestAnimationFrame(() => {
+            if (matchMedia('(pointer: fine)').matches) search.focus();
+            const tiles = [...results.querySelectorAll('.pick-tile.current')];
+            if (tiles.length) tiles[tiles.length - 1].scrollIntoView({block: 'center'}); // Its place in the full list
+        });
+    }
+
+    /** Creates a catalogue product from the recipe form, without leaving it. Gives back the product, or null. */
+    function newProductDialog(name, d, unitValue) {
+        return new Promise(resolve => {
+            const p = {name, icon: 'generic'};
+            const nameIt = inp({value: name, maxlength: 80});
+            const nameEn = inp({maxlength: 80});
+            const cat = sel([{value: '', label: '—'}].concat(d.categories.map(c => ({value: c.id, label: c.name}))), '');
+            const unit = sel(d.units.map(u => ({value: u, label: UI.unitLabel(u)})), unitValue);
+            const env = sel([{value: '', label: t('Not set')}].concat(UI.environments()), '');
+            let created = null;
+            const save = btn(t('Create'), {
+                icon: 'add', onclick: async () => {
+                    if (!nameIt.value.trim()) {
+                        toast(t('Enter the product name.'), 'error');
+                        return;
+                    }
+                    const i18n = nameEn.value.trim() ? {en: {name: nameEn.value.trim()}} : {};
+                    const data = {
+                        name: nameIt.value.trim(), icon: p.icon, categoryId: cat.value ? Number(cat.value) : null, unit: unit.value,
+                        environment: env.value || null, expiryTip: '', active: true, i18n
+                    };
+                    const res = await busy(save, () => Api.post('admin.product.save', {id: 0, ...data}));
+                    created = Object.assign(data, {id: res.id});
+                    d.products.push(created);
+                    dlg.close();
+                    toast(t('Product saved'));
+                }
+            });
+            const dlg = dialog({
+                title: t('New product'), size: 'lg', onclose: () => resolve(created),
+                body: [
+                    h('div.f-row', f(t('Name'), nameIt), f(t('Name in English (optional)'), nameEn)),
+                    h('div.f-row', f(t('Category'), cat), f(t('Default unit'), unit)),
+                    f(t('Storage'), env),
+                    h('div.f', h('span.lbl', t('Icon')), iconGrid(d.icons, p.icon, v => {
+                        p.icon = v;
+                    })),
+                ],
+                actions: [btn(t('Cancel'), {kind: 'text', onclick: () => dlg.close()}), save],
+            });
+        });
+    }
+
     function openRecipe(src, d) {
         const r = src ? JSON.parse(JSON.stringify(src)) : {
             id: 0,
@@ -640,7 +923,6 @@
             if (!i.i18n || Array.isArray(i.i18n)) i.i18n = {};
         });
         const prodByName = name => d.products.find(p => norm(p.name) === norm(name));
-        const datalist = h('datalist#ft-prod', d.products.map(p => h('option', {value: p.name})));
 
         // --- Details
         const prep = inp({type: 'number', min: 0, value: r.prepMinutes ?? ''});
@@ -702,10 +984,68 @@
             h('div.f', h('span.lbl', t('Countries of origin')), origin.el, h('div.help', t('Add one or more countries (for example for fusion dishes). With none, the origin is “not defined”.'))));
 
         // --- Ingredients
-        const ingBody = h('tbody');
+        const ingV2 = INGREDIENT_EDITOR === 'v2';
+        const ingBody = ingV2 ? h('div.ing-list', {'data-empty': t('No ingredients yet')}) : h('tbody');
+        const usedNames = () => new Set([...ingBody.children].map(c => norm(c._name())));
+
+        /** Ingredient of the v2 editor: a card with the product, its dose and the notes on request. */
+        function ingCard(ing) {
+            let current = ing.name;
+            const qty = inp({type: 'number', min: 0, step: 'any', inputmode: 'decimal', value: ing.quantity ?? '', placeholder: t('Qty'), 'aria-label': t('Qty')});
+            const unit = sel(d.units.concat(d.units.includes(ing.unit) ? [] : [ing.unit]).map(u => ({
+                value: u,
+                label: UI.unitLabel(u)
+            })), ing.unit || 'g', {'aria-label': t('Unit')});
+            const notes = inp({value: ing.notes || '', placeholder: t('Notes (Italian)')});
+            const notesEn = inp({value: (ing.i18n.en || {}).notes || '', placeholder: t('Notes (English)')});
+            const notesBox = h('div.ing-notes', {hidden: !(notes.value || notesEn.value)}, notes, notesEn);
+            const pick = h('button.ing-pick', {
+                type: 'button',
+                onclick: () => ingredientBrowser(d, {
+                    selected: current, unit: unit.value,
+                    onpick: p => {
+                        current = p.name;
+                        paint();
+                        if (!qty.value) unit.value = p.unit;
+                    },
+                })
+            });
+
+            function paint() {
+                const p = prodByName(current);
+                pick.replaceChildren(p ? tile('products', p.icon, 'sm') : h('span.tile.tile-sm', icon('link')),
+                    h('span.ing-name', h('strong', current), p ? null : h('small', t('Not linked: choose it from the catalogue'))), icon('chevronDown'));
+            }
+
+            paint();
+            const noteBtn = iconBtn('edit', t('Notes'), () => {
+                notesBox.hidden = !notesBox.hidden;
+                if (!notesBox.hidden) notes.focus();
+            });
+            const card = h('div.ing-card', pick, qty, unit, noteBtn, iconBtn('delete', t('Remove'), () => card.remove()), notesBox);
+            card._name = () => current;
+            card._get = () => {
+                const p = prodByName(current);
+                return {
+                    productId: p ? p.id : null,
+                    name: current,
+                    quantity: qty.value,
+                    unit: unit.value,
+                    notes: notes.value,
+                    i18n: notesEn.value.trim() ? {en: {notes: notesEn.value.trim()}} : {}
+                };
+            };
+            ingBody.appendChild(card);
+        }
 
         function ingRow(ing) {
-            const name = inp({value: ing.name, list: 'ft-prod', placeholder: t('Catalogue product or free text')});
+            const name = ingredientPicker(ing.name, d, {
+                onpick: p => {
+                    paintLink();
+                    if (!qty.value) unit.value = p.unit;
+                },
+                create: text => newProductDialog(text, d, unit.value),
+            });
             const qty = inp({type: 'number', min: 0, step: 'any', value: ing.quantity ?? ''});
             const unit = sel(d.units.concat(d.units.includes(ing.unit) ? [] : [ing.unit]).map(u => ({
                 value: u,
@@ -720,11 +1060,7 @@
             };
             paintLink();
             name.addEventListener('input', paintLink);
-            name.addEventListener('change', () => {
-                const p = prodByName(name.value);
-                if (p && !qty.value) unit.value = p.unit;
-            });
-            const tr = h('tr', h('td.drag', linked), h('td', name), h('td', {style: {width: '90px'}}, qty), h('td', {style: {width: '120px'}}, unit), h('td', notes), h('td', notesEn),
+            const tr = h('tr', h('td.drag', linked), h('td', {style: {width: '26%', minWidth: '170px'}}, name), h('td', {style: {width: '80px'}}, qty), h('td', {style: {width: '140px'}}, unit), h('td', notes), h('td', notesEn),
                 h('td.del', iconBtn('delete', t('Remove'), () => tr.remove())));
             tr._get = () => {
                 const p = prodByName(name.value);
@@ -738,60 +1074,112 @@
                 } : null;
             };
             ingBody.appendChild(tr);
+            return name;
         }
 
-        r.ingredients.forEach(ingRow);
-        if (!r.ingredients.length) ingRow({name: '', unit: 'g', i18n: {}});
-        const ingredients = h('div',
-            h('div.notice', icon('info'), h('span', t('Pick names from the catalogue (suggested while typing): linked ingredients show an icon and let the app check what users already have.'))),
-            datalist,
+        r.ingredients.forEach(ingV2 ? ingCard : ingRow);
+        if (!r.ingredients.length && !ingV2) ingRow({name: '', unit: 'g', i18n: {}});
+        const ingredients = ingV2 ? h('div', ingBody, btn(t('Add ingredients'), {
+            kind: 'tonal', icon: 'add', onclick: () => ingredientBrowser(d, {
+                multi: true, taken: usedNames,
+                onpick: p => ingCard({name: p.name, unit: p.unit, i18n: {}}),
+                onremove: p => [...ingBody.children].filter(c => norm(c._name()) === norm(p.name)).forEach(c => c.remove()),
+            })
+        })) : h('div',
+            h('div.notice', icon('info'), h('span', t('Choose the ingredients from the list, or create one if it is missing: linked ingredients show an icon and let the app check what users already have.'))),
             h('table.ed-table', h('thead', h('tr', h('th', ''), h('th', t('Ingredient')), h('th', t('Qty')), h('th', t('Unit')), h('th', t('Notes') + ' (IT)'), h('th', t('Notes') + ' (EN)'), h('th', ''))), ingBody),
             h('div', {style: {marginTop: '8px'}}, btn(t('Add ingredient'), {
                 kind: 'text',
                 icon: 'add',
-                onclick: () => ingRow({name: '', unit: 'g', i18n: {}})
+                onclick: () => ingRow({name: '', unit: 'g', i18n: {}}).focus()
             })));
 
-        // --- Steps (per language)
+        // --- Steps (per language): the two lists always have the same length, so step 3 is step 3 in both
         const stepsBy = {it: r.steps.slice(), en: (r.i18n.en.steps || []).slice()};
+        while (stepsBy.en.length < stepsBy.it.length) stepsBy.en.push('');
+        while (stepsBy.it.length < stepsBy.en.length) stepsBy.it.push('');
+        const eachLanguage = fn => Object.values(stepsBy).forEach(fn);
         const steps = langTabs(lang => {
             const wrap = h('div');
             const list = stepsBy[lang];
+            let dragged = null;
+
+            function moveStep(from, to, focusClass) {
+                if (to < 0 || to >= list.length || from === to) return;
+                eachLanguage(l => l.splice(to, 0, l.splice(from, 1)[0]));
+                paintS();
+                if (focusClass) {
+                    const btnNow = wrap.querySelectorAll('.step-edit')[to].querySelector(focusClass);
+                    (btnNow.disabled ? wrap.querySelectorAll('.step-edit')[to].querySelector('textarea') : btnNow).focus();
+                }
+            }
+
+            function addStep(at) {
+                eachLanguage(l => l.splice(at, 0, ''));
+                paintS();
+                wrap.querySelectorAll('.step-edit textarea')[at].focus();
+            }
+
+            function stepRow(text, i) {
+                const ta = area({
+                    value: text,
+                    rows: 2,
+                    placeholder: lang !== CONTENT_BASE ? (stepsBy.it[i] || '') : t('Describe this step in a few words'),
+                    'aria-label': t('Step {n}', {n: i + 1}),
+                });
+                ta.addEventListener('input', () => {
+                    list[i] = ta.value;
+                });
+                const up = iconBtn('up', t('Move up'), () => moveStep(i, i - 1, '.step-up'), 'step-up');
+                const down = iconBtn('down', t('Move down'), () => moveStep(i, i + 1, '.step-down'), 'step-down');
+                up.disabled = i === 0;
+                down.disabled = i === list.length - 1;
+                const row = h('div.step-edit', {
+                        ondragover: e => {
+                            if (dragged === null) return;
+                            e.preventDefault();
+                            row.classList.add('drop');
+                        },
+                        ondragleave: () => row.classList.remove('drop'),
+                        ondrop: e => {
+                            e.preventDefault();
+                            const from = dragged;
+                            dragged = null;
+                            row.classList.remove('drop');
+                            if (from !== null) moveStep(from, i);
+                        },
+                    },
+                    h('span.step-num', {
+                        draggable: 'true',
+                        title: t('Drag to reorder'),
+                        ondragstart: e => {
+                            dragged = i;
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', String(i + 1));
+                            e.dataTransfer.setDragImage(row, 16, 16);
+                            row.classList.add('dragging');
+                        },
+                        ondragend: () => {
+                            dragged = null;
+                            row.classList.remove('dragging');
+                        },
+                    }, String(i + 1)),
+                    ta,
+                    h('div.step-tools', up, down,
+                        iconBtn('add', t('Add a step after this one'), () => addStep(i + 1)),
+                        iconBtn('delete', t('Remove'), () => {
+                            eachLanguage(l => l.splice(i, 1));
+                            paintS();
+                        })));
+                return row;
+            }
 
             function paintS() {
                 UI.clear(wrap);
                 if (lang !== CONTENT_BASE) wrap.appendChild(h('div.notice', icon('info'), h('span', t('Leave the steps empty to show the Italian ones.'))));
-                list.forEach((text, i) => {
-                    const ta = area({
-                        value: text,
-                        rows: 2,
-                        placeholder: lang !== CONTENT_BASE ? (stepsBy.it[i] || '') : ''
-                    });
-                    ta.addEventListener('input', () => {
-                        list[i] = ta.value;
-                    });
-                    wrap.appendChild(h('table.ed-table', h('tbody', h('tr', h('td.drag', String(i + 1)), h('td', ta), h('td.del',
-                        iconBtn('up', t('Move up'), () => {
-                            if (i > 0) {
-                                [list[i - 1], list[i]] = [list[i], list[i - 1]];
-                                paintS();
-                            }
-                        }),
-                        iconBtn('delete', t('Remove'), () => {
-                            list.splice(i, 1);
-                            paintS();
-                        }))))));
-                });
-                wrap.appendChild(btn(t('Add step'), {
-                    kind: 'text', icon: 'add', onclick: () => {
-                        list.push('');
-                        paintS();
-                        setTimeout(() => {
-                            const all = wrap.querySelectorAll('textarea');
-                            if (all.length) all[all.length - 1].focus();
-                        }, 0);
-                    }
-                }));
+                if (!list.length) wrap.appendChild(h('p.muted', t('No steps yet: add the first one.')));
+                wrap.appendChild(h('div.step-list', list.map(stepRow)));
+                wrap.appendChild(btn(t('Add step'), {kind: 'tonal', icon: 'add', onclick: () => addStep(list.length)}));
             }
 
             paintS();
@@ -839,8 +1227,10 @@
                     }
                 }
                 r.ingredients = [...ingBody.children].map(tr => tr._get()).filter(Boolean);
-                r.steps = stepsBy.it.filter(s => s.trim());
-                if (r.status.en !== 'none') r.i18n.en.steps = stepsBy.en.filter(s => s.trim());
+                // A step not translated yet shows the Italian text, so the two languages keep the same steps in the same order
+                const stepPairs = stepsBy.it.map((s, i) => [s.trim(), stepsBy.en[i].trim()]).filter(([it, en]) => it || en);
+                r.steps = stepPairs.map(([it, en]) => it || en);
+                if (r.status.en !== 'none') r.i18n.en.steps = stepPairs.some(([, en]) => en) ? stepPairs.map(([it, en]) => en || it) : [];
                 const unlinked = r.ingredients.filter(i => !i.productId).map(i => i.name);
                 await busy(save, () => saveRecipe(r));
                 dlg.close();
@@ -982,7 +1372,8 @@
                 label: '+ ' + t('Add a country')
             }].concat(UI.countryList().filter(x => !chosen.includes(x.code)).map(x => ({
                 value: x.code,
-                label: x.name
+                label: x.name,
+                flag: x.code
             }))), '', {
                 onchange: e => {
                     if (e.target.value) {

@@ -349,23 +349,208 @@
         return h('textarea', Object.assign({rows: 3}, attrs || {}));
     }
 
-    function select(options, value, attrs) {
-        const s = h('select', attrs || {});
+    /** Fills a <select>. An option can have a flag (country code) or a pic ([folder, icon]), shown in the custom list. */
+    function fillSelect(s, options, value) {
         for (const o of options) {
             const opt = h('option', {value: String(o.value)}, o.label);
+            if (o.flag) opt.dataset.flag = o.flag;
+            if (o.pic) opt.dataset.pic = o.pic.join('/');
             if (String(o.value) === String(value ?? '')) opt.selected = true;
             s.appendChild(opt);
         }
+        refreshSelectFlag(s);
         return s;
     }
+
+    function select(options, value, attrs) {
+        return fillSelect(h('select', attrs || {}), options, value);
+    }
+
+    /** Shows the flag of the chosen option inside the closed <select>. */
+    function refreshSelectFlag(s) {
+        const code = s.selectedOptions[0] && s.selectedOptions[0].dataset.flag;
+        if (code) {
+            s.dataset.lead = '1';
+            s.style.setProperty('--lead', `url("${new URL(`assets/flags/${code.toLowerCase()}.svg`, document.baseURI).href}")`); // Absolute: a url() in a variable would be relative to the stylesheet
+        } else {
+            delete s.dataset.lead;
+            s.style.removeProperty('--lead');
+        }
+    }
+
+    // ---------- Dropdowns ----------
+    // With a mouse every <select> of the app opens this list instead of the one of the operating system: same look
+    // everywhere, flags and icons, and a search box in long lists. The real <select> stays in the page and keeps the
+    // value, so the code using it does not change. On touch screens the native picker is better and stays.
+
+    const DROPDOWN_SEARCH_FROM = 10;
+    let dropdown = null;
+
+    function usesDropdown(s) {
+        return !!s && !s.disabled && !s.multiple && s.size <= 1 && matchMedia('(hover: hover) and (pointer: fine)').matches;
+    }
+
+    function closeDropdown(refocus) {
+        if (!dropdown) return;
+        const {panel, target, timer} = dropdown;
+        dropdown = null;
+        clearInterval(timer);
+        panel.remove();
+        target.removeAttribute('aria-expanded');
+        if (refocus && target.isConnected) target.focus();
+    }
+
+    function chooseOption(opt) {
+        const s = dropdown.target;
+        const changed = s.value !== opt.value;
+        closeDropdown(true);
+        if (!changed) return;
+        s.value = opt.value;
+        s.dispatchEvent(new Event('input', {bubbles: true}));
+        s.dispatchEvent(new Event('change', {bubbles: true}));
+    }
+
+    function setActive(i) {
+        const d = dropdown, rows = d.rows;
+        if (!rows.length) return;
+        d.active = Math.max(0, Math.min(rows.length - 1, i));
+        rows.forEach((r, n) => r.el.classList.toggle('active', n === d.active));
+        rows[d.active].el.scrollIntoView({block: 'nearest'});
+    }
+
+    function paintDropdown(query) {
+        const d = dropdown, s = d.target, q = norm(query);
+        const opts = [...s.options].filter(o => !o.hidden && !o.disabled && (!q || norm(o.textContent).includes(q)));
+        d.rows = opts.map(o => {
+            const code = o.dataset.flag, picture = o.dataset.pic && o.dataset.pic.split('/');
+            const el = h('div.dd-item' + (o.selected ? '.selected' : ''), {role: 'option', 'aria-selected': String(o.selected)},
+                code ? flag(code) : picture ? pic(picture[0], picture[1]) : null,
+                h('span.dd-label', o.textContent),
+                o.selected ? icon('check') : null);
+            return {el, option: o};
+        });
+        d.rows.forEach((r, i) => {
+            r.el.addEventListener('mousemove', () => {
+                if (d.active !== i) setActive(i);
+            });
+            r.el.addEventListener('click', () => chooseOption(r.option));
+        });
+        d.list.replaceChildren(...(d.rows.length ? d.rows.map(r => r.el) : [h('div.dd-empty', t('No results'))]));
+        const chosen = d.rows.findIndex(r => r.option.selected);
+        setActive(chosen >= 0 ? chosen : 0);
+    }
+
+    /** Puts a floating list under its field, or above it when there is more room there. */
+    function placePanel(panel, target) {
+        const r = target.getBoundingClientRect(), gap = 6, margin = 8;
+        const below = innerHeight - r.bottom - gap - margin, above = r.top - gap - margin;
+        const up = below < 220 && above > below;
+        panel.style.minWidth = r.width + 'px';
+        panel.style.maxHeight = Math.min(340, up ? above : below) + 'px';
+        const w = panel.offsetWidth;
+        panel.style.left = Math.max(margin, Math.min(r.left, innerWidth - w - margin)) + 'px';
+        panel.style.top = up ? 'auto' : r.bottom + gap + 'px';
+        panel.style.bottom = up ? innerHeight - r.top + gap + 'px' : 'auto';
+    }
+
+    function openDropdown(s) {
+        closeDropdown();
+        const list = h('div.dd-list', {role: 'listbox', 'aria-label': s.getAttribute('aria-label') || ''});
+        const search = s.options.length >= DROPDOWN_SEARCH_FROM ? h('input.dd-search', {
+            type: 'search',
+            placeholder: t('Search'),
+            'aria-label': t('Search'),
+            autocomplete: 'off',
+            oninput: e => paintDropdown(e.target.value)
+        }) : null;
+        const panel = h('div.dd', search, list);
+        dropdown = {
+            target: s, panel, list, search, rows: [], active: 0, typed: '', typedAt: 0,
+            timer: setInterval(() => {
+                if (!s.isConnected) closeDropdown(); // The page was redrawn under the list
+            }, 400)
+        };
+        s.setAttribute('aria-expanded', 'true');
+        document.body.appendChild(panel);
+        paintDropdown('');
+        placePanel(panel, s);
+        if (dropdown.rows[dropdown.active]) dropdown.rows[dropdown.active].el.scrollIntoView({block: 'nearest'});
+        if (search) search.focus();
+    }
+
+    /** Without a search box, typing jumps to the first option starting with those letters. */
+    function typeAhead(ch) {
+        const d = dropdown;
+        d.typed = (Date.now() - d.typedAt < 700 ? d.typed : '') + ch;
+        d.typedAt = Date.now();
+        const i = d.rows.findIndex(r => norm(r.option.textContent).startsWith(norm(d.typed)));
+        if (i >= 0) setActive(i);
+    }
+
+    document.addEventListener('mousedown', e => {
+        const s = e.target.closest ? e.target.closest('select') : null;
+        if (dropdown && !dropdown.panel.contains(e.target)) {
+            const same = dropdown.target === s;
+            closeDropdown();
+            if (same) {
+                e.preventDefault();
+                return;
+            }
+        }
+        if (e.button !== 0 || !usesDropdown(s)) return;
+        e.preventDefault();
+        s.focus();
+        openDropdown(s);
+    }, true);
+
+    document.addEventListener('keydown', e => {
+        if (!dropdown) {
+            const s = e.target;
+            if (s.tagName === 'SELECT' && usesDropdown(s) && ['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+                e.preventDefault();
+                openDropdown(s);
+            }
+            return;
+        }
+        const d = dropdown, page = 8;
+        const moves = {ArrowDown: d.active + 1, ArrowUp: d.active - 1, PageDown: d.active + page, PageUp: d.active - page};
+        if (!d.search) Object.assign(moves, {Home: 0, End: d.rows.length - 1});
+        if (e.key in moves) setActive(moves[e.key]);
+        else if (e.key === 'Enter') {
+            if (d.rows[d.active]) chooseOption(d.rows[d.active].option);
+        } else if (e.key === 'Escape') closeDropdown(true);
+        else if (e.key === 'Tab') {
+            closeDropdown(true);
+            return;
+        } else {
+            if (!d.search && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                typeAhead(e.key);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            return; // Typing in the search box
+        }
+        e.preventDefault();
+        e.stopPropagation(); // Esc must close the list, not the sheet under it
+    }, true);
+
+    document.addEventListener('change', e => {
+        if (e.target.tagName === 'SELECT') refreshSelectFlag(e.target);
+    });
+    window.addEventListener('scroll', e => {
+        if (dropdown && !dropdown.panel.contains(e.target)) closeDropdown();
+    }, true);
+    window.addEventListener('resize', () => closeDropdown());
+    window.addEventListener('popstate', () => closeDropdown());
+    window.addEventListener('hashchange', () => closeDropdown());
 
     /** Storage environments of products and spaces, coldest first. */
     function environments() {
         return [
-            {value: 'cold', label: t('Cold (freezer)')},
-            {value: 'cool', label: t('Cool (fridge)')},
-            {value: 'ambient', label: t('Room temperature')},
-            {value: 'warm', label: t('Warm')},
+            {value: 'cold', label: t('Cold (freezer)'), pic: ['spaces', 'freezer']},
+            {value: 'cool', label: t('Cool (fridge)'), pic: ['spaces', 'fridge']},
+            {value: 'ambient', label: t('Room temperature'), pic: ['spaces', 'pantry']},
+            {value: 'warm', label: t('Warm'), pic: ['spaces', 'microwave']},
         ];
     }
 
@@ -778,6 +963,8 @@
         input,
         textarea,
         select,
+        fillSelect,
+        placePanel,
         environments,
         environmentLabel,
         sheet,

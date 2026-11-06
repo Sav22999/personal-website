@@ -83,6 +83,14 @@ Nelle case con più membri l'app avvisa di ciò che hanno fatto gli altri: prodo
 - **Browser, app chiusa:** Web Push. Il server manda solo un segnale senza contenuto (chiavi VAPID create al primo uso e salvate in `meta`); il service worker chiede poi il testo a `activity.pending` con la sessione dell'utente. I servizi push non ricevono dati della casa. Su iPhone funziona solo con l'app aggiunta alla schermata Home.
 - **App Android, app chiusa:** il WebView non supporta Web Push e Firebase non è usato: `ActivityJobService` controlla `activity.pending` circa ogni 15 minuti (Android può ritardare il controllo per risparmiare batteria).
 
+## Menu a tendina
+
+Con il mouse tutti i `<select>` di app e portale aprono una lista propria (sezione «Dropdowns» di `assets/ui.js`) invece di quella del sistema operativo: stesso aspetto ovunque, bandiere e icone (`flag` e `pic` nelle opzioni), ricerca nelle liste da 10 voci in su, tastiera completa. Il `<select>` vero resta nella pagina e conserva il valore, quindi i nuovi menu funzionano senza codice aggiuntivo. Sui touch screen resta il selettore nativo, più comodo.
+
+## Modifica delle ricette (portale)
+
+Gli ingredienti si scelgono da un catalogo a griglia con ricerca (anche per nome inglese), categorie e prodotti più usati: a tutto schermo su telefono, si apre sul prodotto già scelto e permette di aggiungerne diversi di seguito. Se un prodotto manca, «Crea» lo aggiunge al catalogo senza lasciare la ricetta. La costante `INGREDIENT_EDITOR` in `assets/admin.js` sceglie l'editor: `'v2'` (schede e catalogo) o `'v1'` (tabella con menu a tendina). Il testo non collegato delle ricette vecchie resta com'è ed è segnalato al salvataggio. Nel procedimento i passaggi si spostano con le frecce o trascinando il numero: italiano e inglese si muovono insieme, e un passaggio senza traduzione usa il testo italiano.
+
 ## Cronologia della casa
 
 La cronologia registra tutto ciò che cambia nella casa: prodotti, spazi, liste e loro contenuto, piano dei pasti, membri e dati della casa. Si possono annullare solo le azioni sui prodotti negli spazi (`UNDOABLE_ACTIONS` in `lib/bootstrap.php`). I preferiti non compaiono perché sono personali, non della casa. Le voci si caricano 100 alla volta con «Mostra altro».

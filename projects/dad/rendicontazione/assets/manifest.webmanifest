@@ -1,0 +1,16 @@
+{
+  "name": "Rendicontazione Ore",
+  "short_name": "Registro Ore",
+  "description": "Portale per il calcolo e la gestione delle ore lavorative e straordinari",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1c1c1e",
+  "theme_color": "#1c1c1e",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

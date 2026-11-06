@@ -37,6 +37,7 @@
     --card-shadow: 0 1px 2px rgba(16, 32, 16, .05), 0 2px 8px rgba(16, 32, 16, .04);
     --text: #1A1C19;
     --muted: #5C6459;
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%235C6459' d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E");
     --outline: #8F978C;
     --outline-variant: #CDD5CA;
     --danger: #BA1A1A;
@@ -73,6 +74,7 @@
         --card-shadow: none;
         --text: #E1E4DD;
         --muted: #A9B2A5;
+        --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23A9B2A5' d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E");
         --outline: #8A9386;
         --outline-variant: #3F473D;
         --danger: #FFB4AB;
@@ -102,6 +104,7 @@
     --card-shadow: none;
     --text: #E1E4DD;
     --muted: #A9B2A5;
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23A9B2A5' d='M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z'/%3E%3C/svg%3E");
     --outline: #8A9386;
     --outline-variant: #3F473D;
     --danger: #FFB4AB;
@@ -1041,7 +1044,7 @@ button.list-row, a.list-row {
 }
 
 .field .input:hover {
-    background: var(--surface-3);
+    background-color: var(--surface-3);
 }
 
 .field textarea.input {
@@ -1073,6 +1076,151 @@ button.list-row, a.list-row {
     color: var(--text);
 }
 
+/* Flag of the chosen option inside a closed select */
+select[data-lead] {
+    padding-left: 42px !important;
+    background-image: var(--lead);
+    background-repeat: no-repeat;
+    background-position: 13px 50%;
+    background-size: 20px 15px;
+}
+
+.field select.input[data-lead] {
+    background-position: 13px 27px;
+}
+
+/* Dropdown list used with a mouse (see "Dropdowns" in ui.js) */
+.dd {
+    position: fixed;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    max-width: min(420px, calc(100vw - 16px));
+    padding: 6px;
+    box-sizing: border-box;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-3);
+    animation: dd-in .12s ease-out;
+}
+
+@keyframes dd-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dd {
+        animation: none;
+    }
+}
+
+.dd-search {
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+    height: 38px;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    font: inherit;
+    font-size: .92rem;
+    color: inherit;
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    outline: none;
+}
+
+.dd-search:focus {
+    border-color: var(--primary);
+}
+
+.dd-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.dd-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    font-size: .92rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.dd-item.active {
+    background: var(--surface-2);
+}
+
+.dd-item.selected {
+    font-weight: 600;
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+}
+
+.dd-item > svg, .dd-item .flag {
+    flex: none;
+    width: 22px;
+    height: 22px;
+}
+
+.dd-item .flag {
+    height: 16px;
+    border-radius: 2px;
+}
+
+.dd-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.dd-wide {
+    width: 340px;
+}
+
+.dd-meta {
+    flex: none;
+    max-width: 45%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: .78rem;
+    color: var(--muted);
+}
+
+.dd-item.selected .dd-meta {
+    color: inherit;
+}
+
+.dd-create {
+    flex: none;
+    margin-top: 6px;
+    font-weight: 600;
+    color: var(--primary);
+    border-top: 1px solid var(--outline-variant);
+    border-radius: 0 0 8px 8px;
+}
+
+.dd-empty {
+    padding: 12px;
+    font-size: .9rem;
+    text-align: center;
+    color: var(--muted);
+}
+
 .field label {
     position: absolute;
     left: 14px;
@@ -1089,7 +1237,7 @@ button.list-row, a.list-row {
 
 .field .input:focus {
     border-color: var(--primary);
-    background: var(--surface);
+    background-color: var(--surface);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 

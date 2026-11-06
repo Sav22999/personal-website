@@ -297,7 +297,7 @@ button.sn-user.adm-user-btn > .ic {
     height: 34px;
     font-size: .8rem;
     padding: 0 24px 0 10px;
-    background-position: calc(100% - 13px) 50%, calc(100% - 8px) 50%;
+    background-position: right 3px center;
 }
 
 .adm-topbar .adm-app-link {
@@ -451,11 +451,11 @@ textarea.ctl {
 
 select.ctl {
     cursor: pointer;
-    padding-right: 30px;
+    padding-right: 34px;
     appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
-    background-size: 5px 5px;
+    background-image: var(--select-arrow);
+    background-position: right 8px center;
+    background-size: 20px 20px;
     background-repeat: no-repeat;
 }
 
@@ -464,14 +464,21 @@ select.ctl option {
     color: var(--text);
 }
 
+select.ctl[data-lead] {
+    background-image: var(--lead), var(--select-arrow);
+    background-position: 13px 50%, right 8px center;
+    background-size: 20px 15px, 20px 20px;
+    background-repeat: no-repeat;
+}
+
 .ctl:hover {
     border-color: transparent;
-    background: var(--surface-3);
+    background-color: var(--surface-3);
 }
 
 .ctl:focus {
     border-color: var(--primary);
-    background: var(--surface);
+    background-color: var(--surface);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
@@ -1079,6 +1086,87 @@ table.dt {
     width: 40px;
 }
 
+/* Steps of a recipe */
+.step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.step-edit {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+}
+
+.step-edit.drop {
+    border-color: var(--primary);
+}
+
+.step-edit.dragging {
+    opacity: .5;
+}
+
+.step-num {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-top: 4px;
+    border-radius: 50%;
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+    cursor: grab;
+    user-select: none;
+}
+
+.step-num:active {
+    cursor: grabbing;
+}
+
+.step-edit textarea.ctl {
+    min-height: 64px;
+    field-sizing: content;
+    background-color: var(--surface);
+}
+
+.step-tools {
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.step-tools .icon-btn {
+    flex: none;
+    width: 36px;
+    height: 36px;
+}
+
+.step-tools .icon-btn:disabled {
+    opacity: .3;
+    cursor: default;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .step-edit {
+        grid-template-columns: 32px minmax(0, 1fr);
+    }
+
+    .step-tools {
+        grid-column: 2;
+        justify-content: flex-end;
+    }
+}
+
 .img-drop {
     display: flex;
     gap: 14px;
@@ -1338,7 +1426,7 @@ body.admin #toast.show {
         height: 34px;
         font-size: .8rem;
         padding: 0 24px 0 10px;
-        background-position: calc(100% - 13px) 50%, calc(100% - 8px) 50%;
+        background-position: right 3px center;
     }
 
     .adm-app-link, .adm .adm-tools .icon-btn {
@@ -1605,5 +1693,321 @@ body.admin #toast.show {
 @media (max-width: 440px) {
     .adm-tools select.ctl {
         display: none;
+    }
+}
+
+/* ---------- Ingredient editor v2 and product browser (kept last: it overrides the dialog on phones) ---------- */
+.ing-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ing-list:empty::before {
+    content: attr(data-empty);
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+    border: 1px dashed var(--outline-variant);
+    border-radius: var(--r-md);
+}
+
+.ing-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px 130px 36px 36px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+}
+
+.ing-card .ctl {
+    min-width: 0;
+    background-color: var(--surface);
+}
+
+.ing-card .ctl:hover {
+    background-color: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--outline-variant);
+}
+
+.ing-pick {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 10px 4px 4px;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.ing-pick:hover {
+    background: var(--surface-3);
+}
+
+.ing-pick > .ic {
+    flex: none;
+    margin-left: auto;
+    color: var(--muted);
+}
+
+.ing-name {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.ing-name strong, .ing-name small {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ing-name strong {
+    font-weight: 600;
+}
+
+.ing-name small {
+    color: var(--muted);
+}
+
+.ing-notes {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ing-notes[hidden] {
+    display: none;
+}
+
+.dlg.picker {
+    max-width: 860px;
+    height: min(760px, calc(100vh - 48px));
+}
+
+.dlg.picker .dlg-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 0 16px;
+    align-content: start;
+    padding-top: 0;
+}
+
+.pick-head {
+    grid-column: 1 / -1;
+}
+
+.pick-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -2px;
+    padding: 4px 2px 10px;
+    background: var(--surface);
+}
+
+/* Categories: a side list on large screens, a row to swipe on phones */
+.dlg.picker .chips {
+    position: sticky;
+    top: 56px;
+    align-self: start;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+.dlg.picker .chip {
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 34px;
+    text-align: left;
+    border-color: transparent;
+    border-radius: 8px;
+    background: none;
+    white-space: normal;
+}
+
+.dlg.picker .chip:hover {
+    background: var(--surface-2);
+}
+
+.dlg.picker .chip.sel {
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+}
+
+.pick-title {
+    margin: 14px 2px 8px;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.pick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 8px;
+}
+
+.pick-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-height: 104px;
+    padding: 12px 6px 8px;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: .82rem;
+    line-height: 1.2;
+    text-align: center;
+    color: inherit;
+    background: var(--surface-2);
+    border: 2px solid transparent;
+    border-radius: var(--r-md);
+    cursor: pointer;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 104px;
+}
+
+.pick-tile:hover, .pick-tile.active, .pick-create:hover, .pick-create.active {
+    border-color: var(--primary);
+}
+
+.pick-tile.taken {
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+}
+
+.pick-pic svg {
+    display: block;
+    width: 36px;
+    height: 36px;
+}
+
+.pick-name {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.pick-tick {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    color: var(--on-primary);
+    background: var(--primary);
+    border-radius: 50%;
+}
+
+.pick-tick .ic {
+    width: 14px;
+    height: 14px;
+}
+
+.pick-create {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    margin-bottom: 8px;
+    padding: 8px 14px;
+    box-sizing: border-box;
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    color: var(--on-primary-container);
+    background: var(--primary-container);
+    border: 2px solid transparent;
+    border-radius: var(--r-md);
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .ing-card {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
+    }
+
+    .ing-pick {
+        grid-column: 1 / 3;
+    }
+
+    .ing-card .icon-btn:last-of-type {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .ing-notes {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 860px) {
+    .ovl:has(.dlg.picker) {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .ovl .dlg.picker {
+        max-width: none;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+        border-radius: 0;
+    }
+
+    .dlg.picker .dlg-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dlg.picker .chips {
+        z-index: 2;
+        top: 52px;
+        flex-direction: row;
+        gap: 6px;
+        margin: 0 -16px;
+        padding: 0 16px 10px;
+        overflow-x: auto;
+        background: var(--surface);
+        scrollbar-width: none;
+    }
+
+    .dlg.picker .chips::-webkit-scrollbar {
+        display: none;
+    }
+
+    .dlg.picker .chip {
+        flex: none;
+        width: auto;
+        white-space: nowrap;
+        border-color: var(--outline-variant);
+        border-radius: 999px;
+    }
+
+    .pick-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
 }

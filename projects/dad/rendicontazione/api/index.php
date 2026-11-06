@@ -259,7 +259,7 @@ try {
             $notes = trim((string)($b['notes'] ?? ''));
             $shifts = is_array($b['shifts'] ?? null) ? $b['shifts'] : [];
 
-            $dayId = work_day_save($targetUserId, $date, $dayType, $notes ?: null, $shifts);
+            $dayId = work_day_save($targetUserId, $date, $dayType, $notes ?: null, $shifts, true, $u['id']);
 
             // Return updated month data so UI immediately syncs
             $parts = explode('-', $date);
@@ -283,7 +283,7 @@ try {
                 fail('Data non valida.', 422);
             }
 
-            work_day_delete($targetUserId, $date);
+            work_day_delete($targetUserId, $date, true, $u['id']);
 
             $parts = explode('-', $date);
             $updatedMonth = work_days_get_month($targetUserId, (int)$parts[0], (int)$parts[1]);
@@ -316,7 +316,7 @@ try {
             }
             if (!$found) fail('Nessun turno predefinito trovato.', 404);
 
-            work_day_save($targetUserId, $date, 'work', null, $found['shifts']);
+            work_day_save($targetUserId, $date, 'work', null, $found['shifts'], true, $u['id']);
 
             $parts = explode('-', $date);
             $updatedMonth = work_days_get_month($targetUserId, (int)$parts[0], (int)$parts[1]);
@@ -337,6 +337,33 @@ try {
                 'ok' => true,
                 'presets' => presets_get_for_user($targetUserId),
             ]);
+            break;
+
+        // --- CRONOLOGIA / AUDIT LOG ---
+        case 'history.list':
+            $u = require_active_user();
+            $targetUserId = (int)($_GET['target_user_id'] ?? 0);
+            $limit = min(100, max(10, (int)($_GET['limit'] ?? 50)));
+            $offset = max(0, (int)($_GET['offset'] ?? 0));
+
+            $list = audit_log_list($u['id'], $targetUserId, $limit, $offset);
+            send_json([
+                'ok' => true,
+                'history' => $list,
+                'can_undo' => ($u['role'] >= ROLE_ADMIN),
+            ]);
+            break;
+
+        case 'history.undo':
+            if ($method !== 'POST') fail('Metodo non consentito', 405);
+            // STRICT: Only Admin or Master Admin can undo changes!
+            $u = require_admin();
+            $b = body();
+            $logId = (int)($b['id'] ?? 0);
+            if ($logId <= 0) fail('ID voce cronologia non valido.', 422);
+
+            $res = audit_log_undo($logId, $u['id']);
+            send_json($res);
             break;
 
         // --- EXPORT & IMPORT ---

@@ -78,9 +78,28 @@ function schema_create_tables(PDO $pdo, string $p = 'dad_rend_'): void
                 FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
             )",
 
+            "CREATE TABLE IF NOT EXISTS `{$p}audit_log` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+                `user_id` INTEGER NOT NULL,
+                `target_user_id` INTEGER NOT NULL,
+                `action` VARCHAR(40) NOT NULL,
+                `entity_type` VARCHAR(30) NOT NULL,
+                `entity_id` VARCHAR(50) NOT NULL,
+                `summary` VARCHAR(255) NOT NULL,
+                `before_state` TEXT NULL,
+                `after_state` TEXT NULL,
+                `is_undone` INTEGER NOT NULL DEFAULT 0,
+                `undone_at` DATETIME NULL,
+                `undone_by_user_id` INTEGER NULL,
+                `created_at` DATETIME NOT NULL,
+                FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`target_user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+            )",
+
             "CREATE INDEX IF NOT EXISTS `idx_{$p}work_days_date` ON `{$p}work_days` (`user_id`, `work_date`)",
             "CREATE INDEX IF NOT EXISTS `idx_{$p}shifts_day` ON `{$p}work_shifts` (`day_id`)",
             "CREATE INDEX IF NOT EXISTS `idx_{$p}shifts_user` ON `{$p}work_shifts` (`user_id`)",
+            "CREATE INDEX IF NOT EXISTS `idx_{$p}audit_target` ON `{$p}audit_log` (`target_user_id`, `created_at`)",
         ];
     } else {
         $opts = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -163,6 +182,27 @@ function schema_create_tables(PDO $pdo, string $p = 'dad_rend_'): void
                 PRIMARY KEY (`id`),
                 KEY `idx_user` (`user_id`),
                 CONSTRAINT `fk_{$p}preset_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+            ) $opts",
+
+            "CREATE TABLE IF NOT EXISTS `{$p}audit_log` (
+                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `user_id` INT UNSIGNED NOT NULL,
+                `target_user_id` INT UNSIGNED NOT NULL,
+                `action` VARCHAR(40) NOT NULL,
+                `entity_type` VARCHAR(30) NOT NULL,
+                `entity_id` VARCHAR(50) NOT NULL,
+                `summary` VARCHAR(255) NOT NULL,
+                `before_state` MEDIUMTEXT NULL,
+                `after_state` MEDIUMTEXT NULL,
+                `is_undone` TINYINT(1) NOT NULL DEFAULT 0,
+                `undone_at` DATETIME NULL,
+                `undone_by_user_id` INT UNSIGNED NULL,
+                `created_at` DATETIME NOT NULL,
+                PRIMARY KEY (`id`),
+                KEY `idx_target_date` (`target_user_id`, `created_at`),
+                KEY `idx_action` (`action`),
+                CONSTRAINT `fk_{$p}audit_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
+                CONSTRAINT `fk_{$p}audit_target` FOREIGN KEY (`target_user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
             ) $opts",
         ];
     }

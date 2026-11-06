@@ -1561,7 +1561,7 @@ switch ($route) {
         require_user(ROLE_EDITOR);
         $favs = [];
         foreach (db()->query('SELECT recipe_id, COUNT(*) AS n FROM ' . t('favorites') . ' GROUP BY recipe_id') as $r) $favs[(int)$r['recipe_id']] = (int)$r['n'];
-        send_json(['ok' => true, 'recipes' => load_recipes(false, true), 'favorites' => $favs, 'units' => UNITS, 'langs' => LANGS] + load_catalog(true));
+        send_json(['ok' => true, 'recipes' => load_recipes(false, true), 'favorites' => $favs, 'units' => UNITS, 'langs' => LANGS, 'icons' => sprite_icons('products')] + load_catalog(true));
 
     case 'admin.recipe.image':
         only('POST');

@@ -668,10 +668,14 @@
         return env ? S.spaces.find(sp => sp.environment === env) || null : null;
     }
 
+    function spaceOptions() {
+        return S.spaces.map(sp => ({value: sp.id, label: sp.name, pic: ['spaces', sp.icon]}));
+    }
+
     /** Space picker for a bought product: on the matching space, or asks for a choice when there is none. */
     function spaceSelect(x) {
         const match = spaceForItem(x);
-        const opts = S.spaces.map(sp => ({value: sp.id, label: sp.name}));
+        const opts = spaceOptions();
         return select(match ? opts : [{value: '', label: t('Choose a space')}].concat(opts), match ? match.id : '');
     }
 
@@ -1016,7 +1020,7 @@
         if (!v.icon) v.icon = p0 ? p0.icon : 'generic';
         if (v.categoryId == null && p0) v.categoryId = p0.categoryId;
 
-        const space = li ? spaceSelect(li) : select(S.spaces.map(sp => ({value: sp.id, label: sp.name})), v.spaceId);
+        const space = li ? spaceSelect(li) : select(spaceOptions(), v.spaceId);
         const name = input({value: v.name, maxlength: 80});
         const qty = input({
             type: 'number',
@@ -2532,7 +2536,7 @@
         }
         const checks = rows.map(r => ({r, cb: h('input', {type: 'checkbox', checked: true})}));
         const NEW = '__new__';
-        const listSel = select(S.lists.map(l => ({value: l.id, label: l.name})).concat([{
+        const listSel = select(S.lists.map(l => ({value: l.id, label: l.name, pic: ['lists', l.icon]})).concat([{
             value: NEW,
             label: t('+ New list…')
         }]), S.lists[0] ? S.lists[0].id : NEW);
@@ -3090,10 +3094,7 @@
             'aria-label': t('Find a food')
         });
         const results = h('div');
-        const spaceSel = select([{value: '', label: t('All spaces')}].concat(S.spaces.map(s => ({
-            value: s.id,
-            label: s.name
-        }))), searchState.spaceId);
+        const spaceSel = select([{value: '', label: t('All spaces')}].concat(spaceOptions()), searchState.spaceId);
         const catSel = select([{
             value: '',
             label: t('All categories')

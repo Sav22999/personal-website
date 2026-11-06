@@ -138,6 +138,40 @@ function get_pending_users_count(): int
 // --- WORK DAYS & SHIFTS ---
 
 /**
+ * Returns a complete JSON-ready snapshot of a work day and its shifts.
+ */
+function work_day_get_snapshot(int $userId, string $date): ?array
+{
+    $st = db()->prepare('SELECT * FROM ' . t('work_days') . ' WHERE user_id = ? AND work_date = ?');
+    $st->execute([$userId, $date]);
+    $day = $st->fetch();
+    if (!$day) return null;
+
+    $stShifts = db()->prepare('SELECT * FROM ' . t('work_shifts') . ' WHERE day_id = ? ORDER BY sort_order ASC, id ASC');
+    $stShifts->execute([(int)$day['id']]);
+    $shifts = $stShifts->fetchAll();
+
+    $cleanShifts = [];
+    foreach ($shifts as $s) {
+        $cleanShifts[] = [
+            'start_time' => $s['start_time'],
+            'end_time' => $s['end_time'],
+            'is_overtime' => (bool)$s['is_overtime'],
+            'hours_ordinary' => (float)$s['hours_ordinary'],
+            'hours_overtime' => (float)$s['hours_overtime'],
+            'notes' => $s['notes'],
+        ];
+    }
+
+    return [
+        'work_date' => (string)$day['work_date'],
+        'day_type' => (string)$day['day_type'],
+        'notes' => $day['notes'] ? (string)$day['notes'] : null,
+        'shifts' => $cleanShifts,
+    ];
+}
+
+/**
  * Returns work days and shifts for a user in a given year and month.
  * Computes daily totals and progressive/cumulative month totals.
  */
@@ -375,9 +409,12 @@ function work_days_get_year_summary(int $userId, int $year): array
 /**
  * Saves or updates a work day and its shifts.
  * Replaces any existing shifts for that day atomically.
+ * Automatically tracks changes in audit_log.
  */
-function work_day_save(int $userId, string $date, string $dayType = 'work', ?string $notes = null, array $shifts = []): int
+function work_day_save(int $userId, string $date, string $dayType = 'work', ?string $notes = null, array $shifts = [], bool $recordAudit = true, ?int $actorUserId = null): int
 {
+    $beforeSnapshot = $recordAudit ? work_day_get_snapshot($userId, $date) : null;
+
     $pdo = db();
     $pdo->beginTransaction();
 
@@ -418,6 +455,9 @@ function work_day_save(int $userId, string $date, string $dayType = 'work', ?str
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
 
+        $totalOrd = 0.0;
+        $totalOver = 0.0;
+
         foreach ($shifts as $s) {
             $start = !empty($s['start_time']) ? trim((string)$s['start_time']) : null;
             $end = !empty($s['end_time']) ? trim((string)$s['end_time']) : null;
@@ -445,6 +485,9 @@ function work_day_save(int $userId, string $date, string $dayType = 'work', ?str
                 }
             }
 
+            $totalOrd += $hoursOrd;
+            $totalOver += $hoursOver;
+
             $insertShift->execute([
                 $dayId,
                 $userId,
@@ -460,6 +503,21 @@ function work_day_save(int $userId, string $date, string $dayType = 'work', ?str
         }
 
         $pdo->commit();
+
+        if ($recordAudit) {
+            $afterSnapshot = work_day_get_snapshot($userId, $date);
+            $tot = round($totalOrd + $totalOver, 2);
+            $action = ($beforeSnapshot === null) ? 'day.create' : 'day.update';
+            $actionLabel = ($beforeSnapshot === null) ? 'Aggiunta giornata ' : 'Modificata giornata ';
+            $summary = $actionLabel . $date . ' (' . format_hours_human($tot);
+            if ($totalOver > 0) $summary .= ', di cui ' . format_hours_human($totalOver) . ' straord.';
+            if ($dayType !== 'work') $summary .= " - $dayType";
+            $summary .= ')';
+
+            $actor = $actorUserId ?: (current_user()['id'] ?? $userId);
+            audit_log_record($actor, $userId, $action, 'work_day', $date, $summary, $beforeSnapshot, $afterSnapshot);
+        }
+
         return $dayId;
     } catch (Throwable $e) {
         $pdo->rollBack();
@@ -469,15 +527,190 @@ function work_day_save(int $userId, string $date, string $dayType = 'work', ?str
 
 /**
  * Deletes a work day and its shifts.
+ * Automatically records audit trail with before snapshot so it can be restored.
  */
-function work_day_delete(int $userId, string $date): void
+function work_day_delete(int $userId, string $date, bool $recordAudit = true, ?int $actorUserId = null): void
 {
+    $beforeSnapshot = $recordAudit ? work_day_get_snapshot($userId, $date) : null;
+
     $st = db()->prepare('SELECT id FROM ' . t('work_days') . ' WHERE user_id = ? AND work_date = ?');
     $st->execute([$userId, $date]);
     $dayId = $st->fetchColumn();
     if ($dayId) {
         db()->prepare('DELETE FROM ' . t('work_days') . ' WHERE id = ?')->execute([(int)$dayId]);
     }
+
+    if ($recordAudit && $beforeSnapshot) {
+        $actor = $actorUserId ?: (current_user()['id'] ?? $userId);
+        audit_log_record($actor, $userId, 'day.delete', 'work_day', $date, "Eliminata giornata $date", $beforeSnapshot, null);
+    }
+}
+
+// --- CRONOLOGIA & AUDIT LOG ---
+
+function audit_log_record(int $userId, int $targetUserId, string $action, string $entityType, string $entityId, string $summary, ?array $before = null, ?array $after = null): int
+{
+    $pdo = db();
+    $now = now_utc();
+    $st = $pdo->prepare('
+        INSERT INTO ' . t('audit_log') . '
+        (user_id, target_user_id, action, entity_type, entity_id, summary, before_state, after_state, is_undone, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+    ');
+    $st->execute([
+        $userId,
+        $targetUserId,
+        $action,
+        $entityType,
+        $entityId,
+        $summary,
+        $before !== null ? json_encode($before, JSON_UNESCAPED_UNICODE) : null,
+        $after !== null ? json_encode($after, JSON_UNESCAPED_UNICODE) : null,
+        $now,
+    ]);
+    return (int)$pdo->lastInsertId();
+}
+
+function audit_log_list(int $viewerUserId, int $targetUserId = 0, int $limit = 60, int $offset = 0): array
+{
+    $viewer = user_get_by_id($viewerUserId);
+    $isAdmin = $viewer && ((int)$viewer['role'] >= ROLE_ADMIN);
+
+    $sql = '
+        SELECT
+            a.*,
+            u.name AS actor_name,
+            u.email AS actor_email,
+            u.role AS actor_role,
+            tu.name AS target_name,
+            tu.email AS target_email,
+            und.name AS undone_by_name
+        FROM ' . t('audit_log') . ' a
+        LEFT JOIN ' . t('users') . ' u ON u.id = a.user_id
+        LEFT JOIN ' . t('users') . ' tu ON tu.id = a.target_user_id
+        LEFT JOIN ' . t('users') . ' und ON und.id = a.undone_by_user_id
+    ';
+
+    $params = [];
+    if (!$isAdmin) {
+        // Standard user only sees changes to their own sheet
+        $sql .= ' WHERE a.target_user_id = ?';
+        $params[] = $viewerUserId;
+    } elseif ($targetUserId > 0) {
+        $sql .= ' WHERE a.target_user_id = ?';
+        $params[] = $targetUserId;
+    }
+
+    $sql .= ' ORDER BY a.id DESC LIMIT ? OFFSET ?';
+    $params[] = $limit;
+    $params[] = $offset;
+
+    $st = db()->prepare($sql);
+    $st->execute($params);
+    $rows = $st->fetchAll();
+
+    return array_map(function ($r) use ($isAdmin) {
+        $isUndoableAction = in_array($r['action'], ['day.create', 'day.update', 'day.delete', 'day.preset'], true);
+        return [
+            'id' => (int)$r['id'],
+            'action' => (string)$r['action'],
+            'entity_type' => (string)$r['entity_type'],
+            'entity_id' => (string)$r['entity_id'],
+            'summary' => (string)$r['summary'],
+            'user_id' => (int)$r['user_id'],
+            'actor_name' => (string)($r['actor_name'] ?? 'Utente'),
+            'actor_role' => (int)($r['actor_role'] ?? 1),
+            'actor_role_label' => ROLE_LABELS[(int)($r['actor_role'] ?? 1)] ?? 'Utente',
+            'target_user_id' => (int)$r['target_user_id'],
+            'target_name' => (string)($r['target_name'] ?? 'Lavoratore'),
+            'is_undone' => (bool)$r['is_undone'],
+            'undone_at' => (string)($r['undone_at'] ?? ''),
+            'undone_by_name' => (string)($r['undone_by_name'] ?? ''),
+            // CRITICAL: only administrators can undo changes!
+            'can_undo' => $isAdmin && $isUndoableAction && !(bool)$r['is_undone'],
+            'has_before' => !empty($r['before_state']),
+            'has_after' => !empty($r['after_state']),
+            'created_at' => (string)$r['created_at'],
+        ];
+    }, $rows);
+}
+
+function audit_log_undo(int $logId, int $adminUserId): array
+{
+    $admin = user_get_by_id($adminUserId);
+    if (!$admin || (int)$admin['role'] < ROLE_ADMIN) {
+        throw new RuntimeException('Solo gli amministratori possono annullare le modifiche.');
+    }
+
+    $st = db()->prepare('SELECT * FROM ' . t('audit_log') . ' WHERE id = ?');
+    $st->execute([$logId]);
+    $entry = $st->fetch();
+    if (!$entry) {
+        throw new RuntimeException('Voce di cronologia non trovata.');
+    }
+
+    if ((int)$entry['is_undone'] === 1) {
+        throw new RuntimeException('Questa modifica è già stata annullata in precedenza.');
+    }
+
+    $targetUserId = (int)$entry['target_user_id'];
+    $date = (string)$entry['entity_id'];
+    $action = (string)$entry['action'];
+
+    $beforeState = !empty($entry['before_state']) ? json_decode((string)$entry['before_state'], true) : null;
+    $afterState = !empty($entry['after_state']) ? json_decode((string)$entry['after_state'], true) : null;
+
+    $now = now_utc();
+
+    // Revert logic:
+    if ($action === 'day.create') {
+        // It was a newly added day -> undoing means deleting the day!
+        work_day_delete($targetUserId, $date, false);
+    } elseif ($action === 'day.delete') {
+        // It was deleted -> undoing means restoring beforeState!
+        if ($beforeState) {
+            work_day_save($targetUserId, $date, $beforeState['day_type'] ?? 'work', $beforeState['notes'] ?? null, $beforeState['shifts'] ?? [], false);
+        }
+    } elseif ($action === 'day.update' || $action === 'day.preset') {
+        // It was updated -> restore beforeState!
+        if ($beforeState) {
+            work_day_save($targetUserId, $date, $beforeState['day_type'] ?? 'work', $beforeState['notes'] ?? null, $beforeState['shifts'] ?? [], false);
+        } else {
+            work_day_delete($targetUserId, $date, false);
+        }
+    } else {
+        throw new RuntimeException('Questo tipo di operazione non supporta l\'annullamento automatico.');
+    }
+
+    // Mark as undone
+    db()->prepare('
+        UPDATE ' . t('audit_log') . '
+        SET is_undone = 1, undone_at = ?, undone_by_user_id = ?
+        WHERE id = ?
+    ')->execute([$now, $adminUserId, $logId]);
+
+    // Record an audit log for the undo itself
+    audit_log_record(
+        $adminUserId,
+        $targetUserId,
+        'day.rollback',
+        'audit_log',
+        (string)$logId,
+        'Annullata modifica #' . $logId . ' (' . $entry['summary'] . ')',
+        $afterState,
+        $beforeState
+    );
+
+    $parts = explode('-', $date);
+    $updatedMonth = work_days_get_month($targetUserId, (int)$parts[0], (int)$parts[1]);
+
+    return [
+        'ok' => true,
+        'undone_id' => $logId,
+        'target_user_id' => $targetUserId,
+        'date' => $date,
+        'month_data' => $updatedMonth,
+    ];
 }
 
 // --- PRESETS ---
