@@ -415,17 +415,16 @@ function makeMove()
         $newMovesStr = implode(' ', $tentativeMoves);
         $winningLineStr = ConnectFourEngine::formatWinningLine($replay['winning_line']);
 
+        // The move is always stored, the winning one too: clients learn it from the next poll
+        $pdo->prepare("UPDATE c4_rooms SET moves = ?, p1_ms = ?, p2_ms = ?, turn_started_ms = ?, draw_offer_slot = NULL WHERE id = ?")
+            ->execute([$newMovesStr, $p1Ms, $p2Ms, $now, $room['id']]);
+
+        $room['p1_ms'] = $p1Ms;
+        $room['p2_ms'] = $p2Ms;
         if ($replay['winner'] !== 0) {
-            $room['p1_ms'] = $p1Ms;
-            $room['p2_ms'] = $p2Ms;
             finishGame($room, $replay['winner'], 'connect4', $winningLineStr);
         } elseif ($replay['is_full']) {
-            $room['p1_ms'] = $p1Ms;
-            $room['p2_ms'] = $p2Ms;
             finishGame($room, 0, 'draw_board');
-        } else {
-            $pdo->prepare("UPDATE c4_rooms SET moves = ?, p1_ms = ?, p2_ms = ?, turn_started_ms = ?, draw_offer_slot = NULL WHERE id = ?")
-                ->execute([$newMovesStr, $p1Ms, $p2Ms, $now, $room['id']]);
         }
 
         $pdo->commit();
@@ -531,7 +530,7 @@ function requestRematch()
             $ms = (int)$room['time_control'] * 1000;
             $pdo->prepare("UPDATE c4_rooms SET status = 'playing', round = round + 1, first_slot = ?, moves = '', p1_ms = ?, p2_ms = ?, turn_started_ms = ?, draw_offer_slot = NULL, result = NULL, reason = NULL, winning_line = NULL WHERE id = ?")
                 ->execute([$newFirst, $ms, $ms, nowMs(), $room['id']]);
-            $pdo->prepare("UPDATE c4_players SET wants_rematch = 0 WHERE id = ?")->execute([$room['id']]);
+            $pdo->prepare("UPDATE c4_players SET wants_rematch = 0 WHERE room_id = ?")->execute([$room['id']]);
         }
         $pdo->commit();
     } catch (Throwable $e) {
@@ -582,6 +581,9 @@ function leaveRoom()
         $pdo->prepare("UPDATE c4_players SET is_online = 0 WHERE id = ?")->execute([$player['id']]);
         if ($room && $room['status'] === 'playing') {
             finishGame($room, other($player['slot']), 'abandon');
+        } elseif ($room && $room['status'] === 'waiting') {
+            // Nobody is left in the room: a late friend must not join an empty game
+            $pdo->prepare("UPDATE c4_rooms SET status = 'finished' WHERE id = ?")->execute([$room['id']]);
         }
         $pdo->commit();
     } catch (Throwable $e) {

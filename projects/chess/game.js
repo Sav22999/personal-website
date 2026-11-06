@@ -1701,3 +1701,6 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// Lets the game open without a connection (see sw.js)
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

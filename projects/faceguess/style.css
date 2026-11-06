@@ -906,3 +906,35 @@ input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rg
         min-height: 40px; font-size: 13.5px;
     }
 }
+
+/* ---------- Theme: tabs on desktop, one button on phones ---------- */
+.theme-selector { position: absolute; top: calc(16px + var(--safe-top)); left: 16px; display: flex; gap: 2px; padding: 3px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); z-index: 20; }
+.theme-tab { border: 0; background: transparent; color: var(--text-muted); font-family: inherit; font-size: 12px; font-weight: 800; padding: 6px 11px; border-radius: 9px; cursor: pointer; transition: color .15s, background .15s; }
+.theme-tab:hover { color: var(--text); }
+.theme-tab.active { background: var(--accent); color: #fff; }
+.theme-toggle { display: none; position: absolute; top: calc(14px + var(--safe-top)); left: 14px; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; z-index: 20; }
+.theme-toggle svg { color: var(--accent-light); }
+@media (max-width: 640px) {
+    .theme-selector { display: none; }
+    .theme-toggle { display: inline-flex; }
+}
+
+/* ---------- Light theme ---------- */
+:root { color-scheme: dark; }
+:root[data-theme="light"] {
+    --accent: #5A4BD1; --accent-light: #4B3DB8; --accent-dark: #4A3DB5;
+    --bg: #F5F4FC; --bg-card: #FFFFFF; --bg-card-hover: #ECEAF9; --bg-surface: #FAF9FF; --avatar-bg: #E2DFF5;
+    --text: #1B1A2E; --text-muted: #55547A; --text-dim: #85849F;
+    --green: #00836B; --red: #D63B3B; --yellow: #946200;
+    --border: rgba(40, 30, 110, 0.13); --shadow: 0 10px 30px rgba(40, 30, 110, 0.1);
+    color-scheme: light;
+}
+:root[data-theme="light"] .donate-reason { background: rgba(0, 0, 0, 0.025); }
+:root[data-theme="light"] .step.done .step-btn:hover { background: rgba(0, 0, 0, 0.05); }
+:root[data-theme="light"] .btn-secondary.loading::after { border-color: rgba(0, 0, 0, 0.15); border-top-color: var(--text); }
+
+:root[data-theme="light"] .btn-secondary:hover:not(:disabled), :root[data-theme="light"] .zoom-close:hover { background: var(--bg-card-hover); }
+:root[data-theme="light"] .btn-accent, :root[data-theme="light"] .guess-banner { background: #FACC15; }
+:root[data-theme="light"] .mini-card.out, :root[data-theme="light"] .char-card.hidden-card { background: #E4E1F4; }
+:root[data-theme="light"] .hidden-badge, :root[data-theme="light"] .card-back-icon { color: #F0F0FA; }
+:root[data-theme="light"] .disconnect-banner { color: var(--red); }

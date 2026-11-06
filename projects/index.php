@@ -244,6 +244,21 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
+        <a class="card" href="/projects/letterhop/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/letterhop.png" alt="">
+            </div>
+            <h3>LetterHop</h3>
+            <p>The word ladder game: go from one word to another changing one letter at a time. Three levels, five languages, and the fewer words you use, the more points you get. No sign-up required.</p>
+            <ul class="project-tags">
+                <li>Web game</li>
+                <li>Multilingual</li>
+                <li>Built with Claude</li>
+            </ul>
+        </a>
     </div>
 
     <div class="projects-divider">

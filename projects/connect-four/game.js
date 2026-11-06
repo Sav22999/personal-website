@@ -12,6 +12,7 @@ let sessionSeq = 0;      // Counter for stale callback rejection
 let pollTimer = null;
 let clockInterval = null;
 let aiWorker = null;
+let aiRequestSeq = 0;    // Identifies the latest computer move request
 
 // Audio context
 let audioCtx = null;
@@ -19,8 +20,6 @@ let audioCtx = null;
 // Customization preferences
 const customPrefs = {
     palette: 'fuchsia_gold',
-    p1Color: '#D946EF',
-    p2Color: '#EAB308',
     discStyle: 'glossy',
     boardHue: 'plum',
     sound: true,
@@ -46,6 +45,22 @@ const PALETTES = {
 // --- Storage Helpers ---
 function storageGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function storageSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function sessionGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+function sessionSet(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} }
+
+// Names and chat come from other players: never put them in the page as HTML
+function escapeHtml(str) {
+    const el = document.createElement('div');
+    el.textContent = str;
+    return el.innerHTML;
+}
+
+// The language in its own words: italiano, English, español…
+function languageName() {
+    try { return new Intl.DisplayNames([currentLang], { type: 'language' }).of(currentLang); } catch (e) { return currentLang.toUpperCase(); }
+}
+
+const formatPoints = (points2) => Math.floor(points2 / 2) + (points2 % 2 ? '½' : '');
 
 // --- Web Audio Synthesizer ---
 function initAudio() {
@@ -129,6 +144,30 @@ function showError(code) {
     showToast(t(key) !== key ? t(key) : t('err_generic'));
 }
 
+// Closes the topmost open sheet; the result of the game stays open until the player chooses
+function closeTopModal() {
+    const open = [...document.querySelectorAll('.modal:not(.hidden)')].filter(m => m.id !== 'gameover-overlay').pop();
+    if (!open) return false;
+    showModal(open.id, false);
+    return true;
+}
+
+async function copyText(text, okMessage) {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch (e) {
+        // Not available everywhere (older WebViews, plain http)
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); } catch (e2) {}
+        area.remove();
+    }
+    showToast(okMessage);
+}
+
 let confirmAction = null;
 function openConfirm(title, text, yesLabel, onYes) {
     $('confirm-title').textContent = title;
@@ -167,6 +206,7 @@ function applyCustomPrefs() {
 
     updateCustomPreview();
     renderLogoFaces();
+    if (session) updatePlayerBars();
 }
 
 // --- API Client ---
@@ -207,6 +247,9 @@ function buildBoardDOM() {
         const colEl = document.createElement('div');
         colEl.className = 'c4-column';
         colEl.dataset.col = c;
+        colEl.tabIndex = 0;
+        colEl.setAttribute('role', 'button');
+        colEl.setAttribute('aria-label', t('col_label', { col: c + 1 }));
 
         for (let r = 0; r < ConnectFour.ROWS; r++) {
             const cell = document.createElement('div');
@@ -219,22 +262,39 @@ function buildBoardDOM() {
         colEl.addEventListener('mouseenter', () => onColumnHover(c, true));
         colEl.addEventListener('mouseleave', () => onColumnHover(c, false));
         colEl.addEventListener('click', () => onColumnClick(c));
+        colEl.addEventListener('keydown', (e) => onColumnKey(e, c));
 
         boardEl.appendChild(colEl);
     }
 }
 
 function onColumnHover(col, active) {
-    if (!customPrefs.guides || !session || session.status !== 'playing' || !isMyTurn()) return;
     const guide = document.querySelector(`.guide-indicator[data-col="${col}"]`);
-    if (guide) guide.classList.toggle('active', active);
+    if (!guide) return;
+    guide.classList.toggle('active', active && customPrefs.guides && isMyTurn());
+}
+
+function clearGuides() {
+    document.querySelectorAll('.guide-indicator.active').forEach(g => g.classList.remove('active'));
+}
+
+// Enter or Space drops a disc, the arrows move between the columns
+function onColumnKey(e, col) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onColumnClick(col);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const next = document.querySelector(`.c4-column[data-col="${col + (e.key === 'ArrowLeft' ? -1 : 1)}"]`);
+        if (next) next.focus();
+    }
 }
 
 function isMyTurn() {
     if (!session || session.status !== 'playing') return false;
     if (session.mode === 'local') return true;
     if (session.mode === 'ai') return session.turnSlot === session.playerSlot;
-    if (session.mode === 'online') return session.slotToMove === session.mySlot;
+    if (session.mode === 'online') return session.slotToMove === session.mySlot && !session.moveInFlight;
     return false;
 }
 
@@ -249,7 +309,7 @@ function onColumnClick(col) {
     }
 
     if (session.mode === 'local') {
-        executeLocalMove(col, row);
+        placeDisc(col, row, session.turnSlot);
     } else if (session.mode === 'ai') {
         executePlayerMoveVsAI(col, row);
     } else if (session.mode === 'online') {
@@ -299,20 +359,21 @@ function drawWinningLine(line) {
         if (disc) disc.classList.add('winning');
     });
 
-    // Scaled coordinates based on 700x600 viewBox
-    const x1 = line[0].c * 100 + 50;
-    const y1 = line[0].r * 100 + 50;
-    const x2 = line[3].c * 100 + 50;
-    const y2 = line[3].r * 100 + 50;
+    // Measured on the real cells, so the line stays centred on the discs at any size
+    const wrap = $('board-wrap').getBoundingClientRect();
+    const scale = wrap.width / 700;
+    const dots = line.map(({ r, c }) => {
+        const box = document.querySelector(`.c4-cell[data-row="${r}"][data-col="${c}"]`).getBoundingClientRect();
+        return { x: box.left + box.width / 2 - wrap.left, y: box.top + box.height / 2 - wrap.top };
+    });
+    const first = dots[0];
+    const last = dots[dots.length - 1];
 
-    svg.setAttribute('viewBox', '0 0 700 600');
+    svg.setAttribute('viewBox', `0 0 ${wrap.width} ${wrap.height}`);
     svg.setAttribute('preserveAspectRatio', 'none');
     svg.innerHTML = `
-        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" opacity="0.95" style="filter: drop-shadow(0 0 10px var(--accent));"/>
-        <circle cx="${x1}" cy="${y1}" r="12" fill="#FFFFFF"/>
-        <circle cx="${line[1].c * 100 + 50}" cy="${line[1].r * 100 + 50}" r="10" fill="#FFFFFF"/>
-        <circle cx="${line[2].c * 100 + 50}" cy="${line[2].r * 100 + 50}" r="10" fill="#FFFFFF"/>
-        <circle cx="${x2}" cy="${y2}" r="12" fill="#FFFFFF"/>
+        <line x1="${first.x}" y1="${first.y}" x2="${last.x}" y2="${last.y}" stroke="#FFFFFF" stroke-width="${12 * scale}" stroke-linecap="round" opacity="0.95" style="filter: drop-shadow(0 0 ${10 * scale}px var(--accent));"/>
+        ${dots.map(d => `<circle cx="${d.x}" cy="${d.y}" r="${11 * scale}" fill="#FFFFFF"/>`).join('')}
     `;
 }
 
@@ -342,16 +403,16 @@ function updateTurnIndicator() {
         return;
     }
 
-    let isMy = isMyTurn();
-    let currentSlot = session.mode === 'online' ? session.slotToMove : session.turnSlot;
-    let name = currentSlot === 1 ? session.p1Name : session.p2Name;
+    const currentSlot = session.mode === 'online' ? session.slotToMove : session.turnSlot;
+    const name = currentSlot === 1 ? session.p1Name : session.p2Name;
+    const dot = `<span class="turn-disc-dot" style="background:var(--disc-p${currentSlot}-color); color:var(--disc-p${currentSlot}-color);"></span>`;
 
     if (session.mode === 'ai' && currentSlot !== session.playerSlot) {
-        ind.innerHTML = `<span class="online-dot" style="background:var(--accent);"></span> <span>${t('computer_thinking')}</span>`;
-    } else if (isMy) {
-        ind.innerHTML = `<span class="turn-disc-dot" style="background:var(--disc-p${currentSlot}-color); color:var(--disc-p${currentSlot}-color);"></span> <span>${t('your_turn')}</span>`;
+        ind.innerHTML = `<span class="online-dot" style="background:var(--accent);"></span> <span>${escapeHtml(t('computer_thinking'))}</span>`;
+    } else if (session.mode !== 'local' && currentSlot === session.mySlot) {
+        ind.innerHTML = `${dot} <span>${escapeHtml(t('your_turn'))}</span>`;
     } else {
-        ind.innerHTML = `<span class="turn-disc-dot" style="background:var(--disc-p${currentSlot}-color); color:var(--disc-p${currentSlot}-color);"></span> <span>${t('their_turn', { name })}</span>`;
+        ind.innerHTML = `${dot} <span>${escapeHtml(t('their_turn', { name }))}</span>`;
     }
 
     // Toggle active player bar
@@ -363,6 +424,56 @@ function updateTurnIndicator() {
         barTop.classList.toggle('active-turn', currentSlot === topSlot);
         barBottom.classList.toggle('active-turn', currentSlot === bottomSlot);
     }
+    renderActions();
+}
+
+// Shows only the actions that make sense right now
+function renderActions() {
+    if (!session) return;
+    const over = session.status === 'finished';
+    const online = session.mode === 'online';
+    const myTurn = isMyTurn();
+    const undoable = session.moves.length >= (session.mode === 'ai' ? 2 : 1);
+
+    $('btn-hint').classList.toggle('hidden', online || over);
+    $('btn-undo').classList.toggle('hidden', online || over);
+    $('btn-draw').classList.toggle('hidden', !online || over);
+    $('btn-resign').classList.toggle('hidden', over);
+    $('btn-result').classList.toggle('hidden', !over);
+    $('btn-chat-toggle').classList.toggle('hidden', !online);
+    $('btn-moves-toggle').classList.toggle('hidden', online);
+
+    $('btn-hint').disabled = !myTurn;
+    $('btn-undo').disabled = !myTurn || !undoable;
+    $('btn-draw').disabled = online && session.drawOffer === session.mySlot;
+}
+
+// ==================== SHARED MOVE LOGIC ====================
+// Drops a disc in a game played on this device. Returns true when that move ended the game.
+function placeDisc(col, row, player) {
+    session.board[row][col] = player;
+    session.moves.push(col);
+
+    renderDisc(row, col, player, true);
+    playDropSound(row);
+    addMoveToHistory(session.moves.length - 1, col, player);
+    updateFullColumnsUI();
+    clearGuides();
+
+    const winLine = ConnectFour.checkWinAt(session.board, row, col);
+    if (winLine) {
+        endGame(player, 'connect4', winLine);
+        return true;
+    }
+    if (ConnectFour.isBoardFull(session.board)) {
+        endGame(0, 'draw_board');
+        return true;
+    }
+
+    session.turnSlot = player === 1 ? 2 : 1;
+    session.turnStartedMs = Date.now();
+    updateTurnIndicator();
+    return false;
 }
 
 // ==================== LOCAL 2-PLAYER MODE ====================
@@ -397,32 +508,6 @@ function startLocalGame() {
     setupGameScreenUI();
     showScreen('game');
     startClock();
-}
-
-function executeLocalMove(col, row) {
-    const player = session.turnSlot;
-    session.board[row][col] = player;
-    session.moves.push(col);
-
-    renderDisc(row, col, player, true);
-    playDropSound(row);
-    addMoveToHistory(session.moves.length - 1, col, player);
-    updateFullColumnsUI();
-
-    const winLine = ConnectFour.checkWinAt(session.board, row, col);
-    if (winLine) {
-        endGame(player, 'connect4', winLine);
-        return;
-    }
-
-    if (ConnectFour.isBoardFull(session.board)) {
-        endGame(0, 'draw_board');
-        return;
-    }
-
-    session.turnSlot = session.turnSlot === 1 ? 2 : 1;
-    session.turnStartedMs = Date.now();
-    updateTurnIndicator();
 }
 
 // ==================== COMPUTER AI MODE ====================
@@ -473,91 +558,46 @@ function startAIGame() {
 }
 
 function executePlayerMoveVsAI(col, row) {
-    const player = session.playerSlot;
-    session.board[row][col] = player;
-    session.moves.push(col);
+    if (!placeDisc(col, row, session.playerSlot)) triggerAIMove();
+}
 
-    renderDisc(row, col, player, true);
-    playDropSound(row);
-    addMoveToHistory(session.moves.length - 1, col, player);
-    updateFullColumnsUI();
-
-    const winLine = ConnectFour.checkWinAt(session.board, row, col);
-    if (winLine) {
-        endGame(player, 'connect4', winLine);
-        return;
+function getAIWorker() {
+    if (!aiWorker && typeof Worker !== 'undefined') {
+        try { aiWorker = new Worker('ai-worker.js?v=' + document.body.dataset.v); } catch (err) { aiWorker = null; }
     }
+    return aiWorker;
+}
 
-    if (ConnectFour.isBoardFull(session.board)) {
-        endGame(0, 'draw_board');
-        return;
-    }
-
-    session.turnSlot = player === 1 ? 2 : 1;
-    updateTurnIndicator();
-    triggerAIMove();
+// The search runs in a worker so the page stays smooth; without one it runs here
+function computeMove(board, player, level, onDone) {
+    const id = ++aiRequestSeq;
+    const here = () => onDone(ConnectFourAI.bestMove(board, player, level));
+    const worker = getAIWorker();
+    if (!worker) { here(); return; }
+    worker.onmessage = (e) => { if (e.data.id === id) onDone(e.data.col); };
+    worker.onerror = () => { aiWorker = null; here(); };
+    worker.postMessage({ id, board, player, level });
 }
 
 function triggerAIMove() {
     if (!session || session.status !== 'playing') return;
-    const aiSlot = session.playerSlot === 1 ? 2 : 1;
-    const currentSeq = session.seq;
+    const s = session;
+    const aiSlot = s.playerSlot === 1 ? 2 : 1;
+    const request = ++aiRequestSeq;
+    s.aiRequest = request;
+    const current = () => session === s && s.aiRequest === request && s.status === 'playing';
 
     setTimeout(() => {
-        if (!session || session.seq !== currentSeq || session.status !== 'playing') return;
-
-        let bestCol = -1;
-        if (typeof Worker !== 'undefined') {
-            try {
-                if (!aiWorker) aiWorker = new Worker('ai-worker.js');
-                const reqId = Date.now();
-                aiWorker.onmessage = (e) => {
-                    if (session && session.seq === currentSeq && session.status === 'playing') {
-                        executeAIMove(e.data.col, aiSlot);
-                    }
-                };
-                aiWorker.postMessage({
-                    id: reqId,
-                    board: session.board,
-                    player: aiSlot,
-                    level: session.aiLevel,
-                });
-                return;
-            } catch (err) {}
-        }
-
-        bestCol = ConnectFourAI.bestMove(session.board, aiSlot, session.aiLevel);
-        executeAIMove(bestCol, aiSlot);
+        if (!current()) return;
+        computeMove(s.board, aiSlot, s.aiLevel, (col) => {
+            if (current()) executeAIMove(col, aiSlot);
+        });
     }, 320);
 }
 
 function executeAIMove(col, aiSlot) {
-    if (!session || session.status !== 'playing') return;
     const row = ConnectFour.getLowestEmptyRow(session.board, col);
-    if (row === -1) return;
-
-    session.board[row][col] = aiSlot;
-    session.moves.push(col);
-
-    renderDisc(row, col, aiSlot, true);
-    playDropSound(row);
-    addMoveToHistory(session.moves.length - 1, col, aiSlot);
-    updateFullColumnsUI();
-
-    const winLine = ConnectFour.checkWinAt(session.board, row, col);
-    if (winLine) {
-        endGame(aiSlot, 'connect4', winLine);
-        return;
-    }
-
-    if (ConnectFour.isBoardFull(session.board)) {
-        endGame(0, 'draw_board');
-        return;
-    }
-
-    session.turnSlot = session.playerSlot;
-    session.turnStartedMs = Date.now();
-    updateTurnIndicator();
+    if (row !== -1) placeDisc(col, row, aiSlot);
 }
 
 // ==================== ONLINE MULTIPLAYER ====================
@@ -648,12 +688,18 @@ function setupOnlineSession(code, token, slot, isPublic) {
         timeControl: 0,
         p1Ms: 0,
         p2Ms: 0,
+        turnStartedMs: Date.now(),
         lastMessageId: 0,
+        players: [],
+        drawOffer: null,
+        rematchSent: false,
     };
+    sessionSet('c4_session', JSON.stringify({ code, token, slot, isPublic }));
+    $('chat-list').innerHTML = '';
 
     if (isPublic) {
         $('waiting-title').textContent = t('searching_title');
-        $('waiting-public-desc').textContent = t('searching_desc', { language: currentLang.toUpperCase() });
+        $('waiting-public-desc').textContent = t('searching_desc', { language: languageName() });
         $('waiting-private').classList.add('hidden');
     } else {
         $('waiting-title').textContent = t('waiting_title');
@@ -673,120 +719,171 @@ function startPolling() {
 }
 
 async function pollServer() {
-    if (!session || session.mode !== 'online' || !session.token) return;
+    const s = session;
+    if (!s || s.mode !== 'online' || !s.token) return;
+    if (s.polling) { s.pollAgain = true; return; }
 
+    s.polling = true;
     const res = await api('poll', {
-        token: session.token,
-        since: session.lastMessageId || 0,
+        token: s.token,
+        since: s.lastMessageId || 0,
     });
+    s.polling = false;
+    if (session !== s) return;
 
     if (res.error) {
         if (res.error === 'invalid_session') {
-            clearInterval(pollTimer);
             showError('invalid_session');
-            showScreen('lobby');
+            resetToLobby();
         }
         return;
     }
 
     handlePollUpdate(res);
+    if (s.pollAgain) {
+        s.pollAgain = false;
+        pollServer();
+    }
 }
 
 function handlePollUpdate(data) {
-    if (!session) return;
+    const s = session;
 
-    session.code = data.code;
-    session.firstSlot = data.firstSlot;
-    session.timeControl = data.timeControl;
-    session.p1Ms = data.p1Ms;
-    session.p2Ms = data.p2Ms;
+    s.code = data.code;
+    s.firstSlot = data.firstSlot;
+    s.mySlot = data.mySlot; // Two players searching at once can be moved to the other's room
+    s.timeControl = data.timeControl;
+    s.p1Ms = data.p1Ms;
+    s.p2Ms = data.p2Ms;
+    s.turnStartedMs = Date.now();
+    s.players = data.players;
+    s.drawOffer = data.drawOffer;
 
     const p1 = data.players.find(p => p.slot === 1);
     const p2 = data.players.find(p => p.slot === 2);
-    if (p1) { session.p1Name = p1.name; session.p1Points = p1.points2; }
-    if (p2) { session.p2Name = p2.name; session.p2Points = p2.points2; }
+    if (p1) { s.p1Name = p1.name; s.p1Points = p1.points2; }
+    if (p2) { s.p2Name = p2.name; s.p2Points = p2.points2; }
 
-    // State transition: Waiting -> Playing
-    if (session.status === 'waiting' && data.status === 'playing') {
-        session.status = 'playing';
+    // Both players accepted the rematch: a new round starts from an empty board
+    if (s.round && data.round !== s.round) {
+        s.status = 'waiting';
+        s.moves = [];
+        s.board = ConnectFour.createBoard();
+        s.rematchSent = false;
+        showModal('gameover-overlay', false);
+    }
+    s.round = data.round;
+
+    if (s.status === 'waiting' && data.status !== 'waiting') {
+        s.status = 'playing';
         setupGameScreenUI();
         showScreen('game');
         startClock();
     }
 
-    // Moves sync
+    // Moves sync (a reload brings many at once: they appear without the drop animation)
     const serverMoves = data.moves || [];
-    if (serverMoves.length > session.moves.length) {
-        for (let i = session.moves.length; i < serverMoves.length; i++) {
+    const missing = serverMoves.length - s.moves.length;
+    if (missing > 0) {
+        for (let i = s.moves.length; i < serverMoves.length; i++) {
             const col = parseInt(serverMoves[i], 10);
-            const player = (i % 2 === 0) ? session.firstSlot : (session.firstSlot === 1 ? 2 : 1);
-            const row = ConnectFour.getLowestEmptyRow(session.board, col);
-            if (row !== -1) {
-                session.board[row][col] = player;
-                renderDisc(row, col, player, true);
-                playDropSound(row);
-                addMoveToHistory(i, col, player);
-            }
+            const player = (i % 2 === 0) ? s.firstSlot : (s.firstSlot === 1 ? 2 : 1);
+            const row = ConnectFour.getLowestEmptyRow(s.board, col);
+            if (row === -1) continue;
+            s.board[row][col] = player;
+            renderDisc(row, col, player, missing === 1);
+            if (missing === 1) playDropSound(row);
+            addMoveToHistory(i, col, player);
         }
-        session.moves = serverMoves;
+        s.moves = serverMoves;
         updateFullColumnsUI();
+        clearGuides();
     }
 
-    session.slotToMove = (session.moves.length % 2 === 0) ? session.firstSlot : (session.firstSlot === 1 ? 2 : 1);
-    updateTurnIndicator();
+    s.slotToMove = (s.moves.length % 2 === 0) ? s.firstSlot : (s.firstSlot === 1 ? 2 : 1);
 
-    // Check game termination from server
-    if (data.status === 'finished' && session.status !== 'finished') {
-        let winLine = null;
-        if (data.winningLine) {
-            winLine = data.winningLine.split('-').map(s => {
-                const [r, c] = s.split(',').map(Number);
-                return { r, c };
-            });
-        }
+    if (data.status === 'finished' && s.status !== 'finished') {
+        const winLine = data.winningLine ? data.winningLine.split('-').map(part => {
+            const [r, c] = part.split(',').map(Number);
+            return { r, c };
+        }) : null;
         const winner = data.result === '1-0' ? 1 : (data.result === '0-1' ? 2 : 0);
         endGame(winner, data.reason, winLine);
+    } else if (s.status !== 'waiting') {
+        updateTurnIndicator();
     }
 
-    // Incoming Chat messages
-    if (data.messages && data.messages.length > 0) {
-        data.messages.forEach(msg => {
-            appendChatMessage(msg.slot === session.mySlot ? 'me' : 'them', msg.text);
-            session.lastMessageId = Math.max(session.lastMessageId || 0, msg.id);
-        });
+    if (s.status !== 'waiting') {
+        updatePlayerBars();
+        updateClockDisplay();
+        renderBanner();
+        renderRematchStatus();
+    }
+    addChatMessages(data.messages || []);
+}
+
+// Draw offers and an opponent who lost the connection
+function renderBanner() {
+    const banner = $('banner');
+    const s = session;
+    let html = '';
+    let warn = false;
+
+    if (s && s.mode === 'online' && s.status === 'playing') {
+        const opp = s.players.find(p => p.slot !== s.mySlot);
+        if (s.drawOffer !== null && s.drawOffer !== s.mySlot) {
+            html = `<span>${escapeHtml(t('draw_offer_received', { name: opp ? opp.name : '' }))}</span>
+                <button type="button" class="btn btn-primary" data-draw-answer="1">${escapeHtml(t('accept'))}</button>
+                <button type="button" class="btn btn-secondary" data-draw-answer="0">${escapeHtml(t('decline'))}</button>`;
+        } else if (opp && !opp.online) {
+            warn = true;
+            html = `<span>${escapeHtml(t('opponent_offline', { sec: Math.min(opp.idle, CLAIM_AFTER_S) }))}</span>`;
+            if (opp.idle >= CLAIM_AFTER_S || opp.left) {
+                html += `<button type="button" class="btn btn-accent" data-claim-win>${escapeHtml(t('claim_win'))}</button>`;
+            }
+        }
     }
 
-    // Draw offer notification
-    if (data.drawOffer !== null && data.drawOffer !== session.mySlot && !session.drawOfferPrompted) {
-        session.drawOfferPrompted = true;
-        const oppName = session.mySlot === 1 ? session.p2Name : session.p1Name;
-        openConfirm(t('draw'), t('draw_offer_received', { name: oppName }), t('accept'), async () => {
-            await api('answer_draw', { token: session.token, accept: 1 });
-            session.drawOfferPrompted = false;
-        });
-    }
+    if (banner.dataset.html === html) return; // Buttons stay clickable between polls
+    banner.dataset.html = html;
+    banner.innerHTML = html;
+    banner.classList.toggle('warn', warn);
+    banner.classList.toggle('hidden', !html);
+}
+
+async function answerDraw(accept) {
+    const s = session;
+    const res = await api('answer_draw', { token: s.token, accept: accept ? 1 : 0 });
+    if (res.error) showError(res.error);
+    pollServer();
+}
+
+async function claimWin() {
+    const res = await api('claim_win', { token: session.token });
+    if (res.error) showError(res.error);
+    pollServer();
 }
 
 async function executeOnlineMove(col) {
-    const ply = session.moves.length;
+    const s = session;
+    s.moveInFlight = true; // A double tap must not send the same turn twice
+    clearGuides();
     const res = await api('move', {
-        token: session.token,
+        token: s.token,
         col,
-        ply,
+        ply: s.moves.length,
     });
-
-    if (res.error) {
-        showError(res.error);
-        pollServer();
-    } else {
-        pollServer();
-    }
+    s.moveInFlight = false;
+    if (session !== s) return;
+    if (res.error) showError(res.error);
+    pollServer();
 }
 
 // --- Clocks ---
 function startClock() {
     clearInterval(clockInterval);
     if (!session || session.timeControl <= 0) return;
+    session.turnStartedMs = Date.now();
 
     clockInterval = setInterval(() => {
         if (!session || session.status !== 'playing') {
@@ -849,35 +946,35 @@ function setupGameScreenUI() {
 
     $('mode-badge').textContent = t('tab_' + session.mode);
 
-    // Player bars
-    const topSlot = session.mySlot === 2 ? 1 : 2;
-    const bottomSlot = session.mySlot === 2 ? 2 : 1;
-
-    const nameTop = topSlot === 1 ? session.p1Name : session.p2Name;
-    const nameBottom = bottomSlot === 1 ? session.p1Name : session.p2Name;
-
-    $('name-top').textContent = nameTop;
-    $('name-bottom').textContent = nameBottom;
-
-    const isFlat = customPrefs.discStyle === 'flat';
-    $('avatar-top').style.background = isFlat ? `var(--disc-p${topSlot}-color)` : `var(--disc-p${topSlot}-grad)`;
-    $('avatar-bottom').style.background = isFlat ? `var(--disc-p${bottomSlot}-color)` : `var(--disc-p${bottomSlot}-grad)`;
-
-    const ptsTop = topSlot === 1 ? session.p1Points : session.p2Points;
-    const ptsBottom = bottomSlot === 1 ? session.p1Points : session.p2Points;
-    $('score-top').textContent = Math.floor(ptsTop / 2) + (ptsTop % 2 ? '½' : '') + ' pt';
-    $('score-bottom').textContent = Math.floor(ptsBottom / 2) + (ptsBottom % 2 ? '½' : '') + ' pt';
+    updatePlayerBars();
 
     // Controls visibility based on mode
     const isOnline = session.mode === 'online';
     $('chat').classList.toggle('hidden', !isOnline);
-    $('btn-hint').classList.toggle('hidden', isOnline);
-    $('btn-undo').classList.toggle('hidden', isOnline);
-    $('btn-draw').classList.toggle('hidden', !isOnline);
-    $('btn-chat-toggle').classList.toggle('hidden', !isOnline);
+    $('btn-chat-toggle').classList.remove('has-unread');
+    closePanel();
+    renderBanner();
 
     updateTurnIndicator();
     updateClockDisplay();
+}
+
+function updatePlayerBars() {
+    const topSlot = session.mySlot === 2 ? 1 : 2;
+    const bottomSlot = session.mySlot === 2 ? 2 : 1;
+    const isFlat = customPrefs.discStyle === 'flat';
+
+    [['top', topSlot], ['bottom', bottomSlot]].forEach(([side, slot]) => {
+        $('name-' + side).textContent = slot === 1 ? session.p1Name : session.p2Name;
+        $('avatar-' + side).style.background = `var(--disc-p${slot}-${isFlat ? 'color' : 'grad'})`;
+        $('score-' + side).textContent = formatPoints(slot === 1 ? session.p1Points : session.p2Points) + ' pt';
+
+        // Connection dot only where there is a connection to show
+        const dot = $('dot-online-' + side);
+        const player = session.mode === 'online' ? (session.players || []).find(p => p.slot === slot) : null;
+        dot.classList.toggle('hidden', !player);
+        dot.classList.toggle('offline', !!player && !player.online);
+    });
 }
 
 // --- End Game Flow ---
@@ -889,8 +986,9 @@ const GAMEOVER_ICONS = {
 };
 
 function endGame(winner, reason, winLine = null) {
-    if (!session) return;
-    session.status = 'finished';
+    const s = session;
+    if (!s || s.status === 'finished') return;
+    s.status = 'finished';
     clearInterval(clockInterval);
 
     if (winLine) {
@@ -900,25 +998,19 @@ function endGame(winner, reason, winLine = null) {
 
     const titleEl = $('gameover-title');
     const textEl = $('gameover-text');
-    const scoreEl = $('score-line');
     const iconEl = $('gameover-icon');
 
-    const p1 = session.p1Name;
-    const p2 = session.p2Name;
-
-    let isMe = false;
-    let winName = '';
+    const p1 = s.p1Name;
+    const p2 = s.p2Name;
+    const winName = winner === 1 ? p1 : p2;
+    const isMe = s.mode !== 'local' && winner === s.mySlot;
 
     if (winner === 0) {
         titleEl.textContent = t('game_draw');
-        textEl.textContent = t('reason_' + reason) || '';
+        textEl.textContent = t('reason_' + reason);
         iconEl.innerHTML = GAMEOVER_ICONS.draw;
     } else {
-        winName = winner === 1 ? p1 : p2;
-        isMe = (session.mode === 'online' && winner === session.mySlot) ||
-               (session.mode === 'ai' && winner === session.playerSlot);
-
-        if (session.mode === 'local') {
+        if (s.mode === 'local') {
             titleEl.textContent = t('won_the_game', { name: winName });
             iconEl.innerHTML = GAMEOVER_ICONS.trophy;
         } else if (isMe) {
@@ -928,108 +1020,184 @@ function endGame(winner, reason, winLine = null) {
             titleEl.textContent = t('you_lost');
             iconEl.innerHTML = GAMEOVER_ICONS.lose;
         }
-        textEl.textContent = t('reason_' + reason, { name: winner === 1 ? p2 : p1 }) || '';
-
-        if (winner === 1) session.p1Points += 2;
-        else session.p2Points += 2;
+        textEl.textContent = t('reason_' + reason, { name: winner === 1 ? p2 : p1 });
     }
 
-    scoreEl.textContent = t('score_tracker', {
-        p1, s1: Math.floor(session.p1Points / 2) + (session.p1Points % 2 ? '½' : ''),
-        p2, s2: Math.floor(session.p2Points / 2) + (session.p2Points % 2 ? '½' : '')
-    });
+    // Online the server keeps the score
+    if (s.mode !== 'online') {
+        if (winner === 0) { s.p1Points += 1; s.p2Points += 1; }
+        else if (winner === 1) s.p1Points += 2;
+        else s.p2Points += 2;
+    }
 
-    $('btn-rematch').textContent = t('rematch');
+    $('score-line').textContent = t('score_tracker', { p1, s1: formatPoints(s.p1Points), p2, s2: formatPoints(s.p2Points) });
+    $('btn-rematch').disabled = false;
     $('rematch-status').textContent = '';
 
     const ind = $('turn-indicator');
     if (ind) {
-        if (session.mode !== 'local') {
-            ind.textContent = isMe ? t('you_won') : (winner === 0 ? t('game_draw') : t('you_lost'));
-        } else {
-            ind.textContent = winner === 0 ? t('game_draw') : t('won_the_game', { name: winName });
-        }
+        if (winner === 0) ind.textContent = t('game_draw');
+        else if (s.mode === 'local') ind.textContent = t('won_the_game', { name: winName });
+        else ind.textContent = isMe ? t('you_won') : t('you_lost');
     }
-    const barTop = $('bar-top');
-    const barBottom = $('bar-bottom');
-    if (barTop) barTop.classList.remove('active-turn');
-    if (barBottom) barBottom.classList.remove('active-turn');
+    $('bar-top').classList.remove('active-turn');
+    $('bar-bottom').classList.remove('active-turn');
+
+    updatePlayerBars();
+    renderActions();
+    renderBanner();
+    clearGuides();
 
     setTimeout(() => {
-        showModal('gameover-overlay', true);
-    }, 700);
+        if (session === s && s.status === 'finished') showModal('gameover-overlay', true);
+    }, winLine ? 1000 : 300);
+}
+
+function renderRematchStatus() {
+    const s = session;
+    if (!s || s.mode !== 'online' || s.status !== 'finished') return;
+    const me = s.players.find(p => p.slot === s.mySlot);
+    const opp = s.players.find(p => p.slot !== s.mySlot);
+    if (me && me.wantsRematch) s.rematchSent = true;
+
+    let status = '';
+    if (!opp || opp.left) status = t('opponent_left');
+    else if (s.rematchSent) status = t('rematch_requested');
+    else if (opp.wantsRematch) status = t('rematch_offer', { name: opp.name });
+
+    $('rematch-status').textContent = status;
+    $('btn-rematch').disabled = s.rematchSent || !opp || opp.left;
 }
 
 // Rematch click
 async function triggerRematch() {
-    if (!session) return;
+    const s = session;
+    if (!s) return;
 
-    if (session.mode === 'online') {
-        $('rematch-status').textContent = t('rematch_requested');
-        await api('rematch', { token: session.token });
-        showModal('gameover-overlay', false);
-    } else {
-        // Swap who starts
-        session.firstSlot = session.firstSlot === 1 ? 2 : 1;
-        session.turnSlot = session.firstSlot;
-        session.moves = [];
-        session.board = ConnectFour.createBoard();
-        session.status = 'playing';
-        session.turnStartedMs = Date.now();
-        if (session.timeControl > 0) {
-            session.p1Ms = session.timeControl * 1000;
-            session.p2Ms = session.timeControl * 1000;
+    if (s.mode === 'online') {
+        s.rematchSent = true;
+        renderRematchStatus();
+        const res = await api('rematch', { token: s.token });
+        if (res.error) {
+            s.rematchSent = false;
+            showError(res.error);
         }
+        pollServer(); // The result stays open until the opponent answers
+        return;
+    }
 
-        showModal('gameover-overlay', false);
-        setupGameScreenUI();
-        startClock();
+    // Swap who starts
+    s.aiRequest = 0;
+    s.firstSlot = s.firstSlot === 1 ? 2 : 1;
+    s.turnSlot = s.firstSlot;
+    s.moves = [];
+    s.board = ConnectFour.createBoard();
+    s.status = 'playing';
+    if (s.timeControl > 0) {
+        s.p1Ms = s.timeControl * 1000;
+        s.p2Ms = s.timeControl * 1000;
+    }
 
-        if (session.mode === 'ai' && session.firstSlot !== session.playerSlot) {
-            triggerAIMove();
-        }
+    showModal('gameover-overlay', false);
+    setupGameScreenUI();
+    startClock();
+
+    if (s.mode === 'ai' && s.firstSlot !== s.playerSlot) {
+        triggerAIMove();
     }
 }
+
+// Leaves the current game (the server is told, so the opponent is not left waiting)
+async function leaveGame() {
+    const s = session;
+    resetToLobby();
+    if (s && s.mode === 'online' && s.token) await api('leave', { token: s.token });
+}
+
+function resetToLobby() {
+    clearInterval(pollTimer);
+    clearInterval(clockInterval);
+    session = null;
+    sessionSet('c4_session', null);
+    document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+    closePanel();
+    renderBanner();
+    showScreen('lobby');
+}
+
+function requestLeave() {
+    if (!session) return;
+    const started = session.status === 'playing' && (session.mode === 'online' || session.moves.length > 0);
+    if (started) openConfirm(t('confirm_leave_title'), t('confirm_leave_text'), t('leave'), leaveGame);
+    else leaveGame();
+}
+
+// Side panel: on phones it slides up from the action bar
+function togglePanel() {
+    const open = !$('side-panel').classList.contains('open');
+    $('side-panel').classList.toggle('open', open);
+    $('chat-backdrop').classList.toggle('open', open);
+    if (open) $('btn-chat-toggle').classList.remove('has-unread');
+}
+
+function closePanel() {
+    $('side-panel').classList.remove('open');
+    $('chat-backdrop').classList.remove('open');
+}
+
+// Android back key (see MainActivity): true means the page used it
+window.onAndroidBack = function () {
+    if (closeTopModal()) return true;
+    if ($('side-panel').classList.contains('open')) { closePanel(); return true; }
+    if (!$('gameover-overlay').classList.contains('hidden')) { showModal('gameover-overlay', false); return true; }
+    if (session) { requestLeave(); return true; }
+    return false;
+};
 
 // Hint & Undo
 function triggerHint() {
-    if (!session || session.status !== 'playing' || !isMyTurn()) return;
-    const currentSlot = session.mode === 'ai' ? session.playerSlot : session.turnSlot;
-    const bestCol = ConnectFourAI.bestMove(session.board, currentSlot, 'hard');
-    if (bestCol !== -1) {
+    if (!session || !isMyTurn() || session.mode === 'online') return;
+    const s = session;
+    const ply = s.moves.length;
+    const currentSlot = s.mode === 'ai' ? s.playerSlot : s.turnSlot;
+    $('btn-hint').disabled = true;
+
+    computeMove(s.board, currentSlot, 'hard', (bestCol) => {
+        if (session !== s || s.moves.length !== ply || s.status !== 'playing') return;
+        renderActions();
         const guide = document.querySelector(`.guide-indicator[data-col="${bestCol}"]`);
-        if (guide) {
-            guide.classList.add('active');
-            showToast(t('hint') + ': ' + t('col_label', { col: bestCol + 1 }));
-            setTimeout(() => guide.classList.remove('active'), 2500);
-        }
-    }
+        if (!guide) return;
+        guide.classList.add('active');
+        showToast(t('hint') + ': ' + t('col_label', { col: bestCol + 1 }));
+        setTimeout(() => guide.classList.remove('active'), 2500);
+    });
 }
 
 function triggerUndo() {
-    if (!session || session.status !== 'playing' || session.mode === 'online') return;
-    if (session.moves.length === 0) return;
+    const s = session;
+    if (!s || s.mode === 'online' || !isMyTurn()) return;
 
-    const countToPop = (session.mode === 'ai') ? 2 : 1;
-    for (let i = 0; i < countToPop; i++) {
-        if (session.moves.length === 0) break;
-        session.moves.pop();
-    }
+    // Against the computer its reply goes too, so it is your turn again
+    const countToPop = s.mode === 'ai' ? 2 : 1;
+    if (s.moves.length < countToPop) return;
+    s.moves.length -= countToPop;
 
-    session.board = ConnectFour.createBoard();
+    s.aiRequest = 0;
+    s.board = ConnectFour.createBoard();
     clearBoardDOM();
     clearMoveHistory();
 
-    for (let ply = 0; ply < session.moves.length; ply++) {
-        const col = session.moves[ply];
-        const p = (ply % 2 === 0) ? session.firstSlot : (session.firstSlot === 1 ? 2 : 1);
-        const r = ConnectFour.getLowestEmptyRow(session.board, col);
-        session.board[r][col] = p;
+    for (let ply = 0; ply < s.moves.length; ply++) {
+        const col = s.moves[ply];
+        const p = (ply % 2 === 0) ? s.firstSlot : (s.firstSlot === 1 ? 2 : 1);
+        const r = ConnectFour.getLowestEmptyRow(s.board, col);
+        s.board[r][col] = p;
         renderDisc(r, col, p, false);
         addMoveToHistory(ply, col, p);
     }
 
-    session.turnSlot = (session.moves.length % 2 === 0) ? session.firstSlot : (session.firstSlot === 1 ? 2 : 1);
+    s.turnSlot = (s.moves.length % 2 === 0) ? s.firstSlot : (s.firstSlot === 1 ? 2 : 1);
+    s.turnStartedMs = Date.now();
     updateFullColumnsUI();
     updateTurnIndicator();
 }
@@ -1043,6 +1211,18 @@ function appendChatMessage(type, text) {
     li.textContent = text;
     list.appendChild(li);
     list.scrollTop = list.scrollHeight;
+}
+
+// Messages arrive only from the poll, in order: nothing is shown twice or skipped
+function addChatMessages(list) {
+    const s = session;
+    list.forEach(msg => {
+        if (msg.id <= s.lastMessageId) return;
+        s.lastMessageId = msg.id;
+        const mine = msg.slot === s.mySlot;
+        appendChatMessage(mine ? 'me' : 'them', msg.text);
+        if (!mine && !$('side-panel').classList.contains('open')) $('btn-chat-toggle').classList.add('has-unread');
+    });
 }
 
 function setBusy(btn, busy) {
@@ -1136,47 +1316,45 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-undo').addEventListener('click', triggerUndo);
 
     $('btn-resign').addEventListener('click', () => {
+        if (!session || session.status !== 'playing') return;
         openConfirm(t('confirm_resign_title'), t('confirm_resign_text'), t('resign'), async () => {
-            showModal('confirm-overlay', false);
-            if (session && session.mode === 'online') {
-                await api('resign', { token: session.token });
-            } else if (session) {
-                const opp = session.turnSlot === 1 ? 2 : 1;
-                endGame(opp, 'resign');
+            const s = session;
+            if (!s || s.status !== 'playing') return;
+            if (s.mode === 'online') {
+                const res = await api('resign', { token: s.token });
+                if (res.error) showError(res.error);
+                pollServer();
+            } else {
+                // On one device the player to move gives up; against the computer it is always you
+                const loser = s.mode === 'ai' ? s.playerSlot : s.turnSlot;
+                endGame(loser === 1 ? 2 : 1, 'resign');
             }
         });
     });
 
     $('btn-draw').addEventListener('click', () => {
-        if (!session || session.mode !== 'online') return;
+        if (!session || session.mode !== 'online' || session.status !== 'playing') return;
         openConfirm(t('confirm_draw_title'), t('confirm_draw_text'), t('draw'), async () => {
-            showModal('confirm-overlay', false);
-            await api('offer_draw', { token: session.token });
-            showToast(t('draw_offered'));
+            const res = await api('offer_draw', { token: session.token });
+            if (res.error) showError(res.error);
+            else showToast(t('draw_offered'));
+            pollServer();
         });
     });
 
-    $('btn-leave-game').addEventListener('click', () => {
-        openConfirm(t('confirm_leave_title'), t('confirm_leave_text'), t('leave'), async () => {
-            showModal('confirm-overlay', false);
-            if (session && session.mode === 'online') {
-                await api('leave', { token: session.token });
-                clearInterval(pollTimer);
-            }
-            clearInterval(clockInterval);
-            session = null;
-            showScreen('lobby');
-        });
+    $('banner').addEventListener('click', (e) => {
+        const answer = e.target.closest('[data-draw-answer]');
+        if (answer) answerDraw(answer.dataset.drawAnswer === '1');
+        if (e.target.closest('[data-claim-win]')) claimWin();
     });
 
-    $('btn-leave-waiting').addEventListener('click', async () => {
-        if (session && session.token) {
-            await api('leave', { token: session.token });
-        }
-        clearInterval(pollTimer);
-        session = null;
-        showScreen('lobby');
+    $('btn-result').addEventListener('click', () => showModal('gameover-overlay', true));
+    $('btn-leave-game').addEventListener('click', requestLeave);
+    document.querySelector('.game-title').addEventListener('click', (e) => {
+        e.preventDefault();
+        requestLeave();
     });
+    $('btn-leave-waiting').addEventListener('click', leaveGame);
 
     // Audio toggle in header
     $('btn-audio-toggle').addEventListener('click', () => {
@@ -1185,21 +1363,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(customPrefs.sound ? t('sound_on') : t('sound_off'));
     });
 
-    // Mobile chat toggle
-    const sidePanel = $('side-panel');
-    const backdrop = $('chat-backdrop');
-    $('btn-chat-toggle').addEventListener('click', () => {
-        sidePanel.classList.toggle('open');
-        backdrop.classList.toggle('open');
-    });
-    $('btn-chat-close').addEventListener('click', () => {
-        sidePanel.classList.remove('open');
-        backdrop.classList.remove('open');
-    });
-    backdrop.addEventListener('click', () => {
-        sidePanel.classList.remove('open');
-        backdrop.classList.remove('open');
-    });
+    // Side panel on phones
+    $('btn-chat-toggle').addEventListener('click', togglePanel);
+    $('btn-moves-toggle').addEventListener('click', togglePanel);
+    $('btn-chat-close').addEventListener('click', closePanel);
+    $('chat-backdrop').addEventListener('click', closePanel);
 
     // Language selection (desktop and mobile)
     document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -1254,16 +1422,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $('btn-confirm-no').addEventListener('click', () => showModal('confirm-overlay', false));
     $('btn-confirm-yes').addEventListener('click', () => {
+        showModal('confirm-overlay', false);
         if (typeof confirmAction === 'function') confirmAction();
+    });
+
+    // Sheets close with Esc or a tap outside them
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeTopModal();
+    });
+    document.querySelectorAll('.modal').forEach(modal => {
+        if (modal.id === 'gameover-overlay') return;
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) showModal(modal.id, false);
+        });
     });
 
     // Game over actions
     $('btn-rematch').addEventListener('click', triggerRematch);
     $('btn-review').addEventListener('click', () => showModal('gameover-overlay', false));
-    $('btn-gameover-home').addEventListener('click', () => {
-        showModal('gameover-overlay', false);
-        showScreen('lobby');
-    });
+    $('btn-gameover-home').addEventListener('click', leaveGame);
     $('turn-indicator')?.addEventListener('click', () => {
         if (session && session.status === 'finished') {
             showModal('gameover-overlay', true);
@@ -1277,22 +1454,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = input.value.trim();
         if (!text || !session || session.mode !== 'online') return;
         input.value = '';
-        appendChatMessage('me', text);
         const res = await api('send_message', { token: session.token, text });
-        if (res.error) showError(res.error);
+        if (res.error) {
+            input.value = text;
+            showError(res.error);
+        }
+        pollServer();
     });
 
     // Waiting share buttons
     $('btn-copy-code').addEventListener('click', () => {
-        if (!session || !session.code) return;
-        navigator.clipboard.writeText(session.code);
-        showToast(t('copied'));
+        if (session && session.code) copyText(session.code, t('copied'));
     });
     $('btn-share-link').addEventListener('click', () => {
         if (!session || !session.code) return;
-        const url = `${window.location.origin}${window.location.pathname}?join=${session.code}`;
-        navigator.clipboard.writeText(url);
-        showToast(t('link_copied'));
+        copyText(`${window.location.origin}${window.location.pathname}?join=${session.code}`, t('link_copied'));
+    });
+
+    // Timers slow down in the background: catch up as soon as the player is back
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollServer();
     });
 
     // Check URL params for quick join (e.g. ?join=ABC123 or ?code=ABC123)
@@ -1304,6 +1485,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.mode-tab[data-tab="online"]').click();
         $('btn-join').disabled = clean.length !== 6;
         $('card-join').classList.add('highlight');
+    }
+
+    // A reload does not lose an online game
+    const saved = sessionGet('c4_session');
+    if (saved) {
+        try {
+            const { code, token, slot, isPublic } = JSON.parse(saved);
+            setupOnlineSession(code, token, slot, isPublic);
+        } catch (e) {
+            sessionSet('c4_session', null);
+        }
     }
 
     // App version in footer
@@ -1372,6 +1564,7 @@ function renderLogoFaces() {
 }
 
 window.onLanguageChanged = function(lang) {
+    $('random-desc').textContent = t('random_desc', { language: languageName() });
     if (playerName) {
         const greeting = $('greeting-text');
         if (greeting) greeting.textContent = t('greeting', { name: playerName });
@@ -1379,8 +1572,12 @@ window.onLanguageChanged = function(lang) {
     if (session) {
         const modeBadge = $('mode-badge');
         if (modeBadge) modeBadge.textContent = t('tab_' + session.mode);
-        updateTurnIndicator();
+        if (session.status === 'playing') updateTurnIndicator();
+        renderBanner();
     }
+    document.querySelectorAll('.c4-column').forEach(col => {
+        col.setAttribute('aria-label', t('col_label', { col: Number(col.dataset.col) + 1 }));
+    });
     renderHowToModal();
     updateCustomPreview();
     renderCustomiseModal();
@@ -1529,3 +1726,6 @@ function saveAndApplyCustomPrefs() {
     storageSet('c4_prefs', JSON.stringify(customPrefs));
     applyCustomPrefs();
 }
+
+// Lets the game open without a connection (see sw.js)
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

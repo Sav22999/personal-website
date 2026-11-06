@@ -1,6 +1,6 @@
 <?php
 $description = 'FaceGuess – a two-player face-guessing game with brand-new characters every match. Play with a friend online, no sign-up needed.';
-$v = 18;
+$v = 20;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,7 +62,8 @@ $v = 18;
     }
     </script>
     <meta name="theme-color" content="#0F0F1A">
-    <meta name="color-scheme" content="dark">
+    <meta name="color-scheme" content="dark light">
+    <script src="theme.js?v=<?= $v ?>"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -81,6 +82,17 @@ $v = 18;
 <div id="app">
     <!-- Lobby -->
     <div id="screen-lobby" class="screen active">
+        <div class="theme-selector" id="theme-selector" role="radiogroup" data-i18n-title="theme_title">
+            <button type="button" class="theme-tab" data-theme-mode="auto" role="radio" data-i18n="theme_auto">Auto</button>
+            <button type="button" class="theme-tab" data-theme-mode="light" role="radio" data-i18n="theme_light">Light</button>
+            <button type="button" class="theme-tab" data-theme-mode="dark" role="radio" data-i18n="theme_dark">Dark</button>
+        </div>
+        <button type="button" class="theme-toggle" id="btn-theme" data-i18n-title="theme_title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none"/></svg>
+            <span data-theme-label="auto" data-i18n="theme_auto">Auto</span>
+            <span data-theme-label="light" data-i18n="theme_light" hidden>Light</span>
+            <span data-theme-label="dark" data-i18n="theme_dark" hidden>Dark</span>
+        </button>
         <div class="lang-selector" id="lang-selector">
             <button type="button" class="lang-btn" data-lang="en">EN</button>
             <button type="button" class="lang-btn" data-lang="it">IT</button>

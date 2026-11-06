@@ -191,9 +191,9 @@ const ConnectFourAI = (() => {
             return res.col !== null ? res.col : legal[0];
         }
 
-        // 3. Hard Mode: Depth 6 search (depth 7 if fewer moves left)
+        // 3. Hard Mode: searches deeper as the board fills up and there are fewer moves to explore
         const emptyCells = legal.reduce((acc, c) => acc + (C4.getLowestEmptyRow(board, c) + 1), 0);
-        const depth = emptyCells <= 14 ? 8 : (emptyCells <= 22 ? 7 : 6);
+        const depth = emptyCells <= 16 ? 12 : (emptyCells <= 26 ? 10 : 8);
 
         const res = minimax(board, depth, -Infinity, Infinity, true, player, opponent);
         return res.col !== null ? res.col : legal[0];

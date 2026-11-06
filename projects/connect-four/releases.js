@@ -1,7 +1,62 @@
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.2.0';
 
 // Newest first. Each entry lists notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.2.0',
+        notes: {
+            en: ['New light theme: choose Auto, Light or Dark'],
+            it: ['Nuovo tema chiaro: scegli Auto, Chiaro o Scuro'],
+            es: ['Nuevo tema claro: elige Auto, Claro u Oscuro'],
+            fr: ['Nouveau thème clair : choisis Auto, Clair ou Sombre'],
+            de: ['Neues helles Design: wähle Auto, Hell oder Dunkel'],
+        },
+    },
+    {
+        version: '1.1.0',
+        notes: {
+            en: [
+                'Phones: hint, undo, resign, draw and chat are now always within reach in a bar under the board',
+                'Online: the winning move now appears for both players and rematches start properly',
+                'Online: a reloaded page returns to your game, and you can claim the win if your opponent disappears',
+                'Hard level is much stronger; discs now really fall down the column',
+                'New icon and new typefaces, served from this site with no third-party requests',
+                'The game also opens without a connection, for playing on one device or against the computer',
+            ],
+            it: [
+                'Telefoni: suggerimento, annulla, abbandona, patta e chat sono sempre a portata di mano in una barra sotto la plancia',
+                'Online: la mossa vincente ora compare a entrambi e la rivincita riparte correttamente',
+                "Online: ricaricando la pagina torni alla partita e puoi rivendicare la vittoria se l'avversario sparisce",
+                'Il livello Difficile è molto più forte; le fiches ora cadono davvero lungo la colonna',
+                'Nuova icona e nuovi caratteri, serviti da questo sito senza richieste a terzi',
+                'Il gioco si apre anche senza connessione, per giocare sullo stesso dispositivo o contro il computer',
+            ],
+            es: [
+                'Móviles: pista, deshacer, rendirse, tablas y chat están siempre a mano en una barra bajo el tablero',
+                'En línea: la jugada ganadora aparece ahora a ambos jugadores y la revancha se inicia correctamente',
+                'En línea: al recargar la página vuelves a tu partida y puedes reclamar la victoria si tu rival desaparece',
+                'El nivel Difícil es mucho más fuerte; las fichas ahora caen de verdad por la columna',
+                'Nuevo icono y nuevas tipografías, servidas desde este sitio sin peticiones a terceros',
+                'El juego también se abre sin conexión, para jugar en el mismo dispositivo o contra el ordenador',
+            ],
+            fr: [
+                'Téléphones : indice, annuler, abandonner, nulle et chat sont toujours à portée de main dans une barre sous la grille',
+                'En ligne : le coup gagnant apparaît désormais pour les deux joueurs et la revanche démarre correctement',
+                'En ligne : recharger la page vous ramène à votre partie et vous pouvez réclamer la victoire si votre adversaire disparaît',
+                'Le niveau Difficile est bien plus fort ; les jetons tombent désormais vraiment dans la colonne',
+                'Nouvelle icône et nouvelles polices, servies par ce site sans requête vers des tiers',
+                "Le jeu s'ouvre aussi sans connexion, pour jouer sur le même appareil ou contre l'ordinateur",
+            ],
+            de: [
+                'Smartphones: Tipp, Rückgängig, Aufgeben, Remis und Chat sind jetzt immer in einer Leiste unter dem Spielbrett erreichbar',
+                'Online: Der Gewinnzug erscheint jetzt bei beiden Spielern und die Revanche startet korrekt',
+                'Online: Nach dem Neuladen kehrst du zu deinem Spiel zurück und kannst den Sieg beanspruchen, wenn dein Gegner verschwindet',
+                'Die Stufe Schwer ist viel stärker; die Steine fallen jetzt wirklich durch die Spalte',
+                'Neues Symbol und neue Schriften, direkt von dieser Website ohne Anfragen an Dritte',
+                'Das Spiel startet auch ohne Verbindung, zum Spielen auf einem Gerät oder gegen den Computer',
+            ],
+        },
+    },
     {
         version: '1.0.1',
         notes: {

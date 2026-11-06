@@ -1,7 +1,17 @@
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.5.0';
 
 // Newest first. Each entry lists its notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.5.0',
+        notes: {
+            en: ['New light theme: choose Auto, Light or Dark'],
+            it: ['Nuovo tema chiaro: scegli Auto, Chiaro o Scuro'],
+            es: ['Nuevo tema claro: elige Auto, Claro u Oscuro'],
+            fr: ['Nouveau thème clair : choisis Auto, Clair ou Sombre'],
+            de: ['Neues helles Design: wähle Auto, Hell oder Dunkel'],
+        },
+    },
     {
         version: '1.4.2',
         notes: {

@@ -70,6 +70,10 @@ svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor;
 /* ---------- Home ---------- */
 .home { max-width: 980px; margin: 0 auto; padding: 28px 20px 40px; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 .topbar { display: flex; justify-content: flex-end; gap: 6px; }
+.topbar { align-items: center; }
+.topbar .theme-tabs { display: none; margin-right: auto; }
+.theme-tabs button { padding: 7px 13px; }
+@media (min-width: 641px) { .topbar .theme-tabs { display: flex; } .topbar .theme-cycle { display: none; } }
 .lang-pill { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; font-size: .85rem; }
 .hero { text-align: center; padding: 24px 0 26px; }
 .hero .logo { width: 84px; height: 84px; border-radius: 24px; box-shadow: 0 14px 36px color-mix(in srgb, var(--primary) 35%, transparent); }
@@ -89,6 +93,10 @@ svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor;
 .level .dots i.on { background: var(--primary); }
 .level small { color: var(--muted); font-size: .78rem; }
 .resume-card { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 16px; background: var(--primary-soft); color: var(--on-primary-soft); margin-bottom: 12px; cursor: pointer; border: 0; width: 100%; text-align: left; }
+.resume-wrap { position: relative; margin-bottom: 12px; }
+.resume-wrap .resume-card { margin-bottom: 0; padding-right: 54px; }
+.resume-discard { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); width: 38px; height: 38px; border: 0; border-radius: 11px; background: transparent; color: var(--on-primary-soft); display: grid; place-items: center; cursor: pointer; }
+.resume-discard:hover { background: color-mix(in srgb, var(--on-primary-soft) 14%, transparent); }
 .resume-card .mini { width: 48px; height: 48px; flex: none; }
 .resume-card strong { display: block; }
 .resume-card span { font-size: .85rem; opacity: .85; }

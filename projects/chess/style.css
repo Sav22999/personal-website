@@ -999,3 +999,34 @@ body.chat-open .chat-backdrop { opacity: 1; pointer-events: auto; }
     .game-header { padding-top: calc(4px + var(--safe-top)); padding-bottom: 4px; }
     .board-area { padding-top: 4px; padding-bottom: 4px; }
 }
+
+/* ---------- Theme: tabs on desktop, one button on phones ---------- */
+.theme-selector { position: absolute; top: calc(16px + var(--safe-top)); left: 16px; display: flex; gap: 2px; padding: 3px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); z-index: 20; }
+.theme-tab { border: 0; background: transparent; color: var(--text-muted); font-family: inherit; font-size: 12px; font-weight: 800; padding: 6px 11px; border-radius: 9px; cursor: pointer; transition: color .15s, background .15s; }
+.theme-tab:hover { color: var(--text); }
+.theme-tab.active { background: var(--accent); color: #fff; }
+.theme-toggle { display: none; position: absolute; top: calc(14px + var(--safe-top)); left: 14px; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; z-index: 20; }
+.theme-toggle svg { color: var(--accent-light); }
+@media (max-width: 640px) {
+    .theme-selector { display: none; }
+    .theme-toggle { display: inline-flex; }
+}
+
+/* ---------- Light theme ---------- */
+:root { color-scheme: dark; }
+:root[data-theme="light"] {
+    --accent: #17804B; --accent-light: #146C40; --accent-dark: #136B3F;
+    --bg: #F3F7F4; --bg-card: #FFFFFF; --bg-card-hover: #E9F1EC; --bg-surface: #F8FBF9; --avatar-bg: #DCE9E0;
+    --text: #14201A; --text-muted: #4F6358; --text-dim: #7C8E83;
+    --green: #00836B; --red: #D63B3B; --yellow: #946200;
+    --border: rgba(20, 50, 35, 0.13); --shadow: 0 10px 30px rgba(20, 50, 35, 0.1);
+    color-scheme: light;
+}
+:root[data-theme="light"] .donate-reason { background: rgba(0, 0, 0, 0.025); }
+:root[data-theme="light"] .step.done .step-btn:hover { background: rgba(0, 0, 0, 0.05); }
+:root[data-theme="light"] .btn-secondary.loading::after { border-color: rgba(0, 0, 0, 0.15); border-top-color: var(--text); }
+
+:root[data-theme="light"] .btn-secondary:hover:not(:disabled), :root[data-theme="light"] .zoom-close:hover { background: var(--bg-card-hover); }
+:root[data-theme="light"] .btn-accent, :root[data-theme="light"] .ti.check { background: #FACC15; }
+:root[data-theme="light"] .banner.warn, :root[data-theme="light"] .tip-facts .warn-text { color: var(--red); }
+:root[data-theme="light"] .move-row:nth-child(odd) { background: rgba(0, 0, 0, 0.03); }

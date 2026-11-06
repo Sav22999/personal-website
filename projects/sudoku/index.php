@@ -1,6 +1,6 @@
 <?php
 $description = 'Sudoku – the classic number puzzle, free in the browser. Four difficulty levels, pencil notes, tips that explain the next move, cell check. No sign-up.';
-$v = '2.0.5';
+$v = '2.1.2';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -57,7 +57,7 @@ $v = '2.0.5';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=<?= $v ?>">
-    <script>try{var t=localStorage.getItem('sudoku.theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+    <script>try{var t=JSON.parse(localStorage.getItem('sudoku.theme'));if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
 <div id="app"><noscript><p style="padding:24px">Sudoku needs JavaScript.</p></noscript></div>

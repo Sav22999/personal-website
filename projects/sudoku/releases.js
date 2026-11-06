@@ -1,6 +1,39 @@
 /* Sudoku — release notes (newest first). Each note is translated in the five languages. */
 window.SudokuReleases = [
   {
+    version: '2.1.1',
+    date: '2026-11-06',
+    notes: {
+      en: ['You can discard a saved game from the home screen'],
+      it: ['Puoi scartare una partita salvata dalla schermata iniziale'],
+      es: ['Puedes descartar una partida guardada desde la pantalla inicial'],
+      fr: ['Tu peux abandonner une partie enregistrée depuis l’écran d’accueil'],
+      de: ['Du kannst ein gespeichertes Spiel auf dem Startbildschirm verwerfen'],
+    },
+  },
+  {
+    version: '2.1.0',
+    date: '2026-11-06',
+    notes: {
+      en: ['On desktop you can pick Auto, Light or Dark at a glance', 'The chosen theme is now remembered when you come back'],
+      it: ['Su desktop scegli Auto, Chiaro o Scuro a colpo d’occhio', 'Il tema scelto ora resta anche quando torni'],
+      es: ['En el ordenador eliges Auto, Claro u Oscuro de un vistazo', 'El tema elegido ahora se recuerda cuando vuelves'],
+      fr: ['Sur ordinateur, choisis Auto, Clair ou Sombre en un coup d’œil', 'Le thème choisi est maintenant conservé à ton retour'],
+      de: ['Am Computer wählst du Auto, Hell oder Dunkel auf einen Blick', 'Das gewählte Design bleibt jetzt erhalten, wenn du zurückkommst'],
+    },
+  },
+  {
+    version: '2.0.6',
+    date: '2026-11-06',
+    notes: {
+      en: ['“New game” and “Restart this puzzle” work again after you confirm'],
+      it: ['«Nuova partita» e «Ricomincia questo puzzle» tornano a funzionare dopo la conferma'],
+      es: ['«Nueva partida» y «Reiniciar este puzle» vuelven a funcionar tras confirmar'],
+      fr: ['« Nouvelle partie » et « Recommencer cette grille » fonctionnent à nouveau après confirmation'],
+      de: ['„Neues Spiel“ und „Dieses Rätsel neu starten“ funktionieren nach dem Bestätigen wieder'],
+    },
+  },
+  {
     version: '2.0.2',
     date: '2026-11-04',
     notes: {

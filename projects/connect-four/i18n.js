@@ -74,6 +74,7 @@ const translations = {
         computer: 'Computer',
 
         // Footer & general
+        theme_title: 'Theme', theme_auto: 'Auto', theme_light: 'Light', theme_dark: 'Dark',
         credit_by: 'A project by',
         credit_ai: 'Built with Claude AI',
         release_notes: 'Release notes',
@@ -123,6 +124,8 @@ const translations = {
         new_game: 'New game',
         rematch: 'Rematch',
         rematch_requested: 'Rematch requested…',
+        opponent_left: 'Your opponent has left the game.',
+        rematch_offer: '{name} wants a rematch!',
         your_turn: 'Your turn',
         their_turn: "{name}'s turn",
         computer_thinking: 'Computer is thinking…',
@@ -278,6 +281,7 @@ const translations = {
         computer: 'Computer',
 
         // Footer & general
+        theme_title: 'Tema', theme_auto: 'Auto', theme_light: 'Chiaro', theme_dark: 'Scuro',
         credit_by: 'Un progetto di',
         credit_ai: 'Sviluppato con Claude AI',
         release_notes: 'Note di rilascio',
@@ -327,6 +331,8 @@ const translations = {
         new_game: 'Nuova partita',
         rematch: 'Rivincita',
         rematch_requested: 'Rivincita richiesta…',
+        opponent_left: 'Il tuo avversario ha lasciato la partita.',
+        rematch_offer: '{name} vuole la rivincita!',
         your_turn: 'Tocca a te',
         their_turn: 'Tocca a {name}',
         computer_thinking: 'Il computer sta pensando…',
@@ -468,6 +474,7 @@ const translations = {
         player_disc_2: 'Segundo jugador',
         random_color: 'Aleatorio',
         computer: 'Ordenador',
+        theme_title: 'Tema', theme_auto: 'Auto', theme_light: 'Claro', theme_dark: 'Oscuro',
         credit_by: 'Un proyecto de',
         credit_ai: 'Desarrollado con Claude AI',
         release_notes: 'Notas de versión',
@@ -513,6 +520,8 @@ const translations = {
         new_game: 'Nueva partida',
         rematch: 'Revancha',
         rematch_requested: 'Revancha solicitada…',
+        opponent_left: 'Tu rival ha abandonado la partida.',
+        rematch_offer: '¡{name} quiere la revancha!',
         your_turn: 'Tu turno',
         their_turn: 'Turno de {name}',
         computer_thinking: 'El ordenador está pensando…',
@@ -646,6 +655,7 @@ const translations = {
         player_disc_2: 'Second joueur',
         random_color: 'Aléatoire',
         computer: 'Ordinateur',
+        theme_title: 'Thème', theme_auto: 'Auto', theme_light: 'Clair', theme_dark: 'Sombre',
         credit_by: 'Un projet de',
         credit_ai: 'Conçu avec Claude AI',
         release_notes: 'Notes de version',
@@ -691,6 +701,8 @@ const translations = {
         new_game: 'Nouvelle partie',
         rematch: 'Revanche',
         rematch_requested: 'Revanche demandée…',
+        opponent_left: 'Votre adversaire a quitté la partie.',
+        rematch_offer: '{name} veut une revanche !',
         your_turn: 'À toi de jouer',
         their_turn: 'Au tour de {name}',
         computer_thinking: 'L’ordinateur réfléchit…',
@@ -824,6 +836,7 @@ const translations = {
         player_disc_2: 'Zweiter Spieler',
         random_color: 'Zufällig',
         computer: 'Computer',
+        theme_title: 'Design', theme_auto: 'Auto', theme_light: 'Hell', theme_dark: 'Dunkel',
         credit_by: 'Ein Projekt von',
         credit_ai: 'Erstellt mit Claude AI',
         release_notes: 'Versionshinweise',
@@ -869,6 +882,8 @@ const translations = {
         new_game: 'Neues Spiel',
         rematch: 'Revanche',
         rematch_requested: 'Revanche angefordert…',
+        opponent_left: 'Dein Gegner hat das Spiel verlassen.',
+        rematch_offer: '{name} möchte eine Revanche!',
         your_turn: 'Du bist am Zug',
         their_turn: '{name} ist am Zug',
         computer_thinking: 'Computer denkt nach…',
@@ -1010,7 +1025,7 @@ function t(key, vars = {}) {
     let str = (translations[currentLang] && translations[currentLang][key]) ||
               (translations['en'] && translations['en'][key]) || key;
     for (const [k, v] of Object.entries(vars)) {
-        str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), v);
+        str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), () => v);
     }
     return str;
 }

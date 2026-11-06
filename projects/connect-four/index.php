@@ -1,6 +1,6 @@
 <?php
 $description = 'Free online Connect Four (Forza Quattro): play a friend with a room code, a random opponent, on the same device or against the computer. Customise disc colors, clock and chat. No sign-up.';
-$v = 10;
+$v = 13;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';
@@ -10,6 +10,8 @@ $ICON_WAND = '<path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M17.8 6.2L19
 $ICON_PALETTE = '<circle cx="13.5" cy="6.5" r="1.3"/><circle cx="17.5" cy="10.5" r="1.3"/><circle cx="8.5" cy="7.5" r="1.3"/><circle cx="6.5" cy="12.5" r="1.3"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.8-1.7 1.7-1.7H16c3.1 0 5.6-2.5 5.6-5.6C21.6 6 17.3 2 12 2z"/>';
 $ICON_BOOK = '<path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5A2.5 2.5 0 014 18.5"/>';
 $ICON_LEAVE = '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>';
+$ICON_LIST = '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>';
+$ICON_TROPHY = '<path d="M8 4h8v7a4 4 0 01-8 0zM8 6H4a4 4 0 004 5M16 6h4a4 4 0 01-4 5M12 15v4M8 21h8"/>';
 $ICON_CHAT = '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>';
 $ICON_SOUND = '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>';
 $ICON_CHECK = $icon('<path d="M5 12l5 5L20 7"/>', 18, 3);
@@ -88,7 +90,8 @@ $timeChips = function ($name, $default) {
     }
     </script>
     <meta name="theme-color" content="#12061A">
-    <meta name="color-scheme" content="dark">
+    <meta name="color-scheme" content="dark light">
+    <script src="theme.js?v=<?= $v ?>"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -97,16 +100,26 @@ $timeChips = function ($name, $default) {
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preload" href="fonts/fredoka-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="style.css?v=<?= $v ?>">
 </head>
-<body data-board="plum">
+<body data-board="plum" data-v="<?= $v ?>">
 
 <div id="app">
     <!-- Lobby Screen -->
     <div id="screen-lobby" class="screen active">
+        <div class="theme-selector" id="theme-selector" role="radiogroup" data-i18n-title="theme_title">
+            <button type="button" class="theme-tab" data-theme-mode="auto" role="radio" data-i18n="theme_auto">Auto</button>
+            <button type="button" class="theme-tab" data-theme-mode="light" role="radio" data-i18n="theme_light">Light</button>
+            <button type="button" class="theme-tab" data-theme-mode="dark" role="radio" data-i18n="theme_dark">Dark</button>
+        </div>
+        <button type="button" class="theme-toggle" id="btn-theme" data-i18n-title="theme_title">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none"/></svg>
+            <span data-theme-label="auto" data-i18n="theme_auto">Auto</span>
+            <span data-theme-label="light" data-i18n="theme_light" hidden>Light</span>
+            <span data-theme-label="dark" data-i18n="theme_dark" hidden>Dark</span>
+        </button>
         <div class="lang-selector" id="lang-selector">
             <button type="button" class="lang-btn" data-lang="en">EN</button>
             <button type="button" class="lang-btn" data-lang="it">IT</button>
@@ -303,6 +316,7 @@ $timeChips = function ($name, $default) {
                 <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span data-i18n="credit_ai">Built with Claude AI</span></span>
             </div>
             <div class="footer-actions">
+                <a class="version-btn privacy-link" href="privacy.html">Privacy</a>
                 <button type="button" class="donate-btn" id="btn-donate" data-i18n-title="donate_title">
                     <?= $icon($ICON_HEART, 13, 2.2) ?>
                     <span data-i18n="donate">Donate</span>
@@ -426,9 +440,11 @@ $timeChips = function ($name, $default) {
                     <div class="game-actions" id="game-actions">
                         <button type="button" class="action-btn" id="btn-hint"><?= $icon($ICON_WAND, 18, 2) ?><span data-i18n="hint">Hint</span></button>
                         <button type="button" class="action-btn" id="btn-undo"><?= $icon($ICON_UNDO, 18, 2) ?><span data-i18n="undo">Undo</span></button>
-                        <button type="button" class="action-btn hidden" id="btn-chat-toggle"><?= $icon($ICON_CHAT, 18, 2) ?><span data-i18n="chat_title">Chat</span></button>
+                        <button type="button" class="action-btn panel-toggle hidden" id="btn-chat-toggle"><?= $icon($ICON_CHAT, 18, 2) ?><span data-i18n="chat_title">Chat</span></button>
+                        <button type="button" class="action-btn panel-toggle hidden" id="btn-moves-toggle"><?= $icon($ICON_LIST, 18, 2) ?><span data-i18n="moves_title">Moves</span></button>
                         <button type="button" class="action-btn" id="btn-draw"><?= $icon($ICON_HANDSHAKE, 18, 2) ?><span data-i18n="draw">Draw</span></button>
                         <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 18, 2) ?><span data-i18n="resign">Resign</span></button>
+                        <button type="button" class="action-btn primary hidden" id="btn-result"><?= $icon($ICON_TROPHY, 18, 2) ?><span data-i18n="game_over">Game over</span></button>
                     </div>
                 </div>
             </aside>

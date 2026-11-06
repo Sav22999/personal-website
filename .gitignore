@@ -5,6 +5,7 @@ old/api/emoticolor/credentials.php
 projects/ripasso-fipav/lib/config.php
 projects/ripasso-fipav/sql/
 projects/*/api/db.php
+projects/cron/credentials.php
 .env
 .env.*
 
@@ -34,3 +35,18 @@ Thumbs.db
 
 # Temporary/debug files
 preview-icons.html
+
+# Android builds and keys
+android/keystore.properties
+projects/*/android/keystore.properties
+projects/*/android/**/*.jks
+projects/*/android/**/*.keystore
+projects/*/android/local.properties
+projects/*/android/.gradle/
+projects/*/android/.idea/
+projects/*/android/build/
+projects/*/android/app/build/
+projects/*/android/app/release/
+projects/*/android/captures/
+*.apk
+*.aab

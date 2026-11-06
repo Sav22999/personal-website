@@ -56,6 +56,7 @@
     trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/>',
     help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>',
     tick: '<path d="M5 12l5 5L20 7"/>',
+    close: '<path d="M18 6L6 18M6 6l12 12"/>',
     info: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
     heart: '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>',
   };
@@ -82,7 +83,7 @@
     return new Promise(res => {
       const m = modal([h('h3', title), h('p.muted', text), h('div.actions',
         h('button.btn.btn-ghost', { onclick: () => { m.close(); res(false); } }, t('cancel')),
-        h('button.btn.btn-primary', { onclick: () => { m.close(); res(true); } }, okLabel))], { onclose: () => res(false) });
+        h('button.btn.btn-primary', { onclick: () => { res(true); m.close(); } }, okLabel))], { onclose: () => res(false) });
     });
   }
 
@@ -94,8 +95,8 @@
     if (th === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', th);
     const dark = th === 'dark' || (th === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
     document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.removeAttribute('media'); m.content = dark ? '#0B1120' : '#F4F7FC'; });
+    document.querySelectorAll('.theme-tabs button').forEach(b => { const on = b.dataset.mode === th; b.classList.toggle('sel', on); b.setAttribute('aria-checked', String(on)); });
   }
-  try { localStorage.setItem('sudoku.theme', store.get('theme', 'auto')); } catch (e) { /* no storage */ }
 
   // =================================================================== state
   let G = null;           // current game
@@ -315,12 +316,13 @@
       levels.appendChild(b);
     });
     app.replaceChildren(h('div.home',
-      h('div.topbar', langButton(), h('button.icon-btn', { title: t('theme'), 'aria-label': t('theme'), onclick: cycleTheme }, icon('moon'))),
+      h('div.topbar', themeTabs(), langButton(), h('button.icon-btn.theme-cycle', { type: 'button', title: t('theme'), 'aria-label': t('theme'), onclick: cycleTheme }, icon('moon'))),
       h('section.hero', h('img.logo', { src: 'icons/favicon.svg', alt: '' }), h('h1', 'Sudoku'), h('p', t('subtitle'))),
       h('div.home-grid',
         h('section.panel',
-          saved ? h('button.resume-card', { type: 'button', onclick: () => resume(saved) }, h('img.mini', { src: 'icons/favicon.svg', alt: '' }),
-            h('div', h('strong', t('continue_game')), h('span', `${t(saved.level)} · ${fmtTime(saved.elapsed)}`))) : null,
+          saved ? h('div.resume-wrap', h('button.resume-card', { type: 'button', onclick: () => resume(saved) }, h('img.mini', { src: 'icons/favicon.svg', alt: '' }),
+            h('div', h('strong', t('continue_game')), h('span', `${t(saved.level)} · ${fmtTime(saved.elapsed)}`))),
+            h('button.resume-discard', { type: 'button', title: t('discard_title'), 'aria-label': t('discard_title'), onclick: discardGame }, icon('close'))) : null,
           h('h2', t('level')), levels,
           h('button.btn.btn-primary.btn-block', { type: 'button', onclick: async () => {
             if (saved && !await confirmBox(t('confirm_new'), t('confirm_new_text'), t('start'))) return;
@@ -342,12 +344,22 @@
 
   function resume(saved) { G = saved; G.paused = false; sel = -1; tip = null; pencil = false; choosing = false; screen = 'game'; renderGame(); startTimer(); }
 
+  async function discardGame() {
+    if (!await confirmBox(t('confirm_discard'), t('confirm_discard_text'), t('discard_btn'))) return;
+    store.del('game');
+    showHome();
+  }
+
   function langButton() {
     return h('button.lang-pill', { type: 'button', onclick: showLanguages }, icon('globe'), I.getLang().toUpperCase());
   }
   function showLanguages() {
     const m = modal([h('h3', t('language')), h('div.menu-list.lang-list', Object.entries(I.LANGS).map(([k, label]) =>
       h('button', { type: 'button', onclick: () => { I.setLang(k); m.close(); screen === 'game' ? renderGame() : showHome(); } }, h('span', label), k === I.getLang() ? icon('tick') : null)))]);
+  }
+  function themeTabs() {
+    const th = store.get('theme', 'auto');
+    return h('div.seg.theme-tabs', { role: 'radiogroup', 'aria-label': t('theme') }, ['auto', 'light', 'dark'].map(k => h('button' + (k === th ? '.sel' : ''), { type: 'button', role: 'radio', 'aria-checked': String(k === th), 'data-mode': k, onclick: () => { store.set('theme', k); applyTheme(); } }, k === 'auto' ? 'Auto' : t('theme_' + k))));
   }
   function cycleTheme() {
     const next = { auto: 'light', light: 'dark', dark: 'auto' }[store.get('theme', 'auto')];
@@ -541,3 +553,6 @@
   applyTheme();
   showHome();
 })();
+
+// Lets the game open without a connection (see sw.js)
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
