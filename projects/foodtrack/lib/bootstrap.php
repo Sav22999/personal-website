@@ -23,7 +23,7 @@ const ROLE_LABELS = [
 const AUTH_COOKIE = 'foodtrack_auth';
 const SCHEMA_VERSION = 21;
 
-const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
+const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'dl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
 const NUTRISCORES = ['A', 'B', 'C', 'D', 'E'];
 // Storage environments of products and spaces: cold (freezer), cool (fridge), ambient (room temperature), warm
 const ENVIRONMENTS = ['cold', 'cool', 'ambient', 'warm'];

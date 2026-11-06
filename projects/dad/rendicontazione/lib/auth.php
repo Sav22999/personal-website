@@ -63,7 +63,7 @@ function user_set(int $id, array $fields): void
     $sets = [];
     $params = [];
     foreach ($fields as $column => $value) {
-        if (!in_array($column, ['name', 'avatar_url', 'google_sub', 'role', 'status', 'last_login_at'], true)) {
+        if (!in_array($column, ['name', 'email', 'avatar_url', 'google_sub', 'role', 'status', 'last_login_at'], true)) {
             throw new InvalidArgumentException('Invalid column');
         }
         $sets[] = "`$column` = ?";
@@ -167,6 +167,25 @@ function require_master(): array
 }
 
 /**
+ * The body of a web page, whatever its HTTP status, or null if it cannot be reached.
+ * cURL comes first because hosts such as Aruba forbid opening URLs with file_get_contents.
+ */
+function http_get(string $url): ?string
+{
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 5]);
+        $body = curl_exec($ch);
+        if ($body === false) error_log('rendicontazione: cURL: ' . curl_error($ch));
+    } else {
+        $context = stream_context_create(['http' => ['timeout' => 8, 'ignore_errors' => true]]);
+        $body = @file_get_contents($url, false, $context);
+        if ($body === false) error_log('rendicontazione: neither cURL nor allow_url_fopen can reach ' . parse_url($url, PHP_URL_HOST));
+    }
+    return is_string($body) ? $body : null;
+}
+
+/**
  * Checks a Google ID token with Google's tokeninfo endpoint.
  * Returns sub, email, name and picture.
  */
@@ -177,14 +196,10 @@ function verify_google_token(string $credential): array
     if (strlen($credential) > 4096 || !preg_match('/^[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+$/', $credential)) {
         fail('Accesso con Google non riuscito. Riprova.', 422, 'google_token');
     }
-    $ctx = stream_context_create([
-        'http' => ['timeout' => 8, 'ignore_errors' => true, 'header' => "User-Agent: RendicontazioneOre/2.0\r\n"],
-        'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
-    ]);
-    $response = @file_get_contents('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($credential), false, $ctx);
-    if ($response === false) fail('Non riesco a contattare Google. Riprova tra poco.', 502, 'google_network');
+    $response = http_get('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($credential));
+    $c = $response === null ? null : json_decode($response, true);
+    if (!is_array($c)) fail('Non riesco a contattare Google. Riprova tra poco.', 502, 'google_network');
 
-    $c = json_decode($response, true);
     $valid = is_array($c)
         && !empty($c['sub'])
         && hash_equals($clientId, (string)($c['aud'] ?? ''))
@@ -253,6 +268,18 @@ function pending_count(): int
 
 function users_list(): array
 {
-    $rows = db()->query('SELECT * FROM ' . t('users') . " ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, role DESC, name ASC")->fetchAll();
-    return array_map('user_public', $rows);
+    $rows = db()->query('SELECT u.*, (SELECT COUNT(*) FROM ' . t('days') . ' d WHERE d.user_id = u.id) AS day_count FROM ' . t('users') . " u ORDER BY CASE WHEN u.status = 'pending' THEN 0 ELSE 1 END, u.role DESC, u.name ASC")->fetchAll();
+    return array_map(function ($r) {
+        return user_public($r) + ['days' => (int)$r['day_count']];
+    }, $rows);
+}
+
+/** Removes an account with no hours. Whoever has hours can only be disabled, so nothing recorded gets lost. */
+function user_delete(int $id): void
+{
+    in_transaction(function () use ($id) {
+        foreach (['auth_tokens' => 'user_id', 'schedules' => 'user_id', 'history' => 'target_user_id', 'users' => 'id'] as $table => $column) {
+            db()->prepare('DELETE FROM ' . t($table) . " WHERE `$column` = ?")->execute([$id]);
+        }
+    });
 }

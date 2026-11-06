@@ -141,7 +141,8 @@ function kind_from_note(string $note): string
 /**
  * Turns the sheets into day snapshots. Months come from the sheet names, never from their order
  * (the original file has Ottobre before Settembre). Nothing is corrected silently: whatever does
- * not add up goes to the warnings for the person importing to check.
+ * not add up goes to the warnings for the person importing to check. A sheet may carry the year in
+ * its name ("Giugno 2023"), and a real date may repeat on every row of the same day.
  */
 function timesheet_parse(array $sheets, int $fallbackYear): array
 {
@@ -153,10 +154,23 @@ function timesheet_parse(array $sheets, int $fallbackYear): array
     }
     if ($year < 2000 || $year > 2100) throw new UserError("Non riesco a capire l'anno del foglio.");
 
+    $weekday_prefix = function (string $date): string {
+        return mb_substr(WEEKDAY_NAMES[(int)date('N', strtotime($date))], 0, 3);
+    };
+    // The first date of the same month after $after with that weekday, or null
+    $next_weekday = function (string $after, string $prefix) use ($weekday_prefix): ?string {
+        for ($i = 1; $i <= 7; $i++) {
+            $date = date('Y-m-d', strtotime("$after 12:00:00 +$i days"));
+            if (substr($date, 0, 7) !== substr($after, 0, 7)) return null;
+            if ($weekday_prefix($date) === $prefix) return $date;
+        }
+        return null;
+    };
+
     $days = [];
     $warnings = [];
     foreach ($sheets as $name => $rows) {
-        $month = array_search(mb_strtolower(trim($name)), MONTH_NAMES, true);
+        $month = array_search(mb_strtolower(trim((string)preg_replace('/\s+\d{4}\s*$/', '', $name))), MONTH_NAMES, true);
         if ($month === false) continue;
         $label = MONTH_NAMES[$month];
 
@@ -172,18 +186,24 @@ function timesheet_parse(array $sheets, int $fallbackYear): array
                     $current = null;
                     continue;
                 }
-                $current = sprintf('%04d-%02d-%02d', $year, $month, $day);
-                if (isset($days[$current])) {
-                    $warnings[] = "$label: il giorno $day compare due volte, le righe sono state unite.";
-                } else {
-                    $days[$current] = ['slots' => [], 'notes' => []];
-                }
-                if (is_string($dateCell) && preg_match('/^\s*(lun|mar|mer|gio|ven|sab|dom)/iu', $dateCell, $w)) {
-                    $real = WEEKDAY_NAMES[(int)date('N', strtotime($current))];
-                    if (mb_substr($real, 0, 3) !== mb_strtolower($w[1])) {
-                        $warnings[] = "$label: nel foglio c'è «" . trim($dateCell) . "», ma il $day $label $year è $real.";
+                $date = sprintf('%04d-%02d-%02d', $year, $month, $day);
+                $written = is_string($dateCell) && preg_match('/^\s*(lun|mar|mer|gio|ven|sab|dom)/iu', $dateCell, $w) ? mb_strtolower($w[1]) : null;
+                if ($written !== null && $weekday_prefix($date) !== $written) {
+                    // Out of order and with the wrong weekday: the number is the typo, the row order is right
+                    $fixed = $current !== null && $date <= $current ? $next_weekday($current, $written) : null;
+                    if ($fixed !== null) {
+                        $warnings[] = "$label: «" . trim($dateCell) . '» viene dopo il ' . (int)substr($current, 8) . ' ed è fuori ordine: letto come ' . date_label($fixed) . '.';
+                        $date = $fixed;
+                    } else {
+                        $warnings[] = "$label: nel foglio c'è «" . trim($dateCell) . "», ma il $day $label $year è " . WEEKDAY_NAMES[(int)date('N', strtotime($date))] . '.';
                     }
                 }
+                if (!isset($days[$date])) {
+                    $days[$date] = ['slots' => [], 'notes' => []];
+                } elseif ($date !== $current) {
+                    $warnings[] = "$label: il giorno " . (int)substr($date, 8) . ' compare due volte, le righe sono state unite.';
+                }
+                $current = $date;
             }
             if ($current === null) continue;
 

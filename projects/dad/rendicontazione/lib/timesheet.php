@@ -132,11 +132,9 @@ function day_put(int $userId, string $date, ?array $snapshot, int $actorId): voi
         ->execute([$userId, $date, $snapshot['kind'], $snapshot['note'], json_encode($snapshot['slots']), $ordinary, $overtime, now_utc(), $actorId]);
 }
 
-/** Every recorded day of a month with its running total, plus the month's totals. */
-function month_data(int $userId, int $year, int $month): array
+/** Every recorded day between two dates with its running total, plus the totals of the period. */
+function days_between(int $userId, string $from, string $to): array
 {
-    $from = sprintf('%04d-%02d-01', $year, $month);
-    $to = date('Y-m-t', strtotime($from));
     $st = db()->prepare('SELECT * FROM ' . t('days') . ' WHERE user_id = ? AND work_date >= ? AND work_date <= ? ORDER BY work_date ASC');
     $st->execute([$userId, $from, $to]);
 
@@ -159,11 +157,24 @@ function month_data(int $userId, int $year, int $month): array
         ];
     }
     return [
-        'year' => $year,
-        'month' => $month,
         'days' => $days,
         'totals' => ['ordinary' => $ordinary, 'overtime' => $overtime, 'total' => $ordinary + $overtime] + $counts,
     ];
+}
+
+function month_data(int $userId, int $year, int $month): array
+{
+    $from = sprintf('%04d-%02d-01', $year, $month);
+    return ['year' => $year, 'month' => $month] + days_between($userId, $from, date('Y-m-t', strtotime($from)));
+}
+
+/** The Monday-to-Sunday week that contains a date. */
+function week_data(int $userId, string $date): array
+{
+    $noon = strtotime($date . ' 12:00:00');
+    $start = date('Y-m-d', strtotime('-' . ((int)date('N', $noon) - 1) . ' days', $noon));
+    $end = date('Y-m-d', strtotime('+6 days', strtotime($start . ' 12:00:00')));
+    return ['start' => $start, 'end' => $end] + days_between($userId, $start, $end);
 }
 
 /** The twelve months of a year and the year's totals. */

@@ -20,7 +20,13 @@ function h(tag, props, ...children) {
     return node;
 }
 
+/** Replaces the content of a node; optional parts may be null. */
+function fill(node, ...children) {
+    node.replaceChildren(...children.flat(Infinity).filter(c => c !== null && c !== undefined && c !== false));
+}
+
 const ICONS = {
+    week: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M7 15.5h10"/>',
     calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     chart: '<path d="M5 20v-7M12 20V5M19 20v-10"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3.5 2"/>',
@@ -38,6 +44,11 @@ const ICONS = {
     pencil: '<path d="m4 20 1-4L16 5l3 3L8 19l-4 1Z"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/>',
     logout: '<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>',
+    lavoro: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V4h6v3M3 13h18"/>',
+    pioggia: '<path d="M17 14H7a4 4 0 0 1-.6-7.95A5.5 5.5 0 0 1 17 5.6a4.2 4.2 0 0 1 0 8.4Z"/><path d="m8 17-1 4M13 17l-1 4M18 17l-1 4"/>',
+    permesso: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    ferie: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',
+    malattia: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6Z"/>',
 };
 
 function icon(name) {
@@ -71,6 +82,17 @@ function shiftDate(iso, days) {
 function dateLabel(iso, withYear) {
     const d = parseDate(iso);
     return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}${withYear ? ' ' + d.getFullYear() : ''}`;
+}
+
+/** The Monday of the week that contains a date. */
+const mondayOf = iso => shiftDate(iso, -((parseDate(iso).getDay() + 6) % 7));
+
+/** "2 – 8 novembre 2026", "30 novembre – 6 dicembre 2026", "28 dicembre 2026 – 3 gennaio 2027" */
+function weekLabel(start) {
+    const a = parseDate(start), b = parseDate(shiftDate(start, 6));
+    const end = `${b.getDate()} ${MONTHS[b.getMonth()]} ${b.getFullYear()}`;
+    if (a.getFullYear() !== b.getFullYear()) return `${a.getDate()} ${MONTHS[a.getMonth()]} ${a.getFullYear()} – ${end}`;
+    return a.getMonth() === b.getMonth() ? `${a.getDate()} – ${end}` : `${a.getDate()} ${MONTHS[a.getMonth()]} – ${end}`;
 }
 
 function timeAgoLabel(utc) {
@@ -148,6 +170,9 @@ function toast(message, opts = {}) {
         h('span', null, message),
         opts.action ? h('button', { class: 'toast-action', type: 'button', onclick: () => { node.remove(); opts.action.run(); } }, opts.action.label) : null);
     box.append(node);
+    // A modal covers everything outside it, so the messages must live inside the one on top
+    const modals = document.querySelectorAll('dialog[open]');
+    (modals.length ? modals[modals.length - 1] : document.body).append(box);
     setTimeout(() => node.remove(), opts.error ? 7000 : (opts.action ? 6000 : 3500));
 }
 
@@ -155,13 +180,21 @@ function toast(message, opts = {}) {
 
 const dialogStack = [];
 
+/** To call before removing a modal: the messages on screen must survive it. */
+function rescueToasts(dialog) {
+    const box = document.getElementById('toasts');
+    if (dialog.contains(box)) document.body.append(box);
+}
+
 /**
  * Opens a modal. The phone's back button closes it instead of leaving the page, which is why
  * every dialog owns one browser history entry. `guard` can stop the closing (unsaved changes).
  */
 function openDialog(node, guard) {
     document.body.append(node);
+    node.tabIndex = -1;
     node.showModal();
+    node.focus();   // no control looks selected until the person chooses one
     history.pushState({ dialog: true }, '');
     const entry = { node, guard };
     dialogStack.push(entry);
@@ -174,7 +207,10 @@ async function closeDialog(node, force) {
     if (!entry || entry.node !== node) return;
     if (!force && entry.guard && !(await entry.guard())) return;
     entry.guard = null;
-    history.back();
+    return new Promise(resolve => {
+        entry.onClosed = resolve;
+        history.back();
+    });
 }
 
 window.addEventListener('popstate', async () => {
@@ -186,16 +222,24 @@ window.addEventListener('popstate', async () => {
         return;
     }
     dialogStack.pop();
+    rescueToasts(entry.node);
     entry.node.close();
     entry.node.remove();
+    if (entry.onClosed) entry.onClosed();
 });
 
 /** Yes/no question. Resolves to true or false. */
 function ask({ title, text, yes, no = 'Annulla', danger }) {
     return new Promise(resolve => {
         const dialog = h('dialog', { class: 'ask' });
-        const finish = value => { dialog.close(); dialog.remove(); resolve(value); };
-        dialog.append(
+        const finish = value => {
+            const modals = [...document.querySelectorAll('dialog[open]')].filter(d => d !== dialog);
+            if (dialog.contains(document.getElementById('toasts'))) (modals.pop() || document.body).append(document.getElementById('toasts'));
+            dialog.close();
+            dialog.remove();
+            resolve(value);
+        };
+        fill(dialog,
             h('h2', null, title),
             text ? h('p', null, text) : null,
             h('div', { class: 'ask-actions' },

@@ -22,6 +22,10 @@
     --sick: #a8261d;
     --sick-soft: #f9e2df;
     --shadow: 0 1px 2px rgb(23 33 31 / 7%);
+    --bar-ord: #0b8a72;
+    --bar-ot: #d9782d;
+    --sat-bg: #e4f0f9;
+    --rest-bg: #fae6e4;
     --radius: 16px;
     --base: 17px;
     color-scheme: light;
@@ -37,6 +41,8 @@
         --rain: #8ecbf2; --rain-soft: #17384c; --perm: #c8b6f0; --perm-soft: #352a52;
         --holiday: #e6cb73; --holiday-soft: #40360f; --sick: #f4a59e; --sick-soft: #4d211d;
         --shadow: none;
+        --bar-ord: #2aa88e; --bar-ot: #d4722a;
+        --sat-bg: #1b2f3b; --rest-bg: #3a2423;
         color-scheme: dark;
     }
 }
@@ -48,6 +54,8 @@
     --rain: #8ecbf2; --rain-soft: #17384c; --perm: #c8b6f0; --perm-soft: #352a52;
     --holiday: #e6cb73; --holiday-soft: #40360f; --sick: #f4a59e; --sick-soft: #4d211d;
     --shadow: none;
+        --bar-ord: #2aa88e; --bar-ot: #d4722a;
+        --sat-bg: #1b2f3b; --rest-bg: #3a2423;
     color-scheme: dark;
 }
 
@@ -110,6 +118,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-plain { background: none; border-color: transparent; }
 .btn-link { background: none; border: 0; color: var(--primary); text-decoration: underline; min-height: 40px; }
 .btn-add { width: 100%; border-style: dashed; }
+.btn-danger-soft { background: var(--sick-soft); border-color: var(--sick); color: var(--sick); font-weight: 700; }
+.btn-danger-soft:hover { background: var(--sick-soft); filter: brightness(1.05); }
 .btn-delete { color: var(--sick); margin: 0 auto; display: flex; }
 
 .btn-today { justify-content: flex-start; text-align: left; padding: .7rem 1rem; gap: .7rem; }
@@ -182,7 +192,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .pager { display: flex; align-items: center; justify-content: space-between; gap: .5rem; text-align: center; }
 
-.today { display: grid; gap: .7rem; padding: 1rem; }
+.today { display: grid; gap: .7rem; padding: 1rem; border: 2px solid var(--primary); }
+.today .eyebrow { color: var(--ink); font-size: 1.05rem; font-weight: 800; }
 .today.done { grid-template-columns: 1fr auto; align-items: center; }
 .eyebrow { color: var(--muted); font-size: .88rem; font-weight: 600; }
 .today-line { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: 1.25rem; font-weight: 700; }
@@ -241,25 +252,41 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .day-note { color: var(--muted); font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .day-hours { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .day-hours small { color: var(--muted); }
-.day-sat .day-date b { color: var(--ot); }
-.day-rest { background: var(--surface-2); }
+/* Saturdays light blue; Sundays and holidays light red. A holiday on a Saturday counts as a holiday. */
+.day-sat { background: var(--sat-bg); }
+.day-sat .day-date b { color: var(--rain); }
+.day-rest { background: var(--rest-bg); }
 .day-rest .day-date b { color: var(--sick); }
 .day-empty .day-date b { font-weight: 500; }
-.day-today { box-shadow: inset 4px 0 0 var(--primary); }
-.day-today .day-date b { color: var(--primary); font-weight: 800; }
+/* Today must stand out at a glance, whatever kind of day it is: these rules come after the weekend tints */
+.day-today, .day-today:hover { background: var(--primary-soft); box-shadow: inset 6px 0 0 var(--primary); }
+.day-today .day-date small { color: var(--ink); }
+.day-today .day-date b {
+    display: grid; place-items: center; width: 2.1rem; height: 2.1rem; margin-top: .1rem;
+    background: var(--primary); color: var(--primary-ink); border-radius: 50%; font-size: 1.1rem; font-weight: 800;
+}
+.today-tag { padding: .05rem .5rem; background: var(--primary); color: var(--primary-ink); border-radius: 6px; font-size: .78rem; font-weight: 800; }
 
 .ot { color: var(--ot); font-weight: 600; }
 
-.kind { padding: .05rem .45rem; border-radius: 6px; font-size: .78rem; font-weight: 700; }
-.kind-pioggia { background: var(--rain-soft); color: var(--rain); }
-.kind-permesso { background: var(--perm-soft); color: var(--perm); }
-.kind-ferie { background: var(--holiday-soft); color: var(--holiday); }
-.kind-malattia { background: var(--sick-soft); color: var(--sick); }
-.kind-lavoro { background: var(--primary-soft); color: var(--ink); }
+/* Each kind of day has one colour and one icon, everywhere: --k is that colour */
+.kind-lavoro { --k: var(--primary); }
+.kind-pioggia { --k: var(--rain); }
+.kind-permesso { --k: var(--perm); }
+.kind-ferie { --k: var(--holiday); }
+.kind-malattia { --k: var(--sick); }
+.kind {
+    display: inline-flex; align-items: center; gap: .25rem; padding: .1rem .5rem .1rem .35rem;
+    background: var(--k); color: var(--surface); border-radius: 7px; font-size: .8rem; font-weight: 800;
+}
+.kind .icon { width: 1.15em; height: 1.15em; }
+.stat[class*="kind-"] span { display: flex; align-items: center; gap: .25rem; }
+.stat .icon { color: var(--k); }
+.kind-legend { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
 
 /* ---- sheets (dialogs) ---- */
 
-dialog { color: inherit; border: 0; padding: 0; }
+dialog { color: inherit; border: 0; padding: 0; outline: none; }
 dialog::backdrop { background: rgb(10 16 15 / 55%); }
 
 .sheet {
@@ -298,21 +325,18 @@ dialog::backdrop { background: rgb(10 16 15 / 55%); }
 
 .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
 .kind-choice {
-    min-height: 46px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
+    min-height: 66px;
     background: var(--surface);
     border: 1.5px solid var(--line);
     border-radius: 12px;
     color: var(--ink);
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
 }
-.kind-choice[aria-checked="true"] { border-color: currentColor; box-shadow: inset 0 0 0 1.5px currentColor; }
-.kind-choice.kind-lavoro[aria-checked="true"] { background: var(--primary-soft); color: var(--ink); }
-.kind-choice.kind-pioggia[aria-checked="true"] { background: var(--rain-soft); color: var(--rain); }
-.kind-choice.kind-permesso[aria-checked="true"] { background: var(--perm-soft); color: var(--perm); }
-.kind-choice.kind-ferie[aria-checked="true"] { background: var(--holiday-soft); color: var(--holiday); }
-.kind-choice.kind-malattia[aria-checked="true"] { background: var(--sick-soft); color: var(--sick); }
-.kind-choice:not([aria-checked="true"]) { background: var(--surface); }
+.kind-choice .icon { width: 1.5rem; height: 1.5rem; color: var(--k); }
+.kind-choice[aria-checked="true"] { background: var(--k); border-color: var(--k); color: var(--surface); }
+.kind-choice[aria-checked="true"] .icon { color: inherit; }
 
 .slots { display: grid; gap: .5rem; }
 .slots:empty { display: none; }
@@ -408,8 +432,8 @@ table.year a { text-decoration: none; }
 .bar-cell { display: none; width: 38%; }
 .bar { display: flex; gap: 2px; height: 16px; }
 .bar span { display: block; height: 100%; min-width: 2px; }
-.bar-ord { background: var(--primary); border-radius: 4px 0 0 4px; }
-.bar-ot { background: var(--ot-mark); border-radius: 0 4px 4px 0; }
+.bar-ord { background: var(--bar-ord); border-radius: 4px 0 0 4px; }
+.bar-ot { background: var(--bar-ot); border-radius: 0 4px 4px 0; }
 .bar .bar-ord:last-child { border-radius: 4px; }
 .legend { display: flex; align-items: center; gap: .3rem; }
 .legend i { width: 12px; height: 12px; border-radius: 3px; }
@@ -457,6 +481,58 @@ dl.change dt { color: var(--muted); }
 .warnings { padding: .7rem .8rem; background: var(--holiday-soft); border-radius: 12px; display: grid; gap: .35rem; font-size: .9rem; }
 .warnings ul { list-style: disc; padding-left: 1.1rem; }
 .warn-text { color: var(--sick); font-weight: 600; }
+
+/* ---- month overview ---- */
+
+.month-main { display: grid; gap: .6rem; min-width: 0; }
+
+.cal-card { overflow: hidden; padding: .35rem; }
+.cal { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 2px; }
+.cal th { padding: .25rem 0; color: var(--muted); font-size: .72rem; font-weight: 600; text-transform: uppercase; }
+.cal td { padding: 0; height: 1px; }
+.cal th.cal-total, .cal td.cal-total { width: 3.1rem; }
+:where(.cal-day) { background: var(--surface-2); color: var(--ink); }
+.cal-day {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: .05rem;
+    width: 100%; height: 100%; min-height: 62px; padding: .25rem .1rem;
+    border: 0; border-radius: 8px; font: inherit; font-size: .74rem; line-height: 1.2; font-variant-numeric: tabular-nums;
+    cursor: pointer; overflow: hidden;
+}
+.cal-day:hover { box-shadow: inset 0 0 0 1.5px var(--primary); }
+.cal-day b { font-size: .95rem; }
+.cal-day span, .cal-day small { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-day small { font-size: .66rem; }
+.cal-day .ot { color: var(--ot); font-weight: 700; }
+.cal-day[class*="kind-"] { background: var(--k); }
+.cal-day[class*="kind-"], .cal-day[class*="kind-"] b, .cal-day[class*="kind-"] span, .cal-day[class*="kind-"] .ot { background: none; color: var(--surface); }
+.cal-day[class*="kind-"] { background: var(--k); }
+.cal-day .icon { width: 1rem; height: 1rem; }
+.cal-today[class*="kind-"] { outline: 3px solid var(--primary); outline-offset: 1px; }
+/* :where keeps these weaker than the colour of a rain, leave or sick day */
+:where(.cal-sat) { background: var(--sat-bg); }
+.cal-sat b { color: var(--rain); }
+:where(.cal-rest) { background: var(--rest-bg); }
+.cal-rest b { color: var(--sick); }
+.cal-missing { box-shadow: inset 0 0 0 1.5px var(--holiday); }
+.cal-today, .cal-today b, .cal-today span, .cal-today .ot { background: var(--primary); color: var(--primary-ink); }
+.cal-today b { font-weight: 800; }
+.cal-total button {
+    width: 100%; height: 100%; min-height: 62px; padding: 0; border: 0; border-radius: 8px; background: none;
+    color: var(--ink); font: inherit; font-size: .74rem; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.cal-total button:hover { background: var(--primary-soft); }
+
+/* ---- week ---- */
+
+.week-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: .3rem; padding: .8rem .7rem .6rem; }
+.week-col { display: grid; grid-template-rows: 1.1rem 96px auto; gap: .2rem; justify-items: center; min-width: 0; }
+.week-col small { color: var(--muted); font-size: .68rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.week-col b { color: var(--muted); font-size: .72rem; font-weight: 600; text-transform: uppercase; }
+.week-col-today b { padding: 0 .3rem; background: var(--primary); color: var(--primary-ink); border-radius: 6px; font-weight: 800; }
+.week-bar { display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; width: min(100%, 30px); height: 96px; border-bottom: 2px solid var(--line); }
+.week-bar span { display: block; min-height: 3px; }
+.week-bar .bar-ord, .week-bar .bar-ot { border-radius: 0; }
+.week-bar span:first-child { border-radius: 4px 4px 0 0; }
 
 /* ---- print: only the table ---- */
 
@@ -513,6 +589,19 @@ dl.change dt { color: var(--muted); }
     .slot .switch { order: 3; align-self: end; }
     .slot .slot-duration { grid-column: auto; order: 4; align-self: end; padding-bottom: .55rem; min-width: 3.4rem; text-align: right; }
     .slot .btn-icon { order: 5; }
+}
+
+/* Tablets: the logo alone leaves room for the tabs, and the admin's switcher drops to its own line */
+@media (min-width: 760px) and (max-width: 1099px) {
+    .brand span { display: none; }
+    .top { flex-wrap: wrap; row-gap: .25rem; }
+    .switcher { margin-left: auto; }
+}
+
+@media (min-width: 760px) {
+    .cal-day, .cal-total button { min-height: 76px; font-size: .86rem; }
+    .cal-day small { font-size: .74rem; }
+    .cal th.cal-total, .cal td.cal-total { width: 4.2rem; }
 }
 
 @media (min-width: 1000px) {

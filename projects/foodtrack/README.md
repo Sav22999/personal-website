@@ -83,6 +83,10 @@ Nelle case con più membri l'app avvisa di ciò che hanno fatto gli altri: prodo
 - **Browser, app chiusa:** Web Push. Il server manda solo un segnale senza contenuto (chiavi VAPID create al primo uso e salvate in `meta`); il service worker chiede poi il testo a `activity.pending` con la sessione dell'utente. I servizi push non ricevono dati della casa. Su iPhone funziona solo con l'app aggiunta alla schermata Home.
 - **App Android, app chiusa:** il WebView non supporta Web Push e Firebase non è usato: `ActivityJobService` controlla `activity.pending` circa ogni 15 minuti (Android può ritardare il controllo per risparmiare batteria).
 
+## Unità di misura
+
+Dal profilo si scelgono le unità per pesi (g, kg) e volumi (ml, cl, dl, l): «Come inserite», «Automatiche» o un'unità fissa. È solo una conversione a schermo (`preferredQty` in `assets/ui.js`), salvata sul dispositivo: nel database quantità e unità restano quelle inserite, e i moduli di modifica mostrano i valori salvati.
+
 ## Menu a tendina
 
 Con il mouse tutti i `<select>` di app e portale aprono una lista propria (sezione «Dropdowns» di `assets/ui.js`) invece di quella del sistema operativo: stesso aspetto ovunque, bandiere e icone (`flag` e `pic` nelle opzioni), ricerca nelle liste da 10 voci in su, tastiera completa. Il `<select>` vero resta nella pagina e conserva il valore, quindi i nuovi menu funzionano senza codice aggiuntivo. Sui touch screen resta il selettore nativo, più comodo.

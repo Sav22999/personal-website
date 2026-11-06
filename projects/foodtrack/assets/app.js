@@ -26,11 +26,14 @@
 
     const VERSION = '1.6.0';
     const MAX_SERVINGS = 50;
+    const RECIPES_STEP = 24;
+    /** Recipes already on screen, so that a redraw keeps the list as long as it was. */
+    let recipesShown = RECIPES_STEP;
     /** Servings chosen on a recipe page, by recipe id: they last until the app is closed. */
     const recipeServings = new Map();
     const CONTACT_URL = 'https://www.saveriomorelli.com/contact-me/email/';
     const DONATE_URL = 'https://www.saveriomorelli.com/donate/';
-    const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
+    const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'dl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
     const SLOTS = [['colazione', t('Breakfast')], ['pranzo', t('Lunch')], ['merenda', t('Snack')], ['cena', t('Dinner')]];
     const SORTS = [
         ['exp-asc', t('Expiry: soonest first')],
@@ -2697,6 +2700,7 @@
                     onclick: () => {
                         if (isSel) recipeIngredients.delete(key);
                         else recipeIngredients.add(key);
+                        recipesShown = RECIPES_STEP;
                         paint();
                     }
                 }, isSel ? icon('check') : UI.pic('products', ic), name));
@@ -2710,6 +2714,7 @@
                 chips.appendChild(h('button.chip' + (recipeFilters[k] ? '.sel' : ''), {
                     type: 'button', onclick: () => {
                         recipeFilters[k] = !recipeFilters[k];
+                        recipesShown = RECIPES_STEP;
                         paint();
                     }
                 }, recipeFilters[k] ? icon('check') : null, labels[k]));
@@ -2735,11 +2740,18 @@
             } else {
                 results.appendChild(sectionTitle(t('Results'), list.length));
             }
-            results.appendChild(h('div.stack', list.map(recipeCard)));
+            const stack = h('div.stack');
+            const end = UI.infiniteList(stack, list, recipeCard, {
+                step: RECIPES_STEP, shown: recipesShown, onmore: n => {
+                    recipesShown = n;
+                }
+            });
+            results.append(stack, end);
         }
 
         q.addEventListener('input', () => {
             recipeQuery = q.value;
+            recipesShown = RECIPES_STEP;
             paint();
         });
         paint();
@@ -3410,6 +3422,21 @@
             h('span', t('Developed with')), h('span.dev-heart', {html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#E5484D" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'}), h('span', t('by')), h('span.dev-name', 'Saverio Morelli'));
     }
 
+    /** Setting of the unit used to show weights or volumes. The saved data does not change. */
+    function unitRow(title, key, units, example) {
+        const current = store.get(key, '');
+        const label = v => v === '' ? t('As entered') : v === 'auto' ? t('Automatic ({example})', {example}) : v;
+        return groupRow('category', title, label(current), () => actionSheet(['', 'auto', ...units].map(v => ({
+            icon: 'category',
+            label: label(v),
+            selected: v === current,
+            onclick: () => {
+                store.set(key, v);
+                render(true);
+            }
+        })), title));
+    }
+
     /** Turns the notifications of this device on (asking for the permission) or off. */
     async function toggleDeviceNotifications() {
         const on = store.get('notify', false) && UI.app.notificationPermission() === 'granted';
@@ -3569,6 +3596,8 @@
                         render(true);
                     }
                 })), t('Default servings'))),
+                unitRow(t('Weight units'), 'units.weight', ['g', 'kg'], '1,5 kg · 500 g'),
+                unitRow(t('Volume units'), 'units.volume', ['ml', 'cl', 'dl', 'l'], '1,5 l · 500 ml'),
                 groupRow('warning', t('“Expiring soon” alert'), t('{what} before expiry', {what: plural(noticeDays(), 'day', 'days')}), () => actionSheet([1, 2, 3, 5, 7].map(n => ({
                     icon: 'timer',
                     label: t('{what} before', {what: plural(n, 'day', 'days')}),

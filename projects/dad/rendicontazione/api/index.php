@@ -54,6 +54,18 @@ function month_response(int $userId, string $date): array
     return month_data($userId, (int)substr($date, 0, 4), (int)substr($date, 5, 2)) + ['usual' => usual_slots($userId)];
 }
 
+function week_response(int $userId, string $date): array
+{
+    return week_data($userId, $date) + ['usual' => usual_slots($userId)];
+}
+
+/** After a change the app gets back what it has on screen: the week it names, otherwise the month. */
+function days_response(int $userId, string $date): array
+{
+    $week = body()['week'] ?? null;
+    return valid_date($week) ? week_response($userId, $week) : month_response($userId, $date);
+}
+
 /** What the app needs to start. */
 function boot_response(): array
 {
@@ -116,6 +128,14 @@ try {
             send_json(['ok' => true, 'presets' => presets_get($userId)] + month_response($userId, sprintf('%04d-%02d-01', $year, $month)));
             break;
 
+        case 'week':
+            $me = require_active();
+            $date = (string)($_GET['start'] ?? date('Y-m-d'));
+            if (!valid_date($date)) fail('Data non valida.', 422);
+            $userId = target_user($me);
+            send_json(['ok' => true, 'presets' => presets_get($userId)] + week_response($userId, $date));
+            break;
+
         case 'year':
             $me = require_active();
             send_json(['ok' => true] + year_data(target_user($me), year_param()));
@@ -127,7 +147,7 @@ try {
             $userId = target_user($me);
             $date = date_param();
             day_change($me['id'], $userId, $date, normalize_day(body()));
-            send_json(['ok' => true] + month_response($userId, $date));
+            send_json(['ok' => true] + days_response($userId, $date));
             break;
 
         case 'day.delete':
@@ -136,7 +156,25 @@ try {
             $userId = target_user($me);
             $date = date_param();
             day_change($me['id'], $userId, $date, null);
-            send_json(['ok' => true] + month_response($userId, $date));
+            send_json(['ok' => true] + days_response($userId, $date));
+            break;
+
+        case 'days.fill':
+            // Empty days only: a day recorded in the meantime is never overwritten
+            require_post();
+            $me = require_active();
+            $userId = target_user($me);
+            $dates = body()['dates'] ?? null;
+            if (!is_array($dates) || !$dates || count($dates) > 7) fail('Giorni non validi.', 422);
+            $snapshot = normalize_day(['kind' => 'lavoro', 'slots' => body()['slots'] ?? null]);
+            $snapshots = [];
+            foreach ($dates as $date) {
+                if (!valid_date($date)) fail('Data non valida.', 422);
+                if (day_get($userId, $date) === null) $snapshots[$date] = $snapshot;
+            }
+            ksort($snapshots);
+            $changed = days_import($me['id'], $userId, $snapshots, 'Segnati ' . count($snapshots) . " giorni con l'orario solito");
+            send_json(['ok' => true, 'changed' => $changed] + days_response($userId, (string)$dates[0]));
             break;
 
         case 'presets.save':
@@ -254,6 +292,49 @@ try {
                 ? $texts[$changes['status']] . ' per ' . $target['name']
                 : ($changes['role'] === ROLE_ADMIN ? $target['name'] . ' è ora amministratore' : $target['name'] . ' non è più amministratore');
             history_add($me['id'], $id, isset($changes['status']) ? 'user.status' : 'user.role', $summary);
+            send_json(['ok' => true, 'users' => users_list(), 'workers' => workers_list(), 'pending' => pending_count()]);
+            break;
+
+        case 'users.edit':
+            require_post();
+            $me = require_master();
+            $id = (int)(body()['id'] ?? 0);
+            $target = user_by('id', (string)$id);
+            if (!$target) fail('Utente non trovato.', 404);
+            $name = trim((string)(body()['name'] ?? ''));
+            $email = mb_strtolower(trim((string)(body()['email'] ?? '')));
+            if ($name === '' || mb_strlen($name) > 100) fail('Scrivi il nome della persona.', 422);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail("Controlla l'indirizzo email.", 422);
+
+            $fields = ['name' => $name];
+            if ($email !== $target['email']) {
+                if ((int)$target['role'] >= ROLE_MASTER) fail("L'email del Master Admin si cambia in credentials.php.", 403, 'forbidden');
+                if (user_by('email', $email)) fail('Esiste già un account con questa email.', 409);
+                // The old Google account must stop working: it is linked by google_sub, not by email
+                $fields += ['email' => $email, 'google_sub' => null];
+            }
+            in_transaction(function () use ($me, $id, $fields, $target) {
+                user_set($id, $fields);
+                if (isset($fields['email'])) {
+                    db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$id]);
+                }
+                history_add($me['id'], $id, 'user.edit', 'Account modificato: ' . $target['name'] . (isset($fields['email']) ? ' (nuova email)' : ''));
+            });
+            send_json(['ok' => true, 'users' => users_list(), 'workers' => workers_list(), 'pending' => pending_count()]);
+            break;
+
+        case 'users.delete':
+            require_post();
+            $me = require_master();
+            $id = (int)(body()['id'] ?? 0);
+            $target = user_by('id', (string)$id);
+            if (!$target) fail('Utente non trovato.', 404);
+            if ($id === $me['id'] || (int)$target['role'] >= ROLE_MASTER) fail('Il Master Admin non si può eliminare.', 403, 'forbidden');
+            $st = db()->prepare('SELECT COUNT(*) FROM ' . t('days') . ' WHERE user_id = ?');
+            $st->execute([$id]);
+            if ((int)$st->fetchColumn() > 0) fail('Questa persona ha ore registrate: si può solo disattivare.', 409, 'has_hours');
+            user_delete($id);
+            history_add($me['id'], $me['id'], 'user.delete', 'Account eliminato: ' . $target['name']);
             send_json(['ok' => true, 'users' => users_list(), 'workers' => workers_list(), 'pending' => pending_count()]);
             break;
 

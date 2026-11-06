@@ -1,5 +1,5 @@
 /**
- * Rendicontazione Ore: the application. Views: month, year, history, settings.
+ * Rendicontazione Ore: the application. Views: week, month, year, history, settings.
  * Server rules are the real protection: the interface only hides what the API would refuse.
  */
 'use strict';
@@ -24,7 +24,10 @@ const state = {
     targetId: 0,       // whose hours are on screen
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
-    data: null,        // the month on screen
+    screen: 'mese',    // the tab on screen
+    weekStart: null,   // Monday of the week on screen
+    monthView: 'dettaglio',   // dettaglio: a row per day; panoramica: a calendar, a row per week
+    data: null,        // the days on screen: a month or a week
     presets: [],
     usual: null,
 };
@@ -80,6 +83,9 @@ async function api(action, { params = {}, body, form } = {}) {
 
 const withUser = (extra = {}) => ({ user: state.targetId, ...extra });
 
+/** For changes to the days: asks the server to answer with what is on screen. */
+const withScreen = (extra = {}) => withUser(onWeek() ? { ...extra, week: state.weekStart } : extra);
+
 function showError(error) {
     console.error(error);
     toast(error.message || 'Si è verificato un errore.', { error: true });
@@ -117,7 +123,7 @@ function pickTarget() {
 }
 
 function render(node) {
-    document.getElementById('app').replaceChildren(node);
+    fill(document.getElementById('app'), node);
 }
 
 function renderSignIn() {
@@ -133,11 +139,12 @@ function renderSignIn() {
         h('p', null, 'Il registro delle ore di lavoro.'),
         slot,
         state.googleClientId ? null : h('p', { class: 'muted' }, "L'accesso con Google non è ancora configurato."),
+        h('a', { class: 'btn btn-link', href: 'guida.html' }, 'Come si usa? Leggi la guida'),
         dev)));
 
     if (!state.googleClientId) return;
     const script = h('script', { src: 'https://accounts.google.com/gsi/client', async: true });
-    script.onerror = () => slot.replaceChildren(h('p', { class: 'muted' }, 'Non riesco a caricare il pulsante di Google. Controlla la connessione.'));
+    script.onerror = () => fill(slot, h('p', { class: 'muted' }, 'Non riesco a caricare il pulsante di Google. Controlla la connessione.'));
     script.onload = () => {
         google.accounts.id.initialize({
             client_id: state.googleClientId,
@@ -174,6 +181,7 @@ async function logout() {
 /* ---- shell and routes ---- */
 
 const TABS = [
+    ['settimana', 'Settimana', 'week'],
     ['mese', 'Mese', 'calendar'],
     ['anno', 'Anno', 'chart'],
     ['cronologia', 'Cronologia', 'history'],
@@ -215,14 +223,15 @@ function route() {
         if (tab.dataset.tab === current) tab.setAttribute('aria-current', 'page');
         else tab.removeAttribute('aria-current');
     });
-    ({ mese: showMonth, anno: showYear, cronologia: showHistory, altro: showSettings })[current]();
+    state.screen = current;
+    ({ settimana: showWeek, mese: showMonth, anno: showYear, cronologia: showHistory, altro: showSettings })[current]();
 }
 
 window.addEventListener('hashchange', route);
 
 function viewError(error, retry) {
     if (error.code === 'unauthorized' || error.code === 'inactive') return;
-    view().replaceChildren(h('div', { class: 'card empty' }, h('p', null, error.message),
+    fill(view(), h('div', { class: 'card empty' }, h('p', null, error.message),
         h('button', { class: 'btn btn-primary', type: 'button', onclick: retry }, 'Riprova')));
 }
 
@@ -239,9 +248,36 @@ async function showMonth() {
 }
 
 function applyMonth(data) {
+    if (state.screen !== 'mese' || data.year !== state.year || data.month !== state.month) return;
     state.data = data;
     state.usual = data.usual;
-    if (data.year === state.year && data.month === state.month) renderMonth();
+    renderMonth();
+}
+
+/** The answer to a change of the days: a week carries its start, a month does not. */
+function applyDays(data) {
+    if (data.start) applyWeek(data); else applyMonth(data);
+}
+
+const onWeek = () => state.screen === 'settimana';
+const weekDates = start => Array.from({ length: 7 }, (_, i) => shiftDate(start, i));
+
+/** Every date of the month or week on screen. */
+function screenDates() {
+    if (onWeek()) return weekDates(state.weekStart);
+    const count = new Date(state.year, state.month, 0).getDate();
+    return Array.from({ length: count }, (_, i) => isoDate(state.year, state.month, i + 1));
+}
+
+/** Brings a date on screen, in the month or week view that is open. */
+async function showDate(iso) {
+    if (onWeek()) {
+        setWeek(mondayOf(iso));
+        await showWeek();
+        return;
+    }
+    [state.year, state.month] = iso.split('-').map(Number);
+    await showMonth();
 }
 
 function moveMonth(step) {
@@ -251,7 +287,10 @@ function moveMonth(step) {
     showMonth();
 }
 
+const backToToday = () => h('button', { class: 'btn btn-primary btn-wide', type: 'button', onclick: goToToday }, icon('calendar'), 'Torna a oggi');
+
 function goToToday() {
+    if (onWeek()) return showDate(todayIso());
     const now = new Date();
     state.year = now.getFullYear();
     state.month = now.getMonth() + 1;
@@ -270,22 +309,37 @@ function dayByDate(iso) {
     return state.data.days.find(d => d.date === iso) || null;
 }
 
-/** Past working days of the current month with nothing recorded. */
-function missingDays() {
-    const today = todayIso();
-    const days = [];
-    for (let iso = isoDate(state.year, state.month, 1); iso < today && iso.startsWith(today.slice(0, 7)); iso = shiftDate(iso, 1)) {
-        const weekday = parseDate(iso).getDay();
-        if (weekday !== 0 && weekday !== 6 && !holidayName(iso) && !dayByDate(iso)) days.push(iso);
-    }
-    return days;
+/** A past working day with nothing recorded. The month only looks at the current one, a week at any. */
+function isMissing(iso, today) {
+    const weekday = parseDate(iso).getDay();
+    return iso < today && (onWeek() || iso.startsWith(today.slice(0, 7)))
+        && weekday !== 0 && weekday !== 6 && !holidayName(iso) && !dayByDate(iso);
 }
+
+const missingDays = () => screenDates().filter(iso => isMissing(iso, todayIso()));
 
 async function saveQuick(iso, slots) {
     try {
-        const data = await api('day.save', { body: withUser({ date: iso, kind: 'lavoro', note: '', slots }) });
-        applyMonth(data);
+        const data = await api('day.save', { body: withScreen({ date: iso, kind: 'lavoro', note: '', slots }) });
+        applyDays(data);
         toast(`Salvato: ${dateLabel(iso)}, ${fmtHours(slotsMinutes(slots).total)}`, { action: { label: 'Modifica', run: () => openDay(iso) } });
+    } catch (e) {
+        showError(e);
+    }
+}
+
+/** Fills the missing days of the week on screen with the usual hours, as one change. */
+async function fillMissing(dates) {
+    const slots = usualFor(dates[0]);
+    const yes = await ask({
+        title: dates.length === 1 ? 'Segnare questo giorno?' : `Segnare questi ${dates.length} giorni?`,
+        text: `${dates.map(iso => capitalize(dateLabel(iso))).join(', ')}: ${slotsText(slots)}, ${fmtHours(slotsMinutes(slots).total)} al giorno.`,
+        yes: 'Segna',
+    });
+    if (!yes) return;
+    try {
+        applyDays(await api('days.fill', { body: withScreen({ dates, slots }) }));
+        toast(dates.length === 1 ? 'Giorno segnato' : `${dates.length} giorni segnati`);
     } catch (e) {
         showError(e);
     }
@@ -293,7 +347,7 @@ async function saveQuick(iso, slots) {
 
 function todayCard() {
     const today = todayIso();
-    if (!today.startsWith(isoDate(state.year, state.month, 1).slice(0, 7))) return null;
+    if (!screenDates().includes(today)) return null;
     const record = dayByDate(today);
     const weekday = parseDate(today).getDay();
     const holiday = holidayName(today);
@@ -325,8 +379,6 @@ function todayCard() {
 }
 
 function missingCard() {
-    const today = todayIso();
-    if (!today.startsWith(isoDate(state.year, state.month, 1).slice(0, 7))) return null;
     const missing = missingDays();
     if (!missing.length) return null;
     return h('section', { class: 'card missing' },
@@ -334,11 +386,13 @@ function missingCard() {
         h('div', { class: 'chips' }, missing.slice(-6).map(iso => {
             const d = parseDate(iso);
             return h('button', { class: 'chip', type: 'button', onclick: () => openDay(iso) }, `${WEEKDAYS[d.getDay()].slice(0, 3)} ${d.getDate()}`);
-        })));
+        })),
+        onWeek() ? h('button', { class: 'btn btn-wide', type: 'button', onclick: () => fillMissing(missing) }, icon('check'),
+            missing.length === 1 ? "Segna con l'orario solito" : "Segna tutti con l'orario solito") : null);
 }
 
-function totalsCard(totals) {
-    const extras = [
+function totalsCard(totals, compact) {
+    const extras = compact ? [] : [
         [totals.worked, totals.worked === 1 ? 'giorno lavorato' : 'giorni lavorati'],
         [totals.pioggia, 'pioggia'], [totals.permesso, 'permesso'], [totals.ferie, 'ferie'], [totals.malattia, 'malattia'],
     ].filter(([n]) => n > 0);
@@ -355,7 +409,7 @@ function dayRow(iso, today) {
     const weekday = d.getDay();
     const record = dayByDate(iso);
     const holiday = holidayName(iso);
-    const missing = !record && iso < today && iso.startsWith(today.slice(0, 7)) && weekday !== 0 && weekday !== 6 && !holiday;
+    const missing = isMissing(iso, today);
 
     const classes = ['day'];
     if (iso === today) classes.push('day-today');
@@ -363,35 +417,102 @@ function dayRow(iso, today) {
     if (weekday === 6) classes.push('day-sat');
     if (!record) classes.push('day-empty');
 
+    const todayTag = iso === today ? h('span', { class: 'today-tag' }, 'Oggi') : null;
     let body;
     if (record) {
         body = [
             h('span', { class: 'day-main' },
-                record.kind !== 'lavoro' ? h('span', { class: 'kind kind-' + record.kind }, KINDS[record.kind]) : null,
+                todayTag,
+                record.kind !== 'lavoro' ? h('span', { class: 'kind kind-' + record.kind }, icon(record.kind), KINDS[record.kind]) : null,
                 record.slots.length ? h('span', { class: 'day-slots' }, slotsNodes(record.slots)) : null),
             record.note ? h('span', { class: 'day-note' }, record.note) : null,
         ];
     } else {
-        body = h('span', { class: 'day-main muted' }, holiday || (missing ? 'Da segnare' : ''));
+        body = h('span', { class: 'day-main muted' }, todayTag, holiday || (missing ? 'Da segnare' : ''));
     }
 
     return h('li', null, h('button', { class: classes.join(' '), type: 'button', onclick: () => openDay(iso), 'aria-label': capitalize(dateLabel(iso)) + (record ? ', ' + fmtHours(record.ordinary + record.overtime) : ', vuoto') },
         h('span', { class: 'day-date' }, h('small', null, WEEKDAYS[weekday].slice(0, 3)), h('b', null, String(d.getDate()))),
         h('span', { class: 'day-body' }, body),
         record && record.ordinary + record.overtime > 0
-            ? h('span', { class: 'day-hours' }, h('b', null, fmtHours(record.ordinary + record.overtime)), h('small', { title: 'Progressivo del mese' }, 'tot. ' + fmtHours(record.running)))
+            ? h('span', { class: 'day-hours' }, h('b', null, fmtHours(record.ordinary + record.overtime)), h('small', { title: onWeek() ? 'Progressivo della settimana' : 'Progressivo del mese' }, 'tot. ' + fmtHours(record.running)))
             : null));
+}
+
+/* ---- month overview: a calendar with one week per row ---- */
+
+function calendarDay(iso, today) {
+    const d = parseDate(iso);
+    const weekday = d.getDay();
+    const record = dayByDate(iso);
+    const holiday = holidayName(iso);
+    const minutes = record ? record.ordinary + record.overtime : 0;
+
+    const classes = ['cal-day'];
+    if (iso === today) classes.push('cal-today');
+    if (weekday === 0 || holiday) classes.push('cal-rest');
+    if (weekday === 6) classes.push('cal-sat');
+    if (isMissing(iso, today)) classes.push('cal-missing');
+    if (record && record.kind !== 'lavoro') classes.push('kind-' + record.kind);
+
+    const title = [capitalize(dateLabel(iso)), holiday, record ? daySummary(record) : null].filter(Boolean).join(' · ');
+    return h('td', null, h('button', { class: classes.join(' '), type: 'button', title, 'aria-label': title, onclick: () => openDay(iso) },
+        h('b', null, String(d.getDate())),
+        minutes ? h('span', null, fmtHours(minutes)) : null,
+        record && record.kind !== 'lavoro' ? icon(record.kind) : null,
+        record && record.overtime ? h('small', { class: 'ot' }, '+' + fmtHours(record.overtime)) : null));
+}
+
+/** The last column adds up the days of this month, so the column gives the month's total. */
+function monthCalendar(today) {
+    const dates = screenDates();
+    const weeks = [];
+    for (let start = mondayOf(dates[0]); start <= dates[dates.length - 1]; start = shiftDate(start, 7)) weeks.push(start);
+
+    const rows = weeks.map(start => {
+        const inMonth = weekDates(start).filter(iso => dates.includes(iso));
+        const total = inMonth.reduce((sum, iso) => {
+            const record = dayByDate(iso);
+            return sum + (record ? record.ordinary + record.overtime : 0);
+        }, 0);
+        return h('tr', null,
+            weekDates(start).map(iso => dates.includes(iso) ? calendarDay(iso, today) : h('td', { class: 'cal-out' })),
+            h('td', { class: 'cal-total' }, h('button', {
+                type: 'button', title: 'Apri questa settimana',
+                'aria-label': `Settimana del ${dateLabel(start)}: ${fmtHours(total)}. Apri la settimana`,
+                onclick: () => { setWeek(start); location.hash = '#/settimana'; },
+            }, total ? fmtHours(total) : '–')));
+    });
+
+    return h('section', { class: 'card cal-card' },
+        h('table', { class: 'cal' },
+            h('thead', null, h('tr', null,
+                ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map(name => h('th', { scope: 'col' }, name)),
+                h('th', { scope: 'col', class: 'cal-total' }, 'Tot.'))),
+            h('tbody', null, rows)));
+}
+
+/** What the calendar's icons mean, for the kinds of day that appear in this month. */
+function kindLegend() {
+    const used = Object.keys(KINDS).filter(kind => kind !== 'lavoro' && state.data.days.some(d => d.kind === kind));
+    if (!used.length) return null;
+    return h('ul', { class: 'kind-legend' }, used.map(kind => h('li', null, h('span', { class: 'kind kind-' + kind }, icon(kind), KINDS[kind]))));
+}
+
+function monthViewSwitch() {
+    return h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': 'Vista del mese' },
+        [['dettaglio', 'Dettagliata'], ['panoramica', 'Panoramica']].map(([id, label]) => h('button', {
+            type: 'button', role: 'radio', 'aria-checked': String(state.monthView === id),
+            onclick: () => { state.monthView = id; renderMonth(); },
+        }, label)));
 }
 
 function renderMonth() {
     const { totals } = state.data;
     const today = todayIso();
-    const daysInMonth = new Date(state.year, state.month, 0).getDate();
     const isCurrent = today.startsWith(isoDate(state.year, state.month, 1).slice(0, 7));
-    const rows = [];
-    for (let d = 1; d <= daysInMonth; d++) rows.push(dayRow(isoDate(state.year, state.month, d), today));
 
-    view().replaceChildren(
+    fill(view(), 
         otherBanner(),
         h('div', { class: 'month-grid' },
             h('div', { class: 'month-side' },
@@ -399,11 +520,95 @@ function renderMonth() {
                     h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Mese precedente', onclick: () => moveMonth(-1) }, icon('left')),
                     h('h1', null, `${capitalize(MONTHS[state.month - 1])} ${state.year}`),
                     h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Mese successivo', onclick: () => moveMonth(1) }, icon('right'))),
-                isCurrent ? null : h('button', { class: 'btn btn-link', type: 'button', onclick: goToToday }, 'Torna a oggi'),
+                isCurrent ? null : backToToday(),
                 todayCard(),
                 missingCard(),
                 totalsCard(totals)),
-            h('ol', { class: 'card days' }, rows)));
+            h('div', { class: 'month-main' },
+                monthViewSwitch(),
+                state.monthView === 'panoramica'
+                    ? [monthCalendar(today), kindLegend()]
+                    : h('ol', { class: 'card days' }, screenDates().map(iso => dayRow(iso, today))))));
+}
+
+/* ---- week ---- */
+
+/** The week to open: the one already chosen if it touches the month in use, else today's or the month's first. */
+function weekForMonth() {
+    const first = isoDate(state.year, state.month, 1);
+    const last = isoDate(state.year, state.month, new Date(state.year, state.month, 0).getDate());
+    const start = state.weekStart;
+    if (start && start <= last && shiftDate(start, 6) >= first) return start;
+    const today = todayIso();
+    return mondayOf(today >= first && today <= last ? today : first);
+}
+
+/** Moving through the weeks also moves the month, so the other tabs open at the same point. */
+function setWeek(start) {
+    state.weekStart = start;
+    [state.year, state.month] = shiftDate(start, 3).split('-').map(Number);
+}
+
+async function showWeek() {
+    state.weekStart = weekForMonth();
+    try {
+        const data = await api('week', { params: withUser({ start: state.weekStart }) });
+        state.presets = data.presets;
+        applyWeek(data);
+    } catch (e) {
+        viewError(e, showWeek);
+    }
+}
+
+function applyWeek(data) {
+    if (!onWeek() || data.start !== state.weekStart) return;
+    state.data = data;
+    state.usual = data.usual;
+    renderWeek();
+}
+
+function moveWeek(step) {
+    setWeek(shiftDate(state.weekStart, step * 7));
+    showWeek();
+}
+
+/** The seven days side by side. The list next to it says the same in words, so it stays hidden from screen readers. */
+function weekChart(dates, today) {
+    const minutes = dates.map(iso => {
+        const day = dayByDate(iso);
+        return day ? { ordinary: day.ordinary, overtime: day.overtime } : { ordinary: 0, overtime: 0 };
+    });
+    const max = Math.max(480, ...minutes.map(m => m.ordinary + m.overtime));
+    return h('section', { class: 'card week-chart', 'aria-hidden': 'true' }, dates.map((iso, i) => {
+        const { ordinary, overtime } = minutes[i];
+        const total = ordinary + overtime;
+        return h('div', { class: 'week-col' + (iso === today ? ' week-col-today' : '') },
+            h('small', null, total ? fmtHours(total) : ''),
+            h('div', { class: 'week-bar' },
+                overtime ? h('span', { class: 'bar-ot', style: `height:${overtime / max * 100}%` }) : null,
+                ordinary ? h('span', { class: 'bar-ord', style: `height:${ordinary / max * 100}%` }) : null),
+            h('b', null, WEEKDAYS[parseDate(iso).getDay()].slice(0, 3)));
+    }));
+}
+
+function renderWeek() {
+    const today = todayIso();
+    const dates = weekDates(state.weekStart);
+
+    fill(view(),
+        otherBanner(),
+        h('div', { class: 'month-grid' },
+            h('div', { class: 'month-side' },
+                h('div', { class: 'pager' },
+                    h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Settimana precedente', onclick: () => moveWeek(-1) }, icon('left')),
+                    h('h1', null, weekLabel(state.weekStart)),
+                    h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Settimana successiva', onclick: () => moveWeek(1) }, icon('right'))),
+                dates.includes(today) ? null : backToToday(),
+                todayCard(),
+                missingCard(),
+                totalsCard(state.data.totals),
+                weekChart(dates, today)),
+            h('ol', { class: 'card days' }, dates.map(iso => dayRow(iso, today)))));
 }
 
 function otherBanner() {
@@ -415,7 +620,7 @@ function otherBanner() {
 function slotEditor(slots, onChange) {
     const box = h('div', { class: 'slots' });
     const paint = () => {
-        box.replaceChildren(...slots.map((slot, index) => {
+        fill(box, ...slots.map((slot, index) => {
             const minutes = slotsMinutes([slot]).total;
             const set = (key, value) => {
                 slot[key] = value;
@@ -458,17 +663,17 @@ function openDay(iso) {
     const totalLine = h('p', { class: 'sheet-total', 'aria-live': 'polite' });
     const paintTotal = () => {
         const m = slotsMinutes(draft.slots);
-        totalLine.replaceChildren(h('strong', null, fmtHours(m.total)),
+        fill(totalLine, h('strong', null, fmtHours(m.total)),
             m.overtime ? h('span', null, ` di cui ${fmtHours(m.overtime)} straord.`) : null);
     };
 
     const slots = slotEditor(draft.slots, paintTotal);
     const kinds = h('div', { class: 'kinds', role: 'radiogroup', 'aria-label': 'Tipo di giornata' });
-    const paintKinds = () => kinds.replaceChildren(...Object.entries(KINDS).map(([kind, label]) =>
+    const paintKinds = () => fill(kinds, ...Object.entries(KINDS).map(([kind, label]) =>
         h('button', {
             class: `kind-choice kind-${kind}`, type: 'button', role: 'radio', 'aria-checked': String(draft.kind === kind),
             onclick: () => { draft.kind = kind; paintKinds(); },
-        }, label)));
+        }, icon(kind), h('span', null, label))));
     paintKinds();
 
     const applySlots = (list, kind) => {
@@ -486,8 +691,8 @@ function openDay(iso) {
 
     const save = async () => {
         try {
-            const data = await api('day.save', { body: withUser({ date: iso, kind: draft.kind, note: draft.note, slots: draft.slots }) });
-            applyMonth(data);
+            const data = await api('day.save', { body: withScreen({ date: iso, kind: draft.kind, note: draft.note, slots: draft.slots }) });
+            applyDays(data);
             closeDialog(dialog, true);
             toast('Salvato');
         } catch (e) {
@@ -495,10 +700,16 @@ function openDay(iso) {
         }
     };
     const remove = async () => {
-        const yes = await ask({ title: 'Cancellare questa giornata?', text: `Tutti i dati di ${dateLabel(iso)} verranno tolti.`, yes: 'Cancella', danger: true });
+        const yes = await ask({
+            title: 'Cancellare questa giornata?',
+            text: `${capitalize(dateLabel(iso))}: ${daySummary(record)}. Se cambi idea dovrai segnarla di nuovo.`,
+            yes: 'Sì, cancella',
+            no: 'No, tienila',
+            danger: true,
+        });
         if (!yes) return;
         try {
-            applyMonth(await api('day.delete', { body: withUser({ date: iso }) }));
+            applyDays(await api('day.delete', { body: withScreen({ date: iso }) }));
             closeDialog(dialog, true);
             toast('Giornata cancellata');
         } catch (e) {
@@ -510,13 +721,8 @@ function openDay(iso) {
         if (dirty() && !(await ask({ title: 'Lasciare senza salvare?', text: 'Le modifiche a questo giorno andranno perse.', yes: 'Lascia', no: 'Resta' }))) return;
         const next = shiftDate(iso, delta);
         await closeDialog(dialog, true);
-        const [y, m] = next.split('-').map(Number);
-        if (y !== state.year || m !== state.month) {
-            state.year = y;
-            state.month = m;
-            await showMonth();
-        }
-        setTimeout(() => openDay(next), 60);
+        if (!screenDates().includes(next)) await showDate(next);
+        openDay(next);
     };
 
     const holiday = holidayName(iso);
@@ -533,13 +739,15 @@ function openDay(iso) {
                 h('section', null, h('h3', null, 'Che giornata è stata?'), kinds),
                 h('section', null,
                     h('h3', null, 'Orari'),
-                    h('div', { class: 'chips' }, quick.map(p => h('button', {
-                        class: 'chip', type: 'button', title: slotsText(p.slots), onclick: () => applySlots(p.slots, p.kind),
-                    }, h('span', null, p.name), h('small', null, slotsText(p.slots))))),
                     slots,
                     h('button', { class: 'btn btn-add', type: 'button', onclick: () => { draft.slots.push(nextSlot(draft.slots)); slots.repaint(); paintTotal(); } }, icon('plus'), 'Aggiungi fascia oraria')),
+                h('section', null,
+                    h('h3', null, 'Orari rapidi'),
+                    h('div', { class: 'chips' }, quick.map(p => h('button', {
+                        class: 'chip', type: 'button', title: slotsText(p.slots), onclick: () => applySlots(p.slots, p.kind),
+                    }, h('span', null, p.name), h('small', null, slotsText(p.slots)))))),
                 h('section', null, h('h3', null, h('label', null, 'Note')), note),
-                record ? h('button', { class: 'btn btn-link btn-delete', type: 'button', onclick: remove }, icon('trash'), 'Cancella questa giornata') : null),
+                record ? h('button', { class: 'btn btn-wide btn-danger-soft', type: 'button', onclick: remove }, icon('trash'), 'Cancella questa giornata') : null),
             h('footer', { class: 'sheet-foot' },
                 totalLine,
                 h('button', { class: 'btn btn-primary btn-big', type: 'submit' }, 'Salva'))));
@@ -574,18 +782,19 @@ function renderYear(data) {
         m.overtime ? h('span', { class: 'bar-ot', style: `width:${m.overtime / max * 100}%` }) : null) : null)));
 
     const counts = [
-        [t.worked, 'Giorni lavorati'], [t.pioggia, 'Pioggia'], [t.permesso, 'Permesso'], [t.ferie, 'Ferie'], [t.malattia, 'Malattia'],
+        [t.worked, 'Giorni lavorati', 'lavoro'], [t.pioggia, 'Pioggia', 'pioggia'], [t.permesso, 'Permesso', 'permesso'],
+        [t.ferie, 'Ferie', 'ferie'], [t.malattia, 'Malattia', 'malattia'],
     ];
     const move = step => { state.year += step; showYear(); };
 
-    view().replaceChildren(
+    fill(view(), 
         otherBanner(),
         h('div', { class: 'pager' },
             h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Anno precedente', onclick: () => move(-1) }, icon('left')),
             h('h1', null, String(data.year)),
             h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Anno successivo', onclick: () => move(1) }, icon('right'))),
-        totalsCard(t),
-        h('section', { class: 'card counts' }, counts.map(([n, label]) => h('div', { class: 'stat' }, h('span', null, label), h('strong', null, String(n))))),
+        totalsCard(t, true),
+        h('section', { class: 'card counts' }, counts.map(([n, label, kind]) => h('div', { class: 'stat kind-' + kind }, h('span', null, icon(kind), label), h('strong', null, String(n))))),
         h('section', { class: 'card table-card' },
             h('table', { class: 'year' },
                 h('thead', null, h('tr', null,
@@ -679,7 +888,7 @@ function renderHistory(more) {
         entry.undone ? h('p', { class: 'entry-flag' }, `Annullata da ${entry.undone.by}, ${timeAgoLabel(entry.undone.at)}`) : null,
         entry.canUndo ? h('button', { class: 'btn', type: 'button', onclick: () => undoEntry(entry) }, icon('undo'), entry.action === 'undo' ? 'Ripristina la modifica' : 'Annulla questa modifica') : null));
 
-    view().replaceChildren(
+    fill(view(), 
         otherBanner(),
         h('h1', { class: 'page-title' }, 'Cronologia'),
         h('p', { class: 'lead' }, isAdmin()
@@ -696,7 +905,7 @@ function renderHistory(more) {
 function choice(label, key, options, apply) {
     const current = localStorage.getItem(key) || options[0][0];
     const box = h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': label });
-    const paint = value => box.replaceChildren(...options.map(([id, text]) => h('button', {
+    const paint = value => fill(box, ...options.map(([id, text]) => h('button', {
         type: 'button', role: 'radio', 'aria-checked': String(id === value),
         onclick: () => { localStorage.setItem(key, id); apply(id); paint(id); },
     }, text)));
@@ -714,6 +923,7 @@ async function showSettings() {
     const body = [
         otherBanner(),
         h('h1', { class: 'page-title' }, 'Altro'),
+        h('a', { class: 'btn btn-wide', href: 'guida.html' }, 'Apri la guida: come si usa'),
         h('section', { class: 'card panel' },
             h('h2', null, 'Scarica e stampa'),
             h('a', { class: 'btn btn-wide', href: exportUrl, download: '' }, icon('download'), `Scarica Excel del ${state.year}`),
@@ -731,7 +941,10 @@ async function showSettings() {
             choice('Colori', 'rend.theme', [['auto', 'Automatici'], ['light', 'Chiari'], ['dark', 'Scuri']], v => { document.documentElement.dataset.theme = v; })),
     ];
 
-    if (isAdmin()) body.push(usersPanel(), importPanel());
+    if (isAdmin()) {
+        body.splice(2, 0, usersPanel());   // right under the title: approvals are what an admin comes here for
+        body.push(importPanel());
+    }
 
     body.push(h('section', { class: 'card panel' },
         h('h2', null, 'Il tuo account'),
@@ -739,7 +952,7 @@ async function showSettings() {
         h('p', { class: 'muted' }, u.role >= ROLE_MASTER ? 'Master Admin' : (u.role >= ROLE_ADMIN ? 'Amministratore' : 'Utente')),
         h('button', { class: 'btn btn-wide', type: 'button', onclick: logout }, icon('logout'), 'Esci')));
 
-    view().replaceChildren(...body.filter(Boolean));
+    fill(view(), ...body.filter(Boolean));
 }
 
 function editPreset(index) {
@@ -787,6 +1000,70 @@ function editPreset(index) {
 
 /* ---- admin: users ---- */
 
+/** Name and email, and removal of an account with no hours. Master Admin only: the API refuses everyone else. */
+function editUser(u) {
+    const isMasterAccount = u.role >= ROLE_MASTER;
+    const name = h('input', { id: 'user-name', type: 'text', maxLength: 100, value: u.name, required: true });
+    const email = h('input', { id: 'user-email', type: 'email', value: u.email, required: true, disabled: isMasterAccount });
+    const dialog = h('dialog', { class: 'sheet' });
+
+    const finish = async message => {
+        await closeDialog(dialog, true);
+        toast(message);
+        await start();
+    };
+    const save = async () => {
+        const changed = email.value.trim().toLowerCase() !== u.email;
+        if (changed && !(await ask({
+            title: "Cambiare l'email?",
+            text: `${u.name} dovrà entrare con ${email.value.trim()}: il vecchio account Google smetterà di funzionare.`,
+            yes: 'Cambia',
+        }))) return;
+        try {
+            await api('users.edit', { body: { id: u.id, name: name.value, email: email.value } });
+            await finish('Salvato');
+        } catch (e) {
+            showError(e);
+        }
+    };
+    const remove = async () => {
+        if (!(await ask({ title: 'Eliminare questo account?', text: `${u.name} (${u.email}) non potrà più entrare. L'account non si può recuperare.`, yes: 'Elimina', danger: true }))) return;
+        try {
+            await api('users.delete', { body: { id: u.id } });
+            await finish('Account eliminato');
+        } catch (e) {
+            showError(e);
+        }
+    };
+
+    let removal = null;
+    if (!isMasterAccount) {
+        removal = u.days
+            ? h('p', { class: 'muted' }, `Ha ${u.days === 1 ? 'un giorno registrato' : `${u.days} giorni registrati`}: per non perdere le ore l'account si può solo disattivare.`)
+            : h('button', { class: 'btn btn-link btn-delete', type: 'button', onclick: remove }, icon('trash'), 'Elimina questo account');
+    }
+
+    dialog.append(h('form', { method: 'dialog', class: 'sheet-form', onsubmit: e => { e.preventDefault(); save(); } },
+        h('header', { class: 'sheet-head' },
+            h('div', { class: 'sheet-title' }, h('h2', null, 'Modifica account')),
+            h('button', { class: 'btn btn-icon btn-plain', type: 'button', 'aria-label': 'Chiudi', onclick: () => closeDialog(dialog) }, icon('close'))),
+        h('div', { class: 'sheet-body' },
+            h('section', null, h('h3', null, h('label', { htmlFor: 'user-name' }, 'Nome')), name),
+            h('section', null, h('h3', null, h('label', { htmlFor: 'user-email' }, 'Email Google')), email,
+                isMasterAccount ? h('p', { class: 'muted' }, "L'email del Master Admin si cambia in credentials.php.") : null),
+            removal),
+        h('footer', { class: 'sheet-foot' }, h('button', { class: 'btn btn-primary btn-big', type: 'submit' }, 'Salva'))));
+    openDialog(dialog);
+}
+
+/** Opens the hours of a person, with the switcher at the top showing them. */
+function viewHours(id) {
+    state.targetId = id;
+    localStorage.setItem('rend.target', String(id));
+    renderShell();
+    location.hash = '#/mese';
+}
+
 const STATUS_LABELS = { pending: 'In attesa', active: 'Attivo', rejected: 'Rifiutato', disabled: 'Disattivato' };
 
 function usersPanel() {
@@ -799,7 +1076,7 @@ function usersPanel() {
     const update = fields => api('users.update', { body: fields }).then(data => { applyUsers(data); renderShell(); route(); }).catch(showError);
 
     const paint = users => {
-        box.replaceChildren(...users.map(u => {
+        fill(box, ...users.map(u => {
             const locked = u.id === state.user.id || u.role >= ROLE_MASTER || (u.role >= ROLE_ADMIN && state.user.role < ROLE_MASTER);
             const actions = [];
             if (!locked) {
@@ -817,9 +1094,15 @@ function usersPanel() {
                         : h('button', { class: 'btn', type: 'button', onclick: () => update({ id: u.id, role: ROLE_ADMIN }) }, 'Rendi admin'));
                 }
             }
+            if (u.status === 'active') {
+                actions.push(h('button', { class: 'btn', type: 'button', onclick: () => viewHours(u.id) }, 'Vedi ore'));
+            }
+            if (state.user.role >= ROLE_MASTER) {
+                actions.push(h('button', { class: 'btn', type: 'button', onclick: () => editUser(u) }, icon('pencil'), 'Modifica'));
+            }
             return h('div', { class: 'user' + (u.status === 'pending' ? ' user-pending' : '') },
                 h('p', null, h('b', null, u.name), h('br'), h('span', { class: 'muted' }, u.email)),
-                h('p', { class: 'muted' }, [u.role >= ROLE_MASTER ? 'Master Admin' : (u.role >= ROLE_ADMIN ? 'Amministratore' : 'Utente'), STATUS_LABELS[u.status], u.lastLogin ? null : 'non ha ancora fatto accesso'].filter(Boolean).join(' · ')),
+                h('p', { class: 'muted' }, [u.role >= ROLE_MASTER ? 'Master Admin' : (u.role >= ROLE_ADMIN ? 'Amministratore' : 'Utente'), STATUS_LABELS[u.status], u.days === 1 ? '1 giorno' : `${u.days} giorni`, u.lastLogin ? 'ultimo accesso ' + timeAgoLabel(u.lastLogin) : 'non ha ancora fatto accesso'].join(' · ')),
                 actions.length ? h('div', { class: 'user-actions' }, actions) : null);
         }));
     };
@@ -856,14 +1139,14 @@ function importPanel() {
         onchange: async () => {
             const file = input.files[0];
             if (!file) return;
-            result.replaceChildren(h('p', { class: 'muted' }, 'Lettura del file…'));
+            fill(result, h('p', { class: 'muted' }, 'Lettura del file…'));
             const form = new FormData();
             form.append('file', file);
             form.append('user', String(state.targetId));
             try {
                 paintPreview(await api('import.preview', { form }));
             } catch (e) {
-                result.replaceChildren();
+                fill(result);
                 showError(e);
             }
             input.value = '';
@@ -873,7 +1156,7 @@ function importPanel() {
     const paintPreview = preview => {
         const total = preview.months.reduce((sum, m) => sum + m.ordinary + m.overtime, 0);
         const count = Object.keys(preview.days).length;
-        result.replaceChildren(
+        fill(result, 
             h('h3', null, `Anno ${preview.year}: ${count} giorni, ${fmtHours(total)}`),
             h('table', { class: 'year' },
                 h('thead', null, h('tr', null, h('th', { scope: 'col' }, 'Mese'), h('th', { scope: 'col', class: 'num' }, 'Giorni'), h('th', { scope: 'col', class: 'num' }, 'Ordinarie'), h('th', { scope: 'col', class: 'num' }, 'Straord.'))),
@@ -893,7 +1176,7 @@ function importPanel() {
                     try {
                         const data = await api('import.apply', { body: withUser({ days: preview.days }) });
                         state.year = preview.year;
-                        result.replaceChildren(h('p', null, data.changed ? `Fatto: ${data.changed} giorni importati.` : 'Niente da importare: i dati sono già uguali.'));
+                        fill(result, h('p', null, data.changed ? `Fatto: ${data.changed} giorni importati.` : 'Niente da importare: i dati sono già uguali.'));
                         const boot = await api('boot');
                         state.workers = boot.workers;
                     } catch (e) {
@@ -931,7 +1214,7 @@ async function printMonth() {
                     h('td', null, i === 0 ? [day.kind !== 'lavoro' ? KINDS[day.kind] : '', day.note].filter(Boolean).join(': ') : ''));
             });
         });
-        document.getElementById('print').replaceChildren(
+        fill(document.getElementById('print'),
             h('h1', null, `Rendicontazione ore: ${MONTHS[state.month - 1]} ${state.year}`),
             h('p', null, targetName()),
             h('table', null,

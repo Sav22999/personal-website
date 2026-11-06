@@ -156,7 +156,14 @@
     function dataTable(cols, rows, opts) {
         opts = opts || {};
         const state = opts.state || {key: opts.sortKey || null, dir: opts.sortDir || 1};
-        const thead = h('thead'), tbody = h('tbody');
+        const thead = h('thead'), tbody = h('tbody'), after = h('div');
+
+        const rowOf = r => h('tr' + (opts.onrow ? '.click' : ''), {
+                onclick: opts.onrow ? e => {
+                    if (!e.target.closest('button, a, input')) opts.onrow(r);
+                } : null
+            },
+            cols.map(col => h('td' + (col.num ? '.num' : '') + (col.cls ? '.' + col.cls : ''), col.render(r))));
 
         function paint() {
             const list = rows.slice();
@@ -174,17 +181,14 @@
                 'aria-sort': state.key === col.key ? (state.dir > 0 ? 'ascending' : 'descending') : null,
             }, col.label, col.sort ? h('span.arrow', state.key === col.key ? (state.dir > 0 ? ' ↑' : ' ↓') : '') : null))));
             UI.clear(tbody);
-            for (const r of list) tbody.appendChild(h('tr' + (opts.onrow ? '.click' : ''), {
-                    onclick: opts.onrow ? e => {
-                        if (!e.target.closest('button, a, input')) opts.onrow(r);
-                    } : null
-                },
-                cols.map(col => h('td' + (col.num ? '.num' : '') + (col.cls ? '.' + col.cls : ''), col.render(r)))));
+            if (after.firstChild) after.firstChild._stop();
+            if (opts.step) after.replaceChildren(UI.infiniteList(tbody, list, rowOf, {step: opts.step}));
+            else for (const r of list) tbody.appendChild(rowOf(r));
             if (!list.length) tbody.appendChild(h('tr', h('td', {colspan: cols.length}, h('div.dt-empty', opts.empty || t('Nothing to show')))));
         }
 
         paint();
-        return h('div.table-card', h('div.table-scroll', h('table.dt', thead, tbody)));
+        return h('div.table-card', h('div.table-scroll', h('table.dt', thead, tbody), after));
     }
 
     function searchInput(value, placeholder, oninput) {
@@ -554,7 +558,7 @@
                         } : null,
                     ])]
                 },
-            ], rows, {state: recipeState.sort, onrow: r => openRecipe(r, d), empty: t('No recipes')}));
+            ], rows, {state: recipeState.sort, onrow: r => openRecipe(r, d), empty: t('No recipes'), step: 30}));
         }
 
         paint();

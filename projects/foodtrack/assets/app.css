@@ -1191,6 +1191,10 @@ select[data-lead] {
     width: 340px;
 }
 
+.infinite-end {
+    height: 1px;
+}
+
 .dd-meta {
     flex: none;
     max-width: 45%;

@@ -2011,3 +2011,11 @@ body.admin #toast.show {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
 }
+
+/* Language menu of the top bar (tablet and phone): flag on the left, arrow on the right */
+.adm-tools select.ctl[data-lead], .adm-topbar .adm-tools select.ctl[data-lead] {
+    padding-left: 36px !important;
+    padding-right: 26px;
+    background-position: 10px 50%, right 3px center;
+    background-size: 18px 14px, 20px 20px;
+}

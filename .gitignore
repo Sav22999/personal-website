@@ -18,6 +18,7 @@ projects/cron/credentials.php
 # Dependencies
 /vendor/
 node_modules/
+__pycache__/
 !projects/foodtrack/assets/vendor/
 
 # IDE, tools and OS

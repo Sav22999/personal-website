@@ -349,6 +349,41 @@
         return h('textarea', Object.assign({rows: 3}, attrs || {}));
     }
 
+    /**
+     * Fills a list little by little while the user scrolls: render(item) gives the node of an item.
+     * Gives back the element to put right after the list, which brings in the next items as it gets near the screen.
+     * opts: {step, shown (items to show at once), onmore(shown)}.
+     */
+    function infiniteList(parent, items, render, opts) {
+        const step = opts.step || 24;
+        const end = h('div.infinite-end', {'aria-hidden': 'true'});
+        let shown = 0, observer = null;
+
+        function more(count) {
+            const next = Math.min(items.length, shown + count);
+            for (; shown < next; shown++) parent.appendChild(render(items[shown]));
+            if (opts.onmore) opts.onmore(shown);
+            if (shown >= items.length && observer) observer.disconnect();
+        }
+
+        end._stop = () => observer && observer.disconnect();
+        if (!('IntersectionObserver' in window)) {
+            more(items.length);
+            return end;
+        }
+        more(Math.max(step, opts.shown || 0));
+        if (shown < items.length) {
+            observer = new IntersectionObserver(entries => {
+                if (!entries.some(e => e.isIntersecting)) return;
+                more(step);
+                observer.unobserve(end); // Observing again checks if the end is still near the screen
+                if (shown < items.length) observer.observe(end);
+            }, {rootMargin: '600px'});
+            observer.observe(end);
+        }
+        return end;
+    }
+
     /** Fills a <select>. An option can have a flag (country code) or a pic ([folder, icon]), shown in the custom list. */
     function fillSelect(s, options, value) {
         for (const o of options) {
@@ -795,7 +830,7 @@
 
     // ---------- Quantities ----------
 
-    const UNIT_BASE = {g: ['g', 1], kg: ['g', 1000], ml: ['ml', 1], cl: ['ml', 10], l: ['ml', 1000]};
+    const UNIT_BASE = {g: ['g', 1], kg: ['g', 1000], ml: ['ml', 1], cl: ['ml', 10], dl: ['ml', 100], l: ['ml', 1000]};
 
     function toBase(qty, unit) {
         const b = UNIT_BASE[unit];
@@ -815,9 +850,23 @@
         return window.I18N && I18N.lang !== 'it' && UNIT_EN[u] ? UNIT_EN[u] : u;
     }
 
+    /**
+     * Quantity in the unit chosen in the settings. Only for display: the data keeps the unit it was saved with.
+     * Preference: '' = as entered, 'auto' = the unit that reads best, or a unit (g, kg, ml, cl, dl, l).
+     */
+    function preferredQty(qty, unit) {
+        const b = UNIT_BASE[unit];
+        const pref = b ? store.get(b[0] === 'g' ? 'units.weight' : 'units.volume', '') : '';
+        if (!pref) return {qty, unit};
+        const value = qty * b[1];
+        const to = pref !== 'auto' ? pref : value >= 1000 ? (b[0] === 'g' ? 'kg' : 'l') : b[0];
+        return {qty: value / UNIT_BASE[to][1], unit: to};
+    }
+
     function fmtQty(qty, unit) {
         if (unit === 'q.b.') return unitLabel('q.b.');
         if (qty === null || qty === undefined) return unit && unit !== 'pz' ? unitLabel(unit) : '';
+        ({qty, unit} = preferredQty(qty, unit));
         if (qty === 1 && UNIT_ONE[unitLabel(unit)]) return '1 ' + UNIT_ONE[unitLabel(unit)];
         return fmtNum(qty) + (unit ? ' ' + unitLabel(unit) : '');
     }
@@ -964,6 +1013,7 @@
         textarea,
         select,
         fillSelect,
+        infiniteList,
         placePanel,
         environments,
         environmentLabel,
