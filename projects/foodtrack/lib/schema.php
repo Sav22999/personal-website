@@ -463,6 +463,12 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
         foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
     }
+    if ($from < 21) {
+        require_once __DIR__ . '/seed.php';
+        $now = gmdate('Y-m-d H:i:s');
+        $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
+        foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
+    }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }
 

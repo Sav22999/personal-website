@@ -298,7 +298,7 @@ CREATE TABLE IF NOT EXISTS `ft_history` (
   CONSTRAINT `fk_ft_hist_user` FOREIGN KEY (`user_id`) REFERENCES `ft_users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `ft_meta` (k, v) VALUES ('schema_version', '20') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `ft_meta` (k, v) VALUES ('schema_version', '21') ON DUPLICATE KEY UPDATE v = VALUES(v);
 
 -- ---------------------------------------------------------------- categories
 INSERT IGNORE INTO `ft_categories` (name, expiry_tip, sort) VALUES ('Frutta', 'La frutta fresca non ha una vera data di scadenza: controlla aspetto, odore e consistenza. Piccole ammaccature si possono eliminare; muffa, odore fermentato o polpa molle e scura indicano che è meglio non consumarla. La frutta troppo matura è perfetta per frullati, dolci e marmellate.', 10);
@@ -2832,7 +2832,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Sciogli 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Unisci uovo, zucchero, cacao e biscotti spezzettati.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Forma un salame nella carta forno e lascia in frigo 4 ore.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Rinderrouladen', 'Involtini di manzo con senape, pancetta e cetriolini.', '', 25, 90, 'In pentola', 4, 'media', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Rinderrouladen', 'Involtini di manzo con senape, pancetta e cetriolini.', 'assets/img/recipes/rinderrouladen.jpg', 25, 90, 'In pentola', 4, 'media', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Fettine di vitello'), 'Fettine di vitello', 600, 'g', 'o di manzo, grandi', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Senape'), 'Senape', 2, 'cucchiai', '', 1);
@@ -2847,7 +2847,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Arrotola
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Rosola gli involtini nell’olio.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Aggiungi il brodo e cuoci coperto per 1 ora e mezza.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Sauerbraten', 'Arrosto di manzo marinato nell’aceto.', '', 20, 150, 'Marinatura di 2 giorni, poi in pentola', 6, 'media', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Sauerbraten', 'Arrosto di manzo marinato nell’aceto.', 'assets/img/recipes/sauerbraten.jpg', 20, 150, 'Marinatura di 2 giorni, poi in pentola', 6, 'media', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Arrosto di manzo'), 'Arrosto di manzo', 1.2, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Aceto di vino'), 'Aceto di vino', 300, 'ml', '', 1);
@@ -2864,7 +2864,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Asciugal
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Versa la marinata e cuoci coperto per 2 ore e mezza.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Filtra il sugo, aggiungi l’uvetta e servi a fette.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Kartoffelpuffer', 'Frittelle di patate con composta di mele.', '', 15, 15, 'In padella', 4, 'facile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Kartoffelpuffer', 'Frittelle di patate con composta di mele.', 'assets/img/recipes/kartoffelpuffer.jpg', 15, 15, 'In padella', 4, 'facile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Patate'), 'Patate', 1, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Cipolle'), 'Cipolle', 1, 'pz', '', 1);
@@ -2876,7 +2876,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Grattugi
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Unisci uova, farina e sale.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Friggi piccole frittelle, 3 minuti per lato.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Käsespätzle', 'Gnocchetti al formaggio con cipolle dorate.', '', 15, 20, 'In pentola e in padella', 4, 'facile', 'DE,AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Käsespätzle', 'Gnocchetti al formaggio con cipolle dorate.', 'assets/img/recipes/kaesespaetzle.jpg', 15, 20, 'In pentola e in padella', 4, 'facile', 'DE,AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 400, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 4, 'pz', '', 1);
@@ -2890,7 +2890,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Passa l�
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Dora le cipolle affettate nel burro.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Alterna spätzle e formaggio e copri con le cipolle.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Laugenbrezel', 'I brezel bavaresi, morbidi e salati.', '', 30, 15, 'Forno a 200 °C', 8, 'media', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Laugenbrezel', 'I brezel bavaresi, morbidi e salati.', 'assets/img/recipes/laugenbrezel.jpg', 30, 15, 'Forno a 200 °C', 8, 'media', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 500, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Acqua'), 'Acqua', 300, 'ml', 'tiepida', 1);
@@ -2903,7 +2903,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Forma i 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Immergili 30 secondi in acqua bollente con il bicarbonato.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cospargi di sale grosso e cuoci in forno 15 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Schwarzwälder Kirschtorte', 'Torta della Foresta Nera: cioccolato, panna e ciliegie.', '', 40, 35, 'Forno a 180 °C', 12, 'difficile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Schwarzwälder Kirschtorte', 'Torta della Foresta Nera: cioccolato, panna e ciliegie.', 'assets/img/recipes/black_forest_cake.jpg', 40, 35, 'Forno a 180 °C', 12, 'difficile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 6, 'pz', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Zucchero'), 'Zucchero', 200, 'g', '', 1);
@@ -2919,7 +2919,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Taglia l
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Farcisci con panna montata e ciliegie.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Copri di panna e decora con cioccolato e ciliegie.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Streuselkuchen', 'Dolce lievitato con croccanti briciole di burro.', '', 30, 30, 'Forno a 180 °C', 12, 'facile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Streuselkuchen', 'Dolce lievitato con croccanti briciole di burro.', 'assets/img/recipes/streuselkuchen.jpg', 30, 30, 'Forno a 180 °C', 12, 'facile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 600, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Latte intero'), 'Latte intero', 200, 'ml', 'tiepido', 1);
@@ -2933,7 +2933,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Stendi l
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Sbriciola con le dita il resto di farina, zucchero e burro con la cannella.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Copri l’impasto con le briciole e cuoci in forno 30 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Rote Grütze', 'Composta di frutti rossi con panna o vaniglia.', '', 10, 10, 'In pentola, poi in frigo', 4, 'facile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Rote Grütze', 'Composta di frutti rossi con panna o vaniglia.', 'assets/img/recipes/rote_gruetze.jpg', 10, 10, 'In pentola, poi in frigo', 4, 'facile', 'DE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Frutti di bosco'), 'Frutti di bosco', 600, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Zucchero'), 'Zucchero', 80, 'g', '', 1);
@@ -2944,7 +2944,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Scalda f
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Stempera l’amido nel succo rimasto e unisci.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Fai addensare, raffredda e servi con la panna.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Tafelspitz', 'Manzo bollito viennese con patate e rafano.', '', 15, 150, 'In pentola', 6, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Tafelspitz', 'Manzo bollito viennese con patate e rafano.', 'assets/img/recipes/tafelspitz.jpg', 15, 150, 'In pentola', 6, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Arrosto di manzo'), 'Arrosto di manzo', 1.5, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Carote'), 'Carote', 2, 'pz', '', 1);
@@ -2958,7 +2958,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Cuoci a 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Lessa le patate a parte.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Servi a fette con un po’ di brodo e le patate.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Palatschinken', 'Crespelle sottili con confettura di albicocche.', '', 10, 15, 'In padella', 4, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Palatschinken', 'Crespelle sottili con confettura di albicocche.', 'assets/img/recipes/palatschinken.jpg', 10, 15, 'In padella', 4, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 150, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Latte intero'), 'Latte intero', 300, 'ml', '', 1);
@@ -2970,7 +2970,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Sbatti f
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Cuoci crespelle sottili nel burro.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Spalma la confettura, arrotola e spolvera di zucchero a velo.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Marillenknödel', 'Gnocchi dolci di patate con albicocca.', '', 30, 15, 'In pentola e in padella', 4, 'media', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Marillenknödel', 'Gnocchi dolci di patate con albicocca.', 'assets/img/recipes/marillenknodel.jpg', 30, 15, 'In pentola e in padella', 4, 'media', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Patate'), 'Patate', 500, 'g', 'lessate', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 150, 'g', '', 1);
@@ -2984,7 +2984,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Avvolgi 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci in acqua a fuoco basso per 12–15 minuti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Passali nel pangrattato tostato con burro e zucchero.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Germknödel', 'Grandi gnocchi lievitati con prugne e burro.', '', 30, 20, 'Al vapore', 4, 'media', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Germknödel', 'Grandi gnocchi lievitati con prugne e burro.', 'assets/img/recipes/germknoedel.jpg', 30, 20, 'Al vapore', 4, 'media', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 350, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Latte intero'), 'Latte intero', 150, 'ml', 'tiepido', 1);
@@ -2998,7 +2998,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Forma 4 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci al vapore per 15–20 minuti senza aprire.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Servi con il burro fuso rimasto e zucchero a velo.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Vanillekipferl', 'Biscottini di Natale alle mandorle e vaniglia.', '', 25, 12, 'Forno a 180 °C', 12, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Vanillekipferl', 'Biscottini di Natale alle mandorle e vaniglia.', 'assets/img/recipes/vanillekipferl.jpg', 25, 12, 'Forno a 180 °C', 12, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 250, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Mandorle'), 'Mandorle', 100, 'g', 'tritate', 1);
@@ -3011,7 +3011,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Lascia 3
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci in forno 12 minuti senza farli scurire.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Passali ancora caldi nello zucchero a velo.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Gugelhupf', 'Ciambella marmorizzata al cacao.', '', 15, 50, 'Forno a 180 °C', 10, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Gugelhupf', 'Ciambella marmorizzata al cacao.', 'assets/img/recipes/gugelhupf.jpg', 15, 50, 'Forno a 180 °C', 10, 'facile', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 300, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 200, 'g', '', 1);
@@ -3025,7 +3025,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Aggiungi
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Unisci il cacao a un terzo dell’impasto e alterna nello stampo.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci in forno 50 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Salzburger Nockerl', 'Soufflé dolce a forma delle montagne di Salisburgo.', '', 15, 12, 'Forno a 200 °C', 4, 'media', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Salzburger Nockerl', 'Soufflé dolce a forma delle montagne di Salisburgo.', 'assets/img/recipes/salzburger_nockerl.jpg', 15, 12, 'Forno a 200 °C', 4, 'media', 'AT', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 5, 'pz', 'tuorli e albumi separati', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Zucchero'), 'Zucchero', 60, 'g', '', 1);
@@ -3038,7 +3038,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Monta gl
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Forma tre cumuli sopra i frutti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci in forno 10–12 minuti e servi subito con zucchero a velo.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Coq au vin', 'Pollo stufato nel vino rosso con funghi e pancetta.', '', 20, 75, 'In pentola', 4, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Coq au vin', 'Pollo stufato nel vino rosso con funghi e pancetta.', 'assets/img/recipes/coq_au_vin.jpg', 20, 75, 'In pentola', 4, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Cosce di pollo'), 'Cosce di pollo', 1.2, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Vino rosso'), 'Vino rosso', 500, 'ml', '', 1);
@@ -3054,7 +3054,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Soffrigg
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Rimetti il pollo, aggiungi vino e timo.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci coperto a fuoco basso per 1 ora.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Bœuf bourguignon', 'Stufato di manzo della Borgogna.', '', 25, 150, 'In pentola', 6, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Bœuf bourguignon', 'Stufato di manzo della Borgogna.', 'assets/img/recipes/boeuf_bourguignon.jpg', 25, 150, 'In pentola', 6, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Carne di manzo a cubetti'), 'Carne di manzo a cubetti', 1.2, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Vino rosso'), 'Vino rosso', 750, 'ml', '', 1);
@@ -3071,7 +3071,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Aggiungi
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci coperto a fuoco basso per 2 ore e mezza.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Salta i funghi e uniscili negli ultimi 15 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Gratin dauphinois', 'Patate al forno con panna e aglio.', '', 15, 75, 'Forno a 180 °C', 6, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Gratin dauphinois', 'Patate al forno con panna e aglio.', 'assets/img/recipes/gratin_dauphinois.jpg', 15, 75, 'Forno a 180 °C', 6, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Patate'), 'Patate', 1, 'kg', 'a fette sottili', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Panna fresca'), 'Panna fresca', 400, 'ml', '', 1);
@@ -3083,7 +3083,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Strofina
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Disponi le patate a strati con sale e noce moscata.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Copri con panna e latte e cuoci in forno 1 ora e 15 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Salade niçoise', 'Insalata di Nizza con tonno, uova e olive.', '', 15, 10, 'Uova e fagiolini lessati', 2, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Salade niçoise', 'Insalata di Nizza con tonno, uova e olive.', 'assets/img/recipes/salade_nicoise.jpg', 15, 10, 'Uova e fagiolini lessati', 2, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Tonno in scatola'), 'Tonno in scatola', 160, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 2, 'pz', '', 1);
@@ -3096,7 +3096,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Lessa uo
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Taglia pomodori e uova a spicchi.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Componi il piatto con tutti gli ingredienti e condisci con olio.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Tarte Tatin', 'Torta rovesciata di mele caramellate.', '', 20, 40, 'Forno a 180 °C', 8, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Tarte Tatin', 'Torta rovesciata di mele caramellate.', 'assets/img/recipes/tarte_tatin.jpg', 20, 40, 'Forno a 180 °C', 8, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Mele'), 'Mele', 1, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Pasta sfoglia'), 'Pasta sfoglia', 1, 'pz', '', 1);
@@ -3107,7 +3107,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Disponi 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Copri con la sfoglia e cuoci in forno 30 minuti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Attendi 5 minuti e capovolgi su un piatto.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Crème brûlée', 'Crema alla vaniglia con crosta di zucchero caramellato.', '', 15, 40, 'Forno a 150 °C a bagnomaria', 4, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Crème brûlée', 'Crema alla vaniglia con crosta di zucchero caramellato.', 'assets/img/recipes/creme_brulee.jpg', 15, 40, 'Forno a 150 °C a bagnomaria', 4, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Panna fresca'), 'Panna fresca', 500, 'ml', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 5, 'pz', 'solo i tuorli', 1);
@@ -3119,7 +3119,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Sbatti t
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci a bagnomaria in forno 40 minuti e raffredda in frigo.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cospargi di zucchero di canna e caramella con il cannello.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Mousse au chocolat', 'Spuma leggera di cioccolato fondente.', '', 20, NULL, 'Senza forno, poi in frigo', 4, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Mousse au chocolat', 'Spuma leggera di cioccolato fondente.', 'assets/img/recipes/mousse_au_chocolat.jpg', 20, NULL, 'Senza forno, poi in frigo', 4, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Cioccolato fondente'), 'Cioccolato fondente', 200, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 4, 'pz', 'freschissime, tuorli e albumi separati', 1);
@@ -3129,7 +3129,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Sciogli 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Monta gli albumi con lo zucchero.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Incorpora delicatamente e lascia in frigo 3 ore.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Clafoutis alle ciliegie', 'Flan del Limosino con ciliegie.', '', 10, 40, 'Forno a 180 °C', 6, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Clafoutis alle ciliegie', 'Flan del Limosino con ciliegie.', 'assets/img/recipes/cherry_clafoutis.jpg', 10, 40, 'Forno a 180 °C', 6, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Ciliegie'), 'Ciliegie', 500, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Uova'), 'Uova', 3, 'pz', '', 1);
@@ -3141,7 +3141,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Imburra 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Sbatti uova, zucchero, farina e latte.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Versa sulle ciliegie e cuoci in forno 40 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Madeleines', 'Piccoli dolci soffici a forma di conchiglia.', '', 15, 10, 'Forno a 200 °C', 6, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Madeleines', 'Piccoli dolci soffici a forma di conchiglia.', 'assets/img/recipes/madeleines.jpg', 15, 10, 'Forno a 200 °C', 6, 'facile', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 120, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Zucchero'), 'Zucchero', 100, 'g', '', 1);
@@ -3154,7 +3154,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Unisci f
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Lascia l’impasto in frigo 1 ora.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Versa negli stampi e cuoci in forno 10 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Tarte au citron', 'Crostata con crema al limone.', '', 25, 35, 'Forno a 180 °C', 8, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Tarte au citron', 'Crostata con crema al limone.', 'assets/img/recipes/tarte_au_citron.jpg', 25, 35, 'Forno a 180 °C', 8, 'media', 'FR', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Pasta frolla'), 'Pasta frolla', 1, 'pz', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Limoni'), 'Limoni', 3, 'pz', 'succo e scorza', 1);
@@ -3166,7 +3166,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Cuoci uo
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Fuori dal fuoco unisci il burro.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Versa sulla frolla e lascia in frigo 2 ore.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Carbonade flamande', 'Stufato fiammingo di manzo alla birra.', '', 20, 120, 'In pentola', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Carbonade flamande', 'Stufato fiammingo di manzo alla birra.', 'assets/img/recipes/carbonade_flamande.jpg', 20, 120, 'In pentola', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Carne di manzo a cubetti'), 'Carne di manzo a cubetti', 800, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Birra'), 'Birra', 500, 'ml', 'scura', 1);
@@ -3181,7 +3181,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Aggiungi
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Appoggia sopra il pane spalmato di senape.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci coperto per 2 ore a fuoco basso e mescola.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Waterzooi di pollo', 'Zuppa cremosa di Gand con pollo e verdure.', '', 15, 45, 'In pentola', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Waterzooi di pollo', 'Zuppa cremosa di Gand con pollo e verdure.', 'assets/img/recipes/waterzooi.jpg', 15, 45, 'In pentola', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Cosce di pollo'), 'Cosce di pollo', 800, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Porri'), 'Porri', 2, 'pz', '', 1);
@@ -3195,7 +3195,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Cuoci po
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Spolpa il pollo e rimettilo nella pentola.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Mescola panna e tuorli e unisci fuori dal fuoco.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Stoemp', 'Purè di Bruxelles con patate e verdure.', '', 15, 25, 'In pentola', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Stoemp', 'Purè di Bruxelles con patate e verdure.', 'assets/img/recipes/stoemp.jpg', 15, 25, 'In pentola', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Patate'), 'Patate', 1, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Carote'), 'Carote', 3, 'pz', '', 1);
@@ -3207,7 +3207,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Lessa pa
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Fai appassire il porro nel burro.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Schiaccia tutto con sale e noce moscata.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Indivia al prosciutto gratinata', 'I chicons belgi: indivia, prosciutto e besciamella.', '', 15, 40, 'Forno a 200 °C', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Indivia al prosciutto gratinata', 'I chicons belgi: indivia, prosciutto e besciamella.', 'assets/img/recipes/chicons_au_gratin.jpg', 15, 40, 'Forno a 200 °C', 4, 'facile', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Indivia'), 'Indivia', 8, 'pz', 'belga', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Prosciutto cotto'), 'Prosciutto cotto', 8, 'pz', 'fette', 1);
@@ -3220,7 +3220,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Prepara 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Avvolgi l’indivia nel prosciutto e mettila in teglia.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Copri con besciamella e formaggio e cuoci in forno 20 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Gaufres de Liège', 'Cialde lievitate con zucchero caramellato.', '', 25, 15, 'Piastra per waffle', 8, 'media', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Gaufres de Liège', 'Cialde lievitate con zucchero caramellato.', 'assets/img/recipes/liege_waffles.jpg', 25, 15, 'Piastra per waffle', 8, 'media', 'BE', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 500, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Latte intero'), 'Latte intero', 150, 'ml', 'tiepido', 1);
@@ -3232,7 +3232,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Impasta 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Fai lievitare 1 ora e unisci lo zucchero in granella.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Dividi in palline e cuoci nella piastra 3–4 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Speculoos', 'Biscotti speziati al caramello.', '', 15, 15, 'Forno a 180 °C', 12, 'facile', 'BE,NL', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Speculoos', 'Biscotti speziati al caramello.', 'assets/img/recipes/speculoos.jpg', 15, 15, 'Forno a 180 °C', 12, 'facile', 'BE,NL', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 300, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Zucchero di canna'), 'Zucchero di canna', 180, 'g', '', 1);
@@ -3246,7 +3246,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Impasta 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Lascia in frigo 2 ore.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Stendi, taglia i biscotti e cuoci in forno 15 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Fish and chips', 'Merluzzo in pastella e patatine.', '', 20, 20, 'Frittura', 2, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Fish and chips', 'Merluzzo in pastella e patatine.', 'assets/img/recipes/fish_and_chips.jpg', 20, 20, 'Frittura', 2, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Merluzzo'), 'Merluzzo', 400, 'g', 'filetti', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Patate'), 'Patate', 600, 'g', '', 1);
@@ -3260,7 +3260,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Mescola 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Immergi il pesce nella pastella e friggilo a 180 °C per 6 minuti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Rifriggi le patate finché dorate e servi con sale e aceto.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Shepherd’s pie', 'Agnello macinato sotto una crosta di purè.', '', 25, 45, 'Forno a 200 °C', 4, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Shepherd’s pie', 'Agnello macinato sotto una crosta di purè.', 'assets/img/recipes/shepherds_pie.jpg', 25, 45, 'Forno a 200 °C', 4, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Carne macinata di agnello'), 'Carne macinata di agnello', 500, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Cipolle'), 'Cipolle', 1, 'pz', '', 1);
@@ -3276,7 +3276,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Lessa le
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Metti la carne in teglia e copri con il purè.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci in forno 25 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Roast beef e Yorkshire pudding', 'Il pranzo della domenica.', '', 15, 70, 'Forno a 220 °C', 6, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Roast beef e Yorkshire pudding', 'Il pranzo della domenica.', 'assets/img/recipes/roast_beef_yorkshire_pudding.jpg', 15, 70, 'Forno a 220 °C', 6, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Arrosto di manzo'), 'Arrosto di manzo', 1.5, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 150, 'g', '', 1);
@@ -3289,7 +3289,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Sbatti f
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Lascia riposare la carne e scalda l’olio in uno stampo da muffin.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Versa la pastella e cuoci 20 minuti senza aprire il forno.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Toad in the hole', 'Salsicce in una pastella soffice al forno.', '', 10, 35, 'Forno a 220 °C', 4, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Toad in the hole', 'Salsicce in una pastella soffice al forno.', 'assets/img/recipes/toad_in_the_hole.jpg', 10, 35, 'Forno a 220 °C', 4, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Salsiccia'), 'Salsiccia', 8, 'pz', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 150, 'g', '', 1);
@@ -3301,7 +3301,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Sbatti f
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Cuoci le salsicce in teglia con l’olio per 10 minuti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Versa la pastella e cuoci 25 minuti senza aprire il forno.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Bangers and mash', 'Salsicce, purè e salsa di cipolle.', '', 10, 30, 'In padella e in pentola', 4, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Bangers and mash', 'Salsicce, purè e salsa di cipolle.', 'assets/img/recipes/bangers_and_mash.jpg', 10, 30, 'In padella e in pentola', 4, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Salsiccia'), 'Salsiccia', 8, 'pz', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Patate'), 'Patate', 1, 'kg', '', 1);
@@ -3316,7 +3316,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Cuoci le
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Nella stessa padella dora le cipolle, aggiungi farina e brodo e fai addensare.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Servi le salsicce sul purè con la salsa.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Chicken tikka masala', 'Il curry britannico per eccellenza.', '', 15, 30, 'In padella', 4, 'facile', 'GB', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Chicken tikka masala', 'Il curry britannico per eccellenza.', 'assets/img/recipes/chicken_tikka_masala.jpg', 15, 30, 'In padella', 4, 'facile', 'GB', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Petto di pollo'), 'Petto di pollo', 600, 'g', 'a pezzi', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Yogurt bianco'), 'Yogurt bianco', 150, 'g', '', 1);
@@ -3332,7 +3332,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Rosola i
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Soffriggi cipolla, aglio e spezie, aggiungi la passata e cuoci 10 minuti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Unisci pollo e panna e cuoci altri 10 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Cornish pasty', 'Fagottini della Cornovaglia con carne e patate.', '', 30, 50, 'Forno a 180 °C', 4, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Cornish pasty', 'Fagottini della Cornovaglia con carne e patate.', 'assets/img/recipes/cornish_pasty.jpg', 30, 50, 'Forno a 180 °C', 4, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Pasta brisée'), 'Pasta brisée', 2, 'pz', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Carne di manzo a cubetti'), 'Carne di manzo a cubetti', 300, 'g', 'tagliata piccola', 1);
@@ -3346,7 +3346,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Taglia d
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Chiudi a mezzaluna e spennella con l’uovo.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci in forno 50 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Sticky toffee pudding', 'Dolce di datteri con salsa mou.', '', 20, 35, 'Forno a 180 °C', 6, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Sticky toffee pudding', 'Dolce di datteri con salsa mou.', 'assets/img/recipes/sticky_toffee_pudding.jpg', 20, 35, 'Forno a 180 °C', 6, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Datteri'), 'Datteri', 200, 'g', 'denocciolati', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Bicarbonato'), 'Bicarbonato', 1, 'cucchiaini', '', 1);
@@ -3361,7 +3361,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Monta 50
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci in forno 35 minuti.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Sciogli il resto di burro e zucchero con la panna e versa sul dolce.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Victoria sponge', 'Torta farcita con confettura e panna.', '', 15, 25, 'Forno a 180 °C', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Victoria sponge', 'Torta farcita con confettura e panna.', 'assets/img/recipes/victoria_sponge.jpg', 15, 25, 'Forno a 180 °C', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 200, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 200, 'g', '', 1);
@@ -3376,7 +3376,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Aggiungi
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci in forno 25 minuti e fai raffreddare.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Farcisci con confettura e panna e spolvera di zucchero a velo.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Apple crumble', 'Mele al forno sotto una crosta di briciole.', '', 15, 40, 'Forno a 180 °C', 6, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Apple crumble', 'Mele al forno sotto una crosta di briciole.', 'assets/img/recipes/apple_crumble.jpg', 15, 40, 'Forno a 180 °C', 6, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Mele'), 'Mele', 1, 'kg', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 200, 'g', '', 1);
@@ -3387,7 +3387,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Taglia l
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Sbriciola con le dita farina, burro e il resto dello zucchero.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Copri le mele e cuoci in forno 40 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Trifle', 'Coppa a strati con savoiardi, frutta, crema e panna.', '', 25, 10, 'In pentola, poi in frigo', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Trifle', 'Coppa a strati con savoiardi, frutta, crema e panna.', 'assets/img/recipes/trifle.jpg', 25, 10, 'In pentola, poi in frigo', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Savoiardi'), 'Savoiardi', 200, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Frutti di bosco'), 'Frutti di bosco', 300, 'g', '', 1);
@@ -3401,7 +3401,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Metti sa
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Copri con la crema e poi con la panna montata.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Lascia in frigo 2 ore.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Bread and butter pudding', 'Dolce del recupero con pane, uvetta e crema.', '', 15, 35, 'Forno a 180 °C', 6, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Bread and butter pudding', 'Dolce del recupero con pane, uvetta e crema.', 'assets/img/recipes/bread_and_butter_pudding.jpg', 15, 35, 'Forno a 180 °C', 6, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Pancarrè'), 'Pancarrè', 8, 'pz', 'fette', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 50, 'g', '', 1);
@@ -3415,7 +3415,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Sbatti l
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Lascia riposare 20 minuti e cospargi di cannella.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Cuoci in forno 35 minuti.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Banoffee pie', 'Banane, caramello e panna su base di biscotti.', '', 25, NULL, 'Senza forno, poi in frigo', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Banoffee pie', 'Banane, caramello e panna su base di biscotti.', 'assets/img/recipes/banoffee_pie.jpg', 25, NULL, 'Senza forno, poi in frigo', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Biscotti integrali'), 'Biscotti integrali', 250, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 120, 'g', 'fuso', 1);
@@ -3428,7 +3428,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Stendi s
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Aggiungi le banane a fette.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Copri con la panna montata e spolvera di cacao.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Lemon drizzle cake', 'Plumcake al limone bagnato con sciroppo.', '', 15, 45, 'Forno a 180 °C', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Lemon drizzle cake', 'Plumcake al limone bagnato con sciroppo.', 'assets/img/recipes/lemon_drizzle_cake.jpg', 15, 45, 'Forno a 180 °C', 8, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 225, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 225, 'g', '', 1);
@@ -3441,7 +3441,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Aggiungi
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Mescola il succo di limone con lo zucchero rimasto.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 3, 'Bucherella il dolce caldo e versa lo sciroppo.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Flapjacks', 'Barrette di avena, burro e miele.', '', 10, 25, 'Forno a 180 °C', 12, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Flapjacks', 'Barrette di avena, burro e miele.', 'assets/img/recipes/flapjacks.jpg', 10, 25, 'Forno a 180 °C', 12, 'facile', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Fiocchi d’avena'), 'Fiocchi d’avena', 300, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 150, 'g', '', 1);
@@ -3451,7 +3451,7 @@ INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 0, 'Sciogli 
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 1, 'Unisci l’avena e compatta in una teglia.');
 INSERT INTO `ft_recipe_steps` (recipe_id, sort, text) VALUES (@rid, 2, 'Cuoci in forno 25 minuti e taglia a barrette da tiepido.');
 
-INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Apple pie', 'Mele e cannella tra due strati di pasta croccante.', '', 30, 50, 'Forno a 190 °C', 8, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+INSERT INTO `ft_recipes` (name, description, image, prep_minutes, cook_minutes, cook_notes, servings, difficulty, origin, published, created_at, updated_at) VALUES ('Apple pie', 'Mele e cannella tra due strati di pasta croccante.', 'assets/img/recipes/apple_pie.jpg', 30, 50, 'Forno a 190 °C', 8, 'media', 'GB-ENG', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());
 SET @rid = LAST_INSERT_ID();
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Farina'), 'Farina', 350, 'g', '', 0);
 INSERT INTO `ft_recipe_ingredients` (recipe_id, product_id, name, quantity, unit, notes, sort) VALUES (@rid, (SELECT id FROM `ft_products` WHERE name = 'Burro'), 'Burro', 200, 'g', 'freddo', 1);
