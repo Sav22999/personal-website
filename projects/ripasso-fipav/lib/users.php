@@ -3,9 +3,9 @@
 
 declare(strict_types=1);
 
-const LOGIN_WINDOW_MIN   = 15;
+const LOGIN_WINDOW_MIN = 15;
 const LOGIN_MAX_PER_MAIL = 8;
-const LOGIN_MAX_PER_IP   = 30;
+const LOGIN_MAX_PER_IP = 30;
 
 function normalize_email(string $email): string
 {
@@ -24,7 +24,7 @@ function validate_password(string $pw, string $email = '', string $name = ''): v
     if ($len < PASSWORD_MIN_LENGTH) fail('La password deve avere almeno ' . PASSWORD_MIN_LENGTH . ' caratteri.', 422, 'weak_password');
     if ($len > 200) fail('La password è troppo lunga.', 422, 'validation');
     $kinds = (int)preg_match('/\p{Ll}/u', $pw) + (int)preg_match('/\p{Lu}/u', $pw)
-           + (int)preg_match('/\d/', $pw) + (int)preg_match('/[^\p{L}\d]/u', $pw);
+        + (int)preg_match('/\d/', $pw) + (int)preg_match('/[^\p{L}\d]/u', $pw);
     if ($kinds < 3) fail('Usa almeno tre tipi di caratteri tra minuscole, maiuscole, numeri e simboli.', 422, 'weak_password');
     $lower = mb_strtolower($pw);
     $local = mb_strtolower((string)strstr($email, '@', true));
@@ -93,7 +93,7 @@ function notify_admin_new_user(string $name, string $email): void
     $url = trim((string)($cfg['public_url'] ?? ''));
     $subject = '=?UTF-8?B?' . base64_encode('Fischietto: nuova registrazione da abilitare') . '?=';
     $body = "Nuovo utente in attesa di abilitazione:\n\nNome: $name\nEmail: $email\n"
-          . ($url !== '' ? "\nGestisci gli utenti: " . rtrim($url, '/') . "/admin.html#utenti\n" : '');
+        . ($url !== '' ? "\nGestisci gli utenti: " . rtrim($url, '/') . "/admin.html#utenti\n" : '');
     $headers = "From: $from\r\nContent-Type: text/plain; charset=UTF-8\r\n";
     @mail($to, $subject, $body, $headers, '-f' . $from);
 }
@@ -103,6 +103,7 @@ function login_user(array $in): array
     $email = normalize_email(str_param($in, 'email', 190, true));
     $password = (string)($in['password'] ?? '');
     $ip = client_ip();
+    $emailKey = hash('sha256', $email); // The rate limit only has to recognise the address, not read it
     $pdo = db();
     ensure_schema();
 
@@ -110,18 +111,20 @@ function login_user(array $in): array
         SUM(CASE WHEN email = ? THEN 1 ELSE 0 END) AS by_mail,
         COUNT(*) AS by_ip
         FROM ' . t('login_attempts') . ' WHERE success = 0 AND ip = ? AND created_at > (UTC_TIMESTAMP() - INTERVAL ' . LOGIN_WINDOW_MIN . ' MINUTE)');
-    $st->execute([$email, $ip]);
+    $st->execute([$emailKey, $ip]);
     $c = $st->fetch();
     $st2 = $pdo->prepare('SELECT COUNT(*) FROM ' . t('login_attempts') . ' WHERE success = 0 AND email = ? AND created_at > (UTC_TIMESTAMP() - INTERVAL ' . LOGIN_WINDOW_MIN . ' MINUTE)');
-    $st2->execute([$email]);
+    $st2->execute([$emailKey]);
     if ((int)$st2->fetchColumn() >= LOGIN_MAX_PER_MAIL || (int)$c['by_ip'] >= LOGIN_MAX_PER_IP) {
         fail('Troppi tentativi falliti. Riprova tra ' . LOGIN_WINDOW_MIN . ' minuti.', 429, 'rate_limited');
     }
 
     $user = find_user_by_email($email);
     $ok = $user && password_verify($password, $user['password_hash']);
-    $pdo->prepare('INSERT INTO ' . t('login_attempts') . ' (ip, email, success, created_at) VALUES (?,?,?,?)')->execute([$ip, $email, $ok ? 1 : 0, now_utc()]);
-    if (!$ok) fail('Email o password non corretti.', 401, 'bad_credentials');
+    if (!$ok) {
+        $pdo->prepare('INSERT INTO ' . t('login_attempts') . ' (ip, email, success, created_at) VALUES (?,?,0,?)')->execute([$ip, $emailKey, now_utc()]);
+        fail('Email o password non corretti.', 401, 'bad_credentials');
+    }
 
     if ($user['status'] === 'pending') fail('Il tuo account è in attesa di abilitazione da parte di un amministratore.', 403, 'pending');
     if ($user['status'] === 'disabled') fail('Il tuo account è stato disabilitato. Contatta l\'amministratore.', 403, 'disabled');
@@ -192,7 +195,6 @@ function admin_list_users(array $actor): array
         $u['role'] = role_label($u['permissions']);
         $u['answers'] = $answers[$u['id']] ?? 0;
         $u['canManage'] = can_manage_user($actor, $u);
-        $u['gravatar'] = gravatar_hash($u['email']);
         $out[] = $u;
     }
     return $out;
@@ -262,11 +264,11 @@ function account_email_links(): array
         $portal = rtrim((string)(config()['public_url'] ?? ''), '/') . '/';
     }
     return [
-        'portal_url'  => $portal,
-        'icon_url'    => $portal . 'assets/icons/icon-192.png',
-        'assets_url'  => $portal . 'assets/email/',
+        'portal_url' => $portal,
+        'icon_url' => $portal . 'assets/icons/icon-192.png',
+        'assets_url' => $portal . 'assets/email/',
         'contact_url' => 'https://www.saveriomorelli.com/contact-me/email/',
-        'credit_url'  => 'https://www.saveriomorelli.com/',
+        'credit_url' => 'https://www.saveriomorelli.com/',
     ];
 }
 
@@ -310,7 +312,9 @@ function admin_send_activation_all(array $actor): array
 {
     if (!mail_enabled()) fail('Invio email non configurato: manca lib/mail-config.php.', 503, 'mail_disabled');
     $rows = db()->query('SELECT * FROM ' . t('users') . " WHERE status = 'active' AND permissions >= " . PERM_USER . ' AND activation_mail_at IS NULL ORDER BY id LIMIT 100')->fetchAll();
-    $targets = array_values(array_filter($rows, function ($u) use ($actor) { return can_manage_user($actor, $u); }));
+    $targets = array_values(array_filter($rows, function ($u) use ($actor) {
+        return can_manage_user($actor, $u);
+    }));
     if (!$targets) return ['sent' => 0, 'failed' => 0, 'errors' => []];
     $results = send_account_emails($targets, 'approved');
     $errors = [];
@@ -421,8 +425,14 @@ function admin_user_stats(int $id): array
         $found = array_search($prefix, SOURCE_PREFIX, true);
         return $found === false ? null : $found;
     };
-    foreach ($refCorrect as $code => $n) { $src = $sourceOf((string)$code); if ($src) $bySource[$src]['correct'] += (int)$n; }
-    foreach ($refWrong as $code => $n) { $src = $sourceOf((string)$code); if ($src) $bySource[$src]['wrong'] += (int)$n; }
+    foreach ($refCorrect as $code => $n) {
+        $src = $sourceOf((string)$code);
+        if ($src) $bySource[$src]['correct'] += (int)$n;
+    }
+    foreach ($refWrong as $code => $n) {
+        $src = $sourceOf((string)$code);
+        if ($src) $bySource[$src]['wrong'] += (int)$n;
+    }
 
     // Weakest topics: references with the lowest share of correct answers (at least one mistake)
     $weak = [];
@@ -432,29 +442,33 @@ function admin_user_stats(int $id): array
         $c = (int)($refCorrect[$code] ?? 0);
         $weak[] = ['code' => (string)$code, 'title' => $refs[$code]['title'] ?? '', 'correct' => $c, 'wrong' => $w, 'pct' => (int)round($c / ($c + $w) * 100)];
     }
-    usort($weak, function ($a, $b) { return $a['pct'] <=> $b['pct'] ?: $b['wrong'] <=> $a['wrong']; });
+    usort($weak, function ($a, $b) {
+        return $a['pct'] <=> $b['pct'] ?: $b['wrong'] <=> $a['wrong'];
+    });
 
     $bm = is_array($data['bookmarks'] ?? null) ? $data['bookmarks'] : [];
     $flags = is_array($bm['flagged'] ?? null) ? $bm['flagged'] : [];
-    $openFlags = count(array_filter($flags, function ($f) { return is_array($f) && empty($f['resolved']); }));
+    $openFlags = count(array_filter($flags, function ($f) {
+        return is_array($f) && empty($f['resolved']);
+    }));
     $suspended = $state['suspended'] ?? [];
     $suspendedCount = is_array($suspended) ? (isset($suspended['questionCodes']) ? 1 : count($suspended)) : 0;
 
     return [
-        'name'        => $u['name'],
-        'role'        => role_label((int)$u['permissions']),
-        'status'      => $u['status'],
-        'created_at'  => $u['created_at'],
-        'last_seen_at'=> $u['last_seen_at'] ?: $u['last_login_at'],
+        'name' => $u['name'],
+        'role' => role_label((int)$u['permissions']),
+        'status' => $u['status'],
+        'created_at' => $u['created_at'],
+        'last_seen_at' => $u['last_seen_at'] ?: $u['last_login_at'],
         'last_saved_at' => $lastSaved,
-        'answers'     => ['total' => $correct + $wrong, 'correct' => $correct, 'wrong' => $wrong],
-        'by_source'   => $bySource,
-        'weak_refs'   => array_slice($weak, 0, 8),
+        'answers' => ['total' => $correct + $wrong, 'correct' => $correct, 'wrong' => $wrong],
+        'by_source' => $bySource,
+        'weak_refs' => array_slice($weak, 0, 8),
         'refs_practiced' => count(array_unique(array_merge(array_keys($refCorrect), array_keys($refWrong)))),
-        'saved'       => ['questions' => count((array)($bm['questions'] ?? [])), 'refs' => count((array)($bm['refs'] ?? []))],
-        'flags'       => ['open' => $openFlags, 'closed' => count($flags) - $openFlags],
+        'saved' => ['questions' => count((array)($bm['questions'] ?? [])), 'refs' => count((array)($bm['refs'] ?? []))],
+        'flags' => ['open' => $openFlags, 'closed' => count($flags) - $openFlags],
         'suspended_quizzes' => $suspendedCount,
-        'quiz_in_progress'  => !empty($state['autosave']),
+        'quiz_in_progress' => !empty($state['autosave']),
     ];
 }
 
@@ -475,21 +489,23 @@ function admin_list_flags(): array
             $sim = $r['state_key'] === 'sim';
             $id = $sim ? sim_flag_id((int)$r['user_id'], (string)($f['date'] ?? ''), (string)$f['code']) : null;
             $out[] = [
-                'kind'     => $sim ? 'sim' : 'quiz',
-                'id'       => $id,
-                'code'     => (string)$f['code'],
-                'text'     => (string)($f['text'] ?? ''),
-                'date'     => (string)($f['date'] ?? ''),
+                'kind' => $sim ? 'sim' : 'quiz',
+                'id' => $id,
+                'code' => (string)$f['code'],
+                'text' => (string)($f['text'] ?? ''),
+                'date' => (string)($f['date'] ?? ''),
                 'resolved' => $sim ? isset($closed[$id]) : !empty($f['resolved']),
                 'closedAt' => $sim && isset($closed[$id]) ? (string)$closed[$id] : null,
-                'context'  => mb_substr((string)($f['context'] ?? ''), 0, 600),
+                'context' => mb_substr((string)($f['context'] ?? ''), 0, 600),
                 // Simulation: everything needed to understand (and recreate) the action
-                'detail'   => $sim && isset($f['detail']) && is_array($f['detail']) ? $f['detail'] : null,
-                'user'     => ['id' => (int)$r['user_id'], 'name' => $r['name'], 'email' => $r['email']],
+                'detail' => $sim && isset($f['detail']) && is_array($f['detail']) ? $f['detail'] : null,
+                'user' => ['id' => (int)$r['user_id'], 'name' => $r['name'], 'email' => $r['email']],
             ];
         }
     }
-    usort($out, function ($a, $b) { return strcmp($b['date'], $a['date']); });
+    usort($out, function ($a, $b) {
+        return strcmp($b['date'], $a['date']);
+    });
     return $out;
 }
 
@@ -540,7 +556,10 @@ function admin_overview(): array
         WHERE u.status = 'active' AND s.state_key IN ('data', 'suspended', 'autosave')");
     foreach ($rows as $row) {
         $v = json_decode($row['value'], true);
-        if ($row['state_key'] === 'autosave') { if (!empty($v)) $inProgress++; continue; }
+        if ($row['state_key'] === 'autosave') {
+            if (!empty($v)) $inProgress++;
+            continue;
+        }
         if ($row['state_key'] === 'suspended') {
             if (is_array($v)) $suspended += isset($v['questionCodes']) ? 1 : count($v);
             continue;
@@ -549,7 +568,8 @@ function admin_overview(): array
         $st = is_array($v['stats'] ?? null) ? $v['stats'] : [];
         $c = (int)($st['correct'] ?? 0);
         $w = (int)($st['wrong'] ?? 0);
-        $correct += $c; $wrong += $w;
+        $correct += $c;
+        $wrong += $w;
         if ($c + $w > 0) $learners++;
         $bm = is_array($v['bookmarks'] ?? null) ? $v['bookmarks'] : [];
         $savedQ += count((array)($bm['questions'] ?? []));
@@ -578,16 +598,21 @@ function admin_overview(): array
     foreach ($refTotals as $code => [$c, $w, $nUsers]) {
         if ($w === 0 || $c + $w < 3 || !isset($refs[$code])) continue;
         $hard[] = ['code' => $code, 'title' => $refs[$code]['title'], 'source' => $refs[$code]['source'],
-                   'answers' => $c + $w, 'pct' => (int)round($c / ($c + $w) * 100), 'users' => $nUsers];
+            'answers' => $c + $w, 'pct' => (int)round($c / ($c + $w) * 100), 'users' => $nUsers];
     }
-    usort($hard, function ($a, $b) { return $a['pct'] <=> $b['pct'] ?: $b['answers'] <=> $a['answers']; });
+    usort($hard, function ($a, $b) {
+        return $a['pct'] <=> $b['pct'] ?: $b['answers'] <=> $a['answers'];
+    });
 
     // Official PDFs (fixed, in documenti/): how many and how much space
     $official = ['count' => 0, 'size' => 0];
-    foreach (glob(dirname(__DIR__) . '/documenti/*.pdf') ?: [] as $f) { $official['count']++; $official['size'] += (int)filesize($f); }
+    foreach (glob(dirname(__DIR__) . '/documenti/*.pdf') ?: [] as $f) {
+        $official['count']++;
+        $official['size'] += (int)filesize($f);
+    }
 
     return [
-        'users'    => $users,
+        'users' => $users,
         'activity' => [
             'answers' => $correct + $wrong, 'correct' => $correct, 'wrong' => $wrong,
             'learners' => $learners,

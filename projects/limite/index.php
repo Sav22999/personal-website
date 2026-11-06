@@ -55,7 +55,8 @@ $canonical = '/projects/limite/';
         </div>
         <div class="addon-info">
             <p class="addon-description">Browser add-on that tracks how much time you spend on each website, daily. View
-                detailed statistics, categorise websites, customise the add-on from its settings, import/export data, and
+                detailed statistics, categorise websites, customise the add-on from its settings, import/export data,
+                and
                 get notified about your browsing habits. Available in English, German, Italian, French and Russian.</p>
             <div class="book-meta">
                 <div class="book-meta-item">
@@ -80,7 +81,9 @@ $canonical = '/projects/limite/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2021 – present <span class="book-meta-note">· <?php $years = date('Y') - 2021; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2021 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2021;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
@@ -112,16 +115,24 @@ $canonical = '/projects/limite/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Limite popup showing the time spent today and since install on the current website">
-                <img src="/images/projects/screenshots/limite/1.png" alt="Limite popup showing the time spent today and since install on the current website" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Limite popup showing the time spent today and since install on the current website">
+                <img src="/images/projects/screenshots/limite/1.png"
+                     alt="Limite popup showing the time spent today and since install on the current website"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: "All time spent" page listing every visited website with status, category and daily time">
-                <img src="/images/projects/screenshots/limite/2.png" alt=""All time spent" page listing every visited website with status, category and daily time" width="1280" height="800"
-                     loading="lazy">
+            <button type="button" class="screenshot" aria-label="Enlarge screenshot: " All time spent
+            " page listing every visited website with status, category and daily time">
+            <img src="/images/projects/screenshots/limite/2.png" alt="" All time spent" page listing every visited
+            website with status, category and daily time" width="1280" height="800"
+            loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Limite settings: visible columns, display interval, default sorting and tracking of new websites">
-                <img src="/images/projects/screenshots/limite/3.png" alt="Limite settings: visible columns, display interval, default sorting and tracking of new websites" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Limite settings: visible columns, display interval, default sorting and tracking of new websites">
+                <img src="/images/projects/screenshots/limite/3.png"
+                     alt="Limite settings: visible columns, display interval, default sorting and tracking of new websites"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
         </div>
@@ -145,7 +156,9 @@ $canonical = '/projects/limite/';
             <div class="timeline-item major">
                 <span class="timeline-version">v3.0</span>
                 <span class="timeline-date">25 June 2026</span>
-                <p>Refreshed "time spent" page, new settings to customise the add-on (visible columns and days, default sorting, infinite scrolling), resizable website column, websites list per category, faster loading of websites. Translated into German, Italian, French and Russian.</p>
+                <p>Refreshed "time spent" page, new settings to customise the add-on (visible columns and days, default
+                    sorting, infinite scrolling), resizable website column, websites list per category, faster loading
+                    of websites. Translated into German, Italian, French and Russian.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v2.2</span>
@@ -165,7 +178,8 @@ $canonical = '/projects/limite/';
             <div class="timeline-item">
                 <span class="timeline-version">v2.1</span>
                 <span class="timeline-date">8 October 2023</span>
-                <p>Added search and sorting by any column in "All websites". Added "Cloud" category and new default websites. Bug fixes and back-end improvements.</p>
+                <p>Added search and sorting by any column in "All websites". Added "Cloud" category and new default
+                    websites. Bug fixes and back-end improvements.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v2.0.1</span>
@@ -175,7 +189,8 @@ $canonical = '/projects/limite/';
             <div class="timeline-item major">
                 <span class="timeline-version">v2.0.0.1</span>
                 <span class="timeline-date">13 September 2023</span>
-                <p>Revisited UI of "All time spent", 7-day view, icons in buttons, status toggle and categories. Many improvements and bug fixes.</p>
+                <p>Revisited UI of "All time spent", 7-day view, icons in buttons, status toggle and categories. Many
+                    improvements and bug fixes.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.2.1.2</span>
@@ -190,7 +205,8 @@ $canonical = '/projects/limite/';
             <div class="timeline-item">
                 <span class="timeline-version">v1.2.1</span>
                 <span class="timeline-date">3 August 2021</span>
-                <p>Added "delete" button for each website, wider "All time spent" page, dates sorted from the most recent. Bug fixes.</p>
+                <p>Added "delete" button for each website, wider "All time spent" page, dates sorted from the most
+                    recent. Bug fixes.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.2</span>

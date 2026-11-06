@@ -5,6 +5,8 @@
     <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/foodtrack/</string>
     <string name="channel_expiry">Expiring products</string>
     <string name="offline_title">No connection</string>
-    <string name="offline_text">FoodTrack needs the internet the first time it opens. Check your connection and try again.</string>
+    <string name="offline_text">FoodTrack needs the internet the first time it opens. Check your connection and try
+        again.
+    </string>
     <string name="offline_retry">Try again</string>
 </resources>

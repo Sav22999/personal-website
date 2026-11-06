@@ -753,11 +753,26 @@ const translations = {
 
 // Example questions shown in turn as the placeholder of the question field.
 const ASK_EXAMPLES = {
-    en: { prefix: 'e.g.', items: ['Does your character wear glasses?', 'Is it a woman?', 'Do they have a beard?', 'Are they wearing a hat?', 'Do they have blonde hair?', 'Is their hair long?', 'Are they wearing earrings?', 'Do they have freckles?', 'Is their shirt red?'] },
-    it: { prefix: 'es.', items: ['Porta gli occhiali?', 'È una donna?', 'Ha la barba?', 'Indossa un cappello?', 'Ha i capelli biondi?', 'Ha i capelli lunghi?', 'Porta gli orecchini?', 'Ha le lentiggini?', 'Ha la maglia rossa?'] },
-    es: { prefix: 'p. ej.', items: ['¿Lleva gafas?', '¿Es una mujer?', '¿Tiene barba?', '¿Lleva sombrero?', '¿Tiene el pelo rubio?', '¿Tiene el pelo largo?', '¿Lleva pendientes?', '¿Tiene pecas?', '¿Lleva camiseta roja?'] },
-    fr: { prefix: 'ex.', items: ['Porte-t-il des lunettes ?', 'Est-ce une femme ?', 'A-t-il une barbe ?', 'Porte-t-il un chapeau ?', 'A-t-il les cheveux blonds ?', 'A-t-il les cheveux longs ?', 'Porte-t-il des boucles d’oreilles ?', 'A-t-il des taches de rousseur ?', 'Son t-shirt est-il rouge ?'] },
-    de: { prefix: 'z. B.', items: ['Trägt die Figur eine Brille?', 'Ist es eine Frau?', 'Hat die Figur einen Bart?', 'Trägt sie einen Hut?', 'Hat sie blonde Haare?', 'Hat sie lange Haare?', 'Trägt sie Ohrringe?', 'Hat sie Sommersprossen?', 'Ist das Shirt rot?'] },
+    en: {
+        prefix: 'e.g.',
+        items: ['Does your character wear glasses?', 'Is it a woman?', 'Do they have a beard?', 'Are they wearing a hat?', 'Do they have blonde hair?', 'Is their hair long?', 'Are they wearing earrings?', 'Do they have freckles?', 'Is their shirt red?']
+    },
+    it: {
+        prefix: 'es.',
+        items: ['Porta gli occhiali?', 'È una donna?', 'Ha la barba?', 'Indossa un cappello?', 'Ha i capelli biondi?', 'Ha i capelli lunghi?', 'Porta gli orecchini?', 'Ha le lentiggini?', 'Ha la maglia rossa?']
+    },
+    es: {
+        prefix: 'p. ej.',
+        items: ['¿Lleva gafas?', '¿Es una mujer?', '¿Tiene barba?', '¿Lleva sombrero?', '¿Tiene el pelo rubio?', '¿Tiene el pelo largo?', '¿Lleva pendientes?', '¿Tiene pecas?', '¿Lleva camiseta roja?']
+    },
+    fr: {
+        prefix: 'ex.',
+        items: ['Porte-t-il des lunettes ?', 'Est-ce une femme ?', 'A-t-il une barbe ?', 'Porte-t-il un chapeau ?', 'A-t-il les cheveux blonds ?', 'A-t-il les cheveux longs ?', 'Porte-t-il des boucles d’oreilles ?', 'A-t-il des taches de rousseur ?', 'Son t-shirt est-il rouge ?']
+    },
+    de: {
+        prefix: 'z. B.',
+        items: ['Trägt die Figur eine Brille?', 'Ist es eine Frau?', 'Hat die Figur einen Bart?', 'Trägt sie einen Hut?', 'Hat sie blonde Haare?', 'Hat sie lange Haare?', 'Trägt sie Ohrringe?', 'Hat sie Sommersprossen?', 'Ist das Shirt rot?']
+    },
 };
 
 const SUPPORTED_LANGS = Object.keys(translations);
@@ -773,8 +788,12 @@ function t(key, params) {
 
 function applyTranslations() {
     document.documentElement.lang = currentLang;
-    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         el.title = t(el.dataset.i18nTitle);
         el.setAttribute('aria-label', el.title);
@@ -785,14 +804,20 @@ function applyTranslations() {
 function setLanguage(lang) {
     if (!SUPPORTED_LANGS.includes(lang)) return;
     currentLang = lang;
-    try { localStorage.setItem('fg_lang', lang); } catch (e) { /* storage unavailable */ }
+    try {
+        localStorage.setItem('fg_lang', lang);
+    } catch (e) { /* storage unavailable */
+    }
     applyTranslations();
     if (typeof onLanguageChange === 'function') onLanguageChange();
 }
 
 function initI18n() {
     let saved = null;
-    try { saved = localStorage.getItem('fg_lang'); } catch (e) { /* storage unavailable */ }
+    try {
+        saved = localStorage.getItem('fg_lang');
+    } catch (e) { /* storage unavailable */
+    }
     if (SUPPORTED_LANGS.includes(saved)) currentLang = saved;
     document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
     applyTranslations();

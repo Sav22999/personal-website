@@ -26,7 +26,7 @@ set_exception_handler(function (Throwable $e) {
 });
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$route  = (string)($_GET['r'] ?? '');
+$route = (string)($_GET['r'] ?? '');
 
 if ($method === 'POST') {
     $ct = strtolower((string)($_SERVER['CONTENT_TYPE'] ?? ''));
@@ -62,11 +62,14 @@ function writer(int $minRole = ROLE_USER, bool $allowPasswordChange = false): ar
 
 // ---------- Row formatting ----------
 
-function f_num($v): ?float { return $v === null ? null : (float)$v; }
+function f_num($v): ?float
+{
+    return $v === null ? null : (float)$v;
+}
 
 function fmt_space(array $r): array
 {
-    return ['id' => (int)$r['id'], 'name' => $r['name'], 'icon' => $r['icon'], 'notes' => $r['notes'], 'sort' => (int)$r['sort']];
+    return ['id' => (int)$r['id'], 'name' => $r['name'], 'icon' => $r['icon'], 'environment' => $r['environment'], 'notes' => $r['notes'], 'sort' => (int)$r['sort']];
 }
 
 function fmt_item(array $r): array
@@ -90,7 +93,7 @@ function fmt_list_item(array $r): array
     return [
         'id' => (int)$r['id'], 'listId' => (int)$r['list_id'], 'productId' => $r['product_id'] !== null ? (int)$r['product_id'] : null,
         'name' => $r['name'], 'icon' => $r['icon'], 'quantity' => f_num($r['quantity']), 'unit' => $r['unit'], 'notes' => $r['notes'],
-        'inCart' => (bool)$r['in_cart'],
+        'environment' => $r['environment'], 'inCart' => (bool)$r['in_cart'],
     ];
 }
 
@@ -123,7 +126,9 @@ function i18n_input($raw, array $fields, int $max = 2000): ?string
                 continue;
             }
             if ($f === 'steps') {
-                $v = is_array($v) ? array_values(array_filter(array_map(function ($x) { return mb_substr(trim((string)$x), 0, 1000); }, array_slice($v, 0, 60)), 'strlen')) : [];
+                $v = is_array($v) ? array_values(array_filter(array_map(function ($x) {
+                    return mb_substr(trim((string)$x), 0, 1000);
+                }, array_slice($v, 0, 60)), 'strlen')) : [];
                 if ($v) $out[$lg][$f] = $v;
             } else {
                 $v = mb_substr(trim((string)($v ?? '')), 0, $max);
@@ -139,16 +144,24 @@ function fmt_product(array $r, bool $raw = false): array
     $o = [
         'id' => (int)$r['id'], 'name' => loc($r, 'name', $r['name']), 'nameBase' => $r['name'], 'icon' => $r['icon'],
         'categoryId' => $r['category_id'] !== null ? (int)$r['category_id'] : null,
-        'unit' => $r['default_unit'], 'expiryTip' => loc($r, 'expiry_tip', $r['expiry_tip']), 'active' => (bool)$r['active'],
+        'unit' => $r['default_unit'], 'environment' => $r['environment'], 'expiryTip' => loc($r, 'expiry_tip', $r['expiry_tip']), 'active' => (bool)$r['active'],
     ];
-    if ($raw) { $o['name'] = $r['name']; $o['expiryTip'] = $r['expiry_tip']; $o['i18n'] = (object)i18n_of($r); }
+    if ($raw) {
+        $o['name'] = $r['name'];
+        $o['expiryTip'] = $r['expiry_tip'];
+        $o['i18n'] = (object)i18n_of($r);
+    }
     return $o;
 }
 
 function fmt_category(array $r, bool $raw = false): array
 {
     $o = ['id' => (int)$r['id'], 'name' => loc($r, 'name', $r['name']), 'expiryTip' => loc($r, 'expiry_tip', $r['expiry_tip']), 'sort' => (int)$r['sort']];
-    if ($raw) { $o['name'] = $r['name']; $o['expiryTip'] = $r['expiry_tip']; $o['i18n'] = (object)i18n_of($r); }
+    if ($raw) {
+        $o['name'] = $r['name'];
+        $o['expiryTip'] = $r['expiry_tip'];
+        $o['i18n'] = (object)i18n_of($r);
+    }
     return $o;
 }
 
@@ -182,7 +195,9 @@ function load_recipes(bool $onlyPublished, bool $raw = false): array
         ];
         if ($raw) {
             $recipes[(int)$r['id']]['i18n'] = (object)i18n_of($r);
-            $recipes[(int)$r['id']]['status'] = array_combine(LANGS, array_map(function ($lg) use ($r) { return recipe_status($r, $lg); }, LANGS));
+            $recipes[(int)$r['id']]['status'] = array_combine(LANGS, array_map(function ($lg) use ($r) {
+                return recipe_status($r, $lg);
+            }, LANGS));
         }
     }
     if (!$recipes) return [];
@@ -217,12 +232,18 @@ function load_recipes(bool $onlyPublished, bool $raw = false): array
 
 function load_catalog(bool $raw = false): array
 {
-    $fc = function ($r) use ($raw) { return fmt_category($r, $raw); };
-    $fp = function ($r) use ($raw) { return fmt_product($r, $raw); };
+    $fc = function ($r) use ($raw) {
+        return fmt_category($r, $raw);
+    };
+    $fp = function ($r) use ($raw) {
+        return fmt_product($r, $raw);
+    };
     $cats = array_map($fc, db()->query('SELECT * FROM ' . t('categories') . ' ORDER BY sort, name')->fetchAll());
     $where = $raw ? '' : 'WHERE active = 1';
     $prods = array_map($fp, db()->query('SELECT * FROM ' . t('products') . " $where ORDER BY name")->fetchAll());
-    if (!$raw) usort($prods, function ($a, $b) { return strcoll(mb_strtolower($a['name']), mb_strtolower($b['name'])); });
+    if (!$raw) usort($prods, function ($a, $b) {
+        return strcoll(mb_strtolower($a['name']), mb_strtolower($b['name']));
+    });
     return ['categories' => $cats, 'products' => $prods];
 }
 
@@ -234,7 +255,9 @@ function household_payload(array $u, int $hid): array
     $role = membership($hid, $u['id']);
     $st = db()->prepare('SELECT u.id, u.name, m.role, m.joined_at FROM ' . t('household_members') . ' m JOIN ' . t('users') . ' u ON u.id = m.user_id WHERE m.household_id = ? ORDER BY (m.role = \'owner\') DESC, m.joined_at');
     $st->execute([$hid]);
-    $members = array_map(function ($m) { return ['id' => (int)$m['id'], 'name' => $m['name'], 'role' => $m['role'], 'joinedAt' => $m['joined_at']]; }, $st->fetchAll());
+    $members = array_map(function ($m) {
+        return ['id' => (int)$m['id'], 'name' => $m['name'], 'role' => $m['role'], 'joinedAt' => $m['joined_at']];
+    }, $st->fetchAll());
     return [
         'id' => (int)$h['id'], 'name' => $h['name'], 'role' => $role,
         'inviteCode' => $h['invite_code'], 'members' => $members,
@@ -244,7 +267,11 @@ function household_payload(array $u, int $hid): array
 function state_payload(array $u): array
 {
     $hid = active_household($u);
-    $q = function (string $sql, array $args) { $st = db()->prepare($sql); $st->execute($args); return $st->fetchAll(); };
+    $q = function (string $sql, array $args) {
+        $st = db()->prepare($sql);
+        $st->execute($args);
+        return $st->fetchAll();
+    };
     $spaces = array_map('fmt_space', $q('SELECT * FROM ' . t('spaces') . ' WHERE household_id = ? ORDER BY sort, id', [$hid]));
     $items = array_map('fmt_item', $q('SELECT i.*, u.name AS created_by_name FROM ' . t('items') . ' i LEFT JOIN ' . t('users') . ' u ON u.id = i.created_by WHERE i.household_id = ? ORDER BY i.expiry_date IS NULL, i.expiry_date, i.name', [$hid]));
     $lists = array_map('fmt_list', $q('SELECT * FROM ' . t('lists') . ' WHERE household_id = ? ORDER BY updated_at DESC, id DESC', [$hid]));
@@ -360,6 +387,43 @@ function log_history(int $hid, ?int $userId, string $userName, string $action, ?
     }
 }
 
+/** Records a household event that is not about a product in a space (these events cannot be undone). */
+function log_event(array $u, int $hid, string $action, string $name, array $details = [], string $listName = ''): void
+{
+    log_history($hid, (int)$u['id'], (string)$u['name'], $action, null, mb_substr($name, 0, 80), null, mb_substr($listName, 0, 60), null, 'pz', $details);
+}
+
+/** Creates the first household of a new user. */
+function create_first_household(int $userId, string $userName): void
+{
+    $name = tr("{name}'s home", ['name' => first_name($userName)]);
+    log_event(['id' => $userId, 'name' => $userName], create_household($userId, $name), 'household_create', $name);
+}
+
+/** Records in each household of a user that is about to be deleted that the user left. */
+function log_account_removal(array $user): void
+{
+    foreach (user_households((int)$user['id']) as $hh) log_event($user, $hh['id'], 'member_leave', (string)$user['name']);
+}
+
+/** Name of a shopping list, for the history. */
+function list_name(int $listId): string
+{
+    $st = db()->prepare('SELECT name FROM ' . t('lists') . ' WHERE id = ?');
+    $st->execute([$listId]);
+    return (string)$st->fetchColumn();
+}
+
+/** What a meal plan entry is called: the recipe name, otherwise its free title. */
+function plan_name(?int $recipeId, string $title): string
+{
+    if (!$recipeId) return $title;
+    $st = db()->prepare('SELECT * FROM ' . t('recipes') . ' WHERE id = ?');
+    $st->execute([$recipeId]);
+    $r = $st->fetch();
+    return $r ? loc($r, 'name', $r['name']) : $title;
+}
+
 // ---------- Admin helpers ----------
 
 /** Can $actor change/delete $target? Admins act on users only, the master also on admins. Nobody on the master or on themselves. */
@@ -398,15 +462,18 @@ function save_recipe_image(array $file): string
     if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
         $src = @imagecreatefromstring((string)file_get_contents($file['tmp_name']));
         if ($src) {
-            $w = imagesx($src); $h = imagesy($src);
+            $w = imagesx($src);
+            $h = imagesy($src);
             $scale = min(1, 1600 / max($w, $h));
-            $nw = (int)round($w * $scale); $nh = (int)round($h * $scale);
+            $nw = (int)round($w * $scale);
+            $nh = (int)round($h * $scale);
             $dst = imagecreatetruecolor($nw, $nh);
             imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
             imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
             $path = "$dir/$name.jpg";
             if (!imagejpeg($dst, $path, 84)) fail('Could not save the image.', 500, 'upload');
-            imagedestroy($src); imagedestroy($dst);
+            imagedestroy($src);
+            imagedestroy($dst);
             return "uploads/recipes/$name.jpg";
         }
     }
@@ -464,7 +531,7 @@ switch ($route) {
             db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, google_sub, role, status, created_at) VALUES (?,?, '', ?, ?, 'active', ?)")
                 ->execute([$name, $g['email'], $g['sub'], ROLE_USER, now_utc()]);
             $uid = (int)db()->lastInsertId();
-            create_household($uid, tr("{name}'s home", ['name' => first_name($name)]));
+            create_first_household($uid, $name);
             $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($b['inviteCode'] ?? '')));
             if ($code !== '') {
                 $st = db()->prepare('SELECT id FROM ' . t('households') . ' WHERE invite_code = ?');
@@ -473,6 +540,7 @@ switch ($route) {
                 if ($hid) {
                     db()->prepare('INSERT IGNORE INTO ' . t('household_members') . " (household_id, user_id, role, joined_at) VALUES (?,?, 'member', ?)")->execute([$hid, $uid, now_utc()]);
                     db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $uid]);
+                    log_event(['id' => $uid, 'name' => $name], (int)$hid, 'member_join', $name);
                 }
             }
             $row = user_row($uid);
@@ -517,7 +585,7 @@ switch ($route) {
         db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, role, status, created_at, last_login_at) VALUES (?,?,?,?, 'active', ?, ?)")
             ->execute([$name, $email, password_hash($pw, PASSWORD_DEFAULT), ROLE_USER, now_utc(), now_utc()]);
         $uid = (int)db()->lastInsertId();
-        create_household($uid, tr("{name}'s home", ['name' => first_name($name)]));
+        create_first_household($uid, $name);
         // Optional: join a household right away with an invite code
         $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($b['inviteCode'] ?? '')));
         if ($code !== '') {
@@ -527,6 +595,7 @@ switch ($route) {
             if ($hid) {
                 db()->prepare('INSERT IGNORE INTO ' . t('household_members') . " (household_id, user_id, role, joined_at) VALUES (?,?, 'member', ?)")->execute([$hid, $uid, now_utc()]);
                 db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $uid]);
+                log_event(['id' => $uid, 'name' => $name], (int)$hid, 'member_join', $name);
             }
         }
         mail_account_created(user_row($uid), 'email');
@@ -591,6 +660,7 @@ switch ($route) {
             if (!in_array(mb_strtoupper(trim((string)(body()['confirm'] ?? ''))), ['ELIMINA', 'DELETE'], true)) fail('Type DELETE to confirm.', 422, 'bad_password');
         } elseif (!password_verify((string)(body()['password'] ?? ''), $row['password_hash'])) fail('Wrong password.', 422, 'bad_password');
         destroy_auth_session();
+        log_account_removal($u);
         delete_user_account($u['id']);
         send_json(['ok' => true]);
 
@@ -619,7 +689,7 @@ switch ($route) {
         $st = db()->prepare('SELECT COUNT(*) FROM ' . t('household_members') . ' WHERE user_id = ?');
         $st->execute([$u['id']]);
         if ((int)$st->fetchColumn() >= 10) fail('You can be a member of at most 10 households.', 422, 'limit');
-        create_household($u['id'], $name);
+        log_event($u, create_household($u['id'], $name), 'household_create', $name);
         send_json(['ok' => true] + state_payload(require_user()));
 
     case 'household.switch':
@@ -634,7 +704,12 @@ switch ($route) {
         $u = writer();
         $hid = active_household($u);
         if (membership($hid, $u['id']) !== 'owner') fail('Only the owner can rename the household.', 403, 'forbidden');
-        db()->prepare('UPDATE ' . t('households') . ' SET name = ? WHERE id = ?')->execute([s(body(), 'name', 80, true, 'Name'), $hid]);
+        $name = s(body(), 'name', 80, true, 'Name');
+        $st = db()->prepare('SELECT name FROM ' . t('households') . ' WHERE id = ?');
+        $st->execute([$hid]);
+        $oldName = (string)$st->fetchColumn();
+        db()->prepare('UPDATE ' . t('households') . ' SET name = ? WHERE id = ?')->execute([$name, $hid]);
+        if ($oldName !== $name) log_event($u, $hid, 'household_rename', $name, ['from' => $oldName, 'to' => $name]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'household.code':
@@ -642,6 +717,7 @@ switch ($route) {
         $hid = active_household($u);
         if (membership($hid, $u['id']) !== 'owner') fail('Only the owner can regenerate the invite code.', 403, 'forbidden');
         db()->prepare('UPDATE ' . t('households') . ' SET invite_code = ? WHERE id = ?')->execute([unique_invite_code(), $hid]);
+        log_event($u, $hid, 'household_code', '');
         send_json(['ok' => true] + state_payload($u));
 
     case 'household.join':
@@ -651,13 +727,17 @@ switch ($route) {
         $st = db()->prepare('SELECT id FROM ' . t('households') . ' WHERE invite_code = ?');
         $st->execute([$code]);
         $hid = $st->fetchColumn();
-        if (!$hid) { record_attempt('join'); fail('Invalid invite code.', 404, 'not_found'); }
+        if (!$hid) {
+            record_attempt('join');
+            fail('Invalid invite code.', 404, 'not_found');
+        }
         $hid = (int)$hid;
         if (!membership($hid, $u['id'])) {
             $st = db()->prepare('SELECT COUNT(*) FROM ' . t('household_members') . ' WHERE household_id = ?');
             $st->execute([$hid]);
             if ((int)$st->fetchColumn() >= 20) fail('This household already has the maximum number of members (20).', 422, 'limit');
             db()->prepare('INSERT INTO ' . t('household_members') . " (household_id, user_id, role, joined_at) VALUES (?,?, 'member', ?)")->execute([$hid, $u['id'], now_utc()]);
+            log_event($u, $hid, 'member_join', $u['name']);
         }
         db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $u['id']]);
         $u['active_household_id'] = $hid;
@@ -666,6 +746,7 @@ switch ($route) {
     case 'household.leave':
         $u = writer();
         $hid = active_household($u);
+        log_event($u, $hid, 'member_leave', $u['name']);
         leave_household($hid, $u['id']);
         db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = NULL WHERE id = ?')->execute([$u['id']]);
         $u['active_household_id'] = null;
@@ -677,6 +758,7 @@ switch ($route) {
         if (membership($hid, $u['id']) !== 'owner') fail('Only the owner can remove members.', 403, 'forbidden');
         $target = (int)(body()['userId'] ?? 0);
         if ($target === $u['id']) fail('To leave the household use “Leave this household”.', 422, 'validation');
+        if (membership($hid, $target) !== null) log_event($u, $hid, 'member_remove', user_row($target)['name']);
         db()->prepare('DELETE FROM ' . t('household_members') . ' WHERE household_id = ? AND user_id = ?')->execute([$hid, $target]);
         send_json(['ok' => true] + state_payload($u));
 
@@ -689,6 +771,7 @@ switch ($route) {
         db()->prepare('UPDATE ' . t('household_members') . " SET role = 'member' WHERE household_id = ?")->execute([$hid]);
         db()->prepare('UPDATE ' . t('household_members') . " SET role = 'owner' WHERE household_id = ? AND user_id = ?")->execute([$hid, $target]);
         db()->prepare('UPDATE ' . t('households') . ' SET owner_id = ? WHERE id = ?')->execute([$target, $hid]);
+        log_event($u, $hid, 'household_transfer', user_row($target)['name']);
         send_json(['ok' => true] + state_payload($u));
 
     case 'household.delete':
@@ -709,18 +792,22 @@ switch ($route) {
         $name = s($b, 'name', 60, true, 'Name');
         $icon = icon_name($b['icon'] ?? '', 'spaces', 'pantry');
         $notes = s($b, 'notes', 500, false, 'Notes');
+        $env = environment_or_null($b['environment'] ?? null);
         $id = (int)($b['id'] ?? 0);
         if ($id) {
-            own_row('spaces', $id, $hid);
-            db()->prepare('UPDATE ' . t('spaces') . ' SET name = ?, icon = ?, notes = ?, updated_at = ? WHERE id = ?')->execute([$name, $icon, $notes, now_utc(), $id]);
+            $sp = own_row('spaces', $id, $hid);
+            db()->prepare('UPDATE ' . t('spaces') . ' SET name = ?, icon = ?, environment = ?, notes = ?, updated_at = ? WHERE id = ?')->execute([$name, $icon, $env ?? $sp['environment'], $notes, now_utc(), $id]);
+            if ($sp['name'] !== $name) log_event($u, $hid, 'space_rename', $name, ['from' => $sp['name'], 'to' => $name]);
+            elseif ($sp['icon'] !== $icon || $sp['environment'] !== ($env ?? $sp['environment']) || $sp['notes'] !== $notes) log_event($u, $hid, 'space_edit', $name);
         } else {
             $st = db()->prepare('SELECT COUNT(*), COALESCE(MAX(sort), 0) FROM ' . t('spaces') . ' WHERE household_id = ?');
             $st->execute([$hid]);
             [$count, $max] = $st->fetch(PDO::FETCH_NUM);
             if ((int)$count >= 50) fail('You reached the maximum number of spaces (50).', 422, 'limit');
-            db()->prepare('INSERT INTO ' . t('spaces') . ' (household_id, name, icon, notes, sort, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)')
-                ->execute([$hid, $name, $icon, $notes, (int)$max + 10, $u['id'], now_utc(), now_utc()]);
+            db()->prepare('INSERT INTO ' . t('spaces') . ' (household_id, name, icon, environment, notes, sort, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)')
+                ->execute([$hid, $name, $icon, $env ?? 'ambient', $notes, (int)$max + 10, $u['id'], now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
+            log_event($u, $hid, 'space_create', $name);
         }
         send_json(['ok' => true, 'id' => $id] + state_payload($u));
 
@@ -728,8 +815,12 @@ switch ($route) {
         $u = writer();
         $hid = active_household($u);
         $id = (int)(body()['id'] ?? 0);
-        own_row('spaces', $id, $hid);
+        $sp = own_row('spaces', $id, $hid);
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('items') . ' WHERE space_id = ?');
+        $st->execute([$id]);
+        $products = (int)$st->fetchColumn();
         db()->prepare('DELETE FROM ' . t('spaces') . ' WHERE id = ?')->execute([$id]);
+        log_event($u, $hid, 'space_delete', $sp['name'], ['n' => $products]);
         send_json(['ok' => true] + state_payload($u));
 
     // ---------- Items in the spaces ----------
@@ -810,8 +901,10 @@ switch ($route) {
         $notes = s($b, 'notes', 500, false, 'Notes');
         $id = (int)($b['id'] ?? 0);
         if ($id) {
-            own_row('lists', $id, $hid);
+            $old = own_row('lists', $id, $hid);
             db()->prepare('UPDATE ' . t('lists') . ' SET name = ?, icon = ?, notes = ?, updated_at = ? WHERE id = ?')->execute([$name, $icon, $notes, now_utc(), $id]);
+            if ($old['name'] !== $name) log_event($u, $hid, 'list_rename', $name, ['from' => $old['name'], 'to' => $name]);
+            elseif ($old['icon'] !== $icon || $old['notes'] !== $notes) log_event($u, $hid, 'list_edit', $name);
         } else {
             $st = db()->prepare('SELECT COUNT(*) FROM ' . t('lists') . ' WHERE household_id = ?');
             $st->execute([$hid]);
@@ -819,6 +912,7 @@ switch ($route) {
             db()->prepare('INSERT INTO ' . t('lists') . ' (household_id, name, icon, notes, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?)')
                 ->execute([$hid, $name, $icon, $notes, $u['id'], now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
+            log_event($u, $hid, 'list_create', $name);
         }
         send_json(['ok' => true, 'id' => $id] + state_payload($u));
 
@@ -826,8 +920,9 @@ switch ($route) {
         $u = writer();
         $hid = active_household($u);
         $id = (int)(body()['id'] ?? 0);
-        own_row('lists', $id, $hid);
+        $old = own_row('lists', $id, $hid);
         db()->prepare('DELETE FROM ' . t('lists') . ' WHERE id = ?')->execute([$id]);
+        log_event($u, $hid, 'list_delete', $old['name']);
         send_json(['ok' => true] + state_payload($u));
 
     case 'list.clearcart':
@@ -835,8 +930,10 @@ switch ($route) {
         $u = writer();
         $hid = active_household($u);
         $id = (int)(body()['id'] ?? 0);
-        own_row('lists', $id, $hid);
-        db()->prepare('DELETE FROM ' . t('list_items') . ' WHERE list_id = ? AND in_cart = 1')->execute([$id]);
+        $old = own_row('lists', $id, $hid);
+        $st = db()->prepare('DELETE FROM ' . t('list_items') . ' WHERE list_id = ? AND in_cart = 1');
+        $st->execute([$id]);
+        if ($st->rowCount()) log_event($u, $hid, 'list_clearcart', $old['name'], ['n' => $st->rowCount()], $old['name']);
         touch_list($id);
         send_json(['ok' => true] + state_payload($u));
 
@@ -854,18 +951,24 @@ switch ($route) {
         $qty = num_or_null($b['quantity'] ?? null);
         $unit = unit_or_default($b['unit'] ?? ($product['default_unit'] ?? 'pz'));
         $notes = s($b, 'notes', 500, false, 'Notes');
+        $env = environment_or_null($b['environment'] ?? null);
         $id = (int)($b['id'] ?? 0);
         if ($id) {
-            own_list_item($id, $hid);
-            db()->prepare('UPDATE ' . t('list_items') . ' SET product_id = ?, name = ?, icon = ?, quantity = ?, unit = ?, notes = ?, updated_at = ? WHERE id = ?')
-                ->execute([$product ? (int)$product['id'] : null, $name, $icon, $qty, $unit, $notes, now_utc(), $id]);
+            $old = own_list_item($id, $hid);
+            if (!array_key_exists('environment', $b)) $env = $old['environment'];
+            db()->prepare('UPDATE ' . t('list_items') . ' SET product_id = ?, name = ?, icon = ?, quantity = ?, unit = ?, notes = ?, environment = ?, updated_at = ? WHERE id = ?')
+                ->execute([$product ? (int)$product['id'] : null, $name, $icon, $qty, $unit, $notes, $env, now_utc(), $id]);
+            $oldQty = $old['quantity'] === null ? null : (float)$old['quantity'];
+            $newQty = $qty === null ? null : (float)$qty;
+            if ($old['name'] !== $name || $oldQty !== $newQty || $old['unit'] !== $unit || $old['notes'] !== $notes || $old['environment'] !== $env) log_event($u, $hid, 'listitem_edit', $name, [], list_name($listId));
         } else {
             $st = db()->prepare('SELECT COUNT(*) FROM ' . t('list_items') . ' WHERE list_id = ?');
             $st->execute([$listId]);
             if ((int)$st->fetchColumn() >= 500) fail('This list already has too many products (500).', 422, 'limit');
-            db()->prepare('INSERT INTO ' . t('list_items') . ' (list_id, product_id, name, icon, quantity, unit, notes, in_cart, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,0,?,?,?)')
-                ->execute([$listId, $product ? (int)$product['id'] : null, $name, $icon, $qty, $unit, $notes, $u['id'], now_utc(), now_utc()]);
+            db()->prepare('INSERT INTO ' . t('list_items') . ' (list_id, product_id, name, icon, quantity, unit, notes, environment, in_cart, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,0,?,?,?)')
+                ->execute([$listId, $product ? (int)$product['id'] : null, $name, $icon, $qty, $unit, $notes, $env, $u['id'], now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
+            log_event($u, $hid, 'listitem_add', $name, [], list_name($listId));
         }
         touch_list($listId);
         send_json(['ok' => true, 'id' => $id] + state_payload($u));
@@ -888,6 +991,7 @@ switch ($route) {
             $ins->execute([$listId, $product ? (int)$product['id'] : null, $name, $product['icon'] ?? 'generic', num_or_null($r['quantity'] ?? null), unit_or_default($r['unit'] ?? ''), mb_substr(trim((string)($r['notes'] ?? '')), 0, 500), $u['id'], now_utc(), now_utc()]);
             $n++;
         }
+        if ($n) log_event($u, $hid, 'listitem_addmany', list_name($listId), ['n' => $n], list_name($listId));
         touch_list($listId);
         send_json(['ok' => true, 'added' => $n] + state_payload($u));
 
@@ -896,6 +1000,7 @@ switch ($route) {
         $hid = active_household($u);
         $row = own_list_item((int)(body()['id'] ?? 0), $hid);
         db()->prepare('DELETE FROM ' . t('list_items') . ' WHERE id = ?')->execute([$row['id']]);
+        log_event($u, $hid, 'listitem_delete', $row['name'], [], list_name((int)$row['list_id']));
         touch_list((int)$row['list_id']);
         send_json(['ok' => true] + state_payload($u));
 
@@ -905,6 +1010,7 @@ switch ($route) {
         $b = body();
         $row = own_list_item((int)($b['id'] ?? 0), $hid);
         db()->prepare('UPDATE ' . t('list_items') . ' SET in_cart = ?, updated_at = ? WHERE id = ?')->execute([!empty($b['inCart']) ? 1 : 0, now_utc(), $row['id']]);
+        if ((bool)$row['in_cart'] !== !empty($b['inCart'])) log_event($u, $hid, !empty($b['inCart']) ? 'listitem_cart' : 'listitem_uncart', $row['name'], [], list_name((int)$row['list_id']));
         touch_list((int)$row['list_id']);
         send_json(['ok' => true] + state_payload($u));
 
@@ -967,11 +1073,14 @@ switch ($route) {
         if (!$rid && $title === '') fail('Choose a recipe or write what you want to eat.', 422, 'validation');
         $id = (int)($b['id'] ?? 0);
         if ($id) {
-            own_row('meal_plan', $id, $hid);
+            $old = own_row('meal_plan', $id, $hid);
             db()->prepare('UPDATE ' . t('meal_plan') . ' SET plan_date = ?, slot = ?, recipe_id = ?, title = ? WHERE id = ?')->execute([$date, $slot, $rid, $title, $id]);
+            $oldRecipe = $old['recipe_id'] !== null ? (int)$old['recipe_id'] : null;
+            if ($old['plan_date'] !== $date || $old['slot'] !== $slot || $oldRecipe !== $rid || $old['title'] !== $title) log_event($u, $hid, 'plan_edit', plan_name($rid, $title), ['date' => $date, 'slot' => $slot]);
         } else {
             db()->prepare('INSERT INTO ' . t('meal_plan') . ' (household_id, plan_date, slot, recipe_id, title, created_by, created_at) VALUES (?,?,?,?,?,?,?)')
                 ->execute([$hid, $date, $slot, $rid, $title, $u['id'], now_utc()]);
+            log_event($u, $hid, 'plan_add', plan_name($rid, $title), ['date' => $date, 'slot' => $slot]);
         }
         send_json(['ok' => true] + state_payload($u));
 
@@ -979,8 +1088,9 @@ switch ($route) {
         $u = writer();
         $hid = active_household($u);
         $id = (int)(body()['id'] ?? 0);
-        own_row('meal_plan', $id, $hid);
+        $old = own_row('meal_plan', $id, $hid);
         db()->prepare('DELETE FROM ' . t('meal_plan') . ' WHERE id = ?')->execute([$id]);
+        log_event($u, $hid, 'plan_delete', plan_name($old['recipe_id'] !== null ? (int)$old['recipe_id'] : null, (string)$old['title']), ['date' => $old['plan_date'], 'slot' => $old['slot']]);
         send_json(['ok' => true] + state_payload($u));
 
     // ---------- Activity history & undo ----------
@@ -990,7 +1100,9 @@ switch ($route) {
         $u = require_user();
         $hid = active_household($u);
         try {
-            $st = db()->prepare('SELECT id, user_id, user_name, action, item_id, item_name, space_id, space_name, quantity, unit, details, undone, created_at FROM ' . t('history') . ' WHERE household_id = ? ORDER BY id DESC LIMIT 100');
+            // Pages of 100, from the newest; "before" is the id of the last row already shown
+            $before = (int)($_GET['before'] ?? 0);
+            $st = db()->prepare('SELECT id, user_id, user_name, action, item_id, item_name, space_id, space_name, quantity, unit, details, undone, created_at FROM ' . t('history') . ' WHERE household_id = ?' . ($before ? ' AND id < ' . $before : '') . ' ORDER BY id DESC LIMIT 100');
             $st->execute([$hid]);
             $rows = array_map(function ($r) {
                 return [
@@ -1006,6 +1118,7 @@ switch ($route) {
                     'unit' => $r['unit'],
                     'details' => json_decode((string)$r['details'], true) ?: [],
                     'undone' => (bool)$r['undone'],
+                    'undoable' => in_array($r['action'], UNDOABLE_ACTIONS, true),
                     'createdAt' => $r['created_at'],
                 ];
             }, $st->fetchAll());
@@ -1013,7 +1126,8 @@ switch ($route) {
             try {
                 require_once __DIR__ . '/../lib/schema.php';
                 install_schema(db(), (string)config_value('prefix', 'ft_'));
-            } catch (Throwable $ignored) {}
+            } catch (Throwable $ignored) {
+            }
             $rows = [];
         }
         send_json(['ok' => true, 'history' => $rows]);
@@ -1027,6 +1141,7 @@ switch ($route) {
         $h = $st->fetch();
         if (!$h) fail('History entry not found.', 404);
         if ($h['undone']) fail('Action already undone.', 400);
+        if (!in_array($h['action'], UNDOABLE_ACTIONS, true)) fail('This action cannot be undone.', 422, 'validation');
 
         $act = $h['action'];
         $details = json_decode((string)$h['details'], true) ?: [];
@@ -1148,7 +1263,10 @@ switch ($route) {
             $name = '';
             foreach ($nameCandidates as $nc) {
                 $nc = trim((string)$nc);
-                if ($nc !== '') { $name = mb_substr($nc, 0, 80); break; }
+                if ($nc !== '') {
+                    $name = mb_substr($nc, 0, 80);
+                    break;
+                }
             }
             $genericName = mb_substr(trim((string)(($p['generic_name_it'] ?? '') ?: ($p['generic_name'] ?? ''))), 0, 120);
             if ($name === '' && $brand !== '') $name = $brand;
@@ -1214,7 +1332,9 @@ switch ($route) {
     case 'admin.overview':
         only('GET');
         require_user(ROLE_ADMIN);
-        $c = function (string $sql) { return (int)db()->query($sql)->fetchColumn(); };
+        $c = function (string $sql) {
+            return (int)db()->query($sql)->fetchColumn();
+        };
         send_json(['ok' => true, 'stats' => [
             'users' => $c('SELECT COUNT(*) FROM ' . t('users')),
             'usersActive30' => $c('SELECT COUNT(*) FROM ' . t('users') . ' WHERE last_seen_at > (UTC_TIMESTAMP() - INTERVAL 30 DAY) OR last_login_at > (UTC_TIMESTAMP() - INTERVAL 30 DAY)'),
@@ -1227,11 +1347,14 @@ switch ($route) {
             'expired' => $c('SELECT COUNT(*) FROM ' . t('items') . ' WHERE expiry_date < UTC_DATE()'),
             'lists' => $c('SELECT COUNT(*) FROM ' . t('lists')),
             'recipes' => $c('SELECT COUNT(*) FROM ' . t('recipes')),
-            'recipesPublished' => count(array_filter(db()->query('SELECT * FROM ' . t('recipes'))->fetchAll(), function ($r) { foreach (LANGS as $lg) if (recipe_status($r, $lg) === 'published') return true; return false; })),
+            'recipesPublished' => count(array_filter(db()->query('SELECT * FROM ' . t('recipes'))->fetchAll(), function ($r) {
+                foreach (LANGS as $lg) if (recipe_status($r, $lg) === 'published') return true;
+                return false;
+            })),
             'products' => $c('SELECT COUNT(*) FROM ' . t('products')),
             'favorites' => $c('SELECT COUNT(*) FROM ' . t('favorites')),
         ], 'topRecipes' => db()->query('SELECT r.name, COUNT(*) AS n FROM ' . t('favorites') . ' f JOIN ' . t('recipes') . ' r ON r.id = f.recipe_id GROUP BY r.id, r.name ORDER BY n DESC LIMIT 5')->fetchAll(),
-           'topProducts' => db()->query('SELECT name, COUNT(*) AS n FROM ' . t('items') . ' GROUP BY name ORDER BY n DESC LIMIT 8')->fetchAll(),
+            'topProducts' => db()->query('SELECT name, COUNT(*) AS n FROM ' . t('items') . ' GROUP BY name ORDER BY n DESC LIMIT 8')->fetchAll(),
         ]);
 
     case 'admin.users':
@@ -1284,6 +1407,7 @@ switch ($route) {
         $me = writer(ROLE_ADMIN);
         $target = user_row((int)(body()['id'] ?? 0));
         if (!can_manage($me, $target)) fail('You cannot delete this account.', 403, 'forbidden');
+        log_account_removal($target);
         delete_user_account((int)$target['id']);
         send_json(['ok' => true]);
 
@@ -1303,7 +1427,7 @@ switch ($route) {
         db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, role, status, must_change_password, created_at) VALUES (?,?,?,?, 'active', 1, ?)")
             ->execute([$name, $email, password_hash($pw, PASSWORD_DEFAULT), $role, now_utc()]);
         $uid = (int)db()->lastInsertId();
-        create_household($uid, tr("{name}'s home", ['name' => first_name($name)]));
+        create_first_household($uid, $name);
         mail_account_created(user_row($uid), 'admin');
         send_json(['ok' => true, 'password' => $pw]);
 
@@ -1352,6 +1476,7 @@ switch ($route) {
         $icon = icon_name($b['icon'] ?? '', 'products', 'generic');
         $cat = valid_category(int_or_null($b['categoryId'] ?? null));
         $unit = unit_or_default($b['unit'] ?? 'pz');
+        $env = environment_or_null($b['environment'] ?? null);
         $tip = s($b, 'expiryTip', 2000, false, 'Expiry information');
         $active = !empty($b['active']) ? 1 : 0;
         $i18n = i18n_input($b['i18n'] ?? null, ['name', 'expiry_tip']);
@@ -1361,11 +1486,11 @@ switch ($route) {
         if ($st->fetchColumn()) fail('A product with this name already exists.', 409, 'duplicate');
         if ($id) {
             product_row($id) ?: fail('Product not found.', 404, 'not_found');
-            db()->prepare('UPDATE ' . t('products') . ' SET name = ?, icon = ?, category_id = ?, default_unit = ?, expiry_tip = ?, i18n = ?, active = ?, updated_at = ? WHERE id = ?')
-                ->execute([$name, $icon, $cat, $unit, $tip !== '' ? $tip : null, $i18n, $active, now_utc(), $id]);
+            db()->prepare('UPDATE ' . t('products') . ' SET name = ?, icon = ?, category_id = ?, default_unit = ?, environment = ?, expiry_tip = ?, i18n = ?, active = ?, updated_at = ? WHERE id = ?')
+                ->execute([$name, $icon, $cat, $unit, $env, $tip !== '' ? $tip : null, $i18n, $active, now_utc(), $id]);
         } else {
-            db()->prepare('INSERT INTO ' . t('products') . ' (name, icon, category_id, default_unit, expiry_tip, i18n, active, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)')
-                ->execute([$name, $icon, $cat, $unit, $tip !== '' ? $tip : null, $i18n, $active, now_utc(), now_utc()]);
+            db()->prepare('INSERT INTO ' . t('products') . ' (name, icon, category_id, default_unit, environment, expiry_tip, i18n, active, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+                ->execute([$name, $icon, $cat, $unit, $env, $tip !== '' ? $tip : null, $i18n, $active, now_utc(), now_utc()]);
             $id = (int)db()->lastInsertId();
         }
         send_json(['ok' => true, 'id' => $id]);
@@ -1427,7 +1552,11 @@ switch ($route) {
         $diff = in_array($b['difficulty'] ?? '', DIFFICULTIES, true) ? $b['difficulty'] : 'facile';
         // Countries of origin: one or more ISO 3166 codes (none = not defined)
         $origin = is_array($b['origin'] ?? null) ? $b['origin'] : explode(',', (string)($b['origin'] ?? ''));
-        $origin = array_values(array_unique(array_filter(array_map(function ($c) { return strtoupper(trim((string)$c)); }, $origin), function ($c) { return (bool)preg_match('/^[A-Z]{2}(-(ENG|SCT|WLS|NIR))?$/', $c); })));
+        $origin = array_values(array_unique(array_filter(array_map(function ($c) {
+            return strtoupper(trim((string)$c));
+        }, $origin), function ($c) {
+            return (bool)preg_match('/^[A-Z]{2}(-(ENG|SCT|WLS|NIR))?$/', $c);
+        })));
         $origin = implode(',', array_slice($origin, 0, 20));
         $pub = !empty($b['published']) ? 1 : 0;
         $i18n = i18n_input($b['i18n'] ?? null, ['name', 'description', 'cook_notes', 'steps', 'status']);
@@ -1446,7 +1575,10 @@ switch ($route) {
             $st = db()->prepare('SELECT image FROM ' . t('recipes') . ' WHERE id = ?');
             $st->execute([$id]);
             $old = $st->fetchColumn();
-            if ($old === false) { db()->rollBack(); fail('Recipe not found.', 404, 'not_found'); }
+            if ($old === false) {
+                db()->rollBack();
+                fail('Recipe not found.', 404, 'not_found');
+            }
             $oldImage = (string)$old;
             db()->prepare('UPDATE ' . t('recipes') . ' SET name = ?, description = ?, image = ?, prep_minutes = ?, cook_minutes = ?, cook_notes = ?, servings = ?, difficulty = ?, origin = ?, published = ?, i18n = ?, updated_at = ? WHERE id = ?')
                 ->execute([$name, $desc, $image, $prep, $cook, $cookNotes, $servings, $diff, $origin, $pub, $i18n, now_utc(), $id]);

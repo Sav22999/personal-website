@@ -115,7 +115,9 @@ function seed_en_recipes(): array
     foreach (array_merge(seed2_recipes(), seed3_recipes()) as $r) {
         $notes = [];
         foreach ($r['ing'] as $i) if ($i[3] !== '' && $i[4] !== '') $notes[$i[3]] = $i[4];
-        $b2[$r['it']] = [$r['en'], $r['desc'][1], $r['cookN'][1], array_map(function ($st) { return $st[1]; }, $r['steps']), $notes];
+        $b2[$r['it']] = [$r['en'], $r['desc'][1], $r['cookN'][1], array_map(function ($st) {
+            return $st[1];
+        }, $r['steps']), $notes];
     }
     return array_merge(seed_en_recipes_1(), $b2);
 }
@@ -181,7 +183,9 @@ function seed_translations(PDO $pdo, string $p): void
     $setI = function (string $table, int $id, ?string $current, array $en) use ($pdo, $p) {
         $data = $current ? (json_decode($current, true) ?: []) : [];
         if (!empty($data['en'])) return;
-        $data['en'] = array_filter($en, function ($v) { return $v !== null && $v !== '' && $v !== []; });
+        $data['en'] = array_filter($en, function ($v) {
+            return $v !== null && $v !== '' && $v !== [];
+        });
         $pdo->prepare("UPDATE `{$p}{$table}` SET i18n = ? WHERE id = ?")->execute([json_encode($data, JSON_UNESCAPED_UNICODE), $id]);
     };
     $cats = seed_en_categories();

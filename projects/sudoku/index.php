@@ -1,6 +1,6 @@
 <?php
 $description = 'Sudoku – the classic number puzzle, free in the browser. Four difficulty levels, pencil notes, tips that explain the next move, cell check. No sign-up.';
-$v = '2.1.2';
+$v = '2.1.3';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,12 +26,12 @@ $v = '2.1.2';
     <meta name="twitter:description" content="<?= htmlspecialchars($description) ?>">
     <meta name="twitter:image" content="https://www.saveriomorelli.com/projects/sudoku/og-image.png">
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": ["VideoGame", "WebApplication"],
-        "name": "Sudoku",
-        "url": "https://www.saveriomorelli.com/projects/sudoku/",
-        "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        {
+            "@context": "https://schema.org",
+            "@type": ["VideoGame", "WebApplication"],
+            "name": "Sudoku",
+            "url": "https://www.saveriomorelli.com/projects/sudoku/",
+            "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
         "applicationCategory": "GameApplication",
         "genre": "Puzzle game",
         "operatingSystem": "Any (web browser)",
@@ -53,14 +53,18 @@ $v = '2.1.2';
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preload" href="fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="style.css?v=<?= $v ?>">
-    <script>try{var t=JSON.parse(localStorage.getItem('sudoku.theme'));if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+    <script>try {
+            var t = JSON.parse(localStorage.getItem('sudoku.theme'));
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+        } catch (e) {
+        }</script>
 </head>
 <body>
-<div id="app"><noscript><p style="padding:24px">Sudoku needs JavaScript.</p></noscript></div>
+<div id="app">
+    <noscript><p style="padding:24px">Sudoku needs JavaScript.</p></noscript>
+</div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="i18n.js?v=<?= $v ?>" defer></script>
 <script src="releases.js?v=<?= $v ?>" defer></script>

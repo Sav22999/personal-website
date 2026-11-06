@@ -4,6 +4,8 @@
     <string name="host_name" translatable="false">www.saveriomorelli.com</string>
     <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/faceguess/</string>
     <string name="offline_title">No connection</string>
-    <string name="offline_text">FaceGuess needs internet for online face-guessing matches. Check your network and try again.</string>
+    <string name="offline_text">FaceGuess needs internet for online face-guessing matches. Check your network and try
+        again.
+    </string>
     <string name="offline_retry">Try again</string>
 </resources>

@@ -2,6 +2,7 @@
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
 Store assets:
+
 - App icon: `../play-store-icon-512.png` (512×512, 24-bit PNG without transparency)
 - Feature graphic: `en-GB/feature-graphic-1024x500.png` (1024×500, 24-bit PNG)
 - Phone screenshots: `en-GB/phone-*.png` (1080×1920, 24-bit PNG)
@@ -43,17 +44,22 @@ PRIVACY-FIRST & CLEAN
 • Modern dark theme designed for smooth mobile gameplay
 ```
 
-**Category**: Game → Board (alternative: Word & Trivia)  ·  **Tags** (up to 5): Guess who, Face guess, Deduction, 2 player, Multiplayer  
+**Category**: Game → Board (alternative: Word & Trivia)  · **Tags** (up to 5): Guess who, Face guess, Deduction, 2
+player, Multiplayer  
 **Website**: https://www.saveriomorelli.com/projects/faceguess/  
-**Privacy policy**: https://www.saveriomorelli.com/projects/faceguess/privacy.html  
+**Privacy policy**: https://www.saveriomorelli.com/projects/faceguess/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-lobby.png` — Guess the hidden face
 2. `phone-2-board.png` — New faces every game
 3. `phone-3-deduce.png` — Ask, flip, deduce
 
 ### Data safety (Play Console → App content → Data safety)
-- Data collected: the nickname the player types and the in-game chat messages, for online games only. In Play Console declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties. Nothing else is collected: no email, phone, location or device identifiers.
+
+- Data collected: the nickname the player types and the in-game chat messages, for online games only. In Play Console
+  declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared
+  with third parties. Nothing else is collected: no email, phone, location or device identifiers.
 - Every game runs through the online server, in person games too.
 - Temporary data: rooms, nicknames and chat are deleted automatically within 48 hours of the last activity.
 - Data encrypted in transit (HTTPS).

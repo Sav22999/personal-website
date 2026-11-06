@@ -34,7 +34,21 @@ function seed_categories(): array
 function seed_products(): array
 {
     // [name, icon, category, default unit, specific expiry tip (optional)]
-    return array_merge(seed_products_1(), array_map(function ($p) { return [$p[0], $p[2], $p[3], $p[4], null]; }, array_merge(seed2_products(), seed3_products())));
+    return array_merge(seed_products_1(), array_map(function ($p) {
+        return [$p[0], $p[2], $p[3], $p[4], null];
+    }, array_merge(seed2_products(), seed3_products())));
+}
+
+/** Storage environment of a catalog product: the usual one of its category, unless it is an exception. */
+function seed_product_environment(string $name, string $category): string
+{
+    $exceptions = [
+        'Mele' => 'cool', 'Lamponi' => 'cool', 'Kimchi' => 'cool', 'Pasta di miso' => 'cool', 'Pasta sfoglia' => 'cool', 'Tofu' => 'cool',
+        'Patate' => 'ambient', 'Patate dolci' => 'ambient', 'Cipolle' => 'ambient', 'Aglio' => 'ambient', 'Zucca' => 'ambient', 'Pomodori' => 'ambient',
+        'Latte UHT' => 'ambient', 'Latte condensato' => 'ambient',
+    ];
+    $categories = ['Surgelati' => 'cold', 'Verdura' => 'cool', 'Latticini e uova' => 'cool', 'Carne e salumi' => 'cool', 'Pesce' => 'cool'];
+    return $exceptions[$name] ?? $categories[$category] ?? 'ambient';
 }
 
 function seed_products_1(): array
@@ -116,13 +130,17 @@ function seed_recipes(): array
 {
     $conv = function (array $list, int $batch) {
         return array_map(function ($r) use ($batch) {
-        return [
-            'name' => $r['it'], 'origin' => implode(',', $r['origin']), 'image' => seed_recipe_image($r['it']), 'description' => $r['desc'][0],
-            'prep' => $r['prep'], 'cook' => $r['cook'], 'cook_notes' => $r['cookN'][0], 'servings' => $r['serv'], 'difficulty' => $r['diff'],
-            'ingredients' => array_map(function ($i) { return [$i[0], $i[1], $i[2], $i[3]]; }, $r['ing']),
-            'steps' => array_map(function ($st) { return $st[0]; }, $r['steps']),
-            'batch' => $batch,
-        ];
+            return [
+                'name' => $r['it'], 'origin' => implode(',', $r['origin']), 'image' => seed_recipe_image($r['it']), 'description' => $r['desc'][0],
+                'prep' => $r['prep'], 'cook' => $r['cook'], 'cook_notes' => $r['cookN'][0], 'servings' => $r['serv'], 'difficulty' => $r['diff'],
+                'ingredients' => array_map(function ($i) {
+                    return [$i[0], $i[1], $i[2], $i[3]];
+                }, $r['ing']),
+                'steps' => array_map(function ($st) {
+                    return $st[0];
+                }, $r['steps']),
+                'batch' => $batch,
+            ];
         }, $list);
     };
     return array_merge(seed_recipes_1(), $conv(seed2_recipes(), 2), $conv(seed3_recipes(), 3));
@@ -262,9 +280,9 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
     $cats = [];
     foreach ($pdo->query("SELECT id, name FROM `{$p}categories`") as $r) $cats[$r['name']] = (int)$r['id'];
 
-    $insProd = $pdo->prepare("INSERT IGNORE INTO `{$p}products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES (?,?,?,?,?,1,?,?)");
+    $insProd = $pdo->prepare("INSERT IGNORE INTO `{$p}products` (name, icon, category_id, default_unit, environment, expiry_tip, active, created_at, updated_at) VALUES (?,?,?,?,?,?,1,?,?)");
     foreach (seed_products() as [$name, $icon, $cat, $unit, $tip]) {
-        $insProd->execute([$name, $icon, $cats[$cat] ?? null, $unit, $tip, $now, $now]);
+        $insProd->execute([$name, $icon, $cats[$cat] ?? null, $unit, seed_product_environment($name, $cat), $tip, $now, $now]);
         $added['products'] += $insProd->rowCount();
     }
     $prods = [];
@@ -274,7 +292,11 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
     // (once: a recipe deleted by an admin is not brought back).
     $hasRecipes = (int)$pdo->query("SELECT COUNT(*) FROM `{$p}recipes`")->fetchColumn() > 0;
     $doneBatch = 0;
-    try { $doneBatch = (int)$pdo->query("SELECT v FROM `{$p}meta` WHERE k = 'seed_batch'")->fetchColumn(); } catch (Throwable $e) { $doneBatch = 0; }
+    try {
+        $doneBatch = (int)$pdo->query("SELECT v FROM `{$p}meta` WHERE k = 'seed_batch'")->fetchColumn();
+    } catch (Throwable $e) {
+        $doneBatch = 0;
+    }
     if (!$hasRecipes) $doneBatch = 0; elseif ($doneBatch === 0) $doneBatch = 1;
     $existing = [];
     foreach ($pdo->query("SELECT name FROM `{$p}recipes`") as $row) $existing[mb_strtolower($row['name'])] = true;
@@ -308,8 +330,8 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
 function default_spaces(): array
 {
     return [
-        ['Fridge', 'fridge', 'For fresh food'],
-        ['Freezer', 'freezer', 'For frozen food'],
-        ['Pantry', 'pantry', 'For dry and long-life food'],
+        ['Fridge', 'fridge', 'For fresh food', 'cool'],
+        ['Freezer', 'freezer', 'For frozen food', 'cold'],
+        ['Pantry', 'pantry', 'For dry and long-life food', 'ambient'],
     ];
 }

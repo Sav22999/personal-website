@@ -1,7 +1,8 @@
 # FoodTrack — Google Play store listing
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
-Images for the listing are in `en-GB/` (phone screenshots 1080×1920, feature graphic 1024×500, 24-bit PNG without transparency).
+Images for the listing are in `en-GB/` (phone screenshots 1080×1920, feature graphic 1024×500, 24-bit PNG without
+transparency).
 App icon: `../play-store-icon-512.png`.
 
 ---
@@ -57,12 +58,14 @@ AND ALSO
 Expiry tips are indicative and do not replace your own judgement.
 ```
 
-**Category**: App → Food & Drink  ·  **Tags** (up to 5): Shopping list, Recipes, Food, Organisation, Meal planning
-**Contact email**: the developer address registered in Play Console (the public contact page is https://www.saveriomorelli.com/contact-me/email/)
+**Category**: App → Food & Drink · **Tags** (up to 5): Shopping list, Recipes, Food, Organisation, Meal planning
+**Contact email**: the developer address registered in Play Console (the public contact page
+is https://www.saveriomorelli.com/contact-me/email/)
 **Website**: https://www.saveriomorelli.com/projects/foodtrack/
 **Privacy policy**: https://www.saveriomorelli.com/projects/foodtrack/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-spaces.png` — Everything at home, under control
 2. `phone-2-fridge.png` — Never miss an expiry date
 3. `phone-3-list.png` — Shopping lists that keep up

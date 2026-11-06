@@ -29,24 +29,104 @@ const customPrefs = {
 
 // Preset color pairs
 const PALETTES = {
-    fuchsia_gold:   { p1: '#D946EF', p2: '#EAB308', p1G: 'radial-gradient(circle at 35% 30%, #FDF4FF 0%, #F472B6 28%, #D946EF 68%, #A21CAF 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 28%, #EAB308 68%, #CA8A04 100%)' },
-    red_blue:       { p1: '#EF4444', p2: '#2563EB', p1G: 'radial-gradient(circle at 35% 30%, #FFE4E6 0%, #F87171 28%, #EF4444 68%, #B91C1C 100%)', p2G: 'radial-gradient(circle at 35% 30%, #EFF6FF 0%, #60A5FA 28%, #2563EB 68%, #1D4ED8 100%)' },
-    black_white:    { p1: '#F8FAFC', p2: '#18181B', p1G: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #F1F5F9 28%, #E2E8F0 68%, #94A3B8 100%)', p2G: 'radial-gradient(circle at 35% 30%, #71717A 0%, #3F3F46 28%, #18181B 68%, #09090B 100%)' },
-    neon_cyan:      { p1: '#FF007F', p2: '#06B6D4', p1G: 'radial-gradient(circle at 35% 30%, #FFF0F7 0%, #FF66B2 30%, #FF007F 70%, #B30059 100%)', p2G: 'radial-gradient(circle at 35% 30%, #ECFEFF 0%, #67E8F9 30%, #06B6D4 70%, #0891B2 100%)' },
-    sunset_amber:   { p1: '#F97316', p2: '#FBBF24', p1G: 'radial-gradient(circle at 35% 30%, #FFF7ED 0%, #FB923C 30%, #EA580C 70%, #9A3412 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FCD34D 30%, #F59E0B 70%, #B45309 100%)' },
-    emerald_violet: { p1: '#10B981', p2: '#8B5CF6', p1G: 'radial-gradient(circle at 35% 30%, #ECFDF5 0%, #34D399 30%, #059669 70%, #047857 100%)', p2G: 'radial-gradient(circle at 35% 30%, #F5F3FF 0%, #A78BFA 30%, #7C3AED 70%, #5B21B6 100%)' },
-    orange_cobalt:  { p1: '#FF6B4A', p2: '#1D4ED8', p1G: 'radial-gradient(circle at 35% 30%, #FFF1EE 0%, #FF8A65 28%, #FF6B4A 68%, #C2410C 100%)', p2G: 'radial-gradient(circle at 35% 30%, #DBEAFE 0%, #60A5FA 28%, #1D4ED8 68%, #1E3A8A 100%)' },
-    lime_pink:      { p1: '#84CC16', p2: '#EC4899', p1G: 'radial-gradient(circle at 35% 30%, #F7FEE7 0%, #A3E635 28%, #84CC16 68%, #4D7C0F 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FDF2F8 0%, #F472B6 28%, #EC4899 68%, #BE185D 100%)' },
-    gold_silver:    { p1: '#EAB308', p2: '#CBD5E1', p1G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 28%, #EAB308 68%, #A16207 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #E2E8F0 28%, #CBD5E1 68%, #64748B 100%)' },
-    ruby_yellow:    { p1: '#EF4444', p2: '#FACC15', p1G: 'radial-gradient(circle at 35% 30%, #FEF2F2 0%, #F87171 30%, #DC2626 70%, #991B1B 100%)', p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 30%, #EAB308 70%, #A16207 100%)' },
-    lilac_mint:     { p1: '#A855F7', p2: '#14B8A6', p1G: 'radial-gradient(circle at 35% 30%, #FAF5FF 0%, #C084FC 30%, #9333EA 70%, #6B21A8 100%)', p2G: 'radial-gradient(circle at 35% 30%, #F0FDFA 0%, #5EEAD4 30%, #0D9488 70%, #115E59 100%)' },
+    fuchsia_gold: {
+        p1: '#D946EF',
+        p2: '#EAB308',
+        p1G: 'radial-gradient(circle at 35% 30%, #FDF4FF 0%, #F472B6 28%, #D946EF 68%, #A21CAF 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 28%, #EAB308 68%, #CA8A04 100%)'
+    },
+    red_blue: {
+        p1: '#EF4444',
+        p2: '#2563EB',
+        p1G: 'radial-gradient(circle at 35% 30%, #FFE4E6 0%, #F87171 28%, #EF4444 68%, #B91C1C 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #EFF6FF 0%, #60A5FA 28%, #2563EB 68%, #1D4ED8 100%)'
+    },
+    black_white: {
+        p1: '#F8FAFC',
+        p2: '#18181B',
+        p1G: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #F1F5F9 28%, #E2E8F0 68%, #94A3B8 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #71717A 0%, #3F3F46 28%, #18181B 68%, #09090B 100%)'
+    },
+    neon_cyan: {
+        p1: '#FF007F',
+        p2: '#06B6D4',
+        p1G: 'radial-gradient(circle at 35% 30%, #FFF0F7 0%, #FF66B2 30%, #FF007F 70%, #B30059 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #ECFEFF 0%, #67E8F9 30%, #06B6D4 70%, #0891B2 100%)'
+    },
+    sunset_amber: {
+        p1: '#F97316',
+        p2: '#FBBF24',
+        p1G: 'radial-gradient(circle at 35% 30%, #FFF7ED 0%, #FB923C 30%, #EA580C 70%, #9A3412 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FCD34D 30%, #F59E0B 70%, #B45309 100%)'
+    },
+    emerald_violet: {
+        p1: '#10B981',
+        p2: '#8B5CF6',
+        p1G: 'radial-gradient(circle at 35% 30%, #ECFDF5 0%, #34D399 30%, #059669 70%, #047857 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #F5F3FF 0%, #A78BFA 30%, #7C3AED 70%, #5B21B6 100%)'
+    },
+    orange_cobalt: {
+        p1: '#FF6B4A',
+        p2: '#1D4ED8',
+        p1G: 'radial-gradient(circle at 35% 30%, #FFF1EE 0%, #FF8A65 28%, #FF6B4A 68%, #C2410C 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #DBEAFE 0%, #60A5FA 28%, #1D4ED8 68%, #1E3A8A 100%)'
+    },
+    lime_pink: {
+        p1: '#84CC16',
+        p2: '#EC4899',
+        p1G: 'radial-gradient(circle at 35% 30%, #F7FEE7 0%, #A3E635 28%, #84CC16 68%, #4D7C0F 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #FDF2F8 0%, #F472B6 28%, #EC4899 68%, #BE185D 100%)'
+    },
+    gold_silver: {
+        p1: '#EAB308',
+        p2: '#CBD5E1',
+        p1G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 28%, #EAB308 68%, #A16207 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #FFFFFF 0%, #E2E8F0 28%, #CBD5E1 68%, #64748B 100%)'
+    },
+    ruby_yellow: {
+        p1: '#EF4444',
+        p2: '#FACC15',
+        p1G: 'radial-gradient(circle at 35% 30%, #FEF2F2 0%, #F87171 30%, #DC2626 70%, #991B1B 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #FEFCE8 0%, #FDE047 30%, #EAB308 70%, #A16207 100%)'
+    },
+    lilac_mint: {
+        p1: '#A855F7',
+        p2: '#14B8A6',
+        p1G: 'radial-gradient(circle at 35% 30%, #FAF5FF 0%, #C084FC 30%, #9333EA 70%, #6B21A8 100%)',
+        p2G: 'radial-gradient(circle at 35% 30%, #F0FDFA 0%, #5EEAD4 30%, #0D9488 70%, #115E59 100%)'
+    },
 };
 
 // --- Storage Helpers ---
-function storageGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-function storageSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-function sessionGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
-function sessionSet(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} }
+function storageGet(k) {
+    try {
+        return localStorage.getItem(k);
+    } catch (e) {
+        return null;
+    }
+}
+
+function storageSet(k, v) {
+    try {
+        localStorage.setItem(k, v);
+    } catch (e) {
+    }
+}
+
+function sessionGet(k) {
+    try {
+        return sessionStorage.getItem(k);
+    } catch (e) {
+        return null;
+    }
+}
+
+function sessionSet(k, v) {
+    try {
+        v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v);
+    } catch (e) {
+    }
+}
 
 // Names and chat come from other players: never put them in the page as HTML
 function escapeHtml(str) {
@@ -57,7 +137,11 @@ function escapeHtml(str) {
 
 // The language in its own words: italiano, English, español…
 function languageName() {
-    try { return new Intl.DisplayNames([currentLang], { type: 'language' }).of(currentLang); } catch (e) { return currentLang.toUpperCase(); }
+    try {
+        return new Intl.DisplayNames([currentLang], {type: 'language'}).of(currentLang);
+    } catch (e) {
+        return currentLang.toUpperCase();
+    }
 }
 
 const formatPoints = (points2) => Math.floor(points2 / 2) + (points2 % 2 ? '½' : '');
@@ -95,7 +179,8 @@ function playDropSound(row = 5) {
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.13);
-    } catch (e) {}
+    } catch (e) {
+    }
 }
 
 function playWinSound() {
@@ -116,7 +201,8 @@ function playWinSound() {
             osc.start(start);
             osc.stop(start + 0.36);
         });
-    } catch (e) {}
+    } catch (e) {
+    }
 }
 
 // --- UI Helpers ---
@@ -130,6 +216,7 @@ function showModal(id, visible) {
 }
 
 let toastTimer = null;
+
 function showToast(msg) {
     const toast = $('toast');
     if (!toast) return;
@@ -162,13 +249,17 @@ async function copyText(text, okMessage) {
         area.style.cssText = 'position:fixed;opacity:0';
         document.body.appendChild(area);
         area.select();
-        try { document.execCommand('copy'); } catch (e2) {}
+        try {
+            document.execCommand('copy');
+        } catch (e2) {
+        }
         area.remove();
     }
     showToast(okMessage);
 }
 
 let confirmAction = null;
+
 function openConfirm(title, text, yesLabel, onYes) {
     $('confirm-title').textContent = title;
     $('confirm-text').textContent = text;
@@ -213,16 +304,16 @@ function applyCustomPrefs() {
 async function api(action, data = {}) {
     try {
         if (action === 'poll') {
-            const resp = await fetch(`${API_URL}?${new URLSearchParams({ action, ...data })}`, { cache: 'no-store' });
+            const resp = await fetch(`${API_URL}?${new URLSearchParams({action, ...data})}`, {cache: 'no-store'});
             return await resp.json();
         }
         const form = new FormData();
         form.append('action', action);
         for (const [k, v] of Object.entries(data)) form.append(k, v);
-        const resp = await fetch(API_URL, { method: 'POST', body: form });
+        const resp = await fetch(API_URL, {method: 'POST', body: form});
         return await resp.json();
     } catch (e) {
-        return { error: 'network_error' };
+        return {error: 'network_error'};
     }
 }
 
@@ -249,7 +340,7 @@ function buildBoardDOM() {
         colEl.dataset.col = c;
         colEl.tabIndex = 0;
         colEl.setAttribute('role', 'button');
-        colEl.setAttribute('aria-label', t('col_label', { col: c + 1 }));
+        colEl.setAttribute('aria-label', t('col_label', {col: c + 1}));
 
         for (let r = 0; r < ConnectFour.ROWS; r++) {
             const cell = document.createElement('div');
@@ -354,7 +445,7 @@ function drawWinningLine(line) {
     if (!svg) return;
 
     // Highlight winning discs
-    line.forEach(({ r, c }) => {
+    line.forEach(({r, c}) => {
         const disc = document.querySelector(`.c4-cell[data-row="${r}"][data-col="${c}"] .c4-disc`);
         if (disc) disc.classList.add('winning');
     });
@@ -362,9 +453,9 @@ function drawWinningLine(line) {
     // Measured on the real cells, so the line stays centred on the discs at any size
     const wrap = $('board-wrap').getBoundingClientRect();
     const scale = wrap.width / 700;
-    const dots = line.map(({ r, c }) => {
+    const dots = line.map(({r, c}) => {
         const box = document.querySelector(`.c4-cell[data-row="${r}"][data-col="${c}"]`).getBoundingClientRect();
-        return { x: box.left + box.width / 2 - wrap.left, y: box.top + box.height / 2 - wrap.top };
+        return {x: box.left + box.width / 2 - wrap.left, y: box.top + box.height / 2 - wrap.top};
     });
     const first = dots[0];
     const last = dots[dots.length - 1];
@@ -383,7 +474,7 @@ function addMoveToHistory(ply, col, player) {
     if (!list) return;
     const item = document.createElement('li');
     item.className = 'move-item';
-    item.innerHTML = `<span class="move-num">#${ply + 1}</span> <span>${t('col_label', { col: col + 1 })}</span> <span class="palette-dot" style="width:12px;height:12px;background:var(--disc-p${player}-color);"></span>`;
+    item.innerHTML = `<span class="move-num">#${ply + 1}</span> <span>${t('col_label', {col: col + 1})}</span> <span class="palette-dot" style="width:12px;height:12px;background:var(--disc-p${player}-color);"></span>`;
     list.appendChild(item);
     list.scrollTop = list.scrollHeight;
 }
@@ -412,7 +503,7 @@ function updateTurnIndicator() {
     } else if (session.mode !== 'local' && currentSlot === session.mySlot) {
         ind.innerHTML = `${dot} <span>${escapeHtml(t('your_turn'))}</span>`;
     } else {
-        ind.innerHTML = `${dot} <span>${escapeHtml(t('their_turn', { name }))}</span>`;
+        ind.innerHTML = `${dot} <span>${escapeHtml(t('their_turn', {name}))}</span>`;
     }
 
     // Toggle active player bar
@@ -563,7 +654,11 @@ function executePlayerMoveVsAI(col, row) {
 
 function getAIWorker() {
     if (!aiWorker && typeof Worker !== 'undefined') {
-        try { aiWorker = new Worker('ai-worker.js?v=' + document.body.dataset.v); } catch (err) { aiWorker = null; }
+        try {
+            aiWorker = new Worker('ai-worker.js?v=' + document.body.dataset.v);
+        } catch (err) {
+            aiWorker = null;
+        }
     }
     return aiWorker;
 }
@@ -573,10 +668,18 @@ function computeMove(board, player, level, onDone) {
     const id = ++aiRequestSeq;
     const here = () => onDone(ConnectFourAI.bestMove(board, player, level));
     const worker = getAIWorker();
-    if (!worker) { here(); return; }
-    worker.onmessage = (e) => { if (e.data.id === id) onDone(e.data.col); };
-    worker.onerror = () => { aiWorker = null; here(); };
-    worker.postMessage({ id, board, player, level });
+    if (!worker) {
+        here();
+        return;
+    }
+    worker.onmessage = (e) => {
+        if (e.data.id === id) onDone(e.data.col);
+    };
+    worker.onerror = () => {
+        aiWorker = null;
+        here();
+    };
+    worker.postMessage({id, board, player, level});
 }
 
 function triggerAIMove() {
@@ -694,12 +797,12 @@ function setupOnlineSession(code, token, slot, isPublic) {
         drawOffer: null,
         rematchSent: false,
     };
-    sessionSet('c4_session', JSON.stringify({ code, token, slot, isPublic }));
+    sessionSet('c4_session', JSON.stringify({code, token, slot, isPublic}));
     $('chat-list').innerHTML = '';
 
     if (isPublic) {
         $('waiting-title').textContent = t('searching_title');
-        $('waiting-public-desc').textContent = t('searching_desc', { language: languageName() });
+        $('waiting-public-desc').textContent = t('searching_desc', {language: languageName()});
         $('waiting-private').classList.add('hidden');
     } else {
         $('waiting-title').textContent = t('waiting_title');
@@ -721,7 +824,10 @@ function startPolling() {
 async function pollServer() {
     const s = session;
     if (!s || s.mode !== 'online' || !s.token) return;
-    if (s.polling) { s.pollAgain = true; return; }
+    if (s.polling) {
+        s.pollAgain = true;
+        return;
+    }
 
     s.polling = true;
     const res = await api('poll', {
@@ -761,8 +867,14 @@ function handlePollUpdate(data) {
 
     const p1 = data.players.find(p => p.slot === 1);
     const p2 = data.players.find(p => p.slot === 2);
-    if (p1) { s.p1Name = p1.name; s.p1Points = p1.points2; }
-    if (p2) { s.p2Name = p2.name; s.p2Points = p2.points2; }
+    if (p1) {
+        s.p1Name = p1.name;
+        s.p1Points = p1.points2;
+    }
+    if (p2) {
+        s.p2Name = p2.name;
+        s.p2Points = p2.points2;
+    }
 
     // Both players accepted the rematch: a new round starts from an empty board
     if (s.round && data.round !== s.round) {
@@ -805,7 +917,7 @@ function handlePollUpdate(data) {
     if (data.status === 'finished' && s.status !== 'finished') {
         const winLine = data.winningLine ? data.winningLine.split('-').map(part => {
             const [r, c] = part.split(',').map(Number);
-            return { r, c };
+            return {r, c};
         }) : null;
         const winner = data.result === '1-0' ? 1 : (data.result === '0-1' ? 2 : 0);
         endGame(winner, data.reason, winLine);
@@ -832,12 +944,12 @@ function renderBanner() {
     if (s && s.mode === 'online' && s.status === 'playing') {
         const opp = s.players.find(p => p.slot !== s.mySlot);
         if (s.drawOffer !== null && s.drawOffer !== s.mySlot) {
-            html = `<span>${escapeHtml(t('draw_offer_received', { name: opp ? opp.name : '' }))}</span>
+            html = `<span>${escapeHtml(t('draw_offer_received', {name: opp ? opp.name : ''}))}</span>
                 <button type="button" class="btn btn-primary" data-draw-answer="1">${escapeHtml(t('accept'))}</button>
                 <button type="button" class="btn btn-secondary" data-draw-answer="0">${escapeHtml(t('decline'))}</button>`;
         } else if (opp && !opp.online) {
             warn = true;
-            html = `<span>${escapeHtml(t('opponent_offline', { sec: Math.min(opp.idle, CLAIM_AFTER_S) }))}</span>`;
+            html = `<span>${escapeHtml(t('opponent_offline', {sec: Math.min(opp.idle, CLAIM_AFTER_S)}))}</span>`;
             if (opp.idle >= CLAIM_AFTER_S || opp.left) {
                 html += `<button type="button" class="btn btn-accent" data-claim-win>${escapeHtml(t('claim_win'))}</button>`;
             }
@@ -853,13 +965,13 @@ function renderBanner() {
 
 async function answerDraw(accept) {
     const s = session;
-    const res = await api('answer_draw', { token: s.token, accept: accept ? 1 : 0 });
+    const res = await api('answer_draw', {token: s.token, accept: accept ? 1 : 0});
     if (res.error) showError(res.error);
     pollServer();
 }
 
 async function claimWin() {
-    const res = await api('claim_win', { token: session.token });
+    const res = await api('claim_win', {token: session.token});
     if (res.error) showError(res.error);
     pollServer();
 }
@@ -1011,7 +1123,7 @@ function endGame(winner, reason, winLine = null) {
         iconEl.innerHTML = GAMEOVER_ICONS.draw;
     } else {
         if (s.mode === 'local') {
-            titleEl.textContent = t('won_the_game', { name: winName });
+            titleEl.textContent = t('won_the_game', {name: winName});
             iconEl.innerHTML = GAMEOVER_ICONS.trophy;
         } else if (isMe) {
             titleEl.textContent = t('you_won');
@@ -1020,24 +1132,31 @@ function endGame(winner, reason, winLine = null) {
             titleEl.textContent = t('you_lost');
             iconEl.innerHTML = GAMEOVER_ICONS.lose;
         }
-        textEl.textContent = t('reason_' + reason, { name: winner === 1 ? p2 : p1 });
+        textEl.textContent = t('reason_' + reason, {name: winner === 1 ? p2 : p1});
     }
 
     // Online the server keeps the score
     if (s.mode !== 'online') {
-        if (winner === 0) { s.p1Points += 1; s.p2Points += 1; }
-        else if (winner === 1) s.p1Points += 2;
+        if (winner === 0) {
+            s.p1Points += 1;
+            s.p2Points += 1;
+        } else if (winner === 1) s.p1Points += 2;
         else s.p2Points += 2;
     }
 
-    $('score-line').textContent = t('score_tracker', { p1, s1: formatPoints(s.p1Points), p2, s2: formatPoints(s.p2Points) });
+    $('score-line').textContent = t('score_tracker', {
+        p1,
+        s1: formatPoints(s.p1Points),
+        p2,
+        s2: formatPoints(s.p2Points)
+    });
     $('btn-rematch').disabled = false;
     $('rematch-status').textContent = '';
 
     const ind = $('turn-indicator');
     if (ind) {
         if (winner === 0) ind.textContent = t('game_draw');
-        else if (s.mode === 'local') ind.textContent = t('won_the_game', { name: winName });
+        else if (s.mode === 'local') ind.textContent = t('won_the_game', {name: winName});
         else ind.textContent = isMe ? t('you_won') : t('you_lost');
     }
     $('bar-top').classList.remove('active-turn');
@@ -1063,7 +1182,7 @@ function renderRematchStatus() {
     let status = '';
     if (!opp || opp.left) status = t('opponent_left');
     else if (s.rematchSent) status = t('rematch_requested');
-    else if (opp.wantsRematch) status = t('rematch_offer', { name: opp.name });
+    else if (opp.wantsRematch) status = t('rematch_offer', {name: opp.name});
 
     $('rematch-status').textContent = status;
     $('btn-rematch').disabled = s.rematchSent || !opp || opp.left;
@@ -1077,7 +1196,7 @@ async function triggerRematch() {
     if (s.mode === 'online') {
         s.rematchSent = true;
         renderRematchStatus();
-        const res = await api('rematch', { token: s.token });
+        const res = await api('rematch', {token: s.token});
         if (res.error) {
             s.rematchSent = false;
             showError(res.error);
@@ -1111,7 +1230,7 @@ async function triggerRematch() {
 async function leaveGame() {
     const s = session;
     resetToLobby();
-    if (s && s.mode === 'online' && s.token) await api('leave', { token: s.token });
+    if (s && s.mode === 'online' && s.token) await api('leave', {token: s.token});
 }
 
 function resetToLobby() {
@@ -1148,9 +1267,18 @@ function closePanel() {
 // Android back key (see MainActivity): true means the page used it
 window.onAndroidBack = function () {
     if (closeTopModal()) return true;
-    if ($('side-panel').classList.contains('open')) { closePanel(); return true; }
-    if (!$('gameover-overlay').classList.contains('hidden')) { showModal('gameover-overlay', false); return true; }
-    if (session) { requestLeave(); return true; }
+    if ($('side-panel').classList.contains('open')) {
+        closePanel();
+        return true;
+    }
+    if (!$('gameover-overlay').classList.contains('hidden')) {
+        showModal('gameover-overlay', false);
+        return true;
+    }
+    if (session) {
+        requestLeave();
+        return true;
+    }
     return false;
 };
 
@@ -1168,7 +1296,7 @@ function triggerHint() {
         const guide = document.querySelector(`.guide-indicator[data-col="${bestCol}"]`);
         if (!guide) return;
         guide.classList.add('active');
-        showToast(t('hint') + ': ' + t('col_label', { col: bestCol + 1 }));
+        showToast(t('hint') + ': ' + t('col_label', {col: bestCol + 1}));
         setTimeout(() => guide.classList.remove('active'), 2500);
     });
 }
@@ -1244,7 +1372,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Load stored preferences & name
     const storedPrefs = storageGet('c4_prefs');
     if (storedPrefs) {
-        try { Object.assign(customPrefs, JSON.parse(storedPrefs)); } catch (e) {}
+        try {
+            Object.assign(customPrefs, JSON.parse(storedPrefs));
+        } catch (e) {
+        }
     }
     applyCustomPrefs();
 
@@ -1321,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const s = session;
             if (!s || s.status !== 'playing') return;
             if (s.mode === 'online') {
-                const res = await api('resign', { token: s.token });
+                const res = await api('resign', {token: s.token});
                 if (res.error) showError(res.error);
                 pollServer();
             } else {
@@ -1335,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-draw').addEventListener('click', () => {
         if (!session || session.mode !== 'online' || session.status !== 'playing') return;
         openConfirm(t('confirm_draw_title'), t('confirm_draw_text'), t('draw'), async () => {
-            const res = await api('offer_draw', { token: session.token });
+            const res = await api('offer_draw', {token: session.token});
             if (res.error) showError(res.error);
             else showToast(t('draw_offered'));
             pollServer();
@@ -1454,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = input.value.trim();
         if (!text || !session || session.mode !== 'online') return;
         input.value = '';
-        const res = await api('send_message', { token: session.token, text });
+        const res = await api('send_message', {token: session.token, text});
         if (res.error) {
             input.value = text;
             showError(res.error);
@@ -1491,7 +1622,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saved = sessionGet('c4_session');
     if (saved) {
         try {
-            const { code, token, slot, isPublic } = JSON.parse(saved);
+            const {code, token, slot, isPublic} = JSON.parse(saved);
             setupOnlineSession(code, token, slot, isPublic);
         } catch (e) {
             sessionSet('c4_session', null);
@@ -1549,7 +1680,7 @@ function setLobbyStep(step) {
         $('step-name').classList.remove('active');
         $('step-mode').classList.add('active');
         $('btn-step-1').disabled = false;
-        $('greeting-text').textContent = t('greeting', { name: playerName });
+        $('greeting-text').textContent = t('greeting', {name: playerName});
     }
 }
 
@@ -1563,11 +1694,11 @@ function renderLogoFaces() {
     `;
 }
 
-window.onLanguageChanged = function(lang) {
-    $('random-desc').textContent = t('random_desc', { language: languageName() });
+window.onLanguageChanged = function (lang) {
+    $('random-desc').textContent = t('random_desc', {language: languageName()});
     if (playerName) {
         const greeting = $('greeting-text');
-        if (greeting) greeting.textContent = t('greeting', { name: playerName });
+        if (greeting) greeting.textContent = t('greeting', {name: playerName});
     }
     if (session) {
         const modeBadge = $('mode-badge');
@@ -1576,7 +1707,7 @@ window.onLanguageChanged = function(lang) {
         renderBanner();
     }
     document.querySelectorAll('.c4-column').forEach(col => {
-        col.setAttribute('aria-label', t('col_label', { col: Number(col.dataset.col) + 1 }));
+        col.setAttribute('aria-label', t('col_label', {col: Number(col.dataset.col) + 1}));
     });
     renderHowToModal();
     updateCustomPreview();
@@ -1698,13 +1829,19 @@ function renderCustomiseModal() {
     const soundSw = $('opt-sound');
     if (soundSw) {
         soundSw.checked = customPrefs.sound;
-        soundSw.onchange = () => { customPrefs.sound = soundSw.checked; saveAndApplyCustomPrefs(); };
+        soundSw.onchange = () => {
+            customPrefs.sound = soundSw.checked;
+            saveAndApplyCustomPrefs();
+        };
     }
 
     const guideSw = $('opt-guides');
     if (guideSw) {
         guideSw.checked = customPrefs.guides;
-        guideSw.onchange = () => { customPrefs.guides = guideSw.checked; saveAndApplyCustomPrefs(); };
+        guideSw.onchange = () => {
+            customPrefs.guides = guideSw.checked;
+            saveAndApplyCustomPrefs();
+        };
     }
 
     // Animation speed
@@ -1728,4 +1865,5 @@ function saveAndApplyCustomPrefs() {
 }
 
 // Lets the game open without a connection (see sw.js)
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {
+}));

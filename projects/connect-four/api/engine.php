@@ -8,11 +8,6 @@ class ConnectFourEngine
     public const ROWS = 6;
     public const COLS = 7;
 
-    public static function createBoard(): array
-    {
-        return array_fill(0, self::ROWS, array_fill(0, self::COLS, 0));
-    }
-
     public static function replay(array $moves, int $firstSlot = 1): ?array
     {
         $board = self::createBoard();
@@ -66,6 +61,11 @@ class ConnectFourEngine
             'total_moves' => $totalMoves,
             'last_move' => $lastMove,
         ];
+    }
+
+    public static function createBoard(): array
+    {
+        return array_fill(0, self::ROWS, array_fill(0, self::COLS, 0));
     }
 
     public static function checkWinAt(array $board, int $row, int $col): ?array

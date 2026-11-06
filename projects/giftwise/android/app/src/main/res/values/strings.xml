@@ -4,7 +4,8 @@
     <string name="host_name" translatable="false">www.saveriomorelli.com</string>
     <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/giftwise/</string>
     <string name="offline_title">No connection</string>
-    <string name="offline_text">Giftwise needs the internet to show your lists. Check your connection and try again.</string>
+    <string name="offline_text">Giftwise needs the internet to show your lists. Check your connection and try again.
+    </string>
     <string name="offline_retry">Try again</string>
     <string name="share_label">Add to Giftwise</string>
 </resources>

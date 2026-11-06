@@ -77,7 +77,10 @@ function log_history(int $userId, string $action, ?int $listId, string $listTitl
     }
 }
 
-function pair(int $x, int $y): array { return $x < $y ? [$x, $y] : [$y, $x]; }
+function pair(int $x, int $y): array
+{
+    return $x < $y ? [$x, $y] : [$y, $x];
+}
 
 function user_row(int $id): ?array
 {
@@ -235,8 +238,9 @@ function state_payload(array $u): array
     foreach ($st->fetchAll() as $f) {
         $p = ['id' => (int)$f['uid'], 'name' => $f['name'], 'username' => $f['username']];
         $mine = (int)$f['follower_id'] === $me;
-        if ($f['status'] === 'accepted') { if ($mine) $following[] = $p + ['since' => $f['accepted_at']]; else $followers[] = $p + ['since' => $f['accepted_at']]; }
-        elseif ($mine) $outgoing[] = $p + ['at' => $f['created_at']];
+        if ($f['status'] === 'accepted') {
+            if ($mine) $following[] = $p + ['since' => $f['accepted_at']]; else $followers[] = $p + ['since' => $f['accepted_at']];
+        } elseif ($mine) $outgoing[] = $p + ['at' => $f['created_at']];
         else $incoming[] = $p + ['at' => $f['created_at']];
     }
 
@@ -277,10 +281,10 @@ function state_payload(array $u): array
         foreach ($rows as $l) {
             $id = (int)$l['id'];
             $friendLists[] = list_out($l) + [
-                'owner' => ['id' => (int)$l['owner_id'], 'name' => $l['owner_name']],
-                'itemCount' => $count[$id] ?? 0, 'takenCount' => $taken[$id] ?? 0, 'consideringCount' => $consid[$id] ?? 0,
-                'myClaims' => $mineC[$id] ?? 0, 'commentCount' => $comments[$id]['n'] ?? 0, 'lastComment' => $comments[$id]['last'] ?? null,
-            ];
+                    'owner' => ['id' => (int)$l['owner_id'], 'name' => $l['owner_name']],
+                    'itemCount' => $count[$id] ?? 0, 'takenCount' => $taken[$id] ?? 0, 'consideringCount' => $consid[$id] ?? 0,
+                    'myClaims' => $mineC[$id] ?? 0, 'commentCount' => $comments[$id]['n'] ?? 0, 'lastComment' => $comments[$id]['last'] ?? null,
+                ];
         }
     }
     return ['user' => public_user(user_row($me)), 'following' => $following, 'followers' => $followers, 'requests' => ['incoming' => $incoming, 'outgoing' => $outgoing], 'myLists' => $myLists, 'friendLists' => $friendLists];
@@ -334,7 +338,8 @@ function apply_invite(int $uid, string $code): void
     $inviter = (int)$st->fetchColumn();
     if ($inviter && $inviter !== $uid) {
         $was = follows($uid, $inviter) && follows($inviter, $uid);
-        set_follow($uid, $inviter, 'accepted'); set_follow($inviter, $uid, 'accepted');
+        set_follow($uid, $inviter, 'accepted');
+        set_follow($inviter, $uid, 'accepted');
         if (!$was) mail_friend_joined(user_row($inviter), user_row($uid));
     }
 }
@@ -500,7 +505,8 @@ switch ($r) {
         if ((int)$inviter['id'] === $u['id']) fail('This is your own invite link: share it with your friends.', 422, 'own_code');
         $iid = (int)$inviter['id'];
         $was = follows($u['id'], $iid) && follows($iid, $u['id']);
-        set_follow($u['id'], $iid, 'accepted'); set_follow($iid, $u['id'], 'accepted');
+        set_follow($u['id'], $iid, 'accepted');
+        set_follow($iid, $u['id'], 'accepted');
         if (!$was) mail_friend_joined($inviter, user_row($u['id']));
         send_json(['ok' => true, 'friendName' => $inviter['name'], 'already' => $was] + state_payload($u));
 
@@ -511,7 +517,10 @@ switch ($r) {
         $okFormat = (bool)preg_match('/^[a-z0-9](?:[a-z0-9._]{1,18})[a-z0-9]$/', $name) && strpos($name, '..') === false;
         $available = $okFormat && !username_taken($name, $u ? (int)$u['id'] : 0);
         $suggestion = '';
-        if ($okFormat && !$available) { require_once __DIR__ . '/../lib/schema.php'; $suggestion = suggest_username_raw(db(), (string)config_value('prefix', 'gw_'), str_replace(['.', '_'], ' ', $name), ''); }
+        if ($okFormat && !$available) {
+            require_once __DIR__ . '/../lib/schema.php';
+            $suggestion = suggest_username_raw(db(), (string)config_value('prefix', 'gw_'), str_replace(['.', '_'], ' ', $name), '');
+        }
         send_json(['ok' => true, 'username' => $name, 'valid' => $okFormat, 'available' => $available, 'suggestion' => $suggestion]);
 
     case 'user.search':
@@ -794,7 +803,8 @@ switch ($r) {
             try {
                 require_once __DIR__ . '/../lib/schema.php';
                 install_schema(db(), (string)config_value('prefix', 'gw_'));
-            } catch (Throwable $ignored) {}
+            } catch (Throwable $ignored) {
+            }
             $rows = [];
         }
         send_json(['ok' => true, 'history' => $rows]);

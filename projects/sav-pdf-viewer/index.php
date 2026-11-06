@@ -82,11 +82,14 @@ $canonical = '/projects/sav-pdf-viewer/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2021 – present <span class="book-meta-note">· <?php $years = date('Y') - 2021; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2021 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2021;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
-                <a href="https://play.google.com/store/apps/details?id=com.saverio.pdfviewer" target="_blank" rel="noopener"
+                <a href="https://play.google.com/store/apps/details?id=com.saverio.pdfviewer" target="_blank"
+                   rel="noopener"
                    class="book-btn book-btn-primary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -134,20 +137,32 @@ $canonical = '/projects/sav-pdf-viewer/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid portrait">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Promotional graphic with the word &quot;Safe&quot; and a padlock shield beside a tilted phone showing a PDF page open in the app">
-                <img src="/images/projects/screenshots/sav-pdf-viewer/1.png" alt="Promotional graphic with the word &quot;Safe&quot; and a padlock shield beside a tilted phone showing a PDF page open in the app" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Promotional graphic with the word &quot;Safe&quot; and a padlock shield beside a tilted phone showing a PDF page open in the app">
+                <img src="/images/projects/screenshots/sav-pdf-viewer/1.png"
+                     alt="Promotional graphic with the word &quot;Safe&quot; and a padlock shield beside a tilted phone showing a PDF page open in the app"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Promotional graphic with the word &quot;Lightweight&quot; and two crossed phones: one shows a PDF with the page counter and a bookmark, the other shows the red menu panel">
-                <img src="/images/projects/screenshots/sav-pdf-viewer/2.png" alt="Promotional graphic with the word &quot;Lightweight&quot; and two crossed phones: one shows a PDF with the page counter and a bookmark, the other shows the red menu panel" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Promotional graphic with the word &quot;Lightweight&quot; and two crossed phones: one shows a PDF with the page counter and a bookmark, the other shows the red menu panel">
+                <img src="/images/projects/screenshots/sav-pdf-viewer/2.png"
+                     alt="Promotional graphic with the word &quot;Lightweight&quot; and two crossed phones: one shows a PDF with the page counter and a bookmark, the other shows the red menu panel"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Promotional graphic with the word &quot;Simple&quot; and a PDF logo beside a phone showing the app&#x27;s menu with share, help and zoom options">
-                <img src="/images/projects/screenshots/sav-pdf-viewer/3.png" alt="Promotional graphic with the word &quot;Simple&quot; and a PDF logo beside a phone showing the app&#x27;s menu with share, help and zoom options" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Promotional graphic with the word &quot;Simple&quot; and a PDF logo beside a phone showing the app&#x27;s menu with share, help and zoom options">
+                <img src="/images/projects/screenshots/sav-pdf-viewer/3.png"
+                     alt="Promotional graphic with the word &quot;Simple&quot; and a PDF logo beside a phone showing the app&#x27;s menu with share, help and zoom options"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Text graphic reading &quot;Your privacy is important. You are important. Full stop.&quot; signed by Saverio Morelli">
-                <img src="/images/projects/screenshots/sav-pdf-viewer/4.png" alt="Text graphic reading &quot;Your privacy is important. You are important. Full stop.&quot; signed by Saverio Morelli" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Text graphic reading &quot;Your privacy is important. You are important. Full stop.&quot; signed by Saverio Morelli">
+                <img src="/images/projects/screenshots/sav-pdf-viewer/4.png"
+                     alt="Text graphic reading &quot;Your privacy is important. You are important. Full stop.&quot; signed by Saverio Morelli"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
         </div>

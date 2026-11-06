@@ -9,12 +9,12 @@
  * never commit it and never publish real credentials.
  */
 
-$localhost_db  = "<YOUR DATABASE HOST>";      // e.g. 89.46.111.xxx (on Aruba it is an IP, not "localhost")
-$username_db   = "<YOUR DATABASE USERNAME>";
-$password_db   = "<YOUR DATABASE PASSWORD>";
+$localhost_db = "<YOUR DATABASE HOST>";      // e.g. 89.46.111.xxx (on Aruba it is an IP, not "localhost")
+$username_db = "<YOUR DATABASE USERNAME>";
+$password_db = "<YOUR DATABASE PASSWORD>";
 $database_name = "<YOUR DATABASE NAME>";
 
-$table_prefix  = "gw_";   // every Giftwise table starts with this prefix
+$table_prefix = "gw_";   // every Giftwise table starts with this prefix
 
 // Optional: "Sign in with Google". Client ID of a Google Cloud "OAuth client ID" of type "Web application"
 // (the same one used by FoodTrack works too). Empty = Google login disabled. It is not a secret.

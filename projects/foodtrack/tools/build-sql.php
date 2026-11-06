@@ -8,7 +8,10 @@
 
 declare(strict_types=1);
 
-if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 
 require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/schema.php';
@@ -16,7 +19,10 @@ require __DIR__ . '/../lib/seed.php';
 require __DIR__ . '/../lib/seed-en.php';
 
 $p = $argv[1] ?? 'ft_';
-if (!preg_match('/^[A-Za-z0-9_]{1,20}$/', $p)) { fwrite(STDERR, "Invalid prefix\n"); exit(1); }
+if (!preg_match('/^[A-Za-z0-9_]{1,20}$/', $p)) {
+    fwrite(STDERR, "Invalid prefix\n");
+    exit(1);
+}
 
 function q($v): string
 {
@@ -53,8 +59,8 @@ $out[] = '';
 
 $out[] = '-- ---------------------------------------------------------------- product catalog';
 foreach (seed_products() as [$name, $icon, $cat, $unit, $tip]) {
-    $out[] = "INSERT IGNORE INTO `{$p}products` (name, icon, category_id, default_unit, expiry_tip, active, created_at, updated_at) VALUES ("
-        . q($name) . ', ' . q($icon) . ", (SELECT id FROM `{$p}categories` WHERE name = " . q($cat) . '), ' . q($unit) . ', ' . q($tip) . ', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());';
+    $out[] = "INSERT IGNORE INTO `{$p}products` (name, icon, category_id, default_unit, environment, expiry_tip, active, created_at, updated_at) VALUES ("
+        . q($name) . ', ' . q($icon) . ", (SELECT id FROM `{$p}categories` WHERE name = " . q($cat) . '), ' . q($unit) . ', ' . q(seed_product_environment($name, $cat)) . ', ' . q($tip) . ', 1, UTC_TIMESTAMP(), UTC_TIMESTAMP());';
 }
 $out[] = '';
 
@@ -74,7 +80,11 @@ foreach (seed_recipes() as $r) {
 }
 
 $out[] = '-- ---------------------------------------------------------------- English translations of the content';
-$j = function (array $a): string { return q(json_encode(['en' => array_filter($a, function ($v) { return $v !== null && $v !== ''; })], JSON_UNESCAPED_UNICODE)); };
+$j = function (array $a): string {
+    return q(json_encode(['en' => array_filter($a, function ($v) {
+        return $v !== null && $v !== '';
+    })], JSON_UNESCAPED_UNICODE));
+};
 foreach (seed_en_categories() as $it => [$name, $tip]) $out[] = "UPDATE `{$p}categories` SET i18n = " . $j(['name' => $name, 'expiry_tip' => $tip]) . ' WHERE name = ' . q($it) . ';';
 foreach (seed_en_products() as $it => [$name, $tip]) $out[] = "UPDATE `{$p}products` SET i18n = " . $j(['name' => $name, 'expiry_tip' => $tip]) . ' WHERE name = ' . q($it) . ';';
 foreach (seed_en_recipes() as $it => [$name, $desc, $cook, $steps, $notes]) {

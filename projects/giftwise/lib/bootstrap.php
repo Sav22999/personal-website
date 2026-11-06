@@ -67,7 +67,10 @@ function t(string $name): string
 function pdo_connect(string $host, string $user, string $pass, string $name): PDO
 {
     $port = 3306;
-    if (preg_match('/^(.+):(\d+)$/', $host, $m)) { $host = $m[1]; $port = (int)$m[2]; }
+    if (preg_match('/^(.+):(\d+)$/', $host, $m)) {
+        $host = $m[1];
+        $port = (int)$m[2];
+    }
     $pdo = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $name), $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -91,7 +94,10 @@ function db(?PDO $set = null): PDO
     return $pdo;
 }
 
-function now_utc(): string { return gmdate('Y-m-d H:i:s'); }
+function now_utc(): string
+{
+    return gmdate('Y-m-d H:i:s');
+}
 
 function is_https(): bool
 {
@@ -100,7 +106,10 @@ function is_https(): bool
     return strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
 }
 
-function client_ip(): string { return substr((string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'), 0, 45); }
+function client_ip(): string
+{
+    return substr((string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'), 0, 45);
+}
 
 /** Folder of the app (e.g. "/projects/giftwise/"), used as the cookie path. */
 function app_base_path(): string
@@ -202,10 +211,10 @@ function create_auth_session(int $userId): string
     $token = bin2hex(random_bytes(32));
     $csrf = bin2hex(random_bytes(24));
     $expires = time() + 60 * 60 * 24 * 60; // 60 days
+    // user_agent and ip stay empty: nothing uses them, so they are not collected
     db()->prepare('INSERT INTO ' . t('auth_tokens') . ' (token_hash, user_id, csrf_token, user_agent, ip, created_at, last_seen_at, expires_at) VALUES (?,?,?,?,?,?,?,?)')
-        ->execute([hash('sha256', $token), $userId, $csrf, substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255), client_ip(), now_utc(), now_utc(), gmdate('Y-m-d H:i:s', $expires)]);
+        ->execute([hash('sha256', $token), $userId, $csrf, '', '', now_utc(), now_utc(), gmdate('Y-m-d H:i:s', $expires)]);
     set_auth_cookie($token, $expires);
-    if (random_int(1, 40) === 1) db()->exec('DELETE FROM ' . t('auth_tokens') . ' WHERE expires_at < UTC_TIMESTAMP()');
     return $csrf;
 }
 
@@ -298,7 +307,6 @@ function too_many_attempts(string $kind, int $max, int $minutes): bool
 function record_attempt(string $kind): void
 {
     db()->prepare('INSERT INTO ' . t('attempts') . ' (kind, ip, created_at) VALUES (?,?,?)')->execute([$kind, client_ip(), now_utc()]);
-    if (random_int(1, 30) === 1) db()->exec('DELETE FROM ' . t('attempts') . ' WHERE created_at < (UTC_TIMESTAMP() - INTERVAL 1 DAY)');
 }
 
 function clear_attempts(string $kind): void

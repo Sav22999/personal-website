@@ -16,25 +16,60 @@ const CHAT_HISTORY = 50;
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 switch ($action) {
-    case 'create_room':  createRoom(); break;
-    case 'join_room':    joinRoom(); break;
-    case 'find_match':   findMatch(); break;
-    case 'poll':         pollState(); break;
-    case 'move':         makeMove(); break;
-    case 'resign':       resign(); break;
-    case 'offer_draw':   offerDraw(); break;
-    case 'answer_draw':  answerDraw(); break;
-    case 'rematch':      requestRematch(); break;
-    case 'claim_win':    claimWin(); break;
-    case 'leave':        leaveRoom(); break;
-    case 'send_message': sendMessage(); break;
+    case 'create_room':
+        createRoom();
+        break;
+    case 'join_room':
+        joinRoom();
+        break;
+    case 'find_match':
+        findMatch();
+        break;
+    case 'poll':
+        pollState();
+        break;
+    case 'move':
+        makeMove();
+        break;
+    case 'resign':
+        resign();
+        break;
+    case 'offer_draw':
+        offerDraw();
+        break;
+    case 'answer_draw':
+        answerDraw();
+        break;
+    case 'rematch':
+        requestRematch();
+        break;
+    case 'claim_win':
+        claimWin();
+        break;
+    case 'leave':
+        leaveRoom();
+        break;
+    case 'send_message':
+        sendMessage();
+        break;
     default:
         echo json_encode(['error' => 'Unknown action']);
 }
 
-function respondError($code) { echo json_encode(['error' => $code]); }
-function nowMs() { return (int)floor(microtime(true) * 1000); }
-function other($slot) { return (int)$slot === 1 ? 2 : 1; }
+function respondError($code)
+{
+    echo json_encode(['error' => $code]);
+}
+
+function nowMs()
+{
+    return (int)floor(microtime(true) * 1000);
+}
+
+function other($slot)
+{
+    return (int)$slot === 1 ? 2 : 1;
+}
 
 function cleanName($raw, $fallback)
 {
@@ -118,7 +153,10 @@ function createRoom()
     $tc = (int)($_POST['time'] ?? 0);
     if (!in_array($tc, TIME_CONTROLS, true)) $tc = 0;
     $room = insertRoomWithHost($name, $color, $tc, false, null);
-    if (!$room) { respondError('create_failed'); return; }
+    if (!$room) {
+        respondError('create_failed');
+        return;
+    }
     echo json_encode(['success' => true, 'code' => $room['code'], 'token' => $room['token']]);
 }
 
@@ -152,7 +190,10 @@ function joinRoom()
     $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $_POST['code'] ?? ''));
     $name = cleanName($_POST['name'] ?? '', 'Player 2');
     $color = cleanDiscColor($_POST['disc_color'] ?? '', 'gold');
-    if ($code === '') { respondError('code_required'); return; }
+    if ($code === '') {
+        respondError('code_required');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
@@ -165,7 +206,11 @@ function joinRoom()
             $stmt->execute([$room['id']]);
             if ((int)$stmt->fetchColumn() >= 2) $error = 'room_full';
         }
-        if ($error) { $pdo->rollBack(); respondError($error); return; }
+        if ($error) {
+            $pdo->rollBack();
+            respondError($error);
+            return;
+        }
         $token = addSecondPlayer($room['id'], $name, $color);
         $pdo->commit();
     } catch (Throwable $e) {
@@ -213,7 +258,10 @@ function findMatch()
         $pdo->rollBack();
         throw $e;
     }
-    if (!$room) { respondError('create_failed'); return; }
+    if (!$room) {
+        respondError('create_failed');
+        return;
+    }
     echo json_encode(['success' => true, 'token' => $room['token'], 'matched' => false]);
 }
 
@@ -224,7 +272,10 @@ function mergeWaitingPublicRoom($player)
     try {
         $own = lockRoom($player['room_id']);
         $targetId = $own && $own['status'] === 'waiting' ? findOpenPublicRoom($player['lang'], (int)$player['room_id']) : null;
-        if (!$targetId || $targetId > (int)$player['room_id']) { $pdo->rollBack(); return false; }
+        if (!$targetId || $targetId > (int)$player['room_id']) {
+            $pdo->rollBack();
+            return false;
+        }
         $pdo->prepare("UPDATE c4_players SET room_id = ?, slot = 2 WHERE id = ?")->execute([$targetId, $player['id']]);
         $pdo->prepare("UPDATE c4_rooms SET status = 'finished' WHERE id = ?")->execute([$player['room_id']]);
         startGame($targetId);
@@ -281,7 +332,10 @@ function pollState()
     global $pdo;
     $token = $_GET['token'] ?? '';
     $player = getPlayer($token);
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     if ($player['room_status'] === 'waiting' && mergeWaitingPublicRoom($player)) {
         $player = getPlayer($token);
@@ -364,14 +418,26 @@ function sendMessage()
 {
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
-    if (!$player) { respondError('invalid_session'); return; }
-    if ($player['room_status'] === 'waiting') { respondError('not_started'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    if ($player['room_status'] === 'waiting') {
+        respondError('not_started');
+        return;
+    }
     $text = cleanMessage($_POST['text'] ?? '');
-    if ($text === '') { respondError('empty_message'); return; }
+    if ($text === '') {
+        respondError('empty_message');
+        return;
+    }
 
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM c4_messages WHERE room_id = ? AND slot = ? AND created_at > NOW() - INTERVAL 10 SECOND");
     $stmt->execute([$player['room_id'], $player['slot']]);
-    if ((int)$stmt->fetchColumn() >= CHAT_BURST) { respondError('too_fast'); return; }
+    if ((int)$stmt->fetchColumn() >= CHAT_BURST) {
+        respondError('too_fast');
+        return;
+    }
 
     $pdo->prepare("INSERT INTO c4_messages (room_id, slot, body) VALUES (?, ?, ?)")->execute([$player['room_id'], $player['slot'], $text]);
     $id = (int)$pdo->lastInsertId();
@@ -384,15 +450,30 @@ function makeMove()
     $player = getPlayer($_POST['token'] ?? '');
     $col = isset($_POST['col']) ? (int)$_POST['col'] : -1;
     $ply = (int)($_POST['ply'] ?? -1);
-    if (!$player || $col < 0 || $col >= ConnectFourEngine::COLS) { respondError('invalid_request'); return; }
+    if (!$player || $col < 0 || $col >= ConnectFourEngine::COLS) {
+        respondError('invalid_request');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'playing' || checkFlag($room)) { $pdo->commit(); respondError('game_not_active'); return; }
+        if ($room['status'] !== 'playing' || checkFlag($room)) {
+            $pdo->commit();
+            respondError('game_not_active');
+            return;
+        }
         $moves = moveList($room);
-        if (slotToMove($room) !== (int)$player['slot']) { $pdo->rollBack(); respondError('not_your_turn'); return; }
-        if ($ply !== count($moves)) { $pdo->rollBack(); respondError('out_of_sync'); return; }
+        if (slotToMove($room) !== (int)$player['slot']) {
+            $pdo->rollBack();
+            respondError('not_your_turn');
+            return;
+        }
+        if ($ply !== count($moves)) {
+            $pdo->rollBack();
+            respondError('out_of_sync');
+            return;
+        }
 
         $tentativeMoves = array_merge($moves, [$col]);
         $replay = ConnectFourEngine::replay($tentativeMoves, (int)$room['first_slot']);
@@ -446,12 +527,19 @@ function resign()
 {
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'playing') { $pdo->commit(); respondError('game_not_active'); return; }
+        if ($room['status'] !== 'playing') {
+            $pdo->commit();
+            respondError('game_not_active');
+            return;
+        }
         finishGame($room, other($player['slot']), 'resign');
         $pdo->commit();
     } catch (Throwable $e) {
@@ -465,13 +553,24 @@ function offerDraw()
 {
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'playing') { $pdo->commit(); respondError('game_not_active'); return; }
-        if ($room['draw_offer_slot'] !== null) { $pdo->commit(); respondError('already_offered'); return; }
+        if ($room['status'] !== 'playing') {
+            $pdo->commit();
+            respondError('game_not_active');
+            return;
+        }
+        if ($room['draw_offer_slot'] !== null) {
+            $pdo->commit();
+            respondError('already_offered');
+            return;
+        }
         $pdo->prepare("UPDATE c4_rooms SET draw_offer_slot = ? WHERE id = ?")->execute([$player['slot'], $room['id']]);
         $pdo->commit();
     } catch (Throwable $e) {
@@ -486,7 +585,10 @@ function answerDraw()
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
     $accept = !empty($_POST['accept']);
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
@@ -513,12 +615,19 @@ function requestRematch()
 {
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'finished') { $pdo->commit(); respondError('game_not_finished'); return; }
+        if ($room['status'] !== 'finished') {
+            $pdo->commit();
+            respondError('game_not_finished');
+            return;
+        }
 
         $pdo->prepare("UPDATE c4_players SET wants_rematch = 1 WHERE id = ?")->execute([$player['id']]);
 
@@ -544,12 +653,19 @@ function claimWin()
 {
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'playing') { $pdo->commit(); respondError('game_not_active'); return; }
+        if ($room['status'] !== 'playing') {
+            $pdo->commit();
+            respondError('game_not_active');
+            return;
+        }
 
         $stmt = $pdo->prepare("SELECT is_online, TIMESTAMPDIFF(SECOND, last_seen, NOW()) AS idle FROM c4_players WHERE room_id = ? AND slot = ?");
         $stmt->execute([$room['id'], other($player['slot'])]);
@@ -573,7 +689,10 @@ function leaveRoom()
 {
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
-    if (!$player) { respondError('invalid_session'); return; }
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
 
     $pdo->beginTransaction();
     try {

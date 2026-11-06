@@ -101,7 +101,7 @@ const ConnectFourAI = (() => {
 
         // Terminal states
         if (depth === 0 || legalCols.length === 0) {
-            return { score: evaluateBoard(board, player), col: null };
+            return {score: evaluateBoard(board, player), col: null};
         }
 
         if (isMaximizing) {
@@ -114,7 +114,7 @@ const ConnectFourAI = (() => {
 
                 if (C4.checkWinAt(board, r, col)) {
                     board[r][col] = 0;
-                    return { score: 100000 + depth * 1000, col };
+                    return {score: 100000 + depth * 1000, col};
                 }
 
                 const result = minimax(board, depth - 1, alpha, beta, false, player, opponent);
@@ -127,7 +127,7 @@ const ConnectFourAI = (() => {
                 alpha = Math.max(alpha, maxScore);
                 if (alpha >= beta) break; // Beta prune
             }
-            return { score: maxScore, col: bestCol };
+            return {score: maxScore, col: bestCol};
         } else {
             let minScore = Infinity;
             let bestCol = legalCols[0];
@@ -138,7 +138,7 @@ const ConnectFourAI = (() => {
 
                 if (C4.checkWinAt(board, r, col)) {
                     board[r][col] = 0;
-                    return { score: -100000 - depth * 1000, col };
+                    return {score: -100000 - depth * 1000, col};
                 }
 
                 const result = minimax(board, depth - 1, alpha, beta, true, player, opponent);
@@ -151,7 +151,7 @@ const ConnectFourAI = (() => {
                 beta = Math.min(beta, minScore);
                 if (alpha >= beta) break; // Alpha prune
             }
-            return { score: minScore, col: bestCol };
+            return {score: minScore, col: bestCol};
         }
     }
 

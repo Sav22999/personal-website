@@ -18,7 +18,10 @@ function preview_link(string $url): array
     for ($hop = 0; $hop < 4; $hop++) {
         $r = preview_fetch($final);
         if ($r === null) break;
-        if ($r['redirect']) { $final = preview_absolute($r['redirect'], $final); continue; }
+        if ($r['redirect']) {
+            $final = preview_absolute($r['redirect'], $final);
+            continue;
+        }
         $html = $r['body'];
         break;
     }

@@ -106,8 +106,11 @@ $canonical = '/projects/all-currencies/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid portrait">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: All Currencies popup showing a grid of currency symbols such as €, £, $, ¥, ₩, ₪, Rs, ₽, ₦, ฿ and ¤, with the euro button highlighted">
-                <img src="/images/projects/screenshots/all-currencies/1.png" alt="All Currencies popup showing a grid of currency symbols such as €, £, $, ¥, ₩, ₪, Rs, ₽, ₦, ฿ and ¤, with the euro button highlighted" width="707" height="722"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: All Currencies popup showing a grid of currency symbols such as €, £, $, ¥, ₩, ₪, Rs, ₽, ₦, ฿ and ¤, with the euro button highlighted">
+                <img src="/images/projects/screenshots/all-currencies/1.png"
+                     alt="All Currencies popup showing a grid of currency symbols such as €, £, $, ¥, ₩, ₪, Rs, ₽, ₦, ฿ and ¤, with the euro button highlighted"
+                     width="707" height="722"
                      loading="lazy">
             </button>
         </div>

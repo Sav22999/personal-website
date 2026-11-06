@@ -97,7 +97,9 @@ $canonical = '/projects/notefox/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2021 – present <span class="book-meta-note">· <?php $years = date('Y') - 2021; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2021 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2021;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
@@ -111,7 +113,8 @@ $canonical = '/projects/notefox/';
                     </svg>
                     Install on Firefox
                 </a>
-                <a href="https://chromewebstore.google.com/detail/agcdffobijddcccbfnhfjmaohnljefpm" target="_blank" rel="noopener"
+                <a href="https://chromewebstore.google.com/detail/agcdffobijddcccbfnhfjmaohnljefpm" target="_blank"
+                   rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -121,7 +124,8 @@ $canonical = '/projects/notefox/';
                     </svg>
                     Install on Chrome
                 </a>
-                <a href="https://microsoftedge.microsoft.com/addons/detail/lkahmkadpaibphpoiofpdinacjffddda" target="_blank" rel="noopener"
+                <a href="https://microsoftedge.microsoft.com/addons/detail/lkahmkadpaibphpoiofpdinacjffddda"
+                   target="_blank" rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -162,9 +166,16 @@ $canonical = '/projects/notefox/';
             <div class="timeline-item">
                 <span class="timeline-version">Recommended</span>
                 <span class="timeline-date">Firefox</span>
-                <p>Editorially reviewed and approved as a Recommended Extension by Mozilla, a recognition given to extensions that meet the highest standards of security, utility and user experience.</p>
-                <a href="https://addons.mozilla.org/firefox/addon/websites-notes/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <p>Editorially reviewed and approved as a Recommended Extension by Mozilla, a recognition given to
+                    extensions that meet the highest standards of security, utility and user experience.</p>
+                <a href="https://addons.mozilla.org/firefox/addon/websites-notes/" target="_blank" rel="noopener"
+                   class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     View on Firefox Add-ons
                 </a>
             </div>
@@ -173,8 +184,14 @@ $canonical = '/projects/notefox/';
                 <span class="timeline-version">Featured</span>
                 <span class="timeline-date">Chrome</span>
                 <p>Selected as a Featured extension on the Chrome Web Store by Google's editorial team.</p>
-                <a href="https://chromewebstore.google.com/detail/agcdffobijddcccbfnhfjmaohnljefpm" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <a href="https://chromewebstore.google.com/detail/agcdffobijddcccbfnhfjmaohnljefpm" target="_blank"
+                   rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     View on Chrome Web Store
                 </a>
             </div>
@@ -186,24 +203,39 @@ $canonical = '/projects/notefox/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Notefox popup with Global, Domain and Page tabs, a formatted note and the formatting toolbar, next to the tagline “Take notes on every website in a smart and simple way!”">
-                <img src="/images/projects/screenshots/notefox/1.png" alt="Notefox popup with Global, Domain and Page tabs, a formatted note and the formatting toolbar, next to the tagline “Take notes on every website in a smart and simple way!”" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Notefox popup with Global, Domain and Page tabs, a formatted note and the formatting toolbar, next to the tagline “Take notes on every website in a smart and simple way!”">
+                <img src="/images/projects/screenshots/notefox/1.png"
+                     alt="Notefox popup with Global, Domain and Page tabs, a formatted note and the formatting toolbar, next to the tagline “Take notes on every website in a smart and simple way!”"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Notefox Settings page with general options and keyboard shortcut settings, under the heading “Customise your experience, make your Notefox!”">
-                <img src="/images/projects/screenshots/notefox/2.png" alt="Notefox Settings page with general options and keyboard shortcut settings, under the heading “Customise your experience, make your Notefox!”" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Notefox Settings page with general options and keyboard shortcut settings, under the heading “Customise your experience, make your Notefox!”">
+                <img src="/images/projects/screenshots/notefox/2.png"
+                     alt="Notefox Settings page with general options and keyboard shortcut settings, under the heading “Customise your experience, make your Notefox!”"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: All notes page listing notes for notefox.eu with search, filter, edit, copy and clear buttons">
-                <img src="/images/projects/screenshots/notefox/3.png" alt="All notes page listing notes for notefox.eu with search, filter, edit, copy and clear buttons" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: All notes page listing notes for notefox.eu with search, filter, edit, copy and clear buttons">
+                <img src="/images/projects/screenshots/notefox/3.png"
+                     alt="All notes page listing notes for notefox.eu with search, filter, edit, copy and clear buttons"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Two Notefox popups explaining the toolbar icon: green when at least one note is found, orange when there are none">
-                <img src="/images/projects/screenshots/notefox/4.png" alt="Two Notefox popups explaining the toolbar icon: green when at least one note is found, orange when there are none" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Two Notefox popups explaining the toolbar icon: green when at least one note is found, orange when there are none">
+                <img src="/images/projects/screenshots/notefox/4.png"
+                     alt="Two Notefox popups explaining the toolbar icon: green when at least one note is found, orange when there are none"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Annotated Notefox popup pointing out the Global, Domain, Page and sub-path tabs, images, text styles, sticky-note button and All notes">
-                <img src="/images/projects/screenshots/notefox/5.png" alt="Annotated Notefox popup pointing out the Global, Domain, Page and sub-path tabs, images, text styles, sticky-note button and All notes" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Annotated Notefox popup pointing out the Global, Domain, Page and sub-path tabs, images, text styles, sticky-note button and All notes">
+                <img src="/images/projects/screenshots/notefox/5.png"
+                     alt="Annotated Notefox popup pointing out the Global, Domain, Page and sub-path tabs, images, text styles, sticky-note button and All notes"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
         </div>

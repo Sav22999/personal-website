@@ -105,7 +105,9 @@ $canonical = '/projects/emoji/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2019 – present <span class="book-meta-note">· <?php $years = date('Y') - 2019; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2019 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2019;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
@@ -119,7 +121,8 @@ $canonical = '/projects/emoji/';
                     </svg>
                     Install on Firefox
                 </a>
-                <a href="https://chromewebstore.google.com/detail/emoji/kjepehkgbooeigeflhiogplnckadlife" target="_blank" rel="noopener"
+                <a href="https://chromewebstore.google.com/detail/emoji/kjepehkgbooeigeflhiogplnckadlife"
+                   target="_blank" rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -129,7 +132,8 @@ $canonical = '/projects/emoji/';
                     </svg>
                     Install on Chrome
                 </a>
-                <a href="https://microsoftedge.microsoft.com/addons/detail/emoji/ejcgfbaipbelddlbokgcfajefbnnagfm" target="_blank" rel="noopener"
+                <a href="https://microsoftedge.microsoft.com/addons/detail/emoji/ejcgfbaipbelddlbokgcfajefbnnagfm"
+                   target="_blank" rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -139,7 +143,8 @@ $canonical = '/projects/emoji/';
                     </svg>
                     Install on Edge
                 </a>
-                <a href="https://addons.thunderbird.net/en-US/thunderbird/addon/emoji-sav/" target="_blank" rel="noopener"
+                <a href="https://addons.thunderbird.net/en-US/thunderbird/addon/emoji-sav/" target="_blank"
+                   rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -180,9 +185,16 @@ $canonical = '/projects/emoji/';
             <div class="timeline-item">
                 <span class="timeline-version">Recommended</span>
                 <span class="timeline-date">Firefox</span>
-                <p>Editorially reviewed and approved as a Recommended Extension by Mozilla, a recognition given to extensions that meet the highest standards of security, utility and user experience.</p>
-                <a href="https://addons.mozilla.org/firefox/addon/emoji-sav/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <p>Editorially reviewed and approved as a Recommended Extension by Mozilla, a recognition given to
+                    extensions that meet the highest standards of security, utility and user experience.</p>
+                <a href="https://addons.mozilla.org/firefox/addon/emoji-sav/" target="_blank" rel="noopener"
+                   class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     View on Firefox Add-ons
                 </a>
             </div>
@@ -191,8 +203,14 @@ $canonical = '/projects/emoji/';
                 <span class="timeline-version">Featured</span>
                 <span class="timeline-date">Chrome</span>
                 <p>Selected as a Featured extension on the Chrome Web Store by Google's editorial team.</p>
-                <a href="https://chromewebstore.google.com/detail/emoji/kjepehkgbooeigeflhiogplnckadlife" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <a href="https://chromewebstore.google.com/detail/emoji/kjepehkgbooeigeflhiogplnckadlife"
+                   target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     View on Chrome Web Store
                 </a>
             </div>
@@ -201,8 +219,14 @@ $canonical = '/projects/emoji/';
                 <span class="timeline-version">Featured</span>
                 <span class="timeline-date">Edge</span>
                 <p>Selected as a Featured add-on on Microsoft Edge Add-ons.</p>
-                <a href="https://microsoftedge.microsoft.com/addons/detail/emoji/ejcgfbaipbelddlbokgcfajefbnnagfm" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <a href="https://microsoftedge.microsoft.com/addons/detail/emoji/ejcgfbaipbelddlbokgcfajefbnnagfm"
+                   target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     View on Edge Add-ons
                 </a>
             </div>
@@ -214,20 +238,32 @@ $canonical = '/projects/emoji/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Emoji popup with a search box for keyword, colour or gender, category tabs and a row of most used emojis, under the heading “All emojis in a single add-on”">
-                <img src="/images/projects/screenshots/emoji/1.png" alt="Emoji popup with a search box for keyword, colour or gender, category tabs and a row of most used emojis, under the heading “All emojis in a single add-on”" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Emoji popup with a search box for keyword, colour or gender, category tabs and a row of most used emojis, under the heading “All emojis in a single add-on”">
+                <img src="/images/projects/screenshots/emoji/1.png"
+                     alt="Emoji popup with a search box for keyword, colour or gender, category tabs and a row of most used emojis, under the heading “All emojis in a single add-on”"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Emoji popup in the dark theme, with the search box, category tabs and most used emojis">
-                <img src="/images/projects/screenshots/emoji/2.png" alt="Emoji popup in the dark theme, with the search box, category tabs and most used emojis" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Emoji popup in the dark theme, with the search box, category tabs and most used emojis">
+                <img src="/images/projects/screenshots/emoji/2.png"
+                     alt="Emoji popup in the dark theme, with the search box, category tabs and most used emojis"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: People category in the Emoji popup with a highlighted row of Santa Claus emojis in different skin tones">
-                <img src="/images/projects/screenshots/emoji/3.png" alt="People category in the Emoji popup with a highlighted row of Santa Claus emojis in different skin tones" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: People category in the Emoji popup with a highlighted row of Santa Claus emojis in different skin tones">
+                <img src="/images/projects/screenshots/emoji/3.png"
+                     alt="People category in the Emoji popup with a highlighted row of Santa Claus emojis in different skin tones"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Emoji Settings panel with theme, language, columns, rows and emoji size options">
-                <img src="/images/projects/screenshots/emoji/4.png" alt="Emoji Settings panel with theme, language, columns, rows and emoji size options" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Emoji Settings panel with theme, language, columns, rows and emoji size options">
+                <img src="/images/projects/screenshots/emoji/4.png"
+                     alt="Emoji Settings panel with theme, language, columns, rows and emoji size options" width="1280"
+                     height="800"
                      loading="lazy">
             </button>
         </div>

@@ -43,7 +43,8 @@ $timeChips = function ($name, $default) {
     <meta property="og:image" content="https://www.saveriomorelli.com/projects/connect-four/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Connect Four (Forza Quattro) – free online game with custom disc colors and chat, by Saverio Morelli">
+    <meta property="og:image:alt"
+          content="Connect Four (Forza Quattro) – free online game with custom disc colors and chat, by Saverio Morelli">
     <meta property="og:site_name" content="Saverio Morelli">
     <meta property="og:locale" content="en_US">
     <meta name="twitter:card" content="summary_large_image">
@@ -51,16 +52,16 @@ $timeChips = function ($name, $default) {
     <meta name="twitter:description" content="<?= htmlspecialchars($description) ?>">
     <meta name="twitter:image" content="https://www.saveriomorelli.com/projects/connect-four/og-image.png">
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": [
-            "VideoGame",
-            "WebApplication"
-        ],
-        "name": "Connect Four",
-        "alternateName": "Forza Quattro",
-        "url": "https://www.saveriomorelli.com/projects/connect-four/",
-        "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        {
+            "@context": "https://schema.org",
+            "@type": [
+                "VideoGame",
+                "WebApplication"
+            ],
+            "name": "Connect Four",
+            "alternateName": "Forza Quattro",
+            "url": "https://www.saveriomorelli.com/projects/connect-four/",
+            "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
         "applicationCategory": "GameApplication",
         "genre": "Board game",
         "operatingSystem": "Any (web browser)",
@@ -110,12 +111,19 @@ $timeChips = function ($name, $default) {
     <!-- Lobby Screen -->
     <div id="screen-lobby" class="screen active">
         <div class="theme-selector" id="theme-selector" role="radiogroup" data-i18n-title="theme_title">
-            <button type="button" class="theme-tab" data-theme-mode="auto" role="radio" data-i18n="theme_auto">Auto</button>
-            <button type="button" class="theme-tab" data-theme-mode="light" role="radio" data-i18n="theme_light">Light</button>
-            <button type="button" class="theme-tab" data-theme-mode="dark" role="radio" data-i18n="theme_dark">Dark</button>
+            <button type="button" class="theme-tab" data-theme-mode="auto" role="radio" data-i18n="theme_auto">Auto
+            </button>
+            <button type="button" class="theme-tab" data-theme-mode="light" role="radio" data-i18n="theme_light">Light
+            </button>
+            <button type="button" class="theme-tab" data-theme-mode="dark" role="radio" data-i18n="theme_dark">Dark
+            </button>
         </div>
         <button type="button" class="theme-toggle" id="btn-theme" data-i18n-title="theme_title">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none"/></svg>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
+                 aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 3a9 9 0 010 18z" fill="currentColor" stroke="none"/>
+            </svg>
             <span data-theme-label="auto" data-i18n="theme_auto">Auto</span>
             <span data-theme-label="light" data-i18n="theme_light" hidden>Light</span>
             <span data-theme-label="dark" data-i18n="theme_dark" hidden>Dark</span>
@@ -127,7 +135,8 @@ $timeChips = function ($name, $default) {
             <button type="button" class="lang-btn" data-lang="fr">FR</button>
             <button type="button" class="lang-btn" data-lang="de">DE</button>
         </div>
-        <button type="button" class="lang-toggle" id="btn-lang-menu" aria-haspopup="dialog" data-i18n-title="language_title">
+        <button type="button" class="lang-toggle" id="btn-lang-menu" aria-haspopup="dialog"
+                data-i18n-title="language_title">
             <?= $icon('<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/>', 18, 2) ?>
             <span id="lang-current">EN</span>
             <?= $icon('<path d="M6 9l6 6 6-6"/>', 14, 2.6) ?>
@@ -141,7 +150,8 @@ $timeChips = function ($name, $default) {
                         <img class="logo-mark" src="icons/favicon.svg" alt="" width="44" height="44">
                         <span data-i18n="app_title">Connect Four</span>
                     </h1>
-                    <p class="logo-subtitle" data-i18n="lobby_subtitle">The classic four-in-a-row game, online or on your device.</p>
+                    <p class="logo-subtitle" data-i18n="lobby_subtitle">The classic four-in-a-row game, online or on
+                        your device.</p>
                     <div class="hero-links">
                         <button type="button" class="link-btn howto-link" id="btn-howto">
                             <?= $icon('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>', 16) ?>
@@ -161,9 +171,21 @@ $timeChips = function ($name, $default) {
                 <div class="howto howto-inline">
                     <h2 data-i18n="howto_title">How to play</h2>
                     <ol class="howto-list" id="howto-list">
-                        <li><span class="howto-num">1</span><div><strong data-i18n="howto1_title">Pick how to play</strong><p data-i18n="howto1_text">A friend online with a room code, a random opponent, on the same device or against the computer.</p></div></li>
-                        <li><span class="howto-num">2</span><div><strong data-i18n="howto2_title">Drop your discs</strong><p data-i18n="howto2_text">Take turns dropping one disc into any of the 7 columns. Gravity pulls it down to the lowest free slot.</p></div></li>
-                        <li><span class="howto-num">3</span><div><strong data-i18n="howto3_title">Connect 4 to win</strong><p data-i18n="howto3_text">Be the first to connect four of your discs horizontally, vertically, or diagonally.</p></div></li>
+                        <li><span class="howto-num">1</span>
+                            <div><strong data-i18n="howto1_title">Pick how to play</strong>
+                                <p data-i18n="howto1_text">A friend online with a room code, a random opponent, on the
+                                    same device or against the computer.</p></div>
+                        </li>
+                        <li><span class="howto-num">2</span>
+                            <div><strong data-i18n="howto2_title">Drop your discs</strong>
+                                <p data-i18n="howto2_text">Take turns dropping one disc into any of the 7 columns.
+                                    Gravity pulls it down to the lowest free slot.</p></div>
+                        </li>
+                        <li><span class="howto-num">3</span>
+                            <div><strong data-i18n="howto3_title">Connect 4 to win</strong>
+                                <p data-i18n="howto3_text">Be the first to connect four of your discs horizontally,
+                                    vertically, or diagonally.</p></div>
+                        </li>
                     </ol>
                     <button type="button" class="link-btn rules-more" data-open-rules>
                         <span data-i18n="rules_title">Game rules</span>
@@ -176,20 +198,30 @@ $timeChips = function ($name, $default) {
                 <ol class="steps-indicator">
                     <li class="step active" id="dot-1">
                         <button type="button" class="step-btn" id="btn-step-1" disabled>
-                            <span class="step-num"><span class="step-n">1</span><svg class="step-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span>
+                            <span class="step-num"><span class="step-n">1</span><svg class="step-check"
+                                                                                     viewBox="0 0 24 24" width="14"
+                                                                                     height="14" fill="none"
+                                                                                     stroke="currentColor"
+                                                                                     stroke-width="3"
+                                                                                     stroke-linecap="round"
+                                                                                     stroke-linejoin="round"
+                                                                                     aria-hidden="true"><path
+                                            d="M5 12l5 5L20 7"/></svg></span>
                             <span class="step-label" data-i18n="step_label_name">Your name</span>
                         </button>
                     </li>
                     <li class="step-line" aria-hidden="true"></li>
                     <li class="step" id="dot-2">
-                        <span class="step-btn"><span class="step-num"><span class="step-n">2</span></span><span class="step-label" data-i18n="step_label_game">Game</span></span>
+                        <span class="step-btn"><span class="step-num"><span class="step-n">2</span></span><span
+                                    class="step-label" data-i18n="step_label_game">Game</span></span>
                     </li>
                 </ol>
 
                 <form id="step-name" class="lobby-step active" autocomplete="off">
                     <label class="step-title" for="player-name" data-i18n="step1_title">What's your name?</label>
                     <p class="step-hint" data-i18n="step1_hint">Your opponent will see it during the game.</p>
-                    <input type="text" id="player-name" maxlength="30" data-i18n-placeholder="name_placeholder" placeholder="e.g. Alex" required>
+                    <input type="text" id="player-name" maxlength="30" data-i18n-placeholder="name_placeholder"
+                           placeholder="e.g. Alex" required>
                     <button type="submit" class="btn btn-primary btn-block" id="btn-continue" disabled>
                         <span data-i18n="continue">Continue</span>
                         <?= $icon('<path d="M5 12h14M13 6l6 6-6 6"/>', 18, 2.4) ?>
@@ -199,7 +231,9 @@ $timeChips = function ($name, $default) {
                 <div id="step-mode" class="lobby-step">
                     <div class="greeting">
                         <span class="step-title" id="greeting-text"></span>
-                        <button type="button" class="link-btn" id="btn-change-name" data-i18n="change_name">Change name</button>
+                        <button type="button" class="link-btn" id="btn-change-name" data-i18n="change_name">Change
+                            name
+                        </button>
                     </div>
                     <p class="step-hint" data-i18n="step2_hint">How do you want to play?</p>
 
@@ -231,7 +265,9 @@ $timeChips = function ($name, $default) {
                                     <span class="field-label" data-i18n="time_label">Time per player</span>
                                     <?= $timeChips('time-online', 5) ?>
                                 </div>
-                                <button type="button" class="btn btn-primary btn-block" id="btn-create" data-i18n="create_room">Create game</button>
+                                <button type="button" class="btn btn-primary btn-block" id="btn-create"
+                                        data-i18n="create_room">Create game
+                                </button>
                             </div>
 
                             <form class="mode-card" id="card-join" autocomplete="off">
@@ -240,17 +276,23 @@ $timeChips = function ($name, $default) {
                                     <h3 data-i18n="join_title">I have a code</h3>
                                     <p data-i18n="join_desc">Enter the 6-character code your friend sent you.</p>
                                 </div>
-                                <input type="text" id="room-code" maxlength="6" placeholder="ABC123" class="code-input" autocapitalize="characters" spellcheck="false" aria-label="Room code">
-                                <button type="submit" class="btn btn-secondary btn-block" id="btn-join" disabled data-i18n="join_room">Join game</button>
+                                <input type="text" id="room-code" maxlength="6" placeholder="ABC123" class="code-input"
+                                       autocapitalize="characters" spellcheck="false" aria-label="Room code">
+                                <button type="submit" class="btn btn-secondary btn-block" id="btn-join" disabled
+                                        data-i18n="join_room">Join game
+                                </button>
                             </form>
 
                             <div class="mode-card mode-card-wide" id="card-random">
                                 <div class="mode-icon random"><?= $icon('<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>', 22) ?></div>
                                 <div class="mode-body">
                                     <h3 data-i18n="random_title">Random opponent</h3>
-                                    <p id="random-desc" data-i18n="random_desc">Play someone who speaks your language. 5 minutes per player.</p>
+                                    <p id="random-desc" data-i18n="random_desc">Play someone who speaks your language. 5
+                                        minutes per player.</p>
                                 </div>
-                                <button type="button" class="btn btn-secondary" id="btn-random" data-i18n="random_btn">Find a player</button>
+                                <button type="button" class="btn btn-secondary" id="btn-random" data-i18n="random_btn">
+                                    Find a player
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -265,13 +307,16 @@ $timeChips = function ($name, $default) {
                             </div>
                             <label class="field">
                                 <span class="field-label" data-i18n="opponent_name">Opponent's name</span>
-                                <input type="text" id="local-opponent" maxlength="30" data-i18n-placeholder="opponent_placeholder" placeholder="e.g. Sam">
+                                <input type="text" id="local-opponent" maxlength="30"
+                                       data-i18n-placeholder="opponent_placeholder" placeholder="e.g. Sam">
                             </label>
                             <div class="field">
                                 <span class="field-label" data-i18n="time_label">Time per player</span>
                                 <?= $timeChips('time-local', 0) ?>
                             </div>
-                            <button type="button" class="btn btn-primary btn-block" id="btn-start-local" data-i18n="start_game">Start game</button>
+                            <button type="button" class="btn btn-primary btn-block" id="btn-start-local"
+                                    data-i18n="start_game">Start game
+                            </button>
                         </div>
                     </div>
 
@@ -281,29 +326,39 @@ $timeChips = function ($name, $default) {
                             <div class="mode-icon random"><?= $icon('<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 14h.01M15 14h.01M2 13v3M22 13v3"/><circle cx="12" cy="3" r="1"/>', 22) ?></div>
                             <div class="mode-body">
                                 <h3 data-i18n="ai_title">Play the computer</h3>
-                                <p data-i18n="ai_desc">Practise at your own pace. You can take back moves and ask for a hint.</p>
+                                <p data-i18n="ai_desc">Practise at your own pace. You can take back moves and ask for a
+                                    hint.</p>
                             </div>
                             <div class="field">
                                 <span class="field-label" data-i18n="level_label">Level</span>
                                 <div class="chips" role="radiogroup">
-                                    <label class="chip"><input type="radio" name="ai-level" value="easy"><span data-i18n="level_easy">Easy</span></label>
-                                    <label class="chip"><input type="radio" name="ai-level" value="medium" checked><span data-i18n="level_medium">Medium</span></label>
-                                    <label class="chip"><input type="radio" name="ai-level" value="hard"><span data-i18n="level_hard">Hard</span></label>
+                                    <label class="chip"><input type="radio" name="ai-level" value="easy"><span
+                                                data-i18n="level_easy">Easy</span></label>
+                                    <label class="chip"><input type="radio" name="ai-level" value="medium" checked><span
+                                                data-i18n="level_medium">Medium</span></label>
+                                    <label class="chip"><input type="radio" name="ai-level" value="hard"><span
+                                                data-i18n="level_hard">Hard</span></label>
                                 </div>
                             </div>
                             <div class="field">
                                 <span class="field-label" data-i18n="color_label">You play as</span>
                                 <div class="chips" role="radiogroup">
-                                    <label class="chip"><input type="radio" name="ai-color" value="1" checked><span><i class="chip-dot p1"></i><span data-i18n="player_disc_1">First player</span></span></label>
-                                    <label class="chip"><input type="radio" name="ai-color" value="2"><span><i class="chip-dot p2"></i><span data-i18n="player_disc_2">Second player</span></span></label>
-                                    <label class="chip"><input type="radio" name="ai-color" value="r"><span><i class="chip-dot r"></i><span data-i18n="random_color">Random</span></span></label>
+                                    <label class="chip"><input type="radio" name="ai-color" value="1" checked><span><i
+                                                    class="chip-dot p1"></i><span
+                                                    data-i18n="player_disc_1">First player</span></span></label>
+                                    <label class="chip"><input type="radio" name="ai-color" value="2"><span><i
+                                                    class="chip-dot p2"></i><span data-i18n="player_disc_2">Second player</span></span></label>
+                                    <label class="chip"><input type="radio" name="ai-color" value="r"><span><i
+                                                    class="chip-dot r"></i><span data-i18n="random_color">Random</span></span></label>
                                 </div>
                             </div>
                             <div class="field">
                                 <span class="field-label" data-i18n="time_label">Time per player</span>
                                 <?= $timeChips('time-ai', 0) ?>
                             </div>
-                            <button type="button" class="btn btn-primary btn-block" id="btn-start-ai" data-i18n="start_game">Start game</button>
+                            <button type="button" class="btn btn-primary btn-block" id="btn-start-ai"
+                                    data-i18n="start_game">Start game
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -312,8 +367,13 @@ $timeChips = function ($name, $default) {
 
         <footer class="site-footer">
             <div class="credit-block">
-                <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span data-i18n="credit_by">A project by</span> <span class="credit-name">Saverio Morelli</span></a>
-                <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span data-i18n="credit_ai">Built with Claude AI</span></span>
+                <a class="credit" href="https://www.saveriomorelli.com/" target="_blank" rel="noopener"><span
+                            data-i18n="credit_by">A project by</span> <span
+                            class="credit-name">Saverio Morelli</span></a>
+                <span class="credit-ai"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"
+                                             aria-hidden="true"><path
+                                d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span
+                            data-i18n="credit_ai">Built with Claude AI</span></span>
             </div>
             <div class="footer-actions">
                 <a class="version-btn privacy-link" href="privacy.html">Privacy</a>
@@ -332,7 +392,8 @@ $timeChips = function ($name, $default) {
     <!-- Waiting Screen -->
     <div id="screen-waiting" class="screen">
         <div class="waiting-container">
-            <div class="brand-mark"><img src="icons/favicon.svg" alt="" width="28" height="28"><span data-i18n="app_title">Connect Four</span></div>
+            <div class="brand-mark"><img src="icons/favicon.svg" alt="" width="28" height="28"><span
+                        data-i18n="app_title">Connect Four</span></div>
             <div class="waiting-animation">
                 <div class="pulse-ring"></div>
                 <div class="pulse-ring delay-1"></div>
@@ -370,10 +431,14 @@ $timeChips = function ($name, $default) {
             </div>
             <div class="game-header-right">
                 <span class="mode-badge" id="mode-badge"></span>
-                <button type="button" class="btn-icon" id="btn-audio-toggle" data-i18n-title="sound"><?= $icon($ICON_SOUND, 20, 2) ?></button>
-                <button type="button" class="btn-icon" data-open-style data-i18n-title="appearance"><?= $icon($ICON_PALETTE, 20, 2) ?></button>
-                <button type="button" class="btn-icon" data-open-rules data-i18n-title="rules_title"><?= $icon($ICON_BOOK, 20, 2) ?></button>
-                <button type="button" class="btn-icon" id="btn-leave-game" data-i18n-title="leave"><?= $icon($ICON_LEAVE, 20, 2) ?></button>
+                <button type="button" class="btn-icon" id="btn-audio-toggle"
+                        data-i18n-title="sound"><?= $icon($ICON_SOUND, 20, 2) ?></button>
+                <button type="button" class="btn-icon" data-open-style
+                        data-i18n-title="appearance"><?= $icon($ICON_PALETTE, 20, 2) ?></button>
+                <button type="button" class="btn-icon" data-open-rules
+                        data-i18n-title="rules_title"><?= $icon($ICON_BOOK, 20, 2) ?></button>
+                <button type="button" class="btn-icon" id="btn-leave-game"
+                        data-i18n-title="leave"><?= $icon($ICON_LEAVE, 20, 2) ?></button>
             </div>
         </header>
 
@@ -387,7 +452,8 @@ $timeChips = function ($name, $default) {
                             <div class="player-avatar" id="avatar-top"></div>
                             <div class="player-name-wrap">
                                 <span class="player-name" id="name-top"></span>
-                                <span class="player-sub"><span class="online-dot" id="dot-online-top"></span> <span id="score-top">0 pt</span></span>
+                                <span class="player-sub"><span class="online-dot" id="dot-online-top"></span> <span
+                                            id="score-top">0 pt</span></span>
                             </div>
                         </div>
                         <div class="player-clock hidden" id="clock-top">0:00</div>
@@ -406,7 +472,8 @@ $timeChips = function ($name, $default) {
                             <div class="player-avatar" id="avatar-bottom"></div>
                             <div class="player-name-wrap">
                                 <span class="player-name" id="name-bottom"></span>
-                                <span class="player-sub"><span class="online-dot" id="dot-online-bottom"></span> <span id="score-bottom">0 pt</span></span>
+                                <span class="player-sub"><span class="online-dot" id="dot-online-bottom"></span> <span
+                                            id="score-bottom">0 pt</span></span>
                             </div>
                         </div>
                         <div class="player-clock hidden" id="clock-bottom">0:00</div>
@@ -428,23 +495,36 @@ $timeChips = function ($name, $default) {
                     <section class="chat hidden" id="chat">
                         <div class="chat-head">
                             <h3 class="side-title" data-i18n="chat_title">Chat</h3>
-                            <button type="button" class="btn-icon chat-close" id="btn-chat-close" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+                            <button type="button" class="btn-icon chat-close" id="btn-chat-close"
+                                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
                         </div>
                         <ol class="chat-list" id="chat-list"></ol>
                         <form class="chat-form" id="chat-form" autocomplete="off">
-                            <input type="text" id="chat-input" maxlength="200" data-i18n-placeholder="chat_placeholder" placeholder="Write a message…">
-                            <button type="submit" class="chat-send" data-i18n-title="chat_send"><?= $icon('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 16, 2) ?></button>
+                            <input type="text" id="chat-input" maxlength="200" data-i18n-placeholder="chat_placeholder"
+                                   placeholder="Write a message…">
+                            <button type="submit" class="chat-send"
+                                    data-i18n-title="chat_send"><?= $icon('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 16, 2) ?></button>
                         </form>
                     </section>
 
                     <div class="game-actions" id="game-actions">
-                        <button type="button" class="action-btn" id="btn-hint"><?= $icon($ICON_WAND, 18, 2) ?><span data-i18n="hint">Hint</span></button>
-                        <button type="button" class="action-btn" id="btn-undo"><?= $icon($ICON_UNDO, 18, 2) ?><span data-i18n="undo">Undo</span></button>
-                        <button type="button" class="action-btn panel-toggle hidden" id="btn-chat-toggle"><?= $icon($ICON_CHAT, 18, 2) ?><span data-i18n="chat_title">Chat</span></button>
-                        <button type="button" class="action-btn panel-toggle hidden" id="btn-moves-toggle"><?= $icon($ICON_LIST, 18, 2) ?><span data-i18n="moves_title">Moves</span></button>
-                        <button type="button" class="action-btn" id="btn-draw"><?= $icon($ICON_HANDSHAKE, 18, 2) ?><span data-i18n="draw">Draw</span></button>
-                        <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 18, 2) ?><span data-i18n="resign">Resign</span></button>
-                        <button type="button" class="action-btn primary hidden" id="btn-result"><?= $icon($ICON_TROPHY, 18, 2) ?><span data-i18n="game_over">Game over</span></button>
+                        <button type="button" class="action-btn" id="btn-hint"><?= $icon($ICON_WAND, 18, 2) ?><span
+                                    data-i18n="hint">Hint</span></button>
+                        <button type="button" class="action-btn" id="btn-undo"><?= $icon($ICON_UNDO, 18, 2) ?><span
+                                    data-i18n="undo">Undo</span></button>
+                        <button type="button" class="action-btn panel-toggle hidden"
+                                id="btn-chat-toggle"><?= $icon($ICON_CHAT, 18, 2) ?><span
+                                    data-i18n="chat_title">Chat</span></button>
+                        <button type="button" class="action-btn panel-toggle hidden"
+                                id="btn-moves-toggle"><?= $icon($ICON_LIST, 18, 2) ?><span
+                                    data-i18n="moves_title">Moves</span></button>
+                        <button type="button" class="action-btn" id="btn-draw"><?= $icon($ICON_HANDSHAKE, 18, 2) ?><span
+                                    data-i18n="draw">Draw</span></button>
+                        <button type="button" class="action-btn danger" id="btn-resign"><?= $icon($ICON_FLAG, 18, 2) ?>
+                            <span data-i18n="resign">Resign</span></button>
+                        <button type="button" class="action-btn primary hidden"
+                                id="btn-result"><?= $icon($ICON_TROPHY, 18, 2) ?><span
+                                    data-i18n="game_over">Game over</span></button>
                     </div>
                 </div>
             </aside>
@@ -454,11 +534,14 @@ $timeChips = function ($name, $default) {
     <!-- Mobile Language Modal -->
     <div id="lang-overlay" class="modal hidden">
         <div class="modal-content lang-sheet">
-            <button type="button" class="zoom-close" id="btn-close-lang" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <button type="button" class="zoom-close" id="btn-close-lang"
+                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="language_title">Language</h3>
             <div class="lang-options" role="listbox">
                 <?php foreach (['en' => 'English', 'it' => 'Italiano', 'es' => 'Español', 'fr' => 'Français', 'de' => 'Deutsch'] as $code => $label): ?>
-                <button type="button" class="lang-option" data-lang="<?= $code ?>" lang="<?= $code ?>"><span class="lang-code"><?= strtoupper($code) ?></span><?= $label ?><span class="lang-check"><?= $ICON_CHECK ?></span></button>
+                    <button type="button" class="lang-option" data-lang="<?= $code ?>" lang="<?= $code ?>"><span
+                                class="lang-code"><?= strtoupper($code) ?></span><?= $label ?><span
+                                class="lang-check"><?= $ICON_CHECK ?></span></button>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -467,17 +550,21 @@ $timeChips = function ($name, $default) {
     <!-- How to play Modal -->
     <div id="howto-overlay" class="modal hidden">
         <div class="modal-content howto">
-            <button type="button" class="zoom-close" id="btn-close-howto-x" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <button type="button" class="zoom-close" id="btn-close-howto-x"
+                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="howto_title">How to play</h3>
             <div id="howto-sheet-body"></div>
-            <button type="button" class="btn btn-primary btn-block" style="margin-top:16px;" id="btn-close-howto" data-i18n="got_it">Got it!</button>
+            <button type="button" class="btn btn-primary btn-block" style="margin-top:16px;" id="btn-close-howto"
+                    data-i18n="got_it">Got it!
+            </button>
         </div>
     </div>
 
     <!-- Rules Modal -->
     <div id="rules-overlay" class="modal hidden">
         <div class="modal-content rules-content">
-            <button type="button" class="zoom-close" id="btn-close-rules" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <button type="button" class="zoom-close" id="btn-close-rules"
+                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="rules_title">Game rules</h3>
             <div class="rules-body" id="rules-body"></div>
         </div>
@@ -486,7 +573,8 @@ $timeChips = function ($name, $default) {
     <!-- Customise Modal -->
     <div id="style-overlay" class="modal hidden">
         <div class="modal-content style-content">
-            <button type="button" class="zoom-close" id="btn-close-style" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <button type="button" class="zoom-close" id="btn-close-style"
+                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="custom_title">Customise</h3>
 
             <!-- Live 4x3 Mini Preview -->
@@ -506,10 +594,13 @@ $timeChips = function ($name, $default) {
             <div class="custom-section">
                 <h4 class="custom-section-title" data-i18n="custom_style">Disc Finish</h4>
                 <div class="seg" role="radiogroup">
-                    <button type="button" role="radio" data-disc-style="glossy" data-i18n="style_glossy">Glossy 3D</button>
-                    <button type="button" role="radio" data-disc-style="flat" data-i18n="style_flat">Flat Modern</button>
+                    <button type="button" role="radio" data-disc-style="glossy" data-i18n="style_glossy">Glossy 3D
+                    </button>
+                    <button type="button" role="radio" data-disc-style="flat" data-i18n="style_flat">Flat Modern
+                    </button>
                     <button type="button" role="radio" data-disc-style="ring" data-i18n="style_ring">Ring Inset</button>
-                    <button type="button" role="radio" data-disc-style="star" data-i18n="style_star">Star Emblem</button>
+                    <button type="button" role="radio" data-disc-style="star" data-i18n="style_star">Star Emblem
+                    </button>
                 </div>
             </div>
 
@@ -518,9 +609,12 @@ $timeChips = function ($name, $default) {
                 <h4 class="custom-section-title" data-i18n="custom_board">Board Hue</h4>
                 <div class="seg" role="radiogroup">
                     <button type="button" role="radio" data-board-hue="plum" data-i18n="board_plum">Deep Plum</button>
-                    <button type="button" role="radio" data-board-hue="lilac" data-i18n="board_lilac">Royal Lilac</button>
-                    <button type="button" role="radio" data-board-hue="navy" data-i18n="board_navy">Midnight Navy</button>
-                    <button type="button" role="radio" data-board-hue="slate" data-i18n="board_slate">Dark Slate</button>
+                    <button type="button" role="radio" data-board-hue="lilac" data-i18n="board_lilac">Royal Lilac
+                    </button>
+                    <button type="button" role="radio" data-board-hue="navy" data-i18n="board_navy">Midnight Navy
+                    </button>
+                    <button type="button" role="radio" data-board-hue="slate" data-i18n="board_slate">Dark Slate
+                    </button>
                 </div>
             </div>
 
@@ -539,9 +633,13 @@ $timeChips = function ($name, $default) {
                     <div class="option-row">
                         <span data-i18n="opt_anim">Drop animation speed</span>
                         <div class="seg" role="radiogroup">
-                            <button type="button" role="radio" data-anim-speed="normal" data-i18n="anim_normal">Normal</button>
-                            <button type="button" role="radio" data-anim-speed="fast" data-i18n="anim_fast">Fast</button>
-                            <button type="button" role="radio" data-anim-speed="instant" data-i18n="anim_instant">Instant</button>
+                            <button type="button" role="radio" data-anim-speed="normal" data-i18n="anim_normal">Normal
+                            </button>
+                            <button type="button" role="radio" data-anim-speed="fast" data-i18n="anim_fast">Fast
+                            </button>
+                            <button type="button" role="radio" data-anim-speed="instant" data-i18n="anim_instant">
+                                Instant
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -552,7 +650,8 @@ $timeChips = function ($name, $default) {
     <!-- Release notes Modal -->
     <div id="release-overlay" class="modal hidden">
         <div class="modal-content release-content">
-            <button type="button" class="zoom-close" id="btn-close-release" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <button type="button" class="zoom-close" id="btn-close-release"
+                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <h3 data-i18n="release_notes">Release notes</h3>
             <div class="release-list" id="release-list"></div>
         </div>
@@ -561,10 +660,12 @@ $timeChips = function ($name, $default) {
     <!-- Donate overlay -->
     <div id="donate-overlay" class="modal hidden">
         <div class="modal-content donate-content">
-            <button type="button" class="zoom-close" id="btn-close-donate" data-i18n-title="close"><?= $ICON_CLOSE ?></button>
+            <button type="button" class="zoom-close" id="btn-close-donate"
+                    data-i18n-title="close"><?= $ICON_CLOSE ?></button>
             <div class="donate-modal-icon"><?= $icon($ICON_HEART, 28, 2.2) ?></div>
             <h3 data-i18n="donate_modal_title">Support the project</h3>
-            <p class="donate-modal-intro" data-i18n="donate_modal_intro">All my projects are free and open-source — no ads, no tracking, no subscriptions. A small donation helps cover server and maintenance costs.</p>
+            <p class="donate-modal-intro" data-i18n="donate_modal_intro">All my projects are free and open-source — no
+                ads, no tracking, no subscriptions. A small donation helps cover server and maintenance costs.</p>
             <div class="donate-reasons">
                 <div class="donate-reason">
                     <div class="donate-reason-icon"><?= $icon('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 18, 2) ?></div>
@@ -584,11 +685,13 @@ $timeChips = function ($name, $default) {
                     <div class="donate-reason-icon"><?= $icon('<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>', 18, 2) ?></div>
                     <div>
                         <strong data-i18n="donate_reason_server_title">Server &amp; Maintenance</strong>
-                        <p data-i18n="donate_reason_server_desc">Keeps multiplayer servers, hosting, and updates running.</p>
+                        <p data-i18n="donate_reason_server_desc">Keeps multiplayer servers, hosting, and updates
+                            running.</p>
                     </div>
                 </div>
             </div>
-            <a class="btn btn-primary btn-block donate-cta-btn" href="https://www.saveriomorelli.com/donate/" target="_blank" rel="noopener">
+            <a class="btn btn-primary btn-block donate-cta-btn" href="https://www.saveriomorelli.com/donate/"
+               target="_blank" rel="noopener">
                 <?= $icon($ICON_HEART, 18, 2.2) ?>
                 <span data-i18n="donate_cta">Make a donation</span>
                 <?= $icon('<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>', 15, 2.2) ?>
@@ -617,9 +720,14 @@ $timeChips = function ($name, $default) {
             <p class="score-line" id="score-line"></p>
             <p class="rematch-status" id="rematch-status" style="font-size:13px; color:var(--text-muted);"></p>
             <div class="gameover-actions">
-                <button type="button" class="btn btn-primary btn-block" id="btn-rematch" data-i18n="rematch">Rematch</button>
-                <button type="button" class="btn btn-secondary btn-block" id="btn-review" data-i18n="review_board">Look at the board</button>
-                <button type="button" class="btn btn-ghost btn-block" id="btn-gameover-home" data-i18n="back_home">Back to start</button>
+                <button type="button" class="btn btn-primary btn-block" id="btn-rematch" data-i18n="rematch">Rematch
+                </button>
+                <button type="button" class="btn btn-secondary btn-block" id="btn-review" data-i18n="review_board">Look
+                    at the board
+                </button>
+                <button type="button" class="btn btn-ghost btn-block" id="btn-gameover-home" data-i18n="back_home">Back
+                    to start
+                </button>
             </div>
         </div>
     </div>

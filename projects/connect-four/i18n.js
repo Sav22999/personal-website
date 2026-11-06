@@ -966,14 +966,18 @@ function getInitialLang() {
         if (saved && translations[saved]) return saved;
         const nav = (navigator.language || '').slice(0, 2).toLowerCase();
         if (translations[nav]) return nav;
-    } catch (e) {}
+    } catch (e) {
+    }
     return 'en';
 }
 
 function setLanguage(lang) {
     if (!translations[lang]) lang = 'en';
     currentLang = lang;
-    try { localStorage.setItem('c4_lang', lang); } catch (e) {}
+    try {
+        localStorage.setItem('c4_lang', lang);
+    } catch (e) {
+    }
     document.documentElement.lang = lang;
 
     // Update data-i18n elements
@@ -1023,7 +1027,7 @@ function setLanguage(lang) {
 
 function t(key, vars = {}) {
     let str = (translations[currentLang] && translations[currentLang][key]) ||
-              (translations['en'] && translations['en'][key]) || key;
+        (translations['en'] && translations['en'][key]) || key;
     for (const [k, v] of Object.entries(vars)) {
         str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), () => v);
     }

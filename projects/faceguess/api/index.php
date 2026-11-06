@@ -12,33 +12,60 @@ const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 switch ($action) {
-    case 'create_room':     createRoom(); break;
-    case 'join_room':       joinRoom(); break;
-    case 'find_match':      findMatch(); break;
-    case 'poll':            pollState(); break;
-    case 'toggle_card':     toggleCard(); break;
-    case 'ask_question':    askQuestion(); break;
-    case 'answer_question': answerQuestion(); break;
-    case 'end_turn':        endTurn(); break;
-    case 'final_guess':     finalGuess(); break;
-    case 'concede':         concede(); break;
-    case 'rematch':         requestRematch(); break;
-    case 'leave':           leaveRoom(); break;
+    case 'create_room':
+        createRoom();
+        break;
+    case 'join_room':
+        joinRoom();
+        break;
+    case 'find_match':
+        findMatch();
+        break;
+    case 'poll':
+        pollState();
+        break;
+    case 'toggle_card':
+        toggleCard();
+        break;
+    case 'ask_question':
+        askQuestion();
+        break;
+    case 'answer_question':
+        answerQuestion();
+        break;
+    case 'end_turn':
+        endTurn();
+        break;
+    case 'final_guess':
+        finalGuess();
+        break;
+    case 'concede':
+        concede();
+        break;
+    case 'rematch':
+        requestRematch();
+        break;
+    case 'leave':
+        leaveRoom();
+        break;
     default:
         echo json_encode(['error' => 'Unknown action']);
 }
 
-function respondError($code) {
+function respondError($code)
+{
     echo json_encode(['error' => $code]);
 }
 
-function cleanName($raw, $fallback) {
+function cleanName($raw, $fallback)
+{
     $name = trim((string)$raw);
     if ($name === '') $name = $fallback;
     return mb_substr($name, 0, 30);
 }
 
-function generateRoomCode() {
+function generateRoomCode()
+{
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     $code = '';
     for ($i = 0; $i < 6; $i++) {
@@ -47,7 +74,8 @@ function generateRoomCode() {
     return $code;
 }
 
-function insertRoomWithHost($name, $mode, $isPublic, $lang) {
+function insertRoomWithHost($name, $mode, $isPublic, $lang)
+{
     global $pdo;
 
     for ($i = 0; $i < 10; $i++) {
@@ -68,7 +96,8 @@ function insertRoomWithHost($name, $mode, $isPublic, $lang) {
     return null;
 }
 
-function addSecondPlayer($roomId, $name) {
+function addSecondPlayer($roomId, $name)
+{
     global $pdo;
     $token = bin2hex(random_bytes(32));
     $pdo->prepare("INSERT INTO fg_players (room_id, slot, token, name) VALUES (?, 2, ?, ?)")
@@ -77,7 +106,8 @@ function addSecondPlayer($roomId, $name) {
     return $token;
 }
 
-function createRoom() {
+function createRoom()
+{
     $name = cleanName($_POST['name'] ?? '', 'Player 1');
     $mode = in_array($_POST['mode'] ?? '', MODES, true) ? $_POST['mode'] : 'online';
 
@@ -89,7 +119,8 @@ function createRoom() {
     echo json_encode(['success' => true, 'code' => $room['code'], 'token' => $room['token'], 'slot' => 1]);
 }
 
-function joinRoom() {
+function joinRoom()
+{
     global $pdo;
 
     $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $_POST['code'] ?? ''));
@@ -133,7 +164,8 @@ function joinRoom() {
 }
 
 // Oldest public room in the same language whose host is still connected and alone.
-function findOpenPublicRoom($lang, $excludeRoomId = 0) {
+function findOpenPublicRoom($lang, $excludeRoomId = 0)
+{
     global $pdo;
     $stmt = $pdo->prepare("
         SELECT r.id
@@ -151,7 +183,8 @@ function findOpenPublicRoom($lang, $excludeRoomId = 0) {
     return $id ? (int)$id : null;
 }
 
-function findMatch() {
+function findMatch()
+{
     global $pdo;
 
     $name = cleanName($_POST['name'] ?? '', 'Player');
@@ -182,7 +215,8 @@ function findMatch() {
 }
 
 // Two players searching at the same moment can each open a room; the newer one moves into the older one.
-function mergeWaitingPublicRoom($player) {
+function mergeWaitingPublicRoom($player)
+{
     global $pdo;
 
     $pdo->beginTransaction();
@@ -209,7 +243,8 @@ function mergeWaitingPublicRoom($player) {
     }
 }
 
-function initializeGame($roomId, $firstTurn = 1) {
+function initializeGame($roomId, $firstTurn = 1)
+{
     global $pdo;
 
     $characters = generateCharacters(BOARD_SIZE);
@@ -242,7 +277,8 @@ function initializeGame($roomId, $firstTurn = 1) {
         ->execute([$firstTurn, $firstTurn, $roomId]);
 }
 
-function requestRematch() {
+function requestRematch()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -293,7 +329,8 @@ function requestRematch() {
     echo json_encode(['success' => true, 'started' => $started]);
 }
 
-function getPlayer($token) {
+function getPlayer($token)
+{
     global $pdo;
 
     if (!is_string($token) || $token === '') return null;
@@ -313,14 +350,16 @@ function getPlayer($token) {
     return $player;
 }
 
-function getOpponent($player) {
+function getOpponent($player)
+{
     global $pdo;
     $stmt = $pdo->prepare("SELECT * FROM fg_players WHERE room_id = ? AND id <> ?");
     $stmt->execute([$player['room_id'], $player['id']]);
     return $stmt->fetch() ?: null;
 }
 
-function pollState() {
+function pollState()
+{
     global $pdo;
 
     $token = $_GET['token'] ?? '';
@@ -420,7 +459,8 @@ function pollState() {
     echo json_encode($response);
 }
 
-function toggleCard() {
+function toggleCard()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -435,14 +475,16 @@ function toggleCard() {
     echo json_encode(['success' => true]);
 }
 
-function hasPendingQuestion($roomId) {
+function hasPendingQuestion($roomId)
+{
     global $pdo;
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM fg_guesses WHERE room_id = ? AND is_final_guess = 0 AND answer IS NULL");
     $stmt->execute([$roomId]);
     return (int)$stmt->fetchColumn() > 0;
 }
 
-function askQuestion() {
+function askQuestion()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -475,7 +517,8 @@ function askQuestion() {
     echo json_encode(['success' => true]);
 }
 
-function answerQuestion() {
+function answerQuestion()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -505,7 +548,8 @@ function answerQuestion() {
 }
 
 // In person the question is asked out loud, so the player hands the turn over explicitly.
-function endTurn() {
+function endTurn()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -533,7 +577,8 @@ function endTurn() {
     echo json_encode(['success' => true]);
 }
 
-function finalGuess() {
+function finalGuess()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -596,7 +641,8 @@ function finalGuess() {
 }
 
 // During the last chance the player may give up instead of guessing.
-function concede() {
+function concede()
+{
     global $pdo;
 
     $player = getPlayer($_POST['token'] ?? '');
@@ -623,7 +669,8 @@ function concede() {
     echo json_encode(['success' => true]);
 }
 
-function lockRoom($roomId) {
+function lockRoom($roomId)
+{
     global $pdo;
     $stmt = $pdo->prepare("SELECT * FROM fg_rooms WHERE id = ? FOR UPDATE");
     $stmt->execute([$roomId]);
@@ -631,7 +678,8 @@ function lockRoom($roomId) {
 }
 
 // $winnerSlot 0 means a draw: nobody's score changes.
-function finishRoom($roomId, $winnerSlot) {
+function finishRoom($roomId, $winnerSlot)
+{
     global $pdo;
     $pdo->prepare("UPDATE fg_rooms SET status = 'finished', winner_slot = ?, pending_winner = NULL WHERE id = ?")
         ->execute([$winnerSlot, $roomId]);
@@ -640,7 +688,8 @@ function finishRoom($roomId, $winnerSlot) {
     }
 }
 
-function leaveRoom() {
+function leaveRoom()
+{
     global $pdo;
 
     $token = $_POST['token'] ?? '';

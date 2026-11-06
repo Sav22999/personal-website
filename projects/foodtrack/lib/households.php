@@ -27,8 +27,8 @@ function create_household(int $userId, string $name): int
     $hid = (int)db()->lastInsertId();
     db()->prepare('INSERT INTO ' . t('household_members') . " (household_id, user_id, role, joined_at) VALUES (?,?, 'owner', ?)")
         ->execute([$hid, $userId, $now]);
-    $ins = db()->prepare('INSERT INTO ' . t('spaces') . ' (household_id, name, icon, notes, sort, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)');
-    foreach (default_spaces() as $i => [$sname, $icon, $notes]) $ins->execute([$hid, tr($sname), $icon, tr($notes), $i * 10, $userId, $now, $now]);
+    $ins = db()->prepare('INSERT INTO ' . t('spaces') . ' (household_id, name, icon, environment, notes, sort, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)');
+    foreach (default_spaces() as $i => [$sname, $icon, $notes, $env]) $ins->execute([$hid, tr($sname), $icon, $env, tr($notes), $i * 10, $userId, $now, $now]);
     db()->prepare('UPDATE ' . t('users') . ' SET active_household_id = ? WHERE id = ?')->execute([$hid, $userId]);
     return $hid;
 }

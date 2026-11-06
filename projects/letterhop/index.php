@@ -1,6 +1,6 @@
 <?php
 $description = 'LetterHop – the free word ladder game: go from one word to another changing one letter at a time. Three levels, five languages, works offline. No sign-up.';
-$v = '1.0.6';
+$v = '1.0.7';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,13 +26,13 @@ $v = '1.0.6';
     <meta name="twitter:description" content="<?= htmlspecialchars($description) ?>">
     <meta name="twitter:image" content="https://www.saveriomorelli.com/projects/letterhop/og-image.png">
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": ["VideoGame", "WebApplication"],
-        "name": "LetterHop",
-        "alternateName": ["Word Ladder", "Scala di parole"],
-        "url": "https://www.saveriomorelli.com/projects/letterhop/",
-        "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        {
+            "@context": "https://schema.org",
+            "@type": ["VideoGame", "WebApplication"],
+            "name": "LetterHop",
+            "alternateName": ["Word Ladder", "Scala di parole"],
+            "url": "https://www.saveriomorelli.com/projects/letterhop/",
+            "description": <?= json_encode($description, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
         "applicationCategory": "GameApplication",
         "genre": "Word game",
         "operatingSystem": "Any (web browser)",
@@ -55,10 +55,16 @@ $v = '1.0.6';
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="style.css?v=<?= $v ?>">
-    <script>try{var t=JSON.parse(localStorage.getItem('letterhop.theme'));if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+    <script>try {
+            var t = JSON.parse(localStorage.getItem('letterhop.theme'));
+            if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+        } catch (e) {
+        }</script>
 </head>
 <body>
-<div id="app"><noscript><p style="padding:24px">LetterHop needs JavaScript.</p></noscript></div>
+<div id="app">
+    <noscript><p style="padding:24px">LetterHop needs JavaScript.</p></noscript>
+</div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="i18n.js?v=<?= $v ?>" defer></script>
 <script src="releases.js?v=<?= $v ?>" defer></script>

@@ -6,17 +6,17 @@
 
 declare(strict_types=1);
 
-const PERM_NONE   = 0;   // no access (pending or revoked account)
-const PERM_USER   = 1;   // can use the portal
+const PERM_NONE = 0;   // no access (pending or revoked account)
+const PERM_USER = 1;   // can use the portal
 const PERM_EDITOR = 5;   // content moderator: questions, references, reports
-const PERM_ADMIN  = 9;   // administrator: + manages users and moderators
+const PERM_ADMIN = 9;   // administrator: + manages users and moderators
 const PERM_MASTER = 10;  // master admin (only one): + manages administrators
 
 const PERMISSION_LEVELS = [
-    PERM_NONE   => 'Nessun accesso',
-    PERM_USER   => 'Utente',
+    PERM_NONE => 'Nessun accesso',
+    PERM_USER => 'Utente',
     PERM_EDITOR => 'Moderatore contenuti',
-    PERM_ADMIN  => 'Amministratore',
+    PERM_ADMIN => 'Amministratore',
     PERM_MASTER => 'Master admin',
 ];
 
@@ -64,9 +64,9 @@ function db(): PDO
             $c['host'], (int)($c['port'] ?? 3306), $c['name'], $c['charset'] ?? 'utf8mb4'
         );
         $pdo = new PDO($dsn, $c['user'], $c['pass'], [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_EMULATE_PREPARES => false,
         ]);
         $pdo->exec("SET time_zone = '+00:00'");
     }
@@ -145,9 +145,9 @@ function str_param(array $src, string $key, int $maxLen = 0, bool $required = fa
 function set_auth_cookie(string $value, int $expires): void
 {
     setcookie(AUTH_COOKIE, $value, [
-        'expires'  => $expires,
-        'path'     => app_base_path(),
-        'secure'   => is_https(),
+        'expires' => $expires,
+        'path' => app_base_path(),
+        'secure' => is_https(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -156,20 +156,16 @@ function set_auth_cookie(string $value, int $expires): void
 function create_auth_session(int $userId): array
 {
     $token = bin2hex(random_bytes(32));
-    $csrf  = bin2hex(random_bytes(24));
+    $csrf = bin2hex(random_bytes(24));
     $lifetime = (int)(config()['session_lifetime'] ?? 2592000);
     $expires = time() + $lifetime;
     $st = db()->prepare('INSERT INTO ' . t('auth_tokens') . ' (token_hash, user_id, csrf_token, user_agent, ip, created_at, last_seen_at, expires_at) VALUES (?,?,?,?,?,?,?,?)');
     $st->execute([
         hash('sha256', $token), $userId, $csrf,
-        substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255), client_ip(),
+        '', '', // user_agent and ip stay empty: nothing uses them, so they are not collected
         now_utc(), now_utc(), gmdate('Y-m-d H:i:s', $expires),
     ]);
     set_auth_cookie($token, $expires);
-    // Occasional cleanup of expired tokens
-    if (random_int(1, 50) === 1) {
-        db()->exec('DELETE FROM ' . t('auth_tokens') . " WHERE expires_at < UTC_TIMESTAMP()");
-    }
     return ['csrf' => $csrf];
 }
 
@@ -215,26 +211,19 @@ function public_user(array $u): array
     $p = (int)$u['permissions'];
     $can = user_can_use($u);
     return [
-        'id'             => (int)$u['id'],
-        'name'           => $u['name'],
-        'email'          => $u['email'],
-        'permissions'    => $p,
-        'status'         => $u['status'],
-        'role'           => role_label($p),
-        'canUse'         => $can,
-        'canEdit'        => $can && $p >= PERM_EDITOR,
+        'id' => (int)$u['id'],
+        'name' => $u['name'],
+        'email' => $u['email'],
+        'permissions' => $p,
+        'status' => $u['status'],
+        'role' => role_label($p),
+        'canUse' => $can,
+        'canEdit' => $can && $p >= PERM_EDITOR,
         'canManageUsers' => $can && $p >= PERM_ADMIN,
-        'isMaster'       => $can && $p >= PERM_MASTER,
+        'isMaster' => $can && $p >= PERM_MASTER,
         'mustChangePassword' => !empty($u['must_change_password']),
-        'createdAt'      => $u['created_at'] ?? null,
-        'gravatar'       => gravatar_hash((string)$u['email']),
+        'createdAt' => $u['created_at'] ?? null,
     ];
-}
-
-/** Gravatar hash: SHA-256 of the normalized email (the email itself is never sent in clear text). */
-function gravatar_hash(string $email): string
-{
-    return hash('sha256', mb_strtolower(trim($email)));
 }
 
 function role_label(int $p): string
@@ -345,12 +334,24 @@ function normalize_master_admin(): void
 {
     $pdo = db();
     $rows = $pdo->query('SELECT id, permissions, status FROM ' . t('users') . " WHERE permissions >= " . PERM_ADMIN . " ORDER BY (status = 'active') DESC, id ASC")->fetchAll();
-    $masters = array_values(array_filter($rows, function ($r) { return (int)$r['permissions'] >= PERM_MASTER; }));
+    $masters = array_values(array_filter($rows, function ($r) {
+        return (int)$r['permissions'] >= PERM_MASTER;
+    }));
     $keep = null;
-    foreach ($masters as $r) { if ($r['status'] === 'active') { $keep = (int)$r['id']; break; } }
+    foreach ($masters as $r) {
+        if ($r['status'] === 'active') {
+            $keep = (int)$r['id'];
+            break;
+        }
+    }
     if ($keep === null && $masters) $keep = (int)$masters[0]['id'];
     if ($keep === null) {
-        foreach ($rows as $r) { if ($r['status'] === 'active') { $keep = (int)$r['id']; break; } }
+        foreach ($rows as $r) {
+            if ($r['status'] === 'active') {
+                $keep = (int)$r['id'];
+                break;
+            }
+        }
     }
     if ($keep === null) return;
     $pdo->prepare('UPDATE ' . t('users') . ' SET permissions = ? WHERE permissions >= ? AND id <> ?')->execute([PERM_ADMIN, PERM_ADMIN, $keep]);

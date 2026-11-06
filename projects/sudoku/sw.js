@@ -5,8 +5,8 @@
  */
 'use strict';
 
-const CACHE = 'sudoku-1';
-const FILES = ['./', 'engine.js', 'game.js', 'i18n.js', 'releases.js', 'style.css', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png'];
+const CACHE = 'sudoku-2';
+const FILES = ['./', 'engine.js', 'game.js', 'i18n.js', 'releases.js', 'style.css', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'fonts/nunito-latin.woff2', 'fonts/nunito-latin-ext.woff2'];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));

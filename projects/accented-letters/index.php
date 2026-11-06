@@ -77,7 +77,9 @@ $canonical = '/projects/accented-letters/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2019 – present <span class="book-meta-note">· <?php $years = date('Y') - 2019; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2019 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2019;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
@@ -129,8 +131,11 @@ $canonical = '/projects/accented-letters/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Accented Letters popup with lowercase accented characters ready to copy">
-                <img src="/images/projects/screenshots/accented-letters/1.png" alt="Accented Letters popup with lowercase accented characters ready to copy" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Accented Letters popup with lowercase accented characters ready to copy">
+                <img src="/images/projects/screenshots/accented-letters/1.png"
+                     alt="Accented Letters popup with lowercase accented characters ready to copy" width="1280"
+                     height="800"
                      loading="lazy">
             </button>
         </div>
@@ -144,7 +149,9 @@ $canonical = '/projects/accented-letters/';
             <div class="timeline-item major">
                 <span class="timeline-version">v3.0</span>
                 <span class="timeline-date">26 May 2026</span>
-                <p>A fully refreshed version: new settings to customise the add-on, custom characters, predefined character sets, default visibility and case, monospace or sans-serif typeface, import/export of settings, and a new search bar.</p>
+                <p>A fully refreshed version: new settings to customise the add-on, custom characters, predefined
+                    character sets, default visibility and case, monospace or sans-serif typeface, import/export of
+                    settings, and a new search bar.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v2.1</span>
@@ -174,7 +181,8 @@ $canonical = '/projects/accented-letters/';
             <div class="timeline-item">
                 <span class="timeline-version">v1.2</span>
                 <span class="timeline-date">9 December 2019</span>
-                <p>Added translations for titles in many languages (English, French, Spanish, Italian, German, Portuguese, Chinese, Japanese, Arabic).</p>
+                <p>Added translations for titles in many languages (English, French, Spanish, Italian, German,
+                    Portuguese, Chinese, Japanese, Arabic).</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.1.2</span>

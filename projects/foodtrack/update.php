@@ -17,7 +17,10 @@ header('X-Frame-Options: DENY');
 header('Cache-Control: no-store');
 header('Referrer-Policy: no-referrer');
 
-function h_esc($s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+function h_esc($s): string
+{
+    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+}
 
 $cfg = credentials();
 $error = null;
@@ -54,11 +57,11 @@ if (!$cfg) {
         $tables = $pdo->query("SHOW TABLES LIKE " . $pdo->quote($prefix . '%'))->fetchAll(PDO::FETCH_COLUMN);
 
         $result = [
-            'ok' => true,
-            'fromVersion' => $fromVersion,
-            'toVersion' => SCHEMA_VERSION,
-            'added' => $added,
-            'tables' => $tables,
+                'ok' => true,
+                'fromVersion' => $fromVersion,
+                'toVersion' => SCHEMA_VERSION,
+                'added' => $added,
+                'tables' => $tables,
         ];
     } catch (Throwable $e) {
         error_log('[foodtrack] update.php: ' . get_class($e) . ': ' . $e->getMessage());
@@ -67,7 +70,7 @@ if (!$cfg) {
 }
 
 $wantsJson = (($_GET['format'] ?? '') === 'json')
-    || (stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false && stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'text/html') === false);
+        || (stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json') !== false && stripos((string)($_SERVER['HTTP_ACCEPT'] ?? ''), 'text/html') === false);
 
 if ($wantsJson) {
     if ($error) send_json(['ok' => false, 'message' => $error], 500);
@@ -87,59 +90,172 @@ if (PHP_SAPI === 'cli') {
 ?><!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>FoodTrack · Aggiornamento database</title>
-<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
-<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-<style>
-  :root { --green:#4CAF50; --green-dark:#2E7D32; --bg:#F3F6F3; --card:#fff; --text:#1C1B1F; --muted:#5F6368; --border:#DADCE0; --red:#C62828; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#121412; --card:#1E211E; --text:#E6E1E5; --muted:#A8ADA8; --border:#353935; } }
-  * { box-sizing: border-box; }
-  body { margin:0; padding:32px 16px; font:15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); }
-  main { max-width:560px; margin:0 auto; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:28px; }
-  .brand { display:flex; align-items:center; gap:10px; color:var(--green-dark); font-weight:700; }
-  .brand img { width:28px; height:28px; }
-  @media (prefers-color-scheme: dark) { .brand { color:#81C784; } }
-  h1 { margin:8px 0 6px; font-size:1.5rem; }
-  p.lead { color:var(--muted); margin:0 0 18px; }
-  code { font-size:.88em; background:var(--bg); padding:2px 6px; border-radius:5px; }
-  .err { background:rgba(198,40,40,.08); border:1px solid var(--red); color:var(--red); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
-  .ok { background:rgba(76,175,80,.1); border:1px solid var(--green); border-radius:12px; padding:14px 16px; margin-bottom:16px; }
-  .tables { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 20px; }
-  .btn-row { display:flex; gap:12px; flex-wrap:wrap; margin-top:20px; }
-  .btn { display:inline-flex; align-items:center; justify-content:center; padding:11px 20px; border-radius:999px; background:var(--green); color:#fff; text-decoration:none; font-weight:700; }
-  .btn.sec { background:var(--bg); color:var(--text); border:1px solid var(--border); }
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>FoodTrack · Aggiornamento database</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <style>
+        :root {
+            --green: #4CAF50;
+            --green-dark: #2E7D32;
+            --bg: #F3F6F3;
+            --card: #fff;
+            --text: #1C1B1F;
+            --muted: #5F6368;
+            --border: #DADCE0;
+            --red: #C62828;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #121412;
+                --card: #1E211E;
+                --text: #E6E1E5;
+                --muted: #A8ADA8;
+                --border: #353935;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px 16px;
+            font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        main {
+            max-width: 560px;
+            margin: 0 auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--green-dark);
+            font-weight: 700;
+        }
+
+        .brand img {
+            width: 28px;
+            height: 28px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .brand {
+                color: #81C784;
+            }
+        }
+
+        h1 {
+            margin: 8px 0 6px;
+            font-size: 1.5rem;
+        }
+
+        p.lead {
+            color: var(--muted);
+            margin: 0 0 18px;
+        }
+
+        code {
+            font-size: .88em;
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 5px;
+        }
+
+        .err {
+            background: rgba(198, 40, 40, .08);
+            border: 1px solid var(--red);
+            color: var(--red);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+        }
+
+        .ok {
+            background: rgba(76, 175, 80, .1);
+            border: 1px solid var(--green);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+
+        .tables {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 12px 0 20px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 20px;
+            border-radius: 999px;
+            background: var(--green);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .btn.sec {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+    </style>
 </head>
 <body>
 <main>
-  <div class="brand"><img src="assets/icons/icon-color.png" alt=""> FoodTrack</div>
-  <h1>Aggiornamento database</h1>
-  <p class="lead">Verifica e aggiorna automaticamente tutte le tabelle usando le credenziali configurate in <code>credentials.php</code>.</p>
+    <div class="brand"><img src="assets/icons/icon-color.png" alt=""> FoodTrack</div>
+    <h1>Aggiornamento database</h1>
+    <p class="lead">Verifica e aggiorna automaticamente tutte le tabelle usando le credenziali configurate in <code>credentials.php</code>.
+    </p>
 
-  <?php if ($error): ?>
-    <div class="err"><?= h_esc($error) ?></div>
-  <?php else: ?>
-    <div class="ok">
-      <strong>Database aggiornato con successo.</strong><br>
-      Versione schema: <code>v<?= (int)$result['fromVersion'] ?></code> → <code>v<?= (int)$result['toVersion'] ?></code><br>
-      Dati aggiunti: <?= (int)$result['added']['categories'] ?> categorie, <?= (int)$result['added']['products'] ?> prodotti, <?= (int)$result['added']['recipes'] ?> ricette.
-    </div>
-    <div>
-      <strong>Tabelle verificate (<?= count($result['tables']) ?>):</strong>
-      <div class="tables">
-        <?php foreach ($result['tables'] as $tb): ?><code><?= h_esc($tb) ?></code><?php endforeach; ?>
-      </div>
-    </div>
-  <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="err"><?= h_esc($error) ?></div>
+    <?php else: ?>
+        <div class="ok">
+            <strong>Database aggiornato con successo.</strong><br>
+            Versione schema: <code>v<?= (int)$result['fromVersion'] ?></code> →
+            <code>v<?= (int)$result['toVersion'] ?></code><br>
+            Dati aggiunti: <?= (int)$result['added']['categories'] ?>
+            categorie, <?= (int)$result['added']['products'] ?> prodotti, <?= (int)$result['added']['recipes'] ?>
+            ricette.
+        </div>
+        <div>
+            <strong>Tabelle verificate (<?= count($result['tables']) ?>):</strong>
+            <div class="tables">
+                <?php foreach ($result['tables'] as $tb): ?><code><?= h_esc($tb) ?></code><?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
-  <div class="btn-row">
-    <a class="btn" href="./">Apri FoodTrack →</a>
-    <a class="btn sec" href="admin.html">Portale admin →</a>
-  </div>
+    <div class="btn-row">
+        <a class="btn" href="./">Apri FoodTrack →</a>
+        <a class="btn sec" href="admin.html">Portale admin →</a>
+    </div>
 </main>
 </body>
 </html>

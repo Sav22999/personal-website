@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="offline_title">Nessuna connessione</string>
-    <string name="offline_text">LetterHop funziona anche offline una volta aperto. Controlla la connessione per ricaricare.</string>
+    <string name="offline_text">LetterHop funziona anche offline una volta aperto. Controlla la connessione per
+        ricaricare.
+    </string>
     <string name="offline_retry">Riprova</string>
 </resources>

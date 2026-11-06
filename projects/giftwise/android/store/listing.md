@@ -1,7 +1,8 @@
 # Giftwise — Google Play store listing
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
-Images for the listing are in `en-GB/` (phone screenshots 1080×1920, feature graphic 1024×500, 24-bit PNG without transparency).
+Images for the listing are in `en-GB/` (phone screenshots 1080×1920, feature graphic 1024×500, 24-bit PNG without
+transparency).
 App icon: `../play-store-icon-512.png`.
 
 ---
@@ -52,11 +53,12 @@ AND ALSO
 • Free, no ads, no tracking: your data is never sold or used for advertising
 ```
 
-**Category**: App → Shopping (alternative: Lifestyle)  ·  **Tags** (up to 5): Wish list, Gifts, Birthday, Shopping, Friends
-**Website**: https://www.saveriomorelli.com/projects/giftwise/
+**Category**: App → Shopping (alternative: Lifestyle)  · **Tags** (up to 5): Wish list, Gifts, Birthday, Shopping,
+Friends **Website**: https://www.saveriomorelli.com/projects/giftwise/
 **Privacy policy**: https://www.saveriomorelli.com/projects/giftwise/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-lists.png` — Wish lists for every occasion
 2. `phone-2-list.png` — Add anything you'd love
 3. `phone-3-add.png` — Paste or share a link
@@ -69,8 +71,11 @@ AND ALSO
 Feature graphic: `feature-graphic-1024x500.png`.
 
 ### Data safety (Play Console → App content → Data safety), as the app works today
-- Data collected: name, email address, user IDs (account); other user-generated content (wish lists, wishes, messages). Purpose: app functionality and account management. Not shared with third parties, not used for advertising.
-- Data is encrypted in transit (HTTPS). Users can delete their account and data from the app (Profile → Delete my account).
+
+- Data collected: name, email address, user IDs (account); other user-generated content (wish lists, wishes, messages).
+  Purpose: app functionality and account management. Not shared with third parties, not used for advertising.
+- Data is encrypted in transit (HTTPS). Users can delete their account and data from the app (Profile → Delete my
+  account).
 
 ---
 

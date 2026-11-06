@@ -2,6 +2,7 @@
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
 Store assets:
+
 - App icon: `../play-store-icon-512.png` (512×512, 24-bit PNG without transparency)
 - Feature graphic: `en-GB/feature-graphic-1024x500.png` (1024×500, 24-bit PNG)
 - Phone screenshots: `en-GB/phone-*.png` (1080×1920, 24-bit PNG)
@@ -45,17 +46,20 @@ PRIVACY-FIRST & OFFLINE
 • Available in English, Italian, Spanish, French, and German
 ```
 
-**Category**: Game → Puzzle (alternative: Board)  ·  **Tags** (up to 5): Sudoku, Number puzzle, Brain training, Logic games, Offline puzzle  
+**Category**: Game → Puzzle (alternative: Board)  · **Tags** (up to 5): Sudoku, Number puzzle, Brain training, Logic
+games, Offline puzzle  
 **Website**: https://www.saveriomorelli.com/projects/sudoku/  
-**Privacy policy**: https://www.saveriomorelli.com/projects/sudoku/privacy.html  
+**Privacy policy**: https://www.saveriomorelli.com/projects/sudoku/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-home.png` — Classic Sudoku
 2. `phone-2-game.png` — All the tools you need
 3. `phone-3-tips.png` — Tips that explain why
 4. `phone-4-dark.png` — Easy on the eyes
 
 ### Data safety (Play Console → App content → Data safety)
+
 - Data collected: None. No personal details, identifiers, or tracking data collected.
 - Local storage only: Current puzzle state, timer, notes, and game statistics are stored strictly on your device.
 - Playable offline after the first launch.

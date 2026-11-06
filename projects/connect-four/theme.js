@@ -6,13 +6,17 @@
     'use strict';
 
     const KEY = 'c4_theme';
-    const COLORS = { light: '#FBF5FD', dark: '#12061A' };
+    const COLORS = {light: '#FBF5FD', dark: '#12061A'};
     const MODES = ['auto', 'light', 'dark'];
     const root = document.documentElement;
     const system = matchMedia('(prefers-color-scheme: light)');
 
     let mode = 'auto';
-    try { const saved = localStorage.getItem(KEY); if (MODES.includes(saved)) mode = saved; } catch (e) { /* storage unavailable */ }
+    try {
+        const saved = localStorage.getItem(KEY);
+        if (MODES.includes(saved)) mode = saved;
+    } catch (e) { /* storage unavailable */
+    }
 
     function apply() {
         const theme = mode === 'auto' ? (system.matches ? 'light' : 'dark') : mode;
@@ -25,12 +29,17 @@
             b.classList.toggle('active', on);
             b.setAttribute('aria-checked', String(on));
         });
-        document.querySelectorAll('[data-theme-label]').forEach(s => { s.hidden = s.dataset.themeLabel !== mode; });
+        document.querySelectorAll('[data-theme-label]').forEach(s => {
+            s.hidden = s.dataset.themeLabel !== mode;
+        });
     }
 
     function choose(next) {
         mode = next;
-        try { localStorage.setItem(KEY, mode); } catch (e) { /* storage unavailable */ }
+        try {
+            localStorage.setItem(KEY, mode);
+        } catch (e) { /* storage unavailable */
+        }
         apply();
     }
 

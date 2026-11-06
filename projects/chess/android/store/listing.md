@@ -2,6 +2,7 @@
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
 Store assets:
+
 - App icon: `../play-store-icon-512.png` (512×512, 24-bit PNG without transparency)
 - Feature graphic: `en-GB/feature-graphic-1024x500.png` (1024×500, 24-bit PNG)
 - Phone screenshots: `en-GB/phone-*.png` (1080×1920, 24-bit PNG)
@@ -44,18 +45,23 @@ CLEAN & PRIVACY-FIRST
 • Dark theme design that is easy on the eyes
 ```
 
-**Category**: Game → Board (alternative: Strategy)  ·  **Tags** (up to 5): Chess, Board game, Multiplayer, Puzzle, Brain games  
+**Category**: Game → Board (alternative: Strategy)  · **Tags** (up to 5): Chess, Board game, Multiplayer, Puzzle, Brain
+games  
 **Website**: https://www.saveriomorelli.com/projects/chess/  
-**Privacy policy**: https://www.saveriomorelli.com/projects/chess/privacy.html  
+**Privacy policy**: https://www.saveriomorelli.com/projects/chess/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-lobby.png` — Chess, your way
 2. `phone-2-game.png` — Play face to face
 3. `phone-3-tips.png` — Learn as you play
 4. `phone-4-customise.png` — Make it yours
 
 ### Data safety (Play Console → App content → Data safety)
-- Data collected: the nickname the player types and the in-game chat messages, for online games only. In Play Console declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties. Nothing else is collected: no email, phone, location or device identifiers.
+
+- Data collected: the nickname the player types and the in-game chat messages, for online games only. In Play Console
+  declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared
+  with third parties. Nothing else is collected: no email, phone, location or device identifiers.
 - Games on one device or against the computer send nothing to the server.
 - Temporary data: rooms, nicknames and chat are deleted automatically within 48 hours of the last activity.
 - Data encrypted in transit (HTTPS).

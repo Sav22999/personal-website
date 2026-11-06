@@ -60,12 +60,12 @@ const ConnectFour = (() => {
         if (player === 0) return null;
 
         for (const [[dr1, dc1], [dr2, dc2]] of DIRS) {
-            const line = [{ r: row, c: col }];
+            const line = [{r: row, c: col}];
 
             // Positive direction
             let r = row + dr1, c = col + dc1;
             while (r >= 0 && r < ROWS && c >= 0 && c < COLS && b[r][c] === player) {
-                line.push({ r, c });
+                line.push({r, c});
                 r += dr1;
                 c += dc1;
             }
@@ -74,7 +74,7 @@ const ConnectFour = (() => {
             r = row + dr2;
             c = col + dc2;
             while (r >= 0 && r < ROWS && c >= 0 && c < COLS && b[r][c] === player) {
-                line.unshift({ r, c });
+                line.unshift({r, c});
                 r += dr2;
                 c += dc2;
             }
@@ -92,7 +92,7 @@ const ConnectFour = (() => {
                 if (b[r][c] !== 0) {
                     const line = checkWinAt(b, r, c);
                     if (line) {
-                        return { winner: b[r][c], line };
+                        return {winner: b[r][c], line};
                     }
                 }
             }
@@ -122,7 +122,7 @@ const ConnectFour = (() => {
             const row = dropPiece(b, col, player);
             if (row === -1) return null;
 
-            lastMove = { r: row, c: col, player };
+            lastMove = {r: row, c: col, player};
             const line = checkWinAt(b, row, col);
             if (line) {
                 winner = player;

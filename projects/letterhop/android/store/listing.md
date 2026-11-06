@@ -2,6 +2,7 @@
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
 Store assets:
+
 - App icon: `../play-store-icon-512.png` (512×512, 24-bit PNG without transparency)
 - Feature graphic: `en-GB/feature-graphic-1024x500.png` (1024×500, 24-bit PNG)
 - Phone screenshots: `en-GB/phone-*.png` (1080×1920, 24-bit PNG)
@@ -47,17 +48,19 @@ PRIVACY-FIRST & OFFLINE
 • 100% free with no ads
 ```
 
-**Category**: Game → Word  ·  **Tags** (up to 5): Word games, Word ladder, Brain training, Offline puzzle, Vocabulary  
+**Category**: Game → Word · **Tags** (up to 5): Word games, Word ladder, Brain training, Offline puzzle, Vocabulary  
 **Website**: https://www.saveriomorelli.com/projects/letterhop/  
-**Privacy policy**: https://www.saveriomorelli.com/projects/letterhop/privacy.html  
+**Privacy policy**: https://www.saveriomorelli.com/projects/letterhop/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-home.png` — One letter at a time
 2. `phone-2-game.png` — Hop from word to word
 3. `phone-3-tips.png` — Tips when you are stuck
 4. `phone-4-dark.png` — Easy on the eyes
 
 ### Data safety (Play Console → App content → Data safety)
+
 - Data collected: None. No personal details, identifiers, or tracking data collected.
 - Local storage only: Current puzzle, points and settings are stored strictly on your device.
 - Playable offline after the first launch.

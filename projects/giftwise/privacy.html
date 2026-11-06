@@ -1,62 +1,234 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy · Giftwise</title>
-<meta name="theme-color" content="#FBF6F7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#150F11" media="(prefers-color-scheme: dark)">
-<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
-<link rel="stylesheet" href="assets/app.css?v=1.0.0">
-<style>
-  .doc { max-width: 720px; margin: 0 auto; padding: 18px 20px 48px; }
-  .doc h2 { font-size: 1.1rem; margin: 26px 0 6px; }
-  .doc p, .doc li { font-size: .95rem; }
-  .doc .en { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--outline-variant); }
-</style>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Privacy · Giftwise</title>
+    <meta content="#FBF6F7" media="(prefers-color-scheme: light)" name="theme-color">
+    <meta content="#150F11" media="(prefers-color-scheme: dark)" name="theme-color">
+    <link href="assets/icons/favicon.svg" rel="icon" type="image/svg+xml">
+    <link href="assets/app.css?v=1.0.0" rel="stylesheet">
+    <style>
+        .doc {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 18px 20px 48px;
+        }
+
+        .doc h2 {
+            font-size: 1.1rem;
+            margin: 26px 0 6px;
+        }
+
+        .doc p, .doc li {
+            font-size: .95rem;
+        }
+
+        .legal-note {
+            margin: 14px 0 22px;
+            padding: 10px 14px;
+            border-left: 3px solid currentColor;
+            font-size: .92rem;
+        }
+
+        .courtesy {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid currentColor;
+        }
+    </style>
 </head>
 <body>
 <header class="appbar small" style="max-width:720px;margin:0 auto">
-  <a class="icon-btn" href="./" aria-label="Giftwise" style="color:inherit"><svg class="ic" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></a>
-  <div class="titles"><h1>Privacy e informazioni</h1></div>
+    <a aria-label="Giftwise" class="icon-btn" href="./" style="color:inherit">
+        <svg class="ic" viewBox="0 0 24 24">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+    </a>
+    <div class="titles"><h1>Privacy e informazioni</h1></div>
 </header>
 <main class="doc">
-  <p><strong>Giftwise</strong> è un’app per creare liste dei desideri e organizzare i regali tra amici, sviluppata da Saverio Morelli. Ultimo aggiornamento: novembre 2026.</p>
 
-  <h2>Quali dati raccogliamo</h2>
-  <ul>
-    <li><strong>Account</strong>: nome, indirizzo email e password (salvata solo in forma cifrata con un algoritmo di hashing, mai in chiaro), oppure il collegamento al tuo account Google.</li>
-    <li><strong>Contenuti che inserisci</strong>: le tue liste dei desideri (titolo, occasione, data, descrizione) e i desideri (nome, link, immagine, prezzo, note); le amicizie; sulle liste dei tuoi amici, le tue scelte («ci sto pensando», «lo prendo io») e i messaggi che scrivi.</li>
-    <li><strong>Dati tecnici</strong>: indirizzo IP e tipo di browser/dispositivo associati alla sessione, usati solo per la sicurezza (protezione da accessi non autorizzati e da tentativi ripetuti).</li>
-  </ul>
+    <p><strong>Giftwise</strong> è un’app per creare liste dei desideri e organizzare i regali tra amici di Saverio
+        Morelli. Questa è l’informativa sul trattamento dei dati personali ai sensi del Regolamento (UE) 2016/679
+        (GDPR). Ultimo aggiornamento: 6 novembre 2026.</p>
 
-  <h2>Chi vede cosa</h2>
-  <ul>
-    <li>Le tue liste sono visibili solo ai tuoi amici su Giftwise (o solo agli amici che scegli per ciascuna lista).</li>
-    <li>Le scelte e i messaggi sulla lista di un amico sono visibili agli altri amici che vedono quella lista, ma <strong>mai a chi ha creato la lista</strong>.</li>
-    <li>I tuoi amici vedono il tuo nome e il tuo indirizzo email.</li>
-  </ul>
+    <p class="legal-note"><strong>Lingua ufficiale: italiano.</strong> Il testo italiano è l’unica versione ufficiale di
+        questa informativa e l’unica da prendere in considerazione. La <a href="#en">copia in inglese</a> è solo di
+        cortesia: in caso di differenze prevale sempre l’italiano. Non sono disponibili versioni in altre lingue.</p>
 
-  <h2>Anteprima dei link</h2>
-  <p>Quando aggiungi un desiderio con un link, il nostro server apre quella pagina per leggerne nome, immagine e prezzo. Le immagini dei prodotti vengono poi mostrate direttamente dai siti dei negozi.</p>
+    <h2>Titolare del trattamento</h2>
+    <p>Saverio Morelli — <a href="https://www.saveriomorelli.com">www.saveriomorelli.com</a>. Per qualsiasi richiesta
+        sulla privacy puoi scrivere tramite il <a href="https://www.saveriomorelli.com/contact-me/email/">modulo di
+            contatto</a>.</p>
 
-  <h2>Come usiamo i dati</h2>
-  <p>I dati servono esclusivamente a far funzionare l’app. Non vengono venduti, non vengono usati per pubblicità e non vengono ceduti a terzi. Le email che inviamo sono solo di servizio (benvenuto, richieste di amicizia).</p>
+    <h2>Quali dati trattiamo</h2>
+    <ul>
+        <li><strong>Account</strong>: nome, nome utente, indirizzo email e password (salvata solo in forma cifrata con
+            un algoritmo di hashing, mai in chiaro), oppure il collegamento al tuo account Google.
+        </li>
+        <li><strong>Contenuti che inserisci</strong>: le tue liste dei desideri (titolo, occasione, data, descrizione) e
+            i desideri (nome, link, immagine, prezzo, note); le amicizie; sulle liste dei tuoi amici, le tue scelte («ci
+            sto pensando», «lo prendo io») e i messaggi che scrivi; la cronologia delle modifiche.
+        </li>
+        <li><strong>Sicurezza</strong>: per limitare gli abusi (tentativi ripetuti di accesso o registrazione) salviamo
+            temporaneamente l’indirizzo IP insieme al tipo di tentativo. Le sessioni non conservano né l’IP né il
+            browser. Salviamo anche la data dell’ultimo accesso.
+        </li>
+    </ul>
 
-  <h2>Cookie e archiviazione locale</h2>
-  <p>Giftwise usa un solo cookie tecnico, necessario per mantenere l’accesso. Alcune preferenze (lingua, tema, avvisi già visti) sono salvate solo sul tuo dispositivo. Non usiamo cookie di profilazione né strumenti di analisi di terze parti.</p>
+    <h2>Chi vede cosa</h2>
+    <ul>
+        <li>Le tue liste sono visibili solo ai tuoi amici su Giftwise (o solo agli amici che scegli per ciascuna
+            lista).
+        </li>
+        <li>Le scelte e i messaggi sulla lista di un amico sono visibili agli altri amici che vedono quella lista, ma
+            <strong>mai a chi ha creato la lista</strong>.
+        </li>
+        <li>I tuoi amici vedono il tuo nome e il tuo indirizzo email.</li>
+    </ul>
 
-  <h2>Conservazione e cancellazione</h2>
-  <p>I dati restano salvati finché mantieni l’account. Puoi eliminarlo in qualsiasi momento dal Profilo («Elimina il mio account»): liste, desideri, amicizie, scelte e messaggi vengono cancellati definitivamente.</p>
+    <h2>Perché li trattiamo</h2>
+    <p>I dati servono a fornire l’app che hai scelto di usare: la base giuridica è l’esecuzione del servizio (art. 6,
+        par. 1, lett. b del GDPR). I dati di sicurezza si basano sul legittimo interesse a proteggere il servizio e gli
+        utenti (art. 6, par. 1, lett. f). Non vendiamo i dati e non li usiamo per pubblicità o profilazione.</p>
+    <p>Le email che inviamo sono solo di servizio (benvenuto, richieste di amicizia).</p>
 
-  <h2>I tuoi diritti e contatti</h2>
-  <p>Puoi chiedere l’accesso, la correzione, l’esportazione o la cancellazione dei tuoi dati tramite il <a href="https://www.saveriomorelli.com/contact-me/email/">modulo di contatto</a>. Titolare del trattamento: Saverio Morelli — <a href="https://www.saveriomorelli.com">www.saveriomorelli.com</a></p>
+    <h2>Anteprima dei link</h2>
+    <p>Quando aggiungi un desiderio con un link, il nostro server apre quella pagina per leggerne nome, immagine e
+        prezzo. Le immagini dei prodotti vengono poi mostrate direttamente dai siti dei negozi: il tuo browser le
+        scarica da lì, quindi quei siti ricevono il tuo indirizzo IP.</p>
 
-  <div class="en" lang="en">
-    <h2>In English</h2>
-    <p>Giftwise stores your account (name, email, hashed password or Google link), your wish lists and wishes, your friendships and, on your friends’ lists, your plans and messages. Your lists are visible only to your friends (or to the friends you choose); plans and messages on a friend’s list are visible to the other friends but <strong>never to the owner of the list</strong>. When you add a link, our server reads the page to get name, picture and price. Data is never sold or used for advertising; we only use one technical cookie to keep you signed in. You can delete your account and all its data at any time from the Profile. For any request use the <a href="https://www.saveriomorelli.com/contact-me/email/">contact form</a>.</p>
-  </div>
+    <h2>A chi vengono comunicati</h2>
+    <p>Oltre agli amici che scegli, i fornitori coinvolti sono:</p>
+    <ul>
+        <li><strong>Aruba S.p.A.</strong>, fornitore dell’hosting e del database. Come ogni server web, il servizio di
+            hosting può registrare nei propri log tecnici l’indirizzo IP e il browser di chi visita il sito, per
+            sicurezza e funzionamento: questi log sono gestiti dal fornitore e non vengono usati da noi per
+            identificarti.
+        </li>
+        <li><strong>Google</strong>, solo se è attivo l’accesso con Google: nella schermata di accesso il browser carica
+            il pulsante dai server di Google, che ricevono così il tuo indirizzo IP e possono trattare i dati anche
+            fuori dall’Unione europea, secondo la <a href="https://policies.google.com/privacy" rel="noopener"
+                                                     target="_blank">loro informativa</a>. Se scegli di accedere con
+            Google riceviamo nome, email e identificativo del tuo account.
+        </li>
+    </ul>
+
+    <h2>Cookie e archiviazione locale</h2>
+    <p>Giftwise usa un solo cookie tecnico, necessario per mantenere l’accesso. Alcune preferenze (lingua, tema, avvisi
+        già visti) sono salvate solo sul tuo dispositivo. Non usiamo cookie di profilazione né strumenti di analisi di
+        terze parti.</p>
+
+    <h2>Conservazione e cancellazione</h2>
+    <p>I dati dell’account restano salvati finché mantieni l’account. Puoi eliminarlo in qualsiasi momento dal Profilo
+        («Elimina il mio account»): liste, desideri, amicizie, scelte e messaggi vengono cancellati definitivamente. Gli
+        indirizzi IP dei tentativi vengono cancellati entro 48 ore. Le sessioni scadono dopo 60 giorni e vengono poi
+        eliminate.</p>
+
+    <h2>I tuoi diritti</h2>
+    <p>Puoi chiedere l’accesso ai tuoi dati, la rettifica, la cancellazione, la limitazione del trattamento e la
+        portabilità, e puoi opporti al trattamento (artt. 15–22 del GDPR), tramite il <a
+                href="https://www.saveriomorelli.com/contact-me/email/">modulo di contatto</a>. Hai anche il diritto di
+        proporre reclamo al <a href="https://www.garanteprivacy.it" rel="noopener" target="_blank">Garante per la
+            protezione dei dati personali</a>.</p>
+
+    <h2>Modifiche</h2>
+    <p>Questa informativa può essere aggiornata: la versione valida è sempre quella pubblicata in questa pagina, con la
+        data indicata in alto.</p>
+
+    <section class="courtesy" id="en" lang="en">
+        <h2>English courtesy copy</h2>
+        <p class="legal-note"><strong>Official language: Italian.</strong> This English text is a courtesy copy only and
+            has no legal value: the Italian text above is the only official version and always prevails. No other
+            languages are available.</p>
+
+        <p><strong>Giftwise</strong> is an app to create wish lists and organise gifts among friends by Saverio Morelli.
+            This is the notice on the processing of personal data under Regulation (EU) 2016/679 (GDPR). Last updated: 6
+            November 2026.</p>
+
+        <h2>Data controller</h2>
+        <p>Saverio Morelli — <a href="https://www.saveriomorelli.com">www.saveriomorelli.com</a>. For any privacy
+            request, write through the <a href="https://www.saveriomorelli.com/contact-me/email/">contact form</a>.</p>
+
+        <h2>What data we process</h2>
+        <ul>
+            <li><strong>Account</strong>: name, username, email address and password (stored only in hashed form, never
+                in clear text), or the link to your Google account.
+            </li>
+            <li><strong>Content you enter</strong>: your wish lists (title, occasion, date, description) and wishes
+                (name, link, picture, price, notes); friendships; on your friends’ lists, your choices (“thinking about
+                it”, “I’ll get it”) and the messages you write; the change history.
+            </li>
+            <li><strong>Security</strong>: to limit abuse (repeated sign-in or sign-up attempts) we temporarily store
+                the IP address with the type of attempt. Sessions keep neither the IP nor the browser. We also store the
+                date of the last access.
+            </li>
+        </ul>
+
+        <h2>Who sees what</h2>
+        <ul>
+            <li>Your lists are visible only to your friends on Giftwise (or only to the friends you choose for each
+                list).
+            </li>
+            <li>Choices and messages on a friend’s list are visible to the other friends who see that list, but <strong>never
+                to the person who created it</strong>.
+            </li>
+            <li>Your friends see your name and your email address.</li>
+        </ul>
+
+        <h2>Why we process it</h2>
+        <p>The data is used to provide the app you chose to use: the legal basis is the performance of the service
+            (Article 6(1)(b) GDPR). Security data relies on the legitimate interest in protecting the service and its
+            users (Article 6(1)(f)). We do not sell data or use it for advertising or profiling.</p>
+        <p>The emails we send are service messages only (welcome, friend requests).</p>
+
+        <h2>Link previews</h2>
+        <p>When you add a wish with a link, our server opens that page to read its name, picture and price. Product
+            pictures are then shown directly from the shops’ websites: your browser downloads them from there, so those
+            sites receive your IP address.</p>
+
+        <h2>Who receives it</h2>
+        <p>Besides the friends you choose, the providers involved are:</p>
+        <ul>
+            <li><strong>Aruba S.p.A.</strong>, the hosting and database provider. Like any web server, the hosting
+                service may record the IP address and browser of visitors in its technical logs, for security and
+                operation: these logs are managed by the provider and we do not use them to identify you.
+            </li>
+            <li><strong>Google</strong>, only if sign-in with Google is enabled: on the sign-in screen the browser loads
+                the button from Google’s servers, which therefore receive your IP address and may process data outside
+                the European Union as well, under <a href="https://policies.google.com/privacy" rel="noopener"
+                                                     target="_blank">their privacy policy</a>. If you choose to sign in
+                with Google we receive your name, email and account identifier.
+            </li>
+        </ul>
+
+        <h2>Cookies and local storage</h2>
+        <p>Giftwise uses a single technical cookie, needed to keep you signed in. Some preferences (language, theme,
+            notices already seen) are saved only on your device. We use no profiling cookies or third-party
+            analytics.</p>
+
+        <h2>Retention and deletion</h2>
+        <p>Account data is kept for as long as you keep the account. You can delete it at any time from the Profile
+            (“Delete my account”): lists, wishes, friendships, choices and messages are permanently deleted. The IP
+            addresses of attempts are deleted within 48 hours. Sessions expire after 60 days and are then removed.</p>
+
+        <h2>Your rights</h2>
+        <p>You can ask for access to your data, rectification, erasure, restriction of processing and portability, and
+            you can object to processing (Articles 15–22 GDPR), through the <a
+                    href="https://www.saveriomorelli.com/contact-me/email/">contact form</a>. You also have the right to
+            lodge a complaint with the <a href="https://www.garanteprivacy.it" rel="noopener" target="_blank">Italian
+                Data Protection Authority (Garante per la protezione dei dati personali)</a>.</p>
+
+        <h2>Changes</h2>
+        <p>This notice may be updated: the valid version is always the one published on this page, with the date shown
+            at the top.</p>
+    </section>
 </main>
-<script>try{var t=JSON.parse(localStorage.getItem('gw.theme'));if(t&&t!=='auto')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>try {
+    var t = JSON.parse(localStorage.getItem('gw.theme'));
+    if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t)
+} catch (e) {
+}</script>
 </body>
 </html>

@@ -77,7 +77,7 @@ function mail_account_created(array $user, string $how): void
         '<ul style="margin:0 0 18px;padding-left:20px">' . implode('', array_map(fn($x) => '<li style="margin:0 0 6px">' . e($x) . '</li>', $T['points'])) . '</ul>',
         mail_button($url, $T['open']),
         '<p style="margin:18px 0 0;font-size:13px;color:#5C6459">' . e($T['account']) . ' <strong>' . e((string)$user['email']) . '</strong>'
-            . ($how === 'google' ? ' (Google)' : '') . '</p>',
+        . ($how === 'google' ? ' (Google)' : '') . '</p>',
         '<p style="margin:10px 0 0;font-size:13px;color:#5C6459">' . e($T['not_you']) . '</p>',
     ]);
     $text = str_replace('{name}', $first, $T['hello']) . "\n\n" . $intro . "\n\n" . $T['what'] . "\n- " . implode("\n- ", $T['points'])
@@ -93,8 +93,8 @@ function mail_account_created(array $user, string $how): void
     $html = mail_layout('it', $A['subject_admin'], [
         '<p style="margin:0 0 14px">' . e($A['admin_intro']) . '</p>',
         '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 18px;font-size:14px">'
-            . mail_row($A['f_name'], (string)$user['name']) . mail_row('Email', (string)$user['email']) . mail_row($A['f_method'], $method)
-            . mail_row($A['f_date'], gmdate('d/m/Y H:i') . ' UTC') . '</table>',
+        . mail_row($A['f_name'], (string)$user['name']) . mail_row('Email', (string)$user['email']) . mail_row($A['f_method'], $method)
+        . mail_row($A['f_date'], gmdate('d/m/Y H:i') . ' UTC') . '</table>',
         mail_button(app_url() . 'admin.html#/users', $A['open_admin']),
     ]);
     $text = $A['admin_intro'] . "\n\n" . $A['f_name'] . ': ' . $user['name'] . "\nEmail: " . $user['email'] . "\n" . $A['f_method'] . ': ' . $method
@@ -135,7 +135,10 @@ const MAIL_TEXT = [
     ],
 ];
 
-function e(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
+function e(string $s): string
+{
+    return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+}
 
 function mail_button(string $url, string $label): string
 {
@@ -178,8 +181,13 @@ function ft_send_mails(array $messages): array
     try {
         $c = new FtSmtp($cfg);
         foreach ($messages as $m) {
-            try { $c->send($m['to'], $m['name'], $m['subject'], $m['html'], $m['text']); $out[] = ['ok' => true, 'error' => '']; }
-            catch (Throwable $e) { $out[] = ['ok' => false, 'error' => $e->getMessage()]; $c->reset(); }
+            try {
+                $c->send($m['to'], $m['name'], $m['subject'], $m['html'], $m['text']);
+                $out[] = ['ok' => true, 'error' => ''];
+            } catch (Throwable $e) {
+                $out[] = ['ok' => false, 'error' => $e->getMessage()];
+                $c->reset();
+            }
         }
         $c->close();
     } catch (Throwable $e) {
@@ -218,11 +226,21 @@ final class FtSmtp
         }
     }
 
-    private static function addr(string $email, string $name = ''): string
+    private function expect($ok, string $what = ''): void
     {
-        $email = str_replace(["\r", "\n", '<', '>'], '', $email);
-        $name = trim(str_replace(["\r", "\n", '"'], '', $name));
-        return $name === '' ? $email : '=?UTF-8?B?' . base64_encode($name) . '?= <' . $email . '>';
+        $reply = '';
+        while (($l = fgets($this->fp, 1024)) !== false) {
+            $reply .= $l;
+            if (strlen($l) < 4 || $l[3] !== '-') break;
+        }
+        $code = (int)substr($reply, 0, 3);
+        if (!in_array($code, (array)$ok, true)) throw new RuntimeException(($what ?: 'unexpected SMTP reply') . ' (' . $code . ')');
+    }
+
+    private function cmd(string $line, $ok, string $what = ''): void
+    {
+        if (@fwrite($this->fp, $line . "\r\n") === false) throw new RuntimeException('SMTP connection lost');
+        $this->expect($ok, $what);
     }
 
     public function send(string $to, string $name, string $subject, string $html, string $text): void
@@ -249,21 +267,27 @@ final class FtSmtp
         $this->cmd(implode("\r\n", $h) . "\r\n\r\n" . $part('text/plain', $text) . $part('text/html', $html) . '--' . $b . "--\r\n.", 250, 'message refused');
     }
 
-    public function reset(): void { try { $this->cmd('RSET', 250); } catch (Throwable $e) { /* connection lost */ } }
-
-    public function close(): void { if ($this->fp) { @fwrite($this->fp, "QUIT\r\n"); @fclose($this->fp); $this->fp = null; } }
-
-    private function cmd(string $line, $ok, string $what = ''): void
+    private static function addr(string $email, string $name = ''): string
     {
-        if (@fwrite($this->fp, $line . "\r\n") === false) throw new RuntimeException('SMTP connection lost');
-        $this->expect($ok, $what);
+        $email = str_replace(["\r", "\n", '<', '>'], '', $email);
+        $name = trim(str_replace(["\r", "\n", '"'], '', $name));
+        return $name === '' ? $email : '=?UTF-8?B?' . base64_encode($name) . '?= <' . $email . '>';
     }
 
-    private function expect($ok, string $what = ''): void
+    public function reset(): void
     {
-        $reply = '';
-        while (($l = fgets($this->fp, 1024)) !== false) { $reply .= $l; if (strlen($l) < 4 || $l[3] !== '-') break; }
-        $code = (int)substr($reply, 0, 3);
-        if (!in_array($code, (array)$ok, true)) throw new RuntimeException(($what ?: 'unexpected SMTP reply') . ' (' . $code . ')');
+        try {
+            $this->cmd('RSET', 250);
+        } catch (Throwable $e) { /* connection lost */
+        }
+    }
+
+    public function close(): void
+    {
+        if ($this->fp) {
+            @fwrite($this->fp, "QUIT\r\n");
+            @fclose($this->fp);
+            $this->fp = null;
+        }
     }
 }

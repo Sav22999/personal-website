@@ -1,12 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630"><defs><style>@font-face{font-family:Fredoka;src:url('fonts/fredoka-latin.woff2');font-weight:300 700}@font-face{font-family:Nunito;src:url('fonts/nunito-latin.woff2');font-weight:400 900}</style>
-<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2D0B40"/><stop offset="1" stop-color="#12061A"/></linearGradient>
-<linearGradient id="hot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E44FF0"/><stop offset="1" stop-color="#7322D0"/></linearGradient></defs>
-<rect width="1200" height="630" fill="url(#bg)"/>
-<g transform="translate(0 120.0)"><rect x="680" y="0" width="450" height="390.0" rx="22.5" fill="#2E0F4F"/><circle cx="725.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="785.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="845.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="905.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="965.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="1025.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="1085.0" cy="45.0" r="24.6" fill="#170629"/><circle cx="725.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="785.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="845.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="905.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="965.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="1025.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="1085.0" cy="105.0" r="24.6" fill="#170629"/><circle cx="725.0" cy="165.0" r="24.6" fill="#170629"/><circle cx="785.0" cy="165.0" r="24.6" fill="#170629"/><circle cx="845.0" cy="165.0" r="24.6" fill="#170629"/><circle cx="905.0" cy="165.0" r="24.6" fill="#170629"/><circle cx="965.0" cy="165.0" r="24.6" fill="#FACC15"/><circle cx="1025.0" cy="165.0" r="24.6" fill="#170629"/><circle cx="1085.0" cy="165.0" r="24.6" fill="#170629"/><circle cx="725.0" cy="225.0" r="24.6" fill="#170629"/><circle cx="785.0" cy="225.0" r="24.6" fill="#170629"/><circle cx="845.0" cy="225.0" r="24.6" fill="#170629"/><circle cx="905.0" cy="225.0" r="24.6" fill="#FACC15"/><circle cx="965.0" cy="225.0" r="24.6" fill="#F050F5"/><circle cx="1025.0" cy="225.0" r="24.6" fill="#170629"/><circle cx="1085.0" cy="225.0" r="24.6" fill="#170629"/><circle cx="725.0" cy="285.0" r="24.6" fill="#170629"/><circle cx="785.0" cy="285.0" r="24.6" fill="#170629"/><circle cx="845.0" cy="285.0" r="24.6" fill="#FACC15"/><circle cx="905.0" cy="285.0" r="24.6" fill="#F050F5"/><circle cx="965.0" cy="285.0" r="24.6" fill="#FACC15"/><circle cx="1025.0" cy="285.0" r="24.6" fill="#170629"/><circle cx="1085.0" cy="285.0" r="24.6" fill="#170629"/><circle cx="725.0" cy="345.0" r="24.6" fill="#170629"/><circle cx="785.0" cy="345.0" r="24.6" fill="#FACC15"/><circle cx="845.0" cy="345.0" r="24.6" fill="#F050F5"/><circle cx="905.0" cy="345.0" r="24.6" fill="#F050F5"/><circle cx="965.0" cy="345.0" r="24.6" fill="#F050F5"/><circle cx="1025.0" cy="345.0" r="24.6" fill="#FACC15"/><circle cx="1085.0" cy="345.0" r="24.6" fill="#170629"/></g>
-<text x="84" y="240" font-family="Fredoka" font-weight="600" font-size="88" fill="#FFFFFF">Connect Four</text>
-<text x="86" y="296" font-family="Fredoka" font-weight="500" font-size="40" fill="#F0ABFC">Forza Quattro</text>
-<text x="86" y="358" font-family="Nunito" font-weight="600" font-size="25" fill="#D9C7E4">The classic four-in-a-row game.</text>
-<text x="86" y="392" font-family="Nunito" font-weight="600" font-size="25" fill="#D9C7E4">Free, no sign-up, no ads.</text>
-<rect x="86" y="428" width="103" height="44.0" rx="22.0" fill="rgba(255,255,255,.08)" stroke="rgba(240,171,252,.35)"/><text x="138" y="457.6" text-anchor="middle" font-family="Fredoka" font-weight="500" font-size="20" fill="#F5EBF8">Online</text><rect x="201.2" y="428" width="159" height="44.0" rx="22.0" fill="rgba(255,255,255,.08)" stroke="rgba(240,171,252,.35)"/><text x="281" y="457.6" text-anchor="middle" font-family="Fredoka" font-weight="500" font-size="20" fill="#F5EBF8">Same device</text><rect x="372.4" y="428" width="126" height="44.0" rx="22.0" fill="rgba(255,255,255,.08)" stroke="rgba(240,171,252,.35)"/><text x="435" y="457.6" text-anchor="middle" font-family="Fredoka" font-weight="500" font-size="20" fill="#F5EBF8">Computer</text>
-<text x="86" y="530" font-family="Fredoka" font-weight="500" font-size="21" fill="#C084FC">saveriomorelli.com/projects/connect-four</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+    <defs>
+        <style>@font-face{font-family:Fredoka;src:url('fonts/fredoka-latin.woff2');font-weight:300
+            700}@font-face{font-family:Nunito;src:url('fonts/nunito-latin.woff2');font-weight:400 900}
+        </style>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#2D0B40"/>
+            <stop offset="1" stop-color="#12061A"/>
+        </linearGradient>
+        <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#E44FF0"/>
+            <stop offset="1" stop-color="#7322D0"/>
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <g transform="translate(0 120.0)">
+        <rect x="680" y="0" width="450" height="390.0" rx="22.5" fill="#2E0F4F"/>
+        <circle cx="725.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="785.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="845.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="905.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="965.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="1025.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="1085.0" cy="45.0" r="24.6" fill="#170629"/>
+        <circle cx="725.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="785.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="845.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="905.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="965.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="1025.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="1085.0" cy="105.0" r="24.6" fill="#170629"/>
+        <circle cx="725.0" cy="165.0" r="24.6" fill="#170629"/>
+        <circle cx="785.0" cy="165.0" r="24.6" fill="#170629"/>
+        <circle cx="845.0" cy="165.0" r="24.6" fill="#170629"/>
+        <circle cx="905.0" cy="165.0" r="24.6" fill="#170629"/>
+        <circle cx="965.0" cy="165.0" r="24.6" fill="#FACC15"/>
+        <circle cx="1025.0" cy="165.0" r="24.6" fill="#170629"/>
+        <circle cx="1085.0" cy="165.0" r="24.6" fill="#170629"/>
+        <circle cx="725.0" cy="225.0" r="24.6" fill="#170629"/>
+        <circle cx="785.0" cy="225.0" r="24.6" fill="#170629"/>
+        <circle cx="845.0" cy="225.0" r="24.6" fill="#170629"/>
+        <circle cx="905.0" cy="225.0" r="24.6" fill="#FACC15"/>
+        <circle cx="965.0" cy="225.0" r="24.6" fill="#F050F5"/>
+        <circle cx="1025.0" cy="225.0" r="24.6" fill="#170629"/>
+        <circle cx="1085.0" cy="225.0" r="24.6" fill="#170629"/>
+        <circle cx="725.0" cy="285.0" r="24.6" fill="#170629"/>
+        <circle cx="785.0" cy="285.0" r="24.6" fill="#170629"/>
+        <circle cx="845.0" cy="285.0" r="24.6" fill="#FACC15"/>
+        <circle cx="905.0" cy="285.0" r="24.6" fill="#F050F5"/>
+        <circle cx="965.0" cy="285.0" r="24.6" fill="#FACC15"/>
+        <circle cx="1025.0" cy="285.0" r="24.6" fill="#170629"/>
+        <circle cx="1085.0" cy="285.0" r="24.6" fill="#170629"/>
+        <circle cx="725.0" cy="345.0" r="24.6" fill="#170629"/>
+        <circle cx="785.0" cy="345.0" r="24.6" fill="#FACC15"/>
+        <circle cx="845.0" cy="345.0" r="24.6" fill="#F050F5"/>
+        <circle cx="905.0" cy="345.0" r="24.6" fill="#F050F5"/>
+        <circle cx="965.0" cy="345.0" r="24.6" fill="#F050F5"/>
+        <circle cx="1025.0" cy="345.0" r="24.6" fill="#FACC15"/>
+        <circle cx="1085.0" cy="345.0" r="24.6" fill="#170629"/>
+    </g>
+    <text x="84" y="240" font-family="Fredoka" font-weight="600" font-size="88" fill="#FFFFFF">Connect Four</text>
+    <text x="86" y="296" font-family="Fredoka" font-weight="500" font-size="40" fill="#F0ABFC">Forza Quattro</text>
+    <text x="86" y="358" font-family="Nunito" font-weight="600" font-size="25" fill="#D9C7E4">The classic four-in-a-row
+        game.
+    </text>
+    <text x="86" y="392" font-family="Nunito" font-weight="600" font-size="25" fill="#D9C7E4">Free, no sign-up, no
+        ads.
+    </text>
+    <rect x="86" y="428" width="103" height="44.0" rx="22.0" fill="rgba(255,255,255,.08)"
+          stroke="rgba(240,171,252,.35)"/>
+    <text x="138" y="457.6" text-anchor="middle" font-family="Fredoka" font-weight="500" font-size="20" fill="#F5EBF8">
+        Online
+    </text>
+    <rect x="201.2" y="428" width="159" height="44.0" rx="22.0" fill="rgba(255,255,255,.08)"
+          stroke="rgba(240,171,252,.35)"/>
+    <text x="281" y="457.6" text-anchor="middle" font-family="Fredoka" font-weight="500" font-size="20" fill="#F5EBF8">
+        Same device
+    </text>
+    <rect x="372.4" y="428" width="126" height="44.0" rx="22.0" fill="rgba(255,255,255,.08)"
+          stroke="rgba(240,171,252,.35)"/>
+    <text x="435" y="457.6" text-anchor="middle" font-family="Fredoka" font-weight="500" font-size="20" fill="#F5EBF8">
+        Computer
+    </text>
+    <text x="86" y="530" font-family="Fredoka" font-weight="500" font-size="21" fill="#C084FC">
+        saveriomorelli.com/projects/connect-four
+    </text>
 </svg>

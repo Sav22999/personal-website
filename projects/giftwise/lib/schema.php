@@ -219,7 +219,11 @@ function suggest_username_raw(PDO $pdo, string $p, string $name, string $email):
 function install_schema(PDO $pdo, string $prefix): void
 {
     $from = 0;
-    try { $from = (int)$pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn(); } catch (Throwable $e) { $from = 0; }
+    try {
+        $from = (int)$pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn();
+    } catch (Throwable $e) {
+        $from = 0;
+    }
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if ($from > 0 && $from < SCHEMA_VERSION) migrate_schema($pdo, $prefix, $from); // after the new tables exist
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);

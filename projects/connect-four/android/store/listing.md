@@ -2,6 +2,7 @@
 
 Default language: **English (United Kingdom) – en-GB**. Italian translation below.
 Store assets:
+
 - App icon: `../play-store-icon-512.png` (512×512, 24-bit PNG without transparency)
 - Feature graphic: `en-GB/feature-graphic-1024x500.png` (1024×500, 24-bit PNG)
 - Phone screenshots: `en-GB/phone-*.png` (1080×1920, 24-bit PNG)
@@ -41,11 +42,13 @@ PRIVACY-FIRST & CLEAN
 • Sleek dark aesthetic that looks great day and night
 ```
 
-**Category**: Game → Board (alternative: Casual)  ·  **Tags** (up to 5): Connect 4, Four in a row, Board game, 2 player, Multiplayer  
+**Category**: Game → Board (alternative: Casual)  · **Tags** (up to 5): Connect 4, Four in a row, Board game, 2 player,
+Multiplayer  
 **Website**: https://www.saveriomorelli.com/projects/connect-four/  
-**Privacy policy**: https://www.saveriomorelli.com/projects/connect-four/privacy.html  
+**Privacy policy**: https://www.saveriomorelli.com/projects/connect-four/privacy.html
 
 ### Screenshot order (phone)
+
 1. `phone-1-lobby.png` — Four in a row, your way
 2. `phone-2-computer.png` — Beat the computer
 3. `phone-3-win.png` — Line up four to win
@@ -53,7 +56,10 @@ PRIVACY-FIRST & CLEAN
 5. `phone-5-customise.png` — Make it yours
 
 ### Data safety (Play Console → App content → Data safety)
-- Data collected: the nickname the player types and the in-game chat messages, for online games only. In Play Console declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared with third parties. Nothing else is collected: no email, phone, location or device identifiers.
+
+- Data collected: the nickname the player types and the in-game chat messages, for online games only. In Play Console
+  declare **Personal info → Name** and **Messages → Other in-app messages**, purpose **App functionality**, not shared
+  with third parties. Nothing else is collected: no email, phone, location or device identifiers.
 - Games on one device or against the computer send nothing to the server.
 - Temporary data: rooms, nicknames and chat are deleted automatically within 48 hours of the last activity.
 - Data encrypted in transit (HTTPS).

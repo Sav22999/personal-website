@@ -81,7 +81,8 @@ foreach ($queries as $i => $sql) {
     }
 }
 
-function columnExists($pdo, $table, $column) {
+function columnExists($pdo, $table, $column)
+{
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
     $stmt->execute([$table, $column]);
     return (int)$stmt->fetchColumn() > 0;

@@ -5,8 +5,8 @@
  */
 'use strict';
 
-const CACHE = 'chess-2';
-const FILES = ['./', 'theme.js', 'ai-worker.js', 'ai.js', 'engine.js', 'game.js', 'i18n.js', 'pieces.js', 'releases.js', 'rules.js', 'style.css', 'tips.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png'];
+const CACHE = 'chess-3';
+const FILES = ['./', 'theme.js', 'ai-worker.js', 'ai.js', 'engine.js', 'game.js', 'i18n.js', 'pieces.js', 'releases.js', 'rules.js', 'style.css', 'tips.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'fonts/nunito-latin.woff2', 'fonts/nunito-latin-ext.woff2'];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));

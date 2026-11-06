@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">Scacchi</string>
     <string name="offline_title">Nessuna connessione</string>
-    <string name="offline_text">Scacchi ha bisogno di internet per accedere alle stanze online e giocare con gli amici. Controlla la connessione e riprova.</string>
+    <string name="offline_text">Scacchi ha bisogno di internet per accedere alle stanze online e giocare con gli amici.
+        Controlla la connessione e riprova.
+    </string>
     <string name="offline_retry">Riprova</string>
 </resources>

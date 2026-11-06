@@ -11,13 +11,13 @@ function schema_statements(string $p = 'ft_'): array
 {
     $opts = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
     return [
-"CREATE TABLE IF NOT EXISTS `{$p}meta` (
+        "CREATE TABLE IF NOT EXISTS `{$p}meta` (
   `k` VARCHAR(64) NOT NULL,
   `v` MEDIUMTEXT NOT NULL,
   PRIMARY KEY (`k`)
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}users` (
+        "CREATE TABLE IF NOT EXISTS `{$p}users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(80) NOT NULL,
   `email` VARCHAR(190) NOT NULL,
@@ -36,7 +36,7 @@ function schema_statements(string $p = 'ft_'): array
   KEY `idx_role` (`role`)
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
+        "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
   `token_hash` CHAR(64) NOT NULL,
   `user_id` INT UNSIGNED NOT NULL,
   `csrf_token` CHAR(48) NOT NULL,
@@ -50,7 +50,7 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}tok_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}attempts` (
+        "CREATE TABLE IF NOT EXISTS `{$p}attempts` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `kind` VARCHAR(16) NOT NULL,
   `ip` VARCHAR(45) NOT NULL,
@@ -60,7 +60,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // A household is the shared workspace: spaces, products, shopping lists and meal plan belong to it.
-"CREATE TABLE IF NOT EXISTS `{$p}households` (
+        "CREATE TABLE IF NOT EXISTS `{$p}households` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(80) NOT NULL,
   `invite_code` CHAR(8) NOT NULL,
@@ -71,7 +71,7 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}hh_owner` FOREIGN KEY (`owner_id`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}household_members` (
+        "CREATE TABLE IF NOT EXISTS `{$p}household_members` (
   `household_id` INT UNSIGNED NOT NULL,
   `user_id` INT UNSIGNED NOT NULL,
   `role` ENUM('owner','member') NOT NULL DEFAULT 'member',
@@ -83,7 +83,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Product categories (managed by the admins) with a generic tip about expiry
-"CREATE TABLE IF NOT EXISTS `{$p}categories` (
+        "CREATE TABLE IF NOT EXISTS `{$p}categories` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(60) NOT NULL,
   `expiry_tip` TEXT NULL,
@@ -94,12 +94,13 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Product catalog (managed by the admins): used for suggestions, icons and recipe ingredients
-"CREATE TABLE IF NOT EXISTS `{$p}products` (
+        "CREATE TABLE IF NOT EXISTS `{$p}products` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(80) NOT NULL,
   `icon` VARCHAR(40) NOT NULL DEFAULT 'vegetable',
   `category_id` INT UNSIGNED NULL,
   `default_unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
+  `environment` VARCHAR(10) NULL COMMENT 'cold, cool, ambient or warm; NULL = not set',
   `expiry_tip` TEXT NULL,
   `i18n` TEXT NULL COMMENT 'translations as JSON, keyed by language code',
   `active` TINYINT(1) NOT NULL DEFAULT 1,
@@ -111,11 +112,12 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Spaces of the house (fridge, pantry, freezer...)
-"CREATE TABLE IF NOT EXISTS `{$p}spaces` (
+        "CREATE TABLE IF NOT EXISTS `{$p}spaces` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `name` VARCHAR(60) NOT NULL,
   `icon` VARCHAR(40) NOT NULL DEFAULT 'fridge',
+  `environment` VARCHAR(10) NOT NULL DEFAULT 'ambient' COMMENT 'cold, cool, ambient or warm',
   `notes` VARCHAR(500) NOT NULL DEFAULT '',
   `sort` INT NOT NULL DEFAULT 0,
   `created_by` INT UNSIGNED NULL,
@@ -128,7 +130,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Food stored in a space
-"CREATE TABLE IF NOT EXISTS `{$p}items` (
+        "CREATE TABLE IF NOT EXISTS `{$p}items` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `space_id` INT UNSIGNED NOT NULL,
@@ -158,7 +160,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Shopping lists
-"CREATE TABLE IF NOT EXISTS `{$p}lists` (
+        "CREATE TABLE IF NOT EXISTS `{$p}lists` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `name` VARCHAR(60) NOT NULL,
@@ -173,7 +175,7 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}li_user` FOREIGN KEY (`created_by`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}list_items` (
+        "CREATE TABLE IF NOT EXISTS `{$p}list_items` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `list_id` INT UNSIGNED NOT NULL,
   `product_id` INT UNSIGNED NULL,
@@ -182,6 +184,7 @@ function schema_statements(string $p = 'ft_'): array
   `quantity` DECIMAL(10,3) NULL,
   `unit` VARCHAR(16) NOT NULL DEFAULT 'pz',
   `notes` VARCHAR(500) NOT NULL DEFAULT '',
+  `environment` VARCHAR(10) NULL COMMENT 'overrides the one of the product; NULL = use the product one',
   `in_cart` TINYINT(1) NOT NULL DEFAULT 0,
   `created_by` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
@@ -194,7 +197,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Recipes (managed by the admins)
-"CREATE TABLE IF NOT EXISTS `{$p}recipes` (
+        "CREATE TABLE IF NOT EXISTS `{$p}recipes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(120) NOT NULL,
   `description` VARCHAR(500) NOT NULL DEFAULT '',
@@ -215,7 +218,7 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}rec_user` FOREIGN KEY (`created_by`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}recipe_ingredients` (
+        "CREATE TABLE IF NOT EXISTS `{$p}recipe_ingredients` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `recipe_id` INT UNSIGNED NOT NULL,
   `product_id` INT UNSIGNED NULL,
@@ -231,7 +234,7 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}ri_prod` FOREIGN KEY (`product_id`) REFERENCES `{$p}products` (`id`) ON DELETE SET NULL
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}recipe_steps` (
+        "CREATE TABLE IF NOT EXISTS `{$p}recipe_steps` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `recipe_id` INT UNSIGNED NOT NULL,
   `sort` INT NOT NULL DEFAULT 0,
@@ -241,7 +244,7 @@ function schema_statements(string $p = 'ft_'): array
   CONSTRAINT `fk_{$p}rs_rec` FOREIGN KEY (`recipe_id`) REFERENCES `{$p}recipes` (`id`) ON DELETE CASCADE
 ) $opts",
 
-"CREATE TABLE IF NOT EXISTS `{$p}favorites` (
+        "CREATE TABLE IF NOT EXISTS `{$p}favorites` (
   `user_id` INT UNSIGNED NOT NULL,
   `recipe_id` INT UNSIGNED NOT NULL,
   `created_at` DATETIME NOT NULL,
@@ -251,7 +254,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Weekly meal plan of a household
-"CREATE TABLE IF NOT EXISTS `{$p}meal_plan` (
+        "CREATE TABLE IF NOT EXISTS `{$p}meal_plan` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `plan_date` DATE NOT NULL,
@@ -268,7 +271,7 @@ function schema_statements(string $p = 'ft_'): array
 ) $opts",
 
 // Household activity history (item consume, add, delete, edit) with undo support
-"CREATE TABLE IF NOT EXISTS `{$p}history` (
+        "CREATE TABLE IF NOT EXISTS `{$p}history` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `household_id` INT UNSIGNED NOT NULL,
   `user_id` INT UNSIGNED NULL,
@@ -303,6 +306,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v9: cover images of the initial recipes of batches 2 and 3 (only where the recipe still has no image)
  *  v10: household activity history table (`history`)
  *  v11: remaining cover images for initial recipes (only where the recipe still has no image)
+ *  v12: storage environment of products, list items and spaces (existing rows get a value from the seed and from the space icon)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -338,7 +342,10 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         foreach ($pdo->query("SELECT id, i18n FROM `{$p}recipes` WHERE i18n IS NOT NULL")->fetchAll() as $r) {
             $d = json_decode((string)$r['i18n'], true) ?: [];
             $changed = false;
-            foreach ($d as $lg => $tr) if (is_array($tr) && !empty($tr['name']) && empty($tr['status'])) { $d[$lg]['status'] = 'published'; $changed = true; }
+            foreach ($d as $lg => $tr) if (is_array($tr) && !empty($tr['name']) && empty($tr['status'])) {
+                $d[$lg]['status'] = 'published';
+                $changed = true;
+            }
             if ($changed) $up->execute([json_encode($d, JSON_UNESCAPED_UNICODE), $r['id']]);
         }
     }
@@ -380,6 +387,21 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
         foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
     }
+    if ($from < 12) {
+        require_once __DIR__ . '/seed.php';
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}products`")->fetchAll(), 'Field');
+        if (!in_array('environment', $cols, true)) $pdo->exec("ALTER TABLE `{$p}products` ADD COLUMN `environment` VARCHAR(10) NULL AFTER `default_unit`");
+        $st = $pdo->prepare("UPDATE `{$p}products` SET environment = ? WHERE name = ? AND environment IS NULL");
+        foreach (seed_products() as $row) $st->execute([seed_product_environment($row[0], $row[2]), $row[0]]);
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}list_items`")->fetchAll(), 'Field');
+        if (!in_array('environment', $cols, true)) $pdo->exec("ALTER TABLE `{$p}list_items` ADD COLUMN `environment` VARCHAR(10) NULL AFTER `notes`");
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}spaces`")->fetchAll(), 'Field');
+        if (!in_array('environment', $cols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}spaces` ADD COLUMN `environment` VARCHAR(10) NOT NULL DEFAULT 'ambient' AFTER `icon`");
+            $pdo->exec("UPDATE `{$p}spaces` SET environment = 'cold' WHERE icon = 'freezer'");
+            $pdo->exec("UPDATE `{$p}spaces` SET environment = 'cool' WHERE icon IN ('fridge', 'snow')");
+        }
+    }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }
 
@@ -387,7 +409,11 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
 function install_schema(PDO $pdo, string $prefix): void
 {
     $from = 0;
-    try { $from = (int)$pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn(); } catch (Throwable $e) { $from = 0; }
+    try {
+        $from = (int)$pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn();
+    } catch (Throwable $e) {
+        $from = 0;
+    }
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
     if ($from > 0 && $from < SCHEMA_VERSION) migrate_schema($pdo, $prefix, $from);
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")

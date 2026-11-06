@@ -81,7 +81,9 @@ $canonical = '/projects/savmrl/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2024 – present <span class="book-meta-note">· <?php $years = date('Y') - 2024; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2024 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2024;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
@@ -105,7 +107,8 @@ $canonical = '/projects/savmrl/';
                     </svg>
                     Install on Firefox
                 </a>
-                <a href="https://chromewebstore.google.com/detail/savmrlit/pkbjoeedhjjokllfhgcapbbihianeemn" target="_blank" rel="noopener"
+                <a href="https://chromewebstore.google.com/detail/savmrlit/pkbjoeedhjjokllfhgcapbbihianeemn"
+                   target="_blank" rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -115,7 +118,8 @@ $canonical = '/projects/savmrl/';
                     </svg>
                     Install on Chrome
                 </a>
-                <a href="https://microsoftedge.microsoft.com/addons/detail/jdgcfpdoiojfebhafmihkihficfnpahk" target="_blank" rel="noopener"
+                <a href="https://microsoftedge.microsoft.com/addons/detail/jdgcfpdoiojfebhafmihkihficfnpahk"
+                   target="_blank" rel="noopener"
                    class="book-btn book-btn-secondary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                          stroke-linejoin="round">
@@ -141,18 +145,28 @@ $canonical = '/projects/savmrl/';
 
 <section class="section" style="padding-top: 0;">
     <div class="addon-screenshots">
-        <h2 class="addon-screenshots-title">Screenshots <span class="section-title-note">· savmrl.it companion (browser add-on)</span></h2>
+        <h2 class="addon-screenshots-title">Screenshots <span class="section-title-note">· savmrl.it companion (browser add-on)</span>
+        </h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: savmrl.it companion promo banner with the savmrl.it logo and the name Saverio Morelli">
-                <img src="/images/projects/screenshots/savmrl/addon-1.png" alt="savmrl.it companion promo banner with the savmrl.it logo and the name Saverio Morelli" width="1024" height="500"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: savmrl.it companion promo banner with the savmrl.it logo and the name Saverio Morelli">
+                <img src="/images/projects/screenshots/savmrl/addon-1.png"
+                     alt="savmrl.it companion promo banner with the savmrl.it logo and the name Saverio Morelli"
+                     width="1024" height="500"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Firefox toolbar with the savmrl.it companion icon highlighted and the caption “Click the icon on toolbar”">
-                <img src="/images/projects/screenshots/savmrl/addon-2.png" alt="Firefox toolbar with the savmrl.it companion icon highlighted and the caption “Click the icon on toolbar”" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Firefox toolbar with the savmrl.it companion icon highlighted and the caption “Click the icon on toolbar”">
+                <img src="/images/projects/screenshots/savmrl/addon-2.png"
+                     alt="Firefox toolbar with the savmrl.it companion icon highlighted and the caption “Click the icon on toolbar”"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: savmrl.it opened by the add-on with the current page already shortened, buttons to copy the link, generate another one or see click statistics, and a QR code">
-                <img src="/images/projects/screenshots/savmrl/addon-3.png" alt="savmrl.it opened by the add-on with the current page already shortened, buttons to copy the link, generate another one or see click statistics, and a QR code" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: savmrl.it opened by the add-on with the current page already shortened, buttons to copy the link, generate another one or see click statistics, and a QR code">
+                <img src="/images/projects/screenshots/savmrl/addon-3.png"
+                     alt="savmrl.it opened by the add-on with the current page already shortened, buttons to copy the link, generate another one or see click statistics, and a QR code"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
         </div>
@@ -161,7 +175,8 @@ $canonical = '/projects/savmrl/';
 
 <section class="section" style="padding-top: 0;">
     <div class="addon-timeline">
-        <h2 class="addon-timeline-title">Changelog <span class="section-title-note">· savmrl.it (web service)</span></h2>
+        <h2 class="addon-timeline-title">Changelog <span class="section-title-note">· savmrl.it (web service)</span>
+        </h2>
         <p class="addon-timeline-external">The full changelog is available on the official website.</p>
         <a href="https://www.savmrl.it/changelog/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -177,7 +192,8 @@ $canonical = '/projects/savmrl/';
 
 <section class="section" style="padding-top: 0;">
     <div class="addon-timeline">
-        <h2 class="addon-timeline-title">Changelog <span class="section-title-note">· savmrl.it companion (browser add-on)</span></h2>
+        <h2 class="addon-timeline-title">Changelog <span class="section-title-note">· savmrl.it companion (browser add-on)</span>
+        </h2>
         <div class="timeline-list">
             <div class="timeline-item major">
                 <span class="timeline-version">v2.0</span>
