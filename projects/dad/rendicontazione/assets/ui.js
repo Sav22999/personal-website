@@ -126,9 +126,10 @@ function holidayName(iso) {
 
 /* ---- hours ---- */
 
-/** 480 -> "8 h", 510 -> "8 h 30" */
+/** 480 -> "8 h", 510 -> "8 h 30", 104700 -> "1.745 h" */
 function fmtHours(minutes) {
-    const hours = Math.floor(minutes / 60), rest = minutes % 60;
+    // Not toLocaleString: for Italian it can leave four-digit numbers without the dot
+    const hours = String(Math.floor(minutes / 60)).replace(/\B(?=(\d{3})+$)/g, '.'), rest = minutes % 60;
     return rest ? `${hours} h ${pad(rest)}` : `${hours} h`;
 }
 

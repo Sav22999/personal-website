@@ -551,6 +551,10 @@ dl.change dt { color: var(--muted); }
 /* ---- phones: tabs at the bottom, within reach of the thumb ---- */
 
 @media (max-width: 759px) {
+    /* Large text must still fit a phone: the year's totals are what this screen is for */
+    :root[data-text="large"] .stat strong { font-size: 1.1rem; }
+    :root[data-text="large"] .stats { gap: .3rem; }
+    :root[data-text="large"] table.year th, :root[data-text="large"] table.year td { padding: .55rem .3rem; font-size: .8rem; }
     .brand span { display: none; }
     .top { justify-content: space-between; min-height: 52px; }
     .switcher { margin-left: auto; }
