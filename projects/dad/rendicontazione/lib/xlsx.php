@@ -376,7 +376,9 @@ function xlsx_export(int $userId, int $year): string
         . '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
         . '<xf numFmtId="165" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
         . '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
+        . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
         . '</styleSheet>';
 
-    return xlsx_zip($files);
+    // Readers expect the content types as the first entry of the package
+    return xlsx_zip(['[Content_Types].xml' => $files['[Content_Types].xml']] + $files);
 }

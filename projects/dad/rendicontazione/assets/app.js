@@ -1,1434 +1,952 @@
 /**
- * Rendicontazione Ore — Main Application Controller (Vanilla JS SPA).
- * Handles authentication, real-time hours calculation, multi-shift management,
- * month/year navigation, admin user approvals, and export.
+ * Rendicontazione Ore: the application. Views: month, year, history, settings.
+ * Server rules are the real protection: the interface only hides what the API would refuse.
  */
-
 'use strict';
 
-const App = {
-    state: {
-        currentUser: null,
-        activeView: 'month', // 'month', 'year', 'users'
-        currentYear: 2026,
-        currentMonth: 11,
-        targetUserId: 0,
-        targetUserName: '',
-        monthData: null,
-        yearData: null,
-        usersList: [],
-        presets: [],
-        pendingCount: 0,
-        googleClientId: '',
-        theme: 'dark',
-    },
-
-    async init() {
-        // 1. Initialize Theme
-        const savedTheme = localStorage.getItem('dad_rend_theme') || 'dark';
-        this.setTheme(savedTheme);
-
-        // 2. Load API Config
-        try {
-            const cfg = await this.api('config');
-            if (cfg.ok) {
-                this.state.googleClientId = cfg.googleClientId;
-            }
-        } catch (e) {
-            console.error('Config fetch failed:', e);
-        }
-
-        // 3. Set initial year & month (default to 2026 Nov or current)
-        const now = new Date();
-        this.state.currentYear = now.getFullYear();
-        this.state.currentMonth = now.getMonth() + 1;
-
-        // 4. Check Authentication
-        await this.checkAuth();
-
-        // 5. Setup Event Listeners
-        this.setupEventListeners();
-    },
-
-    setTheme(theme) {
-        this.state.theme = theme;
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('dad_rend_theme', theme);
-        const icon = document.getElementById('theme-icon');
-        if (icon) {
-            icon.textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
-    },
-
-    toggleTheme() {
-        this.setTheme(this.state.theme === 'dark' ? 'light' : 'dark');
-    },
-
-    // --- API HELPER ---
-    async api(action, method = 'GET', data = null) {
-        const url = `api/index.php?action=${encodeURIComponent(action)}`;
-        const opts = {
-            method,
-            headers: {
-                'Accept': 'application/json',
-            },
-        };
-
-        if (data && method !== 'GET') {
-            opts.headers['Content-Type'] = 'application/json';
-            opts.body = JSON.stringify(data);
-        }
-
-        const res = await fetch(url, opts);
-        const json = await res.json();
-        if (!res.ok && !json.ok) {
-            throw new Error(json.error || 'Errore di comunicazione con il server');
-        }
-        return json;
-    },
-
-    // --- AUTHENTICATION ---
-    async checkAuth() {
-        try {
-            const res = await this.api('auth.me');
-            if (res.ok && res.authenticated && res.user) {
-                this.state.currentUser = res.user;
-                this.state.pendingCount = res.pending_users_count || 0;
-                this.renderAppShell();
-                this.loadActiveView();
-            } else {
-                this.state.currentUser = null;
-                this.renderLoginView();
-            }
-        } catch (e) {
-            this.state.currentUser = null;
-            this.renderLoginView();
-        }
-    },
-
-    async handleGoogleCredential(credential) {
-        try {
-            this.showToast('Accesso in corso...');
-            const res = await this.api('auth.google', 'POST', { credential });
-            if (res.ok) {
-                this.state.currentUser = res.user;
-                this.state.pendingCount = res.pending_users_count || 0;
-                this.showToast(`Benvenuto, ${res.user.name}!`);
-                this.renderAppShell();
-                this.loadActiveView();
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    async devLogin(role = 10) {
-        try {
-            this.showToast('Accesso di sviluppo...');
-            const res = await this.api('auth.dev_login', 'POST', { role });
-            if (res.ok) {
-                this.state.currentUser = res.user;
-                this.showToast(`Connesso come ${res.user.name}`);
-                this.renderAppShell();
-                this.loadActiveView();
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    async logout() {
-        try {
-            await this.api('auth.logout', 'POST');
-        } catch (e) {}
-        this.state.currentUser = null;
-        this.state.targetUserId = 0;
-        this.renderLoginView();
-    },
-
-    // --- VIEW SWITCHING ---
-    switchView(viewName) {
-        this.state.activeView = viewName;
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.view === viewName);
-        });
-        this.loadActiveView();
-    },
-
-    async loadActiveView() {
-        if (!this.state.currentUser) return;
-
-        // If user is pending manual approval:
-        if (this.state.currentUser.status === 'pending') {
-            this.renderPendingApprovalView();
-            return;
-        }
-
-        // If user is rejected or disabled:
-        if (this.state.currentUser.status !== 'active') {
-            this.renderInactiveView();
-            return;
-        }
-
-        if (this.state.activeView === 'month') {
-            await this.loadMonthData();
-        } else if (this.state.activeView === 'year') {
-            await this.loadYearData();
-        } else if (this.state.activeView === 'users') {
-            await this.loadUsersData();
-        } else if (this.state.activeView === 'history') {
-            await this.loadHistoryData();
-        }
-    },
-
-    // --- MONTH VIEW ---
-    async loadMonthData() {
-        const main = document.getElementById('view-container');
-        if (!main) return;
-        main.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted)">Caricamento orari...</div>';
-
-        try {
-            const targetParam = this.state.targetUserId > 0 ? `&target_user_id=${this.state.targetUserId}` : '';
-            const res = await this.api(`hours.month&year=${this.state.currentYear}&month=${this.state.currentMonth}${targetParam}`);
-            if (res.ok) {
-                this.state.monthData = res.data;
-                this.state.targetUserName = res.target_user.name;
-                this.renderMonthView();
-            }
-        } catch (e) {
-            main.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger)">Errore: ${e.message}</div>`;
-        }
-    },
-
-    renderMonthView() {
-        const m = this.state.monthData;
-        if (!m) return;
-        const main = document.getElementById('view-container');
-        if (!main) return;
-
-        const isAdmin = (this.state.currentUser.role >= 9);
-        const isViewingOther = (this.state.targetUserId > 0 && this.state.targetUserId !== this.state.currentUser.id);
-
-        let html = '';
-
-        // Admin context switch notice
-        if (isAdmin && isViewingOther) {
-            html += `
-                <div class="admin-context-bar">
-                    <div class="admin-context-label">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <span>Stai consultando e gestendo le ore di: <strong>${this.escape(this.state.targetUserName)}</strong></span>
-                    </div>
-                    <button class="btn btn-secondary btn-sm" onclick="App.setTargetUser(0)">
-                        Torna alle mie ore
-                    </button>
-                </div>
-            `;
-        }
-
-        // Controls bar: Month switcher & quick buttons
-        html += `
-            <div class="control-bar">
-                <div class="period-switcher">
-                    <button class="btn btn-secondary btn-icon" onclick="App.prevMonth()" title="Mese precedente">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    </button>
-                    <div class="current-period-title">${m.month_name} ${m.year}</div>
-                    <button class="btn btn-secondary btn-icon" onclick="App.nextMonth()" title="Mese successivo">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="App.goToToday()" style="margin-left:8px;">Oggi</button>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="App.openAddDayModal()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Aggiungi Giornata
-                    </button>
-                    <button class="btn btn-secondary" onclick="App.applyQuickPresetToday()" title="Segna il turno standard per la giornata odierna">
-                        ⚡ Turno Standard Oggi
-                    </button>
-                    <button class="btn btn-secondary" onclick="App.exportCsv()" title="Esporta in CSV">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Esporta CSV
-                    </button>
-                    <button class="btn btn-secondary btn-icon" onclick="window.print()" title="Stampa o Salva PDF">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Monthly Summary Stats Cards
-        html += `
-            <div class="stats-grid">
-                <div class="stat-card accent-card">
-                    <span class="stat-label">Ore Ordinarie</span>
-                    <span class="stat-value">${m.totals.ordinary_formatted}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">${m.totals.ordinary_hours.toFixed(1)} ore decimali</span>
-                </div>
-                <div class="stat-card warning-card">
-                    <span class="stat-label">Ore Straordinarie</span>
-                    <span class="stat-value">${m.totals.overtime_formatted}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">${m.totals.overtime_hours.toFixed(1)} ore decimali</span>
-                </div>
-                <div class="stat-card success-card">
-                    <span class="stat-label">Totale Ore Mese</span>
-                    <span class="stat-value">${m.totals.total_formatted}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">${m.totals.total_human} complessive</span>
-                </div>
-                <div class="stat-card info-card">
-                    <span class="stat-label">Giorni Lavorati</span>
-                    <span class="stat-value">${m.totals.days_worked}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">su ${m.days.length} giorni di calendario</span>
-                </div>
-            </div>
-        `;
-
-        // Printable header
-        html += `
-            <div class="print-header">
-                <h2>Rendicontazione Ore &middot; ${m.month_name} ${m.year}</h2>
-                <p>Lavoratore: <strong>${this.escape(this.state.targetUserName || this.state.currentUser.name)}</strong> &middot; Totale Ore: <strong>${m.totals.total_formatted}</strong> (${m.totals.ordinary_formatted} ord. + ${m.totals.overtime_formatted} straord.)</p>
-            </div>
-        `;
-
-        // Table
-        html += `
-            <div class="timesheet-card">
-                <div class="table-responsive">
-                    <table class="timesheet-table">
-                        <thead>
-                            <tr>
-                                <th style="width:160px">Data</th>
-                                <th style="width:105px">Orario Inizio</th>
-                                <th style="width:105px">Orario Fine</th>
-                                <th style="width:120px">Tipo</th>
-                                <th style="width:110px">Ordinarie</th>
-                                <th style="width:110px">Straordinarie</th>
-                                <th style="width:130px">Progressivo</th>
-                                <th>Note ed Eventi</th>
-                                <th style="width:90px; text-align:right">Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
-
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        m.days.forEach(d => {
-            const isToday = (d.date === todayStr);
-            const rowClass = [
-                d.is_weekend ? 'weekend-row' : '',
-                isToday ? 'today-row' : '',
-                d.day_type !== 'work' ? 'holiday-row' : '',
-            ].filter(Boolean).join(' ');
-
-            const shifts = d.shifts || [];
-
-            if (shifts.length === 0) {
-                // Single day row without shifts (e.g. rest day, sickness, or holiday)
-                let noteTags = '';
-                if (d.notes) {
-                    noteTags = this.renderNoteBadges(d.notes, d.day_type);
-                } else if (d.is_weekend) {
-                    noteTags = '<span style="color:var(--text-muted); font-size:0.8rem">Riposo settimanale</span>';
-                }
-
-                html += `
-                    <tr class="${rowClass}">
-                        <td>
-                            <div class="day-cell">
-                                <span class="day-cell-main">${d.day_name} ${d.day_number}</span>
-                                <span class="day-cell-sub">${d.date}</span>
-                            </div>
-                        </td>
-                        <td colspan="3" style="color:var(--text-muted); font-size:0.85rem">
-                            ${d.day_type !== 'work' ? `<span class="badge badge-pending">${d.day_type.toUpperCase()}</span>` : '—'}
-                        </td>
-                        <td class="time-badge">${d.has_entry ? d.hours_ordinary_formatted : '—'}</td>
-                        <td class="time-badge">${d.has_entry ? d.hours_overtime_formatted : '—'}</td>
-                        <td class="time-badge" style="color:var(--text-secondary)">${d.cumulative_hours > 0 ? d.cumulative_hours_formatted : '—'}</td>
-                        <td>${noteTags}</td>
-                        <td style="text-align:right">
-                            <button class="btn btn-secondary btn-sm" onclick="App.openEditDayModal('${d.date}')" title="Modifica giornata">
-                                ✏️
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            } else {
-                // Multi-shift rows grouped under this date
-                shifts.forEach((s, idx) => {
-                    const isFirst = (idx === 0);
-                    html += `
-                        <tr class="${rowClass}">
-                            <td>
-                                ${isFirst ? `
-                                    <div class="day-cell">
-                                        <span class="day-cell-main">${d.day_name} ${d.day_number}</span>
-                                        <span class="day-cell-sub">${d.date}</span>
-                                    </div>
-                                ` : ''}
-                            </td>
-                            <td class="time-badge">${s.start_time || '—'}</td>
-                            <td class="time-badge">${s.end_time || '—'}</td>
-                            <td>
-                                ${s.is_overtime ? '<span class="shift-tag tag-str">Straordinario</span>' : '<span class="shift-tag tag-ord">Ordinario</span>'}
-                            </td>
-                            <td class="time-badge">${s.hours_ordinary > 0 ? App.formatHoursHms(s.hours_ordinary) : ''}</td>
-                            <td class="time-badge" style="color:var(--warning)">${s.hours_overtime > 0 ? App.formatHoursHms(s.hours_overtime) : ''}</td>
-                            <td class="time-badge" style="font-weight:700">
-                                ${isFirst ? d.cumulative_hours_formatted : ''}
-                            </td>
-                            <td>
-                                ${this.renderNoteBadges(s.notes || (isFirst ? d.notes : ''), d.day_type)}
-                            </td>
-                            <td style="text-align:right">
-                                ${isFirst ? `
-                                    <button class="btn btn-secondary btn-sm" onclick="App.openEditDayModal('${d.date}')" title="Modifica giornata">
-                                        ✏️
-                                    </button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-        });
-
-        // Table footer with sums
-        html += `
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" style="text-align:right; font-weight:700">TOTALE MESE:</td>
-                                <td class="time-badge" style="color:var(--accent)">${m.totals.ordinary_formatted}</td>
-                                <td class="time-badge" style="color:var(--warning)">${m.totals.overtime_formatted}</td>
-                                <td class="time-badge" style="color:var(--success)">${m.totals.total_formatted}</td>
-                                <td colspan="2" style="font-size:0.85rem; color:var(--text-secondary)">
-                                    ${m.totals.total_human} complessive su ${m.totals.days_worked} giornate
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        `;
-
-        main.innerHTML = html;
-    },
-
-    renderNoteBadges(text, dayType) {
-        if (!text && !dayType) return '';
-        const lower = (text || '').toLowerCase();
-        const pills = [];
-
-        if (lower.includes('pioggia')) {
-            pills.push('<span class="tag-event tag-rain">☔ Pioggia / Intemperie</span>');
-        }
-        if (lower.includes('malattia') || dayType === 'malattia') {
-            pills.push('<span class="tag-event tag-illness">🏥 Malattia</span>');
-        }
-        if (lower.includes('ferie') || dayType === 'ferie') {
-            pills.push('<span class="tag-event tag-leave">🏖️ Ferie</span>');
-        }
-        if (lower.includes('permesso') || dayType === 'permesso') {
-            pills.push('<span class="tag-event tag-doctor">⏱️ Permesso</span>');
-        }
-        if (lower.includes('medico') || lower.includes('ospedale') || lower.includes('sangue')) {
-            pills.push('<span class="tag-event tag-doctor">🩺 Visita Medica</span>');
-        }
-
-        let result = pills.join(' ');
-        if (text) {
-            result += ` <span style="font-size:0.85rem; color:var(--text-secondary); margin-left:4px;">${this.escape(text)}</span>`;
-        }
-        return result;
-    },
-
-    // --- YEAR VIEW ---
-    async loadYearData() {
-        const main = document.getElementById('view-container');
-        if (!main) return;
-        main.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted)">Caricamento riepilogo annuale...</div>';
-
-        try {
-            const targetParam = this.state.targetUserId > 0 ? `&target_user_id=${this.state.targetUserId}` : '';
-            const res = await this.api(`hours.year&year=${this.state.currentYear}${targetParam}`);
-            if (res.ok) {
-                this.state.yearData = res.data;
-                this.renderYearView();
-            }
-        } catch (e) {
-            main.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger)">Errore: ${e.message}</div>`;
-        }
-    },
-
-    renderYearView() {
-        const y = this.state.yearData;
-        if (!y) return;
-        const main = document.getElementById('view-container');
-        if (!main) return;
-
-        let html = `
-            <div class="control-bar">
-                <div class="period-switcher">
-                    <button class="btn btn-secondary btn-icon" onclick="App.prevYear()" title="Anno precedente">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    </button>
-                    <div class="current-period-title">Anno ${y.year}</div>
-                    <button class="btn btn-secondary btn-icon" onclick="App.nextYear()" title="Anno successivo">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-secondary" onclick="App.exportCsv(null)" title="Esporta l'intero anno in CSV">
-                        📥 Esporta Anno Intero (CSV)
-                    </button>
-                    <button class="btn btn-secondary btn-icon" onclick="window.print()" title="Stampa Riepilogo">
-                        🖨️
-                    </button>
-                </div>
-            </div>
-
-            <!-- Big Annual Stat Cards -->
-            <div class="stats-grid">
-                <div class="stat-card accent-card">
-                    <span class="stat-label">Ore Ordinarie Totali</span>
-                    <span class="stat-value">${y.totals.ordinary_formatted}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">${y.totals.ordinary_hours.toFixed(1)} ore decimali</span>
-                </div>
-                <div class="stat-card warning-card">
-                    <span class="stat-label">Ore Straordinarie Totali</span>
-                    <span class="stat-value">${y.totals.overtime_formatted}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">${y.totals.overtime_hours.toFixed(1)} ore decimali</span>
-                </div>
-                <div class="stat-card success-card">
-                    <span class="stat-label">Totale Ore Lavorate</span>
-                    <span class="stat-value">${y.totals.total_formatted}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">${y.totals.total_human} nel ${y.year}</span>
-                </div>
-                <div class="stat-card info-card">
-                    <span class="stat-label">Giorni Lavorati</span>
-                    <span class="stat-value">${y.totals.days_worked}</span>
-                    <span style="font-size:0.8rem; color:var(--text-muted)">Media: ${y.totals.avg_hours_per_worked_day} ore/giorno &middot; ☔ ${y.totals.rain_days} giorni pioggia</span>
-                </div>
-            </div>
-
-            <h3 style="font-size:1.15rem; margin: 30px 0 16px;">Riepilogo Mese per Mese</h3>
-            <div class="year-grid">
-        `;
-
-        y.months.forEach(m => {
-            const hasHours = (m.total_hours > 0);
-            html += `
-                <div class="month-card" onclick="App.selectMonth(${m.month})">
-                    <div class="month-card-header">
-                        <span class="month-card-title">${m.month_name}</span>
-                        <span class="badge ${hasHours ? 'badge-user' : 'badge-rejected'}">
-                            ${hasHours ? `${m.days_worked} gg` : 'Vuoto'}
-                        </span>
-                    </div>
-                    <div class="month-card-stats">
-                        <div class="month-stat-item">
-                            <span class="month-stat-label">ORDINARIE</span>
-                            <span class="month-stat-val" style="color:var(--accent)">${m.ordinary_formatted}</span>
-                        </div>
-                        <div class="month-stat-item">
-                            <span class="month-stat-label">STRAORDINARIE</span>
-                            <span class="month-stat-val" style="color:var(--warning)">${m.overtime_formatted}</span>
-                        </div>
-                    </div>
-                    <div style="margin-top:auto; padding-top:10px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.85rem; color:var(--text-muted)">Totale:</span>
-                        <span style="font-weight:800; font-size:1.15rem; color:var(--success)">${m.total_formatted}</span>
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `</div>`;
-        main.innerHTML = html;
-    },
-
-    selectMonth(m) {
-        this.state.currentMonth = m;
-        this.switchView('month');
-    },
-
-    prevMonth() {
-        if (this.state.currentMonth === 1) {
-            this.state.currentMonth = 12;
-            this.state.currentYear--;
-        } else {
-            this.state.currentMonth--;
-        }
-        this.loadMonthData();
-    },
-
-    nextMonth() {
-        if (this.state.currentMonth === 12) {
-            this.state.currentMonth = 1;
-            this.state.currentYear++;
-        } else {
-            this.state.currentMonth++;
-        }
-        this.loadMonthData();
-    },
-
-    goToToday() {
-        const now = new Date();
-        this.state.currentYear = now.getFullYear();
-        this.state.currentMonth = now.getMonth() + 1;
-        this.loadMonthData();
-    },
-
-    prevYear() {
-        this.state.currentYear--;
-        this.loadYearData();
-    },
-
-    nextYear() {
-        this.state.currentYear++;
-        this.loadYearData();
-    },
-
-    // --- USERS & APPROVALS (ADMIN) ---
-    async loadUsersData() {
-        const main = document.getElementById('view-container');
-        if (!main) return;
-        main.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted)">Caricamento utenti...</div>';
-
-        try {
-            const res = await this.api('users.list');
-            if (res.ok) {
-                this.state.usersList = res.users;
-                this.state.pendingCount = res.pending_count;
-                this.renderUsersView();
-            }
-        } catch (e) {
-            main.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger)">Errore: ${e.message}</div>`;
-        }
-    },
-
-    renderUsersView() {
-        const users = this.state.usersList || [];
-        const main = document.getElementById('view-container');
-        if (!main) return;
-
-        const isMaster = (this.state.currentUser.role >= 10);
-        const pendingUsers = users.filter(u => u.status === 'pending');
-
-        let html = `
-            <div style="margin-bottom:24px;">
-                <h2 style="font-size:1.4rem; font-weight:700; margin-bottom:6px;">Gestione Utenti e Accessi</h2>
-                <p style="color:var(--text-secondary); font-size:0.95rem;">
-                    Come amministratore puoi approvare manualmente i nuovi account registrati con Google, promuovere o declassare ruoli e consultare le ore dei lavoratori.
-                </p>
-            </div>
-        `;
-
-        if (pendingUsers.length > 0) {
-            html += `
-                <div class="pending-callout">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--warning); flex-shrink:0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <div>
-                        <strong style="color:var(--warning); font-size:1.05rem;">Ci sono ${pendingUsers.length} utente/i in attesa di approvazione!</strong>
-                        <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:2px;">
-                            Gli utenti non approvati non possono vedere né registrare ore finché non clicchi su &laquo;Approva&raquo;.
-                        </p>
-                    </div>
-                </div>
-            `;
-        }
-
-        html += `
-            <div class="timesheet-card">
-                <div class="table-responsive">
-                    <table class="timesheet-table users-table">
-                        <thead>
-                            <tr>
-                                <th style="width:50px"></th>
-                                <th>Nome e Cognome</th>
-                                <th>Email</th>
-                                <th style="width:140px">Ruolo</th>
-                                <th style="width:160px">Stato Accesso</th>
-                                <th style="width:130px">Registrazione</th>
-                                <th style="text-align:right">Azioni Amministratore</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
-
-        users.forEach(u => {
-            const avatarHtml = u.avatar_url
-                ? `<img src="${this.escape(u.avatar_url)}" class="user-avatar" alt="">`
-                : `<div class="user-avatar" style="display:flex;align-items:center;justify-content:center;font-weight:700;background:var(--bg-elevated);">${this.escape(u.name.charAt(0))}</div>`;
-
-            let roleBadge = `<span class="badge badge-user">Utente</span>`;
-            if (u.role >= 10) roleBadge = `<span class="badge badge-master">Master Admin</span>`;
-            else if (u.role >= 9) roleBadge = `<span class="badge badge-admin">Amministratore</span>`;
-
-            let statusBadge = `<span class="badge badge-user">Attivo</span>`;
-            if (u.status === 'pending') statusBadge = `<span class="badge badge-pending">In Attesa</span>`;
-            else if (u.status === 'rejected') statusBadge = `<span class="badge badge-rejected">Rifiutato</span>`;
-            else if (u.status === 'disabled') statusBadge = `<span class="badge badge-rejected">Disabilitato</span>`;
-
-            const isSelf = (u.id === this.state.currentUser.id);
-
-            html += `
-                <tr>
-                    <td>${avatarHtml}</td>
-                    <td>
-                        <strong style="color:var(--text)">${this.escape(u.name)}</strong>
-                        ${isSelf ? '<span style="font-size:0.75rem; color:var(--accent); margin-left:6px;">(Tu)</span>' : ''}
-                    </td>
-                    <td style="color:var(--text-secondary)">${this.escape(u.email)}</td>
-                    <td>${roleBadge}</td>
-                    <td>${statusBadge}</td>
-                    <td style="font-size:0.8rem; color:var(--text-muted)">${u.created_at ? u.created_at.split(' ')[0] : '—'}</td>
-                    <td style="text-align:right">
-                        <div style="display:inline-flex; gap:6px; align-items:center;">
-                            ${u.status === 'pending' ? `
-                                <button class="btn btn-success btn-sm" onclick="App.approveUser(${u.id})">
-                                    ✓ Approva
-                                </button>
-                                <button class="btn btn-danger btn-sm" onclick="App.rejectUser(${u.id})">
-                                    ✕ Rifiuta
-                                </button>
-                            ` : ''}
-
-                            ${u.status === 'active' && !isSelf ? `
-                                <button class="btn btn-secondary btn-sm" onclick="App.setTargetUser(${u.id})" title="Visualizza e gestisci le ore di questo utente">
-                                    👁️ Vedi Ore
-                                </button>
-                            ` : ''}
-
-                            ${isMaster && !isSelf ? `
-                                ${u.role < 9 ? `
-                                    <button class="btn btn-secondary btn-sm" onclick="App.setUserRole(${u.id}, 9)" title="Promuovi ad Amministratore">
-                                        Rendi Admin
-                                    </button>
-                                ` : `
-                                    <button class="btn btn-secondary btn-sm" onclick="App.setUserRole(${u.id}, 1)" title="Imposta come semplice Utente">
-                                        Rendi Utente
-                                    </button>
-                                `}
-                            ` : ''}
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-
-        html += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-
-        main.innerHTML = html;
-    },
-
-    async approveUser(userId) {
-        try {
-            const res = await this.api('users.approve', 'POST', { user_id: userId });
-            if (res.ok) {
-                this.showToast('Utente approvato con successo!', 'success');
-                this.loadUsersData();
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    async rejectUser(userId) {
-        if (!confirm('Sei sicuro di voler rifiutare l\'accesso a questo utente?')) return;
-        try {
-            const res = await this.api('users.reject', 'POST', { user_id: userId });
-            if (res.ok) {
-                this.showToast('Utente rifiutato.', 'warning');
-                this.loadUsersData();
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    async setUserRole(userId, newRole) {
-        try {
-            const res = await this.api('users.set_role', 'POST', { user_id: userId, role: newRole });
-            if (res.ok) {
-                this.showToast(`Ruolo aggiornato a ${res.role_label}!`, 'success');
-                this.loadUsersData();
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    setTargetUser(targetId) {
-        this.state.targetUserId = targetId;
-        this.switchView('month');
-    },
-
-    // --- CRONOLOGIA & AUDIT LOG ---
-    async loadHistoryData() {
-        const main = document.getElementById('view-container');
-        if (!main) return;
-        main.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-muted)">Caricamento cronologia modifiche...</div>';
-
-        try {
-            const targetParam = this.state.targetUserId > 0 ? `&target_user_id=${this.state.targetUserId}` : '';
-            const res = await this.api(`history.list${targetParam}`);
-            if (res.ok) {
-                this.state.historyList = res.history || [];
-                this.state.canUndo = !!res.can_undo;
-                this.renderHistoryView();
-            }
-        } catch (e) {
-            main.innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger)">Errore: ${e.message}</div>`;
-        }
-    },
-
-    renderHistoryView() {
-        const list = this.state.historyList || [];
-        const main = document.getElementById('view-container');
-        if (!main) return;
-
-        const isAdmin = (this.state.currentUser.role >= 9);
-
-        let html = `
-            <div style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
-                <div>
-                    <h2 style="font-size:1.4rem; font-weight:700; margin-bottom:6px;">Cronologia Modifiche</h2>
-                    <p style="color:var(--text-secondary); font-size:0.95rem;">
-                        ${isAdmin 
-                            ? 'Registro completo delle modifiche ai fogli ore. In qualità di <strong>amministratore</strong> puoi annullare qualsiasi modifica per ripristinare lo stato precedente.'
-                            : 'Registro di tutte le attività e modifiche relative al tuo foglio ore. <em>(L\'annullamento delle modifiche è riservato agli amministratori).</em>'
-                        }
-                    </p>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn btn-secondary btn-sm" onclick="App.loadHistoryData()">
-                        🔄 Aggiorna
-                    </button>
-                </div>
-            </div>
-        `;
-
-        if (list.length === 0) {
-            html += `
-                <div class="timesheet-card" style="padding:48px; text-align:center; color:var(--text-muted)">
-                    <div style="font-size:2.5rem; margin-bottom:12px;">📜</div>
-                    <p style="font-size:1.05rem; font-weight:600">Nessuna modifica registrata finora</p>
-                    <p style="font-size:0.88rem; margin-top:4px">Tutte le aggiunte, modifiche o eliminazioni di turni verranno tracciate qui in automatico.</p>
-                </div>
-            `;
-            main.innerHTML = html;
-            return;
-        }
-
-        html += `<div class="history-timeline">`;
-
-        list.forEach(item => {
-            let iconClass = 'icon-update';
-            let iconChar = '✏️';
-
-            if (item.action === 'day.create') {
-                iconClass = 'icon-create';
-                iconChar = '➕';
-            } else if (item.action === 'day.delete') {
-                iconClass = 'icon-delete';
-                iconChar = '🗑️';
-            } else if (item.action === 'day.rollback') {
-                iconClass = 'icon-rollback';
-                iconChar = '↩️';
-            }
-
-            const isUndone = item.is_undone;
-            const canUndo = item.can_undo; // only true if admin and not undone
-
-            html += `
-                <div class="history-card ${isUndone ? 'is-undone' : ''}">
-                    <div class="history-left">
-                        <div class="history-icon ${iconClass}">${iconChar}</div>
-                        <div class="history-content">
-                            <div class="history-title">${this.escape(item.summary)}</div>
-                            <div class="history-meta">
-                                <span>Modificato da: <strong>${this.escape(item.actor_name)}</strong> <small>(${this.escape(item.actor_role_label)})</small></span>
-                                <span>&bull;</span>
-                                <span>Lavoratore: <strong>${this.escape(item.target_name)}</strong></span>
-                                <span>&bull;</span>
-                                <span>${this.escape(item.created_at)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
-                        ${isUndone ? `
-                            <span class="undone-badge">
-                                ✓ Annullata ${item.undone_at ? item.undone_at.split(' ')[0] : ''} da ${this.escape(item.undone_by_name || 'Admin')}
-                            </span>
-                        ` : ''}
-
-                        ${canUndo ? `
-                            <button class="btn btn-danger btn-sm" onclick="App.undoHistory(${item.id})">
-                                ↩️ Annulla Modifica
-                            </button>
-                        ` : ''}
-
-                        ${!isAdmin && !isUndone ? `
-                            <span style="font-size:0.78rem; color:var(--text-muted); font-style:italic;">
-                                Solo admin può annullare
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `</div>`;
-        main.innerHTML = html;
-    },
-
-    async undoHistory(logId) {
-        if (!this.state.canUndo && this.state.currentUser.role < 9) {
-            this.showToast('Solo gli amministratori possono annullare le modifiche.', 'danger');
-            return;
-        }
-
-        if (!confirm('Sei sicuro di voler annullare questa modifica? Lo stato precedente della giornata verrà ripristinato automaticamente.')) {
-            return;
-        }
-
-        try {
-            this.showToast('Annullamento in corso...');
-            const res = await this.api('history.undo', 'POST', { id: logId });
-            if (res.ok) {
-                this.showToast('Modifica annullata e stato precedente ripristinato!', 'success');
-                // Refresh history and month data in state
-                await this.loadHistoryData();
-                if (res.month_data && this.state.currentYear === res.month_data.year && this.state.currentMonth === res.month_data.month) {
-                    this.state.monthData = res.month_data;
-                }
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    // --- DAY & SHIFTS EDITOR MODAL ---
-    openAddDayModal(dateStr = null) {
-        if (!dateStr) {
-            const y = this.state.currentYear;
-            const m = String(this.state.currentMonth).padStart(2, '0');
-            dateStr = `${y}-${m}-01`;
-        }
-        this.renderDayModal(dateStr, 'work', '', [
-            { start_time: '07:00', end_time: '12:00', is_overtime: false, notes: '' },
-            { start_time: '13:00', end_time: '16:00', is_overtime: false, notes: '' },
-            { start_time: '16:00', end_time: '17:00', is_overtime: true, notes: '' },
-        ]);
-    },
-
-    openEditDayModal(dateStr) {
-        const m = this.state.monthData;
-        const day = m ? m.days.find(d => d.date === dateStr) : null;
-        if (!day) {
-            this.openAddDayModal(dateStr);
-            return;
-        }
-
-        const shifts = (day.shifts && day.shifts.length > 0) ? day.shifts : [
-            { start_time: '07:00', end_time: '12:00', is_overtime: false, notes: '' }
-        ];
-
-        this.renderDayModal(dateStr, day.day_type || 'work', day.notes || '', shifts);
-    },
-
-    renderDayModal(dateStr, dayType, notes, shifts) {
-        let modal = document.getElementById('day-modal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'day-modal';
-            modal.className = 'modal-backdrop';
-            document.body.appendChild(modal);
-        }
-
-        let shiftsHtml = '';
-        shifts.forEach((s, idx) => {
-            shiftsHtml += this.renderShiftRowHtml(idx, s.start_time || '', s.end_time || '', s.is_overtime || false, s.notes || '');
-        });
-
-        modal.innerHTML = `
-            <div class="modal-card">
-                <div class="modal-header">
-                    <h3 class="modal-title">Gestione Orario Giornata</h3>
-                    <button class="btn btn-secondary btn-icon" onclick="App.closeDayModal()">✕</button>
-                </div>
-                <div class="modal-body">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                        <div class="form-group">
-                            <label class="form-label">Data</label>
-                            <input type="date" id="modal-date" class="form-input" value="${dateStr}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Tipo Giornata / Assenza</label>
-                            <select id="modal-day-type" class="form-select" onchange="App.onDayTypeChange()">
-                                <option value="work" ${dayType === 'work' ? 'selected' : ''}>Lavoro normale</option>
-                                <option value="pioggia" ${dayType === 'pioggia' ? 'selected' : ''}>Uscita / Stop per Pioggia</option>
-                                <option value="malattia" ${dayType === 'malattia' ? 'selected' : ''}>Malattia</option>
-                                <option value="ferie" ${dayType === 'ferie' ? 'selected' : ''}>Ferie</option>
-                                <option value="permesso" ${dayType === 'permesso' ? 'selected' : ''}>Permesso orario</option>
-                                <option value="festivo" ${dayType === 'festivo' ? 'selected' : ''}>Festività</option>
-                                <option value="riposo" ${dayType === 'riposo' ? 'selected' : ''}>Riposo</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Shift Presets Selector -->
-                    <div>
-                        <label class="form-label">Applica Turno Predefinito Rapido</label>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="App.applyPresetToModal(1)">
-                                Invernale (7-12 / 13-16 / 16-17)
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="App.applyPresetToModal(2)">
-                                Estivo (6-14 / 14-15)
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="App.applyPresetToModal(3)">
-                                Sabato (7-12 Straord.)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Shifts List -->
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label class="form-label" style="margin:0">Fasce Orarie Lavorate</label>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="App.addShiftRowToModal()">
-                                + Aggiungi Fascia
-                            </button>
-                        </div>
-                        <div id="modal-shifts-container" class="shifts-builder">
-                            ${shiftsHtml}
-                        </div>
-                    </div>
-
-                    <!-- General Day Notes -->
-                    <div class="form-group">
-                        <label class="form-label">Note della Giornata</label>
-                        <input type="text" id="modal-notes" class="form-input" placeholder="Es. causa pioggia siamo andati via alle 10.00, timbrato..." value="${this.escape(notes)}">
-                        <div class="note-pills">
-                            <span class="note-pill" onclick="App.appendNoteToModal('causa pioggia siamo andati a casa alle 10.00')">☔ Causa Pioggia</span>
-                            <span class="note-pill" onclick="App.appendNoteToModal('timbrato ore 8.00 per visita medica')">🩺 Visita Medica</span>
-                            <span class="note-pill" onclick="App.appendNoteToModal('preso 3 ore di permesso')">⏱️ Permesso</span>
-                            <span class="note-pill" onclick="App.appendNoteToModal('rientrato da casa')">🏠 Rientrato</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="App.deleteCurrentModalDay()" style="margin-right:auto">
-                        Elimina Giornata
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="App.closeDayModal()">Annulla</button>
-                    <button type="button" class="btn btn-primary" onclick="App.saveCurrentModalDay()">Salva Giornata</button>
-                </div>
-            </div>
-        `;
-
-        modal.classList.add('active');
-    },
-
-    renderShiftRowHtml(index, start, end, isOvertime, shiftNotes = '') {
-        return `
-            <div class="shift-row" data-index="${index}">
-                <div>
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block;">Dalle</label>
-                    <input type="time" class="form-input shift-start" value="${start}" onchange="App.recalcShiftRow(this)">
-                </div>
-                <div>
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block;">Alle</label>
-                    <input type="time" class="form-input shift-end" value="${end}" onchange="App.recalcShiftRow(this)">
-                </div>
-                <div>
-                    <label style="font-size:0.75rem; color:var(--text-muted); display:block;">Straordinario</label>
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; margin-top:8px;">
-                        <input type="checkbox" class="shift-overtime" ${isOvertime ? 'checked' : ''} onchange="App.recalcShiftRow(this)">
-                        <span style="font-size:0.85rem">Sì</span>
-                    </label>
-                </div>
-                <div style="display:flex; align-items:flex-end;">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.shift-row').remove()" title="Rimuovi fascia">
-                        ✕
-                    </button>
-                </div>
-            </div>
-        `;
-    },
-
-    addShiftRowToModal() {
-        const container = document.getElementById('modal-shifts-container');
-        if (!container) return;
-        const newIndex = container.querySelectorAll('.shift-row').length;
-        const div = document.createElement('div');
-        div.innerHTML = this.renderShiftRowHtml(newIndex, '07:00', '12:00', false, '');
-        container.appendChild(div.firstElementChild);
-    },
-
-    applyPresetToModal(presetId) {
-        const container = document.getElementById('modal-shifts-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        if (presetId === 1) {
-            // Invernale (7-12, 13-16, 16-17 straord)
-            container.innerHTML += this.renderShiftRowHtml(0, '07:00', '12:00', false);
-            container.innerHTML += this.renderShiftRowHtml(1, '13:00', '16:00', false);
-            container.innerHTML += this.renderShiftRowHtml(2, '16:00', '17:00', true);
-        } else if (presetId === 2) {
-            // Estivo (6-14, 14-15 straord)
-            container.innerHTML += this.renderShiftRowHtml(0, '06:00', '14:00', false);
-            container.innerHTML += this.renderShiftRowHtml(1, '14:00', '15:00', true);
-        } else if (presetId === 3) {
-            // Sabato (7-12 straord)
-            container.innerHTML += this.renderShiftRowHtml(0, '07:00', '12:00', true);
-        }
-    },
-
-    appendNoteToModal(text) {
-        const input = document.getElementById('modal-notes');
-        if (!input) return;
-        input.value = input.value ? (input.value + ' | ' + text) : text;
-    },
-
-    onDayTypeChange() {
-        const type = document.getElementById('modal-day-type').value;
-        const container = document.getElementById('modal-shifts-container');
-        if (!container) return;
-        // If illness, vacation, etc., clear shifts
-        if (type === 'malattia' || type === 'ferie' || type === 'festivo' || type === 'riposo') {
-            container.innerHTML = `<div style="padding:12px; color:var(--text-muted); font-size:0.88rem">Nessuna fascia oraria richiesta per giornata di ${type}.</div>`;
-        }
-    },
-
-    recalcShiftRow(el) {
-        // live calculation if needed
-    },
-
-    closeDayModal() {
-        const modal = document.getElementById('day-modal');
-        if (modal) modal.classList.remove('active');
-    },
-
-    async saveCurrentModalDay() {
-        const date = document.getElementById('modal-date').value;
-        const dayType = document.getElementById('modal-day-type').value;
-        const notes = document.getElementById('modal-notes').value;
-
-        const shifts = [];
-        document.querySelectorAll('#modal-shifts-container .shift-row').forEach(row => {
-            const start = row.querySelector('.shift-start').value;
-            const end = row.querySelector('.shift-end').value;
-            const isOvertime = row.querySelector('.shift-overtime').checked;
-            if (start && end) {
-                shifts.push({
-                    start_time: start,
-                    end_time: end,
-                    is_overtime: isOvertime,
-                });
-            }
-        });
-
-        try {
-            const payload = {
-                date,
-                day_type: dayType,
-                notes,
-                shifts,
-                target_user_id: this.state.targetUserId,
-            };
-            const res = await this.api('hours.save_day', 'POST', payload);
-            if (res.ok) {
-                this.showToast('Giornata salvata con successo!', 'success');
-                this.closeDayModal();
-                if (this.state.activeView === 'month') {
-                    this.state.monthData = res.month_data;
-                    this.renderMonthView();
-                } else {
-                    this.loadActiveView();
-                }
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    async deleteCurrentModalDay() {
-        const date = document.getElementById('modal-date').value;
-        if (!confirm(`Sei sicuro di voler eliminare la giornata del ${date}?`)) return;
-
-        try {
-            const res = await this.api('hours.delete_day', 'POST', {
-                date,
-                target_user_id: this.state.targetUserId,
-            });
-            if (res.ok) {
-                this.showToast('Giornata eliminata.', 'info');
-                this.closeDayModal();
-                if (this.state.activeView === 'month') {
-                    this.state.monthData = res.month_data;
-                    this.renderMonthView();
-                }
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    async applyQuickPresetToday() {
-        const todayStr = new Date().toISOString().split('T')[0];
-        try {
-            const res = await this.api('hours.quick_preset', 'POST', {
-                date: todayStr,
-                preset_id: 1,
-                target_user_id: this.state.targetUserId,
-            });
-            if (res.ok) {
-                this.showToast(`Turno standard applicato per oggi (${todayStr})!`, 'success');
-                this.state.monthData = res.month_data;
-                this.renderMonthView();
-            }
-        } catch (e) {
-            this.showToast(e.message, 'danger');
-        }
-    },
-
-    exportCsv(month = this.state.currentMonth) {
-        const targetParam = this.state.targetUserId > 0 ? `&target_user_id=${this.state.targetUserId}` : '';
-        const monthParam = (month !== null && month !== undefined) ? `&month=${month}` : '';
-        window.location.href = `api/index.php?action=export.csv&year=${this.state.currentYear}${monthParam}${targetParam}`;
-    },
-
-    // --- APP SHELL & LOGIN VIEWS ---
-    renderAppShell() {
-        const app = document.getElementById('app');
-        if (!app) return;
-
-        const u = this.state.currentUser;
-        const isAdmin = (u.role >= 9);
-
-        let roleBadge = `<span class="badge badge-user">Utente</span>`;
-        if (u.role >= 10) roleBadge = `<span class="badge badge-master">Master Admin</span>`;
-        else if (u.role >= 9) roleBadge = `<span class="badge badge-admin">Admin</span>`;
-
-        const avatarHtml = u.avatar_url
-            ? `<img src="${this.escape(u.avatar_url)}" class="user-avatar" alt="">`
-            : `<div class="user-avatar" style="display:flex;align-items:center;justify-content:center;font-weight:700;">${this.escape(u.name.charAt(0))}</div>`;
-
-        app.innerHTML = `
-            <header class="app-header">
-                <div class="header-container">
-                    <div class="logo-area">
-                        <div class="logo-icon">🕒</div>
-                        <div>
-                            <div class="logo-title">Rendicontazione Ore</div>
-                            <div class="logo-subtitle">Registro Lavoro e Straordinari</div>
-                        </div>
-                    </div>
-
-                    <nav class="nav-tabs">
-                        <button class="nav-tab ${this.state.activeView === 'month' ? 'active' : ''}" data-view="month" onclick="App.switchView('month')">
-                            📅 Mese
-                        </button>
-                        <button class="nav-tab ${this.state.activeView === 'year' ? 'active' : ''}" data-view="year" onclick="App.switchView('year')">
-                            📊 Anno
-                        </button>
-                        <button class="nav-tab ${this.state.activeView === 'history' ? 'active' : ''}" data-view="history" onclick="App.switchView('history')">
-                            📜 Cronologia
-                        </button>
-                        ${isAdmin ? `
-                            <button class="nav-tab ${this.state.activeView === 'users' ? 'active' : ''}" data-view="users" onclick="App.switchView('users')">
-                                👥 Utenti ${this.state.pendingCount > 0 ? `<span class="badge badge-pending" style="margin-left:4px">${this.state.pendingCount}</span>` : ''}
-                            </button>
-                        ` : ''}
-                    </nav>
-
-                    <div class="header-user">
-                        <button class="btn btn-secondary btn-icon" id="theme-btn" onclick="App.toggleTheme()" title="Cambia tema">
-                            <span id="theme-icon">${this.state.theme === 'dark' ? '☀️' : '🌙'}</span>
-                        </button>
-                        ${avatarHtml}
-                        <div class="user-info">
-                            <span class="user-name">${this.escape(u.name)}</span>
-                            <div>${roleBadge}</div>
-                        </div>
-                        <button class="btn btn-secondary btn-sm" onclick="App.logout()" title="Esci dall'account" style="margin-left:4px;">
-                            Esci
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <main class="app-main" id="view-container">
-                <!-- Dynamic view content -->
-            </main>
-        `;
-    },
-
-    renderLoginView() {
-        const app = document.getElementById('app');
-        if (!app) return;
-
-        app.innerHTML = `
-            <div class="auth-container">
-                <div class="auth-logo">🕒</div>
-                <h1 style="font-size:1.6rem; font-weight:800; margin-bottom:8px;">Rendicontazione Ore</h1>
-                <p style="color:var(--text-secondary); font-size:0.95rem; margin-bottom:32px;">
-                    Portale riservato per il conteggio e la rendicontazione delle ore lavorative ordinarie e straordinarie.
-                </p>
-
-                <!-- Google Sign-In Button Container -->
-                <div style="display:flex; justify-content:center; margin-bottom:24px;">
-                    <div id="g_id_signin"></div>
-                </div>
-
-                <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-                    🔒 L'accesso è riservato. I nuovi utenti dovranno essere approvati manualmente da un amministratore prima di poter accedere ai fogli ore.
-                </p>
-
-                <!-- Dev local quick buttons if in development mode -->
-                <div style="margin-top:40px; padding-top:20px; border-top:1px dashed var(--border); font-size:0.85rem; color:var(--text-muted)">
-                    <p style="margin-bottom:10px; font-weight:600">Accesso Rapido di Sviluppo:</p>
-                    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-                        <button class="btn btn-secondary btn-sm" onclick="App.devLogin(10)">Master Admin (Saverio)</button>
-                        <button class="btn btn-secondary btn-sm" onclick="App.devLogin(1)">Utente (Papà)</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        this.renderGoogleButton();
-    },
-
-    renderPendingApprovalView() {
-        const app = document.getElementById('app');
-        if (!app) return;
-        const u = this.state.currentUser;
-
-        app.innerHTML = `
-            <div class="auth-container" style="max-width:540px;">
-                <div style="font-size:3rem; margin-bottom:16px;">⏳</div>
-                <h1 style="font-size:1.5rem; font-weight:800; color:var(--warning); margin-bottom:12px;">In attesa di approvazione</h1>
-                <p style="color:var(--text); font-size:1rem; margin-bottom:16px; line-height:1.6;">
-                    Ciao <strong>${this.escape(u.name)}</strong>, il tuo account Google (<code>${this.escape(u.email)}</code>) è stato registrato correttamente.
-                </p>
-                <div style="background:var(--bg-elevated); padding:16px; border-radius:8px; border:1px solid var(--border); margin-bottom:24px; text-align:left; font-size:0.9rem; color:var(--text-secondary);">
-                    ℹ️ Come previsto dalle regole di sicurezza, <strong>un amministratore deve verificare e approvare manualmente il tuo profilo</strong> prima di permetterti di visualizzare o registrare le ore di lavoro.
-                </div>
-                <div style="display:flex; gap:12px; justify-content:center;">
-                    <button class="btn btn-secondary" onclick="App.checkAuth()">🔄 Verifica Approvazione</button>
-                    <button class="btn btn-secondary" onclick="App.logout()">Esci</button>
-                </div>
-            </div>
-        `;
-    },
-
-    renderInactiveView() {
-        const app = document.getElementById('app');
-        if (!app) return;
-        const u = this.state.currentUser;
-
-        app.innerHTML = `
-            <div class="auth-container" style="max-width:500px;">
-                <div style="font-size:3rem; margin-bottom:16px;">🚫</div>
-                <h1 style="font-size:1.5rem; font-weight:800; color:var(--danger); margin-bottom:12px;">Accesso Non Consentito</h1>
-                <p style="color:var(--text-secondary); font-size:0.95rem; margin-bottom:24px;">
-                    Il tuo account (<code>${this.escape(u.email)}</code>) risulta nello stato: <strong>${this.escape(u.status_label)}</strong>. Contatta l'amministratore per maggiori informazioni.
-                </p>
-                <button class="btn btn-secondary" onclick="App.logout()">Esci</button>
-            </div>
-        `;
-    },
-
-    renderGoogleButton() {
-        if (!window.google || !window.google.accounts) {
-            // Wait for GSI library to load
-            setTimeout(() => this.renderGoogleButton(), 300);
-            return;
-        }
-
-        const clientId = this.state.googleClientId || '126260557873-mss9iuldd7uttsj9pqd0oqbtntvvo6hl.apps.googleusercontent.com';
-
-        google.accounts.id.initialize({
-            client_id: clientId,
-            callback: (res) => this.handleGoogleCredential(res.credential),
-        });
-
-        const target = document.getElementById('g_id_signin');
-        if (target) {
-            google.accounts.id.renderButton(target, {
-                theme: this.state.theme === 'dark' ? 'filled_black' : 'outline',
-                size: 'large',
-                text: 'continue_with',
-                shape: 'rectangular',
-                logo_alignment: 'left',
-                width: 280,
-            });
-        }
-    },
-
-    setupEventListeners() {
-        // Keyboard shortcut: Escape closes modal
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') this.closeDayModal();
-        });
-    },
-
-    // --- UTILITIES ---
-    showToast(message, type = 'info') {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'toast-container';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        if (type === 'danger') toast.style.borderColor = 'var(--danger)';
-        if (type === 'success') toast.style.borderColor = 'var(--success)';
-        toast.textContent = message;
-
-        container.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 3500);
-    },
-
-    formatHoursHms(hours) {
-        const totalSeconds = Math.round(hours * 3600);
-        const h = Math.floor(totalSeconds / 3600);
-        const rem = totalSeconds % 3600;
-        const m = Math.floor(rem / 60);
-        const s = rem % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    },
-
-    escape(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    },
+const ROLE_ADMIN = 9;
+const ROLE_MASTER = 10;
+
+const KINDS = {
+    lavoro: 'Lavoro',
+    pioggia: 'Pioggia',
+    permesso: 'Permesso',
+    ferie: 'Ferie',
+    malattia: 'Malattia',
 };
 
-window.App = App;
-document.addEventListener('DOMContentLoaded', () => App.init());
+const state = {
+    user: null,
+    workers: [],
+    pending: 0,
+    googleClientId: '',
+    devLogin: false,
+    targetId: 0,       // whose hours are on screen
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+    data: null,        // the month on screen
+    presets: [],
+    usual: null,
+};
+
+const isAdmin = () => state.user && state.user.role >= ROLE_ADMIN;
+const targetName = () => (state.workers.find(w => w.id === state.targetId) || state.user).name;
+const viewingOther = () => state.targetId !== state.user.id;
+
+/* ---- API ---- */
+
+class ApiError extends Error {
+    constructor(message, code, extra) {
+        super(message);
+        this.code = code;
+        this.extra = extra || {};
+    }
+}
+
+async function api(action, { params = {}, body, form } = {}) {
+    const url = 'api/index.php?' + new URLSearchParams({ action, ...params });
+    const options = { credentials: 'same-origin', headers: {} };
+    if (body !== undefined || form) {
+        options.method = 'POST';
+        options.headers['X-Requested-With'] = 'rendicontazione';
+        if (form) {
+            options.body = form;
+        } else {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(body);
+        }
+    }
+
+    let response;
+    try {
+        response = await fetch(url, options);
+    } catch (e) {
+        throw new ApiError('Connessione assente. Controlla internet e riprova: i dati non sono stati salvati.', 'network');
+    }
+    let json;
+    try {
+        json = await response.json();
+    } catch (e) {
+        throw new ApiError('Il server non risponde come dovrebbe. Riprova tra poco.', 'bad_response');
+    }
+    if (!response.ok || !json.ok) {
+        if (json.code === 'unauthorized' || json.code === 'inactive') {
+            await start();
+        }
+        throw new ApiError(json.error || 'Si è verificato un errore.', json.code, json);
+    }
+    return json;
+}
+
+const withUser = (extra = {}) => ({ user: state.targetId, ...extra });
+
+function showError(error) {
+    console.error(error);
+    toast(error.message || 'Si è verificato un errore.', { error: true });
+}
+
+/* ---- start and sign-in ---- */
+
+async function start() {
+    let boot;
+    try {
+        boot = await api('boot');
+    } catch (e) {
+        render(h('main', { class: 'center' }, h('div', { class: 'card sign' }, h('h1', null, 'Rendicontazione Ore'), h('p', null, e.message),
+            h('button', { class: 'btn btn-primary btn-big', type: 'button', onclick: start }, 'Riprova'))));
+        return;
+    }
+    Object.assign(state, { user: boot.user, workers: boot.workers, pending: boot.pending, googleClientId: boot.googleClientId, devLogin: boot.devLogin });
+
+    if (!state.user) return renderSignIn();
+    if (state.user.status !== 'active') return renderWaiting();
+
+    state.targetId = pickTarget();
+    renderShell();
+    route();
+}
+
+/** An admin lands on the last person viewed, otherwise on whoever actually has hours. */
+function pickTarget() {
+    if (!isAdmin()) return state.user.id;
+    const saved = Number(localStorage.getItem('rend.target'));
+    if (state.workers.some(w => w.id === saved)) return saved;
+    const worker = state.workers.find(w => w.role < ROLE_ADMIN && w.days > 0)
+        || state.workers.find(w => w.role < ROLE_ADMIN);
+    return worker ? worker.id : state.user.id;
+}
+
+function render(node) {
+    document.getElementById('app').replaceChildren(node);
+}
+
+function renderSignIn() {
+    const slot = h('div', { class: 'google-slot' });
+    const dev = state.devLogin ? h('div', { class: 'dev' },
+        h('p', null, 'Solo su questo computer (server di sviluppo):'),
+        [[1, 'Lavoratore'], [ROLE_ADMIN, 'Admin'], [ROLE_MASTER, 'Master']].map(([role, label]) =>
+            h('button', { class: 'btn', type: 'button', onclick: () => api('auth.dev', { body: { role } }).then(start).catch(showError) }, label))) : null;
+
+    render(h('main', { class: 'center' }, h('div', { class: 'card sign' },
+        h('img', { src: 'assets/icons/icon.svg', alt: '', width: 88, height: 88 }),
+        h('h1', null, 'Rendicontazione Ore'),
+        h('p', null, 'Il registro delle ore di lavoro.'),
+        slot,
+        state.googleClientId ? null : h('p', { class: 'muted' }, "L'accesso con Google non è ancora configurato."),
+        dev)));
+
+    if (!state.googleClientId) return;
+    const script = h('script', { src: 'https://accounts.google.com/gsi/client', async: true });
+    script.onerror = () => slot.replaceChildren(h('p', { class: 'muted' }, 'Non riesco a caricare il pulsante di Google. Controlla la connessione.'));
+    script.onload = () => {
+        google.accounts.id.initialize({
+            client_id: state.googleClientId,
+            callback: r => api('auth.google', { body: { credential: r.credential } }).then(start).catch(showError),
+        });
+        google.accounts.id.renderButton(slot, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'continue_with', locale: 'it', width: 280 });
+    };
+    document.head.append(script);
+}
+
+function renderWaiting() {
+    const waiting = state.user.status === 'pending';
+    render(h('main', { class: 'center' }, h('div', { class: 'card sign' },
+        h('img', { src: 'assets/icons/icon.svg', alt: '', width: 72, height: 72 }),
+        h('h1', null, waiting ? 'Quasi fatto' : 'Accesso non attivo'),
+        h('p', null, waiting
+            ? `Ciao ${state.user.name}, il tuo account è in attesa di approvazione. Appena verrà approvato potrai entrare da qui.`
+            : 'Il tuo account non è attivo. Chiedi a un amministratore.'),
+        h('p', { class: 'muted' }, state.user.email),
+        waiting ? h('button', { class: 'btn btn-primary btn-big', type: 'button', onclick: start }, 'Controlla di nuovo') : null,
+        h('button', { class: 'btn', type: 'button', onclick: logout }, 'Esci'))));
+}
+
+async function logout() {
+    try {
+        await api('auth.logout', { body: {} });
+        if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
+        await start();
+    } catch (e) {
+        showError(e);
+    }
+}
+
+/* ---- shell and routes ---- */
+
+const TABS = [
+    ['mese', 'Mese', 'calendar'],
+    ['anno', 'Anno', 'chart'],
+    ['cronologia', 'Cronologia', 'history'],
+    ['altro', 'Altro', 'settings'],
+];
+
+function renderShell() {
+    const tabs = TABS.map(([id, label, name]) => h('a', { href: '#/' + id, class: 'tab', dataset: { tab: id } },
+        icon(name), h('span', null, label),
+        id === 'altro' && state.pending ? h('span', { class: 'dot', title: 'Richieste di accesso' }, String(state.pending)) : null));
+
+    const switcher = isAdmin() && state.workers.length > 1
+        ? h('label', { class: 'switcher' }, h('span', null, 'Ore di'),
+            h('select', { onchange: e => setTarget(Number(e.target.value)) },
+                state.workers.map(w => h('option', { value: w.id, selected: w.id === state.targetId }, w.name))))
+        : null;
+
+    render(h('div', { class: 'shell' },
+        h('header', { class: 'top' },
+            h('a', { class: 'brand', href: '#/mese' }, h('img', { src: 'assets/icons/icon.svg', alt: '', width: 34, height: 34 }), h('span', null, 'Rendicontazione')),
+            h('nav', { class: 'tabs', 'aria-label': 'Sezioni' }, tabs),
+            switcher),
+        h('main', { id: 'view', class: 'view', tabIndex: -1 })));
+}
+
+function setTarget(id) {
+    state.targetId = id;
+    localStorage.setItem('rend.target', String(id));
+    route();
+}
+
+const view = () => document.getElementById('view');
+
+function route() {
+    if (!state.user || state.user.status !== 'active' || !view()) return;
+    const name = (location.hash.replace(/^#\//, '') || 'mese').split('/')[0];
+    const current = TABS.some(t => t[0] === name) ? name : 'mese';
+    document.querySelectorAll('.tab').forEach(tab => {
+        if (tab.dataset.tab === current) tab.setAttribute('aria-current', 'page');
+        else tab.removeAttribute('aria-current');
+    });
+    ({ mese: showMonth, anno: showYear, cronologia: showHistory, altro: showSettings })[current]();
+}
+
+window.addEventListener('hashchange', route);
+
+function viewError(error, retry) {
+    if (error.code === 'unauthorized' || error.code === 'inactive') return;
+    view().replaceChildren(h('div', { class: 'card empty' }, h('p', null, error.message),
+        h('button', { class: 'btn btn-primary', type: 'button', onclick: retry }, 'Riprova')));
+}
+
+/* ---- month ---- */
+
+async function showMonth() {
+    try {
+        const data = await api('month', { params: withUser({ year: state.year, month: state.month }) });
+        state.presets = data.presets;
+        applyMonth(data);
+    } catch (e) {
+        viewError(e, showMonth);
+    }
+}
+
+function applyMonth(data) {
+    state.data = data;
+    state.usual = data.usual;
+    if (data.year === state.year && data.month === state.month) renderMonth();
+}
+
+function moveMonth(step) {
+    const date = new Date(state.year, state.month - 1 + step, 1);
+    state.year = date.getFullYear();
+    state.month = date.getMonth() + 1;
+    showMonth();
+}
+
+function goToToday() {
+    const now = new Date();
+    state.year = now.getFullYear();
+    state.month = now.getMonth() + 1;
+    if (location.hash.startsWith('#/mese') || !location.hash) showMonth(); else location.hash = '#/mese';
+}
+
+/** The hours a date normally has; on a holiday every hour worked is overtime, as in the old sheet. */
+function usualFor(iso) {
+    const weekday = parseDate(iso).getDay();
+    const slots = (weekday === 6 || weekday === 0 ? state.usual.saturday : state.usual.weekday).map(s => ({ ...s }));
+    if (holidayName(iso) || weekday === 0) slots.forEach(s => { s.overtime = true; });
+    return slots;
+}
+
+function dayByDate(iso) {
+    return state.data.days.find(d => d.date === iso) || null;
+}
+
+/** Past working days of the current month with nothing recorded. */
+function missingDays() {
+    const today = todayIso();
+    const days = [];
+    for (let iso = isoDate(state.year, state.month, 1); iso < today && iso.startsWith(today.slice(0, 7)); iso = shiftDate(iso, 1)) {
+        const weekday = parseDate(iso).getDay();
+        if (weekday !== 0 && weekday !== 6 && !holidayName(iso) && !dayByDate(iso)) days.push(iso);
+    }
+    return days;
+}
+
+async function saveQuick(iso, slots) {
+    try {
+        const data = await api('day.save', { body: withUser({ date: iso, kind: 'lavoro', note: '', slots }) });
+        applyMonth(data);
+        toast(`Salvato: ${dateLabel(iso)}, ${fmtHours(slotsMinutes(slots).total)}`, { action: { label: 'Modifica', run: () => openDay(iso) } });
+    } catch (e) {
+        showError(e);
+    }
+}
+
+function todayCard() {
+    const today = todayIso();
+    if (!today.startsWith(isoDate(state.year, state.month, 1).slice(0, 7))) return null;
+    const record = dayByDate(today);
+    const weekday = parseDate(today).getDay();
+    const holiday = holidayName(today);
+
+    if (record) {
+        return h('section', { class: 'card today done' },
+            h('div', null,
+                h('p', { class: 'eyebrow' }, 'Oggi, ' + dateLabel(today)),
+                h('p', { class: 'today-line' }, icon('check'), fmtHours(record.ordinary + record.overtime), record.slots.length ? h('span', { class: 'today-slots' }, slotsNodes(record.slots)) : null)),
+            h('button', { class: 'btn', type: 'button', onclick: () => openDay(today) }, 'Modifica'));
+    }
+    if (weekday === 0 || holiday) {
+        return h('section', { class: 'card today rest' },
+            h('p', { class: 'eyebrow' }, 'Oggi, ' + dateLabel(today)),
+            h('p', null, holiday ? `${holiday}: giornata di festa.` : 'Domenica: giornata di riposo.'),
+            h('button', { class: 'btn', type: 'button', onclick: () => openDay(today) }, 'Ho lavorato: segna le ore'));
+    }
+    const slots = usualFor(today);
+    const minutes = slotsMinutes(slots);
+    return h('section', { class: 'card today' },
+        h('p', { class: 'eyebrow' }, 'Oggi, ' + dateLabel(today)),
+        h('h2', null, viewingOther() ? `Ore di ${targetName()}` : 'Com’è andata oggi?'),
+        h('button', { class: 'btn btn-primary btn-big btn-today', type: 'button', onclick: () => saveQuick(today, slots) },
+            icon('check'),
+            h('span', { class: 'btn-today-text' },
+                h('strong', null, `Giornata normale: ${fmtHours(minutes.total)}`),
+                h('small', null, slotsText(slots)))),
+        h('button', { class: 'btn btn-big', type: 'button', onclick: () => openDay(today) }, 'Orario diverso, pioggia, ferie…'));
+}
+
+function missingCard() {
+    const today = todayIso();
+    if (!today.startsWith(isoDate(state.year, state.month, 1).slice(0, 7))) return null;
+    const missing = missingDays();
+    if (!missing.length) return null;
+    return h('section', { class: 'card missing' },
+        h('h2', null, missing.length === 1 ? 'Manca un giorno' : `Mancano ${missing.length} giorni`),
+        h('div', { class: 'chips' }, missing.slice(-6).map(iso => {
+            const d = parseDate(iso);
+            return h('button', { class: 'chip', type: 'button', onclick: () => openDay(iso) }, `${WEEKDAYS[d.getDay()].slice(0, 3)} ${d.getDate()}`);
+        })));
+}
+
+function totalsCard(totals) {
+    const extras = [
+        [totals.worked, totals.worked === 1 ? 'giorno lavorato' : 'giorni lavorati'],
+        [totals.pioggia, 'pioggia'], [totals.permesso, 'permesso'], [totals.ferie, 'ferie'], [totals.malattia, 'malattia'],
+    ].filter(([n]) => n > 0);
+    return h('section', { class: 'card totals' },
+        h('div', { class: 'stats' },
+            h('div', { class: 'stat' }, h('span', null, 'Ordinarie'), h('strong', null, fmtHours(totals.ordinary))),
+            h('div', { class: 'stat stat-ot' }, h('span', null, 'Straordinarie'), h('strong', null, fmtHours(totals.overtime))),
+            h('div', { class: 'stat stat-total' }, h('span', null, 'Totale'), h('strong', null, fmtHours(totals.total)))),
+        extras.length ? h('p', { class: 'muted' }, extras.map(([n, label]) => `${n} ${label}`).join(' · ')) : null);
+}
+
+function dayRow(iso, today) {
+    const d = parseDate(iso);
+    const weekday = d.getDay();
+    const record = dayByDate(iso);
+    const holiday = holidayName(iso);
+    const missing = !record && iso < today && iso.startsWith(today.slice(0, 7)) && weekday !== 0 && weekday !== 6 && !holiday;
+
+    const classes = ['day'];
+    if (iso === today) classes.push('day-today');
+    if (weekday === 0 || holiday) classes.push('day-rest');
+    if (weekday === 6) classes.push('day-sat');
+    if (!record) classes.push('day-empty');
+
+    let body;
+    if (record) {
+        body = [
+            h('span', { class: 'day-main' },
+                record.kind !== 'lavoro' ? h('span', { class: 'kind kind-' + record.kind }, KINDS[record.kind]) : null,
+                record.slots.length ? h('span', { class: 'day-slots' }, slotsNodes(record.slots)) : null),
+            record.note ? h('span', { class: 'day-note' }, record.note) : null,
+        ];
+    } else {
+        body = h('span', { class: 'day-main muted' }, holiday || (missing ? 'Da segnare' : ''));
+    }
+
+    return h('li', null, h('button', { class: classes.join(' '), type: 'button', onclick: () => openDay(iso), 'aria-label': capitalize(dateLabel(iso)) + (record ? ', ' + fmtHours(record.ordinary + record.overtime) : ', vuoto') },
+        h('span', { class: 'day-date' }, h('small', null, WEEKDAYS[weekday].slice(0, 3)), h('b', null, String(d.getDate()))),
+        h('span', { class: 'day-body' }, body),
+        record && record.ordinary + record.overtime > 0
+            ? h('span', { class: 'day-hours' }, h('b', null, fmtHours(record.ordinary + record.overtime)), h('small', { title: 'Progressivo del mese' }, 'tot. ' + fmtHours(record.running)))
+            : null));
+}
+
+function renderMonth() {
+    const { totals } = state.data;
+    const today = todayIso();
+    const daysInMonth = new Date(state.year, state.month, 0).getDate();
+    const isCurrent = today.startsWith(isoDate(state.year, state.month, 1).slice(0, 7));
+    const rows = [];
+    for (let d = 1; d <= daysInMonth; d++) rows.push(dayRow(isoDate(state.year, state.month, d), today));
+
+    view().replaceChildren(
+        otherBanner(),
+        h('div', { class: 'month-grid' },
+            h('div', { class: 'month-side' },
+                h('div', { class: 'pager' },
+                    h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Mese precedente', onclick: () => moveMonth(-1) }, icon('left')),
+                    h('h1', null, `${capitalize(MONTHS[state.month - 1])} ${state.year}`),
+                    h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Mese successivo', onclick: () => moveMonth(1) }, icon('right'))),
+                isCurrent ? null : h('button', { class: 'btn btn-link', type: 'button', onclick: goToToday }, 'Torna a oggi'),
+                todayCard(),
+                missingCard(),
+                totalsCard(totals)),
+            h('ol', { class: 'card days' }, rows)));
+}
+
+function otherBanner() {
+    return viewingOther() ? h('p', { class: 'banner' }, icon('user'), `Stai vedendo le ore di ${targetName()}.`) : null;
+}
+
+/* ---- slot editor, shared by the day and by the quick schedules ---- */
+
+function slotEditor(slots, onChange) {
+    const box = h('div', { class: 'slots' });
+    const paint = () => {
+        box.replaceChildren(...slots.map((slot, index) => {
+            const minutes = slotsMinutes([slot]).total;
+            const set = (key, value) => {
+                slot[key] = value;
+                duration.textContent = slotsMinutes([slot]).total ? fmtHours(slotsMinutes([slot]).total) : '';
+                onChange();
+            };
+            const duration = h('span', { class: 'slot-duration' }, minutes ? fmtHours(minutes) : '');
+            return h('div', { class: 'slot' + (slot.overtime ? ' slot-ot' : '') },
+                h('label', null, h('span', null, 'Dalle'), h('input', { type: 'time', value: slot.start, required: true, oninput: e => set('start', e.target.value) })),
+                h('label', null, h('span', null, 'Alle'), h('input', { type: 'time', value: slot.end, required: true, oninput: e => set('end', e.target.value) })),
+                h('button', { class: 'btn btn-icon btn-plain', type: 'button', 'aria-label': 'Togli questa fascia oraria', onclick: () => { slots.splice(index, 1); paint(); onChange(); } }, icon('close')),
+                h('label', { class: 'switch' },
+                    h('input', { type: 'checkbox', checked: slot.overtime, onchange: e => { slot.overtime = e.target.checked; paint(); onChange(); } }),
+                    h('span', { class: 'switch-track' }),
+                    h('span', null, 'Straordinario')),
+                duration);
+        }));
+    };
+    paint();
+    box.repaint = paint;
+    return box;
+}
+
+function nextSlot(slots) {
+    const last = slots[slots.length - 1];
+    return { start: last ? last.end : '07:00', end: '', overtime: false };
+}
+
+/* ---- day editor ---- */
+
+function openDay(iso) {
+    const record = dayByDate(iso);
+    const draft = record
+        ? { kind: record.kind, note: record.note, slots: record.slots.map(s => ({ ...s })) }
+        : { kind: 'lavoro', note: '', slots: [] };
+    const original = JSON.stringify(draft);
+    const dirty = () => JSON.stringify(draft) !== original;
+
+    const dialog = h('dialog', { class: 'sheet' });
+    const totalLine = h('p', { class: 'sheet-total', 'aria-live': 'polite' });
+    const paintTotal = () => {
+        const m = slotsMinutes(draft.slots);
+        totalLine.replaceChildren(h('strong', null, fmtHours(m.total)),
+            m.overtime ? h('span', null, ` di cui ${fmtHours(m.overtime)} straord.`) : null);
+    };
+
+    const slots = slotEditor(draft.slots, paintTotal);
+    const kinds = h('div', { class: 'kinds', role: 'radiogroup', 'aria-label': 'Tipo di giornata' });
+    const paintKinds = () => kinds.replaceChildren(...Object.entries(KINDS).map(([kind, label]) =>
+        h('button', {
+            class: `kind-choice kind-${kind}`, type: 'button', role: 'radio', 'aria-checked': String(draft.kind === kind),
+            onclick: () => { draft.kind = kind; paintKinds(); },
+        }, label)));
+    paintKinds();
+
+    const applySlots = (list, kind) => {
+        draft.slots.splice(0, draft.slots.length, ...list.map(s => ({ ...s })));
+        if (kind) { draft.kind = kind; paintKinds(); }
+        slots.repaint();
+        paintTotal();
+    };
+
+    const usual = usualFor(iso);
+    const quick = [{ name: 'Solito orario', kind: 'lavoro', slots: usual }]
+        .concat(state.presets.filter(p => JSON.stringify(p.slots) !== JSON.stringify(usual)));
+
+    const note = h('textarea', { rows: 3, maxLength: 1000, placeholder: 'Per esempio: pioggia, timbrato alle 10', value: draft.note, oninput: e => { draft.note = e.target.value; } });
+
+    const save = async () => {
+        try {
+            const data = await api('day.save', { body: withUser({ date: iso, kind: draft.kind, note: draft.note, slots: draft.slots }) });
+            applyMonth(data);
+            closeDialog(dialog, true);
+            toast('Salvato');
+        } catch (e) {
+            showError(e);
+        }
+    };
+    const remove = async () => {
+        const yes = await ask({ title: 'Cancellare questa giornata?', text: `Tutti i dati di ${dateLabel(iso)} verranno tolti.`, yes: 'Cancella', danger: true });
+        if (!yes) return;
+        try {
+            applyMonth(await api('day.delete', { body: withUser({ date: iso }) }));
+            closeDialog(dialog, true);
+            toast('Giornata cancellata');
+        } catch (e) {
+            showError(e);
+        }
+    };
+
+    const step = async delta => {
+        if (dirty() && !(await ask({ title: 'Lasciare senza salvare?', text: 'Le modifiche a questo giorno andranno perse.', yes: 'Lascia', no: 'Resta' }))) return;
+        const next = shiftDate(iso, delta);
+        await closeDialog(dialog, true);
+        const [y, m] = next.split('-').map(Number);
+        if (y !== state.year || m !== state.month) {
+            state.year = y;
+            state.month = m;
+            await showMonth();
+        }
+        setTimeout(() => openDay(next), 60);
+    };
+
+    const holiday = holidayName(iso);
+    dialog.append(
+        h('form', { method: 'dialog', class: 'sheet-form', onsubmit: e => { e.preventDefault(); save(); } },
+            h('header', { class: 'sheet-head' },
+                h('button', { class: 'btn btn-icon btn-plain', type: 'button', 'aria-label': 'Giorno precedente', onclick: () => step(-1) }, icon('left')),
+                h('div', { class: 'sheet-title' },
+                    h('h2', null, capitalize(dateLabel(iso))),
+                    h('p', { class: 'muted' }, [holiday, viewingOther() ? `ore di ${targetName()}` : null].filter(Boolean).join(' · '))),
+                h('button', { class: 'btn btn-icon btn-plain', type: 'button', 'aria-label': 'Giorno successivo', onclick: () => step(1) }, icon('right')),
+                h('button', { class: 'btn btn-icon btn-plain', type: 'button', 'aria-label': 'Chiudi', onclick: () => closeDialog(dialog) }, icon('close'))),
+            h('div', { class: 'sheet-body' },
+                h('section', null, h('h3', null, 'Che giornata è stata?'), kinds),
+                h('section', null,
+                    h('h3', null, 'Orari'),
+                    h('div', { class: 'chips' }, quick.map(p => h('button', {
+                        class: 'chip', type: 'button', title: slotsText(p.slots), onclick: () => applySlots(p.slots, p.kind),
+                    }, h('span', null, p.name), h('small', null, slotsText(p.slots))))),
+                    slots,
+                    h('button', { class: 'btn btn-add', type: 'button', onclick: () => { draft.slots.push(nextSlot(draft.slots)); slots.repaint(); paintTotal(); } }, icon('plus'), 'Aggiungi fascia oraria')),
+                h('section', null, h('h3', null, h('label', null, 'Note')), note),
+                record ? h('button', { class: 'btn btn-link btn-delete', type: 'button', onclick: remove }, icon('trash'), 'Cancella questa giornata') : null),
+            h('footer', { class: 'sheet-foot' },
+                totalLine,
+                h('button', { class: 'btn btn-primary btn-big', type: 'submit' }, 'Salva'))));
+
+    paintTotal();
+    openDialog(dialog, async () => !dirty() || ask({ title: 'Chiudere senza salvare?', text: 'Le modifiche a questo giorno andranno perse.', yes: 'Chiudi', no: 'Resta' }));
+}
+
+/* ---- year ---- */
+
+async function showYear() {
+    try {
+        renderYear(await api('year', { params: withUser({ year: state.year }) }));
+    } catch (e) {
+        viewError(e, showYear);
+    }
+}
+
+function renderYear(data) {
+    const max = Math.max(1, ...data.months.map(m => m.total));
+    const t = data.totals;
+    const rows = data.months.map(m => h('tr', {
+        class: m.total ? '' : 'row-empty',
+        onclick: () => { state.month = m.month; location.hash = '#/mese'; },
+    },
+    h('th', { scope: 'row' }, h('a', { href: '#/mese', onclick: () => { state.month = m.month; } }, capitalize(MONTHS[m.month - 1]))),
+    h('td', { class: 'num' }, m.total ? fmtHours(m.ordinary) : '–'),
+    h('td', { class: 'num' }, m.total ? fmtHours(m.overtime) : '–'),
+    h('td', { class: 'num strong' }, m.total ? fmtHours(m.total) : '–'),
+    h('td', { class: 'bar-cell', 'aria-hidden': 'true' }, m.total ? h('div', { class: 'bar', title: `${capitalize(MONTHS[m.month - 1])}: ${fmtHours(m.ordinary)} ordinarie, ${fmtHours(m.overtime)} straordinarie` },
+        h('span', { class: 'bar-ord', style: `width:${m.ordinary / max * 100}%` }),
+        m.overtime ? h('span', { class: 'bar-ot', style: `width:${m.overtime / max * 100}%` }) : null) : null)));
+
+    const counts = [
+        [t.worked, 'Giorni lavorati'], [t.pioggia, 'Pioggia'], [t.permesso, 'Permesso'], [t.ferie, 'Ferie'], [t.malattia, 'Malattia'],
+    ];
+    const move = step => { state.year += step; showYear(); };
+
+    view().replaceChildren(
+        otherBanner(),
+        h('div', { class: 'pager' },
+            h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Anno precedente', onclick: () => move(-1) }, icon('left')),
+            h('h1', null, String(data.year)),
+            h('button', { class: 'btn btn-icon', type: 'button', 'aria-label': 'Anno successivo', onclick: () => move(1) }, icon('right'))),
+        totalsCard(t),
+        h('section', { class: 'card counts' }, counts.map(([n, label]) => h('div', { class: 'stat' }, h('span', null, label), h('strong', null, String(n))))),
+        h('section', { class: 'card table-card' },
+            h('table', { class: 'year' },
+                h('thead', null, h('tr', null,
+                    h('th', { scope: 'col' }, 'Mese'),
+                    h('th', { scope: 'col', class: 'num' }, 'Ordinarie'),
+                    h('th', { scope: 'col', class: 'num' }, 'Straord.'),
+                    h('th', { scope: 'col', class: 'num' }, 'Totale'),
+                    h('th', { scope: 'col', class: 'bar-cell' }, h('span', { class: 'legend' }, h('i', { class: 'bar-ord' }), 'Ordinarie', h('i', { class: 'bar-ot' }), 'Straordinarie')))),
+                h('tbody', null, rows))));
+}
+
+/* ---- history ---- */
+
+let historyEntries = [];
+
+async function showHistory() {
+    historyEntries = [];
+    await loadHistory(0);
+}
+
+async function loadHistory(before) {
+    try {
+        const data = await api('history', { params: withUser({ before }) });
+        historyEntries = historyEntries.concat(data.entries);
+        renderHistory(data.more);
+    } catch (e) {
+        viewError(e, showHistory);
+    }
+}
+
+const HISTORY_VERBS = { 'day.add': 'ha aggiunto', 'day.edit': 'ha modificato', 'day.delete': 'ha cancellato' };
+
+function daySummary(day) {
+    if (!day) return 'nessun dato';
+    const parts = [];
+    if (day.kind !== 'lavoro') parts.push(KINDS[day.kind]);
+    if (day.slots.length) parts.push(`${slotsText(day.slots)} = ${fmtHours(slotsMinutes(day.slots).total)}`);
+    if (day.note) parts.push(`«${day.note}»`);
+    return parts.join(' · ') || 'nessun dato';
+}
+
+function historyTitle(entry) {
+    if (HISTORY_VERBS[entry.action]) return `${entry.actor} ${HISTORY_VERBS[entry.action]} ${dateLabel(entry.dates[0], true)}`;
+    if (entry.action === 'undo') {
+        return entry.dates.length === 1
+            ? `${entry.actor} ha annullato una modifica di ${dateLabel(entry.dates[0], true)}`
+            : `${entry.actor} ha annullato una modifica (${entry.dates.length} giorni)`;
+    }
+    return `${entry.actor}: ${entry.summary}`;
+}
+
+function historyDetail(entry) {
+    const change = entry.change;
+    if (!change) return null;
+    if (entry.action === 'day.add') return h('p', { class: 'change' }, daySummary(change.after));
+    if (entry.action === 'day.delete') return h('p', { class: 'change' }, h('span', { class: 'change-old' }, daySummary(change.before)));
+    return h('dl', { class: 'change' },
+        h('dt', null, 'Prima'), h('dd', null, daySummary(change.before)),
+        h('dt', null, 'Dopo'), h('dd', null, daySummary(change.after)));
+}
+
+async function undoEntry(entry) {
+    const what = entry.dates.length === 1 ? dateLabel(entry.dates[0], true) : `${entry.dates.length} giorni`;
+    const yes = await ask({ title: 'Annullare questa modifica?', text: `${capitalize(what)} tornerà com'era prima. L'annullamento resterà in cronologia.`, yes: 'Annulla la modifica', no: 'Lascia così' });
+    if (!yes) return;
+    try {
+        await sendUndo(entry.id, false);
+    } catch (e) {
+        if (e.code !== 'conflict') return showError(e);
+        const list = e.extra.conflicts.slice(0, 5).map(d => dateLabel(d)).join(', ');
+        const force = await ask({
+            title: 'Ci sono modifiche più recenti',
+            text: `Dopo questa modifica è stato cambiato ancora: ${list}. Annullando si perdono anche i cambiamenti più recenti.`,
+            yes: 'Annulla comunque', no: 'Lascia così', danger: true,
+        });
+        if (force) await sendUndo(entry.id, true).catch(showError);
+    }
+}
+
+async function sendUndo(id, force) {
+    await api('history.undo', { body: { id, force } });
+    toast('Modifica annullata');
+    await showHistory();
+}
+
+function renderHistory(more) {
+    const list = historyEntries.map(entry => h('li', { class: 'entry' + (entry.undone ? ' entry-undone' : '') },
+        h('p', { class: 'entry-title' }, historyTitle(entry)),
+        h('p', { class: 'muted' }, timeAgoLabel(entry.at)),
+        historyDetail(entry),
+        entry.undone ? h('p', { class: 'entry-flag' }, `Annullata da ${entry.undone.by}, ${timeAgoLabel(entry.undone.at)}`) : null,
+        entry.canUndo ? h('button', { class: 'btn', type: 'button', onclick: () => undoEntry(entry) }, icon('undo'), entry.action === 'undo' ? 'Ripristina la modifica' : 'Annulla questa modifica') : null));
+
+    view().replaceChildren(
+        otherBanner(),
+        h('h1', { class: 'page-title' }, 'Cronologia'),
+        h('p', { class: 'lead' }, isAdmin()
+            ? 'Tutte le modifiche, dalla più recente. Da amministratore puoi annullare quelle alle ore.'
+            : 'Tutte le modifiche alle tue ore, dalla più recente. Se hai sbagliato qualcosa, correggi il giorno dal mese. Solo un amministratore può annullare una modifica da qui.'),
+        historyEntries.length
+            ? h('ol', { class: 'card entries' }, list)
+            : h('div', { class: 'card empty' }, h('p', null, 'Ancora nessuna modifica.')),
+        more ? h('button', { class: 'btn btn-wide', type: 'button', onclick: () => loadHistory(historyEntries[historyEntries.length - 1].id) }, 'Mostra le precedenti') : null);
+}
+
+/* ---- settings ---- */
+
+function choice(label, key, options, apply) {
+    const current = localStorage.getItem(key) || options[0][0];
+    const box = h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': label });
+    const paint = value => box.replaceChildren(...options.map(([id, text]) => h('button', {
+        type: 'button', role: 'radio', 'aria-checked': String(id === value),
+        onclick: () => { localStorage.setItem(key, id); apply(id); paint(id); },
+    }, text)));
+    paint(current);
+    return h('div', { class: 'setting' }, h('span', null, label), box);
+}
+
+async function showSettings() {
+    const u = state.user;
+    const exportUrl = 'api/index.php?' + new URLSearchParams({ action: 'export', user: state.targetId, year: state.year });
+    if (!state.presets.length) {
+        try { state.presets = (await api('month', { params: withUser({ year: state.year, month: state.month }) })).presets; } catch (e) { viewError(e, showSettings); return; }
+    }
+
+    const body = [
+        otherBanner(),
+        h('h1', { class: 'page-title' }, 'Altro'),
+        h('section', { class: 'card panel' },
+            h('h2', null, 'Scarica e stampa'),
+            h('a', { class: 'btn btn-wide', href: exportUrl, download: '' }, icon('download'), `Scarica Excel del ${state.year}`),
+            h('button', { class: 'btn btn-wide', type: 'button', onclick: printMonth }, icon('print'), `Stampa ${MONTHS[state.month - 1]} ${state.year}`)),
+        h('section', { class: 'card panel' },
+            h('h2', null, 'Orari rapidi'),
+            h('p', { class: 'muted' }, viewingOther() ? `Gli orari proposti a ${targetName()}.` : 'Gli orari che vuoi avere a portata di mano.'),
+            h('ul', { class: 'presets' }, state.presets.map((p, i) => h('li', null,
+                h('button', { class: 'row-button', type: 'button', onclick: () => editPreset(i) },
+                    h('span', null, h('b', null, p.name), h('small', null, slotsText(p.slots))), icon('pencil'))))),
+            state.presets.length < 12 ? h('button', { class: 'btn btn-wide', type: 'button', onclick: () => editPreset(-1) }, icon('plus'), 'Nuovo orario rapido') : null),
+        h('section', { class: 'card panel' },
+            h('h2', null, 'Aspetto'),
+            choice('Dimensione del testo', 'rend.text', [['normal', 'Normale'], ['large', 'Grande']], v => { document.documentElement.dataset.text = v; }),
+            choice('Colori', 'rend.theme', [['auto', 'Automatici'], ['light', 'Chiari'], ['dark', 'Scuri']], v => { document.documentElement.dataset.theme = v; })),
+    ];
+
+    if (isAdmin()) body.push(usersPanel(), importPanel());
+
+    body.push(h('section', { class: 'card panel' },
+        h('h2', null, 'Il tuo account'),
+        h('p', null, h('b', null, u.name), h('br'), h('span', { class: 'muted' }, u.email)),
+        h('p', { class: 'muted' }, u.role >= ROLE_MASTER ? 'Master Admin' : (u.role >= ROLE_ADMIN ? 'Amministratore' : 'Utente')),
+        h('button', { class: 'btn btn-wide', type: 'button', onclick: logout }, icon('logout'), 'Esci')));
+
+    view().replaceChildren(...body.filter(Boolean));
+}
+
+function editPreset(index) {
+    const isNew = index < 0;
+    const source = isNew ? { name: '', kind: 'lavoro', slots: [{ start: '07:00', end: '12:00', overtime: false }] } : state.presets[index];
+    const draft = { name: source.name, kind: source.kind, slots: source.slots.map(s => ({ ...s })) };
+    const dialog = h('dialog', { class: 'sheet' });
+    const slots = slotEditor(draft.slots, () => {});
+
+    const persist = async list => {
+        try {
+            const data = await api('presets.save', { body: withUser({ presets: list }) });
+            state.presets = data.presets;
+            closeDialog(dialog, true);
+            toast('Salvato');
+            showSettings();
+        } catch (e) {
+            showError(e);
+        }
+    };
+    const submit = () => {
+        const list = state.presets.slice();
+        if (isNew) list.push(draft); else list[index] = draft;
+        persist(list);
+    };
+    const remove = async () => {
+        if (await ask({ title: 'Togliere questo orario rapido?', text: source.name, yes: 'Togli', danger: true })) {
+            persist(state.presets.filter((_, i) => i !== index));
+        }
+    };
+
+    dialog.append(h('form', { method: 'dialog', class: 'sheet-form', onsubmit: e => { e.preventDefault(); submit(); } },
+        h('header', { class: 'sheet-head' },
+            h('div', { class: 'sheet-title' }, h('h2', null, isNew ? 'Nuovo orario rapido' : 'Modifica orario rapido')),
+            h('button', { class: 'btn btn-icon btn-plain', type: 'button', 'aria-label': 'Chiudi', onclick: () => closeDialog(dialog) }, icon('close'))),
+        h('div', { class: 'sheet-body' },
+            h('section', null, h('h3', null, h('label', { htmlFor: 'preset-name' }, 'Nome')),
+                h('input', { id: 'preset-name', type: 'text', maxLength: 40, value: draft.name, required: true, oninput: e => { draft.name = e.target.value; } })),
+            h('section', null, h('h3', null, 'Orari'), slots,
+                h('button', { class: 'btn btn-add', type: 'button', onclick: () => { draft.slots.push(nextSlot(draft.slots)); slots.repaint(); } }, icon('plus'), 'Aggiungi fascia oraria')),
+            isNew ? null : h('button', { class: 'btn btn-link btn-delete', type: 'button', onclick: remove }, icon('trash'), 'Togli questo orario')),
+        h('footer', { class: 'sheet-foot' }, h('button', { class: 'btn btn-primary btn-big', type: 'submit' }, 'Salva'))));
+    openDialog(dialog);
+}
+
+/* ---- admin: users ---- */
+
+const STATUS_LABELS = { pending: 'In attesa', active: 'Attivo', rejected: 'Rifiutato', disabled: 'Disattivato' };
+
+function usersPanel() {
+    const box = h('div', { class: 'users' }, h('p', { class: 'muted' }, 'Caricamento…'));
+    const applyUsers = data => {
+        state.pending = data.pending;
+        if (data.workers) state.workers = data.workers;
+        paint(data.users);
+    };
+    const update = fields => api('users.update', { body: fields }).then(data => { applyUsers(data); renderShell(); route(); }).catch(showError);
+
+    const paint = users => {
+        box.replaceChildren(...users.map(u => {
+            const locked = u.id === state.user.id || u.role >= ROLE_MASTER || (u.role >= ROLE_ADMIN && state.user.role < ROLE_MASTER);
+            const actions = [];
+            if (!locked) {
+                if (u.status === 'pending') {
+                    actions.push(h('button', { class: 'btn btn-primary', type: 'button', onclick: () => update({ id: u.id, status: 'active' }) }, 'Approva'));
+                    actions.push(h('button', { class: 'btn', type: 'button', onclick: () => update({ id: u.id, status: 'rejected' }) }, 'Rifiuta'));
+                } else if (u.status === 'active') {
+                    actions.push(h('button', { class: 'btn', type: 'button', onclick: () => update({ id: u.id, status: 'disabled' }) }, 'Disattiva'));
+                } else {
+                    actions.push(h('button', { class: 'btn', type: 'button', onclick: () => update({ id: u.id, status: 'active' }) }, 'Riattiva'));
+                }
+                if (state.user.role >= ROLE_MASTER && u.status === 'active') {
+                    actions.push(u.role >= ROLE_ADMIN
+                        ? h('button', { class: 'btn', type: 'button', onclick: () => update({ id: u.id, role: 1 }) }, 'Togli admin')
+                        : h('button', { class: 'btn', type: 'button', onclick: () => update({ id: u.id, role: ROLE_ADMIN }) }, 'Rendi admin'));
+                }
+            }
+            return h('div', { class: 'user' + (u.status === 'pending' ? ' user-pending' : '') },
+                h('p', null, h('b', null, u.name), h('br'), h('span', { class: 'muted' }, u.email)),
+                h('p', { class: 'muted' }, [u.role >= ROLE_MASTER ? 'Master Admin' : (u.role >= ROLE_ADMIN ? 'Amministratore' : 'Utente'), STATUS_LABELS[u.status], u.lastLogin ? null : 'non ha ancora fatto accesso'].filter(Boolean).join(' · ')),
+                actions.length ? h('div', { class: 'user-actions' }, actions) : null);
+        }));
+    };
+    api('users').then(applyUsers).catch(showError);
+
+    const name = h('input', { type: 'text', placeholder: 'Nome', required: true, maxLength: 100, 'aria-label': 'Nome' });
+    const email = h('input', { type: 'email', placeholder: 'Email Google', required: true, 'aria-label': 'Email Google' });
+    const add = h('form', {
+        class: 'add-user',
+        onsubmit: e => {
+            e.preventDefault();
+            api('users.add', { body: { name: name.value, email: email.value } }).then(data => {
+                name.value = '';
+                email.value = '';
+                applyUsers(data);
+                toast('Account creato');
+                renderShell();
+                route();
+            }).catch(showError);
+        },
+    }, h('h3', null, 'Aggiungi una persona'),
+    h('p', { class: 'muted' }, 'Potrà entrare con questo account Google senza aspettare l’approvazione.'),
+    name, email, h('button', { class: 'btn', type: 'submit' }, icon('plus'), 'Aggiungi'));
+
+    return h('section', { class: 'card panel' }, h('h2', null, 'Utenti'), box, add);
+}
+
+/* ---- admin: import ---- */
+
+function importPanel() {
+    const result = h('div', { class: 'import-result' });
+    const input = h('input', {
+        type: 'file', accept: '.xlsx', class: 'file',
+        onchange: async () => {
+            const file = input.files[0];
+            if (!file) return;
+            result.replaceChildren(h('p', { class: 'muted' }, 'Lettura del file…'));
+            const form = new FormData();
+            form.append('file', file);
+            form.append('user', String(state.targetId));
+            try {
+                paintPreview(await api('import.preview', { form }));
+            } catch (e) {
+                result.replaceChildren();
+                showError(e);
+            }
+            input.value = '';
+        },
+    });
+
+    const paintPreview = preview => {
+        const total = preview.months.reduce((sum, m) => sum + m.ordinary + m.overtime, 0);
+        const count = Object.keys(preview.days).length;
+        result.replaceChildren(
+            h('h3', null, `Anno ${preview.year}: ${count} giorni, ${fmtHours(total)}`),
+            h('table', { class: 'year' },
+                h('thead', null, h('tr', null, h('th', { scope: 'col' }, 'Mese'), h('th', { scope: 'col', class: 'num' }, 'Giorni'), h('th', { scope: 'col', class: 'num' }, 'Ordinarie'), h('th', { scope: 'col', class: 'num' }, 'Straord.'))),
+                h('tbody', null, preview.months.map(m => h('tr', null,
+                    h('th', { scope: 'row' }, capitalize(MONTHS[m.month - 1])),
+                    h('td', { class: 'num' }, String(m.days)),
+                    h('td', { class: 'num' }, fmtHours(m.ordinary)),
+                    h('td', { class: 'num' }, fmtHours(m.overtime)))))),
+            preview.warnings.length ? h('div', { class: 'warnings' },
+                h('h3', null, 'Da controllare nel foglio'),
+                h('ul', null, preview.warnings.map(w => h('li', null, w))),
+                h('p', { class: 'muted' }, 'I giorni vengono importati così come sono scritti: potrai correggerli dopo.')) : null,
+            preview.overwrites ? h('p', { class: 'warn-text' }, `Attenzione: ${preview.overwrites} giorni già presenti verranno sostituiti.`) : null,
+            h('button', {
+                class: 'btn btn-primary btn-wide', type: 'button',
+                onclick: async () => {
+                    try {
+                        const data = await api('import.apply', { body: withUser({ days: preview.days }) });
+                        state.year = preview.year;
+                        result.replaceChildren(h('p', null, data.changed ? `Fatto: ${data.changed} giorni importati.` : 'Niente da importare: i dati sono già uguali.'));
+                        const boot = await api('boot');
+                        state.workers = boot.workers;
+                    } catch (e) {
+                        showError(e);
+                    }
+                },
+            }, `Importa per ${targetName()}`));
+    };
+
+    return h('section', { class: 'card panel' },
+        h('h2', null, 'Importa da Excel'),
+        h('p', { class: 'muted' }, `Carica il foglio annuale: vedrai il riepilogo prima di importare nelle ore di ${targetName()}. L'importazione si può annullare dalla cronologia.`),
+        h('label', { class: 'btn btn-wide' }, icon('upload'), 'Scegli il file Excel', input),
+        result);
+}
+
+/* ---- print ---- */
+
+async function printMonth() {
+    try {
+        const data = await api('month', { params: withUser({ year: state.year, month: state.month }) });
+        const rows = data.days.flatMap(day => {
+            const list = day.slots.length ? day.slots : [null];
+            let running = day.running - day.ordinary - day.overtime;
+            return list.map((slot, i) => {
+                const duration = slot ? timeToMinutes(slot.end) - timeToMinutes(slot.start) : 0;
+                running += duration;
+                return h('tr', null,
+                    h('td', null, i === 0 ? capitalize(dateLabel(day.date).replace(/ [a-z]+$/, '')) : ''),
+                    h('td', null, slot ? slot.start : ''),
+                    h('td', null, slot ? slot.end : ''),
+                    h('td', { class: 'num' }, slot && !slot.overtime ? fmtHours(duration) : ''),
+                    h('td', { class: 'num' }, slot && slot.overtime ? fmtHours(duration) : ''),
+                    h('td', { class: 'num' }, fmtHours(running)),
+                    h('td', null, i === 0 ? [day.kind !== 'lavoro' ? KINDS[day.kind] : '', day.note].filter(Boolean).join(': ') : ''));
+            });
+        });
+        document.getElementById('print').replaceChildren(
+            h('h1', null, `Rendicontazione ore: ${MONTHS[state.month - 1]} ${state.year}`),
+            h('p', null, targetName()),
+            h('table', null,
+                h('thead', null, h('tr', null, ['Data', 'Inizio', 'Fine', 'Ordinarie', 'Straord.', 'Progressivo', 'Note'].map(t => h('th', null, t)))),
+                h('tbody', null, rows),
+                h('tfoot', null, h('tr', null,
+                    h('th', { colSpan: 3 }, 'Totale del mese'),
+                    h('th', { class: 'num' }, fmtHours(data.totals.ordinary)),
+                    h('th', { class: 'num' }, fmtHours(data.totals.overtime)),
+                    h('th', { class: 'num' }, fmtHours(data.totals.total)),
+                    h('th', null, '')))));
+        window.print();
+    } catch (e) {
+        showError(e);
+    }
+}
+
+start();

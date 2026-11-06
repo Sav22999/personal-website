@@ -188,11 +188,11 @@ Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizze
 Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud,
 Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`, `lib/seed-recipes-4.php`, `lib/seed-recipes-5.php`, `lib/seed-recipes-6.php`). Sulle installazioni
 esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non
-ricompare). **Le prime 103 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in
-`lib/seed-images.php`): quelle dei lotti 2 e 3 sono tutte in **pubblico dominio o CC0** (Wikimedia Commons, Flickr),
-ritagliate a 1200×800; fonti e autori in `assets/img/recipes/CREDITS.md`. Sulle installazioni esistenti le versioni 9 e
-11 del database assegnano le foto alle ricette iniziali che non hanno ancora un'immagine (non toccano quelle caricate
-dal portale). Le 103 ricette dei lotti 4, 5, 6 e 7 (piatti di base, classici regionali, dolci e tradizioni di Germania, Austria, Francia, Belgio e Regno Unito) non hanno ancora una foto: per aggiungerla basta salvarla in `assets/img/recipes/` e abbinarla in `lib/seed-images.php`, oppure caricarla dal portale. Le eventuali nuove ricette create senza foto mostrano una copertina illustrata con le bandiere dei paesi
+ricompare). **Le prime 138 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in
+`lib/seed-images.php`): quelle dei lotti 2, 3 e 4 sono tutte in **pubblico dominio o CC0** (Wikimedia Commons, Flickr),
+ritagliate a 1200×800; fonti e autori in `assets/img/recipes/CREDITS.md`. Sulle installazioni esistenti le versioni 9,
+11 e 20 del database assegnano le foto alle ricette iniziali che non hanno ancora un'immagine (non toccano quelle caricate
+dal portale). Le 68 ricette dei lotti 5, 6 e 7 (classici regionali, dolci e tradizioni di Germania, Austria, Francia, Belgio e Regno Unito) non hanno ancora una foto: per aggiungerla basta salvarla in `assets/img/recipes/` e abbinarla in `lib/seed-images.php`, oppure caricarla dal portale. Le eventuali nuove ricette create senza foto mostrano una copertina illustrata con le bandiere dei paesi
 d'origine.
 
 ## Ruoli
