@@ -1,582 +1,271 @@
 <?php
 /**
- * Rendicontazione Ore — REST API controller.
+ * Rendicontazione Ore: JSON API. Every call is api/index.php?action=<name>.
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
-require_once dirname(__DIR__) . '/lib/models.php';
-require_once dirname(__DIR__) . '/lib/importer.php';
-require_once dirname(__DIR__) . '/lib/seed-2026.php';
+require_once dirname(__DIR__) . '/lib/auth.php';
+require_once dirname(__DIR__) . '/lib/timesheet.php';
+require_once dirname(__DIR__) . '/lib/history.php';
+require_once dirname(__DIR__) . '/lib/xlsx.php';
 
 header('X-Content-Type-Options: nosniff');
+header('X-Robots-Tag: noindex, nofollow');
 header('Cache-Control: no-store');
 
-$action = (string)($_GET['action'] ?? $_POST['action'] ?? '');
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$action = (string)($_GET['action'] ?? '');
+$isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
-// Helper to determine the effective user for hours operations
-// If current user is Admin and target_user_id is provided, use that; otherwise use self.
-function get_target_user_id(array $currentUser): int
+/** Changing actions need POST and our header, which another site cannot send: this stops CSRF. */
+function require_post(): void
 {
-    $target = (int)($_GET['target_user_id'] ?? $_POST['target_user_id'] ?? body()['target_user_id'] ?? 0);
-    if ($target > 0 && $target !== $currentUser['id']) {
-        if ($currentUser['role'] < ROLE_ADMIN) {
-            fail('Solo gli amministratori possono consultare le ore di altri utenti.', 403, 'forbidden');
-        }
-        $targetUser = user_get_by_id($target);
-        if (!$targetUser) {
-            fail('Utente selezionato non trovato.', 404, 'user_not_found');
-        }
-        return $target;
-    }
-    return $currentUser['id'];
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') fail('Metodo non consentito.', 405);
+    if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'rendicontazione') fail('Richiesta non valida.', 403, 'csrf');
+}
+
+/** Whose hours this request is about: yourself, or anybody if you are an administrator. */
+function target_user(array $me): int
+{
+    $id = (int)($_GET['user'] ?? body()['user'] ?? $_POST['user'] ?? 0);
+    if ($id <= 0 || $id === $me['id']) return $me['id'];
+    if ($me['role'] < ROLE_ADMIN) fail('Puoi vedere solo le tue ore.', 403, 'forbidden');
+    if (!user_by('id', (string)$id)) fail('Utente non trovato.', 404);
+    return $id;
+}
+
+function year_param(): int
+{
+    $year = (int)($_GET['year'] ?? date('Y'));
+    if ($year < 2000 || $year > 2100) fail('Anno non valido.', 422);
+    return $year;
+}
+
+function date_param(): string
+{
+    $date = body()['date'] ?? null;
+    if (!valid_date($date)) fail('Data non valida.', 422);
+    return $date;
+}
+
+function month_response(int $userId, string $date): array
+{
+    return month_data($userId, (int)substr($date, 0, 4), (int)substr($date, 5, 2)) + ['usual' => usual_slots($userId)];
+}
+
+/** What the app needs to start. */
+function boot_response(): array
+{
+    $user = current_user();
+    $isAdmin = $user && $user['status'] === STATUS_ACTIVE && $user['role'] >= ROLE_ADMIN;
+    return [
+        'ok' => true,
+        'googleClientId' => (string)config_value('google_client_id', ''),
+        'devLogin' => is_local_dev(),
+        'user' => $user ? user_public($user) : null,
+        'workers' => $isAdmin ? workers_list() : [],
+        'pending' => $isAdmin ? pending_count() : 0,
+    ];
 }
 
 try {
+    if (!credentials() && !is_local_dev()) {
+        fail('credentials.php manca sul server.', 503, 'not_configured');
+    }
+
     switch ($action) {
-        // --- CONFIG & PUBLIC ---
-        case 'config':
-            send_json([
-                'ok' => true,
-                'appName' => 'Rendicontazione Ore',
-                'googleClientId' => (string)config_value('google_client_id', ''),
-                'isSqlite' => is_sqlite(),
-                'debug' => (bool)config_value('debug', false),
-            ]);
+        case 'boot':
+            send_json(boot_response());
             break;
 
-        // --- AUTHENTICATION ---
         case 'auth.google':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $b = body();
-            $credential = trim((string)($b['credential'] ?? ''));
-            if ($credential === '') fail('Token di autenticazione Google mancante.', 400);
-
-            $g = verify_google_token($credential);
-            $email = $g['email'];
-            $sub = $g['sub'];
-            $name = $g['name'];
-            $picture = $g['picture'];
-
-            // Check if user already exists
-            $user = user_get_by_google($sub);
-            if (!$user) {
-                $user = user_get_by_email($email);
-            }
-
-            $masterEmail = (string)config_value('master_admin_email', 'saverio.morelli@gmail.com');
-            $isMasterCandidate = (strcasecmp($email, $masterEmail) === 0);
-
-            $totalUsers = (int)db()->query('SELECT COUNT(*) FROM ' . t('users'))->fetchColumn();
-
-            if (!$user) {
-                // New user registration
-                // If it's the master admin candidate or the very first user in the DB: auto-approve as Master Admin!
-                $isFirstUser = ($totalUsers === 0);
-                $role = ($isMasterCandidate || $isFirstUser) ? ROLE_MASTER : ROLE_USER;
-                $status = ($isMasterCandidate || $isFirstUser) ? STATUS_ACTIVE : STATUS_PENDING;
-
-                $newId = user_create([
-                    'name' => $name,
-                    'email' => $email,
-                    'google_sub' => $sub,
-                    'avatar_url' => $picture,
-                    'role' => $role,
-                    'status' => $status,
-                ]);
-
-                // Auto-seed 2026 data for the first user / father
-                if ($isFirstUser || $status === STATUS_ACTIVE) {
-                    try {
-                        seed_father_timesheet($newId);
-                    } catch (Throwable $e) {
-                        // Keep going if seed fails
-                    }
-                }
-
-                $user = user_get_by_id($newId);
-            } else {
-                // Existing user: update details
-                $updateData = [
-                    'name' => $name,
-                    'avatar_url' => $picture,
-                ];
-                if (empty($user['google_sub'])) {
-                    $updateData['google_sub'] = $sub;
-                }
-                // If email matches master admin, ensure master role and active status
-                if ($isMasterCandidate && ($user['role'] < ROLE_MASTER || $user['status'] !== STATUS_ACTIVE)) {
-                    $updateData['role'] = ROLE_MASTER;
-                    $updateData['status'] = STATUS_ACTIVE;
-                }
-
-                user_update((int)$user['id'], $updateData);
-                $user = user_get_by_id((int)$user['id']);
-            }
-
-            $tokenRaw = login_user((int)$user['id']);
-            $pendingCount = ($user['role'] >= ROLE_ADMIN) ? get_pending_users_count() : 0;
-
-            send_json([
-                'ok' => true,
-                'token' => $tokenRaw,
-                'user' => [
-                    'id' => (int)$user['id'],
-                    'name' => (string)$user['name'],
-                    'email' => (string)$user['email'],
-                    'role' => (int)$user['role'],
-                    'role_label' => ROLE_LABELS[(int)$user['role']] ?? 'Utente',
-                    'status' => (string)$user['status'],
-                    'status_label' => STATUS_LABELS[(string)$user['status']] ?? $user['status'],
-                    'avatar_url' => (string)($user['avatar_url'] ?? ''),
-                ],
-                'pending_users_count' => $pendingCount,
-            ]);
+            require_post();
+            $credential = trim((string)(body()['credential'] ?? ''));
+            if ($credential === '') fail('Accesso con Google non riuscito. Riprova.', 422, 'google_token');
+            $user = user_from_google(verify_google_token($credential));
+            login_user((int)$user['id']);
+            send_json(['ok' => true]);
             break;
 
-        case 'auth.dev_login':
-            // Dev login for local testing
-            if (!config_value('debug', false) && !is_sqlite()) {
-                fail('Dev login disabilitato.', 403);
-            }
-            $targetRole = (int)($_POST['role'] ?? body()['role'] ?? ROLE_MASTER);
-            $email = $targetRole >= ROLE_MASTER ? 'saverio.morelli@gmail.com' : ($targetRole >= ROLE_ADMIN ? 'admin@famiglia.local' : 'papa@famiglia.local');
-            $name = $targetRole >= ROLE_MASTER ? 'Saverio Morelli' : ($targetRole >= ROLE_ADMIN ? 'Amministratore' : 'Papà');
-
-            $user = user_get_by_email($email);
-            if (!$user) {
-                $newId = user_create([
-                    'name' => $name,
-                    'email' => $email,
-                    'role' => $targetRole,
-                    'status' => STATUS_ACTIVE,
-                ]);
-                $user = user_get_by_id($newId);
-                // Seed 2026 data
-                try {
-                    seed_father_timesheet($newId);
-                } catch (Throwable $e) {}
-            } else {
-                user_update((int)$user['id'], ['status' => STATUS_ACTIVE, 'role' => $targetRole]);
-                $user = user_get_by_id((int)$user['id']);
-            }
-
-            $tokenRaw = login_user((int)$user['id']);
-            send_json([
-                'ok' => true,
-                'token' => $tokenRaw,
-                'user' => [
-                    'id' => (int)$user['id'],
-                    'name' => (string)$user['name'],
-                    'email' => (string)$user['email'],
-                    'role' => (int)$user['role'],
-                    'role_label' => ROLE_LABELS[(int)$user['role']] ?? 'Utente',
-                    'status' => (string)$user['status'],
-                    'status_label' => STATUS_LABELS[(string)$user['status']] ?? $user['status'],
-                    'avatar_url' => (string)($user['avatar_url'] ?? ''),
-                ],
-            ]);
-            break;
-
-        case 'auth.me':
-            $u = current_user();
-            if (!$u) {
-                send_json(['ok' => true, 'authenticated' => false, 'user' => null]);
-            }
-            $pendingCount = ($u['role'] >= ROLE_ADMIN) ? get_pending_users_count() : 0;
-            send_json([
-                'ok' => true,
-                'authenticated' => true,
-                'user' => $u,
-                'pending_users_count' => $pendingCount,
-            ]);
+        case 'auth.dev':
+            // Only for `php -S` on this machine: see is_local_dev()
+            if (!is_local_dev()) fail('Azione non riconosciuta.', 404, 'not_found');
+            require_post();
+            $role = (int)(body()['role'] ?? ROLE_USER);
+            $email = ['1' => 'lavoratore@dev.invalid', '9' => 'admin@dev.invalid', '10' => 'master@dev.invalid'][(string)$role] ?? null;
+            if (!$email) fail('Ruolo non valido.', 422);
+            $user = user_by('email', $email);
+            $id = $user ? (int)$user['id'] : user_create(['1' => 'Lavoratore di prova', '9' => 'Admin di prova', '10' => 'Master di prova'][(string)$role], $email, $role, STATUS_ACTIVE);
+            login_user($id);
+            send_json(['ok' => true]);
             break;
 
         case 'auth.logout':
+            require_post();
             logout_user();
             send_json(['ok' => true]);
             break;
 
-        // --- HOURS & TIMESHEET ---
-        case 'hours.month':
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            $year = (int)($_GET['year'] ?? date('Y'));
+        case 'month':
+            $me = require_active();
+            $year = year_param();
             $month = (int)($_GET['month'] ?? date('n'));
-            if ($year < 2020 || $year > 2040) $year = (int)date('Y');
-            if ($month < 1 || $month > 12) $month = (int)date('n');
-
-            $data = work_days_get_month($targetUserId, $year, $month);
-            $targetUser = user_get_by_id($targetUserId);
-
-            send_json([
-                'ok' => true,
-                'data' => $data,
-                'target_user' => [
-                    'id' => (int)$targetUser['id'],
-                    'name' => (string)$targetUser['name'],
-                    'email' => (string)$targetUser['email'],
-                ],
-                'is_own' => ($targetUserId === $u['id']),
-            ]);
+            if ($month < 1 || $month > 12) fail('Mese non valido.', 422);
+            $userId = target_user($me);
+            send_json(['ok' => true, 'presets' => presets_get($userId)] + month_response($userId, sprintf('%04d-%02d-01', $year, $month)));
             break;
 
-        case 'hours.year':
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            $year = (int)($_GET['year'] ?? date('Y'));
-            if ($year < 2020 || $year > 2040) $year = (int)date('Y');
-
-            $data = work_days_get_year_summary($targetUserId, $year);
-            $targetUser = user_get_by_id($targetUserId);
-
-            send_json([
-                'ok' => true,
-                'data' => $data,
-                'target_user' => [
-                    'id' => (int)$targetUser['id'],
-                    'name' => (string)$targetUser['name'],
-                    'email' => (string)$targetUser['email'],
-                ],
-                'is_own' => ($targetUserId === $u['id']),
-            ]);
+        case 'year':
+            $me = require_active();
+            send_json(['ok' => true] + year_data(target_user($me), year_param()));
             break;
 
-        case 'hours.save_day':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            $b = body();
-
-            $date = trim((string)($b['date'] ?? ''));
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-                fail('Data non valida. Formato richiesto: AAAA-MM-GG.', 422);
-            }
-
-            $dayType = trim((string)($b['day_type'] ?? 'work'));
-            $notes = trim((string)($b['notes'] ?? ''));
-            $shifts = is_array($b['shifts'] ?? null) ? $b['shifts'] : [];
-
-            $dayId = work_day_save($targetUserId, $date, $dayType, $notes ?: null, $shifts, true, $u['id']);
-
-            // Return updated month data so UI immediately syncs
-            $parts = explode('-', $date);
-            $updatedMonth = work_days_get_month($targetUserId, (int)$parts[0], (int)$parts[1]);
-
-            send_json([
-                'ok' => true,
-                'day_id' => $dayId,
-                'date' => $date,
-                'month_data' => $updatedMonth,
-            ]);
+        case 'day.save':
+            require_post();
+            $me = require_active();
+            $userId = target_user($me);
+            $date = date_param();
+            day_change($me['id'], $userId, $date, normalize_day(body()));
+            send_json(['ok' => true] + month_response($userId, $date));
             break;
 
-        case 'hours.delete_day':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            $b = body();
-            $date = trim((string)($b['date'] ?? ''));
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-                fail('Data non valida.', 422);
-            }
-
-            work_day_delete($targetUserId, $date, true, $u['id']);
-
-            $parts = explode('-', $date);
-            $updatedMonth = work_days_get_month($targetUserId, (int)$parts[0], (int)$parts[1]);
-
-            send_json([
-                'ok' => true,
-                'deleted' => $date,
-                'month_data' => $updatedMonth,
-            ]);
+        case 'day.delete':
+            require_post();
+            $me = require_active();
+            $userId = target_user($me);
+            $date = date_param();
+            day_change($me['id'], $userId, $date, null);
+            send_json(['ok' => true] + month_response($userId, $date));
             break;
 
-        case 'hours.quick_preset':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            $b = body();
-            $date = trim((string)($b['date'] ?? date('Y-m-d')));
-            $presetId = (int)($b['preset_id'] ?? 1);
-
-            $presets = presets_get_for_user($targetUserId);
-            $found = null;
-            foreach ($presets as $p) {
-                if ($p['id'] === $presetId) {
-                    $found = $p;
-                    break;
-                }
-            }
-            if (!$found && !empty($presets)) {
-                $found = $presets[0];
-            }
-            if (!$found) fail('Nessun turno predefinito trovato.', 404);
-
-            work_day_save($targetUserId, $date, 'work', null, $found['shifts'], true, $u['id']);
-
-            $parts = explode('-', $date);
-            $updatedMonth = work_days_get_month($targetUserId, (int)$parts[0], (int)$parts[1]);
-
-            send_json([
-                'ok' => true,
-                'preset_applied' => $found['name'],
-                'date' => $date,
-                'month_data' => $updatedMonth,
-            ]);
+        case 'presets.save':
+            require_post();
+            $me = require_active();
+            $userId = target_user($me);
+            $presets = presets_save($userId, body()['presets'] ?? null);
+            history_add($me['id'], $userId, 'presets', 'Orari rapidi modificati');
+            send_json(['ok' => true, 'presets' => $presets]);
             break;
 
-        // --- PRESETS ---
-        case 'presets.list':
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            send_json([
-                'ok' => true,
-                'presets' => presets_get_for_user($targetUserId),
-            ]);
-            break;
-
-        // --- CRONOLOGIA / AUDIT LOG ---
-        case 'history.list':
-            $u = require_active_user();
-            $targetUserId = (int)($_GET['target_user_id'] ?? 0);
-            $limit = min(100, max(10, (int)($_GET['limit'] ?? 50)));
-            $offset = max(0, (int)($_GET['offset'] ?? 0));
-
-            $list = audit_log_list($u['id'], $targetUserId, $limit, $offset);
-            send_json([
-                'ok' => true,
-                'history' => $list,
-                'can_undo' => ($u['role'] >= ROLE_ADMIN),
-            ]);
+        case 'history':
+            $me = require_active();
+            $limit = 30;
+            send_json(['ok' => true] + history_list(target_user($me), $me['role'] >= ROLE_ADMIN, $limit, (int)($_GET['before'] ?? 0)));
             break;
 
         case 'history.undo':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            // STRICT: Only Admin or Master Admin can undo changes!
-            $u = require_admin();
-            $b = body();
-            $logId = (int)($b['id'] ?? 0);
-            if ($logId <= 0) fail('ID voce cronologia non valido.', 422);
-
-            $res = audit_log_undo($logId, $u['id']);
-            send_json($res);
+            require_post();
+            $me = require_admin();
+            $result = history_undo((int)(body()['id'] ?? 0), $me, !empty(body()['force']));
+            if (!$result['ok']) {
+                fail('Questi giorni sono stati cambiati ancora dopo.', 409, 'conflict', ['conflicts' => $result['conflicts']]);
+            }
+            send_json($result);
             break;
 
-        // --- EXPORT & IMPORT ---
-        case 'export.csv':
-            $u = require_active_user();
-            $targetUserId = get_target_user_id($u);
-            $year = (int)($_GET['year'] ?? date('Y'));
-            $month = isset($_GET['month']) && $_GET['month'] !== '' ? (int)$_GET['month'] : null;
-
-            header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="rendicontazione-' . ($month ? sprintf('%04d-%02d', $year, $month) : $year) . '.csv"');
-
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['Data', 'Orario inizio', 'Orario fine', 'Straordinario', 'Ore ordinarie', 'Ore straordinarie', 'Totale parziale', 'Note']);
-
-            if ($month) {
-                $mData = work_days_get_month($targetUserId, $year, $month);
-                foreach ($mData['days'] as $d) {
-                    if (empty($d['shifts'])) {
-                        if ($d['notes'] || $d['day_type'] !== 'work') {
-                            fputcsv($out, [$d['date'], '', '', 'False', '00:00:00', '00:00:00', $d['cumulative_hours_formatted'], $d['notes'] ?: $d['day_type']]);
-                        }
-                    } else {
-                        foreach ($d['shifts'] as $i => $s) {
-                            $dateCol = ($i === 0) ? $d['date'] : '';
-                            $ordCol = $s['hours_ordinary'] > 0 ? format_hours_hms($s['hours_ordinary']) : '';
-                            $strCol = $s['hours_overtime'] > 0 ? format_hours_hms($s['hours_overtime']) : '';
-                            $noteCol = $s['notes'] ?: ($i === 0 ? $d['notes'] : '');
-                            fputcsv($out, [$dateCol, $s['start_time'], $s['end_time'], $s['is_overtime'] ? 'True' : 'False', $ordCol, $strCol, $d['cumulative_hours_formatted'], $noteCol]);
-                        }
-                    }
-                }
-            } else {
-                for ($m = 1; $m <= 12; $m++) {
-                    $mData = work_days_get_month($targetUserId, $year, $m);
-                    fputcsv($out, [MONTH_NAMES[$m] . ' ' . $year, '', '', '', '', '', '', '']);
-                    foreach ($mData['days'] as $d) {
-                        if (!empty($d['shifts'])) {
-                            foreach ($d['shifts'] as $i => $s) {
-                                $dateCol = ($i === 0) ? $d['date'] : '';
-                                $ordCol = $s['hours_ordinary'] > 0 ? format_hours_hms($s['hours_ordinary']) : '';
-                                $strCol = $s['hours_overtime'] > 0 ? format_hours_hms($s['hours_overtime']) : '';
-                                $noteCol = $s['notes'] ?: ($i === 0 ? $d['notes'] : '');
-                                fputcsv($out, [$dateCol, $s['start_time'], $s['end_time'], $s['is_overtime'] ? 'True' : 'False', $ordCol, $strCol, $d['cumulative_hours_formatted'], $noteCol]);
-                            }
-                        } elseif ($d['notes']) {
-                            fputcsv($out, [$d['date'], '', '', 'False', '00:00:00', '00:00:00', $d['cumulative_hours_formatted'], $d['notes']]);
-                        }
-                    }
-                }
-            }
-            fclose($out);
+        case 'export':
+            $me = require_active();
+            $userId = target_user($me);
+            $year = year_param();
+            $file = xlsx_export($userId, $year);
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="Rendicontazione ' . $year . '.xlsx"');
+            header('Content-Length: ' . strlen($file));
+            echo $file;
             exit;
 
-        case 'import.csv':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_admin();
-            $targetUserId = get_target_user_id($u);
+        case 'import.preview':
+            require_post();
+            $me = require_admin();
+            $userId = target_user($me);
+            $upload = $_FILES['file'] ?? null;
+            if (!$upload || $upload['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($upload['tmp_name'])) {
+                fail('Caricamento del file non riuscito.', 422);
+            }
+            if ($upload['size'] > 10 * 1024 * 1024) fail('Il file è troppo grande (massimo 10 MB).', 422);
+            $parsed = timesheet_parse(xlsx_read((string)file_get_contents($upload['tmp_name'])), (int)date('Y'));
+            send_json(['ok' => true] + import_preview($userId, $parsed));
+            break;
+
+        case 'import.apply':
+            require_post();
+            $me = require_admin();
+            $userId = target_user($me);
+            $input = body()['days'] ?? null;
+            if (!is_array($input) || !$input) fail('Nessun giorno da importare.', 422);
+            $snapshots = [];
+            foreach ($input as $date => $day) {
+                if (!valid_date($date) || !is_array($day)) fail('Dati non validi.', 422);
+                $snapshots[$date] = normalize_day($day);
+            }
+            ksort($snapshots);
+            $changed = days_import($me['id'], $userId, $snapshots, 'Importati ' . count($snapshots) . ' giorni da Excel');
+            send_json(['ok' => true, 'changed' => $changed]);
+            break;
+
+        case 'users':
+            require_admin();
+            send_json(['ok' => true, 'users' => users_list(), 'pending' => pending_count()]);
+            break;
+
+        case 'users.add':
+            // An account prepared in advance: its owner goes straight in with Google, no approval
+            require_post();
+            $me = require_admin();
+            $email = mb_strtolower(trim((string)(body()['email'] ?? '')));
+            $name = trim((string)(body()['name'] ?? ''));
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail("Controlla l'indirizzo email.", 422);
+            if ($name === '' || mb_strlen($name) > 100) fail('Scrivi il nome della persona.', 422);
+            if (user_by('email', $email)) fail('Esiste già un account con questa email.', 409);
+            $id = user_create($name, $email, ROLE_USER, STATUS_ACTIVE);
+            history_add($me['id'], $id, 'user.add', "Account creato per $name");
+            send_json(['ok' => true, 'id' => $id, 'users' => users_list(), 'workers' => workers_list(), 'pending' => pending_count()]);
+            break;
+
+        case 'users.update':
+            require_post();
+            $me = require_admin();
+            $id = (int)(body()['id'] ?? 0);
+            $target = user_by('id', (string)$id);
+            if (!$target) fail('Utente non trovato.', 404);
+            if ($id === $me['id']) fail('Non puoi cambiare il tuo stesso account.', 403, 'forbidden');
+            if ((int)$target['role'] >= ROLE_MASTER) fail('Il Master Admin non si può modificare.', 403, 'forbidden');
+
             $b = body();
-            $csvContent = (string)($b['csv_content'] ?? '');
-            if (empty($csvContent) && !empty($_FILES['file']['tmp_name'])) {
-                $csvContent = file_get_contents($_FILES['file']['tmp_name']);
+            $changes = [];
+            if (array_key_exists('status', $b)) {
+                if ((int)$target['role'] >= ROLE_ADMIN && $me['role'] < ROLE_MASTER) {
+                    fail('Solo il Master Admin può cambiare un amministratore.', 403, 'forbidden');
+                }
+                if (!in_array($b['status'], [STATUS_ACTIVE, STATUS_REJECTED, STATUS_DISABLED], true)) fail('Stato non valido.', 422);
+                $changes['status'] = $b['status'];
             }
-            if (trim($csvContent) === '') {
-                fail('Contenuto CSV mancante.', 400);
+            if (array_key_exists('role', $b)) {
+                if ($me['role'] < ROLE_MASTER) fail('Solo il Master Admin può cambiare i ruoli.', 403, 'forbidden');
+                if (!in_array($b['role'], [ROLE_USER, ROLE_ADMIN], true)) fail('Ruolo non valido.', 422);
+                $changes['role'] = $b['role'];
             }
+            if (!$changes) fail('Niente da cambiare.', 422);
+            user_set($id, $changes);
 
-            $year = (int)($b['year'] ?? date('Y'));
-            $res = import_timesheet_csv($targetUserId, $csvContent, $year);
-            send_json($res);
-            break;
-
-        // --- ADMIN: USERS & APPROVALS ---
-        case 'users.list':
-            $u = require_admin();
-            $status = isset($_GET['status']) ? (string)$_GET['status'] : null;
-            $users = users_list($status);
-            send_json([
-                'ok' => true,
-                'users' => $users,
-                'pending_count' => get_pending_users_count(),
-            ]);
-            break;
-
-        case 'users.approve':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_admin();
-            $b = body();
-            $targetId = (int)($b['user_id'] ?? 0);
-            if ($targetId <= 0) fail('ID utente non valido.', 422);
-
-            $targetUser = user_get_by_id($targetId);
-            if (!$targetUser) fail('Utente non trovato.', 404);
-
-            user_update($targetId, ['status' => STATUS_ACTIVE]);
-
-            // If user has no work records yet, seed the 2026 data
-            $hasDays = (int)db()->prepare('SELECT COUNT(*) FROM ' . t('work_days') . ' WHERE user_id = ?')->execute([$targetId]);
-            $count = (int)db()->query('SELECT COUNT(*) FROM ' . t('work_days') . ' WHERE user_id = ' . $targetId)->fetchColumn();
-            if ($count === 0) {
-                try {
-                    seed_father_timesheet($targetId);
-                } catch (Throwable $e) {}
-            }
-
-            send_json([
-                'ok' => true,
-                'approved_user_id' => $targetId,
-                'pending_count' => get_pending_users_count(),
-            ]);
-            break;
-
-        case 'users.reject':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_admin();
-            $b = body();
-            $targetId = (int)($b['user_id'] ?? 0);
-            if ($targetId <= 0) fail('ID utente non valido.', 422);
-            if ($targetId === $u['id']) fail('Non puoi rifiutare il tuo stesso account.', 400);
-
-            $targetUser = user_get_by_id($targetId);
-            if (!$targetUser) fail('Utente non trovato.', 404);
-            if ((int)$targetUser['role'] >= ROLE_MASTER) fail('Non puoi modificare il Master Admin.', 403);
-
-            user_update($targetId, ['status' => STATUS_REJECTED]);
-            send_json([
-                'ok' => true,
-                'rejected_user_id' => $targetId,
-                'pending_count' => get_pending_users_count(),
-            ]);
-            break;
-
-        case 'users.set_role':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_master(); // Only Master Admin can change user roles
-            $b = body();
-            $targetId = (int)($b['user_id'] ?? 0);
-            $newRole = (int)($b['role'] ?? ROLE_USER);
-            if ($targetId <= 0) fail('ID utente non valido.', 422);
-            if ($targetId === $u['id']) fail('Non puoi declassare te stesso da Master Admin.', 400);
-            if (!in_array($newRole, [ROLE_USER, ROLE_ADMIN], true)) {
-                fail('Ruolo non valido.', 422);
-            }
-
-            user_update($targetId, ['role' => $newRole]);
-            send_json([
-                'ok' => true,
-                'user_id' => $targetId,
-                'new_role' => $newRole,
-                'role_label' => ROLE_LABELS[$newRole],
-            ]);
-            break;
-
-        case 'users.set_status':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_admin();
-            $b = body();
-            $targetId = (int)($b['user_id'] ?? 0);
-            $newStatus = (string)($b['status'] ?? STATUS_ACTIVE);
-            if ($targetId <= 0) fail('ID utente non valido.', 422);
-            if ($targetId === $u['id'] && $newStatus !== STATUS_ACTIVE) {
-                fail('Non puoi disabilitare il tuo account.', 400);
-            }
-
-            $targetUser = user_get_by_id($targetId);
-            if (!$targetUser) fail('Utente non trovato.', 404);
-            if ((int)$targetUser['role'] >= ROLE_MASTER && $targetId !== $u['id']) {
-                fail('Non puoi modificare il Master Admin.', 403);
-            }
-
-            if (!in_array($newStatus, [STATUS_PENDING, STATUS_ACTIVE, STATUS_REJECTED, STATUS_DISABLED], true)) {
-                fail('Stato non valido.', 422);
-            }
-
-            user_update($targetId, ['status' => $newStatus]);
-            send_json([
-                'ok' => true,
-                'user_id' => $targetId,
-                'new_status' => $newStatus,
-                'status_label' => STATUS_LABELS[$newStatus] ?? $newStatus,
-                'pending_count' => get_pending_users_count(),
-            ]);
-            break;
-
-        case 'users.delete':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_master();
-            $b = body();
-            $targetId = (int)($b['user_id'] ?? 0);
-            if ($targetId <= 0 || $targetId === $u['id']) {
-                fail('Non puoi eliminare il tuo stesso account.', 400);
-            }
-
-            db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$targetId]);
-            send_json(['ok' => true, 'deleted_user_id' => $targetId]);
-            break;
-
-        case 'admin.seed_2026':
-            if ($method !== 'POST') fail('Metodo non consentito', 405);
-            $u = require_admin();
-            $targetUserId = get_target_user_id($u);
-            $res = seed_father_timesheet($targetUserId);
-            send_json($res);
+            $texts = [STATUS_ACTIVE => 'Accesso attivato', STATUS_REJECTED => 'Accesso rifiutato', STATUS_DISABLED => 'Accesso disattivato'];
+            $summary = isset($changes['status'])
+                ? $texts[$changes['status']] . ' per ' . $target['name']
+                : ($changes['role'] === ROLE_ADMIN ? $target['name'] . ' è ora amministratore' : $target['name'] . ' non è più amministratore');
+            history_add($me['id'], $id, isset($changes['status']) ? 'user.status' : 'user.role', $summary);
+            send_json(['ok' => true, 'users' => users_list(), 'workers' => workers_list(), 'pending' => pending_count()]);
             break;
 
         default:
-            fail("Azione '{$action}' non riconosciuta.", 404, 'not_found');
+            fail('Azione non riconosciuta.', 404, 'not_found');
     }
+} catch (UserError $e) {
+    fail($e->getMessage(), 422, 'invalid');
+} catch (PDOException $e) {
+    error_log('rendicontazione: ' . $e->getMessage());
+    fail((bool)config_value('debug', false) ? $e->getMessage() : 'Il database non risponde. Riprova tra poco.', 503, 'database');
 } catch (Throwable $e) {
-    $debug = (bool)config_value('debug', false);
-    fail(
-        $debug ? ($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine()) : 'Si è verificato un errore interno. Riprova più tardi.',
-        500,
-        'server_error'
-    );
+    error_log('rendicontazione: ' . $e->getMessage());
+    fail((bool)config_value('debug', false) ? $e->getMessage() : 'Si è verificato un errore. Riprova.', 500, 'server_error');
 }

@@ -21,7 +21,7 @@ const ROLE_LABELS = [
 ];
 
 const AUTH_COOKIE = 'foodtrack_auth';
-const SCHEMA_VERSION = 16;
+const SCHEMA_VERSION = 19;
 
 const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
 const NUTRISCORES = ['A', 'B', 'C', 'D', 'E'];

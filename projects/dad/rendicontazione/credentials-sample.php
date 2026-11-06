@@ -1,27 +1,24 @@
 <?php
 /**
- * Rendicontazione Ore — database credentials (SAMPLE).
+ * Rendicontazione Ore: credentials (SAMPLE).
  *
- * 1. Copy this file to  credentials.php  (same folder), or let install-db.php create it for you.
- * 2. Fill in the details of the MySQL database (it can be the same database as FoodTrack/Giftwise: tables use the "dad_rend_" prefix).
+ * Copy this file to credentials.php (same folder) and fill it in. credentials.php is excluded
+ * from git and blocked from the browser: never commit it and never paste its values in a doc.
  *
- * credentials.php is excluded from git (.gitignore) and blocked from the browser (.htaccess):
- * never commit it and never publish real credentials.
+ * Running locally with `php -S` never reads the database below: it uses data/dev.sqlite instead.
  */
 
-$localhost_db = "<YOUR DATABASE HOST>";      // e.g. 89.46.111.xxx (on Aruba it is an IP, not "localhost")
+$localhost_db = "<YOUR DATABASE HOST>";      // on Aruba it is an IP, not "localhost"
 $username_db = "<YOUR DATABASE USERNAME>";
 $password_db = "<YOUR DATABASE PASSWORD>";
 $database_name = "<YOUR DATABASE NAME>";
 
 $table_prefix = "dad_rend_";   // every table starts with this prefix
 
-// "Sign in with Google": Client ID of a Google Cloud "OAuth client ID" of type "Web application"
-$google_client_id = "126260557873-mss9iuldd7uttsj9pqd0oqbtntvvo6hl.apps.googleusercontent.com";
+// Client ID of a Google Cloud "OAuth client ID" of type "Web application". It is not a secret.
+$google_client_id = "<YOUR GOOGLE CLIENT ID>";
 
-// Email of the designated Master Admin. When this user logs in with Google,
-// they are automatically set as active Master Admin (role 10).
-$master_admin_email = "saverio.morelli@gmail.com";
+// Google account that becomes Master Admin when it signs in. Nobody else can become one.
+$master_admin_email = "<YOUR GOOGLE EMAIL>";
 
-// Debug mode: true allows local testing and detailed error messages
-$debug = false;
+$debug = false;   // true shows error details in API responses: keep it false on the server

@@ -1,9 +1,9 @@
-# Rendicontazione Ore (Portale Papà)
+# Rendicontazione Ore (private tool: not linked from the site, never indexed)
 Options -Indexes
 DirectoryIndex index.php
 
-# Block credentials, database files, sql dumps and protected directories
-<FilesMatch "(^\.|^credentials.*\.php$|\.(sqlite|db|sql|log|bak|md)$)">
+# Block credentials, databases, docs and hidden files
+<FilesMatch "(^\.|^credentials.*\.php$|\.(sqlite|db|sql|log|bak|md|xlsx|csv)$)">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
@@ -13,7 +13,7 @@ DirectoryIndex index.php
   </IfModule>
 </FilesMatch>
 
-# Internal libraries and data storage are not reachable from the browser
+# PHP libraries and local data are not reachable from the browser
 RedirectMatch 404 ^/projects/dad/rendicontazione/(lib|data)(/|$)
 
 <IfModule mod_headers.c>
@@ -21,6 +21,14 @@ RedirectMatch 404 ^/projects/dad/rendicontazione/(lib|data)(/|$)
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set X-Robots-Tag "noindex, nofollow, noarchive"
+</IfModule>
+
+# Force HTTPS (the session cookie is marked Secure)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
 <IfModule mod_mime.c>

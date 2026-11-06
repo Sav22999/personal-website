@@ -1,234 +1,119 @@
 <?php
 /**
- * Rendicontazione Ore — database schema definition & migration.
- * Compatible with both MySQL 5.7+ / MariaDB and SQLite 3.
+ * Rendicontazione Ore: database schema, valid on MySQL/MariaDB and on SQLite (local development).
+ *
+ * The "users" and "auth_tokens" tables keep the columns of schema v1, so accounts created by the
+ * first version survive. Its work_days/work_shifts/presets/audit_log tables are simply not used.
  */
 
 declare(strict_types=1);
 
-function schema_create_tables(PDO $pdo, string $p = 'dad_rend_'): void
+const SCHEMA_VERSION = 2;
+
+function schema_statements(bool $sqlite): array
 {
-    $isSqlite = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
+    $id = $sqlite ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY';
+    $ref = $sqlite ? 'INTEGER' : 'INT UNSIGNED';
+    $big = $sqlite ? 'TEXT' : 'MEDIUMTEXT';
+    $engine = $sqlite ? '' : ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
-    if ($isSqlite) {
-        $statements = [
-            "CREATE TABLE IF NOT EXISTS `{$p}meta` (
-                `k` VARCHAR(64) PRIMARY KEY,
-                `v` TEXT NOT NULL
-            )",
+    $tables = [
+        'CREATE TABLE IF NOT EXISTS ' . t('meta') . ' (
+            `k` VARCHAR(64) NOT NULL PRIMARY KEY,
+            `v` TEXT NOT NULL
+        )' . $engine,
 
-            "CREATE TABLE IF NOT EXISTS `{$p}users` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `name` VARCHAR(100) NOT NULL,
-                `email` VARCHAR(190) NOT NULL UNIQUE,
-                `google_sub` VARCHAR(64) NULL UNIQUE,
-                `avatar_url` VARCHAR(255) NULL,
-                `role` INTEGER NOT NULL DEFAULT 1,
-                `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
-                `notes` VARCHAR(255) NULL,
-                `created_at` DATETIME NOT NULL,
-                `last_login_at` DATETIME NULL
-            )",
+        'CREATE TABLE IF NOT EXISTS ' . t('users') . " (
+            `id` $id,
+            `name` VARCHAR(100) NOT NULL,
+            `email` VARCHAR(190) NOT NULL UNIQUE,
+            `google_sub` VARCHAR(64) NULL UNIQUE,
+            `avatar_url` VARCHAR(255) NULL,
+            `role` INTEGER NOT NULL DEFAULT 1,
+            `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+            `notes` VARCHAR(255) NULL,
+            `created_at` DATETIME NOT NULL,
+            `last_login_at` DATETIME NULL
+        )" . $engine,
 
-            "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
-                `token_hash` CHAR(64) PRIMARY KEY,
-                `user_id` INTEGER NOT NULL,
-                `ip` VARCHAR(45) NULL,
-                `user_agent` VARCHAR(255) NULL,
-                `created_at` DATETIME NOT NULL,
-                `expires_at` DATETIME NOT NULL,
-                FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            )",
+        'CREATE TABLE IF NOT EXISTS ' . t('auth_tokens') . " (
+            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+            `user_id` $ref NOT NULL,
+            `ip` VARCHAR(45) NULL,
+            `user_agent` VARCHAR(255) NULL,
+            `created_at` DATETIME NOT NULL,
+            `expires_at` DATETIME NOT NULL
+        )" . $engine,
 
-            "CREATE TABLE IF NOT EXISTS `{$p}work_days` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `user_id` INTEGER NOT NULL,
-                `work_date` DATE NOT NULL,
-                `day_type` VARCHAR(30) NOT NULL DEFAULT 'work',
-                `notes` TEXT NULL,
-                `created_at` DATETIME NOT NULL,
-                `updated_at` DATETIME NOT NULL,
-                UNIQUE (`user_id`, `work_date`),
-                FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            )",
+        // One row per day: the time slots are a small JSON list, the minutes are kept for quick sums
+        'CREATE TABLE IF NOT EXISTS ' . t('days') . " (
+            `id` $id,
+            `user_id` $ref NOT NULL,
+            `work_date` DATE NOT NULL,
+            `kind` VARCHAR(20) NOT NULL DEFAULT 'lavoro',
+            `note` TEXT NULL,
+            `slots_json` TEXT NOT NULL,
+            `ordinary_min` INTEGER NOT NULL DEFAULT 0,
+            `overtime_min` INTEGER NOT NULL DEFAULT 0,
+            `updated_at` DATETIME NOT NULL,
+            `updated_by` $ref NOT NULL,
+            UNIQUE (`user_id`, `work_date`)
+        )" . $engine,
 
-            "CREATE TABLE IF NOT EXISTS `{$p}work_shifts` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `day_id` INTEGER NOT NULL,
-                `user_id` INTEGER NOT NULL,
-                `sort_order` INTEGER NOT NULL DEFAULT 0,
-                `start_time` VARCHAR(10) NULL,
-                `end_time` VARCHAR(10) NULL,
-                `is_overtime` INTEGER NOT NULL DEFAULT 0,
-                `hours_ordinary` REAL NOT NULL DEFAULT 0.00,
-                `hours_overtime` REAL NOT NULL DEFAULT 0.00,
-                `notes` VARCHAR(255) NULL,
-                `created_at` DATETIME NOT NULL,
-                FOREIGN KEY (`day_id`) REFERENCES `{$p}work_days` (`id`) ON DELETE CASCADE,
-                FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            )",
+        'CREATE TABLE IF NOT EXISTS ' . t('schedules') . " (
+            `user_id` $ref NOT NULL PRIMARY KEY,
+            `presets_json` TEXT NOT NULL,
+            `updated_at` DATETIME NOT NULL
+        )" . $engine,
 
-            "CREATE TABLE IF NOT EXISTS `{$p}presets` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `user_id` INTEGER NOT NULL,
-                `name` VARCHAR(80) NOT NULL,
-                `shifts_json` TEXT NOT NULL,
-                `is_default` INTEGER NOT NULL DEFAULT 0,
-                `created_at` DATETIME NOT NULL,
-                FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            )",
+        // "changes" maps each date to its {before, after} snapshots: that is what makes undo possible
+        'CREATE TABLE IF NOT EXISTS ' . t('history') . " (
+            `id` $id,
+            `actor_id` $ref NOT NULL,
+            `target_user_id` $ref NOT NULL,
+            `action` VARCHAR(30) NOT NULL,
+            `summary` VARCHAR(255) NULL,
+            `changes` $big NULL,
+            `undo_of` $ref NULL,
+            `undone_at` DATETIME NULL,
+            `undone_by` $ref NULL,
+            `created_at` DATETIME NOT NULL
+        )" . $engine,
+    ];
 
-            "CREATE TABLE IF NOT EXISTS `{$p}audit_log` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `user_id` INTEGER NOT NULL,
-                `target_user_id` INTEGER NOT NULL,
-                `action` VARCHAR(40) NOT NULL,
-                `entity_type` VARCHAR(30) NOT NULL,
-                `entity_id` VARCHAR(50) NOT NULL,
-                `summary` VARCHAR(255) NOT NULL,
-                `before_state` TEXT NULL,
-                `after_state` TEXT NULL,
-                `is_undone` INTEGER NOT NULL DEFAULT 0,
-                `undone_at` DATETIME NULL,
-                `undone_by_user_id` INTEGER NULL,
-                `created_at` DATETIME NOT NULL,
-                FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
-                FOREIGN KEY (`target_user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            )",
+    $tables[] = $sqlite
+        ? 'CREATE INDEX IF NOT EXISTS ' . index_name('history_target') . ' ON ' . t('history') . ' (`target_user_id`, `id`)'
+        : null;
 
-            "CREATE INDEX IF NOT EXISTS `idx_{$p}work_days_date` ON `{$p}work_days` (`user_id`, `work_date`)",
-            "CREATE INDEX IF NOT EXISTS `idx_{$p}shifts_day` ON `{$p}work_shifts` (`day_id`)",
-            "CREATE INDEX IF NOT EXISTS `idx_{$p}shifts_user` ON `{$p}work_shifts` (`user_id`)",
-            "CREATE INDEX IF NOT EXISTS `idx_{$p}audit_target` ON `{$p}audit_log` (`target_user_id`, `created_at`)",
-        ];
-    } else {
-        $opts = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
-        $statements = [
-            "CREATE TABLE IF NOT EXISTS `{$p}meta` (
-                `k` VARCHAR(64) NOT NULL,
-                `v` MEDIUMTEXT NOT NULL,
-                PRIMARY KEY (`k`)
-            ) $opts",
-
-            "CREATE TABLE IF NOT EXISTS `{$p}users` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `name` VARCHAR(100) NOT NULL,
-                `email` VARCHAR(190) NOT NULL,
-                `google_sub` VARCHAR(64) NULL,
-                `avatar_url` VARCHAR(255) NULL,
-                `role` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 Utente, 9 Admin, 10 Master Admin',
-                `status` ENUM('pending','active','rejected','disabled') NOT NULL DEFAULT 'pending',
-                `notes` VARCHAR(255) NULL,
-                `created_at` DATETIME NOT NULL,
-                `last_login_at` DATETIME NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `uq_email` (`email`),
-                UNIQUE KEY `uq_google` (`google_sub`),
-                KEY `idx_role_status` (`role`, `status`)
-            ) $opts",
-
-            "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
-                `token_hash` CHAR(64) NOT NULL,
-                `user_id` INT UNSIGNED NOT NULL,
-                `ip` VARCHAR(45) NULL,
-                `user_agent` VARCHAR(255) NULL,
-                `created_at` DATETIME NOT NULL,
-                `expires_at` DATETIME NOT NULL,
-                PRIMARY KEY (`token_hash`),
-                KEY `idx_user` (`user_id`),
-                CONSTRAINT `fk_{$p}tok_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            ) $opts",
-
-            "CREATE TABLE IF NOT EXISTS `{$p}work_days` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `user_id` INT UNSIGNED NOT NULL,
-                `work_date` DATE NOT NULL,
-                `day_type` VARCHAR(30) NOT NULL DEFAULT 'work',
-                `notes` TEXT NULL,
-                `created_at` DATETIME NOT NULL,
-                `updated_at` DATETIME NOT NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `uq_user_date` (`user_id`, `work_date`),
-                KEY `idx_date` (`work_date`),
-                CONSTRAINT `fk_{$p}days_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            ) $opts",
-
-            "CREATE TABLE IF NOT EXISTS `{$p}work_shifts` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `day_id` INT UNSIGNED NOT NULL,
-                `user_id` INT UNSIGNED NOT NULL,
-                `sort_order` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-                `start_time` VARCHAR(10) NULL,
-                `end_time` VARCHAR(10) NULL,
-                `is_overtime` TINYINT(1) NOT NULL DEFAULT 0,
-                `hours_ordinary` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-                `hours_overtime` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-                `notes` VARCHAR(255) NULL,
-                `created_at` DATETIME NOT NULL,
-                PRIMARY KEY (`id`),
-                KEY `idx_day` (`day_id`),
-                KEY `idx_user` (`user_id`),
-                CONSTRAINT `fk_{$p}shifts_day` FOREIGN KEY (`day_id`) REFERENCES `{$p}work_days` (`id`) ON DELETE CASCADE,
-                CONSTRAINT `fk_{$p}shifts_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            ) $opts",
-
-            "CREATE TABLE IF NOT EXISTS `{$p}presets` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `user_id` INT UNSIGNED NOT NULL,
-                `name` VARCHAR(80) NOT NULL,
-                `shifts_json` TEXT NOT NULL,
-                `is_default` TINYINT(1) NOT NULL DEFAULT 0,
-                `created_at` DATETIME NOT NULL,
-                PRIMARY KEY (`id`),
-                KEY `idx_user` (`user_id`),
-                CONSTRAINT `fk_{$p}preset_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            ) $opts",
-
-            "CREATE TABLE IF NOT EXISTS `{$p}audit_log` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `user_id` INT UNSIGNED NOT NULL,
-                `target_user_id` INT UNSIGNED NOT NULL,
-                `action` VARCHAR(40) NOT NULL,
-                `entity_type` VARCHAR(30) NOT NULL,
-                `entity_id` VARCHAR(50) NOT NULL,
-                `summary` VARCHAR(255) NOT NULL,
-                `before_state` MEDIUMTEXT NULL,
-                `after_state` MEDIUMTEXT NULL,
-                `is_undone` TINYINT(1) NOT NULL DEFAULT 0,
-                `undone_at` DATETIME NULL,
-                `undone_by_user_id` INT UNSIGNED NULL,
-                `created_at` DATETIME NOT NULL,
-                PRIMARY KEY (`id`),
-                KEY `idx_target_date` (`target_user_id`, `created_at`),
-                KEY `idx_action` (`action`),
-                CONSTRAINT `fk_{$p}audit_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
-                CONSTRAINT `fk_{$p}audit_target` FOREIGN KEY (`target_user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
-            ) $opts",
-        ];
-    }
-
-    foreach ($statements as $sql) {
-        $pdo->exec($sql);
-    }
+    return array_values(array_filter($tables));
 }
 
-/** Ensure schema exists and metadata is initialized. */
-function ensure_schema(?PDO $pdo = null): void
+function index_name(string $name): string
 {
-    static $ensured = false;
-    if ($ensured) return;
-    $p = (string)config_value('prefix', 'dad_rend_');
-    $pdo = $pdo ?: db();
+    return '`' . (string)config_value('prefix', 'dad_rend_') . $name . '`';
+}
 
-    schema_create_tables($pdo, $p);
-
-    // Record schema version in meta
-    $st = $pdo->prepare('SELECT v FROM ' . t('meta') . ' WHERE k = ?');
-    $st->execute(['schema_version']);
-    $ver = $st->fetchColumn();
-    if ($ver === false) {
-        $pdo->prepare('INSERT INTO ' . t('meta') . ' (k, v) VALUES (?, ?)')->execute(['schema_version', (string)SCHEMA_VERSION]);
+/** Creates the missing tables once, then remembers the schema version. */
+function ensure_schema(PDO $pdo): void
+{
+    try {
+        $version = (int)$pdo->query('SELECT v FROM ' . t('meta') . " WHERE k = 'schema_version'")->fetchColumn();
+    } catch (Throwable $e) {
+        $version = 0;
     }
+    if ($version >= SCHEMA_VERSION) return;
 
-    $ensured = true;
+    $sqlite = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
+    foreach (schema_statements($sqlite) as $sql) {
+        $pdo->exec($sql);
+    }
+    if (!$sqlite) {
+        try {
+            $pdo->exec('ALTER TABLE ' . t('history') . ' ADD INDEX ' . index_name('history_target') . ' (`target_user_id`, `id`)');
+        } catch (Throwable $e) {
+            // already there
+        }
+    }
+    $pdo->prepare('DELETE FROM ' . t('meta') . " WHERE k = 'schema_version'")->execute();
+    $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', ?)")->execute([(string)SCHEMA_VERSION]);
 }

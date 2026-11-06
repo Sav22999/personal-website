@@ -112,7 +112,7 @@ function seed_en_products_1(): array
 function seed_en_recipes(): array
 {
     $b2 = [];
-    foreach (array_merge(seed2_recipes(), seed3_recipes(), seed4_recipes(), seed5_recipes(), seed6_recipes()) as $r) {
+    foreach (array_merge(seed2_recipes(), seed3_recipes(), seed4_recipes(), seed5_recipes(), seed6_recipes(), seed7_recipes()) as $r) {
         $notes = [];
         foreach ($r['ing'] as $i) if ($i[3] !== '' && $i[4] !== '') $notes[$i[3]] = $i[4];
         $b2[$r['it']] = [$r['en'], $r['desc'][1], $r['cookN'][1], array_map(function ($st) {

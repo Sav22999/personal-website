@@ -1,6 +1,7 @@
-# Real database credentials: never commit them (use credentials-sample.php as template)
+# Real credentials and every data file stay out of git: this repository is public
 credentials.php
+data/
 *.sqlite
-data/*.sqlite
-data/*.db
+*.sqlite-*
+*.xlsx
 .DS_Store

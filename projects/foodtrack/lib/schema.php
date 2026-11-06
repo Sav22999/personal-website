@@ -326,6 +326,9 @@ function schema_statements(string $p = 'ft_'): array
  *  v14: notification preferences of the users (the table of the push subscriptions is created with the others)
  *  v15: fourth batch of recipes (everyday basics, without a cover photo for now)
  *  v16: fifth and sixth batch of recipes (regional classics, cakes and European traditions, without a cover photo for now) and the products they need
+ *  v17: corrected countries of origin (a recipe whose origin was changed by an admin stays as it is)
+ *  v18: apple pie added; mashed potatoes and carrot cake moved to England (also from the values of the first v17)
+ *  v19: carrot cake from both England and Switzerland
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -437,6 +440,22 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         require_once __DIR__ . '/seed.php';
         $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
         seed_database($pdo, $p, $admin ? (int)$admin : null);
+    }
+    if ($from < 17) {
+        require_once __DIR__ . '/seed.php';
+        $st = $pdo->prepare("UPDATE `{$p}recipes` SET origin = ? WHERE name = ? AND origin = ?");
+        foreach (seed_origin_fixes() as $name => [$old, $new]) $st->execute([$new, $name, $old]);
+    }
+    if ($from < 18) {
+        require_once __DIR__ . '/seed.php';
+        $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
+        seed_database($pdo, $p, $admin ? (int)$admin : null);
+        $st = $pdo->prepare("UPDATE `{$p}recipes` SET origin = 'GB-ENG' WHERE name = ? AND origin = ?");
+        $st->execute(['Purè di patate', 'FR']);
+        $st->execute(['Torta di carote', 'CH']);
+    }
+    if ($from < 19) {
+        $pdo->exec("UPDATE `{$p}recipes` SET origin = 'GB-ENG,CH' WHERE name = 'Torta di carote' AND origin = 'GB-ENG'");
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

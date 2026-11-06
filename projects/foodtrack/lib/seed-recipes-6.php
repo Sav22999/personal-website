@@ -144,7 +144,7 @@ function seed6_recipes(): array
             ['Cialde lievitate con zucchero caramellato.', 'Yeast waffles with caramelised sugar.'], ['Piastra per waffle', 'Waffle iron'],
             [['Farina', 500, 'g', '', ''], ['Latte intero', 150, 'ml', 'tiepido', 'warm'], ['Lievito di birra', 15, 'g', '', ''], ['Uova', 2, 'pz', '', ''], ['Burro', 200, 'g', 'morbido', 'soft'], ['Zucchero', 200, 'g', 'in granella', 'pearl sugar']],
             [['Impasta farina, latte, lievito, uova e burro.', 'Knead flour, milk, yeast, eggs and butter.'], ['Fai lievitare 1 ora e unisci lo zucchero in granella.', 'Leave to rise for 1 hour and add the pearl sugar.'], ['Dividi in palline e cuoci nella piastra 3–4 minuti.', 'Divide into balls and cook in the waffle iron for 3–4 minutes.']]),
-        $R('Speculoos', 'Speculoos', ['BE'], 15, 15, 12, 'facile',
+        $R('Speculoos', 'Speculoos', ['BE', 'NL'], 15, 15, 12, 'facile',
             ['Biscotti speziati al caramello.', 'Spiced caramel biscuits.'], $oven,
             [['Farina', 300, 'g', '', ''], ['Zucchero di canna', 180, 'g', '', ''], ['Burro', 150, 'g', '', ''], ['Uova', 1, 'pz', '', ''], ['Cannella', 2, 'cucchiaini', '', ''], ['Chiodi di garofano', null, 'q.b.', 'in polvere', 'ground'], ['Zenzero in polvere', 1, 'cucchiaini', '', ''], ['Lievito per dolci', 5, 'g', '', '']],
             [['Impasta tutti gli ingredienti.', 'Knead all the ingredients.'], ['Lascia in frigo 2 ore.', 'Chill for 2 hours.'], ['Stendi, taglia i biscotti e cuoci in forno 15 minuti.', 'Roll out, cut the biscuits and bake for 15 minutes.']]),
@@ -209,5 +209,28 @@ function seed6_recipes(): array
             ['Barrette di avena, burro e miele.', 'Oat, butter and honey bars.'], $oven,
             [['Fiocchi d’avena', 300, 'g', '', ''], ['Burro', 150, 'g', '', ''], ['Zucchero di canna', 120, 'g', '', ''], ['Miele', 4, 'cucchiai', '', '']],
             [['Sciogli burro, zucchero e miele.', 'Melt butter, sugar and honey.'], ['Unisci l’avena e compatta in una teglia.', 'Stir in the oats and press into a tin.'], ['Cuoci in forno 25 minuti e taglia a barrette da tiepido.', 'Bake for 25 minutes and cut into bars while warm.']]),
+    ];
+}
+
+/** Seventh batch of recipes (same format). */
+function seed7_recipes(): array
+{
+    return [
+        [
+            'it' => 'Apple pie', 'en' => 'Apple pie', 'origin' => ['GB-ENG'], 'prep' => 30, 'cook' => 50, 'serv' => 8, 'diff' => 'media',
+            'desc' => ['Mele e cannella tra due strati di pasta croccante.', 'Apples and cinnamon between two layers of crisp pastry.'],
+            'cookN' => ['Forno a 190 °C', 'Oven at 190 °C'],
+            'ing' => [
+                ['Farina', 350, 'g', '', ''], ['Burro', 200, 'g', 'freddo', 'cold'], ['Acqua', 60, 'ml', 'fredda', 'cold'],
+                ['Mele', 1, 'kg', '', ''], ['Zucchero di canna', 120, 'g', '', ''], ['Cannella', 1, 'cucchiaini', '', ''],
+                ['Limoni', 1, 'pz', 'il succo', 'the juice'], ['Uova', 1, 'pz', 'per spennellare', 'for brushing'],
+            ],
+            'steps' => [
+                ['Impasta farina, burro, acqua e un pizzico di sale e lascia 30 minuti in frigo.', 'Knead flour, butter, water and a pinch of salt and chill for 30 minutes.'],
+                ['Mescola le mele a fette con zucchero, cannella e succo di limone.', 'Mix the sliced apples with sugar, cinnamon and lemon juice.'],
+                ['Fodera una tortiera con metà pasta, aggiungi le mele e copri con il resto.', 'Line a pie dish with half the pastry, add the apples and cover with the rest.'],
+                ['Sigilla i bordi, spennella con l’uovo, incidi la superficie e cuoci in forno 50 minuti.', 'Seal the edges, brush with egg, cut a few slits and bake for 50 minutes.'],
+            ],
+        ],
     ];
 }

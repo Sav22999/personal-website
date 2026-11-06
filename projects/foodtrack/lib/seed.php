@@ -150,7 +150,7 @@ function seed_recipes(): array
             ];
         }, $list);
     };
-    return array_merge(seed_recipes_1(), $conv(seed2_recipes(), 2), $conv(seed3_recipes(), 3), $conv(seed4_recipes(), 4), $conv(seed5_recipes(), 5), $conv(seed6_recipes(), 6));
+    return array_merge(seed_recipes_1(), $conv(seed2_recipes(), 2), $conv(seed3_recipes(), 3), $conv(seed4_recipes(), 4), $conv(seed5_recipes(), 5), $conv(seed6_recipes(), 6), $conv(seed7_recipes(), 7));
 }
 
 function seed_recipes_1(): array
@@ -331,6 +331,32 @@ function seed_database(PDO $pdo, string $p, ?int $adminId = null): array
     require_once __DIR__ . '/seed-en.php';
     seed_translations($pdo, $p);
     return $added;
+}
+
+/** Recipes whose country of origin was corrected: name => [previous origin, right origin]. Empty = not tied to a country. */
+function seed_origin_fixes(): array
+{
+    return [
+        'Purè di patate' => ['IT', 'GB-ENG'],
+        'Pollo in padella con spezie' => ['IT', ''],
+        'Pollo al limone' => ['IT', ''],
+        'Pollo arrosto con patate' => ['IT', ''],
+        'Bistecca in padella' => ['IT', ''],
+        'Salmone al forno' => ['IT', ''],
+        'Verdure grigliate' => ['IT', ''],
+        'Patate al forno' => ['IT', ''],
+        'Torta al cioccolato' => ['IT', ''],
+        'Zuppa di lenticchie' => ['IT', ''],
+        'Vellutata di zucca' => ['IT', ''],
+        'Uova strapazzate' => ['GB', ''],
+        'Scones' => ['GB-ENG', 'GB-SCT'],
+        'Coleslaw' => ['US', 'NL,US'],
+        'Apfelstrudel veloce' => ['AT,DE', 'AT'],
+        'Torta di carote' => ['IT,CH', 'GB-ENG,CH'],
+        'Speculoos' => ['BE', 'BE,NL'],
+        'Hummus' => ['LB', 'LB,SY,EG'],
+        'Cuscus di verdure' => ['MA', 'MA,DZ,TN,MR'],
+    ];
 }
 
 /** Default spaces created for every new household (English source, translated with tr()). */
