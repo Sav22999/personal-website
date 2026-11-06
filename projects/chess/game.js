@@ -1502,7 +1502,7 @@ function renderStylePicker() {
     }).join('');
 }
 
-const BOARD_THEMES = ['classic', 'green', 'brown', 'blue', 'grey', 'purple', 'coral'];
+const BOARD_THEMES = ['classic', 'green', 'brown', 'blue', 'grey', 'purple', 'coral', 'flat'];
 
 // Game options. Most work through attributes on <html> (see style.css), so changes show at once.
 const DEFAULT_OPTIONS = {coords: true, lastMove: true, dots: true, autoQueen: false, anim: 'normal'};

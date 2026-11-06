@@ -2177,9 +2177,20 @@ input[type="text"]:focus {
     --sq-dark: #CF8572;
 }
 
+[data-board="flat"] {
+    --sq-light: #F1EFE9;
+    --sq-dark: #3AA6A0;
+}
+
 [data-board="classic"] {
     --sq-light: #F2F2F0;
     --sq-dark: #58585D;
+}
+
+/* Flat board: matte, with no shadow under it */
+[data-board="flat"] .board-wrap,
+[data-board="flat"] .custom-preview {
+    box-shadow: none;
 }
 
 .logo-face {
