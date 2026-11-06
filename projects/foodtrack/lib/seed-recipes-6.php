@@ -2,7 +2,6 @@
 /**
  * Sixth batch of recipes: traditional dishes and sweets of Germany, Austria, France, Belgium and Britain.
  * Same format as seed-recipes-2.php (Italian base language + English, short schematic steps).
- * These recipes have no photo yet: the app shows the generated cover until one is added in lib/seed-images.php.
  */
 
 declare(strict_types=1);
