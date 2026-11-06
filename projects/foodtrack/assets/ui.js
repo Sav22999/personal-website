@@ -120,7 +120,7 @@
     }
 
     /** Pictogram of a product / space / list from the SVG sprite (follows currentColor, any size). */
-    const SPRITE = 'assets/img/icons.svg?v=3';
+    const SPRITE = 'assets/img/icons.svg?v=4';
 
     function pic(folder, name, cls) {
         const ns = 'http://www.w3.org/2000/svg';
@@ -200,6 +200,9 @@
         notificationsSupported: () => !!native || 'Notification' in window,
         notificationPermission: () => native ? String(native.notificationPermission()) : ('Notification' in window ? Notification.permission : 'denied'),
         requestNotifications: () => native ? nativeCall('notify', () => native.requestNotificationPermission()) : Notification.requestPermission(),
+        backgroundActivity: (on, after, lang) => {
+            if (native && native.setBackgroundActivity) native.setBackgroundActivity(on, String(after), lang); // Older app versions don't have it
+        },
         notify: (title, body) => {
             if (native) {
                 native.notify(title, body);

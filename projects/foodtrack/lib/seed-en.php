@@ -31,7 +31,7 @@ function seed_en_categories(): array
 function seed_en_products(): array
 {
     $b2 = [];
-    foreach (array_merge(seed2_products(), seed3_products()) as $p) $b2[$p[0]] = [$p[1], null];
+    foreach (array_merge(seed2_products(), seed3_products(), seed4_products()) as $p) $b2[$p[0]] = [$p[1], null];
     return array_merge(seed_en_products_1(), $b2);
 }
 

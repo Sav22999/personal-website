@@ -44,7 +44,7 @@ foodtrack/
       presi dal pannello Aruba;
     - prefisso tabelle (predefinito `ft_`);
     - nome, email e password del **master admin**.
-3. La pagina crea le tabelle, carica 13 categorie, 153 prodotti e 103 ricette (in italiano e inglese, da oltre 35
+3. La pagina crea le tabelle, carica 13 categorie, 492 prodotti e 103 ricette (in italiano e inglese, da oltre 35
    paesi), crea il master admin (con la sua casa) e scrive `credentials.php`.
    Se PHP non può scrivere il file, la pagina mostra il contenuto da creare a mano via FTP.
 4. **Elimina `install-db.php` dal server** (ricaricalo solo quando serve aggiornare le tabelle: in quel caso chiede la
@@ -74,6 +74,14 @@ Quando un prodotto passa dalla lista a uno spazio, l'app propone il primo spazio
 singolo prodotto sia con «Sposta tutti nei loro spazi». Se manca l'ambiente o non esiste uno spazio adatto, chiede di
 sceglierlo. Sulle installazioni esistenti la versione 12 del database assegna l'ambiente ai prodotti iniziali e agli
 spazi (in base all'icona: freezer, frigo e borsa frigo; gli altri a temperatura ambiente).
+
+## Attività dei collaboratori
+
+Nelle case con più membri l'app avvisa di ciò che hanno fatto gli altri: prodotti, spazi, liste, pasti, ingressi e uscite (`NOTIFIED_ACTIONS` in `lib/push.php`). Dal profilo, «Notifiche» sceglie le categorie: la scelta è salvata sull'account (`users.notify_off`) e vale su tutti i dispositivi.
+
+- **App aperta:** controllo ogni 30 secondi, compare un messaggio.
+- **Browser, app chiusa:** Web Push. Il server manda solo un segnale senza contenuto (chiavi VAPID create al primo uso e salvate in `meta`); il service worker chiede poi il testo a `activity.pending` con la sessione dell'utente. I servizi push non ricevono dati della casa. Su iPhone funziona solo con l'app aggiunta alla schermata Home.
+- **App Android, app chiusa:** il WebView non supporta Web Push e Firebase non è usato: `ActivityJobService` controlla `activity.pending` circa ogni 15 minuti (Android può ritardare il controllo per risparmiare batteria).
 
 ## Cronologia della casa
 

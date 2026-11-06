@@ -901,6 +901,8 @@
             'aria-label': t('Search product')
         });
         const results = h('div.stack', {style: {marginTop: '12px'}});
+        const catChips = h('div.chips.scroll', {style: {marginTop: '10px'}});
+        let catSel = null, shown = 60;
         const createBtn = btn(t('Create new product'), {
             kind: 'tonal',
             icon: 'add',
@@ -919,9 +921,21 @@
             const n = norm(q.value);
             createBtn.querySelector('span').textContent = n ? t('Create “{name}”', {name: q.value.trim()}) : t('Create new product');
             let prods = S.catalog.products;
+            if (catSel) prods = prods.filter(p => p.categoryId === catSel);
             if (n) prods = prods.filter(p => norm(p.name).includes(n)).sort((a, b) => norm(a.name).indexOf(n) - norm(b.name).indexOf(n));
+            UI.clear(catChips);
+            for (const c of [{id: null, name: t('All')}].concat(S.catalog.categories)) {
+                catChips.appendChild(h('button.chip' + (catSel === c.id ? '.sel' : ''), {
+                    type: 'button',
+                    onclick: () => {
+                        catSel = c.id;
+                        shown = 60;
+                        refresh();
+                    }
+                }, c.name));
+            }
             UI.clear(results);
-            for (const p of prods.slice(0, 60)) {
+            for (const p of prods.slice(0, shown)) {
                 const cat = categoryById(p.categoryId);
                 results.appendChild(cardRow({
                         lead: tile('products', p.icon, 'sm'),
@@ -937,10 +951,22 @@
                         categoryId: p.categoryId
                     })));
             }
+            if (prods.length > shown) {
+                results.appendChild(h('div.btn-row', {style: {justifyContent: 'center'}}, btn(t('Show more'), {
+                    kind: 'text',
+                    onclick: () => {
+                        shown += 60;
+                        refresh();
+                    }
+                })));
+            }
             if (n && !prods.length) results.appendChild(h('p.helper.center', t('Not in the catalogue: you can create a new product.')));
         }
 
-        q.addEventListener('input', refresh);
+        q.addEventListener('input', () => {
+            shown = 60;
+            refresh();
+        });
         q.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -957,7 +983,7 @@
                     s.close();
                     setTimeout(() => openScanner(ctx), 240);
                 }
-            })), results],
+            })), catChips, results],
         });
         refresh();
     }
@@ -3161,11 +3187,17 @@
 
     // ===================================================== ACTIVITY HISTORY & UNDO
 
-    /** Icon and text of a household event that is not about a product in a space. */
+    /** Icon and text of a household event. */
     function historyEvent(e) {
         const d = e.details || {}, name = e.itemName;
         const what = d.n != null ? plural(d.n, 'product', 'products') : '';
         const events = {
+            consume_part: ['check', t('Consumed {qty} of “{name}”', {qty: UI.fmtQty(e.quantity, e.unit), name})],
+            consume: ['check', t('Consumed “{name}” entirely', {name})],
+            add: ['add', t('Added “{name}”', {name})],
+            delete: ['delete', t('Deleted “{name}”', {name})],
+            edit: ['edit', t('Edited “{name}”', {name})],
+            move_from_list: ['cartAdd', t('Purchased “{name}”', {name})],
             space_create: ['add', t('Created space “{name}”', {name})],
             space_rename: ['edit', t('Renamed space “{from}” to “{to}”', d)],
             space_edit: ['edit', t('Edited space “{name}”', {name})],
@@ -3222,32 +3254,7 @@
             }
 
             box.appendChild(h('div.stack', list.map(hItem => {
-                let title = '';
-                let ic = 'history';
-                if (hItem.action === 'consume_part') {
-                    title = t('Consumed {qty} of “{name}”', {
-                        qty: UI.fmtQty(hItem.quantity, hItem.unit),
-                        name: hItem.itemName
-                    });
-                    ic = 'check';
-                } else if (hItem.action === 'consume') {
-                    title = t('Consumed “{name}” entirely', {name: hItem.itemName});
-                    ic = 'check';
-                } else if (hItem.action === 'add') {
-                    title = t('Added “{name}”', {name: hItem.itemName});
-                    ic = 'add';
-                } else if (hItem.action === 'delete') {
-                    title = t('Deleted “{name}”', {name: hItem.itemName});
-                    ic = 'delete';
-                } else if (hItem.action === 'edit') {
-                    title = t('Edited “{name}”', {name: hItem.itemName});
-                    ic = 'edit';
-                } else if (hItem.action === 'move_from_list') {
-                    title = t('Purchased “{name}”', {name: hItem.itemName});
-                    ic = 'cartAdd';
-                } else {
-                    [ic, title] = historyEvent(hItem);
-                }
+                const [ic, title] = historyEvent(hItem);
 
                 const timeStr = UI.fmtDateTime(hItem.createdAt);
                 const planned = hItem.details && hItem.details.date ? [UI.fmtDate(hItem.details.date), (SLOTS.find(x => x[0] === hItem.details.slot) || [])[1]] : [];
@@ -3402,6 +3409,56 @@
             h('span', t('Developed with')), h('span.dev-heart', {html: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#E5484D" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'}), h('span', t('by')), h('span.dev-name', 'Saverio Morelli'));
     }
 
+    /** Turns the notifications of this device on (asking for the permission) or off. */
+    async function toggleDeviceNotifications() {
+        const on = store.get('notify', false) && UI.app.notificationPermission() === 'granted';
+        if (on) store.set('notify', false);
+        else {
+            let p = 'denied';
+            try {
+                p = await UI.app.requestNotifications();
+            } catch (e) { /* not allowed */
+            }
+            store.set('notify', p === 'granted');
+            if (p !== 'granted') toast(t('Permission denied: you can turn them on in the browser settings.'), 'error');
+            else {
+                store.set('notifiedOn', '');
+                notifyExpiry();
+            }
+        }
+        await syncBackgroundNotifications();
+    }
+
+    /** Chooses what to be notified about: the choice follows the account, on every device. */
+    function openNotificationSettings() {
+        const box = h('div');
+
+        function paint() {
+            const device = store.get('notify', false) && UI.app.notificationPermission() === 'granted';
+            const sw = on => ({trail: h('div.trail', h('span.switch' + (on ? '.on' : '')))});
+            const cats = notifyCategories().filter(c => c[0] === 'expiry' || hasCollaborators());
+            box.replaceChildren(
+                h('div.group', groupRow('bell', t('On this device'), device ? t('On for this device') : t('Off'), async () => {
+                    await toggleDeviceNotifications();
+                    paint();
+                    render(true);
+                }, sw(device))),
+                sectionTitle(t('Notify me about')),
+                h('div.group', cats.map(([key, ic, title, sub]) => groupRow(ic, title, sub, async () => {
+                    const off = new Set(S.user.notifyOff || []);
+                    if (off.has(key)) off.delete(key); else off.add(key);
+                    S.user.notifyOff = (await Api.post('notify.save', {off: [...off]})).notifyOff;
+                    paint();
+                    syncBackgroundNotifications();
+                }, sw(notifyOn(key))))),
+                hasCollaborators() ? h('p.helper', t('With the app open you see what the others do right away. In the browser it also arrives with the app closed; in the Android app it can take about 15 minutes.'))
+                    : h('p.helper', t('When you share a household, you can also choose what to hear about the other members.')));
+        }
+
+        paint();
+        sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {kind: 'text', onclick: () => UI.closeTop()})], autofocus: false});
+    }
+
     function viewProfile() {
         const hh = S.household;
         const isOwner = hh.role === 'owner';
@@ -3520,25 +3577,7 @@
                         render(true);
                     }
                 })), t('Remind me'))),
-                UI.app.notificationsSupported() ? groupRow('bell', t('Notifications'), notif ? t('On for this device') : t('Off'), async () => {
-                    if (notif) {
-                        store.set('notify', false);
-                        render(true);
-                        return;
-                    }
-                    let p = 'denied';
-                    try {
-                        p = await UI.app.requestNotifications();
-                    } catch (e) { /* not allowed */
-                    }
-                    store.set('notify', p === 'granted');
-                    if (p !== 'granted') toast(t('Permission denied: you can turn them on in the browser settings.'), 'error');
-                    else {
-                        store.set('notifiedOn', '');
-                        notifyExpiry();
-                    }
-                    render(true);
-                }, {trail: h('div.trail', h('span.switch' + (notif ? '.on' : '')))}) : null,
+                UI.app.notificationsSupported() ? groupRow('bell', t('Notifications'), notif ? t('On for this device') : t('Off'), openNotificationSettings) : null,
                 groupRow('school', t('App tutorial'), t('A quick tour of how FoodTrack works'), () => openTutorial()),
                 groupRow('bulb', t('Show tips again'), null, () => {
                     ['tip.cart', 'tip.spaces'].forEach(k => store.set(k, false));
@@ -3649,6 +3688,7 @@
     }
 
     async function logout() {
+        await syncBackgroundNotifications(true);
         try {
             await Api.post('auth.logout', {});
         } catch (e) { /* already signed out */
@@ -4017,7 +4057,7 @@
     // ===================================================== notifications & sync
 
     function notifyExpiry() {
-        if (!store.get('notify', false) || !UI.app.notificationsSupported() || UI.app.notificationPermission() !== 'granted') return;
+        if (!store.get('notify', false) || !notifyOn('expiry') || !UI.app.notificationsSupported() || UI.app.notificationPermission() !== 'granted') return;
         const today = UI.todayStr();
         if (store.get('notifiedOn', '') === today) return;
         const a = expiredItems().length, b = expiringItems().length;
@@ -4026,18 +4066,108 @@
         const parts = [];
         if (b) parts.push(plural(b, 'expiring product', 'expiring products'));
         if (a) parts.push(plural(a, 'expired product', 'expired products'));
-        const opts = {
-            body: t('You have {what}. Find out how to use them before throwing them away!', {what: parts.join(t(' and '))}),
-            icon: 'assets/icons/icon-192.png',
-            badge: 'assets/icons/icon-mono.png',
-            tag: 'ft-expiry'
-        };
+        systemNotify(t('You have {what}. Find out how to use them before throwing them away!', {what: parts.join(t(' and '))}), 'ft-expiry', './#/spaces');
+    }
+
+    /** Shows a system notification; tapping it opens the given page. */
+    function systemNotify(body, tag, page) {
+        const opts = {body, icon: 'assets/icons/icon-192.png', badge: 'assets/icons/icon-mono.png', tag, data: {page}};
         if (UI.app.notify('FoodTrack', opts.body)) return; // Android app: native notification
         if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification('FoodTrack', opts)).catch(() => {
         });
         else try {
             new Notification('FoodTrack', opts);
         } catch (e) { /* not allowed */
+        }
+    }
+
+    /** Notification categories the user can choose, in the order of the settings. */
+    function notifyCategories() {
+        return [
+            ['expiry', 'warning', t('Expiring products'), t('Products about to expire or expired')],
+            ['products', 'add', t('Products'), t('Someone adds, buys, finishes or deletes a product')],
+            ['spaces', 'spaces', t('Spaces'), t('Someone creates, renames or deletes a space')],
+            ['lists', 'cart', t('Shopping lists'), t('New lists and products added to a list')],
+            ['plan', 'calendar', t('Meal plan'), t('Someone plans a meal')],
+            ['members', 'group', t('Members and household'), t('Someone joins or leaves, the household changes')],
+        ];
+    }
+
+    function notifyOn(category) {
+        return !(S.user.notifyOff || []).includes(category);
+    }
+
+    /** True in a shared household: the only case with activity of other people to report. */
+    function hasCollaborators() {
+        return (S.households || []).some(x => x.members > 1);
+    }
+
+    function wantsActivity() {
+        return hasCollaborators() && notifyCategories().some(c => c[0] !== 'expiry' && notifyOn(c[0]));
+    }
+
+    /** Last history event told to the user on this device; the service worker shares it through a cache. */
+    async function activityCursor() {
+        let after = store.get('activity.after', 0);
+        try {
+            const res = await (await caches.open('ft-state')).match('activity');
+            if (res) after = Math.max(after, (await res.json()).after || 0);
+        } catch (e) { /* no cache storage */
+        }
+        return after;
+    }
+
+    async function saveActivityCursor(after) {
+        store.set('activity.after', after);
+        try {
+            await (await caches.open('ft-state')).put('activity', new Response(JSON.stringify({after, lang: I18N.lang})));
+        } catch (e) { /* no cache storage */
+        }
+    }
+
+    /** Tells the user what the other members of the shared households did since the last check. */
+    async function checkActivity() {
+        if (!S.user || !S.loaded || !wantsActivity()) return;
+        try {
+            const seen = await activityCursor();
+            const d = await Api.get('activity.pending&after=' + seen, {silentAuth: true});
+            if (d.lastId > seen) await saveActivityCursor(d.lastId);
+            if (!d.text) return;
+            if (document.visibilityState === 'visible') toast(d.text);
+            else if (store.get('notify', false) && UI.app.notificationPermission() === 'granted') systemNotify(d.text, 'ft-activity', './#/history');
+        } catch (e) { /* tried again at the next check */
+        }
+    }
+
+    function base64Bytes(s) {
+        const raw = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - s.length % 4) % 4));
+        return Uint8Array.from(raw, c => c.charCodeAt(0));
+    }
+
+    /** Keeps this device registered for notifications with the app closed, only while they are wanted. */
+    async function syncBackgroundNotifications(signingOut) {
+        const wanted = !signingOut && !!S.user && wantsActivity() && store.get('notify', false) && UI.app.notificationPermission() === 'granted';
+        if (UI.app.isAndroidApp) {
+            UI.app.backgroundActivity(wanted, await activityCursor(), I18N.lang);
+            return;
+        }
+        if (!('PushManager' in window) || !navigator.serviceWorker) return;
+        try {
+            const reg = await navigator.serviceWorker.ready;
+            let sub = await reg.pushManager.getSubscription();
+            if (wanted) {
+                if (!sub) {
+                    const {publicKey} = await Api.get('push.key', {silentAuth: true});
+                    if (!publicKey) return;
+                    sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: base64Bytes(publicKey)});
+                }
+                await Api.post('push.subscribe', {endpoint: sub.endpoint}, {silentAuth: true});
+            } else if (sub) {
+                await Api.post('push.unsubscribe', {endpoint: sub.endpoint}, {silentAuth: true}).catch(() => {
+                });
+                await sub.unsubscribe();
+            }
+        } catch (e) { /* not available here: the app still tells the user when it is open */
         }
     }
 
@@ -4091,6 +4221,8 @@
             S.loaded = true;
             render();
             notifyExpiry();
+            checkActivity();
+            syncBackgroundNotifications();
             maybeShowTutorial();
         } catch (e) {
             fatal(t('Could not load the data'), e.message);
@@ -4123,9 +4255,15 @@
         }
     });
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') sync();
+        if (document.visibilityState === 'visible') {
+            sync();
+            checkActivity();
+        }
     });
-    setInterval(sync, 30000);
+    setInterval(() => {
+        sync();
+        checkActivity();
+    }, 30000);
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', UI.applyTheme);
 
     UI.applyTheme();

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/seed-recipes-2.php';
 require_once __DIR__ . '/seed-recipes-3.php';
+require_once __DIR__ . '/seed-products-4.php';
 require_once __DIR__ . '/seed-images.php';
 
 function seed_categories(): array
@@ -34,9 +35,12 @@ function seed_categories(): array
 function seed_products(): array
 {
     // [name, icon, category, default unit, specific expiry tip (optional)]
-    return array_merge(seed_products_1(), array_map(function ($p) {
+    $rows = array_merge(seed_products_1(), array_map(function ($p) {
         return [$p[0], $p[2], $p[3], $p[4], null];
-    }, array_merge(seed2_products(), seed3_products())));
+    }, array_merge(seed2_products(), seed3_products(), seed4_products())));
+    $icons = seed4_icon_updates();
+    foreach ($rows as $i => $row) if (isset($icons[$row[0]])) $rows[$i][1] = $icons[$row[0]][1];
+    return $rows;
 }
 
 /** Storage environment of a catalog product: the usual one of its category, unless it is an exception. */
@@ -48,7 +52,7 @@ function seed_product_environment(string $name, string $category): string
         'Latte UHT' => 'ambient', 'Latte condensato' => 'ambient',
     ];
     $categories = ['Surgelati' => 'cold', 'Verdura' => 'cool', 'Latticini e uova' => 'cool', 'Carne e salumi' => 'cool', 'Pesce' => 'cool'];
-    return $exceptions[$name] ?? $categories[$category] ?? 'ambient';
+    return $exceptions[$name] ?? seed4_environments()[$name] ?? $categories[$category] ?? 'ambient';
 }
 
 function seed_products_1(): array

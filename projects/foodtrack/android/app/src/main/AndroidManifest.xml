@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Notifications about products about to expire (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Keeps the periodic check of household activity after a restart of the phone -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
     <application
@@ -41,5 +43,11 @@
                       android:pathPrefix="/projects/foodtrack/"/>
             </intent-filter>
         </activity>
+
+        <!-- Checks what the other household members did while the app is closed -->
+        <service
+                android:name=".ActivityJobService"
+                android:exported="false"
+                android:permission="android.permission.BIND_JOB_SERVICE"/>
     </application>
 </manifest>

@@ -21,7 +21,7 @@ const ROLE_LABELS = [
 ];
 
 const AUTH_COOKIE = 'foodtrack_auth';
-const SCHEMA_VERSION = 12;
+const SCHEMA_VERSION = 14;
 
 const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
 const NUTRISCORES = ['A', 'B', 'C', 'D', 'E'];
@@ -313,6 +313,7 @@ function public_user(array $u): array
         'isMaster' => $role >= ROLE_MASTER,
         'status' => $u['status'],
         'mustChangePassword' => !empty($u['must_change_password']),
+        'notifyOff' => json_decode((string)($u['notify_off'] ?? ''), true) ?: [],
         'hasPassword' => ($u['password_hash'] ?? 'x') !== '',
         'googleLinked' => !empty($u['google_sub']),
         'createdAt' => $u['created_at'] ?? null,

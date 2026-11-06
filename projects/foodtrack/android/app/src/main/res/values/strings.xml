@@ -4,6 +4,7 @@
     <string name="host_name" translatable="false">www.saveriomorelli.com</string>
     <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/foodtrack/</string>
     <string name="channel_expiry">Expiring products</string>
+    <string name="channel_activity">Household activity</string>
     <string name="offline_title">No connection</string>
     <string name="offline_text">FoodTrack needs the internet the first time it opens. Check your connection and try
         again.

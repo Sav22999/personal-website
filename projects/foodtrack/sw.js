@@ -6,8 +6,8 @@
  */
 'use strict';
 
-const CACHE = 'foodtrack-1.6.9';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.6.9', 'assets/i18n.js?v=1.6.9', 'assets/img/icons.js?v=1.6.9', 'assets/img/icons.svg?v=3', 'assets/api.js?v=1.6.9', 'assets/ui.js?v=1.6.9', 'assets/app.js?v=1.6.9', 'assets/vendor/zxing-0.21.3.min.js', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
+const CACHE = 'foodtrack-1.6.11';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/app.css?v=1.6.11', 'assets/i18n.js?v=1.6.11', 'assets/img/icons.js?v=1.6.11', 'assets/img/icons.svg?v=4', 'assets/api.js?v=1.6.11', 'assets/ui.js?v=1.6.11', 'assets/app.js?v=1.6.11', 'assets/vendor/zxing-0.21.3.min.js', 'assets/icons/icon-192.png', 'assets/icons/icon-color.png', 'assets/fonts/inter-latin-wght-normal.woff2'];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -50,14 +50,55 @@ self.addEventListener('fetch', event => {
     }
 });
 
-// Tapping the "products expiring" notification opens (or focuses) the app
+// A push carries no data: it only says that something changed, so the worker asks the API what is new.
+// The position in the history is shared with the page through this cache, so nothing is told twice.
+const STATE_CACHE = 'ft-state';
+
+async function readState(cache) {
+    const res = await cache.match('activity');
+    return res ? res.json() : {after: 0, lang: ''};
+}
+
+async function onPush() {
+    const windows = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
+    if (windows.some(c => c.visibilityState === 'visible')) return; // The open app tells the user by itself
+    await new Promise(r => setTimeout(r, 4000)); // Lets a burst of changes end up in one notification
+    const cache = await caches.open(STATE_CACHE);
+    const state = await readState(cache);
+    const res = await fetch('api/index.php?r=activity.pending&after=' + state.after, {
+        credentials: 'same-origin',
+        headers: state.lang ? {'X-Lang': state.lang} : {}
+    });
+    if (res.status === 401) {
+        const sub = await self.registration.pushManager.getSubscription();
+        if (sub) await sub.unsubscribe(); // Signed out: this device has nothing to receive
+        return;
+    }
+    const d = await res.json();
+    if (d.lastId) await cache.put('activity', new Response(JSON.stringify({after: d.lastId, lang: state.lang})));
+    if (d.text) await self.registration.showNotification('FoodTrack', {
+        body: d.text,
+        icon: 'assets/icons/icon-192.png',
+        badge: 'assets/icons/icon-mono.png',
+        tag: 'ft-activity',
+        data: {page: './#/history'}
+    });
+}
+
+self.addEventListener('push', event => {
+    event.waitUntil(onPush().catch(() => {
+    }));
+});
+
+// Tapping a notification opens (or focuses) the app on the page it is about
 self.addEventListener('notificationclick', event => {
     event.notification.close();
+    const page = (event.notification.data && event.notification.data.page) || './#/spaces';
     event.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(list => {
         for (const c of list) if ('focus' in c) {
-            c.navigate && c.navigate('./#/spaces');
+            c.navigate && c.navigate(page);
             return c.focus();
         }
-        return self.clients.openWindow('./#/spaces');
+        return self.clients.openWindow(page);
     }));
 });

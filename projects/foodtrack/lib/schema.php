@@ -26,6 +26,7 @@ function schema_statements(string $p = 'ft_'): array
   `role` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 utente, 9 amministratore, 10 master admin (uno solo)',
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
+  `notify_off` VARCHAR(200) NULL COMMENT 'notification categories turned off, as JSON',
   `active_household_id` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
   `last_login_at` DATETIME NULL,
@@ -34,6 +35,20 @@ function schema_statements(string $p = 'ft_'): array
   UNIQUE KEY `uq_email` (`email`),
   UNIQUE KEY `uq_google` (`google_sub`),
   KEY `idx_role` (`role`)
+) $opts",
+
+        // Devices to wake up with Web Push (see lib/push.php)
+        "CREATE TABLE IF NOT EXISTS `{$p}push_subscriptions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `endpoint` VARCHAR(700) NOT NULL,
+  `endpoint_hash` CHAR(64) NOT NULL,
+  `last_push_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_endpoint` (`endpoint_hash`),
+  KEY `idx_user` (`user_id`),
+  CONSTRAINT `fk_{$p}push_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
 ) $opts",
 
         "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
@@ -307,6 +322,8 @@ function schema_statements(string $p = 'ft_'): array
  *  v10: household activity history table (`history`)
  *  v11: remaining cover images for initial recipes (only where the recipe still has no image)
  *  v12: storage environment of products, list items and spaces (existing rows get a value from the seed and from the space icon)
+ *  v13: fourth batch of content (many more catalog products, more specific icons; a product icon changed by an admin stays)
+ *  v14: notification preferences of the users (the table of the push subscriptions is created with the others)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -401,6 +418,18 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
             $pdo->exec("UPDATE `{$p}spaces` SET environment = 'cold' WHERE icon = 'freezer'");
             $pdo->exec("UPDATE `{$p}spaces` SET environment = 'cool' WHERE icon IN ('fridge', 'snow')");
         }
+    }
+    if ($from < 13) {
+        require_once __DIR__ . '/seed.php';
+        $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
+        seed_database($pdo, $p, $admin ? (int)$admin : null);
+        $st = $pdo->prepare("UPDATE `{$p}products` SET icon = ? WHERE name = ? AND icon = ?");
+        foreach (seed4_icon_updates() as $name => [$old, $new]) $st->execute([$new, $name, $old]);
+        $pdo->exec("UPDATE `{$p}recipe_ingredients` ri JOIN `{$p}products` pr ON pr.name = ri.name SET ri.product_id = pr.id WHERE ri.product_id IS NULL");
+    }
+    if ($from < 14) {
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}users`")->fetchAll(), 'Field');
+        if (!in_array('notify_off', $cols, true)) $pdo->exec("ALTER TABLE `{$p}users` ADD COLUMN `notify_off` VARCHAR(200) NULL AFTER `must_change_password`");
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

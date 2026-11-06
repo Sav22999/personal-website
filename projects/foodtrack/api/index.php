@@ -17,6 +17,7 @@ declare(strict_types=1);
 require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/households.php';
 require __DIR__ . '/../lib/mail.php';
+require __DIR__ . '/../lib/push.php';
 
 set_exception_handler(function (Throwable $e) {
     error_log('[foodtrack] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
@@ -373,6 +374,7 @@ function log_history(int $hid, ?int $userId, string $userName, string $action, ?
     try {
         $st = db()->prepare($sql);
         $st->execute($params);
+        queue_push($hid, $userId, $action);
         return (int)db()->lastInsertId();
     } catch (Throwable $e) {
         try {
@@ -1095,14 +1097,44 @@ switch ($route) {
 
     // ---------- Activity history & undo ----------
 
+    case 'activity.pending':
+        // What the other members did after a history id: read by the app, the service worker and the Android app
+        $u = reader();
+        send_json(['ok' => true] + activity_pending($u, (int)($_GET['after'] ?? 0)));
+
+    case 'notify.save':
+        $u = writer();
+        $off = is_array(body()['off'] ?? null) ? array_values(array_intersect(NOTIFY_CATEGORIES, body()['off'])) : [];
+        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ? WHERE id = ?')->execute([json_encode($off), $u['id']]);
+        send_json(['ok' => true, 'notifyOff' => $off]);
+
+    case 'push.key':
+        reader();
+        $keys = vapid_keys();
+        send_json(['ok' => true, 'publicKey' => $keys['public'] ?? null]);
+
+    case 'push.subscribe':
+        $u = writer();
+        $endpoint = (string)(body()['endpoint'] ?? '');
+        if (strlen($endpoint) > 700 || !push_endpoint_allowed($endpoint)) fail('Invalid push subscription.', 422, 'validation');
+        db()->prepare('INSERT INTO ' . t('push_subscriptions') . ' (user_id, endpoint, endpoint_hash, created_at) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)')
+            ->execute([$u['id'], $endpoint, hash('sha256', $endpoint), now_utc()]);
+        send_json(['ok' => true]);
+
+    case 'push.unsubscribe':
+        $u = writer();
+        db()->prepare('DELETE FROM ' . t('push_subscriptions') . ' WHERE endpoint_hash = ? AND user_id = ?')->execute([hash('sha256', (string)(body()['endpoint'] ?? '')), $u['id']]);
+        send_json(['ok' => true]);
+
     case 'history.list':
         only('GET');
         $u = require_user();
         $hid = active_household($u);
         try {
-            // Pages of 100, from the newest; "before" is the id of the last row already shown
+            // Pages of 100, from the newest; "before" is the id of the last row already shown, "after" of the last one seen
             $before = (int)($_GET['before'] ?? 0);
-            $st = db()->prepare('SELECT id, user_id, user_name, action, item_id, item_name, space_id, space_name, quantity, unit, details, undone, created_at FROM ' . t('history') . ' WHERE household_id = ?' . ($before ? ' AND id < ' . $before : '') . ' ORDER BY id DESC LIMIT 100');
+            $after = (int)($_GET['after'] ?? 0);
+            $st = db()->prepare('SELECT id, user_id, user_name, action, item_id, item_name, space_id, space_name, quantity, unit, details, undone, created_at FROM ' . t('history') . ' WHERE household_id = ?' . ($before ? ' AND id < ' . $before : '') . ($after ? ' AND id > ' . $after : '') . ' ORDER BY id DESC LIMIT 100');
             $st->execute([$hid]);
             $rows = array_map(function ($r) {
                 return [

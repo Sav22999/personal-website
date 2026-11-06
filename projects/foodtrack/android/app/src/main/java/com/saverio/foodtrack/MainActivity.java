@@ -56,7 +56,7 @@ import java.util.concurrent.Executor;
  * Native parts, exposed to the page as window.FoodTrackAndroid (only on the FoodTrack site):
  *  - "Continue with Google" with the system account picker (Credential Manager): Google sign-in
  *    does not work inside a WebView, so the app gets the ID token and hands it to the page;
- *  - notifications for expiring products;
+ *  - notifications for expiring products, and the background check of household activity (ActivityJobService);
  *  - camera permission for the barcode scanner, file picker for image uploads (admin portal).
  * Links outside the app (contact form, Open Food Facts, …) open in the browser.
  */
@@ -353,6 +353,12 @@ public class MainActivity extends Activity {
                     sendResult("notify", notificationState(), null);
                 }
             });
+        }
+
+        @JavascriptInterface
+        public void setBackgroundActivity(boolean on, String after, String lang) {
+            if (!onAppPage) return;
+            ActivityJobService.configure(MainActivity.this, on, after, lang);
         }
 
         @JavascriptInterface
