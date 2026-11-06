@@ -44,7 +44,7 @@ foodtrack/
       presi dal pannello Aruba;
     - prefisso tabelle (predefinito `ft_`);
     - nome, email e password del **master admin**.
-3. La pagina crea le tabelle, carica 13 categorie, 492 prodotti e 103 ricette (in italiano e inglese, da oltre 35
+3. La pagina crea le tabelle, carica 13 categorie, 500 prodotti e 205 ricette (in italiano e inglese, da oltre 35
    paesi), crea il master admin (con la sua casa) e scrive `credentials.php`.
    Se PHP non può scrivere il file, la pagina mostra il contenuto da creare a mano via FTP.
 4. **Elimina `install-db.php` dal server** (ricaricalo solo quando serve aggiornare le tabelle: in quel caso chiede la
@@ -175,16 +175,16 @@ su Open Food Facts tramite il server.
 
 ## Ricette iniziali
 
-103 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles,
+205 ricette semplici con passaggi brevi e schematici, in italiano e inglese, da Italia, Inghilterra, Scozia, Galles,
 Irlanda, Stati Uniti, Canada, Messico, Perù, Brasile, Germania, Austria, Svizzera, Francia, Belgio, Paesi Bassi, Svezia,
 Polonia, Ungheria, Grecia, Spagna, Portogallo, Turchia, Libano, Egitto, Marocco, Tunisia, Cina, Giappone, Corea del Sud,
-Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`). Sulle installazioni
+Thailandia, Vietnam e India (`lib/seed.php`, `lib/seed-recipes-2.php`, `lib/seed-recipes-3.php`, `lib/seed-recipes-4.php`, `lib/seed-recipes-5.php`, `lib/seed-recipes-6.php`). Sulle installazioni
 esistenti le nuove ricette vengono aggiunte una sola volta, in automatico (una ricetta eliminata da un admin non
-ricompare). **Tutte le 103 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in
+ricompare). **Le prime 103 ricette hanno una foto di copertina** (`assets/img/recipes/`, abbinate in
 `lib/seed-images.php`): quelle dei lotti 2 e 3 sono tutte in **pubblico dominio o CC0** (Wikimedia Commons, Flickr),
 ritagliate a 1200×800; fonti e autori in `assets/img/recipes/CREDITS.md`. Sulle installazioni esistenti le versioni 9 e
 11 del database assegnano le foto alle ricette iniziali che non hanno ancora un'immagine (non toccano quelle caricate
-dal portale). Le eventuali nuove ricette create senza foto mostrano una copertina illustrata con le bandiere dei paesi
+dal portale). Le 102 ricette dei lotti 4, 5 e 6 (piatti di base, classici regionali, dolci e tradizioni di Germania, Austria, Francia, Belgio e Regno Unito) non hanno ancora una foto: per aggiungerla basta salvarla in `assets/img/recipes/` e abbinarla in `lib/seed-images.php`, oppure caricarla dal portale. Le eventuali nuove ricette create senza foto mostrano una copertina illustrata con le bandiere dei paesi
 d'origine.
 
 ## Ruoli

@@ -1,0 +1,6 @@
+# Real database credentials: never commit them (use credentials-sample.php as template)
+credentials.php
+*.sqlite
+data/*.sqlite
+data/*.db
+.DS_Store

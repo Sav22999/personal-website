@@ -324,6 +324,8 @@ function schema_statements(string $p = 'ft_'): array
  *  v12: storage environment of products, list items and spaces (existing rows get a value from the seed and from the space icon)
  *  v13: fourth batch of content (many more catalog products, more specific icons; a product icon changed by an admin stays)
  *  v14: notification preferences of the users (the table of the push subscriptions is created with the others)
+ *  v15: fourth batch of recipes (everyday basics, without a cover photo for now)
+ *  v16: fifth and sixth batch of recipes (regional classics, cakes and European traditions, without a cover photo for now) and the products they need
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -430,6 +432,11 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
     if ($from < 14) {
         $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}users`")->fetchAll(), 'Field');
         if (!in_array('notify_off', $cols, true)) $pdo->exec("ALTER TABLE `{$p}users` ADD COLUMN `notify_off` VARCHAR(200) NULL AFTER `must_change_password`");
+    }
+    if ($from < 16) {
+        require_once __DIR__ . '/seed.php';
+        $admin = $pdo->query("SELECT id FROM `{$p}users` WHERE role >= 10 ORDER BY id LIMIT 1")->fetchColumn();
+        seed_database($pdo, $p, $admin ? (int)$admin : null);
     }
     $pdo->prepare("INSERT INTO `{$p}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([(string)SCHEMA_VERSION]);
 }

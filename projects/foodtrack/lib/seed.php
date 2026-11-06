@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/seed-recipes-2.php';
 require_once __DIR__ . '/seed-recipes-3.php';
+require_once __DIR__ . '/seed-recipes-4.php';
+require_once __DIR__ . '/seed-recipes-5.php';
+require_once __DIR__ . '/seed-recipes-6.php';
 require_once __DIR__ . '/seed-products-4.php';
 require_once __DIR__ . '/seed-images.php';
 
@@ -129,7 +132,7 @@ function seed_products_1(): array
     ];
 }
 
-/** All the initial recipes: batch 1 (first version) + batches 2 and 3 (recipes from many countries). */
+/** All the initial recipes: batch 1 (first version), batches 2 and 3 (recipes from many countries), batch 4 (everyday basics), batch 5 (regional classics and cakes), batch 6 (German, Austrian, French, Belgian and British traditions). */
 function seed_recipes(): array
 {
     $conv = function (array $list, int $batch) {
@@ -147,7 +150,7 @@ function seed_recipes(): array
             ];
         }, $list);
     };
-    return array_merge(seed_recipes_1(), $conv(seed2_recipes(), 2), $conv(seed3_recipes(), 3));
+    return array_merge(seed_recipes_1(), $conv(seed2_recipes(), 2), $conv(seed3_recipes(), 3), $conv(seed4_recipes(), 4), $conv(seed5_recipes(), 5), $conv(seed6_recipes(), 6));
 }
 
 function seed_recipes_1(): array
