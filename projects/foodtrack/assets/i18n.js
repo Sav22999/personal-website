@@ -38,7 +38,7 @@
             "Renamed list “{from}” to “{to}”": "Rinominata la lista «{from}» in «{to}»",
             "Edited list “{name}”": "Modificata la lista «{name}»",
             "Deleted list “{name}”": "Eliminata la lista «{name}»",
-            "Emptied the cart: {what} removed": "Carrello svuotato: {what} rimossi",
+            "Emptied the cart: {what} removed": "Carrello svuotato ({what})",
             "Added “{name}” to the list": "Aggiunto «{name}» alla lista",
             "Added {what} to the list": "Aggiunti {what} alla lista",
             "Edited “{name}” in the list": "Modificato «{name}» nella lista",
