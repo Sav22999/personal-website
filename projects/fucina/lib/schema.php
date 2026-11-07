@@ -306,8 +306,13 @@ function install_schema(PDO $pdo, string $prefix): void
         // Exams passed before this rule existed: their levels count as solved too
         $pass = (int)($pdo->query("SELECT v FROM `{$prefix}settings` WHERE k = 'exam_pass_percent'")->fetchColumn() ?: 70);
         $pdo->exec("INSERT IGNORE INTO `{$prefix}lesson_progress` (user_id, course, lesson, stars, task_done, completed_at, skipped)
-            SELECT e.user_id, l.course, l.slug, IF(MAX(e.score) >= 90, 2, 1), 0, UTC_TIMESTAMP(), 1 FROM `{$prefix}exams` e
+            SELECT e.user_id, l.course, l.slug, IF(MAX(e.score) >= 90, 3, IF(MAX(e.score) >= 80, 2, 1)), 0, UTC_TIMESTAMP(), 1 FROM `{$prefix}exams` e
             JOIN `{$prefix}lessons` l ON l.course = e.course AND l.status = 'published' WHERE e.score >= $pass GROUP BY e.user_id, l.course, l.slug");
+    }
+    // Version 8: skipped levels show fires from the exam score (3 from 90%, 2 from 80%), and no longer 1 or 2 stars
+    if ((int)($pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn() ?: 0) < 8) {
+        $pdo->exec("UPDATE `{$prefix}lesson_progress` p JOIN (SELECT user_id, course, MAX(score) AS best FROM `{$prefix}exams` GROUP BY user_id, course) e
+            ON e.user_id = p.user_id AND e.course = p.course SET p.stars = IF(e.best >= 90, 3, IF(e.best >= 80, 2, 1)) WHERE p.skipped = 1");
     }
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}daily_results`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");

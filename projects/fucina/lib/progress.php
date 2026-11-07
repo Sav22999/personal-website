@@ -230,12 +230,18 @@ function courses_summary(int $uid): array
 }
 
 /**
- * A passed exam solves the levels not played yet: 2 stars from 90%, otherwise 1. The third star is for playing them.
+ * A passed exam solves the levels not played yet, with fires instead of stars: 3 from 90%, 2 from 80%, otherwise 1.
+ * They live in the stars column with skipped = 1; playing the level turns them into real stars.
  * Levels already played stay as they are, and a better exam can only raise the stars of the skipped ones.
  */
+function skipped_fires(int $score): int
+{
+    return $score >= 90 ? 3 : ($score >= 80 ? 2 : 1);
+}
+
 function solve_skipped_lessons(int $uid, array $c, int $score): void
 {
-    $stars = $score >= 90 ? 2 : 1;
+    $stars = skipped_fires($score);
     $st = db()->prepare('INSERT INTO ' . t('lesson_progress') . ' (user_id, course, lesson, stars, task_done, completed_at, skipped) VALUES (?,?,?,?,0,?,1)
         ON DUPLICATE KEY UPDATE stars = IF(skipped = 1, GREATEST(stars, VALUES(stars)), stars)');
     foreach ($c['lessons'] as $l) $st->execute([$uid, $c['id'], $l['id'], $stars, now_utc()]);

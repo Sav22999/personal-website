@@ -103,7 +103,7 @@ function schema_statements(string $p): array
             KEY `ix_user` (`user_id`),
             CONSTRAINT `fk_{$p}push_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
-        // What is waiting to be told: rows go as soon as the device reads them, or after 3 days
+        // What there is to tell: a row is kept 3 days after it is read, so the same reminder is never sent twice
         "CREATE TABLE IF NOT EXISTS `{$p}notifications` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `user_id` INT UNSIGNED NOT NULL,
@@ -112,6 +112,7 @@ function schema_statements(string $p): array
             `ref` VARCHAR(20) NOT NULL DEFAULT '',
             `data` VARCHAR(200) NOT NULL DEFAULT '{}',
             `created_at` DATETIME NOT NULL,
+            `sent_at` DATETIME NULL,
             UNIQUE KEY `uq_once` (`user_id`, `type`, `day`, `ref`),
             CONSTRAINT `fk_{$p}note_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
@@ -145,6 +146,8 @@ function install_schema(PDO $pdo, string $prefix): void
     if (!has_column($pdo, $prefix . 'users', 'show_in_ranking')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1 AFTER `username`");
     // Version 5: notifications, each type on or off
     if (!has_column($pdo, $prefix . 'users', 'notify_off')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `notify_off` VARCHAR(200) NULL AFTER `show_in_ranking`, ADD COLUMN `notify_lang` CHAR(2) NULL AFTER `notify_off`");
+    // Version 6: notifications read are marked, not deleted
+    if (!has_column($pdo, $prefix . 'notifications', 'sent_at')) $pdo->exec("ALTER TABLE `{$prefix}notifications` ADD COLUMN `sent_at` DATETIME NULL AFTER `created_at`");
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);
 }

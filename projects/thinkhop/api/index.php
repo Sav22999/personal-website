@@ -288,16 +288,11 @@ switch ($r) {
         send_json(['ok' => true]);
 
     case 'auth.profile':
+        // Only the name: the email is the identity of the account (and of its Google sign-in), so it never changes
         $u = writer();
-        $b = body();
-        $name = s($b, 'name', 80);
-        $email = mb_strtolower(s($b, 'email', 190));
+        $name = s(body(), 'name', 80);
         valid_name($name);
-        valid_email($email);
-        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ? AND id <> ?');
-        $st->execute([$email, $u['id']]);
-        if ($st->fetchColumn()) fail('email_taken', 409);
-        db()->prepare('UPDATE ' . t('users') . ' SET name = ?, email = ? WHERE id = ?')->execute([$name, $email, $u['id']]);
+        db()->prepare('UPDATE ' . t('users') . ' SET name = ? WHERE id = ?')->execute([$name, $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
     case 'auth.username':
@@ -384,7 +379,7 @@ switch ($r) {
         $u = writer();
         $off = array_values(array_intersect(NOTIFY_TYPES, (array)(body()['off'] ?? [])));
         db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ? WHERE id = ?')->execute([json_encode($off), $u['id']]);
-        db()->prepare('DELETE FROM ' . t('notifications') . " WHERE user_id = ? AND FIND_IN_SET(type, ?)")->execute([$u['id'], implode(',', $off)]);
+        db()->prepare('DELETE FROM ' . t('notifications') . " WHERE user_id = ? AND sent_at IS NULL AND FIND_IN_SET(type, ?)")->execute([$u['id'], implode(',', $off)]);
         send_json(['ok' => true, 'off' => $off]);
 
     case 'notify.pending':
@@ -392,11 +387,11 @@ switch ($r) {
         only('GET');
         $u = require_user();
         $row = user_row((int)$u['id']);
-        $st = db()->prepare('SELECT id, type, data FROM ' . t('notifications') . ' WHERE user_id = ? ORDER BY id LIMIT 5');
-        $st->execute([$u['id']]);
+        $st = db()->prepare('SELECT id, type, data FROM ' . t('notifications') . ' WHERE user_id = ? AND sent_at IS NULL AND created_at > ? ORDER BY id LIMIT 5');
+        $st->execute([$u['id'], gmdate('Y-m-d H:i:s', time() - 86400)]);
         $list = $st->fetchAll();
         $out = array_map(fn($n) => ['type' => $n['type'], 'text' => notify_text((string)($row['notify_lang'] ?: 'en'), $n['type'], json_decode($n['data'], true) ?: [])], $list);
-        if ($list) db()->prepare('DELETE FROM ' . t('notifications') . ' WHERE user_id = ? AND id <= ?')->execute([$u['id'], end($list)['id']]);
+        if ($list) db()->prepare('UPDATE ' . t('notifications') . ' SET sent_at = ? WHERE user_id = ? AND sent_at IS NULL AND id <= ?')->execute([now_utc(), $u['id'], end($list)['id']]);
         send_json(['ok' => true, 'items' => $out]);
 
     case 'push.key':

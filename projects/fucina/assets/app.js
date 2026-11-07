@@ -2,9 +2,16 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.11.0';
+    const VERSION = '1.15.3';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.15.3', date: '2026-11-07', it: ['Salti di riga: ora sposti le righe trascinandole (da telefono, dalla maniglia a sinistra); il tocco per scambiarle resta'], en: ['Line hop: you now move lines by dragging them (on a phone, by the handle on the left); tapping to swap still works']},
+        {v: '1.15.2', date: '2026-11-07', it: ['Tagdoku: i riquadri sono separati da linee più marcate e i tag che inserisci sono blu, così non sembrano errori'], en: ['Tagdoku: the boxes have stronger dividing lines and the tags you enter are blue, so they no longer look like mistakes']},
+        {v: '1.15.1', date: '2026-11-07', it: ['Quattro in fila: il tuo gettone è verde e una risposta sbagliata fa cadere un gettone rosso, che non è di nessuno', 'Corretto un errore grafico che allargava la colonna scelta'], en: ['Four in a line: your disc is green and a wrong answer drops a red disc that belongs to nobody', 'Fixed a display bug that stretched the chosen column']},
+        {v: '1.15.0', date: '2026-11-07', it: ['Alla prima partita fai un giro di prova guidato, con i pezzi veri del gioco'], en: ['Your first game starts with a guided practice round, using the real pieces of the game']},
+        {v: '1.14.0', date: '2026-11-07', it: ['Alla prima partita di ogni gioco una guida spiega come si gioca; poi la ritrovi nel pulsante ?'], en: ['The first time you play a game a guide explains how; then you find it under the ? button']},
+        {v: '1.13.0', date: '2026-11-07', it: ['Mentre una pagina si carica ne vedi già la forma', 'Il pulsante di Google non ha più lo sfondo bianco nel tema scuro'], en: ['While a page loads you already see its shape', 'The Google button no longer has a white background in the dark theme']},
+        {v: '1.12.1', date: '2026-11-07', it: ['I livelli superati con l’esame mostrano da 1 a 3 fuochi, in base al voto', 'Sfida del giorno e Palestra indicano il linguaggio di ogni esercizio', 'Su telefono il corso si apre sull’ultimo livello sbloccato', 'L’email dell’account non si può più modificare'], en: ['Levels passed with the exam show 1 to 3 fires, based on the score', 'Daily challenge and Gym show the language of each exercise', 'On phones a course opens on the last unlocked level', 'The email of the account can no longer be changed']},
         {v: '1.11.0', date: '2026-11-07', it: ['Notifiche: sfida del giorno, serie a rischio, premi e amici, ognuna attivabile dal profilo'], en: ['Notifications: daily challenge, streak at risk, prizes and friends, each one set from your profile']},
         {v: '1.10.0', date: '2026-11-07', it: ['Chiunque può verificare un certificato con il suo numero, senza account'], en: ['Anyone can verify a certificate with its number, without an account']},
         {v: '1.9.0', date: '2026-11-07', it: ['L’esame ha un tempo massimo di 15 minuti', 'Sfida del giorno cronometrata: a parità di risposte vince chi è più veloce'], en: ['The exam has a time limit of 15 minutes', 'Timed daily challenge: with equal answers the fastest wins']},
@@ -23,7 +30,7 @@
     ];
     const t = I18N.t;
     const {h, icon, tile, chip, btn, iconBtn, busy, toast, sheet, confirm} = UI;
-    const {mascot, confetti, colour} = Fun;
+    const {mascot, confetti, colour, langChip} = Fun;
     const root = document.getElementById('app');
     const LOGO = 'assets/icons/icon-192.png?v=2';
     const AUTHOR_URL = 'https://www.saveriomorelli.com/';
@@ -60,6 +67,13 @@
         }
         return wrap;
     }
+
+    /** Levels passed with the exam: fires instead of stars, from its score. */
+    function fires(n) {
+        return h('span.stars.fires', {'aria-label': t('{n} fires out of 3: passed with the exam', {n}), title: t('Passed with the exam')}, [0, 1, 2].map(i => icon('fire', i < n ? 'on' : 'off')));
+    }
+
+    const progressMark = p => p.skipped ? fires(p.stars) : stars(p.stars);
 
     function stars(n, total = 3) {
         return h('span.stars', {'aria-label': t('{n} stars out of {total}', {n, total})}, Array.from({length: total}, (_, i) => icon('star', i < n ? 'on' : 'off')));
@@ -162,6 +176,29 @@
             h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm'), h('span', S.user.name)));
     }
 
+    const TAB_OF = {course: 'path', lesson: 'path', exam: 'path', daily: 'home', gym: 'home', game: 'games', play: 'games', friends: 'board'};
+    const FULL_SCREEN = ['lesson', 'exam', 'daily', 'gym', 'play'];
+
+    /** The shape of the page that is on its way, shown only when the data take a moment to arrive. */
+    function skeleton(name) {
+        const sk = (cls, style) => h('span.skeleton.' + cls, style ? {style} : null);
+        const cards = n => Array.from({length: n}, () => h('div.sk-block', sk('sk-tile'), h('div.sk-body', sk('sk-title'), sk('sk-line.w-60'))));
+        let body;
+        if (name === 'course' && !DESK.matches) body = [sk('sk-line.w-80'), h('div.sk-trail', [50, 74, 62, 36, 28].map(x => sk('sk-node', {left: x + '%'})))];
+        else if (name === 'course') body = [h('div.sk-row4', [1, 2, 3, 4].map(() => sk('sk-stat'))), cards(6)];
+        else if (name === 'board' || name === 'friends') body = [sk('sk-hero'), sk('sk-seg'), Array.from({length: 5}, () => sk('sk-row'))];
+        else if (FULL_SCREEN.includes(name)) body = [sk('sk-progress'), sk('sk-title.w-80'), Array.from({length: 4}, () => sk('sk-option'))];
+        else body = [sk('sk-hero'), cards(3)];
+        return h('div.sk-page', {'aria-busy': 'true', 'aria-label': t('Loading')}, body);
+    }
+
+    function showSkeleton(name) {
+        const tab = TAB_OF[name] || name;
+        const content = h('div.content', h('header.appbar' + (FULL_SCREEN.includes(name) ? '.small' : ''), h('div.titles', h('span.skeleton.sk-heading'))), h('main.view', skeleton(name)));
+        if (!FULL_SCREEN.includes(name)) content.appendChild(bottomNav(tab));
+        root.replaceChildren(sideNav(tab), content);
+    }
+
     async function render() {
         if (!S.user) return renderAuth();
         if (!S.loaded) {
@@ -170,6 +207,9 @@
         }
         if (!S.state.user.username) return renderUsername();
         const r = route();
+        const waiting = setTimeout(() => {
+            if (route().name === r.name) showSkeleton(r.name);
+        }, 180);
         const views = {home: viewHome, path: viewPath, course: viewCourse, lesson: viewLesson, exam: viewExam, daily: viewDaily, gym: viewGym, board: viewBoard, friends: viewFriends, games: viewGames, game: viewGame, play: viewPlay, stats: viewStats, profile: viewProfile};
         let v;
         try {
@@ -177,6 +217,7 @@
         } catch (e) {
             v = {title: t('Something went wrong'), body: banner('error', 'warning', e.message), back: 'home'};
         }
+        clearTimeout(waiting);
         if (route().name !== r.name) return; // the user has moved on while this was loading
         const bar = v.back
             ? h('header.appbar.small', iconBtn('back', t('Back'), () => go(v.back)), h('div.titles', h('h1', v.title)), S.state ? gradeChip() : null, S.state ? sparksChip() : null, v.actions || [])
@@ -189,6 +230,7 @@
         root.replaceChildren(sideNav(v.tab), content);
         document.title = (v.title ? v.title + ' · ' : '') + 'Fucina';
         window.scrollTo(0, 0);
+        if (v.after) setTimeout(v.after, 60);
     }
 
     async function refresh() {
@@ -286,7 +328,7 @@
         const stat = (ic, a, b, label) => h('div.stat', icon(ic), h('strong', `${a}/${b}`), h('span', label));
         return h('div.tiles.course-stats',
             stat('book', c.items.filter(l => l.progress).length, c.items.length, t('Levels done')),
-            stat('star', c.items.reduce((n, l) => n + (l.progress ? l.progress.stars : 0), 0), c.items.length * 3, t('Stars')),
+            stat('star', c.items.reduce((n, l) => n + (l.progress && !l.progress.skipped ? l.progress.stars : 0), 0), c.items.length * 3, t('Stars')),
             stat('bolt', drills.filter(d => d.stars > 0).length, drills.length, t('Drills')),
             stat('code', tasks.filter(l => l.progress && l.progress.taskDone).length, tasks.length, t('Exercises')));
     }
@@ -300,7 +342,7 @@
                 difficultyDots(l.difficulty),
                 l.drills.length ? h('span.lvl-stat', {title: t('Drills')}, icon('bolt'), `${solved}/${l.drills.length}`) : null,
                 l.task ? h('span.lvl-stat' + (l.progress && l.progress.taskDone ? '.yes' : ''), {title: t('Exercises')}, icon('code')) : null,
-                stars(l.progress ? l.progress.stars : 0)];
+                l.progress ? progressMark(l.progress) : stars(0)];
             return h('li', open ? h('a.level' + (i === firstOpen ? '.current' : ''), {href: '#/lesson/' + c.id + '/' + l.id}, body) : h('div.level.locked', body));
         }));
     }
@@ -327,7 +369,7 @@
                 const current = !c.locked && i === firstOpen;
                 const face = l.progress ? icon(l.progress.skipped ? 'bolt' : 'check') : open ? String(i + 1) : icon('lock');
                 const inner = [current ? h('span.node-go', i ? t('Next') : t('Start!')) : null, h('span.node-dot', face),
-                    h('span.node-name', l.title), l.progress ? stars(l.progress.stars) : difficultyDots(l.difficulty)];
+                    h('span.node-name', l.title), l.progress ? progressMark(l.progress) : difficultyDots(l.difficulty)];
                 const cls = current ? '.current' : l.progress ? '.cleared' : '';
                 return h('li.node-spot', {style: {left: spots[i].x + '%', top: spots[i].y + 'px'}}, open ? h('a.node' + cls, {href: '#/lesson/' + c.id + '/' + l.id}, inner) : h('div.node.locked', inner));
             }));
@@ -338,6 +380,12 @@
         const firstOpen = c.items.findIndex(l => !l.progress);
         const allDone = firstOpen === -1;
         return {
+            // On a phone the trail is long: it opens on the level to play, or on the last one reached
+            after: () => {
+                if (DESK.matches) return;
+                const spot = document.querySelector('.node.current') || [...document.querySelectorAll('.node.cleared')].pop();
+                if (spot) spot.scrollIntoView({block: 'center'});
+            },
             title: c.title, back: 'path', tab: 'path', body: [
                 h('p.lead', c.desc),
                 c.locked ? banner('warn', 'lock', t('This course is still locked'), t('Finish the previous course, or pass the final exam below to skip ahead.')) : null,
@@ -612,7 +660,7 @@
             bar.style.width = Math.round(i * 100 / questions.length) + '%';
             if (i >= questions.length) return finish();
             const q = questions[i];
-            stage.replaceChildren(h('section.quiz', h('span.kicker', t('Question {a} of {b}', {a: i + 1, b: questions.length})), h('h2', rich(q.q)),
+            stage.replaceChildren(h('section.quiz', h('div.quiz-head', h('span.kicker', t('Question {a} of {b}', {a: i + 1, b: questions.length})), langChip(q.family)), h('h2', rich(q.q)),
                 h('div.options', q.options.map((o, k) => h('button.option', {
                     type: 'button', onclick: () => {
                         answers[keyOf(q)] = k;
@@ -773,6 +821,9 @@
         };
     }
 
+    /** The guided round of a game: by itself the first time, then from the ? button (see assets/tutorials.js). */
+    const gameGuide = (id, title) => Tutorials.open(id, title, S.state.costs.game);
+
     async function viewPlay(id, levelStr) {
         const level = parseInt(levelStr, 10) || 1;
         const d = await Api.get(`game.get&id=${encodeURIComponent(id)}&level=${level}`);
@@ -821,7 +872,11 @@
                 }
             }
         });
-        return {title: t('{name} · level {n}', {name: d.game.title, n: level}), back: 'game/' + id, tab: 'games', nav: false, body: [stage, h('div.step-actions', hintBtn)]};
+        if (!UI.store.get('guide.' + id, false)) {
+            UI.store.set('guide.' + id, true);
+            setTimeout(() => gameGuide(id, d.game.title), 300);
+        }
+        return {title: t('{name} · level {n}', {name: d.game.title, n: level}), back: 'game/' + id, tab: 'games', nav: false, actions: [iconBtn('help', t('How to play'), () => gameGuide(id, d.game.title))], body: [stage, h('div.step-actions', hintBtn)]};
     }
 
     // ---------------------------------------------------------------- daily leaderboard
@@ -999,7 +1054,7 @@
         const u = S.state.user;
         return {
             title: t('Profile'), back: 'home', tab: 'profile', body: [
-                h('div.card.pad.me', avatar(u.name, 'lg'), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
+                h('div.card.pad.profile-head', avatar(u.name, 'lg'), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
                 rankCard(),
                 h('h2.section-title', t('Preferences')),
                 seg(I18N.langs, I18N.lang, I18N.set),
@@ -1017,7 +1072,7 @@
                 }),
                 h('p.muted.small', t('Your username is the only thing others see, next to your score.')),
                 h('h2.section-title', t('Account')),
-                h('div.group', row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('bell', t('Notifications'), notificationSettings), row('edit', t('Name and email'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
+                h('div.group', row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('bell', t('Notifications'), notificationSettings), row('edit', t('Name'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
                     u.role >= 5 ? h('a.setting', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal')), icon('right')) : null,
                     h('a.setting', {href: 'privacy.html'}, icon('info'), h('span', t('Privacy')), icon('right')),
                     row('logout', t('Sign out'), async () => {
@@ -1130,11 +1185,10 @@
 
     function editProfile() {
         const name = UI.input({value: S.state.user.name, maxlength: 80});
-        const email = UI.input({value: S.state.user.email, type: 'email'});
         const save = btn(t('Save'), {
             onclick: async () => {
                 try {
-                    applyState(await busy(save, () => Api.post('auth.profile', {name: name.value, email: email.value})));
+                    applyState(await busy(save, () => Api.post('auth.profile', {name: name.value})));
                     s.close();
                     setTimeout(render, 150);
                 } catch (e) {
@@ -1142,7 +1196,10 @@
                 }
             }
         });
-        const s = sheet({title: t('Name and email'), body: [UI.field(t('Name'), name), UI.field('Email', email)], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = sheet({
+            title: t('Name'), body: [UI.field(t('Name'), name), h('p.sheet-text', t('Email: {email}', {email: S.state.user.email})), h('p.muted.small', t('The email identifies your account and cannot be changed.'))],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]
+        });
     }
 
     function editPassword() {

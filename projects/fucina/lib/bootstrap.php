@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 
 const APP_NAME = 'Fucina';
 const AUTH_COOKIE = 'fucina_auth';
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 const APP_TIMEZONE = 'Europe/Rome'; // the "day" of streaks and daily challenges
 
 // ---------- Configuration ----------

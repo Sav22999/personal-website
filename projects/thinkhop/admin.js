@@ -8,7 +8,7 @@
     const E = window.ThinkHopEngine;
     const I = window.ThinkHopI18n;
     const A = window.ThinkHopAccount;
-    const {h, icon, toast, modal, confirmBox} = window.ThinkHopUI;
+    const {h, icon, toast, modal, confirmBox, skeleton} = window.ThinkHopUI;
     const root = document.getElementById('admin');
     const LANGS = ['it', 'en', 'es', 'fr', 'de'];
     const REQUIRED = ['it', 'en'];
@@ -317,11 +317,17 @@
                 h('button.icon-btn', {type: 'button', title: u.name, 'aria-label': gt('account'), onclick: A.open}, icon('user'))),
             view));
         document.title = `${t(TABS.find(x => x[0] === tab)[1])} · ThinkHop Admin`;
-        VIEWS[tab](view);
+        const shape = {overview: [skeleton('tiles', 5), h('div.admin-cols', h('section.panel', skeleton('rows', 6)), h('section.panel', skeleton('rows', 6)))], players: [h('section.panel', skeleton('table', 8))]}[tab]
+            || [h('section.panel', skeleton('table', 8))];
+        view.replaceChildren(...shape);
+        // If the call fails the error is already in a toast: the shapes must not stay forever
+        Promise.resolve(VIEWS[tab](view)).then(() => {
+            if (view.querySelector('.skeleton') && !view.querySelector('.skeleton').closest('.modal')) view.replaceChildren(h('p.muted.center', '–'));
+        });
     }
 
     window.addEventListener('hashchange', render);
     if (!['it', 'en'].includes(I.getLang())) I.setLang('en');
-    root.replaceChildren(h('p.muted.center', '…'));
+    root.replaceChildren(h('div.admin-loading', skeleton('table', 6)));
     A.start(render);
 })();

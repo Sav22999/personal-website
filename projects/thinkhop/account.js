@@ -347,7 +347,7 @@
 
     function showProfileForm(parent) {
         const name = input('text', user.name, 'name');
-        const email = input('email', user.email, 'email');
+        const email = h('input', {type: 'email', value: user.email, readonly: true, disabled: true, 'aria-readonly': 'true'});
         const err = h('p.form-error', {role: 'alert', hidden: true});
         const save = h('button.btn.btn-primary', {type: 'submit'}, t('save'));
         const m = modal([h('h3', t('profile_edit')), h('form.form', {
@@ -355,7 +355,7 @@
                 e.preventDefault();
                 err.hidden = true;
                 try {
-                    const d = await busy(save, () => api('auth.profile', {name: name.value, email: email.value}));
+                    const d = await busy(save, () => api('auth.profile', {name: name.value}));
                     user = d.user;
                     m.close();
                     parent.close();
@@ -367,7 +367,7 @@
                     err.hidden = false;
                 }
             }
-        }, field(t('name'), name), field(t('email'), email), err, h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), save))]);
+        }, field(t('name'), name), h('label.field', h('span', t('email')), email, h('small.muted', t('email_fixed'))), err, h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), save))]);
     }
 
     function showPasswordForm(parent) {

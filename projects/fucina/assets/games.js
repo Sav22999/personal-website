@@ -152,7 +152,7 @@
 
     function fourline(ctx) {
         const {t, level, rich} = ctx;
-        const W = 7, H = 6, ME = 1, AI = 2;
+        const W = 7, H = 6, ME = 1, AI = 2, MISS = 3;
         const board = Array.from({length: H}, () => Array(W).fill(0));
         const pool = shuffle(ctx.questions);
         let wrongAnswers = 0, busy = false, current = null;
@@ -226,7 +226,7 @@
 
         function draw() {
             view.replaceChildren(...Array.from({length: W}, (_, c) => h('button.four-col', {type: 'button', disabled: !!board[0][c] || busy, 'aria-label': t('Column {n}', {n: c + 1}), onclick: () => choose(c)},
-                ...board.map(row => h('i.' + ['e', 'me', 'ai'][row[c]])))));
+                ...board.map(row => h('i.disc-' + ['e', 'me', 'ai', 'x'][row[c]])))));
         }
 
         function end() {
@@ -250,11 +250,11 @@
                         buttons[i].classList.add('wrong');
                         wrongAnswers++;
                     }
-                    status.textContent = ok ? t('Correct: your disc drops.') : t('Wrong: you lose your move.');
+                    status.textContent = ok ? t('Correct: your disc drops.') : t('Wrong: a red disc takes the square.');
                     setTimeout(() => {
                         panel.replaceChildren();
                         current = null;
-                        if (ok) drop(board, c, ME);
+                        drop(board, c, ok ? ME : MISS);
                         draw();
                         if (end()) return;
                         setTimeout(() => {
@@ -351,6 +351,47 @@
 
     // ---------------------------------------------------------------- Line hop
 
+    /**
+     * Drag a row of a list to its place: the others make room while it moves.
+     * The row changes position in the page, which drops pointer capture, so the listeners stay on window.
+     * By touch only the grip drags, so the rest of the row still scrolls the page.
+     * Rows carry data-i; onDrop gets the new order of those indexes. While list.dataset.dragged is set,
+     * the click that follows the drop must not count as a tap.
+     */
+    function dragLine(e, row, list, onDrop) {
+        if (e.button !== 0) return;
+        if (e.pointerType !== 'mouse' && !e.target.closest('.grip')) return;
+        e.preventDefault();
+        const y0 = e.clientY;
+        let moved = false;
+        const move = ev => {
+            if (!moved && Math.abs(ev.clientY - y0) < 6) return;
+            if (!moved) {
+                moved = true;
+                list.dataset.dragged = '1';
+                list.querySelectorAll('.sel').forEach(x => x.classList.remove('sel'));
+                row.classList.add('dragging');
+            }
+            const before = [...list.children].filter(x => x !== row).find(x => {
+                const r = x.getBoundingClientRect();
+                return ev.clientY < r.top + r.height / 2;
+            }) || null;
+            if (row.nextElementSibling !== before) list.insertBefore(row, before);
+        };
+        const stop = () => {
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', stop);
+            window.removeEventListener('pointercancel', stop);
+            if (!moved) return;
+            row.classList.remove('dragging');
+            setTimeout(() => delete list.dataset.dragged, 0);
+            onDrop([...list.children].map(x => +x.dataset.i));
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', stop);
+        window.addEventListener('pointercancel', stop);
+    }
+
     function linehop(ctx) {
         const {t, level} = ctx;
         const rounds = shuffle(ctx.items).slice(0, 2);
@@ -372,7 +413,18 @@
 
         function draw() {
             title.textContent = `${rounds[round].title} · ${t('Moves: {n}', {n: moves})}`;
-            list.replaceChildren(...lines.map((l, i) => h('button.line' + (selected === i ? '.sel' : '') + (l === target[i] ? '.fit' : ''), {type: 'button', onclick: () => tap(i)}, h('code', l))));
+            list.replaceChildren(...lines.map((l, i) => {
+                const row = h('button.line' + (selected === i ? '.sel' : '') + (l === target[i] ? '.fit' : ''), {type: 'button', 'data-i': i, onclick: () => {
+                    if (!list.dataset.dragged) tap(i);
+                }}, h('span.grip', {'aria-hidden': 'true'}, icon('menu')), h('code', l));
+                row.addEventListener('pointerdown', e => dragLine(e, row, list, order => {
+                    selected = null;
+                    if (order.some((k, n) => k !== n)) moves++;
+                    lines = order.map(k => lines[k]);
+                    settle();
+                }));
+                return row;
+            }));
         }
 
         function tap(i) {
@@ -384,6 +436,10 @@
                 }
                 selected = null;
             }
+            settle();
+        }
+
+        function settle() {
             draw();
             if (lines.join('\n') === target.join('\n')) {
                 extra += Math.max(0, moves - (target.length - 1));
@@ -405,9 +461,9 @@
             ctx.root.append(h('p', t('This level has no content yet.')));
             return;
         }
-        ctx.root.append(h('p.lead', t('Tap two lines to swap them: green lines are in the right place.')), title, list);
+        ctx.root.append(h('p.lead', t('Drag the lines into the right order, or tap two lines to swap them: green lines are in the right place.')), title, list);
         load();
     }
 
-    window.Games = {whotag, tagdoku, fourline, selectors, linehop};
+    window.Games = {whotag, tagdoku, fourline, selectors, linehop, dragLine};
 })();

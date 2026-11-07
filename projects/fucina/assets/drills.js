@@ -65,6 +65,13 @@
         return out;
     }
 
+    const LANG_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', js: 'JavaScript', ts: 'TypeScript', php: 'PHP'};
+
+    /** The language of an exercise, in the colour of its course family. */
+    function langChip(family) {
+        return family ? h('span.lang-chip.fam-' + family, LANG_NAMES[family] || family.toUpperCase()) : null;
+    }
+
     // ---------------------------------------------------------------- the frame of a drill
 
     const NAMES = {blanks: ['Tiles', 'grid'], order: ['Sort it', 'sort'], bug: ['Bug hunt', 'bug'], match: ['Pairs', 'link'], flash: ['Lightning', 'spark'], tune: ['Tune it', 'tune']};
@@ -118,7 +125,7 @@
         actions.append(hintBtn, btn(t('Skip'), {kind: 'text', onclick: ctx.skip}));
         if (game.action) actions.append(game.action);
         const [name, ic] = NAMES[d.kind];
-        return h('section.drill.k-' + d.kind, h('header.drill-head', h('span.drill-kind', icon(ic), t(name)), d.from ? h('span.muted.small', d.from) : null, lives), h('h2', rich(d.prompt)), body, end, actions);
+        return h('section.drill.k-' + d.kind, h('header.drill-head', h('span.drill-kind', icon(ic), t(name)), langChip(d.family), d.from ? h('span.muted.small.drill-from', d.from) : null, lives), h('h2', rich(d.prompt)), body, end, actions);
     }
 
     // ---------------------------------------------------------------- tiles in the gaps
@@ -514,6 +521,6 @@
 
     const KINDS_OF = {blanks, order, bug, match, flash, tune};
 
-    window.Fun = {mascot, confetti, colour};
+    window.Fun = {mascot, confetti, colour, langChip};
     window.Drills = {render};
 })();

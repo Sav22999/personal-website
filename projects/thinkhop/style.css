@@ -1634,6 +1634,8 @@ svg.i {
 }
 
 .google-slot {
+    /* Google draws its button in a frame of its own: a light frame in a dark page gets a white background unless it is light here too */
+    color-scheme: light;
     display: flex;
     justify-content: center;
     min-height: 44px;
@@ -2524,7 +2526,8 @@ body:has(.modal) .toast {
     height: 20px;
     border-radius: 50%;
     background: var(--line);
-    transition: transform .15s;
+    box-shadow: none;
+    transition: left .15s;
 }
 
 .switch.on {
@@ -2532,7 +2535,7 @@ body:has(.modal) .toast {
 }
 
 .switch.on::after {
-    transform: translateX(18px);
+    left: 20px;
     background: var(--on-accent);
 }
 
@@ -2576,5 +2579,159 @@ body:has(.modal) .toast {
 @media (prefers-reduced-motion: reduce) {
     .switch, .switch::after {
         transition: none;
+    }
+}
+
+.field input:disabled {
+    background: var(--surface-2);
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
+/* ---------- loading skeletons ---------- */
+.sk {
+    display: block;
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-2) 50%, var(--surface-3) 100%) 0 0 / 200% 100%;
+    animation: sk-shine 1.2s ease-in-out infinite;
+}
+
+@keyframes sk-shine {
+    from {
+        background-position: 100% 0;
+    }
+    to {
+        background-position: -100% 0;
+    }
+}
+
+.skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.sk-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 6px 10px;
+    border: 2px solid var(--surface-3);
+    border-radius: 10px;
+}
+
+.sk-row .sk:not(.sk-dot):not(.sk-end) {
+    flex: none;
+}
+
+.sk-dot {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.sk-end {
+    width: 46px;
+    margin-left: auto;
+}
+
+.sk-row.sk-flat {
+    border: 0;
+    border-bottom: 1px solid var(--surface-3);
+    border-radius: 0;
+}
+
+.sk-row.sk-flat .sk:nth-child(2) {
+    margin-left: auto;
+}
+
+.sk-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px;
+}
+
+.sk-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 2px solid var(--surface-3);
+    border-radius: 12px;
+}
+
+.sk-big {
+    width: 50%;
+    height: 22px;
+}
+
+/* the first paint, before the scripts run */
+.skeleton-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sk-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 52px;
+}
+
+.sk-logo {
+    flex: none;
+    width: 76px;
+    height: 76px;
+    border-radius: 18px;
+}
+
+.sk-hero-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sk-title {
+    width: 45%;
+    height: 30px;
+}
+
+.sk-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border: 2px solid var(--surface-3);
+    border-radius: var(--r);
+}
+
+.sk-bar {
+    height: 10px;
+}
+
+.sk-button {
+    height: 46px;
+    border-radius: 12px;
+}
+
+.sk-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.sk-short {
+    height: 130px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sk {
+        animation: none;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 $description = 'ThinkHop – the free logic game: liars, treasure chests, mini sudoku, absurd reasoning, traps and riddles. 500 levels, a daily ranking, five languages, works offline.';
-$v = '1.5.0';
+$v = '1.5.1';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,6 +62,11 @@ $v = '1.5.0';
 </head>
 <body>
 <div id="app">
+    <div class="home skeleton-page" aria-busy="true">
+        <div class="sk-hero"><span class="sk sk-logo"></span><span class="sk-hero-text"><span class="sk sk-title"></span><span class="sk" style="width:70%"></span></span></div>
+        <div class="sk-card"><span class="sk" style="width:30%"></span><span class="sk sk-bar"></span><span class="sk sk-button"></span><span class="sk sk-button"></span></div>
+        <div class="sk-pair"><span class="sk-card sk-short"></span><span class="sk-card sk-short"></span></div>
+    </div>
     <noscript><p style="padding:24px">ThinkHop needs JavaScript.</p></noscript>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>

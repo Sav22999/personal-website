@@ -137,5 +137,21 @@
         });
     }
 
-    window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox};
+    /**
+     * Grey shapes where content is about to appear, so that waiting has the shape of what is coming.
+     * kind: 'rows' (people, settings), 'tiles' (numbers), 'table' (admin lists).
+     */
+    function skeleton(kind, count) {
+        const n = count || 4;
+        const label = window.ThinkHopI18n ? window.ThinkHopI18n.t('loading') : '…';
+        const line = width => h('span.sk', {style: `width:${width}%`});
+        const rows = {
+            rows: () => Array.from({length: n}, (_, i) => h('div.sk-row', h('span.sk.sk-dot'), line(38 + (i * 17) % 40), h('span.sk.sk-end'))),
+            tiles: () => [h('div.sk-tiles', Array.from({length: n}, () => h('div.sk-tile', h('span.sk.sk-big'), line(60))))],
+            table: () => [line(30), ...Array.from({length: n}, (_, i) => h('div.sk-row.sk-flat', line(46 + (i * 13) % 30), line(14), line(10)))],
+        }[kind || 'rows']();
+        return h('div.skeleton', {role: 'status', 'aria-busy': 'true', 'aria-label': label}, rows);
+    }
+
+    window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox, skeleton};
 })();

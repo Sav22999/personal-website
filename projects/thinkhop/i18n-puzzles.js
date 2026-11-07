@@ -4,6 +4,7 @@
 
     window.ThinkHopI18n.extend({
         en: {
+            loading: 'Loading…',
             subtitle: 'Logic puzzles, traps and absurd reasoning: one hop at a time.',
             cat_pattern: 'Picture patterns', cat_letters: 'Letters', cat_intruder: 'The intruder', cat_grid: 'Mini sudoku', cat_compass: 'Turtle on the move',
             cat_lamps: 'Lamps and buttons', cat_code: 'Secret codes', cat_ifthen: 'Absurd logic', cat_liars: 'Angels and devils', cat_boxes: 'The treasure',
@@ -64,6 +65,7 @@
             time_up: 'Time’s up!', seconds_left: '{n} seconds left', sign_in_off: 'Accounts aren’t active yet. They’ll be here soon: meanwhile your games stay on this device.', admin_link: 'Admin',
         },
         it: {
+            loading: 'Caricamento…',
             subtitle: 'Rompicapo, trabocchetti e ragionamenti assurdi: un salto alla volta.',
             cat_pattern: 'Sequenze di figure', cat_letters: 'Lettere', cat_intruder: 'L’intruso', cat_grid: 'Mini sudoku', cat_compass: 'Tartaruga in viaggio',
             cat_lamps: 'Lampadine e pulsanti', cat_code: 'Codici segreti', cat_ifthen: 'Logica assurda', cat_liars: 'Angeli e diavoli', cat_boxes: 'Il tesoro',
@@ -124,6 +126,7 @@
             time_up: 'Tempo scaduto!', seconds_left: '{n} secondi rimasti', sign_in_off: 'Gli account non sono ancora attivi. Arrivano presto: intanto le partite restano su questo dispositivo.', admin_link: 'Admin',
         },
         es: {
+            loading: 'Cargando…',
             subtitle: 'Acertijos, trampas y razonamientos absurdos: salto a salto.',
             cat_pattern: 'Series de figuras', cat_letters: 'Letras', cat_intruder: 'El intruso', cat_grid: 'Mini sudoku', cat_compass: 'Tortuga en marcha',
             cat_lamps: 'Bombillas y botones', cat_code: 'Códigos secretos', cat_ifthen: 'Lógica absurda', cat_liars: 'Ángeles y diablos', cat_boxes: 'El tesoro',
@@ -184,6 +187,7 @@
             time_up: '¡Se acabó el tiempo!', seconds_left: 'Quedan {n} segundos', sign_in_off: 'Las cuentas aún no están activas. Llegarán pronto: mientras tanto tus partidas se quedan en este dispositivo.', admin_link: 'Admin',
         },
         fr: {
+            loading: 'Chargement…',
             subtitle: 'Énigmes, pièges et raisonnements absurdes : un saut à la fois.',
             cat_pattern: 'Suites d’images', cat_letters: 'Lettres', cat_intruder: 'L’intrus', cat_grid: 'Mini sudoku', cat_compass: 'Tortue en route',
             cat_lamps: 'Lampes et boutons', cat_code: 'Codes secrets', cat_ifthen: 'Logique absurde', cat_liars: 'Anges et diables', cat_boxes: 'Le trésor',
@@ -244,6 +248,7 @@
             time_up: 'Temps écoulé !', seconds_left: 'Il reste {n} secondes', sign_in_off: 'Les comptes ne sont pas encore actifs. Ils arrivent bientôt : en attendant, tes parties restent sur cet appareil.', admin_link: 'Admin',
         },
         de: {
+            loading: 'Wird geladen…',
             subtitle: 'Rätsel, Fallen und absurde Logik: ein Sprung nach dem anderen.',
             cat_pattern: 'Bilderfolgen', cat_letters: 'Buchstaben', cat_intruder: 'Der Eindringling', cat_grid: 'Mini-Sudoku', cat_compass: 'Schildkröte unterwegs',
             cat_lamps: 'Lampen und Knöpfe', cat_code: 'Geheimcodes', cat_ifthen: 'Absurde Logik', cat_liars: 'Engel und Teufel', cat_boxes: 'Der Schatz',

@@ -247,16 +247,11 @@ switch ($r) {
         send_json(['ok' => true]);
 
     case 'auth.profile':
+        // The email identifies the account and cannot be changed: only the name can
         $u = writer();
-        $b = body();
-        $name = s($b, 'name', 80, true, 'Name');
-        $email = mb_strtolower(s($b, 'email', 190, true, 'Email'));
+        $name = s(body(), 'name', 80, true, 'Name');
         if (mb_strlen($name) < 2) fail('Enter your name.', 422, 'validation');
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Invalid email address.', 422, 'validation');
-        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ? AND id <> ?');
-        $st->execute([$email, $u['id']]);
-        if ($st->fetchColumn()) fail('This email is already used by another account.', 409, 'email_taken');
-        db()->prepare('UPDATE ' . t('users') . ' SET name = ?, email = ? WHERE id = ?')->execute([$name, $email, $u['id']]);
+        db()->prepare('UPDATE ' . t('users') . ' SET name = ? WHERE id = ?')->execute([$name, $u['id']]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'auth.password':
@@ -431,7 +426,7 @@ switch ($r) {
             $c = course_raw($courseId);
             foreach ($c['lessons'] as $l) {
                 if (!$l['drills'] || !lesson_open($uid, $c, $l['id'])) continue;
-                foreach ($l['drills'] as $d) $pool[] = drill_out($d, $done) + ['from' => pick($l['title'])];
+                foreach ($l['drills'] as $d) $pool[] = drill_out($d, $done) + ['from' => pick($l['title']), 'family' => $c['family']];
             }
         }
         shuffle($pool);
@@ -550,7 +545,7 @@ switch ($r) {
         $st = db()->prepare('SELECT started_at FROM ' . t('daily_starts') . ' WHERE user_id = ? AND day = ?');
         $st->execute([$u['id'], $day]);
         $elapsed = max(0, time() - (int)strtotime($st->fetchColumn() . ' UTC'));
-        send_json(['ok' => true, 'day' => $day, 'elapsed' => $elapsed, 'questions' => array_map(fn($q) => ['key' => $q['key']] + question_out($q), daily_questions($day))]);
+        send_json(['ok' => true, 'day' => $day, 'elapsed' => $elapsed, 'questions' => array_map(fn($q) => ['key' => $q['key'], 'family' => course_raw($q['course'])['family']] + question_out($q), daily_questions($day))]);
 
     case 'daily.submit':
         $u = writer();

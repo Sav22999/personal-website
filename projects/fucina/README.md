@@ -20,7 +20,8 @@ Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per G
 - **Esame e certificato**: un esame con domande estratte a caso e un tempo massimo (15 minuti di partenza, controllato dal
   server), aperto per ogni corso anche senza fare i livelli: chi
   conosce già la materia lo supera e il corso conta come finito: si aprono i successivi e i livelli non giocati risultano
-  risolti con 2 stelle dal 90% e 1 altrimenti, senza XP e senza contare per i badge a numero. Superato, il certificato si **sblocca
+  risolti con dei fuochi al posto delle stelle (3 dal 90%, 2 dall’80%, 1 altrimenti), senza XP e senza contare per i
+  badge a numero. Superato, il certificato si **sblocca
   con le Scintille** (prezzo in Impostazioni, 200 di partenza) e si può mostrare e stampare in A4
   (`certificate.php?c=CODICE`). È un’immagine generata dal server, sempre in inglese, che si salva in PNG o PDF
   (`lib/certificate.php`; lo sfondo si rigenera con `tools/build-certificate.py`). Non ha valore legale, e lo dice.

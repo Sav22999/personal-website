@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS `th_notifications` (
     `ref` VARCHAR(20) NOT NULL DEFAULT '',
     `data` VARCHAR(200) NOT NULL DEFAULT '{}',
     `created_at` DATETIME NOT NULL,
+    `sent_at` DATETIME NULL,
     UNIQUE KEY `uq_once` (`user_id`, `type`, `day`, `ref`),
     CONSTRAINT `fk_th_note_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -112,4 +113,4 @@ CREATE TABLE IF NOT EXISTS `th_settings` (
     `v` TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '5') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v);

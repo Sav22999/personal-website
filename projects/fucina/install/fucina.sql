@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS `fc_users` (
   `drill_streak` INT UNSIGNED NOT NULL DEFAULT 0,
   `best_drill_streak` INT UNSIGNED NOT NULL DEFAULT 0,
   `on_board` TINYINT(1) NOT NULL DEFAULT 1,
+  `notify_off` VARCHAR(100) NULL,
+  `reminded_on` DATE NULL,
   `last_day` DATE NULL,
   `created_at` DATETIME NOT NULL,
   `last_login_at` DATETIME NULL,
@@ -214,6 +216,27 @@ CREATE TABLE IF NOT EXISTS `fc_drill_done` (
   CONSTRAINT `fk_fc_dd_drill` FOREIGN KEY (`drill_id`) REFERENCES `fc_drills` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `fc_push_subscriptions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL,
+  `endpoint` VARCHAR(700) NOT NULL,
+  `endpoint_hash` CHAR(64) NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  UNIQUE KEY `uq_endpoint` (`endpoint_hash`),
+  KEY `ix_user` (`user_id`),
+  CONSTRAINT `fk_fc_ps_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `fc_notifications` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL,
+  `kind` VARCHAR(10) NOT NULL,
+  `data` VARCHAR(255) NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  KEY `ix_user` (`user_id`),
+  CONSTRAINT `fk_fc_no_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `fc_daily_starts` (
   `user_id` INT UNSIGNED NOT NULL,
   `day` DATE NOT NULL,
@@ -262,7 +285,7 @@ CREATE TABLE IF NOT EXISTS `fc_badges` (
   CONSTRAINT `fk_fc_ba_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '8') ON DUPLICATE KEY UPDATE v = VALUES(v);
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-base','html',1,NULL,'published','{"title":{"it":"HTML base","en":"HTML Basics"},"short":{"it":"HTML base","en":"HTML Basics"},"desc":{"it":"Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.","en":"The language every web page is made of: tags, text, links, images, lists, tables and forms."},"level":{"it":"Base","en":"Basic"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-intermediate','html',2,'html-base','published','{"title":{"it":"HTML intermedio","en":"Intermediate HTML"},"short":{"it":"HTML intermedio","en":"HTML Intermediate"},"desc":{"it":"Attributi globali, link interni, testo ricco, iframe e moduli più completi.","en":"Global attributes, internal links, rich text, iframes and fuller forms."},"level":{"it":"Intermedio","en":"Intermediate"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-advanced','html',3,'html-intermediate','published','{"title":{"it":"HTML avanzato","en":"Advanced HTML"},"short":{"it":"HTML avanzato","en":"Advanced HTML"},"desc":{"it":"Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.","en":"Semantic, accessible pages: structure, rich forms, media and metadata."},"level":{"it":"Avanzato","en":"Advanced"}}');
