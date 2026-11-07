@@ -28,10 +28,18 @@ let gameState = freshState();
 let playerName = '';
 
 function storageGet(key) {
-    try { return localStorage.getItem(key); } catch (e) { return null; }
+    try {
+        return localStorage.getItem(key);
+    } catch (e) {
+        return null;
+    }
 }
+
 function storageSet(key, value) {
-    try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) { /* storage unavailable */
+    }
 }
 
 // --- UI helpers ---
@@ -44,6 +52,7 @@ function showModal(id, visible) {
 }
 
 let toastTimer = null;
+
 function showToast(msg) {
     const toast = $('toast');
     toast.textContent = msg;
@@ -71,16 +80,16 @@ function cardAt(position) {
 async function api(action, data = {}) {
     try {
         if (action === 'poll') {
-            const resp = await fetch(`${API_URL}?${new URLSearchParams({ action, ...data })}`, { cache: 'no-store' });
+            const resp = await fetch(`${API_URL}?${new URLSearchParams({action, ...data})}`, {cache: 'no-store'});
             return await resp.json();
         }
         const form = new FormData();
         form.append('action', action);
         for (const [k, v] of Object.entries(data)) form.append(k, v);
-        const resp = await fetch(API_URL, { method: 'POST', body: form });
+        const resp = await fetch(API_URL, {method: 'POST', body: form});
         return await resp.json();
     } catch (e) {
-        return { error: 'network' };
+        return {error: 'network'};
     }
 }
 
@@ -97,7 +106,7 @@ function goToStep(step) {
     if (step === 1) {
         $('player-name').focus();
     } else {
-        $('greeting-text').textContent = t('greeting', { name: playerName });
+        $('greeting-text').textContent = t('greeting', {name: playerName});
         if ($('room-code').value) $('room-code').focus();
     }
 }
@@ -116,12 +125,19 @@ async function createRoom() {
     const btn = $('btn-create');
     const mode = selectedPlayMode();
     setBusy(btn, true);
-    const result = await api('create_room', { name: playerName, mode });
+    const result = await api('create_room', {name: playerName, mode});
     setBusy(btn, false);
 
     if (result.error) return showError(result.error);
 
-    Object.assign(gameState, { token: result.token, code: result.code, slot: result.slot, status: 'waiting', mode, isPublic: false });
+    Object.assign(gameState, {
+        token: result.token,
+        code: result.code,
+        slot: result.slot,
+        status: 'waiting',
+        mode,
+        isPublic: false
+    });
     showWaiting();
     startPolling();
 }
@@ -129,12 +145,18 @@ async function createRoom() {
 async function findRandomMatch() {
     const btn = $('btn-random');
     setBusy(btn, true);
-    const result = await api('find_match', { name: playerName, lang: currentLang });
+    const result = await api('find_match', {name: playerName, lang: currentLang});
     setBusy(btn, false);
 
     if (result.error) return showError(result.error);
 
-    Object.assign(gameState, { token: result.token, slot: result.slot, status: 'waiting', mode: 'online', isPublic: true });
+    Object.assign(gameState, {
+        token: result.token,
+        slot: result.slot,
+        status: 'waiting',
+        mode: 'online',
+        isPublic: true
+    });
     if (!result.matched) showWaiting();
     startPolling();
 }
@@ -146,7 +168,7 @@ function languageName(lang) {
 function showWaiting() {
     const isPublic = gameState.isPublic;
     $('waiting-title').textContent = isPublic ? t('searching_title') : t('waiting_title');
-    $('waiting-public-desc').textContent = isPublic ? t('searching_desc', { language: languageName(currentLang) }) : '';
+    $('waiting-public-desc').textContent = isPublic ? t('searching_desc', {language: languageName(currentLang)}) : '';
     $('waiting-public-desc').classList.toggle('hidden', !isPublic);
     $('waiting-private').classList.toggle('hidden', isPublic);
     $('btn-share-link').classList.toggle('hidden', isPublic);
@@ -167,7 +189,7 @@ function applyModeUI() {
 async function endTurn() {
     const btn = $('btn-end-turn');
     setBusy(btn, true);
-    const result = await api('end_turn', { token: gameState.token });
+    const result = await api('end_turn', {token: gameState.token});
     setBusy(btn, false);
     if (result.error) return showError(result.error);
     poll();
@@ -179,12 +201,12 @@ async function joinRoom() {
 
     const btn = $('btn-join');
     setBusy(btn, true);
-    const result = await api('join_room', { name: playerName, code });
+    const result = await api('join_room', {name: playerName, code});
     setBusy(btn, false);
 
     if (result.error) return showError(result.error);
 
-    Object.assign(gameState, { token: result.token, code: result.code, slot: result.slot, status: 'waiting' });
+    Object.assign(gameState, {token: result.token, code: result.code, slot: result.slot, status: 'waiting'});
     startPolling();
 }
 
@@ -220,7 +242,7 @@ function stopPolling() {
 async function poll() {
     const token = gameState.token;
     if (!token) return;
-    const data = await api('poll', { token });
+    const data = await api('poll', {token});
     // The player may have left (or started another game) while this request was in flight.
     if (gameState.token !== token) return;
 
@@ -294,25 +316,25 @@ function startNewRound(round) {
     $('answer-thumb').innerHTML = '';
     delete $('answer-thumb').dataset.ready;
     $('btn-rematch').classList.remove('loading');
-    showToast(t('new_round', { round }));
+    showToast(t('new_round', {round}));
 }
 
 // Returns true when the opponent has left for good and the game can't go on.
 function checkOpponentPresence(data) {
-    const { opp } = playersOf(data);
+    const {opp} = playersOf(data);
     if (opp && opp.left) {
         stopPolling();
         exitGuessMode();
         closeZoom();
         ['mycard-overlay', 'confirm-overlay'].forEach(id => showModal(id, false));
         $('disconnect-banner').classList.add('hidden');
-        $('left-title').textContent = t('opponent_left_title', { name: opp.name });
+        $('left-title').textContent = t('opponent_left_title', {name: opp.name});
         showModal('left-overlay', true);
         return true;
     }
     const disconnected = opp && !opp.online;
     $('disconnect-banner').classList.toggle('hidden', !disconnected);
-    if (disconnected) $('disconnect-banner').textContent = t('opponent_disconnected', { name: opp.name });
+    if (disconnected) $('disconnect-banner').textContent = t('opponent_disconnected', {name: opp.name});
     return false;
 }
 
@@ -324,7 +346,7 @@ function playersOf(data) {
 }
 
 function updateRematchUI(data) {
-    const { me, opp } = playersOf(data);
+    const {me, opp} = playersOf(data);
     const btn = $('btn-rematch');
     const status = $('rematch-status');
     const oppName = opp ? opp.name : t('opponent');
@@ -333,21 +355,21 @@ function updateRematchUI(data) {
         $('score-line').innerHTML = `<span>${escapeHtml(me.name)}</span><strong>${me.wins} – ${opp.wins}</strong><span>${escapeHtml(opp.name)}</span>`;
     }
 
-    let label = t('rematch', { name: oppName });
+    let label = t('rematch', {name: oppName});
     let message = '';
     let tone = '';
     let enabled = true;
 
     if (!opp || !opp.online) {
-        message = t('opponent_left', { name: oppName });
+        message = t('opponent_left', {name: oppName});
         tone = 'warn';
         enabled = false;
     } else if (me.wantsRematch) {
-        label = t('rematch_waiting', { name: oppName });
+        label = t('rematch_waiting', {name: oppName});
         enabled = false;
     } else if (opp.wantsRematch) {
         label = t('rematch_accept');
-        message = t('rematch_invited', { name: oppName });
+        message = t('rematch_invited', {name: oppName});
         tone = 'invite';
     }
 
@@ -362,7 +384,7 @@ function updateRematchUI(data) {
 async function requestRematch() {
     const btn = $('btn-rematch');
     setBusy(btn, true);
-    const result = await api('rematch', { token: gameState.token });
+    const result = await api('rematch', {token: gameState.token});
     setBusy(btn, false);
     if (result.error) showError(result.error);
     poll();
@@ -435,6 +457,7 @@ function updateBoard() {
 const CARD_MAX = 170;
 const CARD_MIN = 56;
 const CARD_READABLE = 64;
+
 function fitBoard() {
     const container = $('board-container');
     const board = $('game-board');
@@ -457,13 +480,13 @@ function fitBoard() {
         const rows = Math.ceil(count / cols);
         const byHeight = (height - gap * (rows - 1)) / rows - nameHeight;
         const size = Math.min(byWidth(cols), byHeight, CARD_MAX);
-        if (!best || size > best.size + 0.5) best = { cols, size };
+        if (!best || size > best.size + 0.5) best = {cols, size};
     }
     // Too little room to show everything (tiny or very short screens): use as many columns as
     // still give readable cards, and let the board scroll.
     if (best.size < CARD_MIN) {
         const cols = [...layouts].reverse().find(c => byWidth(c) >= CARD_READABLE) || layouts[0];
-        best = { cols, size: Math.min(byWidth(cols), CARD_MAX) };
+        best = {cols, size: Math.min(byWidth(cols), CARD_MAX)};
     }
 
     board.style.setProperty('--cols', best.cols);
@@ -485,7 +508,7 @@ function handleCardClick(position) {
 
 function askGuessConfirmation(card) {
     gameState.pendingGuessPosition = card.position;
-    $('confirm-title').textContent = t('confirm_title', { name: card.card_data.name });
+    $('confirm-title').textContent = t('confirm_title', {name: card.card_data.name});
     $('confirm-warning').textContent = t('final_guess_warning');
     $('confirm-avatar').innerHTML = renderCharacterSVG(card.card_data);
     showModal('confirm-overlay', true);
@@ -494,7 +517,7 @@ function askGuessConfirmation(card) {
 function toggleCardHidden(card) {
     card.is_hidden = !card.is_hidden;
     updateBoard();
-    api('toggle_card', { token: gameState.token, card_id: card.id }).then(result => {
+    api('toggle_card', {token: gameState.token, card_id: card.id}).then(result => {
         if (result.error) {
             card.is_hidden = !card.is_hidden;
             updateBoard();
@@ -506,7 +529,10 @@ function toggleCardHidden(card) {
 function attachLongPress(el, onLongPress) {
     let timer = null;
     let startX = 0, startY = 0;
-    const cancel = () => { clearTimeout(timer); timer = null; };
+    const cancel = () => {
+        clearTimeout(timer);
+        timer = null;
+    };
 
     el.addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'mouse' || e.target.closest('.card-zoom')) return;
@@ -598,7 +624,7 @@ function updateTurnIndicator(data) {
     const el = $('turn-indicator');
     const isMyTurn = data.currentTurn === data.mySlot;
     el.className = 'turn-indicator ' + (isMyTurn ? 'my-turn' : 'their-turn');
-    el.textContent = isMyTurn ? t('your_turn') : t('their_turn', { name: opponentName() });
+    el.textContent = isMyTurn ? t('your_turn') : t('their_turn', {name: opponentName()});
 }
 
 function updatePlayersStatus(players) {
@@ -670,10 +696,10 @@ function updateActionBar(data) {
         const iAmWaiting = data.pendingWinner === data.mySlot;
         $('wait-section').classList.toggle('hidden', !iAmWaiting);
         if (iAmWaiting) {
-            $('wait-section').textContent = t('last_chance_wait', { name: opponentName() });
+            $('wait-section').textContent = t('last_chance_wait', {name: opponentName()});
             if (gameState.guessMode) exitGuessMode();
         } else {
-            $('lastchance-title').textContent = t('last_chance_title', { name: opponentName() });
+            $('lastchance-title').textContent = t('last_chance_title', {name: opponentName()});
         }
         return;
     }
@@ -700,9 +726,9 @@ function updateActionBar(data) {
             $('answer-thumb').dataset.ready = '1';
         }
     } else if (isMyTurn && pending) {
-        $('wait-section').textContent = t('waiting_their_answer', { name: opponentName() });
+        $('wait-section').textContent = t('waiting_their_answer', {name: opponentName()});
     } else if (!isMyTurn) {
-        $('wait-section').textContent = t('waiting_their_question', { name: opponentName() });
+        $('wait-section').textContent = t('waiting_their_question', {name: opponentName()});
     }
 
     if (!isMyTurn && gameState.guessMode) exitGuessMode();
@@ -713,8 +739,8 @@ function updateInPersonBar(isMyTurn) {
     section.classList.toggle('mine', isMyTurn);
     section.classList.toggle('theirs', !isMyTurn);
     $('inperson-actions').classList.toggle('hidden', !isMyTurn);
-    $('inperson-title').textContent = isMyTurn ? t('inperson_my_title') : t('inperson_their_title', { name: opponentName() });
-    $('inperson-text').textContent = isMyTurn ? t('inperson_my_text') : t('inperson_their_text', { name: opponentName() });
+    $('inperson-title').textContent = isMyTurn ? t('inperson_my_title') : t('inperson_their_title', {name: opponentName()});
+    $('inperson-text').textContent = isMyTurn ? t('inperson_my_text') : t('inperson_their_text', {name: opponentName()});
 
     if (gameState.lastTurnMine === false && isMyTurn) {
         showToast(t('turn_passed_to_you'));
@@ -730,7 +756,7 @@ async function askQuestion() {
     const question = input.value.trim();
     if (!question) return showToast(t('enter_question'));
 
-    const result = await api('ask_question', { token: gameState.token, question });
+    const result = await api('ask_question', {token: gameState.token, question});
     if (result.error) return showError(result.error);
 
     input.value = '';
@@ -772,16 +798,16 @@ async function confirmFinalGuess() {
     exitGuessMode();
     if (position === null) return;
 
-    const result = await api('final_guess', { token: gameState.token, position });
+    const result = await api('final_guess', {token: gameState.token, position});
     if (result.error) return showError(result.error);
 
-    if (result.lastChance) showToast(t('last_chance_wait', { name: opponentName() }));
+    if (result.lastChance) showToast(t('last_chance_wait', {name: opponentName()}));
     poll();
 }
 
 async function concedeLastChance() {
-    if (!confirm(t('concede_confirm', { name: opponentName() }))) return;
-    const result = await api('concede', { token: gameState.token });
+    if (!confirm(t('concede_confirm', {name: opponentName()}))) return;
+    const result = await api('concede', {token: gameState.token});
     if (result.error) return showError(result.error);
     poll();
 }
@@ -796,7 +822,7 @@ function renderMyCardThumb() {
 }
 
 function renderSideScore(data) {
-    const { me, opp } = playersOf(data);
+    const {me, opp} = playersOf(data);
     if (!me || !opp) return;
     $('side-score').innerHTML = `${escapeHtml(me.name)} – ${escapeHtml(opp.name)}<strong>${me.wins || 0} – ${opp.wins || 0}</strong>`;
 }
@@ -804,6 +830,7 @@ function renderSideScore(data) {
 // --- Question placeholder: rotating examples ---
 const PLACEHOLDER_MS = 3200;
 let placeholderIndex = 0;
+
 function showNextExample() {
     const input = $('question-input');
     const ex = ASK_EXAMPLES[currentLang] || ASK_EXAMPLES.en;
@@ -822,17 +849,101 @@ function resetExamples() {
 }
 
 // --- Game rules (with illustrated examples built from real characters) ---
-const DEMO_BASE = { eyeColor: 'brown', eyebrows: 'medium', nose: 'medium', mouth: 'smile', hat: 'none', freckles: false, makeup: 'none', earrings: 'none', facialHair: 'none' };
+const DEMO_BASE = {
+    eyeColor: 'brown',
+    eyebrows: 'medium',
+    nose: 'medium',
+    mouth: 'smile',
+    hat: 'none',
+    freckles: false,
+    makeup: 'none',
+    earrings: 'none',
+    facialHair: 'none'
+};
 const DEMO_CHARACTERS = [
-    { name: 'Emma', gender: 'female', faceShape: 'oval', skinTone: 'fair', hairStyle: 'bob', hairColor: 'red', shirtColor: 'purple', glasses: 'none' },
-    { name: 'Noah', gender: 'male', faceShape: 'square', skinTone: 'brown', hairStyle: 'short', hairColor: 'black', shirtColor: 'yellow', glasses: 'round' },
-    { name: 'Mia', gender: 'female', faceShape: 'heart', skinTone: 'tan', hairStyle: 'long-straight', hairColor: 'blonde', shirtColor: 'green', glasses: 'none' },
-    { name: 'Leo', gender: 'male', faceShape: 'round', skinTone: 'light', hairStyle: 'curly', hairColor: 'brown', shirtColor: 'blue', glasses: 'none', facialHair: 'beard' },
-    { name: 'Ivy', gender: 'female', faceShape: 'oval', skinTone: 'dark', hairStyle: 'braids', hairColor: 'black', shirtColor: 'orange', glasses: 'square' },
-    { name: 'Max', gender: 'male', faceShape: 'long', skinTone: 'medium', hairStyle: 'side-part', hairColor: 'gray', shirtColor: 'red', glasses: 'none', hat: 'cap' },
-    { name: 'Zoe', gender: 'female', faceShape: 'round', skinTone: 'light', hairStyle: 'ponytail', hairColor: 'brown', shirtColor: 'blue', glasses: 'round' },
-    { name: 'Kai', gender: 'male', faceShape: 'oval', skinTone: 'tan', hairStyle: 'buzz', hairColor: 'black', shirtColor: 'green', glasses: 'none' },
-].map(c => ({ ...DEMO_BASE, ...c }));
+    {
+        name: 'Emma',
+        gender: 'female',
+        faceShape: 'oval',
+        skinTone: 'fair',
+        hairStyle: 'bob',
+        hairColor: 'red',
+        shirtColor: 'purple',
+        glasses: 'none'
+    },
+    {
+        name: 'Noah',
+        gender: 'male',
+        faceShape: 'square',
+        skinTone: 'brown',
+        hairStyle: 'short',
+        hairColor: 'black',
+        shirtColor: 'yellow',
+        glasses: 'round'
+    },
+    {
+        name: 'Mia',
+        gender: 'female',
+        faceShape: 'heart',
+        skinTone: 'tan',
+        hairStyle: 'long-straight',
+        hairColor: 'blonde',
+        shirtColor: 'green',
+        glasses: 'none'
+    },
+    {
+        name: 'Leo',
+        gender: 'male',
+        faceShape: 'round',
+        skinTone: 'light',
+        hairStyle: 'curly',
+        hairColor: 'brown',
+        shirtColor: 'blue',
+        glasses: 'none',
+        facialHair: 'beard'
+    },
+    {
+        name: 'Ivy',
+        gender: 'female',
+        faceShape: 'oval',
+        skinTone: 'dark',
+        hairStyle: 'braids',
+        hairColor: 'black',
+        shirtColor: 'orange',
+        glasses: 'square'
+    },
+    {
+        name: 'Max',
+        gender: 'male',
+        faceShape: 'long',
+        skinTone: 'medium',
+        hairStyle: 'side-part',
+        hairColor: 'gray',
+        shirtColor: 'red',
+        glasses: 'none',
+        hat: 'cap'
+    },
+    {
+        name: 'Zoe',
+        gender: 'female',
+        faceShape: 'round',
+        skinTone: 'light',
+        hairStyle: 'ponytail',
+        hairColor: 'brown',
+        shirtColor: 'blue',
+        glasses: 'round'
+    },
+    {
+        name: 'Kai',
+        gender: 'male',
+        faceShape: 'oval',
+        skinTone: 'tan',
+        hairStyle: 'buzz',
+        hairColor: 'black',
+        shirtColor: 'green',
+        glasses: 'none'
+    },
+].map(c => ({...DEMO_BASE, ...c}));
 const demo = (name) => DEMO_CHARACTERS.find(c => c.name === name);
 
 const RULE_ICONS = {
@@ -925,7 +1036,7 @@ function openReleaseNotes() {
 
 async function shareInvite() {
     try {
-        await navigator.share({ title: 'FaceGuess', text: t('share_text', { code: gameState.code }), url: inviteLink() });
+        await navigator.share({title: 'FaceGuess', text: t('share_text', {code: gameState.code}), url: inviteLink()});
     } catch (e) {
         if (e && e.name !== 'AbortError') copyText(inviteLink(), t('link_copied'));
     }
@@ -951,14 +1062,14 @@ function gameOverText(data, won, theirs) {
 
     if (won) {
         if (last && last.player_slot !== gameState.slot && !last.is_correct) {
-            return hadLastChance ? t('won_last_chance', { name: opp }) : t('won_opponent_mistake', { name: opp });
+            return hadLastChance ? t('won_last_chance', {name: opp}) : t('won_opponent_mistake', {name: opp});
         }
-        return t('correct_guess', { name: theirs ? theirs.name : '' });
+        return t('correct_guess', {name: theirs ? theirs.name : ''});
     }
     if (last && last.player_slot === gameState.slot && !last.is_correct) {
-        return hadLastChance ? t('lost_last_chance', { name: opp }) : t('lost_wrong_guess', { name: opp });
+        return hadLastChance ? t('lost_last_chance', {name: opp}) : t('lost_wrong_guess', {name: opp});
     }
-    return t('opponent_won', { name: opp });
+    return t('opponent_won', {name: opp});
 }
 
 const GAMEOVER_ICONS = {
@@ -1028,17 +1139,19 @@ function backToLobby() {
 }
 
 async function leaveGame() {
-    if (gameState.token) await api('leave', { token: gameState.token });
+    if (gameState.token) await api('leave', {token: gameState.token});
     backToLobby();
 }
 
 // --- Setup ---
 function onLanguageChange() {
-    if (playerName) $('greeting-text').textContent = t('greeting', { name: playerName });
-    $('random-desc').textContent = t('random_desc', { language: languageName(currentLang) });
+    if (playerName) $('greeting-text').textContent = t('greeting', {name: playerName});
+    $('random-desc').textContent = t('random_desc', {language: languageName(currentLang)});
     if (!$('release-overlay').classList.contains('hidden')) renderReleaseNotes();
     if (!$('rules-overlay').classList.contains('hidden')) renderRules();
-    document.querySelectorAll('.rules-link-label').forEach(el => { el.textContent = (RULES[currentLang] || RULES.en).title; });
+    document.querySelectorAll('.rules-link-label').forEach(el => {
+        el.textContent = (RULES[currentLang] || RULES.en).title;
+    });
     $('lang-current').textContent = currentLang.toUpperCase();
     resetExamples();
     document.querySelectorAll('.lang-option').forEach(o => {
@@ -1050,11 +1163,67 @@ function onLanguageChange() {
 
 function renderLogoFaces() {
     const samples = [
-        { name: 'A', gender: 'female', faceShape: 'oval', skinTone: 'tan', eyeColor: 'green', eyebrows: 'medium', nose: 'small', mouth: 'smile', hairColor: 'black', shirtColor: 'purple', glasses: 'none', hat: 'none', freckles: false, hairStyle: 'bob', facialHair: 'none', makeup: 'lipstick', earrings: 'hoops' },
-        { name: 'B', gender: 'male', faceShape: 'square', skinTone: 'fair', eyeColor: 'blue', eyebrows: 'thick', nose: 'medium', mouth: 'grin', hairColor: 'red', shirtColor: 'yellow', glasses: 'round', hat: 'none', freckles: true, hairStyle: 'curly', facialHair: 'none', makeup: 'none', earrings: 'none' },
-        { name: 'C', gender: 'male', faceShape: 'round', skinTone: 'dark', eyeColor: 'brown', eyebrows: 'medium', nose: 'medium', mouth: 'smile', hairColor: 'gray', shirtColor: 'green', glasses: 'none', hat: 'cap', freckles: false, hairStyle: 'short', facialHair: 'beard', makeup: 'none', earrings: 'none' },
+        {
+            name: 'A',
+            gender: 'female',
+            faceShape: 'oval',
+            skinTone: 'tan',
+            eyeColor: 'green',
+            eyebrows: 'medium',
+            nose: 'small',
+            mouth: 'smile',
+            hairColor: 'black',
+            shirtColor: 'purple',
+            glasses: 'none',
+            hat: 'none',
+            freckles: false,
+            hairStyle: 'bob',
+            facialHair: 'none',
+            makeup: 'lipstick',
+            earrings: 'hoops'
+        },
+        {
+            name: 'B',
+            gender: 'male',
+            faceShape: 'square',
+            skinTone: 'fair',
+            eyeColor: 'blue',
+            eyebrows: 'thick',
+            nose: 'medium',
+            mouth: 'grin',
+            hairColor: 'red',
+            shirtColor: 'yellow',
+            glasses: 'round',
+            hat: 'none',
+            freckles: true,
+            hairStyle: 'curly',
+            facialHair: 'none',
+            makeup: 'none',
+            earrings: 'none'
+        },
+        {
+            name: 'C',
+            gender: 'male',
+            faceShape: 'round',
+            skinTone: 'dark',
+            eyeColor: 'brown',
+            eyebrows: 'medium',
+            nose: 'medium',
+            mouth: 'smile',
+            hairColor: 'gray',
+            shirtColor: 'green',
+            glasses: 'none',
+            hat: 'cap',
+            freckles: false,
+            hairStyle: 'short',
+            facialHair: 'beard',
+            makeup: 'none',
+            earrings: 'none'
+        },
     ];
-    document.querySelectorAll('.logo-face').forEach((el, i) => { el.innerHTML = renderCharacterSVG(samples[i]); });
+    document.querySelectorAll('.logo-face').forEach((el, i) => {
+        el.innerHTML = renderCharacterSVG(samples[i]);
+    });
 }
 
 function init() {
@@ -1068,6 +1237,8 @@ function init() {
     $('app-version').textContent = 'v' + APP_VERSION;
     $('btn-version').addEventListener('click', openReleaseNotes);
     $('btn-close-release').addEventListener('click', () => showModal('release-overlay', false));
+    $('btn-donate')?.addEventListener('click', () => showModal('donate-overlay', true));
+    $('btn-close-donate')?.addEventListener('click', () => showModal('donate-overlay', false));
     $('btn-howto').addEventListener('click', () => showModal('howto-overlay', true));
     $('btn-step-1').addEventListener('click', () => goToStep(1));
     $('btn-lang-menu').addEventListener('click', () => showModal('lang-overlay', true));
@@ -1077,7 +1248,9 @@ function init() {
         openRules();
     }));
     $('btn-close-rules').addEventListener('click', () => showModal('rules-overlay', false));
-    setInterval(() => { if (!$('ask-section').classList.contains('hidden')) showNextExample(); }, PLACEHOLDER_MS);
+    setInterval(() => {
+        if (!$('ask-section').classList.contains('hidden')) showNextExample();
+    }, PLACEHOLDER_MS);
     $('btn-concede').addEventListener('click', concedeLastChance);
     document.querySelectorAll('.lang-option').forEach(o => o.addEventListener('click', () => {
         setLanguage(o.dataset.lang);
@@ -1120,7 +1293,10 @@ function init() {
         $('btn-join').disabled = codeInput.value.length !== 6;
     });
     $('btn-create').addEventListener('click', createRoom);
-    $('card-join').addEventListener('submit', (e) => { e.preventDefault(); joinRoom(); });
+    $('card-join').addEventListener('submit', (e) => {
+        e.preventDefault();
+        joinRoom();
+    });
     $('btn-random').addEventListener('click', findRandomMatch);
     $('btn-guess-inperson').addEventListener('click', enterGuessMode);
     $('btn-end-turn').addEventListener('click', endTurn);
@@ -1140,7 +1316,10 @@ function init() {
         if (gameState.status !== 'playing' || confirm(t('leave_confirm'))) leaveGame();
     });
 
-    $('ask-section').addEventListener('submit', (e) => { e.preventDefault(); askQuestion(); });
+    $('ask-section').addEventListener('submit', (e) => {
+        e.preventDefault();
+        askQuestion();
+    });
     $('btn-guess').addEventListener('click', enterGuessMode);
     $('btn-cancel-guess').addEventListener('click', exitGuessMode);
     document.querySelectorAll('#answer-section [data-answer]').forEach(b =>
@@ -1168,7 +1347,9 @@ function init() {
         else if (e.key === 'Escape') closeZoom();
     });
     let swipeX = null;
-    $('zoom-avatar').addEventListener('pointerdown', (e) => { swipeX = e.clientX; });
+    $('zoom-avatar').addEventListener('pointerdown', (e) => {
+        swipeX = e.clientX;
+    });
     $('zoom-avatar').addEventListener('pointerup', (e) => {
         if (swipeX === null) return;
         const dx = e.clientX - swipeX;
@@ -1187,7 +1368,7 @@ function init() {
 
 window.addEventListener('beforeunload', () => {
     if (gameState.token) {
-        navigator.sendBeacon(API_URL, new URLSearchParams({ action: 'leave', token: gameState.token }));
+        navigator.sendBeacon(API_URL, new URLSearchParams({action: 'leave', token: gameState.token}));
     }
 });
 

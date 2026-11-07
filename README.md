@@ -16,12 +16,15 @@ Personal website of Saverio Morelli — frontend developer & UX designer.
 
 1. Clone the repository
 2. Run `composer install` to install dependencies (Symfony Mailer)
-3. Create the local config files from the samples (the real files are git-ignored and blocked from the web by `.htaccess`):
-   - `.mail-config.sample.php` → `.mail-config.php` (SMTP and ALTCHA secret for the contact form)
-   - `old/include/variables-sample.php` → `old/include/variables.php` (database for the legacy `/old/` projects)
-   - `old/api/emoticolor/credentials-sample.php` → `old/api/emoticolor/credentials.php`
-   - `projects/ripasso-fipav/lib/config.example.php` → `projects/ripasso-fipav/lib/config.php`
-   - `.maintenance-sample` → `.maintenance` (only when you want to enable maintenance mode)
+3. Create the local config files from the samples (the real files are git-ignored and blocked from the web by
+   `.htaccess`):
+    - `.mail-config.sample.php` → `.mail-config.php` (SMTP and ALTCHA secret for the contact form)
+    - `old/include/variables-sample.php` → `old/include/variables.php` (database for the legacy `/old/` projects)
+    - `old/api/emoticolor/credentials-sample.php` → `old/api/emoticolor/credentials.php`
+    - `projects/ripasso-fipav/lib/config.example.php` → `projects/ripasso-fipav/lib/config.php`
+    - `projects/foodtrack/credentials-sample.php` → `projects/foodtrack/credentials.php` (FoodTrack database; or open
+      `projects/foodtrack/install-db.php`, which creates it)
+    - `.maintenance-sample` → `.maintenance` (only when you want to enable maintenance mode)
 4. Deploy to a PHP-capable web server
 
 ## Anti-spam

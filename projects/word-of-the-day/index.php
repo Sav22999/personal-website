@@ -105,16 +105,25 @@ $canonical = '/projects/word-of-the-day/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid portrait">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Store graphic reading “Every day a new word” next to a tilted phone showing the word of the day “Inheritance” with its definition and etymology">
-                <img src="/images/projects/screenshots/word-of-the-day/1.png" alt="Store graphic reading “Every day a new word” next to a tilted phone showing the word of the day “Inheritance” with its definition and etymology" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Store graphic reading “Every day a new word” next to a tilted phone showing the word of the day “Inheritance” with its definition and etymology">
+                <img src="/images/projects/screenshots/word-of-the-day/1.png"
+                     alt="Store graphic reading “Every day a new word” next to a tilted phone showing the word of the day “Inheritance” with its definition and etymology"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Store graphic reading “Phonetics” next to the app showing the date, the word with its IPA transcription and the settings icon">
-                <img src="/images/projects/screenshots/word-of-the-day/2.png" alt="Store graphic reading “Phonetics” next to the app showing the date, the word with its IPA transcription and the settings icon" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Store graphic reading “Phonetics” next to the app showing the date, the word with its IPA transcription and the settings icon">
+                <img src="/images/projects/screenshots/word-of-the-day/2.png"
+                     alt="Store graphic reading “Phonetics” next to the app showing the date, the word with its IPA transcription and the settings icon"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Final part of the store graphic: the blue wave ending on a white background">
-                <img src="/images/projects/screenshots/word-of-the-day/3.png" alt="Final part of the store graphic: the blue wave ending on a white background" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Final part of the store graphic: the blue wave ending on a white background">
+                <img src="/images/projects/screenshots/word-of-the-day/3.png"
+                     alt="Final part of the store graphic: the blue wave ending on a white background" width="919"
+                     height="1800"
                      loading="lazy">
             </button>
         </div>
@@ -128,7 +137,8 @@ $canonical = '/projects/word-of-the-day/';
             <div class="timeline-item major">
                 <span class="timeline-version">v2.0</span>
                 <span class="timeline-date">15 October 2024</span>
-                <p>Added the Words learnt history of previously shown words, along with many improvements and bug fixes.</p>
+                <p>Added the Words learnt history of previously shown words, along with many improvements and bug
+                    fixes.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.5</span>

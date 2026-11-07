@@ -25,12 +25,15 @@ require __DIR__ . '/../lib/documents.php';
 set_exception_handler(function (Throwable $e) {
     error_log('[fipav-ripasso] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     $debug = false;
-    try { $debug = !empty(config()['debug']); } catch (Throwable $ignored) {}
+    try {
+        $debug = !empty(config()['debug']);
+    } catch (Throwable $ignored) {
+    }
     fail('Errore interno del server.' . ($debug ? ' ' . $e->getMessage() : ''), 500, 'server_error');
 });
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$route  = (string)($_GET['r'] ?? '');
+$route = (string)($_GET['r'] ?? '');
 
 // Every request that changes data must be a POST with a JSON body:
 // forms on other sites cannot send JSON without a CORS preflight, which is not allowed here.
@@ -143,7 +146,10 @@ switch ($route) {
         $del = db()->prepare('DELETE FROM ' . t('user_state') . ' WHERE user_id = ? AND state_key = ?');
         foreach ($items as $key => $value) {
             if (!in_array($key, STATE_KEYS, true)) fail('Chiave non valida: ' . $key, 422, 'validation');
-            if ($value === null) { $del->execute([$s['id'], $key]); continue; }
+            if ($value === null) {
+                $del->execute([$s['id'], $key]);
+                continue;
+            }
             if (!is_string($value)) fail('Valore non valido.', 422, 'validation');
             if (strlen($value) > 4 * 1024 * 1024) fail('Dati troppo grandi.', 413, 'too_large');
             json_decode($value);

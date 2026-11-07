@@ -126,7 +126,8 @@ $canonical = '/projects/mozita-antispam/';
             <div class="timeline-item">
                 <span class="timeline-version">v1.6.3</span>
                 <span class="timeline-date">12 June 2020</span>
-                <p>Polls are now accepted events (contributed by Damiano Gualandri), plus typo and indentation fixes.</p>
+                <p>Polls are now accepted events (contributed by Damiano Gualandri), plus typo and indentation
+                    fixes.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.6.2</span>

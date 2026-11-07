@@ -1,434 +1,575 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="noindex">
-<meta name="theme-color" content="#0C1524">
-<title>Simulazione partita · Fischietto</title>
-<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
-<link rel="icon" href="assets/icons/icon-32.png" sizes="32x32" type="image/png">
-<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/app.css?v=4.0.0-20">
-<link rel="stylesheet" href="assets/sim/sim.css?v=4.0.0-20">
-<script>
-  try { var t = localStorage.getItem('fipav-theme'); if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
-</script>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport">
+    <meta content="noindex" name="robots">
+    <meta content="#0C1524" name="theme-color">
+    <title>Simulazione partita · Fischietto</title>
+    <link href="assets/icons/icon.svg" rel="icon" type="image/svg+xml">
+    <link href="assets/icons/icon-32.png" rel="icon" sizes="32x32" type="image/png">
+    <link href="assets/icons/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="manifest.webmanifest" rel="manifest">
+    <link href="assets/app.css?v=4.1.1-21" rel="stylesheet">
+    <link href="assets/sim/sim.css?v=4.1.1-21" rel="stylesheet">
+    <script>
+        try {
+            var t = localStorage.getItem('fipav-theme');
+            if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+        }
+    </script>
 </head>
 <body class="sim-body">
 
 <div class="boot-screen" id="boot-screen">
-  <img class="boot-ball" src="assets/icons/icon.svg" alt="" width="56" height="56">
-  <p id="boot-message">Preparo il campo…</p>
+    <img alt="" class="boot-ball" height="56" src="assets/icons/icon.svg" width="56">
+    <p id="boot-message">Preparo il campo…</p>
 </div>
 
-<div class="sim-root" id="sim-root" hidden>
-  <!-- ====== TOP BAR ====== -->
-  <header class="sim-top">
-    <a class="sim-back" href="./" id="sim-exit" aria-label="Torna al portale">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </a>
-    <img src="assets/icons/icon.svg" alt="" width="26" height="26">
-    <div class="sim-title"><strong>Fischietto</strong><span>Simulazione partita · beta</span></div>
-    <div class="sim-top-right" id="sim-top-actions" hidden>
-      <button class="sim-chip" id="btn-view" title="Vista dall’alto (V)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M12 5v14M8 5v14M16 5v14"/></svg>
-        <span id="btn-view-label">Dall’alto</span>
-      </button>
-      <button class="sim-chip" id="btn-sheet" title="Referto (R)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>
-        <span>Referto</span>
-      </button>
-      <button class="sim-chip" id="btn-log" title="Cronologia (C)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>
-        <span>Cronologia</span>
-      </button>
-      <button class="sim-chip" id="btn-help" title="Aiuto (H)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/></svg>
-        <span>Aiuto</span>
-      </button>
-      <button class="sim-chip" id="btn-opts" title="Impostazioni della partita (O)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
-        <span>Impostazioni</span>
-      </button>
-      <button class="sim-chip" id="btn-pause" title="Pausa (P)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-        <span>Pausa</span>
-      </button>
-    </div>
-    <div class="sim-credit">Simulazione creata con Claude AI</div>
-  </header>
-
-  <!-- ====== SETUP ====== -->
-  <main class="sim-setup" id="sim-setup">
-    <section class="sim-card">
-      <h1>Arbitra una partita</h1>
-      <p class="sim-lead">Una partita animata in tempo reale: autorizza il servizio, fischia quando vedi un fallo e decidi. Ogni decisione viene confrontata con il regolamento, con i riferimenti per ripassare.</p>
-
-      <h2 class="sim-h2">Il tuo ruolo</h2>
-      <div class="role-grid" id="role-grid" role="radiogroup" aria-label="Ruolo">
-        <button type="button" class="role-card active" data-mode="1" role="radio" aria-checked="true">
-          <strong>1° arbitro</strong>
-          <span>Vista dal seggiolone. Autorizzi il servizio, giudichi tocchi, palla dentro o fuori, servizio e falli della squadra al servizio, sanzioni. Il 2° arbitro è automatico.</span>
-        </button>
-        <button type="button" class="role-card" data-mode="2" role="radio" aria-checked="false">
-          <strong>2° arbitro</strong>
-          <span>Vista sotto la rete, lato segnapunti. Giudichi la posizione della squadra in ricezione, rete, linea centrale e attacchi irregolari; autorizzi tempi e sostituzioni. Il 1° arbitro è automatico.</span>
-        </button>
-        <button type="button" class="role-card" data-mode="solo" role="radio" aria-checked="false">
-          <strong>Arbitro unico</strong>
-          <span>Dal seggiolone, senza 2° arbitro: svolgi tutti i compiti, compresi richieste, sostituzioni e Libero.</span>
-        </button>
-      </div>
-
-      <div class="sim-options">
-        <div class="sim-opt">
-          <span class="sim-opt-label">Durata</span>
-          <div class="segmented" id="opt-target">
-            <button type="button" data-v="15">Set a 15</button>
-            <button type="button" data-v="25" class="active">Set a 25</button>
-          </div>
+<div class="sim-root" hidden id="sim-root">
+    <!-- ====== TOP BAR ====== -->
+    <header class="sim-top">
+        <a aria-label="Torna al portale" class="sim-back" href="./" id="sim-exit">
+            <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                 viewBox="0 0 24 24" width="20">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </a>
+        <img alt="" height="26" src="assets/icons/icon.svg" width="26">
+        <div class="sim-title"><strong>Fischietto</strong><span>Simulazione partita · beta</span></div>
+        <div class="sim-top-right" hidden id="sim-top-actions">
+            <button class="sim-chip" id="btn-view" title="Vista dall’alto (V)">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <rect height="14" rx="1" width="18" x="3" y="5"/>
+                    <path d="M12 5v14M8 5v14M16 5v14"/>
+                </svg>
+                <span id="btn-view-label">Dall’alto</span>
+            </button>
+            <button class="sim-chip" id="btn-sheet" title="Referto (R)">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                    <path d="M14 3v6h6M8 13h8M8 17h6"/>
+                </svg>
+                <span>Referto</span>
+            </button>
+            <button class="sim-chip" id="btn-log" title="Cronologia (C)">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <path d="M3 12a9 9 0 109-9 9.7 9.7 0 00-6.7 2.7L3 8"/>
+                    <path d="M3 3v5h5M12 7v5l3 2"/>
+                </svg>
+                <span>Cronologia</span>
+            </button>
+            <button class="sim-chip" id="btn-help" title="Aiuto (H)">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/>
+                </svg>
+                <span>Aiuto</span>
+            </button>
+            <button class="sim-chip" id="btn-opts" title="Impostazioni della partita (O)">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/>
+                    <circle cx="16" cy="6" r="2"/>
+                    <circle cx="10" cy="12" r="2"/>
+                    <circle cx="18" cy="18" r="2"/>
+                </svg>
+                <span>Impostazioni</span>
+            </button>
+            <button class="sim-chip" id="btn-pause" title="Pausa (P)">
+                <svg fill="currentColor" height="16" viewBox="0 0 24 24" width="16">
+                    <rect height="14" rx="1" width="4" x="6" y="5"/>
+                    <rect height="14" rx="1" width="4" x="14" y="5"/>
+                </svg>
+                <span>Pausa</span>
+            </button>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Situazioni da regolamento</span>
-          <div class="segmented" id="opt-freq">
-            <button type="button" data-v="0.3">Poche</button>
-            <button type="button" data-v="0.45" class="active">Normali</button>
-            <button type="button" data-v="0.65">Tante</button>
-          </div>
+        <div class="sim-credit">Simulazione creata con Claude AI</div>
+    </header>
+
+    <!-- ====== SETUP ====== -->
+    <main class="sim-setup" id="sim-setup">
+        <section class="sim-card">
+            <h1>Arbitra una partita</h1>
+            <p class="sim-lead">Una partita animata in tempo reale: autorizza il servizio, fischia quando vedi un fallo
+                e decidi. Ogni decisione viene confrontata con il regolamento, con i riferimenti per ripassare.</p>
+
+            <h2 class="sim-h2">Il tuo ruolo</h2>
+            <div aria-label="Ruolo" class="role-grid" id="role-grid" role="radiogroup">
+                <button aria-checked="true" class="role-card active" data-mode="1" role="radio" type="button">
+                    <strong>1° arbitro</strong>
+                    <span>Vista dal seggiolone. Autorizzi il servizio, giudichi tocchi, palla dentro o fuori, servizio e falli della squadra al servizio, sanzioni. Il 2° arbitro è automatico.</span>
+                </button>
+                <button aria-checked="false" class="role-card" data-mode="2" role="radio" type="button">
+                    <strong>2° arbitro</strong>
+                    <span>Vista sotto la rete, lato segnapunti. Giudichi la posizione della squadra in ricezione, rete, linea centrale e attacchi irregolari; autorizzi tempi e sostituzioni. Il 1° arbitro è automatico.</span>
+                </button>
+                <button aria-checked="false" class="role-card" data-mode="solo" role="radio" type="button">
+                    <strong>Arbitro unico</strong>
+                    <span>Dal seggiolone, senza 2° arbitro: svolgi tutti i compiti, compresi richieste, sostituzioni e Libero.</span>
+                </button>
+            </div>
+
+            <div class="sim-options">
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Durata</span>
+                    <div class="segmented" id="opt-target">
+                        <button data-v="15" type="button">Set a 15</button>
+                        <button class="active" data-v="25" type="button">Set a 25</button>
+                    </div>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Situazioni da regolamento</span>
+                    <div class="segmented" id="opt-freq">
+                        <button data-v="0.3" type="button">Poche</button>
+                        <button class="active" data-v="0.45" type="button">Normali</button>
+                        <button data-v="0.65" type="button">Tante</button>
+                    </div>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Fallosità dei giocatori</span>
+                    <div class="segmented" id="opt-fouls">
+                        <button data-v="0" type="button">Nessuna</button>
+                        <button data-v="0.4" type="button">Bassa</button>
+                        <button class="active" data-v="1" type="button">Media</button>
+                        <button data-v="1.7" type="button">Alta</button>
+                    </div>
+                    <small class="sim-opt-hint">Quanto spesso i giocatori commettono falli durante il gioco.</small>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Posizioni delle squadre</span>
+                    <div class="segmented" id="opt-forms">
+                        <button class="active" data-v="easy" type="button">Semplici</button>
+                        <button data-v="pro" type="button">Realistiche</button>
+                    </div>
+                    <small class="sim-opt-hint">Semplici: ognuno nella sua zona, ben distanziato. Realistiche:
+                        formazioni di ricezione come in una partita vera (palleggiatore che si nasconde a rete,
+                        giocatori sovrapposti al limite, ricezione a tre) e cambi di posizione dopo il servizio.</small>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Condotta scorretta</span>
+                    <div class="segmented" id="opt-conduct">
+                        <button class="active" data-v="auto" type="button">Auto</button>
+                        <button data-v="0" type="button">Nessuna</button>
+                        <button data-v="0.4" type="button">Bassa</button>
+                        <button data-v="1" type="button">Media</button>
+                        <button data-v="1.7" type="button">Alta</button>
+                    </div>
+                    <small class="sim-opt-hint">Quanto spesso giocatori e allenatori hanno comportamenti da sanzionare.
+                        Auto si adatta a te: più decidi bene e più le squadre si calmano; gli errori aumentano il
+                        malcontento e quindi i comportamenti scorretti.</small>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Dopo una decisione sbagliata</span>
+                    <div class="segmented" id="opt-score">
+                        <button class="active" data-v="right" type="button">Si corregge</button>
+                        <button data-v="mine" type="button">Vale la mia decisione</button>
+                    </div>
+                    <small class="sim-opt-hint">«Si corregge»: il punteggio segue sempre la decisione giusta. «Vale la
+                        mia decisione»: come in partita, punto, sanzioni e richieste seguono quello che hai deciso tu,
+                        anche se sbagliato.</small>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Velocità delle animazioni</span>
+                    <div class="segmented" id="opt-anim">
+                        <button data-v="0.7" type="button">Lente</button>
+                        <button class="active" data-v="1" type="button">Normali</button>
+                        <button data-v="1.5" type="button">Veloci</button>
+                        <button data-v="2.5" type="button">Molto veloci</button>
+                    </div>
+                    <small class="sim-opt-hint">Quanto si muovono in fretta i giocatori fra un’azione e l’altra:
+                        sostituzioni, rimpiazzi del Libero, squadre che vanno in panchina per il tempo di riposo,
+                        giocatori che vengono al seggiolone per una sanzione. Il gioco durante l’azione resta a velocità
+                        reale.</small>
+                </div>
+                <div class="sim-opt">
+                    <span class="sim-opt-label">Grafica</span>
+                    <div class="segmented" id="opt-graphics">
+                        <button class="active" data-v="high" type="button">Dettagliata</button>
+                        <button data-v="medium" type="button">Normale</button>
+                        <button data-v="low" type="button">Semplice</button>
+                    </div>
+                    <small class="sim-opt-hint">Dettagliata: palazzetto con pubblico, luci e ombre morbide. Normale:
+                        tribune vuote, senza luce sul campo, ombre semplici. Semplice: solo campo e persone, con meno
+                        dettagli e a risoluzione ridotta; la più leggera, per telefoni e computer lenti.</small>
+                </div>
+                <label class="toggle-row">
+                    <input checked id="opt-aids" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>Tocchi e linee con aiuti visivi</strong><small>Includi palle trattenute, doppi tocchi, palle toccate dal muro e palle sulla linea, mostrate al rallenty e con il punto d’impatto. Se lo disattivi, queste situazioni non compaiono.</small></span>
+                </label>
+                <label class="toggle-row">
+                    <input checked id="opt-automove" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>Spostamento automatico dell’arbitro</strong><small>Il 1° arbitro si sposta leggermente sul seggiolone verso la squadra in attacco; il 2° arbitro si muove lungo la linea laterale verso la squadra in ricezione. Puoi sempre spostarti anche da solo, con le frecce ← → o con i comandi a schermo sul telefono.</small></span>
+                </label>
+                <label class="toggle-row">
+                    <input id="opt-summary" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>Riepilogo dopo ogni decisione</strong><small>Apre subito la scheda con quanto è successo, la decisione corretta e i riferimenti. Se è spento vedi la segnaletica che hai fatto, con il pulsante «Mostra dettagli» per aprire il riepilogo solo quando vuoi.</small></span>
+                </label>
+                <label class="toggle-row">
+                    <input checked id="opt-timeout" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>Attendi i 30 secondi del tempo di riposo</strong><small>Quando concedi un tempo di riposo, il gioco riprende solo dopo 30 secondi, con il conto alla rovescia (puoi comunque riprendere prima).</small></span>
+                </label>
+                <label class="toggle-row">
+                    <input checked id="opt-subanim" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>Animazione di sostituzioni e rimpiazzi</strong><small>I giocatori escono ed entrano camminando dalla zona di sostituzione (o dalla zona di rimpiazzo del Libero).</small></span>
+                </label>
+                <label class="toggle-row" hidden id="opt-allok-row">
+                    <input id="opt-allok" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>«Tutto in ordine» automatico</strong><small>Da 2° arbitro: prima dell’inizio del set e dopo tempi di riposo e sostituzioni il segnale (braccia alzate) lo fai in automatico. Se lo disattivi lo fai tu con il pulsante, e il 1° arbitro autorizza il servizio solo dopo. Il segnapunti lo fa sempre da solo.</small></span>
+                </label>
+                <label class="toggle-row" id="opt-libero-row">
+                    <input id="opt-libero" type="checkbox">
+                    <span class="toggle-track"></span>
+                    <span><strong>Controlla i rimpiazzi del Libero</strong><small>Ogni rimpiazzo ti chiede di confermare se è regolare (solo 2° arbitro e arbitro unico).</small></span>
+                </label>
+            </div>
+
+            <div class="sim-start-row">
+                <button class="btn btn-primary btn-lg" id="btn-start">Inizia la partita</button>
+                <span class="form-hint">Comandi da tastiera: <kbd>Spazio</kbd> fischia · <kbd>Invio</kbd> autorizza il servizio · <kbd>←</kbd> <kbd>→</kbd> spostati · <kbd>P</kbd> pausa · <kbd>V</kbd> vista · <kbd>R</kbd> referto · <kbd>H</kbd> aiuto</span>
+            </div>
+        </section>
+
+        <section class="sim-card sim-stats-link" hidden id="sim-stats-card">
+            <p>Le tue statistiche della simulazione sono nella pagina <a href="./#statistiche">Statistiche</a> del
+                portale, nella sezione «Simulazione partita».</p>
+        </section>
+    </main>
+
+    <!-- ====== GAME ====== -->
+    <main class="sim-game" hidden id="sim-game">
+        <canvas aria-label="Campo di gioco" id="sim-canvas"></canvas>
+        <div class="rotate-tip" id="rotate-tip" role="note">
+            <svg aria-hidden="true" fill="none" height="26" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                 stroke-width="2" viewBox="0 0 24 24" width="26">
+                <rect height="20" rx="2" width="10" x="7" y="2"/>
+                <path d="M11 18h2"/>
+            </svg>
+            <span>Gira il telefono in orizzontale: il campo è più grande.</span>
+            <button id="rot-dismiss" type="button">Ok</button>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Fallosità dei giocatori</span>
-          <div class="segmented" id="opt-fouls">
-            <button type="button" data-v="0">Nessuna</button>
-            <button type="button" data-v="0.4">Bassa</button>
-            <button type="button" data-v="1" class="active">Media</button>
-            <button type="button" data-v="1.7">Alta</button>
-          </div>
-          <small class="sim-opt-hint">Quanto spesso i giocatori commettono falli durante il gioco.</small>
+
+        <div class="sb-holder">
+            <button aria-label="Formazione iniziale della squadra A" class="sb-slip" data-team="A" hidden
+                    id="slip-btn-a" title="Formazione iniziale della squadra A">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <rect height="18" rx="2" width="16" x="4" y="3"/>
+                    <path d="M8 8h8M8 12h8M8 16h5"/>
+                </svg>
+                <span>A</span></button>
+            <div class="scoreboard" id="scoreboard">
+                <div class="sb-team sb-a"><span class="sb-name">A</span><span class="sb-serve"
+                                                                              id="sb-serve-a"></span><span
+                        class="sb-score" id="sb-score-a">0</span></div>
+                <div class="sb-mid"><span id="sb-set">Set a 25</span></div>
+                <div class="sb-team sb-b"><span class="sb-score" id="sb-score-b">0</span><span class="sb-serve"
+                                                                                               id="sb-serve-b"></span><span
+                        class="sb-name">B</span></div>
+                <div class="sbx sbx-a" id="sbx-a"></div>
+                <div class="sbx sbx-mid"></div>
+                <div class="sbx sbx-b" id="sbx-b"></div>
+            </div>
+            <button aria-label="Formazione iniziale della squadra B" class="sb-slip" data-team="B" hidden
+                    id="slip-btn-b" title="Formazione iniziale della squadra B">
+                <svg fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     viewBox="0 0 24 24" width="16">
+                    <rect height="18" rx="2" width="16" x="4" y="3"/>
+                    <path d="M8 8h8M8 12h8M8 16h5"/>
+                </svg>
+                <span>B</span></button>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Posizioni delle squadre</span>
-          <div class="segmented" id="opt-forms">
-            <button type="button" data-v="easy" class="active">Semplici</button>
-            <button type="button" data-v="pro">Realistiche</button>
-          </div>
-          <small class="sim-opt-hint">Semplici: ognuno nella sua zona, ben distanziato. Realistiche: formazioni di ricezione come in una partita vera (palleggiatore che si nasconde a rete, giocatori sovrapposti al limite, ricezione a tre) e cambi di posizione dopo il servizio.</small>
+        <!-- Starting line-up slip ("tagliando della formazione iniziale") of a team -->
+        <div aria-labelledby="slip-title" class="slip-card" hidden id="slip-card" role="dialog">
+            <div class="slip-head">
+                <div><small>Formazione iniziale</small><h4 id="slip-title"></h4></div>
+                <button class="btn btn-ghost btn-sm" id="slip-close">Chiudi</button>
+            </div>
+            <div class="slip-row" id="slip-row"></div>
+            <div class="slip-court-wrap"><small>Come si dispongono in campo (vista dalla propria metà campo, rete in
+                alto)</small>
+                <div class="slip-court" id="slip-court"></div>
+            </div>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Condotta scorretta</span>
-          <div class="segmented" id="opt-conduct">
-            <button type="button" data-v="auto" class="active">Auto</button>
-            <button type="button" data-v="0">Nessuna</button>
-            <button type="button" data-v="0.4">Bassa</button>
-            <button type="button" data-v="1">Media</button>
-            <button type="button" data-v="1.7">Alta</button>
-          </div>
-          <small class="sim-opt-hint">Quanto spesso giocatori e allenatori hanno comportamenti da sanzionare. Auto si adatta a te: più decidi bene e più le squadre si calmano; gli errori aumentano il malcontento e quindi i comportamenti scorretti.</small>
+
+        <div class="sim-badges">
+            <div class="sim-badge slow" hidden id="badge-slow">Rallenty</div>
+            <div class="sim-badge" id="badge-role"></div>
+            <div class="sim-badge" id="badge-clock" title="Tempo di gioco">⏱ 0:00</div>
+            <div class="sim-badge serve" hidden id="badge-serve" title="Secondi dall’autorizzazione del servizio"></div>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Dopo una decisione sbagliata</span>
-          <div class="segmented" id="opt-score">
-            <button type="button" data-v="right" class="active">Si corregge</button>
-            <button type="button" data-v="mine">Vale la mia decisione</button>
-          </div>
-          <small class="sim-opt-hint">«Si corregge»: il punteggio segue sempre la decisione giusta. «Vale la mia decisione»: come in partita, punto, sanzioni e richieste seguono quello che hai deciso tu, anche se sbagliato.</small>
+
+        <div class="sim-banner" hidden id="sim-banner"></div>
+        <div class="pick-layer" hidden id="pick-layer"></div>
+        <div class="to-wait" hidden id="to-wait"><strong>Tempo di riposo</strong><span id="to-wait-team"></span><b
+                id="to-wait-left">30</b>
+            <button class="btn btn-ghost btn-sm" id="to-wait-skip">Riprendi subito</button>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Velocità delle animazioni</span>
-          <div class="segmented" id="opt-anim">
-            <button type="button" data-v="0.7">Lente</button>
-            <button type="button" data-v="1" class="active">Normali</button>
-            <button type="button" data-v="1.5">Veloci</button>
-            <button type="button" data-v="2.5">Molto veloci</button>
-          </div>
-          <small class="sim-opt-hint">Quanto si muovono in fretta i giocatori fra un’azione e l’altra: sostituzioni, rimpiazzi del Libero, squadre che vanno in panchina per il tempo di riposo, giocatori che vengono al seggiolone per una sanzione. Il gioco durante l’azione resta a velocità reale.</small>
+        <div class="person-bar" hidden id="person-bar">
+            <p><strong id="pb-sanction">Sanzione</strong> · tocca sul campo il giocatore o l’allenatore da sanzionare
+            </p>
+            <button class="btn btn-ghost btn-sm" id="pb-cancel">Indietro</button>
         </div>
-        <div class="sim-opt">
-          <span class="sim-opt-label">Grafica</span>
-          <div class="segmented" id="opt-graphics">
-            <button type="button" data-v="high" class="active">Dettagliata</button>
-            <button type="button" data-v="medium">Normale</button>
-            <button type="button" data-v="low">Semplice</button>
-          </div>
-          <small class="sim-opt-hint">Dettagliata: palazzetto con pubblico, luci e ombre morbide. Normale: tribune vuote, senza luce sul campo, ombre semplici. Semplice: solo campo e persone, con meno dettagli e a risoluzione ridotta; la più leggera, per telefoni e computer lenti.</small>
+        <div class="peek-bar" hidden id="peek-bar"><span>Gioco in pausa: guarda il campo</span>
+            <button class="btn btn-ghost btn-sm" id="peek-view">Vista dall’alto</button>
+            <button class="btn btn-primary btn-sm" id="peek-back">Torna alla decisione</button>
         </div>
-        <label class="toggle-row">
-          <input type="checkbox" id="opt-aids" checked>
-          <span class="toggle-track"></span>
-          <span><strong>Tocchi e linee con aiuti visivi</strong><small>Includi palle trattenute, doppi tocchi, palle toccate dal muro e palle sulla linea, mostrate al rallenty e con il punto d’impatto. Se lo disattivi, queste situazioni non compaiono.</small></span>
-        </label>
-        <label class="toggle-row">
-          <input type="checkbox" id="opt-automove" checked>
-          <span class="toggle-track"></span>
-          <span><strong>Spostamento automatico dell’arbitro</strong><small>Il 1° arbitro si sposta leggermente sul seggiolone verso la squadra in attacco; il 2° arbitro si muove lungo la linea laterale verso la squadra in ricezione. Puoi sempre spostarti anche da solo, con le frecce ← → o con i comandi a schermo sul telefono.</small></span>
-        </label>
-        <label class="toggle-row">
-          <input type="checkbox" id="opt-summary">
-          <span class="toggle-track"></span>
-          <span><strong>Riepilogo dopo ogni decisione</strong><small>Apre subito la scheda con quanto è successo, la decisione corretta e i riferimenti. Se è spento vedi la segnaletica che hai fatto, con il pulsante «Mostra dettagli» per aprire il riepilogo solo quando vuoi.</small></span>
-        </label>
-        <label class="toggle-row">
-          <input type="checkbox" id="opt-timeout" checked>
-          <span class="toggle-track"></span>
-          <span><strong>Attendi i 30 secondi del tempo di riposo</strong><small>Quando concedi un tempo di riposo, il gioco riprende solo dopo 30 secondi, con il conto alla rovescia (puoi comunque riprendere prima).</small></span>
-        </label>
-        <label class="toggle-row">
-          <input type="checkbox" id="opt-subanim" checked>
-          <span class="toggle-track"></span>
-          <span><strong>Animazione di sostituzioni e rimpiazzi</strong><small>I giocatori escono ed entrano camminando dalla zona di sostituzione (o dalla zona di rimpiazzo del Libero).</small></span>
-        </label>
-        <label class="toggle-row" id="opt-allok-row" hidden>
-          <input type="checkbox" id="opt-allok">
-          <span class="toggle-track"></span>
-          <span><strong>«Tutto in ordine» automatico</strong><small>Da 2° arbitro: prima dell’inizio del set e dopo tempi di riposo e sostituzioni il segnale (braccia alzate) lo fai in automatico. Se lo disattivi lo fai tu con il pulsante, e il 1° arbitro autorizza il servizio solo dopo. Il segnapunti lo fa sempre da solo.</small></span>
-        </label>
-        <label class="toggle-row" id="opt-libero-row">
-          <input type="checkbox" id="opt-libero">
-          <span class="toggle-track"></span>
-          <span><strong>Controlla i rimpiazzi del Libero</strong><small>Ogni rimpiazzo ti chiede di confermare se è regolare (solo 2° arbitro e arbitro unico).</small></span>
-        </label>
-      </div>
+        <div aria-labelledby="dc-title" class="dcard" hidden id="dcard" role="dialog">
+            <div class="dc-head"><span class="dc-icon" id="dc-icon"></span>
+                <div><h4 id="dc-title"></h4>
+                    <p id="dc-yours"></p></div>
+            </div>
+            <div class="dc-sig" id="dc-sig">
+                <div class="fg-fig" id="dc-fig"></div>
+                <div class="dc-text"><small id="dc-sig-label">La tua segnaletica</small>
+                    <p class="fg-cap" id="dc-cap"></p>
+                    <p class="fg-note" hidden id="dc-note"></p></div>
+                <div class="sig-mark" id="dc-mark"><span>✕</span> Errore</div>
+            </div>
+            <div class="dc-actions">
+                <button class="btn btn-ghost btn-sm" hidden id="dc-replay">▶ Rivedi l’azione</button>
+                <button class="btn btn-ghost btn-sm" id="dc-details">Mostra dettagli</button>
+                <button class="btn btn-primary btn-sm" id="dc-continue">Continua</button>
+            </div>
+        </div>
+        <div class="gesture-mini" hidden id="gesture-mini"><small class="gm-who" id="gm-who"></small>
+            <div class="gm-fig" id="gm-fig"></div>
+            <span id="gm-cap"></span></div>
 
-      <div class="sim-start-row">
-        <button class="btn btn-primary btn-lg" id="btn-start">Inizia la partita</button>
-        <span class="form-hint">Comandi da tastiera: <kbd>Spazio</kbd> fischia · <kbd>Invio</kbd> autorizza il servizio · <kbd>←</kbd> <kbd>→</kbd> spostati · <kbd>P</kbd> pausa · <kbd>V</kbd> vista · <kbd>R</kbd> referto · <kbd>H</kbd> aiuto</span>
-      </div>
-    </section>
+        <div aria-label="Spostati" class="move-pad">
+            <button aria-label="Spostati a sinistra" class="move-btn" data-move="-1" type="button">
+                <svg fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6"
+                     viewBox="0 0 24 24" width="22">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </button>
+            <button aria-label="Spostati a destra" class="move-btn" data-move="1" type="button">
+                <svg fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6"
+                     viewBox="0 0 24 24" width="22">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </button>
+        </div>
 
-    <section class="sim-card sim-stats-link" id="sim-stats-card" hidden>
-      <p>Le tue statistiche della simulazione sono nella pagina <a href="./#statistiche">Statistiche</a> del portale, nella sezione «Simulazione partita».</p>
-    </section>
-  </main>
+        <div class="sim-controls">
+            <div class="sim-hint" id="sim-hint"></div>
+            <div class="sim-buttons">
+                <button class="sim-btn authorize" hidden id="btn-authorize">
+                    <svg fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                         viewBox="0 0 24 24" width="22">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                    </svg>
+                    Autorizza servizio
+                </button>
+                <button class="sim-btn collab" hidden id="btn-allok" title="Segnale di tutto in ordine al 1° arbitro">
+                    <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                         viewBox="0 0 24 24" width="20">
+                        <path d="M7 21V9M17 21V9M7 9V3M17 9V3"/>
+                    </svg>
+                    Tutto in ordine
+                </button>
+                <button class="sim-btn collab" hidden id="btn-collab" title="Segnale di collaborazione al 1° arbitro">
+                    <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                         viewBox="0 0 24 24" width="20">
+                        <path d="M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5.5a1.5 1.5 0 013 0V14a6 6 0 01-6 6h-1a5 5 0 01-4-2l-2.5-3.5a1.5 1.5 0 012.3-1.9L8 14"/>
+                    </svg>
+                    Segnala al 1°
+                </button>
+                <button class="sim-btn whistle" id="btn-whistle">
+                    <svg fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                         viewBox="0 0 24 24" width="22">
+                        <path d="M3 11a5 5 0 005 5h1l5 4v-6h4a3 3 0 000-6H8a5 5 0 00-5 3z"/>
+                        <circle cx="8" cy="11" r="1.6"/>
+                    </svg>
+                    Fischia
+                </button>
+            </div>
+        </div>
 
-  <!-- ====== GAME ====== -->
-  <main class="sim-game" id="sim-game" hidden>
-    <canvas id="sim-canvas" aria-label="Campo di gioco"></canvas>
-    <div class="rotate-tip" id="rotate-tip" role="note">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
-      <span>Gira il telefono in orizzontale: il campo è più grande.</span>
-      <button type="button" id="rot-dismiss">Ok</button>
-    </div>
+        <div class="collab-panel" hidden id="collab-panel">
+            <p>Segnale di collaborazione al 1° arbitro (al petto, non ufficiale) · <strong>gioco al rallenty</strong>
+            </p>
+            <div class="cp-grid" id="cp-grid"></div>
+        </div>
 
-    <div class="sb-holder">
-    <button class="sb-slip" id="slip-btn-a" data-team="A" title="Formazione iniziale della squadra A" aria-label="Formazione iniziale della squadra A" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>A</span></button>
-    <div class="scoreboard" id="scoreboard">
-      <div class="sb-team sb-a"><span class="sb-name">A</span><span class="sb-serve" id="sb-serve-a"></span><span class="sb-score" id="sb-score-a">0</span></div>
-      <div class="sb-mid"><span id="sb-set">Set a 25</span></div>
-      <div class="sb-team sb-b"><span class="sb-score" id="sb-score-b">0</span><span class="sb-serve" id="sb-serve-b"></span><span class="sb-name">B</span></div>
-      <div class="sbx sbx-a" id="sbx-a"></div><div class="sbx sbx-mid"></div><div class="sbx sbx-b" id="sbx-b"></div>
-    </div>
-    <button class="sb-slip" id="slip-btn-b" data-team="B" title="Formazione iniziale della squadra B" aria-label="Formazione iniziale della squadra B" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>B</span></button>
-    </div>
-    <!-- Starting line-up slip ("tagliando della formazione iniziale") of a team -->
-    <div class="slip-card" id="slip-card" hidden role="dialog" aria-labelledby="slip-title">
-      <div class="slip-head"><div><small>Formazione iniziale</small><h4 id="slip-title"></h4></div><button class="btn btn-ghost btn-sm" id="slip-close">Chiudi</button></div>
-      <div class="slip-row" id="slip-row"></div>
-      <div class="slip-court-wrap"><small>Come si dispongono in campo (vista dalla propria metà campo, rete in alto)</small><div class="slip-court" id="slip-court"></div></div>
-    </div>
+        <!-- Game log -->
+        <aside aria-label="Cronologia" class="sheet" hidden id="log">
+            <div class="sheet-head"><strong>Cronologia</strong>
+                <button aria-label="Chiudi" class="icon-btn" id="log-close">✕</button>
+            </div>
+            <div class="sheet-body log-list" id="log-body"></div>
+        </aside>
+        <!-- Score sheet -->
+        <aside aria-label="Referto" class="sheet" hidden id="sheet">
+            <div class="sheet-head"><strong>Referto</strong>
+                <button aria-label="Chiudi" class="icon-btn" id="sheet-close">✕</button>
+            </div>
+            <div class="sheet-body" id="sheet-body"></div>
+        </aside>
+    </main>
 
-    <div class="sim-badges">
-      <div class="sim-badge slow" id="badge-slow" hidden>Rallenty</div>
-      <div class="sim-badge" id="badge-role"></div>
-      <div class="sim-badge" id="badge-clock" title="Tempo di gioco">⏱ 0:00</div>
-      <div class="sim-badge serve" id="badge-serve" hidden title="Secondi dall’autorizzazione del servizio"></div>
-    </div>
-
-    <div class="sim-banner" id="sim-banner" hidden></div>
-    <div class="pick-layer" id="pick-layer" hidden></div>
-    <div class="to-wait" id="to-wait" hidden><strong>Tempo di riposo</strong><span id="to-wait-team"></span><b id="to-wait-left">30</b><button class="btn btn-ghost btn-sm" id="to-wait-skip">Riprendi subito</button></div>
-    <div class="person-bar" id="person-bar" hidden>
-      <p><strong id="pb-sanction">Sanzione</strong> · tocca sul campo il giocatore o l’allenatore da sanzionare</p>
-      <button class="btn btn-ghost btn-sm" id="pb-cancel">Indietro</button>
-    </div>
-    <div class="peek-bar" id="peek-bar" hidden><span>Gioco in pausa: guarda il campo</span><button class="btn btn-ghost btn-sm" id="peek-view">Vista dall’alto</button><button class="btn btn-primary btn-sm" id="peek-back">Torna alla decisione</button></div>
-    <div class="dcard" id="dcard" hidden role="dialog" aria-labelledby="dc-title">
-      <div class="dc-head"><span class="dc-icon" id="dc-icon"></span><div><h4 id="dc-title"></h4><p id="dc-yours"></p></div></div>
-      <div class="dc-sig" id="dc-sig">
-        <div class="fg-fig" id="dc-fig"></div>
-        <div class="dc-text"><small id="dc-sig-label">La tua segnaletica</small><p class="fg-cap" id="dc-cap"></p><p class="fg-note" id="dc-note" hidden></p></div>
-        <div class="sig-mark" id="dc-mark"><span>✕</span> Errore</div>
-      </div>
-      <div class="dc-actions"><button class="btn btn-ghost btn-sm" id="dc-replay" hidden>▶ Rivedi l’azione</button><button class="btn btn-ghost btn-sm" id="dc-details">Mostra dettagli</button><button class="btn btn-primary btn-sm" id="dc-continue">Continua</button></div>
-    </div>
-    <div class="gesture-mini" id="gesture-mini" hidden><small class="gm-who" id="gm-who"></small><div class="gm-fig" id="gm-fig"></div><span id="gm-cap"></span></div>
-
-    <div class="move-pad" aria-label="Spostati">
-      <button type="button" class="move-btn" data-move="-1" aria-label="Spostati a sinistra">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <button type="button" class="move-btn" data-move="1" aria-label="Spostati a destra">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-    </div>
-
-    <div class="sim-controls">
-      <div class="sim-hint" id="sim-hint"></div>
-      <div class="sim-buttons">
-        <button class="sim-btn authorize" id="btn-authorize" hidden>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          Autorizza servizio
-        </button>
-        <button class="sim-btn collab" id="btn-allok" hidden title="Segnale di tutto in ordine al 1° arbitro">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21V9M17 21V9M7 9V3M17 9V3"/></svg>
-          Tutto in ordine
-        </button>
-        <button class="sim-btn collab" id="btn-collab" hidden title="Segnale di collaborazione al 1° arbitro">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 013 0v6M11 11V4a1.5 1.5 0 013 0v7M14 11V5.5a1.5 1.5 0 013 0V14a6 6 0 01-6 6h-1a5 5 0 01-4-2l-2.5-3.5a1.5 1.5 0 012.3-1.9L8 14"/></svg>
-          Segnala al 1°
-        </button>
-        <button class="sim-btn whistle" id="btn-whistle">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a5 5 0 005 5h1l5 4v-6h4a3 3 0 000-6H8a5 5 0 00-5 3z"/><circle cx="8" cy="11" r="1.6"/></svg>
-          Fischia
-        </button>
-      </div>
-    </div>
-
-    <div class="collab-panel" id="collab-panel" hidden>
-      <p>Segnale di collaborazione al 1° arbitro (al petto, non ufficiale) · <strong>gioco al rallenty</strong></p>
-      <div class="cp-grid" id="cp-grid"></div>
-    </div>
-
-    <!-- Game log -->
-    <aside class="sheet" id="log" hidden aria-label="Cronologia">
-      <div class="sheet-head"><strong>Cronologia</strong><button class="icon-btn" id="log-close" aria-label="Chiudi">✕</button></div>
-      <div class="sheet-body log-list" id="log-body"></div>
-    </aside>
-    <!-- Score sheet -->
-    <aside class="sheet" id="sheet" hidden aria-label="Referto">
-      <div class="sheet-head"><strong>Referto</strong><button class="icon-btn" id="sheet-close" aria-label="Chiudi">✕</button></div>
-      <div class="sheet-body" id="sheet-body"></div>
-    </aside>
-  </main>
-
-  <!-- ====== END ====== -->
-  <main class="sim-setup" id="sim-end" hidden>
-    <section class="sim-card" id="sim-end-card"></section>
-  </main>
+    <!-- ====== END ====== -->
+    <main class="sim-setup" hidden id="sim-end">
+        <section class="sim-card" id="sim-end-card"></section>
+    </main>
 </div>
 
 <!-- Decision after a whistle -->
-<div class="modal-overlay sim-modal" id="decision-modal" hidden>
-  <div class="modal-box sim-decision" role="dialog" aria-modal="true" aria-labelledby="decision-title">
-    <h3 class="modal-title" id="decision-title">Che cosa fischi?</h3>
-    <p class="modal-text" id="decision-sub"></p>
-    <div id="decision-body"></div>
-  </div>
+<div class="modal-overlay sim-modal" hidden id="decision-modal">
+    <div aria-labelledby="decision-title" aria-modal="true" class="modal-box sim-decision" role="dialog">
+        <h3 class="modal-title" id="decision-title">Che cosa fischi?</h3>
+        <p class="modal-text" id="decision-sub"></p>
+        <div id="decision-body"></div>
+    </div>
 </div>
 
 <!-- Feedback -->
-<div class="modal-overlay sim-modal" id="feedback-modal" hidden>
-  <div class="modal-box sim-feedback" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
-    <div class="fb-head" id="fb-head"><span class="fb-icon" id="fb-icon"></span><h3 class="modal-title" id="feedback-title"></h3></div>
-    <div class="fb-gesture" id="fb-gesture" hidden>
-      <div class="fg-fig" id="fg-fig"></div>
-      <div class="fg-text">
-        <h5 id="fg-title">Segnaletica corretta</h5>
-        <p class="fg-cap" id="fg-cap"></p>
-        <ol class="fg-list" id="fg-list"></ol>
-        <p class="fg-note" id="fg-note" hidden></p>
-        <button class="btn btn-ghost btn-sm" id="fg-replay">↻ Rivedi il gesto</button>
-      </div>
+<div class="modal-overlay sim-modal" hidden id="feedback-modal">
+    <div aria-labelledby="feedback-title" aria-modal="true" class="modal-box sim-feedback" role="dialog">
+        <div class="fb-head" id="fb-head"><span class="fb-icon" id="fb-icon"></span>
+            <h3 class="modal-title" id="feedback-title"></h3></div>
+        <div class="fb-gesture" hidden id="fb-gesture">
+            <div class="fg-fig" id="fg-fig"></div>
+            <div class="fg-text">
+                <h5 id="fg-title">Segnaletica corretta</h5>
+                <p class="fg-cap" id="fg-cap"></p>
+                <ol class="fg-list" id="fg-list"></ol>
+                <p class="fg-note" hidden id="fg-note"></p>
+                <button class="btn btn-ghost btn-sm" id="fg-replay">↻ Rivedi il gesto</button>
+            </div>
+        </div>
+        <div class="fb-gesture fb-yours" hidden id="fy-gesture">
+            <div class="fg-fig" id="fy-fig"></div>
+            <div class="fg-text">
+                <h5 id="fy-title">La tua segnaletica</h5>
+                <p class="fg-cap" id="fy-cap"></p>
+                <ol class="fg-list" id="fy-list"></ol>
+                <p class="fg-note" hidden id="fy-note"></p>
+                <button class="btn btn-ghost btn-sm" id="fy-replay">↻ Rivedi il gesto</button>
+            </div>
+            <div class="sig-mark" id="fy-mark"><span>✕</span> Errore</div>
+        </div>
+        <div id="feedback-body"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" hidden id="fb-replay">▶ Rivedi l’azione</button>
+            <button class="btn btn-ghost" id="fb-report">Segnala</button>
+            <button class="btn btn-primary" id="fb-continue">Continua</button>
+        </div>
     </div>
-    <div class="fb-gesture fb-yours" id="fy-gesture" hidden>
-      <div class="fg-fig" id="fy-fig"></div>
-      <div class="fg-text">
-        <h5 id="fy-title">La tua segnaletica</h5>
-        <p class="fg-cap" id="fy-cap"></p>
-        <ol class="fg-list" id="fy-list"></ol>
-        <p class="fg-note" id="fy-note" hidden></p>
-        <button class="btn btn-ghost btn-sm" id="fy-replay">↻ Rivedi il gesto</button>
-      </div>
-      <div class="sig-mark" id="fy-mark"><span>✕</span> Errore</div>
-    </div>
-    <div id="feedback-body"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="fb-replay" hidden>▶ Rivedi l’azione</button>
-      <button class="btn btn-ghost" id="fb-report">Segnala</button>
-      <button class="btn btn-primary" id="fb-continue">Continua</button>
-    </div>
-  </div>
 </div>
 
 <!-- Help -->
-<div class="modal-overlay sim-modal" id="help-modal" hidden>
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="help-title">
-    <h3 class="modal-title" id="help-title">Aiuto</h3>
-    <div id="help-body"></div>
-    <div class="modal-actions"><button class="btn btn-primary" id="help-close">Torna al gioco</button></div>
-  </div>
+<div class="modal-overlay sim-modal" hidden id="help-modal">
+    <div aria-labelledby="help-title" aria-modal="true" class="modal-box" role="dialog">
+        <h3 class="modal-title" id="help-title">Aiuto</h3>
+        <div id="help-body"></div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="help-close">Torna al gioco</button>
+        </div>
+    </div>
 </div>
 
 <!-- Pause -->
-<div class="modal-overlay sim-modal" id="pause-modal" hidden>
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-    <h3 class="modal-title" id="pause-title">Partita in pausa</h3>
-    <p class="modal-text" id="pause-text"></p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="pause-end">Termina la partita</button>
-      <button class="btn btn-ghost" id="pause-opts">Impostazioni</button>
-      <button class="btn btn-primary" id="pause-resume">Riprendi</button>
+<div class="modal-overlay sim-modal" hidden id="pause-modal">
+    <div aria-labelledby="pause-title" aria-modal="true" class="modal-box" role="dialog">
+        <h3 class="modal-title" id="pause-title">Partita in pausa</h3>
+        <p class="modal-text" id="pause-text"></p>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" id="pause-end">Termina la partita</button>
+            <button class="btn btn-ghost" id="pause-opts">Impostazioni</button>
+            <button class="btn btn-primary" id="pause-resume">Riprendi</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Match settings during the game (the same options of the setup screen, moved here while open) -->
-<div class="modal-overlay sim-modal" id="opts-modal" hidden>
-  <div class="modal-box opts-box" role="dialog" aria-modal="true" aria-labelledby="opts-title">
-    <h3 class="modal-title" id="opts-title">Impostazioni della partita</h3>
-    <p class="modal-text">Il ruolo non si può cambiare a partita iniziata. Le altre impostazioni valgono dalla prossima azione.</p>
-    <div id="opts-body"></div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="opts-cancel">Annulla</button>
-      <button class="btn btn-primary" id="opts-apply">Applica</button>
+<div class="modal-overlay sim-modal" hidden id="opts-modal">
+    <div aria-labelledby="opts-title" aria-modal="true" class="modal-box opts-box" role="dialog">
+        <h3 class="modal-title" id="opts-title">Impostazioni della partita</h3>
+        <p class="modal-text">Il ruolo non si può cambiare a partita iniziata. Le altre impostazioni valgono dalla
+            prossima azione.</p>
+        <div id="opts-body"></div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" id="opts-cancel">Annulla</button>
+            <button class="btn btn-primary" id="opts-apply">Applica</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Report a situation -->
-<div class="modal-overlay sim-modal" id="report-modal" hidden>
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="report-title">
-    <h3 class="modal-title" id="report-title">Segnala questa situazione</h3>
-    <p class="modal-text" id="report-sub">Se la decisione indicata come corretta, la spiegazione o i riferimenti ti sembrano sbagliati, scrivi cosa non va: la segnalazione arriva agli amministratori con i dettagli della situazione.</p>
-    <textarea class="form-input" id="report-text" rows="4" maxlength="600" placeholder="Es. secondo la Casistica 9.3 qui andava…"></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="report-cancel">Annulla</button>
-      <button class="btn btn-primary" id="report-send">Invia segnalazione</button>
+<div class="modal-overlay sim-modal" hidden id="report-modal">
+    <div aria-labelledby="report-title" aria-modal="true" class="modal-box" role="dialog">
+        <h3 class="modal-title" id="report-title">Segnala questa situazione</h3>
+        <p class="modal-text" id="report-sub">Se la decisione indicata come corretta, la spiegazione o i riferimenti ti
+            sembrano sbagliati, scrivi cosa non va: la segnalazione arriva agli amministratori con i dettagli della
+            situazione.</p>
+        <textarea class="form-input" id="report-text" maxlength="600" placeholder="Es. secondo la Casistica 9.3 qui andava…"
+                  rows="4"></textarea>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" id="report-cancel">Annulla</button>
+            <button class="btn btn-primary" id="report-send">Invia segnalazione</button>
+        </div>
     </div>
-  </div>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div aria-live="polite" class="toast" id="toast" role="status"></div>
 
 <!-- Replay of the last rally -->
-<div class="modal-overlay sim-modal" id="replay-modal" hidden>
-  <div class="modal-box sim-replay" role="dialog" aria-modal="true" aria-labelledby="replay-title">
-    <div class="rp-head"><h3 class="modal-title" id="replay-title">Registrazione dell’azione</h3><button class="icon-btn" id="rp-close" aria-label="Chiudi">✕</button></div>
-    <p class="form-hint" id="rp-note"></p>
-    <div class="rp-stage"><canvas id="rp-canvas"></canvas>
-      <div class="rp-sigs"><div class="rp-sig" id="rp-sig" hidden><div class="rp-sig-fig" id="rp-sig-fig"></div><div class="rp-sig-text"><small id="rp-sig-who"></small><p id="rp-sig-cap"></p></div></div><div class="rp-sig" id="rp-sig2" hidden><div class="rp-sig-fig" id="rp-sig2-fig"></div><div class="rp-sig-text"><small id="rp-sig2-who"></small><p id="rp-sig2-cap"></p></div></div></div><span class="rp-badge" id="rp-badge" hidden></span><span class="rp-rec">● REC</span></div>
-    <div class="rp-bar"><input type="range" id="rp-range" aria-label="Momento dell’azione"><span class="rp-mark" id="rp-mark"></span><span class="rp-mark w" id="rp-mark-w" title="Fischio"></span><span class="rp-mark s" id="rp-mark-s" title="Segnaletica" hidden></span></div>
-    <div class="rp-legend"><span><i class="f"></i><span id="rp-legend-f">Momento del fallo</span></span><span id="rp-legend-w"><i class="w"></i>Fischio</span><span id="rp-legend-s" hidden><i class="s"></i>Segnaletica</span></div>
-    <div class="rp-controls">
-      <button class="btn btn-primary btn-sm" id="rp-play">❚❚ Pausa</button>
-      <button class="btn btn-ghost btn-sm" id="rp-slow">Rallenty</button>
-      <button class="btn btn-ghost btn-sm" id="rp-v1">Vista 1° arbitro</button>
-      <button class="btn btn-ghost btn-sm" id="rp-v2">Vista 2° arbitro</button>
-      <button class="btn btn-ghost btn-sm" id="rp-top">Dall’alto</button>
+<div class="modal-overlay sim-modal" hidden id="replay-modal">
+    <div aria-labelledby="replay-title" aria-modal="true" class="modal-box sim-replay" role="dialog">
+        <div class="rp-head"><h3 class="modal-title" id="replay-title">Registrazione dell’azione</h3>
+            <button aria-label="Chiudi" class="icon-btn" id="rp-close">✕</button>
+        </div>
+        <p class="form-hint" id="rp-note"></p>
+        <div class="rp-stage">
+            <canvas id="rp-canvas"></canvas>
+            <div class="rp-sigs">
+                <div class="rp-sig" hidden id="rp-sig">
+                    <div class="rp-sig-fig" id="rp-sig-fig"></div>
+                    <div class="rp-sig-text"><small id="rp-sig-who"></small>
+                        <p id="rp-sig-cap"></p></div>
+                </div>
+                <div class="rp-sig" hidden id="rp-sig2">
+                    <div class="rp-sig-fig" id="rp-sig2-fig"></div>
+                    <div class="rp-sig-text"><small id="rp-sig2-who"></small>
+                        <p id="rp-sig2-cap"></p></div>
+                </div>
+            </div>
+            <span class="rp-badge" hidden id="rp-badge"></span><span class="rp-rec">● REC</span></div>
+        <div class="rp-bar"><input aria-label="Momento dell’azione" id="rp-range" type="range"><span class="rp-mark"
+                                                                                                     id="rp-mark"></span><span
+                class="rp-mark w" id="rp-mark-w" title="Fischio"></span><span class="rp-mark s" hidden
+                                                                              id="rp-mark-s" title="Segnaletica"></span></div>
+        <div class="rp-legend"><span><i class="f"></i><span id="rp-legend-f">Momento del fallo</span></span><span
+                id="rp-legend-w"><i class="w"></i>Fischio</span><span hidden id="rp-legend-s"><i class="s"></i>Segnaletica</span>
+        </div>
+        <div class="rp-controls">
+            <button class="btn btn-primary btn-sm" id="rp-play">❚❚ Pausa</button>
+            <button class="btn btn-ghost btn-sm" id="rp-slow">Rallenty</button>
+            <button class="btn btn-ghost btn-sm" id="rp-v1">Vista 1° arbitro</button>
+            <button class="btn btn-ghost btn-sm" id="rp-v2">Vista 2° arbitro</button>
+            <button class="btn btn-ghost btn-sm" id="rp-top">Dall’alto</button>
+        </div>
     </div>
-  </div>
 </div>
 
-<script src="assets/version.js?v=4.0.0-20"></script>
-<script src="assets/api.js?v=4.0.0-20"></script>
-<script src="assets/sim/render3d.js?v=4.0.0-20"></script>
-<script src="assets/sim/engine.js?v=4.0.0-20"></script>
-<script src="assets/sim/situations.js?v=4.0.0-20"></script>
-<script src="assets/sim/gestures.js?v=4.0.0-20"></script>
-<script src="assets/sim/ui.js?v=4.0.0-20"></script>
+<script src="assets/version.js?v=4.1.1-21"></script>
+<script src="assets/api.js?v=4.1.1-21"></script>
+<script src="assets/sim/render3d.js?v=4.1.1-21"></script>
+<script src="assets/sim/engine.js?v=4.1.1-21"></script>
+<script src="assets/sim/situations.js?v=4.1.1-21"></script>
+<script src="assets/sim/gestures.js?v=4.1.1-21"></script>
+<script src="assets/sim/ui.js?v=4.1.1-21"></script>
 </body>
 </html>

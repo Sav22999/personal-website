@@ -2436,11 +2436,25 @@ footer {
         animation: menuFadeIn 0.3s ease forwards;
     }
 
-    nav.menu-open .nav-links li:nth-child(1) { animation-delay: 0.05s; }
-    nav.menu-open .nav-links li:nth-child(2) { animation-delay: 0.1s; }
-    nav.menu-open .nav-links li:nth-child(3) { animation-delay: 0.15s; }
-    nav.menu-open .nav-links li:nth-child(4) { animation-delay: 0.2s; }
-    nav.menu-open .nav-links li:nth-child(5) { animation-delay: 0.25s; }
+    nav.menu-open .nav-links li:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    nav.menu-open .nav-links li:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    nav.menu-open .nav-links li:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+
+    nav.menu-open .nav-links li:nth-child(4) {
+        animation-delay: 0.2s;
+    }
+
+    nav.menu-open .nav-links li:nth-child(5) {
+        animation-delay: 0.25s;
+    }
 
     @keyframes menuFadeIn {
         to {

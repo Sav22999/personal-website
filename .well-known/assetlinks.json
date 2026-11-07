@@ -1,0 +1,87 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.foodtrack",
+      "sha256_cert_fingerprints": [
+        "71:C0:D2:51:6B:31:58:88:8E:4D:E6:10:01:8B:83:44:CE:2D:ED:0E:13:60:B6:58:51:F7:CC:2A:3B:BC:7F:F2",
+        "D3:95:6C:F2:68:12:5B:50:0A:95:78:F2:40:21:18:19:57:6F:A3:A8:6D:A7:21:32:B9:1D:36:E9:B7:FB:6E:30"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.giftwise",
+      "sha256_cert_fingerprints": [
+        "40:9D:F5:44:E7:F8:C2:C7:FC:36:6E:FD:58:95:A8:83:11:3D:4F:20:E9:EA:8C:42:B6:E4:47:FE:30:17:0A:6E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.chess",
+      "sha256_cert_fingerprints": [
+        "F7:26:AC:07:EF:7B:29:98:EA:24:EC:6E:FA:27:DE:9F:92:F0:7F:28:61:BD:67:80:4C:F5:FE:3B:9C:CF:B4:0B"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.faceguess",
+      "sha256_cert_fingerprints": [
+        "71:83:45:8D:B9:F5:82:AA:66:C4:8B:ED:C3:3C:F5:56:46:D7:72:D8:18:AE:71:F5:73:58:74:74:B4:0D:28:C5"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.connectfour",
+      "sha256_cert_fingerprints": [
+        "91:81:E5:67:B0:26:58:97:54:C1:6B:7D:46:28:C8:85:59:08:08:A2:33:63:53:B3:8F:CD:99:A3:51:5F:0A:F2"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.sudoku",
+      "sha256_cert_fingerprints": [
+        "8D:FC:1D:DB:7C:DF:DE:C6:F7:D3:8A:57:69:FF:9B:22:7A:04:D3:BB:1A:8E:7B:0A:5F:4D:0D:FE:89:93:3A:D5"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.letterhop",
+      "sha256_cert_fingerprints": [
+        "CD:7D:93:2D:7F:1F:BE:1D:A3:32:C2:74:89:92:5E:84:71:D6:0C:D8:AD:41:FD:AF:C8:90:94:3F:85:F8:84:34"
+      ]
+    }
+  }
+]

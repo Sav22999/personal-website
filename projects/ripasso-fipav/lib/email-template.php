@@ -35,7 +35,6 @@ function email_layout(string $content, array $o): string
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <title>Fischietto</title>
-<link href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch&display=swap" rel="stylesheet">
 <style>
   @media (max-width: 600px) {
     .px { padding-left: 22px !important; padding-right: 22px !important; }
@@ -94,8 +93,8 @@ function render_account_email(string $kind, array $d): array
     };
     $muted = 'margin:0 0 18px;font-size:15px;line-height:1.65;color:#4B5B78;';
     $o = [
-        'icon_url'   => $d['icon_url'],
-        'home_url'   => $portal,
+        'icon_url' => $d['icon_url'],
+        'home_url' => $portal,
         'credit_url' => $d['credit_url'],
     ];
 
@@ -121,47 +120,49 @@ function render_account_email(string $kind, array $d): array
 
         $content =
             '<table role="presentation" cellspacing="0" cellpadding="0" style="margin-bottom:18px;"><tr><td style="background-color:#E3F4EC;border-radius:999px;padding:6px 12px 6px 7px;">'
-          .   '<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:7px;">' . $img('check', 18) . '</td>'
-          .   '<td style="color:#1F8A5B;font-size:13px;font-weight:700;">Account attivo</td></tr></table></td></tr></table>'
-          . '<h1 class="h1" style="margin:0 0 12px;font-size:26px;line-height:1.25;font-weight:800;color:#14264A;">Benvenuto in Fischietto, ' . $first . '!</h1>'
-          . '<p style="' . $muted . '">La tua registrazione è stata approvata: da adesso puoi allenarti sul regolamento FIPAV quando vuoi, dal computer o dal telefono.</p>'
-          . '<div style="padding:8px 0 30px;">' . email_button('Accedi a Fischietto', $portal) . '</div>'
-          . '<div style="background-color:#FDF8EC;border:1px solid #F6E2B3;border-radius:14px;padding:22px 22px 6px;margin-bottom:28px;">'
-          .   '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#B57A0C;margin-bottom:14px;">Come accedere</div>'
-          .   '<table role="presentation" width="100%" cellspacing="0" cellpadding="0">'
-          .     $step('1', 'Apri il portale', '<a href="' . email_esc($portal) . '" style="color:#2459AD;text-decoration:underline;">' . email_esc(preg_replace('#^https?://#', '', rtrim($portal, '/'))) . '</a>')
-          .     $step('2', 'Inserisci la tua email', '<span style="color:#14264A;">' . email_esc($d['email']) . '</span>')
-          .     $step('3', 'Usa la password che hai scelto', 'quella indicata al momento della registrazione.')
-          .   '</table>'
-          . '</div>'
-          . '<div style="font-size:18px;font-weight:800;color:#14264A;margin-bottom:8px;">Cosa trovi dentro</div>'
-          . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px;">'
-          .   '<tr>' . $feature('quiz', 'Quiz su misura', 'Scegli fonti, numero di domande e difficoltà. Risposte in ordine casuale.') . $gap
-          .            $feature('ripasso', 'Ripasso', 'Tutti i riferimenti normativi, con le novità della stagione in evidenza.') . '</tr>' . $rowGap
-          .   '<tr>' . $feature('documenti', 'Documenti ufficiali', 'Regole di gioco, Casistica, Normative e Vademecum da aprire o scaricare.') . $gap
-          .            $feature('statistiche', 'Statistiche', 'Vedi dove sbagli di più e riparti dai riferimenti più deboli.') . '</tr>'
-          . '</table>'
-          . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:24px;"><tr>'
-          .   '<td style="border-left:4px solid #2F6FD0;background-color:#F3F7FE;border-radius:0 10px 10px 0;padding:14px 16px;">'
-          .     '<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="vertical-align:top;padding-right:14px;">' . $img('telefono', 40) . '</td>'
-          .     '<td style="vertical-align:middle;font-size:14px;line-height:1.55;color:#14264A;"><strong>Mettilo sul telefono.</strong> Dopo l’accesso, apri il menu dell’account e scegli «Installa l’app»: Fischietto si apre come un’app, a portata di pollice.</td></tr></table>'
-          .   '</td></tr></table>'
-          . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Hai dimenticato la password o qualcosa non funziona? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Scrivi all’amministratore</a>.</p>';
+            . '<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:7px;">' . $img('check', 18) . '</td>'
+            . '<td style="color:#1F8A5B;font-size:13px;font-weight:700;">Account attivo</td></tr></table></td></tr></table>'
+            . '<h1 class="h1" style="margin:0 0 12px;font-size:26px;line-height:1.25;font-weight:800;color:#14264A;">Benvenuto in Fischietto, ' . $first . '!</h1>'
+            . '<p style="' . $muted . '">La tua registrazione è stata approvata: da adesso puoi allenarti sul regolamento FIPAV quando vuoi, dal computer o dal telefono.</p>'
+            . '<div style="padding:8px 0 30px;">' . email_button('Accedi a Fischietto', $portal) . '</div>'
+            . '<div style="background-color:#FDF8EC;border:1px solid #F6E2B3;border-radius:14px;padding:22px 22px 6px;margin-bottom:28px;">'
+            . '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#B57A0C;margin-bottom:14px;">Come accedere</div>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0">'
+            . $step('1', 'Apri il portale', '<a href="' . email_esc($portal) . '" style="color:#2459AD;text-decoration:underline;">' . email_esc(preg_replace('#^https?://#', '', rtrim($portal, '/'))) . '</a>')
+            . $step('2', 'Inserisci la tua email', '<span style="color:#14264A;">' . email_esc($d['email']) . '</span>')
+            . $step('3', 'Usa la password che hai scelto', 'quella indicata al momento della registrazione.')
+            . '</table>'
+            . '</div>'
+            . '<div style="font-size:18px;font-weight:800;color:#14264A;margin-bottom:8px;">Cosa trovi dentro</div>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px;">'
+            . '<tr>' . $feature('quiz', 'Quiz su misura', 'Scegli fonti, numero di domande e difficoltà. Risposte in ordine casuale.') . $gap
+            . $feature('ripasso', 'Ripasso', 'Tutti i riferimenti normativi, con le novità della stagione in evidenza.') . '</tr>' . $rowGap
+            . '<tr>' . $feature('documenti', 'Documenti ufficiali', 'Regole di gioco, Casistica, Normative e Vademecum da aprire o scaricare.') . $gap
+            . $feature('statistiche', 'Statistiche', 'Vedi dove sbagli di più e riparti dai riferimenti più deboli.') . '</tr>'
+            . '</table>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:24px;"><tr>'
+            . '<td style="border-left:4px solid #2F6FD0;background-color:#F3F7FE;border-radius:0 10px 10px 0;padding:14px 16px;">'
+            . '<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="vertical-align:top;padding-right:14px;">' . $img('telefono', 40) . '</td>'
+            . '<td style="vertical-align:middle;font-size:14px;line-height:1.55;color:#14264A;"><strong>Mettilo sul telefono.</strong> Dopo l’accesso, apri il menu dell’account e scegli «Installa l’app»: Fischietto si apre come un’app, a portata di pollice.</td></tr></table>'
+            . '</td></tr></table>'
+            . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Hai dimenticato la password o qualcosa non funziona? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Scrivi all’amministratore</a>.</p>';
 
         $text = "Ciao {$d['name']},\n\nil tuo account Fischietto è attivo: puoi accedere da subito.\n\n"
-              . "Come accedere\n1. Apri il portale: $portal\n2. Inserisci la tua email: {$d['email']}\n3. Usa la password che hai scelto in registrazione.\n\n"
-              . "Cosa trovi dentro: quiz su misura, ripasso dei riferimenti normativi, documenti ufficiali, statistiche personali.\n\n"
-              . "Password dimenticata? Scrivi all'amministratore: {$d['contact_url']}\n\n-- \nFischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}\n";
+            . "Come accedere\n1. Apri il portale: $portal\n2. Inserisci la tua email: {$d['email']}\n3. Usa la password che hai scelto in registrazione.\n\n"
+            . "Cosa trovi dentro: quiz su misura, ripasso dei riferimenti normativi, documenti ufficiali, statistiche personali.\n\n"
+            . "Password dimenticata? Scrivi all'amministratore: {$d['contact_url']}\n\n-- \nFischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}\n";
     } elseif ($kind === 'role_changed') {
         $old = (int)$d['old_level'];
         $new = (int)$d['new_level'];
         $up = $new > $old;
-        $roleName = function (int $l) { return [1 => 'Utente', 5 => 'Moderatore contenuti', 9 => 'Amministratore', 10 => 'Master admin'][$l] ?? 'Utente'; };
+        $roleName = function (int $l) {
+            return [1 => 'Utente', 5 => 'Moderatore contenuti', 9 => 'Amministratore', 10 => 'Master admin'][$l] ?? 'Utente';
+        };
         // What each level can do (every level includes the ones below)
         $abilities = [
-            1  => ['Quiz su misura, ripasso dei riferimenti, documenti ufficiali e statistiche personali'],
-            5  => ['Creare, modificare e disattivare domande e riferimenti', 'Vedere e chiudere le segnalazioni degli utenti'],
-            9  => ['Abilitare le nuove registrazioni e gestire utenti e moderatori', 'Gestire gli «Altri documenti utili» della sezione Documenti'],
+            1 => ['Quiz su misura, ripasso dei riferimenti, documenti ufficiali e statistiche personali'],
+            5 => ['Creare, modificare e disattivare domande e riferimenti', 'Vedere e chiudere le segnalazioni degli utenti'],
+            9 => ['Abilitare le nuove registrazioni e gestire utenti e moderatori', 'Gestire gli «Altri documenti utili» della sezione Documenti'],
             10 => ['Nominare e gestire gli amministratori', 'Passare ad altri il ruolo di master admin'],
         ];
         $list = [];
@@ -182,34 +183,36 @@ function render_account_email(string $kind, array $d): array
         $panel = $d['portal_url'] . 'admin.html';
         $content =
             '<table role="presentation" cellspacing="0" cellpadding="0" style="margin-bottom:18px;"><tr><td>' . $img('ruolo', 48) . '</td></tr></table>'
-          . '<h1 class="h1" style="margin:0 0 12px;font-size:26px;line-height:1.25;font-weight:800;color:#14264A;">' . ($up ? 'Nuovo ruolo, ' . $first . '!' : 'Il tuo ruolo è cambiato, ' . $first) . '</h1>'
-          . '<p style="' . $muted . '">' . ($up ? 'Un amministratore ti ha affidato un nuovo ruolo su Fischietto. Grazie per il tuo contributo!' : 'Un amministratore ha aggiornato il ruolo del tuo account su Fischietto. Puoi continuare a usare il portale come sempre.') . '</p>'
-          . '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:4px 0 28px;"><tr>'
-          .   '<td style="padding-right:10px;">' . $pill($roleName($old), false) . '</td>'
-          .   '<td style="padding-right:10px;font-size:20px;color:#7A879E;">&rarr;</td>'
-          .   '<td>' . $pill($roleName($new), true) . '</td>'
-          . '</tr></table>'
-          . '<div style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;padding:20px 22px 10px;margin-bottom:28px;">'
-          .   '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A879E;margin-bottom:14px;">Cosa puoi fare ora</div>'
-          .   '<table role="presentation" width="100%" cellspacing="0" cellpadding="0">' . $rows . '</table>'
-          . '</div>'
-          . ($new >= 5
-              ? '<p style="' . $muted . '">Trovi gli strumenti di gestione nel menu del tuo account, alla voce «Pannello di gestione».</p><div style="padding:0 0 26px;">' . email_button('Apri la gestione', $panel) . '</div>'
-              : '<div style="padding:0 0 26px;">' . email_button('Apri Fischietto', $portal) . '</div>')
-          . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Pensi che sia un errore? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Scrivi all’amministratore</a>.</p>';
+            . '<h1 class="h1" style="margin:0 0 12px;font-size:26px;line-height:1.25;font-weight:800;color:#14264A;">' . ($up ? 'Nuovo ruolo, ' . $first . '!' : 'Il tuo ruolo è cambiato, ' . $first) . '</h1>'
+            . '<p style="' . $muted . '">' . ($up ? 'Un amministratore ti ha affidato un nuovo ruolo su Fischietto. Grazie per il tuo contributo!' : 'Un amministratore ha aggiornato il ruolo del tuo account su Fischietto. Puoi continuare a usare il portale come sempre.') . '</p>'
+            . '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:4px 0 28px;"><tr>'
+            . '<td style="padding-right:10px;">' . $pill($roleName($old), false) . '</td>'
+            . '<td style="padding-right:10px;font-size:20px;color:#7A879E;">&rarr;</td>'
+            . '<td>' . $pill($roleName($new), true) . '</td>'
+            . '</tr></table>'
+            . '<div style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;padding:20px 22px 10px;margin-bottom:28px;">'
+            . '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A879E;margin-bottom:14px;">Cosa puoi fare ora</div>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0">' . $rows . '</table>'
+            . '</div>'
+            . ($new >= 5
+                ? '<p style="' . $muted . '">Trovi gli strumenti di gestione nel menu del tuo account, alla voce «Pannello di gestione».</p><div style="padding:0 0 26px;">' . email_button('Apri la gestione', $panel) . '</div>'
+                : '<div style="padding:0 0 26px;">' . email_button('Apri Fischietto', $portal) . '</div>')
+            . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Pensi che sia un errore? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Scrivi all’amministratore</a>.</p>';
         $text = "Ciao {$d['name']},
 
 il tuo ruolo su Fischietto è passato da " . $roleName($old) . ' a ' . $roleName($new) . ".
 
 Cosa puoi fare ora:
 "
-              . implode('', array_map(function ($x) { return '- ' . $x[0] . "
-"; }, $list))
-              . "
+            . implode('', array_map(function ($x) {
+                return '- ' . $x[0] . "
+";
+            }, $list))
+            . "
 " . ($new >= 5 ? "Gestione: $panel
 " : "Portale: $portal
 ")
-              . "
+            . "
 Pensi che sia un errore? Scrivi all'amministratore: {$d['contact_url']}
 
 -- 
@@ -227,41 +230,41 @@ Fischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}
         };
         $content =
             '<h1 class="h1" style="margin:0 0 12px;font-size:24px;line-height:1.3;font-weight:800;color:#14264A;">Ciao ' . $first . ', ecco la tua nuova password</h1>'
-          . '<p style="' . $muted . '">Un amministratore ha reimpostato la password del tuo account. Per entrare usa questa password temporanea:</p>'
-          . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:4px 0 12px;"><tr>'
-          .   '<td align="center" style="background-color:#F7F9FC;border:2px dashed #C9D4E5;border-radius:14px;padding:20px 16px;">'
-          .     '<div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7A879E;margin-bottom:8px;">Password temporanea</div>'
-          .     '<div style="font-family:\'SFMono-Regular\',Menlo,Consolas,\'Courier New\',monospace;font-size:24px;font-weight:700;letter-spacing:.06em;color:#14264A;word-break:break-all;">' . $pw . '</div>'
-          .   '</td></tr></table>'
-          . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:26px;"><tr>'
-          .   '<td style="border-left:4px solid #F6BB42;background-color:#FDF8EC;border-radius:0 10px 10px 0;padding:12px 16px;font-size:14px;line-height:1.55;color:#14264A;">'
-          .     '<strong>È temporanea:</strong> appena entri ti verrà chiesto di sceglierne una nuova, che solo tu conoscerai. Da quel momento questa password non funzionerà più.</td>'
-          . '</tr></table>'
-          . '<div style="padding:0 0 28px;">' . email_button('Accedi e scegli la nuova password', $portal) . '</div>'
-          . '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A879E;margin-bottom:14px;">Come fare</div>'
-          . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:12px;">'
-          .   $step('1', 'Apri il portale', '<a href="' . email_esc($portal) . '" style="color:#2459AD;text-decoration:underline;">' . email_esc(preg_replace('#^https?://#', '', rtrim($portal, '/'))) . '</a>')
-          .   $step('2', 'Accedi con la tua email e la password temporanea', email_esc($d['email']))
-          .   $step('3', 'Scegli una nuova password', 'almeno 10 caratteri, con tre tipi tra minuscole, maiuscole, numeri e simboli.')
-          . '</table>'
-          . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Non hai chiesto tu il reset? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Avvisa l’amministratore</a>.</p>';
+            . '<p style="' . $muted . '">Un amministratore ha reimpostato la password del tuo account. Per entrare usa questa password temporanea:</p>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:4px 0 12px;"><tr>'
+            . '<td align="center" style="background-color:#F7F9FC;border:2px dashed #C9D4E5;border-radius:14px;padding:20px 16px;">'
+            . '<div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7A879E;margin-bottom:8px;">Password temporanea</div>'
+            . '<div style="font-family:\'SFMono-Regular\',Menlo,Consolas,\'Courier New\',monospace;font-size:24px;font-weight:700;letter-spacing:.06em;color:#14264A;word-break:break-all;">' . $pw . '</div>'
+            . '</td></tr></table>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:26px;"><tr>'
+            . '<td style="border-left:4px solid #F6BB42;background-color:#FDF8EC;border-radius:0 10px 10px 0;padding:12px 16px;font-size:14px;line-height:1.55;color:#14264A;">'
+            . '<strong>È temporanea:</strong> appena entri ti verrà chiesto di sceglierne una nuova, che solo tu conoscerai. Da quel momento questa password non funzionerà più.</td>'
+            . '</tr></table>'
+            . '<div style="padding:0 0 28px;">' . email_button('Accedi e scegli la nuova password', $portal) . '</div>'
+            . '<div style="font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A879E;margin-bottom:14px;">Come fare</div>'
+            . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:12px;">'
+            . $step('1', 'Apri il portale', '<a href="' . email_esc($portal) . '" style="color:#2459AD;text-decoration:underline;">' . email_esc(preg_replace('#^https?://#', '', rtrim($portal, '/'))) . '</a>')
+            . $step('2', 'Accedi con la tua email e la password temporanea', email_esc($d['email']))
+            . $step('3', 'Scegli una nuova password', 'almeno 10 caratteri, con tre tipi tra minuscole, maiuscole, numeri e simboli.')
+            . '</table>'
+            . '<p style="margin:0;font-size:14px;line-height:1.6;color:#7A879E;">Non hai chiesto tu il reset? <a href="' . email_esc($d['contact_url']) . '" style="color:#2459AD;">Avvisa l’amministratore</a>.</p>';
         $text = "Ciao {$d['name']},
 
 un amministratore ha reimpostato la password del tuo account Fischietto.
 
 "
-              . "Password temporanea: {$d['temp_password']}
+            . "Password temporanea: {$d['temp_password']}
 
 "
-              . "È temporanea: appena entri ti verrà chiesto di sceglierne una nuova. Da quel momento questa password non funzionerà più.
+            . "È temporanea: appena entri ti verrà chiesto di sceglierne una nuova. Da quel momento questa password non funzionerà più.
 
 "
-              . "1. Apri il portale: $portal
+            . "1. Apri il portale: $portal
 2. Accedi con la tua email ({$d['email']}) e la password temporanea
 3. Scegli una nuova password
 
 "
-              . "Non hai chiesto tu il reset? Avvisa l'amministratore: {$d['contact_url']}
+            . "Non hai chiesto tu il reset? Avvisa l'amministratore: {$d['contact_url']}
 
 -- 
 Fischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}
@@ -272,13 +275,13 @@ Fischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}
         $o['footer_note'] = 'Ricevi questa email perché è stata richiesta una registrazione a Fischietto con questo indirizzo. È un messaggio automatico: non rispondere.';
         $content =
             '<h1 class="h1" style="margin:0 0 12px;font-size:24px;line-height:1.3;font-weight:800;color:#14264A;">Ciao ' . $first . ',</h1>'
-          . '<p style="' . $muted . '">grazie per l’interesse verso Fischietto. Purtroppo la tua richiesta di accesso <strong style="color:#14264A;">non è stata approvata</strong>.</p>'
-          . '<p style="' . $muted . '">Il portale è riservato agli arbitri e agli ufficiali di gara FIPAV. I dati che hai inserito sono stati eliminati.</p>'
-          . '<div style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;padding:20px 22px;margin:8px 0 26px;font-size:15px;line-height:1.6;color:#14264A;">'
-          .   '<strong>Pensi che sia un errore?</strong><br><span style="color:#4B5B78;">Scrivi all’amministratore indicando nome, cognome e comitato di appartenenza: verificherà la tua richiesta.</span></div>'
-          . '<div style="padding:0 0 6px;">' . email_button('Contatta l’amministratore', $d['contact_url']) . '</div>';
+            . '<p style="' . $muted . '">grazie per l’interesse verso Fischietto. Purtroppo la tua richiesta di accesso <strong style="color:#14264A;">non è stata approvata</strong>.</p>'
+            . '<p style="' . $muted . '">Il portale è riservato agli arbitri e agli ufficiali di gara FIPAV. I dati che hai inserito sono stati eliminati.</p>'
+            . '<div style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;padding:20px 22px;margin:8px 0 26px;font-size:15px;line-height:1.6;color:#14264A;">'
+            . '<strong>Pensi che sia un errore?</strong><br><span style="color:#4B5B78;">Scrivi all’amministratore indicando nome, cognome e comitato di appartenenza: verificherà la tua richiesta.</span></div>'
+            . '<div style="padding:0 0 6px;">' . email_button('Contatta l’amministratore', $d['contact_url']) . '</div>';
         $text = "Ciao {$d['name']},\n\ngrazie per l'interesse verso Fischietto. Purtroppo la tua richiesta di accesso non è stata approvata e i dati inseriti sono stati eliminati.\n\n"
-              . "Pensi che sia un errore? Scrivi all'amministratore: {$d['contact_url']}\n\n-- \nFischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}\n";
+            . "Pensi che sia un errore? Scrivi all'amministratore: {$d['contact_url']}\n\n-- \nFischietto · Sviluppato da Saverio Morelli · {$d['credit_url']}\n";
     }
 
     return ['subject' => $subject, 'html' => email_layout($content, $o), 'text' => $text];
@@ -290,24 +293,24 @@ function render_registration_notice(string $name, string $email, array $links): 
     $admin = $links['portal_url'] . 'admin.html#utenti';
     $content =
         '<h1 class="h1" style="margin:0 0 12px;font-size:24px;line-height:1.3;font-weight:800;color:#14264A;">Nuova registrazione da abilitare</h1>'
-      . '<p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#4B5B78;">Una nuova persona ha chiesto di accedere a Fischietto.</p>'
-      . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;margin-bottom:26px;">'
-      .   '<tr><td style="padding:16px 20px 6px;font-size:13px;color:#7A879E;">Nome</td></tr>'
-      .   '<tr><td style="padding:0 20px 12px;font-size:16px;font-weight:700;color:#14264A;">' . email_esc($name) . '</td></tr>'
-      .   '<tr><td style="padding:0 20px 6px;font-size:13px;color:#7A879E;">Email</td></tr>'
-      .   '<tr><td style="padding:0 20px 16px;font-size:16px;color:#14264A;">' . email_esc($email) . '</td></tr>'
-      . '</table>'
-      . '<div style="padding:0 0 6px;">' . email_button('Abilita o rifiuta', $admin) . '</div>';
+        . '<p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#4B5B78;">Una nuova persona ha chiesto di accedere a Fischietto.</p>'
+        . '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#F7F9FC;border:1px solid #E3E8F0;border-radius:14px;margin-bottom:26px;">'
+        . '<tr><td style="padding:16px 20px 6px;font-size:13px;color:#7A879E;">Nome</td></tr>'
+        . '<tr><td style="padding:0 20px 12px;font-size:16px;font-weight:700;color:#14264A;">' . email_esc($name) . '</td></tr>'
+        . '<tr><td style="padding:0 20px 6px;font-size:13px;color:#7A879E;">Email</td></tr>'
+        . '<tr><td style="padding:0 20px 16px;font-size:16px;color:#14264A;">' . email_esc($email) . '</td></tr>'
+        . '</table>'
+        . '<div style="padding:0 0 6px;">' . email_button('Abilita o rifiuta', $admin) . '</div>';
     $o = [
-        'preheader'   => $name . ' attende di essere abilitato.',
+        'preheader' => $name . ' attende di essere abilitato.',
         'footer_note' => 'Ricevi questa email perché sei indicato come amministratore di Fischietto.',
-        'icon_url'    => $links['icon_url'],
-        'home_url'    => $links['portal_url'],
-        'credit_url'  => $links['credit_url'],
+        'icon_url' => $links['icon_url'],
+        'home_url' => $links['portal_url'],
+        'credit_url' => $links['credit_url'],
     ];
     return [
         'subject' => 'Fischietto: nuova registrazione da abilitare',
-        'html'    => email_layout($content, $o),
-        'text'    => "Nuovo utente in attesa di abilitazione:\n\nNome: $name\nEmail: $email\n\nAbilita o rifiuta: $admin\n",
+        'html' => email_layout($content, $o),
+        'text' => "Nuovo utente in attesa di abilitazione:\n\nNome: $name\nEmail: $email\n\nAbilita o rifiuta: $admin\n",
     ];
 }

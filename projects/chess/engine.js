@@ -43,7 +43,13 @@ const Chess = (() => {
             for (let c = 0; c < 8; c++) {
                 const p = s.board[r * 8 + c];
                 if (p === null) empty++;
-                else { if (empty) { out += empty; empty = 0; } out += p; }
+                else {
+                    if (empty) {
+                        out += empty;
+                        empty = 0;
+                    }
+                    out += p;
+                }
             }
             if (empty) out += empty;
             if (r < 7) out += '/';
@@ -79,8 +85,12 @@ const Chess = (() => {
                 let rr = r + dr, cc = c + dc;
                 while (onBoard(rr, cc)) {
                     const p = b[rr * 8 + cc];
-                    if (p !== null) { if (set.includes(p)) return true; break; }
-                    rr += dr; cc += dc;
+                    if (p !== null) {
+                        if (set.includes(p)) return true;
+                        break;
+                    }
+                    rr += dr;
+                    cc += dc;
                 }
             }
         }
@@ -92,7 +102,7 @@ const Chess = (() => {
     function pseudoMoves(s) {
         const moves = [];
         const b = s.board, me = s.turn, them = me === 'w' ? 'b' : 'w';
-        const add = (from, to, extra = {}) => moves.push({ from, to, piece: b[from], captured: b[to], ...extra });
+        const add = (from, to, extra = {}) => moves.push({from, to, piece: b[from], captured: b[to], ...extra});
 
         for (let from = 0; from < 64; from++) {
             const p = b[from];
@@ -104,20 +114,20 @@ const Chess = (() => {
                 const startRow = me === 'w' ? 6 : 1;
                 const lastRow = me === 'w' ? 0 : 7;
                 const pushPromo = (to, extra = {}) => {
-                    if (row(to) === lastRow) for (const promo of 'qrbn') add(from, to, { ...extra, promo });
+                    if (row(to) === lastRow) for (const promo of 'qrbn') add(from, to, {...extra, promo});
                     else add(from, to, extra);
                 };
                 const one = (r + dir) * 8 + c;
                 if (onBoard(r + dir, c) && b[one] === null) {
                     pushPromo(one);
                     const two = (r + 2 * dir) * 8 + c;
-                    if (r === startRow && b[two] === null) add(from, two, { double: true });
+                    if (r === startRow && b[two] === null) add(from, two, {double: true});
                 }
                 for (const dc of [-1, 1]) {
                     if (!onBoard(r + dir, c + dc)) continue;
                     const to = (r + dir) * 8 + c + dc;
                     if (b[to] !== null && colorOf(b[to]) === them) pushPromo(to);
-                    else if (to === s.ep) add(from, to, { ep: true, captured: me === 'w' ? 'p' : 'P' });
+                    else if (to === s.ep) add(from, to, {ep: true, captured: me === 'w' ? 'p' : 'P'});
                 }
             } else if (type === 'n' || type === 'k') {
                 for (const [dr, dc] of type === 'n' ? KNIGHT : KING) {
@@ -133,8 +143,12 @@ const Chess = (() => {
                     while (onBoard(rr, cc)) {
                         const to = rr * 8 + cc;
                         if (b[to] === null) add(from, to);
-                        else { if (colorOf(b[to]) === them) add(from, to); break; }
-                        rr += dr; cc += dc;
+                        else {
+                            if (colorOf(b[to]) === them) add(from, to);
+                            break;
+                        }
+                        rr += dr;
+                        cc += dc;
                     }
                 }
             }
@@ -150,11 +164,11 @@ const Chess = (() => {
         const rook = me === 'w' ? 'R' : 'r';
         if (s.castling.includes(kSide) && b[home + 1] === null && b[home + 2] === null && b[home + 3] === rook
             && !isAttacked(s, home + 1, them) && !isAttacked(s, home + 2, them)) {
-            add(home, home + 2, { castle: 'k' });
+            add(home, home + 2, {castle: 'k'});
         }
         if (s.castling.includes(qSide) && b[home - 1] === null && b[home - 2] === null && b[home - 3] === null && b[home - 4] === rook
             && !isAttacked(s, home - 1, them) && !isAttacked(s, home - 2, them)) {
-            add(home, home - 2, { castle: 'q' });
+            add(home, home - 2, {castle: 'q'});
         }
     }
 
@@ -166,11 +180,19 @@ const Chess = (() => {
         if (m.ep) b[m.to + (me === 'w' ? 8 : -8)] = null;
         if (m.promo) piece = me === 'w' ? m.promo.toUpperCase() : m.promo;
         b[m.to] = piece;
-        if (m.castle === 'k') { b[m.from + 1] = b[m.from + 3]; b[m.from + 3] = null; }
-        if (m.castle === 'q') { b[m.from - 1] = b[m.from - 4]; b[m.from - 4] = null; }
+        if (m.castle === 'k') {
+            b[m.from + 1] = b[m.from + 3];
+            b[m.from + 3] = null;
+        }
+        if (m.castle === 'q') {
+            b[m.from - 1] = b[m.from - 4];
+            b[m.from - 4] = null;
+        }
 
         let castling = s.castling;
-        const strip = (chars) => { for (const ch of chars) castling = castling.replace(ch, ''); };
+        const strip = (chars) => {
+            for (const ch of chars) castling = castling.replace(ch, '');
+        };
         if (m.piece === 'K') strip('KQ');
         if (m.piece === 'k') strip('kq');
         for (const sq of [m.from, m.to]) {
@@ -227,7 +249,7 @@ const Chess = (() => {
         const pieces = [];
         for (let sq = 0; sq < 64; sq++) {
             const p = s.board[sq];
-            if (p && p.toLowerCase() !== 'k') pieces.push({ p: p.toLowerCase(), sq });
+            if (p && p.toLowerCase() !== 'k') pieces.push({p: p.toLowerCase(), sq});
         }
         if (pieces.length === 0) return true;
         if (pieces.length === 1 && (pieces[0].p === 'b' || pieces[0].p === 'n')) return true;
@@ -243,14 +265,14 @@ const Chess = (() => {
     function outcome(s, keys = []) {
         const legal = legalMoves(s);
         if (!legal.length) {
-            if (inCheck(s, s.turn)) return { over: true, result: s.turn === 'w' ? '0-1' : '1-0', reason: 'checkmate' };
-            return { over: true, result: '1/2-1/2', reason: 'stalemate' };
+            if (inCheck(s, s.turn)) return {over: true, result: s.turn === 'w' ? '0-1' : '1-0', reason: 'checkmate'};
+            return {over: true, result: '1/2-1/2', reason: 'stalemate'};
         }
-        if (insufficientMaterial(s)) return { over: true, result: '1/2-1/2', reason: 'insufficient' };
-        if (s.half >= 100) return { over: true, result: '1/2-1/2', reason: 'fifty' };
+        if (insufficientMaterial(s)) return {over: true, result: '1/2-1/2', reason: 'insufficient'};
+        if (s.half >= 100) return {over: true, result: '1/2-1/2', reason: 'fifty'};
         const key = positionKey(s);
-        if (keys.filter(k => k === key).length >= 3) return { over: true, result: '1/2-1/2', reason: 'repetition' };
-        return { over: false };
+        if (keys.filter(k => k === key).length >= 3) return {over: true, result: '1/2-1/2', reason: 'repetition'};
+        return {over: false};
     }
 
     function perft(s, depth) {
@@ -267,12 +289,38 @@ const Chess = (() => {
             this.history = [];
             this.keys = [positionKey(this.state)];
         }
-        get turn() { return this.state.turn; }
-        get fen() { return toFEN(this.state); }
-        legal() { return legalMoves(this.state); }
-        movesFrom(sq) { return this.legal().filter(m => m.from === sq); }
-        inCheck() { return inCheck(this.state, this.state.turn); }
-        outcome() { return outcome(this.state, this.keys); }
+
+        get turn() {
+            return this.state.turn;
+        }
+
+        get fen() {
+            return toFEN(this.state);
+        }
+
+        // Rebuild from a list of UCI moves (used when the server sends the game).
+        static fromMoves(uciList, fen = START_FEN) {
+            const g = new Game(fen);
+            for (const u of uciList) if (!g.move(u)) break;
+            return g;
+        }
+
+        legal() {
+            return legalMoves(this.state);
+        }
+
+        movesFrom(sq) {
+            return this.legal().filter(m => m.from === sq);
+        }
+
+        inCheck() {
+            return inCheck(this.state, this.state.turn);
+        }
+
+        outcome() {
+            return outcome(this.state, this.keys);
+        }
+
         move(uci) {
             const legal = this.legal();
             const m = legal.find(x => toUci(x) === uci);
@@ -280,17 +328,32 @@ const Chess = (() => {
             const san = toSAN(this.state, m, legal);
             this.state = applyMove(this.state, m);
             this.keys.push(positionKey(this.state));
-            const entry = { uci, san, from: m.from, to: m.to, captured: m.captured || null, piece: m.piece, ep: !!m.ep };
+            const entry = {uci, san, from: m.from, to: m.to, captured: m.captured || null, piece: m.piece, ep: !!m.ep};
             this.history.push(entry);
             return entry;
         }
-        // Rebuild from a list of UCI moves (used when the server sends the game).
-        static fromMoves(uciList, fen = START_FEN) {
-            const g = new Game(fen);
-            for (const u of uciList) if (!g.move(u)) break;
-            return g;
-        }
     }
 
-    return { START_FEN, parseFEN, toFEN, positionKey, legalMoves, applyMove, toUci, toSAN, inCheck, isAttacked, insufficientMaterial, outcome, perft, sqName, sqIndex, colorOf, isWhite, row, col, Game };
+    return {
+        START_FEN,
+        parseFEN,
+        toFEN,
+        positionKey,
+        legalMoves,
+        applyMove,
+        toUci,
+        toSAN,
+        inCheck,
+        isAttacked,
+        insufficientMaterial,
+        outcome,
+        perft,
+        sqName,
+        sqIndex,
+        colorOf,
+        isWhite,
+        row,
+        col,
+        Game
+    };
 })();

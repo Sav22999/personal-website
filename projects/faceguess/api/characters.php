@@ -1,5 +1,6 @@
 <?php
-function pickWeighted(array $weights) {
+function pickWeighted(array $weights)
+{
     $total = array_sum($weights);
     $r = random_int(1, $total);
     foreach ($weights as $value => $weight) {
@@ -9,7 +10,8 @@ function pickWeighted(array $weights) {
     return array_key_first($weights);
 }
 
-function pickOne(array $values) {
+function pickOne(array $values)
+{
     return $values[random_int(0, count($values) - 1)];
 }
 
@@ -30,7 +32,8 @@ const HATS_COVERING_HEAD = ['beanie', 'cap', 'fedora'];
 const HAIR_INCOMPATIBLE_WITH_HAT = ['mohawk', 'spiky', 'bun', 'curly'];
 const HAIR_INCOMPATIBLE_WITH_HEADBAND = ['bald', 'buzz', 'mohawk'];
 
-function generateCharacter($gender, $name) {
+function generateCharacter($gender, $name)
+{
     $char = [
         'name' => $name,
         'gender' => $gender,
@@ -75,14 +78,16 @@ function generateCharacter($gender, $name) {
     return $char;
 }
 
-function characterSignature($c) {
+function characterSignature($c)
+{
     return implode('|', [
         $c['gender'], $c['skinTone'], $c['hairStyle'], $c['hairColor'],
         $c['glasses'], $c['hat'], $c['facialHair'], $c['makeup'],
     ]);
 }
 
-function generateCharacters($count = 24) {
+function generateCharacters($count = 24)
+{
     $half = intdiv($count, 2);
     $genders = array_merge(array_fill(0, $half, 'male'), array_fill(0, $count - $half, 'female'));
     shuffle($genders);

@@ -118,16 +118,25 @@ $canonical = '/projects/nolimit-math/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: NoLimit Math normal version calculating the limit of (x^2+5)/1 as x approaches 2, showing the result 9.0 next to the plotted parabola">
-                <img src="/images/projects/screenshots/nolimit-math/1.png" alt="NoLimit Math normal version calculating the limit of (x^2+5)/1 as x approaches 2, showing the result 9.0 next to the plotted parabola" width="934" height="550"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: NoLimit Math normal version calculating the limit of (x^2+5)/1 as x approaches 2, showing the result 9.0 next to the plotted parabola">
+                <img src="/images/projects/screenshots/nolimit-math/1.png"
+                     alt="NoLimit Math normal version calculating the limit of (x^2+5)/1 as x approaches 2, showing the result 9.0 next to the plotted parabola"
+                     width="934" height="550"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: NoLimit Math SymPy version with Live calculation turned on, showing the limit of x**2+5 as x approaches 2 equals 9 with its graph">
-                <img src="/images/projects/screenshots/nolimit-math/2.png" alt="NoLimit Math SymPy version with Live calculation turned on, showing the limit of x**2+5 as x approaches 2 equals 9 with its graph" width="934" height="550"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: NoLimit Math SymPy version with Live calculation turned on, showing the limit of x**2+5 as x approaches 2 equals 9 with its graph">
+                <img src="/images/projects/screenshots/nolimit-math/2.png"
+                     alt="NoLimit Math SymPy version with Live calculation turned on, showing the limit of x**2+5 as x approaches 2 equals 9 with its graph"
+                     width="934" height="550"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Detailed graph window of NoLimit Math, a zoomable Matplotlib plot of the function">
-                <img src="/images/projects/screenshots/nolimit-math/3.png" alt="Detailed graph window of NoLimit Math, a zoomable Matplotlib plot of the function" width="770" height="681"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Detailed graph window of NoLimit Math, a zoomable Matplotlib plot of the function">
+                <img src="/images/projects/screenshots/nolimit-math/3.png"
+                     alt="Detailed graph window of NoLimit Math, a zoomable Matplotlib plot of the function" width="770"
+                     height="681"
                      loading="lazy">
             </button>
         </div>

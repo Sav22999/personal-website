@@ -106,16 +106,25 @@ $canonical = '/projects/scrolly/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Scrolly promo image reading &#x27;Remember the scroll position on every page easily!&#x27; above the popup with the &#x27;Enable Scrolly on this page&#x27; toggle">
-                <img src="/images/projects/screenshots/scrolly/1.png" alt="Scrolly promo image reading &#x27;Remember the scroll position on every page easily!&#x27; above the popup with the &#x27;Enable Scrolly on this page&#x27; toggle" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Scrolly promo image reading &#x27;Remember the scroll position on every page easily!&#x27; above the popup with the &#x27;Enable Scrolly on this page&#x27; toggle">
+                <img src="/images/projects/screenshots/scrolly/1.png"
+                     alt="Scrolly promo image reading &#x27;Remember the scroll position on every page easily!&#x27; above the popup with the &#x27;Enable Scrolly on this page&#x27; toggle"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Scrolly &#x27;All webpages&#x27; page listing saved pages with their status toggles and buttons to export, import, refresh and delete data">
-                <img src="/images/projects/screenshots/scrolly/2.png" alt="Scrolly &#x27;All webpages&#x27; page listing saved pages with their status toggles and buttons to export, import, refresh and delete data" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Scrolly &#x27;All webpages&#x27; page listing saved pages with their status toggles and buttons to export, import, refresh and delete data">
+                <img src="/images/projects/screenshots/scrolly/2.png"
+                     alt="Scrolly &#x27;All webpages&#x27; page listing saved pages with their status toggles and buttons to export, import, refresh and delete data"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Scrolly toolbar icons: an outlined S when Scrolly is enabled and a filled S when it is disabled">
-                <img src="/images/projects/screenshots/scrolly/3.png" alt="Scrolly toolbar icons: an outlined S when Scrolly is enabled and a filled S when it is disabled" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Scrolly toolbar icons: an outlined S when Scrolly is enabled and a filled S when it is disabled">
+                <img src="/images/projects/screenshots/scrolly/3.png"
+                     alt="Scrolly toolbar icons: an outlined S when Scrolly is enabled and a filled S when it is disabled"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
         </div>

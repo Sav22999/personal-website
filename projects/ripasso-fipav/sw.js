@@ -10,55 +10,58 @@
  */
 'use strict';
 
-const CACHE = 'fischietto-v4.0.0-20';
+const CACHE = 'fischietto-v4.1.1-21';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/icons/icon.svg', 'assets/icons/icon-192.png'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+    event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('fischietto-') && k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+    event.waitUntil(
+        caches.keys()
+            .then(keys => Promise.all(keys.filter(k => k.startsWith('fischietto-') && k !== CACHE).map(k => caches.delete(k))))
+            .then(() => self.clients.claim())
+    );
 });
 
 function isStatic(url) {
-  return /\.(css|js|svg|png|ico|webmanifest|woff2?)$/.test(url.pathname) || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+    return /\.(css|js|svg|png|ico|webmanifest|woff2?)$/.test(url.pathname);
 }
 
 self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  const sameOrigin = url.origin === self.location.origin;
+    const req = event.request;
+    if (req.method !== 'GET') return;
+    const url = new URL(req.url);
+    const sameOrigin = url.origin === self.location.origin;
 
-  // Personal data, uploads and PDFs: always straight to the network
-  if (sameOrigin && (url.pathname.includes('/api/') || url.pathname.endsWith('.pdf') || url.pathname.endsWith('.php'))) return;
+    // Personal data, uploads and PDFs: always straight to the network
+    if (sameOrigin && (url.pathname.includes('/api/') || url.pathname.endsWith('.pdf') || url.pathname.endsWith('.php'))) return;
 
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then(res => {
-          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
-          return res;
-        })
-        .catch(() => caches.match(req).then(r => r || caches.match('./')))
-    );
-    return;
-  }
+    if (req.mode === 'navigate') {
+        event.respondWith(
+            fetch(req)
+                .then(res => {
+                    if (res.ok) {
+                        const copy = res.clone();
+                        caches.open(CACHE).then(c => c.put(req, copy));
+                    }
+                    return res;
+                })
+                .catch(() => caches.match(req).then(r => r || caches.match('./')))
+        );
+        return;
+    }
 
-  if ((sameOrigin || url.hostname.startsWith('fonts.')) && isStatic(url)) {
-    event.respondWith(
-      caches.open(CACHE).then(cache => cache.match(req).then(cached => {
-        const network = fetch(req).then(res => {
-          if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
-          return res;
-        }).catch(() => cached);
-        return cached || network;
-      }))
-    );
-  }
+    if ((sameOrigin || url.hostname.startsWith('fonts.')) && isStatic(url)) {
+        event.respondWith(
+            caches.open(CACHE).then(cache => cache.match(req).then(cached => {
+                const network = fetch(req).then(res => {
+                    if (res.ok || res.type === 'opaque') cache.put(req, res.clone());
+                    return res;
+                }).catch(() => cached);
+                return cached || network;
+            }))
+        );
+    }
 });

@@ -112,9 +112,17 @@ $canonical = '/projects/cv-project/';
             <div class="timeline-item">
                 <span class="timeline-version">$5,000</span>
                 <span class="timeline-date">September 2022</span>
-                <p>Winner of the Mozilla Foundation &amp; NVIDIA open call for enabling voice data donation in low and no internet contexts. CV Project was one of two projects selected globally for advancing offline contributions to the Common Voice open-source dataset.</p>
-                <a href="https://www.mozillafoundation.org/en/blog/common-voice-for-everyone-mozilla-advances-projects-with-nvidia-enabling-voice-data-donation-in-low-internet-contexts/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <p>Winner of the Mozilla Foundation &amp; NVIDIA open call for enabling voice data donation in low and
+                    no internet contexts. CV Project was one of two projects selected globally for advancing offline
+                    contributions to the Common Voice open-source dataset.</p>
+                <a href="https://www.mozillafoundation.org/en/blog/common-voice-for-everyone-mozilla-advances-projects-with-nvidia-enabling-voice-data-donation-in-low-internet-contexts/"
+                   target="_blank" rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     Mozilla Foundation blog
                 </a>
             </div>
@@ -122,9 +130,16 @@ $canonical = '/projects/cv-project/';
             <div class="timeline-item">
                 <span class="timeline-version">€2,000</span>
                 <span class="timeline-date">September 2021</span>
-                <p>Awarded by Italian Linux Society in recognition of the work on CV Project, described as the most popular Common Voice app, used by contributors on every continent and in every language.</p>
-                <a href="https://www.ils.org/2021/09/20/sostegno-common-voice/" target="_blank" rel="noopener" class="book-btn book-btn-secondary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <p>Awarded by Italian Linux Society in recognition of the work on CV Project, described as the most
+                    popular Common Voice app, used by contributors on every continent and in every language.</p>
+                <a href="https://www.ils.org/2021/09/20/sostegno-common-voice/" target="_blank" rel="noopener"
+                   class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
                     Italian Linux Society
                 </a>
             </div>
@@ -136,28 +151,46 @@ $canonical = '/projects/cv-project/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid portrait">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Store graphic reading “Common Voice in your pocket” with the CV Project home screen: a greeting, a Profile button, the robot mascot and the Speak and Listen buttons">
-                <img src="/images/projects/screenshots/cv-project/1.png" alt="Store graphic reading “Common Voice in your pocket” with the CV Project home screen: a greeting, a Profile button, the robot mascot and the Speak and Listen buttons" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Store graphic reading “Common Voice in your pocket” with the CV Project home screen: a greeting, a Profile button, the robot mascot and the Speak and Listen buttons">
+                <img src="/images/projects/screenshots/cv-project/1.png"
+                     alt="Store graphic reading “Common Voice in your pocket” with the CV Project home screen: a greeting, a Profile button, the robot mascot and the Speak and Listen buttons"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Profile screen with email, username, age and gender fields and an All badges button, captioned “Log in to your account”">
-                <img src="/images/projects/screenshots/cv-project/2.png" alt="Profile screen with email, username, age and gender fields and an All badges button, captioned “Log in to your account”" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Profile screen with email, username, age and gender fields and an All badges button, captioned “Log in to your account”">
+                <img src="/images/projects/screenshots/cv-project/2.png"
+                     alt="Profile screen with email, username, age and gender fields and an All badges button, captioned “Log in to your account”"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Settings screen in dark theme with a language selector and sections for Listen, Speak, User Interface, Offline mode, Customise gestures and Other">
-                <img src="/images/projects/screenshots/cv-project/3.png" alt="Settings screen in dark theme with a language selector and sections for Listen, Speak, User Interface, Offline mode, Customise gestures and Other" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Settings screen in dark theme with a language selector and sections for Listen, Speak, User Interface, Offline mode, Customise gestures and Other">
+                <img src="/images/projects/screenshots/cv-project/3.png"
+                     alt="Settings screen in dark theme with a language selector and sections for Listen, Speak, User Interface, Offline mode, Customise gestures and Other"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Speak screen recording a sentence, with an animated sound wave around the stop button and Skip and Report buttons">
-                <img src="/images/projects/screenshots/cv-project/4.png" alt="Speak screen recording a sentence, with an animated sound wave around the stop button and Skip and Report buttons" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Speak screen recording a sentence, with an animated sound wave around the stop button and Skip and Report buttons">
+                <img src="/images/projects/screenshots/cv-project/4.png"
+                     alt="Speak screen recording a sentence, with an animated sound wave around the stop button and Skip and Report buttons"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Listen screen showing the sentence “He campaigned against tobacco advertising.” with instructions to vote thumbs up or down and a play button">
-                <img src="/images/projects/screenshots/cv-project/5.png" alt="Listen screen showing the sentence “He campaigned against tobacco advertising.” with instructions to vote thumbs up or down and a play button" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Listen screen showing the sentence “He campaigned against tobacco advertising.” with instructions to vote thumbs up or down and a play button">
+                <img src="/images/projects/screenshots/cv-project/5.png"
+                     alt="Listen screen showing the sentence “He campaigned against tobacco advertising.” with instructions to vote thumbs up or down and a play button"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: Store graphic reading “Developed with” and a blue heart, with a photo of Saverio Morelli next to his name">
-                <img src="/images/projects/screenshots/cv-project/6.png" alt="Store graphic reading “Developed with” and a blue heart, with a photo of Saverio Morelli next to his name" width="919" height="1800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: Store graphic reading “Developed with” and a blue heart, with a photo of Saverio Morelli next to his name">
+                <img src="/images/projects/screenshots/cv-project/6.png"
+                     alt="Store graphic reading “Developed with” and a blue heart, with a photo of Saverio Morelli next to his name"
+                     width="919" height="1800"
                      loading="lazy">
             </button>
         </div>
@@ -213,7 +246,8 @@ $canonical = '/projects/cv-project/';
                 <p>Rewritten from scratch with a new interface, Offline mode, Top contributors, app statistics,
                     background sending of recordings and validations, and new animations. Includes 2.0.1–2.0.4 (up to 1
                     August 2020): the app was renamed CV Android, gained links to Mozilla’s Terms of Service and
-                    validation guidelines, fixed a crash in Listen and moved to the new commonvoice.mozilla.org domain.</p>
+                    validation guidelines, fixed a crash in Listen and moved to the new commonvoice.mozilla.org
+                    domain.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.4</span>

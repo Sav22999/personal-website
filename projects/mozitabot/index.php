@@ -173,7 +173,8 @@ $canonical = '/projects/mozitabot/';
             <div class="timeline-item">
                 <span class="timeline-version">v1.4.1</span>
                 <span class="timeline-date">28 April 2020</span>
-                <p>Users the bot can no longer reach are removed automatically from the news-alert and all-users lists.</p>
+                <p>Users the bot can no longer reach are removed automatically from the news-alert and all-users
+                    lists.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.4</span>
@@ -189,7 +190,8 @@ $canonical = '/projects/mozitabot/';
             <div class="timeline-item">
                 <span class="timeline-version">v1.3.5</span>
                 <span class="timeline-date">5 April 2020</span>
-                <p>New /social command and button with the community&#x27;s social media links (contributed by Ilyas).</p>
+                <p>New /social command and button with the community&#x27;s social media links (contributed by
+                    Ilyas).</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.3.4</span>
@@ -216,7 +218,8 @@ $canonical = '/projects/mozitabot/';
                 <span class="timeline-version">v1.3</span>
                 <span class="timeline-date">6 October 2019</span>
                 <p>Simplified the help, renamed commands (call to meeting, prossimacall to prossimoMeeting) in camelCase
-                    and added /aiuto. A new button opens the YouTube channel, and commands are no longer case-sensitive.</p>
+                    and added /aiuto. A new button opens the YouTube channel, and commands are no longer
+                    case-sensitive.</p>
             </div>
             <div class="timeline-item">
                 <span class="timeline-version">v1.2.8</span>

@@ -81,7 +81,9 @@ $canonical = '/projects/mozita-l10n-addon/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
-                    <span class="book-meta-value">2019 – present <span class="book-meta-note">· <?php $years = date('Y') - 2019; echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
+                    <span class="book-meta-value">2019 – present <span
+                                class="book-meta-note">· <?php $years = date('Y') - 2019;
+                            echo $years === 0 ? 'less than a year' : $years . ($years === 1 ? ' year' : ' years'); ?></span></span>
                 </div>
             </div>
             <div class="book-actions">
@@ -113,8 +115,11 @@ $canonical = '/projects/mozita-l10n-addon/';
     <div class="addon-screenshots">
         <h2 class="addon-screenshots-title">Screenshots</h2>
         <div class="screenshot-grid">
-            <button type="button" class="screenshot" aria-label="Enlarge screenshot: MozIta L10n add-on promo image (&#x27;Il componente aggiuntivo per il team l10n di Mozilla Italia&#x27;) showing the popup with Transvision, Microsoft and Pontoon search tabs and a grid of useful characters">
-                <img src="/images/projects/screenshots/mozita-l10n-addon/1.png" alt="MozIta L10n add-on promo image (&#x27;Il componente aggiuntivo per il team l10n di Mozilla Italia&#x27;) showing the popup with Transvision, Microsoft and Pontoon search tabs and a grid of useful characters" width="1280" height="800"
+            <button type="button" class="screenshot"
+                    aria-label="Enlarge screenshot: MozIta L10n add-on promo image (&#x27;Il componente aggiuntivo per il team l10n di Mozilla Italia&#x27;) showing the popup with Transvision, Microsoft and Pontoon search tabs and a grid of useful characters">
+                <img src="/images/projects/screenshots/mozita-l10n-addon/1.png"
+                     alt="MozIta L10n add-on promo image (&#x27;Il componente aggiuntivo per il team l10n di Mozilla Italia&#x27;) showing the popup with Transvision, Microsoft and Pontoon search tabs and a grid of useful characters"
+                     width="1280" height="800"
                      loading="lazy">
             </button>
         </div>
