@@ -10,6 +10,16 @@
   sulle sessioni delle versioni precedenti. Non tocca mai liste, prodotti, desideri, statistiche, progressi o altri
   dati degli utenti.
 
+## Promemoria di ThinkHop
+
+`thinkhop-reminders.php` è un job a parte, perché a mezzanotte un promemoria non serve a nessuno: va lanciato **una volta al
+giorno alle 18:00**. Avvisa chi ha attivato le notifiche e oggi non ha giocato la sfida: della serie in pericolo se ne ha una,
+altrimenti della sfida del giorno. Una notifica al massimo, solo per le tipologie lasciate accese. Cancella anche le notifiche
+non lette da più di 3 giorni.
+
+- **URL:** `https://www.saveriomorelli.com/projects/cron/thinkhop-reminders.php?key=LA_TUA_CHIAVE` (la stessa chiave)
+- **Riga di comando:** `php /percorso/del/sito/projects/cron/thinkhop-reminders.php` (senza chiave)
+
 ## Installazione
 
 1. Carica sul server tutta la cartella `projects/cron/`, compreso `credentials.php` (è escluso da git). Se manca, copia
@@ -27,3 +37,8 @@
 - `500` la pulizia di almeno un gioco o un'app è fallita (il codice è nella risposta, i dettagli nel log degli errori di
   PHP) o il database non risponde. `SQLSTATE 42S02` significa che mancano le tabelle del gioco: va lanciato il suo
   `api/setup.php`
+
+## Promemoria di Fucina
+
+A parte dalla pulizia, pianifica ogni giorno alle 18:00 `https://www.saveriomorelli.com/projects/fucina/reminders.php?key=LA_TUA_CHIAVE`
+(stessa chiave di `credentials.php`). Invia al massimo una notifica a persona: la serie a rischio o la sfida del giorno.

@@ -38,6 +38,7 @@ function translations_it(): array
         'User not found.' => 'Utente non trovato.',
         'You cannot add yourself.' => 'Non puoi aggiungere te stesso.',
         'You already passed this exam with full marks.' => 'Hai già superato questo esame con il massimo.',
+        'Notifications are not available on this device.' => 'Le notifiche non sono disponibili su questo dispositivo.',
         'Pass the exam first.' => 'Prima supera l’esame.',
         'You already have this certificate.' => 'Hai già questo certificato.',
         'Unknown kind of exercise.' => 'Tipo di esercizio sconosciuto.',

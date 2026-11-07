@@ -6,6 +6,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/push.php';
+
 const ROLE_ADMIN = 5;
 const ROLE_MASTER = 10;
 
@@ -377,7 +379,10 @@ function settle_boards(): void
             if (!$prizes[$place] || !(int)$r['correct']) continue; // answering at random earns nothing
             $in = db()->prepare('INSERT IGNORE INTO ' . t('board_prizes') . ' (day, place, user_id, participants, points) VALUES (?,?,?,?,?)');
             $in->execute([$day, $place, $r['id'], count($rows), $prizes[$place]]);
-            if ($in->rowCount()) db()->prepare('UPDATE ' . t('users') . ' SET points = points + ? WHERE id = ?')->execute([$prizes[$place], $r['id']]);
+            if ($in->rowCount()) {
+                db()->prepare('UPDATE ' . t('users') . ' SET points = points + ? WHERE id = ?')->execute([$prizes[$place], $r['id']]);
+                notify_user((int)$r['id'], 'prizes', ['place' => $place, 'points' => $prizes[$place]]);
+            }
         }
     }
     db()->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('board_settled', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute([day_offset($today, -1)]);

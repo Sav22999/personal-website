@@ -2414,6 +2414,49 @@ code {
     color: var(--muted);
 }
 
+.setting.toggle span {
+    display: grid;
+}
+
+.setting.toggle strong {
+    font-weight: 800;
+}
+
+.setting.toggle small {
+    color: var(--muted);
+    font-size: .82rem;
+}
+
+.setting i.switch {
+    flex: none;
+    position: relative;
+    width: 46px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--surface-3);
+    transition: background .15s;
+}
+
+.setting i.switch::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform .15s;
+}
+
+.setting i.switch.on {
+    background: var(--mint);
+}
+
+.setting i.switch.on::after {
+    transform: translateX(18px);
+}
+
 /* ---------- Sign in ---------- */
 .auth-top {
     background: #D93A14;

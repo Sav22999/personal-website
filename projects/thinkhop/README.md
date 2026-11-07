@@ -55,6 +55,13 @@ tempo la domanda conta come sbagliata. `node tools/check_questions.js` controlla
 metodo (mai la soluzione) le prime 3 volte per tipo, poi una battuta ogni tanto; reagiscono alle risposte e al tempo che
 finisce, presentano i mondi e commentano la fine del livello.
 
+## Notifiche
+
+Web Push come FoodTrack (`lib/push.php`): la push non contiene dati e sveglia il service worker, che chiede a
+`notify.pending` cosa dire. Dal profilo, «Notifiche» accende il dispositivo e ogni tipologia: sfida del giorno, serie in pericolo,
+nuovi amici, sorpassi (le scelte stanno sull'account, `users.notify_off`). Amici e sorpassi partono subito; i promemoria richiedono il job
+`projects/cron/thinkhop-reminders.php` alle 18:00. Nell'app Android la WebView non riceve push.
+
 ## Username, classifica e amici
 
 L'username è l'unico dato pubblico: compare nella classifica giornaliera e nella ricerca amici. Dal profilo ognuno sceglie se comparire in classifica (se dice no resta trovabile nella ricerca amici). Nome ed email non

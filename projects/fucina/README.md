@@ -34,6 +34,9 @@ Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per G
   il primo riceve Scintille in base ai partecipanti, il secondo la metà e il terzo un quarto, ma serve almeno una risposta
   giusta. Non serve un cron: paga il primo accesso del giorno dopo. Quella degli XP è solo per divertimento. Ci si può
   escludere dal profilo.
+- **Notifiche**: sfida del giorno, serie a rischio, premi e amici, ognuna attivabile dal profilo (`lib/push.php`). Il push
+  non porta contenuti: sveglia il service worker, che chiede all’API. I promemoria serali partono da `reminders.php`: va
+  pianificato ogni giorno verso le 18:00, con la stessa chiave del cron di pulizia.
 - **Sfida del giorno**, serie di giorni, statistiche, calendario delle attività e 51 badge, uno anche per ogni corso.
 
 Le regole stanno sul server: le risposte arrivano al browser solo dopo aver risposto (`quiz.check`), l’esame viene

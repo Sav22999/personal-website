@@ -6,6 +6,21 @@
 
     const DICT = {
         it: {
+            'An evening reminder if you have not done it yet': 'Un promemoria serale se non l’hai ancora fatta',
+            'Streak at risk': 'Serie a rischio',
+            'In the evening, if your streak is about to end': 'La sera, se la tua serie sta per finire',
+            'Prizes': 'Premi',
+            'When you make the podium': 'Quando arrivi sul podio',
+            'When someone adds you': 'Quando qualcuno ti aggiunge',
+            'On this device': 'Su questo dispositivo',
+            'On': 'Attive',
+            'Not available here': 'Non disponibili qui',
+            'This browser cannot receive notifications. On iPhone, add Fucina to the home screen first.': 'Questo browser non può ricevere notifiche. Su iPhone, aggiungi prima Fucina alla schermata Home.',
+            'Notify me about': 'Avvisami per',
+            'Your choices follow your account. The content never passes through the push services.': 'Le scelte seguono il tuo account. I contenuti non passano mai dai servizi di notifica.',
+            'Permission denied: you can turn them on in the browser settings.': 'Permesso negato: puoi attivarle dalle impostazioni del browser.',
+            'Notifications are not available on this device.': 'Le notifiche non sono disponibili su questo dispositivo.',
+            'Notifications': 'Notifiche',
             'Verify a certificate': 'Verifica un certificato',
             'No hints here: the exam is all yours. The questions are drawn at random from the course, and you have {n} minutes.': 'Qui niente suggerimenti: l’esame è tutto tuo. Le domande sono estratte a caso dal corso e hai {n} minuti.',
             'Time is up!': 'Tempo scaduto!',

@@ -36,6 +36,8 @@ function schema_statements(string $p): array
             `drill_streak` INT UNSIGNED NOT NULL DEFAULT 0,
             `best_drill_streak` INT UNSIGNED NOT NULL DEFAULT 0,
             `on_board` TINYINT(1) NOT NULL DEFAULT 1,
+            `notify_off` VARCHAR(100) NULL,
+            `reminded_on` DATE NULL,
             `last_day` DATE NULL,
             `created_at` DATETIME NOT NULL,
             `last_login_at` DATETIME NULL,
@@ -217,6 +219,26 @@ function schema_statements(string $p): array
             CONSTRAINT `fk_{$p}dd_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_{$p}dd_drill` FOREIGN KEY (`drill_id`) REFERENCES `{$p}drills` (`id`) ON DELETE CASCADE
         ) $e",
+        // Devices to wake up with Web Push, and what is waiting for them: see lib/push.php
+        "CREATE TABLE IF NOT EXISTS `{$p}push_subscriptions` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `endpoint` VARCHAR(700) NOT NULL,
+            `endpoint_hash` CHAR(64) NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            UNIQUE KEY `uq_endpoint` (`endpoint_hash`),
+            KEY `ix_user` (`user_id`),
+            CONSTRAINT `fk_{$p}ps_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}notifications` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `kind` VARCHAR(10) NOT NULL,
+            `data` VARCHAR(255) NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`),
+            CONSTRAINT `fk_{$p}no_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
         // When a learner opened the daily challenge: the time is measured here, not in the browser
         "CREATE TABLE IF NOT EXISTS `{$p}daily_starts` (
             `user_id` INT UNSIGNED NOT NULL,
@@ -276,6 +298,7 @@ function install_schema(PDO $pdo, string $prefix): void
         if (!in_array($c, $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `$c` INT UNSIGNED NOT NULL DEFAULT 0");
     }
     if (!in_array('on_board', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `on_board` TINYINT(1) NOT NULL DEFAULT 1");
+    if (!in_array('notify_off', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `notify_off` VARCHAR(100) NULL, ADD COLUMN `reminded_on` DATE NULL");
     if (!in_array('username', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `username` VARCHAR(20) NULL AFTER `name`, ADD UNIQUE KEY `uq_username` (`username`)");
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}lesson_progress`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('skipped', $columns, true)) {

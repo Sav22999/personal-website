@@ -5,6 +5,7 @@
  * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout
  * Account:  state, auth.profile, auth.password, auth.delete
  * Ranking:  board.get, board.seen, board.join
+ * Notify:   notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
  * Friends:  auth.username, friends.list, friends.search, friends.add, friends.remove
  * Learning: course.get, quiz.check, hint.buy, lesson.complete, drill.finish, drill.mix, exam.start, exam.submit, certificate.rename
  * Playing:  daily.get, daily.submit, game.get, game.finish
@@ -704,12 +705,46 @@ switch ($r) {
         $id = (int)$st->fetchColumn();
         if (!$id) fail('User not found.', 404, 'not_found');
         if ($id === (int)$u['id']) fail('You cannot add yourself.', 422, 'validation');
-        db()->prepare('INSERT IGNORE INTO ' . t('friends') . ' (user_id, friend_id, created_at) VALUES (?,?,?)')->execute([$u['id'], $id, now_utc()]);
+        $st = db()->prepare('INSERT IGNORE INTO ' . t('friends') . ' (user_id, friend_id, created_at) VALUES (?,?,?)');
+        $st->execute([$u['id'], $id, now_utc()]);
+        if ($st->rowCount()) notify_user($id, 'friends', ['name' => $u['username']]);
         reward($u, 0, level_of((int)$u['id']));
 
     case 'friends.remove':
         $u = writer();
         db()->prepare('DELETE f FROM ' . t('friends') . ' f JOIN ' . t('users') . ' u ON u.id = f.friend_id WHERE f.user_id = ? AND u.username = ?')->execute([$u['id'], s(body(), 'username', 20)]);
+        send_json(['ok' => true]);
+
+    // ======================================================== notifications
+
+    case 'notify.save':
+        $u = writer();
+        $off = is_array(body()['off'] ?? null) ? array_values(array_intersect(NOTIFY_KINDS, body()['off'])) : [];
+        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ? WHERE id = ?')->execute([json_encode($off), $u['id']]);
+        send_json(['ok' => true, 'notifyOff' => $off]);
+
+    case 'notify.pending':
+        // Asked by the service worker when a push wakes it up
+        $u = reader();
+        send_json(['ok' => true, 'items' => notify_pending((int)$u['id'])]);
+
+    case 'push.key':
+        reader();
+        send_json(['ok' => true, 'publicKey' => vapid_keys()['public'] ?? null]);
+
+    case 'push.subscribe':
+        $u = writer();
+        $b = body();
+        $endpoint = (string)($b['endpoint'] ?? '');
+        if (strlen($endpoint) > 700 || !push_endpoint_allowed($endpoint)) fail('Notifications are not available on this device.', 422, 'validation');
+        db()->prepare('INSERT INTO ' . t('push_subscriptions') . ' (user_id, endpoint, endpoint_hash, created_at) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)')
+            ->execute([$u['id'], $endpoint, hash('sha256', $endpoint), now_utc()]);
+        db()->prepare('UPDATE ' . t('users') . ' SET lang = ? WHERE id = ?')->execute([lang(), $u['id']]);
+        send_json(['ok' => true]);
+
+    case 'push.unsubscribe':
+        $u = writer();
+        db()->prepare('DELETE FROM ' . t('push_subscriptions') . ' WHERE endpoint_hash = ? AND user_id = ?')->execute([hash('sha256', (string)(body()['endpoint'] ?? '')), $u['id']]);
         send_json(['ok' => true]);
 
     case 'board.seen':

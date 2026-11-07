@@ -477,6 +477,7 @@
                 h('button', {type: 'button', onclick: () => showUsernameForm(m)}, icon('user'), h('span', t(user.username ? 'username_change' : 'username_title'))),
                 h('button', {type: 'button', onclick: () => showPasswordForm(m)}, icon('key'), h('span', t(user.hasPassword ? 'password_change' : 'password_set'))),
                 rankingToggle(),
+                h('button', {type: 'button', onclick: () => window.ThinkHopSocial.showNotifications()}, icon('bell'), h('span', t('notify_title'))),
                 h('button', {type: 'button', onclick: showDonate}, icon('heart'), h('span', t('donate'))),
                 user.isAdmin ? h('a.menu-link', {href: 'admin.html'}, icon('shield'), h('span', t('admin_panel'))) : null,
                 h('button', {type: 'button', onclick: () => signOut(m)}, icon('exit'), h('span', t('sign_out'))),

@@ -1,6 +1,17 @@
 /* ThinkHop — release notes (newest first). Each note is translated in the five languages. */
 window.ThinkHopReleases = [
     {
+        version: '1.5.0',
+        date: '2026-11-07',
+        notes: {
+            en: ['Notifications, each type on or off: daily challenge, streak in danger, new friends and overtakes'],
+            it: ['Notifiche, ogni tipologia attivabile a parte: sfida del giorno, serie in pericolo, nuovi amici e sorpassi'],
+            es: ['Notificaciones, cada tipo por separado: desafío del día, racha en peligro, nuevos amigos y adelantamientos'],
+            fr: ['Notifications, chaque type à part : défi du jour, série en danger, nouveaux amis et dépassements'],
+            de: ['Benachrichtigungen, jeder Typ einzeln: Tagesaufgabe, Serie in Gefahr, neue Freunde und Überholt'],
+        },
+    },
+    {
         version: '1.4.0',
         date: '2026-11-07',
         notes: {

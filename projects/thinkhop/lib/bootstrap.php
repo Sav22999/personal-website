@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'ThinkHop';
 const AUTH_COOKIE = 'thinkhop_auth';
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at least these
 const ROLE_ADMIN = 9;

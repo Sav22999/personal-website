@@ -3,7 +3,8 @@
  * ThinkHop — JSON API.  api/index.php?r=<action>
  *
  * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout, board.daily
- * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, sync, friends.list, friends.search, friends.add, friends.remove
+ * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, sync, friends.list, friends.search, friends.add, friends.remove,
+ *           notify.get, notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
  * Admin:    admin.overview, admin.settings.save, admin.questions, admin.question.save, admin.question.delete,
  *           admin.games, admin.game.delete, admin.players, admin.player.update, admin.player.delete
  *
@@ -14,6 +15,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../lib/bootstrap.php';
+require __DIR__ . '/../lib/push.php';
 
 header('X-Robots-Tag: noindex');
 set_exception_handler(function (Throwable $e) {
@@ -368,7 +370,59 @@ switch ($r) {
         $st = db()->prepare('SELECT COUNT(*) FROM ' . t('friends') . ' WHERE user_id = ?');
         $st->execute([$u['id']]);
         if ((int)$st->fetchColumn() >= MAX_FRIENDS) fail('too_many_friends', 422);
-        db()->prepare('INSERT IGNORE INTO ' . t('friends') . ' (user_id, friend_id, created_at) VALUES (?,?,?)')->execute([$u['id'], $id, now_utc()]);
+        $ins = db()->prepare('INSERT IGNORE INTO ' . t('friends') . ' (user_id, friend_id, created_at) VALUES (?,?,?)');
+        $ins->execute([$u['id'], $id, now_utc()]);
+        $me = user_row((int)$u['id']);
+        if ($ins->rowCount() && !empty($me['username'])) notify_user($id, 'friends', gmdate('Y-m-d'), $me['username'], ['name' => $me['username']]);
+        send_json(['ok' => true]);
+
+    case 'notify.get':
+        $u = writer();
+        send_json(['ok' => true, 'types' => NOTIFY_TYPES, 'off' => notify_off(user_row((int)$u['id']))]);
+
+    case 'notify.save':
+        $u = writer();
+        $off = array_values(array_intersect(NOTIFY_TYPES, (array)(body()['off'] ?? [])));
+        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ? WHERE id = ?')->execute([json_encode($off), $u['id']]);
+        db()->prepare('DELETE FROM ' . t('notifications') . " WHERE user_id = ? AND FIND_IN_SET(type, ?)")->execute([$u['id'], implode(',', $off)]);
+        send_json(['ok' => true, 'off' => $off]);
+
+    case 'notify.pending':
+        // Called by the service worker when a push wakes it: what it reads is told once
+        only('GET');
+        $u = require_user();
+        $row = user_row((int)$u['id']);
+        $st = db()->prepare('SELECT id, type, data FROM ' . t('notifications') . ' WHERE user_id = ? ORDER BY id LIMIT 5');
+        $st->execute([$u['id']]);
+        $list = $st->fetchAll();
+        $out = array_map(fn($n) => ['type' => $n['type'], 'text' => notify_text((string)($row['notify_lang'] ?: 'en'), $n['type'], json_decode($n['data'], true) ?: [])], $list);
+        if ($list) db()->prepare('DELETE FROM ' . t('notifications') . ' WHERE user_id = ? AND id <= ?')->execute([$u['id'], end($list)['id']]);
+        send_json(['ok' => true, 'items' => $out]);
+
+    case 'push.key':
+        only('GET');
+        require_user();
+        $keys = vapid_keys();
+        if (!$keys) fail('push_unavailable', 503);
+        send_json(['ok' => true, 'key' => $keys['public']]);
+
+    case 'push.subscribe':
+        $u = writer();
+        $b = body();
+        $endpoint = (string)($b['endpoint'] ?? '');
+        if (strlen($endpoint) > 700 || !push_endpoint_allowed($endpoint)) fail('bad_request', 422);
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('push_subscriptions') . ' WHERE user_id = ?');
+        $st->execute([$u['id']]);
+        if ((int)$st->fetchColumn() >= MAX_DEVICES) db()->prepare('DELETE FROM ' . t('push_subscriptions') . ' WHERE user_id = ? ORDER BY created_at LIMIT 1')->execute([$u['id']]);
+        db()->prepare('INSERT INTO ' . t('push_subscriptions') . ' (user_id, endpoint, endpoint_hash, created_at) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)')
+            ->execute([$u['id'], $endpoint, hash('sha256', $endpoint), now_utc()]);
+        $lang = (string)($b['lang'] ?? '');
+        if (in_array($lang, LANGS, true)) db()->prepare('UPDATE ' . t('users') . ' SET notify_lang = ? WHERE id = ?')->execute([$lang, $u['id']]);
+        send_json(['ok' => true]);
+
+    case 'push.unsubscribe':
+        $u = writer();
+        db()->prepare('DELETE FROM ' . t('push_subscriptions') . ' WHERE user_id = ? AND endpoint_hash = ?')->execute([$u['id'], hash('sha256', (string)(body()['endpoint'] ?? ''))]);
         send_json(['ok' => true]);
 
     case 'auth.password':
@@ -397,7 +451,9 @@ switch ($r) {
         $ins = db()->prepare('INSERT IGNORE INTO ' . t('games') . ' (user_id, uid, mode, stage, stars, score, spent, correct, total, seconds, cats, day, played_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
         foreach (array_slice((array)($b['games'] ?? []), 0, 500) as $g) {
             $c = is_array($g) ? clean_game($g) : null;
-            if ($c) $ins->execute([$u['id'], $c['uid'], $c['mode'], $c['stage'], $c['stars'], $c['score'], $c['spent'], $c['correct'], $c['total'], $c['seconds'], $c['cats'], $c['day'], now_utc()]);
+            if (!$c) continue;
+            $ins->execute([$u['id'], $c['uid'], $c['mode'], $c['stage'], $c['stars'], $c['score'], $c['spent'], $c['correct'], $c['total'], $c['seconds'], $c['cats'], $c['day'], now_utc()]);
+            if ($ins->rowCount()) notify_overtaken(user_row((int)$u['id']), $c);
         }
         send_json(['ok' => true, 'games' => user_games($u['id'])]);
 

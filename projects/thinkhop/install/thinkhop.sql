@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS `th_users` (
     `name` VARCHAR(80) NOT NULL,
     `username` VARCHAR(20) NULL,
     `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1,
+    `notify_off` VARCHAR(200) NULL,
+    `notify_lang` CHAR(2) NULL,
     `email` VARCHAR(190) NOT NULL,
     `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
     `google_sub` VARCHAR(64) NULL,
@@ -81,9 +83,33 @@ CREATE TABLE IF NOT EXISTS `th_friends` (
     CONSTRAINT `fk_th_fr_friend` FOREIGN KEY (`friend_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `th_push_subscriptions` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `endpoint` VARCHAR(700) NOT NULL,
+    `endpoint_hash` CHAR(64) NOT NULL,
+    `last_push_at` DATETIME NULL,
+    `created_at` DATETIME NOT NULL,
+    UNIQUE KEY `uq_endpoint` (`endpoint_hash`),
+    KEY `ix_user` (`user_id`),
+    CONSTRAINT `fk_th_push_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `th_notifications` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `type` VARCHAR(20) NOT NULL,
+    `day` CHAR(10) NOT NULL,
+    `ref` VARCHAR(20) NOT NULL DEFAULT '',
+    `data` VARCHAR(200) NOT NULL DEFAULT '{}',
+    `created_at` DATETIME NOT NULL,
+    UNIQUE KEY `uq_once` (`user_id`, `type`, `day`, `ref`),
+    CONSTRAINT `fk_th_note_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `th_settings` (
     `k` VARCHAR(40) NOT NULL PRIMARY KEY,
     `v` TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '5') ON DUPLICATE KEY UPDATE v = VALUES(v);

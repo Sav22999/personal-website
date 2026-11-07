@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.10.0';
+    const VERSION = '1.11.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.11.0', date: '2026-11-07', it: ['Notifiche: sfida del giorno, serie a rischio, premi e amici, ognuna attivabile dal profilo'], en: ['Notifications: daily challenge, streak at risk, prizes and friends, each one set from your profile']},
         {v: '1.10.0', date: '2026-11-07', it: ['Chiunque può verificare un certificato con il suo numero, senza account'], en: ['Anyone can verify a certificate with its number, without an account']},
         {v: '1.9.0', date: '2026-11-07', it: ['L’esame ha un tempo massimo di 15 minuti', 'Sfida del giorno cronometrata: a parità di risposte vince chi è più veloce'], en: ['The exam has a time limit of 15 minutes', 'Timed daily challenge: with equal answers the fastest wins']},
         {v: '1.8.0', date: '2026-11-07', it: ['Nuovo certificato: un’immagine in inglese, da salvare in PNG o PDF'], en: ['New certificate: an image in English, to save as PNG or PDF']},
@@ -1016,7 +1017,7 @@
                 }),
                 h('p.muted.small', t('Your username is the only thing others see, next to your score.')),
                 h('h2.section-title', t('Account')),
-                h('div.group', row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('edit', t('Name and email'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
+                h('div.group', row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('bell', t('Notifications'), notificationSettings), row('edit', t('Name and email'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
                     u.role >= 5 ? h('a.setting', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal')), icon('right')) : null,
                     h('a.setting', {href: 'privacy.html'}, icon('info'), h('span', t('Privacy')), icon('right')),
                     row('logout', t('Sign out'), async () => {
@@ -1055,6 +1056,68 @@
         }, UI.field(t('Username'), name), h('p.muted.small', t('3 to 20 letters, numbers, dots or underscores. It is the only thing others can see about you: avoid your real name if you prefer.')), err, h('div.spacer'), save,
             changing ? h('div.center', btn(t('Cancel'), {kind: 'text', onclick: render})) : null);
         root.replaceChildren(h('div.auth', h('div.auth-top', mascot('happy', 'auth-pet'), h('h1', changing ? t('Change username') : t('Choose your username')), h('p', t('This is how others find you'))), h('div.auth-body', form)));
+    }
+
+    const pushReady = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+    function keyBytes(text) {
+        const raw = atob(text.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - text.length % 4) % 4));
+        return Uint8Array.from(raw, c => c.charCodeAt(0));
+    }
+
+    /** This device receives notifications when the browser allows them and it is subscribed. */
+    async function deviceSubscription() {
+        if (!pushReady() || Notification.permission !== 'granted') return null;
+        return (await navigator.serviceWorker.ready).pushManager.getSubscription();
+    }
+
+    async function setDevice(on) {
+        const reg = await navigator.serviceWorker.ready;
+        let sub = await reg.pushManager.getSubscription();
+        if (!on) {
+            if (sub) {
+                await Api.post('push.unsubscribe', {endpoint: sub.endpoint});
+                await sub.unsubscribe();
+            }
+            return;
+        }
+        if (await Notification.requestPermission() !== 'granted') throw new Error(t('Permission denied: you can turn them on in the browser settings.'));
+        const {publicKey} = await Api.get('push.key');
+        if (!publicKey) throw new Error(t('Notifications are not available on this device.'));
+        if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: keyBytes(publicKey)});
+        await Api.post('push.subscribe', {endpoint: sub.endpoint});
+    }
+
+    /** The device is a choice of this browser; the kinds follow the account, on every device. */
+    function notificationSettings() {
+        const kinds = [['daily', 'calendar', t('Daily challenge'), t('An evening reminder if you have not done it yet')], ['streak', 'fire', t('Streak at risk'), t('In the evening, if your streak is about to end')], ['prizes', 'trophy', t('Prizes'), t('When you make the podium')], ['friends', 'group', t('Friends'), t('When someone adds you')]];
+        const box = h('div');
+        const toggle = (ic, title, text, on, onclick, disabled) => h('button.setting.toggle', {type: 'button', role: 'switch', 'aria-checked': on ? 'true' : 'false', disabled: !!disabled, onclick}, icon(ic), h('span', h('strong', title), text ? h('small', text) : null), h('i.switch' + (on ? '.on' : '')));
+
+        async function paint() {
+            const sub = await deviceSubscription().catch(() => null);
+            const off = new Set(S.state.user.notifyOff || []);
+            box.replaceChildren(
+                pushReady() ? h('div.group', toggle('bell', t('On this device'), sub ? t('On') : t('Off'), !!sub, async e => {
+                    e.currentTarget.disabled = true;
+                    await setDevice(!sub).catch(err => toast(err.message, 'error'));
+                    paint();
+                })) : banner('info', 'info', t('Not available here'), t('This browser cannot receive notifications. On iPhone, add Fucina to the home screen first.')),
+                h('h2.section-title', t('Notify me about')),
+                h('div.group', kinds.map(([key, ic, title, text]) => toggle(ic, title, text, !off.has(key), async () => {
+                    if (off.has(key)) off.delete(key); else off.add(key);
+                    try {
+                        S.state.user.notifyOff = (await Api.post('notify.save', {off: [...off]})).notifyOff;
+                    } catch (err) {
+                        toast(err.message, 'error');
+                    }
+                    paint();
+                }))),
+                h('p.muted.small', t('Your choices follow your account. The content never passes through the push services.')));
+        }
+
+        paint();
+        const s = sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {onclick: () => s.close()})]});
     }
 
     function releaseNotes() {
