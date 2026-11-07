@@ -2333,3 +2333,170 @@ body:has(.modal) .toast {
 .stat-grid:not(.wide) .stat:last-child:nth-child(odd) {
     grid-column: 1 / -1;
 }
+
+/* ---------- mascots ---------- */
+.mascot {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 52px;
+    height: 52px;
+    padding: 3px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: #FFFBF2;
+    box-shadow: 2px 2px 0 var(--ink);
+}
+
+.mascot-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.mascot.big {
+    width: 104px;
+    height: 104px;
+    border-radius: 18px;
+    box-shadow: var(--shadow-sm);
+}
+
+.mascot.tiny {
+    width: 30px;
+    height: 30px;
+    padding: 1px;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.guide {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+}
+
+.bubble {
+    position: relative;
+    margin: 0;
+    padding: 8px 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: .92rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.bubble b {
+    display: block;
+    color: var(--primary);
+    font-size: .74rem;
+    font-weight: 800;
+}
+
+.guide.small {
+    margin: 8px 0;
+}
+
+.guide.small .mascot {
+    width: 42px;
+    height: 42px;
+}
+
+.home-guide {
+    margin: 0 0 16px;
+}
+
+.timer-face {
+    display: inline-flex;
+    flex: none;
+    width: 30px;
+    height: 30px;
+}
+
+.timer-face .mascot {
+    width: 30px;
+    height: 30px;
+    padding: 1px;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.world h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.intro h3 {
+    margin: 4px 0 0;
+}
+
+.intro p {
+    margin: 0;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.win-box .mascot {
+    margin: 0 auto;
+}
+
+.result-line {
+    display: inline-block;
+    margin: 8px auto;
+}
+
+.hop {
+    animation: mascot-hop .7s ease-out;
+}
+
+.shake {
+    animation: mascot-shake .45s ease-in-out 3;
+}
+
+@keyframes mascot-hop {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    35% {
+        transform: translateY(-12px);
+    }
+    60% {
+        transform: translateY(0);
+    }
+    78% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes mascot-shake {
+    25% {
+        transform: rotate(-7deg);
+    }
+    75% {
+        transform: rotate(7deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hop, .shake {
+        animation: none;
+    }
+}
+
+.menu-state {
+    margin-left: auto;
+    color: var(--primary);
+    font-weight: 800;
+}

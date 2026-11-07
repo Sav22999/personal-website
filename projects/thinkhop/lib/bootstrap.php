@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'ThinkHop';
 const AUTH_COOKIE = 'thinkhop_auth';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at least these
 const ROLE_ADMIN = 9;
@@ -210,6 +210,7 @@ function public_user(array $u): array
         'id' => (int)$u['id'],
         'name' => $u['name'],
         'username' => $u['username'] ?? null,
+        'ranking' => (int)($u['show_in_ranking'] ?? 1) === 1,
         'email' => $u['email'],
         'isAdmin' => (int)($u['role'] ?? 0) >= ROLE_ADMIN,
         'hasPassword' => ($u['password_hash'] ?? '') !== '',

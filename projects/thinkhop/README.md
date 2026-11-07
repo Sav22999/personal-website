@@ -1,7 +1,7 @@
 # ThinkHop
 
 Il gioco di logica e matematica di Saverio Morelli: un salto di ragionamento alla volta (2 ? 3 = 8 → il segno è ^).
-Web app installabile (PWA) e app Android per Google Play. **Non è ancora elencata tra i progetti personali del sito.**
+Web app installabile (PWA) e app Android per Google Play. È elencata tra i progetti del sito, nella sezione «Built with AI».
 
 ## Il gioco
 
@@ -49,9 +49,15 @@ chiedono una `d` sempre crescente, la matematica è limitata a una domanda su qu
 torna: il dispositivo ricorda le ultime 8000 (la sfida del giorno fa eccezione, perché è uguale per tutti). Allo scadere del
 tempo la domanda conta come sbagliata. `node tools/check_questions.js` controlla ogni pattern e il percorso dei 500 livelli.
 
+## Mascotte
+
+`mascots.js`: Punto, Sillo, Dedo e Neuro si dividono i tipi di domanda, quindi si alternano da sole. Danno un consiglio di
+metodo (mai la soluzione) le prime 3 volte per tipo, poi una battuta ogni tanto; reagiscono alle risposte e al tempo che
+finisce, presentano i mondi e commentano la fine del livello.
+
 ## Username, classifica e amici
 
-L'username è l'unico dato pubblico: compare nella classifica giornaliera e nella ricerca amici. Nome ed email non
+L'username è l'unico dato pubblico: compare nella classifica giornaliera e nella ricerca amici. Dal profilo ognuno sceglie se comparire in classifica (se dice no resta trovabile nella ricerca amici). Nome ed email non
 arrivano mai agli altri giocatori. Gli amici vanno in una sola direzione, senza richieste da accettare. I punteggi sono
 calcolati sul dispositivo: il server scarta solo quelli impossibili, quindi la classifica non è a prova di imbroglio.
 

@@ -5,8 +5,8 @@
  */
 'use strict';
 
-const CACHE = 'thinkhop-10';
-const FILES = ['./', 'engine.js', 'puzzles.js', 'riddles.js', 'riddles-more.js', 'game.js', 'ui.js', 'account.js', 'social.js', 'i18n.js', 'i18n-puzzles.js', 'releases.js', 'style.css', 'privacy.html', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'fonts/stack-sans-notch.ttf', 'fonts/inter-latin-wght-normal.woff2', 'fonts/inter-latin-ext-wght-normal.woff2'];
+const CACHE = 'thinkhop-13';
+const FILES = ['./', 'engine.js', 'puzzles.js', 'riddles.js', 'riddles-more.js', 'game.js', 'ui.js', 'account.js', 'social.js', 'mascots.js', 'i18n.js', 'i18n-puzzles.js', 'releases.js', 'style.css', 'privacy.html', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'fonts/stack-sans-notch.ttf', 'fonts/inter-latin-wght-normal.woff2', 'fonts/inter-latin-ext-wght-normal.woff2'];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));

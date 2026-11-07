@@ -20,6 +20,7 @@ function schema_statements(string $p): array
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `name` VARCHAR(80) NOT NULL,
             `username` VARCHAR(20) NULL,
+            `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1,
             `email` VARCHAR(190) NOT NULL,
             `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
             `google_sub` VARCHAR(64) NULL,
@@ -114,6 +115,8 @@ function install_schema(PDO $pdo, string $prefix): void
         $pdo->exec("ALTER TABLE `{$prefix}questions` ADD COLUMN `difficulty` DECIMAL(3,2) NOT NULL DEFAULT 0.25 AFTER `tier`");
         $pdo->exec("UPDATE `{$prefix}questions` SET difficulty = CASE tier WHEN 'easy' THEN 0.25 WHEN 'medium' THEN 0.75 WHEN 'hard' THEN 1.25 ELSE 1.75 END");
     }
+    // Version 4: everyone chooses whether to appear in the ranking
+    if (!has_column($pdo, $prefix . 'users', 'show_in_ranking')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1 AFTER `username`");
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);
 }

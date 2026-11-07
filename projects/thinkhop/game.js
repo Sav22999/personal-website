@@ -6,6 +6,7 @@
     const I = window.ThinkHopI18n;
     const A = window.ThinkHopAccount;
     const S = window.ThinkHopSocial;
+    const M = window.ThinkHopMascots;
     const {store, h, icon, toast, modal, confirmBox} = window.ThinkHopUI;
     const t = I.t;
     const app = document.getElementById('app');
@@ -59,6 +60,44 @@
     let startedAt = 0;      // when the current question appeared
 
     let ticking = null;     // the clock of the current question
+    let worried = false;    // the mascot already warned about the time on this question
+
+    // ---------- mascots ----------
+    const face = (id, mood, extra) => h('span.mascot' + (extra || ''), {html: M.svg(id, mood), title: id[0].toUpperCase() + id.slice(1)});
+    const guide = (id, mood, text, extra) => h('div.guide' + (extra || ''), face(id, mood), h('p.bubble', h('b', id[0].toUpperCase() + id.slice(1)), text));
+
+    /** Tips only while a type is new; then a word now and then, so that the mascots don't become routine. */
+    function questionGuide(q) {
+        const id = M.hostOf(q.cat);
+        const met = store.get('met', {});
+        if (q.guided === undefined) {
+            const n = met[q.cat] || 0;
+            q.guided = n < 3 ? 'tip' : ((G.index + q.sig.length) % 3 === 0 ? 'idle' : 'none');
+            store.set('met', Object.assign(met, {[q.cat]: n + 1}));
+        }
+        if (q.guided === 'tip') return guide(id, 'think', M.tip(q.cat));
+        return q.guided === 'idle' ? guide(id, 'happy', M.pick(id, 'idle', G.index)) : null;
+    }
+
+    function reaction(q, right) {
+        const id = M.hostOf(q.cat);
+        if (G.picked < 0) return guide(id, 'sad', M.say(id, 'time'), '.small');
+        if (right && [3, 5, 8, 10, 15, 20].includes(G.streak)) return guide(id, 'happy', M.say(id, 'streak'), '.small.hop');
+        return guide(id, right ? 'happy' : 'sad', M.pick(id, right ? 'right' : 'wrong', G.index + G.correct), '.small' + (right ? '.hop' : ''));
+    }
+
+    const worldHost = world => M.IDS[world % M.IDS.length];
+
+    /** A new world opens with its mascot: the clock starts only after this. */
+    function worldIntro(stage, go) {
+        const world = Math.floor((stage - 1) / E.WORLD);
+        const seenWorlds = store.get('worlds', []);
+        if ((stage - 1) % E.WORLD !== 0 || seenWorlds.includes(world)) return go();
+        store.set('worlds', [...seenWorlds, world]);
+        const id = worldHost(world);
+        const m = modal([h('div.intro', face(id, 'happy', '.big.hop'), h('h3', t('world_n', {n: world + 1})), h('p', M.say(id, 'world'))),
+            h('div.actions', h('button.btn.btn-primary.btn-block', {type: 'button', onclick: () => m.close()}, t('start'), icon('arrow')))], {persistent: true, onclose: go});
+    }
 
     const elapsed = () => G.clock + (performance.now() - startedAt) / 1000;
 
@@ -82,6 +121,15 @@
         if (G.answered) return;
         const show = () => {
             const left = Math.max(0, Math.ceil(q.limit - elapsed()));
+            if (left <= 10 && left > 0 && !worried) {
+                worried = true;
+                const id = M.hostOf(q.cat);
+                const slot = app.querySelector('.timer-face');
+                if (slot) {
+                    slot.replaceChildren(face(id, 'worried', '.shake'));
+                    toast(M.say(id, 'worry'));
+                }
+            }
             const el = app.querySelector('.clock');
             if (el) {
                 el.textContent = String(left);
@@ -117,8 +165,9 @@
 
     function begin(mode, stage) {
         G = E.newGame(mode, stage, Math.floor(Math.random() * 2147483647), seen());
-        save();
-        renderGame();
+        store.set('saved', G);
+        if (mode === 'level') worldIntro(stage, renderGame);
+        else renderGame();
     }
 
     async function start(mode, stage) {
@@ -200,6 +249,7 @@
     // ---------- game screen ----------
     function renderGame() {
         screen = 'game';
+        greeting = null;
         const q = G.questions[G.index];
         const mode = G.mode === 'level' ? t('level_n', {n: G.stage}) : t('mode_' + G.mode);
         const counter = G.mode === 'survival' ? t('question_n', {n: G.index + 1}) : t('question_of', {n: G.index + 1, m: G.questions.length});
@@ -223,12 +273,14 @@
             h('main.question',
                 h('div.tags', h('span.tag', t('cat_' + q.cat)), h('span.tag.level-' + q.level, t(q.level)),
                     G.streak > 1 ? h('span.tag.hot', icon('flame'), String(G.streak)) : null),
+                G.answered ? null : questionGuide(q),
                 h('h1.prompt', promptText(q)),
                 questionBody(q),
-                G.answered ? null : h('div.timer', h('div.speed', {'aria-hidden': 'true'}, h('i', {style: `animation-duration:${q.limit}s;animation-delay:-${G.clock}s`})), h('span.clock', {role: 'timer'})),
+                G.answered ? null : h('div.timer', h('span.timer-face', face(M.hostOf(q.cat), 'think')), h('div.speed', {'aria-hidden': 'true'}, h('i', {style: `animation-duration:${q.limit}s;animation-delay:-${G.clock}s`})), h('span.clock', {role: 'timer'})),
                 options,
                 G.answered ? h('section.feedback' + (right ? '.good' : '.bad'), {role: 'status'},
                         h('h2', icon(right ? 'tick' : 'close'), G.picked < 0 ? t('time_up') : t(right ? 'right' : 'wrong'), right ? h('span.gain', t('plus_points', {n: G.gained})) : null),
+                        reaction(q, right),
                         whyLines(q),
                         h('button.btn.btn-primary.btn-block', {type: 'button', onclick: advance}, E.isOver(G) ? t('see_result') : t('next'), icon('arrow')))
                     : h('button.btn.btn-soft.hint-btn', {
@@ -236,6 +288,7 @@
                     }, icon('bulb'), t('hint_cost', {n: E.hintCost(G)})))));
         document.title = `${NAME} – ${counter}`;
         startedAt = performance.now();
+        worried = false;
         rememberQuestion(q);
         runClock(q);
         window.scrollTo(0, 0);
@@ -288,6 +341,7 @@
         const title = done.mode === 'level' ? t(passed ? 'level_passed' : 'level_failed', {n: done.stage}) : t('over_' + done.mode);
         const needed = Math.ceil(done.questions.length / 2);
         const last = done.stage >= E.STAGES;
+        const host = M.IDS[(done.stage + done.correct) % M.IDS.length];
         const again = (label, stage, primary) => h('button.btn' + (primary ? '.btn-primary' : '.btn-soft'), {
             type: 'button', onclick: () => {
                 m.close();
@@ -296,11 +350,12 @@
         }, label);
         const m = modal([
             h('div.win-box',
-                h('div.trophy' + (passed ? '' : '.lost'), icon(passed ? 'trophy' : 'bulb')),
+                face(host, passed ? 'happy' : 'sad', '.big' + (passed ? '.hop' : '')),
                 h('h3', title),
                 h('div.stars', {role: 'img', 'aria-label': `${g.stars}/3`}, [0, 1, 2].map(i => h('span' + (i < g.stars ? '.on' : ''), icon('star')))),
                 h('div.score', h('b', '+' + fmtNumber(done.score)), h('span', t('stat_points'))),
                 done.mode !== 'level' && done.score > before && before > 0 ? h('p.record', t('new_record')) : null,
+                h('p.bubble.result-line', M.say(host, passed ? 'pass' : 'fail')),
                 h('p.muted', t('result_right', {n: done.correct, m: g.total})),
                 passed ? h('p.muted', [t('result_streak', {n: done.bestStreak}), t('result_time', {t: fmtTime(done.seconds)})].join(' · ')) : h('p.muted', t('level_failed_text', {n: needed})),
                 done.mode === 'level' && passed && last ? h('p.muted', t('all_done')) : null),
@@ -391,6 +446,14 @@
             }, icon('close')));
     }
 
+    /** The home is drawn again when the server answers: the greeting must stay the same until the next game. */
+    let greeting = null;
+
+    function homeGreeting() {
+        if (!greeting) greeting = {id: M.IDS[Math.floor(Math.random() * M.IDS.length)], n: Math.floor(Math.random() * 2)};
+        return guide(greeting.id, 'happy', M.pick(greeting.id, 'hello', greeting.n), '.home-guide');
+    }
+
     const quickLink = (name, label, open) => h('button.quick-link', {type: 'button', onclick: open}, icon(name), h('span', label));
 
     function showHome() {
@@ -408,6 +471,7 @@
             }, icon('moon'))),
             h('section.hero', h('img.logo', {src: 'icons/favicon.svg', alt: ''}), h('h1', NAME), h('p', t('subtitle')),
                 h('div.total', {title: t('balance')}, icon('star'), t('total_points', {n: fmtNumber(st.balance)}))),
+            homeGreeting(),
             h('main.home-main',
                 saved ? resumeCard(saved) : null,
                 h('section.panel', levelCard(st)),
@@ -440,7 +504,7 @@
         const worlds = Array.from({length: E.STAGES / E.WORLD}, (_, w) => {
             const first = w * E.WORLD + 1;
             return h('section.world',
-                h('h2', t('world_n', {n: w + 1})),
+                h('h2', face(worldHost(w), 'happy', '.tiny'), t('world_n', {n: w + 1})),
                 h('div.stage-grid', Array.from({length: E.WORLD}, (_, i) => {
                     const n = first + i, stars = st.stages[n] || 0, open = n <= st.unlocked;
                     return h('button.stage' + (open ? '' : '.locked') + (n === st.unlocked && !stars ? '.current' : ''), {

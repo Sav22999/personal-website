@@ -37,6 +37,7 @@ function translations_it(): array
         'Use 3 to 20 letters, numbers, dots or underscores.' => 'Usa da 3 a 20 lettere, numeri, punti o trattini bassi.',
         'User not found.' => 'Utente non trovato.',
         'You cannot add yourself.' => 'Non puoi aggiungere te stesso.',
+        'You already passed this exam with full marks.' => 'Hai già superato questo esame con il massimo.',
         'Pass the exam first.' => 'Prima supera l’esame.',
         'You already have this certificate.' => 'Hai già questo certificato.',
         'Unknown kind of exercise.' => 'Tipo di esercizio sconosciuto.',

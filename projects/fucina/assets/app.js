@@ -2,12 +2,30 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.3.5';
+    const VERSION = '1.10.0';
+    /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
+    const RELEASES = [
+        {v: '1.10.0', date: '2026-11-07', it: ['Chiunque può verificare un certificato con il suo numero, senza account'], en: ['Anyone can verify a certificate with its number, without an account']},
+        {v: '1.9.0', date: '2026-11-07', it: ['L’esame ha un tempo massimo di 15 minuti', 'Sfida del giorno cronometrata: a parità di risposte vince chi è più veloce'], en: ['The exam has a time limit of 15 minutes', 'Timed daily challenge: with equal answers the fastest wins']},
+        {v: '1.8.0', date: '2026-11-07', it: ['Nuovo certificato: un’immagine in inglese, da salvare in PNG o PDF'], en: ['New certificate: an image in English, to save as PNG or PDF']},
+        {v: '1.7.0', date: '2026-11-07', it: ['Superando l’esame i livelli non giocati risultano risolti: 2 stelle dal 90%, altrimenti 1', 'La terza stella si guadagna giocando il livello'], en: ['Passing the exam solves the levels not played: 2 stars from 90%, otherwise 1', 'The third star is earned by playing the level']},
+        {v: '1.6.2', date: '2026-11-07', it: ['Testi dell’esame più chiari'], en: ['Clearer exam texts']},
+        {v: '1.6.1', date: '2026-11-07', it: ['Un esame superato con il massimo non si ripete più'], en: ['An exam passed with full marks can no longer be repeated']},
+        {v: '1.6.0', date: '2026-11-07', it: ['Favilla ti accompagna di più: in home, nei consigli delle lezioni e prima degli esami'], en: ['Favilla keeps you company more: at home, in lesson tips and before exams']},
+        {v: '1.5.0', date: '2026-11-07', it: ['Sai già la materia? Fai subito l’esame finale di qualsiasi corso: se lo superi, il corso è finito e si aprono i successivi', 'Nuovo carattere per il codice, uguale su tutti i dispositivi'], en: ['Already know the subject? Take the final exam of any course right away: pass it and the course is finished and the next ones open', 'New font for code, the same on every device']},
+        {v: '1.4.1', date: '2026-11-07', it: ['La firma nel profilo usa il carattere del sito dell’autore'], en: ['The credit in the profile uses the font of the author’s website']},
+        {v: '1.4.0', date: '2026-11-07', it: ['Note di rilascio: tocca il numero di versione nel profilo', 'Nel profilo trovi chi ha creato Fucina e come sostenerla', 'A fine sfida restano solo il risultato e il pulsante per continuare', 'Il trascinamento delle righe ora funziona, con mouse e dito'], en: ['Release notes: tap the version number in your profile', 'Your profile shows who made Fucina and how to support it', 'At the end of a drill only the result and the continue button remain', 'Dragging lines now works, with mouse and finger']},
+        {v: '1.3.0', date: '2026-11-07', it: ['Username: l’unico dato pubblico del tuo account', 'Amici: cerca, aggiungi e rimuovi', 'Classifiche della sfida del giorno, tra tutti o tra amici', 'I premi di fine giornata vanno alla sfida del giorno', 'Nuova icona'], en: ['Username: the only public data of your account', 'Friends: search, add and remove', 'Daily challenge rankings, among everyone or among friends', 'End-of-day prizes go to the daily challenge', 'New icon']},
+        {v: '1.2.0', date: '2026-11-07', it: ['Nove nuovi corsi: JavaScript, TypeScript, PHP, HTML e CSS intermedi, Animazioni', 'Più livelli nei corsi esistenti', 'Il certificato si sblocca con le Scintille', 'Classifica giornaliera con premi', 'Grado sempre in vista e molti nuovi badge'], en: ['Nine new courses: JavaScript, TypeScript, PHP, intermediate HTML and CSS, Animations', 'More levels in the existing courses', 'Certificates are unlocked with Sparks', 'Daily leaderboard with prizes', 'Grade always in sight and many new badges']},
+        {v: '1.1.0', date: '2026-11-07', it: ['Grafica tutta nuova con Favilla, la mascotte', 'Mappa dei livelli', 'Sfide lampo: tessere, riordina, caccia al bug, coppie, vero o falso, regola', 'Palestra: sei sfide quando vuoi'], en: ['A brand new look with Favilla, the mascot', 'Level map', 'Quick drills: tiles, sort it, bug hunt, pairs, true or false, tune it', 'Gym: six drills whenever you want']},
+        {v: '1.0.0', date: '2026-11-07', it: ['Prima versione: corsi a livelli, quiz, esercizi, giochi, certificati e pannello admin'], en: ['First release: level-based courses, quizzes, exercises, games, certificates and admin portal']},
+    ];
     const t = I18N.t;
     const {h, icon, tile, chip, btn, iconBtn, busy, toast, sheet, confirm} = UI;
     const {mascot, confetti, colour} = Fun;
     const root = document.getElementById('app');
     const LOGO = 'assets/icons/icon-192.png?v=2';
+    const AUTHOR_URL = 'https://www.saveriomorelli.com/';
     const DONATE_URL = 'https://www.saveriomorelli.com/donate/';
     const CONTACT_URL = '../../contact-me/';
     const DESK = matchMedia('(min-width: 960px)');
@@ -24,8 +42,8 @@
         return h('div.banner.' + tone, icon(ic), h('div.b-body', h('h3', title), text ? h('p', text) : null));
     }
 
-    function empty(ic, title, text, action) {
-        return h('div.empty', tile('icon', ic, 'xl'), h('strong', title), text ? h('p', text) : null, action || null);
+    function empty(title, text, action) {
+        return h('div.empty', mascot('happy', 'lg'), h('strong', title), text ? h('p', text) : null, action || null);
     }
 
     function seg(options, value, onchange) {
@@ -190,7 +208,17 @@
 
     /** The next thing to do: the first open course with lessons left. */
     function nextStep() {
-        return S.state.courses.find(c => !c.locked && c.done < c.lessons) || S.state.courses.find(c => !c.locked && !c.certificate);
+        return S.state.courses.find(c => !c.locked && !c.examScore && c.done < c.lessons) || S.state.courses.find(c => !c.locked && !c.certificate);
+    }
+
+    /** Favilla says one thing at a time, about what matters now. */
+    function favillaSays() {
+        const st = S.state;
+        const line = !st.totals.lessons && !st.daily ? t('Hi, I’m Favilla! Shall we light the forge with the first level?')
+            : !st.practicedToday && st.user.streak > 0 ? t('{n} days in a row: don’t let the fire go out!', {n: st.user.streak})
+                : !st.daily ? t('The daily challenge is waiting: the podium is up for grabs!')
+                    : t('Nice work today. See you tomorrow at the forge!');
+        return h('div.pet-say', mascot(st.practicedToday ? 'happy' : 'wow', 'pet-sm'), h('p', line));
     }
 
     function viewHome() {
@@ -198,6 +226,7 @@
         const d = S.state.daily;
         return {
             title: t('Hi {name}', {name: S.user.name.split(' ')[0]}), tab: 'home', body: [
+                favillaSays(),
                 rankCard(),
                 n ? h('a.cta.fam-' + n.family, {href: '#/course/' + n.id}, h('span.kicker', n.done ? t('Pick up where you left off') : t('Start here')), h('strong', n.title),
                     h('div.bar', h('i', {style: {width: Math.round(n.done * 100 / Math.max(1, n.lessons)) + '%'}})),
@@ -238,9 +267,9 @@
     function courseCard(c) {
         const after = c.locked ? S.state.courses.find(x => x.id === c.after) : null;
         const inner = [h('span.fam', c.family.toUpperCase()), h('div.grow', h('strong', c.title), h('p.muted', c.desc),
-            c.locked ? h('p.lock-note', icon('lock'), t('Finish “{name}” first', {name: after ? after.title : ''})) : h('div.bar', h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
+            c.locked ? h('p.lock-note', icon('lock'), t('Finish “{name}” or pass the exam', {name: after ? after.title : ''})) : h('div.bar', h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
             h('div.meta', chip(c.level), chip(t('{n} levels', {n: c.lessons})), c.certificate ? chip(t('Certified'), 'ok', 'cert') : null))];
-        return c.locked ? h('div.course.locked.fam-' + c.family, inner) : h('a.course.fam-' + c.family, {href: '#/course/' + c.id}, inner);
+        return h('a.course.fam-' + c.family + (c.locked ? '.locked' : ''), {href: '#/course/' + c.id}, inner);
     }
 
     async function loadCourse(id) {
@@ -263,9 +292,9 @@
 
     function levelList(c, firstOpen) {
         return h('ol.levels.fam-' + c.family, c.items.map((l, i) => {
-            const open = !c.locked && (l.progress || i === firstOpen);
+            const open = !c.locked && (l.progress || i === firstOpen || c.examScore > 0);
             const solved = l.drills.filter(d => d.stars > 0).length;
-            const body = [h('span.lvl-num' + (l.progress ? '.cleared' : ''), l.progress ? icon('check') : open ? String(i + 1) : icon('lock')),
+            const body = [h('span.lvl-num' + (l.progress ? '.cleared' : ''), {title: l.progress && l.progress.skipped ? t('Passed with the exam') : null}, l.progress ? icon(l.progress.skipped ? 'bolt' : 'check') : open ? String(i + 1) : icon('lock')),
                 h('div.grow', h('span.kicker', t('Level {n}', {n: i + 1})), h('strong', l.title)),
                 difficultyDots(l.difficulty),
                 l.drills.length ? h('span.lvl-stat', {title: t('Drills')}, icon('bolt'), `${solved}/${l.drills.length}`) : null,
@@ -293,9 +322,9 @@
                 html: `<svg viewBox="0 0 100 ${height}" preserveAspectRatio="none"><path class="way" d="${line(spots)}"/><path class="walked" d="${line(reached)}"/></svg>`
             }),
             c.items.map((l, i) => {
-                const open = !c.locked && (l.progress || i === firstOpen);
+                const open = !c.locked && (l.progress || i === firstOpen || c.examScore > 0);
                 const current = !c.locked && i === firstOpen;
-                const face = l.progress ? icon('check') : open ? String(i + 1) : icon('lock');
+                const face = l.progress ? icon(l.progress.skipped ? 'bolt' : 'check') : open ? String(i + 1) : icon('lock');
                 const inner = [current ? h('span.node-go', i ? t('Next') : t('Start!')) : null, h('span.node-dot', face),
                     h('span.node-name', l.title), l.progress ? stars(l.progress.stars) : difficultyDots(l.difficulty)];
                 const cls = current ? '.current' : l.progress ? '.cleared' : '';
@@ -310,7 +339,7 @@
         return {
             title: c.title, back: 'path', tab: 'path', body: [
                 h('p.lead', c.desc),
-                c.locked ? banner('warn', 'lock', t('This course is still locked'), t('Finish the previous course to open it.')) : null,
+                c.locked ? banner('warn', 'lock', t('This course is still locked'), t('Finish the previous course, or pass the final exam below to skip ahead.')) : null,
                 DESK.matches ? [courseStats(c), levelList(c, firstOpen)] : levelMap(c, firstOpen),
                 examCard(c, allDone),
             ]
@@ -319,12 +348,14 @@
 
     function examCard(c, allDone) {
         const passed = c.examScore > 0 && !c.certificate;
-        const text = passed ? t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examScore, c: S.state.costs.certificate})
-            : t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {n: c.examQuestions, p: c.examPass, c: S.state.costs.certificate});
+        const perfect = c.examScore >= 100;
+        const text = perfect && c.certificate ? t('Passed with full marks: there is nothing left to improve.') : passed ? t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examScore, c: S.state.costs.certificate})
+            : (allDone || c.examScore ? '' : t('Already know this? Take it now: if you pass, the course counts as finished and the next ones open.') + ' ')
+            + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {n: c.examQuestions, p: c.examPass, c: S.state.costs.certificate});
         return h('section.card.exam-card', tile('icon', 'cert', 'lg'), h('div.grow', h('strong', t('Final exam')), h('p.muted', text),
             c.certificate ? h('div.btn-row', h('a.btn.btn-tonal', {href: certUrl(c.certificate.code), target: '_blank', rel: 'noopener'}, icon('cert'), h('span', t('Open the certificate')))) : null),
             passed ? btn(t('Unlock · {n}', {n: S.state.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(c.id, render)}) : null,
-            btn(c.certificate || passed ? t('Try again') : t('Start'), {kind: c.certificate || passed ? 'text' : 'filled', disabled: !allDone || !c.items.length, onclick: () => go('exam/' + c.id)}));
+            perfect ? null : btn(c.certificate || passed ? t('Try again') : t('Start'), {kind: c.certificate || passed ? 'text' : 'filled', disabled: !c.items.length, onclick: () => go('exam/' + c.id)}));
     }
 
     /** The certificate is the prize you buy with what you earned: the price is shown first. */
@@ -398,7 +429,7 @@
         };
 
         function theory() {
-            return h('article.theory', lesson.body.map(b => b.t === 'code' ? codeBlock(b.code, b.lang) : b.t === 'tip' ? h('aside.tip', icon('bulb'), h('p', rich(b.text))) : h('p', rich(b.text))),
+            return h('article.theory', lesson.body.map(b => b.t === 'code' ? codeBlock(b.code, b.lang) : b.t === 'tip' ? h('aside.tip', mascot('happy', 'still'), h('p', rich(b.text))) : h('p', rich(b.text))),
                 h('div.step-actions', btn(lesson.drills.length ? t('Let’s play') : t('Go to the questions'), {icon: 'right', onclick: next})));
         }
 
@@ -545,13 +576,40 @@
 
     // ---------------------------------------------------------------- questions in a row: exam and daily challenge
 
-    /** Asks the questions one by one and resolves with the answers, keyed by keyOf(question). */
+    /** A clock that counts down to zero and calls onEnd, or counts up without end. It stops when it leaves the page. */
+    function clock(seconds, down, onEnd) {
+        const el = h('div.exam-clock', icon('timer'), h('b'));
+        const started = Date.now();
+        const show = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        let id = 0;
+        const tick = () => {
+            const gone = Math.floor((Date.now() - started) / 1000);
+            const value = down ? Math.max(0, seconds - gone) : seconds + gone;
+            el.lastChild.textContent = show(value);
+            el.classList.toggle('low', down && value <= 60);
+            if (down && value === 0) {
+                clearInterval(id);
+                onEnd();
+            } else if (gone > 1 && !el.isConnected) clearInterval(id);
+        };
+        tick();
+        id = setInterval(tick, 500);
+        el.stop = () => clearInterval(id);
+        return el;
+    }
+
+    /** Asks the questions one by one and resolves with the answers, keyed by keyOf(question). The result ends it early. */
     function askAll(stage, bar, questions, keyOf, onDone) {
         const answers = {};
-        let i = 0;
+        let i = 0, closed = false;
+        const finish = () => {
+            if (closed) return;
+            closed = true;
+            onDone(answers);
+        };
         const next = () => {
             bar.style.width = Math.round(i * 100 / questions.length) + '%';
-            if (i >= questions.length) return onDone(answers);
+            if (i >= questions.length) return finish();
             const q = questions[i];
             stage.replaceChildren(h('section.quiz', h('span.kicker', t('Question {a} of {b}', {a: i + 1, b: questions.length})), h('h2', rich(q.q)),
                 h('div.options', q.options.map((o, k) => h('button.option', {
@@ -564,6 +622,7 @@
             window.scrollTo(0, 0);
         };
         next();
+        return finish;
     }
 
     function reviewList(items) {
@@ -574,13 +633,29 @@
         const c = S.state.courses.find(x => x.id === courseId);
         const stage = h('div.stage');
         const bar = h('i');
+        const slot = h('div.clock-slot');
 
         function intro() {
-            stage.replaceChildren(h('section.done', tile('icon', 'cert', 'xl'), h('h2', c.title), h('p', t('No hints here: the exam is all yours. The questions are drawn at random from the course.')),
+            if (c.examScore >= 100) {
+                stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', c.title), h('p', t('Passed with full marks: there is nothing left to improve.')), h('div.step-actions', btn(t('Back to the course'), {onclick: () => go('course/' + courseId)}))));
+                return;
+            }
+            stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', c.title), h('p', t('No hints here: the exam is all yours. The questions are drawn at random from the course, and you have {n} minutes.', {n: S.state.examMinutes})),
                 h('div.step-actions', btn(t('Start the exam'), {
                     icon: 'play', onclick: async e => {
                         const d = await busy(e.currentTarget, () => Api.post('exam.start', {course: courseId})).catch(err => toast(err.message, 'error'));
-                        if (d) askAll(stage, bar, d.questions, q => q.id, a => submit(d.exam, a));
+                        if (!d) return;
+                        let finish = () => null;
+                        const time = d.seconds ? clock(d.seconds, true, () => {
+                            toast(t('Time is up!'), 'error');
+                            finish();
+                        }) : null;
+                        slot.replaceChildren(...(time ? [time] : []));
+                        finish = askAll(stage, bar, d.questions, q => q.id, a => {
+                            if (time) time.stop();
+                            slot.replaceChildren();
+                            submit(d.exam, a);
+                        });
                     }
                 }))));
         }
@@ -593,8 +668,9 @@
                 delete S.course[courseId];
                 if (d.passed) confetti();
                 stage.replaceChildren(h('section.done', mascot(d.passed ? 'wow' : 'sad', 'lg'), h('h2', d.passed ? t('You passed!') : t('Not this time')),
-                    h('p.score', d.score + '%'), h('p', t('{a} correct answers out of {b}', {a: d.correct, b: d.total})),
+                    d.expired ? h('p', t('Time ran out before the answers arrived.')) : null, h('p.score', d.score + '%'), h('p', t('{a} correct answers out of {b}', {a: d.correct, b: d.total})),
                     d.passed && d.xp ? h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: d.xp})) : null,
+                    d.passed ? h('p', t('The course counts as finished: its levels are solved and the next courses are open.')) : null,
                     d.passed && d.certificate ? h('div.step-actions', h('a.btn.btn-filled', {href: certUrl(d.certificate.code), target: '_blank', rel: 'noopener'}, icon('cert'), h('span', t('Open the certificate')))) : null,
                     d.passed && !d.certificate ? h('div.step-actions', btn(t('Unlock the certificate · {n}', {n: S.state.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(courseId, () => go('course/' + courseId))})) : null,
                     h('div.step-actions', btn(t('Back to the course'), {kind: 'tonal', onclick: () => go('course/' + courseId)}), !d.passed ? btn(t('Try again'), {onclick: intro}) : null),
@@ -607,24 +683,29 @@
 
         if (!c) throw new Error(t('Course not found.'));
         intro();
-        return {title: t('Final exam'), back: 'course/' + courseId, tab: 'path', nav: false, body: [h('div.bar.top', bar), stage]};
+        return {title: t('Final exam'), back: 'course/' + courseId, tab: 'path', nav: false, body: [h('div.bar.top', bar), slot, stage]};
     }
 
     async function viewDaily() {
         const stage = h('div.stage');
         const bar = h('i');
+        const slot = h('div.clock-slot');
         if (S.state.daily) {
             stage.replaceChildren(h('section.done', mascot('happy', 'lg'), h('h2', t('See you tomorrow')), h('p', t('Today you got {a} out of {b}.', {a: S.state.daily.correct, b: S.state.daily.total})),
                 h('div.step-actions', btn(t('Play a game'), {onclick: () => go('games')}))));
         } else {
             const d = await Api.get('daily.get');
+            const time = clock(d.elapsed || 0, false);
+            slot.replaceChildren(time);
             askAll(stage, bar, d.questions, q => q.key, async answers => {
+                time.stop();
+                slot.replaceChildren();
                 stage.replaceChildren(h('div.loader'));
                 try {
                     const r = await Api.post('daily.submit', {answers});
                     applyState(r);
                     if (r.correct === r.total) confetti();
-                    stage.replaceChildren(h('section.done', mascot(r.correct === r.total ? 'wow' : 'happy', 'lg'), stars(r.correct === r.total ? 3 : r.correct >= 3 ? 2 : 1), h('h2', t('{a} out of {b}', {a: r.correct, b: r.total})), h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: r.xp})),
+                    stage.replaceChildren(h('section.done', mascot(r.correct === r.total ? 'wow' : 'happy', 'lg'), stars(r.correct === r.total ? 3 : r.correct >= 3 ? 2 : 1), h('h2', t('{a} out of {b}', {a: r.correct, b: r.total})), r.seconds ? h('p', t('Time: {n} seconds', {n: r.seconds})) : null, h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: r.xp})),
                         h('div.step-actions', btn(t('Back home'), {onclick: () => go('home')})), reviewList(r.review.filter(x => !x.ok))));
                     celebrate({...r, xp: 0});
                 } catch (e) {
@@ -632,7 +713,7 @@
                 }
             });
         }
-        return {title: t('Daily challenge'), back: 'home', tab: 'home', nav: false, body: [h('div.bar.top', bar), stage]};
+        return {title: t('Daily challenge'), back: 'home', tab: 'home', nav: false, body: [h('div.bar.top', bar), slot, stage]};
     }
 
     // ---------------------------------------------------------------- gym
@@ -654,7 +735,7 @@
         }
 
         if (d.drills.length) next();
-        else stage.replaceChildren(empty('bolt', t('The gym opens soon'), t('Start the first level of a course to unlock the drills.'), btn(t('Open the path'), {onclick: () => go('path')})));
+        else stage.replaceChildren(empty(t('The gym opens soon'), t('Start the first level of a course to unlock the drills.'), btn(t('Open the path'), {onclick: () => go('path')})));
         return {title: t('Gym'), back: 'home', tab: 'home', nav: false, body: [d.drills.length ? h('div.bar.top', bar) : null, stage]};
     }
 
@@ -760,9 +841,9 @@
                 h('section.board-head', mascot(d.me && d.me.place === 1 ? 'wow' : 'happy'), h('div.grow', h('strong', daily ? t('Daily challenge') : t('Today’s forge')), h('p', d.participants === 1 ? t('1 participant') : t('{n} participants', {n: d.participants})), h('p.small', t('Closes in {h} h {m} min', {h: hours, m: minutes})))),
                 seg([['daily', t('Daily challenge')], ['xp', t('Today’s XP')]], type, pick('type')),
                 seg([['all', t('Everyone')], ['friends', t('Friends')]], scope, pick('scope')),
-                h('p.lead', daily ? t('Most right answers first; at a tie, whoever finished earlier. The top three win Sparks: the more people take part, the bigger the prize.') : t('Who earned the most XP today. This one is just for fun: the prizes go to the daily challenge.')),
+                h('p.lead', daily ? t('Most right answers first; at a tie, the fastest. The top three win Sparks: the more people take part, the bigger the prize.') : t('Who earned the most XP today. This one is just for fun: the prizes go to the daily challenge.')),
                 daily && scope === 'all' && d.prizes[0] ? h('div.prizes', prize(d.prizes[0], '1°'), prize(d.prizes[1], '2°'), prize(d.prizes[2], '3°')) : null,
-                d.rows.length ? h('ol.board', d.rows.map(row)) : empty('trophy', t('Nobody yet today'), daily ? t('Do the daily challenge and take the lead.') : t('Finish a level, a drill or a game and take the lead.'), daily && !S.state.daily ? btn(t('Daily challenge'), {onclick: () => go('daily')}) : null),
+                d.rows.length ? h('ol.board', d.rows.map(row)) : empty(t('Nobody yet today'), daily ? t('Do the daily challenge and take the lead.') : t('Finish a level, a drill or a game and take the lead.'), daily && !S.state.daily ? btn(t('Daily challenge'), {onclick: () => go('daily')}) : null),
                 d.me && d.me.place > 20 ? h('ol.board', {start: d.me.place}, row(d.me)) : null,
                 !d.onBoard ? banner('info', 'info', t('You are not in the ranking'), t('You can join again from your profile.')) : null,
                 h('a.btn.btn-tonal.btn-block', {href: '#/friends'}, icon('group'), h('span', t('Find and manage friends'))),
@@ -947,7 +1028,8 @@
                     row('delete', t('Delete account'), deleteAccount, true)),
                 h('h2.section-title', t('Support the project')),
                 h('a.donate', {href: DONATE_URL, target: '_blank', rel: 'noopener'}, h('span.quick-ic', icon('heart')), h('span.grow', h('strong', t('Donate')), h('span', t('Fucina is open source and free. A donation supports the project.'))), icon('right')),
-                h('p.muted.center.small', 'Fucina ' + VERSION),
+                h('div.center', h('a.credit', {href: AUTHOR_URL, target: '_blank', rel: 'noopener'}, h('span', t('A project by')), h('span.credit-name', 'Saverio Morelli'))),
+                h('div.center', h('button.version-btn', {type: 'button', onclick: releaseNotes}, 'Fucina ' + VERSION)),
             ]
         };
     }
@@ -973,6 +1055,14 @@
         }, UI.field(t('Username'), name), h('p.muted.small', t('3 to 20 letters, numbers, dots or underscores. It is the only thing others can see about you: avoid your real name if you prefer.')), err, h('div.spacer'), save,
             changing ? h('div.center', btn(t('Cancel'), {kind: 'text', onclick: render})) : null);
         root.replaceChildren(h('div.auth', h('div.auth-top', mascot('happy', 'auth-pet'), h('h1', changing ? t('Change username') : t('Choose your username')), h('p', t('This is how others find you'))), h('div.auth-body', form)));
+    }
+
+    function releaseNotes() {
+        const s = sheet({
+            title: t('Release notes'),
+            body: [h('div.releases', RELEASES.map(r => h('section.release', h('h3', r.v, h('small', UI.fmtDate(r.date))), h('ul', (r[I18N.lang] || r.en).map(n => h('li', n))))))],
+            actions: [btn(t('Close'), {onclick: () => s.close()})]
+        });
     }
 
     function editProfile() {
@@ -1084,7 +1174,7 @@
                     renderAuth(v);
                 }),
                 S.config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
-                form, features('mob-only'))));
+                form, features('mob-only'), h('p.center.small', h('a.verify-link', {href: 'verify.php'}, t('Verify a certificate'))))));
         document.title = 'Fucina';
         if (S.config.googleClientId) UI.googleButton(gslot, S.config.googleClientId, googleSignIn, mode === 'login' ? 'continue_with' : 'signup_with');
     }

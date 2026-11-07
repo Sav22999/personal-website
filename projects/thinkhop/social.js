@@ -8,7 +8,7 @@
     const I = window.ThinkHopI18n;
     I.extend({
         en: {
-            username_change: 'Change username', username: 'Username', username_title: 'Choose your username', username_hint: '3–20 letters, numbers or _. It is public.',
+            username_change: 'Change username', ranking_show: 'Show me in the ranking', ranking_hint: 'If you turn this off, other players no longer see you in the ranking. You can still find your own result.', ranking_on: 'You appear in the ranking', ranking_off: 'You no longer appear in the ranking', ranking_hidden: 'Only you can see your result.', username: 'Username', username_title: 'Choose your username', username_hint: '3–20 letters, numbers or _. It is public.',
             username_text: 'It is the only thing other players can see: it appears in the rankings and in the search for friends.',
             err_username_invalid: 'Use 3–20 letters, numbers or _.', err_username_taken: 'This username is already taken.', err_not_found: 'Player not found.', err_too_many_friends: 'You have reached the maximum number of friends.',
             board: 'Ranking', board_title: 'Today’s ranking', board_all: 'Everyone', board_friends: 'Friends', board_empty: 'Nobody here yet: play the daily challenge!', board_sign_in: 'Sign in to appear in the ranking.', board_row: '{n}/{m} · {t}',
@@ -16,7 +16,7 @@
             friend_add: 'Add', friend_remove: 'Remove', friend_added: '{n} added', friend_removed: '{n} removed',
         },
         it: {
-            username_change: 'Cambia username', username: 'Username', username_title: 'Scegli il tuo username', username_hint: '3–20 lettere, numeri o _. È pubblico.',
+            username_change: 'Cambia username', ranking_show: 'Mostrami in classifica', ranking_hint: 'Se lo disattivi, gli altri giocatori non ti vedono più in classifica. Il tuo risultato resta visibile a te.', ranking_on: 'Compari in classifica', ranking_off: 'Non compari più in classifica', ranking_hidden: 'Il tuo risultato lo vedi solo tu.', username: 'Username', username_title: 'Scegli il tuo username', username_hint: '3–20 lettere, numeri o _. È pubblico.',
             username_text: 'È l’unica cosa che gli altri giocatori possono vedere: compare nelle classifiche e nella ricerca amici.',
             err_username_invalid: 'Usa 3–20 lettere, numeri o _.', err_username_taken: 'Questo username è già in uso.', err_not_found: 'Giocatore non trovato.', err_too_many_friends: 'Hai raggiunto il numero massimo di amici.',
             board: 'Classifica', board_title: 'Classifica di oggi', board_all: 'Tutti', board_friends: 'Amici', board_empty: 'Ancora nessuno: gioca la sfida del giorno!', board_sign_in: 'Accedi per comparire in classifica.', board_row: '{n}/{m} · {t}',
@@ -24,7 +24,7 @@
             friend_add: 'Aggiungi', friend_remove: 'Rimuovi', friend_added: '{n} aggiunto', friend_removed: '{n} rimosso',
         },
         es: {
-            username_change: 'Cambiar nombre de usuario', username: 'Nombre de usuario', username_title: 'Elige tu nombre de usuario', username_hint: '3–20 letras, números o _. Es público.',
+            username_change: 'Cambiar nombre de usuario', ranking_show: 'Mostrarme en la clasificación', ranking_hint: 'Si lo desactivas, los demás jugadores ya no te ven en la clasificación. Tu resultado sigue visible para ti.', ranking_on: 'Apareces en la clasificación', ranking_off: 'Ya no apareces en la clasificación', ranking_hidden: 'Tu resultado solo lo ves tú.', username: 'Nombre de usuario', username_title: 'Elige tu nombre de usuario', username_hint: '3–20 letras, números o _. Es público.',
             username_text: 'Es lo único que ven los demás jugadores: aparece en las clasificaciones y en la búsqueda de amigos.',
             err_username_invalid: 'Usa 3–20 letras, números o _.', err_username_taken: 'Este nombre de usuario ya está en uso.', err_not_found: 'Jugador no encontrado.', err_too_many_friends: 'Has alcanzado el número máximo de amigos.',
             board: 'Clasificación', board_title: 'Clasificación de hoy', board_all: 'Todos', board_friends: 'Amigos', board_empty: 'Aún no hay nadie: ¡juega el desafío del día!', board_sign_in: 'Inicia sesión para aparecer en la clasificación.', board_row: '{n}/{m} · {t}',
@@ -32,7 +32,7 @@
             friend_add: 'Añadir', friend_remove: 'Quitar', friend_added: '{n} añadido', friend_removed: '{n} quitado',
         },
         fr: {
-            username_change: 'Changer de pseudo', username: 'Pseudo', username_title: 'Choisis ton pseudo', username_hint: '3 à 20 lettres, chiffres ou _. Il est public.',
+            username_change: 'Changer de pseudo', ranking_show: 'M’afficher au classement', ranking_hint: 'Si tu le désactives, les autres joueurs ne te voient plus au classement. Ton résultat reste visible pour toi.', ranking_on: 'Tu apparais au classement', ranking_off: 'Tu n’apparais plus au classement', ranking_hidden: 'Toi seul vois ton résultat.', username: 'Pseudo', username_title: 'Choisis ton pseudo', username_hint: '3 à 20 lettres, chiffres ou _. Il est public.',
             username_text: 'C’est la seule chose que les autres joueurs voient : il apparaît dans les classements et la recherche d’amis.',
             err_username_invalid: 'Utilise 3 à 20 lettres, chiffres ou _.', err_username_taken: 'Ce pseudo est déjà pris.', err_not_found: 'Joueur introuvable.', err_too_many_friends: 'Tu as atteint le nombre maximum d’amis.',
             board: 'Classement', board_title: 'Classement du jour', board_all: 'Tous', board_friends: 'Amis', board_empty: 'Personne pour l’instant : joue le défi du jour !', board_sign_in: 'Connecte-toi pour apparaître au classement.', board_row: '{n}/{m} · {t}',
@@ -40,7 +40,7 @@
             friend_add: 'Ajouter', friend_remove: 'Retirer', friend_added: '{n} ajouté', friend_removed: '{n} retiré',
         },
         de: {
-            username_change: 'Benutzernamen ändern', username: 'Benutzername', username_title: 'Wähle deinen Benutzernamen', username_hint: '3–20 Buchstaben, Ziffern oder _. Er ist öffentlich.',
+            username_change: 'Benutzernamen ändern', ranking_show: 'In der Rangliste zeigen', ranking_hint: 'Schaltest du das aus, sehen dich andere nicht mehr in der Rangliste. Dein Ergebnis siehst du weiterhin.', ranking_on: 'Du erscheinst in der Rangliste', ranking_off: 'Du erscheinst nicht mehr in der Rangliste', ranking_hidden: 'Dein Ergebnis siehst nur du.', username: 'Benutzername', username_title: 'Wähle deinen Benutzernamen', username_hint: '3–20 Buchstaben, Ziffern oder _. Er ist öffentlich.',
             username_text: 'Das ist das Einzige, was andere sehen: Er erscheint in den Ranglisten und in der Freundessuche.',
             err_username_invalid: 'Verwende 3–20 Buchstaben, Ziffern oder _.', err_username_taken: 'Dieser Benutzername ist vergeben.', err_not_found: 'Spieler nicht gefunden.', err_too_many_friends: 'Du hast die Höchstzahl an Freunden erreicht.',
             board: 'Rangliste', board_title: 'Rangliste von heute', board_all: 'Alle', board_friends: 'Freunde', board_empty: 'Noch niemand: Spiel die Tagesaufgabe!', board_sign_in: 'Melde dich an, um in der Rangliste zu erscheinen.', board_row: '{n}/{m} · {t}',
@@ -97,7 +97,7 @@
             }
         }
         const m = modal([h('h3', t('board_title')), tabs, list,
-            A.user() ? null : h('p.muted', t('board_sign_in')),
+            A.user() ? (A.user().ranking ? null : h('p.muted', t('ranking_hidden'))) : h('p.muted', t('board_sign_in')),
             h('div.actions', h('button.btn.btn-primary', {type: 'button', onclick: () => m.close()}, t('close')))]);
         load();
     }

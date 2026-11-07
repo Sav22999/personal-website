@@ -156,6 +156,7 @@ function schema_statements(string $p): array
             `lesson` VARCHAR(40) NOT NULL,
             `stars` TINYINT UNSIGNED NOT NULL DEFAULT 1,
             `task_done` TINYINT(1) NOT NULL DEFAULT 0,
+            `skipped` TINYINT(1) NOT NULL DEFAULT 0,
             `completed_at` DATETIME NOT NULL,
             PRIMARY KEY (`user_id`, `course`, `lesson`),
             CONSTRAINT `fk_{$p}lp_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
@@ -191,6 +192,7 @@ function schema_statements(string $p): array
             `correct` TINYINT UNSIGNED NOT NULL,
             `total` TINYINT UNSIGNED NOT NULL,
             `done_at` DATETIME NULL,
+            `seconds` INT UNSIGNED NULL,
             PRIMARY KEY (`user_id`, `day`),
             CONSTRAINT `fk_{$p}dr_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
@@ -214,6 +216,14 @@ function schema_statements(string $p): array
             PRIMARY KEY (`user_id`, `drill_id`),
             CONSTRAINT `fk_{$p}dd_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_{$p}dd_drill` FOREIGN KEY (`drill_id`) REFERENCES `{$p}drills` (`id`) ON DELETE CASCADE
+        ) $e",
+        // When a learner opened the daily challenge: the time is measured here, not in the browser
+        "CREATE TABLE IF NOT EXISTS `{$p}daily_starts` (
+            `user_id` INT UNSIGNED NOT NULL,
+            `day` DATE NOT NULL,
+            `started_at` DATETIME NOT NULL,
+            PRIMARY KEY (`user_id`, `day`),
+            CONSTRAINT `fk_{$p}ds_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
         // Friends go one way, like following: adding someone shows you their public results, and nothing else
         "CREATE TABLE IF NOT EXISTS `{$p}friends` (
@@ -267,8 +277,18 @@ function install_schema(PDO $pdo, string $prefix): void
     }
     if (!in_array('on_board', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `on_board` TINYINT(1) NOT NULL DEFAULT 1");
     if (!in_array('username', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `username` VARCHAR(20) NULL AFTER `name`, ADD UNIQUE KEY `uq_username` (`username`)");
+    $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}lesson_progress`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('skipped', $columns, true)) {
+        $pdo->exec("ALTER TABLE `{$prefix}lesson_progress` ADD COLUMN `skipped` TINYINT(1) NOT NULL DEFAULT 0");
+        // Exams passed before this rule existed: their levels count as solved too
+        $pass = (int)($pdo->query("SELECT v FROM `{$prefix}settings` WHERE k = 'exam_pass_percent'")->fetchColumn() ?: 70);
+        $pdo->exec("INSERT IGNORE INTO `{$prefix}lesson_progress` (user_id, course, lesson, stars, task_done, completed_at, skipped)
+            SELECT e.user_id, l.course, l.slug, IF(MAX(e.score) >= 90, 2, 1), 0, UTC_TIMESTAMP(), 1 FROM `{$prefix}exams` e
+            JOIN `{$prefix}lessons` l ON l.course = e.course AND l.status = 'published' WHERE e.score >= $pass GROUP BY e.user_id, l.course, l.slug");
+    }
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}daily_results`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");
+    if (!in_array('seconds', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `seconds` INT UNSIGNED NULL");
     require_once __DIR__ . '/seed.php';
     install_seed($pdo, $prefix);
     install_seed_drills($pdo, $prefix);

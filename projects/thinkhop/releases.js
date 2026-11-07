@@ -1,6 +1,17 @@
 /* ThinkHop — release notes (newest first). Each note is translated in the five languages. */
 window.ThinkHopReleases = [
     {
+        version: '1.4.0',
+        date: '2026-11-07',
+        notes: {
+            en: ['Meet Punto, Sillo, Dedo and Neuro: four mascots that guide you through the games'],
+            it: ['Ecco Punto, Sillo, Dedo e Neuro: quattro mascotte che ti guidano nei giochi'],
+            es: ['Conoce a Punto, Sillo, Dedo y Neuro: cuatro mascotas que te guían por los juegos'],
+            fr: ['Voici Punto, Sillo, Dedo et Neuro : quatre mascottes qui te guident dans les jeux'],
+            de: ['Das sind Punto, Sillo, Dedo und Neuro: vier Maskottchen, die dich durch die Spiele führen'],
+        },
+    },
+    {
         version: '1.3.0',
         date: '2026-11-07',
         notes: {

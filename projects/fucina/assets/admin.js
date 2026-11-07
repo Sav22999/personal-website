@@ -485,7 +485,7 @@
     const SETTINGS = [
         ['XP and Sparks', [['xp_lesson_base', 'Level completed (× difficulty)'], ['xp_lesson_star', 'Each star of a level'], ['xp_task', 'Exercise solved'], ['xp_drill', 'Drill solved'], ['xp_drill_perfect', 'Drill: bonus without mistakes'], ['xp_daily_correct', 'Daily challenge: each right answer'], ['xp_daily_perfect', 'Daily challenge: bonus without mistakes'], ['xp_certificate', 'Exam passed'], ['xp_game_max', 'Game: maximum per match'], ['xp_game_daily_cap', 'Games: daily maximum']]],
         ['Hint prices (Sparks)', [['hint_question', 'Hint on a question'], ['hint_task', 'Hint on an exercise'], ['hint_game', 'Help in a game'], ['hint_drill', 'Hint in a drill']]],
-        ['Final exam', [['exam_questions', 'Number of questions'], ['exam_pass_percent', 'Pass mark (%)'], ['cert_cost', 'Certificate price (Sparks)']]],
+        ['Final exam', [['exam_questions', 'Number of questions'], ['exam_pass_percent', 'Pass mark (%)'], ['exam_minutes', 'Time limit in minutes (0 = none)'], ['cert_cost', 'Certificate price (Sparks)']]],
         ['Daily leaderboard', [['board_per_player', 'First prize: Sparks per participant'], ['board_max', 'First prize: maximum']]],
     ];
 

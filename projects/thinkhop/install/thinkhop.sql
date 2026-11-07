@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `th_users` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(80) NOT NULL,
     `username` VARCHAR(20) NULL,
+    `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1,
     `email` VARCHAR(190) NOT NULL,
     `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
     `google_sub` VARCHAR(64) NULL,
@@ -85,4 +86,4 @@ CREATE TABLE IF NOT EXISTS `th_settings` (
     `v` TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '3') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v);

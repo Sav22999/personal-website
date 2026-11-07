@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS `fc_lesson_progress` (
   `lesson` VARCHAR(40) NOT NULL,
   `stars` TINYINT UNSIGNED NOT NULL DEFAULT 1,
   `task_done` TINYINT(1) NOT NULL DEFAULT 0,
+  `skipped` TINYINT(1) NOT NULL DEFAULT 0,
   `completed_at` DATETIME NOT NULL,
   PRIMARY KEY (`user_id`, `course`, `lesson`),
   CONSTRAINT `fk_fc_lp_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
@@ -186,6 +187,7 @@ CREATE TABLE IF NOT EXISTS `fc_daily_results` (
   `correct` TINYINT UNSIGNED NOT NULL,
   `total` TINYINT UNSIGNED NOT NULL,
   `done_at` DATETIME NULL,
+  `seconds` INT UNSIGNED NULL,
   PRIMARY KEY (`user_id`, `day`),
   CONSTRAINT `fk_fc_dr_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -210,6 +212,14 @@ CREATE TABLE IF NOT EXISTS `fc_drill_done` (
   PRIMARY KEY (`user_id`, `drill_id`),
   CONSTRAINT `fk_fc_dd_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_fc_dd_drill` FOREIGN KEY (`drill_id`) REFERENCES `fc_drills` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `fc_daily_starts` (
+  `user_id` INT UNSIGNED NOT NULL,
+  `day` DATE NOT NULL,
+  `started_at` DATETIME NOT NULL,
+  PRIMARY KEY (`user_id`, `day`),
+  CONSTRAINT `fk_fc_ds_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `fc_friends` (
@@ -252,7 +262,7 @@ CREATE TABLE IF NOT EXISTS `fc_badges` (
   CONSTRAINT `fk_fc_ba_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v);
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-base','html',1,NULL,'published','{"title":{"it":"HTML base","en":"HTML Basics"},"short":{"it":"HTML base","en":"HTML Basics"},"desc":{"it":"Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.","en":"The language every web page is made of: tags, text, links, images, lists, tables and forms."},"level":{"it":"Base","en":"Basic"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-intermediate','html',2,'html-base','published','{"title":{"it":"HTML intermedio","en":"Intermediate HTML"},"short":{"it":"HTML intermedio","en":"HTML Intermediate"},"desc":{"it":"Attributi globali, link interni, testo ricco, iframe e moduli più completi.","en":"Global attributes, internal links, rich text, iframes and fuller forms."},"level":{"it":"Intermedio","en":"Intermediate"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-advanced','html',3,'html-intermediate','published','{"title":{"it":"HTML avanzato","en":"Advanced HTML"},"short":{"it":"HTML avanzato","en":"Advanced HTML"},"desc":{"it":"Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.","en":"Semantic, accessible pages: structure, rich forms, media and metadata."},"level":{"it":"Avanzato","en":"Advanced"}}');

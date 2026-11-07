@@ -3,7 +3,7 @@
  * ThinkHop — JSON API.  api/index.php?r=<action>
  *
  * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout, board.daily
- * Account:  auth.profile, auth.username, auth.password, auth.delete, sync, friends.list, friends.search, friends.add, friends.remove
+ * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, sync, friends.list, friends.search, friends.add, friends.remove
  * Admin:    admin.overview, admin.settings.save, admin.questions, admin.question.save, admin.question.delete,
  *           admin.games, admin.game.delete, admin.players, admin.player.update, admin.player.delete
  *
@@ -304,6 +304,11 @@ switch ($r) {
         db()->prepare('UPDATE ' . t('users') . ' SET username = ? WHERE id = ?')->execute([$username, $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
+    case 'auth.ranking':
+        $u = writer();
+        db()->prepare('UPDATE ' . t('users') . ' SET show_in_ranking = ? WHERE id = ?')->execute([empty(body()['visible']) ? 0 : 1, $u['id']]);
+        send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
+
     case 'board.daily':
         // Only usernames and results: nothing else about a player leaves the server
         only('POST');
@@ -318,6 +323,9 @@ switch ($r) {
             FROM ' . t('games') . ' g JOIN ' . t('users') . " u ON u.id = g.user_id
             WHERE g.mode = 'daily' AND g.day = ? AND u.username IS NOT NULL AND u.status = 'active'";
         $args = [$day];
+        // Who chose to stay out is seen by nobody else: they still find their own result
+        $sql .= ' AND (u.show_in_ranking = 1 OR u.id = ?)';
+        $args[] = $me;
         if ($friendsOnly) {
             $sql .= ' AND (u.id = ? OR u.id IN (SELECT friend_id FROM ' . t('friends') . ' WHERE user_id = ?))';
             array_push($args, $me, $me);

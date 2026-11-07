@@ -445,6 +445,29 @@
         ]);
     }
 
+    /** Only the player's choice: staying out of the ranking changes nothing else in the game. */
+    function rankingToggle() {
+        const state = h('b.menu-state');
+        const draw = () => {
+            state.textContent = t(user.ranking ? 'yes' : 'no');
+            b.setAttribute('aria-pressed', String(!!user.ranking));
+        };
+        const b = h('button', {
+            type: 'button', title: t('ranking_hint'), onclick: async () => {
+                try {
+                    const d = await busy(b, () => api('auth.ranking', {visible: !user.ranking}));
+                    user = d.user;
+                    draw();
+                    toast(t(user.ranking ? 'ranking_on' : 'ranking_off'), 'ok');
+                } catch (e) {
+                    toast(e.message, 'bad');
+                }
+            }
+        }, icon('trophy'), h('span', t('ranking_show')), state);
+        draw();
+        return b;
+    }
+
     function showProfile() {
         const m = modal([
             h('div.profile-head', h('span.avatar', (user.name || '?').slice(0, 1).toUpperCase()),
@@ -453,6 +476,7 @@
                 h('button', {type: 'button', onclick: () => showProfileForm(m)}, icon('pen'), h('span', t('profile_edit'))),
                 h('button', {type: 'button', onclick: () => showUsernameForm(m)}, icon('user'), h('span', t(user.username ? 'username_change' : 'username_title'))),
                 h('button', {type: 'button', onclick: () => showPasswordForm(m)}, icon('key'), h('span', t(user.hasPassword ? 'password_change' : 'password_set'))),
+                rankingToggle(),
                 h('button', {type: 'button', onclick: showDonate}, icon('heart'), h('span', t('donate'))),
                 user.isAdmin ? h('a.menu-link', {href: 'admin.html'}, icon('shield'), h('span', t('admin_panel'))) : null,
                 h('button', {type: 'button', onclick: () => signOut(m)}, icon('exit'), h('span', t('sign_out'))),

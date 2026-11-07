@@ -5,12 +5,10 @@ animazioni, SCSS, Sass, JavaScript, TypeScript e PHP, in percorsi paralleli che 
 
 Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per Google Play (`android/`).
 
-Non è ancora tra i progetti personali del sito: non è collegata da `projects/index.php`, `sitemap.xml` o `llms.txt`.
-
 ## Come funziona
 
 - **Corsi e livelli**: ogni corso è una serie di livelli (teoria, domande, esercizio di codice) con difficoltà crescente.
-  Un livello si apre finendo il precedente, un corso finendo quello che lo precede.
+  Un livello si apre finendo il precedente, un corso finendo quello che lo precede o superandone l’esame.
 - **Sfide lampo** (`lib/drills.php`, `assets/drills.js`): tra teoria e domande, sei tipi di mini-gioco: tessere, ordina
   le righe, caccia al bug, coppie, vero o falso a tempo e figure da copiare con i comandi CSS. Si ritrovano mescolate in
   **Palestra**. Come i giochi si svolgono nel browser, quindi non sono materiale d’esame e pagano una volta sola.
@@ -19,15 +17,20 @@ Non è ancora tra i progetti personali del sito: non è collegata da `projects/i
 - **XP e Scintille**: ogni ricompensa dà XP e altrettante Scintille. Gli XP crescono soltanto e decidono il grado (da
   Scintilla a Leggenda della forgia). Le Scintille si spendono in **suggerimenti**: su una domanda tolgono metà delle
   risposte sbagliate, su un esercizio mostrano una soluzione, nei giochi danno un aiuto. All’esame non ci sono.
-- **Esame e certificato**: finiti i livelli, un esame con domande estratte a caso. Superato, il certificato si **sblocca
+- **Esame e certificato**: un esame con domande estratte a caso e un tempo massimo (15 minuti di partenza, controllato dal
+  server), aperto per ogni corso anche senza fare i livelli: chi
+  conosce già la materia lo supera e il corso conta come finito: si aprono i successivi e i livelli non giocati risultano
+  risolti con 2 stelle dal 90% e 1 altrimenti, senza XP e senza contare per i badge a numero. Superato, il certificato si **sblocca
   con le Scintille** (prezzo in Impostazioni, 200 di partenza) e si può mostrare e stampare in A4
-  (`certificate.php?c=CODICE`). Non ha valore legale, e lo dice.
+  (`certificate.php?c=CODICE`). È un’immagine generata dal server, sempre in inglese, che si salva in PNG o PDF
+  (`lib/certificate.php`; lo sfondo si rigenera con `tools/build-certificate.py`). Non ha valore legale, e lo dice.
+  Chiunque, anche senza account, può controllarlo con il suo numero univoco su `verify.php`.
 - **Giochi**: cinque giochi a livelli (ispirati a FaceGuess, Sudoku, Connect Four, Chess e LetterHop, ma sul codice).
   *Chi è il tag?*, *Tagdoku*, *Quattro di fila*, *Scacchiera CSS*, *Salti di riga*.
   Danno Scintille extra, fino a un massimo giornaliero.
 - **Username e amici**: ognuno sceglie uno username, l’unico dato pubblico. Serve per cercare, aggiungere e rimuovere
   amici (in un solo senso, senza richieste) e nelle classifiche, tra tutti o tra amici.
-- **Classifiche del giorno**: quella della sfida del giorno (più risposte giuste, a parità chi finisce prima) dà i premi:
+- **Classifiche del giorno**: quella della sfida del giorno (più risposte giuste, a parità il più veloce, con il tempo misurato dal server) dà i premi:
   il primo riceve Scintille in base ai partecipanti, il secondo la metà e il terzo un quarto, ma serve almeno una risposta
   giusta. Non serve un cron: paga il primo accesso del giorno dopo. Quella degli XP è solo per divertimento. Ci si può
   escludere dal profilo.

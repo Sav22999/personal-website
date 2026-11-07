@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS = [
     'xp_lesson_base' => 10, 'xp_lesson_star' => 10, 'xp_task' => 10, 'xp_daily_correct' => 5, 'xp_daily_perfect' => 10, 'xp_certificate' => 100,
     'xp_game_max' => 30, 'xp_game_daily_cap' => 150, 'xp_drill' => 5, 'xp_drill_perfect' => 5,
     'hint_question' => 10, 'hint_task' => 20, 'hint_game' => 15, 'hint_drill' => 5,
-    'exam_questions' => 10, 'exam_pass_percent' => 70, 'cert_cost' => 200,
+    'exam_questions' => 10, 'exam_pass_percent' => 70, 'exam_minutes' => 15, 'cert_cost' => 200,
     'board_per_player' => 10, 'board_max' => 500,
 ];
 

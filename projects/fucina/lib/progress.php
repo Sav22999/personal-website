@@ -130,7 +130,8 @@ function user_totals(int $uid): array
         $st->execute([$uid]);
         return $st->fetch(PDO::FETCH_NUM);
     };
-    [$lessons, $stars, $tasks] = $one('SELECT COUNT(*), COALESCE(SUM(stars),0), COALESCE(SUM(task_done),0) FROM ' . t('lesson_progress') . ' WHERE user_id = ?');
+    // Levels passed through the exam do not count here: three exams must not earn the badges for 25 lessons
+    [$lessons, $stars, $tasks] = $one('SELECT COALESCE(SUM(skipped = 0),0), COALESCE(SUM(IF(skipped = 0, stars, 0)),0), COALESCE(SUM(task_done),0) FROM ' . t('lesson_progress') . ' WHERE user_id = ?');
     [$games, $kinds, $wins] = $one('SELECT COUNT(*), COUNT(DISTINCT game), COALESCE(SUM(won),0) FROM ' . t('game_results') . ' WHERE user_id = ?');
     [$daily, $perfect] = $one('SELECT COUNT(*), COALESCE(SUM(correct = total),0) FROM ' . t('daily_results') . ' WHERE user_id = ?');
     [$drills, $drillsPerfect] = $one('SELECT COUNT(*), COALESCE(SUM(stars = 3),0) FROM ' . t('drill_done') . ' WHERE user_id = ?');
@@ -193,14 +194,17 @@ function award_badges(int $uid): array
 
 function lesson_rows(int $uid): array
 {
-    $st = db()->prepare('SELECT course, lesson, stars, task_done FROM ' . t('lesson_progress') . ' WHERE user_id = ?');
+    $st = db()->prepare('SELECT course, lesson, stars, task_done, skipped FROM ' . t('lesson_progress') . ' WHERE user_id = ?');
     $st->execute([$uid]);
     $out = [];
-    foreach ($st->fetchAll() as $r) $out[$r['course']][$r['lesson']] = ['stars' => (int)$r['stars'], 'taskDone' => (bool)$r['task_done']];
+    foreach ($st->fetchAll() as $r) $out[$r['course']][$r['lesson']] = ['stars' => (int)$r['stars'], 'taskDone' => (bool)$r['task_done'], 'skipped' => (bool)$r['skipped']];
     return $out;
 }
 
-/** Courses open to a learner: one with a prerequisite stays locked until all the lessons of that course are done. */
+/**
+ * Courses open to a learner: one with a prerequisite stays locked until that course is finished.
+ * A course is finished with all its lessons or by passing its exam: who already knows the subject can move on.
+ */
 function courses_summary(int $uid): array
 {
     $done = lesson_rows($uid);
@@ -213,14 +217,33 @@ function courses_summary(int $uid): array
     foreach (course_ids() as $id) {
         $c = course_raw($id);
         $valid = array_intersect_key($done[$id] ?? [], array_flip(array_column($c['lessons'], 'id')));
-        $finished[$id] = count($c['lessons']) > 0 && count($valid) === count($c['lessons']);
+        $finished[$id] = isset($passed[$id]) || (count($c['lessons']) > 0 && count($valid) === count($c['lessons']));
         $out[] = [
             'id' => $id, 'title' => pick($c['title']), 'short' => pick($c['short']), 'desc' => pick($c['desc']), 'level' => pick($c['level']), 'family' => $c['family'],
             'after' => $c['after'], 'lessons' => count($c['lessons']), 'done' => count($valid), 'stars' => array_sum(array_column($valid, 'stars')), 'certificate' => $certs[$id] ?? null, 'examScore' => $passed[$id] ?? 0,
         ];
     }
-    foreach ($out as &$o) $o['locked'] = $o['after'] !== null && in_array($o['after'], course_ids(), true) && !$finished[$o['after']];
+    foreach ($out as &$o) $o['locked'] = !$o['examScore'] && $o['after'] !== null && in_array($o['after'], course_ids(), true) && !$finished[$o['after']];
     return $out;
+}
+
+/**
+ * A passed exam solves the levels not played yet: 2 stars from 90%, otherwise 1. The third star is for playing them.
+ * Levels already played stay as they are, and a better exam can only raise the stars of the skipped ones.
+ */
+function solve_skipped_lessons(int $uid, array $c, int $score): void
+{
+    $stars = $score >= 90 ? 2 : 1;
+    $st = db()->prepare('INSERT INTO ' . t('lesson_progress') . ' (user_id, course, lesson, stars, task_done, completed_at, skipped) VALUES (?,?,?,?,0,?,1)
+        ON DUPLICATE KEY UPDATE stars = IF(skipped = 1, GREATEST(stars, VALUES(stars)), stars)');
+    foreach ($c['lessons'] as $l) $st->execute([$uid, $c['id'], $l['id'], $stars, now_utc()]);
+}
+
+/** Has the learner passed the exam of this course? Then all its lessons are open, in any order. */
+function exam_passed(int $uid, string $id): bool
+{
+    foreach (courses_summary($uid) as $c) if ($c['id'] === $id) return $c['examScore'] > 0;
+    return false;
 }
 
 function course_locked(int $uid, string $id): bool
@@ -285,6 +308,7 @@ function state_payload(array $u): array
         'courses' => courses_summary($uid), 'totals' => user_totals($uid), 'activity' => $activity, 'games' => $games,
         'daily' => $daily ? ['correct' => (int)$daily['correct'], 'total' => (int)$daily['total']] : null, 'badges' => $badges,
         'costs' => ['question' => setting('hint_question'), 'task' => setting('hint_task'), 'game' => setting('hint_game'), 'drill' => setting('hint_drill'), 'certificate' => setting('cert_cost')],
+        'examMinutes' => setting('exam_minutes'),
         'gameSparks' => ['today' => $gameToday, 'cap' => setting('xp_game_daily_cap')],
         'board' => board_position($uid), 'prizes' => unseen_prizes($uid),
     ];
@@ -301,13 +325,20 @@ function board_rows(string $day): array
     return $st->fetchAll();
 }
 
-/** Who did the daily challenge: the most right answers first, and at a tie whoever finished earlier. */
+/** Who did the daily challenge: the most right answers first, and at a tie whoever took the least time. */
 function daily_board_rows(string $day): array
 {
-    $st = db()->prepare('SELECT u.id, u.username, d.correct, d.total FROM ' . t('daily_results') . ' d JOIN ' . t('users') . " u ON u.id = d.user_id
-        WHERE d.day = ? AND u.on_board = 1 AND u.status = 'active' AND u.username IS NOT NULL ORDER BY d.correct DESC, d.done_at, u.id");
+    $st = db()->prepare('SELECT u.id, u.username, d.correct, d.total, d.seconds FROM ' . t('daily_results') . ' d JOIN ' . t('users') . " u ON u.id = d.user_id
+        WHERE d.day = ? AND u.on_board = 1 AND u.status = 'active' AND u.username IS NOT NULL ORDER BY d.correct DESC, d.seconds IS NULL, d.seconds, d.done_at, u.id");
     $st->execute([$day]);
     return $st->fetchAll();
+}
+
+/** A time for the rankings: 42s, or 3m 20s. */
+function short_time(?int $seconds): string
+{
+    if ($seconds === null) return '';
+    return $seconds < 60 ? $seconds . 's' : intdiv($seconds, 60) . 'm ' . ($seconds % 60) . 's';
 }
 
 /** The ids of the friends of a learner. */

@@ -194,6 +194,23 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
+        <a class="card" href="/projects/fucina/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/fucina.png" alt="">
+            </div>
+            <h3>Fucina</h3>
+            <p>Learn HTML, CSS, JavaScript, TypeScript and PHP by playing: levels that get harder, quick drills, games, a
+                daily challenge with its leaderboard, and certificates to unlock with the Sparks you earn.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>English</li>
+                <li>Italian</li>
+            </ul>
+        </a>
     </div>
 
     <div class="projects-divider">
@@ -281,6 +298,23 @@ $canonical = '/projects/';
             <h3>LetterHop</h3>
             <p>The word ladder game: go from one word to another changing one letter at a time. Three levels, five
                 languages, and the fewer words you use, the more points you get. No sign-up required.</p>
+            <ul class="project-tags">
+                <li>Web game</li>
+                <li>Multilingual</li>
+                <li>Built with Claude</li>
+            </ul>
+        </a>
+        <a class="card" href="/projects/thinkhop/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/thinkhop.png" alt="">
+            </div>
+            <h3>ThinkHop</h3>
+            <p>The logic game: liars, treasure chests, mini sudoku, absurd reasoning and traps across 500 levels that keep
+                getting harder. Five languages, a daily ranking and friends, with no sign-up required to play.</p>
             <ul class="project-tags">
                 <li>Web game</li>
                 <li>Multilingual</li>

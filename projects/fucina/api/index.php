@@ -95,6 +95,7 @@ function reward(array $u, int $xp, int $levelBefore, array $extra = []): void
 function lesson_open(int $uid, array $c, string $slug): bool
 {
     if (course_locked($uid, $c['id'])) return false;
+    if (exam_passed($uid, $c['id'])) return true;
     $mine = lesson_rows($uid)[$c['id']] ?? [];
     foreach ($c['lessons'] as $l) {
         if ($l['id'] === $slug) return true;
@@ -372,7 +373,7 @@ switch ($r) {
         $lesson = $c['lessons'][$index];
         $mine = lesson_rows($uid)[$c['id']] ?? [];
         // Lessons follow one another: the previous one must be done
-        if ($index > 0 && !isset($mine[$c['lessons'][$index - 1]['id']])) fail('Complete the previous lessons first.', 403, 'locked');
+        if ($index > 0 && !isset($mine[$c['lessons'][$index - 1]['id']]) && !exam_passed($uid, $c['id'])) fail('Complete the previous lessons first.', 403, 'locked');
 
         // "answers" holds the first answer given to each question: it decides the stars
         $answers = is_array($b['answers'] ?? null) ? $b['answers'] : [];
@@ -390,7 +391,7 @@ switch ($r) {
         if ($taskDone && !($before['taskDone'] ?? false)) $xp += setting('xp_task');
 
         db()->prepare('INSERT INTO ' . t('lesson_progress') . ' (user_id, course, lesson, stars, task_done, completed_at) VALUES (?,?,?,?,?,?)
-            ON DUPLICATE KEY UPDATE stars = GREATEST(stars, VALUES(stars)), task_done = GREATEST(task_done, VALUES(task_done))')
+            ON DUPLICATE KEY UPDATE stars = GREATEST(stars, VALUES(stars)), task_done = GREATEST(task_done, VALUES(task_done)), skipped = 0')
             ->execute([$uid, $c['id'], $lessonId, $stars, $taskDone ? 1 : 0, now_utc()]);
         add_xp($uid, $xp, $before ? 0 : 1);
         reward($u, $xp, $levelBefore, ['stars' => $stars, 'correct' => $correct, 'total' => $total]);
@@ -441,16 +442,18 @@ switch ($r) {
         $uid = (int)$u['id'];
         $b = body();
         $c = course_or_404(s($b, 'course', 30));
-        $mine = lesson_rows($uid)[$c['id']] ?? [];
-        if (!$c['lessons']) fail('Complete all the lessons of the course first.', 403, 'locked');
-        foreach ($c['lessons'] as $l) if (!isset($mine[$l['id']])) fail('Complete all the lessons of the course first.', 403, 'locked');
+        // Open to everyone, even on a locked course: who already knows the subject can prove it and move on
         $pool = course_questions($c);
+        if (!$pool) fail('Course not found.', 404, 'not_found');
+        $st = db()->prepare('SELECT 1 FROM ' . t('exams') . ' WHERE user_id = ? AND course = ? AND score >= 100 LIMIT 1');
+        $st->execute([$uid, $c['id']]);
+        if ($st->fetchColumn()) fail('You already passed this exam with full marks.', 409, 'perfect');
         $ids = array_keys($pool);
         shuffle($ids);
         $ids = array_map('strval', array_slice($ids, 0, setting('exam_questions')));
         db()->prepare('INSERT INTO ' . t('exams') . ' (user_id, course, questions, started_at) VALUES (?,?,?,?)')->execute([$uid, $c['id'], json_encode($ids), now_utc()]);
         $examId = (int)db()->lastInsertId();
-        send_json(['ok' => true, 'exam' => $examId, 'pass' => setting('exam_pass_percent'), 'questions' => array_map(fn($id) => question_out($pool[$id]), $ids)]);
+        send_json(['ok' => true, 'exam' => $examId, 'pass' => setting('exam_pass_percent'), 'seconds' => setting('exam_minutes') * 60, 'questions' => array_map(fn($id) => question_out($pool[$id]), $ids)]);
 
     case 'exam.submit':
         $u = writer();
@@ -464,6 +467,10 @@ switch ($r) {
         $pool = course_questions($c);
         $ids = json_decode($exam['questions'], true);
         $answers = is_array($b['answers'] ?? null) ? $b['answers'] : [];
+        // The clock of the browser submits by itself at zero: what arrives well after the limit does not count
+        $limit = setting('exam_minutes') * 60;
+        $expired = $limit > 0 && time() - strtotime($exam['started_at'] . ' UTC') > $limit + 30;
+        if ($expired) $answers = [];
         $correct = 0;
         $review = [];
         foreach ($ids as $id) {
@@ -478,6 +485,7 @@ switch ($r) {
         $passedBefore = (bool)$st->fetchColumn();
         db()->prepare('UPDATE ' . t('exams') . ' SET score = ?, submitted_at = ? WHERE id = ?')->execute([$score, now_utc(), $exam['id']]);
 
+        if ($passed) solve_skipped_lessons($uid, $c, $score);
         $levelBefore = level_of($uid);
         $xp = 0;
         $cert = user_certificates($uid)[$c['id']] ?? null;
@@ -490,7 +498,7 @@ switch ($r) {
             db()->prepare('UPDATE ' . t('certificates') . ' SET score = ? WHERE code = ?')->execute([$score, $cert['code']]);
         }
         $cert = user_certificates($uid)[$c['id']] ?? null;
-        reward($u, $xp, $levelBefore, ['score' => $score, 'passed' => $passed, 'correct' => $correct, 'total' => count($ids), 'review' => $review, 'certificate' => $cert]);
+        reward($u, $xp, $levelBefore, ['expired' => $expired, 'score' => $score, 'passed' => $passed, 'correct' => $correct, 'total' => count($ids), 'review' => $review, 'certificate' => $cert]);
 
     case 'certificate.claim':
         // A passed exam opens the certificate; the Sparks earned along the way unlock it
@@ -534,9 +542,14 @@ switch ($r) {
     // ======================================================== playing
 
     case 'daily.get':
+        // The clock starts the first time the questions are opened, and reloading does not reset it
         $u = reader();
         $day = today();
-        send_json(['ok' => true, 'day' => $day, 'questions' => array_map(fn($q) => ['key' => $q['key']] + question_out($q), daily_questions($day))]);
+        db()->prepare('INSERT IGNORE INTO ' . t('daily_starts') . ' (user_id, day, started_at) VALUES (?,?,?)')->execute([$u['id'], $day, now_utc()]);
+        $st = db()->prepare('SELECT started_at FROM ' . t('daily_starts') . ' WHERE user_id = ? AND day = ?');
+        $st->execute([$u['id'], $day]);
+        $elapsed = max(0, time() - (int)strtotime($st->fetchColumn() . ' UTC'));
+        send_json(['ok' => true, 'day' => $day, 'elapsed' => $elapsed, 'questions' => array_map(fn($q) => ['key' => $q['key']] + question_out($q), daily_questions($day))]);
 
     case 'daily.submit':
         $u = writer();
@@ -556,11 +569,15 @@ switch ($r) {
             $review[] = ['ok' => $ok, 'q' => pick($q['q']), 'answer' => pick($q['options'][$q['a']]), 'why' => pick($q['why'])];
         }
         $total = count($questions);
-        db()->prepare('INSERT INTO ' . t('daily_results') . ' (user_id, day, correct, total, done_at) VALUES (?,?,?,?,?)')->execute([$uid, $day, $correct, $total, now_utc()]);
+        $st = db()->prepare('SELECT started_at FROM ' . t('daily_starts') . ' WHERE user_id = ? AND day = ?');
+        $st->execute([$uid, $day]);
+        $started = $st->fetchColumn();
+        $seconds = $started ? max(1, time() - (int)strtotime($started . ' UTC')) : null;
+        db()->prepare('INSERT INTO ' . t('daily_results') . ' (user_id, day, correct, total, done_at, seconds) VALUES (?,?,?,?,?,?)')->execute([$uid, $day, $correct, $total, now_utc(), $seconds]);
         $levelBefore = level_of($uid);
         $xp = $correct * setting('xp_daily_correct') + ($correct === $total ? setting('xp_daily_perfect') : 0);
         add_xp($uid, $xp);
-        reward($u, $xp, $levelBefore, ['correct' => $correct, 'total' => $total, 'review' => $review]);
+        reward($u, $xp, $levelBefore, ['correct' => $correct, 'total' => $total, 'review' => $review, 'seconds' => $seconds]);
 
     case 'game.get':
         // What a level needs: its items and, for the games played with questions, questions up to its difficulty.
@@ -636,7 +653,7 @@ switch ($r) {
         $me = null;
         $out = [];
         foreach ($rows as $i => $r) {
-            $line = ['place' => $i + 1, 'name' => $r['username'], 'score' => $daily ? $r['correct'] . '/' . $r['total'] : $r['xp'] . ' XP', 'me' => (int)$r['id'] === $uid];
+            $line = ['place' => $i + 1, 'name' => $r['username'], 'score' => $daily ? trim($r['correct'] . '/' . $r['total'] . ' · ' . short_time($r['seconds'] === null ? null : (int)$r['seconds']), ' ·') : $r['xp'] . ' XP', 'me' => (int)$r['id'] === $uid];
             if ($line['me']) $me = $line;
             if ($i < 20) $out[] = $line;
         }
