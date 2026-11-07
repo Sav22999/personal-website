@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `fc_meta` (
 CREATE TABLE IF NOT EXISTS `fc_users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(80) NOT NULL,
+  `username` VARCHAR(20) NULL,
   `email` VARCHAR(190) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
   `google_sub` VARCHAR(64) NULL,
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `fc_users` (
   `last_login_at` DATETIME NULL,
   `last_seen_at` DATETIME NULL,
   UNIQUE KEY `uq_email` (`email`),
+  UNIQUE KEY `uq_username` (`username`),
   UNIQUE KEY `uq_google` (`google_sub`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -183,6 +185,7 @@ CREATE TABLE IF NOT EXISTS `fc_daily_results` (
   `day` DATE NOT NULL,
   `correct` TINYINT UNSIGNED NOT NULL,
   `total` TINYINT UNSIGNED NOT NULL,
+  `done_at` DATETIME NULL,
   PRIMARY KEY (`user_id`, `day`),
   CONSTRAINT `fk_fc_dr_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -207,6 +210,15 @@ CREATE TABLE IF NOT EXISTS `fc_drill_done` (
   PRIMARY KEY (`user_id`, `drill_id`),
   CONSTRAINT `fk_fc_dd_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_fc_dd_drill` FOREIGN KEY (`drill_id`) REFERENCES `fc_drills` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `fc_friends` (
+  `user_id` INT UNSIGNED NOT NULL,
+  `friend_id` INT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`user_id`, `friend_id`),
+  CONSTRAINT `fk_fc_fr_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fc_fr_friend` FOREIGN KEY (`friend_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `fc_board_prizes` (
@@ -240,7 +252,7 @@ CREATE TABLE IF NOT EXISTS `fc_badges` (
   CONSTRAINT `fk_fc_ba_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '3') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v);
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-base','html',1,NULL,'published','{"title":{"it":"HTML base","en":"HTML Basics"},"short":{"it":"HTML base","en":"HTML Basics"},"desc":{"it":"Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.","en":"The language every web page is made of: tags, text, links, images, lists, tables and forms."},"level":{"it":"Base","en":"Basic"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-intermediate','html',2,'html-base','published','{"title":{"it":"HTML intermedio","en":"Intermediate HTML"},"short":{"it":"HTML intermedio","en":"HTML Intermediate"},"desc":{"it":"Attributi globali, link interni, testo ricco, iframe e moduli più completi.","en":"Global attributes, internal links, rich text, iframes and fuller forms."},"level":{"it":"Intermedio","en":"Intermediate"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-advanced','html',3,'html-intermediate','published','{"title":{"it":"HTML avanzato","en":"Advanced HTML"},"short":{"it":"HTML avanzato","en":"Advanced HTML"},"desc":{"it":"Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.","en":"Semantic, accessible pages: structure, rich forms, media and metadata."},"level":{"it":"Avanzato","en":"Advanced"}}');

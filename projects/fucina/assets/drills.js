@@ -97,6 +97,7 @@
             win() {
                 if (won) return;
                 won = true;
+                body.classList.add('finished'); // what was only needed to play goes away: see fucina.css
                 actions.replaceChildren();
                 if (!mistakes) confetti();
                 end.replaceChildren(h('div.win', mascot(mistakes ? 'happy' : 'wow'), h('div.grow', h('strong', mistakes ? t('Solved!') : t('Flawless!')), h('p', rich(d.why))), btn(t('Continue'), {icon: 'right', onclick: ctx.next})));
@@ -191,25 +192,30 @@
             const grip = h('span.grip', icon('menu'));
             const li = h('li.sort-item', grip, h('code', colour(line)), iconBtn('up', t('Move up'), () => step(li, -1)), iconBtn('down', t('Move down'), () => step(li, 1)));
             li.dataset.line = line;
-            grip.addEventListener('pointerdown', e => {
+            // The row moves in the page while it is dragged, and that drops any pointer capture: so the listeners stay on window
+            li.addEventListener('pointerdown', e => {
+                if (e.button !== 0 || e.target.closest('button')) return;
+                if (e.pointerType !== 'mouse' && !e.target.closest('.grip')) return; // by touch the rest of the row scrolls the page
                 e.preventDefault();
-                grip.setPointerCapture(e.pointerId);
                 li.classList.add('dragging');
+                list.querySelectorAll('.ko').forEach(x => x.classList.remove('ko'));
                 const move = ev => {
                     const rest = [...list.children].filter(x => x !== li);
-                    list.insertBefore(li, rest.find(x => {
+                    const before = rest.find(x => {
                         const r = x.getBoundingClientRect();
                         return ev.clientY < r.top + r.height / 2;
-                    }) || null);
+                    }) || null;
+                    if (li.nextElementSibling !== before) list.insertBefore(li, before);
                 };
                 const stop = () => {
                     li.classList.remove('dragging');
-                    list.querySelectorAll('.ko').forEach(x => x.classList.remove('ko'));
-                    grip.removeEventListener('pointermove', move);
+                    window.removeEventListener('pointermove', move);
+                    window.removeEventListener('pointerup', stop);
+                    window.removeEventListener('pointercancel', stop);
                 };
-                grip.addEventListener('pointermove', move);
-                grip.addEventListener('pointerup', stop, {once: true});
-                grip.addEventListener('pointercancel', stop, {once: true});
+                window.addEventListener('pointermove', move);
+                window.addEventListener('pointerup', stop);
+                window.addEventListener('pointercancel', stop);
             });
             list.appendChild(li);
         }
@@ -330,7 +336,7 @@
         const SECONDS = 9;
         const queue = shuffle(d.cards);
         const total = queue.length;
-        let solved = 0, combo = 0, deadline = 0, frozen = false, card = null, frame = 0;
+        let solved = 0, combo = 0, best = 0, deadline = 0, frozen = false, card = null, frame = 0;
         const text = h('p.flash-text');
         const fuse = h('i');
         const count = h('span.muted.small');
@@ -380,6 +386,7 @@
             if (right) {
                 solved++;
                 combo++;
+                best = Math.max(best, combo);
                 comboTag.textContent = combo > 1 ? t('Combo ×{n}', {n: combo}) : '';
                 comboTag.classList.remove('pop');
                 void comboTag.offsetWidth;
@@ -392,7 +399,7 @@
             }
             if (!queue.length) {
                 card = null;
-                text.textContent = '';
+                api.body.append(h('div.flash-done', icon('check'), h('strong', t('{a} of {b}', {a: total, b: total})), best > 1 ? h('span', t('Combo ×{n}', {n: best})) : null));
                 return api.win();
             }
             deal();

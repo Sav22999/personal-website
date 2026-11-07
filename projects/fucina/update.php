@@ -79,7 +79,7 @@ if (PHP_SAPI === 'cli') {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>Fucina · Aggiornamento database</title>
-    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?v=2">
     <style>
         :root {
             --brand: #FF5B2E;
@@ -200,7 +200,7 @@ if (PHP_SAPI === 'cli') {
 </head>
 <body>
 <main>
-    <div class="brand"><img src="assets/icons/favicon.svg" alt=""> Fucina</div>
+    <div class="brand"><img src="assets/icons/favicon.svg?v=2" alt=""> Fucina</div>
     <h1>Aggiornamento database</h1>
     <p class="lead">Verifica e aggiorna automaticamente tutte le tabelle usando le credenziali configurate in <code>credentials.php</code>.
     </p>

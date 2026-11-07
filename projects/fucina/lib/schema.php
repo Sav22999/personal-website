@@ -20,6 +20,7 @@ function schema_statements(string $p): array
         "CREATE TABLE IF NOT EXISTS `{$p}users` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `name` VARCHAR(80) NOT NULL,
+            `username` VARCHAR(20) NULL,
             `email` VARCHAR(190) NOT NULL,
             `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
             `google_sub` VARCHAR(64) NULL,
@@ -40,6 +41,7 @@ function schema_statements(string $p): array
             `last_login_at` DATETIME NULL,
             `last_seen_at` DATETIME NULL,
             UNIQUE KEY `uq_email` (`email`),
+            UNIQUE KEY `uq_username` (`username`),
             UNIQUE KEY `uq_google` (`google_sub`)
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
@@ -188,6 +190,7 @@ function schema_statements(string $p): array
             `day` DATE NOT NULL,
             `correct` TINYINT UNSIGNED NOT NULL,
             `total` TINYINT UNSIGNED NOT NULL,
+            `done_at` DATETIME NULL,
             PRIMARY KEY (`user_id`, `day`),
             CONSTRAINT `fk_{$p}dr_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
@@ -211,6 +214,15 @@ function schema_statements(string $p): array
             PRIMARY KEY (`user_id`, `drill_id`),
             CONSTRAINT `fk_{$p}dd_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_{$p}dd_drill` FOREIGN KEY (`drill_id`) REFERENCES `{$p}drills` (`id`) ON DELETE CASCADE
+        ) $e",
+        // Friends go one way, like following: adding someone shows you their public results, and nothing else
+        "CREATE TABLE IF NOT EXISTS `{$p}friends` (
+            `user_id` INT UNSIGNED NOT NULL,
+            `friend_id` INT UNSIGNED NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            PRIMARY KEY (`user_id`, `friend_id`),
+            CONSTRAINT `fk_{$p}fr_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
+            CONSTRAINT `fk_{$p}fr_friend` FOREIGN KEY (`friend_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
         // Prizes of the daily leaderboard: one row per day and place, so a day can never be paid twice
         "CREATE TABLE IF NOT EXISTS `{$p}board_prizes` (
@@ -254,6 +266,9 @@ function install_schema(PDO $pdo, string $prefix): void
         if (!in_array($c, $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `$c` INT UNSIGNED NOT NULL DEFAULT 0");
     }
     if (!in_array('on_board', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `on_board` TINYINT(1) NOT NULL DEFAULT 1");
+    if (!in_array('username', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `username` VARCHAR(20) NULL AFTER `name`, ADD UNIQUE KEY `uq_username` (`username`)");
+    $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}daily_results`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");
     require_once __DIR__ . '/seed.php';
     install_seed($pdo, $prefix);
     install_seed_drills($pdo, $prefix);

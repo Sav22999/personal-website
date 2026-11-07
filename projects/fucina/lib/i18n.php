@@ -33,6 +33,10 @@ function tr(string $en, array $vars = []): string
 function translations_it(): array
 {
     return [
+        'This username is already taken.' => 'Questo username è già preso.',
+        'Use 3 to 20 letters, numbers, dots or underscores.' => 'Usa da 3 a 20 lettere, numeri, punti o trattini bassi.',
+        'User not found.' => 'Utente non trovato.',
+        'You cannot add yourself.' => 'Non puoi aggiungere te stesso.',
         'Pass the exam first.' => 'Prima supera l’esame.',
         'You already have this certificate.' => 'Hai già questo certificato.',
         'Unknown kind of exercise.' => 'Tipo di esercizio sconosciuto.',

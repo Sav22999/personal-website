@@ -50,7 +50,7 @@ $date = $cert ? (new DateTimeImmutable($cert['issued_at'], new DateTimeZone('UTC
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title><?= $cert ? hh($T['title'] . ' · ' . $cert['name']) : hh($T['none']) ?></title>
-    <link href="assets/icons/favicon.svg" rel="icon" type="image/svg+xml">
+    <link href="assets/icons/favicon.svg?v=2" rel="icon" type="image/svg+xml">
     <style>
         @page { size: A4 landscape; margin: 0; }
         :root { --ink: #1B1B4B; --ember: #D93A14; --gold: #B7791F; --paper: #FFFBF3; }
@@ -89,7 +89,7 @@ $date = $cert ? (new DateTimeImmutable($cert['issued_at'], new DateTimeZone('UTC
 <?php else: ?>
     <main class="sheet">
         <div class="frame">
-            <div class="brand"><img src="assets/icons/favicon.svg" alt="">Fucina</div>
+            <div class="brand"><img src="assets/icons/favicon.svg?v=2" alt="">Fucina</div>
             <h1><?= hh($T['title']) ?></h1>
             <p class="to"><?= hh($T['to']) ?></p>
             <p class="name"><?= hh($cert['name']) ?></p>
@@ -103,7 +103,7 @@ $date = $cert ? (new DateTimeImmutable($cert['issued_at'], new DateTimeZone('UTC
             <svg class="seal" viewBox="0 0 100 100" aria-hidden="true">
                 <path fill="#D93A14" d="M50 3l11 9 14-3 6 13 13 6-3 14 9 11-9 11 3 14-13 6-6 13-14-3-11 9-11-9-14 3-6-13-13-6 3-14-9-11 9-11-3-14 13-6 6-13 14 3z"/>
                 <circle cx="50" cy="50" r="30" fill="none" stroke="#FFFBF3" stroke-width="2"/>
-                <path fill="#FFFBF3" d="M44 28v26h7v18l15-27h-9l9-17z"/>
+                <path fill="none" stroke="#FFFBF3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M34 38 24 50l10 12M66 38l10 12-10 12"/><path fill="#FFC53D" d="M54 30 42 53h8l-4 18 13-24h-8z"/>
             </svg>
             <p class="note"><?= hh($T['note']) ?></p>
         </div>

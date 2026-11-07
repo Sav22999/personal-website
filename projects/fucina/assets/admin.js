@@ -425,8 +425,8 @@
 
         async function load() {
             const d = await Api.get('admin.users&q=' + encodeURIComponent(q.value));
-            holder.replaceChildren(table([t('Name'), 'Email', t('Role'), t('Grade XP'), t('Sparks'), t('Levels'), t('Certificates'), ''], d.users.map(u => h('tr',
-                h('td', u.name, +u.status ? '' : u.status === 'disabled' ? chip(t('Disabled'), 'danger') : null), h('td', u.email), h('td', +u.role >= 10 ? t('Master admin') : +u.role >= 5 ? t('Administrator') : t('Learner')),
+            holder.replaceChildren(table([t('Name'), t('Username'), 'Email', t('Role'), t('Grade XP'), t('Sparks'), t('Levels'), t('Certificates'), ''], d.users.map(u => h('tr',
+                h('td', u.name, +u.status ? '' : u.status === 'disabled' ? chip(t('Disabled'), 'danger') : null), h('td', u.username ? '@' + u.username : '—'), h('td', u.email), h('td', +u.role >= 10 ? t('Master admin') : +u.role >= 5 ? t('Administrator') : t('Learner')),
                 h('td', String(u.xp)), h('td', String(u.points)), h('td', String(u.lessons)), h('td', String(u.certificates)),
                 h('td.nowrap', +u.id !== d.me ? iconBtn('edit', t('Edit'), () => userDialog(u, d.isMaster, load)) : null)))));
         }
@@ -508,7 +508,7 @@
         lang.setAttribute('aria-label', t('Language'));
         lang.addEventListener('change', () => I18N.set(lang.value));
         root.replaceChildren(h('div.adm', h('nav.adm-side', {'aria-label': t('Sections')},
-            h('a.sn-brand', {href: 'index.html'}, h('img', {src: 'assets/icons/icon-192.png', alt: ''}), h('strong', 'Fucina')), h('span.muted.small', t('Admin portal')),
+            h('a.sn-brand', {href: 'index.html'}, h('img', {src: 'assets/icons/icon-192.png?v=2', alt: ''}), h('strong', 'Fucina')), h('span.muted.small', t('Admin portal')),
             TABS.map(([id, label, ic]) => h('a.sn-link' + (active === id ? '.active' : ''), {href: '#/' + id}, icon(ic), h('span', t(label)))),
             h('div.grow'), lang, h('a.sn-link', {href: 'index.html'}, icon('back'), h('span', t('Back to the app')))), h('main.adm-main', content)));
     }

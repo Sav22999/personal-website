@@ -431,6 +431,20 @@
             h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), ok))]);
     }
 
+    /** Everything is free and open source: a donation is only a way to support the project. */
+    function showDonate() {
+        modal([
+            h('div.donate-modal-icon', icon('heart')),
+            h('h3', t('donate_modal_title')),
+            h('p.muted', t('donate_modal_intro')),
+            h('div.donate-reasons',
+                h('div.donate-reason', h('div.donate-reason-icon', icon('check')), h('div', h('strong', t('donate_reason_ads_title')), h('p', t('donate_reason_ads_desc')))),
+                h('div.donate-reason', h('div.donate-reason-icon', icon('magic')), h('div', h('strong', t('donate_reason_oss_title')), h('p', t('donate_reason_oss_desc')))),
+                h('div.donate-reason', h('div.donate-reason-icon', icon('globe')), h('div', h('strong', t('donate_reason_server_title')), h('p', t('donate_reason_server_desc'))))),
+            h('div.actions', h('a.btn.btn-primary.btn-block.donate-cta-btn', {href: 'https://www.saveriomorelli.com/donate/', target: '_blank', rel: 'noopener'}, icon('heart'), h('span', t('donate_cta')))),
+        ]);
+    }
+
     function showProfile() {
         const m = modal([
             h('div.profile-head', h('span.avatar', (user.name || '?').slice(0, 1).toUpperCase()),
@@ -439,6 +453,7 @@
                 h('button', {type: 'button', onclick: () => showProfileForm(m)}, icon('pen'), h('span', t('profile_edit'))),
                 h('button', {type: 'button', onclick: () => showUsernameForm(m)}, icon('user'), h('span', t(user.username ? 'username_change' : 'username_title'))),
                 h('button', {type: 'button', onclick: () => showPasswordForm(m)}, icon('key'), h('span', t(user.hasPassword ? 'password_change' : 'password_set'))),
+                h('button', {type: 'button', onclick: showDonate}, icon('heart'), h('span', t('donate'))),
                 user.isAdmin ? h('a.menu-link', {href: 'admin.html'}, icon('shield'), h('span', t('admin_panel'))) : null,
                 h('button', {type: 'button', onclick: () => signOut(m)}, icon('exit'), h('span', t('sign_out'))),
                 h('button.danger', {type: 'button', onclick: () => showDelete(m)}, icon('trash'), h('span', t('delete_account')))),
@@ -453,5 +468,6 @@
         user: () => user,
         open: () => (user ? showProfile() : (config.accounts ? showSignIn() : showAccountsOff())),
         askUsername: done => showUsernameForm(null, done),
+        showDonate,
     };
 })();

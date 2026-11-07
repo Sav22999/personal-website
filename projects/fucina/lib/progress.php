@@ -102,8 +102,9 @@ function badge_fixed(): array
         'wins_row_10' => ['icon' => 'trophy', 'title' => L('Imbattibile', 'Unbeatable'), 'desc' => L('10 giochi di fila senza sbagliare', '10 games in a row without mistakes')],
         'wins_50' => ['icon' => 'game', 'title' => L('Campione', 'Champion'), 'desc' => L('Vinci 50 partite', 'Win 50 games')],
         'drills_row_10' => ['icon' => 'bolt', 'title' => L('Occhio di falco', 'Eagle eye'), 'desc' => L('10 sfide di fila senza errori', '10 drills in a row without mistakes')],
-        'board_podium' => ['icon' => 'trophy', 'title' => L('Sul podio', 'On the podium'), 'desc' => L('Finisci tra i primi 3 della classifica del giorno', 'Finish in the top 3 of the daily leaderboard')],
-        'board_first' => ['icon' => 'trophy', 'title' => L('Re della forgia', 'King of the forge'), 'desc' => L('Vinci la classifica del giorno', 'Win the daily leaderboard')],
+        'board_podium' => ['icon' => 'trophy', 'title' => L('Sul podio', 'On the podium'), 'desc' => L('Finisci tra i primi 3 della sfida del giorno', 'Finish in the top 3 of the daily challenge')],
+        'first_friend' => ['icon' => 'group', 'title' => L('In compagnia', 'In good company'), 'desc' => L('Aggiungi il tuo primo amico', 'Add your first friend')],
+        'board_first' => ['icon' => 'trophy', 'title' => L('Re della forgia', 'King of the forge'), 'desc' => L('Vinci la sfida del giorno', 'Win the daily challenge')],
         'certs_3' => ['icon' => 'cert', 'title' => L('Parete dei diplomi', 'Wall of diplomas'), 'desc' => L('Ottieni 3 certificati', 'Earn 3 certificates')],
         'js_master' => ['icon' => 'cert', 'title' => L('Mastro JavaScript', 'JavaScript master'), 'desc' => L('Tutti i certificati JavaScript', 'All the JavaScript certificates')],
         'php_master' => ['icon' => 'cert', 'title' => L('Mastro PHP', 'PHP master'), 'desc' => L('Certificati PHP base e avanzato', 'PHP Basics and Advanced certificates')],
@@ -174,7 +175,7 @@ function award_badges(int $uid): array
         'wins_row_5' => (int)$u['best_win_streak'] >= 5, 'wins_row_10' => (int)$u['best_win_streak'] >= 10, 'wins_50' => $n['wins'] >= 50,
         'drills_row_10' => (int)$u['best_drill_streak'] >= 10, 'certs_3' => $n['certificates'] >= 3,
         'js_master' => isset($certs['js-base'], $certs['js-intermediate'], $certs['js-advanced']), 'php_master' => isset($certs['php-base'], $certs['php-advanced']),
-        'board_podium' => $bestPlace > 0, 'board_first' => $bestPlace === 1,
+        'board_podium' => $bestPlace > 0, 'board_first' => $bestPlace === 1, 'first_friend' => count(friend_ids($uid)) > 0,
     ];
     foreach (courses_summary($uid) as $c) $reached['course_' . $c['id']] = $c['lessons'] > 0 && $c['done'] === $c['lessons'];
     $st = db()->prepare('SELECT badge FROM ' . t('badges') . ' WHERE user_id = ?');
@@ -291,20 +292,30 @@ function state_payload(array $u): array
 
 // ---------------------------------------------------------------- daily leaderboard
 
-/** How a learner appears to the others: first name and the initial of the surname, never the email. */
-function public_name(string $name): string
-{
-    $p = preg_split('/\s+/', trim($name)) ?: [$name];
-    return $p[0] . (isset($p[1]) ? ' ' . mb_strtoupper(mb_substr($p[1], 0, 1)) . '.' : '');
-}
-
-/** Who earned XP on a day, from the first. Learners who left the leaderboard are not counted. */
+/** Who earned XP on a day, from the first. The username is all the others see; who left the leaderboard is not counted. */
 function board_rows(string $day): array
 {
-    $st = db()->prepare('SELECT u.id, u.name, u.xp AS total, a.xp FROM ' . t('activity') . ' a JOIN ' . t('users') . " u ON u.id = a.user_id
-        WHERE a.day = ? AND a.xp > 0 AND u.on_board = 1 AND u.status = 'active' ORDER BY a.xp DESC, u.id");
+    $st = db()->prepare('SELECT u.id, u.username, a.xp FROM ' . t('activity') . ' a JOIN ' . t('users') . " u ON u.id = a.user_id
+        WHERE a.day = ? AND a.xp > 0 AND u.on_board = 1 AND u.status = 'active' AND u.username IS NOT NULL ORDER BY a.xp DESC, u.id");
     $st->execute([$day]);
     return $st->fetchAll();
+}
+
+/** Who did the daily challenge: the most right answers first, and at a tie whoever finished earlier. */
+function daily_board_rows(string $day): array
+{
+    $st = db()->prepare('SELECT u.id, u.username, d.correct, d.total FROM ' . t('daily_results') . ' d JOIN ' . t('users') . " u ON u.id = d.user_id
+        WHERE d.day = ? AND u.on_board = 1 AND u.status = 'active' AND u.username IS NOT NULL ORDER BY d.correct DESC, d.done_at, u.id");
+    $st->execute([$day]);
+    return $st->fetchAll();
+}
+
+/** The ids of the friends of a learner. */
+function friend_ids(int $uid): array
+{
+    $st = db()->prepare('SELECT friend_id FROM ' . t('friends') . ' WHERE user_id = ?');
+    $st->execute([$uid]);
+    return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
 }
 
 /** Sparks of the first three places: the more participants, the bigger the prize. */
@@ -315,7 +326,7 @@ function board_prizes(int $participants): array
 }
 
 /**
- * Pays the days already over. There is no job to wait for: the first learner of the new day triggers it.
+ * Pays the daily challenge of the days already over. There is no job to wait for: the first learner of the new day triggers it.
  * The primary key on day and place makes it safe if two requests arrive together.
  */
 function settle_boards(): void
@@ -325,14 +336,14 @@ function settle_boards(): void
     $st->execute();
     $last = (string)($st->fetchColumn() ?: '2000-01-01');
     if ($last >= day_offset($today, -1)) return;
-    $st = db()->prepare('SELECT DISTINCT day FROM ' . t('activity') . ' WHERE day > ? AND day < ? ORDER BY day');
+    $st = db()->prepare('SELECT DISTINCT day FROM ' . t('daily_results') . ' WHERE day > ? AND day < ? ORDER BY day');
     $st->execute([$last, $today]);
     foreach ($st->fetchAll(PDO::FETCH_COLUMN) as $day) {
-        $rows = board_rows($day);
+        $rows = daily_board_rows($day);
         $prizes = board_prizes(count($rows));
         foreach (array_slice($rows, 0, 3) as $i => $r) {
             $place = $i + 1;
-            if (!$prizes[$place]) continue;
+            if (!$prizes[$place] || !(int)$r['correct']) continue; // answering at random earns nothing
             $in = db()->prepare('INSERT IGNORE INTO ' . t('board_prizes') . ' (day, place, user_id, participants, points) VALUES (?,?,?,?,?)');
             $in->execute([$day, $place, $r['id'], count($rows), $prizes[$place]]);
             if ($in->rowCount()) db()->prepare('UPDATE ' . t('users') . ' SET points = points + ? WHERE id = ?')->execute([$prizes[$place], $r['id']]);
@@ -343,7 +354,7 @@ function settle_boards(): void
 
 function board_position(int $uid): array
 {
-    $rows = board_rows(today());
+    $rows = daily_board_rows(today());
     $place = array_search($uid, array_map('intval', array_column($rows, 'id')), true);
     return ['place' => $place === false ? 0 : $place + 1, 'participants' => count($rows)];
 }

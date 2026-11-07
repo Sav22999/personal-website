@@ -388,13 +388,13 @@ function admin_route(string $r): void
         case 'admin.users':
             $me = admin_reader();
             $q = trim((string)($_GET['q'] ?? ''));
-            $sql = 'SELECT u.id, u.name, u.email, u.role, u.status, u.xp, u.points, u.streak, u.created_at, u.last_seen_at, (SELECT COUNT(*) FROM ' . t('lesson_progress') . ' lp WHERE lp.user_id = u.id) AS lessons,
+            $sql = 'SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.xp, u.points, u.streak, u.created_at, u.last_seen_at, (SELECT COUNT(*) FROM ' . t('lesson_progress') . ' lp WHERE lp.user_id = u.id) AS lessons,
                 (SELECT COUNT(*) FROM ' . t('certificates') . ' c WHERE c.user_id = u.id) AS certificates FROM ' . t('users') . ' u';
             $params = [];
             if ($q !== '') {
-                $sql .= ' WHERE u.name LIKE ? OR u.email LIKE ?';
+                $sql .= ' WHERE u.name LIKE ? OR u.email LIKE ? OR u.username LIKE ?';
                 $like = '%' . addcslashes($q, '%_\\') . '%';
-                $params = [$like, $like];
+                $params = [$like, $like, $like];
             }
             $st = db()->prepare($sql . ' ORDER BY u.id DESC LIMIT 100');
             $st->execute($params);

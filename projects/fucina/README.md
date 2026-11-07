@@ -25,10 +25,13 @@ Non è ancora tra i progetti personali del sito: non è collegata da `projects/i
 - **Giochi**: cinque giochi a livelli (ispirati a FaceGuess, Sudoku, Connect Four, Chess e LetterHop, ma sul codice).
   *Chi è il tag?*, *Tagdoku*, *Quattro di fila*, *Scacchiera CSS*, *Salti di riga*.
   Danno Scintille extra, fino a un massimo giornaliero.
-- **Classifica del giorno**: vince chi fa più XP. A fine giornata il primo riceve Scintille in base ai partecipanti, il
-  secondo la metà e il terzo un quarto. Non serve un cron: paga il primo accesso del giorno dopo. Ci si può escludere
-  dal profilo.
-- **Sfida del giorno**, serie di giorni, statistiche, calendario delle attività e 50 badge, uno anche per ogni corso.
+- **Username e amici**: ognuno sceglie uno username, l’unico dato pubblico. Serve per cercare, aggiungere e rimuovere
+  amici (in un solo senso, senza richieste) e nelle classifiche, tra tutti o tra amici.
+- **Classifiche del giorno**: quella della sfida del giorno (più risposte giuste, a parità chi finisce prima) dà i premi:
+  il primo riceve Scintille in base ai partecipanti, il secondo la metà e il terzo un quarto, ma serve almeno una risposta
+  giusta. Non serve un cron: paga il primo accesso del giorno dopo. Quella degli XP è solo per divertimento. Ci si può
+  escludere dal profilo.
+- **Sfida del giorno**, serie di giorni, statistiche, calendario delle attività e 51 badge, uno anche per ogni corso.
 
 Le regole stanno sul server: le risposte arrivano al browser solo dopo aver risposto (`quiz.check`), l’esame viene
 corretto dal server e gli XP dei giochi, l’unico risultato comunicato dal browser, hanno un massimo per partita e al giorno.

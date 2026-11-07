@@ -127,7 +127,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>Fucina · Installazione</title>
-    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?v=2">
     <style>
         :root {
             --brand: #FF5B2E;
@@ -301,7 +301,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 </head>
 <body>
 <main>
-    <div class="brand"><img src="assets/icons/favicon.svg" alt=""> Fucina</div>
+    <div class="brand"><img src="assets/icons/favicon.svg?v=2" alt=""> Fucina</div>
     <h1><?= $mode === 'update' && !$done ? 'Aggiorna il database' : 'Installazione' ?></h1>
     <p class="lead">Crea le tabelle di Fucina (prefisso <code>fc_</code>) e salva le credenziali in <code>credentials.php</code>.
     </p>

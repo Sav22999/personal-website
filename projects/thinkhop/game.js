@@ -428,7 +428,7 @@
                 h('div.footer-actions',
                     h('a.version-btn.privacy-link', {href: 'privacy.html'}, 'Privacy'),
                     h('a.version-btn.privacy-link', {href: 'admin.html'}, t('admin_link')),
-                    h('button.donate-btn', {type: 'button', onclick: showDonate, title: t('donate_title')}, icon('heart'), h('span', t('donate'))),
+                    h('button.donate-btn', {type: 'button', onclick: A.showDonate, title: t('donate_title')}, icon('heart'), h('span', t('donate'))),
                     h('button.version-btn', {type: 'button', onclick: showReleases}, `${t('version')} ${VERSION}`)))));
         document.title = 'ThinkHop – Saverio Morelli';
     }
@@ -489,19 +489,6 @@
         modal([h('h3', t('release_notes')), h('div.release', (window.ThinkHopReleases || []).map(r => [h('h4', `${r.version} · ${new Date(r.date).toLocaleDateString(L, {
             year: 'numeric', month: 'short', day: 'numeric',
         })}`), h('ul', (r.notes[L] || r.notes.en).map(n => h('li', n)))]))]);
-    }
-
-    function showDonate() {
-        modal([
-            h('div.donate-modal-icon', icon('heart')),
-            h('h3', t('donate_modal_title')),
-            h('p.muted', t('donate_modal_intro')),
-            h('div.donate-reasons',
-                h('div.donate-reason', h('div.donate-reason-icon', icon('check')), h('div', h('strong', t('donate_reason_ads_title')), h('p', t('donate_reason_ads_desc')))),
-                h('div.donate-reason', h('div.donate-reason-icon', icon('magic')), h('div', h('strong', t('donate_reason_oss_title')), h('p', t('donate_reason_oss_desc')))),
-                h('div.donate-reason', h('div.donate-reason-icon', icon('globe')), h('div', h('strong', t('donate_reason_server_title')), h('p', t('donate_reason_server_desc'))))),
-            h('div.actions', h('a.btn.btn-primary.btn-block.donate-cta-btn', {href: 'https://www.saveriomorelli.com/donate/', target: '_blank', rel: 'noopener'}, icon('heart'), h('span', t('donate_cta')))),
-        ]);
     }
 
     // ---------- keyboard ----------

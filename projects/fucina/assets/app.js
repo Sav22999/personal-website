@@ -2,15 +2,17 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.2.1';
+    const VERSION = '1.3.5';
     const t = I18N.t;
     const {h, icon, tile, chip, btn, iconBtn, busy, toast, sheet, confirm} = UI;
     const {mascot, confetti, colour} = Fun;
     const root = document.getElementById('app');
+    const LOGO = 'assets/icons/icon-192.png?v=2';
+    const DONATE_URL = 'https://www.saveriomorelli.com/donate/';
     const CONTACT_URL = '../../contact-me/';
     const DESK = matchMedia('(min-width: 960px)');
 
-    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}};
+    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}, board: {type: 'daily', scope: 'all'}};
 
     // ---------------------------------------------------------------- small components
 
@@ -133,7 +135,7 @@
     function sideNav(active) {
         const link = (name, label, ic) => h('a.sn-link' + (active === name ? '.active' : ''), {href: '#/' + name, 'aria-current': active === name ? 'page' : null}, icon(ic), h('span', label));
         return h('nav.sidenav', {'aria-label': t('Sections')},
-            h('a.sn-brand', {href: '#/home'}, mascot('happy', 'xs'), h('strong', 'Fucina')),
+            h('a.sn-brand', {href: '#/home'}, h('img', {src: LOGO, alt: ''}), h('strong', 'Fucina')),
             S.state ? gradeChip() : null,
             h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Path'), 'book'), link('games', t('Games'), 'game'), link('board', t('Ranking'), 'trophy'), link('stats', t('Stats'), 'stats')),
             h('div.grow'),
@@ -147,8 +149,9 @@
             root.replaceChildren(UI.skeletonScreen());
             return;
         }
+        if (!S.state.user.username) return renderUsername();
         const r = route();
-        const views = {home: viewHome, path: viewPath, course: viewCourse, lesson: viewLesson, exam: viewExam, daily: viewDaily, gym: viewGym, board: viewBoard, games: viewGames, game: viewGame, play: viewPlay, stats: viewStats, profile: viewProfile};
+        const views = {home: viewHome, path: viewPath, course: viewCourse, lesson: viewLesson, exam: viewExam, daily: viewDaily, gym: viewGym, board: viewBoard, friends: viewFriends, games: viewGames, game: viewGame, play: viewPlay, stats: viewStats, profile: viewProfile};
         let v;
         try {
             v = await (views[r.name] || viewHome)(r.a, r.b);
@@ -204,7 +207,7 @@
                     quick('#/daily', 'calendar', 'sun', t('Daily challenge'), d ? t('Done: {a} out of {b}', {a: d.correct, b: d.total}) : t('Five questions from all the courses'), d ? 'check' : null),
                     quick('#/gym', 'bolt', 'mint', t('Gym'), t('Six quick drills, right now')),
                     quick('#/games', 'game', 'sky', t('Play a game'), t('Extra Sparks, on top of the courses')),
-                    quick('#/board', 'trophy', 'pink', t('Ranking'), S.state.board.place ? t('You are number {a} of {b}', {a: S.state.board.place, b: S.state.board.participants}) : t('Earn XP today to enter'))),
+                    quick('#/board', 'trophy', 'pink', t('Ranking'), S.state.board.place ? t('You are number {a} of {b}', {a: S.state.board.place, b: S.state.board.participants}) : t('Do the daily challenge to enter'))),
                 h('h2.section-title', t('Your results')),
                 h('div.tiles',
                     statTile('book', S.state.totals.lessons, t('Levels done')), statTile('star', S.state.totals.stars, t('Stars')),
@@ -742,19 +745,84 @@
     // ---------------------------------------------------------------- daily leaderboard
 
     async function viewBoard() {
-        const d = await Api.get('board.get');
+        const {type, scope} = S.board;
+        const d = await Api.get(`board.get&type=${type}&scope=${scope}`);
         const hours = Math.floor(d.secondsLeft / 3600), minutes = Math.floor(d.secondsLeft % 3600 / 60);
-        const row = r => h('li.board-row' + (r.me ? '.you' : ''), h('b.place.p' + Math.min(r.place, 4), String(r.place)), avatar(r.name, 'sm'), h('span.grow', r.name), h('span.board-grade', t('Grade {n}', {n: r.grade})), h('strong', r.xp + ' XP'));
+        const row = r => h('li.board-row' + (r.me ? '.you' : ''), h('b.place.p' + Math.min(r.place, 4), String(r.place)), avatar(r.name, 'sm'), h('span.grow', r.name), h('strong', r.score));
         const prize = (n, label) => n ? h('div.prize', h('b', label), h('span', icon('spark'), String(n))) : null;
+        const pick = key => v => {
+            S.board[key] = v;
+            render();
+        };
+        const daily = type === 'daily';
         return {
             title: t('Ranking'), tab: 'board', body: [
-                h('section.board-head', mascot(d.me && d.me.place === 1 ? 'wow' : 'happy'), h('div.grow', h('strong', t('Today’s forge')), h('p', d.participants === 1 ? t('1 participant') : t('{n} participants', {n: d.participants})), h('p.small', t('Closes in {h} h {m} min', {h: hours, m: minutes})))),
-                h('p.lead', t('Whoever earns the most XP today wins. The more people take part, the bigger the prize.')),
-                d.participants ? h('div.prizes', prize(d.prizes[0], '1°'), prize(d.prizes[1], '2°'), prize(d.prizes[2], '3°')) : null,
-                d.rows.length ? h('ol.board', d.rows.map(row)) : empty('trophy', t('Nobody yet today'), t('Finish a level, a drill or a game and take the lead.')),
+                h('section.board-head', mascot(d.me && d.me.place === 1 ? 'wow' : 'happy'), h('div.grow', h('strong', daily ? t('Daily challenge') : t('Today’s forge')), h('p', d.participants === 1 ? t('1 participant') : t('{n} participants', {n: d.participants})), h('p.small', t('Closes in {h} h {m} min', {h: hours, m: minutes})))),
+                seg([['daily', t('Daily challenge')], ['xp', t('Today’s XP')]], type, pick('type')),
+                seg([['all', t('Everyone')], ['friends', t('Friends')]], scope, pick('scope')),
+                h('p.lead', daily ? t('Most right answers first; at a tie, whoever finished earlier. The top three win Sparks: the more people take part, the bigger the prize.') : t('Who earned the most XP today. This one is just for fun: the prizes go to the daily challenge.')),
+                daily && scope === 'all' && d.prizes[0] ? h('div.prizes', prize(d.prizes[0], '1°'), prize(d.prizes[1], '2°'), prize(d.prizes[2], '3°')) : null,
+                d.rows.length ? h('ol.board', d.rows.map(row)) : empty('trophy', t('Nobody yet today'), daily ? t('Do the daily challenge and take the lead.') : t('Finish a level, a drill or a game and take the lead.'), daily && !S.state.daily ? btn(t('Daily challenge'), {onclick: () => go('daily')}) : null),
                 d.me && d.me.place > 20 ? h('ol.board', {start: d.me.place}, row(d.me)) : null,
                 !d.onBoard ? banner('info', 'info', t('You are not in the ranking'), t('You can join again from your profile.')) : null,
-                d.yesterday.length ? [h('h2.section-title', t('Yesterday’s podium')), h('ol.board', d.yesterday.map(y => h('li.board-row', h('b.place.p' + y.place, String(y.place)), avatar(y.name, 'sm'), h('span.grow', y.name), h('strong.won', icon('spark'), '+' + y.points))))] : null,
+                h('a.btn.btn-tonal.btn-block', {href: '#/friends'}, icon('group'), h('span', t('Find and manage friends'))),
+                daily && scope === 'all' && d.yesterday.length ? [h('h2.section-title', t('Yesterday’s podium')), h('ol.board', d.yesterday.map(y => h('li.board-row', h('b.place.p' + y.place, String(y.place)), avatar(y.name, 'sm'), h('span.grow', y.name), h('strong.won', icon('spark'), '+' + y.points))))] : null,
+            ]
+        };
+    }
+
+    // ---------------------------------------------------------------- friends
+
+    async function viewFriends() {
+        const list = h('div.friend-list');
+        const found = h('div.friend-list');
+        const line = (name, action) => h('div.friend', avatar(name, 'sm'), h('span.grow', name), action);
+
+        async function load() {
+            const d = await Api.get('friends.list');
+            list.replaceChildren(...(d.friends.length ? d.friends.map(f => line(f.name, btn(t('Remove'), {
+                kind: 'text', onclick: async () => {
+                    if (!await confirm(t('Remove {name}?', {name: f.name}), t('You can add them again at any time.'), t('Remove'), true)) return;
+                    await Api.post('friends.remove', {username: f.name}).catch(e => toast(e.message, 'error'));
+                    load();
+                    search();
+                }
+            }))) : [h('p.muted', t('No friends yet: search for a username.'))]));
+        }
+
+        const input = UI.input({autocomplete: 'off', autocapitalize: 'off', spellcheck: false, maxlength: 20, 'aria-label': t('Search by username')});
+        let timer = null;
+
+        async function search() {
+            const q = input.value.trim();
+            if (q.length < 2) return found.replaceChildren();
+            const d = await Api.get('friends.search&q=' + encodeURIComponent(q)).catch(() => ({results: []}));
+            found.replaceChildren(...(d.results.length ? d.results.map(r => line(r.name, r.added ? chip(t('Friend'), 'ok', 'check') : btn(t('Add'), {
+                icon: 'add', onclick: async () => {
+                    try {
+                        const a = await Api.post('friends.add', {username: r.name});
+                        applyState(a);
+                        toast(t('{name} added', {name: r.name}), 'ok');
+                        celebrate({...a, xp: 0});
+                        load();
+                        search();
+                    } catch (e) {
+                        toast(e.message, 'error');
+                    }
+                }
+            }))) : [h('p.muted', t('Nobody with this username.'))]));
+        }
+
+        input.addEventListener('input', () => {
+            clearTimeout(timer);
+            timer = setTimeout(search, 250);
+        });
+        await load();
+        return {
+            title: t('Friends'), back: 'board', tab: 'board', body: [
+                h('p.lead', t('Your username is @{name}. Friends only see your username and your results in the rankings.', {name: S.state.user.username})),
+                UI.field(t('Search by username'), input), found,
+                h('h2.section-title', t('Your friends')), list,
             ]
         };
     }
@@ -849,7 +917,7 @@
         const u = S.state.user;
         return {
             title: t('Profile'), back: 'home', tab: 'profile', body: [
-                h('div.card.pad.me', avatar(u.name, 'lg'), h('div.grow', h('strong', u.name), h('p.muted', u.email))),
+                h('div.card.pad.me', avatar(u.name, 'lg'), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
                 rankCard(),
                 h('h2.section-title', t('Preferences')),
                 seg(I18N.langs, I18N.lang, I18N.set),
@@ -865,9 +933,9 @@
                         toast(e.message, 'error');
                     }
                 }),
-                h('p.muted.small', t('Others see your first name, the initial of your surname, your grade and today’s XP.')),
+                h('p.muted.small', t('Your username is the only thing others see, next to your score.')),
                 h('h2.section-title', t('Account')),
-                h('div.group', row('edit', t('Name and email'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
+                h('div.group', row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('edit', t('Name and email'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
                     u.role >= 5 ? h('a.setting', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal')), icon('right')) : null,
                     h('a.setting', {href: 'privacy.html'}, icon('info'), h('span', t('Privacy')), icon('right')),
                     row('logout', t('Sign out'), async () => {
@@ -877,9 +945,34 @@
                         render();
                     }),
                     row('delete', t('Delete account'), deleteAccount, true)),
+                h('h2.section-title', t('Support the project')),
+                h('a.donate', {href: DONATE_URL, target: '_blank', rel: 'noopener'}, h('span.quick-ic', icon('heart')), h('span.grow', h('strong', t('Donate')), h('span', t('Fucina is open source and free. A donation supports the project.'))), icon('right')),
                 h('p.muted.center.small', 'Fucina ' + VERSION),
             ]
         };
+    }
+
+    /** Everyone needs a username: it is the only public data of an account, and the app stops here until it is chosen. */
+    function renderUsername(changing) {
+        const current = S.state.user.username || '';
+        const name = UI.input({value: current, autocomplete: 'off', autocapitalize: 'off', spellcheck: false, maxlength: 20});
+        const err = h('div.err-box', {hidden: true});
+        const save = btn(changing ? t('Save') : t('Continue'), {type: 'submit', cls: 'btn-block'});
+        const form = h('form', {
+            novalidate: true, onsubmit: async e => {
+                e.preventDefault();
+                err.hidden = true;
+                try {
+                    applyState(await busy(save, () => Api.post('auth.username', {username: name.value})));
+                    render();
+                } catch (ex) {
+                    err.textContent = ex.message;
+                    err.hidden = false;
+                }
+            }
+        }, UI.field(t('Username'), name), h('p.muted.small', t('3 to 20 letters, numbers, dots or underscores. It is the only thing others can see about you: avoid your real name if you prefer.')), err, h('div.spacer'), save,
+            changing ? h('div.center', btn(t('Cancel'), {kind: 'text', onclick: render})) : null);
+        root.replaceChildren(h('div.auth', h('div.auth-top', mascot('happy', 'auth-pet'), h('h1', changing ? t('Change username') : t('Choose your username')), h('p', t('This is how others find you'))), h('div.auth-body', form)));
     }
 
     function editProfile() {
@@ -984,7 +1077,7 @@
             h('li', tile('icon', 'spark', 'sm'), t('Earn Sparks and spend them on hints')),
             h('li', tile('icon', 'cert', 'sm'), t('A certificate for every course you complete')));
         root.replaceChildren(h('div.auth',
-            h('div.auth-top', mascot('happy', 'auth-pet'), h('h1', 'Fucina'), h('p', t('Where the code is forged')), features('desk-only')),
+            h('div.auth-top', h('div.auth-brand', h('img', {src: LOGO, alt: ''}), h('h1', 'Fucina')), h('p', t('Where the code is forged')), mascot('happy', 'auth-pet'), features('desk-only')),
             h('div.auth-body',
                 seg([['login', t('Sign in')], ['register', t('Create account')]], mode, v => {
                     UI.store.set('authMode', v);
@@ -1022,7 +1115,7 @@
     }
 
     function fatal(title, text, action) {
-        root.replaceChildren(h('div.auth', h('div.auth-top', mascot('sad', 'auth-pet'), h('h1', 'Fucina'), h('p', title)),
+        root.replaceChildren(h('div.auth', h('div.auth-top', h('div.auth-brand', h('img', {src: LOGO, alt: ''}), h('h1', 'Fucina')), h('p', title), mascot('sad', 'auth-pet')),
             h('div.auth-body.center', h('p', text), action || btn(t('Try again'), {onclick: start}))));
     }
 

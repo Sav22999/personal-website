@@ -5,6 +5,7 @@
  * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout
  * Account:  state, auth.profile, auth.password, auth.delete
  * Ranking:  board.get, board.seen, board.join
+ * Friends:  auth.username, friends.list, friends.search, friends.add, friends.remove
  * Learning: course.get, quiz.check, hint.buy, lesson.complete, drill.finish, drill.mix, exam.start, exam.submit, certificate.rename
  * Playing:  daily.get, daily.submit, game.get, game.finish
  * Portal:   admin.* (see lib/admin-api.php)
@@ -109,6 +110,15 @@ function record_streak(int $uid, string $kind, bool $clean): void
     $best = 'best_' . $now;
     if ($clean) db()->prepare('UPDATE ' . t('users') . " SET `$best` = GREATEST(`$best`, `$now` + 1), `$now` = `$now` + 1 WHERE id = ?")->execute([$uid]);
     else db()->prepare('UPDATE ' . t('users') . " SET `$now` = 0 WHERE id = ?")->execute([$uid]);
+}
+
+/** A username: 3 to 20 lowercase letters, digits, dots or underscores. It is the only public data of an account. */
+function clean_username($v): string
+{
+    $name = mb_strtolower(trim((string)$v));
+    if (!preg_match('/^[a-z0-9_.]{3,20}$/', $name)) fail('Use 3 to 20 letters, numbers, dots or underscores.', 422, 'validation');
+    if (in_array($name, ['admin', 'administrator', 'fucina', 'root', 'staff', 'support', 'moderator'], true)) fail('This username is already taken.', 409, 'username_taken');
+    return $name;
 }
 
 function level_of(int $uid): int
@@ -546,7 +556,7 @@ switch ($r) {
             $review[] = ['ok' => $ok, 'q' => pick($q['q']), 'answer' => pick($q['options'][$q['a']]), 'why' => pick($q['why'])];
         }
         $total = count($questions);
-        db()->prepare('INSERT INTO ' . t('daily_results') . ' (user_id, day, correct, total) VALUES (?,?,?,?)')->execute([$uid, $day, $correct, $total]);
+        db()->prepare('INSERT INTO ' . t('daily_results') . ' (user_id, day, correct, total, done_at) VALUES (?,?,?,?,?)')->execute([$uid, $day, $correct, $total, now_utc()]);
         $levelBefore = level_of($uid);
         $xp = $correct * setting('xp_daily_correct') + ($correct === $total ? setting('xp_daily_perfect') : 0);
         add_xp($uid, $xp);
@@ -612,24 +622,78 @@ switch ($r) {
     // ======================================================== daily leaderboard
 
     case 'board.get':
+        // Two leaderboards of the day, XP and daily challenge, among everyone or among friends. Only usernames go out.
         $u = reader();
         $uid = (int)$u['id'];
         settle_boards();
         $today = today();
-        $rows = board_rows($today);
+        $daily = ($_GET['type'] ?? '') !== 'xp';
+        $rows = $daily ? daily_board_rows($today) : board_rows($today);
+        if (($_GET['scope'] ?? '') === 'friends') {
+            $circle = array_merge(friend_ids($uid), [$uid]);
+            $rows = array_values(array_filter($rows, fn($r) => in_array((int)$r['id'], $circle, true)));
+        }
         $me = null;
         $out = [];
         foreach ($rows as $i => $r) {
-            $line = ['place' => $i + 1, 'name' => public_name($r['name']), 'grade' => level_info((int)$r['total'])['level'], 'xp' => (int)$r['xp'], 'me' => (int)$r['id'] === $uid];
+            $line = ['place' => $i + 1, 'name' => $r['username'], 'score' => $daily ? $r['correct'] . '/' . $r['total'] : $r['xp'] . ' XP', 'me' => (int)$r['id'] === $uid];
             if ($line['me']) $me = $line;
             if ($i < 20) $out[] = $line;
         }
-        $st = db()->prepare('SELECT p.place, p.points, u.name FROM ' . t('board_prizes') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.day = ? ORDER BY p.place');
+        $st = db()->prepare('SELECT p.place, p.points, u.username FROM ' . t('board_prizes') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.day = ? AND u.username IS NOT NULL ORDER BY p.place');
         $st->execute([day_offset($today, -1)]);
-        $yesterday = array_map(fn($p) => ['place' => (int)$p['place'], 'points' => (int)$p['points'], 'name' => public_name($p['name'])], $st->fetchAll());
-        $prizes = board_prizes(count($rows));
+        $yesterday = array_map(fn($p) => ['place' => (int)$p['place'], 'points' => (int)$p['points'], 'name' => $p['username']], $st->fetchAll());
+        $prizes = board_prizes(count(daily_board_rows($today)));
         $seconds = (new DateTimeImmutable('tomorrow', new DateTimeZone(APP_TIMEZONE)))->getTimestamp() - time();
         send_json(['ok' => true, 'rows' => $out, 'me' => $me, 'participants' => count($rows), 'prizes' => array_values($prizes), 'yesterday' => $yesterday, 'secondsLeft' => $seconds, 'onBoard' => (bool)user_row($uid)['on_board']]);
+
+    // ======================================================== username and friends
+
+    case 'auth.username':
+        $u = writer();
+        $name = clean_username(body()['username'] ?? '');
+        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE username = ? AND id <> ?');
+        $st->execute([$name, $u['id']]);
+        if ($st->fetchColumn()) fail('This username is already taken.', 409, 'username_taken');
+        try {
+            db()->prepare('UPDATE ' . t('users') . ' SET username = ? WHERE id = ?')->execute([$name, $u['id']]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') fail('This username is already taken.', 409, 'username_taken'); // two requests at once
+            throw $e;
+        }
+        send_json(['ok' => true] + state_payload($u));
+
+    case 'friends.list':
+        $u = reader();
+        $st = db()->prepare('SELECT u.username, COALESCE(a.xp, 0) AS xp FROM ' . t('friends') . ' f JOIN ' . t('users') . ' u ON u.id = f.friend_id
+            LEFT JOIN ' . t('activity') . " a ON a.user_id = u.id AND a.day = ? WHERE f.user_id = ? AND u.status = 'active' AND u.username IS NOT NULL ORDER BY u.username");
+        $st->execute([today(), $u['id']]);
+        send_json(['ok' => true, 'friends' => array_map(fn($f) => ['name' => $f['username']], $st->fetchAll())]);
+
+    case 'friends.search':
+        // Usernames only, starting with what was typed
+        $u = reader();
+        $q = mb_strtolower(trim((string)($_GET['q'] ?? '')));
+        if (!preg_match('/^[a-z0-9_.]{2,20}$/', $q)) send_json(['ok' => true, 'results' => []]);
+        $st = db()->prepare('SELECT u.username, (f.friend_id IS NOT NULL) AS added FROM ' . t('users') . ' u LEFT JOIN ' . t('friends') . " f ON f.friend_id = u.id AND f.user_id = ?
+            WHERE u.username LIKE ? AND u.id <> ? AND u.status = 'active' ORDER BY u.username LIMIT 10");
+        $st->execute([$u['id'], addcslashes($q, '%_\\') . '%', $u['id']]);
+        send_json(['ok' => true, 'results' => array_map(fn($r) => ['name' => $r['username'], 'added' => (bool)$r['added']], $st->fetchAll())]);
+
+    case 'friends.add':
+        $u = writer();
+        $st = db()->prepare('SELECT id FROM ' . t('users') . " WHERE username = ? AND status = 'active'");
+        $st->execute([s(body(), 'username', 20)]);
+        $id = (int)$st->fetchColumn();
+        if (!$id) fail('User not found.', 404, 'not_found');
+        if ($id === (int)$u['id']) fail('You cannot add yourself.', 422, 'validation');
+        db()->prepare('INSERT IGNORE INTO ' . t('friends') . ' (user_id, friend_id, created_at) VALUES (?,?,?)')->execute([$u['id'], $id, now_utc()]);
+        reward($u, 0, level_of((int)$u['id']));
+
+    case 'friends.remove':
+        $u = writer();
+        db()->prepare('DELETE f FROM ' . t('friends') . ' f JOIN ' . t('users') . ' u ON u.id = f.friend_id WHERE f.user_id = ? AND u.username = ?')->execute([$u['id'], s(body(), 'username', 20)]);
+        send_json(['ok' => true]);
 
     case 'board.seen':
         $u = writer();
