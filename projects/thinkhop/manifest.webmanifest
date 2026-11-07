@@ -1,0 +1,20 @@
+{
+  "name": "ThinkHop: Logic and Maths",
+  "short_name": "ThinkHop",
+  "description": "500 levels of logic puzzles that get harder and harder.",
+  "id": "/projects/thinkhop/",
+  "start_url": "/projects/thinkhop/",
+  "scope": "/projects/thinkhop/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFBF2",
+  "theme_color": "#5B3FD6",
+  "categories": ["games", "puzzle", "education"],
+  "icons": [
+    { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

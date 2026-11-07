@@ -3,8 +3,8 @@
  * Daily clean-up: see README.md.
  * Games (Connect Four, Chess, FaceGuess): deletes the rooms with no changes and no connected player
  * for ROOM_RETENTION_HOURS; players, chat and cards go with them through the foreign keys.
- * Apps (FoodTrack, Giftwise, Fischietto): deletes expired sessions and old sign-in attempts and blanks the IP and browser
- * still stored on sessions from older versions. It never touches the users' own data.
+ * Apps (FoodTrack, Giftwise, Fucina, ThinkHop, Fischietto): deletes expired sessions and old sign-in attempts and blanks the IP
+ * and browser still stored on sessions from older versions. It never touches the users' own data.
  *
  * URL:          https://www.saveriomorelli.com/projects/cron/cleanup.php?key=SECRET_KEY
  * Command line: php cleanup.php (no key needed)
@@ -12,7 +12,8 @@
 
 const ROOM_RETENTION_HOURS = 24;
 const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_']; // project => default table prefix
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop']; // these apps never stored the IP and browser on their sessions: no such columns
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
 
 header('Content-Type: application/json');
@@ -33,10 +34,10 @@ function connectTo($host, $port, $name, $user, $pass)
     ]);
 }
 
-function cleanTables($db, $prefix, $attemptsTable)
+function cleanTables($db, $prefix, $attemptsTable, $anonymise = true)
 {
     return [
-        'sessions_anonymised' => $db->exec("UPDATE `{$prefix}auth_tokens` SET ip = '', user_agent = '' WHERE ip <> '' OR user_agent <> ''"),
+        'sessions_anonymised' => $anonymise ? $db->exec("UPDATE `{$prefix}auth_tokens` SET ip = '', user_agent = '' WHERE ip <> '' OR user_agent <> ''") : 0,
         'sessions' => $db->exec("DELETE FROM `{$prefix}auth_tokens` WHERE expires_at < UTC_TIMESTAMP()"),
         'attempts' => $db->exec("DELETE FROM `{$prefix}{$attemptsTable}` WHERE created_at < UTC_TIMESTAMP() - INTERVAL " . ATTEMPT_RETENTION_HOURS . " HOUR"),
     ];
@@ -60,7 +61,7 @@ function cleanApp($project, $defaultPrefix)
         $host = $m[1];
         $port = (int)$m[2];
     }
-    return cleanTables(connectTo($host, $port, $database_name, $username_db, $password_db), validPrefix($table_prefix ?: $defaultPrefix, $defaultPrefix), 'attempts');
+    return cleanTables(connectTo($host, $port, $database_name, $username_db, $password_db), validPrefix($table_prefix ?: $defaultPrefix, $defaultPrefix), 'attempts', !in_array($project, NO_SESSION_DETAILS, true));
 }
 
 // Fischietto keeps its settings in a different file and format
