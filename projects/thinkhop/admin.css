@@ -323,3 +323,184 @@ td .block {
         grid-template-columns: 1fr;
     }
 }
+
+/* ---------- phones: a tab bar at the bottom, and tables turned into cards ---------- */
+@media (max-width: 640px) {
+    .admin {
+        padding: 0 12px calc(88px + env(safe-area-inset-bottom));
+    }
+
+    .admin-bar {
+        padding: 10px 0;
+        gap: 8px;
+    }
+
+    .admin-bar .brand strong {
+        font-size: .95rem;
+    }
+
+    .admin-bar nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        overflow: visible;
+        border-top: 2px solid var(--line);
+        background: var(--surface);
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, .12);
+    }
+
+    .admin-bar nav a {
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        min-height: 54px;
+        padding: 6px 2px;
+        font-size: .72rem;
+        text-align: center;
+    }
+
+    .admin-bar nav a svg.i {
+        width: 22px;
+        height: 22px;
+    }
+
+    .admin-view {
+        gap: 12px;
+    }
+
+    .admin-view > .panel, .admin-cols > .panel {
+        padding: 16px;
+    }
+
+    .card-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .card-head .btn, .card-head .ctl, .filters, .filters .ctl {
+        width: 100%;
+    }
+
+    .filters {
+        flex-direction: column;
+    }
+
+    .stat-grid.wide {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .table-wrap {
+        overflow: visible;
+    }
+
+    .table-wrap table, .table-wrap tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .table-wrap thead {
+        display: none;
+    }
+
+    .table-wrap tr {
+        display: block;
+        margin: 0 0 10px;
+        padding: 10px 12px;
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+    }
+
+    .table-wrap td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        border: 0;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .table-wrap td + td {
+        border-top: 1px solid var(--surface-3);
+    }
+
+    .table-wrap td[data-label]::before {
+        content: attr(data-label);
+        flex: none;
+        max-width: 45%;
+        color: var(--muted);
+        font-size: .78rem;
+        font-weight: 700;
+        text-align: left;
+    }
+
+    /* The first column is the subject of the card: it reads as a title, without a label */
+    .table-wrap td:first-child {
+        display: block;
+        padding-top: 0;
+        text-align: left;
+        font-weight: 700;
+    }
+
+    .table-wrap td:first-child::before {
+        content: none;
+    }
+
+    .table-wrap td:first-child small.block {
+        font-weight: 500;
+    }
+
+    /* Buttons: the whole width, never squeezed into a corner */
+    .table-wrap td.row-actions, .table-wrap td:last-child:not([data-label]) {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px;
+        padding-top: 10px;
+    }
+
+    /* Actions: an even grid of buttons that are easy to hit with a thumb */
+    .table-wrap td.row-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .table-wrap td.row-actions:has(> :only-child) {
+        grid-template-columns: 1fr;
+    }
+
+    .table-wrap td.row-actions .btn, .table-wrap td.row-actions .icon-btn {
+        width: 100%;
+        min-height: 42px;
+        border: 2px solid var(--line);
+        border-radius: 10px;
+    }
+
+    .table-wrap td.row-actions .btn-ghost {
+        background: var(--surface-2);
+    }
+
+    .table-wrap td:empty {
+        display: none;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .player-dates {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .modal .box.wide {
+        padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
+    }
+}

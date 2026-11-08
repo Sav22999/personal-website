@@ -71,7 +71,7 @@ function certificate_image(string $name, string $course, string $family, int $sc
     cert_text($img, 'MrsSaintDelafield-Regular', 148, 1870, 1472, $ink, 'Saverio Morelli');
     cert_text($img, 'Gelasio-Regular', 32, 1870, 1534, $soft, 'Founder of Fucina');
     cert_text($img, 'Gelasio-Regular', 25, $mid, 1580, $soft, 'Personal achievement issued by Fucina, with no legal value. Fucina is a project curated by Saverio Morelli.');
-    cert_text($img, 'JetBrainsMono-Medium', 22, $mid, 1610, $soft, 'Verify: saveriomorelli.com/projects/fucina/verify.php');
+    cert_text($img, 'Gelasio-Regular', 25, $mid, 1614, $soft, 'Its authenticity can be checked with its number on the official Fucina website.');
     return $img;
 }
 

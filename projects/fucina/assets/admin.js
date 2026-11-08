@@ -9,7 +9,7 @@
     let me = null;
     let LANGS = ['it', 'en'];
 
-    const TABS = [['overview', 'Overview', 'dashboard'], ['courses', 'Courses', 'book'], ['games', 'Games', 'game'], ['users', 'Users', 'group'], ['certificates', 'Certificates', 'cert'], ['settings', 'Settings', 'tune']];
+    const TABS = [['overview', 'Overview', 'dashboard'], ['courses', 'Courses', 'book'], ['games', 'Games', 'game'], ['users', 'Users', 'group'], ['certificates', 'Certificates', 'cert'], ['avatars', 'Profile pictures', 'image'], ['settings', 'Settings', 'tune']];
 
     // ---------------------------------------------------------------- form helpers
 
@@ -61,8 +61,13 @@
         }
     }
 
+    /** A table; on a phone each row becomes a card, and every cell shows the name of its column (data-label). */
     function table(cols, rows) {
-        return h('div.tbl-wrap', h('table.tbl', h('thead', h('tr', cols.map(c => h('th', c)))), h('tbody', rows)));
+        const body = h('tbody', rows);
+        body.querySelectorAll(':scope > tr').forEach(tr => [...tr.children].forEach((td, i) => {
+            if (cols[i]) td.dataset.label = cols[i];
+        }));
+        return h('div.tbl-wrap', h('table.tbl', h('thead', h('tr', cols.map(c => h('th', c)))), body));
     }
 
     /** Moves a row up or down and saves the new order. */
@@ -514,6 +519,8 @@
                     return ['bulb', t('Help bought for {n} Sparks ({r})', {n: e.n, r: e.a})];
                 case 'prize':
                     return ['trophy', t('Leaderboard prize: place {p}, +{n} Sparks (end of day)', {p: e.m, n: e.n})];
+                case 'avatar':
+                    return ['image', t('Profile picture bought: {i} for {n} Sparks', {i: Avatars.CHARACTERS[e.a] ? Avatars.name(Avatars.CHARACTERS[e.a]) : Avatars.BACKGROUNDS[e.a] ? Avatars.name(Avatars.BACKGROUNDS[e.a]) : e.a, n: e.n})];
                 case 'points':
                     return ['edit', t('Changed from the portal · {f}: {a} → {b}', {f: e.a === 'xp' ? t('Grade XP') : t('Sparks'), a: e.n, b: e.m})];
                 default:
@@ -537,6 +544,28 @@
                 await Api.post('admin.certificate.delete', {code: c.code}).catch(e => toast(e.message, 'error'));
                 render();
             }))))) : h('p.muted', t('No certificates yet.')));
+    }
+
+    // ---------------------------------------------------------------- profile pictures
+
+    /** Price in Sparks and sale of each character and background; the drawings are in assets/avatars.js. */
+    async function viewAvatars() {
+        const d = await Api.get('admin.avatars');
+        const section = (kind, title) => {
+            const rows = d.items.filter(x => x.kind === kind).map(x => {
+                const art = kind === 'character' ? Avatars.CHARACTERS[x.id] : Avatars.BACKGROUNDS[x.id];
+                const price = inp({type: 'number', min: 0, max: 100000, value: x.price, 'aria-label': t('Price')});
+                price.classList.add('adm-price');
+                const on = h('input', {type: 'checkbox', checked: !!+x.enabled, 'aria-label': t('On sale')});
+                const save = iconBtn('save', t('Save'), () => act(save, () => Api.post('admin.avatar.save', {id: x.id, price: price.value, enabled: on.checked})));
+                return h('tr', h('td', Avatars.render(kind === 'character' ? x.id + ':violet' : ':' + x.id, 'A', 'sm')), h('td', art ? Avatars.name(art) : x.id),
+                    h('td', price), h('td', h('label.check', on, h('span', t('On sale')))), h('td', String(x.sold)), h('td.nowrap', save));
+            });
+            return [h('h2.section-title', title), table(['', t('Name'), t('Price (Sparks)'), t('Sale'), t('Sold'), ''], rows)];
+        };
+        return page(t('Profile pictures'), null,
+            h('p.muted', t('Learners buy these with Sparks from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.')),
+            section('character', t('Characters')), section('background', t('Backgrounds')));
     }
 
     const SETTINGS = [
@@ -564,15 +593,24 @@
         const lang = sel(I18N.langs, I18N.lang);
         lang.setAttribute('aria-label', t('Language'));
         lang.addEventListener('change', () => I18N.set(lang.value));
-        root.replaceChildren(h('div.adm', h('nav.adm-side', {'aria-label': t('Sections')},
+        // On a phone: a top bar (brand, language, back to the app) and the sections in a strip that scrolls sideways
+        const lang2 = sel(I18N.langs, I18N.lang);
+        lang2.setAttribute('aria-label', t('Language'));
+        lang2.addEventListener('change', () => I18N.set(lang2.value));
+        const top = h('header.adm-top', h('a.sn-brand', {href: 'index.html'}, h('img', {src: 'assets/icons/icon-192.png?v=2', alt: ''}), h('strong', 'Fucina'), h('span.muted.small', 'Admin')),
+            h('div.grow'), lang2, iconBtn('back', t('Back to the app'), () => location.href = 'index.html'));
+        const nav = h('nav.adm-side', {'aria-label': t('Sections')},
             h('a.sn-brand', {href: 'index.html'}, h('img', {src: 'assets/icons/icon-192.png?v=2', alt: ''}), h('strong', 'Fucina')), h('span.muted.small', t('Admin portal')),
             TABS.map(([id, label, ic]) => h('a.sn-link' + (active === id ? '.active' : ''), {href: '#/' + id}, icon(ic), h('span', t(label)))),
-            h('div.grow'), lang, h('a.sn-link', {href: 'index.html'}, icon('back'), h('span', t('Back to the app')))), h('main.adm-main', content)));
+            h('div.grow'), lang, h('a.sn-link.back', {href: 'index.html'}, icon('back'), h('span', t('Back to the app'))));
+        root.replaceChildren(h('div.adm', top, nav, h('main.adm-main', content)));
+        const on = nav.querySelector('.sn-link.active');
+        if (on && matchMedia('(max-width: 760px)').matches) setTimeout(() => nav.scrollLeft = on.offsetLeft - 12, 0);
     }
 
     async function render() {
         const [name, a, b] = (location.hash.replace(/^#\/?/, '') || 'overview').split('/').map(decodeURIComponent);
-        const views = {overview: viewOverview, courses: viewCourses, 'course-new': viewCourseNew, course: viewCourse, lesson: viewLesson, 'lesson-new': viewLessonNew, games: viewGames, game: viewGame, users: viewUsers, certificates: viewCertificates, settings: viewSettings};
+        const views = {overview: viewOverview, courses: viewCourses, 'course-new': viewCourseNew, course: viewCourse, lesson: viewLesson, 'lesson-new': viewLessonNew, games: viewGames, game: viewGame, users: viewUsers, certificates: viewCertificates, avatars: viewAvatars, settings: viewSettings};
         const active = {'course-new': 'courses', course: 'courses', lesson: 'courses', 'lesson-new': 'courses', game: 'games'}[name] || name;
         let content;
         try {

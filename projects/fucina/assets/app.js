@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.17.0';
+    const VERSION = '1.18.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.18.0', date: '2026-11-08', it: ['Immagine del profilo: scegli un personaggio e uno sfondo, comprali con le Scintille dal profilo; si vedono in classifica e tra gli amici', 'Il certificato dice che si può verificare con il suo numero sul sito ufficiale di Fucina, senza indirizzo', 'Più nomi per i gradi: 14, da Scintilla a Fiamma eterna, tutti elencati nelle statistiche', 'Portale admin più comodo da telefono: barra in alto, sezioni scorrevoli e tabelle a schede'], en: ['Profile picture: pick a character and a background and buy them with Sparks from your profile; they show in the leaderboards and among friends', 'The certificate says it can be checked with its number on the official Fucina website, with no address', 'More grade names: 14, from Spark to Eternal flame, all listed in the stats', 'Admin portal easier on a phone: top bar, scrolling sections and tables as cards']},
         {v: '1.17.0', date: '2026-11-08', it: ['Chi si registra con email e password conferma l’indirizzo con un link: finché non lo apre l’account resta bloccato'], en: ['If you sign up with email and password you confirm the address with a link: until you open it the account stays locked']},
         {v: '1.16.2', date: '2026-11-08', it: ['Ogni nuovo badge dà +50 XP e +50 Scintille'], en: ['Every new badge gives +50 XP and +50 Sparks']},
         {v: '1.16.1', date: '2026-11-08', it: ['Laboratorio flex non blocca più il browser', 'Quattro di fila diventa un forza quattro con le domande: risposta giusta, cade il tuo gettone verde; risposta sbagliata, il computer mette un gettone rosso. Nessun altro gettone'], en: ['Flex lab no longer freezes the browser', 'Four in a line becomes four in a row with questions: a right answer drops your green disc, a wrong one lets the computer drop a red disc. No other discs']},
@@ -46,9 +47,13 @@
 
     // ---------------------------------------------------------------- small components
 
-    function avatar(name, cls) {
-        return h('span.avatar' + (cls ? '.' + cls : ''), String(name || '?').trim().charAt(0).toUpperCase());
+    /** A profile picture (see assets/avatars.js): the chosen character and background, or the initial. */
+    function avatar(name, cls, code) {
+        return Avatars.render(code, name, cls);
     }
+
+    /** My own picture, from the freshest data there is. */
+    const myAvatar = () => ((S.state && S.state.user) || S.user || {}).avatar;
 
     function banner(tone, ic, title, text) {
         return h('div.banner.' + tone, icon(ic), h('div.b-body', h('h3', title), text ? h('p', text) : null));
@@ -179,7 +184,7 @@
             h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Path'), 'book'), link('games', t('Games'), 'game'), link('board', t('Ranking'), 'trophy'), link('stats', t('Stats'), 'stats')),
             h('div.grow'),
             S.user.role >= 5 ? h('a.sn-link', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal'))) : null,
-            h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm'), h('span', S.user.name)));
+            h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm', myAvatar()), h('span', S.user.name)));
     }
 
     const TAB_OF = {course: 'path', lesson: 'path', exam: 'path', daily: 'home', gym: 'home', game: 'games', play: 'games', friends: 'board'};
@@ -228,7 +233,7 @@
         const bar = v.back
             ? h('header.appbar.small', iconBtn('back', t('Back'), () => go(v.back)), h('div.titles', h('h1', v.title)), S.state ? gradeChip() : null, S.state ? sparksChip() : null, v.actions || [])
             : h('header.appbar', h('div.titles', h('h1', v.title)), gradeChip(), sparksChip(), v.actions || [],
-                h('button.avatar-btn', {type: 'button', 'aria-label': t('Profile and settings'), onclick: () => go('profile')}, avatar(S.user.name)));
+                h('button.avatar-btn', {type: 'button', 'aria-label': t('Profile and settings'), onclick: () => go('profile')}, avatar(S.user.name, '', myAvatar())));
         const nav = v.nav !== false;
         const main = h('main.view' + (!nav ? '.no-nav' : '.no-fab'), v.body);
         const content = h('div.content', bar, main);
@@ -241,6 +246,16 @@
 
     async function refresh() {
         applyState(await Api.get('state'));
+    }
+
+    /** Every grade name and the level that opens it: the ones reached are lit, the current one stands out. */
+    function gradeLadder() {
+        const level = S.state.level.level;
+        const ranks = S.state.ranks || [];
+        const current = ranks.filter(r => r.from <= level).pop();
+        return h('details.card.pad.ladder', h('summary', t('All grades'), h('span.muted', ` · ${ranks.filter(r => r.from <= level).length}/${ranks.length}`)),
+            h('ol', ranks.map(r => h('li.r-' + r.id + (r.from <= level ? '.reached' : '') + (r === current ? '.now' : ''),
+                h('b', String(r.from)), h('span', r.name), r === current ? chip(t('You are here'), 'ok') : null))));
     }
 
     // ---------------------------------------------------------------- home
@@ -892,7 +907,7 @@
         const {type, scope} = S.board;
         const d = await Api.get(`board.get&type=${type}&scope=${scope}`);
         const hours = Math.floor(d.secondsLeft / 3600), minutes = Math.floor(d.secondsLeft % 3600 / 60);
-        const row = r => h('li.board-row' + (r.me ? '.you' : ''), h('b.place.p' + Math.min(r.place, 4), String(r.place)), avatar(r.name, 'sm'), h('span.grow', r.name), h('strong', r.score));
+        const row = r => h('li.board-row' + (r.me ? '.you' : ''), h('b.place.p' + Math.min(r.place, 4), String(r.place)), avatar(r.name, 'sm', r.avatar), h('span.grow', r.name), h('strong', r.score));
         const prize = (n, label) => n ? h('div.prize', h('b', label), h('span', icon('spark'), String(n))) : null;
         const pick = key => v => {
             S.board[key] = v;
@@ -910,7 +925,7 @@
                 d.me && d.me.place > 20 ? h('ol.board', {start: d.me.place}, row(d.me)) : null,
                 !d.onBoard ? banner('info', 'info', t('You are not in the ranking'), t('You can join again from your profile.')) : null,
                 h('a.btn.btn-tonal.btn-block', {href: '#/friends'}, icon('group'), h('span', t('Find and manage friends'))),
-                daily && scope === 'all' && d.yesterday.length ? [h('h2.section-title', t('Yesterday’s podium')), h('ol.board', d.yesterday.map(y => h('li.board-row', h('b.place.p' + y.place, String(y.place)), avatar(y.name, 'sm'), h('span.grow', y.name), h('strong.won', icon('spark'), '+' + y.points))))] : null,
+                daily && scope === 'all' && d.yesterday.length ? [h('h2.section-title', t('Yesterday’s podium')), h('ol.board', d.yesterday.map(y => h('li.board-row', h('b.place.p' + y.place, String(y.place)), avatar(y.name, 'sm', y.avatar), h('span.grow', y.name), h('strong.won', icon('spark'), '+' + y.points))))] : null,
             ]
         };
     }
@@ -920,11 +935,11 @@
     async function viewFriends() {
         const list = h('div.friend-list');
         const found = h('div.friend-list');
-        const line = (name, action) => h('div.friend', avatar(name, 'sm'), h('span.grow', name), action);
+        const line = (p, action) => h('div.friend', avatar(p.name, 'sm', p.avatar), h('span.grow', p.name), action);
 
         async function load() {
             const d = await Api.get('friends.list');
-            list.replaceChildren(...(d.friends.length ? d.friends.map(f => line(f.name, btn(t('Remove'), {
+            list.replaceChildren(...(d.friends.length ? d.friends.map(f => line(f, btn(t('Remove'), {
                 kind: 'text', onclick: async () => {
                     if (!await confirm(t('Remove {name}?', {name: f.name}), t('You can add them again at any time.'), t('Remove'), true)) return;
                     await Api.post('friends.remove', {username: f.name}).catch(e => toast(e.message, 'error'));
@@ -941,7 +956,7 @@
             const q = input.value.trim();
             if (q.length < 2) return found.replaceChildren();
             const d = await Api.get('friends.search&q=' + encodeURIComponent(q)).catch(() => ({results: []}));
-            found.replaceChildren(...(d.results.length ? d.results.map(r => line(r.name, r.added ? chip(t('Friend'), 'ok', 'check') : btn(t('Add'), {
+            found.replaceChildren(...(d.results.length ? d.results.map(r => line(r, r.added ? chip(t('Friend'), 'ok', 'check') : btn(t('Add'), {
                 icon: 'add', onclick: async () => {
                     try {
                         const a = await Api.post('friends.add', {username: r.name});
@@ -1021,6 +1036,7 @@
         return {
             title: t('Stats'), tab: 'stats', body: [
                 rankCard(),
+                gradeLadder(),
                 h('div.tiles', statTile('fire', st.user.bestStreak, t('Best streak')), statTile('spark', st.user.points, t('Sparks')), statTile('code', n.tasks, t('Exercises')), statTile('bolt', n.drills, t('Drills')), statTile('game', n.games, t('Games played')), statTile('calendar', n.daily, t('Daily challenges')), statTile('trophy', n.wins, t('Wins'))),
                 h('h2.section-title', t('This week')), h('div.card.pad', weekBars()),
                 h('h2.section-title', t('Activity')), h('div.card.pad', calendar()),
@@ -1055,6 +1071,91 @@
         const s = sheet({title: t('Name on the certificate'), body: [UI.field(t('Full name'), name)], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
     }
 
+    // ---------------------------------------------------------------- profile picture
+
+    /**
+     * The picture shop: a character (or the initial) on a background. Free and bought items are worn at once
+     * with Save; the others show in the preview with their price and a button to buy them with Sparks.
+     */
+    function openAvatarShop() {
+        const now = Avatars.parse(myAvatar());
+        let pick = {character: now.character, background: now.background || 'violet'};
+        let kind = 'character';
+        const item = id => S.state.shop.find(x => x.id === id);
+        const owned = id => !id || (item(id) && item(id).owned);
+        const preview = h('div.av-preview');
+        const tabs = h('div');
+        const grid = h('div.av-grid');
+        const buyBox = h('div.av-buy');
+        const save = btn(t('Save'), {icon: 'check', onclick: wear});
+        const wallet = h('p.muted.small');
+
+        function code(c, b) {
+            return (c || '') + ':' + (b || '');
+        }
+
+        function draw() {
+            preview.replaceChildren(avatar(S.state.user.name, 'xl', code(pick.character, pick.background)),
+                h('div', h('strong', pick.character ? Avatars.name(Avatars.CHARACTERS[pick.character]) : t('Your initial')),
+                    h('span.muted', Avatars.name(Avatars.BACKGROUNDS[pick.background]))));
+            tabs.replaceChildren(seg([['character', t('Characters')], ['background', t('Backgrounds')]], kind, v => {
+                kind = v;
+                draw();
+            }));
+            const items = S.state.shop.filter(x => x.kind === kind && (kind === 'character' ? Avatars.CHARACTERS[x.id] : Avatars.BACKGROUNDS[x.id]));
+            const tiles = (kind === 'character' ? [{id: '', owned: true, price: 0}] : []).concat(items).map(x => {
+                const on = kind === 'character' ? pick.character === x.id : pick.background === x.id;
+                const face = kind === 'character' ? code(x.id, pick.background) : code(pick.character, x.id);
+                const label = kind === 'character' ? (x.id ? Avatars.name(Avatars.CHARACTERS[x.id]) : t('Your initial')) : Avatars.name(Avatars.BACKGROUNDS[x.id]);
+                return h('button.av-tile' + (on ? '.on' : '') + (x.owned ? '' : '.locked'), {
+                    type: 'button', 'aria-pressed': String(on), onclick: () => {
+                        pick[kind] = x.id;
+                        draw();
+                    }
+                }, avatar(S.state.user.name, 'md', face), h('span.av-name', label),
+                    x.owned ? h('span.av-price.own', icon('check'), x.price ? t('Owned') : t('Free')) : h('span.av-price', icon('spark'), String(x.price)));
+            });
+            grid.replaceChildren(...tiles);
+            // What is in the preview but not owned yet: buy it, one item at a time
+            const missing = [pick.character, pick.background].filter(id => !owned(id));
+            buyBox.replaceChildren(...missing.map(id => {
+                const it = item(id);
+                const short = S.state.user.points < it.price;
+                const label = it.kind === 'character' ? Avatars.name(Avatars.CHARACTERS[id]) : Avatars.name(Avatars.BACKGROUNDS[id]);
+                const b = btn(t('Buy {name} · {n}', {name: label, n: it.price}), {
+                    icon: 'spark', kind: short ? 'tonal' : 'filled', disabled: short, onclick: async () => {
+                        if (!await confirm(t('Buy {name}?', {name: label}), t('It costs {n} Sparks: you have {m}.', {n: it.price, m: S.state.user.points}), t('Buy'))) return;
+                        try {
+                            applyState(await busy(b, () => Api.post('avatar.buy', {item: id})));
+                            toast(t('Bought: {name}', {name: label}), 'ok');
+                            draw();
+                        } catch (e) {
+                            toast(e.message, 'error');
+                        }
+                    }
+                });
+                return h('div.av-buy-row', b, short ? h('p.muted.small', t('You need {n} more Sparks.', {n: it.price - S.state.user.points})) : null);
+            }));
+            save.disabled = !!missing.length;
+            wallet.textContent = t('You have {n} Sparks. Earn more with levels, games, badges and the daily challenge.', {n: S.state.user.points});
+        }
+
+        async function wear() {
+            try {
+                applyState(await busy(save, () => Api.post('avatar.set', {character: pick.character, background: pick.background})));
+                s.close();
+                toast(t('Profile picture updated'), 'ok');
+                render();
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+
+        const s = sheet({title: t('Profile picture'), body: [preview, buyBox, tabs, grid, wallet],
+            actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        draw();
+    }
+
     // ---------------------------------------------------------------- profile
 
     function viewProfile() {
@@ -1062,7 +1163,7 @@
         const u = S.state.user;
         return {
             title: t('Profile'), back: 'home', tab: 'profile', body: [
-                h('div.card.pad.profile-head', avatar(u.name, 'lg'), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
+                h('div.card.pad.profile-head', h('button.avatar-edit', {type: 'button', 'aria-label': t('Change profile picture'), onclick: openAvatarShop}, avatar(u.name, 'lg', myAvatar()), h('i', icon('edit'))), h('div.grow', h('strong', u.name), h('p.muted', '@' + u.username), h('p.muted', u.email))),
                 rankCard(),
                 h('h2.section-title', t('Preferences')),
                 seg(I18N.langs, I18N.lang, I18N.set),
@@ -1080,7 +1181,7 @@
                 }),
                 h('p.muted.small', t('Your username is the only thing others see, next to your score.')),
                 h('h2.section-title', t('Account')),
-                h('div.group', row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('bell', t('Notifications'), notificationSettings), row('edit', t('Name'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
+                h('div.group', row('image', t('Profile picture'), openAvatarShop), row('person', t('Change username'), () => renderUsername(true)), row('group', t('Friends'), () => go('friends')), row('bell', t('Notifications'), notificationSettings), row('edit', t('Name'), editProfile), row('lock', u.hasPassword ? t('Change password') : t('Set a password'), editPassword),
                     u.role >= 5 ? h('a.setting', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal')), icon('right')) : null,
                     h('a.setting', {href: 'privacy.html'}, icon('info'), h('span', t('Privacy')), icon('right')),
                     row('logout', t('Sign out'), async () => {

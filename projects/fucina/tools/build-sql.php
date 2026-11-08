@@ -28,5 +28,8 @@ foreach (seed_drills() as $lesson => $drills) {
         $out[] = "INSERT INTO `{$p}drills` (lesson_id, sort, kind, data) VALUES ((SELECT id FROM `{$p}lessons` WHERE course = " . $q($course) . ' AND slug = ' . $q($slug) . '),' . ($i + 1) . ',' . $q($kind) . ',' . $q(json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) . ');';
     }
 }
+// The profile pictures for sale, with their starting prices
+$n = 0;
+foreach (AVATAR_ITEMS as $id => [$kind, $price]) $out[] = "INSERT INTO `{$p}avatar_items` (id, kind, price, enabled, sort) VALUES (" . $q($id) . ',' . $q($kind) . ",$price,1," . (++$n) . ');';
 file_put_contents(__DIR__ . '/../install/fucina.sql', implode("\n", $out) . "\n");
 echo "Written install/fucina.sql\n";

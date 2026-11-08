@@ -102,7 +102,14 @@
         return b;
     };
 
-    const table = (heads, rows) => h('div.table-wrap', h('table', h('thead', h('tr', heads.map(x => h('th', x)))), h('tbody', rows)));
+    /** Every cell knows its column: on a phone each row becomes a card with labels (admin.css, "Phones"). */
+    function table(heads, rows) {
+        const body = h('tbody', rows);
+        [...body.rows].forEach(tr => [...tr.cells].forEach((td, i) => {
+            if (heads[i]) td.dataset.label = heads[i];
+        }));
+        return h('div.table-wrap', h('table', h('thead', h('tr', heads.map(x => h('th', x)))), body));
+    }
     const card = (title, ...kids) => h('section.panel', title ? h('h2', title) : null, kids);
 
     // ---------- overview ----------

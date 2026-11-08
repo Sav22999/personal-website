@@ -351,6 +351,143 @@ h1, h2, h3, .section-title, .appbar h1, .auth-top h1, .sheet-title, .sn-brand st
     font-size: 1.5rem;
 }
 
+.avatar.md {
+    width: 52px;
+    height: 52px;
+    font-size: 1.3rem;
+}
+
+.avatar.xl {
+    width: 96px;
+    height: 96px;
+    font-size: 2.4rem;
+}
+
+/* A drawn character fills its circle */
+.avatar.drawn {
+    overflow: hidden;
+}
+
+.avatar.drawn svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* The picture in the profile opens the shop: a small pencil on its edge */
+.avatar-edit {
+    position: relative;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    flex: none;
+}
+
+.avatar-edit i {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--surface);
+}
+
+.avatar-edit i .ic {
+    width: 14px;
+    height: 14px;
+    fill: var(--on-primary);
+}
+
+/* ---------- Profile picture shop ---------- */
+.av-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.av-preview > div {
+    display: grid;
+    gap: 2px;
+}
+
+.av-buy {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.av-buy:empty {
+    display: none;
+}
+
+.av-buy-row {
+    display: grid;
+    gap: 4px;
+}
+
+.av-buy-row p {
+    margin: 0;
+}
+
+.av-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.av-tile {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 10px 4px 8px;
+    background: var(--surface);
+    color: var(--text);
+    border: 2px solid var(--card-border);
+    border-radius: var(--r-md);
+    font: inherit;
+    cursor: pointer;
+}
+
+.av-tile.on {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.av-tile.locked .avatar {
+    filter: saturate(.55) brightness(.9);
+}
+
+.av-name {
+    font-size: .74rem;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.av-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font: 700 .74rem var(--mono);
+    color: var(--gold);
+}
+
+.av-price.own {
+    color: var(--ok);
+}
+
+.av-price .ic {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
 .avatar-btn {
     border: 0;
     padding: 0;
@@ -2855,11 +2992,19 @@ code {
 
 /* ---------- Grade ---------- */
 .r-spark { --rank: #FF5B2E; --rank-edge: #BF3C14; }
+.r-ember { --rank: #E5383B; --rank-edge: #A3191C; }
 .r-apprentice { --rank: #12B886; --rank-edge: #0B8A63; }
+.r-journeyman { --rank: #0CA5A5; --rank-edge: #077A7A; }
 .r-smith { --rank: #2F8CF0; --rank-edge: #1B66BC; }
+.r-forger { --rank: #4A63E0; --rank-edge: #3045B0; }
 .r-artisan { --rank: #7048E8; --rank-edge: #5230BA; }
+.r-armourer { --rank: #9B40D8; --rank-edge: #7128A8; }
 .r-master { --rank: #F03E82; --rank-edge: #BC2460; }
+.r-grandmaster { --rank: #D6336C; --rank-edge: #A01E4C; }
+.r-keeper { --rank: #5A6275; --rank-edge: #3A4152; }
 .r-legend { --rank: #E8A400; --rank-edge: #B07C00; }
+.r-titan { --rank: #C2410C; --rank-edge: #8A2C06; }
+.r-eternal { --rank: #1B1B4B; --rank-edge: #FFC53D; }
 
 .grade {
     display: inline-flex;
@@ -4011,6 +4156,11 @@ body.admin {
     white-space: nowrap;
 }
 
+.tbl td.nowrap > * {
+    display: inline-grid;
+    vertical-align: middle;
+}
+
 .ctl {
     width: 100%;
     box-sizing: border-box;
@@ -4117,21 +4267,208 @@ body.admin {
     text-align: center;
 }
 
+/* The top bar exists only on a phone */
+.adm-top {
+    display: none;
+}
+
 @media (max-width: 760px) {
     .adm {
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr;
     }
 
+    .adm-top {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: var(--code-bg);
+        color: var(--code-fg);
+    }
+
+    .adm-top .sn-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .adm-top .sn-brand img {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+    }
+
+    .adm-top .muted {
+        color: #B3A698;
+    }
+
+    .adm-top select.ctl {
+        width: auto;
+        padding: 5px 8px;
+        background: transparent;
+        color: inherit;
+        border-color: rgb(255 255 255 / .25);
+    }
+
+    .adm-top .icon-btn .ic, .adm-top button .ic {
+        fill: currentColor;
+    }
+
+    .adm-top button {
+        color: inherit;
+    }
+
+    /* Sections: one row of chips that scrolls sideways, just under the top bar */
     .adm-side {
-        position: static;
+        position: sticky;
+        top: 52px;
+        z-index: 4;
         height: auto;
         flex-direction: row;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        border-bottom: 1px solid rgb(255 255 255 / .08);
     }
 
-    .adm-side .grow, .adm-side > .muted {
+    .adm-side::-webkit-scrollbar {
         display: none;
+    }
+
+    .adm-side .sn-brand, .adm-side .grow, .adm-side > .muted, .adm-side > select, .adm-side .sn-link.back {
+        display: none;
+    }
+
+    .adm-side .sn-link {
+        flex: none;
+        padding: 7px 12px;
+        font-size: .88rem;
+        white-space: nowrap;
+        background: rgb(255 255 255 / .06);
+    }
+
+    .adm-main {
+        padding: 14px 12px 60px;
+    }
+
+    .adm-head h1 {
+        font-size: 1.45rem;
+    }
+
+
+    /* Tables become cards: one per row, each cell with the name of its column */
+    .tbl-wrap {
+        border: 0;
+        background: none;
+        overflow: visible;
+    }
+
+    .tbl thead {
+        display: none;
+    }
+
+    .tbl, .tbl tbody {
+        display: block;
+    }
+
+    .tbl tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 12px;
+        margin-bottom: 10px;
+        padding: 12px;
+        background: var(--surface);
+        border: 2px solid var(--card-border);
+        border-radius: var(--r-md);
+    }
+
+    .tbl td {
+        display: grid;
+        align-content: start;
+        gap: 2px;
+        min-width: 0;
+        padding: 0;
+        border-top: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .tbl td[data-label]::before {
+        content: attr(data-label);
+        font: 700 .66rem var(--mono);
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    /* The first cell is the title of the card; cells without a column name (buttons) take the whole width */
+    .tbl td:first-child {
+        grid-column: 1 / -1;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .tbl td:first-child[data-label]::before {
+        display: none;
+    }
+
+    .tbl td:not([data-label]) {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    .tbl td:not([data-label]):empty {
+        display: none;
+    }
+
+    /* A first cell without a name (order arrows, a picture) sits at the top right; the next one is then the title */
+    .tbl td:first-child:not([data-label]) {
+        grid-column: 2;
+        grid-row: 1;
+        justify-content: flex-end;
+    }
+
+    .tbl td:first-child:not([data-label]) + td {
+        grid-column: 1;
+        grid-row: 1;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .tbl td:first-child:not([data-label]) + td::before {
+        display: none;
+    }
+
+    .tbl td[data-label] {
+        justify-items: start;
+    }
+
+    .tbl td[data-label] > .ctl {
+        justify-self: stretch;
+    }
+
+    .tbl td .ctl {
+        width: 100%;
+    }
+
+    .adm-price {
+        max-width: 110px;
+    }
+
+    .sheet .adm-grid, .adm-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -4160,4 +4497,52 @@ select.ctl {
     display: grid;
     gap: 10px;
     margin-top: 16px;
+}
+
+/* All the grades, in the stats */
+.ladder summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.ladder ol {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.ladder li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: .55;
+}
+
+.ladder li.reached {
+    opacity: 1;
+}
+
+.ladder li b {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border-radius: 9px;
+    background: var(--rank);
+    box-shadow: 0 3px 0 var(--rank-edge);
+    color: #fff;
+    font: 700 .82rem var(--display);
+}
+
+.ladder li:not(.reached) b {
+    background: var(--surface-2);
+    box-shadow: none;
+    color: var(--muted);
+}
+
+.ladder li.now span {
+    font-weight: 800;
 }

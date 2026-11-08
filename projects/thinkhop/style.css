@@ -2317,6 +2317,7 @@ body {
 /* A message must not cover the buttons of a window, which sits at the bottom on phones */
 body:has(.modal) .toast {
     top: calc(14px + env(safe-area-inset-top));
+    bottom: auto; /* the base rule anchors it at the bottom: both together would stretch it over the whole screen */
 }
 
 .menu-link {

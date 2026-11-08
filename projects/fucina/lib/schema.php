@@ -27,6 +27,7 @@ function schema_statements(string $p): array
             `lang` CHAR(2) NOT NULL DEFAULT 'en',
             `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
             `email_verified_at` DATETIME NULL,
+            `avatar` VARCHAR(40) NULL,
             `role` TINYINT UNSIGNED NOT NULL DEFAULT 0,
             `xp` INT UNSIGNED NOT NULL DEFAULT 0,
             `points` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -280,6 +281,23 @@ function schema_statements(string $p): array
             UNIQUE KEY `uq_user_course` (`user_id`, `course`),
             CONSTRAINT `fk_{$p}ce_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
+        // Profile pictures for sale: the drawings are in assets/avatars.js, price and sale here (admin portal)
+        "CREATE TABLE IF NOT EXISTS `{$p}avatar_items` (
+            `id` VARCHAR(30) NOT NULL PRIMARY KEY,
+            `kind` VARCHAR(12) NOT NULL,
+            `price` INT UNSIGNED NOT NULL DEFAULT 0,
+            `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+            `sort` SMALLINT UNSIGNED NOT NULL DEFAULT 0
+        ) $e",
+        // What each learner bought, and for how much
+        "CREATE TABLE IF NOT EXISTS `{$p}user_items` (
+            `user_id` INT UNSIGNED NOT NULL,
+            `item_id` VARCHAR(30) NOT NULL,
+            `price` INT UNSIGNED NOT NULL DEFAULT 0,
+            `bought_at` DATETIME NOT NULL,
+            PRIMARY KEY (`user_id`, `item_id`),
+            CONSTRAINT `fk_{$p}ui_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
         // Single-use links that confirm an email address: only their hash is kept
         "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
             `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
@@ -327,6 +345,7 @@ function install_schema(PDO $pdo, string $prefix): void
         $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `email_verified_at` DATETIME NULL AFTER `status`");
         $pdo->exec("UPDATE `{$prefix}users` SET email_verified_at = UTC_TIMESTAMP() WHERE google_sub IS NOT NULL OR role >= 5");
     }
+    if (!in_array('avatar', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `avatar` VARCHAR(40) NULL");
     if (!in_array('username', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `username` VARCHAR(20) NULL AFTER `name`, ADD UNIQUE KEY `uq_username` (`username`)");
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}lesson_progress`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('skipped', $columns, true)) {
@@ -346,6 +365,10 @@ function install_schema(PDO $pdo, string $prefix): void
     if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");
     if (!in_array('seconds', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `seconds` INT UNSIGNED NULL");
     require_once __DIR__ . '/seed.php';
+    // The catalogue of profile pictures: new items arrive with their starting price, existing ones keep what the admin set
+    $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}avatar_items` (id, kind, price, enabled, sort) VALUES (?,?,?,1,?)");
+    $n = 0;
+    foreach (AVATAR_ITEMS as $id => [$kind, $price]) $ins->execute([$id, $kind, $price, ++$n]);
     // Version 9: the CSS board grows with the level, so it gets selectors written for each size
     $old = (int)($pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn() ?: 0);
     if ($old > 0 && $old < 9) install_seed_selectors_v9($pdo, $prefix);

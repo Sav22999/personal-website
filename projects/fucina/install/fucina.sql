@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS `fc_users` (
   `lang` CHAR(2) NOT NULL DEFAULT 'en',
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
   `email_verified_at` DATETIME NULL,
+  `avatar` VARCHAR(40) NULL,
   `role` TINYINT UNSIGNED NOT NULL DEFAULT 0,
   `xp` INT UNSIGNED NOT NULL DEFAULT 0,
   `points` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -278,6 +279,23 @@ CREATE TABLE IF NOT EXISTS `fc_certificates` (
   CONSTRAINT `fk_fc_ce_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `fc_avatar_items` (
+  `id` VARCHAR(30) NOT NULL PRIMARY KEY,
+  `kind` VARCHAR(12) NOT NULL,
+  `price` INT UNSIGNED NOT NULL DEFAULT 0,
+  `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+  `sort` SMALLINT UNSIGNED NOT NULL DEFAULT 0
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `fc_user_items` (
+  `user_id` INT UNSIGNED NOT NULL,
+  `item_id` VARCHAR(30) NOT NULL,
+  `price` INT UNSIGNED NOT NULL DEFAULT 0,
+  `bought_at` DATETIME NOT NULL,
+  PRIMARY KEY (`user_id`, `item_id`),
+  CONSTRAINT `fk_fc_ui_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `fc_email_tokens` (
   `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
   `user_id` INT UNSIGNED NOT NULL,
@@ -307,7 +325,7 @@ CREATE TABLE IF NOT EXISTS `fc_badges` (
   CONSTRAINT `fk_fc_ba_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '10') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '11') ON DUPLICATE KEY UPDATE v = VALUES(v);
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-base','html',1,NULL,'published','{"title":{"it":"HTML base","en":"HTML Basics"},"short":{"it":"HTML base","en":"HTML Basics"},"desc":{"it":"Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.","en":"The language every web page is made of: tags, text, links, images, lists, tables and forms."},"level":{"it":"Base","en":"Basic"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-intermediate','html',2,'html-base','published','{"title":{"it":"HTML intermedio","en":"Intermediate HTML"},"short":{"it":"HTML intermedio","en":"HTML Intermediate"},"desc":{"it":"Attributi globali, link interni, testo ricco, iframe e moduli più completi.","en":"Global attributes, internal links, rich text, iframes and fuller forms."},"level":{"it":"Intermedio","en":"Intermediate"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-advanced','html',3,'html-intermediate','published','{"title":{"it":"HTML avanzato","en":"Advanced HTML"},"short":{"it":"HTML avanzato","en":"Advanced HTML"},"desc":{"it":"Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.","en":"Semantic, accessible pages: structure, rich forms, media and metadata."},"level":{"it":"Avanzato","en":"Advanced"}}');
@@ -993,3 +1011,28 @@ INSERT INTO `fc_drills` (lesson_id, sort, kind, data) VALUES ((SELECT id FROM `f
 INSERT INTO `fc_drills` (lesson_id, sort, kind, data) VALUES ((SELECT id FROM `fc_lessons` WHERE course = 'php-advanced' AND slug = 'errors'),2,'bug','{"prompt":{"it":"Tocca la riga con l’errore.","en":"Tap the line with the mistake."},"lines":["try {","    salva();","} catch (Throwable $e) {","    echo $e->getMessage();","}"],"bug":3,"fix":"    error_log($e->getMessage());","why":{"it":"Mostrare l’errore al visitatore rivela dettagli interni: va nel log.","en":"Showing the error to visitors reveals internal details: it goes to the log."}}');
 INSERT INTO `fc_drills` (lesson_id, sort, kind, data) VALUES ((SELECT id FROM `fc_lessons` WHERE course = 'php-advanced' AND slug = 'project'),1,'match','{"prompt":{"it":"Abbina ogni elemento al suo significato.","en":"Match each item with its meaning."},"pairs":[["composer.json",{"it":"Elenco delle librerie","en":"List of libraries"}],["vendor/",{"it":"Le librerie scaricate","en":"Downloaded libraries"}],["namespace",{"it":"Cognome delle classi","en":"Surname of classes"}],["use",{"it":"Importa una classe","en":"Imports a class"}],[".gitignore",{"it":"File esclusi da git","en":"Files kept out of git"}]],"why":{"it":"L’ordine oggi vale tempo domani.","en":"Order today is time saved tomorrow."}}');
 INSERT INTO `fc_drills` (lesson_id, sort, kind, data) VALUES ((SELECT id FROM `fc_lessons` WHERE course = 'php-advanced' AND slug = 'project'),2,'flash','{"prompt":{"it":"Vero o falso? Rispondi prima che scada il tempo!","en":"True or false? Answer before time runs out!"},"cards":[[{"it":"`vendor/` di solito sta fuori da git","en":"`vendor/` usually stays out of git"},true],[{"it":"Le password si scrivono nel codice pubblico","en":"Passwords go in public code"},false],[{"it":"L’iniezione delle dipendenze aiuta i test","en":"Dependency injection helps testing"},true],[{"it":"Un namespace rende il codice più lento","en":"A namespace makes code slower"},false]],"why":{"it":"Segreti fuori dal codice, dipendenze dentro al costruttore.","en":"Secrets out of the code, dependencies into the constructor."}}');
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('bit','character',0,1,1);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('pixel','character',0,1,2);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('owl','character',60,1,3);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('fox','character',80,1,4);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('octopus','character',100,1,5);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('ghost','character',100,1,6);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('snail','character',120,1,7);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('penguin','character',120,1,8);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('alien','character',150,1,9);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('dragon','character',200,1,10);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('anvil','character',250,1,11);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('astronaut','character',300,1,12);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('favilla','character',300,1,13);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('unicorn','character',400,1,14);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('violet','background',0,1,15);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('night','background',0,1,16);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('ember','background',40,1,17);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('mint','background',40,1,18);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('sky','background',40,1,19);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('gold','background',60,1,20);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('pink','background',60,1,21);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('coal','background',60,1,22);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('aurora','background',120,1,23);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('terminal','background',120,1,24);
+INSERT INTO `fc_avatar_items` (id, kind, price, enabled, sort) VALUES ('sunset','background',150,1,25);

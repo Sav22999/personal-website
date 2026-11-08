@@ -245,6 +245,20 @@ function seed_linehop_items(): array
     return $out;
 }
 
+/**
+ * Profile pictures and their starting price in Sparks (the admin can change prices and take items off sale).
+ * The drawings are in assets/avatars.js under the same ids. The initial of the username is always free.
+ */
+const AVATAR_ITEMS = [
+    'bit' => ['character', 0], 'pixel' => ['character', 0], 'owl' => ['character', 60], 'fox' => ['character', 80],
+    'octopus' => ['character', 100], 'ghost' => ['character', 100], 'snail' => ['character', 120], 'penguin' => ['character', 120],
+    'alien' => ['character', 150], 'dragon' => ['character', 200], 'anvil' => ['character', 250], 'astronaut' => ['character', 300],
+    'favilla' => ['character', 300], 'unicorn' => ['character', 400],
+    'violet' => ['background', 0], 'night' => ['background', 0], 'ember' => ['background', 40], 'mint' => ['background', 40],
+    'sky' => ['background', 40], 'gold' => ['background', 60], 'pink' => ['background', 60], 'coal' => ['background', 60],
+    'aurora' => ['background', 120], 'terminal' => ['background', 120], 'sunset' => ['background', 150],
+];
+
 /** Every row of the initial content, table by table. Questions refer to their lesson through "_lesson". */
 function seed_rows(): array
 {

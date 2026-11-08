@@ -1443,13 +1443,13 @@ switch ($route) {
         $target = user_row((int)($b['id'] ?? 0));
         if (!can_manage($me, $target)) fail('You cannot edit this account.', 403, 'forbidden');
         $name = s($b, 'name', 80, true, 'Name');
-        $email = (string)$target['email']; // the email identifies the account: not even administrators change it
+        // The email identifies the account: not even administrators change it, so it is not in this update
         $status = ($b['status'] ?? 'active') === 'disabled' ? 'disabled' : 'active';
         $role = (int)($b['role'] ?? $target['role']);
         if (!in_array($role, [ROLE_USER, ROLE_EDITOR, ROLE_ADMIN], true)) $role = (int)$target['role'];
         // Administrators can appoint content moderators; only the master admin appoints or removes administrators
         if ($role !== (int)$target['role'] && ($role >= ROLE_ADMIN || (int)$target['role'] >= ROLE_ADMIN) && $me['role'] < ROLE_MASTER) fail('Only the master admin can appoint or remove administrators.', 403, 'forbidden');
-        db()->prepare('UPDATE ' . t('users') . ' SET name = ?, email = ?, status = ?, role = ? WHERE id = ?')->execute([$name, $email, $status, $role, $target['id']]);
+        db()->prepare('UPDATE ' . t('users') . ' SET name = ?, status = ?, role = ? WHERE id = ?')->execute([$name, $status, $role, $target['id']]);
         if ($status === 'disabled') db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$target['id']]);
         send_json(['ok' => true]);
 

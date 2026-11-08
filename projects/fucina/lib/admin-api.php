@@ -440,6 +440,7 @@ function admin_route(string $r): void
                 "SELECT 'hint', created_at, ref, NULL, cost, NULL FROM " . t('hints') . ' WHERE user_id = :u',
                 "SELECT 'prize', CONCAT(day, ' 23:59:59'), NULL, NULL, points, place FROM " . t('board_prizes') . ' WHERE user_id = :u',
                 "SELECT 'points', created_at, field, NULL, before_value, after_value FROM " . t('point_changes') . ' WHERE user_id = :u',
+                "SELECT 'avatar', bought_at, item_id, NULL, price, NULL FROM " . t('user_items') . ' WHERE user_id = :u',
             ];
             $sql = implode(' UNION ALL ', array_map(fn($q, $i) => str_replace(':u', ':u' . $i, $q), $parts, array_keys($parts))) . ' ORDER BY at DESC LIMIT 300';
             $st = db()->prepare($sql);
@@ -467,6 +468,18 @@ function admin_route(string $r): void
             if (!$target) fail('Not found.', 404, 'not_found');
             if ((int)$target['role'] >= ROLE_ADMIN && (int)$me['role'] < ROLE_MASTER) fail('Only the master admin can change roles.', 403, 'forbidden');
             db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$id]);
+            send_json(['ok' => true]);
+
+        case 'admin.avatars':
+            admin_reader();
+            $rows = db()->query('SELECT i.id, i.kind, i.price, i.enabled, (SELECT COUNT(*) FROM ' . t('user_items') . ' u WHERE u.item_id = i.id) AS sold FROM ' . t('avatar_items') . ' i ORDER BY i.kind DESC, i.sort')->fetchAll();
+            send_json(['ok' => true, 'items' => array_map(fn($r) => ['id' => $r['id'], 'kind' => $r['kind'], 'price' => (int)$r['price'], 'enabled' => (int)$r['enabled'], 'sold' => (int)$r['sold']], $rows)]);
+
+        case 'admin.avatar.save':
+            admin_writer();
+            $b = body();
+            $st = db()->prepare('UPDATE ' . t('avatar_items') . ' SET price = ?, enabled = ? WHERE id = ?');
+            $st->execute([max(0, min(100000, (int)($b['price'] ?? 0))), empty($b['enabled']) ? 0 : 1, (string)($b['id'] ?? '')]);
             send_json(['ok' => true]);
 
         case 'admin.certificates':

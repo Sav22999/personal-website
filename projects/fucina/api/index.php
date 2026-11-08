@@ -680,13 +680,13 @@ switch ($r) {
         $me = null;
         $out = [];
         foreach ($rows as $i => $r) {
-            $line = ['place' => $i + 1, 'name' => $r['username'], 'score' => $daily ? trim($r['correct'] . '/' . $r['total'] . ' · ' . short_time($r['seconds'] === null ? null : (int)$r['seconds']), ' ·') : $r['xp'] . ' XP', 'me' => (int)$r['id'] === $uid];
+            $line = ['place' => $i + 1, 'name' => $r['username'], 'avatar' => $r['avatar'] ?? null, 'score' => $daily ? trim($r['correct'] . '/' . $r['total'] . ' · ' . short_time($r['seconds'] === null ? null : (int)$r['seconds']), ' ·') : $r['xp'] . ' XP', 'me' => (int)$r['id'] === $uid];
             if ($line['me']) $me = $line;
             if ($i < 20) $out[] = $line;
         }
-        $st = db()->prepare('SELECT p.place, p.points, u.username FROM ' . t('board_prizes') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.day = ? AND u.username IS NOT NULL ORDER BY p.place');
+        $st = db()->prepare('SELECT p.place, p.points, u.username, u.avatar FROM ' . t('board_prizes') . ' p JOIN ' . t('users') . ' u ON u.id = p.user_id WHERE p.day = ? AND u.username IS NOT NULL ORDER BY p.place');
         $st->execute([day_offset($today, -1)]);
-        $yesterday = array_map(fn($p) => ['place' => (int)$p['place'], 'points' => (int)$p['points'], 'name' => $p['username']], $st->fetchAll());
+        $yesterday = array_map(fn($p) => ['place' => (int)$p['place'], 'points' => (int)$p['points'], 'name' => $p['username'], 'avatar' => $p['avatar']], $st->fetchAll());
         $prizes = board_prizes(count(daily_board_rows($today)));
         $seconds = (new DateTimeImmutable('tomorrow', new DateTimeZone(APP_TIMEZONE)))->getTimestamp() - time();
         send_json(['ok' => true, 'rows' => $out, 'me' => $me, 'participants' => count($rows), 'prizes' => array_values($prizes), 'yesterday' => $yesterday, 'secondsLeft' => $seconds, 'onBoard' => (bool)user_row($uid)['on_board']]);
@@ -707,22 +707,55 @@ switch ($r) {
         }
         send_json(['ok' => true] + state_payload($u));
 
+    // ======================================================== profile picture
+
+    case 'avatar.buy':
+        // Paid in Sparks; the balance is checked in the same UPDATE, so two taps never spend twice
+        $u = writer();
+        $id = s(body(), 'item', 30);
+        $st = db()->prepare('SELECT price FROM ' . t('avatar_items') . ' WHERE id = ? AND enabled = 1');
+        $st->execute([$id]);
+        $price = $st->fetchColumn();
+        if ($price === false) fail('This item is not for sale.', 404, 'not_found');
+        $price = (int)$price;
+        $st = db()->prepare('SELECT 1 FROM ' . t('user_items') . ' WHERE user_id = ? AND item_id = ?');
+        $st->execute([$u['id'], $id]);
+        if ($st->fetchColumn() || $price === 0) send_json(['ok' => true] + state_payload($u));
+        $st = db()->prepare('UPDATE ' . t('users') . ' SET points = points - ? WHERE id = ? AND points >= ?');
+        $st->execute([$price, $u['id'], $price]);
+        if (!$st->rowCount()) fail('Not enough Sparks.', 422, 'not_enough');
+        db()->prepare('INSERT IGNORE INTO ' . t('user_items') . ' (user_id, item_id, price, bought_at) VALUES (?,?,?,?)')->execute([$u['id'], $id, $price, now_utc()]);
+        send_json(['ok' => true] + state_payload($u));
+
+    case 'avatar.set':
+        // character:background; an empty character is the initial. Only what is owned (or free) can be worn.
+        $u = writer();
+        $b = body();
+        $owned = array_column(array_filter(avatar_shop((int)$u['id']), fn($i) => $i['owned']), 'kind', 'id');
+        $character = s($b, 'character', 30);
+        $background = s($b, 'background', 30);
+        if ($character !== '' && ($owned[$character] ?? '') !== 'character') fail('Buy this character first.', 403, 'not_owned');
+        if ($background !== '' && ($owned[$background] ?? '') !== 'background') fail('Buy this background first.', 403, 'not_owned');
+        $code = $character === '' && $background === '' ? null : $character . ':' . $background;
+        db()->prepare('UPDATE ' . t('users') . ' SET avatar = ? WHERE id = ?')->execute([$code, $u['id']]);
+        send_json(['ok' => true] + state_payload($u));
+
     case 'friends.list':
         $u = reader();
-        $st = db()->prepare('SELECT u.username, COALESCE(a.xp, 0) AS xp FROM ' . t('friends') . ' f JOIN ' . t('users') . ' u ON u.id = f.friend_id
+        $st = db()->prepare('SELECT u.username, u.avatar, COALESCE(a.xp, 0) AS xp FROM ' . t('friends') . ' f JOIN ' . t('users') . ' u ON u.id = f.friend_id
             LEFT JOIN ' . t('activity') . " a ON a.user_id = u.id AND a.day = ? WHERE f.user_id = ? AND u.status = 'active' AND u.username IS NOT NULL ORDER BY u.username");
         $st->execute([today(), $u['id']]);
-        send_json(['ok' => true, 'friends' => array_map(fn($f) => ['name' => $f['username']], $st->fetchAll())]);
+        send_json(['ok' => true, 'friends' => array_map(fn($f) => ['name' => $f['username'], 'avatar' => $f['avatar']], $st->fetchAll())]);
 
     case 'friends.search':
         // Usernames only, starting with what was typed
         $u = reader();
         $q = mb_strtolower(trim((string)($_GET['q'] ?? '')));
         if (!preg_match('/^[a-z0-9_.]{2,20}$/', $q)) send_json(['ok' => true, 'results' => []]);
-        $st = db()->prepare('SELECT u.username, (f.friend_id IS NOT NULL) AS added FROM ' . t('users') . ' u LEFT JOIN ' . t('friends') . " f ON f.friend_id = u.id AND f.user_id = ?
+        $st = db()->prepare('SELECT u.username, u.avatar, (f.friend_id IS NOT NULL) AS added FROM ' . t('users') . ' u LEFT JOIN ' . t('friends') . " f ON f.friend_id = u.id AND f.user_id = ?
             WHERE u.username LIKE ? AND u.id <> ? AND u.status = 'active' ORDER BY u.username LIMIT 10");
         $st->execute([$u['id'], addcslashes($q, '%_\\') . '%', $u['id']]);
-        send_json(['ok' => true, 'results' => array_map(fn($r) => ['name' => $r['username'], 'added' => (bool)$r['added']], $st->fetchAll())]);
+        send_json(['ok' => true, 'results' => array_map(fn($r) => ['name' => $r['username'], 'avatar' => $r['avatar'], 'added' => (bool)$r['added']], $st->fetchAll())]);
 
     case 'friends.add':
         $u = writer();

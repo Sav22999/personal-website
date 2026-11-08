@@ -14,8 +14,8 @@ Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per G
   **Palestra**. Come i giochi si svolgono nel browser, quindi non sono materiale d’esame e pagano una volta sola.
 - **Esercizi**: si scrive codice vero con anteprima dal vivo per HTML e CSS. Il controllo gira nel browser, in un iframe
   senza script. SCSS, Sass, JavaScript, TypeScript e PHP non hanno anteprima: il controllo guarda il codice scritto.
-- **XP e Scintille**: ogni ricompensa dà XP e altrettante Scintille. Gli XP crescono soltanto e decidono il grado (da
-  Scintilla a Leggenda della forgia). Le Scintille si spendono in **suggerimenti**: su una domanda tolgono metà delle
+- **XP e Scintille**: ogni ricompensa dà XP e altrettante Scintille. Gli XP crescono soltanto e decidono il grado: 14 nomi,
+  da Scintilla (grado 1) a Fiamma eterna (grado 40), elencati in `RANKS` di `lib/progress.php` e mostrati tutti nelle statistiche. Le Scintille si spendono in **suggerimenti**: su una domanda tolgono metà delle
   risposte sbagliate, su un esercizio mostrano una soluzione, nei giochi danno un aiuto. All’esame non ci sono.
 - **Esame e certificato**: un esame con domande estratte a caso e un tempo massimo (15 minuti di partenza, controllato dal
   server), aperto per ogni corso anche senza fare i livelli: chi
@@ -31,6 +31,10 @@ Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per G
   *Scacchiera CSS* (da 3×3 a 10×10), *Salti di riga* (righe da trascinare), *Tinta giusta* (colori CSS),
   *Duello di selettori* (specificità), *Laboratorio flex* e *Che cosa stampa?* (output JavaScript).
   Danno Scintille extra, fino a un massimo giornaliero.
+- **Immagine del profilo**: personaggi originali e sfondi disegnati in SVG (`assets/avatars.js`), comprati con le Scintille
+  dal profilo e visibili nelle classifiche e tra gli amici. Prezzi e vendita di ogni elemento si cambiano dal portale admin
+  (*Immagini del profilo*, tabella `fc_avatar_items`); gli acquisti stanno in `fc_user_items` e nell’attività dell’utente.
+  L’iniziale dello username è sempre gratis.
 - **Badge**: ogni nuovo badge dà XP e Scintille (50 di partenza, `xp_badge` in Impostazioni).
 - **Conferma dell’email**: chi si registra con email e password riceve un link (valido 48 ore, monouso, salvato solo come
   hash in `fc_email_tokens`); finché non lo apre l’account è bloccato lato server (`must_verify()`), tranne reinvio del

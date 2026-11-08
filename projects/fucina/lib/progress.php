@@ -9,16 +9,42 @@ declare(strict_types=1);
 require_once __DIR__ . '/push.php';
 
 const ROLE_ADMIN = 5;
+
+/** The shop as one learner sees it: items on sale, plus those already bought even if taken off sale later. */
+function avatar_shop(int $uid): array
+{
+    $st = db()->prepare('SELECT i.id, i.kind, i.price, i.enabled, (u.item_id IS NOT NULL) AS owned FROM ' . t('avatar_items') . ' i
+        LEFT JOIN ' . t('user_items') . ' u ON u.item_id = i.id AND u.user_id = ? ORDER BY i.kind, i.sort');
+    $st->execute([$uid]);
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $owned = (bool)$r['owned'] || (int)$r['price'] === 0;
+        if (!$r['enabled'] && !$r['owned']) continue;
+        $out[] = ['id' => $r['id'], 'kind' => $r['kind'], 'price' => (int)$r['price'], 'owned' => $owned];
+    }
+    return $out;
+}
 const ROLE_MASTER = 10;
 
-/** Rank of each level band: from the first spark to the master of the forge. */
+/**
+ * Rank of each level band, from the first spark to the eternal flame. A new name comes often at the start
+ * and more rarely later, when each level takes longer (level n starts at 50·n·(n−1) XP).
+ */
 const RANKS = [
     1 => ['id' => 'spark', 'it' => 'Scintilla', 'en' => 'Spark'],
+    2 => ['id' => 'ember', 'it' => 'Brace', 'en' => 'Ember'],
     3 => ['id' => 'apprentice', 'it' => 'Apprendista', 'en' => 'Apprentice'],
-    6 => ['id' => 'smith', 'it' => 'Fabbro', 'en' => 'Smith'],
-    10 => ['id' => 'artisan', 'it' => 'Artigiano', 'en' => 'Artisan'],
+    5 => ['id' => 'journeyman', 'it' => 'Garzone di bottega', 'en' => 'Journeyman'],
+    7 => ['id' => 'smith', 'it' => 'Fabbro', 'en' => 'Smith'],
+    9 => ['id' => 'forger', 'it' => 'Forgiatore', 'en' => 'Forger'],
+    11 => ['id' => 'artisan', 'it' => 'Artigiano', 'en' => 'Artisan'],
+    13 => ['id' => 'armourer', 'it' => 'Armaiolo del codice', 'en' => 'Code armourer'],
     15 => ['id' => 'master', 'it' => 'Mastro', 'en' => 'Master'],
+    18 => ['id' => 'grandmaster', 'it' => 'Gran mastro', 'en' => 'Grand master'],
+    21 => ['id' => 'keeper', 'it' => 'Custode dell’incudine', 'en' => 'Keeper of the anvil'],
     25 => ['id' => 'legend', 'it' => 'Leggenda della forgia', 'en' => 'Legend of the forge'],
+    30 => ['id' => 'titan', 'it' => 'Titano del fuoco', 'en' => 'Titan of fire'],
+    40 => ['id' => 'eternal', 'it' => 'Fiamma eterna', 'en' => 'Eternal flame'],
 ];
 
 /** Bilingual text of the code (badges). The catalogue itself comes from the database. */
@@ -324,6 +350,8 @@ function state_payload(array $u): array
         'examMinutes' => setting('exam_minutes'),
         'gameSparks' => ['today' => $gameToday, 'cap' => setting('xp_game_daily_cap')],
         'board' => board_position($uid), 'prizes' => unseen_prizes($uid),
+        'shop' => avatar_shop($uid),
+        'ranks' => array_map(fn($from, $r) => ['from' => $from, 'id' => $r['id'], 'name' => $r[lang()]], array_keys(RANKS), RANKS),
     ];
 }
 
@@ -332,7 +360,7 @@ function state_payload(array $u): array
 /** Who earned XP on a day, from the first. The username is all the others see; who left the leaderboard is not counted. */
 function board_rows(string $day): array
 {
-    $st = db()->prepare('SELECT u.id, u.username, a.xp FROM ' . t('activity') . ' a JOIN ' . t('users') . " u ON u.id = a.user_id
+    $st = db()->prepare('SELECT u.id, u.username, u.avatar, a.xp FROM ' . t('activity') . ' a JOIN ' . t('users') . " u ON u.id = a.user_id
         WHERE a.day = ? AND a.xp > 0 AND u.on_board = 1 AND u.status = 'active' AND u.username IS NOT NULL ORDER BY a.xp DESC, u.id");
     $st->execute([$day]);
     return $st->fetchAll();
@@ -341,7 +369,7 @@ function board_rows(string $day): array
 /** Who did the daily challenge: the most right answers first, and at a tie whoever took the least time. */
 function daily_board_rows(string $day): array
 {
-    $st = db()->prepare('SELECT u.id, u.username, d.correct, d.total, d.seconds FROM ' . t('daily_results') . ' d JOIN ' . t('users') . " u ON u.id = d.user_id
+    $st = db()->prepare('SELECT u.id, u.username, u.avatar, d.correct, d.total, d.seconds FROM ' . t('daily_results') . ' d JOIN ' . t('users') . " u ON u.id = d.user_id
         WHERE d.day = ? AND u.on_board = 1 AND u.status = 'active' AND u.username IS NOT NULL ORDER BY d.correct DESC, d.seconds IS NULL, d.seconds, d.done_at, u.id");
     $st->execute([$day]);
     return $st->fetchAll();
