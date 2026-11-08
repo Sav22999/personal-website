@@ -329,7 +329,7 @@ let chatbotLoading = null;
 function openChatbot() {
     if (!chatbotLoading) chatbotLoading = new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = 'assets/chatbot.js?v=4.1.1-21';
+        s.src = 'assets/chatbot.js?v=4.1.1-22';
         s.onload = resolve;
         s.onerror = reject;
         document.head.appendChild(s);

@@ -134,27 +134,30 @@
                     box.append(pad);
                 }
             },
+            {
+                text: t('Every two levels the grid grows: 4×4, then 9×9 with 3×3 boxes, then 16×16 with 4×4 boxes.'), build: box => growing(box, [4, 9, 16], dokuOf),
+            },
         ];
     }
 
     // ---------------------------------------------------------------- Four in a line
 
     function fourline() {
-        // Columns from the bottom: 0 empty, 1 you, 2 the computer, 3 a wrong answer
+        // Columns from the bottom: 0 empty, 1 you (green), 2 the computer (red)
         const cols = [[2], [1, 2], [1], [], [2, 2], [], [2]];
         let chosen = 3;
         const draw = box => {
             const view = h('div.four.tut-four');
             cols.forEach((col, c) => view.appendChild(h('button.four-col', {type: 'button', 'data-c': c}, ...Array.from({length: 6}, (_, k) => {
                 const v = col[5 - k];
-                return h('i.disc-' + (['e', 'me', 'ai', 'x'][v || 0]));
+                return h('i.disc-' + (['e', 'me', 'ai'][v || 0]));
             }))));
             box.appendChild(view);
             return view;
         };
         return [
             {
-                text: t('Your discs are green. Tap the column where you want to drop one.'), ok: t('Good choice: before it drops, you have to answer.'), build: (box, done) => {
+                text: t('Your discs are green, the computer’s are red. Tap the column where you want to drop one.'), ok: t('Good choice: before it drops, you have to answer.'), build: (box, done) => {
                     const view = draw(box);
                     const col = view.querySelector('[data-c="3"]');
                     hint(col);
@@ -167,17 +170,18 @@
                 }
             },
             {
-                text: t('Answer right and your green disc drops. Answer wrong and a red disc drops instead: that square is lost.'), ok: t('Right: your disc drops!'), build: (box, done) => {
+                text: t('Answer right and your green disc drops. Answer wrong and the computer drops a red one wherever it likes.'), ok: t('Right: your disc drops!'), build: (box, done) => {
                     let view = draw(box);
                     view.querySelector(`[data-c="${chosen}"]`).classList.add('tut-pick');
-                    // Both answers really drop a disc: green when right, red when wrong
-                    const dropIn = who => {
-                        cols[chosen].push(who);
+                    // Both answers really drop a disc: yours in your column when right, the computer's red one when wrong
+                    const dropIn = (who, col) => {
+                        cols[col].push(who);
                         const fresh = draw(h('div'));
                         view.replaceWith(fresh);
                         view = fresh;
-                        const slots = fresh.querySelector(`[data-c="${chosen}"]`).querySelectorAll('i');
-                        slots[6 - cols[chosen].length].classList.add('tut-drop');
+                        fresh.querySelector(`[data-c="${chosen}"]`).classList.add('tut-pick');
+                        const slots = fresh.querySelector(`[data-c="${col}"]`).querySelectorAll('i');
+                        slots[6 - cols[col].length].classList.add('tut-drop');
                     };
                     const opts = ['<p>', '<a>', '<img>'].map((o, i) => h('button.option', {
                         type: 'button', onclick: e => {
@@ -185,12 +189,12 @@
                                 e.currentTarget.classList.add('wrong');
                                 e.currentTarget.disabled = true;
                                 shake(e.currentTarget);
-                                dropIn(3);
+                                dropIn(2, cols[5].length < 5 ? 5 : 2);
                                 return;
                             }
                             opts.forEach(x => x.disabled = true);
                             e.currentTarget.classList.add('right');
-                            dropIn(1);
+                            dropIn(1, chosen);
                             done();
                         }
                     }, h('b.opt-key', 'ABC'[i]), h('span', o)));
@@ -198,12 +202,12 @@
                 }
             },
             {
-                text: t('Then the computer plays. Line up four of your discs, in a row, column or diagonal, to win.'), build: async box => {
+                text: t('The computer plays only when you get it wrong. Line up four green discs in a row, column or diagonal to win; four red ones and the computer wins.'), build: async box => {
                     const four = [[1], [2, 1], [2, 2, 1], [2, 2, 2, 1], [2], [], []];
                     const view = h('div.four.tut-four');
                     four.forEach((col, c) => view.appendChild(h('button.four-col', {type: 'button'}, ...Array.from({length: 6}, (_, k) => {
                         const v = col[5 - k];
-                        return h('i.disc-' + ['e', 'me', 'ai', 'x'][v || 0] + (v === 1 && c < 4 && k === 5 - c ? '.tut-glow' : ''));
+                        return h('i.disc-' + ['e', 'me', 'ai'][v || 0] + (v === 1 && c < 4 && k === 5 - c ? '.tut-glow' : ''));
                     }))));
                     box.append(view);
                 }
@@ -259,6 +263,25 @@
         ];
     }
 
+    /** Small empty boards that appear one after the other: how a game grows with the levels. */
+    async function growing(box, sizes, make) {
+        const row = h('div.tut-sizes');
+        box.append(row);
+        for (const n of sizes) {
+            row.append(h('figure.tut-pop', make(n), h('figcaption', `${n}×${n}`)));
+            await wait(350);
+        }
+    }
+
+    const dokuOf = n => {
+        const b = Math.sqrt(n);
+        return h('div.doku.tut-mini', {style: {gridTemplateColumns: `repeat(${n}, 1fr)`}}, Array.from({length: n * n}, (_, i) => {
+            const r = Math.floor(i / n), c = i % n;
+            return h('i.dk' + ((c + 1) % b === 0 && c < n - 1 ? '.edge-r' : '') + ((r + 1) % b === 0 && r < n - 1 ? '.edge-b' : ''));
+        }));
+    };
+    const chessOf = n => h('div.chess.tut-mini', {style: {gridTemplateColumns: `repeat(${n}, 1fr)`}}, Array.from({length: n * n}, (_, i) => h('i.sq.' + ((Math.floor(i / n) + i % n) % 2 ? 'black' : 'white'))));
+
     // ---------------------------------------------------------------- Line hop
 
     function linehop() {
@@ -309,7 +332,119 @@
         ];
     }
 
-    const TUTORIALS = {whotag, tagdoku, fourline, selectors, linehop};
+
+    // ---------------------------------------------------------------- Quick rounds: one question, the options as buttons
+
+    /** Options to tap; the right one ends the step, a wrong one shakes. */
+    function pickStep(box, prompt, options, done, swatches) {
+        const keys = 'ABCD';
+        const buttons = options.map((o, i) => h('button.option' + (o.swatch ? '.swatch-opt' : ''), {
+            type: 'button', onclick: e => {
+                if (!o.ok) {
+                    e.currentTarget.classList.add('wrong');
+                    shake(e.currentTarget);
+                    return;
+                }
+                clear(box);
+                buttons.forEach(b => b.disabled = true);
+                e.currentTarget.classList.add('right');
+                done();
+            }
+        }, h('b.opt-key', keys[i]), o.swatch ? h('i.swatch', {style: {background: o.swatch}}) : h('span', o.label)));
+        box.append(h('div.qr.tut-qr', prompt, h('div.options' + (swatches ? '.swatch-grid' : ''), buttons)));
+    }
+
+    function shade() {
+        return [
+            {
+                text: t('Every round shows a colour written in CSS. Tap the matching colour.'), ok: t('Right: #f00 is pure red, the short form of #ff0000.'), build: (box, done) => {
+                    pickStep(box, h('div.qr-prompt', h('code.selector', '#f00')), [
+                        {swatch: '#00f', ok: false}, {swatch: '#f00', ok: true}, {swatch: '#0a0', ok: false}, {swatch: '#fc0', ok: false},
+                    ], done, true);
+                }
+            },
+            {
+                text: t('From level 2 a round in two goes the other way: you see the colour and pick its code. Then come rgb() and hsl(), with closer colours.'), build: box => {
+                    box.append(h('div.qr.tut-qr', h('div.qr-prompt', h('i.swatch.big', {style: {background: 'hsl(200, 80%, 50%)'}})),
+                        h('div.options', ['hsl(200, 80%, 50%)', 'rgb(26, 166, 230)', '#1aa6e6'].map(c => h('div.option', h('span', h('code', c)))))));
+                }
+            },
+        ];
+    }
+
+    function duel() {
+        return [
+            {
+                text: t('Two selectors point at the same element: the more specific one wins. Which one is it?'), ok: t('Yes: an id counts more than any number of classes and elements.'), build: (box, done) => {
+                    pickStep(box, h('div.qr-prompt', h('p', t('Which selector is more specific?'))), [
+                        {label: h('code', '.menu a'), ok: false}, {label: h('code', '#nav'), ok: true}, {label: t('Same specificity'), ok: false},
+                    ], done);
+                }
+            },
+            {
+                text: t('Count in three columns: ids, then classes, attributes and pseudo-classes, then elements. The first column that differs decides.'), build: async box => {
+                    const rows = [['#nav', '(1, 0, 0)'], ['.menu a', '(0, 1, 1)'], ['a:hover', '(0, 1, 1)'], ['ul li a', '(0, 0, 3)']];
+                    const list = h('div.options');
+                    box.append(h('div.qr.tut-qr', list));
+                    for (const [sel, spec] of rows) {
+                        list.append(h('div.option.tut-pop', h('span.grow', h('code', sel)), h('b.mono', spec)));
+                        await wait(300);
+                    }
+                }
+            },
+        ];
+    }
+
+    function output() {
+        return [
+            {
+                text: t('Read the code and guess what appears in the console.'), ok: t('Right: a string plus a number joins them, so you get 22 and not 4.'), build: (box, done) => {
+                    pickStep(box, h('div.qr-prompt', h('pre.out-code', h('code', "console.log('2' + 2);"))), [
+                        {label: h('code', '4'), ok: false}, {label: h('code', '22'), ok: true}, {label: h('code', 'NaN'), ok: false},
+                    ], done);
+                }
+            },
+            {
+                text: t('Each level adds something: types, arrays, loops, array methods, scope. Three mistakes and the level is lost.'), build: async box => {
+                    const lines = ['a + b', "typeof 'ciao'", 'a.length', 'for (…)', 'a.map(x => x * 2)', '{ let x = 2; }'];
+                    const list = h('div.tut-row.tut-chips');
+                    box.append(list);
+                    for (const l of lines) {
+                        list.append(h('code.chip-btn.tut-pop', l));
+                        await wait(200);
+                    }
+                }
+            },
+        ];
+    }
+
+    function flexlab() {
+        return [
+            {
+                text: t('The dashed boxes show where the items must go. Choose the value that puts them there.'), ok: t('They line up! Each level adds a property: align-items, flex-direction, flex-wrap and gap.'), build: (box, done) => {
+                    const items = () => [1, 2, 3].map(n => h('i.fi.fi' + (n - 1), {style: {width: '40px', height: '40px'}}, String(n)));
+                    const ghost = h('div.flex-box.ghost', {style: {justifyContent: 'center'}}, items());
+                    const mine = h('div.flex-box.mine', items());
+                    const values = ['flex-start', 'center', 'flex-end', 'space-between'];
+                    const chips = h('div.chips', values.map(v => h('button.chip-btn' + (v === 'flex-start' ? '.on' : ''), {
+                        type: 'button', onclick: e => {
+                            chips.querySelectorAll('.on').forEach(x => x.classList.remove('on'));
+                            e.currentTarget.classList.add('on');
+                            mine.style.justifyContent = v;
+                            if (v !== 'center') return;
+                            clear(box);
+                            mine.classList.add('matched');
+                            done();
+                        }
+                    }, v)));
+                    box.append(h('div.flex-stage.tut-flex', ghost, mine), h('div.flex-prop', h('code', 'justify-content:'), chips));
+                    hint(chips.children[1]);
+                }
+            },
+        ];
+    }
+
+    const TUTORIALS = {whotag, tagdoku, fourline, selectors, linehop, shade, duel, output, flexlab};
 
     /** Opens the guided round of a game. */
     function open(id, title, cost) {

@@ -159,7 +159,13 @@
         store.set('seen', [...seen(), q.sig].slice(-8000));
     }
 
-    const stats = () => E.stats(A.games());
+    /** The wallet also counts what an administrator changed on the account (see admin.player.points). */
+    const stats = () => {
+        const s = E.stats(A.games());
+        const u = A.user();
+        if (u && u.pointsAdjust) s.balance = Math.max(0, s.balance + u.pointsAdjust);
+        return s;
+    };
     /** Points that can be spent now: the wallet plus what the current game has earned so far. */
     const balance = () => stats().balance + (G ? G.score - G.spent : 0);
 

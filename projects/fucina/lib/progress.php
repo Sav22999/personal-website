@@ -189,7 +189,12 @@ function award_badges(int $uid): array
     foreach ($reached as $id => $ok) {
         if (!$ok || in_array($id, $have, true)) continue;
         db()->prepare('INSERT IGNORE INTO ' . t('badges') . ' (user_id, badge, earned_at) VALUES (?,?,?)')->execute([$uid, $id, now_utc()]);
-        $new[] = ['id' => $id] + deep_pick($catalog[$id]);
+        $new[] = ['id' => $id, 'reward' => setting('xp_badge')] + deep_pick($catalog[$id]);
+    }
+    // Every new badge pays XP and Sparks; that XP can reach a grade badge in turn, so look once more
+    if ($new && setting('xp_badge') > 0) {
+        add_xp($uid, setting('xp_badge') * count($new));
+        $new = array_merge($new, award_badges($uid));
     }
     return $new;
 }
@@ -315,7 +320,7 @@ function state_payload(array $u): array
         'user' => $user, 'level' => level_info((int)$row['xp']), 'today' => $day, 'practicedToday' => $row['last_day'] === $day,
         'courses' => courses_summary($uid), 'totals' => user_totals($uid), 'activity' => $activity, 'games' => $games,
         'daily' => $daily ? ['correct' => (int)$daily['correct'], 'total' => (int)$daily['total']] : null, 'badges' => $badges,
-        'costs' => ['question' => setting('hint_question'), 'task' => setting('hint_task'), 'game' => setting('hint_game'), 'drill' => setting('hint_drill'), 'certificate' => setting('cert_cost')],
+        'costs' => ['question' => setting('hint_question'), 'task' => setting('hint_task'), 'game' => setting('hint_game'), 'drill' => setting('hint_drill'), 'certificate' => setting('cert_cost'), 'badge' => setting('xp_badge')],
         'examMinutes' => setting('exam_minutes'),
         'gameSparks' => ['today' => $gameToday, 'cap' => setting('xp_game_daily_cap')],
         'board' => board_position($uid), 'prizes' => unseen_prizes($uid),

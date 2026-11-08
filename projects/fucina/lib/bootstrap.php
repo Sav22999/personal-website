@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 
 const APP_NAME = 'Fucina';
 const AUTH_COOKIE = 'fucina_auth';
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 10;
 const APP_TIMEZONE = 'Europe/Rome'; // the "day" of streaks and daily challenges
 
 // ---------- Configuration ----------
@@ -253,6 +253,8 @@ function public_user(array $u): array
         'hasPassword' => ($u['password_hash'] ?? 'x') !== '',
         'googleLinked' => !empty($u['google_sub']),
         'createdAt' => $u['created_at'] ?? null,
+        'verified' => !empty($u['email_verified_at']),
+        'mustVerify' => must_verify($u),
         'xp' => (int)($u['xp'] ?? 0),
         'points' => (int)($u['points'] ?? 0),
         'role' => (int)($u['role'] ?? 0),
@@ -279,20 +281,38 @@ function ensure_schema(): void
     }
     if ($v < SCHEMA_VERSION) {
         require_once __DIR__ . '/schema.php';
-        // A failed update must not take the app down with it: what is already there keeps working, and it is tried again
+        // A failed update must not take the app down with it: what is already there keeps working, and it is tried again.
+        // One request at a time: the others wait for the lock, then find the new version and skip it.
         try {
-            install_schema(db(), $c['prefix']);
+            if ((int)db()->query("SELECT GET_LOCK('" . $c['prefix'] . "schema', 20)")->fetchColumn() !== 1) return;
+            try {
+                $v = (int)db()->query('SELECT v FROM ' . t('meta') . " WHERE k = 'schema_version'")->fetchColumn();
+                if ($v < SCHEMA_VERSION) install_schema(db(), $c['prefix']);
+            } finally {
+                db()->query("SELECT RELEASE_LOCK('" . $c['prefix'] . "schema')");
+            }
         } catch (Throwable $e) {
             error_log('Fucina update: ' . $e->getMessage());
         }
     }
 }
 
-function require_user(): array
+/**
+ * An account made with email and password is usable only once its address is confirmed (see lib/mail.php).
+ * Admins never wait for it, so nobody is locked out of the portal.
+ */
+function must_verify(array $u): bool
+{
+    return empty($u['email_verified_at']) && (int)($u['role'] ?? 0) < 5 && function_exists('verification_required') && verification_required();
+}
+
+/** $unverifiedOk: the few calls an account can make before confirming its email (resend the link, delete itself). */
+function require_user(bool $unverifiedOk = false): array
 {
     $u = current_user();
     if (!$u) fail('Session expired: sign in again.', 401, 'unauthenticated');
     if ($u['status'] !== 'active') fail('Your account has been disabled.', 403, 'disabled');
+    if (!$unverifiedOk && must_verify($u)) fail('Confirm your email first.', 403, 'email_unverified');
     return $u;
 }
 
@@ -327,6 +347,7 @@ function purge_expired(): void
     $jobs = [
         ['attempts', 'id', 'created_at', gmdate('Y-m-d H:i:s', time() - 48 * 3600)],
         ['auth_tokens', 'token_hash', 'expires_at', now_utc()],
+        ['email_tokens', 'token_hash', 'expires_at', now_utc()],
     ];
     try {
         foreach ($jobs as [$table, $key, $column, $before]) {

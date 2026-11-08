@@ -426,9 +426,9 @@
         async function load() {
             const d = await Api.get('admin.users&q=' + encodeURIComponent(q.value));
             holder.replaceChildren(table([t('Name'), t('Username'), 'Email', t('Role'), t('Grade XP'), t('Sparks'), t('Levels'), t('Certificates'), ''], d.users.map(u => h('tr',
-                h('td', u.name, +u.status ? '' : u.status === 'disabled' ? chip(t('Disabled'), 'danger') : null), h('td', u.username ? '@' + u.username : '—'), h('td', u.email), h('td', +u.role >= 10 ? t('Master admin') : +u.role >= 5 ? t('Administrator') : t('Learner')),
+                h('td', u.name, +u.status ? '' : u.status === 'disabled' ? chip(t('Disabled'), 'danger') : null), h('td', u.username ? '@' + u.username : '—'), h('td', u.email, u.email_verified_at || +u.role >= 5 ? null : chip(t('To confirm'), 'warn')), h('td', +u.role >= 10 ? t('Master admin') : +u.role >= 5 ? t('Administrator') : t('Learner')),
                 h('td', String(u.xp)), h('td', String(u.points)), h('td', String(u.lessons)), h('td', String(u.certificates)),
-                h('td.nowrap', +u.id !== d.me ? iconBtn('edit', t('Edit'), () => userDialog(u, d.isMaster, load)) : null)))));
+                h('td.nowrap', iconBtn('history', t('Activity'), () => userActivity(u)), iconBtn('edit', t('Edit'), () => userDialog(u, d.isMaster, load, +u.id === d.me)))))));
         }
 
         let timer;
@@ -440,15 +440,22 @@
         return page(t('Users'), null, q, holder);
     }
 
-    function userDialog(u, isMaster, done) {
+    /** XP and Sparks of a user: a value to set, or an amount to add or take away. On your own account only these. */
+    function userDialog(u, isMaster, done, self) {
         const role = sel([[0, t('Learner')], [5, t('Administrator')]], +u.role >= 5 ? 5 : 0);
-        role.disabled = !isMaster;
+        role.disabled = !isMaster || self;
         const status = sel([['active', t('Active')], ['disabled', t('Disabled')]], u.status);
+        status.disabled = self;
+        const xp = inp({type: 'number', min: 0, value: u.xp});
         const points = inp({type: 'number', min: 0, value: u.points});
+        const nudge = (control, by) => iconBtn(by > 0 ? 'add' : 'remove', by > 0 ? t('Add {n}', {n: by}) : t('Take away {n}', {n: -by}), () => {
+            control.value = Math.max(0, (parseInt(control.value, 10) || 0) + by);
+        });
+        const amount = (control, step) => h('div.adm-amount', nudge(control, -step), control, nudge(control, step));
         const save = btn(t('Save'), {
             icon: 'save', onclick: async () => {
                 try {
-                    await busy(save, () => Api.post('admin.user.save', {id: u.id, role: role.value, status: status.value, points: points.value}));
+                    await busy(save, () => Api.post('admin.user.save', {id: u.id, role: role.value, status: status.value, xp: xp.value, points: points.value}));
                     s.close();
                     done();
                 } catch (e) {
@@ -468,7 +475,57 @@
                 }
             }
         });
-        const s = UI.sheet({title: u.name, body: [f(t('Role'), role), f(t('Status'), status), f(t('Sparks'), points)], actions: [del, btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+        const s = UI.sheet({
+            title: u.name, body: [f(t('Role'), role), f(t('Status'), status), f(t('Grade XP'), amount(xp, 50), t('XP set the grade: the learner may move up or down.')), f(t('Sparks'), amount(points, 10), t('Every change shows in the activity of the user.')),
+                btn(t('Activity'), {kind: 'tonal', icon: 'history', onclick: () => userActivity(u)})],
+            actions: [self ? null : del, btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save].filter(Boolean)
+        });
+    }
+
+    /** What a user did, newest first, with date and time. Read only. */
+    async function userActivity(u) {
+        const list = h('div.loader');
+        const s = UI.sheet({title: t('Activity') + ' · ' + (u.username ? '@' + u.username : u.name), body: [list], actions: [btn(t('Close'), {kind: 'text', onclick: () => s.close()})]});
+        let d;
+        try {
+            d = await Api.get('admin.user.activity&id=' + u.id);
+        } catch (e) {
+            return list.replaceWith(h('p.muted', e.message));
+        }
+        const when = iso => new Date(iso).toLocaleString(I18N.locale, {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+        const stars = n => '★'.repeat(n || 0) + '☆'.repeat(Math.max(0, 3 - (n || 0)));
+        const what = e => {
+            switch (e.kind) {
+                case 'lesson':
+                    return [e.m ? 'fire' : 'book', e.m ? t('Level skipped by the exam: {c} / {l}', {c: e.a, l: e.b}) : t('Level completed: {c} / {l} {s}', {c: e.a, l: e.b, s: stars(e.n)})];
+                case 'drill':
+                    return ['bolt', t('Exercise done in {c} / {l} {s}', {c: e.a, l: e.b, s: stars(e.n)})];
+                case 'game':
+                    return ['game', e.m ? t('Game won: {g} {s}', {g: e.a, s: stars(e.n)}) : t('Game lost: {g}', {g: e.a})];
+                case 'daily':
+                    return ['calendar', t('Daily challenge: {a} of {b} right', {a: e.n, b: e.m})];
+                case 'exam':
+                    return ['school', t('Final exam {c}: {n}%', {c: e.a, n: e.n})];
+                case 'certificate':
+                    return ['cert', t('Certificate {c} claimed ({code})', {c: e.a, code: e.b})];
+                case 'badge':
+                    return ['trophy', t('Badge earned: {b}', {b: e.a})];
+                case 'hint':
+                    return ['bulb', t('Help bought for {n} Sparks ({r})', {n: e.n, r: e.a})];
+                case 'prize':
+                    return ['trophy', t('Leaderboard prize: place {p}, +{n} Sparks (end of day)', {p: e.m, n: e.n})];
+                case 'points':
+                    return ['edit', t('Changed from the portal · {f}: {a} → {b}', {f: e.a === 'xp' ? t('Grade XP') : t('Sparks'), a: e.n, b: e.m})];
+                default:
+                    return ['info', e.kind];
+            }
+        };
+        const rows = d.events.map(e => {
+            const [ic, text] = what(e);
+            return h('li.adm-event', icon(ic), h('time', {datetime: e.at}, when(e.at)), h('span', text));
+        });
+        const days = d.days.length ? h('details.adm-days', h('summary', t('XP by day')), table([t('Day'), 'XP'], d.days.map(x => h('tr', h('td', new Date(x.day + 'T12:00:00').toLocaleDateString(I18N.locale, {weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'})), h('td', String(x.xp)))))) : null;
+        list.replaceWith(h('div', rows.length ? h('ul.adm-events', rows) : h('p.muted', t('No activity yet.')), days));
     }
 
     async function viewCertificates() {
@@ -483,7 +540,7 @@
     }
 
     const SETTINGS = [
-        ['XP and Sparks', [['xp_lesson_base', 'Level completed (× difficulty)'], ['xp_lesson_star', 'Each star of a level'], ['xp_task', 'Exercise solved'], ['xp_drill', 'Drill solved'], ['xp_drill_perfect', 'Drill: bonus without mistakes'], ['xp_daily_correct', 'Daily challenge: each right answer'], ['xp_daily_perfect', 'Daily challenge: bonus without mistakes'], ['xp_certificate', 'Exam passed'], ['xp_game_max', 'Game: maximum per match'], ['xp_game_daily_cap', 'Games: daily maximum']]],
+        ['XP and Sparks', [['xp_lesson_base', 'Level completed (× difficulty)'], ['xp_lesson_star', 'Each star of a level'], ['xp_task', 'Exercise solved'], ['xp_drill', 'Drill solved'], ['xp_drill_perfect', 'Drill: bonus without mistakes'], ['xp_daily_correct', 'Daily challenge: each right answer'], ['xp_daily_perfect', 'Daily challenge: bonus without mistakes'], ['xp_certificate', 'Exam passed'], ['xp_game_max', 'Game: maximum per match'], ['xp_game_daily_cap', 'Games: daily maximum'], ['xp_badge', 'Each new badge']]],
         ['Hint prices (Sparks)', [['hint_question', 'Hint on a question'], ['hint_task', 'Hint on an exercise'], ['hint_game', 'Help in a game'], ['hint_drill', 'Hint in a drill']]],
         ['Final exam', [['exam_questions', 'Number of questions'], ['exam_pass_percent', 'Pass mark (%)'], ['exam_minutes', 'Time limit in minutes (0 = none)'], ['cert_cost', 'Certificate price (Sparks)']]],
         ['Daily leaderboard', [['board_per_player', 'First prize: Sparks per participant'], ['board_max', 'First prize: maximum']]],

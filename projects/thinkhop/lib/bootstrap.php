@@ -10,7 +10,8 @@ declare(strict_types=1);
 
 const APP_NAME = 'ThinkHop';
 const AUTH_COOKIE = 'thinkhop_auth';
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 8;
+const START_POINTS = 100; // START_POINTS in engine.js: the gift every wallet starts with
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at least these
 const ROLE_ADMIN = 9;
@@ -39,6 +40,7 @@ function credentials(): ?array
     $table_prefix = 'th_';
     $debug = false;
     $google_client_id = '';
+    $mail_config = null;
     require $file;
     if (!$localhost_db || !$username_db || !$database_name) return $cfg = null;
     return $cfg = [
@@ -49,6 +51,7 @@ function credentials(): ?array
         'prefix' => (string)($table_prefix ?: 'th_'),
         'debug' => (bool)$debug,
         'google_client_id' => trim((string)$google_client_id),
+        'mail' => is_array($mail_config) ? $mail_config : null,
     ];
 }
 
@@ -215,6 +218,9 @@ function public_user(array $u): array
         'isAdmin' => (int)($u['role'] ?? 0) >= ROLE_ADMIN,
         'hasPassword' => ($u['password_hash'] ?? '') !== '',
         'googleLinked' => !empty($u['google_sub']),
+        'verified' => !empty($u['email_verified_at']),
+        'mustVerify' => must_verify($u),
+        'pointsAdjust' => (int)($u['points_adjust'] ?? 0),
     ];
 }
 
@@ -238,11 +244,19 @@ function ensure_schema(): void
     }
 }
 
-function require_user(): array
+/** An account made with email and password is usable only once its address is confirmed (see lib/mail.php). */
+function must_verify(array $u): bool
+{
+    return empty($u['email_verified_at']) && verification_required();
+}
+
+/** $unverifiedOk: the few calls an account can make before confirming its email (resend the link, delete itself). */
+function require_user(bool $unverifiedOk = false): array
 {
     $u = current_user();
     if (!$u) fail('unauthenticated', 401);
     if ($u['status'] !== 'active') fail('disabled', 403);
+    if (!$unverifiedOk && must_verify($u)) fail('email_unverified', 403);
     return $u;
 }
 
@@ -306,3 +320,5 @@ function verify_google_token(string $credential): array
     if (empty($c['email']) || !in_array($c['email_verified'] ?? '', ['true', true, 1, '1'], true)) fail('google_email', 401);
     return ['sub' => substr((string)$c['sub'], 0, 64), 'email' => mb_strtolower((string)$c['email']), 'name' => mb_substr(trim((string)($c['name'] ?? '')), 0, 80)];
 }
+
+require_once __DIR__ . '/mail.php';

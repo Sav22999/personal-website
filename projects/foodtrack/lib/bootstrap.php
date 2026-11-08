@@ -21,7 +21,7 @@ const ROLE_LABELS = [
 ];
 
 const AUTH_COOKIE = 'foodtrack_auth';
-const SCHEMA_VERSION = 21;
+const SCHEMA_VERSION = 22;
 
 const UNITS = ['pz', 'g', 'kg', 'ml', 'cl', 'dl', 'l', 'conf', 'cucchiai', 'cucchiaini', 'q.b.'];
 const NUTRISCORES = ['A', 'B', 'C', 'D', 'E'];
@@ -317,6 +317,8 @@ function public_user(array $u): array
         'hasPassword' => ($u['password_hash'] ?? 'x') !== '',
         'googleLinked' => !empty($u['google_sub']),
         'createdAt' => $u['created_at'] ?? null,
+        'verified' => !empty($u['email_verified_at']),
+        'mustVerify' => must_verify($u),
     ];
 }
 
@@ -343,11 +345,19 @@ function ensure_schema(): void
     }
 }
 
-function require_user(int $minRole = ROLE_USER, bool $allowPasswordChange = false): array
+/** An account with a password is usable only once its address is confirmed (see lib/mail.php). */
+function must_verify(array $u): bool
+{
+    return empty($u['email_verified_at']) && function_exists('verification_required') && verification_required();
+}
+
+/** $unverifiedOk: the few calls an account can make before confirming its email (resend the link, delete itself). */
+function require_user(int $minRole = ROLE_USER, bool $allowPasswordChange = false, bool $unverifiedOk = false): array
 {
     $u = current_user();
     if (!$u) fail('Session expired: sign in again.', 401, 'unauthenticated');
     if ($u['status'] !== 'active') fail('Your account has been disabled.', 403, 'disabled');
+    if (!$unverifiedOk && must_verify($u)) fail('Confirm your email first.', 403, 'email_unverified');
     if ($u['role'] < $minRole) fail('You don\'t have permission for this action.', 403, 'forbidden');
     if (!$allowPasswordChange && !empty($u['must_change_password'])) fail('Before continuing you must choose a new password.', 403, 'must_change_password');
     return $u;

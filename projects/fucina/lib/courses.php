@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = [
     'xp_game_max' => 30, 'xp_game_daily_cap' => 150, 'xp_drill' => 5, 'xp_drill_perfect' => 5,
     'hint_question' => 10, 'hint_task' => 20, 'hint_game' => 15, 'hint_drill' => 5,
     'exam_questions' => 10, 'exam_pass_percent' => 70, 'exam_minutes' => 15, 'cert_cost' => 200,
-    'board_per_player' => 10, 'board_max' => 500,
+    'board_per_player' => 10, 'board_max' => 500, 'xp_badge' => 50,
 ];
 
 function setting(string $key): int

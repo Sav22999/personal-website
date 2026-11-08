@@ -294,6 +294,7 @@
                 '<span class="pill ' + statusPill + '">' + STATUS_LABEL[u.status] + '</span>' +
                 (u.status !== 'pending' ? '<span class="role-badge ' + roleClass(u.permissions) + '">' + esc(u.role) + '</span>' : '') +
                 (u.must_change_password ? '<span class="pill gold">Deve cambiare password</span>' : '') +
+                (u.verified === false ? '<span class="pill gold">Email da confermare</span>' : '') +
                 (needsActivationMail(u) ? '<span class="pill gold" title="Non ha ricevuto l’email con le indicazioni per accedere">Email di attivazione non inviata</span>' : '') +
                 '</div>' +
                 '<div class="u-email">' + esc(u.email) + '</div>' +

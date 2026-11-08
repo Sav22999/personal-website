@@ -53,10 +53,10 @@ function reader(int $minRole = ROLE_USER, bool $allowPasswordChange = false): ar
 }
 
 /** Signed-in user + CSRF check for a POST that changes data. */
-function writer(int $minRole = ROLE_USER, bool $allowPasswordChange = false): array
+function writer(int $minRole = ROLE_USER, bool $allowPasswordChange = false, bool $unverifiedOk = false): array
 {
     only('POST');
-    $u = require_user($minRole, $allowPasswordChange);
+    $u = require_user($minRole, $allowPasswordChange, $unverifiedOk);
     require_csrf($u);
     return $u;
 }
@@ -519,19 +519,21 @@ switch ($route) {
         $st->execute([$g['sub']]);
         $row = $st->fetch();
         if (!$row) {
-            // Existing account with the same (verified) email: link it to Google
+            // Existing account with the same (verified) email: link it to Google. Google proves the address, so an account
+            // nobody confirmed loses the password someone else may have chosen
             $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
             $st->execute([$g['email']]);
             $row = $st->fetch();
-            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ? WHERE id = ?')->execute([$g['sub'], $row['id']]);
+            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ?, password_hash = IF(email_verified_at IS NULL, \'\', password_hash), must_change_password = IF(email_verified_at IS NULL, 0, must_change_password), email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')
+                ->execute([$g['sub'], now_utc(), $row['id']]);
         }
         if (!$row) {
             if (empty($b['acceptPrivacy'])) send_json(['ok' => false, 'error' => 'needs_signup', 'message' => tr('Create your FoodTrack account'), 'name' => $g['name'], 'email' => $g['email']], 200);
             if (too_many_attempts('register', 5, 60)) fail('Too many sign-ups from this network: try again later.', 429, 'rate_limited');
             record_attempt('register');
             $name = $g['name'] ?: explode('@', $g['email'])[0];
-            db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, google_sub, role, status, created_at) VALUES (?,?, '', ?, ?, 'active', ?)")
-                ->execute([$name, $g['email'], $g['sub'], ROLE_USER, now_utc()]);
+            db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, google_sub, role, status, created_at, email_verified_at) VALUES (?,?, '', ?, ?, 'active', ?, ?)")
+                ->execute([$name, $g['email'], $g['sub'], ROLE_USER, now_utc(), now_utc()]);
             $uid = (int)db()->lastInsertId();
             create_first_household($uid, $name);
             $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($b['inviteCode'] ?? '')));
@@ -560,6 +562,7 @@ switch ($route) {
         $st->execute([$g['sub'], $u['id']]);
         if ($st->fetchColumn()) fail('This Google account is already linked to another FoodTrack account.', 409, 'google_taken');
         db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ? WHERE id = ?')->execute([$g['sub'], $u['id']]);
+        if ($g['email'] === mb_strtolower((string)$u['email'])) db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
     case 'auth.google.unlink':
@@ -600,7 +603,7 @@ switch ($route) {
                 log_event(['id' => $uid, 'name' => $name], (int)$hid, 'member_join', $name);
             }
         }
-        mail_account_created(user_row($uid), 'email');
+        send_verification(user_row($uid)); // the welcome follows once the address is confirmed
         $csrf = create_auth_session($uid);
         send_json(['ok' => true, 'user' => public_user(user_row($uid)), 'csrf' => $csrf], 201);
 
@@ -625,6 +628,34 @@ switch ($route) {
         }
         db()->prepare('UPDATE ' . t('users') . ' SET last_login_at = ? WHERE id = ?')->execute([now_utc(), $row['id']]);
         $csrf = create_auth_session((int)$row['id']);
+        send_json(['ok' => true, 'user' => public_user($row), 'csrf' => $csrf]);
+
+    case 'auth.resend':
+        $u = writer(ROLE_USER, true, true);
+        if (!must_verify($u)) send_json(['ok' => true, 'user' => public_user(user_row((int)$u['id']))]);
+        if (too_many_attempts('verify_mail', 3, 60)) fail('Too many emails: try again in an hour.', 429, 'rate_limited');
+        record_attempt('verify_mail');
+        send_verification(user_row((int)$u['id']));
+        send_json(['ok' => true]);
+
+    case 'auth.verify':
+        // The link of the email opens the app, which asks for this with a button: mail scanners that open links do nothing
+        only('POST');
+        if (too_many_attempts('verify', 20, 15)) fail('Too many attempts: try again in a few minutes.', 429, 'rate_limited');
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . ' WHERE token_hash = ? AND expires_at > ?');
+        $st->execute([hash('sha256', (string)(body()['token'] ?? '')), now_utc()]);
+        $uid = (int)$st->fetchColumn();
+        if (!$uid) {
+            record_attempt('verify');
+            fail('This link has expired or was already used: sign in and ask for a new one.', 410, 'token_invalid');
+        }
+        $first = empty(user_row($uid)['email_verified_at']);
+        db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $uid]);
+        db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$uid]);
+        $row = user_row($uid);
+        if ($row['status'] !== 'active') fail('Your account has been disabled. Contact the administrator.', 403, 'disabled');
+        if ($first) mail_account_created($row, (int)$row['must_change_password'] ? 'admin' : 'email');
+        $csrf = create_auth_session($uid); // a magic link: it also signs in on the device that opened it
         send_json(['ok' => true, 'user' => public_user($row), 'csrf' => $csrf]);
 
     case 'auth.logout':
@@ -655,7 +686,7 @@ switch ($route) {
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
     case 'auth.delete':
-        $u = writer(ROLE_USER, true);
+        $u = writer(ROLE_USER, true, true);
         if ($u['role'] >= ROLE_MASTER) fail('The master admin cannot delete their own account: first hand the role over to another administrator.', 422, 'master');
         $row = user_row($u['id']);
         if ($row['password_hash'] === '') {
@@ -1412,11 +1443,7 @@ switch ($route) {
         $target = user_row((int)($b['id'] ?? 0));
         if (!can_manage($me, $target)) fail('You cannot edit this account.', 403, 'forbidden');
         $name = s($b, 'name', 80, true, 'Name');
-        $email = mb_strtolower(s($b, 'email', 190, true, 'Email'));
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Invalid email address.', 422, 'validation');
-        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ? AND id <> ?');
-        $st->execute([$email, $target['id']]);
-        if ($st->fetchColumn()) fail('This email is already used by another account.', 409, 'email_taken');
+        $email = (string)$target['email']; // the email identifies the account: not even administrators change it
         $status = ($b['status'] ?? 'active') === 'disabled' ? 'disabled' : 'active';
         $role = (int)($b['role'] ?? $target['role']);
         if (!in_array($role, [ROLE_USER, ROLE_EDITOR, ROLE_ADMIN], true)) $role = (int)$target['role'];
@@ -1460,7 +1487,7 @@ switch ($route) {
             ->execute([$name, $email, password_hash($pw, PASSWORD_DEFAULT), $role, now_utc()]);
         $uid = (int)db()->lastInsertId();
         create_first_household($uid, $name);
-        mail_account_created(user_row($uid), 'admin');
+        send_verification(user_row($uid)); // the person confirms the address; the welcome follows
         send_json(['ok' => true, 'password' => $pw]);
 
     case 'admin.user.transfer_master':

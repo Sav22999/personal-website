@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS `th_users` (
     `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1,
     `notify_off` VARCHAR(200) NULL,
     `notify_lang` CHAR(2) NULL,
+    `email_verified_at` DATETIME NULL,
+    `points_adjust` INT NOT NULL DEFAULT 0,
     `email` VARCHAR(190) NOT NULL,
     `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
     `google_sub` VARCHAR(64) NULL,
@@ -83,6 +85,27 @@ CREATE TABLE IF NOT EXISTS `th_friends` (
     CONSTRAINT `fk_th_fr_friend` FOREIGN KEY (`friend_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `th_email_tokens` (
+    `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `created_at` DATETIME NOT NULL,
+    `expires_at` DATETIME NOT NULL,
+    KEY `ix_user` (`user_id`),
+    CONSTRAINT `fk_th_etok_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `th_admin_log` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `admin_id` INT UNSIGNED NULL,
+    `action` VARCHAR(30) NOT NULL,
+    `detail` VARCHAR(500) NOT NULL DEFAULT '{}',
+    `created_at` DATETIME NOT NULL,
+    KEY `ix_user` (`user_id`, `created_at`),
+    CONSTRAINT `fk_th_log_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_th_log_admin` FOREIGN KEY (`admin_id`) REFERENCES `th_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `th_push_subscriptions` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` INT UNSIGNED NOT NULL,
@@ -113,4 +136,4 @@ CREATE TABLE IF NOT EXISTS `th_settings` (
     `v` TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '8') ON DUPLICATE KEY UPDATE v = VALUES(v);

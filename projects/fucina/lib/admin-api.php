@@ -388,7 +388,7 @@ function admin_route(string $r): void
         case 'admin.users':
             $me = admin_reader();
             $q = trim((string)($_GET['q'] ?? ''));
-            $sql = 'SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.xp, u.points, u.streak, u.created_at, u.last_seen_at, (SELECT COUNT(*) FROM ' . t('lesson_progress') . ' lp WHERE lp.user_id = u.id) AS lessons,
+            $sql = 'SELECT u.id, u.name, u.username, u.email, u.email_verified_at, u.role, u.status, u.xp, u.points, u.streak, u.created_at, u.last_seen_at, (SELECT COUNT(*) FROM ' . t('lesson_progress') . ' lp WHERE lp.user_id = u.id) AS lessons,
                 (SELECT COUNT(*) FROM ' . t('certificates') . ' c WHERE c.user_id = u.id) AS certificates FROM ' . t('users') . ' u';
             $params = [];
             if ($q !== '') {
@@ -404,16 +404,60 @@ function admin_route(string $r): void
             $me = admin_writer();
             $b = body();
             $id = (int)($b['id'] ?? 0);
-            if ($id === (int)$me['id']) fail('You cannot change your own account here.', 403, 'self');
             $target = user_row($id);
             if (!$target) fail('Not found.', 404, 'not_found');
+            $self = $id === (int)$me['id'];
+            // XP and Sparks: every change is written down and shows in the activity of the user
+            $values = ['xp' => max(0, min(10000000, (int)($b['xp'] ?? $target['xp']))), 'points' => max(0, min(1000000, (int)($b['points'] ?? $target['points'])))];
+            $log = db()->prepare('INSERT INTO ' . t('point_changes') . ' (user_id, admin_id, field, before_value, after_value, created_at) VALUES (?,?,?,?,?,?)');
+            foreach ($values as $field => $v) if ($v !== (int)$target[$field]) $log->execute([$id, (int)$me['id'], $field, (int)$target[$field], $v, now_utc()]);
+            if ($self) {
+                // On your own account only the points: role and status stay as they are
+                db()->prepare('UPDATE ' . t('users') . ' SET xp = ?, points = ? WHERE id = ?')->execute([$values['xp'], $values['points'], $id]);
+                send_json(['ok' => true]);
+            }
             $isMaster = (int)$me['role'] >= ROLE_MASTER;
             $role = in_array((int)($b['role'] ?? 0), [0, ROLE_ADMIN], true) ? (int)$b['role'] : 0;
             if (!$isMaster && ($role !== (int)$target['role'] || (int)$target['role'] >= ROLE_ADMIN)) fail('Only the master admin can change roles.', 403, 'forbidden');
             $status = ($b['status'] ?? '') === 'disabled' ? 'disabled' : 'active';
-            db()->prepare('UPDATE ' . t('users') . ' SET role = ?, status = ?, points = ? WHERE id = ?')->execute([$role, $status, max(0, min(1000000, (int)($b['points'] ?? 0))), $id]);
+            db()->prepare('UPDATE ' . t('users') . ' SET role = ?, status = ?, xp = ?, points = ? WHERE id = ?')->execute([$role, $status, $values['xp'], $values['points'], $id]);
             if ($status === 'disabled') db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$id]);
             send_json(['ok' => true]);
+
+        case 'admin.user.activity':
+            // Read only: what the user did, newest first, with date and time (UTC; the portal shows local time)
+            admin_reader();
+            $id = (int)($_GET['id'] ?? 0);
+            if (!user_row($id)) fail('Not found.', 404, 'not_found');
+            $parts = [
+                "SELECT 'lesson' AS kind, completed_at AS at, course AS a, lesson AS b, stars AS n, skipped AS m FROM " . t('lesson_progress') . ' WHERE user_id = :u',
+                "SELECT 'drill', d.done_at, l.course, l.slug, d.stars, NULL FROM " . t('drill_done') . ' d JOIN ' . t('drills') . ' x ON x.id = d.drill_id JOIN ' . t('lessons') . ' l ON l.id = x.lesson_id WHERE d.user_id = :u',
+                "SELECT 'game', created_at, game, NULL, stars, won FROM " . t('game_results') . ' WHERE user_id = :u',
+                "SELECT 'daily', done_at, NULL, NULL, correct, total FROM " . t('daily_results') . ' WHERE user_id = :u AND done_at IS NOT NULL',
+                "SELECT 'exam', submitted_at, course, NULL, score, NULL FROM " . t('exams') . ' WHERE user_id = :u AND submitted_at IS NOT NULL',
+                "SELECT 'certificate', issued_at, course, code, score, NULL FROM " . t('certificates') . ' WHERE user_id = :u',
+                "SELECT 'badge', earned_at, badge, NULL, NULL, NULL FROM " . t('badges') . ' WHERE user_id = :u',
+                "SELECT 'hint', created_at, ref, NULL, cost, NULL FROM " . t('hints') . ' WHERE user_id = :u',
+                "SELECT 'prize', CONCAT(day, ' 23:59:59'), NULL, NULL, points, place FROM " . t('board_prizes') . ' WHERE user_id = :u',
+                "SELECT 'points', created_at, field, NULL, before_value, after_value FROM " . t('point_changes') . ' WHERE user_id = :u',
+            ];
+            $sql = implode(' UNION ALL ', array_map(fn($q, $i) => str_replace(':u', ':u' . $i, $q), $parts, array_keys($parts))) . ' ORDER BY at DESC LIMIT 300';
+            $st = db()->prepare($sql);
+            foreach (array_keys($parts) as $i) $st->bindValue(':u' . $i, $id, PDO::PARAM_INT);
+            $st->execute();
+            // Games and courses by name, in the language of the portal
+            $names = [];
+            foreach (db()->query('SELECT id, data FROM ' . t('games'))->fetchAll() as $g) $names['game:' . $g['id']] = pick(json_decode($g['data'], true)['title'] ?? $g['id']);
+            foreach (db()->query('SELECT id, data FROM ' . t('courses'))->fetchAll() as $c) $names['course:' . $c['id']] = pick(json_decode($c['data'], true)['title'] ?? $c['id']);
+            $label = fn($r) => match ($r['kind']) {
+                'game' => $names['game:' . $r['a']] ?? $r['a'],
+                'lesson', 'drill', 'exam', 'certificate' => $names['course:' . $r['a']] ?? $r['a'],
+                default => $r['a'],
+            };
+            $events = array_map(fn($r) => ['kind' => $r['kind'], 'at' => str_replace(' ', 'T', $r['at']) . 'Z', 'a' => $label($r), 'b' => $r['b'], 'n' => $r['n'] === null ? null : (int)$r['n'], 'm' => $r['m'] === null ? null : (int)$r['m']], $st->fetchAll());
+            $st = db()->prepare('SELECT day, xp FROM ' . t('activity') . ' WHERE user_id = ? ORDER BY day DESC LIMIT 60');
+            $st->execute([$id]);
+            send_json(['ok' => true, 'events' => $events, 'days' => $st->fetchAll()]);
 
         case 'admin.user.delete':
             $me = admin_writer();

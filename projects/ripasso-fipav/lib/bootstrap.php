@@ -187,7 +187,7 @@ function current_session(): ?array
     $token = $_COOKIE[AUTH_COOKIE] ?? '';
     if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) return $cached = null;
     $st = db()->prepare(
-        'SELECT u.id, u.name, u.email, u.permissions, u.status, u.must_change_password, u.created_at, a.csrf_token, a.last_seen_at, a.token_hash
+        'SELECT u.id, u.name, u.email, u.permissions, u.status, u.must_change_password, u.email_verified_at, u.created_at, a.csrf_token, a.last_seen_at, a.token_hash
          FROM ' . t('auth_tokens') . ' a JOIN ' . t('users') . ' u ON u.id = a.user_id
          WHERE a.token_hash = ? AND a.expires_at > UTC_TIMESTAMP()'
     );
@@ -223,6 +223,7 @@ function public_user(array $u): array
         'isMaster' => $can && $p >= PERM_MASTER,
         'mustChangePassword' => !empty($u['must_change_password']),
         'createdAt' => $u['created_at'] ?? null,
+        'verified' => !empty($u['email_verified_at']),
     ];
 }
 
@@ -250,6 +251,7 @@ function require_user(int $minPermission = PERM_USER, bool $allowPasswordChange 
     if (!$u) fail('Sessione scaduta: accedi di nuovo.', 401, 'unauthenticated');
     if ($u['status'] === 'pending') fail('Il tuo account è in attesa di abilitazione da parte di un amministratore.', 403, 'pending');
     if ($u['status'] === 'disabled') fail('Il tuo account è stato disabilitato.', 403, 'disabled');
+    if (must_verify($u)) fail('Prima conferma la tua email: accedi di nuovo per ricevere il link.', 403, 'email_unverified');
     if ($u['permissions'] < max(PERM_USER, $minPermission)) fail('Non hai i permessi per questa operazione.', 403, 'forbidden');
     if (!$allowPasswordChange && !empty($u['must_change_password'])) {
         fail('Prima di continuare devi scegliere una nuova password.', 403, 'must_change_password');
@@ -284,7 +286,7 @@ function ensure_schema(): void
     } catch (Throwable $e) {
         return; // portal not installed yet
     }
-    if ($version >= 6) return;
+    if ($version >= 7) return;
 
     $pdo = db();
     if ($version < 2) {
@@ -327,6 +329,29 @@ function ensure_schema(): void
         $pdo->exec('ALTER TABLE ' . t('meta') . ' MODIFY `v` MEDIUMTEXT NOT NULL');
         $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
     }
+    if ($version < 7 && function_exists('email_tokens_table_sql')) {
+        // v7: confirmed email addresses. Administrators keep their access; everyone else confirms with a link at the
+        // next sign-in, so the sessions of the accounts still to confirm end now
+        $have = array_column($pdo->query('SHOW COLUMNS FROM ' . t('users'))->fetchAll(), 'Field');
+        if (!in_array('email_verified_at', $have, true)) {
+            $pdo->exec('ALTER TABLE ' . t('users') . " ADD COLUMN `email_verified_at` DATETIME NULL AFTER `activation_mail_at`");
+            $pdo->exec('UPDATE ' . t('users') . ' SET email_verified_at = UTC_TIMESTAMP() WHERE permissions >= ' . PERM_ADMIN);
+            if (mail_enabled_safe()) $pdo->exec('DELETE a FROM ' . t('auth_tokens') . ' a JOIN ' . t('users') . ' u ON u.id = a.user_id WHERE u.email_verified_at IS NULL');
+        }
+        $pdo->exec(email_tokens_table_sql());
+        $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '7') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
+    }
+}
+
+function mail_enabled_safe(): bool
+{
+    return function_exists('mail_enabled') && mail_enabled();
+}
+
+/** An account is usable only once its address is confirmed; without email settings nobody could, so it isn't asked. */
+function must_verify(array $u): bool
+{
+    return empty($u['email_verified_at']) && mail_enabled_safe();
 }
 
 /** Makes sure there is exactly one master admin. */

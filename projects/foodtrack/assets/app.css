@@ -3788,3 +3788,11 @@ img.flag.big {
 .dev-credit:hover .dev-heart {
     transform: scale(1.2);
 }
+
+/* Email check: the only screen of an account that hasn't confirmed its address */
+.verify-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}

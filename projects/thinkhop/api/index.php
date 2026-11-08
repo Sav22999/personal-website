@@ -2,10 +2,11 @@
 /**
  * ThinkHop — JSON API.  api/index.php?r=<action>
  *
- * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout, board.daily
+ * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout, auth.verify, board.daily
+ * Before the email is confirmed only auth.resend and auth.delete work (see must_verify in lib/bootstrap.php).
  * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, sync, friends.list, friends.search, friends.add, friends.remove,
  *           notify.get, notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
- * Admin:    admin.overview, admin.settings.save, admin.questions, admin.question.save, admin.question.delete,
+ * Admin:    admin.player (everything about one player, read only), admin.player.points, admin.overview, admin.settings.save, admin.questions, admin.question.save, admin.question.delete,
  *           admin.games, admin.game.delete, admin.players, admin.player.update, admin.player.delete
  *
  * The game itself needs no server: without an account (or without credentials.php) it stays on the device.
@@ -36,10 +37,10 @@ function only(string $method): void
     if ($_SERVER['REQUEST_METHOD'] !== $method) fail('bad_request', 405);
 }
 
-function writer(): array
+function writer(bool $unverifiedOk = false): array
 {
     only('POST');
-    $u = require_user();
+    $u = require_user($unverifiedOk);
     require_csrf($u);
     return $u;
 }
@@ -64,6 +65,12 @@ function clean_username(array $b, int $self = 0): string
     $st->execute([$name, $self]);
     if ($st->fetchColumn()) fail('username_taken', 409);
     return $name;
+}
+
+function mail_lang(array $b): string
+{
+    $l = (string)($b['lang'] ?? '');
+    return in_array($l, LANGS, true) ? $l : 'en';
 }
 
 function valid_email(string $email): void
@@ -233,7 +240,9 @@ switch ($r) {
         $st->execute([$email]);
         if ($st->fetchColumn()) fail('email_taken', 409);
         record_attempt('register');
-        signed_in(new_user($name, $username, $email, password_hash($pw, PASSWORD_DEFAULT), null));
+        $id = new_user($name, $username, $email, password_hash($pw, PASSWORD_DEFAULT), null);
+        send_verification(user_row($id), mail_lang($b));
+        signed_in($id);
 
     case 'auth.login':
         only('POST');
@@ -268,7 +277,9 @@ switch ($r) {
             $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
             $st->execute([$g['email']]);
             $row = $st->fetch();
-            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ? WHERE id = ?')->execute([$g['sub'], $row['id']]);
+            // Google proves the address: an account nobody confirmed loses the password someone else may have chosen
+            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ?, password_hash = IF(email_verified_at IS NULL, \'\', password_hash), email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')
+                ->execute([$g['sub'], now_utc(), $row['id']]);
         }
         if (!$row) {
             if (empty($b['acceptPrivacy'])) send_json(['ok' => false, 'error' => 'needs_signup', 'name' => $g['name'], 'email' => $g['email']], 200);
@@ -276,9 +287,35 @@ switch ($r) {
             $username = clean_username($b);
             record_attempt('register');
             $row = user_row(new_user($g['name'] ?: explode('@', $g['email'])[0], $username, $g['email'], '', $g['sub']));
+            db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = ? WHERE id = ?')->execute([now_utc(), $row['id']]);
         }
         if ($row['status'] !== 'active') fail('disabled', 403);
         signed_in((int)$row['id']);
+
+    case 'auth.resend':
+        $u = writer(true);
+        if (!empty($u['email_verified_at'])) send_json(['ok' => true, 'user' => public_user(user_row((int)$u['id']))]);
+        if (too_many_attempts('verify_mail', 3, 60)) fail('rate_limited', 429);
+        record_attempt('verify_mail');
+        send_verification(user_row((int)$u['id']), mail_lang(body()));
+        send_json(['ok' => true]);
+
+    case 'auth.verify':
+        // The link of the email opens the app, which asks for this with a button: mail scanners that open links do nothing
+        only('POST');
+        if (too_many_attempts('verify', 20, 15)) fail('rate_limited', 429);
+        $token = (string)(body()['token'] ?? '');
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . ' WHERE token_hash = ? AND expires_at > ?');
+        $st->execute([hash('sha256', $token), now_utc()]);
+        $uid = (int)$st->fetchColumn();
+        if (!$uid) {
+            record_attempt('verify');
+            fail('token_invalid', 410);
+        }
+        db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $uid]);
+        db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$uid]);
+        if (user_row($uid)['status'] !== 'active') fail('disabled', 403);
+        signed_in($uid); // a magic link: it also signs in on the device that opened it
 
     case 'auth.logout':
         only('POST');
@@ -431,7 +468,7 @@ switch ($r) {
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
     case 'auth.delete':
-        $u = writer();
+        $u = writer(true);
         $b = body();
         $row = user_row($u['id']);
         if ($row['password_hash'] !== '' && !password_verify((string)($b['password'] ?? ''), $row['password_hash'])) fail('bad_password', 422);
@@ -536,8 +573,8 @@ switch ($r) {
     case 'admin.players':
         only('GET');
         $me = require_admin();
-        $players = db()->query('SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.created_at, u.last_login_at, u.google_sub IS NOT NULL AS google,
-            COUNT(g.uid) AS games, COALESCE(SUM(g.score), 0) AS points, COALESCE(SUM(g.spent), 0) AS spent, COALESCE(MAX(CASE WHEN g.stars > 0 THEN g.stage END), 0) AS stage
+        $players = db()->query('SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.created_at, u.last_login_at, u.google_sub IS NOT NULL AS google, u.email_verified_at IS NOT NULL AS verified,
+            COUNT(g.uid) AS games, ' . START_POINTS . ' + COALESCE(SUM(g.score), 0) - COALESCE(SUM(g.spent), 0) + u.points_adjust AS points, COALESCE(SUM(g.spent), 0) AS spent, COALESCE(MAX(CASE WHEN g.stars > 0 THEN g.stage END), 0) AS stage
             FROM ' . t('users') . ' u LEFT JOIN ' . t('games') . ' g ON g.user_id = u.id GROUP BY u.id ORDER BY u.created_at DESC LIMIT 1000')->fetchAll();
         send_json(['ok' => true, 'players' => $players, 'me' => $me['id']]);
 
@@ -550,6 +587,61 @@ switch ($r) {
         db()->prepare('UPDATE ' . t('users') . ' SET status = ?, role = ? WHERE id = ?')->execute([$status, $role, $row['id']]);
         if ($status === 'disabled') db()->prepare('DELETE FROM ' . t('auth_tokens') . ' WHERE user_id = ?')->execute([$row['id']]);
         send_json(['ok' => true]);
+
+    case 'admin.player':
+        // Read only: what one player did, for the administrators
+        $me = admin_writer();
+        $id = (int)(body()['id'] ?? 0);
+        $row = user_row($id);
+        if (!$row) fail('bad_request', 404);
+        $g = t('games');
+        $one = function (string $sql, array $args) {
+            $st = db()->prepare($sql);
+            $st->execute($args);
+            return $st->fetch() ?: [];
+        };
+        $all = function (string $sql, array $args) {
+            $st = db()->prepare($sql);
+            $st->execute($args);
+            return $st->fetchAll();
+        };
+        $sum = $one("SELECT COUNT(*) AS games, COALESCE(SUM(score), 0) AS earned, COALESCE(SUM(spent), 0) AS spent, COALESCE(SUM(correct), 0) AS correct,
+            COALESCE(SUM(total), 0) AS total, COALESCE(SUM(seconds), 0) AS seconds, COUNT(DISTINCT CASE WHEN mode = 'level' AND stars > 0 THEN stage END) AS levels,
+            COALESCE(MAX(CASE WHEN mode = 'level' AND stars > 0 THEN stage END), 0) AS top_level, COUNT(DISTINCT CASE WHEN mode = 'daily' THEN day END) AS dailies,
+            COALESCE(MAX(CASE WHEN mode = 'daily' THEN score END), 0) AS best_daily, COALESCE(MAX(CASE WHEN mode = 'survival' THEN score END), 0) AS best_survival,
+            MIN(played_at) AS first_game, MAX(played_at) AS last_game FROM $g WHERE user_id = ?", [$id]);
+        $count = fn(string $sql) => (int)($one($sql, [$id])['n'] ?? 0);
+        send_json(['ok' => true, 'player' => [
+            'id' => $id, 'name' => $row['name'], 'username' => $row['username'], 'email' => $row['email'], 'status' => $row['status'],
+            'admin' => (int)$row['role'] >= ROLE_ADMIN, 'google' => !empty($row['google_sub']), 'password' => $row['password_hash'] !== '',
+            'verified' => $row['email_verified_at'], 'ranking' => (int)$row['show_in_ranking'] === 1,
+            'createdAt' => $row['created_at'], 'lastLogin' => $row['last_login_at'],
+            'devices' => $count('SELECT COUNT(*) AS n FROM ' . t('push_subscriptions') . ' WHERE user_id = ?'),
+            'following' => $count('SELECT COUNT(*) AS n FROM ' . t('friends') . ' WHERE user_id = ?'),
+            'followers' => $count('SELECT COUNT(*) AS n FROM ' . t('friends') . ' WHERE friend_id = ?'),
+            'adjust' => (int)$row['points_adjust'],
+            'balance' => START_POINTS + (int)$sum['earned'] - (int)$sum['spent'] + (int)$row['points_adjust'],
+        ], 'stats' => $sum,
+            'games' => $all("SELECT mode, stage, stars, score, spent, correct, total, seconds, day, played_at FROM $g WHERE user_id = ? ORDER BY played_at DESC, uid LIMIT 100", [$id]),
+            'log' => $all('SELECT l.action, l.detail, l.created_at, a.name AS admin FROM ' . t('admin_log') . ' l LEFT JOIN ' . t('users') . ' a ON a.id = l.admin_id WHERE l.user_id = ? ORDER BY l.id DESC LIMIT 30', [$id]),
+        ]);
+
+    case 'admin.player.points':
+        // The wallet is what the games earned and spent: the change is kept apart, so the games stay as they were played
+        $me = admin_writer();
+        $b = body();
+        $row = target_player($me, $b);
+        if (!is_numeric($b['balance'] ?? null)) fail('bad_request', 422);
+        $want = max(0, min(10000000, (int)$b['balance']));
+        $st = db()->prepare('SELECT COALESCE(SUM(score), 0) - COALESCE(SUM(spent), 0) FROM ' . t('games') . ' WHERE user_id = ?');
+        $st->execute([$row['id']]);
+        $before = START_POINTS + (int)$st->fetchColumn() + (int)$row['points_adjust'];
+        $adjust = $want - $before + (int)$row['points_adjust'];
+        db()->prepare('UPDATE ' . t('users') . ' SET points_adjust = ? WHERE id = ?')->execute([$adjust, $row['id']]);
+        $note = mb_substr(trim((string)($b['note'] ?? '')), 0, 200);
+        db()->prepare('INSERT INTO ' . t('admin_log') . ' (user_id, admin_id, action, detail, created_at) VALUES (?,?,?,?,?)')
+            ->execute([$row['id'], $me['id'], 'points', json_encode(['from' => $before, 'to' => $want, 'note' => $note], JSON_UNESCAPED_UNICODE), now_utc()]);
+        send_json(['ok' => true, 'balance' => $want]);
 
     case 'admin.player.delete':
         $me = admin_writer();

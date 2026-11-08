@@ -27,6 +27,7 @@ function schema_statements(string $p): array
             `follow_policy` ENUM('approve','open') NOT NULL DEFAULT 'approve',
             `lang` CHAR(2) NOT NULL DEFAULT 'en',
             `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
+            `email_verified_at` DATETIME NULL,
             `created_at` DATETIME NOT NULL,
             `last_login_at` DATETIME NULL,
             `last_seen_at` DATETIME NULL,
@@ -87,6 +88,15 @@ function schema_statements(string $p): array
             PRIMARY KEY (`list_id`, `user_id`),
             CONSTRAINT `fk_{$p}lv_list` FOREIGN KEY (`list_id`) REFERENCES `{$p}lists` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_{$p}lv_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
+        // Single-use links that confirm an email address: only their hash is kept
+        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
+            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            `expires_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`),
+            CONSTRAINT `fk_{$p}etok_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}items` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -175,6 +185,14 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
                     $ins->execute([$f['requested_by'], $other, 'pending', $f['created_at'], null]);
                 }
             }
+        }
+    }
+    if ($from < 4) {
+        // Confirmed email addresses: Google already checked its accounts, the others confirm theirs with a link
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}users`")->fetchAll(), 'Field');
+        if (!in_array('email_verified_at', $cols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}users` ADD COLUMN `email_verified_at` DATETIME NULL");
+            $pdo->exec("UPDATE `{$p}users` SET email_verified_at = UTC_TIMESTAMP() WHERE google_sub IS NOT NULL");
         }
     }
     if ($from < 3) {

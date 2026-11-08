@@ -27,6 +27,7 @@ function schema_statements(string $p = 'ft_'): array
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
   `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
   `notify_off` VARCHAR(200) NULL COMMENT 'notification categories turned off, as JSON',
+  `email_verified_at` DATETIME NULL COMMENT 'empty = the address still has to be confirmed with the emailed link',
   `active_household_id` INT UNSIGNED NULL,
   `created_at` DATETIME NOT NULL,
   `last_login_at` DATETIME NULL,
@@ -35,6 +36,17 @@ function schema_statements(string $p = 'ft_'): array
   UNIQUE KEY `uq_email` (`email`),
   UNIQUE KEY `uq_google` (`google_sub`),
   KEY `idx_role` (`role`)
+) $opts",
+
+        // Single-use links that confirm an email address: only their hash is kept
+        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
+  `token_hash` CHAR(64) NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  PRIMARY KEY (`token_hash`),
+  KEY `idx_user` (`user_id`),
+  CONSTRAINT `fk_{$p}etok_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
 ) $opts",
 
         // Devices to wake up with Web Push (see lib/push.php)
@@ -329,6 +341,7 @@ function schema_statements(string $p = 'ft_'): array
  *  v17: corrected countries of origin (a recipe whose origin was changed by an admin stays as it is)
  *  v18: apple pie added; mashed potatoes and carrot cake moved to England (also from the values of the first v17)
  *  v19: carrot cake from both England and Switzerland
+ *  v22: confirmed email addresses (users.email_verified_at, email_tokens)
  */
 function migrate_schema(PDO $pdo, string $p, int $from): void
 {
@@ -462,6 +475,14 @@ function migrate_schema(PDO $pdo, string $p, int $from): void
         $now = gmdate('Y-m-d H:i:s');
         $st = $pdo->prepare("UPDATE `{$p}recipes` SET image = ?, updated_at = ? WHERE name = ? AND image = ''");
         foreach (seed_recipes() as $r) if ($r['image'] !== '') $st->execute([$r['image'], $now, $r['name']]);
+    }
+    if ($from < 22) {
+        // Confirmed email addresses: Google already checked its accounts, administrators keep their access
+        $cols = array_column($pdo->query("SHOW COLUMNS FROM `{$p}users`")->fetchAll(), 'Field');
+        if (!in_array('email_verified_at', $cols, true)) {
+            $pdo->exec("ALTER TABLE `{$p}users` ADD COLUMN `email_verified_at` DATETIME NULL AFTER `notify_off`");
+            $pdo->exec("UPDATE `{$p}users` SET email_verified_at = UTC_TIMESTAMP() WHERE google_sub IS NOT NULL OR role >= 9");
+        }
     }
     if ($from < 21) {
         require_once __DIR__ . '/seed.php';

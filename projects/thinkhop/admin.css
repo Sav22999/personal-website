@@ -253,3 +253,73 @@ td .block {
     margin: 40px auto;
     padding: 0 16px;
 }
+
+.player-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+}
+
+.player-head strong {
+    font-size: 1.2rem;
+}
+
+.player-head .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.tag.on {
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+
+.tag.off {
+    background: var(--wrong-bg);
+    color: var(--wrong);
+}
+
+.player-dates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px 16px;
+    margin: 16px 0;
+}
+
+.player-dates dt {
+    color: var(--muted);
+    font-size: .8rem;
+}
+
+.player-dates dd {
+    margin: 0 0 6px;
+    font-weight: 700;
+}
+
+.points-form {
+    margin: 8px 0 18px;
+    padding: 14px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+}
+
+.points-form h4 {
+    margin: 0 0 4px;
+}
+
+.points-form .form-row {
+    align-items: end;
+}
+
+.points-form .form-row {
+    grid-template-columns: 1fr 2fr auto;
+}
+
+@media (max-width: 640px) {
+    .points-form .form-row {
+        grid-template-columns: 1fr;
+    }
+}

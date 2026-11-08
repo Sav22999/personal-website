@@ -2735,3 +2735,34 @@ body:has(.modal) .toast {
         animation: none;
     }
 }
+
+/* ---------- email check ---------- */
+.verify-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.verify-icon svg.i {
+    width: 30px;
+    height: 30px;
+}
+
+.verify-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.verify-status {
+    min-height: 1.4em;
+    margin: 10px 0 0;
+    text-align: center;
+}

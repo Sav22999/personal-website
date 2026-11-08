@@ -2,9 +2,13 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.15.3';
+    const VERSION = '1.17.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.17.0', date: '2026-11-08', it: ['Chi si registra con email e password conferma l’indirizzo con un link: finché non lo apre l’account resta bloccato'], en: ['If you sign up with email and password you confirm the address with a link: until you open it the account stays locked']},
+        {v: '1.16.2', date: '2026-11-08', it: ['Ogni nuovo badge dà +50 XP e +50 Scintille'], en: ['Every new badge gives +50 XP and +50 Sparks']},
+        {v: '1.16.1', date: '2026-11-08', it: ['Laboratorio flex non blocca più il browser', 'Quattro di fila diventa un forza quattro con le domande: risposta giusta, cade il tuo gettone verde; risposta sbagliata, il computer mette un gettone rosso. Nessun altro gettone'], en: ['Flex lab no longer freezes the browser', 'Four in a line becomes four in a row with questions: a right answer drops your green disc, a wrong one lets the computer drop a red disc. No other discs']},
+        {v: '1.16.0', date: '2026-11-07', it: ['Quattro nuovi giochi: Tinta giusta, Duello di selettori, Laboratorio flex e Che cosa stampa?', 'Tagdoku cresce con i livelli: 4×4, poi 9×9, poi 16×16', 'La scacchiera CSS cresce con i livelli: da 3×3 fino a 10×10', 'Quattro di fila: i gettoni cadono, la colonna scelta si illumina e la fila vincente lampeggia', 'Negli esercizi «Ora tocca a te» le due metà hanno le etichette Codice e Anteprima'], en: ['Four new games: Right shade, Selector duel, Flex lab and What does it print?', 'Tagdoku grows with the levels: 4×4, then 9×9, then 16×16', 'The CSS board grows with the levels: from 3×3 up to 10×10', 'Four in a line: discs fall, the chosen column lights up and the winning line flashes', 'In the “Now you try” exercises the two halves are labelled Code and Preview']},
         {v: '1.15.3', date: '2026-11-07', it: ['Salti di riga: ora sposti le righe trascinandole (da telefono, dalla maniglia a sinistra); il tocco per scambiarle resta'], en: ['Line hop: you now move lines by dragging them (on a phone, by the handle on the left); tapping to swap still works']},
         {v: '1.15.2', date: '2026-11-07', it: ['Tagdoku: i riquadri sono separati da linee più marcate e i tag che inserisci sono blu, così non sembrano errori'], en: ['Tagdoku: the boxes have stronger dividing lines and the tags you enter are blue, so they no longer look like mistakes']},
         {v: '1.15.1', date: '2026-11-07', it: ['Quattro in fila: il tuo gettone è verde e una risposta sbagliata fa cadere un gettone rosso, che non è di nessuno', 'Corretto un errore grafico che allargava la colonna scelta'], en: ['Four in a line: your disc is green and a wrong answer drops a red disc that belongs to nobody', 'Fixed a display bug that stretched the chosen column']},
@@ -139,7 +143,9 @@
         if ((d.newBadges || []).length) {
             const s = sheet({
                 title: d.newBadges.length > 1 ? t('{n} new badges!', {n: d.newBadges.length}) : t('New badge!'),
-                body: [h('div.badge-won', d.newBadges.map(b => h('div.badge.on', tile('icon', b.icon), h('strong', b.title), h('span', b.desc))))],
+                body: [h('div.badge-won', d.newBadges.map(b => h('div.badge.on', tile('icon', b.icon), h('strong', b.title), h('span', b.desc)))),
+                    // Each badge pays XP and Sparks (see xp_badge in the settings)
+                    d.newBadges.some(b => b.reward) ? h('p.gain', icon('spark'), t('+{n} XP and Sparks', {n: d.newBadges.reduce((s, b) => s + (b.reward || 0), 0)})) : null],
                 actions: [btn(t('Great!'), {onclick: () => s.close()})]
             });
         }
@@ -567,7 +573,8 @@
             setTimeout(refreshFrame);
             return h('section.task', h('h2', t('Now you try')), h('p', rich(task.prompt)),
                 task.lang === 'css' ? h('details.page-src', h('summary', t('The page your CSS applies to')), codeBlock(task.html, 'html')) : null,
-                h('div.workbench' + (live ? '' : '.single'), ta, frame), list, hintBox, actions);
+                h('div.workbench' + (live ? '' : '.single'), h('div.pane', h('span.pane-label', icon('code'), t('Code')), ta),
+                    frame ? h('div.pane', h('span.pane-label', icon('eye'), t('Preview')), frame) : null), list, hintBox, actions);
         }
 
         async function finish() {
@@ -1020,6 +1027,7 @@
                 h('h2.section-title', t('Certificates')),
                 st.courses.some(c => c.certificate) ? h('div.group', st.courses.filter(c => c.certificate).map(c => certRow(c))) : h('p.muted', t('Finish a course and pass its exam to earn the first one.')),
                 h('h2.section-title', t('Badges') + ` · ${st.badges.filter(b => b.earnedAt).length}/${st.badges.length}`),
+                S.state.costs.badge ? h('p.muted', t('Every new badge gives +{n} XP and Sparks.', {n: S.state.costs.badge})) : null,
                 h('div.badges', [...st.badges].sort((a, b) => !!b.earnedAt - !!a.earnedAt).map(b => h('div.badge' + (b.earnedAt ? '.on' : ''), {title: b.desc}, tile('icon', b.icon), h('strong', b.title), h('span', b.desc)))),
             ]
         };
@@ -1329,11 +1337,82 @@
             h('div.auth-body.center', h('p', text), action || btn(t('Try again'), {onclick: start}))));
     }
 
+    // ---------------------------------------------------------------- email check (see auth.resend and auth.verify)
+
+    /** Until the address is confirmed the account can do nothing else: the server refuses every call. */
+    function verifyGate() {
+        const status = h('p.center', {role: 'status'});
+        const check = btn(t('I’ve confirmed it'), {
+            icon: 'check', onclick: async () => {
+                try {
+                    const d = await busy(check, () => Api.get('auth.me', {silentAuth: true}));
+                    S.user = d.user;
+                    if (!S.user || !S.user.mustVerify) return start();
+                    status.textContent = t('Not confirmed yet: open the link in the email.');
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        });
+        const resend = btn(t('Send the link again'), {
+            kind: 'tonal', onclick: async () => {
+                try {
+                    const d = await busy(resend, () => Api.post('auth.resend', {}, {silentAuth: true}));
+                    if (d.user && !d.user.mustVerify) return start();
+                    status.textContent = t('New link sent to {email}. It may take a minute: check spam too.', {email: S.user.email});
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        });
+        const out = btn(t('Sign out'), {
+            kind: 'text', onclick: async () => {
+                try {
+                    await Api.post('auth.logout', {}, {silentAuth: true});
+                } catch (e) { /* the cookie expires by itself */
+                }
+                S.user = null;
+                S.loaded = false;
+                render();
+            }
+        });
+        root.replaceChildren(h('div.auth', h('div.auth-top', h('div.auth-brand', h('img', {src: LOGO, alt: ''}), h('h1', 'Fucina')), h('p', t('Confirm your email')), mascot('happy', 'auth-pet')),
+            h('div.auth-body.center', h('p', t('We sent a link to {email}. Open it to start using your account: until then the account stays locked.', {email: S.user.email})),
+                status, h('div.verify-actions', check, resend, out))));
+        document.title = t('Confirm your email') + ' · Fucina';
+    }
+
+    /** The link of the email: a button confirms it, so that mail scanners opening links change nothing. */
+    function confirmEmailLink(token) {
+        return new Promise(resolve => {
+            const ok = btn(t('Confirm email'), {
+                icon: 'check', onclick: async () => {
+                    try {
+                        const d = await busy(ok, () => Api.post('auth.verify', {token}, {silentAuth: true}));
+                        S.user = d.user;
+                        s.close();
+                        toast(t('Email confirmed. Let’s go!'), 'ok');
+                    } catch (e) {
+                        toast(e.message, 'error');
+                    }
+                }
+            });
+            const s = sheet({title: t('Confirm your email'), body: [h('p.sheet-text', t('Tap the button to confirm the address of your Fucina account.'))], actions: [ok], onclose: resolve});
+        });
+    }
+
     async function start() {
+        const token = new URLSearchParams(location.search).get('verify');
+        if (token) {
+            // Out of the address bar at once: it must not stay in the history or be shared by mistake
+            history.replaceState(null, '', location.pathname + location.hash);
+            await confirmEmailLink(token);
+        }
         try {
             const [me, cfg] = await Promise.all([Api.get('auth.me', {silentAuth: true}), Api.get('auth.config', {silentAuth: true}).catch(() => null)]);
             S.user = me.user;
             if (cfg) S.config = cfg;
+            if (S.user && S.user.mustVerify) return verifyGate();
         } catch (e) {
             if (e.code === 'not_installed') return fatal(t('Installation not completed'), t('The database is not configured yet.'), h('a.btn.btn-filled', {href: 'install-db.php'}, t('Open install-db.php')));
             return fatal(t('Could not connect'), e.message);
@@ -1349,6 +1428,7 @@
             render();
             showPrizes();
         } catch (e) {
+            if (e.code === 'email_unverified') return verifyGate();
             fatal(t('Could not load the data'), e.message);
         }
     }

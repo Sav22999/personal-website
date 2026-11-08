@@ -82,11 +82,11 @@ if ($state === 'form' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $st->execute([$email]);
             $existing = $st->fetchColumn();
             if ($existing) {
-                db()->prepare('UPDATE ' . t('users') . " SET name = ?, password_hash = ?, permissions = ?, status = 'active', approved_at = ? WHERE id = ?")
-                        ->execute([$name, password_hash($pw, PASSWORD_DEFAULT), PERM_MASTER, now_utc(), $existing]);
+                db()->prepare('UPDATE ' . t('users') . " SET name = ?, password_hash = ?, permissions = ?, status = 'active', approved_at = ?, email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?")
+                        ->execute([$name, password_hash($pw, PASSWORD_DEFAULT), PERM_MASTER, now_utc(), now_utc(), $existing]);
             } else {
-                db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, permissions, status, created_at, approved_at) VALUES (?,?,?,?, 'active', ?, ?)")
-                        ->execute([$name, $email, password_hash($pw, PASSWORD_DEFAULT), PERM_MASTER, now_utc(), now_utc()]);
+                db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, permissions, status, created_at, approved_at, email_verified_at) VALUES (?,?,?,?, 'active', ?, ?, ?)")
+                        ->execute([$name, $email, password_hash($pw, PASSWORD_DEFAULT), PERM_MASTER, now_utc(), now_utc(), now_utc()]);
             }
             normalize_master_admin();
             $done = ['imported' => $imported, 'email' => $email];

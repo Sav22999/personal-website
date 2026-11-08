@@ -10,7 +10,7 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.2.1';
+    const VERSION = '1.2.2';
     const {
         h,
         icon,
@@ -1409,10 +1409,11 @@
 
     function openProfileForm() {
         const name = input({value: S.user.name, maxlength: 80, autocomplete: 'name'});
-        const email = input({type: 'email', value: S.user.email, maxlength: 190, autocomplete: 'email'});
+        // The email identifies the account: shown, never changed
+        const email = input({type: 'email', value: S.user.email, readonly: true, disabled: true, title: t('The email can’t be changed.')});
         const save = btn(t('Save'), {
             icon: 'check', onclick: async () => {
-                await act('auth.profile', {name: name.value, email: email.value}, save);
+                await act('auth.profile', {name: name.value}, save);
                 s.close();
                 toast(t('Profile updated'));
             }
@@ -1906,11 +1907,80 @@
         }
     }
 
+    // ===================================================== email check (see auth.resend and auth.verify)
+
+    /** Until the address is confirmed the account can do nothing else: the server refuses every call. */
+    function verifyGate() {
+        const status = h('p.sheet-text.center', {role: 'status'});
+        const check = btn(t('I’ve confirmed it'), {
+            cls: 'btn-block', onclick: async () => {
+                try {
+                    const d = await busy(check, () => Api.get('auth.me', {silentAuth: true}));
+                    S.user = d.user;
+                    if (S.user && !S.user.mustVerify) return start();
+                    status.textContent = t('Not confirmed yet: open the link in the email.');
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        });
+        const resend = btn(t('Send the link again'), {
+            kind: 'tonal', cls: 'btn-block', onclick: async () => {
+                try {
+                    const d = await busy(resend, () => Api.post('auth.resend', {}, {silentAuth: true}));
+                    if (d.user && !d.user.mustVerify) return start();
+                    status.textContent = t('New link sent to {email}. It may take a minute: check spam too.', {email: S.user.email});
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        });
+        const out = btn(t('Sign out'), {
+            kind: 'text', cls: 'btn-block', onclick: async () => {
+                try {
+                    await Api.post('auth.logout', {}, {silentAuth: true});
+                } catch (e) { /* the cookie expires by itself */
+                }
+                S.user = null;
+                S.loaded = false;
+                render();
+            }
+        });
+        root.replaceChildren(h('div.auth', h('div.auth-top', h('div.logo', h('img', {src: 'assets/icons/icon-192.png', alt: ''})), h('h1', 'Giftwise'), h('p', t('Confirm your email'))),
+            h('div.auth-body.center', h('p', t('We sent a link to {email}. Open it to start using your account: until then the account stays locked.', {email: S.user.email})),
+                status, h('div.verify-actions', check, resend, out))));
+    }
+
+    /** The link of the email: a button confirms it, so that mail scanners opening links change nothing. */
+    function confirmEmailLink(token) {
+        return new Promise(resolve => {
+            const ok = btn(t('Confirm email'), {
+                icon: 'check', cls: 'btn-block', onclick: async () => {
+                    try {
+                        const d = await busy(ok, () => Api.post('auth.verify', {token}, {silentAuth: true}));
+                        S.user = d.user;
+                        s.close();
+                        toast(t('Email confirmed. Let’s go!'));
+                    } catch (e) {
+                        toast(e.message, 'error');
+                    }
+                }
+            });
+            const s = sheet({title: t('Confirm your email'), body: [h('p.sheet-text', t('Tap the button to confirm the address of your Giftwise account.'))], actions: [ok], onclose: resolve});
+        });
+    }
+
     async function start() {
+        const token = new URLSearchParams(location.search).get('verify');
+        if (token) {
+            history.replaceState(null, '', location.pathname + location.hash);
+            await confirmEmailLink(token);
+        }
         try {
             const [me, cfg] = await Promise.all([Api.get('auth.me', {silentAuth: true}), Api.get('auth.config', {silentAuth: true}).catch(() => null)]);
             S.user = me.user;
             if (cfg) S.config = cfg;
+            if (S.user && S.user.mustVerify) return verifyGate();
         } catch (e) {
             if (e.code === 'not_installed') return fatal(t('Installation not completed'), t('The database is not configured yet.'), h('a.btn.btn-filled', {href: 'install-db.php'}, t('Open install-db.php')));
             return fatal(t('Could not connect'), e.message);
@@ -1927,6 +1997,7 @@
             render();
             if (!consumeShare()) maybeShowTutorial();
         } catch (e) {
+            if (e.code === 'email_unverified') return verifyGate();
             fatal(t('Could not load the data'), e.message);
         }
     }

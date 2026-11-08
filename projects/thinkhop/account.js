@@ -78,6 +78,10 @@
                 return true;
             } catch (e) {
                 if (e.code === 'unauthenticated') signedOut();
+                if (e.code === 'email_unverified' && user) {
+                    user.mustVerify = true;
+                    showVerifyGate();
+                }
                 return false;
             } finally {
                 syncing = null;
@@ -107,19 +111,26 @@
             store.set('config', config);
             window.ThinkHopEngine.configure(config.game);
             if (config.accounts) {
+                const token = new URLSearchParams(location.search).get('verify');
+                if (token) await confirmEmail(token);
                 const me = await api('auth.me');
                 user = me.user;
-                if (user) await sync();
+                if (user && !user.mustVerify) await sync();
             }
         } catch (e) { /* offline or no server: the game does not need it */
         }
         onChange();
+        if (user && user.mustVerify) return showVerifyGate();
         // An account made before usernames existed: the game asks, the admin panel doesn't get in the way
         if (user && !user.username && document.getElementById('app')) showUsernameForm();
     }
 
     async function afterSignIn(d) {
         user = d.user;
+        if (user.mustVerify) {
+            onChange();
+            return showVerifyGate();
+        }
         const ok = await sync();
         toast(ok ? t('synced') : t('sync_later'), ok ? 'ok' : undefined);
         onChange();
@@ -150,6 +161,90 @@
                 }
             }
         }, usernameField(username), err, h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, t('cancel')), save))]);
+    }
+
+    /**
+     * Until the email is confirmed the account can do nothing else: the server refuses every call (email_unverified).
+     * Signing out gives the game back, without the account.
+     */
+    let gate = null;
+
+    function showVerifyGate() {
+        if (gate) return;
+        const status = h('p.muted.verify-status', {role: 'status'});
+        const resend = h('button.btn.btn-soft.btn-block', {
+            type: 'button', onclick: async () => {
+                try {
+                    const d = await busy(resend, () => api('auth.resend', {lang: lang()}));
+                    if (d.user && !d.user.mustVerify) return verified(d.user);
+                    status.textContent = t('verify_sent', {email: user.email});
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        }, t('verify_resend'));
+        const check = h('button.btn.btn-primary.btn-block', {
+            type: 'button', onclick: async () => {
+                try {
+                    const d = await busy(check, () => api('auth.me'));
+                    if (d.user && !d.user.mustVerify) return verified(d.user);
+                    status.textContent = t('verify_not_yet');
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        }, t('verify_done'));
+        const out = h('button.btn.btn-ghost.btn-block', {
+            type: 'button', onclick: async () => {
+                try {
+                    await api('auth.logout', {});
+                } catch (e) { /* the cookie expires by itself */
+                }
+                forgetDevice();
+                closeGate();
+                onChange();
+            }
+        }, t('sign_out'));
+        gate = modal([h('div.intro', h('div.verify-icon', icon('mail')), h('h3', t('verify_title')),
+            h('p', t('verify_text', {email: user.email}))), status, h('div.verify-actions', check, resend, out)], {persistent: true});
+    }
+
+    function closeGate() {
+        if (gate) gate.close();
+        gate = null;
+    }
+
+    async function verified(u) {
+        user = u;
+        closeGate();
+        toast(t('verify_ok'), 'ok');
+        await sync();
+        onChange();
+        if (!user.username && document.getElementById('app')) showUsernameForm();
+    }
+
+    /** The link of the email: a button confirms it, so that mail scanners opening links change nothing. */
+    function confirmEmail(token) {
+        history.replaceState(null, '', location.pathname + location.hash);
+        return new Promise(resolve => {
+            const err = h('p.form-error', {role: 'alert', hidden: true});
+            const ok = h('button.btn.btn-primary.btn-block', {
+                type: 'button', onclick: async () => {
+                    try {
+                        const d = await busy(ok, () => api('auth.verify', {token}));
+                        user = d.user;
+                        m.close();
+                        toast(t('verify_ok'), 'ok');
+                        resolve();
+                    } catch (e) {
+                        err.textContent = e.message;
+                        err.hidden = false;
+                    }
+                }
+            }, t('verify_confirm_btn'));
+            const m = modal([h('div.intro', h('div.verify-icon', icon('mail')), h('h3', t('verify_confirm_title')), h('p', t('verify_confirm_text'))), err,
+                h('div.verify-actions', ok, h('button.btn.btn-ghost.btn-block', {type: 'button', onclick: () => m.close()}, t('cancel')))], {onclose: resolve});
+        });
     }
 
     function showAccountsOff() {
@@ -291,7 +386,7 @@
                         try {
                             const d = await busy(submit, () => mode === 'login'
                                 ? api('auth.login', {email: email.value, password: pw.value})
-                                : api('auth.register', {name: name.value, username: username.value, email: email.value, password: pw.value, acceptPrivacy: privacy.box.checked}));
+                                : api('auth.register', {lang: lang(), name: name.value, username: username.value, email: email.value, password: pw.value, acceptPrivacy: privacy.box.checked}));
                             m.close();
                             await afterSignIn(d);
                         } catch (ex) {
@@ -491,7 +586,7 @@
         installNeeded: () => !!config.installNeeded,
         needsAdmin: () => !!config.needsAdmin,
         user: () => user,
-        open: () => (user ? showProfile() : (config.accounts ? showSignIn() : showAccountsOff())),
+        open: () => (user ? (user.mustVerify ? showVerifyGate() : showProfile()) : (config.accounts ? showSignIn() : showAccountsOff())),
         askUsername: done => showUsernameForm(null, done),
         showDonate,
     };

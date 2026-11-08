@@ -170,6 +170,10 @@ function seed_games(): array
         ['id' => 'fourline', 'levels' => 6, 'icon' => 'columns', 'title' => L('Quattro di fila', 'Four in a line'), 'desc' => L('Rispondi bene per giocare la tua mossa e allinea quattro gettoni.', 'Answer correctly to play your move and line up four discs.')],
         ['id' => 'selectors', 'levels' => 6, 'icon' => 'board', 'title' => L('Scacchiera CSS', 'CSS board'), 'desc' => L('Tocca tutte le caselle scelte dal selettore.', 'Tap every square picked by the selector.')],
         ['id' => 'linehop', 'levels' => 6, 'icon' => 'sort', 'title' => L('Salti di riga', 'Line hop'), 'desc' => L('Rimetti in ordine le righe di codice con meno mosse possibile.', 'Put the lines of code back in order in as few moves as possible.')],
+        ['id' => 'shade', 'levels' => 6, 'icon' => 'theme', 'title' => L('Tinta giusta', 'Right shade'), 'desc' => L('Dal codice al colore e ritorno: nomi, esadecimali, rgb() e hsl().', 'From code to colour and back: names, hex, rgb() and hsl().')],
+        ['id' => 'duel', 'levels' => 6, 'icon' => 'swap', 'title' => L('Duello di selettori', 'Selector duel'), 'desc' => L('Due selettori si sfidano: scegli quello più specifico.', 'Two selectors face off: pick the more specific one.')],
+        ['id' => 'flexlab', 'levels' => 6, 'icon' => 'spaces', 'title' => L('Laboratorio flex', 'Flex lab'), 'desc' => L('Regola le proprietà flex finché le scatole non combaciano.', 'Tune the flex properties until the boxes line up.')],
+        ['id' => 'output', 'levels' => 6, 'icon' => 'print', 'title' => L('Che cosa stampa?', 'What does it print?'), 'desc' => L('Leggi il codice JavaScript e indovina cosa scrive in console.', 'Read the JavaScript and guess what it logs to the console.')],
     ];
 }
 
@@ -185,17 +189,44 @@ function seed_whotag_items(): array
 /** Selectors of the CSS board, from a single class to :not() and structural pseudo-classes. Squares have .white/.black, .rN, .cN. */
 function seed_selector_items(): array
 {
+    // The board grows with the level (3×3, 5×5, 7×7, 9×9, 10×10, 10×10): each selector is written for its size
     $by = [
-        1 => ['.r1', '.c3', '.r8', '.c1'],
-        2 => ['.r2.c2', '.r4.c5', '.r1.white', '.c8.black'],
-        3 => ['.r1, .r8', '.c1, .c8', '.r2.white, .r3.black', '.r4, .c4'],
-        4 => [':nth-child(8n)', ':nth-child(8n+1)', ':nth-child(-n+8)', ':nth-child(n+57)'],
-        5 => ['.black:not(.r1):not(.r2)', '.r3:not(.c1):not(.c8)', '.white:nth-child(-n+16)', ':not(.white):nth-child(n+49)'],
-        6 => [':nth-child(4n).black', ':nth-child(3n+1):not(.r1):not(.r8)', '.r5 ~ .r6.white', '.c4 + .c5.black'],
+        1 => ['.r1', '.c3', '.r3', '.c1', '.r2.c2'],
+        2 => ['.r2.c4', '.r5.white', '.c1.black', '.r1, .r5', '.c3.white'],
+        3 => ['.r1, .r7', '.c1, .c7', '.r2.white, .r3.black', '.r4, .c4', '.r7.black'],
+        4 => [':nth-child(9n)', ':nth-child(9n+1)', ':nth-child(-n+9)', ':nth-child(n+73)', '.r5:nth-child(odd)'],
+        5 => ['.black:not(.r1):not(.r2)', '.r3:not(.c1):not(.c10)', '.white:nth-child(-n+20)', ':not(.white):nth-child(n+81)', ':nth-child(10n+5)'],
+        6 => [':nth-child(4n).black', ':nth-child(3n+1):not(.r1):not(.r10)', '.r5 ~ .r6.white', '.c4 + .c5.black', '.r9 ~ :nth-child(odd):not(.c1)'],
     ];
     $out = [];
     foreach ($by as $level => $list) foreach ($list as $sel) $out[] = ['level' => $level, 'data' => ['selector' => $sel]];
     return $out;
+}
+
+/** The selectors of the 8×8 board used before version 9: the update swaps them for the ones above. */
+const SEED_SELECTORS_V8 = ['.r1', '.c3', '.r8', '.c1', '.r2.c2', '.r4.c5', '.r1.white', '.c8.black', '.r1, .r8', '.c1, .c8', '.r2.white, .r3.black', '.r4, .c4',
+    ':nth-child(8n)', ':nth-child(8n+1)', ':nth-child(-n+8)', ':nth-child(n+57)', '.black:not(.r1):not(.r2)', '.r3:not(.c1):not(.c8)', '.white:nth-child(-n+16)',
+    ':not(.white):nth-child(n+49)', ':nth-child(4n).black', ':nth-child(3n+1):not(.r1):not(.r8)', '.r5 ~ .r6.white', '.c4 + .c5.black'];
+
+/** Version 9: the CSS board grows with the level, so the selectors of the old 8×8 board make way for new ones. Edited ones stay. */
+function install_seed_selectors_v9(PDO $pdo, string $p): void
+{
+    $st = $pdo->prepare("SELECT id, data FROM `{$p}game_items` WHERE game = 'selectors'");
+    $st->execute();
+    $del = $pdo->prepare("DELETE FROM `{$p}game_items` WHERE id = ?");
+    foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $sel = json_decode($r['data'], true)['selector'] ?? null;
+        if (in_array($sel, SEED_SELECTORS_V8, true)) $del->execute([$r['id']]);
+    }
+    // Only what is not there yet, so running it twice adds nothing
+    $have = [];
+    $st->execute();
+    foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) $have[] = json_decode($r['data'], true)['selector'] ?? '';
+    $ins = $pdo->prepare("INSERT INTO `{$p}game_items` (game, level, status, data) VALUES ('selectors', ?, 'published', ?)");
+    foreach (seed_selector_items() as $it) {
+        if (in_array($it['data']['selector'], $have, true)) continue;
+        $ins->execute([$it['level'], json_encode($it['data'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
+    }
 }
 
 /** Snippets of Line hop, longer and more nested at every level. The lines are stored in the right order. */
@@ -273,9 +304,16 @@ function install_seed(PDO $pdo, string $p): void
         unset($r['_lesson']);
         if (isset($added[$key])) $insert('questions', ['lesson_id' => $added[$key]] + $r);
     }
-    if ((int)$pdo->query("SELECT COUNT(*) FROM `{$p}games`")->fetchColumn() > 0) return;
-    foreach ($rows['games'] as $r) $insert('games', $r);
-    foreach ($rows['game_items'] as $r) $insert('game_items', $r);
+    // Games: the new ones of the catalogue are added after the existing ones, with their items; existing games are never touched
+    $games = $pdo->query("SELECT id FROM `{$p}games`")->fetchAll(PDO::FETCH_COLUMN);
+    $sort = (int)$pdo->query("SELECT COALESCE(MAX(sort), 0) FROM `{$p}games`")->fetchColumn();
+    $new = [];
+    foreach ($rows['games'] as $r) {
+        if (in_array($r['id'], $games, true)) continue;
+        $new[] = $r['id'];
+        $insert('games', ['sort' => ++$sort] + $r);
+    }
+    foreach ($rows['game_items'] as $r) if (in_array($r['game'], $new, true)) $insert('game_items', $r);
 }
 
 /** Drills of the lessons that have none, so they reach the installations made before they existed. */

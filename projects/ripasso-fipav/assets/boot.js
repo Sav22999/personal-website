@@ -245,7 +245,8 @@
                 authScreen.hidden = false;
                 bootScreen.hidden = true;
             }
-            if (err.code === 'pending') showPending('Account in attesa', err.message);
+            if (err.code === 'email_unverified') showPending('Conferma la tua email', err.message);
+            else if (err.code === 'pending') showPending('Account in attesa', err.message);
             else if (err.code === 'disabled') showPending('Account disabilitato', err.message);
             else setAuthMessage(err.message);
         } finally {
@@ -383,7 +384,7 @@
         window.APP_CONTENT = content;
         window.Store.load(state.state || {});
         appRoot.hidden = false;
-        await loadScript('assets/app.js?v=4.1.1-21');
+        await loadScript('assets/app.js?v=4.1.1-22');
         appStarted = true;
         bootScreen.hidden = true;
     }
@@ -392,7 +393,45 @@
         if (appStarted) showAuth(true);
     });
 
+    /** The link of the email: a button confirms it, so that mail scanners opening links change nothing. */
+    function confirmEmailLink(token) {
+        return new Promise(resolve => {
+            bootScreen.hidden = true;
+            authScreen.hidden = false;
+            showPending('Conferma la tua email', 'Tocca il pulsante per confermare l’indirizzo del tuo account Fischietto.');
+            const text = $('auth-pending-text');
+            const ok = document.createElement('button');
+            ok.type = 'button';
+            ok.className = 'btn btn-primary btn-block';
+            ok.textContent = 'Conferma email';
+            ok.style.marginBottom = '10px';
+            ok.addEventListener('click', async () => {
+                ok.disabled = true;
+                try {
+                    const res = await Api.post('auth.verify', {token});
+                    ok.remove();
+                    if (res.user) return resolve(res.user);
+                    showPending('Email confermata', res.message);
+                    resolve(null);
+                } catch (err) {
+                    text.textContent = err.message;
+                } finally {
+                    ok.disabled = false;
+                }
+            });
+            text.after(ok);
+        });
+    }
+
     (async () => {
+        const token = new URLSearchParams(location.search).get('verify');
+        if (token) {
+            history.replaceState(null, '', location.pathname + location.hash);
+            const user = await confirmEmailLink(token);
+            if (!user) return;
+            if (user.mustChangePassword) return showForceChange(user);
+            return startApp(user);
+        }
         try {
             const me = await Api.me();
             if (me.user && me.user.canUse && me.user.mustChangePassword) showForceChange(me.user);
@@ -400,7 +439,10 @@
             else showAuth(false);
         } catch (err) {
             if (err.code === 'must_change_password') showForceChange(window.APP_USER || null);
-            else if (err.status === 401 || err.status === 403) showAuth(false);
+            else if (err.code === 'email_unverified') {
+                showAuth(false);
+                showPending('Conferma la tua email', err.message);
+            } else if (err.status === 401 || err.status === 403) showAuth(false);
             else showBootError(err.message || 'Errore durante il caricamento.');
         }
     })();

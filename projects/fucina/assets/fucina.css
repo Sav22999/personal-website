@@ -684,6 +684,69 @@ h1, h2, h3, .section-title, .appbar h1, .auth-top h1, .sheet-title, .sn-brand st
     from { transform: translateY(-260px); }
 }
 
+/* How a board grows with the levels: small empty boards side by side */
+.tut-sizes {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 12px;
+    width: 100%;
+}
+
+.tut-sizes figure {
+    margin: 0;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    flex: 1;
+    max-width: 120px;
+}
+
+.tut-sizes figcaption {
+    font: 700 .78rem var(--mono);
+    color: var(--muted);
+}
+
+.tut-stage .tut-mini {
+    width: 100%;
+    margin: 0;
+    border-width: 2px;
+}
+
+.tut-mini .dk, .tut-mini .sq {
+    display: block;
+    aspect-ratio: 1;
+    cursor: default;
+}
+
+.tut-mini .dk.edge-r {
+    border-right-width: 2px;
+}
+
+.tut-mini .dk.edge-b {
+    border-bottom-width: 2px;
+}
+
+.tut-stage .tut-qr {
+    width: min(100%, 360px);
+}
+
+.tut-qr b.mono {
+    font: 700 .82rem var(--mono);
+}
+
+.tut-chips {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.tut-stage .tut-flex {
+    width: min(100%, 340px);
+    height: 120px;
+    margin-bottom: 4px;
+}
+
 .tut-question {
     display: grid;
     gap: 8px;
@@ -716,7 +779,7 @@ h1, h2, h3, .section-title, .appbar h1, .auth-top h1, .sheet-title, .sn-brand st
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .tut-hint, .tut-pop, .tut-ready, .tut-four i.tut-drop, .tut-win {
+    .tut-hint, .tut-pop, .tut-ready, .tut-four i.tut-drop, .tut-win, .four-col.picked, .four-col i.fall, .four-col i.win, .qr.qr-in, .flex-box.mine.matched .fi {
         animation: none;
     }
 }
@@ -1578,6 +1641,31 @@ code {
     .workbench:not(.single) {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+/* "Code" and "Preview" above the two halves of an exercise */
+.pane {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 6px;
+    min-width: 0;
+}
+
+.pane-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 4px;
+    font: 700 .74rem var(--display);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.pane-label .ic {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
 
 .editor {
@@ -3265,7 +3353,36 @@ a.btn-block {
 .dk.given {
     background: var(--surface-2);
     color: var(--text);
-    cursor: default;
+}
+
+.dk.peer {
+    background: color-mix(in srgb, var(--entry) 12%, var(--surface));
+}
+
+.dk.given.peer {
+    background: color-mix(in srgb, var(--entry) 14%, var(--surface-2));
+}
+
+.dk.same {
+    box-shadow: inset 0 0 0 2px var(--entry);
+}
+
+/* 9×9 and 16×16: wider on large screens, smaller type so two-letter tags still fit */
+.doku.n9 {
+    width: min(100%, 460px);
+}
+
+.doku.n9 .dk {
+    font-size: clamp(.6rem, 2.9vw, .92rem);
+}
+
+.doku.n16 {
+    width: min(100%, 560px);
+}
+
+.doku.n16 .dk {
+    font-size: clamp(.5rem, 2.3vw, .8rem);
+    letter-spacing: -.03em;
 }
 
 .dk.sel {
@@ -3337,16 +3454,12 @@ a.btn-block {
     box-shadow: inset 0 -3px 0 var(--mint-edge);
 }
 
+/* The computer: red, and it plays only when you answer wrong */
 .four-col i.disc-ai {
-    background: #1C1714;
-    box-shadow: inset 0 -3px 0 #000;
-}
-
-/* A wrong answer leaves a red disc that belongs to nobody */
-.four-col i.disc-x {
     background: #E5383B;
     box-shadow: inset 0 -3px 0 #A3191C;
 }
+
 
 .chess {
     display: grid;
@@ -3354,6 +3467,19 @@ a.btn-block {
     width: min(100%, 420px);
     margin: 10px auto;
     border: 3px solid var(--card-border);
+}
+
+/* Small boards stay small: squares about the same size at every level */
+.chess.n3 {
+    width: min(100%, 210px);
+}
+
+.chess.n5 {
+    width: min(100%, 300px);
+}
+
+.chess.n7 {
+    width: min(100%, 360px);
 }
 
 .sq {
@@ -3387,6 +3513,195 @@ a.btn-block {
     75% {
         transform: translateX(5px);
     }
+}
+
+/* ---------- Quick games: Right shade, Selector duel, What does it print? ---------- */
+.qr {
+    display: grid;
+    gap: 14px;
+    width: min(100%, 520px);
+    margin: 0 auto;
+}
+
+.qr.qr-in {
+    animation: qr-in .3s ease-out;
+}
+
+@keyframes qr-in {
+    from { opacity: 0; transform: translateY(8px); }
+}
+
+.qr-prompt {
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+    text-align: center;
+}
+
+.qr-prompt p {
+    margin: 0;
+    font-weight: 700;
+}
+
+.qr-prompt .selector {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.qr .option code {
+    font: 600 .9rem var(--mono);
+    background: none;
+    color: inherit;
+    padding: 0;
+    overflow-wrap: anywhere;
+}
+
+.qr-why {
+    min-height: 1.4em;
+    margin: 12px auto 0;
+    width: min(100%, 520px);
+    font: 600 .82rem var(--mono);
+    color: var(--muted);
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.swatch-grid {
+    grid-template-columns: 1fr 1fr;
+}
+
+.swatch-opt {
+    padding: 8px;
+}
+
+.swatch {
+    display: block;
+    flex: 1;
+    height: 64px;
+    border-radius: var(--r-sm);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12);
+}
+
+.swatch.big {
+    width: min(100%, 220px);
+    height: 110px;
+    flex: none;
+    border-radius: var(--r-md);
+}
+
+.out-code {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 14px 16px;
+    text-align: left;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border-radius: var(--r-md);
+    font: 500 .88rem/1.6 var(--mono);
+    overflow-x: auto;
+}
+
+.out-code code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+
+/* ---------- Flex lab ---------- */
+.flex-stage {
+    position: relative;
+    width: min(100%, 520px);
+    height: 230px;
+    margin: 0 auto 12px;
+    background: var(--code-bg);
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+
+.flex-box {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    padding: 10px;
+}
+
+.flex-box .fi {
+    display: grid;
+    place-items: center;
+    flex-shrink: 1;
+    min-width: 0;
+    border-radius: 9px;
+    font: 700 .8rem var(--mono);
+    color: #fff;
+    transition: transform .25s;
+}
+
+.flex-box.ghost .fi {
+    background: none;
+    color: transparent;
+    outline: 2px dashed rgb(255 255 255 / .45);
+    outline-offset: -2px;
+}
+
+.flex-box.mine .fi {
+    opacity: .9;
+}
+
+.flex-box.mine .fi0 { background: var(--brand); }
+.flex-box.mine .fi1 { background: var(--sky); }
+.flex-box.mine .fi2 { background: var(--mint); }
+.flex-box.mine .fi3 { background: var(--violet); }
+.flex-box.mine .fi4 { background: var(--pink); }
+
+.flex-box.mine.matched .fi {
+    animation: flex-ok .5s ease-in-out;
+}
+
+@keyframes flex-ok {
+    50% { transform: scale(1.12); }
+}
+
+.flex-css {
+    width: min(100%, 520px);
+    margin: 0 auto 12px;
+    display: block;
+}
+
+.flex-controls {
+    display: grid;
+    gap: 12px;
+    width: min(100%, 520px);
+    margin: 0 auto;
+}
+
+.flex-prop {
+    display: grid;
+    gap: 6px;
+}
+
+.flex-prop > code {
+    font: 700 .82rem var(--mono);
+    background: none;
+    color: var(--muted);
+    padding: 0;
+}
+
+.flex-prop .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flex-prop .chip-btn {
+    font-family: var(--mono);
+    font-size: .78rem;
+}
+
+.flex-prop .chip-btn.on {
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
 }
 
 .selector {
@@ -3582,6 +3897,71 @@ body.admin {
     font-size: .84rem;
 }
 
+/* Admin: XP and Sparks with − and + around the value, and the activity of a user */
+.adm-amount {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.adm-amount .ctl {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+}
+
+.adm-events {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.adm-event {
+    display: grid;
+    grid-template-columns: 20px auto 1fr;
+    align-items: start;
+    gap: 4px 10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--outline-variant);
+    font-size: .88rem;
+}
+
+.adm-event .ic {
+    width: 18px;
+    height: 18px;
+    fill: var(--muted);
+    margin-top: 1px;
+}
+
+.adm-event time {
+    font: 600 .78rem var(--mono);
+    color: var(--muted);
+    white-space: nowrap;
+    padding-top: 2px;
+}
+
+@media (max-width: 520px) {
+    .adm-event {
+        grid-template-columns: 20px 1fr;
+    }
+
+    .adm-event span {
+        grid-column: 2;
+    }
+}
+
+.adm-days {
+    margin-top: 14px;
+}
+
+.adm-days summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
 .adm-bars {
     display: flex;
     align-items: flex-end;
@@ -3773,4 +4153,11 @@ body.admin {
 
 select.ctl {
     height: auto;
+}
+
+/* Email check: the only screen of an account that hasn't confirmed its address */
+.verify-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
 }

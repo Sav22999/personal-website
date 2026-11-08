@@ -103,9 +103,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         try {
             install_schema($pdo, $prefix);
             if ($mode === 'install') {
-                $st = $pdo->prepare("INSERT INTO `{$prefix}users` (name, email, password_hash, lang, role, created_at) VALUES (?,?,?,'it',10,?)
-                    ON DUPLICATE KEY UPDATE role = 10, password_hash = VALUES(password_hash)");
-                $st->execute([$adminName, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), now_utc()]);
+                $st = $pdo->prepare("INSERT INTO `{$prefix}users` (name, email, password_hash, lang, role, email_verified_at, created_at) VALUES (?,?,?,'it',10,?,?)
+                    ON DUPLICATE KEY UPDATE role = 10, password_hash = VALUES(password_hash), email_verified_at = COALESCE(email_verified_at, VALUES(email_verified_at))");
+                $st->execute([$adminName, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), now_utc(), now_utc()]);
             }
             $write = $mode === 'install' || ($google !== '' && $google !== ($existing['google_client_id'] ?? ''));
             if ($write) {

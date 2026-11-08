@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `fc_users` (
   `google_sub` VARCHAR(64) NULL,
   `lang` CHAR(2) NOT NULL DEFAULT 'en',
   `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
+  `email_verified_at` DATETIME NULL,
   `role` TINYINT UNSIGNED NOT NULL DEFAULT 0,
   `xp` INT UNSIGNED NOT NULL DEFAULT 0,
   `points` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -277,6 +278,27 @@ CREATE TABLE IF NOT EXISTS `fc_certificates` (
   CONSTRAINT `fk_fc_ce_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `fc_email_tokens` (
+  `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  KEY `ix_user` (`user_id`),
+  CONSTRAINT `fk_fc_etok_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `fc_point_changes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNSIGNED NOT NULL,
+  `admin_id` INT UNSIGNED NULL,
+  `field` VARCHAR(10) NOT NULL,
+  `before_value` INT NOT NULL,
+  `after_value` INT NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  KEY `ix_user` (`user_id`, `created_at`),
+  CONSTRAINT `fk_fc_pc_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `fc_badges` (
   `user_id` INT UNSIGNED NOT NULL,
   `badge` VARCHAR(30) NOT NULL,
@@ -285,7 +307,7 @@ CREATE TABLE IF NOT EXISTS `fc_badges` (
   CONSTRAINT `fk_fc_ba_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '8') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '10') ON DUPLICATE KEY UPDATE v = VALUES(v);
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-base','html',1,NULL,'published','{"title":{"it":"HTML base","en":"HTML Basics"},"short":{"it":"HTML base","en":"HTML Basics"},"desc":{"it":"Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.","en":"The language every web page is made of: tags, text, links, images, lists, tables and forms."},"level":{"it":"Base","en":"Basic"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-intermediate','html',2,'html-base','published','{"title":{"it":"HTML intermedio","en":"Intermediate HTML"},"short":{"it":"HTML intermedio","en":"HTML Intermediate"},"desc":{"it":"Attributi globali, link interni, testo ricco, iframe e moduli più completi.","en":"Global attributes, internal links, rich text, iframes and fuller forms."},"level":{"it":"Intermedio","en":"Intermediate"}}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-advanced','html',3,'html-intermediate','published','{"title":{"it":"HTML avanzato","en":"Advanced HTML"},"short":{"it":"HTML avanzato","en":"Advanced HTML"},"desc":{"it":"Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.","en":"Semantic, accessible pages: structure, rich forms, media and metadata."},"level":{"it":"Avanzato","en":"Advanced"}}');
@@ -399,6 +421,10 @@ INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('tagdoku'
 INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('fourline',1,3,6,'{"title":{"it":"Quattro di fila","en":"Four in a line"},"desc":{"it":"Rispondi bene per giocare la tua mossa e allinea quattro gettoni.","en":"Answer correctly to play your move and line up four discs."},"icon":"columns"}');
 INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('selectors',1,4,6,'{"title":{"it":"Scacchiera CSS","en":"CSS board"},"desc":{"it":"Tocca tutte le caselle scelte dal selettore.","en":"Tap every square picked by the selector."},"icon":"board"}');
 INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('linehop',1,5,6,'{"title":{"it":"Salti di riga","en":"Line hop"},"desc":{"it":"Rimetti in ordine le righe di codice con meno mosse possibile.","en":"Put the lines of code back in order in as few moves as possible."},"icon":"sort"}');
+INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('shade',1,6,6,'{"title":{"it":"Tinta giusta","en":"Right shade"},"desc":{"it":"Dal codice al colore e ritorno: nomi, esadecimali, rgb() e hsl().","en":"From code to colour and back: names, hex, rgb() and hsl()."},"icon":"theme"}');
+INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('duel',1,7,6,'{"title":{"it":"Duello di selettori","en":"Selector duel"},"desc":{"it":"Due selettori si sfidano: scegli quello più specifico.","en":"Two selectors face off: pick the more specific one."},"icon":"swap"}');
+INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('flexlab',1,8,6,'{"title":{"it":"Laboratorio flex","en":"Flex lab"},"desc":{"it":"Regola le proprietà flex finché le scatole non combaciano.","en":"Tune the flex properties until the boxes line up."},"icon":"spaces"}');
+INSERT INTO `fc_games` (`id`,`enabled`,`sort`,`levels`,`data`) VALUES ('output',1,9,6,'{"title":{"it":"Che cosa stampa?","en":"What does it print?"},"desc":{"it":"Leggi il codice JavaScript e indovina cosa scrive in console.","en":"Read the JavaScript and guess what it logs to the console."},"icon":"print"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('whotag',1,'published','{"name":"h1","traits":["block","text"]}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('whotag',1,'published','{"name":"p","traits":["block","text"]}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('whotag',1,'published','{"name":"span","traits":["inline","text"]}');
@@ -425,28 +451,34 @@ INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('whotag',1,
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('whotag',1,'published','{"name":"footer","traits":["block","semantic"]}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',1,'published','{"selector":".r1"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',1,'published','{"selector":".c3"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',1,'published','{"selector":".r8"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',1,'published','{"selector":".r3"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',1,'published','{"selector":".c1"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".r2.c2"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".r4.c5"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".r1.white"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".c8.black"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".r1, .r8"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".c1, .c8"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',1,'published','{"selector":".r2.c2"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".r2.c4"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".r5.white"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".c1.black"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".r1, .r5"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',2,'published','{"selector":".c3.white"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".r1, .r7"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".c1, .c7"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".r2.white, .r3.black"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".r4, .c4"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(8n)"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(8n+1)"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(-n+8)"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(n+57)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',3,'published','{"selector":".r7.black"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(9n)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(9n+1)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(-n+9)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":":nth-child(n+73)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',4,'published','{"selector":".r5:nth-child(odd)"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":".black:not(.r1):not(.r2)"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":".r3:not(.c1):not(.c8)"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":".white:nth-child(-n+16)"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":":not(.white):nth-child(n+49)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":".r3:not(.c1):not(.c10)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":".white:nth-child(-n+20)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":":not(.white):nth-child(n+81)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',5,'published','{"selector":":nth-child(10n+5)"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',6,'published','{"selector":":nth-child(4n).black"}');
-INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',6,'published','{"selector":":nth-child(3n+1):not(.r1):not(.r8)"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',6,'published','{"selector":":nth-child(3n+1):not(.r1):not(.r10)"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',6,'published','{"selector":".r5 ~ .r6.white"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',6,'published','{"selector":".c4 + .c5.black"}');
+INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('selectors',6,'published','{"selector":".r9 ~ :nth-child(odd):not(.c1)"}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('linehop',1,'published','{"title":{"it":"Un titolo in una pagina","en":"A heading in a page"},"lines":["<body>","  <h1>Ciao</h1>","</body>"]}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('linehop',1,'published','{"title":{"it":"Una regola CSS","en":"A CSS rule"},"lines":["p {","  color: red;","}"]}');
 INSERT INTO `fc_game_items` (`game`,`level`,`status`,`data`) VALUES ('linehop',2,'published','{"title":{"it":"Una lista","en":"A list"},"lines":["<ul>","  <li>Pane</li>","  <li>Latte</li>","</ul>"]}');

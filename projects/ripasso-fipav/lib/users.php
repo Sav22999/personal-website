@@ -73,6 +73,7 @@ function register_user(array $in): array
     db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, permissions, status, created_at) VALUES (?,?,?,?, 'pending', ?)")
         ->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), PERM_NONE, now_utc()]);
 
+    send_verification(find_user_by_email($email));
     notify_admin_new_user($name, $email);
     return ['name' => $name, 'email' => $email];
 }
@@ -126,6 +127,11 @@ function login_user(array $in): array
         fail('Email o password non corretti.', 401, 'bad_credentials');
     }
 
+    // The address comes first: the link is sent again at most every 10 minutes
+    if (must_verify($user)) {
+        send_verification($user, 10);
+        fail('Conferma la tua email: ti abbiamo inviato un link a ' . $user['email'] . '. Aprilo, poi accedi di nuovo. Controlla anche lo spam.', 403, 'email_unverified');
+    }
     if ($user['status'] === 'pending') fail('Il tuo account è in attesa di abilitazione da parte di un amministratore.', 403, 'pending');
     if ($user['status'] === 'disabled') fail('Il tuo account è stato disabilitato. Contatta l\'amministratore.', 403, 'disabled');
     if ((int)$user['permissions'] < PERM_USER) fail('Il tuo account non ha ancora i permessi di accesso.', 403, 'pending');
@@ -136,6 +142,48 @@ function login_user(array $in): array
     $pdo->prepare('UPDATE ' . t('users') . ' SET last_login_at = ?, last_seen_at = ? WHERE id = ?')->execute([now_utc(), now_utc(), $user['id']]);
     $sess = create_auth_session((int)$user['id']);
     return ['user' => public_user($user), 'csrf' => $sess['csrf']];
+}
+
+// ---------------- Email check ----------------
+
+const VERIFY_HOURS = 48;
+
+/** A new single-use link (the older ones stop working). $minutes: skip if one was sent more recently than this. */
+function send_verification(?array $user, int $minutes = 0): void
+{
+    if (!$user || !mail_enabled()) return;
+    if ($minutes > 0) {
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('email_tokens') . ' WHERE user_id = ? AND created_at > (UTC_TIMESTAMP() - INTERVAL ' . (int)$minutes . ' MINUTE)');
+        $st->execute([$user['id']]);
+        if ((int)$st->fetchColumn() > 0) return;
+    }
+    $token = bin2hex(random_bytes(32));
+    db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$user['id']]);
+    db()->prepare('INSERT INTO ' . t('email_tokens') . ' (token_hash, user_id, created_at, expires_at) VALUES (?,?,?,?)')
+        ->execute([hash('sha256', $token), $user['id'], now_utc(), gmdate('Y-m-d H:i:s', time() + VERIFY_HOURS * 3600)]);
+    $links = account_email_links();
+    $url = $links['portal_url'] . '?verify=' . $token;
+    $first = trim(explode(' ', trim((string)$user['name']))[0]) ?: (string)$user['name'];
+    $html = email_layout('<h1 style="margin:0 0 14px;font-size:22px;color:#13203A">Conferma la tua email</h1>'
+        . '<p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#4B5B78">Ciao ' . email_esc($first) . ', conferma che questo indirizzo è tuo per usare il tuo account Fischietto.</p>'
+        . email_button('Conferma la mia email', $url)
+        . '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#4B5B78">Il link vale 48 ore. Se non hai creato un account, puoi ignorare questa email.</p>',
+        ['preheader' => 'Conferma la tua email per Fischietto', 'icon_url' => $links['icon_url'], 'home_url' => $links['portal_url'], 'credit_url' => $links['credit_url']]);
+    $text = "Ciao $first,\n\nconferma che questo indirizzo è tuo per usare il tuo account Fischietto:\n$url\n\nIl link vale 48 ore. Se non hai creato un account, puoi ignorare questa email.\n";
+    $r = send_mail((string)$user['email'], (string)$user['name'], 'Conferma la tua email per Fischietto', $html, $text);
+    if (empty($r['sent']) && empty($r['ok'])) error_log('[fischietto] verification email not sent to user #' . $user['id']);
+}
+
+/** The link of the email, confirmed by a button in the portal (mail scanners that open links change nothing). */
+function verify_email_token(string $token): array
+{
+    $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . ' WHERE token_hash = ? AND expires_at > ?');
+    $st->execute([hash('sha256', $token), now_utc()]);
+    $uid = (int)$st->fetchColumn();
+    if (!$uid) fail('Questo link è scaduto o è già stato usato: accedi per riceverne uno nuovo.', 410, 'token_invalid');
+    db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $uid]);
+    db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$uid]);
+    return find_user($uid);
 }
 
 function change_own_password(array $session, array $in): array
@@ -187,11 +235,13 @@ function admin_list_users(array $actor): array
         }
     }
     $out = [];
-    $rows = db()->query('SELECT id, name, email, permissions, status, must_change_password, created_at, approved_at, activation_mail_at, last_login_at, last_seen_at FROM ' . t('users') . " ORDER BY FIELD(status,'pending','active','disabled'), permissions DESC, created_at DESC");
+    $rows = db()->query('SELECT id, name, email, permissions, status, must_change_password, email_verified_at, created_at, approved_at, activation_mail_at, last_login_at, last_seen_at FROM ' . t('users') . " ORDER BY FIELD(status,'pending','active','disabled'), permissions DESC, created_at DESC");
     foreach ($rows as $u) {
         $u['id'] = (int)$u['id'];
         $u['permissions'] = (int)$u['permissions'];
         $u['must_change_password'] = (bool)$u['must_change_password'];
+        $u['verified'] = !empty($u['email_verified_at']);
+        unset($u['email_verified_at']);
         $u['role'] = role_label($u['permissions']);
         $u['answers'] = $answers[$u['id']] ?? 0;
         $u['canManage'] = can_manage_user($actor, $u);

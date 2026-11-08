@@ -44,10 +44,10 @@ function reader(): array
     return require_user();
 }
 
-function writer(): array
+function writer(bool $unverifiedOk = false): array
 {
     only('POST');
-    $u = require_user();
+    $u = require_user($unverifiedOk);
     require_csrf($u);
     return $u;
 }
@@ -378,7 +378,7 @@ switch ($r) {
         record_attempt('register');
         $uid = new_user($name, $email, password_hash($pw, PASSWORD_DEFAULT), null, $username);
         apply_invite($uid, (string)($b['inviteCode'] ?? ''));
-        mail_account_created(user_row($uid), 'email');
+        send_verification(user_row($uid)); // the welcome follows once the address is confirmed
         $csrf = create_auth_session($uid);
         send_json(['ok' => true, 'user' => public_user(user_row($uid)), 'csrf' => $csrf]);
 
@@ -418,13 +418,16 @@ switch ($r) {
             $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
             $st->execute([$g['email']]);
             $row = $st->fetch();
-            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ? WHERE id = ?')->execute([$g['sub'], $row['id']]);
+            // Google proves the address: an account nobody confirmed loses the password someone else may have chosen
+            if ($row) db()->prepare('UPDATE ' . t('users') . ' SET google_sub = ?, password_hash = IF(email_verified_at IS NULL, \'\', password_hash), email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')
+                ->execute([$g['sub'], now_utc(), $row['id']]);
         }
         if (!$row) {
             if (empty($b['acceptPrivacy'])) send_json(['ok' => false, 'error' => 'needs_signup', 'message' => tr('Create your Giftwise account'), 'name' => $g['name'], 'email' => $g['email']], 200);
             if (too_many_attempts('register', 5, 60)) fail('Too many sign-ups from this network: try again later.', 429, 'rate_limited');
             record_attempt('register');
             $uid = new_user($g['name'] ?: explode('@', $g['email'])[0], $g['email'], '', $g['sub']);
+            db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = ? WHERE id = ?')->execute([now_utc(), $uid]);
             $row = user_row($uid);
             mail_account_created($row, 'google');
         }
@@ -434,6 +437,34 @@ switch ($r) {
         $csrf = create_auth_session((int)$row['id']);
         send_json(['ok' => true, 'user' => public_user(user_row((int)$row['id'])), 'csrf' => $csrf]);
 
+    case 'auth.resend':
+        $u = writer(true);
+        if (!must_verify($u)) send_json(['ok' => true, 'user' => public_user(user_row((int)$u['id']))]);
+        if (too_many_attempts('verify_mail', 3, 60)) fail('Too many emails: try again in an hour.', 429, 'rate_limited');
+        record_attempt('verify_mail');
+        send_verification(user_row((int)$u['id']));
+        send_json(['ok' => true]);
+
+    case 'auth.verify':
+        // The link of the email opens the app, which asks for this with a button: mail scanners that open links do nothing
+        only('POST');
+        if (too_many_attempts('verify', 20, 15)) fail('Too many attempts: try again in a few minutes.', 429, 'rate_limited');
+        $st = db()->prepare('SELECT user_id FROM ' . t('email_tokens') . ' WHERE token_hash = ? AND expires_at > ?');
+        $st->execute([hash('sha256', (string)(body()['token'] ?? '')), now_utc()]);
+        $uid = (int)$st->fetchColumn();
+        if (!$uid) {
+            record_attempt('verify');
+            fail('This link has expired or was already used: sign in and ask for a new one.', 410, 'token_invalid');
+        }
+        $first = empty(user_row($uid)['email_verified_at']);
+        db()->prepare('UPDATE ' . t('users') . ' SET email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?')->execute([now_utc(), $uid]);
+        db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$uid]);
+        $row = user_row($uid);
+        if ($row['status'] !== 'active') fail('Your account has been disabled.', 403, 'disabled');
+        if ($first && $row['password_hash'] !== '') mail_account_created($row, 'email');
+        $csrf = create_auth_session($uid); // a magic link: it also signs in on the device that opened it
+        send_json(['ok' => true, 'user' => public_user($row), 'csrf' => $csrf]);
+
     case 'auth.logout':
         only('POST');
         $u = current_user();
@@ -442,16 +473,11 @@ switch ($r) {
         send_json(['ok' => true]);
 
     case 'auth.profile':
+        // Only the name: the email is the identity of the account (and of its Google sign-in), so it never changes
         $u = writer();
-        $b = body();
-        $name = s($b, 'name', 80, true, 'Name');
-        $email = mb_strtolower(s($b, 'email', 190, true, 'Email'));
+        $name = s(body(), 'name', 80, true, 'Name');
         if (mb_strlen($name) < 2) fail('Enter your name.', 422, 'validation');
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Invalid email address.', 422, 'validation');
-        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ? AND id <> ?');
-        $st->execute([$email, $u['id']]);
-        if ($st->fetchColumn()) fail('This email is already used by another account.', 409, 'email_taken');
-        db()->prepare('UPDATE ' . t('users') . ' SET name = ?, email = ? WHERE id = ?')->execute([$name, $email, $u['id']]);
+        db()->prepare('UPDATE ' . t('users') . ' SET name = ? WHERE id = ?')->execute([$name, $u['id']]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'auth.password':
@@ -465,7 +491,7 @@ switch ($r) {
         send_json(['ok' => true]);
 
     case 'auth.delete':
-        $u = writer();
+        $u = writer(true);
         $b = body();
         $row = user_row($u['id']);
         if ($row['password_hash'] !== '' && !password_verify((string)($b['password'] ?? ''), $row['password_hash'])) fail('The password is not correct.', 422, 'bad_password');

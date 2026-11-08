@@ -421,6 +421,7 @@
 
     function render(keepScroll) {
         if (!S.user) return renderAuth();
+        if (S.user.mustVerify) return renderVerify();
         if (S.user.mustChangePassword) return renderForcePassword();
         if (!S.loaded) {
             root.replaceChildren(DESK.matches ? h('div.content', UI.skeletonScreen()) : UI.skeletonScreen());
@@ -3930,6 +3931,69 @@
         if (S.config.googleClientId) googleButton(gslot, cred => googleSignIn(cred, pending), mode === 'login' ? 'continue_with' : 'signup_with');
     }
 
+    // ===================================================== email check (see auth.resend and auth.verify)
+
+    /** Until the address is confirmed the account can do nothing else: the server refuses every call. */
+    function renderVerify() {
+        const status = h('p.center', {role: 'status'});
+        const check = btn(t('I’ve confirmed it'), {
+            cls: 'btn-block', onclick: async () => {
+                try {
+                    const d = await busy(check, () => Api.get('auth.me', {silentAuth: true}));
+                    S.user = d.user;
+                    if (S.user && !S.user.mustVerify) return start();
+                    status.textContent = t('Not confirmed yet: open the link in the email.');
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        });
+        const resend = btn(t('Send the link again'), {
+            kind: 'tonal', cls: 'btn-block', onclick: async () => {
+                try {
+                    const d = await busy(resend, () => Api.post('auth.resend', {}, {silentAuth: true}));
+                    if (d.user && !d.user.mustVerify) return start();
+                    status.textContent = t('New link sent to {email}. It may take a minute: check spam too.', {email: S.user.email});
+                } catch (e) {
+                    status.textContent = e.message;
+                }
+            }
+        });
+        const out = btn(t('Sign out'), {
+            kind: 'text', cls: 'btn-block', onclick: async () => {
+                try {
+                    await Api.post('auth.logout', {}, {silentAuth: true});
+                } catch (e) { /* the cookie expires by itself */
+                }
+                S.user = null;
+                S.loaded = false;
+                render();
+            }
+        });
+        root.replaceChildren(h('div.auth', h('div.auth-top', h('div.logo', h('img', {src: 'assets/icons/icon-color.png', alt: ''})), h('h1', 'FoodTrack'), h('p', t('Confirm your email'))),
+            h('div.auth-body.center', h('p', t('We sent a link to {email}. Open it to start using your account: until then the account stays locked.', {email: S.user.email})),
+                status, h('div.verify-actions', check, resend, out))));
+    }
+
+    /** The link of the email: a button confirms it, so that mail scanners opening links change nothing. */
+    function confirmEmailLink(token) {
+        return new Promise(resolve => {
+            const ok = btn(t('Confirm email'), {
+                icon: 'check', cls: 'btn-block', onclick: async () => {
+                    try {
+                        const d = await busy(ok, () => Api.post('auth.verify', {token}, {silentAuth: true}));
+                        S.user = d.user;
+                        s.close();
+                        toast(t('Email confirmed. Let’s go!'));
+                    } catch (e) {
+                        toast(e.message, 'error');
+                    }
+                }
+            });
+            const s = sheet({title: t('Confirm your email'), body: [h('p.sheet-text', t('Tap the button to confirm the address of your FoodTrack account.'))], actions: [ok], onclose: resolve});
+        });
+    }
+
     function renderForcePassword() {
         root.replaceChildren(h('div.auth', h('div.auth-top', h('div.logo', h('img', {
             src: 'assets/icons/icon-color.png',
@@ -4228,6 +4292,11 @@
     }
 
     async function start() {
+        const token = new URLSearchParams(location.search).get('verify');
+        if (token) {
+            history.replaceState(history.state, '', location.pathname + location.hash);
+            await confirmEmailLink(token);
+        }
         try {
             const [me, cfg] = await Promise.all([Api.get('auth.me', {silentAuth: true}), Api.get('auth.config', {silentAuth: true}).catch(() => null)]);
             S.user = me.user;
@@ -4241,7 +4310,7 @@
             render();
             return;
         }
-        if (S.user.mustChangePassword) {
+        if (S.user.mustVerify || S.user.mustChangePassword) {
             render();
             return;
         }

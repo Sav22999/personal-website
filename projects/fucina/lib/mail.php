@@ -63,6 +63,37 @@ function mail_t(string $lang): array
     return MAIL_TEXT[$lang] ?? MAIL_TEXT['en'];
 }
 
+// ---------------------------------------------------------------- the email check
+
+const VERIFY_HOURS = 48;
+
+/** The check is required only when an email can actually be sent: otherwise nobody could ever get in. */
+function verification_required(): bool
+{
+    return mail_settings() !== null;
+}
+
+/** A new single-use link for this account; the older ones stop working. The app confirms it with a button. */
+function send_verification(array $user): void
+{
+    if (!mail_settings()) return;
+    $token = bin2hex(random_bytes(32));
+    db()->prepare('DELETE FROM ' . t('email_tokens') . ' WHERE user_id = ?')->execute([$user['id']]);
+    db()->prepare('INSERT INTO ' . t('email_tokens') . ' (token_hash, user_id, created_at, expires_at) VALUES (?,?,?,?)')
+        ->execute([hash('sha256', $token), $user['id'], now_utc(), gmdate('Y-m-d H:i:s', time() + VERIFY_HOURS * 3600)]);
+    $lang = lang();
+    $T = mail_t($lang);
+    $url = app_url() . '?verify=' . $token;
+    $hello = str_replace('{name}', first_name((string)$user['name']), $T['hello']);
+    $html = mail_layout($lang, $T['subject_verify'], [
+        '<p style="margin:0 0 14px">' . e($hello) . '</p>',
+        '<p style="margin:0 0 18px">' . e($T['verify_body']) . '</p>',
+        mail_button($url, $T['verify_button']),
+        '<p style="margin:18px 0 0;font-size:13px;color:#6B6058">' . e($T['verify_expires']) . '</p>',
+    ]);
+    queue_mail((string)$user['email'], (string)$user['name'], $T['subject_verify'], $html, "$hello\n\n{$T['verify_body']}\n\n$url\n\n{$T['verify_expires']}\n");
+}
+
 /** Welcome email. $how: 'email' (sign-up form) or 'google'. */
 function mail_account_created(array $user, string $how): void
 {
@@ -86,6 +117,10 @@ function mail_account_created(array $user, string $how): void
 
 const MAIL_TEXT = [
     'it' => [
+        'subject_verify' => 'Conferma la tua email per Fucina',
+        'verify_body' => 'Conferma che questo indirizzo è tuo per iniziare a usare il tuo account Fucina.',
+        'verify_button' => 'Conferma la mia email',
+        'verify_expires' => 'Il link vale 48 ore. Se non hai creato un account, puoi ignorare questa email.',
         'subject_welcome' => 'Ti diamo il benvenuto in Fucina',
         'hello' => 'Ciao {name},',
         'intro_email' => 'il tuo account Fucina è pronto: qui il codice si impara facendolo, tra lezioni brevi, giochi e sfide quotidiane.',
@@ -97,6 +132,10 @@ const MAIL_TEXT = [
         'footer' => 'Email automatica inviata da Fucina. Non rispondere a questo messaggio.',
     ],
     'en' => [
+        'subject_verify' => 'Confirm your email for Fucina',
+        'verify_body' => 'Confirm that this address is yours to start using your Fucina account.',
+        'verify_button' => 'Confirm my email',
+        'verify_expires' => 'The link works for 48 hours. If you didn’t create an account, you can ignore this email.',
         'subject_welcome' => 'Welcome to Fucina',
         'hello' => 'Hi {name},',
         'intro_email' => 'your Fucina account is ready: here you learn to code by doing it, with short lessons, games and daily challenges.',

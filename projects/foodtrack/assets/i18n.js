@@ -7,6 +7,16 @@
 
     const DICT = {
         it: {
+            "Confirm your email": "Conferma la tua email",
+            "We sent a link to {email}. Open it to start using your account: until then the account stays locked.": "Abbiamo inviato un link a {email}. Aprilo per iniziare a usare il tuo account: fino ad allora l’account resta bloccato.",
+            "I’ve confirmed it": "L’ho confermata",
+            "Send the link again": "Invia di nuovo il link",
+            "New link sent to {email}. It may take a minute: check spam too.": "Nuovo link inviato a {email}. Può volerci un minuto: controlla anche lo spam.",
+            "Not confirmed yet: open the link in the email.": "Non ancora confermata: apri il link nell’email.",
+            "Email confirmed. Let’s go!": "Email confermata. Si parte!",
+            "Tap the button to confirm the address of your FoodTrack account.": "Tocca il pulsante per confermare l’indirizzo del tuo account FoodTrack.",
+            "Confirm email": "Conferma email",
+            "The email can’t be changed.": "L’email non si può modificare.",
             " and ": " e ",
             "+ New list…": "+ Nuova lista…",
             "About the expiry": "Informazioni sulla scadenza",

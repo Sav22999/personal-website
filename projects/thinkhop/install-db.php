@@ -80,9 +80,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $pdo = pdo_connect($host, $user, $pass, $name);
             install_schema($pdo, $prefix);
             if (!$locked) {
-                $pdo->prepare("INSERT INTO `{$prefix}users` (name, username, email, password_hash, role, created_at) VALUES (?,?,?,?,?,?)
-                    ON DUPLICATE KEY UPDATE role = VALUES(role), password_hash = VALUES(password_hash)")
-                    ->execute([$adminName, $adminUsername, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_ADMIN, now_utc()]);
+                $pdo->prepare("INSERT INTO `{$prefix}users` (name, username, email, password_hash, role, created_at, email_verified_at) VALUES (?,?,?,?,?,?,?)
+                    ON DUPLICATE KEY UPDATE role = VALUES(role), password_hash = VALUES(password_hash), email_verified_at = COALESCE(email_verified_at, VALUES(email_verified_at))")
+                    ->execute([$adminName, $adminUsername, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_ADMIN, now_utc(), now_utc()]);
             }
             if (!$locked || ($google !== '' && $google !== $existing['google_client_id'])) {
                 $content = credentials_php($host, $user, $pass, $name, $prefix, $google !== '' ? $google : (string)($existing['google_client_id'] ?? ''));

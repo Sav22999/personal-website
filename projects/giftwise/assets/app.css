@@ -3011,3 +3011,11 @@ a.tour-pill:hover {
     display: inline-grid;
     margin-left: -4px;
 }
+
+/* Email check: the only screen of an account that hasn't confirmed its address */
+.verify-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}

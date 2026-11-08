@@ -1696,7 +1696,7 @@
 
     function editUser(u) {
         const name = inp({value: u.name, maxlength: 80});
-        const email = inp({type: 'email', value: u.email, maxlength: 190});
+        const email = inp({type: 'email', value: u.email, readonly: true, disabled: true, title: t('The email can’t be changed.')}); // it identifies the account
         const status = sel([{value: 'active', label: t('Active')}, {
             value: 'disabled',
             label: t('Disabled (cannot sign in)')
@@ -1707,7 +1707,6 @@
                 await busy(save, () => Api.post('admin.user.update', {
                     id: u.id,
                     name: name.value,
-                    email: email.value,
                     status: status.value,
                     role: Number(role.value)
                 }));

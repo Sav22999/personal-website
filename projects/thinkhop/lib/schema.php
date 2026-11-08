@@ -23,6 +23,8 @@ function schema_statements(string $p): array
             `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1,
             `notify_off` VARCHAR(200) NULL,
             `notify_lang` CHAR(2) NULL,
+            `email_verified_at` DATETIME NULL,
+            `points_adjust` INT NOT NULL DEFAULT 0,
             `email` VARCHAR(190) NOT NULL,
             `password_hash` VARCHAR(255) NOT NULL DEFAULT '',
             `google_sub` VARCHAR(64) NULL,
@@ -91,6 +93,27 @@ function schema_statements(string $p): array
             CONSTRAINT `fk_{$p}fr_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
             CONSTRAINT `fk_{$p}fr_friend` FOREIGN KEY (`friend_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
+        // Single-use links that confirm an email address: only their hash is kept
+        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
+            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            `expires_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`),
+            CONSTRAINT `fk_{$p}etok_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
+        // What the administrators changed on an account, readable in the admin panel
+        "CREATE TABLE IF NOT EXISTS `{$p}admin_log` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `admin_id` INT UNSIGNED NULL,
+            `action` VARCHAR(30) NOT NULL,
+            `detail` VARCHAR(500) NOT NULL DEFAULT '{}',
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`, `created_at`),
+            CONSTRAINT `fk_{$p}log_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
+            CONSTRAINT `fk_{$p}log_admin` FOREIGN KEY (`admin_id`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
+        ) $e",
         // Devices to wake up with Web Push (see lib/push.php)
         "CREATE TABLE IF NOT EXISTS `{$p}push_subscriptions` (
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -148,6 +171,13 @@ function install_schema(PDO $pdo, string $prefix): void
     if (!has_column($pdo, $prefix . 'users', 'notify_off')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `notify_off` VARCHAR(200) NULL AFTER `show_in_ranking`, ADD COLUMN `notify_lang` CHAR(2) NULL AFTER `notify_off`");
     // Version 6: notifications read are marked, not deleted
     if (!has_column($pdo, $prefix . 'notifications', 'sent_at')) $pdo->exec("ALTER TABLE `{$prefix}notifications` ADD COLUMN `sent_at` DATETIME NULL AFTER `created_at`");
+    // Version 7: confirmed email addresses. Google already checked its accounts; administrators keep their access
+    if (!has_column($pdo, $prefix . 'users', 'email_verified_at')) {
+        $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `email_verified_at` DATETIME NULL AFTER `notify_lang`");
+        $pdo->exec("UPDATE `{$prefix}users` SET email_verified_at = UTC_TIMESTAMP() WHERE google_sub IS NOT NULL OR role >= " . ROLE_ADMIN);
+    }
+    // Version 8: points changed by an administrator
+    if (!has_column($pdo, $prefix . 'users', 'points_adjust')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `points_adjust` INT NOT NULL DEFAULT 0 AFTER `email_verified_at`");
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);
 }

@@ -26,6 +26,7 @@ function schema_statements(string $p): array
             `google_sub` VARCHAR(64) NULL,
             `lang` CHAR(2) NOT NULL DEFAULT 'en',
             `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
+            `email_verified_at` DATETIME NULL,
             `role` TINYINT UNSIGNED NOT NULL DEFAULT 0,
             `xp` INT UNSIGNED NOT NULL DEFAULT 0,
             `points` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -279,6 +280,27 @@ function schema_statements(string $p): array
             UNIQUE KEY `uq_user_course` (`user_id`, `course`),
             CONSTRAINT `fk_{$p}ce_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
+        // Single-use links that confirm an email address: only their hash is kept
+        "CREATE TABLE IF NOT EXISTS `{$p}email_tokens` (
+            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            `expires_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`),
+            CONSTRAINT `fk_{$p}etok_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
+        // Changes of XP or Sparks made from the admin portal, shown in the activity of the user
+        "CREATE TABLE IF NOT EXISTS `{$p}point_changes` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `admin_id` INT UNSIGNED NULL,
+            `field` VARCHAR(10) NOT NULL,
+            `before_value` INT NOT NULL,
+            `after_value` INT NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            KEY `ix_user` (`user_id`, `created_at`),
+            CONSTRAINT `fk_{$p}pc_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
+        ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}badges` (
             `user_id` INT UNSIGNED NOT NULL,
             `badge` VARCHAR(30) NOT NULL,
@@ -299,6 +321,12 @@ function install_schema(PDO $pdo, string $prefix): void
     }
     if (!in_array('on_board', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `on_board` TINYINT(1) NOT NULL DEFAULT 1");
     if (!in_array('notify_off', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `notify_off` VARCHAR(100) NULL, ADD COLUMN `reminded_on` DATE NULL");
+    if (!in_array('email_verified_at', $columns, true)) {
+        // Version 10: confirmed email addresses. Google already checked its accounts, and the admins are trusted so they are
+        // never locked out of the portal; every other existing account confirms its address with a link.
+        $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `email_verified_at` DATETIME NULL AFTER `status`");
+        $pdo->exec("UPDATE `{$prefix}users` SET email_verified_at = UTC_TIMESTAMP() WHERE google_sub IS NOT NULL OR role >= 5");
+    }
     if (!in_array('username', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `username` VARCHAR(20) NULL AFTER `name`, ADD UNIQUE KEY `uq_username` (`username`)");
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}lesson_progress`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('skipped', $columns, true)) {
@@ -318,6 +346,9 @@ function install_schema(PDO $pdo, string $prefix): void
     if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");
     if (!in_array('seconds', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `seconds` INT UNSIGNED NULL");
     require_once __DIR__ . '/seed.php';
+    // Version 9: the CSS board grows with the level, so it gets selectors written for each size
+    $old = (int)($pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn() ?: 0);
+    if ($old > 0 && $old < 9) install_seed_selectors_v9($pdo, $prefix);
     install_seed($pdo, $prefix);
     install_seed_drills($pdo, $prefix);
     // Last: if something above fails, the next request tries again

@@ -42,6 +42,15 @@
         'At least one type of question must stay on.': 'Almeno un tipo di domanda deve restare acceso.', 'You cannot change your own account here.': 'Non puoi modificare il tuo account da qui.',
         'You do not have access to this.': 'Non hai accesso a questa funzione.',
         'Levels': 'Livelli', 'Survival': 'Sopravvivenza', 'Daily': 'Sfida del giorno',
+        'Details': 'Dettagli', 'Activity': 'Attività', 'Read only: what this player did.': 'Sola lettura: ciò che ha fatto questo giocatore.',
+        'Wallet': 'Punti disponibili', 'Earned': 'Guadagnati', 'Changed by admins': 'Modificati dagli admin', 'Levels passed': 'Livelli superati', 'Highest level': 'Livello più alto',
+        'Daily challenges': 'Sfide del giorno', 'Play time': 'Tempo di gioco', 'Best daily': 'Migliore sfida', 'Best survival': 'Migliore sopravvivenza',
+        'Following': 'Segue', 'Followers': 'Lo seguono', 'Notification devices': 'Dispositivi con notifiche',
+        'Signed up': 'Iscritto', 'Last sign-in': 'Ultimo accesso', 'First game': 'Prima partita', 'Last game': 'Ultima partita',
+        'Email confirmed': 'Email confermata', 'Email not confirmed': 'Email da confermare', 'Google': 'Google', 'Password': 'Password', 'In the ranking': 'In classifica', 'Hidden from the ranking': 'Nascosto dalla classifica',
+        'Change points': 'Modifica punti', 'New balance': 'Nuovo saldo', 'Note (optional)': 'Nota (facoltativa)', 'The games stay as they were played: only the balance changes.': 'Le partite restano come sono state giocate: cambia solo il saldo.',
+        'Points saved': 'Punti salvati', 'Last 100 games': 'Ultime 100 partite', 'Admin changes': 'Modifiche degli admin', 'No changes.': 'Nessuna modifica.', 'Mode': 'Modalità', 'Time': 'Tempo', 'Admin': 'Admin', 'Change': 'Modifica', 'Note': 'Nota',
+        'You cannot change your own points.': 'Non puoi modificare i tuoi punti.', 'Never': 'Mai',
     };
     const t = (s, v) => {
         let out = I.getLang() === 'it' ? (IT[s] || s) : s;
@@ -271,8 +280,8 @@
                 const self = +p.id === +d.me, admin = +p.role >= 9, off = p.status === 'disabled';
                 return h('tr',
                     h('td', h('strong', p.username ? '@' + p.username : p.name), h('small.block', `${p.name} · ${p.email}`)), h('td', String(p.stage)), h('td', num(p.games)), h('td', num(p.points)), h('td', when(p.last_login_at || p.created_at)),
-                    h('td', self ? t('You') : (off ? t('Disabled') : (admin ? t('Administrator') : t('Active')))),
-                    h('td.row-actions', self ? null : [
+                    h('td', self ? t('You') : (off ? t('Disabled') : (+p.verified ? (admin ? t('Administrator') : t('Active')) : t('Email not confirmed')))),
+                    h('td.row-actions', h('button.btn.btn-soft.small', {type: 'button', onclick: () => showPlayer(p.id, +d.me, refresh)}, t('Details')), self ? null : [
                         h('button.btn.btn-ghost.small', {type: 'button', onclick: () => call('admin.player.update', {id: p.id, admin: !admin, status: p.status}, refresh)}, t(admin ? 'Remove administrator' : 'Make administrator')),
                         h('button.btn.btn-ghost.small', {type: 'button', onclick: () => call('admin.player.update', {id: p.id, admin, status: off ? 'active' : 'disabled'}, refresh)}, t(off ? 'Enable' : 'Disable')),
                         h('button.icon-btn', {
@@ -286,6 +295,61 @@
         search.addEventListener('input', draw);
         draw();
         view.replaceChildren(card(null, h('div.card-head', h('h2', t('Players')), search), wrap));
+    }
+
+    // ---------- one player: everything they did, read only; only the points can be changed ----------
+    const clock = s => {
+        const m = Math.round((+s || 0) / 60);
+        return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+    };
+
+    async function showPlayer(id, me, refresh) {
+        const body = h('div', skeleton('tiles', 8), skeleton('table', 6));
+        const m = modal([h('h3', t('Details')), h('p.muted', t('Read only: what this player did.')), body,
+            h('div.actions', h('button.btn.btn-primary', {type: 'button', onclick: () => m.close()}, gt('close')))]);
+        m.box.classList.add('wide');
+        const d = await call('admin.player', {id});
+        if (!d) return body.replaceChildren(h('p.muted', '–'));
+        const p = d.player, s = d.stats;
+        const badge = (on, yes, no) => h('span.tag' + (on ? '.on' : ''), t(on ? yes : no));
+        const share = s.total > 0 ? Math.round(s.correct / s.total * 100) + '%' : '–';
+        const modeName = x => x.mode === 'level' ? gt('level_n', {n: x.stage}) : t(x.mode === 'daily' ? 'Daily' : 'Survival');
+        const self = p.id === me;
+        const balance = h('input.ctl', {type: 'number', min: 0, max: 10000000, step: 1, value: p.balance, disabled: self || undefined});
+        const note = h('input.ctl', {type: 'text', maxlength: 200, placeholder: t('Note (optional)'), disabled: self || undefined});
+        const save = h('button.btn.btn-primary', {type: 'submit', disabled: self || undefined}, t('Save'));
+        body.replaceChildren(
+            h('div.player-head', h('strong', p.username ? '@' + p.username : p.name), h('span.muted', `${p.name} · ${p.email}`),
+                h('div.tags', badge(!!p.verified, 'Email confirmed', 'Email not confirmed'), p.google ? h('span.tag', 'Google') : null, p.password ? h('span.tag', t('Password')) : null,
+                    badge(p.ranking, 'In the ranking', 'Hidden from the ranking'), p.admin ? h('span.tag.on', t('Administrator')) : null, p.status === 'disabled' ? h('span.tag.off', t('Disabled')) : null)),
+            h('div.stat-grid.wide',
+                tile(t('Wallet'), num(p.balance)), tile(t('Earned'), num(s.earned)), tile(t('Spent'), num(s.spent)), tile(t('Changed by admins'), (p.adjust > 0 ? '+' : '') + num(p.adjust)),
+                tile(t('Games played'), num(s.games)), tile(t('Levels passed'), num(s.levels)), tile(t('Highest level'), num(s.top_level)), tile(t('Daily challenges'), num(s.dailies)),
+                tile(t('Right answers'), share), tile(t('Play time'), clock(s.seconds)), tile(t('Best daily'), num(s.best_daily)), tile(t('Best survival'), num(s.best_survival)),
+                tile(t('Following'), num(p.following)), tile(t('Followers'), num(p.followers)), tile(t('Notification devices'), num(p.devices))),
+            h('dl.player-dates', [['Signed up', p.createdAt], ['Last sign-in', p.lastLogin], ['First game', s.first_game], ['Last game', s.last_game]].map(([k, v]) => [h('dt', t(k)), h('dd', v ? when(v) : t('Never'))])),
+            h('form.form.points-form', {
+                    onsubmit: async e => {
+                        e.preventDefault();
+                        save.disabled = true;
+                        await call('admin.player.points', {id: p.id, balance: +balance.value, note: note.value}, () => {
+                            toast(t('Points saved'), 'ok');
+                            m.close();
+                            showPlayer(id, me, refresh);
+                            if (refresh) refresh();
+                        });
+                        save.disabled = false;
+                    }
+                }, h('h4', t('Change points')), h('p.muted', self ? t('You cannot change your own points.') : t('The games stay as they were played: only the balance changes.')),
+                h('div.form-row', h('label.field', h('span', t('New balance')), balance), h('label.field', h('span', t('Note')), note), save)),
+            h('h4', t('Last 100 games')),
+            d.games.length ? table([t('Date'), t('Mode'), t('Result'), t('Points'), t('Spent'), t('Time')], d.games.map(x => h('tr',
+                h('td', when(x.played_at)), h('td', modeName(x)), h('td', `${x.correct}/${x.total} ${'★'.repeat(+x.stars)}`), h('td', num(x.score)), h('td', num(x.spent)), h('td', clock(x.seconds))))) : h('p.muted', t('No data yet.')),
+            h('h4', t('Admin changes')),
+            d.log.length ? table([t('Date'), t('Admin'), t('Change'), t('Note')], d.log.map(x => {
+                const v = JSON.parse(x.detail || '{}');
+                return h('tr', h('td', when(x.created_at)), h('td', x.admin || '–'), h('td', `${num(v.from)} → ${num(v.to)}`), h('td', v.note || ''));
+            })) : h('p.muted', t('No changes.')));
     }
 
     // ---------- shell ----------

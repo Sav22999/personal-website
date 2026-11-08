@@ -114,11 +114,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $adminId = $st->fetchColumn();
                 $now = gmdate('Y-m-d H:i:s');
                 if ($adminId) {
-                    $pdo->prepare("UPDATE `{$p}users` SET name = ?, password_hash = ?, role = ?, status = 'active', must_change_password = 0 WHERE id = ?")
-                            ->execute([$adminName, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_MASTER, $adminId]);
+                    $pdo->prepare("UPDATE `{$p}users` SET name = ?, password_hash = ?, role = ?, status = 'active', must_change_password = 0, email_verified_at = COALESCE(email_verified_at, ?) WHERE id = ?")
+                            ->execute([$adminName, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_MASTER, $now, $adminId]);
                 } else {
-                    $pdo->prepare("INSERT INTO `{$p}users` (name, email, password_hash, role, status, created_at) VALUES (?,?,?,?, 'active', ?)")
-                            ->execute([$adminName, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_MASTER, $now]);
+                    $pdo->prepare("INSERT INTO `{$p}users` (name, email, password_hash, role, status, created_at, email_verified_at) VALUES (?,?,?,?, 'active', ?, ?)")
+                            ->execute([$adminName, $adminEmail, password_hash($adminPw, PASSWORD_DEFAULT), ROLE_MASTER, $now, $now]);
                     $adminId = (int)$pdo->lastInsertId();
                 }
                 // Only one master admin: any other one becomes a normal administrator

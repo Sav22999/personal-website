@@ -26,9 +26,19 @@ Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per G
   (`certificate.php?c=CODICE`). È un’immagine generata dal server, sempre in inglese, che si salva in PNG o PDF
   (`lib/certificate.php`; lo sfondo si rigenera con `tools/build-certificate.py`). Non ha valore legale, e lo dice.
   Chiunque, anche senza account, può controllarlo con il suo numero univoco su `verify.php`.
-- **Giochi**: cinque giochi a livelli (ispirati a FaceGuess, Sudoku, Connect Four, Chess e LetterHop, ma sul codice).
-  *Chi è il tag?*, *Tagdoku*, *Quattro di fila*, *Scacchiera CSS*, *Salti di riga*.
+- **Giochi**: nove giochi a livelli sul codice. *Chi è il tag?*, *Tagdoku* (4×4, poi 9×9, poi 16×16), *Quattro di fila*
+  (forza quattro con le domande: risposta giusta, il tuo gettone verde; sbagliata, il computer mette un gettone rosso),
+  *Scacchiera CSS* (da 3×3 a 10×10), *Salti di riga* (righe da trascinare), *Tinta giusta* (colori CSS),
+  *Duello di selettori* (specificità), *Laboratorio flex* e *Che cosa stampa?* (output JavaScript).
   Danno Scintille extra, fino a un massimo giornaliero.
+- **Badge**: ogni nuovo badge dà XP e Scintille (50 di partenza, `xp_badge` in Impostazioni).
+- **Conferma dell’email**: chi si registra con email e password riceve un link (valido 48 ore, monouso, salvato solo come
+  hash in `fc_email_tokens`); finché non lo apre l’account è bloccato lato server (`must_verify()`), tranne reinvio del
+  link ed eliminazione. Il link porta all’app, che chiede conferma con un pulsante (così gli scanner delle email non lo
+  consumano) e fa entrare. Gli account Google e gli admin sono già confermati. Senza SMTP configurato la verifica si
+  spegne, invece di chiudere fuori tutti. L’email non si può cambiare.
+- **Portale admin, utenti**: XP e Scintille modificabili (ogni modifica resta nell’attività), attività di ogni utente in
+  sola lettura con data e ora, e chi deve ancora confermare l’email.
 - **Username e amici**: ognuno sceglie uno username, l’unico dato pubblico. Serve per cercare, aggiungere e rimuovere
   amici (in un solo senso, senza richieste) e nelle classifiche, tra tutti o tra amici.
 - **Classifiche del giorno**: quella della sfida del giorno (più risposte giuste, a parità il più veloce, con il tempo misurato dal server) dà i premi:
