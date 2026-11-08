@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.19.1';
+    const VERSION = '1.19.2';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.19.2', date: '2026-11-08', it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'], en: ['Course search: multiple selection of category and language chips']},
         {v: '1.19.1', date: '2026-11-08', it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'], en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']},
         {v: '1.19.0', date: '2026-11-08', it: ['28 nuovi corsi: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust e Vala, più un nuovo PHP avanzato', 'Il vecchio PHP avanzato ora si chiama PHP intermedio: progressi e certificati restano', 'Nel Percorso cerchi un corso, filtri per categoria (frontend, backend, mobile, dati, sistemi, desktop) e trovi i corsi raggruppati per linguaggio', 'Il tempo dell’esame finale si può impostare corso per corso dal portale admin'], en: ['28 new courses: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust and Vala, plus a new Advanced PHP', 'The old Advanced PHP is now Intermediate PHP: progress and certificates stay', 'In the Path you can search for a course, filter by category (frontend, backend, mobile, data, systems, desktop) and see courses grouped by language', 'The final exam time can be set course by course from the admin portal']},
         {v: '1.18.0', date: '2026-11-08', it: ['Immagine del profilo: scegli un personaggio e uno sfondo, comprali con le Scintille dal profilo; si vedono in classifica e tra gli amici', 'Il certificato dice che si può verificare con il suo numero sul sito ufficiale di Fucina, senza indirizzo', 'Più nomi per i gradi: 14, da Scintilla a Fiamma eterna, tutti elencati nelle statistiche', 'Portale admin più comodo da telefono: barra in alto, sezioni scorrevoli e tabelle a schede'], en: ['Profile picture: pick a character and a background and buy them with Sparks from your profile; they show in the leaderboards and among friends', 'The certificate says it can be checked with its number on the official Fucina website, with no address', 'More grade names: 14, from Spark to Eternal flame, all listed in the stats', 'Admin portal easier on a phone: top bar, scrolling sections and tables as cards']},
@@ -45,7 +46,7 @@
     const CONTACT_URL = '../../contact-me/';
     const DESK = matchMedia('(min-width: 960px)');
 
-    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}, board: {type: 'daily', scope: 'all'}, path: {q: '', cat: '', fam: ''}};
+    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}, board: {type: 'daily', scope: 'all'}, path: {q: '', cats: new Set(), fams: new Set()}};
 
     /** Names of the languages (course families) and what a course can be for. */
     const FAMILY_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
@@ -340,29 +341,39 @@
         const search = UI.input({type: 'search', class: 'path-search', value: S.path.q, placeholder: t('Search a course or a language'), 'aria-label': t('Search a course or a language'), autocomplete: 'off'});
         const used = new Set(S.state.courses.flatMap(c => c.categories || []));
         const families = [...new Set(S.state.courses.map(c => c.family))];
-        /** A row of filter chips: one choice at a time, the chosen one with a check mark; tapping it again clears it. */
+        /** A row of filter chips: multiple choices can be selected, each with a check mark; tapping one toggles it. */
         const chipRow = (key, options, label) => {
+            if (!S.path[key] || !(S.path[key] instanceof Set)) S.path[key] = new Set();
             const row = h('div.chips.scroll.path-chips', {role: 'group', 'aria-label': label});
-            const paint = () => row.replaceChildren(...options.map(([v, text, fam]) => {
-                const on = S.path[key] === v;
-                return h('button.chip' + (on ? '.sel' : '') + (fam ? '.fam-' + fam : ''), {
-                    type: 'button', 'aria-pressed': String(on), onclick: () => {
-                        S.path[key] = on ? '' : v;
-                        paint();
-                        draw();
-                    }
-                }, on ? icon('check') : fam ? h('i.chip-dot') : null, text);
-            }));
-            paint();
+            const updateChip = (b, v, text, fam) => {
+                const on = S.path[key].has(v);
+                b.className = 'chip' + (on ? ' sel' : '') + (fam ? ' fam-' + fam : '');
+                b.setAttribute('aria-pressed', String(on));
+                b.replaceChildren(...[on ? icon('check') : fam ? h('i.chip-dot') : null, text].filter(Boolean));
+            };
+            const chips = options.map(([v, text, fam]) => {
+                const b = h('button.chip', {type: 'button'});
+                b.onclick = () => {
+                    if (S.path[key].has(v)) S.path[key].delete(v);
+                    else S.path[key].add(v);
+                    updateChip(b, v, text, fam);
+                    draw();
+                };
+                updateChip(b, v, text, fam);
+                return b;
+            });
+            row.replaceChildren(...chips);
             return row;
         };
-        const cats = chipRow('cat', CATEGORIES.filter(([v]) => used.has(v)).map(([v, label]) => [v, t(label)]), t('Categories'));
-        const langs = chipRow('fam', families.map(f => [f, familyName(f), f]), t('Languages'));
+        const cats = chipRow('cats', CATEGORIES.filter(([v]) => used.has(v)).map(([v, label]) => [v, t(label)]), t('Categories'));
+        const langs = chipRow('fams', families.map(f => [f, familyName(f), f]), t('Languages'));
         const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         function draw() {
             const words = norm(S.path.q).split(/\s+/).filter(Boolean);
-            const shown = S.state.courses.filter(c => (!S.path.cat || (c.categories || []).includes(S.path.cat)) && (!S.path.fam || c.family === S.path.fam)
+            const shown = S.state.courses.filter(c =>
+                (!S.path.cats.size || (c.categories || []).some(cat => S.path.cats.has(cat)))
+                && (!S.path.fams.size || S.path.fams.has(c.family))
                 && words.every(w => norm([c.title, c.short, c.desc, c.level, c.family, familyName(c.family)].join(' ')).includes(w)));
             const groups = [];
             for (const c of shown) {
