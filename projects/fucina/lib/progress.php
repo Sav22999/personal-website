@@ -135,7 +135,7 @@ function badge_fixed(): array
         'board_first' => ['icon' => 'trophy', 'title' => L('Re della forgia', 'King of the forge'), 'desc' => L('Vinci la sfida del giorno', 'Win the daily challenge')],
         'certs_3' => ['icon' => 'cert', 'title' => L('Parete dei diplomi', 'Wall of diplomas'), 'desc' => L('Ottieni 3 certificati', 'Earn 3 certificates')],
         'js_master' => ['icon' => 'cert', 'title' => L('Mastro JavaScript', 'JavaScript master'), 'desc' => L('Tutti i certificati JavaScript', 'All the JavaScript certificates')],
-        'php_master' => ['icon' => 'cert', 'title' => L('Mastro PHP', 'PHP master'), 'desc' => L('Certificati PHP base e avanzato', 'PHP Basics and Advanced certificates')],
+        'php_master' => ['icon' => 'cert', 'title' => L('Mastro PHP', 'PHP master'), 'desc' => L('Tutti i certificati PHP', 'All the PHP certificates')],
         'streak_30' => ['icon' => 'fire', 'title' => L('Fiamma eterna', 'Eternal flame'), 'desc' => L('30 giorni di fila', '30 days in a row')],
         'first_game' => ['icon' => 'game', 'title' => L('Si gioca', 'Game on'), 'desc' => L('Finisci la tua prima partita', 'Finish your first game')],
         'all_games' => ['icon' => 'game', 'title' => L('Tuttofare', 'All-rounder'), 'desc' => L('Prova tutti i giochi', 'Try every game')],
@@ -203,7 +203,7 @@ function award_badges(int $uid): array
         'lessons_50' => $n['lessons'] >= 50, 'lessons_100' => $n['lessons'] >= 100, 'streak_10' => $streak >= 10, 'streak_100' => $streak >= 100,
         'wins_row_5' => (int)$u['best_win_streak'] >= 5, 'wins_row_10' => (int)$u['best_win_streak'] >= 10, 'wins_50' => $n['wins'] >= 50,
         'drills_row_10' => (int)$u['best_drill_streak'] >= 10, 'certs_3' => $n['certificates'] >= 3,
-        'js_master' => isset($certs['js-base'], $certs['js-intermediate'], $certs['js-advanced']), 'php_master' => isset($certs['php-base'], $certs['php-advanced']),
+        'js_master' => isset($certs['js-base'], $certs['js-intermediate'], $certs['js-advanced']), 'php_master' => isset($certs['php-base'], $certs['php-intermediate'], $certs['php-advanced']),
         'board_podium' => $bestPlace > 0, 'board_first' => $bestPlace === 1, 'first_friend' => count(friend_ids($uid)) > 0,
     ];
     foreach (courses_summary($uid) as $c) $reached['course_' . $c['id']] = $c['lessons'] > 0 && $c['done'] === $c['lessons'];
@@ -252,7 +252,7 @@ function courses_summary(int $uid): array
         $valid = array_intersect_key($done[$id] ?? [], array_flip(array_column($c['lessons'], 'id')));
         $finished[$id] = isset($passed[$id]) || (count($c['lessons']) > 0 && count($valid) === count($c['lessons']));
         $out[] = [
-            'id' => $id, 'title' => pick($c['title']), 'short' => pick($c['short']), 'desc' => pick($c['desc']), 'level' => pick($c['level']), 'family' => $c['family'],
+            'id' => $id, 'title' => pick($c['title']), 'short' => pick($c['short']), 'desc' => pick($c['desc']), 'level' => pick($c['level']), 'family' => $c['family'], 'categories' => $c['categories'],
             'after' => $c['after'], 'lessons' => count($c['lessons']), 'done' => count($valid), 'stars' => array_sum(array_column($valid, 'stars')), 'certificate' => $certs[$id] ?? null, 'examScore' => $passed[$id] ?? 0,
         ];
     }

@@ -178,6 +178,18 @@
 .fam-js { --fam: #E8A400; --fam-edge: #B07C00; }
 .fam-php { --fam: #7048E8; --fam-edge: #5230BA; }
 .fam-ts { --fam: #1F7FD1; --fam-edge: #125C9E; }
+.fam-tailwind { --fam: #0EA5C6; --fam-edge: #0A7891; }
+.fam-angular { --fam: #DD0031; --fam-edge: #A30024; }
+.fam-vue { --fam: #2FA36B; --fam-edge: #1F7A4E; }
+.fam-python { --fam: #3572A5; --fam-edge: #24527A; }
+.fam-java { --fam: #B07219; --fam-edge: #7E5110; }
+.fam-sql { --fam: #4F6D8F; --fam-edge: #364D67; }
+.fam-r { --fam: #276DC3; --fam-edge: #1A4F8F; }
+.fam-flutter { --fam: #0B8BD9; --fam-edge: #0765A0; }
+.fam-swift { --fam: #F05138; --fam-edge: #B83722; }
+.fam-kotlin { --fam: #7F52FF; --fam-edge: #5B33D6; }
+.fam-rust { --fam: #B7410E; --fam-edge: #842E08; }
+.fam-vala { --fam: #6B3FA0; --fam-edge: #4C2A75; }
 
 /* ---------- Base components, reshaped ---------- */
 html, body, button, input, select, textarea {
@@ -4545,4 +4557,108 @@ select.ctl {
 
 .ladder li.now span {
     font-weight: 800;
+}
+
+/* The path: search, categories and the courses grouped by language */
+.path-tools {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.path-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    background: var(--surface);
+    border: 2px solid var(--card-border);
+    border-radius: 999px;
+}
+
+.path-search-box:focus-within {
+    border-color: var(--primary);
+}
+
+.path-search-box .ic {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    fill: var(--muted);
+}
+
+.path-search {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+    font: inherit;
+    color: var(--text);
+    background: none;
+    border: 0;
+    outline: none;
+}
+
+/* Filter chips: categories and languages, one row each, sliding sideways on a phone */
+.path-chips {
+    margin: 0;
+    padding: 0 0 2px;
+}
+
+.path-chips .chip {
+    font-family: var(--body);
+    font-weight: 700;
+    border-width: 1.5px;
+    border-color: var(--card-border);
+    background: var(--surface);
+}
+
+.path-chips .chip.sel {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+.path-chips .chip.sel .ic {
+    fill: currentColor;
+}
+
+/* A language chip: a dot in the language's colour, the whole chip in that colour once chosen */
+.chip-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--fam);
+}
+
+.path-chips .chip[class*="fam-"].sel {
+    background: var(--fam);
+    border-color: var(--fam);
+    color: #fff;
+}
+
+.path-count {
+    margin: 0;
+}
+
+.path-group {
+    margin-bottom: 22px;
+}
+
+.path-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+}
+
+.path-head strong {
+    font: 600 1.15rem var(--display);
+}
+
+.path-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--fam);
+    box-shadow: 0 2px 0 var(--fam-edge);
 }

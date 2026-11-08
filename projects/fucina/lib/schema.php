@@ -372,6 +372,8 @@ function install_schema(PDO $pdo, string $prefix): void
     // Version 9: the CSS board grows with the level, so it gets selectors written for each size
     $old = (int)($pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn() ?: 0);
     if ($old > 0 && $old < 9) install_seed_selectors_v9($pdo, $prefix);
+    // Version 12: "PHP advanced" becomes "PHP intermediate", before the catalogue adds the new advanced course
+    if ($old > 0 && $old < 12) install_seed_php_v12($pdo, $prefix);
     install_seed($pdo, $prefix);
     install_seed_drills($pdo, $prefix);
     // Last: if something above fails, the next request tries again

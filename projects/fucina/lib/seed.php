@@ -140,7 +140,28 @@ const SEED_TASK_HINTS = [
 ];
 
 /** Courses of the first installation, in display order. */
-const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'js-base', 'js-intermediate', 'js-advanced', 'ts', 'php-base', 'php-advanced'];
+const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'tailwind',
+    'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate',
+    'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'java-base', 'java-intermediate', 'java-advanced',
+    'sql-base', 'sql-intermediate', 'sql-advanced', 'r-base', 'r-intermediate',
+    'flutter-base', 'flutter-intermediate', 'swift-base', 'swift-intermediate', 'kotlin-base', 'kotlin-intermediate',
+    'rust-base', 'rust-intermediate', 'rust-advanced', 'vala-base', 'vala-intermediate'];
+
+/**
+ * What each course is for, to filter the catalogue. A course file may set its own 'categories'; otherwise its family decides.
+ */
+const FAMILY_CATEGORIES = [
+    'html' => ['frontend'], 'css' => ['frontend'], 'scss' => ['frontend'], 'sass' => ['frontend'], 'tailwind' => ['frontend'],
+    'js' => ['frontend', 'backend'], 'ts' => ['frontend', 'backend'], 'angular' => ['frontend'], 'vue' => ['frontend'],
+    'php' => ['backend'], 'python' => ['backend', 'data'], 'java' => ['backend', 'mobile', 'desktop'], 'sql' => ['data', 'backend'], 'r' => ['data'],
+    'flutter' => ['mobile', 'desktop'], 'swift' => ['mobile', 'desktop'], 'kotlin' => ['mobile', 'backend'],
+    'rust' => ['systems', 'backend'], 'vala' => ['desktop', 'systems'],
+];
+
+function seed_categories(array $c): array
+{
+    return $c['categories'] ?? FAMILY_CATEGORIES[$c['family']] ?? [];
+}
 
 /** The courses whose file is on the server: a partial upload must not stop the update of the others. */
 function seed_course_ids(): array
@@ -160,7 +181,31 @@ function seed_course(string $id): array
 
 /** Base difficulty of a course (1 easy, 2 medium, 3 hard): the second half of a course is one step harder. */
 const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' => 2, 'css-base' => 1, 'css-intermediate' => 1, 'css-advanced' => 2, 'css-animations' => 2, 'scss' => 2, 'sass' => 2,
-    'js-base' => 1, 'js-intermediate' => 2, 'js-advanced' => 2, 'ts' => 2, 'php-base' => 1, 'php-advanced' => 2];
+    'js-base' => 1, 'js-intermediate' => 2, 'js-advanced' => 2, 'ts' => 2, 'php-base' => 1, 'php-intermediate' => 2, 'php-advanced' => 2, 'tailwind' => 1,
+    'angular-base' => 2, 'angular-intermediate' => 2, 'vue-base' => 1, 'vue-intermediate' => 2, 'python-base' => 1, 'python-intermediate' => 2, 'python-advanced' => 2,
+    'java-base' => 1, 'java-intermediate' => 2, 'java-advanced' => 2, 'sql-base' => 1, 'sql-intermediate' => 2, 'sql-advanced' => 2, 'r-base' => 1, 'r-intermediate' => 2,
+    'flutter-base' => 1, 'flutter-intermediate' => 2, 'swift-base' => 1, 'swift-intermediate' => 2, 'kotlin-base' => 1, 'kotlin-intermediate' => 2,
+    'rust-base' => 1, 'rust-intermediate' => 2, 'rust-advanced' => 3, 'vala-base' => 1, 'vala-intermediate' => 2];
+
+/**
+ * Version 12: what was "PHP advanced" becomes "PHP intermediate" (same lessons, same progress and certificates),
+ * so that a new, really advanced PHP course can follow it.
+ */
+function install_seed_php_v12(PDO $pdo, string $p): void
+{
+    $has = $pdo->prepare("SELECT COUNT(*) FROM `{$p}courses` WHERE id = ?");
+    $has->execute(['php-advanced']);
+    $old = (int)$has->fetchColumn();
+    $has->execute(['php-intermediate']);
+    if (!$old || (int)$has->fetchColumn()) return;
+    $c = seed_course('php-intermediate');
+    $data = json_encode(['title' => $c['title'], 'short' => $c['short'], 'desc' => $c['desc'], 'level' => $c['level'], 'categories' => seed_categories($c)], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // The lessons follow the course by themselves (ON UPDATE CASCADE); the other tables keep the id as plain text
+    $pdo->prepare("UPDATE `{$p}courses` SET id = 'php-intermediate', data = ? WHERE id = 'php-advanced'")->execute([$data]);
+    $pdo->exec("UPDATE `{$p}courses` SET after_id = 'php-intermediate' WHERE after_id = 'php-advanced'");
+    foreach (['lesson_progress', 'exams', 'certificates'] as $table) $pdo->exec("UPDATE `{$p}{$table}` SET course = 'php-intermediate' WHERE course = 'php-advanced'");
+    $pdo->exec("UPDATE `{$p}badges` SET badge = 'course_php-intermediate' WHERE badge = 'course_php-advanced'");
+}
 
 function seed_games(): array
 {
@@ -267,7 +312,7 @@ function seed_rows(): array
     foreach (seed_course_ids() as $sort => $id) {
         $c = seed_course($id);
         $rows['courses'][] = ['id' => $id, 'family' => $c['family'], 'sort' => $sort + 1, 'after_id' => $c['after'] ?? null, 'status' => 'published',
-            'data' => $j(['title' => $c['title'], 'short' => $c['short'], 'desc' => $c['desc'], 'level' => $c['level']])];
+            'data' => $j(['title' => $c['title'], 'short' => $c['short'], 'desc' => $c['desc'], 'level' => $c['level'], 'categories' => seed_categories($c)])];
         $n = count($c['lessons']);
         foreach ($c['lessons'] as $i => $l) {
             $difficulty = min(3, SEED_TIERS[$id] + ($i >= $n / 2 ? 1 : 0));
@@ -300,11 +345,21 @@ function install_seed(PDO $pdo, string $p): void
         $pdo->prepare("INSERT INTO `{$p}{$table}` (`" . implode('`,`', $cols) . '`) VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')')->execute(array_values($row));
         return (int)$pdo->lastInsertId();
     };
-    $courses = $pdo->query("SELECT id FROM `{$p}courses`")->fetchAll(PDO::FETCH_COLUMN);
+    $courses = $pdo->query("SELECT id, data FROM `{$p}courses`")->fetchAll(PDO::FETCH_KEY_PAIR);
     $move = $pdo->prepare("UPDATE `{$p}courses` SET sort = ?, after_id = ? WHERE id = ?");
+    $tag = $pdo->prepare("UPDATE `{$p}courses` SET data = ? WHERE id = ?");
     foreach ($rows['courses'] as $r) {
-        if (in_array($r['id'], $courses, true)) $move->execute([$r['sort'], $r['after_id'], $r['id']]);
-        else $insert('courses', $r);
+        if (!isset($courses[$r['id']])) {
+            $insert('courses', $r);
+            continue;
+        }
+        $move->execute([$r['sort'], $r['after_id'], $r['id']]);
+        // Courses made before the categories existed get them; categories changed in the portal stay
+        $data = json_decode((string)$courses[$r['id']], true) ?: [];
+        if (!array_key_exists('categories', $data)) {
+            $data['categories'] = json_decode($r['data'], true)['categories'] ?? [];
+            $tag->execute([json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $r['id']]);
+        }
     }
     $lessonIds = [];
     foreach ($pdo->query("SELECT course, slug FROM `{$p}lessons`")->fetchAll(PDO::FETCH_ASSOC) as $l) $lessonIds[$l['course'] . '/' . $l['slug']] = 0;

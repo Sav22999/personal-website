@@ -1,7 +1,7 @@
 {
   "name": "Fucina",
   "short_name": "Fucina",
-  "description": "Learn HTML, CSS, SCSS and Sass level by level, with quizzes, exercises, games and certificates.",
+  "description": "Learn to code level by level, from the web (HTML, CSS, JavaScript, Angular, Vue) to Python, Java, SQL, Kotlin, Swift and Rust, with quizzes, exercises, games and certificates.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

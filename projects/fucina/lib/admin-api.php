@@ -192,7 +192,7 @@ function admin_route(string $r): void
                 foreach ($questions as $q) $missing += count_missing(js($q['q'])) + count_missing(js($q['options'])) + count_missing(js($q['why']));
                 $out[] = ['id' => $c['id'], 'family' => $c['family'], 'sort' => (int)$c['sort'], 'after' => $c['after_id'], 'status' => $c['status'], 'lessons' => count($lessons), 'questions' => count($questions), 'missing' => $missing] + js($c['data']);
             }
-            send_json(['ok' => true, 'courses' => $out, 'languages' => LANGS]);
+            send_json(['ok' => true, 'courses' => $out, 'languages' => LANGS, 'examMinutes' => setting('exam_minutes')]);
 
         case 'admin.course':
             admin_reader();
@@ -217,7 +217,11 @@ function admin_route(string $r): void
             $isNew = empty($b['existing']);
             $id = slug_of($b['id'] ?? '', 30);
             if ($id === '') fail('Fill in at least one language.', 422, 'validation');
-            $data = json_out(['title' => lang_field($b['title'] ?? null, true, 120), 'short' => lang_field($b['short'] ?? ($b['title'] ?? null), true, 60), 'desc' => lang_field($b['desc'] ?? null, false, 400), 'level' => lang_field($b['level'] ?? null, false, 40)]);
+            $data = json_out(['title' => lang_field($b['title'] ?? null, true, 120), 'short' => lang_field($b['short'] ?? ($b['title'] ?? null), true, 60), 'desc' => lang_field($b['desc'] ?? null, false, 400), 'level' => lang_field($b['level'] ?? null, false, 40)]
+                // What the course is for, to filter the catalogue (frontend, backend…)
+                + ['categories' => array_values(array_intersect(COURSE_CATEGORIES_ALL, (array)($b['categories'] ?? [])))]
+                // Time limit of this course's final exam in minutes; empty = the general one in the settings, 0 = no limit
+                + (($b['examMinutes'] ?? '') === '' || $b['examMinutes'] === null ? [] : ['examMinutes' => max(0, min(240, (int)$b['examMinutes']))]));
             $after = slug_of($b['after'] ?? '', 30) ?: null;
             if ($after === $id) $after = null;
             $family = slug_of($b['family'] ?? 'html', 20) ?: 'html';

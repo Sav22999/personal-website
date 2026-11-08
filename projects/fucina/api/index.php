@@ -327,7 +327,7 @@ switch ($r) {
             ];
         }
         $summary = array_values(array_filter(courses_summary((int)$u['id']), fn($x) => $x['id'] === $c['id']))[0];
-        send_json(['ok' => true, 'course' => $summary + ['items' => $lessons, 'examQuestions' => min(setting('exam_questions'), count(course_questions($c))), 'examPass' => setting('exam_pass_percent')]]);
+        send_json(['ok' => true, 'course' => $summary + ['items' => $lessons, 'examQuestions' => min(setting('exam_questions'), count(course_questions($c))), 'examPass' => setting('exam_pass_percent'), 'examMinutes' => exam_minutes($c)]]);
 
     case 'quiz.check':
         // The answer to a single question, revealed once the learner has answered
@@ -480,7 +480,7 @@ switch ($r) {
         $ids = array_map('strval', array_slice($ids, 0, setting('exam_questions')));
         db()->prepare('INSERT INTO ' . t('exams') . ' (user_id, course, questions, started_at) VALUES (?,?,?,?)')->execute([$uid, $c['id'], json_encode($ids), now_utc()]);
         $examId = (int)db()->lastInsertId();
-        send_json(['ok' => true, 'exam' => $examId, 'pass' => setting('exam_pass_percent'), 'seconds' => setting('exam_minutes') * 60, 'questions' => array_map(fn($id) => question_out($pool[$id]), $ids)]);
+        send_json(['ok' => true, 'exam' => $examId, 'pass' => setting('exam_pass_percent'), 'seconds' => exam_minutes($c) * 60, 'questions' => array_map(fn($id) => question_out($pool[$id]), $ids)]);
 
     case 'exam.submit':
         $u = writer();
@@ -495,7 +495,7 @@ switch ($r) {
         $ids = json_decode($exam['questions'], true);
         $answers = is_array($b['answers'] ?? null) ? $b['answers'] : [];
         // The clock of the browser submits by itself at zero: what arrives well after the limit does not count
-        $limit = setting('exam_minutes') * 60;
+        $limit = exam_minutes($c) * 60;
         $expired = $limit > 0 && time() - strtotime($exam['started_at'] . ' UTC') > $limit + 30;
         if ($expired) $answers = [];
         $correct = 0;

@@ -1,153 +1,179 @@
 <?php
-/** PHP advanced: objects, databases with PDO, passwords, APIs and tidy projects. */
+/** PHP advanced: namespaces and Composer, interfaces and traits, enums, generators, tests and security. */
 
 return [
-    'id' => 'php-advanced', 'family' => 'php', 'after' => 'php-base',
+    'id' => 'php-advanced', 'family' => 'php', 'after' => 'php-intermediate',
     'title' => L('PHP avanzato', 'Advanced PHP'), 'short' => L('PHP avanzato', 'PHP Advanced'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Classi, database con PDO, password sicure, API JSON, errori e progetti ordinati.', 'Classes, databases with PDO, safe passwords, JSON APIs, errors and tidy projects.'),
+    'desc' => L('Namespace e Composer, interfacce e trait, enum, generatori, test automatici e sicurezza.', 'Namespaces and Composer, interfaces and traits, enums, generators, automated tests and security.'),
     'lessons' => [
-        lesson('classes', L('Classi e oggetti', 'Classes and objects'), [
-            P('Una classe è lo stampo degli oggetti. Si accede a proprietà e metodi con `->`. Le visibilità `public`, `protected` e `private` decidono chi può usarli.', 'A class is the mould of objects. You reach properties and methods with `->`. The visibilities `public`, `protected` and `private` decide who can use them.'),
+        lesson('namespaces', L('Namespace e Composer', 'Namespaces and Composer'), [
+            P('Un **namespace** è il cognome di una classe: due classi `Utente` possono convivere se stanno in namespace diversi. `use` importa una classe per chiamarla con il nome corto.', 'A **namespace** is the surname of a class: two `Utente` classes can live together in different namespaces. `use` imports a class so you can call it by its short name.'),
             C('<?php
-class Eroe {
-    public function __construct(
-        public string $nome,
-        private int $vite = 3,
-    ) {}
+namespace App\Corsi;
 
-    public function colpisci(): void {
-        $this->vite--;
-    }
-}
-$e = new Eroe("Ada");
-$e->colpisci();
-echo $e->nome;', 'php'),
-            P('La **promozione nel costruttore** dichiara e assegna le proprietà in un colpo. `$this` è l’oggetto stesso.', '**Constructor promotion** declares and assigns properties in one go. `$this` is the object itself.'),
-        ], [
-            Q('c1', L('Quale operatore raggiunge un metodo?', 'Which operator reaches a method?'), ['->', '.', '=>', '::'], 0, L('`::` serve per i membri statici.', '`::` is for static members.')),
-            Q('c2', L('Chi vede una proprietà `private`?', 'Who sees a `private` property?'), [L('Solo la sua classe', 'Only its own class'), L('Tutti', 'Everyone'), L('Le sottoclassi', 'Subclasses'), L('Il browser', 'The browser')], 0, L('`protected` include le sottoclassi.', '`protected` includes subclasses.')),
-            Q('c3', L('Come si chiama il costruttore?', 'What is the constructor called?'), ['__construct', 'constructor', 'init', 'new'], 0, L('Con due trattini bassi.', 'With two underscores.')),
-        ], task('php', L('Crea la classe `Gatto` con un costruttore che riceve `public string $nome`.', 'Create the class `Gatto` with a constructor taking `public string $nome`.'), '<?php
-', [re('class\s+Gatto', L('La classe esiste', 'The class exists')), re('__construct\s*\(\s*public\s+string\s+\$nome', L('Il costruttore è giusto', 'The constructor is right'))], '', "<?php\nclass Gatto {\n    public function __construct(public string \$nome) {}\n}"), [
-            dBlanks(pFill(), "class Mago ___ Eroe {\n    public function lancia(): void {\n        ___->magia--;\n    }\n}\n\$m = ___ Mago(\"Ada\");\n\$m___lancia();", ['extends', '$this', 'new', '->'], ['implements', 'self', '.'], L('Ereditarietà, oggetto corrente, creazione e chiamata.', 'Inheritance, current object, creation and call.')),
-            dMatch(pMatch(), [['public', L('Tutti', 'Everyone')], ['protected', L('Classe e sottoclassi', 'Class and subclasses')], ['private', L('Solo la classe', 'Only the class')], ['static', L('Della classe, non dell’oggetto', 'Of the class, not the object')], ['abstract', L('Solo da estendere', 'Only to be extended')]], L('Chi può toccare che cosa.', 'Who can touch what.')),
-        ]),
-        lesson('pdo', L('Database con PDO', 'Databases with PDO'), [
-            P('**PDO** collega PHP a un database. Le **query preparate** separano il comando dai dati: è la difesa contro la **SQL injection**. Non inserire mai una variabile dentro il testo di una query.', '**PDO** connects PHP to a database. **Prepared queries** keep the command apart from the data: it is the defence against **SQL injection**. Never put a variable inside the text of a query.'),
-            C('<?php
-$pdo = new PDO($dsn, $utente, $password, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-]);
-$st = $pdo->prepare("SELECT nome FROM utenti WHERE id = ?");
-$st->execute([$id]);
-$riga = $st->fetch();
+use App\Utenti\Utente;
 
-$st = $pdo->prepare("INSERT INTO corsi (titolo) VALUES (?)");
-$st->execute(["PHP"]);', 'php'),
-            P('`fetch` legge una riga, `fetchAll` tutte. Il `?` è un segnaposto: il valore viaggia separato e non può cambiare il comando.', '`fetch` reads one row, `fetchAll` all of them. `?` is a placeholder: the value travels apart and cannot change the command.'),
-        ], [
-            Q('d1', L('Che cosa blocca una query preparata?', 'What does a prepared query block?'), [L('La SQL injection', 'SQL injection'), L('L’XSS', 'XSS'), L('I virus', 'Viruses'), L('Lo spam', 'Spam')], 0, L('I dati non diventano mai comandi.', 'Data never becomes commands.')),
-            Q('d2', L('Che cosa fa `?` in una query?', 'What does `?` do in a query?'), [L('È un segnaposto', 'It is a placeholder'), L('È una domanda', 'It is a question'), L('È un commento', 'It is a comment'), L('Rende casuale', 'Makes it random')], 0, L('Il valore arriva con `execute`.', 'The value comes with `execute`.')),
-            Q('d3', L('Quale metodo legge tutte le righe?', 'Which method reads all the rows?'), ['fetchAll', 'all', 'getRows', 'read'], 0, L('`fetch` ne legge una.', '`fetch` reads one.')),
-        ], task('php', L('Prepara `SELECT * FROM corsi WHERE id = ?` ed eseguila con `[$id]`.', 'Prepare `SELECT * FROM corsi WHERE id = ?` and run it with `[$id]`.'), '<?php
-', [re('\$pdo->prepare\(\s*"SELECT \* FROM corsi WHERE id = \?"\s*\)', L('La query è preparata', 'The query is prepared')), re('->execute\(\s*\[\s*\$id\s*\]\s*\)', L('La esegui con il dato', 'You run it with the data'))], '', "<?php\n\$st = \$pdo->prepare(\"SELECT * FROM corsi WHERE id = ?\");\n\$st->execute([\$id]);"), [
-            dBug(pBug(), ['$id = $_GET["id"];', '$st = $pdo->query("SELECT * FROM utenti WHERE id = $id");', '$riga = $st->fetch();'], 1, '$st = $pdo->prepare("SELECT * FROM utenti WHERE id = ?");', L('Una variabile dentro la query apre alla SQL injection: serve `prepare`.', 'A variable inside the query opens the door to SQL injection: use `prepare`.')),
-            dOrder(pSort(), ['$pdo = new PDO($dsn, $utente, $password);', '$st = $pdo->prepare("SELECT * FROM corsi WHERE id = ?");', '$st->execute([$id]);', '$corso = $st->fetch();'], L('Connetti, prepara, esegui, leggi.', 'Connect, prepare, run, read.')),
-        ]),
-        lesson('passwords', L('Password e accessi', 'Passwords and logins'), [
-            P('Le password non si salvano mai in chiaro. `password_hash` crea un’impronta sicura, `password_verify` controlla un tentativo. Un’impronta non si può riportare al testo originale.', 'Passwords are never saved in clear text. `password_hash` creates a safe fingerprint, `password_verify` checks an attempt. A fingerprint cannot be turned back into the original text.'),
-            C('<?php
-$impronta = password_hash($password, PASSWORD_DEFAULT);
-
-if (password_verify($tentativo, $impronta)) {
-    session_regenerate_id(true);
-    $_SESSION["id"] = $utente["id"];
-}
-$token = bin2hex(random_bytes(32));', 'php'),
-            P('Dopo l’accesso rigenera l’id di sessione. Per valori segreti usa `random_bytes`: `rand` è prevedibile. Limita anche i tentativi per fermare chi prova a indovinare.', 'After login regenerate the session id. For secret values use `random_bytes`: `rand` is predictable. Also limit attempts to stop those trying to guess.'),
-        ], [
-            Q('p1', L('Come si salva una password?', 'How do you save a password?'), [L('Con `password_hash`', 'With `password_hash`'), L('In chiaro', 'In clear text'), L('Con `md5`', 'With `md5`'), L('In un cookie', 'In a cookie')], 0, L('`md5` è troppo debole.', '`md5` is too weak.')),
-            Q('p2', L('Si può risalire alla password dall’impronta?', 'Can you get the password back from the fingerprint?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo l’admin', 'Only the admin'), L('Con `password_undo`', 'With `password_undo`')], 0, L('Si può solo verificare un tentativo.', 'You can only verify an attempt.')),
-            Q('p3', L('Quale funzione è adatta ai token?', 'Which function suits tokens?'), ['random_bytes', 'rand', 'time', 'uniqid'], 0, L('È crittograficamente sicura.', 'It is cryptographically secure.')),
-        ], task('php', L('Crea l’impronta di `$password` con `password_hash` e `PASSWORD_DEFAULT`.', 'Create the fingerprint of `$password` with `password_hash` and `PASSWORD_DEFAULT`.'), '<?php
-', [re('password_hash\(\s*\$password\s*,\s*PASSWORD_DEFAULT\s*\)', L('Usi `password_hash`', 'You use `password_hash`'))], '', "<?php\n\$impronta = password_hash(\$password, PASSWORD_DEFAULT);"), [
-            dBlanks(pFill(), "\$h = ___(\$pw, PASSWORD_DEFAULT);\nif (___(\$prova, \$h)) {\n    session_regenerate_id(true);\n}\n\$t = bin2hex(___(32));", ['password_hash', 'password_verify', 'random_bytes'], ['md5', 'rand', 'strcmp'], L('Impronta, verifica e casualità sicura.', 'Fingerprint, verification and safe randomness.')),
-            dFlash(pFlash(), [[L('`md5` va bene per le password', '`md5` is fine for passwords'), false], [L('Due utenti con la stessa password hanno impronte diverse', 'Two users with the same password get different fingerprints'), true], [L('Limitare i tentativi è utile', 'Limiting attempts is useful'), true], [L('`rand()` è sicuro per i token', '`rand()` is safe for tokens'), false]], L('Il sale casuale rende diversa ogni impronta.', 'Random salt makes every fingerprint different.')),
-        ]),
-        lesson('json-api', L('Costruire un’API JSON', 'Building a JSON API'), [
-            P('Un’API risponde con dati invece che con pagine. Imposti il tipo di contenuto, il codice di stato e stampi il JSON. Il corpo di una richiesta si legge da `php://input`.', 'An API answers with data instead of pages. You set the content type, the status code and print the JSON. The body of a request is read from `php://input`.'),
-            C('<?php
-header("Content-Type: application/json; charset=utf-8");
-
-$dati = json_decode(file_get_contents("php://input"), true);
-if (!is_array($dati) || empty($dati["nome"])) {
-    http_response_code(422);
-    echo json_encode(["errore" => "Nome mancante"]);
-    exit;
-}
-echo json_encode(["ok" => true, "nome" => $dati["nome"]]);', 'php'),
-            P('Con `true`, `json_decode` restituisce array invece di oggetti. Usa i codici giusti: `200` riuscito, `401` non autenticato, `404` non trovato, `422` dati non validi.', 'With `true`, `json_decode` gives back arrays instead of objects. Use the right codes: `200` success, `401` not signed in, `404` not found, `422` invalid data.'),
-        ], [
-            Q('j1', L('Che cosa fa `json_encode`?', 'What does `json_encode` do?'), [L('Da valore a testo JSON', 'Value to JSON text'), L('Da testo a valore', 'Text to value'), L('Cifra', 'Encrypts'), L('Comprime', 'Compresses')], 0, L('`json_decode` è il contrario.', '`json_decode` is the opposite.')),
-            Q('j2', L('Da dove si legge un corpo JSON?', 'Where do you read a JSON body from?'), ['php://input', '$_POST', '$_JSON', '$_BODY'], 0, L('`$_POST` vale solo per i moduli classici.', '`$_POST` only works for classic forms.')),
-            Q('j3', L('Quale codice per dati non validi?', 'Which code for invalid data?'), ['422', '200', '301', '500'], 0, L('`500` è un errore del server, non dell’utente.', '`500` is a server error, not the user’s.')),
-        ], task('php', L('Imposta l’intestazione JSON e stampa `["ok" => true]` con `json_encode`.', 'Set the JSON header and print `["ok" => true]` with `json_encode`.'), '<?php
-', [re('header\(\s*"Content-Type:\s*application\/json', L('L’intestazione è giusta', 'The header is right')), re('echo\s+json_encode\(', L('Stampi il JSON', 'You print the JSON'))], '', "<?php\nheader(\"Content-Type: application/json\");\necho json_encode([\"ok\" => true]);"), [
-            dMatch(pMatch(), [['200', L('Riuscito', 'Success')], ['401', L('Non autenticato', 'Not signed in')], ['403', L('Non permesso', 'Forbidden')], ['404', L('Non trovato', 'Not found')], ['422', L('Dati non validi', 'Invalid data')], ['500', L('Errore del server', 'Server error')]], L('Il codice dice a colpo d’occhio com’è andata.', 'The code says at a glance how it went.')),
-            dOrder(pSort(), ['header("Content-Type: application/json");', '$dati = json_decode(file_get_contents("php://input"), true);', 'http_response_code(201);', 'echo json_encode(["ok" => true]);'], L('Intestazioni, lettura, stato, risposta.', 'Headers, reading, status, response.')),
-        ]),
-        lesson('errors', L('Errori ed eccezioni', 'Errors and exceptions'), [
-            P('Quando qualcosa va storto, `throw` lancia un’eccezione e `catch` la gestisce. In produzione gli errori si scrivono nei log e non si mostrano mai ai visitatori.', 'When something goes wrong, `throw` raises an exception and `catch` handles it. In production errors are written to logs and never shown to visitors.'),
-            C('<?php
-declare(strict_types=1);
-
-function dividi(int $a, int $b): float {
-    if ($b === 0) {
-        throw new InvalidArgumentException("Divisione per zero");
-    }
-    return $a / $b;
-}
-try {
-    echo dividi(1, 0);
-} catch (InvalidArgumentException $e) {
-    error_log($e->getMessage());
-    echo "Riprova";
-} finally {
-    echo "Fine";
+final class Iscrizione {
+    public function __construct(public Utente $chi) {}
 }', 'php'),
-            P('`strict_types` impedisce conversioni silenziose: passare un testo a un `int` diventa un errore. `Throwable` raccoglie tutti gli errori ed eccezioni.', '`strict_types` prevents silent conversions: passing text to an `int` becomes an error. `Throwable` gathers all errors and exceptions.'),
+            P('**Composer** scarica le librerie e crea l’**autoload**: con lo standard PSR-4 il namespace `App\` corrisponde alla cartella `src/`, e ogni classe si carica da sola quando serve. Basta un `require "vendor/autoload.php";`.', '**Composer** downloads libraries and creates the **autoloader**: with the PSR-4 standard the namespace `App\` matches the `src/` folder, and every class loads by itself when needed. One `require "vendor/autoload.php";` is enough.'),
         ], [
-            Q('e1', L('Quale parola lancia un’eccezione?', 'Which word raises an exception?'), ['throw', 'raise', 'error', 'fail'], 0, L('Si cattura con `catch`.', 'It is caught with `catch`.')),
-            Q('e2', L('Che cosa mostrare ai visitatori?', 'What should visitors be shown?'), [L('Un messaggio generico', 'A generic message'), L('Tutto l’errore', 'The whole error'), L('La password', 'The password'), L('Il percorso dei file', 'The file paths')], 0, L('I dettagli aiutano chi attacca: vanno nei log.', 'Details help attackers: they go to the logs.')),
-            Q('e3', L('Che cosa fa `strict_types`?', 'What does `strict_types` do?'), [L('Vieta le conversioni silenziose', 'Bans silent conversions'), L('Accelera', 'Speeds up'), L('Cifra', 'Encrypts'), L('Compila', 'Compiles')], 0, L('Va scritto in cima al file.', 'It goes at the top of the file.')),
-        ], task('php', L('Con `try` e `catch (Exception $e)`, chiama `rischio()` e scrivi il messaggio con `error_log`.', 'With `try` and `catch (Exception $e)`, call `rischio()` and write the message with `error_log`.'), '<?php
-', [re('try\s*\{[\s\S]*rischio\(\)', L('Provi `rischio()`', 'You try `rischio()`')), re('catch\s*\(\s*Exception\s+\$e\s*\)', L('Catturi l’eccezione', 'You catch the exception')), re('error_log\(', L('Scrivi nel log', 'You write to the log'))], '', "<?php\ntry {\n    rischio();\n} catch (Exception \$e) {\n    error_log(\$e->getMessage());\n}"), [
-            dBlanks(pFill(), "___ {\n    salva();\n} ___ (Throwable \$e) {\n    error_log(\$e->___());\n}", ['try', 'catch', 'getMessage'], ['do', 'except', 'message'], L('Prova, cattura, scrivi nel log.', 'Try, catch, write to the log.')),
-            dBug(pBug(), ['try {', '    salva();', '} catch (Throwable $e) {', '    echo $e->getMessage();', '}'], 3, '    error_log($e->getMessage());', L('Mostrare l’errore al visitatore rivela dettagli interni: va nel log.', 'Showing the error to visitors reveals internal details: it goes to the log.')),
+            Q('n1', L('A che cosa serve un namespace?', 'What is a namespace for?'), [L('A evitare conflitti tra nomi', 'To avoid name clashes'), L('A rendere il codice più veloce', 'To make code faster'), L('A criptare le classi', 'To encrypt classes'), L('A creare tabelle', 'To create tables')], 0, L('È come un cognome per le classi.', 'It is like a surname for classes.')),
+            Q('n2', L('Quale file carica tutte le classi installate con Composer?', 'Which file loads every class installed with Composer?'), ['vendor/autoload.php', 'composer.json', 'index.php', 'autoload.ini'], 0, L('Lo genera Composer.', 'Composer generates it.')),
+            Q('n3', L('Che cosa fa `use App\Utenti\Utente;`?', 'What does `use App\Utenti\Utente;` do?'), [L('Permette di scrivere solo `Utente`', 'Lets you write just `Utente`'), L('Crea un oggetto', 'Creates an object'), L('Include un file a mano', 'Includes a file by hand'), L('Cancella la classe', 'Deletes the class')], 0, L('Importa il nome, non esegue nulla.', 'It imports the name, it runs nothing.')),
+        ], task('php', L('Dichiara il namespace `App\Corsi` e importa `App\Utenti\Utente`.', 'Declare the namespace `App\Corsi` and import `App\Utenti\Utente`.'), '<?php
+', [re('namespace\s+App\\\\Corsi\s*;', L('Il namespace è dichiarato', 'The namespace is declared')), re('use\s+App\\\\Utenti\\\\Utente\s*;', L('La classe è importata', 'The class is imported'))], '', '<?php
+namespace App\Corsi;
+
+use App\Utenti\Utente;'), [
+            dOrder(pSort(), ['<?php', 'namespace App\Corsi;', 'use App\Utenti\Utente;', 'final class Corso {}'], L('Prima il namespace, poi gli import, poi il codice.', 'First the namespace, then the imports, then the code.')),
+            dMatch(pMatch(), [['namespace', L('Il cognome delle classi', 'The surname of classes')], ['use', L('Importa un nome', 'Imports a name')], ['composer.json', L('Elenca le dipendenze', 'Lists the dependencies')], ['vendor/', L('Le librerie scaricate', 'The downloaded libraries')], ['PSR-4', L('Namespace → cartella', 'Namespace → folder')]], L('Gli attrezzi di un progetto moderno.', 'The tools of a modern project.')),
         ]),
-        lesson('project', L('Progetti ordinati', 'Tidy projects'), [
-            P('Un progetto serio usa **Composer** per le librerie e i **namespace** per non far scontrare i nomi. Le credenziali stanno fuori dal codice pubblico, in un file escluso da git o nelle variabili d’ambiente.', 'A serious project uses **Composer** for libraries and **namespaces** to stop names clashing. Credentials stay out of public code, in a file excluded from git or in environment variables.'),
+        lesson('interfaces', L('Interfacce, astratte e trait', 'Interfaces, abstracts and traits'), [
+            P('Un’**interfaccia** è un contratto: elenca i metodi che una classe promette di avere. Una classe **astratta** dà una base comune ma non si può istanziare. Un **trait** è un pezzo di codice da riusare in più classi.', 'An **interface** is a contract: it lists the methods a class promises to have. An **abstract** class gives a shared base but cannot be instantiated. A **trait** is a piece of code reused in several classes.'),
             C('<?php
-namespace Fucina\Corsi;
+interface Pagabile {
+    public function totale(): float;
+}
 
-use Fucina\Db\Connessione;
+trait ConData {
+    public function oggi(): string { return date("Y-m-d"); }
+}
 
-require __DIR__ . "/vendor/autoload.php";
-
-$password = getenv("DB_PASSWORD");
-
-final class Catalogo {
-    public function __construct(private Connessione $db) {}
+final class Ordine implements Pagabile {
+    use ConData;
+    public function totale(): float { return 42.0; }
 }', 'php'),
-            P('Passare le dipendenze dal costruttore si chiama **iniezione delle dipendenze**: il codice diventa più facile da provare. `vendor/autoload.php` carica le classi da solo.', 'Passing dependencies through the constructor is called **dependency injection**: code becomes easier to test. `vendor/autoload.php` loads classes by itself.'),
+            P('Programmare verso le interfacce rende il codice sostituibile: una funzione che chiede `Pagabile` accetta qualsiasi classe che rispetta il contratto.', 'Coding against interfaces makes code swappable: a function that asks for `Pagabile` accepts any class that keeps the contract.'),
         ], [
-            Q('r1', L('A che cosa serve Composer?', 'What is Composer for?'), [L('A gestire le librerie', 'Managing libraries'), L('A scrivere musica', 'Writing music'), L('A comprimere immagini', 'Compressing images'), L('A fare il deploy', 'Deploying')], 0, L('Le elenca in `composer.json`.', 'It lists them in `composer.json`.')),
-            Q('r2', L('Dove non vanno le password del database?', 'Where must database passwords not go?'), [L('In un repository pubblico', 'In a public repository'), L('In una variabile d’ambiente', 'In an environment variable'), L('In un file fuori da git', 'In a file outside git'), L('Sul server', 'On the server')], 0, L('Un segreto su git resta nella cronologia.', 'A secret on git stays in the history.')),
-            Q('r3', L('Che cosa evitano i namespace?', 'What do namespaces avoid?'), [L('Scontri tra nomi', 'Name clashes'), L('I bug', 'Bugs'), L('Il CSS', 'CSS'), L('I database', 'Databases')], 0, L('Due classi con lo stesso nome possono convivere.', 'Two classes with the same name can coexist.')),
-        ], task('php', L('Dichiara il namespace `Fucina\Corsi` e leggi la password con `getenv("DB_PASSWORD")`.', 'Declare the namespace `Fucina\Corsi` and read the password with `getenv("DB_PASSWORD")`.'), '<?php
-', [re('namespace\s+Fucina\\\\Corsi', L('Il namespace è giusto', 'The namespace is right')), re('getenv\(\s*"DB_PASSWORD"\s*\)', L('Leggi la variabile', 'You read the variable'))], '', "<?php\nnamespace Fucina\\Corsi;\n\$password = getenv(\"DB_PASSWORD\");"), [
-            dMatch(pMatch(), [['composer.json', L('Elenco delle librerie', 'List of libraries')], ['vendor/', L('Le librerie scaricate', 'Downloaded libraries')], ['namespace', L('Cognome delle classi', 'Surname of classes')], ['use', L('Importa una classe', 'Imports a class')], ['.gitignore', L('File esclusi da git', 'Files kept out of git')]], L('L’ordine oggi vale tempo domani.', 'Order today is time saved tomorrow.')),
-            dFlash(pFlash(), [[L('`vendor/` di solito sta fuori da git', '`vendor/` usually stays out of git'), true], [L('Le password si scrivono nel codice pubblico', 'Passwords go in public code'), false], [L('L’iniezione delle dipendenze aiuta i test', 'Dependency injection helps testing'), true], [L('Un namespace rende il codice più lento', 'A namespace makes code slower'), false]], L('Segreti fuori dal codice, dipendenze dentro al costruttore.', 'Secrets out of the code, dependencies into the constructor.')),
+            Q('i1', L('Quale parola fa rispettare un’interfaccia?', 'Which keyword makes a class follow an interface?'), ['implements', 'extends', 'use', 'include'], 0, L('`extends` è per l’ereditarietà.', '`extends` is for inheritance.')),
+            Q('i2', L('Si può fare `new` di una classe astratta?', 'Can you `new` an abstract class?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo in PHP 8', 'Only in PHP 8'), L('Solo se è vuota', 'Only if empty')], 0, L('Va estesa da una classe concreta.', 'A concrete class must extend it.')),
+            Q('i3', L('Come si usa un trait dentro una classe?', 'How do you use a trait inside a class?'), ['use NomeTrait;', 'implements NomeTrait', 'extends NomeTrait', 'trait NomeTrait;'], 0, L('`use` dentro il corpo della classe.', '`use` inside the class body.')),
+        ], task('php', L('Crea l’interfaccia `Stampabile` con il metodo `stampa(): string`, e la classe `Report` che la implementa.', 'Create the interface `Stampabile` with the method `stampa(): string`, and the class `Report` that implements it.'), '<?php
+', [re('interface\s+Stampabile', L('L’interfaccia esiste', 'The interface exists')), re('function\s+stampa\s*\(\s*\)\s*:\s*string', L('Il metodo ha il tipo giusto', 'The method has the right type')), re('class\s+Report\s+implements\s+Stampabile', L('`Report` la implementa', '`Report` implements it'))], '', '<?php
+interface Stampabile {
+    public function stampa(): string;
+}
+
+class Report implements Stampabile {
+    public function stampa(): string { return "ok"; }
+}'), [
+            dBlanks(pFill(), "interface Volante {\n    public function vola(): void;\n}\nclass Drone ___ Volante {\n    ___ Batteria;\n    public ___ vola(): void {}\n}", ['implements', 'use', 'function'], ['extends', 'include', 'trait'], L('Contratto, trait e metodo.', 'Contract, trait and method.')),
+            dFlash(pFlash(), [[L('Una classe può implementare più interfacce', 'A class can implement several interfaces'), true], [L('Una classe può estendere due classi', 'A class can extend two classes'), false], [L('Un trait può contenere metodi', 'A trait can contain methods'), true], [L('Un’interfaccia contiene il codice dei metodi', 'An interface holds the code of its methods'), false]], L('Un solo `extends`, tante interfacce.', 'One `extends`, many interfaces.')),
+        ]),
+        lesson('enums', L('Enum, readonly e match', 'Enums, readonly and match'), [
+            P('Un **enum** elenca i soli valori possibili di qualcosa: niente più stringhe scritte male. Una proprietà **readonly** si assegna una volta sola e poi non cambia.', 'An **enum** lists the only possible values of something: no more misspelt strings. A **readonly** property is set once and never changes.'),
+            C('<?php
+enum Stato: string {
+    case Bozza = "draft";
+    case Pubblicato = "published";
+}
+
+final class Lezione {
+    public function __construct(public readonly Stato $stato) {}
+}
+
+$etichetta = match ($lezione->stato) {
+    Stato::Bozza => "Da finire",
+    Stato::Pubblicato => "Online",
+};', 'php'),
+            P('`match` è un `switch` più rigoroso: confronta con `===`, restituisce un valore e dà errore se un caso manca.', '`match` is a stricter `switch`: it compares with `===`, returns a value and fails if a case is missing.'),
+        ], [
+            Q('e1', L('Che cosa succede se modifichi una proprietà `readonly` già assegnata?', 'What happens if you change a `readonly` property already set?'), [L('Un errore', 'An error'), L('Cambia valore', 'It changes'), L('Viene ignorato', 'It is ignored'), L('Diventa null', 'It becomes null')], 0, L('Si assegna una volta sola.', 'It is set only once.')),
+            Q('e2', L('Come confronta `match`?', 'How does `match` compare?'), ['===', '==', '=', '<=>'], 0, L('Confronto stretto, tipo compreso.', 'Strict comparison, type included.')),
+            Q('e3', L('Come si legge un caso di un enum?', 'How do you read a case of an enum?'), ['Stato::Bozza', 'Stato->Bozza', 'Stato.Bozza', '$Stato[Bozza]'], 0, L('Con l’operatore `::`.', 'With the `::` operator.')),
+        ], task('php', L('Crea l’enum `Livello: int` con i casi `Base = 1` e `Avanzato = 2`.', 'Create the enum `Livello: int` with the cases `Base = 1` and `Avanzato = 2`.'), '<?php
+', [re('enum\s+Livello\s*:\s*int', L('L’enum ha valori interi', 'The enum has int values')), re('case\s+Base\s*=\s*1', L('C’è `Base`', 'There is `Base`')), re('case\s+Avanzato\s*=\s*2', L('C’è `Avanzato`', 'There is `Avanzato`'))], '', '<?php
+enum Livello: int {
+    case Base = 1;
+    case Avanzato = 2;
+}'), [
+            dBug(pBug(), ['$voto = 7;', '$giudizio = match ($voto) {', '    10 => "Perfetto",', '    7 => "Buono"', '    default => "Da rivedere",', '};'], 3, '    7 => "Buono",', L('Ogni ramo di `match` finisce con una virgola.', 'Every arm of `match` ends with a comma.')),
+            dMatch(pMatch(), [['enum', L('Valori possibili fissi', 'Fixed possible values')], ['readonly', L('Assegnata una volta', 'Set once')], ['match', L('Switch che restituisce', 'A switch that returns')], ['final', L('Non si può estendere', 'Cannot be extended')]], L('Parole del PHP moderno.', 'Words of modern PHP.')),
+        ]),
+        lesson('generators', L('Closure e generatori', 'Closures and generators'), [
+            P('Una **closure** è una funzione senza nome da passare come valore. La forma corta `fn($x) => $x * 2` vede da sola le variabili esterne.', 'A **closure** is a nameless function passed around as a value. The short form `fn($x) => $x * 2` sees outer variables by itself.'),
+            C('<?php
+$iva = 0.22;
+$lordi = array_map(fn($p) => $p * (1 + $iva), [10, 20]);
+
+function righe(string $file): Generator {
+    $h = fopen($file, "r");
+    while (($riga = fgets($h)) !== false) {
+        yield trim($riga);
+    }
+    fclose($h);
+}
+
+foreach (righe("log.txt") as $riga) echo $riga;', 'php'),
+            P('Un **generatore** usa `yield` per dare un valore alla volta: legge un file enorme senza caricarlo tutto in memoria.', 'A **generator** uses `yield` to hand out one value at a time: it reads a huge file without loading it all into memory.'),
+        ], [
+            Q('g1', L('Che cosa fa `yield`?', 'What does `yield` do?'), [L('Dà un valore e si ferma lì', 'Hands out a value and pauses'), L('Chiude la funzione', 'Ends the function'), L('Stampa', 'Prints'), L('Crea una classe', 'Creates a class')], 0, L('Riprende dal punto giusto al giro dopo.', 'It resumes from the same spot next time.')),
+            Q('g2', L('Perché un generatore risparmia memoria?', 'Why does a generator save memory?'), [L('Produce un valore alla volta', 'It produces one value at a time'), L('Comprime i dati', 'It compresses data'), L('Usa il disco', 'It uses the disk'), L('Non lo fa', 'It does not')], 0, L('Non serve tenere tutto in un array.', 'There is no need to keep everything in an array.')),
+            Q('g3', L('La funzione freccia `fn` vede le variabili esterne?', 'Does the arrow function `fn` see outer variables?'), [L('Sì, da sola', 'Yes, by itself'), L('Solo con `global`', 'Only with `global`'), L('No, mai', 'No, never'), L('Solo le costanti', 'Only constants')], 0, L('Con `function` serve `use`.', 'With `function` you need `use`.')),
+        ], task('php', L('Scrivi il generatore `numeri(int $n)` che fa `yield` dei numeri da 1 a `$n`.', 'Write the generator `numeri(int $n)` that yields the numbers from 1 to `$n`.'), '<?php
+', [re('function\s+numeri\s*\(\s*int\s+\$n\s*\)', L('La funzione esiste', 'The function exists')), re('yield\s+\$', L('Usa `yield`', 'It uses `yield`'))], '', '<?php
+function numeri(int $n): Generator {
+    for ($i = 1; $i <= $n; $i++) {
+        yield $i;
+    }
+}'), [
+            dBlanks(pFill(), "\$doppi = array_map(___(\$x) => \$x * 2, \$numeri);\nfunction pari(): Generator {\n    foreach ([2, 4, 6] as \$n) ___ \$n;\n}", ['fn', 'yield'], ['return', 'function', 'echo'], L('Funzione freccia e generatore.', 'Arrow function and generator.')),
+            dFlash(pFlash(), [[L('`array_map` applica una funzione a ogni elemento', '`array_map` applies a function to each item'), true], [L('Un generatore restituisce un array', 'A generator returns an array'), false], [L('`array_filter` tiene gli elementi che passano un test', '`array_filter` keeps the items that pass a test'), true], [L('`fn` può contenere più istruzioni', '`fn` can contain several statements'), false]], L('`fn` ha una sola espressione.', '`fn` has a single expression.')),
+        ]),
+        lesson('testing', L('Test automatici', 'Automated tests'), [
+            P('Un **test** è codice che controlla altro codice. Con **PHPUnit** ogni metodo che inizia per `test` prepara una situazione, esegue e verifica con le **asserzioni**.', 'A **test** is code that checks other code. With **PHPUnit** every method starting with `test` sets up a situation, runs it and checks with **assertions**.'),
+            C('<?php
+use PHPUnit\Framework\TestCase;
+
+final class CarrelloTest extends TestCase {
+    public function testTotale(): void {
+        $c = new Carrello();
+        $c->aggiungi(10);
+        $c->aggiungi(5);
+        $this->assertSame(15, $c->totale());
+    }
+}', 'php'),
+            P('Si lanciano con `vendor/bin/phpunit`. Quando cambi il codice, i test ti dicono subito se hai rotto qualcosa.', 'You run them with `vendor/bin/phpunit`. When you change the code, tests tell you at once if you broke something.'),
+        ], [
+            Q('t1', L('Quale asserzione controlla valore e tipo?', 'Which assertion checks value and type?'), ['assertSame', 'assertTrue', 'assertCount', 'assertEmpty'], 0, L('`assertSame` usa `===`.', '`assertSame` uses `===`.')),
+            Q('t2', L('Da quale classe estende un test PHPUnit?', 'Which class does a PHPUnit test extend?'), ['TestCase', 'Test', 'Assert', 'PHPUnit'], 0, L('`PHPUnit\Framework\TestCase`.', '`PHPUnit\Framework\TestCase`.')),
+            Q('t3', L('A che cosa servono i test?', 'What are tests for?'), [L('A scoprire subito le regressioni', 'To catch regressions at once'), L('A rendere il sito più bello', 'To make the site prettier'), L('A sostituire il database', 'To replace the database'), L('A nascondere errori', 'To hide errors')], 0, L('Ti avvisano quando qualcosa si rompe.', 'They warn you when something breaks.')),
+        ], task('php', L('Scrivi `testSomma()` che verifica con `assertSame` che `somma(2, 3)` dia `5`.', 'Write `testSomma()` that checks with `assertSame` that `somma(2, 3)` gives `5`.'), '<?php
+use PHPUnit\Framework\TestCase;
+
+final class SommaTest extends TestCase {
+}', [re('function\s+testSomma\s*\(', L('Il test esiste', 'The test exists')), re('assertSame\s*\(\s*5\s*,\s*somma\s*\(\s*2\s*,\s*3\s*\)\s*\)', L('L’asserzione è giusta', 'The assertion is right'))], '', '<?php
+public function testSomma(): void {
+    $this->assertSame(5, somma(2, 3));
+}'), [
+            dOrder(pSort(), ['public function testSconto(): void {', '    $p = new Prezzo(100);', '    $p->sconto(20);', '    $this->assertSame(80, $p->valore());', '}'], L('Prepara, esegui, verifica.', 'Arrange, act, assert.')),
+            dMatch(pMatch(), [['assertSame', L('Uguale e stesso tipo', 'Equal and same type')], ['assertTrue', L('Vale true', 'Is true')], ['assertCount', L('Quanti elementi', 'How many items')], ['expectException', L('Deve lanciare un errore', 'Must throw an error')]], L('Le asserzioni più usate.', 'The most used assertions.')),
+        ]),
+        lesson('security', L('Sicurezza delle applicazioni', 'Application security'), [
+            P('Tre regole d’oro: **mai fidarsi dell’input**, **escapare l’output** con `htmlspecialchars` (contro l’XSS) e **proteggere i moduli** con un token CSRF legato alla sessione.', 'Three golden rules: **never trust input**, **escape output** with `htmlspecialchars` (against XSS) and **protect forms** with a CSRF token tied to the session.'),
+            C('<?php
+session_start();
+$_SESSION["csrf"] ??= bin2hex(random_bytes(32));
+
+if ($_SERVER["REQUEST_METHOD"] === "POST"
+    && !hash_equals($_SESSION["csrf"], $_POST["csrf"] ?? "")) {
+    http_response_code(403);
+    exit("Richiesta non valida");
+}
+
+echo htmlspecialchars($commento, ENT_QUOTES, "UTF-8");', 'php'),
+            P('`hash_equals` confronta senza rivelare nulla con i tempi di risposta. Imposta anche intestazioni come `Content-Security-Policy` e cookie `HttpOnly` e `SameSite`.', '`hash_equals` compares without leaking anything through timing. Also set headers such as `Content-Security-Policy` and `HttpOnly`, `SameSite` cookies.'),
+        ], [
+            Q('s1', L('Contro che cosa protegge `htmlspecialchars`?', 'What does `htmlspecialchars` protect against?'), ['XSS', 'SQL injection', 'CSRF', L('Password deboli', 'Weak passwords')], 0, L('Trasforma `<` in `&lt;`.', 'It turns `<` into `&lt;`.')),
+            Q('s2', L('A che cosa serve un token CSRF?', 'What is a CSRF token for?'), [L('A provare che il modulo arriva dal tuo sito', 'To prove the form comes from your site'), L('A cifrare la password', 'To encrypt the password'), L('A velocizzare la sessione', 'To speed up the session'), L('A contare le visite', 'To count visits')], 0, L('Un altro sito non conosce il token.', 'Another site does not know the token.')),
+            Q('s3', L('Perché usare `hash_equals` invece di `===`?', 'Why use `hash_equals` instead of `===`?'), [L('Ha sempre lo stesso tempo di risposta', 'It always takes the same time'), L('È più corto', 'It is shorter'), L('Ignora le maiuscole', 'It ignores case'), L('Funziona solo con i numeri', 'It only works with numbers')], 0, L('Evita gli attacchi a tempo.', 'It avoids timing attacks.')),
+        ], task('php', L('Stampa `$nome` con `htmlspecialchars($nome, ENT_QUOTES, "UTF-8")`.', 'Print `$nome` with `htmlspecialchars($nome, ENT_QUOTES, "UTF-8")`.'), '<?php
+$nome = $_GET["nome"] ?? "";
+', [re('echo\s+htmlspecialchars\s*\(\s*\$nome\s*,\s*ENT_QUOTES', L('L’output è protetto', 'The output is escaped'))], '', '<?php
+echo htmlspecialchars($nome, ENT_QUOTES, "UTF-8");'), [
+            dBug(pBug(), ['$q = $_GET["q"] ?? "";', 'echo "<h1>Risultati per " . $q . "</h1>";', '$st = $pdo->prepare("SELECT * FROM corsi WHERE titolo LIKE ?");'], 1, 'echo "<h1>Risultati per " . htmlspecialchars($q) . "</h1>";', L('Ciò che scrive l’utente va escapato prima di mostrarlo.', 'What the user writes must be escaped before it is shown.')),
+            dMatch(pMatch(), [['XSS', L('Script iniettato nella pagina', 'Script injected into the page')], ['CSRF', L('Richiesta falsa da un altro sito', 'Forged request from another site')], ['SQL injection', L('Dati che diventano comandi', 'Data that becomes commands')], ['HttpOnly', L('Il cookie non si legge da JS', 'JS cannot read the cookie')]], L('Gli attacchi e le loro difese.', 'Attacks and their defences.')),
         ]),
     ],
 ];

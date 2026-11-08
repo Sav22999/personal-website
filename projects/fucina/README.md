@@ -1,7 +1,11 @@
 # Fucina
 
-App gamificata per imparare i linguaggi del web, a livelli sempre più difficili: **15 corsi e 93 livelli** di HTML, CSS,
-animazioni, SCSS, Sass, JavaScript, TypeScript e PHP, in percorsi paralleli che partono da HTML base.
+App gamificata per imparare a programmare, a livelli sempre più difficili: **43 corsi e 234 livelli**. Web (HTML, CSS,
+animazioni, SCSS, Sass, Tailwind CSS, JavaScript, TypeScript, Angular, Vue), backend e dati (PHP, Python, Java, SQL, R),
+mobile e desktop (Flutter, Swift, Kotlin, Vala) e sistemi (Rust). Ogni corso ha una o più categorie (frontend, backend,
+mobile, dati, sistemi, desktop): nel Percorso si cercano per nome e si filtrano per categoria, raggruppati per linguaggio.
+Il corso “PHP avanzato” di prima ora si chiama “PHP intermedio” (lo sposta la versione 12 dello schema, con progressi e
+certificati); il nuovo “PHP avanzato” viene dopo.
 
 Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per Google Play (`android/`).
 

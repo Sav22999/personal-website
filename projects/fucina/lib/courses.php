@@ -86,7 +86,16 @@ function course_raw(string $id): ?array
         }
         foreach (drills_by_lesson(array_keys($byId)) as $lessonId => $drills) $lessons[$byId[$lessonId]]['drills'] = $drills;
     }
-    return $cache[$id] = ['id' => $id, 'family' => $c['family'], 'after' => $c['after_id'], 'title' => $d['title'], 'short' => $d['short'], 'desc' => $d['desc'], 'level' => $d['level'], 'lessons' => $lessons];
+    return $cache[$id] = ['id' => $id, 'family' => $c['family'], 'after' => $c['after_id'], 'title' => $d['title'], 'short' => $d['short'], 'desc' => $d['desc'], 'level' => $d['level'], 'examMinutes' => $d['examMinutes'] ?? null, 'categories' => $d['categories'] ?? [], 'lessons' => $lessons];
+}
+
+/** The categories a course can have (see FAMILY_CATEGORIES in lib/seed.php for the defaults). */
+const COURSE_CATEGORIES_ALL = ['frontend', 'backend', 'mobile', 'data', 'systems', 'desktop'];
+
+/** Minutes of a course's final exam: its own value if the admin set one, otherwise the general setting (0 = no limit). */
+function exam_minutes(array $c): int
+{
+    return isset($c['examMinutes']) ? (int)$c['examMinutes'] : setting('exam_minutes');
 }
 
 function course_questions(array $c): array

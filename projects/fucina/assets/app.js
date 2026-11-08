@@ -2,9 +2,11 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.18.0';
+    const VERSION = '1.19.1';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.19.1', date: '2026-11-08', it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'], en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']},
+        {v: '1.19.0', date: '2026-11-08', it: ['28 nuovi corsi: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust e Vala, più un nuovo PHP avanzato', 'Il vecchio PHP avanzato ora si chiama PHP intermedio: progressi e certificati restano', 'Nel Percorso cerchi un corso, filtri per categoria (frontend, backend, mobile, dati, sistemi, desktop) e trovi i corsi raggruppati per linguaggio', 'Il tempo dell’esame finale si può impostare corso per corso dal portale admin'], en: ['28 new courses: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust and Vala, plus a new Advanced PHP', 'The old Advanced PHP is now Intermediate PHP: progress and certificates stay', 'In the Path you can search for a course, filter by category (frontend, backend, mobile, data, systems, desktop) and see courses grouped by language', 'The final exam time can be set course by course from the admin portal']},
         {v: '1.18.0', date: '2026-11-08', it: ['Immagine del profilo: scegli un personaggio e uno sfondo, comprali con le Scintille dal profilo; si vedono in classifica e tra gli amici', 'Il certificato dice che si può verificare con il suo numero sul sito ufficiale di Fucina, senza indirizzo', 'Più nomi per i gradi: 14, da Scintilla a Fiamma eterna, tutti elencati nelle statistiche', 'Portale admin più comodo da telefono: barra in alto, sezioni scorrevoli e tabelle a schede'], en: ['Profile picture: pick a character and a background and buy them with Sparks from your profile; they show in the leaderboards and among friends', 'The certificate says it can be checked with its number on the official Fucina website, with no address', 'More grade names: 14, from Spark to Eternal flame, all listed in the stats', 'Admin portal easier on a phone: top bar, scrolling sections and tables as cards']},
         {v: '1.17.0', date: '2026-11-08', it: ['Chi si registra con email e password conferma l’indirizzo con un link: finché non lo apre l’account resta bloccato'], en: ['If you sign up with email and password you confirm the address with a link: until you open it the account stays locked']},
         {v: '1.16.2', date: '2026-11-08', it: ['Ogni nuovo badge dà +50 XP e +50 Scintille'], en: ['Every new badge gives +50 XP and +50 Sparks']},
@@ -43,7 +45,16 @@
     const CONTACT_URL = '../../contact-me/';
     const DESK = matchMedia('(min-width: 960px)');
 
-    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}, board: {type: 'daily', scope: 'all'}};
+    const S = {user: null, config: {googleClientId: ''}, loaded: false, state: null, course: {}, board: {type: 'daily', scope: 'all'}, path: {q: '', cat: '', fam: ''}};
+
+    /** Names of the languages (course families) and what a course can be for. */
+    const FAMILY_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
+        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+    const familyName = f => FAMILY_NAMES[f] || f.toUpperCase();
+    /** The short label in the square badge of a course card. */
+    const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA'};
+    const familyShort = f => FAMILY_SHORT[f] || f.toUpperCase();
+    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop']];
 
     // ---------------------------------------------------------------- small components
 
@@ -319,18 +330,70 @@
 
     // ---------------------------------------------------------------- path of courses
 
+    /**
+     * All the courses, grouped by language in the order of the path. A search (title, description, language) and a
+     * category (frontend, backend…) narrow the list; only the list is redrawn while typing, so the field keeps its focus.
+     */
     function viewPath() {
+        const list = h('div.path-groups');
+        const count = h('p.muted.small.path-count', {role: 'status'});
+        const search = UI.input({type: 'search', class: 'path-search', value: S.path.q, placeholder: t('Search a course or a language'), 'aria-label': t('Search a course or a language'), autocomplete: 'off'});
+        const used = new Set(S.state.courses.flatMap(c => c.categories || []));
+        const families = [...new Set(S.state.courses.map(c => c.family))];
+        /** A row of filter chips: one choice at a time, the chosen one with a check mark; tapping it again clears it. */
+        const chipRow = (key, options, label) => {
+            const row = h('div.chips.scroll.path-chips', {role: 'group', 'aria-label': label});
+            const paint = () => row.replaceChildren(...options.map(([v, text, fam]) => {
+                const on = S.path[key] === v;
+                return h('button.chip' + (on ? '.sel' : '') + (fam ? '.fam-' + fam : ''), {
+                    type: 'button', 'aria-pressed': String(on), onclick: () => {
+                        S.path[key] = on ? '' : v;
+                        paint();
+                        draw();
+                    }
+                }, on ? icon('check') : fam ? h('i.chip-dot') : null, text);
+            }));
+            paint();
+            return row;
+        };
+        const cats = chipRow('cat', CATEGORIES.filter(([v]) => used.has(v)).map(([v, label]) => [v, t(label)]), t('Categories'));
+        const langs = chipRow('fam', families.map(f => [f, familyName(f), f]), t('Languages'));
+        const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        function draw() {
+            const words = norm(S.path.q).split(/\s+/).filter(Boolean);
+            const shown = S.state.courses.filter(c => (!S.path.cat || (c.categories || []).includes(S.path.cat)) && (!S.path.fam || c.family === S.path.fam)
+                && words.every(w => norm([c.title, c.short, c.desc, c.level, c.family, familyName(c.family)].join(' ')).includes(w)));
+            const groups = [];
+            for (const c of shown) {
+                let g = groups.find(x => x.family === c.family);
+                if (!g) groups.push(g = {family: c.family, courses: []});
+                g.courses.push(c);
+            }
+            count.textContent = shown.length === S.state.courses.length ? t('{n} courses', {n: shown.length}) : t('{a} of {b} courses', {a: shown.length, b: S.state.courses.length});
+            list.replaceChildren(...(groups.length ? groups.map(g => {
+                const done = g.courses.filter(c => c.lessons && c.done === c.lessons || c.examScore).length;
+                return h('section.path-group.fam-' + g.family, h('header.path-head', h('i.path-dot'), h('strong', familyName(g.family)),
+                    h('span.muted.small', t('{a} of {b} completed', {a: done, b: g.courses.length}))), h('div.course-list', g.courses.map(courseCard)));
+            }) : [empty(t('No course found'), t('Try another word or another category.'))]));
+        }
+
+        search.addEventListener('input', () => {
+            S.path.q = search.value;
+            draw();
+        });
+        draw();
         return {
             title: t('Path'), tab: 'path', body: [
                 h('p.lead', t('Every course is a series of levels, each harder than the last. Finish a course to open the ones that follow.')),
-                h('div.course-list', S.state.courses.map(courseCard)),
+                h('div.path-tools', h('label.path-search-box', icon('search'), search), cats, langs, count), list,
             ]
         };
     }
 
     function courseCard(c) {
         const after = c.locked ? S.state.courses.find(x => x.id === c.after) : null;
-        const inner = [h('span.fam', c.family.toUpperCase()), h('div.grow', h('strong', c.title), h('p.muted', c.desc),
+        const inner = [h('span.fam', familyShort(c.family)), h('div.grow', h('strong', c.title), h('p.muted', c.desc),
             c.locked ? h('p.lock-note', icon('lock'), t('Finish “{name}” or pass the exam', {name: after ? after.title : ''})) : h('div.bar', h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
             h('div.meta', chip(c.level), chip(t('{n} levels', {n: c.lessons})), c.certificate ? chip(t('Certified'), 'ok', 'cert') : null))];
         return h('a.course.fam-' + c.family + (c.locked ? '.locked' : ''), {href: '#/course/' + c.id}, inner);
@@ -711,7 +774,7 @@
                 stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', c.title), h('p', t('Passed with full marks: there is nothing left to improve.')), h('div.step-actions', btn(t('Back to the course'), {onclick: () => go('course/' + courseId)}))));
                 return;
             }
-            stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', c.title), h('p', t('No hints here: the exam is all yours. The questions are drawn at random from the course, and you have {n} minutes.', {n: S.state.examMinutes})),
+            stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', c.title), h('p', (c.examMinutes ?? S.state.examMinutes) > 0 ? t('No hints here: the exam is all yours. The questions are drawn at random from the course, and you have {n} minutes.', {n: c.examMinutes ?? S.state.examMinutes}) : t('No hints here: the exam is all yours. The questions are drawn at random from the course, with no time limit.')),
                 h('div.step-actions', btn(t('Start the exam'), {
                     icon: 'play', onclick: async e => {
                         const d = await busy(e.currentTarget, () => Api.post('exam.start', {course: courseId})).catch(err => toast(err.message, 'error'));
@@ -1391,7 +1454,7 @@
                 }
             })) : null);
         const features = cls => h('ul.features.' + cls,
-            h('li', tile('icon', 'book', 'sm'), t('HTML, CSS, SCSS and Sass, level after level')),
+            h('li', tile('icon', 'book', 'sm'), t('From HTML to Python, Java and Rust, level after level')),
             h('li', tile('icon', 'game', 'sm'), t('Games, drills and daily challenges')),
             h('li', tile('icon', 'spark', 'sm'), t('Earn Sparks and spend them on hints')),
             h('li', tile('icon', 'cert', 'sm'), t('A certificate for every course you complete')));

@@ -203,8 +203,9 @@ $canonical = '/projects/';
                 <img src="/images/projects/fucina.png" alt="">
             </div>
             <h3>Fucina</h3>
-            <p>Learn HTML, CSS, JavaScript, TypeScript and PHP by playing: levels that get harder, quick drills, games, a
-                daily challenge with its leaderboard, and certificates to unlock with the Sparks you earn.</p>
+            <p>Learn to code by playing, from HTML, CSS and JavaScript to Python, Java, SQL, Kotlin, Swift and Rust: levels
+                that get harder, quick drills, games, a daily challenge with its leaderboard, and certificates to unlock
+                with the Sparks you earn.</p>
             <ul class="project-tags">
                 <li>Web app</li>
                 <li>English</li>

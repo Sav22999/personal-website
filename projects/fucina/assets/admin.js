@@ -8,6 +8,9 @@
     const root = document.getElementById('admin');
     let me = null;
     let LANGS = ['it', 'en'];
+    /** What a course is for (the same list as COURSE_CATEGORIES_ALL in lib/courses.php). */
+    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop']];
+    let GENERAL_EXAM_MINUTES = null; // the general time of the final exams, shown as a hint in the course form
 
     const TABS = [['overview', 'Overview', 'dashboard'], ['courses', 'Courses', 'book'], ['games', 'Games', 'game'], ['users', 'Users', 'group'], ['certificates', 'Certificates', 'cert'], ['avatars', 'Profile pictures', 'image'], ['settings', 'Settings', 'tune']];
 
@@ -122,24 +125,32 @@
         const family = inp({value: c.family});
         const after = sel([['', t('None: open from the start')], ...courses.filter(x => x.id !== c.id).map(x => [x.id, title(x.title)])], c.after || '');
         const status = sel(statuses(), c.status);
+        const cats = (c.categories || []);
+        const boxes = CATEGORIES.map(([v, label]) => [v, h('input', {type: 'checkbox', checked: cats.includes(v)}), label]);
+        const catField = h('div.f', h('span', t('Categories')), h('div.adm-traits', boxes.map(([, box, label]) => h('label.check', box, h('span', t(label))))),
+            h('small', t('Used to filter the courses in the app.')));
+        const minutes = inp({type: 'number', min: 0, max: 240, value: c.examMinutes ?? '', placeholder: t('General: {n}', {n: GENERAL_EXAM_MINUTES ?? 15})});
         const save = btn(t('Save'), {
             icon: 'save', onclick: () => act(save, () => Api.post('admin.course.save', {
-                existing: !isNew, id: id.value, family: family.value, after: after.value, status: status.value,
-                title: fTitle.value(), short: fShort.value(), desc: fDesc.value(), level: fLevel.value()
+                existing: !isNew, id: id.value, family: family.value, after: after.value, status: status.value, examMinutes: minutes.value,
+                categories: boxes.filter(([, box]) => box.checked).map(([v]) => v), title: fTitle.value(), short: fShort.value(), desc: fDesc.value(), level: fLevel.value()
             }), () => go(isNew ? 'courses' : 'course/' + c.id))
         });
-        return h('div.adm-form', h('div.adm-grid', f(t('Id (cannot change later)'), id), f(t('Family'), family, 'html, css, scss, sass, js, php…'), f(t('Unlocked after'), after), f(t('Status'), status)), fTitle, fShort, fDesc, fLevel, h('div.adm-actions', save));
+        return h('div.adm-form', h('div.adm-grid', f(t('Id (cannot change later)'), id), f(t('Family'), family, 'html, css, scss, sass, js, php…'), f(t('Unlocked after'), after), f(t('Status'), status),
+            f(t('Final exam: time in minutes'), minutes, t('Empty = the general time in Settings · 0 = no limit'))), catField, fTitle, fShort, fDesc, fLevel, h('div.adm-actions', save));
     }
 
     async function viewCourseNew() {
         const d = await Api.get('admin.courses');
         LANGS = d.languages;
+        GENERAL_EXAM_MINUTES = d.examMinutes;
         return page(t('New course'), null, courseForm(null, d.courses));
     }
 
     async function viewCourse(id) {
         const [d, list] = await Promise.all([Api.get('admin.course&id=' + encodeURIComponent(id)), Api.get('admin.courses')]);
         LANGS = list.languages;
+        GENERAL_EXAM_MINUTES = list.examMinutes;
         const c = d.course;
         const del = btn(t('Delete'), {
             kind: 'danger', icon: 'delete', onclick: async () => {
