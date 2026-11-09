@@ -48,7 +48,7 @@ function certificate_image(string $name, string $course, string $family, int $sc
     $accent = imagecolorallocate($img, ...(CERT_ACCENTS[$family] ?? CERT_ACCENTS['html']));
     $mid = 1200;
 
-    cert_text($img, 'Gelasio-Italic', 104, $mid, 452, $ink, 'Certificate of completion');
+    cert_text($img, 'Gelasio-Italic', 104, $mid, 452, $ink, 'Certificate of completion' . ($score >= 100 ? ' with honours' : ''));
     cert_text($img, 'Gelasio-Regular', 44, $mid, 552, $soft, 'This is proudly awarded to');
     [$px, $lines] = cert_name_lines($name, 1900);
     $y = 700;
@@ -63,7 +63,7 @@ function certificate_image(string $name, string $course, string $family, int $sc
     imagefilledpolygon($img, [$mid, $y - 11, $mid + 11, $y, $mid, $y + 11, $mid - 11, $y], $gold);
     cert_text($img, 'Gelasio-Regular', 44, $mid, $y + 84, $soft, 'for completing the course and passing its final exam');
     cert_text($img, 'Gelasio-Bold', 88, $mid, $y + 196, $accent, $course);
-    cert_text($img, 'JetBrainsMono-Medium', 32, $mid, $y + 268, $soft, "Score {$score}%  ·  No. {$code}");
+    cert_text($img, 'JetBrainsMono-Medium', 32, $mid, $y + 268, $soft, 'Score ' . ($score / 10) . " of 10  ·  No. {$code}");
 
     $date = (new DateTimeImmutable($issued, new DateTimeZone('UTC')))->format('j M Y');
     cert_text($img, 'JetBrainsMono-Medium', 46, 530, 1472, $ink, $date);
