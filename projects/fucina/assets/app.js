@@ -2,10 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.19.3';
+    const VERSION = '1.19.4';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
-        {v: '1.19.3', date: '2026-11-09', it: ['Sezione Certificati nella barra di navigazione', 'Il Percorso ora si chiama Corsi', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'], en: ['Certificates section in the navigation bar', 'Path is now called Courses', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']},
+        {v: '1.19.4', date: '2026-11-09', it: ['Immagine del profilo ancora più personalizzabile: 26 nuovi personaggi, 27 accessori, 18 cornici e 21 nuovi sfondi', 'Sezione Certificati nella barra di navigazione e «Corsi» al posto di «Percorso»', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'], en: ['Even more profile picture options: 26 new characters, 27 accessories, 18 frames and 21 new backgrounds', 'Certificates section in the navigation bar and “Courses” instead of “Path”', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']},
         {v: '1.19.2', date: '2026-11-08', it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'], en: ['Course search: multiple selection of category and language chips']},
         {v: '1.19.1', date: '2026-11-08', it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'], en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']},
         {v: '1.19.0', date: '2026-11-08', it: ['28 nuovi corsi: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust e Vala, più un nuovo PHP avanzato', 'Il vecchio PHP avanzato ora si chiama PHP intermedio: progressi e certificati restano', 'Nel Percorso cerchi un corso, filtri per categoria (frontend, backend, mobile, dati, sistemi, desktop) e trovi i corsi raggruppati per linguaggio', 'Il tempo dell’esame finale si può impostare corso per corso dal portale admin'], en: ['28 new courses: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust and Vala, plus a new Advanced PHP', 'The old Advanced PHP is now Intermediate PHP: progress and certificates stay', 'In the Path you can search for a course, filter by category (frontend, backend, mobile, data, systems, desktop) and see courses grouped by language', 'The final exam time can be set course by course from the admin portal']},
@@ -1154,13 +1154,14 @@
     // ---------------------------------------------------------------- profile picture
 
     /**
-     * The picture shop: a character (or the initial) on a background. Free and bought items are worn at once
-     * with Save; the others show in the preview with their price and a button to buy them with Sparks.
+     * The picture shop: a character (or the initial), an accessory and a frame on a background. Free and bought items
+     * are worn at once with Save; the others show in the preview with their price and a button to buy them with Sparks.
      */
     function openAvatarShop() {
         const now = Avatars.parse(myAvatar());
-        let pick = {character: now.character, background: now.background || 'violet'};
+        let pick = {character: now.character, background: now.background || 'violet', accessory: now.accessory, frame: now.frame};
         let kind = 'character';
+        const dict = {character: Avatars.CHARACTERS, accessory: Avatars.ACCESSORIES, frame: Avatars.FRAMES, background: Avatars.BACKGROUNDS};
         const item = id => S.state.shop.find(x => x.id === id);
         const owned = id => !id || (item(id) && item(id).owned);
         const preview = h('div.av-preview');
@@ -1170,23 +1171,23 @@
         const save = btn(t('Save'), {icon: 'check', onclick: wear});
         const wallet = h('p.muted.small');
 
-        function code(c, b) {
-            return (c || '') + ':' + (b || '');
-        }
-
         function draw() {
-            preview.replaceChildren(avatar(S.state.user.name, 'xl', code(pick.character, pick.background)),
-                h('div', h('strong', pick.character ? Avatars.name(Avatars.CHARACTERS[pick.character]) : t('Your initial')),
-                    h('span.muted', Avatars.name(Avatars.BACKGROUNDS[pick.background]))));
-            tabs.replaceChildren(seg([['character', t('Characters')], ['background', t('Backgrounds')]], kind, v => {
+            const topParts = [pick.character ? Avatars.name(Avatars.CHARACTERS[pick.character]) : t('Your initial')];
+            if (pick.accessory) topParts.push(Avatars.name(Avatars.ACCESSORIES[pick.accessory]));
+            const subParts = [Avatars.name(Avatars.BACKGROUNDS[pick.background])];
+            if (pick.frame) subParts.push(Avatars.name(Avatars.FRAMES[pick.frame]));
+            preview.replaceChildren(avatar(S.state.user.name, 'xl', Avatars.encode(pick)),
+                h('div', h('strong', topParts.join(' · ')), h('span.muted', subParts.join(' · '))));
+            tabs.replaceChildren(seg([['character', t('Characters')], ['accessory', t('Accessories')], ['frame', t('Frames')], ['background', t('Backgrounds')]], kind, v => {
                 kind = v;
                 draw();
             }));
-            const items = S.state.shop.filter(x => x.kind === kind && (kind === 'character' ? Avatars.CHARACTERS[x.id] : Avatars.BACKGROUNDS[x.id]));
-            const tiles = (kind === 'character' ? [{id: '', owned: true, price: 0}] : []).concat(items).map(x => {
-                const on = kind === 'character' ? pick.character === x.id : pick.background === x.id;
-                const face = kind === 'character' ? code(x.id, pick.background) : code(pick.character, x.id);
-                const label = kind === 'character' ? (x.id ? Avatars.name(Avatars.CHARACTERS[x.id]) : t('Your initial')) : Avatars.name(Avatars.BACKGROUNDS[x.id]);
+            const items = S.state.shop.filter(x => x.kind === kind && dict[kind][x.id]);
+            const emptyOpt = kind !== 'background' ? [{id: '', owned: true, price: 0}] : [];
+            const tiles = emptyOpt.concat(items).map(x => {
+                const on = pick[kind] === x.id;
+                const face = Avatars.encode(Object.assign({}, pick, {[kind]: x.id}));
+                const label = x.id ? Avatars.name(dict[kind][x.id]) : kind === 'character' ? t('Your initial') : t('None');
                 return h('button.av-tile' + (on ? '.on' : '') + (x.owned ? '' : '.locked'), {
                     type: 'button', 'aria-pressed': String(on), onclick: () => {
                         pick[kind] = x.id;
@@ -1197,11 +1198,11 @@
             });
             grid.replaceChildren(...tiles);
             // What is in the preview but not owned yet: buy it, one item at a time
-            const missing = [pick.character, pick.background].filter(id => !owned(id));
+            const missing = [pick.character, pick.accessory, pick.frame, pick.background].filter(id => !owned(id));
             buyBox.replaceChildren(...missing.map(id => {
                 const it = item(id);
                 const short = S.state.user.points < it.price;
-                const label = it.kind === 'character' ? Avatars.name(Avatars.CHARACTERS[id]) : Avatars.name(Avatars.BACKGROUNDS[id]);
+                const label = Avatars.name(Avatars.item(id));
                 const b = btn(t('Buy {name} · {n}', {name: label, n: it.price}), {
                     icon: 'spark', kind: short ? 'tonal' : 'filled', disabled: short, onclick: async () => {
                         if (!await confirm(t('Buy {name}?', {name: label}), t('It costs {n} Sparks: you have {m}.', {n: it.price, m: S.state.user.points}), t('Buy'))) return;
@@ -1222,7 +1223,7 @@
 
         async function wear() {
             try {
-                applyState(await busy(save, () => Api.post('avatar.set', {character: pick.character, background: pick.background})));
+                applyState(await busy(save, () => Api.post('avatar.set', pick)));
                 s.close();
                 toast(t('Profile picture updated'), 'ok');
                 render();

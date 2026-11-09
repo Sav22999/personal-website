@@ -718,16 +718,20 @@ switch ($r) {
         send_json(['ok' => true] + state_payload($u));
 
     case 'avatar.set':
-        // character:background; an empty character is the initial. Only what is owned (or free) can be worn.
+        // character:background:accessory:frame; an empty character is the initial. Only what is owned (or free) can be worn.
         $u = writer();
         $b = body();
         $owned = array_column(array_filter(avatar_shop((int)$u['id']), fn($i) => $i['owned']), 'kind', 'id');
         $character = s($b, 'character', 30);
         $background = s($b, 'background', 30);
+        $accessory = s($b, 'accessory', 30);
+        $frame = s($b, 'frame', 30);
         if ($character !== '' && ($owned[$character] ?? '') !== 'character') fail('Buy this character first.', 403, 'not_owned');
         if ($background !== '' && ($owned[$background] ?? '') !== 'background') fail('Buy this background first.', 403, 'not_owned');
-        $code = $character === '' && $background === '' ? null : $character . ':' . $background;
-        db()->prepare('UPDATE ' . t('users') . ' SET avatar = ? WHERE id = ?')->execute([$code, $u['id']]);
+        if ($accessory !== '' && ($owned[$accessory] ?? '') !== 'accessory') fail('Buy this accessory first.', 403, 'not_owned');
+        if ($frame !== '' && ($owned[$frame] ?? '') !== 'frame') fail('Buy this frame first.', 403, 'not_owned');
+        $code = rtrim("$character:$background:$accessory:$frame", ':');
+        db()->prepare('UPDATE ' . t('users') . ' SET avatar = ? WHERE id = ?')->execute([$code === '' ? null : $code, $u['id']]);
         send_json(['ok' => true] + state_payload($u));
 
     case 'friends.list':

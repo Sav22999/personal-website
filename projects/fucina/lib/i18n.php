@@ -85,6 +85,8 @@ function translations_it(): array
         'This item is not for sale.' => 'Questo elemento non è in vendita.',
         'Buy this character first.' => 'Prima compra questo personaggio.',
         'Buy this background first.' => 'Prima compra questo sfondo.',
+        'Buy this accessory first.' => 'Prima compra questo accessorio.',
+        'Buy this frame first.' => 'Prima compra questa cornice.',
         'Too many emails: try again in an hour.' => 'Troppe email: riprova tra un’ora.',
         'This link has expired or was already used: sign in and ask for a new one.' => 'Questo link è scaduto o è già stato usato: accedi e chiedine uno nuovo.',
         '{field} is required.' => '{field} è obbligatorio.',

@@ -295,13 +295,40 @@ function seed_linehop_items(): array
  * The drawings are in assets/avatars.js under the same ids. The initial of the username is always free.
  */
 const AVATAR_ITEMS = [
-    'bit' => ['character', 0], 'pixel' => ['character', 0], 'owl' => ['character', 60], 'fox' => ['character', 80],
-    'octopus' => ['character', 100], 'ghost' => ['character', 100], 'snail' => ['character', 120], 'penguin' => ['character', 120],
-    'alien' => ['character', 150], 'dragon' => ['character', 200], 'anvil' => ['character', 250], 'astronaut' => ['character', 300],
-    'favilla' => ['character', 300], 'unicorn' => ['character', 400],
+    // Characters
+    'bit' => ['character', 0], 'pixel' => ['character', 0], 'duck' => ['character', 40], 'hamster' => ['character', 50],
+    'frog' => ['character', 60], 'owl' => ['character', 60], 'hedgehog' => ['character', 70], 'turtle' => ['character', 70],
+    'fox' => ['character', 80], 'crab' => ['character', 80], 'bee' => ['character', 80], 'axolotl' => ['character', 90],
+    'octopus' => ['character', 100], 'ghost' => ['character', 100], 'snake' => ['character', 100], 'racoon' => ['character', 110],
+    'sloth' => ['character', 110], 'snail' => ['character', 120], 'penguin' => ['character', 120], 'gopher' => ['character', 120],
+    'corgi' => ['character', 130], 'panda' => ['character', 140], 'chameleon' => ['character', 140], 'koala' => ['character', 150],
+    'alien' => ['character', 150], 'redpanda' => ['character', 160], 'narwhal' => ['character', 170], 'shark' => ['character', 180],
+    'dragon' => ['character', 200], 'viking' => ['character', 210], 'pirate' => ['character', 210], 'ninja' => ['character', 220],
+    'anvil' => ['character', 250], 'wizard' => ['character', 260], 'cyborg' => ['character', 280], 'favilla' => ['character', 300],
+    'astronaut' => ['character', 300], 'griffin' => ['character', 320], 'phoenix' => ['character', 350], 'unicorn' => ['character', 400],
+    // Accessories
+    'glasses' => ['accessory', 0], 'bandage' => ['accessory', 30], 'bowtie' => ['accessory', 40], 'flower' => ['accessory', 40],
+    'sprout' => ['accessory', 50], 'mustache' => ['accessory', 50], 'bandana' => ['accessory', 60], 'beanie' => ['accessory', 70],
+    'cap' => ['accessory', 80], 'beret' => ['accessory', 80], 'eyepatch' => ['accessory', 80], 'scarf' => ['accessory', 90],
+    'heartglasses' => ['accessory', 90], 'shades' => ['accessory', 100], 'antlers' => ['accessory', 100], 'monocle' => ['accessory', 110],
+    'chef' => ['accessory', 110], 'coffee' => ['accessory', 120], 'gradcap' => ['accessory', 130], 'headphones' => ['accessory', 140],
+    'tophat' => ['accessory', 150], 'halo' => ['accessory', 160], 'vikinghelm' => ['accessory', 170], 'wizardhat' => ['accessory', 180],
+    'vr' => ['accessory', 200], 'tiara' => ['accessory', 220], 'crown' => ['accessory', 250],
+    // Frames
+    'ring' => ['frame', 0], 'dashed' => ['frame', 40], 'wood' => ['frame', 50], 'copper_ring' => ['frame', 60],
+    'pixel_frame' => ['frame', 70], 'neon' => ['frame', 90], 'ice' => ['frame', 100], 'emerald' => ['frame', 110],
+    'gear' => ['frame', 120], 'sakura' => ['frame', 130], 'gold_ring' => ['frame', 140], 'circuit' => ['frame', 150],
+    'lightning_ring' => ['frame', 160], 'laurel' => ['frame', 180], 'rainbow_ring' => ['frame', 200], 'fire_ring' => ['frame', 220],
+    'galaxy_ring' => ['frame', 260], 'royal' => ['frame', 300],
+    // Backgrounds
     'violet' => ['background', 0], 'night' => ['background', 0], 'ember' => ['background', 40], 'mint' => ['background', 40],
-    'sky' => ['background', 40], 'gold' => ['background', 60], 'pink' => ['background', 60], 'coal' => ['background', 60],
-    'aurora' => ['background', 120], 'terminal' => ['background', 120], 'sunset' => ['background', 150],
+    'sky' => ['background', 40], 'ocean' => ['background', 40], 'forest' => ['background', 40], 'lavender' => ['background', 40],
+    'coral' => ['background', 40], 'teal' => ['background', 40], 'crimson' => ['background', 50], 'indigo' => ['background', 50],
+    'amber' => ['background', 50], 'slate' => ['background', 50], 'gold' => ['background', 60], 'pink' => ['background', 60],
+    'coal' => ['background', 60], 'cherry' => ['background', 70], 'copper' => ['background', 90], 'arctic' => ['background', 100],
+    'jungle' => ['background', 100], 'aurora' => ['background', 120], 'terminal' => ['background', 120], 'cyber' => ['background', 120],
+    'magma' => ['background', 130], 'synthwave' => ['background', 140], 'sunset' => ['background', 150], 'nebula' => ['background', 150],
+    'forge' => ['background', 160], 'matrix' => ['background', 170], 'blueprint' => ['background', 180], 'prism' => ['background', 200],
 ];
 
 /** Every row of the initial content, table by table. Questions refer to their lesson through "_lesson". */

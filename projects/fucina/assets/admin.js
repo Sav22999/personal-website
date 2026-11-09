@@ -531,7 +531,7 @@
                 case 'prize':
                     return ['trophy', t('Leaderboard prize: place {p}, +{n} Sparks (end of day)', {p: e.m, n: e.n})];
                 case 'avatar':
-                    return ['image', t('Profile picture bought: {i} for {n} Sparks', {i: Avatars.CHARACTERS[e.a] ? Avatars.name(Avatars.CHARACTERS[e.a]) : Avatars.BACKGROUNDS[e.a] ? Avatars.name(Avatars.BACKGROUNDS[e.a]) : e.a, n: e.n})];
+                    return ['image', t('Profile picture bought: {i} for {n} Sparks', {i: Avatars.item(e.a) ? Avatars.name(Avatars.item(e.a)) : e.a, n: e.n})];
                 case 'points':
                     return ['edit', t('Changed from the portal · {f}: {a} → {b}', {f: e.a === 'xp' ? t('Grade XP') : t('Sparks'), a: e.n, b: e.m})];
                 default:
@@ -576,24 +576,25 @@
 
     // ---------------------------------------------------------------- profile pictures
 
-    /** Price in Sparks and sale of each character and background; the drawings are in assets/avatars.js. */
+    /** Price in Sparks and sale of each character, accessory, frame and background; the drawings are in assets/avatars.js. */
     async function viewAvatars() {
         const d = await Api.get('admin.avatars');
+        const previewCode = (kind, id) => kind === 'character' ? id + ':violet' : kind === 'accessory' ? ':violet:' + id : kind === 'frame' ? ':violet::' + id : ':' + id;
         const section = (kind, title) => {
             const rows = d.items.filter(x => x.kind === kind).map(x => {
-                const art = kind === 'character' ? Avatars.CHARACTERS[x.id] : Avatars.BACKGROUNDS[x.id];
+                const art = Avatars.item(x.id);
                 const price = inp({type: 'number', min: 0, max: 100000, value: x.price, 'aria-label': t('Price')});
                 price.classList.add('adm-price');
                 const on = h('input', {type: 'checkbox', checked: !!+x.enabled, 'aria-label': t('On sale')});
                 const save = iconBtn('save', t('Save'), () => act(save, () => Api.post('admin.avatar.save', {id: x.id, price: price.value, enabled: on.checked})));
-                return h('tr', h('td', Avatars.render(kind === 'character' ? x.id + ':violet' : ':' + x.id, 'A', 'sm')), h('td', art ? Avatars.name(art) : x.id),
+                return h('tr', h('td', Avatars.render(previewCode(kind, x.id), kind === 'accessory' ? '' : 'A', 'sm')), h('td', art ? Avatars.name(art) : x.id),
                     h('td', price), h('td', h('label.check', on, h('span', t('On sale')))), h('td', String(x.sold)), h('td.nowrap', save));
             });
             return [h('h2.section-title', title), table(['', t('Name'), t('Price (Sparks)'), t('Sale'), t('Sold'), ''], rows)];
         };
         return page(t('Profile pictures'), null,
             h('p.muted', t('Learners buy these with Sparks from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.')),
-            section('character', t('Characters')), section('background', t('Backgrounds')));
+            section('character', t('Characters')), section('accessory', t('Accessories')), section('frame', t('Frames')), section('background', t('Backgrounds')));
     }
 
     const SETTINGS = [

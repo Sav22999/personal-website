@@ -27,7 +27,7 @@ function schema_statements(string $p): array
             `lang` CHAR(2) NOT NULL DEFAULT 'en',
             `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
             `email_verified_at` DATETIME NULL,
-            `avatar` VARCHAR(40) NULL,
+            `avatar` VARCHAR(80) NULL,
             `role` TINYINT UNSIGNED NOT NULL DEFAULT 0,
             `xp` INT UNSIGNED NOT NULL DEFAULT 0,
             `points` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -345,7 +345,8 @@ function install_schema(PDO $pdo, string $prefix): void
         $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `email_verified_at` DATETIME NULL AFTER `status`");
         $pdo->exec("UPDATE `{$prefix}users` SET email_verified_at = UTC_TIMESTAMP() WHERE google_sub IS NOT NULL OR role >= 5");
     }
-    if (!in_array('avatar', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `avatar` VARCHAR(40) NULL");
+    if (!in_array('avatar', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `avatar` VARCHAR(80) NULL");
+    else $pdo->exec("ALTER TABLE `{$prefix}users` MODIFY COLUMN `avatar` VARCHAR(80) NULL");
     if (!in_array('username', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `username` VARCHAR(20) NULL AFTER `name`, ADD UNIQUE KEY `uq_username` (`username`)");
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}lesson_progress`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('skipped', $columns, true)) {
