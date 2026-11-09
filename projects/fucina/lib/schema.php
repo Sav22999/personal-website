@@ -39,6 +39,7 @@ function schema_statements(string $p): array
             `best_drill_streak` INT UNSIGNED NOT NULL DEFAULT 0,
             `on_board` TINYINT(1) NOT NULL DEFAULT 1,
             `notify_off` VARCHAR(100) NULL,
+            `notify_hours` VARCHAR(200) NULL,
             `reminded_on` DATE NULL,
             `last_day` DATE NULL,
             `created_at` DATETIME NOT NULL,
@@ -362,6 +363,8 @@ function install_schema(PDO $pdo, string $prefix): void
         $pdo->exec("UPDATE `{$prefix}lesson_progress` p JOIN (SELECT user_id, course, MAX(score) AS best FROM `{$prefix}exams` GROUP BY user_id, course) e
             ON e.user_id = p.user_id AND e.course = p.course SET p.stars = IF(e.best >= 90, 3, IF(e.best >= 80, 2, 1)) WHERE p.skipped = 1");
     }
+    $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}users`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('notify_hours', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `notify_hours` VARCHAR(200) NULL AFTER `notify_off`");
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}daily_results`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");
     if (!in_array('seconds', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `seconds` INT UNSIGNED NULL");

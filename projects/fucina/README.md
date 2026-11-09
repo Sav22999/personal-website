@@ -1,133 +1,86 @@
 # Fucina
 
-App gamificata per imparare a programmare, a livelli sempre più difficili: **43 corsi e 234 livelli**. Web (HTML, CSS,
-animazioni, SCSS, Sass, Tailwind CSS, JavaScript, TypeScript, Angular, Vue), backend e dati (PHP, Python, Java, SQL, R),
-mobile e desktop (Flutter, Swift, Kotlin, Vala) e sistemi (Rust). Ogni corso ha una o più categorie (frontend, backend,
-mobile, dati, sistemi, desktop): nel Percorso si cercano per nome e si filtrano per categoria, raggruppati per linguaggio.
-Il corso “PHP avanzato” di prima ora si chiama “PHP intermedio” (lo sposta la versione 12 dello schema, con progressi e
-certificati); il nuovo “PHP avanzato” viene dopo.
+Gamified web app for learning to program, across progressively challenging levels: **43 courses and 234 levels**. Web (HTML, CSS, animations, SCSS, Sass, Tailwind CSS, JavaScript, TypeScript, Angular, Vue), backend & data (PHP, Python, Java, SQL, R), mobile & desktop (Flutter, Swift, Kotlin, Vala), and systems (Rust). Each course belongs to one or more categories (frontend, backend, mobile, data, systems, desktop): in the Courses section they can be searched by name and filtered by category chips, grouped by language. The original “Advanced PHP” course is now titled “Intermediate PHP” (migrated by schema version 12 with all learner progress and certificates intact); the newer “Advanced PHP” comes afterwards.
 
-Web app in PHP + MySQL, in italiano e inglese, installabile (PWA) e pronta per Google Play (`android/`).
+Web application in PHP + MySQL, bilingual in Italian and English, installable as a Progressive Web App (PWA) and ready for Google Play (`android/`).
 
-## Come funziona
+## How It Works
 
-- **Corsi e livelli**: ogni corso è una serie di livelli (teoria, domande, esercizio di codice) con difficoltà crescente.
-  Un livello si apre finendo il precedente, un corso finendo quello che lo precede o superandone l’esame.
-- **Sfide lampo** (`lib/drills.php`, `assets/drills.js`): tra teoria e domande, sei tipi di mini-gioco: tessere, ordina
-  le righe, caccia al bug, coppie, vero o falso a tempo e figure da copiare con i comandi CSS. Si ritrovano mescolate in
-  **Palestra**. Come i giochi si svolgono nel browser, quindi non sono materiale d’esame e pagano una volta sola.
-- **Esercizi**: si scrive codice vero con anteprima dal vivo per HTML e CSS. Il controllo gira nel browser, in un iframe
-  senza script. SCSS, Sass, JavaScript, TypeScript e PHP non hanno anteprima: il controllo guarda il codice scritto.
-- **XP e Scintille**: ogni ricompensa dà XP e altrettante Scintille. Gli XP crescono soltanto e decidono il grado: 14 nomi,
-  da Scintilla (grado 1) a Fiamma eterna (grado 40), elencati in `RANKS` di `lib/progress.php` e mostrati tutti nelle statistiche. Le Scintille si spendono in **suggerimenti**: su una domanda tolgono metà delle
-  risposte sbagliate, su un esercizio mostrano una soluzione, nei giochi danno un aiuto. All’esame non ci sono.
-- **Esame e certificato**: un esame con domande estratte a caso e un tempo massimo (15 minuti di partenza, controllato dal
-  server), aperto per ogni corso anche senza fare i livelli: chi
-  conosce già la materia lo supera e il corso conta come finito: si aprono i successivi e i livelli non giocati risultano
-  risolti con dei fuochi al posto delle stelle (3 dal 90%, 2 dall’80%, 1 altrimenti), senza XP e senza contare per i
-  badge a numero. Superato, il certificato si **sblocca
-  con le Scintille** (prezzo in Impostazioni, 200 di partenza) e si può mostrare e stampare in A4
-  (`certificate.php?c=CODICE`). È un’immagine generata dal server, sempre in inglese, che si salva in PNG o PDF
-  (`lib/certificate.php`; lo sfondo si rigenera con `tools/build-certificate.py`). Non ha valore legale, e lo dice.
-  Chiunque, anche senza account, può controllarlo con il suo numero univoco su `verify.php`.
-- **Giochi**: nove giochi a livelli sul codice. *Chi è il tag?*, *Tagdoku* (4×4, poi 9×9, poi 16×16), *Quattro di fila*
-  (forza quattro con le domande: risposta giusta, il tuo gettone verde; sbagliata, il computer mette un gettone rosso),
-  *Scacchiera CSS* (da 3×3 a 10×10), *Salti di riga* (righe da trascinare), *Tinta giusta* (colori CSS),
-  *Duello di selettori* (specificità), *Laboratorio flex* e *Che cosa stampa?* (output JavaScript).
-  Danno Scintille extra, fino a un massimo giornaliero.
-- **Immagine del profilo**: personaggi originali e sfondi disegnati in SVG (`assets/avatars.js`), comprati con le Scintille
-  dal profilo e visibili nelle classifiche e tra gli amici. Prezzi e vendita di ogni elemento si cambiano dal portale admin
-  (*Immagini del profilo*, tabella `fc_avatar_items`); gli acquisti stanno in `fc_user_items` e nell’attività dell’utente.
-  L’iniziale dello username è sempre gratis.
-- **Badge**: ogni nuovo badge dà XP e Scintille (50 di partenza, `xp_badge` in Impostazioni).
-- **Conferma dell’email**: chi si registra con email e password riceve un link (valido 48 ore, monouso, salvato solo come
-  hash in `fc_email_tokens`); finché non lo apre l’account è bloccato lato server (`must_verify()`), tranne reinvio del
-  link ed eliminazione. Il link porta all’app, che chiede conferma con un pulsante (così gli scanner delle email non lo
-  consumano) e fa entrare. Gli account Google e gli admin sono già confermati. Senza SMTP configurato la verifica si
-  spegne, invece di chiudere fuori tutti. L’email non si può cambiare.
-- **Portale admin, utenti**: XP e Scintille modificabili (ogni modifica resta nell’attività), attività di ogni utente in
-  sola lettura con data e ora, e chi deve ancora confermare l’email.
-- **Username e amici**: ognuno sceglie uno username, l’unico dato pubblico. Serve per cercare, aggiungere e rimuovere
-  amici (in un solo senso, senza richieste) e nelle classifiche, tra tutti o tra amici.
-- **Classifiche del giorno**: quella della sfida del giorno (più risposte giuste, a parità il più veloce, con il tempo misurato dal server) dà i premi:
-  il primo riceve Scintille in base ai partecipanti, il secondo la metà e il terzo un quarto, ma serve almeno una risposta
-  giusta. Non serve un cron: paga il primo accesso del giorno dopo. Quella degli XP è solo per divertimento. Ci si può
-  escludere dal profilo.
-- **Notifiche**: sfida del giorno, serie a rischio, premi e amici, ognuna attivabile dal profilo (`lib/push.php`). Il push
-  non porta contenuti: sveglia il service worker, che chiede all’API. I promemoria serali partono da `reminders.php`: va
-  pianificato ogni giorno verso le 18:00, con la stessa chiave del cron di pulizia.
-- **Sfida del giorno**, serie di giorni, statistiche, calendario delle attività e 51 badge, uno anche per ogni corso.
+- **Courses & Levels**: each course is a sequence of levels (theory, questions, code exercise) of increasing difficulty. A level unlocks upon completing the previous one, and a course unlocks by finishing the one before it or by passing its final exam.
+- **Drills** (`lib/drills.php`, `assets/drills.js`): between theory and questions, six types of bite-sized drills appear: code tiles, line order, bug hunt, match pairs, timed true-or-false flashcards, and CSS copy shapes. These drills are also mixed together in the **Gym**. As with games, drills run client-side in the browser, are not part of final exams, and award rewards once.
+- **Exercises**: learners write real code with a live preview for HTML and CSS. Validation executes in the browser within a script-less sandboxed iframe. SCSS, Sass, JavaScript, TypeScript, and PHP do not show live rendering: automated tests inspect the written code structure.
+- **XP & Sparks**: each reward awards both XP and an equal number of Sparks. XP increases monotonically and determines rank: 14 ranks, from Spark (rank 1) to Eternal Flame (rank 40), defined in `RANKS` in `lib/progress.php` and listed in learner statistics. Sparks are spent on **hints**: on a question they eliminate half of the wrong options, on an exercise they show a working solution, and in games they provide assistance. Hints are unavailable during final exams.
+- **Exam & Certificate**: an exam with questions drawn at random and a time limit (default 15 minutes, configurable per course and verified server-side), available for every course even without completing all intermediate levels. Those who already know the subject can pass the exam directly: subsequent courses unlock, unplayed levels are marked as completed with fires instead of stars (3 fires from 90%, 2 from 80%, 1 otherwise), without XP and without counting towards milestone badges. Once passed, the certificate can be **unlocked with Sparks** (price configured in Settings, default 200) and can be viewed or printed in A4 (`certificate.php?c=CODE`). The certificate is a server-rendered image, always in English, exportable as PNG or PDF (`lib/certificate.php`; certificate background can be rebuilt via `tools/build-certificate.py`). Certificates clearly state they carry no formal legal accreditation. Anyone can verify an earned certificate by its unique alphanumeric code at `verify.php` without an account. If score is 100%, the title displays “Certificate of completion with honours”; otherwise “Certificate of completion”. The score is displayed in points out of 10.
+- **Games**: nine level-based mini-games focused on code: *Who is the tag?*, *Tagdoku* (4×4, 9×9, 16×16), *Four in a row* (Connect Four mechanics with questions: correct answers drop a green disc, incorrect answers drop a red disc), *CSS Chessboard* (from 3×3 up to 10×10), *Line hop* (drag-and-drop lines), *Right shade* (CSS colours), *Selector duel* (specificity), *Flex lab*, and *What does it print?* (JavaScript output). Games award bonus Sparks up to a daily cap.
+- **Profile Picture**: custom characters, accessories, frames, and backgrounds rendered in SVG (`assets/avatars.js`), unlocked with Sparks from the learner profile and displayed in rankings and among friends. Prices, availability, and sales of each item are managed from the admin portal (*Profile pictures*, table `fc_avatar_items`); purchases are recorded in `fc_user_items` and user activity logs. The learner's initial character and empty slots are always free. Items are sorted in ascending order by price.
+- **Badges**: every unlocked badge awards XP and Sparks (default 50, `xp_badge` in Settings).
+- **Email Verification**: learners registering with email and password receive a single-use verification link (valid for 48 hours, stored only as a SHA-256 hash in `fc_email_tokens`); until confirmed, the account is restricted server-side (`must_verify()`), allowing only resending the link or account deletion. The link opens the app with a confirmation button to prevent automated email security scanners from consuming the token. Google accounts and administrators are verified automatically. If SMTP credentials are not configured, verification is disabled gracefully to avoid lockouts. Registered email addresses cannot be modified.
+- **Admin Portal, Users**: user XP and Sparks are editable (every adjustment is recorded in activity history), read-only activity logs display timestamps and actions, and pending unverified accounts are flagged. Certificate names can be updated by administrators.
+- **Username & Friends**: each learner selects a unique username, which is the only publicly visible detail. Used to search, add, and remove friends (unidirectional follow, no pending request queue) and in leaderboards (global or friends-only).
+- **Daily Leaderboards**: the daily challenge leaderboard (highest score first; on ties, fastest completion verified by server timestamps) distributes prizes: 1st place earns Sparks based on participant count, 2nd earns half, 3rd earns one quarter (requiring at least one correct answer). No background cron is needed: the first request of the subsequent day settles rewards automatically. The XP leaderboard is purely recreational. Learners can opt out of leaderboards from their profile preferences.
+- **Notifications**: daily challenge, streak at risk, prizes, and friends, each configurable from the profile (`lib/push.php`). Web Push carries no payload: it simply wakes the service worker, which fetches pending notifications from the API. Scheduled reminders (daily challenge and streak at risk) are delivered by `projects/cron/fucina-reminders.php` according to each user's chosen reminder hour in server timezone (Europe/Rome).
+- **Daily Challenge**, day streaks, learning analytics, activity heatmaps, and 51 collectible badges (including one for every course).
 
-Le regole stanno sul server: le risposte arrivano al browser solo dopo aver risposto (`quiz.check`), l’esame viene
-corretto dal server e gli XP dei giochi, l’unico risultato comunicato dal browser, hanno un massimo per partita e al giorno.
+Rules and validation remain strictly on the server: question answers reach the browser only after submission (`quiz.check`), exams are graded server-side, and game XP is subject to per-game and daily limits.
 
-## Portale admin (`admin.html`)
+## Admin Portal (`admin.html`)
 
-Riservato ad amministratori (ruolo 5) e master admin (10), in italiano e inglese. Gestisce corsi, livelli (teoria,
-esercizi, controlli), quiz, sfide (il contenuto si scrive in JSON, con un esempio per ogni tipo), giochi e loro contenuti, utenti, certificati e impostazioni (XP, prezzi dei suggerimenti,
-esame). Ogni testo si modifica nelle lingue affiancate; una lingua vuota è segnalata in rosso e contata in «Da tradurre»,
-e nel frattempo l’app mostra l’altra.
+Restricted to administrators (role 5) and master administrators (role 10), available in Italian and English. Manages courses, levels (theory, exercises, validation checks), quizzes, drills (content authored in JSON with reference templates), games and items, users, certificates, avatar items, and system settings (XP rates, hint pricing, exam timers). All content supports side-by-side editing across languages; missing translations are highlighted in red and tallied in “To translate”.
 
-Per aggiungere una lingua: un blocco in `assets/i18n.js` e il suo codice in `LANGS` di `lib/i18n.php`.
+To add a new language: provide a locale dictionary in `assets/i18n.js` and register its language code in `LANGS` within `lib/i18n.php`.
 
-## Struttura
+## Project Structure
 
 ```
 fucina/
 ├── index.html, admin.html, privacy.html, manifest.webmanifest, sw.js
-├── certificate.php         pagina pubblica di un certificato
-├── install-db.php          installazione guidata (tabelle, contenuti iniziali, master admin)
-├── update.php              aggiorna le tabelle con le credenziali salvate
-├── credentials-sample.php  modello delle credenziali (credentials.php è in .gitignore)
-├── api/index.php           API JSON
-├── lib/                    bootstrap, schema, catalogo (courses.php), progressi (progress.php), API admin, email
-│   ├── seed.php, seed/     contenuti iniziali: usati una sola volta, poi comanda il database
-├── assets/                 app.js, games.js, admin.js, ui.js, api.js, i18n.js, app.css + fucina.css, icone, font
-├── install/fucina.sql      le stesse tabelle e contenuti per phpMyAdmin (php tools/build-sql.php)
-├── tools/                  build-sql.php, build-icons.py
-└── android/                progetto Android Studio (WebView)
+├── certificate.php         public certificate verification and display
+├── reminders.php           legacy wrapper (points to projects/cron/fucina-reminders.php)
+├── install-db.php          installation wizard (tables, initial seed, master admin)
+├── update.php              database schema migration using saved credentials
+├── credentials-sample.php  configuration template (credentials.php is gitignored)
+├── api/index.php           JSON API endpoints
+├── lib/                    bootstrap, schema, courses, progress, push, admin API, email
+│   ├── seed.php, seed/     initial content catalogue: loaded once on install/upgrade
+├── assets/                 app.js, games.js, admin.js, ui.js, api.js, avatars.js, i18n.js, css, icons
+├── install/fucina.sql      complete SQL schema and seed data for phpMyAdmin (tools/build-sql.php)
+├── tools/                  build-sql.php, build-icons.py, check-drills.php
+└── android/                native Android Studio WebView wrapper
 ```
 
-## Installazione sul server
+## Server Installation
 
-Il database è il quinto dell’hosting (`…_5`), con prefisso `fc_`.
+The database is typically the 5th database on shared hosting (`…_5`), using the `fc_` table prefix.
 
-1. Carica `projects/fucina/` (la cartella `android/` non serve sul server), senza `credentials.php`.
-2. Apri `https://www.saveriomorelli.com/projects/fucina/install-db.php` e inserisci host, utente, password e nome del
-   database (`…_5`), poi nome, email e password del **master admin**.
-3. La pagina crea le tabelle e i contenuti iniziali, il master admin e `credentials.php`.
-4. Eliminala dal server dopo l’uso.
+1. Upload `projects/fucina/` (the `android/` directory is not needed on the server), without `credentials.php`.
+2. Navigate to `https://www.saveriomorelli.com/projects/fucina/install-db.php` and enter the database host, user, password, database name (`…_5`), followed by the master admin name, email, and password.
+3. The wizard provisions all database tables, seed content, master admin account, and writes `credentials.php`.
+4. Delete `install-db.php` from the server once complete.
 
-In alternativa: phpMyAdmin → importa `install/fucina.sql`, poi registrati e rendi admin il tuo account:
+Alternative installation via phpMyAdmin: import `install/fucina.sql`, register an account in the app, and elevate it to master admin:
 
 ```sql
-UPDATE fc_users SET role = 10 WHERE email = 'tua@email.it';
+UPDATE fc_users SET role = 10 WHERE email = 'your@email.com';
 ```
 
-## Accesso con Google
+## Google Sign-In
 
-Usa lo stesso client OAuth «Applicazione web» di FoodTrack e GiftWise. Il Client ID sta in `credentials.php`.
+Shares the same OAuth 2.0 Web Client as FoodTrack and GiftWise. The Client ID is stored in `credentials.php`.
 
-## App Android (Google Play)
+## Android Application (Google Play)
 
-`android/` è una WebView nativa come quella di GiftWise (`com.saverio.fucina`): login Google con il selettore di sistema
-(`window.FucinaAndroid`), link ai certificati che aprono l’app, tasto indietro, pagina «Nessuna connessione».
+`android/` is a native WebView container (`com.saverio.fucina`): Google sign-in via native credential picker (`window.FucinaAndroid`), deep links for certificates opening directly in the app, system back button navigation, and an offline fallback page.
 
-1. Apri `android/` in Android Studio e attendi Gradle.
-2. Crea la chiave di caricamento, oppure copia `keystore.properties.sample` in `keystore.properties`.
-3. In Google Cloud Console crea un *ID client OAuth* di tipo **Android** con package `com.saverio.fucina` e la SHA-1.
-4. Carica l’`.aab` in Play Console. Icona: `android/play-store-icon-512.png`, testi: `android/store/listing.md`.
-5. Per aprire i link nell’app aggiungi a `/.well-known/assetlinks.json` quanto indicato in `android/assetlinks.sample.json`.
+1. Open `android/` in Android Studio and let Gradle sync.
+2. Generate an upload keystore or copy `keystore.properties.sample` to `keystore.properties`.
+3. In Google Cloud Console, create an **Android** OAuth Client ID with package name `com.saverio.fucina` and your signing certificate SHA-1 fingerprint.
+4. Upload the built `.aab` bundle to Google Play Console. App icon: `android/play-store-icon-512.png`, store text: `android/store/listing.md`.
+5. For deep link handling, add the Digital Asset Links definition to `/.well-known/assetlinks.json` as shown in `android/assetlinks.sample.json`.
 
-## Sicurezza
+## Security
 
-Password con `password_hash`, sessione con token casuale in cookie HttpOnly/Secure/SameSite (nel database solo l’hash
-SHA-256), token CSRF su ogni modifica, limiti ai tentativi, `credentials.php`, `lib/`, `install/` e `tools/` bloccati dal
-browser. Il codice degli esercizi gira in un iframe `sandbox` senza script.
+Passwords hashed with `password_hash` (bcrypt/argon2), session authentication via cryptographically random tokens stored in HttpOnly/Secure/SameSite cookies (database holds only the SHA-256 hash), CSRF token validation on all mutating POST endpoints, rate limiting on sensitive actions, and directory access to `credentials.php`, `lib/`, `install/`, and `tools/` denied by server configuration. User-submitted exercise code executes in an isolated sandbox iframe without script execution privileges.
 
-## Aggiornare il catalogo
+## Upgrading the Catalogue
 
-I contenuti iniziali stanno in `lib/seed/`. Per portarli su un’installazione esistente aggiungili e alza `SCHEMA_VERSION`
-in `lib/bootstrap.php`: al primo accesso vengono inseriti solo i corsi e i livelli che mancano, e ciò che è stato
-modificato dal portale resta com’è. Prima di caricare, controlla tutto con `php tools/check-drills.php`, poi rigenera
-`install/fucina.sql` con `php tools/build-sql.php`.
+Initial seed content resides in `lib/seed/`. To apply updates to an existing installation, update the seed files and increment `SCHEMA_VERSION` in `lib/bootstrap.php`: upon the next request, `ensure_schema()` inserts only missing courses and levels, preserving any edits made via the admin portal. Verify catalogue integrity beforehand via `php tools/check-drills.php`, then rebuild `install/fucina.sql` via `php tools/build-sql.php`.

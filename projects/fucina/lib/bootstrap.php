@@ -7,10 +7,11 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/push.php';
 
 const APP_NAME = 'Fucina';
 const AUTH_COOKIE = 'fucina_auth';
-const SCHEMA_VERSION = 15;
+const SCHEMA_VERSION = 16;
 const APP_TIMEZONE = 'Europe/Rome'; // the "day" of streaks and daily challenges
 
 // ---------- Configuration ----------
@@ -264,6 +265,7 @@ function public_user(array $u): array
         'username' => $u['username'] ?? null,
         'avatar' => $u['avatar'] ?? null,
         'notifyOff' => json_decode((string)($u['notify_off'] ?? ''), true) ?: [],
+        'notifyHours' => notify_hours($u['notify_hours'] ?? null),
     ];
 }
 

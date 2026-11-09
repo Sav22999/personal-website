@@ -770,11 +770,38 @@ switch ($r) {
 
     // ======================================================== notifications
 
+    case 'notify.get':
+        $u = writer();
+        $st = db()->prepare('SELECT notify_off, notify_hours FROM ' . t('users') . ' WHERE id = ?');
+        $st->execute([$u['id']]);
+        $r = $st->fetch() ?: [];
+        $now = new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
+        send_json([
+            'ok' => true,
+            'kinds' => NOTIFY_KINDS,
+            'live' => NOTIFY_LIVE,
+            'scheduled' => NOTIFY_SCHEDULED,
+            'off' => notify_off($r['notify_off'] ?? null),
+            'hours' => notify_hours($r['notify_hours'] ?? null),
+            'serverTz' => APP_TIMEZONE,
+            'serverTime' => $now->format('H:i'),
+            'serverOffset' => $now->getOffset() / 3600,
+        ]);
+
     case 'notify.save':
         $u = writer();
-        $off = is_array(body()['off'] ?? null) ? array_values(array_intersect(NOTIFY_KINDS, body()['off'])) : [];
-        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ? WHERE id = ?')->execute([json_encode($off), $u['id']]);
-        send_json(['ok' => true, 'notifyOff' => $off]);
+        $b = body();
+        $off = is_array($b['off'] ?? null) ? array_values(array_intersect(NOTIFY_KINDS, $b['off'])) : [];
+        $rawHours = (array)($b['hours'] ?? []);
+        $hours = DEFAULT_NOTIFY_HOURS;
+        foreach (NOTIFY_SCHEDULED as $k) {
+            if (isset($rawHours[$k]) && is_numeric($rawHours[$k])) {
+                $h = max(0, min(23, (int)$rawHours[$k]));
+                $hours[$k] = $h;
+            }
+        }
+        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ?, notify_hours = ? WHERE id = ?')->execute([json_encode($off), json_encode($hours), $u['id']]);
+        send_json(['ok' => true, 'notifyOff' => $off, 'notifyHours' => $hours]);
 
     case 'notify.pending':
         // Asked by the service worker when a push wakes it up

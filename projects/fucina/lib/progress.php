@@ -351,6 +351,9 @@ function state_payload(array $u): array
         'gameSparks' => ['today' => $gameToday, 'cap' => setting('xp_game_daily_cap')],
         'board' => board_position($uid), 'prizes' => unseen_prizes($uid),
         'shop' => avatar_shop($uid),
+        'serverTime' => (new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE)))->format('H:i'),
+        'serverTz' => APP_TIMEZONE,
+        'serverOffset' => (new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE)))->getOffset() / 3600,
         'ranks' => array_map(fn($from, $r) => ['from' => $from, 'id' => $r['id'], 'name' => $r[lang()]], array_keys(RANKS), RANKS),
     ];
 }

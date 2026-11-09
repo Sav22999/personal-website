@@ -1333,36 +1333,115 @@
         await Api.post('push.subscribe', {endpoint: sub.endpoint});
     }
 
-    /** The device is a choice of this browser; the kinds follow the account, on every device. */
-    function notificationSettings() {
-        const kinds = [['daily', 'calendar', t('Daily challenge'), t('An evening reminder if you have not done it yet')], ['streak', 'fire', t('Streak at risk'), t('In the evening, if your streak is about to end')], ['prizes', 'trophy', t('Prizes'), t('When you make the podium')], ['friends', 'group', t('Friends'), t('When someone adds you')]];
+    /** The device is a choice of this browser; the kinds and reminder hours follow the account, on every device. */
+    async function notificationSettings() {
+        const kinds = [
+            ['daily', 'calendar', t('Daily challenge'), t('A reminder if you have not done it yet'), true],
+            ['streak', 'fire', t('Streak at risk'), t('When your streak is about to end'), true],
+            ['prizes', 'trophy', t('Prizes'), t('When you make the podium'), false],
+            ['friends', 'group', t('Friends'), t('When someone adds you'), false]
+        ];
         const box = h('div');
-        const toggle = (ic, title, text, on, onclick, disabled) => h('button.setting.toggle', {type: 'button', role: 'switch', 'aria-checked': on ? 'true' : 'false', disabled: !!disabled, onclick}, icon(ic), h('span', h('strong', title), text ? h('small', text) : null), h('i.switch' + (on ? '.on' : '')));
+        const s = sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {onclick: () => s.close()})]});
+
+        const info = await Api.get('notify.get').catch(() => null);
+        let off = new Set((info && info.off) || S.state.user.notifyOff || []);
+        let hours = Object.assign({daily: 18, streak: 18}, (info && info.hours) || S.state.user.notifyHours || {});
+        const serverOffset = typeof (info && info.serverOffset) === 'number' ? info.serverOffset : 1;
+        const localOffset = -new Date().getTimezoneOffset() / 60;
+        const tzDiff = Math.round(localOffset - serverOffset);
 
         async function paint() {
             const sub = await deviceSubscription().catch(() => null);
-            const off = new Set(S.state.user.notifyOff || []);
-            box.replaceChildren(
-                pushReady() ? h('div.group', toggle('bell', t('On this device'), sub ? t('On') : t('Off'), !!sub, async e => {
-                    e.currentTarget.disabled = true;
-                    await setDevice(!sub).catch(err => toast(err.message, 'error'));
-                    paint();
-                })) : banner('info', 'info', t('Not available here'), t('This browser cannot receive notifications. On iPhone, add Fucina to the home screen first.')),
-                h('h2.section-title', t('Notify me about')),
-                h('div.group', kinds.map(([key, ic, title, text]) => toggle(ic, title, text, !off.has(key), async () => {
-                    if (off.has(key)) off.delete(key); else off.add(key);
-                    try {
-                        S.state.user.notifyOff = (await Api.post('notify.save', {off: [...off]})).notifyOff;
-                    } catch (err) {
-                        toast(err.message, 'error');
+
+            const items = kinds.map(([key, ic, title, text, isSched]) => {
+                const isOn = !off.has(key);
+                let hourSelect = null;
+                if (isSched) {
+                    hourSelect = h('select.ctl.notify-select', {
+                        disabled: !isOn || undefined,
+                        'aria-label': t('Time'),
+                        onchange: async e => {
+                            const newH = parseInt(e.target.value, 10);
+                            hours[key] = newH;
+                            try {
+                                const res = await Api.post('notify.save', {off: [...off], hours});
+                                if (res.notifyHours) hours = res.notifyHours;
+                                if (S.state.user) S.state.user.notifyHours = hours;
+                                toast(t('Notification settings saved'), 'ok');
+                            } catch (err) {
+                                toast(err.message, 'error');
+                            }
+                        }
+                    });
+                    for (let hVal = 0; hVal < 24; hVal++) {
+                        let label = String(hVal) + ':00';
+                        if (hVal === 18) label += ' (' + t('default') + ')';
+                        if (tzDiff !== 0) {
+                            let localH = (hVal + tzDiff) % 24;
+                            if (localH < 0) localH += 24;
+                            label += ' · ' + t('{h}:00 on your device', {h: localH});
+                        }
+                        const opt = h('option', {value: hVal, selected: (hours[key] ?? 18) === hVal || undefined}, label);
+                        hourSelect.appendChild(opt);
                     }
-                    paint();
-                }))),
-                h('p.muted.small', t('Your choices follow your account. The content never passes through the push services.')));
+                }
+
+                const tag = isSched ? h('span.notify-tag.tag-sched', t('Reminder')) : h('span.notify-tag.tag-live', t('Immediate'));
+                const sw = h('button.setting.toggle', {
+                    type: 'button',
+                    role: 'switch',
+                    'aria-checked': isOn ? 'true' : 'false',
+                    onclick: async () => {
+                        if (off.has(key)) off.delete(key); else off.add(key);
+                        try {
+                            const res = await Api.post('notify.save', {off: [...off], hours});
+                            off = new Set(res.notifyOff);
+                            if (res.notifyHours) hours = res.notifyHours;
+                            if (S.state.user) {
+                                S.state.user.notifyOff = res.notifyOff;
+                                S.state.user.notifyHours = hours;
+                            }
+                        } catch (err) {
+                            toast(err.message, 'error');
+                        }
+                        paint();
+                    }
+                }, icon(ic), h('span', h('div.notify-head', h('strong', title), tag), text ? h('small', text) : null), h('i.switch' + (isOn ? '.on' : '')));
+
+                const hourRow = isSched ? h('div.notify-hour-row' + (isOn ? '' : '.disabled'),
+                    h('label', t('Time:')),
+                    hourSelect
+                ) : null;
+
+                return h('div.notify-item', sw, hourRow);
+            });
+
+            const tzBox = h('div.notify-tz-box',
+                icon('timer'),
+                h('span', t('Times are based on the server timezone ({tz}, current server time: {time}).', {
+                    tz: (info && info.serverTz) || 'Europe/Rome',
+                    time: (info && info.serverTime) || '18:00'
+                }))
+            );
+
+            box.replaceChildren(
+                pushReady() ? h('div.group', h('button.setting.toggle', {
+                    type: 'button', role: 'switch', 'aria-checked': sub ? 'true' : 'false', onclick: async e => {
+                        e.currentTarget.disabled = true;
+                        await setDevice(!sub).catch(err => toast(err.message, 'error'));
+                        paint();
+                    }
+                }, icon('bell'), h('span', h('strong', t('On this device')), h('small', sub ? t('On') : t('Off'))), h('i.switch' + (sub ? '.on' : ''))))
+                    : banner('info', 'info', t('Not available here'), t('This browser cannot receive notifications. On iPhone, add Fucina to the home screen first.')),
+                h('h2.section-title', t('Notify me about')),
+                h('div.group', items),
+                tzBox,
+                h('p.muted.small', t('Your choices follow your account. The content never passes through the push services.'))
+            );
         }
 
         paint();
-        const s = sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {onclick: () => s.close()})]});
     }
 
     function releaseNotes() {

@@ -8,6 +8,9 @@
 declare(strict_types=1);
 
 const NOTIFY_KINDS = ['daily', 'streak', 'prizes', 'friends'];
+const NOTIFY_LIVE = ['prizes', 'friends'];
+const NOTIFY_SCHEDULED = ['daily', 'streak'];
+const DEFAULT_NOTIFY_HOURS = ['daily' => 18, 'streak' => 18];
 /** Hosts of the browsers' push services: subscriptions pointing anywhere else are refused. */
 const PUSH_HOSTS = ['fcm.googleapis.com', 'android.googleapis.com', '.push.services.mozilla.com', '.push.apple.com', '.notify.windows.com'];
 const NOTIFY_PAGES = ['daily' => './#/daily', 'streak' => './#/home', 'prizes' => './#/board', 'friends' => './#/friends'];
@@ -16,6 +19,22 @@ const NOTIFY_PAGES = ['daily' => './#/daily', 'streak' => './#/home', 'prizes' =
 function notify_off(?string $json): array
 {
     return array_values(array_intersect(json_decode((string)$json, true) ?: [], NOTIFY_KINDS));
+}
+
+/** Chosen hours for scheduled reminders (whole hours 0-23) in server timezone (Europe/Rome). */
+function notify_hours(?string $json): array
+{
+    $saved = json_decode((string)$json, true);
+    $res = DEFAULT_NOTIFY_HOURS;
+    if (is_array($saved)) {
+        foreach (NOTIFY_SCHEDULED as $k) {
+            if (isset($saved[$k]) && is_numeric($saved[$k])) {
+                $h = (int)$saved[$k];
+                if ($h >= 0 && $h <= 23) $res[$k] = $h;
+            }
+        }
+    }
+    return $res;
 }
 
 /** The text of a notification, in the language of the user: the service worker has no dictionary. */
