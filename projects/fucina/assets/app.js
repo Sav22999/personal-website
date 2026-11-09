@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.19.2';
+    const VERSION = '1.19.3';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.19.3', date: '2026-11-09', it: ['Sezione Certificati nella barra di navigazione', 'Il Percorso ora si chiama Corsi', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'], en: ['Certificates section in the navigation bar', 'Path is now called Courses', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']},
         {v: '1.19.2', date: '2026-11-08', it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'], en: ['Course search: multiple selection of category and language chips']},
         {v: '1.19.1', date: '2026-11-08', it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'], en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']},
         {v: '1.19.0', date: '2026-11-08', it: ['28 nuovi corsi: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust e Vala, più un nuovo PHP avanzato', 'Il vecchio PHP avanzato ora si chiama PHP intermedio: progressi e certificati restano', 'Nel Percorso cerchi un corso, filtri per categoria (frontend, backend, mobile, dati, sistemi, desktop) e trovi i corsi raggruppati per linguaggio', 'Il tempo dell’esame finale si può impostare corso per corso dal portale admin'], en: ['28 new courses: Tailwind CSS, Angular, Vue, Python, Java, SQL, R, Flutter, Swift, Kotlin, Rust and Vala, plus a new Advanced PHP', 'The old Advanced PHP is now Intermediate PHP: progress and certificates stay', 'In the Path you can search for a course, filter by category (frontend, backend, mobile, data, systems, desktop) and see courses grouped by language', 'The final exam time can be set course by course from the admin portal']},
@@ -185,7 +186,7 @@
 
     function bottomNav(active) {
         const tab = (name, label, ic) => h('a' + (active === name ? '.active' : ''), {href: '#/' + name, 'aria-current': active === name ? 'page' : null}, h('span.pill', icon(ic)), label);
-        return h('nav.bottomnav', {'aria-label': t('Sections')}, tab('home', t('Home'), 'home'), tab('path', t('Path'), 'book'), tab('games', t('Games'), 'game'), tab('board', t('Ranking'), 'trophy'), tab('stats', t('Stats'), 'stats'));
+        return h('nav.bottomnav', {'aria-label': t('Sections')}, tab('home', t('Home'), 'home'), tab('path', t('Courses'), 'book'), tab('games', t('Games'), 'game'), tab('board', t('Ranking'), 'trophy'), tab('certificates', t('Certificates'), 'cert'), tab('stats', t('Stats'), 'stats'));
     }
 
     function sideNav(active) {
@@ -193,13 +194,13 @@
         return h('nav.sidenav', {'aria-label': t('Sections')},
             h('a.sn-brand', {href: '#/home'}, h('img', {src: LOGO, alt: ''}), h('strong', 'Fucina')),
             S.state ? gradeChip() : null,
-            h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Path'), 'book'), link('games', t('Games'), 'game'), link('board', t('Ranking'), 'trophy'), link('stats', t('Stats'), 'stats')),
+            h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Courses'), 'book'), link('games', t('Games'), 'game'), link('board', t('Ranking'), 'trophy'), link('certificates', t('Certificates'), 'cert'), link('stats', t('Stats'), 'stats')),
             h('div.grow'),
             S.user.role >= 5 ? h('a.sn-link', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal'))) : null,
             h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm', myAvatar()), h('span', S.user.name)));
     }
 
-    const TAB_OF = {course: 'path', lesson: 'path', exam: 'path', daily: 'home', gym: 'home', game: 'games', play: 'games', friends: 'board'};
+    const TAB_OF = {courses: 'path', course: 'path', lesson: 'path', exam: 'path', daily: 'home', gym: 'home', game: 'games', play: 'games', friends: 'board'};
     const FULL_SCREEN = ['lesson', 'exam', 'daily', 'gym', 'play'];
 
     /** The shape of the page that is on its way, shown only when the data take a moment to arrive. */
@@ -233,7 +234,7 @@
         const waiting = setTimeout(() => {
             if (route().name === r.name) showSkeleton(r.name);
         }, 180);
-        const views = {home: viewHome, path: viewPath, course: viewCourse, lesson: viewLesson, exam: viewExam, daily: viewDaily, gym: viewGym, board: viewBoard, friends: viewFriends, games: viewGames, game: viewGame, play: viewPlay, stats: viewStats, profile: viewProfile};
+        const views = {home: viewHome, path: viewPath, courses: viewPath, course: viewCourse, lesson: viewLesson, exam: viewExam, daily: viewDaily, gym: viewGym, board: viewBoard, friends: viewFriends, games: viewGames, game: viewGame, play: viewPlay, certificates: viewCertificates, stats: viewStats, profile: viewProfile};
         let v;
         try {
             v = await (views[r.name] || viewHome)(r.a, r.b);
@@ -395,7 +396,7 @@
         });
         draw();
         return {
-            title: t('Path'), tab: 'path', body: [
+            title: t('Courses'), tab: 'path', body: [
                 h('p.lead', t('Every course is a series of levels, each harder than the last. Finish a course to open the ones that follow.')),
                 h('div.path-tools', h('label.path-search-box', icon('search'), search), cats, langs, count), list,
             ]
@@ -880,7 +881,7 @@
         }
 
         if (d.drills.length) next();
-        else stage.replaceChildren(empty(t('The gym opens soon'), t('Start the first level of a course to unlock the drills.'), btn(t('Open the path'), {onclick: () => go('path')})));
+        else stage.replaceChildren(empty(t('The gym opens soon'), t('Start the first level of a course to unlock the drills.'), btn(t('Open the courses'), {icon: 'book', onclick: () => go('path')})));
         return {title: t('Gym'), back: 'home', tab: 'home', nav: false, body: [d.drills.length ? h('div.bar.top', bar) : null, stage]};
     }
 
@@ -1114,8 +1115,6 @@
                 h('div.tiles', statTile('fire', st.user.bestStreak, t('Best streak')), statTile('spark', st.user.points, t('Sparks')), statTile('code', n.tasks, t('Exercises')), statTile('bolt', n.drills, t('Drills')), statTile('game', n.games, t('Games played')), statTile('calendar', n.daily, t('Daily challenges')), statTile('trophy', n.wins, t('Wins'))),
                 h('h2.section-title', t('This week')), h('div.card.pad', weekBars()),
                 h('h2.section-title', t('Activity')), h('div.card.pad', calendar()),
-                h('h2.section-title', t('Certificates')),
-                st.courses.some(c => c.certificate) ? h('div.group', st.courses.filter(c => c.certificate).map(c => certRow(c))) : h('p.muted', t('Finish a course and pass its exam to earn the first one.')),
                 h('h2.section-title', t('Badges') + ` · ${st.badges.filter(b => b.earnedAt).length}/${st.badges.length}`),
                 S.state.costs.badge ? h('p.muted', t('Every new badge gives +{n} XP and Sparks.', {n: S.state.costs.badge})) : null,
                 h('div.badges', [...st.badges].sort((a, b) => !!b.earnedAt - !!a.earnedAt).map(b => h('div.badge' + (b.earnedAt ? '.on' : ''), {title: b.desc}, tile('icon', b.icon), h('strong', b.title), h('span', b.desc)))),
@@ -1123,26 +1122,33 @@
         };
     }
 
-    function certRow(c) {
-        return h('div.cert-row', tile('icon', 'cert'), h('div.grow', h('strong', c.title), h('p.muted', `${c.certificate.score}% · ${UI.fmtDate(c.certificate.issuedAt.slice(0, 10))} · ${c.certificate.name}`)),
-            iconBtn('edit', t('Name on the certificate'), () => renameCertificate(c)),
-            h('a.icon-btn', {href: certUrl(c.certificate.code), target: '_blank', rel: 'noopener', 'aria-label': t('Open the certificate')}, icon('right')));
+    // ---------------------------------------------------------------- certificates
+
+    function viewCertificates() {
+        const st = S.state;
+        const earned = st.courses.filter(c => c.certificate);
+        const ready = st.courses.filter(c => c.examScore > 0 && !c.certificate);
+        return {
+            title: t('Certificates'), tab: 'certificates', body: [
+                h('p.lead', t('Finish a course and pass its final exam to unlock its certificate with Sparks.')),
+                ready.length ? [
+                    h('h2.section-title', t('Ready to unlock')),
+                    h('div.group', ready.map(c => h('div.cert-row', tile('icon', 'cert'),
+                        h('div.grow', h('strong', c.title), h('p.muted', t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examScore, c: st.costs.certificate}))),
+                        btn(t('Unlock · {n}', {n: st.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(c.id, render)})))),
+                ] : null,
+                earned.length ? [
+                    ready.length ? h('h2.section-title', t('Your certificates')) : null,
+                    h('div.group', earned.map(certRow)),
+                ] : empty(t('No certificates yet.'), t('Finish a course and pass its exam to earn the first one.'), btn(t('Open the courses'), {icon: 'book', onclick: () => go('path')})),
+                h('a.btn.btn-tonal.btn-block', {href: 'verify.php'}, icon('cert'), h('span', t('Verify a certificate'))),
+            ]
+        };
     }
 
-    function renameCertificate(c) {
-        const name = UI.input({value: c.certificate.name, maxlength: 80});
-        const save = btn(t('Save'), {
-            onclick: async () => {
-                try {
-                    applyState(await busy(save, () => Api.post('certificate.rename', {code: c.certificate.code, name: name.value})));
-                    s.close();
-                    setTimeout(render, 150);
-                } catch (e) {
-                    toast(e.message, 'error');
-                }
-            }
-        });
-        const s = sheet({title: t('Name on the certificate'), body: [UI.field(t('Full name'), name)], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
+    function certRow(c) {
+        return h('div.cert-row', tile('icon', 'cert'), h('div.grow', h('strong', c.title), h('p.muted', `${c.certificate.score}% · ${UI.fmtDate(c.certificate.issuedAt.slice(0, 10))} · ${c.certificate.name}`)),
+            h('a.icon-btn', {href: certUrl(c.certificate.code), target: '_blank', rel: 'noopener', 'aria-label': t('Open the certificate')}, icon('right')));
     }
 
     // ---------------------------------------------------------------- profile picture

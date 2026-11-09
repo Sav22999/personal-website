@@ -7,7 +7,7 @@
  * Ranking:  board.get, board.seen, board.join
  * Notify:   notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
  * Friends:  auth.username, friends.list, friends.search, friends.add, friends.remove
- * Learning: course.get, quiz.check, hint.buy, lesson.complete, drill.finish, drill.mix, exam.start, exam.submit, certificate.rename
+ * Learning: course.get, quiz.check, hint.buy, lesson.complete, drill.finish, drill.mix, exam.start, exam.submit, certificate.claim
  * Playing:  daily.get, daily.submit, game.get, game.finish
  * Portal:   admin.* (see lib/admin-api.php)
  *
@@ -555,16 +555,6 @@ switch ($r) {
             throw $e;
         }
         reward($u, 0, level_of($uid), ['certificate' => user_certificates($uid)[$c['id']]]);
-
-    case 'certificate.rename':
-        // The name printed on a certificate can differ from the account's one (a full name, for example)
-        $u = writer();
-        $b = body();
-        $name = s($b, 'name', 80, true, 'Name');
-        if (mb_strlen($name) < 2) fail('Enter your name.', 422, 'validation');
-        $st = db()->prepare('UPDATE ' . t('certificates') . ' SET name = ? WHERE code = ? AND user_id = ?');
-        $st->execute([$name, s($b, 'code', 12), $u['id']]);
-        send_json(['ok' => true] + state_payload($u));
 
     // ======================================================== playing
 

@@ -4,7 +4,7 @@
  *
  * Read:   admin.overview, admin.courses, admin.course, admin.games, admin.game, admin.users, admin.certificates, admin.settings
  * Write:  admin.course.save/delete/sort, admin.lesson.save/delete/sort, admin.question.save/delete, admin.game.save,
- *         admin.drill.save/delete, admin.item.save/delete, admin.user.save/delete, admin.certificate.delete, admin.settings.save
+ *         admin.drill.save/delete, admin.item.save/delete, admin.user.save/delete, admin.certificate.rename/delete, admin.settings.save
  *
  * Texts arrive as {"it": "…", "en": "…"}: a language may be empty, and the app falls back to the other one meanwhile.
  * Deleting a lesson leaves the progress rows behind on purpose: they simply stop counting.
@@ -490,6 +490,14 @@ function admin_route(string $r): void
             admin_reader();
             $rows = db()->query('SELECT c.code, c.course, c.name, c.score, c.issued_at, u.email FROM ' . t('certificates') . ' c JOIN ' . t('users') . ' u ON u.id = c.user_id ORDER BY c.issued_at DESC LIMIT 200')->fetchAll();
             send_json(['ok' => true, 'certificates' => $rows]);
+
+        case 'admin.certificate.rename':
+            admin_writer();
+            $b = body();
+            $name = s($b, 'name', 80, true, 'Name');
+            if (mb_strlen($name) < 2) fail('Enter your name.', 422, 'validation');
+            db()->prepare('UPDATE ' . t('certificates') . ' SET name = ? WHERE code = ?')->execute([$name, s($b, 'code', 12)]);
+            send_json(['ok' => true]);
 
         case 'admin.certificate.delete':
             admin_writer();

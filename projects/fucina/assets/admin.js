@@ -550,11 +550,28 @@
         const d = await Api.get('admin.certificates');
         return page(t('Certificates'), null, d.certificates.length ? table([t('Name'), 'Email', t('Course'), t('Score'), t('Date'), ''], d.certificates.map(c => h('tr',
             h('td', h('a', {href: `certificate.php?c=${c.code}&lang=${I18N.lang}`, target: '_blank', rel: 'noopener'}, c.name)), h('td', c.email), h('td', c.course), h('td', c.score + '%'), h('td', UI.fmtDate(c.issued_at.slice(0, 10))),
-            h('td.nowrap', iconBtn('delete', t('Revoke'), async () => {
+            h('td.nowrap', iconBtn('edit', t('Name on the certificate'), () => renameCertificate(c)), iconBtn('delete', t('Revoke'), async () => {
                 if (!await confirm(t('Revoke this certificate?'), t('Its link stops working.'), t('Revoke'), true)) return;
                 await Api.post('admin.certificate.delete', {code: c.code}).catch(e => toast(e.message, 'error'));
                 render();
             }))))) : h('p.muted', t('No certificates yet.')));
+    }
+
+    function renameCertificate(c) {
+        const name = inp({value: c.name, maxlength: 80});
+        const save = btn(t('Save'), {
+            icon: 'save', onclick: async () => {
+                try {
+                    await busy(save, () => Api.post('admin.certificate.rename', {code: c.code, name: name.value}));
+                    s.close();
+                    toast(t('Saved'), 'ok');
+                    render();
+                } catch (e) {
+                    toast(e.message, 'error');
+                }
+            }
+        });
+        const s = UI.sheet({title: t('Name on the certificate'), body: [f(t('Full name'), name)], actions: [btn(t('Cancel'), {kind: 'text', onclick: () => s.close()}), save]});
     }
 
     // ---------------------------------------------------------------- profile pictures

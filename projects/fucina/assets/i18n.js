@@ -634,6 +634,10 @@
             'Categories': 'Categorie',
             'Used to filter the courses in the app.': 'Servono a filtrare i corsi nell’app.',
             'Languages': 'Linguaggi',
+            'Open the courses': 'Apri i corsi',
+            'Finish a course and pass its final exam to unlock its certificate with Sparks.': 'Finisci un corso e supera l’esame finale per sbloccare il certificato con le Scintille.',
+            'Ready to unlock': 'Pronti da sbloccare',
+            'Your certificates': 'I tuoi certificati',
         },
     };
     const LANGS = [['it', 'Italiano'], ['en', 'English']];

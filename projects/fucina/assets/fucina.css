@@ -3337,14 +3337,21 @@ a.btn-block {
 .bottomnav {
     background: var(--surface);
     border-top: 2px solid var(--card-border);
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
 }
 
 .bottomnav a {
     font-family: var(--display);
     font-weight: 500;
+    font-size: clamp(.64rem, 2.5vw, .74rem);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .bottomnav a .pill {
+    width: min(100%, 50px);
     border-radius: var(--r-sm);
 }
 
