@@ -771,7 +771,7 @@ switch ($r) {
     // ======================================================== notifications
 
     case 'notify.get':
-        $u = writer();
+        $u = require_user();
         $st = db()->prepare('SELECT notify_off, notify_hours FROM ' . t('users') . ' WHERE id = ?');
         $st->execute([$u['id']]);
         $r = $st->fetch() ?: [];
@@ -784,8 +784,11 @@ switch ($r) {
             'off' => notify_off($r['notify_off'] ?? null),
             'hours' => notify_hours($r['notify_hours'] ?? null),
             'serverTz' => APP_TIMEZONE,
+            'server_tz' => APP_TIMEZONE,
             'serverTime' => $now->format('H:i'),
+            'server_time' => $now->format('H:i'),
             'serverOffset' => $now->getOffset() / 3600,
+            'server_offset' => $now->getOffset() / 3600,
         ]);
 
     case 'notify.save':

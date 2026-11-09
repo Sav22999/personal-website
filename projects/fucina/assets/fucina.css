@@ -2787,7 +2787,7 @@ code {
     cursor: pointer;
 }
 
-.setting span {
+.setting > span {
     flex: 1;
 }
 
@@ -2909,7 +2909,7 @@ code {
     color: var(--muted);
 }
 
-.setting.toggle span {
+.setting.toggle > span {
     display: grid;
 }
 
@@ -2973,6 +2973,10 @@ code {
 }
 
 .notify-tag {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
     font-size: .68rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -2980,6 +2984,7 @@ code {
     padding: 2px 7px;
     border-radius: 999px;
     line-height: 1.2;
+    white-space: nowrap;
 }
 
 .notify-tag.tag-live {

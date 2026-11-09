@@ -1345,11 +1345,27 @@
         const s = sheet({title: t('Notifications'), body: [box], actions: [btn(t('Close'), {onclick: () => s.close()})]});
 
         const info = await Api.get('notify.get').catch(() => null);
-        let off = new Set((info && info.off) || S.state.user.notifyOff || []);
-        let hours = Object.assign({daily: 18, streak: 18}, (info && info.hours) || S.state.user.notifyHours || {});
-        const serverOffset = typeof (info && info.serverOffset) === 'number' ? info.serverOffset : 1;
+        let off = new Set((info && info.off) || (S.state && S.state.user && S.state.user.notifyOff) || []);
+        let hours = Object.assign({daily: 18, streak: 18}, (info && info.hours) || (S.state && S.state.user && S.state.user.notifyHours) || {});
+        const serverOffset = typeof (info && (info.serverOffset ?? info.server_offset)) === 'number'
+            ? (info.serverOffset ?? info.server_offset)
+            : (typeof (S.state && (S.state.serverOffset ?? S.state.server_offset)) === 'number'
+                ? (S.state.serverOffset ?? S.state.server_offset)
+                : 1);
+        const serverTz = (info && (info.serverTz || info.server_tz)) || (S.state && (S.state.serverTz || S.state.server_tz)) || 'Europe/Rome';
+        const serverTime = (info && (info.serverTime || info.server_time)) || (S.state && (S.state.serverTime || S.state.server_time)) || '';
         const localOffset = -new Date().getTimezoneOffset() / 60;
         const tzDiff = Math.round(localOffset - serverOffset);
+
+        function currentServerTimeString() {
+            if (serverTime) return serverTime;
+            try {
+                return new Intl.DateTimeFormat([], {timeZone: serverTz, hour: '2-digit', minute: '2-digit', hour12: false}).format(new Date());
+            } catch (e) {
+                const d = new Date(Date.now() + (serverOffset * 60 + new Date().getTimezoneOffset()) * 60000);
+                return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            }
+        }
 
         async function paint() {
             const sub = await deviceSubscription().catch(() => null);
@@ -1375,12 +1391,13 @@
                         }
                     });
                     for (let hVal = 0; hVal < 24; hVal++) {
-                        let label = String(hVal) + ':00';
+                        const hPad = String(hVal).padStart(2, '0');
+                        let label = hPad + ':00';
                         if (hVal === 18) label += ' (' + t('default') + ')';
                         if (tzDiff !== 0) {
                             let localH = (hVal + tzDiff) % 24;
                             if (localH < 0) localH += 24;
-                            label += ' · ' + t('{h}:00 on your device', {h: localH});
+                            label += ' · ' + t('{h}:00 on your device', {h: String(localH).padStart(2, '0')});
                         }
                         const opt = h('option', {value: hVal, selected: (hours[key] ?? 18) === hVal || undefined}, label);
                         hourSelect.appendChild(opt);
@@ -1420,8 +1437,8 @@
             const tzBox = h('div.notify-tz-box',
                 icon('timer'),
                 h('span', t('Times are based on the server timezone ({tz}, current server time: {time}).', {
-                    tz: (info && info.serverTz) || 'Europe/Rome',
-                    time: (info && info.serverTime) || '18:00'
+                    tz: serverTz,
+                    time: currentServerTimeString()
                 }))
             );
 
