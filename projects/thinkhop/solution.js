@@ -727,7 +727,11 @@
         if (typeof opt === 'string' || typeof opt === 'number') return String(opt);
         if (opt && opt.k) return t(opt.k);
         if (opt && opt.r !== undefined) {
-            return `${opt.r > 0 ? '+' : ''}${opt.r}°`;
+            const rText = getRiddleText(q);
+            if (rText && rText[2] && rText[2][opt.r] !== undefined) {
+                return rText[2][opt.r];
+            }
+            return String(opt.r);
         }
         if (opt && opt.letter) return opt.letter;
         if (opt && opt.text) return opt.text;
@@ -739,7 +743,8 @@
         if (q.t && q.t[I.getLang()]) return q.t[I.getLang()];
         if (q.t && q.t.en) return q.t.en;
         const list = root.ThinkHopRiddles || [];
-        const r = list.find(x => x.id === (q.id || (q.why && q.why[0] && q.why[0].riddle)));
+        const targetId = q.id || q.pid || (q.why && q.why[0] && (q.why[0].riddle || q.why[0].id));
+        const r = list.find(x => x.id === targetId);
         if (r && r.t) return r.t[I.getLang()] || r.t.en || null;
         return null;
     }
