@@ -569,8 +569,9 @@
             }
             if (houses && k < n) clues.push({k: 'wo_house_not', v: {a: people[a], n: k + 1}, test: c => at(c, a) !== k});
         }));
+        const validClues = r.shuffle(clues.filter(c => c.test(truth)));
         let left = cases, facts = [];
-        for (const clue of r.shuffle(clues.filter(c => c.test(truth)))) {
+        for (const clue of validClues) {
             if (left.length === 1) break;
             const narrowed = left.filter(clue.test);
             if (narrowed.length < left.length) {
@@ -578,14 +579,25 @@
                 facts.push(clue);
             }
         }
+        const mp = list => new Set(list.flatMap(o => [o.v.a, o.v.b].filter(Boolean)));
+        const mpt = list => new Set(list.flatMap(o => [o.v.p, o.v.q].filter(Boolean)));
+        for (const clue of validClues) {
+            if (mp(facts).size === n && mpt(facts).size === n) break;
+            const curP = mp(facts), curPt = mpt(facts);
+            const mentionsNew = [clue.v.a, clue.v.b].some(p => p && !curP.has(p)) || [clue.v.p, clue.v.q].some(p => p && !curPt.has(p));
+            if (mentionsNew && !facts.includes(clue)) facts.push(clue);
+        }
         facts.slice().forEach(f => {
             const rest = facts.filter(o => o !== f);
+            if (mp(rest).size < n || mpt(rest).size < n) return;
             if (cases.filter(c => rest.every(o => o.test(c))).length === 1) facts = rest;
         });
         const k = r.int(0, n - 1);
         const right = people[owner(truth, k)];
+        const sortedPeople = people.slice().sort();
         const q = {
-            view: 'facts', pk: houses ? 'q_whoowns_houses' : 'q_whoowns', pv: {n},
+            view: 'facts', pk: houses ? 'q_whoowns_houses' : 'q_whoowns',
+            pv: {n, who: sortedPeople.join(', '), pets: pets.join(', ')},
             facts: facts.map(({k: key, v}) => ({k: key, v})), ask: {k: 'wo_ask', v: {p: pets[k]}},
             why: [{lit: ids.map(i => `${people[i]} ${pets[truth.pet[i]]}`).join(' · ')}],
         };
@@ -1356,8 +1368,9 @@
             ? {k: 'st_ask_opp', v: {a: people[truth[(askSeat + n / 2) % n]], targetSeat}}
             : {k: 'st_ask_seat', v: {n: targetSeat, targetSeat}};
         const right = people[askPerson];
+        const sortedPeople = people.slice().sort();
         const q = {
-            view: 'facts', pk: 'q_seats_round', pv: {n, targetSeat},
+            view: 'facts', pk: 'q_seats_round', pv: {n, targetSeat, who: sortedPeople.join(', ')},
             facts: facts.map(({k, v}) => ({k, v})),
             ask,
             why: [{k: 'why_seats', v: {x: truth.map((p, i) => `${i + 1}:${people[p]}`).join(' · ')}}],
@@ -1406,8 +1419,9 @@
         const pos = r.int(0, n - 1);
         const right = people[truth[pos]];
         const targetSeat = pos + 1;
+        const sortedPeople = people.slice().sort();
         const q = {
-            view: 'facts', pk: 'q_seats_bench', pv: {n, targetSeat},
+            view: 'facts', pk: 'q_seats_bench', pv: {n, targetSeat, who: sortedPeople.join(', ')},
             facts: facts.map(({k, v}) => ({k, v})),
             ask: {k: 'st_ask_seat', v: {n: targetSeat, targetSeat}},
             why: [{k: 'why_seats', v: {x: truth.map(p => people[p]).join(' · ')}}],

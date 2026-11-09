@@ -1403,6 +1403,14 @@
                 );
             });
 
+            if (q.why && q.why[0] && q.why[0].v && q.why[0].v.x) {
+                addStep(
+                    t('sol_step_deduction'),
+                    flowRow(chip(q.why[0].v.x)),
+                    t('sol_seat_step')
+                );
+            }
+
             addFinalStep(
                 t('sol_step_final'),
                 winnerChip(t('sol_seat_res', {name: ansVal})),
@@ -1433,9 +1441,12 @@
         }
         // 16. Who owns what (pets / houses)
         else if (q.cat === 'whoowns' && q.facts && q.facts.length >= 1) {
+            const startChip = q.pv && q.pv.who && q.pv.pets
+                ? `${q.pv.who} · ${q.pv.pets}`
+                : (q.ask ? lineStr(q, q.ask) : t('sol_title'));
             addStep(
                 t('sol_step_start'),
-                flowRow(chip(q.ask ? lineStr(q, q.ask) : t('sol_title'), 'initial')),
+                flowRow(chip(startChip, 'initial')),
                 t('sol_gen_premise')
             );
 
@@ -1446,6 +1457,14 @@
                     ''
                 );
             });
+
+            if (q.why && q.why[0] && q.why[0].lit) {
+                addStep(
+                    t('sol_step_deduction'),
+                    flowRow(chip(q.why[0].lit)),
+                    ''
+                );
+            }
 
             addFinalStep(
                 t('sol_step_final'),
