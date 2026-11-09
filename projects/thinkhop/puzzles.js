@@ -19,6 +19,7 @@
     const SETS = [
         ['🐸', '🦊', '🐼', '🐙', '🦉', '🐢'], ['🍕', '🍩', '🌮', '🍔', '🍟', '🧁'], ['⚽', '🏀', '🎾', '🎱', '🏐', '🏈'],
         ['🌵', '🌻', '🍄', '🌴', '🌷', '🍀'], ['🚗', '🚲', '🚀', '⛵', '🚁', '🛴'], ['🎩', '👑', '🧢', '🎓', '⛑️', '👒'],
+        ['💎', '🔮', '🪙', '🧲', '🧭', '⏳'], ['🎸', '🎺', '🥁', '🎻', '🎷', '🪗'],
     ];
     const ARROWS = ['⬆️', '↗️', '➡️', '↘️', '⬇️', '↙️', '⬅️', '↖️'];
     const MOONS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
@@ -121,26 +122,39 @@
         return lettersQuestion(r, seq.slice(0, -1), seq[4], 'why_lt_consonants', CONSONANTS);
     });
     pattern('abc-numbers', 'letters', 1.12, r => {
-        const list = [1, 3, 6, 10, 15, 21].slice(0, 5).map(n => ABC[n - 1] + n);
+        const s = r.int(1, 12);
+        const nums = [0, 1, 2, 3, 4].reduce((a, i) => [...a, (a.length ? a[a.length - 1] + i + 1 : s)], []);
+        const list = nums.map(n => ABC[n - 1] + n);
         const right = list.pop();
-        return withOptions(r, {view: 'list', items: list, why: [{k: 'why_lt_numbers'}]}, right, ['N14', 'P16', 'O14'].map(String));
+        const rNum = nums[4], rIdx = rNum - 1;
+        return withOptions(r, {view: 'list', items: list, why: [{k: 'why_lt_numbers'}]}, right, [
+            ABC[(rIdx + 25) % 26] + (rNum - 1),
+            ABC[(rIdx + 1) % 26] + (rNum + 1),
+            ABC[rIdx] + (rNum - 1),
+        ]);
     });
 
     // ---------- the odd picture out ----------
     const INTRUDERS = [
-        ['sea', .1, ['🐙', '🐟', '🐬', '🦈', '🐳', '🦑'], ['🐫', '🦒', '🐇']],
-        ['head', .12, ['🎩', '👑', '🧢', '🎓', '👒'], ['🧤', '👟', '🧦']],
-        ['fly', .17, ['🦅', '🦉', '🦆', '🐝', '🦋', '🦇'], ['🐧', '🐢', '🐘']],
-        ['hot', .22, ['🔥', '☀️', '🌋', '☕', '🌶️'], ['❄️', '🧊', '🍦']],
-        ['wheels', .19, ['🚗', '🚲', '🛴', '🚌', '🚜', '🛵'], ['⛵', '🛶', '🚀']],
-        ['round', .28, ['⚽', '🏀', '🌕', '🍊', '🎱', '🌍'], ['📦', '🎲', '📘']],
-        ['cut', .4, ['✂️', '🔪', '🪓', '🪚'], ['🔨', '🧲', '🪛']],
-        ['strings', .38, ['🎸', '🎻', '🪕'], ['🥁', '🎺', '🎷']],
-        ['tree', .47, ['🍎', '🍐', '🍑', '🍊', '🥥', '🍒'], ['🍉', '🍓', '🥕']],
-        ['eggs', .52, ['🐔', '🐢', '🐍', '🐧', '🐊', '🦆'], ['🐈', '🐕', '🐄']],
-        ['ground', .58, ['🥕', '🥔', '🧅', '🧄'], ['🍅', '🍎', '🌽']],
-        ['mammals', .66, ['🐬', '🦇', '🐋', '🐘', '🐕'], ['🦈', '🐧', '🐍']],
-        ['insects', .8, ['🐝', '🐜', '🦋', '🐞', '🦗'], ['🕷️', '🦂', '🦀']],
+        ['sea', .1, ['🐙', '🐟', '🐬', '🦈', '🐳', '🦑'], ['🐫', '🦒', '🐇', '🦁']],
+        ['head', .12, ['🎩', '👑', '🧢', '🎓', '👒'], ['🧤', '👟', '🧦', '🧣']],
+        ['fly', .17, ['🦅', '🦉', '🦆', '🐝', '🦋', '🦇'], ['🐧', '🐢', '🐘', '🐄']],
+        ['hot', .22, ['🔥', '☀️', '🌋', '☕', '🌶️'], ['❄️', '🧊', '🍦', '⛄']],
+        ['cold', .25, ['❄️', '🧊', '⛄', '🍦', '🐧'], ['🔥', '☀️', '🌋', '🌶️', '☕']],
+        ['wheels', .19, ['🚗', '🚲', '🛴', '🚌', '🚜', '🛵'], ['⛵', '🛶', '🚀', '🚁']],
+        ['round', .28, ['⚽', '🏀', '🌕', '🍊', '🎱', '🌍'], ['📦', '🎲', '📘', '🧱']],
+        ['sweet', .33, ['🍩', '🧁', '🍦', '🍫', '🍪'], ['🥦', '🧄', '🧅', '🥕', '🥔']],
+        ['cut', .4, ['✂️', '🔪', '🪓', '🪚'], ['🔨', '🧲', '🪛', '🔦', '🔑']],
+        ['strings', .38, ['🎸', '🎻', '🪕'], ['🥁', '🎺', '🎷', '🪗', '🔔']],
+        ['write', .45, ['✏️', '🖊️', '🖍️', '🖌️'], ['🥄', '🍴', '🔪', '✂️', '🔨']],
+        ['tree', .47, ['🍎', '🍐', '🍑', '🍊', '🥥', '🍒'], ['🍉', '🍓', '🥕', '🥔']],
+        ['eggs', .52, ['🐔', '🐢', '🐍', '🐧', '🐊', '🦆'], ['🐈', '🐕', '🐄', '🦁']],
+        ['ground', .58, ['🥕', '🥔', '🧅', '🧄'], ['🍅', '🍎', '🌽', '🍒', '🍋']],
+        ['space', .62, ['🚀', '🛸', '🛰️', '☄️', '🪐'], ['🚲', '🚜', '⛵', '🚌', '🛴']],
+        ['mammals', .66, ['🐬', '🦇', '🐋', '🐘', '🐕'], ['🦈', '🐧', '🐍', '🐊', '🦉']],
+        ['reptiles', .76, ['🐢', '🐍', '🐊', '🦎'], ['🐸', '🐧', '🐳', '🦉', '🦈']],
+        ['insects', .8, ['🐝', '🐜', '🦋', '🐞', '🦗'], ['🕷️', '🦂', '🦀', '🐙', '🐌']],
+        ['feathers', 1.05, ['🐧', '🐔', '🦅', '🦉', '🦆', '🦜'], ['🦇', '🦋', '🐝', '🚁', '🚀']],
     ];
     INTRUDERS.forEach(([key, d, members, outsiders]) => pattern('pic-' + key, 'intruder', d, r => {
         const odd = r.pick(outsiders);
@@ -497,7 +511,7 @@
     pattern('liars-5', 'liars', 1.92, r => makeLiars(r, 5, ['liar', 'same', 'differ', 'count', 'both', 'some']));
 
     // ---------- the treasure chests ----------
-    const CHESTS = ['🟥', '🟦', '🟩', '🟨'];
+    const CHESTS = ['🟥', '🟦', '🟩', '🟨', '🟪'];
     const LABELS = {
         here: (at, own) => at === own, away: (at, own) => at !== own,
         in: (at, own, x) => at === x, out: (at, own, x) => at !== x,
@@ -521,14 +535,18 @@
     }
 
     pattern('chests-3', 'boxes', .74, r => makeBoxes(r, 3, 1, 'q_boxes_t1'));
+    pattern('chests-3-zero', 'boxes', .85, r => makeBoxes(r, 3, 0, 'q_boxes_t0'));
     pattern('chests-3-false', 'boxes', .92, r => makeBoxes(r, 3, 2, 'q_boxes_f1'));
+    pattern('chests-3-two', 'boxes', 1.12, r => makeBoxes(r, 3, 2, 'q_boxes_t2'));
     pattern('chests-4', 'boxes', 1.3, r => makeBoxes(r, 4, 1, 'q_boxes_t1'));
+    pattern('chests-4-zero', 'boxes', 1.38, r => makeBoxes(r, 4, 0, 'q_boxes_t0'));
     pattern('chests-4-false', 'boxes', 1.5, r => makeBoxes(r, 4, 3, 'q_boxes_f1'));
     pattern('chests-4-two', 'boxes', 1.64, r => makeBoxes(r, 4, 2, 'q_boxes_t2'));
-    pattern('chests-3-two', 'boxes', 1.12, r => makeBoxes(r, 3, 2, 'q_boxes_t2'));
+    pattern('chests-5-one', 'boxes', 1.76, r => makeBoxes(r, 5, 1, 'q_boxes_t1'));
+    pattern('chests-5-two', 'boxes', 1.88, r => makeBoxes(r, 5, 2, 'q_boxes_t2'));
 
     // ---------- who owns the octopus? ----------
-    const PETS = ['🦜', '🐢', '🦔', '🐙', '🦎'];
+    const PETS = ['🦜', '🐢', '🦔', '🐙', '🦎', '🦦', '🦩', '🦙'];
 
     /** A case is {house: person at each position, pet: pet of each person}. */
     function makeOwners(r, n, houses) {
@@ -603,6 +621,15 @@
     }
 
     pattern('days-simple', 'days', .24, r => makeDays(r, SIMPLE_DAYS));
+    pattern('days-back', 'days', .52, r => {
+        const day = r.int(0, 6), n = r.int(10, 120);
+        const options = r.shuffle([0, 1, 2, 3].map(i => dayOption(day - n + i * 2)));
+        const right = dayOption(day - n);
+        return {
+            view: 'riddle', pk: 'dy_ago', pv: {day: dayOption(day), n}, why: [{k: 'why_days_far', v: {n, m: n % 7}}],
+            options, answer: options.findIndex(o => o.k === right.k),
+        };
+    });
     pattern('days-twisted', 'days', .74, r => makeDays(r, TWISTED_DAYS));
     pattern('days-far', 'days', 1.0, r => {
         const day = r.int(0, 6), n = r.int(16, 300);
@@ -610,6 +637,29 @@
         const right = dayOption(day + n);
         return {
             view: 'riddle', pk: 'dy_far', pv: {day: dayOption(day), n}, why: [{k: 'why_days_far', v: {n, m: n % 7}}],
+            options, answer: options.findIndex(o => o.k === right.k),
+        };
+    });
+    pattern('days-chain', 'days', 1.18, r => {
+        const [[a, x], [b, y]] = r.shuffle(SIMPLE_DAYS);
+        const day = r.int(0, 6), n = r.int(3, 18);
+        const right = dayOption(day + y - x + n);
+        const options = r.shuffle([0, 1, 2, 3].map(i => dayOption(day + y - x + n + i * 2)));
+        return {
+            view: 'riddle', pk: 'dy_chain', pv: {a: {k: 'dx_' + a}, b: {k: 'dx_' + b}, day: dayOption(day), n},
+            why: [{k: 'why_days', v: {a: {k: 'dx_' + b}, day: right}}],
+            options, answer: options.findIndex(o => o.k === right.k),
+        };
+    });
+    pattern('days-meet', 'days', 1.48, r => {
+        const pairs = [[2, 3, 6], [2, 5, 10], [3, 4, 12], [3, 5, 15], [4, 5, 20], [4, 6, 12], [5, 6, 30], [3, 8, 24]];
+        const [a, b, m] = r.pick(pairs);
+        const day = r.int(0, 6);
+        const right = dayOption(day + m);
+        const options = r.shuffle([0, 1, 2, 3].map(i => dayOption(day + m + i * 2)));
+        return {
+            view: 'riddle', pk: 'dy_meet', pv: {a, b, day: dayOption(day)},
+            why: [{k: 'why_days_meet', v: {m, day: dayOption(day)}}],
             options, answer: options.findIndex(o => o.k === right.k),
         };
     });
@@ -697,4 +747,753 @@
         const k = r.int(2, 6), n = 4;
         return {v: {k, n}, right: (k - 1) * n + 1, near: [k * n, k + n, (k - 1) * n]};
     });
+    trap('candle', .42, r => {
+        const n = r.int(6, 15), b = r.int(2, n - 2);
+        return {v: {n, b}, right: b, near: [n - b, n, 0]};
+    });
+    trap('holes', .54, r => {
+        const n = r.int(2, 7);
+        return {v: {n}, right: 4 + 2 * n, near: [n, 2 * n, 4 + n]};
+    });
+    trap('bus', .66, r => {
+        const a = r.int(8, 20), b = r.int(2, 5), c = r.int(2, 7), d = r.int(1, 4);
+        const p = a - b + c - d;
+        return {v: {a, b, c, d}, right: p + 1, near: [p, p - 1, a + c + 1]};
+    });
+    trap('folds', 1.15, r => {
+        const n = r.int(4, 9);
+        return {v: {n}, right: 1 << n, near: [n * 2, n * n, (1 << (n - 1))]};
+    });
+    trap('matches', 1.32, r => {
+        const n = r.int(12, 64);
+        return {v: {n}, right: n - 1, near: [n, (n / 2) | 0, n + 1]};
+    });
+    trap('weigh', 1.64, r => {
+        const [n, w] = r.pick([[7, 2], [8, 2], [9, 2], [12, 3], [20, 3], [25, 3], [27, 3], [40, 4], [64, 4], [80, 4], [81, 4]]);
+        return {v: {n}, right: w, near: [w + 1, w - 1, Math.max(4, (n / 3) | 0)]};
+    });
+
+    // ---------- crazy scales (scales) ----------
+    const SCALE_ITEMS = ['🍉', '🍍', '🎃', '🥥', '🧀', '🍎', '🍐', '🍋', '🍓', '🍒', '🪨', '🧱', '💎', '🔮', '👑', '🏺', '🪙'];
+    const repeatIcon = (icon, n) => n <= 4 ? Array(n).fill(icon).join(' ') : `${n} × ${icon}`;
+
+    pattern('scales-2', 'scales', .18, r => {
+        const [x, y, z] = r.shuffle(SCALE_ITEMS);
+        const a = r.int(2, 4), b = r.int(2, 4), k = r.int(1, 2);
+        const right = k * a * b;
+        const q = {
+            view: 'lines', pk: 'q_scales_eq', pv: {z},
+            lines: [`${x}  ⚖️  ${repeatIcon(y, a)}`, `${y}  ⚖️  ${repeatIcon(z, b)}`],
+            ask: `${repeatIcon(x, k)}  ⚖️  ? ${z}`,
+            why: [{k: 'why_scales_eq', v: {x: `${right} ${z}`}}],
+        };
+        return numberOptions(r, q, right, [k * (a + b), a * b + k, right + a, right - b]);
+    });
+
+    pattern('scales-3', 'scales', .56, r => {
+        const [x, y, z, w] = r.shuffle(SCALE_ITEMS);
+        const a = r.int(2, 3), b = r.int(2, 3), c = r.int(2, 4);
+        const right = a * b * c;
+        const q = {
+            view: 'lines', pk: 'q_scales_eq', pv: {z: w},
+            lines: [`${x}  ⚖️  ${repeatIcon(y, a)}`, `${y}  ⚖️  ${repeatIcon(z, b)}`, `${z}  ⚖️  ${repeatIcon(w, c)}`],
+            ask: `${x}  ⚖️  ? ${w}`,
+            why: [{k: 'why_scales_eq', v: {x: `${right} ${w}`}}],
+        };
+        return numberOptions(r, q, right, [a + b + c, a * b + c, right - c, right + b]);
+    });
+
+    pattern('scales-mix', 'scales', .92, r => {
+        const [x, y, z] = r.shuffle(SCALE_ITEMS);
+        const a = r.int(1, 3), xv = r.int(3, 7), yv = r.int(2, 6);
+        const right = xv + yv;
+        const q = {
+            view: 'lines', pk: 'q_scales_eq', pv: {z},
+            lines: [`${x} + ${repeatIcon(z, a)}  ⚖️  ${repeatIcon(z, xv + a)}`, `${y}  ⚖️  ${repeatIcon(z, yv)}`],
+            ask: `${x} + ${y}  ⚖️  ? ${z}`,
+            why: [{k: 'why_scales_eq', v: {x: `${right} ${z}`}}],
+        };
+        return numberOptions(r, q, right, [xv + a + yv, xv + yv - a, xv * yv]);
+    });
+
+    pattern('scales-cross', 'scales', 1.36, r => {
+        const [x, y, z, w] = r.shuffle(SCALE_ITEMS);
+        const a = r.int(2, 6), b = r.int(2, 5);
+        const right = 2 * a + b;
+        const q = {
+            view: 'lines', pk: 'q_scales_eq', pv: {z: w},
+            lines: [
+                `${x} + ${y}  ⚖️  ${a + b} × ${w}`,
+                `${x} + ${y} + ${y}  ⚖️  ${a + 2 * b} × ${w}`,
+                `${z}  ⚖️  ${x} + ${x}`,
+            ],
+            ask: `${z} + ${y}  ⚖️  ? ${w}`,
+            why: [{k: 'why_scales_eq', v: {x: `${right} ${w}`}}],
+        };
+        return numberOptions(r, q, right, [a + 2 * b, 2 * (a + b), a + b + 2]);
+    });
+
+    pattern('scales-heavy-4', 'scales', .42, r => {
+        const items = r.shuffle(SCALE_ITEMS).slice(0, 4);
+        const askHeavy = r.next() < .5;
+        const right = askHeavy ? items[0] : items[3];
+        const lines = r.shuffle([
+            `${items[0]} + ${items[2]}  >  ${items[1]} + ${items[2]}`,
+            `${items[1]}  >  ${items[2]}`,
+            `${items[2]}  >  ${items[3]}`,
+        ]);
+        const q = {
+            view: 'lines', pk: askHeavy ? 'q_scales_heavy' : 'q_scales_light',
+            lines, ask: askHeavy ? '? = max' : '? = min',
+            why: [{k: 'why_scales_ord', v: {x: items.join(' > ')}}],
+        };
+        return withOptions(r, q, right, items.filter(i => i !== right));
+    });
+
+    pattern('scales-light-5', 'scales', 1.12, r => {
+        const items = r.shuffle(SCALE_ITEMS).slice(0, 5);
+        const askHeavy = r.next() < .5;
+        const right = askHeavy ? items[0] : items[4];
+        // items[0] > items[1] > items[2] > items[3] > items[4]
+        // Note: items[1] + items[3] ⚖️ items[2] + items[?]: instead use a deduction where items[1] + items[4] ⚖️ items[2] + items[3] and items[2] > items[3] => items[1] > items[2] and items[3] > items[4]!
+        const lines = r.shuffle([
+            `${items[0]}  >  ${items[1]}`,
+            `${items[1]} + ${items[4]}  ⚖️  ${items[2]} + ${items[3]}`,
+            `${items[1]}  >  ${items[2]}`,
+            `${items[2]}  >  ${items[3]}`,
+        ]);
+        const q = {
+            view: 'lines', pk: askHeavy ? 'q_scales_heavy' : 'q_scales_light',
+            lines, ask: askHeavy ? '? = max' : '? = min',
+            why: [{k: 'why_scales_ord', v: {x: items.join(' > ')}}],
+        };
+        return withOptions(r, q, right, others(r, items, right));
+    });
+
+    function makeFakeGem(r, n, d) {
+        const gems = ['🟥', '🟦', '🟩', '🟨', '🟪'].slice(0, n);
+        const heavy = r.next() < .5;
+        const fakeIdx = r.int(0, n - 1);
+        const weight = (idx, f) => idx === f ? (heavy ? 2 : 0) : 1;
+        const panSign = (left, right, f) => {
+            const lw = left.reduce((s, i) => s + weight(i, f), 0);
+            const rw = right.reduce((s, i) => s + weight(i, f), 0);
+            return lw === rw ? '⚖️' : (lw > rw ? '>' : '<');
+        };
+        for (; ;) {
+            const weighings = [];
+            for (let t = 0; t < 2; t++) {
+                const k = r.int(1, Math.floor(n / 2));
+                const pick = r.shuffle(gems.map((_, i) => i));
+                weighings.push([pick.slice(0, k), pick.slice(k, 2 * k)]);
+            }
+            const obs = weighings.map(([L, R]) => panSign(L, R, fakeIdx));
+            const matches = gems.map((_, f) => f).filter(f => weighings.every(([L, R], i) => panSign(L, R, f) === obs[i]));
+            if (matches.length !== 1) continue;
+            const right = gems[fakeIdx];
+            const kind = {k: heavy ? 'sc_heavy' : 'sc_light'};
+            const lines = weighings.map(([L, R], i) => `${L.map(j => gems[j]).join(' + ')}  ${obs[i]}  ${R.map(j => gems[j]).join(' + ')}`);
+            const q = {
+                view: 'lines', pk: 'q_scales_fake', pv: {kind},
+                lines, ask: '? = 💎',
+                why: [{k: 'why_scales_fake', v: {x: right, kind}}],
+            };
+            return withOptions(r, q, right, others(r, gems, right));
+        }
+    }
+
+    pattern('scales-fake-4', 'scales', 1.58, r => makeFakeGem(r, 4, 1.58));
+    pattern('scales-fake-5', 'scales', 1.86, r => makeFakeGem(r, 5, 1.86));
+
+    // ---------- shell game / cups (cups) ----------
+    function applyCupMove(row, m) {
+        const out = row.slice();
+        if (m.kind === 'swap') {
+            [out[m.a], out[m.b]] = [out[m.b], out[m.a]];
+        } else if (m.kind === 'rev') {
+            out.reverse();
+        } else if (m.kind === 'left') {
+            out.push(out.shift());
+        }
+        return out;
+    }
+
+    const cupMoveText = m => m.kind === 'swap' ? `${m.a + 1} ↔ ${m.b + 1}` : (m.kind === 'rev' ? '⇄' : '⏪');
+
+    function makeCupsForward(r, n, steps, allowSpecial) {
+        const items = r.shuffle(r.pick(SETS)).slice(0, n);
+        const moves = [];
+        for (let i = 0; i < steps; i++) {
+            if (allowSpecial && i === Math.floor(steps / 2) && r.next() < .65) {
+                moves.push({kind: r.pick(['rev', 'left'])});
+            } else {
+                const a = r.int(0, n - 1), b = (a + 1 + r.int(0, n - 2)) % n;
+                moves.push({kind: 'swap', a: Math.min(a, b), b: Math.max(a, b)});
+            }
+        }
+        const end = moves.reduce(applyCupMove, items);
+        if (end.join('') === items.join('')) return makeCupsForward(r, n, steps, allowSpecial);
+        const mode = allowSpecial ? 'row' : (r.next() < .5 ? 'pos' : 'where');
+        if (mode === 'pos') {
+            const p = r.int(0, n - 1);
+            const right = end[p];
+            const q = {
+                view: 'lines', pk: 'q_cups_pos', pv: {p: p + 1},
+                lines: [items.join('   '), moves.map(cupMoveText).join('  ·  ')],
+                ask: `#${p + 1} = ?`,
+                why: [{k: 'why_cups', v: {x: end.join(' ')}}],
+            };
+            return withOptions(r, q, right, others(r, items, right));
+        }
+        if (mode === 'where') {
+            const target = r.pick(items);
+            const right = String(end.indexOf(target) + 1);
+            const q = {
+                view: 'lines', pk: 'q_cups_where', pv: {x: target},
+                lines: [items.join('   '), moves.map(cupMoveText).join('  ·  ')],
+                ask: `${target} → #?`,
+                why: [{k: 'why_cups', v: {x: end.join(' ')}}],
+            };
+            return withOptions(r, q, right, others(r, Array.from({length: n}, (_, i) => String(i + 1)), right));
+        }
+        const right = end.join(' ');
+        const wrong = new Set();
+        while (wrong.size < 3) {
+            const w = r.shuffle(end).join(' ');
+            if (w !== right) wrong.add(w);
+        }
+        const q = {
+            view: 'lines', pk: 'q_cups_row',
+            lines: [items.join('   '), moves.map(cupMoveText).join('  ·  ')],
+            ask: '? ? ?',
+            why: [{k: 'why_cups', v: {x: right}}],
+        };
+        return withOptions(r, q, right, [...wrong]);
+    }
+
+    function makeCupsBack(r, n, steps) {
+        const start = r.shuffle(r.pick(SETS)).slice(0, n);
+        const moves = Array.from({length: steps}, () => {
+            const a = r.int(0, n - 1), b = (a + 1 + r.int(0, n - 2)) % n;
+            return {kind: 'swap', a: Math.min(a, b), b: Math.max(a, b)};
+        });
+        const end = moves.reduce(applyCupMove, start);
+        if (end.join('') === start.join('')) return makeCupsBack(r, n, steps);
+        const right = start.join(' ');
+        const wrong = new Set([end.join(' ')]);
+        while (wrong.size < 3) {
+            const w = r.shuffle(start).join(' ');
+            if (w !== right) wrong.add(w);
+        }
+        const q = {
+            view: 'lines', pk: 'q_cups_back',
+            lines: ['?   '.repeat(n).trim(), moves.map(cupMoveText).join('  ·  '), end.join('   ')],
+            ask: '? → ' + end.join(' '),
+            why: [{k: 'why_cups', v: {x: right}}],
+        };
+        return withOptions(r, q, right, [...wrong]);
+    }
+
+    function makeCupsMissing(r, n, steps) {
+        for (; ;) {
+            const start = r.shuffle(r.pick(SETS)).slice(0, n);
+            const allPairs = [];
+            for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) allPairs.push({kind: 'swap', a, b});
+            const moves = Array.from({length: steps}, () => r.pick(allPairs));
+            const missAt = Math.floor(steps / 2);
+            const end = moves.reduce(applyCupMove, start);
+            const valid = allPairs.filter(cand => {
+                const tryMoves = moves.map((m, i) => i === missAt ? cand : m);
+                return tryMoves.reduce(applyCupMove, start).join('') === end.join('');
+            });
+            if (valid.length !== 1) continue;
+            const right = cupMoveText(valid[0]);
+            const shownMoves = moves.map((m, i) => i === missAt ? '? ↔ ?' : cupMoveText(m)).join('  ·  ');
+            const q = {
+                view: 'lines', pk: 'q_cups_miss',
+                lines: [start.join('   '), shownMoves, end.join('   ')],
+                ask: '? ↔ ?',
+                why: [{k: 'why_cups', v: {x: right}}],
+            };
+            return withOptions(r, q, right, others(r, allPairs.map(cupMoveText), right));
+        }
+    }
+
+    pattern('cups-3-easy', 'cups', .16, r => makeCupsForward(r, 3, 2, false));
+    pattern('cups-4-easy', 'cups', .38, r => makeCupsForward(r, 4, 3, false));
+    pattern('cups-4-med', 'cups', .68, r => makeCupsForward(r, 4, 4, true));
+    pattern('cups-5-hard', 'cups', .96, r => makeCupsForward(r, 5, 5, false));
+    pattern('cups-back-4', 'cups', 1.18, r => makeCupsBack(r, 4, 4));
+    pattern('cups-missing-4', 'cups', 1.44, r => makeCupsMissing(r, 4, 3));
+    pattern('cups-5-expert', 'cups', 1.62, r => makeCupsForward(r, 5, 6, true));
+    pattern('cups-missing-5', 'cups', 1.84, r => makeCupsMissing(r, 5, 5));
+
+    // ---------- crack the lock / mastermind (locks) ----------
+    function scoreLock(secret, guess) {
+        let exact = 0, misplaced = 0;
+        for (let i = 0; i < secret.length; i++) {
+            if (secret[i] === guess[i]) exact++;
+            else if (secret.includes(guess[i])) misplaced++;
+        }
+        return [exact, misplaced];
+    }
+
+    function allCodes(pool, len) {
+        if (len === 1) return pool.map(x => [x]);
+        const out = [];
+        pool.forEach((x, i) => {
+            const rest = pool.filter((_, j) => j !== i);
+            allCodes(rest, len - 1).forEach(sub => out.push([x, ...sub]));
+        });
+        return out;
+    }
+
+    function makeLock(r, len, poolSize, digits, maxClues) {
+        const pool = digits
+            ? r.shuffle(['1', '2', '3', '4', '5', '6', '7', '8', '9']).slice(0, poolSize)
+            : r.shuffle(r.pick(SETS)).slice(0, poolSize);
+        const candidates = allCodes(pool, len);
+        for (; ;) {
+            const secret = r.pick(candidates);
+            let left = candidates;
+            let clues = [];
+            const order = r.shuffle(candidates.filter(c => c !== secret));
+            for (const g of order) {
+                if (left.length === 1) break;
+                const [ex, mis] = scoreLock(secret, g);
+                if (ex === len) continue;
+                const narrowed = left.filter(c => {
+                    const [e2, m2] = scoreLock(c, g);
+                    return e2 === ex && m2 === mis;
+                });
+                if (narrowed.length < left.length) {
+                    left = narrowed;
+                    clues.push({g, ex, mis});
+                }
+            }
+            if (left.length !== 1) continue;
+            clues.slice().forEach(cl => {
+                const rest = clues.filter(o => o !== cl);
+                const survivors = candidates.filter(c => rest.every(o => {
+                    const [e2, m2] = scoreLock(c, o.g);
+                    return e2 === o.ex && m2 === o.mis;
+                }));
+                if (survivors.length === 1) clues = rest;
+            });
+            if (clues.length > maxClues || clues.length < 2) continue;
+            const sep = digits ? '' : ' ';
+            const fmt = c => c.join(sep);
+            const right = fmt(secret);
+            const near = candidates
+                .filter(c => c !== secret)
+                .sort((a, b) => {
+                    const sa = clues.filter(o => {
+                        const [e2, m2] = scoreLock(a, o.g);
+                        return e2 === o.ex && m2 === o.mis;
+                    }).length;
+                    const sb = clues.filter(o => {
+                        const [e2, m2] = scoreLock(b, o.g);
+                        return e2 === o.ex && m2 === o.mis;
+                    }).length;
+                    return sb - sa;
+                })
+                .slice(0, 8)
+                .map(fmt);
+            const q = {
+                view: 'lines', pk: 'q_locks',
+                lines: clues.map(o => `${fmt(o.g)}   →   ${o.ex} 🎯   ${o.mis} 🔄`),
+                ask: '🔒 = ?',
+                why: [{k: 'why_locks', v: {x: right}}],
+            };
+            return withOptions(r, q, right, others(r, near, right));
+        }
+    }
+
+    pattern('locks-pic-3', 'locks', .34, r => makeLock(r, 3, 4, false, 4));
+    pattern('locks-dig-3-easy', 'locks', .58, r => makeLock(r, 3, 4, true, 4));
+    pattern('locks-pic-3-med', 'locks', .86, r => makeLock(r, 3, 5, false, 5));
+    pattern('locks-dig-3-med', 'locks', 1.14, r => makeLock(r, 3, 5, true, 5));
+    pattern('locks-pic-3-hard', 'locks', 1.38, r => makeLock(r, 3, 6, false, 5));
+    pattern('locks-dig-3-hard', 'locks', 1.56, r => makeLock(r, 3, 6, true, 5));
+    pattern('locks-pic-4', 'locks', 1.74, r => makeLock(r, 4, 5, false, 5));
+    pattern('locks-dig-4', 'locks', 1.91, r => makeLock(r, 4, 5, true, 5));
+
+    // ---------- detective case (suspects) ----------
+    const HATS = ['🎩', '👑', '🧢', '🎓', '👒'];
+    const GEAR = ['☂️', '🕶️', '🎒', '🧤', '🧣', '🔦'];
+    const RIDES = ['🚲', '🛴', '🛹', '🛶', '🚀', '🚁'];
+
+    function makeSuspectTraits(r, n, hard) {
+        const people = names(r, n);
+        const hats = r.shuffle(HATS).slice(0, 3);
+        const gear = r.shuffle(GEAR).slice(0, 3);
+        const rides = r.shuffle(RIDES).slice(0, 3);
+        for (; ;) {
+            const profiles = people.map(() => [r.pick(hats), r.pick(gear), r.pick(rides)]);
+            if (new Set(profiles.map(p => p.join())).size !== n) continue;
+            const culprit = r.int(0, n - 1);
+            const allItems = [...new Set(profiles.flat())];
+            const possibleClues = [];
+            allItems.forEach(x => {
+                if (!hard && profiles.filter(p => p.includes(x)).length >= 2) {
+                    possibleClues.push({k: 'su_has', v: {x}, test: p => p.includes(x)});
+                }
+                possibleClues.push({k: 'su_not', v: {x}, test: p => !p.includes(x)});
+                allItems.forEach(y => {
+                    if (x >= y) return;
+                    possibleClues.push({k: 'su_imp', v: {x, y}, test: p => !p.includes(x) || p.includes(y)});
+                    possibleClues.push({k: 'su_xor', v: {x, y}, test: p => p.includes(x) !== p.includes(y)});
+                    possibleClues.push({k: 'su_or', v: {x, y}, test: p => p.includes(x) || p.includes(y)});
+                });
+            });
+            let left = people.map((_, i) => i);
+            let chosen = [];
+            for (const c of r.shuffle(possibleClues.filter(cl => cl.test(profiles[culprit])))) {
+                if (left.length === 1) break;
+                const narrowed = left.filter(i => c.test(profiles[i]));
+                if (narrowed.length < left.length && narrowed.length >= 1) {
+                    left = narrowed;
+                    chosen.push(c);
+                }
+            }
+            if (left.length !== 1) continue;
+            chosen.slice().forEach(c => {
+                const rest = chosen.filter(o => o !== c);
+                if (rest.length >= 2 && people.filter((_, i) => rest.every(o => o.test(profiles[i]))).length === 1) chosen = rest;
+            });
+            if (chosen.length < 2 || chosen.length > 4) continue;
+            const right = people[culprit];
+            const roster = people.map((p, i) => ({lit: `${p}:  ${profiles[i].join(' · ')}`}));
+            const q = {
+                view: 'facts', pk: 'q_suspects_traits',
+                facts: [...roster.map(x => ({k: 'bx_line', v: {c: x.lit.split(':')[0], s: x.lit.split(':  ')[1]}})), ...chosen.map(({k, v}) => ({k, v}))],
+                ask: {k: 'su_ask'},
+                why: [{k: 'why_suspects', v: {x: `${right} (${profiles[culprit].join(' · ')})`}}],
+            };
+            return withOptions(r, q, right, others(r, people, right));
+        }
+    }
+
+    function makeSuspectAlibi(r, n, truths) {
+        const people = names(r, n);
+        const kinds = ['me', 'guilty', 'not', 'either'];
+        for (; ;) {
+            const statements = people.map((_, s) => {
+                const kind = r.pick(kinds);
+                const rest = r.shuffle(people.map((_, i) => i).filter(i => i !== s));
+                return {kind, s, b: rest[0], c: rest[1]};
+            });
+            const holds = (st, guilty) => {
+                if (st.kind === 'me') return guilty !== st.s;
+                if (st.kind === 'guilty') return guilty === st.b;
+                if (st.kind === 'not') return guilty !== st.b;
+                return guilty === st.b || guilty === st.c;
+            };
+            const valid = people.map((_, g) => g).filter(g => statements.filter(st => holds(st, g)).length === truths);
+            if (valid.length !== 1) continue;
+            const right = people[valid[0]];
+            const facts = statements.map(st => ({
+                k: 'su_says_' + st.kind,
+                v: {a: people[st.s], b: people[st.b], c: st.c !== undefined ? people[st.c] : ''},
+            }));
+            const q = {
+                view: 'facts', pk: 'q_suspects_alibi', pv: {k: truths},
+                facts, ask: {k: 'su_ask'},
+                why: [{k: 'why_suspects', v: {x: right}}],
+            };
+            return withOptions(r, q, right, others(r, people, right));
+        }
+    }
+
+    pattern('suspects-traits-3', 'suspects', .28, r => makeSuspectTraits(r, 3, false));
+    pattern('suspects-traits-4', 'suspects', .54, r => makeSuspectTraits(r, 4, false));
+    pattern('suspects-alibi-3', 'suspects', .82, r => makeSuspectAlibi(r, 3, 1));
+    pattern('suspects-traits-4-hard', 'suspects', 1.06, r => makeSuspectTraits(r, 4, true));
+    pattern('suspects-alibi-4-one', 'suspects', 1.28, r => makeSuspectAlibi(r, 4, 1));
+    pattern('suspects-alibi-4-two', 'suspects', 1.48, r => makeSuspectAlibi(r, 4, 2));
+    pattern('suspects-traits-5', 'suspects', 1.68, r => makeSuspectTraits(r, 5, true));
+    pattern('suspects-alibi-5', 'suspects', 1.89, r => makeSuspectAlibi(r, 5, 2));
+
+    // ---------- crazy alchemy (alchemy) ----------
+    const HERBS = ['🍄', '🍀', '🌻', '🌙', '⭐', '💎', '🪶', '🐚', '🦴', '🌶️', '🧄', '🍯'];
+
+    pattern('alchemy-recipe-easy', 'alchemy', .24, r => {
+        const [a, b] = r.shuffle(HERBS);
+        const needA = r.int(2, 4), needB = r.int(2, 4), batches = r.int(2, 6);
+        const haveB = batches * needA * needB;
+        const q = {
+            view: 'lines', pk: 'q_alchemy_recipe',
+            lines: [`${needB} ${b}  →  1 ${a}`, `${needA} ${a}  →  1 🧪`, `🎒:  ${haveB} ${b}`],
+            ask: '🧪 = ?',
+            why: [{k: 'why_alchemy_recipe', v: {x: batches}}],
+        };
+        return numberOptions(r, q, batches, [batches * needA, batches + 1, batches - 1, Math.floor(haveB / needB)]);
+    });
+
+    pattern('alchemy-recipe-med', 'alchemy', .62, r => {
+        const [a, b] = r.shuffle(HERBS);
+        const na = r.int(2, 4), nb = r.int(2, 5);
+        const capA = r.int(3, 8), capB = capA + r.int(1, 4);
+        const swap = r.next() < .5;
+        const [ha, hb] = swap ? [capB * na + r.int(0, na - 1), capA * nb + r.int(0, nb - 1)] : [capA * na + r.int(0, na - 1), capB * nb + r.int(0, nb - 1)];
+        const right = capA;
+        const q = {
+            view: 'lines', pk: 'q_alchemy_recipe',
+            lines: [`${na} ${a} + ${nb} ${b}  →  1 🧪`, `🎒:  ${ha} ${a}  ·  ${hb} ${b}`],
+            ask: '🧪 = ?',
+            why: [{k: 'why_alchemy_recipe', v: {x: right}}],
+        };
+        return numberOptions(r, q, right, [capB, capA + capB, Math.floor((capA + capB) / 2), right + 1]);
+    });
+
+    pattern('alchemy-recipe-hard', 'alchemy', 1.04, r => {
+        const [a, b, c] = r.shuffle(HERBS);
+        const cPerA = r.int(2, 3), aPerP = r.int(2, 3), bPerP = r.int(2, 4);
+        const fromC = r.int(3, 6), directA = r.int(2, 5);
+        const totalA = fromC + directA;
+        const maxByA = Math.floor(totalA / aPerP);
+        const maxByB = Math.max(1, maxByA + r.pick([-1, 1, 2]));
+        const right = Math.min(maxByA, maxByB);
+        const q = {
+            view: 'lines', pk: 'q_alchemy_recipe',
+            lines: [
+                `${cPerA} ${c}  →  1 ${a}`,
+                `${aPerP} ${a} + ${bPerP} ${b}  →  1 🧪`,
+                `🎒:  ${directA} ${a}  ·  ${maxByB * bPerP} ${b}  ·  ${fromC * cPerA} ${c}`,
+            ],
+            ask: '🧪 = ?',
+            why: [{k: 'why_alchemy_recipe', v: {x: right}}],
+        };
+        return numberOptions(r, q, right, [Math.max(maxByA, maxByB), totalA, right + 1, right + 2]);
+    });
+
+    function makeRecycle(r, kRange, nRange) {
+        const k = r.int(kRange[0], kRange[1]);
+        const n = r.int(nRange[0], nRange[1]);
+        let total = n, empty = n;
+        while (empty >= k) {
+            const extra = Math.floor(empty / k);
+            total += extra;
+            empty = (empty % k) + extra;
+        }
+        const firstStepOnly = n + Math.floor(n / k);
+        const q = {
+            view: 'riddle', pk: 'q_alchemy_recycle', pv: {n, k},
+            why: [{k: 'why_alchemy_recycle', v: {x: total}}],
+        };
+        return numberOptions(r, q, total, [firstStepOnly, total - 1, total + 1, n + k]);
+    }
+
+    pattern('alchemy-recycle-easy', 'alchemy', .88, r => makeRecycle(r, [3, 4], [9, 16]));
+    pattern('alchemy-recycle-hard', 'alchemy', 1.38, r => makeRecycle(r, [2, 3], [14, 27]));
+
+    function makeCauldronBack(r, steps, endZero) {
+        let k, start, end;
+        if (endZero) {
+            const m = r.int(1, 5);
+            k = m * (1 << steps);
+            start = m * ((1 << steps) - 1);
+            end = 0;
+        } else {
+            k = r.int(2, 8);
+            start = k + r.int(1, 5);
+            end = start;
+            for (let i = 0; i < steps; i++) end = end * 2 - k;
+        }
+        const q = {
+            view: 'riddle', pk: 'q_alchemy_back', pv: {k, s: steps, e: end},
+            why: [{k: 'why_alchemy_back', v: {k, s: steps, x: start}}],
+        };
+        return numberOptions(r, q, start, [start + 1, start - 1, start + 2, Math.max(1, Math.floor((end + k * steps) / 2))]);
+    }
+
+    pattern('alchemy-back-2', 'alchemy', .76, r => makeCauldronBack(r, 2, false));
+    pattern('alchemy-back-3-zero', 'alchemy', 1.24, r => makeCauldronBack(r, 3, true));
+    pattern('alchemy-back-4', 'alchemy', 1.78, r => makeCauldronBack(r, 4, false));
+
+    // ---------- around the table & on the bench (seats) ----------
+    function makeSeatsRound(r, n) {
+        const people = names(r, n);
+        const ids = people.map((_, i) => i);
+        // Seat 0 is fixed as person 0 in the candidate search or by a clue
+        const perms = orderings(ids.slice(1)).map(rest => [0, ...rest]);
+        const truth = r.pick(perms);
+        const seatOf = (arr, p) => arr.indexOf(p);
+        const rightOf = (arr, a, b) => (seatOf(arr, b) + 1) % n === seatOf(arr, a);
+        const leftOf = (arr, a, b) => (seatOf(arr, b) + n - 1) % n === seatOf(arr, a);
+        const nextTo = (arr, a, b) => rightOf(arr, a, b) || leftOf(arr, a, b);
+        const oppOf = (arr, a, b) => n % 2 === 0 && (seatOf(arr, b) + n / 2) % n === seatOf(arr, a);
+        const clues = [];
+        ids.forEach(a => ids.forEach(b => {
+            if (a === b) return;
+            clues.push({k: 'st_right', v: {a: people[a], b: people[b]}, test: c => rightOf(c, a, b)});
+            clues.push({k: 'st_left', v: {a: people[a], b: people[b]}, test: c => leftOf(c, a, b)});
+            if (a < b) {
+                clues.push({k: 'st_next', v: {a: people[a], b: people[b]}, test: c => nextTo(c, a, b)});
+                clues.push({k: 'st_not_next', v: {a: people[a], b: people[b]}, test: c => !nextTo(c, a, b)});
+                if (n % 2 === 0) clues.push({k: 'st_opp', v: {a: people[a], b: people[b]}, test: c => oppOf(c, a, b)});
+            }
+        }));
+        let left = perms, facts = [{k: 'st_at', v: {a: people[0], n: 1}, test: c => c[0] === 0}];
+        for (const clue of r.shuffle(clues.filter(c => c.test(truth)))) {
+            if (left.length === 1) break;
+            const narrowed = left.filter(clue.test);
+            if (narrowed.length < left.length) {
+                left = narrowed;
+                facts.push(clue);
+            }
+        }
+        if (left.length !== 1) return makeSeatsRound(r, n);
+        facts.slice(1).forEach(f => {
+            const rest = facts.filter(o => o !== f);
+            if (perms.filter(c => rest.every(o => o.test(c))).length === 1) facts = rest;
+        });
+        const askSeat = r.int(1, n - 1);
+        const askPerson = truth[askSeat];
+        const useOpp = n % 2 === 0 && r.next() < .6;
+        const ask = useOpp
+            ? {k: 'st_ask_opp', v: {a: people[truth[(askSeat + n / 2) % n]]}}
+            : {k: 'st_ask_seat', v: {n: askSeat + 1}};
+        const right = people[askPerson];
+        const q = {
+            view: 'facts', pk: 'q_seats_round', pv: {n},
+            facts: facts.map(({k, v}) => ({k, v})),
+            ask,
+            why: [{k: 'why_seats', v: {x: truth.map((p, i) => `${i + 1}:${people[p]}`).join(' · ')}}],
+        };
+        return withOptions(r, q, right, others(r, people, right));
+    }
+
+    function makeSeatsBench(r, n) {
+        const people = names(r, n);
+        const ids = people.map((_, i) => i);
+        const perms = orderings(ids);
+        const truth = r.pick(perms);
+        const at = (c, p) => c.indexOf(p);
+        const clues = [];
+        ids.forEach(a => {
+            clues.push({k: 'st_end', v: {a: people[a]}, test: c => at(c, a) === 0 || at(c, a) === n - 1});
+            ids.forEach((b) => {
+                if (a === b) return;
+                clues.push({k: 'st_left_of', v: {a: people[a], b: people[b]}, test: c => at(c, a) < at(c, b)});
+                clues.push({k: 'st_right', v: {a: people[a], b: people[b]}, test: c => at(c, a) === at(c, b) + 1});
+                if (a < b) {
+                    clues.push({k: 'st_next', v: {a: people[a], b: people[b]}, test: c => Math.abs(at(c, a) - at(c, b)) === 1});
+                    clues.push({k: 'st_not_next', v: {a: people[a], b: people[b]}, test: c => Math.abs(at(c, a) - at(c, b)) > 1});
+                }
+                ids.forEach(d => {
+                    if (b < d && a !== d) {
+                        clues.push({k: 'st_between', v: {a: people[a], b: people[b], c: people[d]}, test: c => Math.abs(at(c, a) - at(c, b)) === 1 && Math.abs(at(c, a) - at(c, d)) === 1});
+                    }
+                });
+            });
+        });
+        let left = perms, facts = [];
+        for (const clue of r.shuffle(clues.filter(c => c.test(truth)))) {
+            if (left.length === 1) break;
+            const narrowed = left.filter(clue.test);
+            if (narrowed.length < left.length) {
+                left = narrowed;
+                facts.push(clue);
+            }
+        }
+        if (left.length !== 1) return makeSeatsBench(r, n);
+        facts.slice().forEach(f => {
+            const rest = facts.filter(o => o !== f);
+            if (perms.filter(c => rest.every(o => o.test(c))).length === 1) facts = rest;
+        });
+        const pos = r.int(0, n - 1);
+        const right = people[truth[pos]];
+        const q = {
+            view: 'facts', pk: 'q_seats_bench', pv: {n},
+            facts: facts.map(({k, v}) => ({k, v})),
+            ask: {k: 'st_ask_seat', v: {n: pos + 1}},
+            why: [{k: 'why_seats', v: {x: truth.map(p => people[p]).join(' · ')}}],
+        };
+        return withOptions(r, q, right, others(r, people, right));
+    }
+
+    pattern('seats-round-4', 'seats', .32, r => makeSeatsRound(r, 4));
+    pattern('seats-bench-4', 'seats', .64, r => makeSeatsBench(r, 4));
+    pattern('seats-round-5', 'seats', .94, r => makeSeatsRound(r, 5));
+    pattern('seats-bench-5', 'seats', 1.22, r => makeSeatsBench(r, 5));
+    pattern('seats-round-6', 'seats', 1.52, r => makeSeatsRound(r, 6));
+    pattern('seats-bench-6', 'seats', 1.84, r => makeSeatsBench(r, 6));
+
+    // ---------- mirrors & flips (mirror) ----------
+    const MIRROR_OPS = [
+        ['↔️', (g, n) => g.map(row => row.slice().reverse())],
+        ['↕️', (g, n) => g.slice().reverse().map(row => row.slice())],
+        ['↻ 90°', (g, n) => Array.from({length: n}, (_, r) => Array.from({length: n}, (_, c) => g[n - 1 - c][r]))],
+        ['↺ 90°', (g, n) => Array.from({length: n}, (_, r) => Array.from({length: n}, (_, c) => g[c][n - 1 - r]))],
+        ['↻ 180°', (g, n) => g.slice().reverse().map(row => row.slice().reverse())],
+    ];
+
+    function makeMirrorMove(r, n, steps) {
+        const pool = r.shuffle(SETS.flat().filter((x, i, a) => a.indexOf(x) === i)).slice(0, n * n);
+        const grid = Array.from({length: n}, (_, y) => Array.from({length: n}, (_, x) => pool[y * n + x]));
+        const ops = Array.from({length: steps}, () => r.pick(MIRROR_OPS));
+        const end = ops.reduce((g, op) => op[1](g, n), grid);
+        // Pick a non-center cell where end[ty][tx] !== grid[ty][tx]
+        const cells = [];
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+            if (end[y][x] !== grid[y][x]) cells.push([y, x]);
+        }
+        if (!cells.length) return makeMirrorMove(r, n, steps);
+        const [ty, tx] = r.pick(cells);
+        const target = grid[ty][tx];
+        const right = end[ty][tx];
+        const decoys = MIRROR_OPS.map(op => op[1](grid, n)[ty][tx]).concat([target, grid[tx][ty]]);
+        const wrong = others(r, [...decoys, ...pool], right);
+        const q = {
+            view: 'grid', grid,
+            lines: [ops.map(o => o[0]).join('  ·  ')],
+            pk: 'q_mirror_move', pv: {target},
+            why: [{k: 'why_mirror', v: {x: right}}],
+        };
+        return withOptions(r, q, right, wrong);
+    }
+
+    function makeMirrorSym(r, n, mode) {
+        const icons = r.shuffle(r.pick(SETS)).slice(0, 5);
+        const grid = Array.from({length: n}, () => Array(n).fill(''));
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+            if (mode === 'both') {
+                const sy = Math.min(y, n - 1 - y), sx = Math.min(x, n - 1 - x);
+                grid[y][x] = grid[sy][sx] || r.pick(icons);
+            } else if (mode === 'point') {
+                const py = n - 1 - y, px = n - 1 - x;
+                grid[y][x] = grid[py][px] || r.pick(icons);
+            } else {
+                grid[y][x] = grid[x][y] || r.pick(icons);
+            }
+        }
+        // Ensure non-trivial board where different symmetries give different answers at the chosen cell
+        const candidates = [];
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+            if (mode === 'diag' && y === x) continue;
+            if (mode === 'point' && y === n - 1 - y && x === n - 1 - x) continue;
+            candidates.push([y, x]);
+        }
+        const [ay, ax] = r.pick(candidates);
+        const right = grid[ay][ax];
+        const mirrorCell = mode === 'both' ? [ay, n - 1 - ax] : (mode === 'point' ? [n - 1 - ay, n - 1 - ax] : [ax, ay]);
+        if (mirrorCell[0] === ay && mirrorCell[1] === ax) return makeMirrorSym(r, n, mode);
+        grid[ay][ax] = '?';
+        const pk = mode === 'both' ? 'q_mirror_sym' : (mode === 'point' ? 'q_mirror_point' : 'q_mirror_diag');
+        const q = {
+            view: 'grid', grid, pk,
+            why: [{k: 'why_mirror', v: {x: right}}],
+        };
+        return withOptions(r, q, right, others(r, icons, right));
+    }
+
+    pattern('mirror-sym-4', 'mirror', .22, r => makeMirrorSym(r, 4, 'both'));
+    pattern('mirror-flip-3', 'mirror', .46, r => makeMirrorMove(r, 3, 1));
+    pattern('mirror-point-4', 'mirror', .78, r => makeMirrorSym(r, 4, 'point'));
+    pattern('mirror-combo-3', 'mirror', 1.08, r => makeMirrorMove(r, 3, 2));
+    pattern('mirror-diag-4', 'mirror', 1.34, r => makeMirrorSym(r, 4, 'diag'));
+    pattern('mirror-combo-4', 'mirror', 1.58, r => makeMirrorMove(r, 4, 2));
+    pattern('mirror-triple-3', 'mirror', 1.76, r => makeMirrorMove(r, 3, 3));
+    pattern('mirror-triple-4', 'mirror', 1.94, r => makeMirrorMove(r, 4, 3));
 })(typeof window !== 'undefined' ? window : globalThis);

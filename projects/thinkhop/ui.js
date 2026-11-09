@@ -41,7 +41,13 @@
             else if (k === 'html') el.innerHTML = v;
             else el.setAttribute(k, v === true ? '' : v);
         }
-        for (const c of kids.flat(Infinity)) if (c != null && c !== false) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+        const textOnly = /^(?:option|textarea|title)$/i.test(el.tagName);
+        const tw = !textOnly && window.ThinkHopTwemoji && window.ThinkHopTwemoji.appendWithTwemoji;
+        for (const c of kids.flat(Infinity)) if (c != null && c !== false) {
+            if (c instanceof Node) el.append(c);
+            else if (tw) tw(el, String(c));
+            else el.append(document.createTextNode(String(c)));
+        }
         return el;
     }
 

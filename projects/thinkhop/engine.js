@@ -15,7 +15,8 @@
 
     const TIERS = ['easy', 'medium', 'hard', 'expert'];
     const CATS = ['sign', 'sequence', 'symbols', 'oddone', 'order', 'weird', 'nonsense', 'riddle',
-        'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap'];
+        'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap',
+        'scales', 'cups', 'locks', 'suspects', 'alchemy', 'seats', 'mirror'];
     const MATH = ['sign', 'sequence', 'symbols', 'oddone', 'weird']; // this is a game of logic: few of these in each game
     const MAX_D = 1.99;
     const STAGES = 500;         // levels of the game, in worlds of 10
@@ -198,11 +199,14 @@
                 return {t: iterate(d * 6 + r.int(1, 20), 6, x => x - d), why: {k: 'seq_sub', v: {d}}};
             },
             r => ({t: iterate(r.int(1, 5), 6, x => x * 2), why: {k: 'seq_mul', v: {m: 2}}}),
-            r => ({t: iterate(r.int(1, 3), 5, x => x * 3), why: {k: 'seq_mul', v: {m: 3}}}),
+            r => {
+                const m = r.pick([3, 4]);
+                return {t: iterate(r.int(1, 6), 5, x => x * m), why: {k: 'seq_mul', v: {m}}};
+            },
         ],
         medium: [
             r => {
-                const s = r.int(1, 4);
+                const s = r.int(1, 9);
                 return {t: [0, 1, 2, 3, 4, 5].map(i => (i + s) * (i + s)), why: {k: 'seq_square'}};
             },
             r => ({t: iterate(r.int(1, 9), 6, (x, i) => x + i), why: {k: 'seq_grow'}}),
@@ -223,7 +227,7 @@
         ],
         hard: [
             r => {
-                const s = r.int(1, 4);
+                const s = r.int(1, 8);
                 return {t: [0, 1, 2, 3, 4].map(i => Math.pow(i + s, 3)), why: {k: 'seq_cube'}};
             },
             r => {
@@ -234,7 +238,7 @@
                 const a = r.int(2, 6), b = r.int(2, 6), x = r.int(1, 9), y = r.int(20, 40);
                 return {t: [x, y, x + a, y - b, x + 2 * a, y - 2 * b, x + 3 * a], why: {k: 'seq_mix', v: {a, b}}};
             },
-            () => ({t: [1, 2, 6, 24, 120, 720], why: {k: 'seq_factorial'}}),
+            r => ({t: iterate(r.int(1, 6), 6, (x, i) => x * (i + 1)), why: {k: 'seq_factorial'}}),
             r => {
                 const a = r.int(1, 4);
                 return {t: iterate(r.int(1, 5), 7, (x, i) => i % 2 ? x * 2 : x + a), why: {k: 'seq_altmul', v: {a}}};
@@ -264,8 +268,8 @@
                 return {t: [0, 1, 2, 3, 4, 5].map(i => (i + s) * (i + s + 1)), why: {k: 'seq_pronic'}};
             },
             r => {
-                const s = r.pick([1, 3]);
-                return {t: [0, 1, 2, 3, 4, 5, 6].map(i => Math.pow(i + s, i % 2 ? 3 : 2)), why: {k: 'seq_sqcube'}};
+                const s = r.int(1, 6), flip = r.int(0, 1);
+                return {t: [0, 1, 2, 3, 4, 5, 6].map(i => Math.pow(i + s, (i + flip) % 2 ? 3 : 2)), why: {k: 'seq_sqcube'}};
             },
         ],
     };
@@ -281,39 +285,76 @@
     }
 
     // ---------- fruit algebra: 🍎 + 🍎 = 6 ----------
-    const FRUIT = ['🍎', '🍌', '🍇', '🍒', '🍋', '🍓', '🥝', '🍑', '🍐', '🍍'];
+    const FRUIT = ['🍎', '🍌', '🍇', '🍒', '🍋', '🍓', '🥝', '🍑', '🍐', '🍍', '🍉', '🍊', '🥭', '🫐'];
 
-    function makeSymbols(r, level) {
+    function makeSymbols(r, level, alt) {
         const [x, y, z, w] = r.shuffle(FRUIT);
         const a = r.int(2, 9), b = r.int(2, 9), c = r.int(2, 6);
         const q = {cat: 'symbols', level, view: 'lines'};
         let right, near;
         // Every line adds one unknown only, so the values follow one after the other
         if (level === 'easy') {
-            q.lines = [`${x} + ${x} = ${2 * a}`, `${x} + ${y} = ${a + b}`];
-            q.ask = `${y} = ?`;
-            right = b;
-            near = [a, a + b, 2 * a - b];
+            if (alt) {
+                q.lines = [`${x} + ${x} + ${x} = ${3 * a}`, `${x} + ${y} + ${y} = ${a + 2 * b}`];
+                q.ask = `${x} + ${y} = ?`;
+                right = a + b;
+                near = [a + 2 * b, 2 * a + b, b];
+            } else {
+                q.lines = [`${x} + ${x} = ${2 * a}`, `${x} + ${y} = ${a + b}`];
+                q.ask = `${y} = ?`;
+                right = b;
+                near = [a, a + b, 2 * a - b];
+            }
             q.why = [{lit: `${x} = ${a}, ${y} = ${b}`}];
         } else if (level === 'medium') {
-            q.lines = [`${x} + ${x} + ${x} = ${3 * a}`, `${x} + ${y} = ${a + b}`, `${y} + ${z} = ${b + c}`];
-            q.ask = `${x} + ${z} = ?`;
-            right = a + c;
-            near = [a + b, b + c, a * c];
+            if (alt) {
+                q.lines = [`${x} × ${x} = ${a * a}`, `${x} + ${y} = ${a + b}`, `${y} − ${z} = ${b - c}`];
+                q.ask = `${x} + ${y} + ${z} = ?`;
+                right = a + b + c;
+                near = [a + b - c, a * b + c, a + c];
+            } else {
+                q.lines = [`${x} + ${x} + ${x} = ${3 * a}`, `${x} + ${y} = ${a + b}`, `${y} + ${z} = ${b + c}`];
+                q.ask = `${x} + ${z} = ?`;
+                right = a + c;
+                near = [a + b, b + c, a * c];
+            }
             q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}`}];
         } else if (level === 'expert') {
             const d = r.int(1, c - 1);
-            q.lines = [`${x} × ${x} = ${a * a}`, `${x} + ${y} = ${a + b}`, `${y} × ${z} = ${b * c}`, `${z} − ${w} = ${c - d}`];
-            q.ask = `${x} × ${y} + ${z} − ${w} = ?`;
-            right = a * b + c - d;
-            near = [a * (b + c) - d, a * b + c + d, a + b + c + d];
-            q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}, ${w} = ${d}`}, {lit: `${a} × ${b} + ${c} − ${d} = ${right}`}];
+            if (alt) {
+                q.lines = [`${x} + ${x} = ${2 * a}`, `${x} × ${y} − ${x} = ${a * b - a}`, `${y} + ${z} × ${z} = ${b + c * c}`, `${z} + ${w} = ${c + d}`];
+                q.ask = `${w} × ${x} + ${y} = ?`;
+                right = d * a + b;
+                near = [d * (a + b), a * b + d, c * a + b];
+                q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}, ${w} = ${d}`}, {lit: `${d} × ${a} + ${b} = ${right}`}];
+            } else {
+                q.lines = [`${x} × ${x} = ${a * a}`, `${x} + ${y} = ${a + b}`, `${y} × ${z} = ${b * c}`, `${z} − ${w} = ${c - d}`];
+                q.ask = `${x} × ${y} + ${z} − ${w} = ?`;
+                right = a * b + c - d;
+                near = [a * (b + c) - d, a * b + c + d, a + b + c + d];
+                q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}, ${w} = ${d}`}, {lit: `${a} × ${b} + ${c} − ${d} = ${right}`}];
+            }
         } else {
-            q.lines = [`${x} + ${x} = ${2 * a}`, `${x} × ${y} = ${a * b}`, `${y} − ${z} = ${b - c}`];
-            q.ask = `${x} + ${y} × ${z} = ?`;
-            right = a + b * c;
-            near = [(a + b) * c, a * b + c, a + b + c];
-            q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}`}, {lit: `${a} + ${b} × ${c} = ${right}`}, {k: 'why_precedence'}];
+            if (alt) {
+                q.lines = [`${x} × ${x} = ${a * a}`, `${x} + ${y} + ${y} = ${a + 2 * b}`, `${y} + ${z} = ${b + c}`];
+                q.ask = `${z} × ${x} − ${y} = ?`;
+                right = Math.max(1, c * a - b);
+                if (c * a - b < 1) {
+                    q.ask = `${x} × ${y} − ${z} = ?`;
+                    right = a * b - c;
+                    near = [a * (b - c), a * b + c, a + b - c];
+                    q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}`}, {lit: `${a} × ${b} − ${c} = ${right}`}, {k: 'why_precedence'}];
+                } else {
+                    near = [c * (a - b), c * a + b, a + b + c];
+                    q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}`}, {lit: `${c} × ${a} − ${b} = ${right}`}, {k: 'why_precedence'}];
+                }
+            } else {
+                q.lines = [`${x} + ${x} = ${2 * a}`, `${x} × ${y} = ${a * b}`, `${y} − ${z} = ${b - c}`];
+                q.ask = `${x} + ${y} × ${z} = ?`;
+                right = a + b * c;
+                near = [(a + b) * c, a * b + c, a + b + c];
+                q.why = [{lit: `${x} = ${a}, ${y} = ${b}, ${z} = ${c}`}, {lit: `${a} + ${b} × ${c} = ${right}`}, {k: 'why_precedence'}];
+            }
         }
         return numberOptions(r, q, right, near);
     }
@@ -591,8 +632,10 @@
         PROPERTIES[tier].forEach((make, i) => pattern(`odd-${tier}-${i}`, 'oddone', ODD_D[tier][i], r => makeOddOne(r, tier, make)));
         WEIRD[tier].forEach((make, i) => pattern(`weird-${tier}-${i}`, 'weird', WEIRD_D[tier][i], r => makeWeird(r, tier, make)));
         FORMS[tier].forEach((form, i) => pattern(`nz-${tier}-${i}`, 'nonsense', FORM_D[tier][i], r => makeNonsense(r, tier, form)));
-        pattern('fruit-' + tier, 'symbols', [.2, .55, .92, 1.35][n], r => makeSymbols(r, tier));
+        pattern('fruit-' + tier, 'symbols', [.2, .55, .92, 1.35][n], r => makeSymbols(r, tier, false));
+        pattern('fruit2-' + tier, 'symbols', [.32, .72, 1.12, 1.68][n], r => makeSymbols(r, tier, true));
         pattern('order-' + tier, 'order', [.18, .48, .82, 1.3][n], r => makeOrder(r, tier));
+        pattern('order2-' + tier, 'order', [.3, .66, 1.06, 1.62][n], r => makeOrder(r, tier));
     });
 
     /** Riddles without their own d get one from the tier they were written for, spread over its range. */
@@ -670,11 +713,13 @@
                 && !(p.fixed && (w > .25 || ctx.seen.has(sigOf(p.id))))
                 && !(ctx.math >= ctx.mathMax && MATH.includes(p.cat)));
             const fresh = pool.filter(p => !ctx.recent.has(p.id));
-            const usableNow = fresh.length ? fresh : pool;
+            // Do not reuse recently played patterns when widening the window slightly finds a fresh one
+            const usableNow = fresh.length ? fresh : (w >= .45 ? pool : []);
             const cats = [...new Set(usableNow.map(p => p.cat))];
             const newCats = cats.filter(c => !ctx.cats.has(c));
+            const veryFreshCats = newCats.filter(c => !ctx.recentCats || !ctx.recentCats.has(c));
             // A type already used in this game comes back only when a wider window has nothing else to offer
-            const choice = newCats.length ? newCats : (w < .45 ? [] : cats);
+            const choice = veryFreshCats.length ? veryFreshCats : (newCats.length ? (w <= .1 ? [] : newCats) : (w < .45 ? [] : cats));
             for (let tries = 0; choice.length && tries < 16; tries++) {
                 const cat = drawCat(r, choice);
                 const p = r.pick(usableNow.filter(x => x.cat === cat));
@@ -690,10 +735,16 @@
         return build(r.pick(list), r.int(0, 2147483647)); // everything was seen: better an old question than none
     }
 
-    const context = (seen, mathMax) => ({
-        seen: new Set(seen || []), recent: new Set((seen || []).slice(-60).map(s => s.split('|')[0])),
-        pids: new Set(), cats: new Set(), math: 0, mathMax,
-    });
+    function context(seen, mathMax) {
+        const list = seen || [];
+        const byId = Object.fromEntries(allPatterns().map(p => [p.id, p.cat]));
+        return {
+            seen: new Set(list),
+            recent: new Set(list.slice(-90).map(s => s.split('|')[0])),
+            recentCats: new Set(list.slice(-6).map(s => byId[s.split('|')[0]]).filter(Boolean)),
+            pids: new Set(), cats: new Set(), math: 0, mathMax,
+        };
+    }
 
     const ascending = list => list.sort((a, b) => a.d - b.d);
 

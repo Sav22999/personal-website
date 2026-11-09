@@ -1,6 +1,42 @@
 /* ThinkHop — release notes (newest first). Each note is translated in the five languages. */
 window.ThinkHopReleases = [
     {
+        version: '1.7.0',
+        date: '2026-11-09',
+        notes: {
+            en: [
+                'Seven new puzzle games: Crazy scales, Shell game, Crack the lock, Detective case, Crazy alchemy, Around the table, and Mirrors & flips',
+                'Guided and animated “?” walkthrough on every exercise (with timer pause)',
+                'Crisp Twemoji SVG icons across every operating system, even offline',
+                'Much greater variety across levels so exercises don’t repeat back-to-back',
+            ],
+            it: [
+                'Sette nuovi giochi di logica: Bilancia pazza, I bussolotti, Il lucchetto, L’indagine, Alchimia, A tavola! e Giochi di specchi',
+                'Pulsante «?» con guida passo-passo animata su ogni esercizio (con timer in pausa)',
+                'Icone Twemoji in SVG nitide e identiche su ogni sistema operativo, anche offline',
+                'Molta più varietà tra un livello e l’altro per non ripetere gli stessi esercizi',
+            ],
+            es: [
+                'Siete nuevos juegos de lógica: Balanza loca, Los cubiletes, El candado, El caso, Alquimia, ¡A la mesa! y Espejos y giros',
+                'Botón «?» con guía animada paso a paso en cada ejercicio (con pausa del reloj)',
+                'Iconos Twemoji en SVG nítidos e idénticos en todos los sistemas, incluso sin conexión',
+                'Mucha más variedad entre niveles para no repetir los mismos ejercicios',
+            ],
+            fr: [
+                'Sept nouveaux jeux de logique : Balance folle, Les gobelets, Le cadenas, L’enquête, Alchimie, À table ! et Miroirs et tours',
+                'Bouton « ? » avec guide animé pas à pas sur chaque exercice (avec pause du chrono)',
+                'Icônes Twemoji en SVG nettes et identiques sur tous les systèmes, même hors ligne',
+                'Beaucoup plus de variété d’un niveau à l’autre pour éviter les répétitions',
+            ],
+            de: [
+                'Sieben neue Logikspiele: Verrückte Waage, Hütchenspiel, Das Zahlenschloss, Der Kriminalfall, Alchemie, Am Tisch! und Spiegel & Drehung',
+                '„?“-Knopf mit animierter Schritt-für-Schritt-Anleitung bei jeder Aufgabe (mit Zeitpause)',
+                'Gestochen scharfe Twemoji-SVG-Icons auf jedem System, auch offline',
+                'Deutlich mehr Abwechslung zwischen den Leveln ohne direkte Wiederholungen',
+            ],
+        },
+    },
+    {
         version: '1.5.0',
         date: '2026-11-07',
         notes: {

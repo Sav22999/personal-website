@@ -116,7 +116,7 @@ function clean_game(array $g): ?array
     if ($mode === 'daily' && ($total !== 10 || (int)($g['score'] ?? 0) > 10000)) return null;
     $cats = [];
     foreach ((array)($g['cats'] ?? []) as $k => $v) {
-        if (!is_string($k) || !preg_match('/^[a-z]{1,12}$/', $k) || !is_array($v) || count($cats) >= 30) continue;
+        if (!is_string($k) || !preg_match('/^[a-z]{1,12}$/', $k) || !is_array($v) || count($cats) >= 50) continue;
         $cats[$k] = [max(0, min(1000, (int)($v[0] ?? 0))), max(0, min(1000, (int)($v[1] ?? 0)))];
     }
     return [

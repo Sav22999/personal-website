@@ -1,6 +1,6 @@
 <?php
 $description = 'ThinkHop – the free logic game: liars, treasure chests, mini sudoku, absurd reasoning, traps and riddles. 500 levels, a daily ranking, five languages, works offline.';
-$v = '1.6.2';
+$v = '1.7.0';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,10 +77,12 @@ $v = '1.6.2';
 <script src="riddles-more.js?v=<?= $v ?>" defer></script>
 <script src="engine.js?v=<?= $v ?>" defer></script>
 <script src="puzzles.js?v=<?= $v ?>" defer></script>
+<script src="twemoji.js?v=<?= $v ?>" defer></script>
 <script src="ui.js?v=<?= $v ?>" defer></script>
 <script src="account.js?v=<?= $v ?>" defer></script>
 <script src="social.js?v=<?= $v ?>" defer></script>
 <script src="mascots.js?v=<?= $v ?>" defer></script>
+<script src="help.js?v=<?= $v ?>" defer></script>
 <script src="game.js?v=<?= $v ?>" defer></script>
 </body>
 </html>

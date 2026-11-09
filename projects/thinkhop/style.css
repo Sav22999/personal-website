@@ -2767,3 +2767,468 @@ body:has(.modal) .toast {
     margin: 10px 0 0;
     text-align: center;
 }
+
+/* ---------- Twemoji SVG icons ---------- */
+img.twemoji {
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    display: inline-block;
+    margin: 0 .05em;
+    pointer-events: none;
+    user-select: none;
+}
+
+.cell img.twemoji {
+    width: 1.28em;
+    height: 1.28em;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.options.pics .option img.twemoji {
+    width: 1.15em;
+    height: 1.15em;
+    margin: 0 .04em;
+    vertical-align: middle;
+}
+
+.sequence span img.twemoji, .gap img.twemoji {
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: -0.22em;
+}
+
+/* ---------- Guided & animated "?" help ---------- */
+.tags {
+    align-items: center;
+}
+
+.help-btn {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--accent);
+    color: var(--on-accent);
+    font: 800 .95rem/1 'Inter', system-ui, sans-serif;
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform .1s, box-shadow .1s;
+}
+
+.help-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.help-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+}
+
+.help-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.help-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.help-titles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.help-titles h3 {
+    width: 100%;
+    margin: 2px 0 0;
+}
+
+.help-pause-tag {
+    background: var(--tip-bg);
+    color: var(--tip);
+}
+
+.help-goal {
+    margin: 0;
+    color: var(--muted);
+    font-size: .92rem;
+    line-height: 1.4;
+}
+
+.help-stage {
+    padding: 14px 12px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface-2);
+    min-height: 128px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.h-scene {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    animation: fade .2s ease;
+}
+
+.h-scene.h-lines {
+    align-items: stretch;
+}
+
+.h-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    font-weight: 700;
+    font-size: .98rem;
+    transition: border-color .2s, background .2s;
+}
+
+.h-line.focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.h-row, .h-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.h-row.h-big {
+    font-size: 1.25rem;
+}
+
+.h-op {
+    font-weight: 800;
+    color: var(--muted);
+    padding: 0 2px;
+}
+
+.h-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
+    border: 2px dashed var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.h-group.focus {
+    border-color: var(--primary);
+}
+
+.h-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    font-weight: 800;
+    font-size: .92rem;
+    transition: transform .2s, background .2s, border-color .2s, opacity .2s;
+}
+
+.h-chip.focus, .h-card.focus, .h-cell.focus {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--on-primary-soft);
+}
+
+.h-chip.ok, .h-card.ok, .h-cell.ok {
+    border-color: var(--ok);
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+
+.h-chip.bad, .h-card.bad {
+    border-color: var(--wrong);
+    background: var(--wrong-bg);
+    color: var(--wrong);
+    text-decoration: line-through;
+    opacity: .72;
+}
+
+.h-chip.dim, .h-card.dim {
+    opacity: .45;
+}
+
+.h-grid4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.h-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 10px;
+    min-width: 58px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    text-align: center;
+}
+
+.h-card strong {
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+.h-card small {
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.h-jumps {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: -4px;
+}
+
+.h-jump {
+    font-size: .76rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 99px;
+    background: var(--tip-bg);
+    color: var(--tip);
+    border: 1.5px solid var(--line);
+}
+
+.h-jump.focus {
+    background: var(--primary-soft);
+    color: var(--on-primary-soft);
+}
+
+.h-board3, .h-board2 {
+    display: grid;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #FFFBF2;
+    color: #1B1640;
+}
+
+.h-board3 {
+    grid-template-columns: repeat(3, 38px);
+}
+
+.h-board2 {
+    grid-template-columns: repeat(2, 38px);
+}
+
+.h-cell {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 1.05rem;
+    border-right: 1px solid rgba(128, 128, 128, .35);
+    border-bottom: 1px solid rgba(128, 128, 128, .35);
+}
+
+.h-cell.ask {
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+.h-table-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.h-table-mid {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.h-table-round {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px dashed var(--line);
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+}
+
+.pulse {
+    animation: help-pulse 1.1s ease-in-out infinite;
+}
+
+.pop {
+    animation: help-pop .38s cubic-bezier(.2, 1.3, .4, 1);
+}
+
+.flip-anim {
+    animation: help-flip .55s ease;
+}
+
+@keyframes help-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+@keyframes help-pop {
+    0% {
+        transform: scale(.72);
+        opacity: .3;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes help-flip {
+    0% {
+        transform: perspective(260px) rotateY(90deg);
+    }
+    100% {
+        transform: perspective(260px) rotateY(0deg);
+    }
+}
+
+.help-guide-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.help-mascot .mascot {
+    width: 44px;
+    height: 44px;
+}
+
+.help-bubble {
+    flex: 1;
+}
+
+.help-caption {
+    margin: 2px 0 0;
+}
+
+.help-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.help-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.help-dot {
+    position: relative;
+    overflow: hidden;
+    min-width: 34px;
+    height: 32px;
+    padding: 0 10px;
+    border: 2px solid var(--line);
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-weight: 800;
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.help-dot.done {
+    background: var(--primary-soft);
+    color: var(--on-primary-soft);
+}
+
+.help-dot.active {
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+.help-dot-bar {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background: var(--primary);
+    transform-origin: left;
+    animation: help-step-progress 3.1s linear forwards;
+}
+
+@keyframes help-step-progress {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+.help-tip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--tip-bg);
+    color: var(--tip);
+    font-size: .86rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pulse, .pop, .flip-anim, .help-dot-bar {
+        animation: none !important;
+    }
+}
+
+

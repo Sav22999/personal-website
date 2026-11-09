@@ -17,7 +17,7 @@ const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at l
 const ROLE_ADMIN = 9;
 const MAX_STAGE = 500; // STAGES in engine.js
 const TIERS = ['easy', 'medium', 'hard', 'expert'];
-const QUESTION_TYPES = ['sign', 'sequence', 'symbols', 'oddone', 'order', 'weird', 'nonsense', 'riddle', 'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap'];
+const QUESTION_TYPES = ['sign', 'sequence', 'symbols', 'oddone', 'order', 'weird', 'nonsense', 'riddle', 'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap', 'scales', 'cups', 'locks', 'suspects', 'alchemy', 'seats', 'mirror'];
 const MAX_DIFFICULTY = 1.99;
 const MAX_FRIENDS = 200;
 

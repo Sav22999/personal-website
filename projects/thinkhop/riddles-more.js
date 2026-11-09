@@ -8,11 +8,11 @@
     const R = (id, d, o, en, it, es, fr, de) => root.ThinkHopRiddles.push(Object.assign({id, d, t: {en, it, es, fr, de}}, o ? {o} : {}));
 
     R('n01', .06, null,
-        ['A rooster lays an egg on the very top of a roof. Which way does it roll?', 'Roosters don’t lay eggs.', ['Nowhere: roosters don’t lay eggs', 'To the left', 'To the right', 'It depends on the wind']],
-        ['Un gallo depone un uovo in cima al tetto. Da che parte rotola?', 'I galli non fanno le uova.', ['Da nessuna: i galli non fanno uova', 'A sinistra', 'A destra', 'Dipende dal vento']],
-        ['Un gallo pone un huevo en lo alto del tejado. ¿Hacia dónde rueda?', 'Los gallos no ponen huevos.', ['Hacia ningún lado: los gallos no ponen huevos', 'A la izquierda', 'A la derecha', 'Depende del viento']],
-        ['Un coq pond un œuf au sommet d’un toit. De quel côté roule-t-il ?', 'Les coqs ne pondent pas.', ['Aucun : les coqs ne pondent pas', 'À gauche', 'À droite', 'Ça dépend du vent']],
-        ['Ein Hahn legt ein Ei auf den Dachfirst. Wohin rollt es?', 'Hähne legen keine Eier.', ['Nirgendwohin: Hähne legen keine Eier', 'Nach links', 'Nach rechts', 'Das hängt vom Wind ab']]);
+        ['What gets wetter the more it dries?', 'A towel dries you by soaking up the water.', ['A towel', 'A sponge in the sun', 'Ice', 'Rain']],
+        ['Che cosa si bagna sempre di più man mano che asciuga?', 'Un asciugamano asciuga assorbendo l’acqua.', ['L’asciugamano', 'Una spugna al sole', 'Il ghiaccio', 'La pioggia']],
+        ['¿Qué se moja cada vez más cuanto más seca?', 'Una toalla seca absorbiendo el agua.', ['La toalla', 'Una esponja al sol', 'El hielo', 'La lluvia']],
+        ['Qu’est-ce qui se mouille de plus en plus à mesure qu’il sèche ?', 'Une serviette sèche en absorbant l’eau.', ['La serviette', 'Une éponge au soleil', 'La glace', 'La pluie']],
+        ['Was wird immer nasser, je mehr es trocknet?', 'Ein Handtuch trocknet, indem es das Wasser aufnimmt.', ['Das Handtuch', 'Ein Schwamm in der Sonne', 'Das Eis', 'Der Regen']]);
     R('n02', .08, null,
         ['What do cows drink?', 'Cows give milk, but they drink water.', ['Water', 'Milk', 'Cream', 'Orange juice']],
         ['Che cosa bevono le mucche?', 'Le mucche fanno il latte, ma bevono acqua.', ['Acqua', 'Latte', 'Panna', 'Aranciata']],
@@ -20,11 +20,11 @@
         ['Que boivent les vaches ?', 'Les vaches donnent du lait, mais elles boivent de l’eau.', ['De l’eau', 'Du lait', 'De la crème', 'Du jus d’orange']],
         ['Was trinken Kühe?', 'Kühe geben Milch, aber sie trinken Wasser.', ['Wasser', 'Milch', 'Sahne', 'Orangensaft']]);
     R('n03', .1, null,
-        ['Which weighs more: a kilo of feathers or a kilo of lead?', 'A kilo is a kilo.', ['They weigh the same', 'The lead', 'The feathers', 'It depends on the bird']],
-        ['Pesa di più un chilo di piume o un chilo di piombo?', 'Un chilo è un chilo.', ['Pesano uguale', 'Il piombo', 'Le piume', 'Dipende dall’uccello']],
-        ['¿Qué pesa más: un kilo de plumas o un kilo de plomo?', 'Un kilo es un kilo.', ['Pesan lo mismo', 'El plomo', 'Las plumas', 'Depende del pájaro']],
-        ['Qu’est-ce qui pèse le plus : un kilo de plumes ou un kilo de plomb ?', 'Un kilo reste un kilo.', ['Ils pèsent pareil', 'Le plomb', 'Les plumes', 'Ça dépend de l’oiseau']],
-        ['Was wiegt mehr: ein Kilo Federn oder ein Kilo Blei?', 'Ein Kilo ist ein Kilo.', ['Beide gleich viel', 'Das Blei', 'Die Federn', 'Das hängt vom Vogel ab']]);
+        ['Before Mount Everest was discovered, what was the highest mountain in the world?', 'It was already the highest even before anyone discovered it.', ['Mount Everest', 'K2', 'Mont Blanc', 'Kilimanjaro']],
+        ['Prima che venisse scoperto l’Everest, qual era la montagna più alta del mondo?', 'Era già la più alta anche prima che qualcuno la scoprisse.', ['L’Everest', 'Il K2', 'Il Monte Bianco', 'Il Kilimangiaro']],
+        ['Antes de que se descubriera el Everest, ¿cuál era la montaña más alta del mundo?', 'Ya era la más alta aunque nadie la hubiera descubierto aún.', ['El Everest', 'El K2', 'El Mont Blanc', 'El Kilimanjaro']],
+        ['Avant que l’Everest ne soit découvert, quelle était la plus haute montagne du monde ?', 'C’était déjà la plus haute, même avant d’être découverte.', ['L’Everest', 'Le K2', 'Le Mont Blanc', 'Le Kilimandjaro']],
+        ['Welcher war der höchste Berg der Welt, bevor der Mount Everest entdeckt wurde?', 'Er war auch schon vor seiner Entdeckung der höchste.', ['Der Mount Everest', 'Der K2', 'Der Mont Blanc', 'Der Kilimandscharo']]);
     R('n04', .12, ['0', '1', '2', '7'],
         ['How many animals of each kind did Moses take on the ark?', 'It was Noah, not Moses.'],
         ['Quanti animali di ogni specie portò Mosè sull’arca?', 'Sull’arca c’era Noè, non Mosè.'],
@@ -37,12 +37,12 @@
         ['Un tren eléctrico va al norte y el viento sopla hacia el sur. ¿Hacia dónde va el humo?', 'Los trenes eléctricos no echan humo.', ['No hay humo', 'Al norte', 'Al sur', 'Hacia arriba']],
         ['Un train électrique va au nord et le vent souffle vers le sud. Où va la fumée ?', 'Les trains électriques ne font pas de fumée.', ['Il n’y a pas de fumée', 'Au nord', 'Au sud', 'Tout droit vers le haut']],
         ['Ein Elektrozug fährt nach Norden, der Wind weht nach Süden. Wohin zieht der Rauch?', 'Elektrozüge machen keinen Rauch.', ['Es gibt keinen Rauch', 'Nach Norden', 'Nach Süden', 'Gerade nach oben']]);
-    R('n06', .16, ['2', '1', '3', '5'],
-        ['There are 3 apples and you take away 2. How many do you have?', 'You have the 2 you took.'],
-        ['Ci sono 3 mele e ne prendi 2. Quante ne hai?', 'Hai le 2 che hai preso.'],
-        ['Hay 3 manzanas y coges 2. ¿Cuántas tienes?', 'Tienes las 2 que has cogido.'],
-        ['Il y a 3 pommes et tu en prends 2. Combien en as-tu ?', 'Tu as les 2 que tu as prises.'],
-        ['Da liegen 3 Äpfel und du nimmst 2 weg. Wie viele hast du?', 'Du hast die 2, die du genommen hast.']);
+    R('n06', .16, null,
+        ['How much dirt is there in a hole 2 metres long, 2 metres wide and 2 metres deep?', 'It’s a hole: the dirt has been taken out.', ['None: it’s a hole', '8 cubic metres', '6 cubic metres', '4 cubic metres']],
+        ['Quanta terra c’è in una buca lunga 2 metri, larga 2 metri e profonda 2 metri?', 'È una buca: la terra è stata tolta.', ['Nessuna: è una buca', '8 metri cubi', '6 metri cubi', '4 metri cubi']],
+        ['¿Cuánta tierra hay en un agujero de 2 metros de largo, 2 de ancho y 2 de fondo?', 'Es un agujero: la tierra se ha sacado.', ['Ninguna: es un agujero', '8 metros cúbicos', '6 metros cúbicos', '4 metros cúbicos']],
+        ['Combien de terre y a-t-il dans un trou de 2 mètres de long, 2 de large et 2 de profondeur ?', 'C’est un trou : la terre a été enlevée.', ['Aucune : c’est un trou', '8 mètres cubes', '6 mètres cubes', '4 mètres cubes']],
+        ['Wie viel Erde ist in einem Loch, das 2 Meter lang, 2 Meter breit und 2 Meter tief ist?', 'Es ist ein Loch: Die Erde wurde herausgeholt.', ['Gar keine: Es ist ein Loch', '8 Kubikmeter', '6 Kubikmeter', '4 Kubikmeter']]);
     R('n07', .18, null,
         ['You enter a dark cabin with one match. There is a candle, a stove and an oil lamp. What do you light first?', 'Without the match, nothing else lights.', ['The match', 'The candle', 'The stove', 'The lamp']],
         ['Entri in una baita buia con un solo fiammifero. Ci sono una candela, una stufa e una lampada a olio. Che cosa accendi per primo?', 'Senza il fiammifero non si accende nient’altro.', ['Il fiammifero', 'La candela', 'La stufa', 'La lampada']],
@@ -194,17 +194,17 @@
         ['Un homme regarde un portrait : « Je n’ai ni frère ni sœur, mais le père de cet homme est le fils de mon père. » Qui est sur le portrait ?', '« Le fils de mon père », c’est lui : le père de cet homme, c’est donc lui.', ['Son fils', 'Lui-même', 'Son père', 'Son neveu']],
         ['Ein Mann betrachtet ein Porträt: „Ich habe keine Geschwister, aber der Vater dieses Mannes ist der Sohn meines Vaters.“ Wer ist auf dem Bild?', '„Der Sohn meines Vaters“ ist er selbst: Der Vater dieses Mannes ist also er.', ['Sein Sohn', 'Er selbst', 'Sein Vater', 'Sein Neffe']]);
     R('n32', 1.14, null,
-        ['Three boxes are labelled Apples, Pears and Mixed, and all three labels are wrong. You may taste one fruit from one box. Which box do you choose to fix every label?', 'The one labelled Mixed holds only one kind: that tells you all three.', ['The one labelled Mixed', 'The one labelled Apples', 'The one labelled Pears', 'One fruit is not enough']],
-        ['Tre scatole hanno le etichette Mele, Pere e Miste, e tutte e tre sono sbagliate. Puoi assaggiare un frutto da una scatola. Quale scegli per correggerle tutte?', 'Quella con scritto Miste contiene un solo tipo: da lì deduci tutto.', ['Quella con scritto Miste', 'Quella con scritto Mele', 'Quella con scritto Pere', 'Un frutto non basta']],
-        ['Tres cajas tienen las etiquetas Manzanas, Peras y Mixtas, y las tres están mal. Puedes probar una fruta de una caja. ¿Cuál eliges para corregirlas todas?', 'La de Mixtas contiene un solo tipo: de ahí se deduce todo.', ['La que dice Mixtas', 'La que dice Manzanas', 'La que dice Peras', 'Una fruta no basta']],
-        ['Trois boîtes sont étiquetées Pommes, Poires et Mélange, et les trois étiquettes sont fausses. Tu peux goûter un fruit d’une boîte. Laquelle choisis-tu pour tout corriger ?', 'Celle marquée Mélange ne contient qu’un type : tout se déduit de là.', ['Celle marquée Mélange', 'Celle marquée Pommes', 'Celle marquée Poires', 'Un fruit ne suffit pas']],
-        ['Drei Kisten tragen die Schilder Äpfel, Birnen und Gemischt, und alle drei sind falsch. Du darfst aus einer Kiste eine Frucht probieren. Welche wählst du, um alle zu berichtigen?', 'Die Kiste Gemischt enthält nur eine Sorte: Daraus folgt alles andere.', ['Die mit dem Schild Gemischt', 'Die mit dem Schild Äpfel', 'Die mit dem Schild Birnen', 'Eine Frucht reicht nicht']]);
-    R('n33', 1.2, ['2', '1', '3', '4'],
-        ['Of 8 identical balls, one is heavier. With a two-pan balance, how many weighings are enough to always find it?', 'Weigh 3 against 3: you are left with 3 or 2 balls, and one more weighing settles it.'],
-        ['Su 8 palline uguali, una pesa di più. Con una bilancia a due piatti, quante pesate bastano per trovarla sempre?', 'Pesa 3 contro 3: restano 3 o 2 palline, e una pesata in più risolve.'],
-        ['De 8 bolas iguales, una pesa más. Con una balanza de dos platos, ¿cuántas pesadas bastan para encontrarla siempre?', 'Pesa 3 contra 3: quedan 3 o 2 bolas y una pesada más lo resuelve.'],
-        ['Sur 8 billes identiques, une est plus lourde. Avec une balance à deux plateaux, combien de pesées suffisent toujours ?', 'Pèse 3 contre 3 : il reste 3 ou 2 billes, et une pesée de plus suffit.'],
-        ['Von 8 gleichen Kugeln ist eine schwerer. Wie viele Wägungen mit einer Balkenwaage reichen immer aus?', 'Wiege 3 gegen 3: Es bleiben 3 oder 2 Kugeln, eine weitere Wägung genügt.']);
+        ['A doctor gives you 3 pills and tells you to take one every half hour. How long do they last?', 'You take the first at 0:00, the second at 0:30 and the third at 1:00: one hour in total.', ['1 hour', '1 hour and a half', '2 hours', '30 minutes']],
+        ['Il medico ti dà 3 pillole e ti dice di prenderne una ogni mezz’ora. Quanto durano?', 'Prendi la prima subito, la seconda dopo 30 minuti e la terza dopo 60: un’ora in tutto.', ['1 ora', '1 ora e mezza', '2 ore', '30 minuti']],
+        ['El médico te da 3 pastillas para tomar una cada media hora. ¿Cuánto duran?', 'Tomas la primera al instante, la segunda a los 30 minutos y la tercera a los 60: una hora en total.', ['1 hora', '1 hora y media', '2 horas', '30 minutos']],
+        ['Un médecin te donne 3 pilules à prendre toutes les demi-heures. Combien de temps durent-elles ?', 'Tu prends la première tout de suite, la deuxième à 30 min et la troisième à 60 min : une heure en tout.', ['1 heure', '1 heure et demie', '2 heures', '30 minutes']],
+        ['Ein Arzt gibt dir 3 Tabletten, jede halbe Stunde eine. Wie lange reichen sie?', 'Die erste nimmst du sofort, die zweite nach 30 Minuten, die dritte nach 60: insgesamt eine Stunde.', ['1 Stunde', '1,5 Stunden', '2 Stunden', '30 Minuten']]);
+    R('n33', 1.2, ['4', '3', '6', '12'],
+        ['Three ducks walk in a line: two ducks in front of a duck, two ducks behind a duck, and one duck in the middle. How many ducks are enough for this to be true — wait, what if there is also one duck with three behind it?', 'Four ducks in a single line satisfy every part of the description.'],
+        ['In fila indiana ci sono due papere davanti a una papera, due dietro a una papera, una in mezzo, più una quarta che le segue tutte. Quante papere bastano in tutto?', 'Basta una fila di 4 papere perché tutte le frasi siano vere.'],
+        ['En fila india van dos patos delante de un pato, dos detrás de un pato, uno en medio y un cuarto siguiéndolos a todos. ¿Cuántos patos bastan en total?', 'Basta una fila de 4 patos para que todo sea cierto.'],
+        ['En file indienne marchent deux canards devant un canard, deux derrière un canard, un au milieu, plus un quatrième qui les suit tous. Combien de canards suffisent ?', 'Une file de 4 canards suffit pour que tout soit vrai.'],
+        ['Im Gänsemarsch laufen zwei Enten vor einer Ente, zwei hinter einer Ente, eine in der Mitte und eine vierte hinter allen. Wie viele Enten reichen insgesamt?', 'Eine Reihe aus 4 Enten erfüllt alle Aussagen.']);
     R('n34', 1.26, null,
         ['Two doors: one leads to freedom. Two guards: one always lies, one always tells the truth, and you don’t know which. With one question to one guard, what do you ask?', 'Both guards point at the wrong door, so you take the other one.', ['“Which door would the other guard say is safe?”, then take the other one', '“Are you the liar?”', '“Which door is safe?”', '“Is the sky blue?”']],
         ['Due porte: una porta alla libertà. Due guardiani: uno mente sempre, uno dice sempre il vero, e non sai chi è chi. Con una domanda a uno solo, che cosa chiedi?', 'Entrambi indicano la porta sbagliata: quindi scegli l’altra.', ['«Quale porta indicherebbe l’altro?», poi scegli l’opposta', '«Sei tu il bugiardo?»', '«Qual è la porta giusta?»', '«Il cielo è blu?»']],
@@ -218,11 +218,11 @@
         ['Avec une cruche de 3 litres, une de 5 et un robinet, combien de gestes au minimum (remplir, vider ou transvaser) pour avoir exactement 4 litres ?', 'Remplis 5, verse dans 3, vide 3, verse les 2 dans 3, remplis 5, complète la 3 : il reste 4.'],
         ['Mit einem 3-Liter-Krug, einem 5-Liter-Krug und einem Hahn: Wie viele Schritte (füllen, leeren, umgießen) braucht man mindestens für genau 4 Liter?', 'Fülle 5, gieße in 3, leere 3, gieße die 2 in 3, fülle 5, fülle 3 auf: Es bleiben 4.']);
     R('n36', 1.36, null,
-        ['Three doors: a prize behind one. You pick one, the host opens another with nothing behind it and lets you switch. What should you do?', 'Your door keeps a 1/3 chance, so the other one has 2/3.', ['Switch: 2/3 chance of winning', 'Stay: your first idea is best', 'It makes no difference: 1/2 each', 'Ask for a fourth door']],
-        ['Tre porte: dietro una c’è un premio. Ne scegli una, il conduttore ne apre un’altra vuota e ti lascia cambiare. Che cosa conviene fare?', 'La tua porta resta a 1/3, quindi l’altra vale 2/3.', ['Cambiare: 2/3 di vincere', 'Restare: la prima idea è la migliore', 'È uguale: 1/2 ciascuna', 'Chiedere una quarta porta']],
-        ['Tres puertas: tras una hay un premio. Eliges una, el presentador abre otra vacía y te deja cambiar. ¿Qué te conviene?', 'Tu puerta sigue con 1/3, así que la otra tiene 2/3.', ['Cambiar: 2/3 de ganar', 'Quedarte: la primera idea es la mejor', 'Da igual: 1/2 cada una', 'Pedir una cuarta puerta']],
-        ['Trois portes : un prix derrière l’une. Tu en choisis une, l’animateur en ouvre une autre vide et te laisse changer. Que faire ?', 'Ta porte garde 1/3, donc l’autre a 2/3.', ['Changer : 2/3 de gagner', 'Rester : la première idée est la bonne', 'C’est pareil : 1/2 chacune', 'Demander une quatrième porte']],
-        ['Drei Türen, hinter einer ein Preis. Du wählst eine, die Moderation öffnet eine andere leere und lässt dich wechseln. Was tust du?', 'Deine Tür behält 1/3, die andere hat also 2/3.', ['Wechseln: 2/3 Gewinnchance', 'Bleiben: Der erste Gedanke ist der beste', 'Egal: je 1/2', 'Eine vierte Tür verlangen']]);
+        ['A lily pad in a pond doubles every day. If you start with TWO lily pads instead of one, and one pad took 30 days to fill the pond, how many days will two pads take?', 'Starting with two is the same as starting on day 2: it takes one day less, so 29 days.', ['29 days', '15 days', '28 days', '30 days']],
+        ['Una ninfea nello stagno raddoppia ogni giorno e da sola lo copre in 30 giorni. Se invece parti subito con DUE ninfee, quanti giorni impiegano?', 'Partire con due equivale a partire dal secondo giorno: basta un giorno in meno, quindi 29.', ['29 giorni', '15 giorni', '28 giorni', '30 giorni']],
+        ['Un nenúfar en un estanque se duplica cada día y tarda 30 días en cubrirlo. Si empiezas con DOS nenúfares, ¿cuántos días tardarán?', 'Empezar con dos equivale a empezar en el segundo día: tarda un día menos, 29.', ['29 días', '15 días', '28 días', '30 días']],
+        ['Un nénuphar double chaque jour et couvre l’étang en 30 jours. Si tu commences avec DEUX nénuphars, combien de jours leur faut-il ?', 'Commencer avec deux revient à partir du deuxième jour : il faut un jour de moins, soit 29.', ['29 jours', '15 jours', '28 jours', '30 jours']],
+        ['Eine Seerose verdoppelt sich täglich und bedeckt den Teich in 30 Tagen. Wenn du gleich mit ZWEI Seerosen startest, wie viele Tage brauchen sie?', 'Mit zwei zu starten ist wie am zweiten Tag zu beginnen: Es dauert einen Tag weniger, also 29.', ['29 Tage', '15 Tage', '28 Tage', '30 Tage']]);
     R('n37', 1.4, ['312211', '1112221', '132112', '311211'],
         ['What comes next? 1, 11, 21, 1211, 111221, …', 'Each row describes the one before: “one 1”, “two 1s”, “one 2, one 1”… so three 1s, two 2s, one 1.'],
         ['Che cosa viene dopo? 1, 11, 21, 1211, 111221, …', 'Ogni riga descrive la precedente: «un 1», «due 1», «un 2, un 1»… quindi tre 1, due 2, un 1.'],
@@ -235,12 +235,12 @@
         ['Dos cuerdas tardan cada una una hora exacta en arder, pero de forma irregular. ¿Cómo mides 45 minutos?', 'La primera, encendida por los dos extremos, dura 30 minutos; al encender el otro extremo de la segunda quedan 15.', ['Enciende una por los dos extremos y otra por uno; al acabar la primera, enciende el otro extremo', 'Corta una a tres cuartos', 'Enciende las dos por un extremo', 'Dóblalas por la mitad']],
         ['Deux cordes brûlent chacune en une heure exacte, mais de façon irrégulière. Comment mesurer 45 minutes ?', 'La première, allumée aux deux bouts, dure 30 minutes ; allumer ensuite l’autre bout de la seconde laisse 15.', ['Allume l’une aux deux bouts et l’autre à un bout ; quand la première finit, allume l’autre bout', 'Coupe-en une aux trois quarts', 'Allume les deux à un bout', 'Plie-les en deux']],
         ['Zwei Seile brennen je genau eine Stunde, aber ungleichmäßig. Wie misst du 45 Minuten?', 'Das erste, an beiden Enden angezündet, brennt 30 Minuten; danach bleiben durch das zweite Ende des anderen 15.', ['Eines an beiden Enden, das andere an einem anzünden; ist das erste aus, das andere Ende anzünden', 'Eines bei drei Vierteln abschneiden', 'Beide an einem Ende anzünden', 'Beide falten']]);
-    R('n39', 1.56, ['10', '50', '25', '1'],
-        ['100 closed lockers. Student 1 toggles all of them, student 2 every second one, student 3 every third one, and so on up to student 100. How many stay open?', 'A locker ends up open if it has an odd number of divisors: only squares do, from 1 to 100.'],
-        ['100 armadietti chiusi. Lo studente 1 li commuta tutti, il 2 uno ogni due, il 3 uno ogni tre, e così via fino al 100. Quanti restano aperti?', 'Resta aperto chi ha un numero dispari di divisori: solo i quadrati, da 1 a 100.'],
-        ['100 taquillas cerradas. El alumno 1 las cambia todas, el 2 una de cada dos, el 3 una de cada tres, y así hasta el 100. ¿Cuántas quedan abiertas?', 'Queda abierta la que tiene un número impar de divisores: solo los cuadrados, de 1 a 100.'],
-        ['100 casiers fermés. L’élève 1 les inverse tous, le 2 un sur deux, le 3 un sur trois, et ainsi de suite jusqu’au 100. Combien restent ouverts ?', 'Reste ouvert celui qui a un nombre impair de diviseurs : seuls les carrés, de 1 à 100.'],
-        ['100 geschlossene Spinde. Person 1 schaltet alle um, Person 2 jeden zweiten, Person 3 jeden dritten und so weiter bis Person 100. Wie viele bleiben offen?', 'Offen bleibt, was eine ungerade Zahl von Teilern hat: nur Quadratzahlen von 1 bis 100.']);
+    R('n39', 1.56, ['1', '3', '9', '10'],
+        ['10 bags hold 10 gold coins each (10 g per coin), but one bag holds only 9 g fakes. With a digital scale that shows the exact weight in grams, how many weighings do you need to find the fake bag?', 'Take 1 coin from bag 1, 2 from bag 2, … 10 from bag 10 and weigh them all together once: the missing grams tell you the bag number!'],
+        ['Hai 10 sacchetti con 10 monete ciascuno (da 10 g l’una), ma un sacchetto contiene solo monete false da 9 g. Con una bilancia digitale che segna il peso esatto in grammi, quante pesate bastano per trovare il sacchetto falso?', 'Prendi 1 moneta dal sacchetto 1, 2 dal 2, … 10 dal 10 e pesale tutte insieme una sola volta: i grammi mancanti da 550 g indicano il numero del sacchetto!'],
+        ['Tienes 10 bolsas con 10 monedas cada una (de 10 g), pero una bolsa solo tiene monedas falsas de 9 g. Con una báscula digital que muestra el peso exacto, ¿cuántas pesadas bastan para hallar la bolsa falsa?', 'Coge 1 moneda de la bolsa 1, 2 de la 2… 10 de la 10 y pésalas juntas una sola vez: los gramos que falten hasta 550 g te dicen qué bolsa es.'],
+        ['Tu as 10 sacs de 10 pièces (de 10 g chacune), mais un sac ne contient que de fausses pièces de 9 g. Avec une balance digitale qui affiche le poids exact, combien de pesées suffisent ?', 'Prends 1 pièce du sac 1, 2 du sac 2… 10 du sac 10 et pèse-les toutes ensemble en une seule fois : les grammes manquants sur 550 g donnent le numéro du sac !'],
+        ['Du hast 10 Beutel mit je 10 Münzen (je 10 g), aber ein Beutel enthält nur 9-g-Fälschungen. Wie viele Wägungen auf einer genauen Digitalwaage brauchst du, um den falschen Beutel zu finden?', 'Nimm 1 Münze aus Beutel 1, 2 aus Beutel 2 … 10 aus Beutel 10 und wiege alle zusammen ein einziges Mal: Die fehlenden Gramm zu 550 g verraten die Beutelnummer!']);
     R('n40', 1.62, ['1', '0', '2', '3'],
         ['A list has four sentences: “Exactly one of these is false”, “Exactly two are false”, “Exactly three are false”, “All four are false”. How many are true?', 'They contradict each other, so at most one is true. That makes three false, which is what the third one says.'],
         ['Una lista ha quattro frasi: «Esattamente una di queste è falsa», «Esattamente due sono false», «Esattamente tre sono false», «Tutte e quattro sono false». Quante sono vere?', 'Si contraddicono, quindi al massimo una è vera. Allora tre sono false, ed è ciò che dice la terza.'],

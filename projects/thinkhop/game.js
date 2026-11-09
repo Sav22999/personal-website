@@ -278,7 +278,10 @@
             G.mode === 'survival' ? null : h('div.progress', {'aria-hidden': 'true'}, h('i', {style: `width:${(G.index + (G.answered ? 1 : 0)) / G.questions.length * 100}%`})),
             h('main.question',
                 h('div.tags', h('span.tag', t('cat_' + q.cat)), h('span.tag.level-' + q.level, t(q.level)),
-                    G.streak > 1 ? h('span.tag.hot', icon('flame'), String(G.streak)) : null),
+                    G.streak > 1 ? h('span.tag.hot', icon('flame'), String(G.streak)) : null,
+                    h('button.help-btn', {
+                        type: 'button', title: t('how_to_play'), 'aria-label': t('how_to_play'), onclick: () => showHelp(q),
+                    }, '?')),
                 G.answered ? null : questionGuide(q),
                 h('h1.prompt', promptText(q)),
                 questionBody(q),
@@ -309,6 +312,28 @@
         renderGame();
         const box = app.querySelector('.feedback');
         if (box) box.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+    }
+
+    function showHelp(q) {
+        if (!window.ThinkHopHelp) return;
+        const active = G && !G.answered;
+        window.ThinkHopHelp.open(q.cat, {
+            paused: active,
+            onopen: () => {
+                if (!active) return;
+                G.clock = elapsed();
+                stopClock();
+                const bar = app.querySelector('.speed i');
+                if (bar) bar.style.animationPlayState = 'paused';
+            },
+            onclose: () => {
+                if (!G || G.answered || screen !== 'game') return;
+                startedAt = performance.now();
+                const bar = app.querySelector('.speed i');
+                if (bar) bar.style.animationPlayState = 'running';
+                runClock(G.questions[G.index]);
+            },
+        });
     }
 
     function useHint() {
@@ -567,6 +592,7 @@
         const n = Number(e.key);
         if (!G.answered && n >= 1 && n <= G.questions[G.index].options.length) choose(n - 1);
         else if (!G.answered && e.key.toLowerCase() === 'h') useHint();
+        else if (e.key === '?') showHelp(G.questions[G.index]);
     });
 
     // Android back key (see MainActivity): true means the page used it

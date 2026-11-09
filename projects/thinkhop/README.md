@@ -7,8 +7,9 @@ Web app installabile (PWA) e app Android per Google Play. È elencata tra i prog
 
 - **500 livelli in 50 mondi**, 5 domande ciascuno. La difficoltà cresce da un livello all'altro e dentro ogni livello
   (`stageTiers` in `engine.js`).
-- **Otto tipi di domanda**, sbloccati strada facendo (`UNLOCK` in `engine.js`): segno mancante e sequenze (livello 1),
-  algebra della frutta (3), intruso (5), chi arriva prima (7), somme strane (10), puro nonsense (13), indovinelli (16).
+- **28 tipologie di giochi di logica e ragionamento** (`CATS` in `engine.js` e `puzzles.js`), con più di 400 pattern procedurali: segno mancante, sequenze, algebra della frutta, intruso numerico e illustrato, chi arriva prima, somme strane, puro nonsense, indovinelli, sequenze di figure, lettere, mini sudoku, tartaruga in marcia, lampadine e bottoni, codici segreti, logica assurda, angeli e diavoli, il tesoro nei forzieri, chi ha cosa, calendario contorto, trappole, bilance pazze, gioco dei bussolotti, combinazione segreta (Mastermind), indagine da detective, alchimia pazza, posti a tavola, specchi e rotazioni.
+- **Guida «?» animata su ogni esercizio** (`help.js`): ogni domanda ha un pulsante `?` che mette in pausa il timer e mostra una dimostrazione guidata e animata in 3 passi per quella tipologia di esercizio.
+- **Icone Twemoji SVG integrate offline** (`twemoji.js`): tutte le emoji sono disegnate come immagini vettoriali SVG identiche su ogni sistema operativo, senza richieste di rete esterne.
 - **Superare un livello**: almeno metà delle risposte giuste. 3 stelle dal 90%, 2 dal 70%, 1 dal 50%.
 - **Quattro gradi di difficoltà**: facile, media, difficile, esperto. Il livello 100 è tutto da esperti.
 - **Punti**: 100 / 200 / 300 / 400 secondo la difficoltà, fino a +50% per la velocità e +10% per ogni risposta di fila (massimo

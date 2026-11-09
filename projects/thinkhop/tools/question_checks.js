@@ -42,6 +42,15 @@
             if (q.cat === 'sign') checkSign(q);
             if (q.pk && q.pk.startsWith('tr_') && !Number.isInteger(+q.options[q.answer])) bad(q, 'a trap with an odd answer');
             if (q.why.some(w => w.k === 'why_nz_null')) bad(q, 'contradictory statements');
+            if (globalThis.ThinkHopTwemoji) {
+                const dump = JSON.stringify(q);
+                const re = globalThis.ThinkHopTwemoji.EMOJI_RE;
+                re.lastIndex = 0;
+                let m;
+                while ((m = re.exec(dump)) !== null) {
+                    if (m[0] !== '★' && !globalThis.ThinkHopTwemoji.has(m[0])) bad(q, 'missing Twemoji SVG for ' + m[0]);
+                }
+            }
         }
 
         const patterns = E.allPatterns();
@@ -66,11 +75,40 @@
                 if (r.o && new Set(r.o).size !== 4) bad(r.id, 'riddle options');
             }
         });
+        const mockH = (tag, ...kids) => ({tag, kids: kids.flat(Infinity).filter(Boolean)});
         for (const c of E.CATS) {
             if (!cats[c]) bad(c, 'a type without patterns');
+            if (globalThis.ThinkHopHelp && !globalThis.ThinkHopHelp.has(c)) bad(c, 'missing help scene');
             LANGS.forEach(l => {
                 I.setLang(l);
                 if (I.t('cat_' + c) === 'cat_' + c) bad(c, 'no name in ' + l);
+                if (globalThis.ThinkHopHelp) {
+                    ['goal', 's1', 's2', 's3'].forEach(k => {
+                        const key = `help_${c}_${k}`;
+                        const val = I.t(key);
+                        if (val === key) bad(c, `no help text ${key} in ${l}`);
+                        if (globalThis.ThinkHopTwemoji) {
+                            const re = globalThis.ThinkHopTwemoji.EMOJI_RE;
+                            re.lastIndex = 0;
+                            let m;
+                            while ((m = re.exec(val)) !== null) {
+                                if (!globalThis.ThinkHopTwemoji.has(m[0])) bad(c, `missing Twemoji SVG in ${key} for ${m[0]}`);
+                            }
+                        }
+                    });
+                    for (let s = 0; s < 3; s++) {
+                        const tree = JSON.stringify(globalThis.ThinkHopHelp.renderStep(c, s, mockH));
+                        if (tree.includes('undefined') || tree.includes('NaN')) bad(c, `undefined in help scene step ${s}`);
+                        if (globalThis.ThinkHopTwemoji) {
+                            const re = globalThis.ThinkHopTwemoji.EMOJI_RE;
+                            re.lastIndex = 0;
+                            let m;
+                            while ((m = re.exec(tree)) !== null) {
+                                if (!globalThis.ThinkHopTwemoji.has(m[0])) bad(c, `missing Twemoji SVG in help scene for ${m[0]}`);
+                            }
+                        }
+                    }
+                }
             });
         }
 
