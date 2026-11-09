@@ -714,7 +714,7 @@
         q.d = p.d;
         q.level = tierOf(p.d);
         q.limit = timeFor(q);
-        q.pics = q.options.every(o => typeof o === 'string' && !/[A-Za-z0-9]/.test(o)); // pictures: shown bigger
+        q.pics = q.cat !== 'sign' && q.options.every(o => typeof o === 'string' && !/[A-Za-z0-9+\u2212\u00d7\u00f7=<>^]/.test(o)); // pictures: shown bigger
         q.sig = sigOf(p.id, p.fixed ? null : q);
         return q;
     }

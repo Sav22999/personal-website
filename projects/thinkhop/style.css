@@ -2582,6 +2582,12 @@ body {
 
 .options.pics .option:not(.right):not(.wrong) {
     background: #FFFBF2;
+    color: #1B1640;
+}
+
+.options.pics .option:hover:not(:disabled):not(.right):not(.wrong) {
+    background: #F0EAD6;
+    color: #1B1640;
 }
 
 /* ---------- home: one column, the next thing to do first ---------- */
