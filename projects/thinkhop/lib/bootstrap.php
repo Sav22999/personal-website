@@ -10,15 +10,15 @@ declare(strict_types=1);
 
 const APP_NAME = 'ThinkHop';
 const AUTH_COOKIE = 'thinkhop_auth';
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 11;
 const START_POINTS = 100; // START_POINTS in engine.js: the gift every wallet starts with
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at least these
 const ROLE_ADMIN = 9;
-const MAX_STAGE = 500; // STAGES in engine.js
-const TIERS = ['easy', 'medium', 'hard', 'expert'];
-const QUESTION_TYPES = ['sign', 'sequence', 'symbols', 'oddone', 'order', 'weird', 'nonsense', 'riddle', 'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap', 'scales', 'cups', 'locks', 'suspects', 'alchemy', 'seats', 'mirror'];
-const MAX_DIFFICULTY = 1.99;
+const MAX_STAGE = 1000; // STAGES in engine.js
+const TIERS = ['novice', 'easy', 'medium', 'hard', 'expert', 'master', 'legend'];
+const QUESTION_TYPES = ['sign', 'sequence', 'symbols', 'oddone', 'order', 'weird', 'nonsense', 'riddle', 'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap', 'scales', 'cups', 'locks', 'suspects', 'alchemy', 'seats', 'mirror', 'gears', 'lasers', 'cubes', 'pipes', 'mobiles', 'origami'];
+const MAX_DIFFICULTY = 9.99;
 const MAX_FRIENDS = 200;
 
 // ---------- Configuration ----------

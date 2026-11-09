@@ -2710,7 +2710,11 @@ code {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
+    padding: 12px 14px;
+}
+
+.cert-row + .cert-row {
+    border-top: 1px solid var(--outline-variant);
 }
 
 .cert-row p {
@@ -2905,8 +2909,45 @@ code {
     line-height: 1.5;
 }
 
-.verify-link {
-    color: var(--muted);
+.auth-verify {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--outline-variant);
+    width: 100%;
+}
+
+.auth-verify-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    font-size: .95rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--surface);
+    border: 2px solid var(--card-border);
+    border-radius: var(--r-md);
+    box-shadow: 0 4px 0 var(--card-edge);
+    transition: transform .08s, box-shadow .08s, filter .15s;
+}
+
+.auth-verify-btn:hover {
+    filter: brightness(1.02);
+    box-shadow: 0 4px 0 var(--card-edge);
+}
+
+.auth-verify-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 transparent;
+}
+
+.auth-verify-btn .ic {
+    width: 20px;
+    height: 20px;
+    fill: var(--primary);
 }
 
 .setting.toggle > span {
@@ -3268,7 +3309,8 @@ code {
 }
 
 a.btn-block {
-    margin: 4px 0 14px;
+    display: flex;
+    margin: 16px 0 14px;
     text-decoration: none;
 }
 

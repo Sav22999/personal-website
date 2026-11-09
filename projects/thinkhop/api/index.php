@@ -22,7 +22,7 @@ header('X-Robots-Tag: noindex');
 set_exception_handler(function (Throwable $e) {
     if ($e->getMessage() === 'not_installed') fail('not_installed', 503);
     error_log('ThinkHop API: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-    send_json(['ok' => false, 'error' => 'server', 'detail' => config_value('debug', false) ? $e->getMessage() : null], 500);
+    send_json(['ok' => false, 'error' => 'server', 'detail' => $e->getMessage(), 'file' => basename($e->getFile()) . ':' . $e->getLine()], 500);
 });
 
 $r = (string)($_GET['r'] ?? '');
@@ -147,11 +147,21 @@ function user_games(int $uid): array
 /** The settings of the game: stored values over the defaults, which are the same as in engine.js. */
 function game_settings(): array
 {
-    $s = ['levelLength' => 5, 'hintCost' => ['easy' => 50, 'medium' => 100, 'hard' => 150, 'expert' => 200], 'disabledCats' => [], 'disabledRiddles' => [], 'difficulty' => (object)[]];
-    foreach (db()->query('SELECT k, v FROM ' . t('settings')) as $row) {
-        if (!array_key_exists($row['k'], $s)) continue;
-        $v = json_decode($row['v'], true);
-        $s[$row['k']] = $row['k'] === 'hintCost' ? array_replace($s['hintCost'], (array)$v) : ($row['k'] === 'difficulty' ? (object)$v : $v); // a tier added later keeps its default cost
+    $s = ['levelLength' => 5, 'hintCost' => ['novice' => 20, 'easy' => 50, 'medium' => 100, 'hard' => 150, 'expert' => 200, 'master' => 300, 'legend' => 500], 'disabledCats' => [], 'disabledRiddles' => [], 'difficulty' => (object)[], 'catWeights' => (object)[]];
+    try {
+        foreach (db()->query('SELECT k, v FROM ' . t('settings')) as $row) {
+            if (!array_key_exists($row['k'], $s)) continue;
+            $v = json_decode((string)$row['v'], true);
+            if ($row['k'] === 'hintCost' && is_array($v)) {
+                $s['hintCost'] = array_replace($s['hintCost'], $v);
+            } elseif ($row['k'] === 'difficulty' || $row['k'] === 'catWeights') {
+                $s[$row['k']] = is_array($v) ? (object)$v : (object)[];
+            } else {
+                $s[$row['k']] = $v;
+            }
+        }
+    } catch (Throwable $e) {
+        // Fallback to defaults if table cannot be queried
     }
     return $s;
 }
@@ -458,14 +468,35 @@ switch ($r) {
 
     case 'notify.get':
         $u = writer();
-        send_json(['ok' => true, 'types' => NOTIFY_TYPES, 'off' => notify_off(user_row((int)$u['id']))]);
+        $row = user_row((int)$u['id']);
+        $now = new DateTimeImmutable('now', new DateTimeZone(SERVER_TIMEZONE));
+        send_json([
+            'ok' => true,
+            'types' => NOTIFY_TYPES,
+            'live' => NOTIFY_LIVE,
+            'scheduled' => NOTIFY_SCHEDULED,
+            'off' => notify_off($row),
+            'hours' => notify_hours($row),
+            'server_tz' => SERVER_TIMEZONE,
+            'server_time' => $now->format('H:i'),
+            'server_offset' => $now->getOffset() / 3600,
+        ]);
 
     case 'notify.save':
         $u = writer();
-        $off = array_values(array_intersect(NOTIFY_TYPES, (array)(body()['off'] ?? [])));
-        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ? WHERE id = ?')->execute([json_encode($off), $u['id']]);
+        $b = body();
+        $off = array_values(array_intersect(NOTIFY_TYPES, (array)($b['off'] ?? [])));
+        $rawHours = (array)($b['hours'] ?? []);
+        $hours = DEFAULT_NOTIFY_HOURS;
+        foreach (NOTIFY_SCHEDULED as $k) {
+            if (isset($rawHours[$k]) && is_numeric($rawHours[$k])) {
+                $h = max(0, min(23, (int)$rawHours[$k]));
+                $hours[$k] = $h;
+            }
+        }
+        db()->prepare('UPDATE ' . t('users') . ' SET notify_off = ?, notify_hours = ? WHERE id = ?')->execute([json_encode($off), json_encode($hours), $u['id']]);
         db()->prepare('DELETE FROM ' . t('notifications') . " WHERE user_id = ? AND sent_at IS NULL AND FIND_IN_SET(type, ?)")->execute([$u['id'], implode(',', $off)]);
-        send_json(['ok' => true, 'off' => $off]);
+        send_json(['ok' => true, 'off' => $off, 'hours' => $hours]);
 
     case 'notify.pending':
         // Called by the service worker when a push wakes it: what it reads is told once
@@ -545,11 +576,23 @@ switch ($r) {
         $n = fn(string $sql) => (int)db()->query($sql)->fetchColumn();
         $g = t('games');
         $perCat = [];
-        foreach (db()->query("SELECT cats FROM $g ORDER BY played_at DESC LIMIT 5000") as $row) {
-            foreach ((array)json_decode($row['cats'], true) as $c => $v) {
-                $perCat[$c][0] = ($perCat[$c][0] ?? 0) + (int)$v[0];
-                $perCat[$c][1] = ($perCat[$c][1] ?? 0) + (int)$v[1];
+        try {
+            foreach (db()->query("SELECT cats FROM $g ORDER BY played_at DESC LIMIT 5000") as $row) {
+                $parsed = json_decode((string)($row['cats'] ?? ''), true);
+                if (!is_array($parsed)) continue;
+                foreach ($parsed as $c => $v) {
+                    if (!is_array($v)) continue;
+                    $perCat[$c][0] = ($perCat[$c][0] ?? 0) + (int)($v[0] ?? 0);
+                    $perCat[$c][1] = ($perCat[$c][1] ?? 0) + (int)($v[1] ?? 0);
+                }
             }
+        } catch (Throwable $e) {
+            $perCat = [];
+        }
+        try {
+            $stages = db()->query("SELECT stage, COUNT(*) AS played, SUM(stars > 0) AS passed FROM $g WHERE mode = 'level' GROUP BY stage ORDER BY stage")->fetchAll();
+        } catch (Throwable $e) {
+            $stages = [];
         }
         send_json(['ok' => true,
             'counts' => [
@@ -561,7 +604,7 @@ switch ($r) {
                 'answers' => $n("SELECT COALESCE(SUM(total), 0) FROM $g"),
             ],
             'cats' => (object)$perCat,
-            'stages' => db()->query("SELECT stage, COUNT(*) AS played, SUM(stars > 0) AS passed FROM $g WHERE mode = 'level' GROUP BY stage ORDER BY stage")->fetchAll(),
+            'stages' => $stages,
             'settings' => game_settings(),
         ]);
 
@@ -577,7 +620,13 @@ switch ($r) {
         }
         $cost = [];
         foreach (TIERS as $tier) $cost[$tier] = max(0, min(5000, (int)(((array)($b['hintCost'] ?? []))[$tier] ?? 0)));
-        $values = ['levelLength' => max(3, min(10, (int)($b['levelLength'] ?? 5))), 'hintCost' => $cost, 'disabledCats' => $cats, 'disabledRiddles' => $riddles, 'difficulty' => (object)$difficulty];
+        $catWeights = [];
+        foreach ((array)($b['catWeights'] ?? []) as $k => $v) {
+            if (is_string($k) && in_array($k, QUESTION_TYPES, true) && is_numeric($v)) {
+                $catWeights[$k] = round(max(0.0, min(1.0, (float)$v)), 2);
+            }
+        }
+        $values = ['levelLength' => max(3, min(10, (int)($b['levelLength'] ?? 5))), 'hintCost' => $cost, 'disabledCats' => $cats, 'disabledRiddles' => $riddles, 'difficulty' => (object)$difficulty, 'catWeights' => (object)$catWeights];
         $st = db()->prepare('INSERT INTO ' . t('settings') . ' (k, v) VALUES (?, ?) ON DUPLICATE KEY UPDATE v = VALUES(v)');
         foreach ($values as $k => $v) $st->execute([$k, json_encode($v)]);
         send_json(['ok' => true, 'settings' => game_settings()]);
@@ -593,7 +642,7 @@ switch ($r) {
         $b = body();
         if (!is_numeric($b['difficulty'] ?? null)) fail('bad_request', 422);
         $difficulty = round(max(0, min(MAX_DIFFICULTY, (float)$b['difficulty'])), 2);
-        $tier = TIERS[min(3, (int)floor($difficulty / .5))];
+        $tier = TIERS[min(6, (int)floor($difficulty / 1.5))];
         $data = json_encode(clean_question_data((array)($b['texts'] ?? [])), JSON_UNESCAPED_UNICODE);
         $active = empty($b['active']) ? 0 : 1;
         $id = (int)($b['id'] ?? 0);
@@ -609,7 +658,11 @@ switch ($r) {
     case 'admin.games':
         only('GET');
         require_admin();
-        $games = db()->query('SELECT g.user_id, g.uid, g.mode, g.stage, g.stars, g.score, g.spent, g.correct, g.total, g.seconds, g.played_at, u.name FROM ' . t('games') . ' g JOIN ' . t('users') . ' u ON u.id = g.user_id ORDER BY g.played_at DESC LIMIT 200')->fetchAll();
+        try {
+            $games = db()->query('SELECT g.user_id, g.uid, g.mode, g.stage, g.stars, g.score, g.spent, g.correct, g.total, g.seconds, g.played_at, COALESCE(u.name, "–") AS name FROM ' . t('games') . ' g LEFT JOIN ' . t('users') . ' u ON u.id = g.user_id ORDER BY g.played_at DESC LIMIT 200')->fetchAll();
+        } catch (Throwable $e) {
+            $games = [];
+        }
         send_json(['ok' => true, 'games' => $games]);
 
     case 'admin.game.delete':
@@ -707,7 +760,7 @@ switch ($r) {
         admin_writer();
         $b = body();
         $st = db()->prepare('UPDATE ' . t('avatar_items') . ' SET price = ?, enabled = ? WHERE id = ?');
-        $st->execute([max(0, min(100000, (int)($b['price'] ?? 0))), empty($b['enabled']) ? 0 : 1, (string)($b['id'] ?? '')]);
+        $st->execute([max(0, min(1000000, (int)($b['price'] ?? 0))), empty($b['enabled']) ? 0 : 1, (string)($b['id'] ?? '')]);
         send_json(['ok' => true]);
 
     default:

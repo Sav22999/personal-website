@@ -13,28 +13,39 @@
 (function (root) {
     'use strict';
 
-    const TIERS = ['easy', 'medium', 'hard', 'expert'];
+    const TIERS = ['novice', 'easy', 'medium', 'hard', 'expert', 'master', 'legend'];
     const CATS = ['sign', 'sequence', 'symbols', 'oddone', 'order', 'weird', 'nonsense', 'riddle',
         'pattern', 'letters', 'intruder', 'grid', 'compass', 'lamps', 'code', 'ifthen', 'liars', 'boxes', 'whoowns', 'days', 'trap',
-        'scales', 'cups', 'locks', 'suspects', 'alchemy', 'seats', 'mirror'];
+        'scales', 'cups', 'locks', 'suspects', 'alchemy', 'seats', 'mirror', 'gears', 'lasers', 'cubes', 'pipes', 'mobiles', 'origami'];
     const MATH = ['sign', 'sequence', 'symbols', 'oddone', 'weird']; // this is a game of logic: few of these in each game
-    const MAX_D = 1.99;
-    const STAGES = 500;         // levels of the game, in worlds of 10
+    const MAX_D = 9.99;
+    const STAGES = 1000;        // levels of the game, in 100 worlds of 10
     const WORLD = 10;
     const DAILY_LENGTH = 10;
     const LIVES = 3;
     const START_POINTS = 100;   // a gift, so that the first hint can be tried
 
-    const tierOf = d => TIERS[Math.min(3, Math.max(0, Math.floor(d / .5)))];
+    const tierOf = d => TIERS[Math.min(6, Math.max(0, Math.floor((+d || 0) / 1.5)))];
+
+    const DIFFICULTY_MODES = {
+        beginner: {key: 'beginner', name: 'Principiante', targets: [.6, 1.1, 1.6, 2.1, 2.6], tiers: ['novice', 'easy']},
+        intermediate: {key: 'intermediate', name: 'Intermedio', targets: [3.3, 3.9, 4.5, 5.1, 5.7], tiers: ['medium', 'hard']},
+        hero: {key: 'hero', name: 'Eroe', targets: [6.3, 6.9, 7.5, 8.1, 8.7], tiers: ['expert', 'master']},
+        impossible: {key: 'impossible', name: 'Impossibile', targets: [9.1, 9.3, 9.5, 9.7, 9.95], tiers: ['legend']},
+    };
 
     // What the admin panel can change (see api/index.php): the defaults work without any server
-    const settings = {levelLength: 5, hintCost: {easy: 50, medium: 100, hard: 150, expert: 200}, disabledCats: [], disabledRiddles: [], difficulty: {}};
+    const settings = {
+        levelLength: 5,
+        hintCost: {novice: 40, easy: 60, medium: 90, hard: 130, expert: 170, master: 220, legend: 280, /* legacy compatibility */ easy_legacy: 50},
+        disabledCats: [], disabledRiddles: [], difficulty: {}, catWeights: {}
+    };
     let customQuestions = [];
 
     function configure(c) {
         if (!c) return;
-        ['levelLength', 'hintCost', 'disabledCats', 'disabledRiddles', 'difficulty'].forEach(k => {
-            if (c[k] !== undefined) settings[k] = Array.isArray(c[k]) && k === 'difficulty' ? {} : c[k]; // PHP sends an empty object as []
+        ['levelLength', 'hintCost', 'disabledCats', 'disabledRiddles', 'difficulty', 'catWeights'].forEach(k => {
+            if (c[k] !== undefined) settings[k] = Array.isArray(c[k]) && (k === 'difficulty' || k === 'catWeights') ? {} : c[k]; // PHP sends an empty object as []
         });
         if (c.questions) customQuestions = c.questions;
         catalogue = null;
@@ -423,7 +434,7 @@
         const members = r.shuffle(between(lo, hi, prop.test)).slice(0, 3);
         const outsiders = prop.decoys || between(lo, hi, n => !prop.test(n));
         const odd = r.pick(outsiders.filter(n => !prop.test(n)));
-        const q = {cat: 'oddone', level, view: 'odd', why: [{k: 'why_odd', v: {x: odd}, prop: {k: 'prop_' + prop.p, v: prop.v || {}}}]};
+        const q = {cat: 'oddone', level, view: 'odd', why: [{k: 'why_odd', v: {x: odd, prop: {k: 'prop_' + prop.p, v: prop.v || {}}}, prop: {k: 'prop_' + prop.p, v: prop.v || {}}}]};
         return withOptions(r, q, String(odd), members.map(String));
     }
 
@@ -643,35 +654,57 @@
         const count = {}, seen = {};
         const list = (root.ThinkHopRiddles || []);
         list.forEach(x => {
-            count[x.level] = (count[x.level] || 0) + 1;
+            const lvl = x.level === 'expert' ? 'hard' : (x.level || 'easy');
+            count[lvl] = (count[lvl] || 0) + 1;
         });
+        const tierBase = lvl => {
+            const i = TIERS.indexOf(lvl);
+            return i >= 0 ? Math.min(3, i) : 1;
+        };
         const spread = x => {
-            seen[x.level] = (seen[x.level] || 0) + 1;
-            return Math.round((TIERS.indexOf(x.level) * .5 + .08 + .36 * seen[x.level] / count[x.level]) * 100) / 100;
+            const lvl = x.level === 'expert' ? 'hard' : (x.level || 'easy');
+            seen[lvl] = (seen[lvl] || 0) + 1;
+            const b = tierBase(lvl);
+            return Math.round((b * .30 + .03 + .24 * seen[lvl] / count[lvl]) * 100) / 100;
         };
         const riddles = list.map(x => ({riddle: x, d: x.d === undefined ? spread(x) : x.d}));
-        return [...riddles, ...customQuestions.map(x => ({riddle: x, d: x.d === undefined ? TIERS.indexOf(x.level) * .5 + .25 : +x.d}))]
+        return [...riddles, ...customQuestions.map(x => ({riddle: x, d: x.d === undefined ? tierBase(x.level) * .30 + .15 : +x.d}))]
             .map(({riddle, d}) => ({id: riddle.id, cat: 'riddle', d, fixed: true, make: r => riddleQuestion(r, riddle)}));
     }
 
     let catalogue = null;
 
-    /** Every pattern, with the difficulties changed in the admin panel. */
+    /** Every pattern, with the difficulties changed in the admin panel and auto-scaled from legacy <= 2.0 to 0.00 – 9.99. */
     function allPatterns() {
-        if (!catalogue) catalogue = [...PATTERNS, ...riddlePatterns()].map(p => Object.assign({}, p, settings.difficulty[p.id] !== undefined ? {d: +settings.difficulty[p.id]} : {}));
+        if (!catalogue) {
+            catalogue = [...PATTERNS, ...riddlePatterns()].map(p => {
+                let d = settings.difficulty[p.id] !== undefined ? +settings.difficulty[p.id] : p.d;
+                if (d <= 2.0) d = Math.round(d * 500) / 100;
+                d = Math.max(0, Math.min(MAX_D, d));
+                return Object.assign({}, p, {d});
+            });
+        }
         return catalogue;
     }
 
-    const usable = () => allPatterns().filter(p => !settings.disabledCats.includes(p.cat) && !settings.disabledRiddles.includes(p.id));
+    const catWeight = cat => {
+        if (settings.catWeights && settings.catWeights[cat] !== undefined) {
+            const w = +settings.catWeights[cat];
+            return isNaN(w) ? 1.0 : Math.max(0, Math.min(1, w));
+        }
+        return 1.0;
+    };
+
+    const usable = () => allPatterns().filter(p => !settings.disabledCats.includes(p.cat) && catWeight(p.cat) > 0 && !settings.disabledRiddles.includes(p.id));
 
     /** Seconds to answer: more for the harder questions and for those with more to read. */
     function timeFor(q) {
         const reading = q.view === 'riddle' || q.pk ? 12 : (q.view === 'grid' ? 15 : 0);
-        return Math.min(120, Math.round(28 + q.d * 24 + reading + (q.facts ? q.facts.length * 5 : 0) + (q.lines ? q.lines.length * 2 : 0)));
+        return Math.min(120, Math.round(28 + q.d * 4.8 + reading + (q.facts ? q.facts.length * 5 : 0) + (q.lines ? q.lines.length * 2 : 0)));
     }
 
     /** Same content, whatever the order of the options: that is what must not come back. */
-    const contentOf = q => JSON.stringify([q.nums, q.result, q.items, q.lines, q.ask, q.grid, q.pv, q.facts && q.facts.map(f => JSON.stringify(f)).sort(), q.options.map(o => JSON.stringify(o)).sort()]);
+    const contentOf = q => JSON.stringify([q.nums, q.result, q.items, q.lines, q.ask, q.grid, q.pv, q.gearsData, q.lasersData, q.cubesData, q.pipesData, q.facts && q.facts.map(f => JSON.stringify(f)).sort(), q.options.map(o => JSON.stringify(o)).sort()]);
     const sigOf = (id, q) => id + '|' + (q ? hashSeed(contentOf(q)).toString(36) : '0');
 
     function build(p, seed) {
@@ -689,16 +722,20 @@
     /** One question of a pattern, for the tests and the admin panel. */
     const make = (id, seed) => build(allPatterns().find(p => p.id === id), seed);
 
-    /** Types are drawn before patterns, or the many riddles would crowd out everything else. */
-    const weight = cat => cat === 'riddle' ? 3 : (MATH.includes(cat) ? .6 : 1.4);
+    /** Types are drawn before patterns, with admin-configured probability (0.0 – 1.0) compared to peers. */
+    const weight = cat => (cat === 'riddle' ? 3 : (MATH.includes(cat) ? .6 : 1.4)) * catWeight(cat);
 
     function drawCat(r, cats) {
-        let x = r.next() * cats.reduce((s, c) => s + weight(c), 0);
-        for (const c of cats) {
+        const eligible = cats.filter(c => weight(c) > 0);
+        if (!eligible.length) return cats[cats.length - 1];
+        const total = eligible.reduce((s, c) => s + weight(c), 0);
+        if (total <= 0) return eligible[0];
+        let x = r.next() * total;
+        for (const c of eligible) {
             x -= weight(c);
             if (x <= 0) return c;
         }
-        return cats[cats.length - 1];
+        return eligible[eligible.length - 1];
     }
 
     /**
@@ -708,18 +745,19 @@
     function pick(r, target, ctx) {
         const all = usable();
         const list = all.length ? all : [PATTERNS[0]];
-        for (const w of [.03, .06, .1, .15, .25, .45, 2]) {
+        for (const w of [.15, .30, .50, .75, 1.25, 2.25, 10.0]) {
             const pool = list.filter(p => Math.abs(p.d - target) <= w && !ctx.pids.has(p.id)
-                && !(p.fixed && (w > .25 || ctx.seen.has(sigOf(p.id))))
+                && !(p.fixed && (target >= 6.0 || w > 1.25 || ctx.seen.has(sigOf(p.id))))
+                && !(p.cat === 'trap' && target >= 6.0)
                 && !(ctx.math >= ctx.mathMax && MATH.includes(p.cat)));
             const fresh = pool.filter(p => !ctx.recent.has(p.id));
             // Do not reuse recently played patterns when widening the window slightly finds a fresh one
-            const usableNow = fresh.length ? fresh : (w >= .45 ? pool : []);
+            const usableNow = fresh.length ? fresh : (w >= 2.25 ? pool : []);
             const cats = [...new Set(usableNow.map(p => p.cat))];
             const newCats = cats.filter(c => !ctx.cats.has(c));
             const veryFreshCats = newCats.filter(c => !ctx.recentCats || !ctx.recentCats.has(c));
             // A type already used in this game comes back only when a wider window has nothing else to offer
-            const choice = veryFreshCats.length ? veryFreshCats : (newCats.length ? (w <= .1 ? [] : newCats) : (w < .45 ? [] : cats));
+            const choice = veryFreshCats.length ? veryFreshCats : (newCats.length ? (w <= .50 ? [] : newCats) : (w < 2.25 ? [] : cats));
             for (let tries = 0; choice.length && tries < 16; tries++) {
                 const cat = drawCat(r, choice);
                 const p = r.pick(usableNow.filter(x => x.cat === cat));
@@ -753,10 +791,10 @@
         return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
     };
 
-    /** The difficulty asked for by each question of a level: it never stops growing, from 0.08 to 1.96. */
+    /** The difficulty asked for by each question of a level: from 0.40 to 9.95 across 1000 levels. */
     function stageTargets(stage) {
         const n = settings.levelLength;
-        return Array.from({length: n}, (_, i) => .08 + 1.88 * Math.pow(((stage - 1) * n + i) / (STAGES * n - 1), .85));
+        return Array.from({length: n}, (_, i) => Math.round((.40 + 9.55 * Math.pow(((stage - 1) * n + i) / (STAGES * n - 1), .85)) * 100) / 100);
     }
 
     function stageQuestions(stage, seed, seen) {
@@ -768,19 +806,29 @@
     function dailyQuestions(day) {
         const r = rng(hashSeed('thinkhop-' + day));
         const ctx = context([], 2);
-        return ascending(Array.from({length: DAILY_LENGTH}, (_, i) => pick(r, .15 + i * .16, ctx)));
+        return ascending(Array.from({length: DAILY_LENGTH}, (_, i) => pick(r, Math.round((.75 + i * .95) * 100) / 100, ctx)));
     }
 
-    /** New game: `stage` is the level for mode 'level'; `seen` are the questions asked so far. */
+    function difficultyQuestions(tierKey, seed, seen) {
+        const conf = DIFFICULTY_MODES[tierKey] || DIFFICULTY_MODES.beginner;
+        const r = rng(seed);
+        const ctx = context(seen, 2);
+        return ascending(conf.targets.map(target => pick(r, target, ctx)));
+    }
+
+    /** New game: `stage` is the level for mode 'level' or diffKey for 'difficulty'; `seen` are the questions asked so far. */
     function newGame(mode, stage, seed, seen, day) {
+        const isDiff = mode === 'difficulty';
+        const diffKey = isDiff ? (typeof stage === 'string' ? stage : 'beginner') : null;
         const game = {
-            v: 2, uid: uid(), mode, stage: mode === 'level' ? stage : 0, day: day || dayText(),
+            v: 2, uid: uid(), mode, stage: mode === 'level' ? stage : 0, diffKey, day: day || dayText(),
             index: 0, score: 0, spent: 0, correct: 0, streak: 0, bestStreak: 0, lives: mode === 'survival' ? LIVES : 0,
             seconds: 0, clock: 0, cats: {}, answered: false, picked: -1, removed: [],
             seed, questions: [],
         };
         if (mode === 'level') game.questions = stageQuestions(stage, seed, seen);
         else if (mode === 'daily') game.questions = dailyQuestions(game.day);
+        else if (isDiff) game.questions = difficultyQuestions(diffKey, seed, seen);
         else game.questions = [survivalQuestion(game, seen)];
         return game;
     }
@@ -793,7 +841,7 @@
         last.forEach(q => ctx.pids.add(q.pid));
         last.slice(-3).forEach(q => ctx.cats.add(q.cat));
         ctx.math = last.slice(-3).filter(q => MATH.includes(q.cat)).length;
-        return pick(r, Math.min(1.96, .12 + n * .07), ctx);
+        return pick(r, Math.min(MAX_D, Math.round((.60 + n * .35) * 100) / 100), ctx);
     }
 
     function uid() {
@@ -808,7 +856,7 @@
      * right answer in a row (at most 50%).
      */
     function points(q, seconds, streak) {
-        const base = 100 + q.d * 150;
+        const base = 100 + q.d * 30;
         const speed = Math.max(0, 1 - seconds / q.limit) * base / 2;
         const bonus = base * Math.min(.5, .1 * Math.max(0, streak - 1));
         return Math.round((base + speed + bonus) / 5) * 5;
@@ -849,7 +897,7 @@
         game.clock = 0;
     }
 
-    const hintCost = game => settings.hintCost[game.questions[game.index].level];
+    const hintCost = game => settings.hintCost[game.questions[game.index].level] || 100;
 
     /** Spends points to hide wrong options until two are left (one for the questions with three options). */
     function hint(game, balance) {
@@ -869,7 +917,7 @@
 
     /** The summary kept for the statistics, on the device and on the account. */
     const summary = game => ({
-        uid: game.uid, mode: game.mode, stage: game.stage, stars: stars(game), score: game.score, spent: game.spent, correct: game.correct,
+        uid: game.uid, mode: game.mode, stage: game.stage, diffKey: game.diffKey || null, stars: stars(game), score: game.score, spent: game.spent, correct: game.correct,
         total: game.index + 1, seconds: Math.round(game.seconds), cats: game.cats, day: game.day,
     });
 
@@ -889,6 +937,9 @@
             out.total += g.total;
             out.seconds += g.seconds;
             out.best[g.mode] = Math.max(out.best[g.mode] || 0, g.score);
+            if (g.mode === 'difficulty' && g.diffKey) {
+                out.best['difficulty_' + g.diffKey] = Math.max(out.best['difficulty_' + g.diffKey] || 0, g.score);
+            }
             if (g.mode === 'level' && g.stars > 0) {
                 out.stages[g.stage] = Math.max(out.stages[g.stage] || 0, g.stars);
                 out.unlocked = Math.max(out.unlocked, Math.min(STAGES, g.stage + 1));
@@ -911,8 +962,10 @@
         return out;
     }
 
+    const worldTier = w => tierOf(stageTargets(Math.max(1, Math.min(STAGES, (w - 1) * WORLD + 5)))[2]);
+
     root.ThinkHopEngine = {
-        TIERS, CATS, MATH, MAX_D, STAGES, WORLD, LIVES, START_POINTS, WORDS, NAMES, settings,
-        configure, rng, evaluate, tierOf, pattern, allPatterns, make, withOptions, numberOptions, orderings, stageTargets, newGame, answer, next, hint, hintCost, isOver, stars, summary, stats, points, dayText, addDays,
+        TIERS, CATS, MATH, MAX_D, STAGES, WORLD, LIVES, START_POINTS, WORDS, NAMES, settings, DIFFICULTY_MODES,
+        configure, rng, evaluate, tierOf, worldTier, pattern, allPatterns, make, withOptions, numberOptions, orderings, stageTargets, newGame, answer, next, hint, hintCost, isOver, stars, summary, stats, points, dayText, addDays, difficultyQuestions,
     };
 })(typeof window !== 'undefined' ? window : globalThis);

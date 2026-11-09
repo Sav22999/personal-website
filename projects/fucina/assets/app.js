@@ -1580,7 +1580,14 @@
                     renderAuth(v);
                 }),
                 S.config.googleClientId ? [gslot, h('div.divider-text', t('or with your email'))] : null,
-                form, features('mob-only'), h('p.center.small', h('a.verify-link', {href: 'verify.php'}, t('Verify a certificate'))))));
+                form,
+                h('div.auth-verify',
+                    h('a.btn.btn-tonal.btn-block.auth-verify-btn', {href: 'verify.php'},
+                        icon('cert'),
+                        h('span', t('Verify a certificate'))
+                    )
+                ),
+                features('mob-only'))));
         document.title = 'Fucina';
         if (S.config.googleClientId) UI.googleButton(gslot, S.config.googleClientId, googleSignIn, mode === 'login' ? 'continue_with' : 'signup_with');
     }

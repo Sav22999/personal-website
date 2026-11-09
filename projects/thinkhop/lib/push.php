@@ -9,6 +9,12 @@ declare(strict_types=1);
 
 /** What a player can turn on and off, one by one. */
 const NOTIFY_TYPES = ['daily', 'streak', 'friends', 'overtaken'];
+/** Non-live / scheduled notification types where the user can pick the hour. */
+const NOTIFY_SCHEDULED = ['daily', 'streak'];
+/** Live / immediate notification types that fire in real time. */
+const NOTIFY_LIVE = ['friends', 'overtaken'];
+const DEFAULT_NOTIFY_HOURS = ['daily' => 18, 'streak' => 18];
+const SERVER_TIMEZONE = 'Europe/Rome';
 /** Hosts of the browsers' push services: subscriptions pointing anywhere else are refused. */
 const PUSH_HOSTS = ['fcm.googleapis.com', 'android.googleapis.com', '.push.services.mozilla.com', '.push.apple.com', '.notify.windows.com'];
 const PUSH_SUBJECT = 'https://www.saveriomorelli.com/projects/thinkhop/';
@@ -25,6 +31,21 @@ const NOTIFY_TEXTS = [
 function notify_off(array $user): array
 {
     return array_values(array_intersect(json_decode((string)($user['notify_off'] ?? ''), true) ?: [], NOTIFY_TYPES));
+}
+
+function notify_hours(array $user): array
+{
+    $saved = json_decode((string)($user['notify_hours'] ?? ''), true);
+    $res = DEFAULT_NOTIFY_HOURS;
+    if (is_array($saved)) {
+        foreach (NOTIFY_SCHEDULED as $k) {
+            if (isset($saved[$k]) && is_numeric($saved[$k])) {
+                $h = (int)$saved[$k];
+                if ($h >= 0 && $h <= 23) $res[$k] = $h;
+            }
+        }
+    }
+    return $res;
 }
 
 function notify_text(string $lang, string $type, array $data): string

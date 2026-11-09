@@ -321,7 +321,7 @@
             const row = lampRow(x.map(Boolean));
             if (row !== right) wrong.add(row);
         }
-        const q = {view: 'lines', lines: [lampRow(start), ...list.map(buttonLine)], ask: order.map(i => ABC[i]).join(' ') + ' = ?', pk: 'q_lamps', why: [{lit: right}, {k: 'why_lamps'}]};
+        const q = {cat: 'lamps', view: 'lamps', lines: [lampRow(start), ...list.map(buttonLine)], ask: order.map(i => ABC[i]).join(' ') + ' = ?', pk: 'q_lamps', why: [{lit: right}, {k: 'why_lamps'}]};
         return withOptions(r, q, right, [...wrong]);
     }
 
@@ -337,7 +337,7 @@
             const good = pairs.filter(([a, b]) => lampRow(press(press(start, list[a]), list[b])) === lampRow(end));
             if (good.length !== 1) continue;
             const text = ([a, b]) => ABC[a] + ' + ' + ABC[b];
-            const q = {view: 'lines', lines: [lampRow(start) + ' → ' + lampRow(end), ...list.map(buttonLine)], ask: '? + ? ', pk: 'q_lamps_back', why: [{lit: text(good[0])}, {k: 'why_lamps'}]};
+            const q = {cat: 'lamps', view: 'lamps', lines: [lampRow(start) + ' → ' + lampRow(end), ...list.map(buttonLine)], ask: '? + ? ', pk: 'q_lamps_back', why: [{lit: text(good[0])}, {k: 'why_lamps'}]};
             return withOptions(r, q, text(good[0]), r.shuffle(pairs.filter(p => p !== good[0])).slice(0, 3).map(text));
         }
     }
@@ -735,15 +735,15 @@
         const a = r.int(4, 12), b = r.int(4, 12), c = r.int(4, 12);
         return {v: {a, b, c}, right: a + b + c - Math.min(a, b, c) + 1, near: [4, 3, a + b + c, a + b + c - Math.max(a, b, c) + 1]};
     });
-    trap('fence', 1.26, r => {
+    trap('fence', .92, r => {
         const n = r.int(6, 14), m = r.pick([2, 3, 4, 5]);
         return {v: {n, m}, right: n * m, near: [(n - 1) * m, (n + 1) * m, n + m]};
     });
-    trap('frogs', 1.38, r => {
+    trap('frogs', 1.0, r => {
         const n = r.int(3, 7);
         return {v: {n}, right: Math.pow(2, n) - 1, near: [Math.pow(2, n), n * 2, n * n]};
     });
-    trap('cards', 1.52, r => {
+    trap('cards', 1.04, r => {
         const k = r.int(2, 6), n = 4;
         return {v: {k, n}, right: (k - 1) * n + 1, near: [k * n, k + n, (k - 1) * n]};
     });
@@ -764,11 +764,11 @@
         const n = r.int(4, 9);
         return {v: {n}, right: 1 << n, near: [n * 2, n * n, (1 << (n - 1))]};
     });
-    trap('matches', 1.32, r => {
+    trap('matches', .96, r => {
         const n = r.int(12, 64);
         return {v: {n}, right: n - 1, near: [n, (n / 2) | 0, n + 1]};
     });
-    trap('weigh', 1.64, r => {
+    trap('weigh', 1.08, r => {
         const [n, w] = r.pick([[7, 2], [8, 2], [9, 2], [12, 3], [20, 3], [25, 3], [27, 3], [40, 4], [64, 4], [80, 4], [81, 4]]);
         return {v: {n}, right: w, near: [w + 1, w - 1, Math.max(4, (n / 3) | 0)]};
     });
@@ -1351,12 +1351,13 @@
         const askSeat = r.int(1, n - 1);
         const askPerson = truth[askSeat];
         const useOpp = n % 2 === 0 && r.next() < .6;
+        const targetSeat = askSeat + 1;
         const ask = useOpp
-            ? {k: 'st_ask_opp', v: {a: people[truth[(askSeat + n / 2) % n]]}}
-            : {k: 'st_ask_seat', v: {n: askSeat + 1}};
+            ? {k: 'st_ask_opp', v: {a: people[truth[(askSeat + n / 2) % n]], targetSeat}}
+            : {k: 'st_ask_seat', v: {n: targetSeat, targetSeat}};
         const right = people[askPerson];
         const q = {
-            view: 'facts', pk: 'q_seats_round', pv: {n},
+            view: 'facts', pk: 'q_seats_round', pv: {n, targetSeat},
             facts: facts.map(({k, v}) => ({k, v})),
             ask,
             why: [{k: 'why_seats', v: {x: truth.map((p, i) => `${i + 1}:${people[p]}`).join(' · ')}}],
@@ -1404,10 +1405,11 @@
         });
         const pos = r.int(0, n - 1);
         const right = people[truth[pos]];
+        const targetSeat = pos + 1;
         const q = {
-            view: 'facts', pk: 'q_seats_bench', pv: {n},
+            view: 'facts', pk: 'q_seats_bench', pv: {n, targetSeat},
             facts: facts.map(({k, v}) => ({k, v})),
-            ask: {k: 'st_ask_seat', v: {n: pos + 1}},
+            ask: {k: 'st_ask_seat', v: {n: targetSeat, targetSeat}},
             why: [{k: 'why_seats', v: {x: truth.map(p => people[p]).join(' · ')}}],
         };
         return withOptions(r, q, right, others(r, people, right));
@@ -1496,4 +1498,857 @@
     pattern('mirror-combo-4', 'mirror', 1.58, r => makeMirrorMove(r, 4, 2));
     pattern('mirror-triple-3', 'mirror', 1.76, r => makeMirrorMove(r, 3, 3));
     pattern('mirror-triple-4', 'mirror', 1.94, r => makeMirrorMove(r, 4, 3));
+
+    // ---------- mini-sudoku X (grid) ----------
+    function makeGridDiag(r) {
+        const n = 4, br = 2, bc = 2;
+        const symbols = gridSymbols(r, 4);
+        function fitsDiag(g, at, v) {
+            const row = Math.floor(at / n), col = at % n;
+            for (let c = 0; c < n; c++) if (g[row * n + c] === v) return false;
+            for (let ro = 0; ro < n; ro++) if (g[ro * n + col] === v) return false;
+            const r0 = Math.floor(row / br) * br, c0 = Math.floor(col / bc) * bc;
+            for (let dr = 0; dr < br; dr++) for (let dc = 0; dc < bc; dc++) if (g[(r0 + dr) * n + c0 + dc] === v) return false;
+            if (row === col) {
+                for (let i = 0; i < n; i++) if (g[i * n + i] === v) return false;
+            }
+            if (row + col === n - 1) {
+                for (let i = 0; i < n; i++) if (g[i * n + (n - 1 - i)] === v) return false;
+            }
+            return true;
+        }
+        function solveDiag(g, limit) {
+            const at = g.indexOf(-1);
+            if (at < 0) return 1;
+            let found = 0;
+            for (let v = 0; v < n && found < limit; v++) {
+                if (!fitsDiag(g, at, v)) continue;
+                g[at] = v;
+                found += solveDiag(g, limit - found);
+                g[at] = -1;
+            }
+            return found;
+        }
+        function fillDiag(g) {
+            const at = g.indexOf(-1);
+            if (at < 0) return true;
+            for (const v of r.shuffle([0, 1, 2, 3])) {
+                if (!fitsDiag(g, at, v)) continue;
+                g[at] = v;
+                if (fillDiag(g)) return true;
+                g[at] = -1;
+            }
+            return false;
+        }
+        const g = Array(16).fill(-1);
+        fillDiag(g);
+        const solved = g.slice();
+        const holes = [];
+        for (const at of r.shuffle(Array.from({length: 16}, (_, i) => i))) {
+            if (holes.length === 8) break;
+            const keep = g[at];
+            g[at] = -1;
+            if (solveDiag(g.slice(), 2) === 1) holes.push(at);
+            else g[at] = keep;
+        }
+        const ask = holes[holes.length - 1];
+        const right = symbols[solved[ask]];
+        const grid = Array.from({length: n}, (_, row) => Array.from({length: n}, (_, col) => {
+            const at = row * n + col;
+            return at === ask ? '?' : (g[at] < 0 ? '' : symbols[g[at]]);
+        }));
+        const q = {
+            view: 'grid', grid, boxes: [2, 2], isDiag: true,
+            pk: 'q_grid_diag',
+            why: [{k: 'why_grid_diag', v: {x: right}}],
+        };
+        return withOptions(r, q, right, others(r, symbols, right));
+    }
+
+    pattern('grid-diag-4', 'grid', 1.28, r => makeGridDiag(r));
+
+    // ---------- gears & rotation (gears) ----------
+    function makeGearsDir(r, n, branch) {
+        const gearNames = ['A', 'B', 'C', 'D', 'E', 'F'];
+        const links = [];
+        if (!branch) {
+            for (let i = 0; i < n - 1; i++) links.push([i, i + 1]);
+        } else {
+            links.push([0, 1], [0, 2]);
+            for (let i = 2; i < n - 1; i++) links.push([i, i + 1]);
+        }
+        const startIdx = r.int(0, n - 1);
+        const startCw = r.next() < .5;
+        const dirs = Array(n).fill(null);
+        dirs[startIdx] = startCw;
+        let changed = true;
+        while (changed) {
+            changed = false;
+            links.forEach(([a, b]) => {
+                if (dirs[a] !== null && dirs[b] === null) { dirs[b] = !dirs[a]; changed = true; }
+                if (dirs[b] !== null && dirs[a] === null) { dirs[a] = !dirs[b]; changed = true; }
+            });
+        }
+        const candidateTargets = [];
+        for (let i = 0; i < n; i++) if (i !== startIdx && dirs[i] !== null) candidateTargets.push(i);
+        const targetIdx = r.pick(candidateTargets);
+        const startName = gearNames[startIdx];
+        const target = gearNames[targetIdx];
+        const isCw = dirs[targetIdx];
+        const right = isCw ? {k: 'ge_cw'} : {k: 'ge_ccw'};
+        const wrong = [isCw ? {k: 'ge_ccw'} : {k: 'ge_cw'}, {k: 'ge_jammed'}];
+        const startDirSym = startCw ? '↻' : '↺';
+        const gearsData = {
+            count: n,
+            links,
+            startDir: startCw ? 'cw' : 'ccw',
+            startIdx,
+            targetIdx,
+            dirs: dirs.map(d => d ? 'cw' : 'ccw'),
+        };
+        const q = {
+            view: 'gears', gearsData,
+            lines: [`${startName} (${startDirSym}) ➔ ${target}`],
+            pk: 'q_gears_dir', pv: {start: startName, dir: startDirSym, target},
+            why: [{k: 'why_gears_dir', v: {target, x: isCw ? '↻' : '↺'}}],
+        };
+        return withOptions(r, q, right, wrong);
+    }
+
+    function makeGearsSpeed(r) {
+        const ratios = [
+            [12, 24, 2, 1],
+            [10, 30, 3, 1],
+            [12, 36, 3, 1],
+            [15, 30, 4, 2],
+            [20, 10, 1, 2],
+            [30, 15, 2, 4],
+            [16, 32, 4, 2],
+            [24, 12, 2, 4],
+            [18, 36, 2, 1],
+            [25, 50, 4, 2],
+        ];
+        const [na, nb, ta, tb] = r.pick(ratios);
+        const right = tb;
+        const gearsData = {
+            count: 2,
+            links: [[0, 1]],
+            teeth: [na, nb],
+            turns: [ta, tb],
+            startDir: 'cw',
+            startIdx: 0,
+            targetIdx: 1,
+            dirs: ['cw', 'ccw'],
+        };
+        const q = {
+            view: 'gears', gearsData,
+            lines: [`A (${na}) · B (${nb}) · ${ta} ↻`],
+            pk: 'q_gears_speed', pv: {na, nb, ta},
+            why: [{k: 'why_gears_speed', v: {na, nb, ta, x: right}}],
+        };
+        return numberOptions(r, q, right, [ta, ta + tb, Math.max(1, Math.abs(ta - tb)), right * 2]);
+    }
+
+    function makeGearsJam(r, n) {
+        const isJammed = (n % 2 !== 0);
+        const right = isJammed ? {k: 'ge_jammed'} : {k: 'ge_free'};
+        const wrong = [isJammed ? {k: 'ge_free'} : {k: 'ge_jammed'}, {k: 'unknown'}];
+        const links = [];
+        for (let i = 0; i < n; i++) links.push([i, (i + 1) % n]);
+        const startName = ['A', 'B', 'C', 'D', 'E'][r.int(0, n - 1)];
+        const gearsData = {
+            count: n,
+            links,
+            isRing: true,
+            isJammed,
+            startDir: 'cw',
+            dirs: Array(n).fill('cw'),
+        };
+        const q = {
+            view: 'gears', gearsData,
+            lines: [`Ring (${n}) · Start: ${startName}`],
+            pk: 'q_gears_jam',
+            why: [{k: 'why_gears_jam', v: {x: isJammed ? '🚫' : '✓'}}],
+        };
+        return withOptions(r, q, right, wrong);
+    }
+
+    pattern('gears-dir-3', 'gears', .18, r => makeGearsDir(r, 3, false));
+    pattern('gears-dir-4', 'gears', .44, r => makeGearsDir(r, 4, false));
+    pattern('gears-branch-4', 'gears', .72, r => makeGearsDir(r, 4, true));
+    pattern('gears-speed-2', 'gears', .98, r => makeGearsSpeed(r));
+    pattern('gears-branch-5', 'gears', 1.24, r => makeGearsDir(r, 5, true));
+    pattern('gears-jam-odd', 'gears', 1.48, r => makeGearsJam(r, r.pick([3, 5])));
+    pattern('gears-speed-hard', 'gears', 1.72, r => makeGearsSpeed(r));
+    pattern('gears-branch-6', 'gears', 1.92, r => makeGearsDir(r, 6, true));
+
+    // ---------- lasers & mirrors (lasers) ----------
+    const GEMS = ['💎', '🔮', '🪙', '⭐'];
+
+    function makeLasers(r, size, mirrorCount, withObstacles) {
+        for (let attempt = 0; attempt < 50; attempt++) {
+            const grid = Array.from({length: size}, () => Array(size).fill(''));
+            const startX = 0, startY = r.int(0, size - 1);
+            let dirX = 1, dirY = 0;
+            const mirrorCells = [];
+            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+                if (x === startX && y === startY) continue;
+                mirrorCells.push([x, y]);
+            }
+            const chosenMirrors = r.shuffle(mirrorCells).slice(0, mirrorCount);
+            chosenMirrors.forEach(([mx, my]) => {
+                grid[my][mx] = r.next() < .5 ? '/' : String.fromCharCode(92);
+            });
+            if (withObstacles && size >= 4) {
+                const rem = mirrorCells.filter(([x, y]) => !chosenMirrors.some(([mx, my]) => mx === x && my === y));
+                if (rem.length) {
+                    const [ox, oy] = r.pick(rem);
+                    grid[oy][ox] = '🧱';
+                }
+            }
+            let curX = startX, curY = startY;
+            let curDx = dirX, curDy = dirY;
+            const visited = new Set();
+            let reflections = 0;
+            let hitBorder = false;
+            const path = [[curX, curY]];
+            for (let step = 0; step < size * size * 2; step++) {
+                curX += curDx;
+                curY += curDy;
+                path.push([curX, curY]);
+                if (curX < 0 || curX >= size || curY < 0 || curY >= size) {
+                    hitBorder = true;
+                    break;
+                }
+                const cell = grid[curY][curX];
+                if (cell === '🧱') break;
+                if (cell === '/' || cell === String.fromCharCode(92)) {
+                    reflections++;
+                    if (cell === '/') {
+                        const ndx = -curDy, ndy = -curDx;
+                        curDx = ndx; curDy = ndy;
+                    } else {
+                        const ndx = curDy, ndy = curDx;
+                        curDx = ndx; curDy = ndy;
+                    }
+                    const sk = `${curX},${curY},${curDx},${curDy}`;
+                    if (visited.has(sk)) break;
+                    visited.add(sk);
+                }
+            }
+            if (!hitBorder || reflections < 2) continue;
+            const [exitX, exitY] = path[path.length - 2];
+            const targetGem = GEMS[0];
+            grid[exitY][exitX] = targetGem;
+            const borderCells = [];
+            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+                if ((x === 0 || x === size - 1 || y === 0 || y === size - 1) && !grid[y][x] && (x !== startX || y !== startY)) {
+                    borderCells.push([x, y]);
+                }
+            }
+            if (borderCells.length < 3) continue;
+            const decoys = r.shuffle(borderCells).slice(0, 3);
+            decoys.forEach(([dx, dy], i) => {
+                grid[dy][dx] = GEMS[i + 1];
+            });
+            grid[startY][startX] = '🔦';
+            const lasersData = {
+                size, grid,
+                startX, startY,
+                path,
+                target: targetGem,
+                reflections,
+            };
+            const q = {
+                view: 'lasers', lasersData, grid,
+                pk: 'q_lasers_hit',
+                why: [{k: 'why_lasers_hit', v: {x: targetGem}}],
+            };
+            return withOptions(r, q, targetGem, GEMS.slice(1));
+        }
+        const grid = [['🔦', '/', '💎'], ['⭐', '', ''], ['🔮', '', '🪙']];
+        const lasersData = {size: 3, grid, startX: 0, startY: 0, path: [[0, 0], [1, 0], [2, 0]], target: '💎', reflections: 1};
+        const q = {view: 'lasers', lasersData, grid, pk: 'q_lasers_hit', why: [{k: 'why_lasers_hit', v: {x: '💎'}}]};
+        return withOptions(r, q, '💎', ['⭐', '🔮', '🪙']);
+    }
+
+    pattern('lasers-3x3', 'lasers', .24, r => makeLasers(r, 3, 2, false));
+    pattern('lasers-3x3-med', 'lasers', .54, r => makeLasers(r, 3, 2, false));
+    pattern('lasers-4x4', 'lasers', .88, r => makeLasers(r, 4, 3, false));
+    pattern('lasers-4x4-obs', 'lasers', 1.16, r => makeLasers(r, 4, 3, true));
+    pattern('lasers-5x5', 'lasers', 1.46, r => makeLasers(r, 5, 4, false));
+    pattern('lasers-5x5-obs', 'lasers', 1.74, r => makeLasers(r, 5, 5, true));
+    pattern('lasers-5x5-max', 'lasers', 1.95, r => makeLasers(r, 5, 6, true));
+
+    // ---------- 3D cube nets (cubes) ----------
+    const CUBE_NETS = [
+        {
+            grid: [
+                [-1, 0, -1, -1],
+                [1,  2,  3,  4],
+                [-1, 5, -1, -1],
+            ],
+            opp: {0: 5, 5: 0, 1: 3, 3: 1, 2: 4, 4: 2},
+        },
+        {
+            grid: [
+                [-1, 0, -1, -1],
+                [1,  2,  3, -1],
+                [-1, -1, 4,  5],
+            ],
+            opp: {0: 4, 4: 0, 1: 3, 3: 1, 2: 5, 5: 2},
+        },
+        {
+            grid: [
+                [0,  1, -1, -1],
+                [-1, 2,  3, -1],
+                [-1, -1, 4,  5],
+            ],
+            opp: {0: 3, 3: 0, 1: 4, 4: 1, 2: 5, 5: 2},
+        },
+    ];
+
+    function makeCubesOpp(r, netIndex) {
+        const netDef = CUBE_NETS[netIndex % CUBE_NETS.length];
+        const icons = r.shuffle(r.pick(SETS)).slice(0, 6);
+        const targetFace = r.int(0, 5);
+        const oppFace = netDef.opp[targetFace];
+        const targetIcon = icons[targetFace];
+        const right = icons[oppFace];
+        const netGrid = netDef.grid.map(row => row.map(idx => idx >= 0 ? icons[idx] : ''));
+        const cubesData = {
+            netGrid,
+            targetIcon,
+            rightIcon: right,
+            opp: netDef.opp,
+            icons,
+        };
+        const q = {
+            view: 'cubes', cubesData, grid: netGrid,
+            lines: [icons.join(' ')],
+            pk: 'q_cubes_opp', pv: {target: targetIcon},
+            why: [{k: 'why_cubes_opp', v: {target: targetIcon, x: right}}],
+        };
+        return withOptions(r, q, right, others(r, icons, right));
+    }
+
+    function makeCubesView(r, netIndex) {
+        const netDef = CUBE_NETS[netIndex % CUBE_NETS.length];
+        const icons = r.shuffle(r.pick(SETS)).slice(0, 6);
+        const validTriplets = [];
+        const invalidTriplets = [];
+        for (let a = 0; a < 6; a++) {
+            for (let b = a + 1; b < 6; b++) {
+                for (let c = b + 1; c < 6; c++) {
+                    if (netDef.opp[a] !== b && netDef.opp[a] !== c && netDef.opp[b] !== c) {
+                        validTriplets.push([a, b, c]);
+                    } else {
+                        invalidTriplets.push([a, b, c]);
+                    }
+                }
+            }
+        }
+        const rightTriplet = r.pick(validTriplets);
+        const wrongTriplets = r.shuffle(invalidTriplets).slice(0, 3);
+        const rightText = rightTriplet.map(i => icons[i]).join(' ');
+        const wrongTexts = wrongTriplets.map(tri => tri.map(i => icons[i]).join(' '));
+        const netGrid = netDef.grid.map(row => row.map(idx => idx >= 0 ? icons[idx] : ''));
+        const cubesData = {
+            netGrid,
+            icons,
+            isViewMode: true,
+        };
+        const q = {
+            view: 'cubes', cubesData, grid: netGrid,
+            lines: [icons.join(' ')],
+            pk: 'q_cubes_view',
+            why: [{k: 'why_cubes_view', v: {x: rightText}}],
+        };
+        return withOptions(r, q, rightText, wrongTexts);
+    }
+
+    pattern('cubes-opp-cross', 'cubes', .26, r => makeCubesOpp(r, 0));
+    pattern('cubes-opp-t', 'cubes', .58, r => makeCubesOpp(r, 1));
+    pattern('cubes-opp-step', 'cubes', .92, r => makeCubesOpp(r, 2));
+    pattern('cubes-view-cross', 'cubes', 1.22, r => makeCubesView(r, 0));
+    pattern('cubes-view-t', 'cubes', 1.54, r => makeCubesView(r, 1));
+    pattern('cubes-view-step', 'cubes', 1.86, r => makeCubesView(r, 2));
+
+    // ---------- pipes & fluid levels (pipes) ----------
+    function makePipes(r, tankCount) {
+        const tankNames = ['A', 'B', 'C', 'D', 'E'].slice(0, tankCount);
+        const tA = 'A';
+        let connections = [];
+        let winningTank = tA;
+
+        if (tankCount === 3) {
+            // Tanks A, B, C: A branches to B and C (one low h=1, one high h=2)
+            const lowTarget = r.next() < .5 ? 'B' : 'C';
+            const highTarget = (lowTarget === 'B') ? 'C' : 'B';
+            const scenario = r.pick(['low_open', 'low_open', 'low_blocked', 'both_blocked']);
+
+            if (scenario === 'low_open') {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: false},
+                    {from: tA, to: highTarget, h: 2, blocked: r.next() < .5},
+                ];
+                winningTank = lowTarget;
+            } else if (scenario === 'low_blocked') {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: true},
+                    {from: tA, to: highTarget, h: 2, blocked: false},
+                ];
+                winningTank = highTarget;
+            } else {
+                // Both outlets from A are blocked: tank A fills to 100% first
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: true},
+                    {from: tA, to: highTarget, h: 2, blocked: true},
+                ];
+                winningTank = tA;
+            }
+        } else if (tankCount === 4) {
+            // Tanks A, B, C, D: A branches to B and C, one branch connects down to D
+            const downstreamParent = r.next() < .5 ? 'B' : 'C';
+            const sibling = (downstreamParent === 'B') ? 'C' : 'B';
+            const parentIsLow = r.next() < .5;
+            const scenario = r.pick(['to_d', 'parent_blocked_down', 'to_sibling', 'both_blocked_a']);
+
+            if (scenario === 'to_d') {
+                connections = [
+                    {from: tA, to: downstreamParent, h: parentIsLow ? 1 : 2, blocked: false},
+                    {from: tA, to: sibling, h: parentIsLow ? 2 : 1, blocked: parentIsLow ? r.next() < .5 : true},
+                    {from: downstreamParent, to: 'D', h: 1, blocked: false},
+                ];
+                winningTank = 'D';
+            } else if (scenario === 'parent_blocked_down') {
+                connections = [
+                    {from: tA, to: downstreamParent, h: parentIsLow ? 1 : 2, blocked: false},
+                    {from: tA, to: sibling, h: parentIsLow ? 2 : 1, blocked: parentIsLow ? r.next() < .5 : true},
+                    {from: downstreamParent, to: 'D', h: 1, blocked: true},
+                ];
+                winningTank = downstreamParent;
+            } else if (scenario === 'to_sibling') {
+                if (parentIsLow) {
+                    connections = [
+                        {from: tA, to: downstreamParent, h: 1, blocked: true},
+                        {from: tA, to: sibling, h: 2, blocked: false},
+                        {from: downstreamParent, to: 'D', h: 1, blocked: r.next() < .5},
+                    ];
+                } else {
+                    connections = [
+                        {from: tA, to: sibling, h: 1, blocked: false},
+                        {from: tA, to: downstreamParent, h: 2, blocked: r.next() < .5},
+                        {from: downstreamParent, to: 'D', h: 1, blocked: r.next() < .5},
+                    ];
+                }
+                winningTank = sibling;
+            } else {
+                connections = [
+                    {from: tA, to: downstreamParent, h: parentIsLow ? 1 : 2, blocked: true},
+                    {from: tA, to: sibling, h: parentIsLow ? 2 : 1, blocked: true},
+                    {from: downstreamParent, to: 'D', h: 1, blocked: r.next() < .5},
+                ];
+                winningTank = tA;
+            }
+        } else {
+            // 5 tanks: A, B, C, D, E
+            const lowTarget = r.next() < .5 ? 'B' : 'C';
+            const highTarget = (lowTarget === 'B') ? 'C' : 'B';
+            const lowDown = (lowTarget === 'B') ? 'D' : 'E';
+            const highDown = (highTarget === 'C') ? 'E' : 'D';
+            const outcome = r.pick(['lowDown', 'lowDown', 'lowTarget', 'highDown', 'highTarget', 'A']);
+
+            if (outcome === 'lowDown') {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: false},
+                    {from: tA, to: highTarget, h: 2, blocked: r.next() < .5},
+                    {from: lowTarget, to: lowDown, h: 1, blocked: false},
+                    {from: highTarget, to: highDown, h: 1, blocked: r.next() < .5},
+                ];
+                winningTank = lowDown;
+            } else if (outcome === 'lowTarget') {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: false},
+                    {from: tA, to: highTarget, h: 2, blocked: r.next() < .5},
+                    {from: lowTarget, to: lowDown, h: 1, blocked: true},
+                    {from: highTarget, to: highDown, h: 1, blocked: r.next() < .5},
+                ];
+                winningTank = lowTarget;
+            } else if (outcome === 'highDown') {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: true},
+                    {from: tA, to: highTarget, h: 2, blocked: false},
+                    {from: lowTarget, to: lowDown, h: 1, blocked: r.next() < .5},
+                    {from: highTarget, to: highDown, h: 1, blocked: false},
+                ];
+                winningTank = highDown;
+            } else if (outcome === 'highTarget') {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: true},
+                    {from: tA, to: highTarget, h: 2, blocked: false},
+                    {from: lowTarget, to: lowDown, h: 1, blocked: r.next() < .5},
+                    {from: highTarget, to: highDown, h: 1, blocked: true},
+                ];
+                winningTank = highTarget;
+            } else {
+                connections = [
+                    {from: tA, to: lowTarget, h: 1, blocked: true},
+                    {from: tA, to: highTarget, h: 2, blocked: true},
+                    {from: lowTarget, to: lowDown, h: 1, blocked: r.next() < .5},
+                    {from: highTarget, to: highDown, h: 1, blocked: r.next() < .5},
+                ];
+                winningTank = tA;
+            }
+        }
+
+        const pipesData = {
+            tanks: tankNames,
+            connections,
+            winner: winningTank,
+            source: tA,
+        };
+        const right = winningTank;
+        const q = {
+            view: 'pipes', pipesData,
+            lines: connections.map(c => `${c.from} ➔ ${c.to}${c.blocked ? ' (🚫)' : ''}`),
+            pk: 'q_pipes_first',
+            pv: {source: tA},
+            why: (right === tA)
+                ? [{k: 'why_pipes_blocked', v: {x: tA}}]
+                : [{k: 'why_pipes_first', v: {x: right}}],
+        };
+        return withOptions(r, q, right, others(r, tankNames, right));
+    }
+
+    pattern('pipes-3', 'pipes', .22, r => makePipes(r, 3));
+    pattern('pipes-4-a', 'pipes', .55, r => makePipes(r, 4));
+    pattern('pipes-4-b', 'pipes', .90, r => makePipes(r, 4));
+    pattern('pipes-5', 'pipes', 1.35, r => makePipes(r, 5));
+    pattern('pipes-5-branch', 'pipes', 1.75, r => makePipes(r, 5));
+
+    // ---------- hanging kinetic balance mobiles ----------
+    function makeMobile(r, tier) {
+        let beams = [];
+        let rightAnswer = 0;
+
+        if (tier === 1) {
+            const pairs = [
+                {dL: 1, dR: 1, wL: 4, wR: 4},
+                {dL: 2, dR: 1, wL: 3, wR: 6},
+                {dL: 1, dR: 2, wL: 8, wR: 4},
+                {dL: 3, dR: 1, wL: 2, wR: 6},
+                {dL: 2, dR: 3, wL: 6, wR: 4},
+                {dL: 1, dR: 3, wL: 9, wR: 3},
+                {dL: 3, dR: 2, wL: 4, wR: 6},
+                {dL: 2, dR: 1, wL: 5, wR: 10},
+            ];
+            const p = r.pick(pairs);
+            const hideRight = r.next() < .5;
+            rightAnswer = hideRight ? p.wR : p.wL;
+            beams = [{
+                id: 'b0',
+                x: 155, y: 35,
+                dL: p.dL, dR: p.dR,
+                left: {type: 'weight', val: hideRight ? p.wL : '?', isTarget: !hideRight, realVal: p.wL},
+                right: {type: 'weight', val: hideRight ? '?' : p.wR, isTarget: hideRight, realVal: p.wR},
+            }];
+        } else if (tier === 2) {
+            const sL = r.int(1, 2);
+            const sR = r.int(1, 3);
+            const k = r.int(2, 4);
+            const wSL = k * sR;
+            const wSR = k * sL;
+            const subTotal = wSL + wSR;
+
+            const dR = 1;
+            let dL = r.int(1, 2);
+            if (dL === 2 && subTotal % 2 !== 0) dL = 1;
+            const wL = (subTotal * dR) / dL;
+
+            const hideTarget = r.pick(['subRight', 'subLeft', 'mainLeft']);
+            if (hideTarget === 'subRight') rightAnswer = wSR;
+            else if (hideTarget === 'subLeft') rightAnswer = wSL;
+            else rightAnswer = wL;
+
+            const rel_min = Math.min(-dL, dR - sL);
+            const rel_max = dR + sR;
+            const b0_x = Math.round(155 - (rel_min + rel_max) * 32 / 2);
+            const b1_x = b0_x + dR * 32;
+
+            beams = [
+                {
+                    id: 'b0',
+                    x: b0_x, y: 32,
+                    dL: dL, dR: dR,
+                    left: {type: 'weight', val: hideTarget === 'mainLeft' ? '?' : wL, isTarget: hideTarget === 'mainLeft', realVal: wL},
+                    right: {type: 'beam', subBeamIdx: 1, totalWeight: subTotal},
+                },
+                {
+                    id: 'b1',
+                    x: b1_x, y: 92,
+                    dL: sL, dR: sR,
+                    left: {type: 'weight', val: hideTarget === 'subLeft' ? '?' : wSL, isTarget: hideTarget === 'subLeft', realVal: wSL},
+                    right: {type: 'weight', val: hideTarget === 'subRight' ? '?' : wSR, isTarget: hideTarget === 'subRight', realVal: wSR},
+                },
+            ];
+        } else {
+            const sL = r.int(1, 3);
+            const sR = r.int(1, 3);
+            const k = r.int(2, 4);
+            const wSubA = k * sR;
+            const wSubB = k * sL;
+            const sSum = wSubA + wSubB;
+            const dL = r.int(1, 2);
+            const dR = 1;
+            const wL = (sSum * dR) / (dL === 2 && sSum % 2 !== 0 ? 1 : dL);
+            const actualDL = (dL === 2 && sSum % 2 !== 0) ? 1 : dL;
+            rightAnswer = wSubB;
+
+            const rel_min = Math.min(-actualDL, dR - sL);
+            const rel_max = dR + sR;
+            const b0_x = Math.round(155 - (rel_min + rel_max) * 32 / 2);
+            const b1_x = b0_x + dR * 32;
+
+            beams = [
+                {
+                    id: 'b0',
+                    x: b0_x, y: 32,
+                    dL: actualDL, dR: dR,
+                    left: {type: 'weight', val: wL, isTarget: false, realVal: wL},
+                    right: {type: 'beam', subBeamIdx: 1, totalWeight: sSum},
+                },
+                {
+                    id: 'b1',
+                    x: b1_x, y: 92,
+                    dL: sL, dR: sR,
+                    left: {type: 'weight', val: wSubA, isTarget: false, realVal: wSubA},
+                    right: {type: 'weight', val: '?', isTarget: true, realVal: wSubB},
+                },
+            ];
+        }
+
+        const mobilesData = {
+            tier,
+            beams,
+            rightAnswer,
+        };
+        const right = String(rightAnswer);
+        const distractors = [rightAnswer - 2, rightAnswer - 1, rightAnswer + 1, rightAnswer + 2, rightAnswer + 3, rightAnswer * 2]
+            .filter(n => n > 0 && n !== rightAnswer)
+            .map(String);
+
+        const q = {
+            view: 'mobiles', mobilesData,
+            pk: 'q_mobile_balance',
+            why: [{k: 'why_mobile', v: {x: right}}],
+        };
+        return withOptions(r, q, right, others(r, distractors, right));
+    }
+
+    pattern('mobiles-1-easy', 'mobiles', .25, r => makeMobile(r, 1));
+    pattern('mobiles-1-med', 'mobiles', .58, r => makeMobile(r, 1));
+    pattern('mobiles-2-easy', 'mobiles', .86, r => makeMobile(r, 2));
+    pattern('mobiles-2-hard', 'mobiles', 1.25, r => makeMobile(r, 2));
+    pattern('mobiles-3-exp', 'mobiles', 1.68, r => makeMobile(r, 3));
+    pattern('mobiles-3-max', 'mobiles', 1.94, r => makeMobile(r, 3));
+
+    // ---------- origami paper folding and hole punch ----------
+    function computeOrigamiBounds(folds, size = 4) {
+        let b = { xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1 };
+        const steps = [];
+        for (const f of folds) {
+            const bBefore = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
+            const sx = b.xMin + b.xMax;
+            const sy = b.yMin + b.yMax;
+            if (f === 'L_TO_R') b.xMin = Math.floor((b.xMin + b.xMax) / 2) + 1;
+            else if (f === 'R_TO_L') b.xMax = Math.floor((b.xMin + b.xMax) / 2);
+            else if (f === 'T_TO_B') b.yMin = Math.floor((b.yMin + b.yMax) / 2) + 1;
+            else if (f === 'B_TO_T') b.yMax = Math.floor((b.yMin + b.yMax) / 2);
+            const bAfter = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
+            steps.push({ fold: f, bBefore, bAfter, sx, sy });
+        }
+        const finalBounds = { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, cols: b.xMax - b.xMin + 1, rows: b.yMax - b.yMin + 1 };
+        return { steps, finalBounds };
+    }
+
+    function unfoldOrigamiHoles(punch, steps) {
+        let holes = [...punch];
+        for (let i = steps.length - 1; i >= 0; i--) {
+            const info = steps[i];
+            const next = [];
+            const seen = new Set();
+            for (const p of holes) {
+                const k1 = p[0] + ',' + p[1];
+                if (!seen.has(k1)) { seen.add(k1); next.push(p); }
+                const rx = (info.fold === 'L_TO_R' || info.fold === 'R_TO_L') ? (info.sx - p[0]) : p[0];
+                const ry = (info.fold === 'T_TO_B' || info.fold === 'B_TO_T') ? (info.sy - p[1]) : p[1];
+                const k2 = rx + ',' + ry;
+                if (!seen.has(k2)) { seen.add(k2); next.push([rx, ry]); }
+            }
+            holes = next;
+        }
+        return holes;
+    }
+
+    function makeOrigami(r, tier, reqSize) {
+        let size = reqSize || 4;
+        let folds = [];
+        let numFolds = 1;
+
+        if (size === 4) {
+            if (tier === 1) {
+                numFolds = 1;
+            } else if (tier === 2) {
+                numFolds = 2;
+            } else {
+                numFolds = (r.next() < .5) ? 2 : 3;
+            }
+        } else if (size === 6) {
+            numFolds = (tier <= 2 && r.next() < .35) ? 1 : 2;
+        } else if (size === 8) {
+            if (tier <= 3) numFolds = 2;
+            else if (tier === 4) numFolds = (r.next() < .5) ? 2 : 3;
+            else if (tier === 5) numFolds = (r.next() < .4) ? 3 : 4;
+            else numFolds = 4;
+        }
+
+        let curB = { xMin: 0, xMax: size - 1, yMin: 0, yMax: size - 1 };
+        for (let s = 0; s < numFolds; s++) {
+            const w = curB.xMax - curB.xMin + 1;
+            const h = curB.yMax - curB.yMin + 1;
+            const valid = [];
+            if (w >= 2 && w % 2 === 0) valid.push('L_TO_R', 'R_TO_L');
+            if (h >= 2 && h % 2 === 0) valid.push('T_TO_B', 'B_TO_T');
+            if (!valid.length) break;
+            const f = r.pick(valid);
+            folds.push(f);
+            if (f === 'L_TO_R') curB.xMin = Math.floor((curB.xMin + curB.xMax) / 2) + 1;
+            else if (f === 'R_TO_L') curB.xMax = Math.floor((curB.xMin + curB.xMax) / 2);
+            else if (f === 'T_TO_B') curB.yMin = Math.floor((curB.yMin + curB.yMax) / 2) + 1;
+            else if (f === 'B_TO_T') curB.yMax = Math.floor((curB.yMin + curB.yMax) / 2);
+        }
+
+        const { steps, finalBounds } = computeOrigamiBounds(folds, size);
+
+        const validX = [];
+        for (let x = finalBounds.xMin; x <= finalBounds.xMax; x++) validX.push(x);
+        const validY = [];
+        for (let y = finalBounds.yMin; y <= finalBounds.yMax; y++) validY.push(y);
+
+        const allCells = [];
+        for (const x of validX) {
+            for (const y of validY) {
+                allCells.push([x, y]);
+            }
+        }
+
+        const wantTwoPunches = (tier >= 3 && (numFolds <= 3 || size <= 6) && r.next() < .6) || (tier >= 5 && r.next() < .7);
+        let punch = [];
+        if (!wantTwoPunches || allCells.length < 2) {
+            punch = [[r.pick(validX), r.pick(validY)]];
+        } else {
+            punch = r.shuffle(allCells).slice(0, 2);
+        }
+
+        const rightHoles = unfoldOrigamiHoles(punch, steps);
+        const serialize = pts => {
+            const grid = Array.from({length: size}, () => Array(size).fill(0));
+            pts.forEach(([x, y]) => { if (x >= 0 && x < size && y >= 0 && y < size) grid[y][x] = 1; });
+            return grid.flat().join('');
+        };
+
+        const rightKey = serialize(rightHoles);
+        const distractors = [];
+        const maxCoord = size - 1;
+
+        // Distractor 1: partial unfold (if multiple folds)
+        if (steps.length > 1) {
+            const partial = unfoldOrigamiHoles(punch, steps.slice(0, steps.length - 1));
+            const d1 = serialize(partial);
+            if (d1 !== rightKey && !distractors.includes(d1)) distractors.push(d1);
+        }
+
+        // Distractor 2: 90-degree rotated
+        const rot90 = serialize(rightHoles.map(([x, y]) => [y, maxCoord - x]));
+        if (rot90 !== rightKey && !distractors.includes(rot90)) distractors.push(rot90);
+
+        // Distractor 3: 180-degree rotated
+        const rot180 = serialize(rightHoles.map(([x, y]) => [maxCoord - x, maxCoord - y]));
+        if (rot180 !== rightKey && !distractors.includes(rot180)) distractors.push(rot180);
+
+        // Distractor 4: Inverted X
+        const invX = serialize(rightHoles.map(([x, y]) => [maxCoord - x, y]));
+        if (invX !== rightKey && !distractors.includes(invX)) distractors.push(invX);
+
+        // Distractor 5: Inverted Y
+        const invY = serialize(rightHoles.map(([x, y]) => [x, maxCoord - y]));
+        if (invY !== rightKey && !distractors.includes(invY)) distractors.push(invY);
+
+        // Fill remaining with another punch position unfolded under same steps
+        let attempts = 0;
+        while (distractors.length < 3 && attempts < 30) {
+            attempts++;
+            let altPunch = [];
+            if (allCells.length >= punch.length) {
+                altPunch = r.shuffle(allCells).slice(0, punch.length);
+            } else {
+                altPunch = [[r.int(finalBounds.xMin, finalBounds.xMax), r.int(finalBounds.yMin, finalBounds.yMax)]];
+            }
+            const altKey = serialize(unfoldOrigamiHoles(altPunch, steps));
+            if (altKey !== rightKey && !distractors.includes(altKey)) {
+                distractors.push(altKey);
+            }
+        }
+
+        const allKeys = [rightKey, ...distractors].slice(0, 4);
+        while (allKeys.length < 4) {
+            const fallbackPunch = [];
+            for (let p = 0; p < punch.length; p++) {
+                fallbackPunch.push([r.int(0, size - 1), r.int(0, size - 1)]);
+            }
+            const fbKey = serialize(fallbackPunch);
+            if (!allKeys.includes(fbKey)) allKeys.push(fbKey);
+            else allKeys.push(serialize([[r.int(0, size - 1), r.int(0, size - 1)]]));
+        }
+
+        const shuffledKeys = r.shuffle(allKeys);
+        const letterOptions = ['A', 'B', 'C', 'D'];
+        const rightLetter = letterOptions[shuffledKeys.indexOf(rightKey)];
+
+        const origamiData = {
+            size,
+            tier,
+            noGuides: tier >= 4 || (tier >= 3 && r.next() < .5),
+            folds,
+            stepBounds: steps,
+            finalBounds,
+            punch,
+            unfoldedHoles: rightHoles,
+            candidateSheets: letterOptions.map((letter, idx) => ({
+                letter,
+                pattern: shuffledKeys[idx] || rightKey,
+            })),
+        };
+
+        const q = {
+            view: 'origami', origamiData,
+            pics: true,
+            pk: 'q_origami_unfold',
+            why: [{k: 'why_origami', v: {x: rightLetter}}],
+        };
+
+        return withOptions(r, q, rightLetter, letterOptions.filter(l => l !== rightLetter));
+    }
+
+    pattern('origami-1-easy', 'origami', .28, r => makeOrigami(r, 1, 4));
+    pattern('origami-2-med', 'origami', .68, r => makeOrigami(r, 2, 4));
+    pattern('origami-2-hard', 'origami', 1.18, r => makeOrigami(r, 2, 4));
+    pattern('origami-3-diag', 'origami', 1.55, r => makeOrigami(r, 3, 4));
+    pattern('origami-3-max', 'origami', 1.88, r => makeOrigami(r, 3, 4));
+    pattern('origami-4-med', 'origami', 3.45, r => makeOrigami(r, 3, 6));
+    pattern('origami-4-hard', 'origami', 4.85, r => makeOrigami(r, 4, 6));
+    pattern('origami-5-exp', 'origami', 6.40, r => makeOrigami(r, 5, 8));
+    pattern('origami-6-master', 'origami', 7.80, r => makeOrigami(r, 6, 8));
+    pattern('origami-7-legend', 'origami', 9.20, r => makeOrigami(r, 7, 8));
 })(typeof window !== 'undefined' ? window : globalThis);

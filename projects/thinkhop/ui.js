@@ -25,9 +25,13 @@
         },
     };
 
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const SVG_TAGS = new Set(['svg', 'polyline', 'polygon', 'circle', 'path', 'rect', 'line', 'g', 'text', 'defs', 'use']);
+
     function h(tag, attrs, ...kids) {
         const m = /^([a-z0-9]+)?((?:[.#][\w-]+)*)$/i.exec(tag);
-        const el = document.createElement(m[1] || 'div');
+        const tagName = m[1] || 'div';
+        const el = SVG_TAGS.has(tagName) ? document.createElementNS(SVG_NS, tagName) : document.createElement(tagName);
         m[2].replace(/([.#])([\w-]+)/g, (_, k, v) => {
             if (k === '.') el.classList.add(v); else el.id = v;
         });
@@ -71,6 +75,7 @@
         star: '<path d="M12 2.8l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.6l-5.8 3.1 1.1-6.5L2.6 9.6l6.5-.9z"/>',
         heart: '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>',
         bell: '<path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 003.4 0"/>',
+        download: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
         mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
         user: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
         chart: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
@@ -86,6 +91,7 @@
         pen: '<path d="M12 20h9"/><path d="M16.500 3.500a2.100 2.100 0 013 3L7 19l-4 1 1-4z"/>',
         image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
         save: '<path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+        chevron: '<path d="M6 9l6 6 6-6"/>',
     };
 
     const icon = name => {
@@ -166,5 +172,17 @@
         return h('div.skeleton', {role: 'status', 'aria-busy': 'true', 'aria-label': label}, rows);
     }
 
-    window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox, skeleton};
+    /**
+     * Optical 45° diagonal mirror SVG for laser puzzles.
+     * '/' reflects horizontal <-> vertical; '\' reflects accordingly.
+     */
+    function mirrorSvg(type, isReflecting) {
+        const isSlash = (type === '/');
+        const x1 = 6, y1 = isSlash ? 30 : 6;
+        const x2 = 30, y2 = isSlash ? 6 : 30;
+        const glow = isReflecting ? '#FF3366' : '#38BDF8';
+        return `<svg class="mirror-svg${isReflecting ? ' reflecting' : ''}" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0D0926" stroke-width="7" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${glow}" stroke-width="4.5" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/><circle cx="${x1}" cy="${y1}" r="2.6" fill="#FFD23F" stroke="#1B1640" stroke-width="1.2"/><circle cx="${x2}" cy="${y2}" r="2.6" fill="#FFD23F" stroke="#1B1640" stroke-width="1.2"/></svg>`;
+    }
+
+    window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox, skeleton, mirrorSvg};
 })();

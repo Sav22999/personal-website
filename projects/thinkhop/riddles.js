@@ -301,9 +301,9 @@
             },
         },
 
-        // ------------------------------------------------------------------ expert
+        // ------------------------------------------------------------------ clever / lateral (hard)
         {
-            id: 'x01', level: 'expert', o: ['10', '50', '25', '1'], t: {
+            id: 'x01', level: 'hard', o: ['10', '50', '25', '1'], t: {
                 en: ['100 lockers are closed. Person 1 changes every locker, person 2 every second one, person 3 every third, up to person 100. How many stay open?', 'A locker changes once for each divisor of its number. Only perfect squares have an odd number of divisors: 1, 4, 9… 100.'],
                 it: ['100 armadietti sono chiusi. La persona 1 li cambia tutti, la 2 uno ogni due, la 3 uno ogni tre, fino alla 100. Quanti restano aperti?', 'Un armadietto cambia una volta per ogni divisore del suo numero. Solo i quadrati perfetti hanno un numero dispari di divisori: 1, 4, 9… 100.'],
                 es: ['100 taquillas están cerradas. La persona 1 las cambia todas, la 2 una de cada dos, la 3 una de cada tres, hasta la 100. ¿Cuántas quedan abiertas?', 'Una taquilla cambia una vez por cada divisor de su número. Solo los cuadrados perfectos tienen un número impar de divisores: 1, 4, 9… 100.'],
@@ -312,7 +312,7 @@
             },
         },
         {
-            id: 'x02', level: 'expert', t: {
+            id: 'x02', level: 'hard', t: {
                 en: ['One of A, B and C took the cake, and exactly one of them tells the truth. A: “B did it.” B: “It wasn’t me.” C: “It wasn’t me.” Who took it?', 'If it were A, both B and C would be telling the truth. If it were B, both A and C would. If it was C, only B tells the truth.', ['C', 'A', 'B', 'You can’t tell']],
                 it: ['Uno tra A, B e C ha preso la torta, e solo uno dei tre dice la verità. A: “È stato B.” B: “Non sono stato io.” C: “Non sono stato io.” Chi l’ha presa?', 'Se fosse A, direbbero la verità sia B sia C. Se fosse B, sia A sia C. Se è C, dice la verità solo B.', ['C', 'A', 'B', 'Non si può dire']],
                 es: ['Uno de A, B y C cogió la tarta, y solo uno de los tres dice la verdad. A: “Fue B.” B: “No fui yo.” C: “No fui yo.” ¿Quién la cogió?', 'Si fuera A, dirían la verdad B y C. Si fuera B, A y C. Si es C, solo B dice la verdad.', ['C', 'A', 'B', 'No se puede saber']],
@@ -321,7 +321,7 @@
             },
         },
         {
-            id: 'x03', level: 'expert', t: {
+            id: 'x03', level: 'hard', t: {
                 en: ['The day before yesterday Marco was 17, and next year he will turn 20. What is today’s date?', 'He was born on 31 December. On 30 December he was 17, on the 31st he turned 18, this year he turns 19 and next year 20.', ['1 January', '31 December', '30 December', '2 January']],
                 it: ['L’altro ieri Marco aveva 17 anni, e l’anno prossimo ne compirà 20. Che giorno è oggi?', 'È nato il 31 dicembre. Il 30 dicembre aveva 17 anni, il 31 ne ha compiuti 18, quest’anno ne compie 19 e l’anno prossimo 20.', ['1 gennaio', '31 dicembre', '30 dicembre', '2 gennaio']],
                 es: ['Anteayer Marco tenía 17 años, y el año que viene cumplirá 20. ¿Qué día es hoy?', 'Nació el 31 de diciembre. El 30 de diciembre tenía 17, el 31 cumplió 18, este año cumple 19 y el que viene 20.', ['1 de enero', '31 de diciembre', '30 de diciembre', '2 de enero']],
@@ -330,7 +330,7 @@
             },
         },
         {
-            id: 'x04', level: 'expert', o: ['24', '20', '25', '10'], t: {
+            id: 'x04', level: 'hard', o: ['24', '20', '25', '10'], t: {
                 en: ['Multiply all the numbers from 1 to 100. How many zeros does the result end with?', 'Each zero needs a factor 5, and there are plenty of 2s. Multiples of 5 give 20 fives, and those of 25 give 4 more.'],
                 it: ['Moltiplica tutti i numeri da 1 a 100. Con quanti zeri finisce il risultato?', 'Ogni zero richiede un fattore 5, e i 2 non mancano. I multipli di 5 danno 20 cinque, quelli di 25 altri 4.'],
                 es: ['Multiplica todos los números del 1 al 100. ¿En cuántos ceros termina el resultado?', 'Cada cero necesita un factor 5, y los 2 sobran. Los múltiplos de 5 dan 20 cincos y los de 25 otros 4.'],
@@ -339,7 +339,7 @@
             },
         },
         {
-            id: 'x05', level: 'expert', o: ['2/3', '1/2', '1/3', '1/4'], t: {
+            id: 'x05', level: 'hard', o: ['2/3', '1/2', '1/3', '1/4'], t: {
                 en: ['A prize is behind one of 3 doors. You pick one; the host, who knows where it is, always opens another door without the prize and lets you switch. If you switch, what is your chance of winning?', 'Your first door wins 1 time in 3. In the other 2 cases out of 3 the prize is behind the door you switch to.'],
                 it: ['Un premio è dietro una di 3 porte. Ne scegli una; il conduttore, che sa dov’è, apre sempre un’altra porta senza premio e ti lascia cambiare. Se cambi, che probabilità hai di vincere?', 'La prima porta vince 1 volta su 3. Negli altri 2 casi su 3 il premio è dietro la porta su cui cambi.'],
                 es: ['Hay un premio detrás de una de 3 puertas. Eliges una; el presentador, que sabe dónde está, abre siempre otra puerta sin premio y te deja cambiar. Si cambias, ¿qué probabilidad tienes de ganar?', 'La primera puerta gana 1 vez de cada 3. En los otros 2 casos de 3, el premio está tras la puerta a la que cambias.'],
@@ -348,7 +348,7 @@
             },
         },
         {
-            id: 'x06', level: 'expert', o: ['40 km/h', '45 km/h', '50 km/h', '35 km/h'], t: {
+            id: 'x06', level: 'hard', o: ['40 km/h', '45 km/h', '50 km/h', '35 km/h'], t: {
                 en: ['You drive to a town at 60 km/h and come back on the same road at 30 km/h. What is your average speed for the whole trip?', 'For 60 km you take 1 hour there and 2 hours back: 120 km in 3 hours.'],
                 it: ['Vai in un paese a 60 km/h e torni sulla stessa strada a 30 km/h. Qual è la velocità media di tutto il viaggio?', 'Per 60 km ci metti 1 ora all’andata e 2 al ritorno: 120 km in 3 ore.'],
                 es: ['Vas a un pueblo a 60 km/h y vuelves por la misma carretera a 30 km/h. ¿Cuál es la velocidad media de todo el viaje?', 'Para 60 km tardas 1 hora a la ida y 2 a la vuelta: 120 km en 3 horas.'],
@@ -357,7 +357,7 @@
             },
         },
         {
-            id: 'x07', level: 'expert', o: ['10', '100', '500', '32'], t: {
+            id: 'x07', level: 'hard', o: ['10', '100', '500', '32'], t: {
                 en: ['One of 1000 bottles is poisoned. You can test drops from many bottles at once on a strip, and all the strips show their result together after a day. How many strips do you need?', 'Write each bottle’s number in binary, with one strip per digit: 10 digits count up to 1024, and the strips that react spell out the number.'],
                 it: ['Una di 1000 bottiglie è avvelenata. Su una striscia puoi provare gocce di molte bottiglie insieme, e tutte le strisce danno il risultato insieme dopo un giorno. Quante strisce servono?', 'Scrivi il numero di ogni bottiglia in binario, con una striscia per cifra: 10 cifre contano fino a 1024, e le strisce che reagiscono compongono il numero.'],
                 es: ['Una de 1000 botellas está envenenada. En una tira puedes probar gotas de muchas botellas a la vez, y todas las tiras dan el resultado juntas al cabo de un día. ¿Cuántas tiras necesitas?', 'Escribe el número de cada botella en binario, con una tira por cifra: 10 cifras cuentan hasta 1024, y las tiras que reaccionan forman el número.'],
@@ -366,7 +366,7 @@
             },
         },
         {
-            id: 'x08', level: 'expert', o: ['22', '24', '23', '12'], t: {
+            id: 'x08', level: 'hard', o: ['22', '24', '23', '12'], t: {
                 en: ['In a full day of 24 hours, how many times do the hour and minute hands of a clock overlap?', 'The minute hand catches the hour hand 11 times every 12 hours, not 12: 2 × 11 = 22.'],
                 it: ['In un giorno intero di 24 ore, quante volte si sovrappongono le lancette delle ore e dei minuti?', 'La lancetta dei minuti raggiunge quella delle ore 11 volte ogni 12 ore, non 12: 2 × 11 = 22.'],
                 es: ['En un día entero de 24 horas, ¿cuántas veces se superponen las agujas de las horas y los minutos?', 'La aguja de los minutos alcanza a la de las horas 11 veces cada 12 horas, no 12: 2 × 11 = 22.'],
@@ -375,7 +375,7 @@
             },
         },
         {
-            id: 'x09', level: 'expert', o: ['1', '2', '3', '4'], t: {
+            id: 'x09', level: 'hard', o: ['1', '2', '3', '4'], t: {
                 en: ['Three switches outside a closed room control three old light bulbs inside. How many times must you enter the room to know which switch controls which bulb?', 'Turn on the first switch for a while, turn it off, turn on the second and go in: one bulb is lit, one is off but warm, one is off and cold.'],
                 it: ['Tre interruttori fuori da una stanza chiusa comandano tre vecchie lampadine all’interno. Quante volte devi entrare per sapere quale interruttore comanda quale lampadina?', 'Accendi il primo per un po’, spegnilo, accendi il secondo ed entra: una lampadina è accesa, una spenta ma calda, una spenta e fredda.'],
                 es: ['Tres interruptores fuera de una habitación cerrada controlan tres bombillas antiguas dentro. ¿Cuántas veces debes entrar para saber qué interruptor controla cada bombilla?', 'Enciende el primero un rato, apágalo, enciende el segundo y entra: una bombilla está encendida, otra apagada pero caliente y otra apagada y fría.'],

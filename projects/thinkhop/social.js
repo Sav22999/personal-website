@@ -8,7 +8,11 @@
     const I = window.ThinkHopI18n;
     I.extend({
         en: {
-            username_change: 'Change username', ranking_show: 'Show me in the ranking', ranking_hint: 'If you turn this off, other players no longer see you in the ranking. You can still find your own result.', ranking_on: 'You appear in the ranking', ranking_off: 'You no longer appear in the ranking', ranking_hidden: 'Only you can see your result.', email_fixed: 'The email can’t be changed.', verify_title: 'Confirm your email', verify_text: 'We sent a link to {email}. Open it to start using your account: until then the account stays locked.', verify_resend: 'Send the link again', verify_sent: 'New link sent to {email}. It may take a minute: check spam too.', verify_done: 'I’ve confirmed it', verify_not_yet: 'Not confirmed yet: open the link in the email.', verify_ok: 'Email confirmed. Welcome!', verify_confirm_title: 'Confirm your email', verify_confirm_text: 'Tap the button to confirm the address of your ThinkHop account.', verify_confirm_btn: 'Confirm email', err_email_unverified: 'Confirm your email first.', err_token_invalid: 'This link has expired or was already used: sign in and ask for a new one.', notify_title: 'Notifications', notify_device: 'On this device', notify_text: 'Choose what you want to hear about. Your choices follow your account; this switch is only for this device.', notify_daily: 'Daily challenge', notify_daily_hint: 'A reminder if you haven’t played today', notify_streak: 'Streak in danger', notify_streak_hint: 'When your streak is about to end', notify_friends: 'New friends', notify_friends_hint: 'When someone adds you', notify_overtaken: 'Overtakes', notify_overtaken_hint: 'When a friend beats you in today’s ranking', notify_blocked: 'Notifications are blocked: allow them in your browser settings.', notify_unsupported: 'This browser or app can’t receive notifications. On iPhone, add the game to the Home Screen first.', err_push_unavailable: 'Notifications aren’t available right now.', username: 'Username', username_title: 'Choose your username', username_hint: '3–20 letters, numbers or _. It is public.',
+            username_change: 'Change username', ranking_show: 'Show me in the ranking', ranking_hint: 'If you turn this off, other players no longer see you in the ranking. You can still find your own result.', ranking_on: 'You appear in the ranking', ranking_off: 'You no longer appear in the ranking', ranking_hidden: 'Only you can see your result.', email_fixed: 'The email can’t be changed.', verify_title: 'Confirm your email', verify_text: 'We sent a link to {email}. Open it to start using your account: until then the account stays locked.', verify_resend: 'Send the link again', verify_sent: 'New link sent to {email}. It may take a minute: check spam too.', verify_done: 'I’ve confirmed it', verify_not_yet: 'Not confirmed yet: open the link in the email.', verify_ok: 'Email confirmed. Welcome!', verify_confirm_title: 'Confirm your email', verify_confirm_text: 'Tap the button to confirm the address of your ThinkHop account.', verify_confirm_btn: 'Confirm email', err_email_unverified: 'Confirm your email first.', err_token_invalid: 'This link has expired or was already used: sign in and ask for a new one.', notify_title: 'Notifications', notify_device: 'On this device', notify_text: 'Choose what you want to hear about. Your choices follow your account; this switch is only for this device.', notify_daily: 'Daily challenge', notify_daily_hint: 'A reminder if you haven’t played today', notify_streak: 'Streak in danger', notify_streak_hint: 'When your streak is about to end', notify_friends: 'New friends', notify_friends_hint: 'When someone adds you', notify_overtaken: 'Overtakes', notify_overtaken_hint: 'When a friend beats you in today’s ranking', notify_blocked: 'Notifications are blocked: allow them in your browser settings.', notify_unsupported: 'This browser or app can’t receive notifications. On iPhone, add the game to the Home Screen first.', err_push_unavailable: 'Notifications aren’t available right now.',
+            notify_live: 'Immediate', notify_scheduled: 'Reminder', notify_hour_label: 'Time', notify_default: 'default',
+            notify_tz_note: 'Times are based on the server timezone ({tz}, current server time: {time}).',
+            notify_tz_local: '{h} on your device', notify_saved: 'Notification settings saved',
+            username: 'Username', username_title: 'Choose your username', username_hint: '3–20 letters, numbers or _. It is public.',
             username_text: 'It is the only thing other players can see: it appears in the rankings and in the search for friends.',
             err_username_invalid: 'Use 3–20 letters, numbers or _.', err_username_taken: 'This username is already taken.', err_not_found: 'Player not found.', err_too_many_friends: 'You have reached the maximum number of friends.',
             board: 'Ranking', board_title: 'Today’s ranking', board_all: 'Everyone', board_friends: 'Friends', board_empty: 'Nobody here yet: play the daily challenge!', board_sign_in: 'Sign in to appear in the ranking.', board_row: '{n}/{m} · {t}',
@@ -22,7 +26,11 @@
             avatar_saved: 'Profile picture updated', err_not_enough_points: 'Not enough points.', err_not_owned: 'Buy this item first.',
         },
         it: {
-            username_change: 'Cambia username', ranking_show: 'Mostrami in classifica', ranking_hint: 'Se lo disattivi, gli altri giocatori non ti vedono più in classifica. Il tuo risultato resta visibile a te.', ranking_on: 'Compari in classifica', ranking_off: 'Non compari più in classifica', ranking_hidden: 'Il tuo risultato lo vedi solo tu.', email_fixed: 'L’email non si può modificare.', verify_title: 'Conferma la tua email', verify_text: 'Abbiamo inviato un link a {email}. Aprilo per iniziare a usare il tuo account: fino ad allora l’account resta bloccato.', verify_resend: 'Invia di nuovo il link', verify_sent: 'Nuovo link inviato a {email}. Può volerci un minuto: controlla anche lo spam.', verify_done: 'L’ho confermata', verify_not_yet: 'Non ancora confermata: apri il link nell’email.', verify_ok: 'Email confermata. Si parte!', verify_confirm_title: 'Conferma la tua email', verify_confirm_text: 'Tocca il pulsante per confermare l’indirizzo del tuo account ThinkHop.', verify_confirm_btn: 'Conferma email', err_email_unverified: 'Prima conferma la tua email.', err_token_invalid: 'Questo link è scaduto o già usato: accedi e chiedine uno nuovo.', notify_title: 'Notifiche', notify_device: 'Su questo dispositivo', notify_text: 'Scegli di cosa vuoi essere avvisato. Le scelte seguono il tuo account; questo interruttore vale solo per questo dispositivo.', notify_daily: 'Sfida del giorno', notify_daily_hint: 'Un promemoria se oggi non hai giocato', notify_streak: 'Serie in pericolo', notify_streak_hint: 'Quando la tua serie sta per finire', notify_friends: 'Nuovi amici', notify_friends_hint: 'Quando qualcuno ti aggiunge', notify_overtaken: 'Sorpassi', notify_overtaken_hint: 'Quando un amico ti supera nella classifica di oggi', notify_blocked: 'Le notifiche sono bloccate: consentile nelle impostazioni del browser.', notify_unsupported: 'Questo browser o questa app non possono ricevere notifiche. Su iPhone aggiungi prima il gioco alla schermata Home.', err_push_unavailable: 'Le notifiche non sono disponibili ora.', username: 'Username', username_title: 'Scegli il tuo username', username_hint: '3–20 lettere, numeri o _. È pubblico.',
+            username_change: 'Cambia username', ranking_show: 'Mostrami in classifica', ranking_hint: 'Se lo disattivi, gli altri giocatori non ti vedono più in classifica. Il tuo risultato resta visibile a te.', ranking_on: 'Compari in classifica', ranking_off: 'Non compari più in classifica', ranking_hidden: 'Il tuo risultato lo vedi solo tu.', email_fixed: 'L’email non si può modificare.', verify_title: 'Conferma la tua email', verify_text: 'Abbiamo inviato un link a {email}. Aprilo per iniziare a usare il tuo account: fino ad allora l’account resta bloccato.', verify_resend: 'Invia di nuovo il link', verify_sent: 'Nuovo link inviato a {email}. Può volerci un minuto: controlla anche lo spam.', verify_done: 'L’ho confermata', verify_not_yet: 'Non ancora confermata: apri il link nell’email.', verify_ok: 'Email confermata. Si parte!', verify_confirm_title: 'Conferma la tua email', verify_confirm_text: 'Tocca il pulsante per confermare l’indirizzo del tuo account ThinkHop.', verify_confirm_btn: 'Conferma email', err_email_unverified: 'Prima conferma la tua email.', err_token_invalid: 'Questo link è scaduto o già usato: accedi e chiedine uno nuovo.', notify_title: 'Notifiche', notify_device: 'Su questo dispositivo', notify_text: 'Scegli di cosa vuoi essere avvisato. Le scelte seguono il tuo account; questo interruttore vale solo per questo dispositivo.', notify_daily: 'Sfida del giorno', notify_daily_hint: 'Un promemoria se oggi non hai giocato', notify_streak: 'Serie in pericolo', notify_streak_hint: 'Quando la tua serie sta per finire', notify_friends: 'Nuovi amici', notify_friends_hint: 'Quando qualcuno ti aggiunge', notify_overtaken: 'Sorpassi', notify_overtaken_hint: 'Quando un amico ti supera nella classifica di oggi', notify_blocked: 'Le notifiche sono bloccate: consentile nelle impostazioni del browser.', notify_unsupported: 'Questo browser o questa app non possono ricevere notifiche. Su iPhone aggiungi prima il gioco alla schermata Home.', err_push_unavailable: 'Le notifiche non sono disponibili ora.',
+            notify_live: 'Immediata', notify_scheduled: 'Promemoria', notify_hour_label: 'Orario', notify_default: 'predefinito',
+            notify_tz_note: 'Gli orari fanno fede al fuso orario del server ({tz}, ora attuale: {time}).',
+            notify_tz_local: 'ore {h} sul tuo dispositivo', notify_saved: 'Impostazioni notifiche salvate',
+            username: 'Username', username_title: 'Scegli il tuo username', username_hint: '3–20 lettere, numeri o _. È pubblico.',
             username_text: 'È l’unica cosa che gli altri giocatori possono vedere: compare nelle classifiche e nella ricerca amici.',
             err_username_invalid: 'Usa 3–20 lettere, numeri o _.', err_username_taken: 'Questo username è già in uso.', err_not_found: 'Giocatore non trovato.', err_too_many_friends: 'Hai raggiunto il numero massimo di amici.',
             board: 'Classifica', board_title: 'Classifica di oggi', board_all: 'Tutti', board_friends: 'Amici', board_empty: 'Ancora nessuno: gioca la sfida del giorno!', board_sign_in: 'Accedi per comparire in classifica.', board_row: '{n}/{m} · {t}',
@@ -36,7 +44,11 @@
             avatar_saved: 'Immagine profilo aggiornata', err_not_enough_points: 'Non hai abbastanza punti.', err_not_owned: 'Prima compra questo elemento.',
         },
         es: {
-            username_change: 'Cambiar nombre de usuario', ranking_show: 'Mostrarme en la clasificación', ranking_hint: 'Si lo desactivas, los demás jugadores ya no te ven en la clasificación. Tu resultado sigue visible para ti.', ranking_on: 'Apareces en la clasificación', ranking_off: 'Ya no apareces en la clasificación', ranking_hidden: 'Tu resultado solo lo ves tú.', email_fixed: 'El correo no se puede cambiar.', verify_title: 'Confirma tu correo', verify_text: 'Hemos enviado un enlace a {email}. Ábrelo para empezar a usar tu cuenta: hasta entonces la cuenta queda bloqueada.', verify_resend: 'Enviar de nuevo el enlace', verify_sent: 'Nuevo enlace enviado a {email}. Puede tardar un minuto: revisa también el spam.', verify_done: 'Ya lo he confirmado', verify_not_yet: 'Aún no confirmado: abre el enlace del correo.', verify_ok: 'Correo confirmado. ¡Vamos!', verify_confirm_title: 'Confirma tu correo', verify_confirm_text: 'Pulsa el botón para confirmar la dirección de tu cuenta de ThinkHop.', verify_confirm_btn: 'Confirmar correo', err_email_unverified: 'Primero confirma tu correo.', err_token_invalid: 'Este enlace ha caducado o ya se usó: inicia sesión y pide uno nuevo.', notify_title: 'Notificaciones', notify_device: 'En este dispositivo', notify_text: 'Elige de qué quieres recibir avisos. Tus elecciones siguen a tu cuenta; este interruptor vale solo para este dispositivo.', notify_daily: 'Desafío del día', notify_daily_hint: 'Un recordatorio si hoy no has jugado', notify_streak: 'Racha en peligro', notify_streak_hint: 'Cuando tu racha está a punto de acabar', notify_friends: 'Nuevos amigos', notify_friends_hint: 'Cuando alguien te añade', notify_overtaken: 'Adelantamientos', notify_overtaken_hint: 'Cuando un amigo te supera en la clasificación de hoy', notify_blocked: 'Las notificaciones están bloqueadas: permítelas en los ajustes del navegador.', notify_unsupported: 'Este navegador o app no puede recibir notificaciones. En iPhone añade antes el juego a la pantalla de inicio.', err_push_unavailable: 'Las notificaciones no están disponibles ahora.', username: 'Nombre de usuario', username_title: 'Elige tu nombre de usuario', username_hint: '3–20 letras, números o _. Es público.',
+            username_change: 'Cambiar nombre de usuario', ranking_show: 'Mostrarme en la clasificación', ranking_hint: 'Si lo desactivas, los demás jugadores ya no te ven en la clasificación. Tu resultado sigue visible para ti.', ranking_on: 'Apareces en la clasificación', ranking_off: 'Ya no apareces en la clasificación', ranking_hidden: 'Tu resultado solo lo ves tú.', email_fixed: 'El correo no se puede cambiar.', verify_title: 'Confirma tu correo', verify_text: 'Hemos enviado un enlace a {email}. Ábrelo para empezar a usar tu cuenta: hasta entonces la cuenta queda bloqueada.', verify_resend: 'Enviar de nuevo el enlace', verify_sent: 'Nuevo enlace enviado a {email}. Puede tardar un minuto: revisa también el spam.', verify_done: 'Ya lo he confirmado', verify_not_yet: 'Aún no confirmado: abre el enlace del correo.', verify_ok: 'Correo confirmado. ¡Vamos!', verify_confirm_title: 'Confirma tu correo', verify_confirm_text: 'Pulsa el botón para confirmar la dirección de tu cuenta de ThinkHop.', verify_confirm_btn: 'Confirmar correo', err_email_unverified: 'Primero confirma tu correo.', err_token_invalid: 'Este enlace ha caducado o ya se usó: inicia sesión y pide uno nuevo.', notify_title: 'Notificaciones', notify_device: 'En este dispositivo', notify_text: 'Elige de qué quieres recibir avisos. Tus elecciones siguen a tu cuenta; este interruptor vale solo para este dispositivo.', notify_daily: 'Desafío del día', notify_daily_hint: 'Un recordatorio si hoy no has jugado', notify_streak: 'Racha en peligro', notify_streak_hint: 'Cuando tu racha está a punto de acabar', notify_friends: 'Nuevos amigos', notify_friends_hint: 'Cuando alguien te añade', notify_overtaken: 'Adelantamientos', notify_overtaken_hint: 'Cuando un amigo te supera en la clasificación de hoy', notify_blocked: 'Las notificaciones están bloqueadas: permítelas en los ajustes del navegador.', notify_unsupported: 'Este navegador o app no puede recibir notificaciones. En iPhone añade antes el juego a la pantalla de inicio.', err_push_unavailable: 'Las notificaciones no están disponibles ahora.',
+            notify_live: 'Inmediata', notify_scheduled: 'Recordatorio', notify_hour_label: 'Hora', notify_default: 'predeterminado',
+            notify_tz_note: 'Los horarios se basan en la zona horaria del servidor ({tz}, hora actual: {time}).',
+            notify_tz_local: '{h} en tu dispositivo', notify_saved: 'Ajustes de notificaciones guardados',
+            username: 'Nombre de usuario', username_title: 'Elige tu nombre de usuario', username_hint: '3–20 letras, números o _. Es público.',
             username_text: 'Es lo único que ven los demás jugadores: aparece en las clasificaciones y en la búsqueda de amigos.',
             err_username_invalid: 'Usa 3–20 letras, números o _.', err_username_taken: 'Este nombre de usuario ya está en uso.', err_not_found: 'Jugador no encontrado.', err_too_many_friends: 'Has alcanzado el número máximo de amigos.',
             board: 'Clasificación', board_title: 'Clasificación de hoy', board_all: 'Todos', board_friends: 'Amigos', board_empty: 'Aún no hay nadie: ¡juega el desafío del día!', board_sign_in: 'Inicia sesión para aparecer en la clasificación.', board_row: '{n}/{m} · {t}',
@@ -50,7 +62,11 @@
             avatar_saved: 'Foto de perfil actualizada', err_not_enough_points: 'No tienes suficientes puntos.', err_not_owned: 'Primero compra este artículo.',
         },
         fr: {
-            username_change: 'Changer de pseudo', ranking_show: 'M’afficher au classement', ranking_hint: 'Si tu le désactives, les autres joueurs ne te voient plus au classement. Ton résultat reste visible pour toi.', ranking_on: 'Tu apparais au classement', ranking_off: 'Tu n’apparais plus au classement', ranking_hidden: 'Toi seul vois ton résultat.', email_fixed: 'L’e-mail ne peut pas être modifié.', verify_title: 'Confirme ton e-mail', verify_text: 'Nous avons envoyé un lien à {email}. Ouvre-le pour commencer à utiliser ton compte : d’ici là, le compte reste bloqué.', verify_resend: 'Renvoyer le lien', verify_sent: 'Nouveau lien envoyé à {email}. Cela peut prendre une minute : vérifie aussi les spams.', verify_done: 'C’est confirmé', verify_not_yet: 'Pas encore confirmé : ouvre le lien de l’e-mail.', verify_ok: 'E-mail confirmé. Bienvenue !', verify_confirm_title: 'Confirme ton e-mail', verify_confirm_text: 'Appuie sur le bouton pour confirmer l’adresse de ton compte ThinkHop.', verify_confirm_btn: 'Confirmer l’e-mail', err_email_unverified: 'Confirme d’abord ton e-mail.', err_token_invalid: 'Ce lien a expiré ou a déjà servi : connecte-toi et demandes-en un nouveau.', notify_title: 'Notifications', notify_device: 'Sur cet appareil', notify_text: 'Choisis ce dont tu veux être averti. Tes choix suivent ton compte ; cet interrupteur ne vaut que pour cet appareil.', notify_daily: 'Défi du jour', notify_daily_hint: 'Un rappel si tu n’as pas joué aujourd’hui', notify_streak: 'Série en danger', notify_streak_hint: 'Quand ta série va se terminer', notify_friends: 'Nouveaux amis', notify_friends_hint: 'Quand quelqu’un t’ajoute', notify_overtaken: 'Dépassements', notify_overtaken_hint: 'Quand un ami te dépasse au classement du jour', notify_blocked: 'Les notifications sont bloquées : autorise-les dans les réglages du navigateur.', notify_unsupported: 'Ce navigateur ou cette appli ne peut pas recevoir de notifications. Sur iPhone, ajoute d’abord le jeu à l’écran d’accueil.', err_push_unavailable: 'Les notifications ne sont pas disponibles pour le moment.', username: 'Pseudo', username_title: 'Choisis ton pseudo', username_hint: '3 à 20 lettres, chiffres ou _. Il est public.',
+            username_change: 'Changer de pseudo', ranking_show: 'M’afficher au classement', ranking_hint: 'Si tu le désactives, les autres joueurs ne te voient plus au classement. Ton résultat reste visible pour toi.', ranking_on: 'Tu apparais au classement', ranking_off: 'Tu n’apparais plus au classement', ranking_hidden: 'Toi seul vois ton résultat.', email_fixed: 'L’e-mail ne peut pas être modifié.', verify_title: 'Confirme ton e-mail', verify_text: 'Nous avons envoyé un lien à {email}. Ouvre-le pour commencer à utiliser ton compte : d’ici là, le compte reste bloqué.', verify_resend: 'Renvoyer le lien', verify_sent: 'Nouveau lien envoyé à {email}. Cela peut prendre une minute : vérifie aussi les spams.', verify_done: 'C’est confirmé', verify_not_yet: 'Pas encore confirmé : ouvre le lien de l’e-mail.', verify_ok: 'E-mail confirmé. Bienvenue !', verify_confirm_title: 'Confirme ton e-mail', verify_confirm_text: 'Appuie sur le bouton pour confirmer l’adresse de ton compte ThinkHop.', verify_confirm_btn: 'Confirmer l’e-mail', err_email_unverified: 'Confirme d’abord ton e-mail.', err_token_invalid: 'Ce lien a expiré ou a déjà servi : connecte-toi et demandes-en un nouveau.', notify_title: 'Notifications', notify_device: 'Sur cet appareil', notify_text: 'Choisis ce dont tu veux être averti. Tes choix suivent ton compte ; cet interrupteur ne vaut que pour cet appareil.', notify_daily: 'Défi du jour', notify_daily_hint: 'Un rappel si tu n’as pas joué aujourd’hui', notify_streak: 'Série en danger', notify_streak_hint: 'Quand ta série va se terminer', notify_friends: 'Nouveaux amis', notify_friends_hint: 'Quand quelqu’un t’ajoute', notify_overtaken: 'Dépassements', notify_overtaken_hint: 'Quand un ami te dépasse au classement du jour', notify_blocked: 'Les notifications sont bloquées : autorise-les dans les réglages du navigateur.', notify_unsupported: 'Ce navigateur ou cette appli ne peut pas recevoir de notifications. Sur iPhone, ajoute d’abord le jeu à l’écran d’accueil.', err_push_unavailable: 'Les notifications ne sont pas disponibles pour le moment.',
+            notify_live: 'Immédiate', notify_scheduled: 'Rappel', notify_hour_label: 'Heure', notify_default: 'par défaut',
+            notify_tz_note: 'Les horaires se réfèrent au fuseau horaire du serveur ({tz}, heure actuelle : {time}).',
+            notify_tz_local: '{h}h sur ton appareil', notify_saved: 'Préférences de notifications enregistrées',
+            username: 'Pseudo', username_title: 'Choisis ton pseudo', username_hint: '3 à 20 lettres, chiffres ou _. Il est public.',
             username_text: 'C’est la seule chose que les autres joueurs voient : il apparaît dans les classements et la recherche d’amis.',
             err_username_invalid: 'Utilise 3 à 20 lettres, chiffres ou _.', err_username_taken: 'Ce pseudo est déjà pris.', err_not_found: 'Joueur introuvable.', err_too_many_friends: 'Tu as atteint le nombre maximum d’amis.',
             board: 'Classement', board_title: 'Classement du jour', board_all: 'Tous', board_friends: 'Amis', board_empty: 'Personne pour l’instant : joue le défi du jour !', board_sign_in: 'Connecte-toi pour apparaître au classement.', board_row: '{n}/{m} · {t}',
@@ -64,7 +80,11 @@
             avatar_saved: 'Photo de profil mise à jour', err_not_enough_points: 'Tu n’as pas assez de points.', err_not_owned: 'Achète d’abord cet élément.',
         },
         de: {
-            username_change: 'Benutzernamen ändern', ranking_show: 'In der Rangliste zeigen', ranking_hint: 'Schaltest du das aus, sehen dich andere nicht mehr in der Rangliste. Dein Ergebnis siehst du weiterhin.', ranking_on: 'Du erscheinst in der Rangliste', ranking_off: 'Du erscheinst nicht mehr in der Rangliste', ranking_hidden: 'Dein Ergebnis siehst nur du.', email_fixed: 'Die E-Mail kann nicht geändert werden.', verify_title: 'Bestätige deine E-Mail', verify_text: 'Wir haben einen Link an {email} geschickt. Öffne ihn, um dein Konto zu nutzen: Bis dahin bleibt es gesperrt.', verify_resend: 'Link erneut senden', verify_sent: 'Neuer Link an {email} gesendet. Das kann eine Minute dauern: Schau auch im Spam nach.', verify_done: 'Ich habe bestätigt', verify_not_yet: 'Noch nicht bestätigt: Öffne den Link in der E-Mail.', verify_ok: 'E-Mail bestätigt. Willkommen!', verify_confirm_title: 'Bestätige deine E-Mail', verify_confirm_text: 'Tippe auf die Schaltfläche, um die Adresse deines ThinkHop-Kontos zu bestätigen.', verify_confirm_btn: 'E-Mail bestätigen', err_email_unverified: 'Bestätige zuerst deine E-Mail.', err_token_invalid: 'Dieser Link ist abgelaufen oder wurde schon benutzt: Melde dich an und fordere einen neuen an.', notify_title: 'Benachrichtigungen', notify_device: 'Auf diesem Gerät', notify_text: 'Wähle, worüber du informiert werden möchtest. Deine Auswahl gilt für dein Konto, dieser Schalter nur für dieses Gerät.', notify_daily: 'Tagesaufgabe', notify_daily_hint: 'Eine Erinnerung, wenn du heute nicht gespielt hast', notify_streak: 'Serie in Gefahr', notify_streak_hint: 'Wenn deine Serie bald endet', notify_friends: 'Neue Freunde', notify_friends_hint: 'Wenn dich jemand hinzufügt', notify_overtaken: 'Überholt', notify_overtaken_hint: 'Wenn dich ein Freund in der Tagesrangliste überholt', notify_blocked: 'Benachrichtigungen sind blockiert: Erlaube sie in den Browser-Einstellungen.', notify_unsupported: 'Dieser Browser oder diese App kann keine Benachrichtigungen empfangen. Füge das Spiel auf dem iPhone zuerst zum Home-Bildschirm hinzu.', err_push_unavailable: 'Benachrichtigungen sind gerade nicht verfügbar.', username: 'Benutzername', username_title: 'Wähle deinen Benutzernamen', username_hint: '3–20 Buchstaben, Ziffern oder _. Er ist öffentlich.',
+            username_change: 'Benutzernamen ändern', ranking_show: 'In der Rangliste zeigen', ranking_hint: 'Schaltest du das aus, sehen dich andere nicht mehr in der Rangliste. Dein Ergebnis siehst du weiterhin.', ranking_on: 'Du erscheinst in der Rangliste', ranking_off: 'Du erscheinst nicht mehr in der Rangliste', ranking_hidden: 'Dein Ergebnis siehst nur du.', email_fixed: 'Die E-Mail kann nicht geändert werden.', verify_title: 'Bestätige deine E-Mail', verify_text: 'Wir haben einen Link an {email} geschickt. Öffne ihn, um dein Konto zu nutzen: Bis dahin bleibt es gesperrt.', verify_resend: 'Link erneut senden', verify_sent: 'Neuer Link an {email} gesendet. Das kann eine Minute dauern: Schau auch im Spam nach.', verify_done: 'Ich habe bestätigt', verify_not_yet: 'Noch nicht bestätigt: Öffne den Link in der E-Mail.', verify_ok: 'E-Mail bestätigt. Willkommen!', verify_confirm_title: 'Bestätige deine E-Mail', verify_confirm_text: 'Tippe auf die Schaltfläche, um die Adresse deines ThinkHop-Kontos zu bestätigen.', verify_confirm_btn: 'E-Mail bestätigen', err_email_unverified: 'Bestätige zuerst deine E-Mail.', err_token_invalid: 'Dieser Link ist abgelaufen oder wurde schon benutzt: Melde dich an und fordere einen neuen an.', notify_title: 'Benachrichtigungen', notify_device: 'Auf diesem Gerät', notify_text: 'Wähle, worüber du informiert werden möchtest. Deine Auswahl gilt für dein Konto, dieser Schalter nur für dieses Gerät.', notify_daily: 'Tagesaufgabe', notify_daily_hint: 'Eine Erinnerung, wenn du heute nicht gespielt hast', notify_streak: 'Serie in Gefahr', notify_streak_hint: 'Wenn deine Serie bald endet', notify_friends: 'Neue Freunde', notify_friends_hint: 'Wenn dich jemand hinzufügt', notify_overtaken: 'Überholt', notify_overtaken_hint: 'Wenn dich ein Freund in der Tagesrangliste überholt', notify_blocked: 'Benachrichtigungen sind blockiert: Erlaube sie in den Browser-Einstellungen.', notify_unsupported: 'Dieser Browser oder diese App kann keine Benachrichtigungen empfangen. Füge das Spiel auf dem iPhone zuerst zum Home-Bildschirm hinzu.', err_push_unavailable: 'Benachrichtigungen sind gerade nicht verfügbar.',
+            notify_live: 'Sofort', notify_scheduled: 'Erinnerung', notify_hour_label: 'Uhrzeit', notify_default: 'Standard',
+            notify_tz_note: 'Zeiten beziehen sich auf die Server-Zeitzone ({tz}, aktuelle Zeit: {time}).',
+            notify_tz_local: '{h} Uhr auf deinem Gerät', notify_saved: 'Benachrichtigungseinstellungen gespeichert',
+            username: 'Benutzername', username_title: 'Wähle deinen Benutzernamen', username_hint: '3–20 Buchstaben, Ziffern oder _. Er ist öffentlich.',
             username_text: 'Das ist das Einzige, was andere sehen: Er erscheint in den Ranglisten und in der Freundessuche.',
             err_username_invalid: 'Verwende 3–20 Buchstaben, Ziffern oder _.', err_username_taken: 'Dieser Benutzername ist vergeben.', err_not_found: 'Spieler nicht gefunden.', err_too_many_friends: 'Du hast die Höchstzahl an Freunden erreicht.',
             board: 'Rangliste', board_title: 'Rangliste von heute', board_all: 'Alle', board_friends: 'Freunde', board_empty: 'Noch niemand: Spiel die Tagesaufgabe!', board_sign_in: 'Melde dich an, um in der Rangliste zu erscheinen.', board_row: '{n}/{m} · {t}',
@@ -82,7 +102,7 @@
     const E = window.ThinkHopEngine;
     const A = window.ThinkHopAccount;
     const Av = window.ThinkHopAvatars;
-    const {h, toast, modal, skeleton} = window.ThinkHopUI;
+    const {store, h, toast, modal, skeleton, icon} = window.ThinkHopUI;
     const t = I.t;
     const time = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
     const face = (code, name) => Av ? Av.render(code, name, 'sm') : h('span.avatar.sm', (name || '?').slice(0, 1).toUpperCase());
@@ -200,6 +220,8 @@
         const {key} = await A.api('push.key');
         const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: keyBytes(key)});
         await A.api('push.subscribe', {endpoint: sub.endpoint, lang: I.getLang()});
+        store.set('notify_device', true);
+        store.set('tip_dismiss_notify', true);
     }
 
     async function unsubscribeDevice() {
@@ -208,6 +230,7 @@
         if (!sub) return;
         await A.api('push.unsubscribe', {endpoint: sub.endpoint});
         await sub.unsubscribe();
+        store.set('notify_device', false);
     }
 
     const switchButton = (on, label, change) => {
@@ -237,10 +260,18 @@
             body.replaceChildren(h('p.muted', e.message));
             return;
         }
-        let off = settings.off;
+        let off = settings.off || [];
+        let hours = settings.hours || {daily: 18, streak: 18};
+        const scheduled = settings.scheduled || ['daily', 'streak'];
+        const live = settings.live || ['friends', 'overtaken'];
+        const serverOffset = typeof settings.server_offset === 'number' ? settings.server_offset : 1;
+        const localOffset = -new Date().getTimezoneOffset() / 60;
+        const tzDiff = Math.round(localOffset - serverOffset);
+
         const supported = pushSupported();
         const reg = supported ? await navigator.serviceWorker.getRegistration() : null;
         const device = !!(reg && Notification.permission === 'granted' && await reg.pushManager.getSubscription());
+        store.set('notify_device', device);
         const note = h('p.muted.notify-note', {hidden: supported && Notification.permission !== 'denied'}, t(supported ? 'notify_blocked' : 'notify_unsupported'));
         const master = switchButton(device, t('notify_device'), async on => {
             try {
@@ -260,20 +291,86 @@
             }
         });
         if (!supported) master.disabled = true;
-        const rows = settings.types.map(k => h('div.notify-row',
-            h('div', h('strong', t('notify_' + k)), h('small.muted', t('notify_' + k + '_hint'))),
-            switchButton(!off.includes(k), t('notify_' + k), async on => {
+
+        const rows = (settings.types || []).map(k => {
+            const isSched = scheduled.includes(k);
+            let hourSelect = null;
+            let hourRow = null;
+
+            if (isSched) {
+                hourSelect = h('select.ctl.notify-select', {
+                    disabled: off.includes(k) || undefined,
+                    onchange: async () => {
+                        const newHour = parseInt(hourSelect.value, 10);
+                        hours[k] = newHour;
+                        try {
+                            const res = await A.api('notify.save', {off, hours});
+                            if (res.hours) hours = res.hours;
+                            toast(t('notify_saved'), 'ok');
+                        } catch (e) {
+                            toast(e.message, 'bad');
+                        }
+                    }
+                });
+                for (let hVal = 0; hVal < 24; hVal++) {
+                    let label = String(hVal);
+                    if (hVal === 18) label += ' (' + t('notify_default') + ')';
+                    if (tzDiff !== 0) {
+                        let localH = (hVal + tzDiff) % 24;
+                        if (localH < 0) localH += 24;
+                        label += ' · ' + t('notify_tz_local', {h: localH});
+                    }
+                    const opt = h('option', {value: hVal, selected: (hours[k] ?? 18) === hVal || undefined}, label);
+                    hourSelect.append(opt);
+                }
+                hourRow = h('div.notify-hour-row',
+                    h('label', t('notify_hour_label') + ':'),
+                    hourSelect
+                );
+            }
+
+            const sw = switchButton(!off.includes(k), t('notify_' + k), async on => {
                 const next = on ? off.filter(x => x !== k) : [...off, k];
                 try {
-                    off = (await A.api('notify.save', {off: next})).off;
+                    const res = await A.api('notify.save', {off: next, hours});
+                    off = res.off;
+                    if (hourSelect) hourSelect.disabled = !on;
                     return true;
                 } catch (e) {
                     toast(e.message, 'bad');
                     return false;
                 }
-            })));
-        body.replaceChildren(h('div.notify-row.notify-master', h('strong', t('notify_device')), master), note, h('div.notify-list', rows));
+            });
+
+            const tag = isSched
+                ? h('span.notify-tag.tag-sched', t('notify_scheduled'))
+                : h('span.notify-tag.tag-live', t('notify_live'));
+
+            return h('div.notify-row',
+                h('div.notify-main',
+                    h('div.notify-head', h('strong', t('notify_' + k)), tag),
+                    h('small.muted', t('notify_' + k + '_hint')),
+                    hourRow
+                ),
+                sw
+            );
+        });
+
+        const tzBox = h('div.notify-tz-box',
+            icon('clock'),
+            h('span', t('notify_tz_note', {
+                tz: settings.server_tz || 'Europe/Rome',
+                time: settings.server_time || '18:00'
+            }))
+        );
+
+        body.replaceChildren(
+            h('div.notify-row.notify-master', h('strong', t('notify_device')), master),
+            note,
+            h('div.notify-list', rows),
+            tzBox
+        );
     }
 
-    window.ThinkHopSocial = {showBoard, showFriends, showNotifications};
+    window.ThinkHopSocial = {showBoard, showFriends, showNotifications, pushSupported};
 })();

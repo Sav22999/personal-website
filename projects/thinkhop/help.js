@@ -158,6 +158,36 @@
             help_mirror_s1: 'Look at the starting 2×2 grid and the requested move: ↔️ (horizontal mirror).',
             help_mirror_s2: 'Flipping horizontally swaps the left and right columns (🍎 ↔ 🍌 and 🍇 ↔ 🍒).',
             help_mirror_s3: 'Pick the grid that matches the flipped positions!',
+
+            help_gears_goal: 'Determine the rotation direction or speed of gears linked in a train.',
+            help_gears_s1: 'Gear A turns clockwise (↻). When two gears touch, their directions invert.',
+            help_gears_s2: 'Gear B meshes with A and turns counter-clockwise (↺).',
+            help_gears_s3: 'Gear C meshes with B, reversing back to clockwise (↻)!',
+
+            help_lasers_goal: 'Trace the laser beam as it reflects 90° off angled mirrors to hit a target gem.',
+            help_lasers_s1: 'The emitter fires a laser beam horizontally to the right.',
+            help_lasers_s2: 'The beam hits mirror / at the top corner and deflects 90° downwards.',
+            help_lasers_s3: 'Travelling down, the beam strikes the target diamond 💎!',
+
+            help_cubes_goal: 'Mentally fold the flat 2D net into a 3D cube to find opposite faces.',
+            help_cubes_s1: 'Notice the straight strip of 4 squares: faces with 1 square between them become opposites.',
+            help_cubes_s2: 'Here 🍌 and 🍓 have 🍇 between them, so they fold to face each other.',
+            help_cubes_s3: 'The opposite face of 🍌 is 🍓!',
+
+            help_pipes_goal: 'Identify which connected tank fills up completely first as water pours in.',
+            help_pipes_s1: 'Water enters tank A. Look at the connecting pipes: one is open, one is blocked with ✕.',
+            help_pipes_s2: 'Water reaches the open pipe at elevation 2 and flows into tank B.',
+            help_pipes_s3: 'Tank B has no outlets and fills to the top first: pick B!',
+
+            help_mobiles_goal: 'Find the missing counterweight that puts every hanging beam into perfect equilibrium.',
+            help_mobiles_s1: 'Remember the lever principle: Torque = Weight × Distance from the center pivot.',
+            help_mobiles_s2: 'Left arm has weight 6 at distance 1 (torque = 6). Right arm has distance 2.',
+            help_mobiles_s3: 'To balance torque 6 at distance 2, we need 6 ÷ 2 = 3: pick 3!',
+
+            help_origami_goal: 'Mentally unfold the paper step by step to find where the punched holes will appear.',
+            help_origami_s1: 'Follow the fold lines and arrows in reverse, like opening the sheet back up.',
+            help_origami_s2: 'Every fold line acts like a mirror: a hole reflects symmetrically across the fold.',
+            help_origami_s3: 'Unfolding both folds creates a 4-way symmetrical pattern: pick matching card!',
         },
         it: {
             how_to_play: 'Come si gioca',
@@ -307,6 +337,36 @@
             help_mirror_s1: 'Osserva la griglia 2×2 di partenza e la mossa indicata: ↔️ (specchio orizzontale).',
             help_mirror_s2: 'Ribaltando in orizzontale, la colonna sinistra e quella destra si scambiano (🍎 ↔ 🍌 e 🍇 ↔ 🍒).',
             help_mirror_s3: 'Scegli la griglia con le posizioni specchiate!',
+
+            help_gears_goal: 'Determina il verso di rotazione o il numero di giri degli ingranaggi collegati.',
+            help_gears_s1: 'L’ingranaggio A gira in senso orario (↻). Due ruote a contatto invertono sempre il verso.',
+            help_gears_s2: 'La ruota B tocca A e gira in senso antiorario (↺).',
+            help_gears_s3: 'La ruota C tocca B e torna a girare in senso orario (↻)!',
+
+            help_lasers_goal: 'Segui il raggio laser che rimbalza a 90° sugli specchi fino a colpire il bersaglio.',
+            help_lasers_s1: 'Il laser spara verso destra in linea retta.',
+            help_lasers_s2: 'Il fascio incontra lo specchio / e viene deviato verso il basso di 90°.',
+            help_lasers_s3: 'Proseguendo verso il basso, il raggio colpisce il diamante 💎!',
+
+            help_cubes_goal: 'Ripiega mentalmente lo sviluppo piatto per ricostruire il cubo 3D e trovare le facce opposte.',
+            help_cubes_s1: 'Osserva la fila: due facce separate da una casella intermedia finiscono sempre opposte.',
+            help_cubes_s2: 'Qui 🍌 e 🍓 sono separati da 🍇, quindi una volta piegati si guardano in faccia.',
+            help_cubes_s3: 'La faccia opposta a 🍌 è 🍓!',
+
+            help_pipes_goal: 'Individua quale serbatoio collegato si riempie completamente per primo versando acqua.',
+            help_pipes_s1: 'L’acqua entra nel serbatoio A. Osserva i tubi: uno è aperto, l’altro è bloccato da ✕.',
+            help_pipes_s2: 'L’acqua raggiunge il tubo aperto e defluisce nel serbatoio B.',
+            help_pipes_s3: 'Il serbatoio B non ha uscite e si riempie completamente per primo: scegli B!',
+
+            help_mobiles_goal: 'Trova il contrappeso mancante che mette in perfetto equilibrio ciascun braccio della scultura.',
+            help_mobiles_s1: 'Ricorda il principio della leva: Momento = Peso × Distanza dal perno centrale.',
+            help_mobiles_s2: 'Il braccio sinistro ha peso 6 a distanza 1 (momento = 6). Il braccio destro ha distanza 2.',
+            help_mobiles_s3: 'Per bilanciare un momento di 6 a distanza 2 serve 6 ÷ 2 = 3: scegli 3!',
+
+            help_origami_goal: 'Riapri mentalmente il foglio a ritroso per scoprire dove si posizionano i fori.',
+            help_origami_s1: 'Ripercorri le pieghe e le frecce all’indietro, come se stessi spiegando il foglio.',
+            help_origami_s2: 'Ogni linea di piega agisce come uno specchio: il foro si riflette simmetricamente.',
+            help_origami_s3: 'Riaprendo entrambe le pieghe ottieni una simmetria quadrupla: scegli la carta corretta!',
         },
         es: {
             how_to_play: 'Cómo se juega',
@@ -456,6 +516,36 @@
             help_mirror_s1: 'Mira la cuadrícula 2×2 inicial y el movimiento pedido: ↔️ (espejo horizontal).',
             help_mirror_s2: 'Al voltear en horizontal, las columnas izquierda y derecha se intercambian (🍎 ↔ 🍌 y 🍇 ↔ 🍒).',
             help_mirror_s3: '¡Elige la cuadrícula con las posiciones reflejadas!',
+
+            help_gears_goal: 'Determina el sentido de giro o las vueltas de los engranajes conectados.',
+            help_gears_s1: 'El engranaje A gira en sentido horario (↻). Dos ruedas en contacto invierten el sentido.',
+            help_gears_s2: 'La rueda B engrana con A y gira en sentido antihorario (↺).',
+            help_gears_s3: 'La rueda C engrana con B y vuelve a girar en sentido horario (↻)!',
+
+            help_lasers_goal: 'Sigue el rayo láser al rebotar 90° en los espejos hasta alcanzar el objetivo.',
+            help_lasers_s1: 'El emisor dispara un rayo horizontalmente hacia la derecha.',
+            help_lasers_s2: 'El rayo choca con el espejo / y se desvía 90° hacia abajo.',
+            help_lasers_s3: 'Siguiendo hacia abajo, ¡el rayo impacta en el diamante 💎!',
+
+            help_cubes_goal: 'Pliega mentalmente el desarrollo plano para formar el cubo y hallar caras opuestas.',
+            help_cubes_s1: 'En una tira recta, dos caras separadas por una casilla intermedia quedan opuestas.',
+            help_cubes_s2: 'Aquí 🍌 y 🍓 tienen a 🍇 en medio, así que al plegarse quedan enfrentadas.',
+            help_cubes_s3: '¡La cara opuesta a 🍌 es 🍓!',
+
+            help_pipes_goal: 'Descubre qué tanque conectado se llena completamente primero al verter agua.',
+            help_pipes_s1: 'El agua entra en el tanque A. Observa los tubos: uno está abierto y otro cerrado con ✕.',
+            help_pipes_s2: 'El agua alcanza el tubo abierto y fluye hacia el tanque B.',
+            help_pipes_s3: 'El tanque B no tiene salidas y se llena por completo primero: ¡elige B!',
+
+            help_mobiles_goal: 'Halla el contrapeso que equilibra perfectamente cada brazo de la escultura móvil.',
+            help_mobiles_s1: 'Recuerda la ley de la palanca: Momento = Peso × Distancia al eje central.',
+            help_mobiles_s2: 'El brazo izquierdo tiene peso 6 a distancia 1 (momento = 6). El derecho tiene distancia 2.',
+            help_mobiles_s3: 'Para equilibrar un momento de 6 a distancia 2 hace falta 6 ÷ 2 = 3: ¡elige 3!',
+
+            help_origami_goal: 'Desdobla mentalmente el papel paso a paso para ver dónde quedarán los agujeros.',
+            help_origami_s1: 'Sigue los pliegues en orden inverso, como si abrieras de nuevo la hoja.',
+            help_origami_s2: 'Cada pliegue actúa como un espejo: el orificio se refleja simétricamente.',
+            help_origami_s3: 'Al desdoblar ambos pliegues se obtiene simetría cuádruple: ¡elige la carta correcta!',
         },
         fr: {
             how_to_play: 'Comment jouer',
@@ -605,6 +695,36 @@
             help_mirror_s1: 'Observe la grille 2×2 de départ et le mouvement demandé : ↔️ (miroir horizontal).',
             help_mirror_s2: 'En retournant horizontalement, les colonnes gauche et droite s’échangent (🍎 ↔ 🍌 et 🍇 ↔ 🍒).',
             help_mirror_s3: 'Choisis la grille avec les positions inversées !',
+
+            help_gears_goal: 'Détermine le sens de rotation ou le nombre de tours des engrenages reliés.',
+            help_gears_s1: 'L’engrenage A tourne dans le sens horaire (↻). Deux roues en contact inversent leur sens.',
+            help_gears_s2: 'La roue B touche A et tourne dans le sens antihoraire (↺).',
+            help_gears_s3: 'La roue C touche B et tourne à nouveau dans le sens horaire (↻) !',
+
+            help_lasers_goal: 'Suis le rayon laser qui rebondit à 90° sur les miroirs pour toucher une cible.',
+            help_lasers_s1: 'L’émetteur tire un rayon en ligne droite vers la droite.',
+            help_lasers_s2: 'Le faisceau rencontre le miroir / et est dévié de 90° vers le bas.',
+            help_lasers_s3: 'En continuant vers le bas, le rayon frappe le diamant 💎 !',
+
+            help_cubes_goal: 'Plie mentalement le patron à plat pour reconstituer le cube et trouver les faces opposées.',
+            help_cubes_s1: 'Sur une bande, deux faces séparées par une case intermédiaire finissent opposées.',
+            help_cubes_s2: 'Ici 🍌 et 🍓 sont séparés par 🍇, donc au pliage ils se font face.',
+            help_cubes_s3: 'La face opposée à 🍌 est 🍓 !',
+
+            help_pipes_goal: 'Trouve quel réservoir connecté se remplit entièrement en premier avec l’eau qui coule.',
+            help_pipes_s1: 'L’eau coule dans le réservoir A. Regarde les tuyaux : l’un est ouvert, l’autre bouché par ✕.',
+            help_pipes_s2: 'L’eau atteint le tuyau ouvert et s’écoule dans le réservoir B.',
+            help_pipes_s3: 'Le réservoir B n’a pas de sortie et se remplit à ras bord en premier : choisis B !',
+
+            help_mobiles_goal: 'Trouve le contrepoids manquant qui équilibre parfaitement chaque bras du mobile.',
+            help_mobiles_s1: 'Rappelle-toi la loi du levier : Couple = Poids × Distance au pivot central.',
+            help_mobiles_s2: 'Le bras gauche porte 6 à distance 1 (couple = 6). Le bras droit a une distance de 2.',
+            help_mobiles_s3: 'Pour équilibrer un couple de 6 à distance 2, il faut 6 ÷ 2 = 3 : choisis 3 !',
+
+            help_origami_goal: 'Déplie mentalement la feuille à rebours pour trouver l’emplacement final des trous.',
+            help_origami_s1: 'Repars des plis et des flèches en sens inverse, comme pour réouvrir le papier.',
+            help_origami_s2: 'Chaque pli se comporte comme un miroir : le trou se reflète symétriquement.',
+            help_origami_s3: 'En dépliant les deux plis, on obtient une symétrie quadruple : choisis la bonne carte !',
         },
         de: {
             how_to_play: 'Spielanleitung',
@@ -754,6 +874,36 @@
             help_mirror_s1: 'Schau dir das 2×2-Startgitter und die geforderte Bewegung an: ↔️ (horizontal spiegeln).',
             help_mirror_s2: 'Beim horizontalen Spiegeln tauschen linke und rechte Spalte (🍎 ↔ 🍌 und 🍇 ↔ 🍒).',
             help_mirror_s3: 'Wähle das Gitter mit den gespiegelten Positionen!',
+
+            help_gears_goal: 'Bestimme Drehrichtung oder Umdrehungen der verbundenen Zahnräder.',
+            help_gears_s1: 'Zahnrad A dreht sich im Uhrzeigersinn (↻). Berührende Räder kehren die Richtung um.',
+            help_gears_s2: 'Zahnrad B greift in A und dreht sich gegen den Uhrzeigersinn (↺).',
+            help_gears_s3: 'Zahnrad C greift in B und dreht sich wieder im Uhrzeigersinn (↻)!',
+
+            help_lasers_goal: 'Verfolge den Laserstrahl bei 90°-Reflexionen an Spiegeln bis zum Ziel.',
+            help_lasers_s1: 'Der Sender schießt einen Strahl geradeaus nach rechts.',
+            help_lasers_s2: 'Der Strahl trifft auf Spiegel / und wird um 90° nach unten abgelenkt.',
+            help_lasers_s3: 'Auf seinem Weg nach unten trifft der Strahl den Diamanten 💎!',
+
+            help_cubes_goal: 'Falte das flache Netz im Kopf zu einem 3D-Würfel, um Gegenüberflächen zu finden.',
+            help_cubes_s1: 'In einem Streifen liegen Flächen mit genau einem Feld dazwischen einander gegenüber.',
+            help_cubes_s2: 'Hier haben 🍌 und 🍓 das Feld 🍇 zwischen sich; beim Falten stehen sie sich gegenüber.',
+            help_cubes_s3: 'Die gegenüberliegende Fläche von 🍌 ist 🍓!',
+
+            help_pipes_goal: 'Erkenne, welcher verbundene Tank als Erster ganz voll ist, wenn Wasser einfließt.',
+            help_pipes_s1: 'Wasser fließt in Tank A. Sieh dir die Rohre an: Eines ist offen, eines durch ✕ blockiert.',
+            help_pipes_s2: 'Das Wasser erreicht das offene Rohr und fließt in Tank B.',
+            help_pipes_s3: 'Tank B hat keinen Abfluss und wird als Erster voll: Wähle B!',
+
+            help_mobiles_goal: 'Finde das Gegengewicht, das jeden Hebelarm des Mobiles perfekt ausbalanciert.',
+            help_mobiles_s1: 'Nutze das Hebelgesetz: Drehmoment = Gewicht × Abstand vom Drehpunkt.',
+            help_mobiles_s2: 'Der linke Arm hat Gewicht 6 im Abstand 1 (Moment = 6). Der rechte Arm hat Abstand 2.',
+            help_mobiles_s3: 'Um 6 im Abstand 2 auszugleichen, braucht man 6 ÷ 2 = 3: Wähle 3!',
+
+            help_origami_goal: 'Falte das Papier in Gedanken rückwärts auf, um die Position der Löcher zu finden.',
+            help_origami_s1: 'Verfolge Faltlinien und Pfeile rückwärts, als würdest du das Blatt wieder öffnen.',
+            help_origami_s2: 'Jede Faltkante wirkt wie ein Spiegel: Das Loch spiegelt sich exakt zur Gegenseite.',
+            help_origami_s3: 'Nach beiden Faltungen entsteht ein 4-fach symmetrisches Muster: Wähle das richtige Blatt!',
         },
     });
 
@@ -1044,6 +1194,105 @@
                     h('div.h-board2', left.flat().map(c => h('span.h-cell', c))),
                     chip(h, '↔️', s === 1 ? '.focus.pulse' : ''),
                     h('div.h-board2' + (s >= 1 ? '.flip-anim' : ''), (s >= 1 ? right : left).flat().map(c => h('span.h-cell' + (s === 2 ? '.ok.pop' : (s === 1 ? '.focus' : '')), c)))));
+        },
+        gears(s, h) {
+            const cogSvg = (cls, spin, lbl) => `<svg class="help-gear-svg ${cls}" viewBox="-25 -25 50 50">
+                <path class="help-gear-teeth ${spin}" d="M-5 -24h10l2 6h8l5 -4l7 7l-4 5v8l6 2v10l-6 2v8l4 5l-7 7l-5 -4h-8l-2 6h-10l-2 -6h-8l-5 4l-7 -7l4 -5v-8l-6 -2v-10l6 -2v-8l-4 -5l7 -7l5 4h8z" fill="currentColor" stroke="#1B1640" stroke-width="2" style="transform-origin:0 0"/>
+                <circle class="help-gear-hub" cx="0" cy="0" r="10" fill="#fff" stroke="#1B1640" stroke-width="2"/>
+                <text class="help-gear-label" x="0" y="4" font-size="11" font-weight="900" text-anchor="middle" fill="#1B1640">${lbl}</text>
+            </svg>`;
+            return h('div.h-scene',
+                h('div.h-row.gears-demo-row',
+                    h('div.help-gear-wrap', {html: cogSvg('gear-a', 'spin-cw', 'A')}),
+                    h('div.help-gear-wrap', {html: cogSvg('gear-b', s >= 1 ? 'spin-ccw' : '', 'B')}),
+                    h('div.help-gear-wrap', {html: cogSvg('gear-c' + (s === 2 ? ' ok' : ''), s === 2 ? 'spin-cw' : '', 'C')})),
+                h('div.h-row',
+                    chip(h, 'A: ↻', '.focus'),
+                    chip(h, 'B: ↺', s >= 1 ? '.focus.pop' : '.dim'),
+                    chip(h, 'C: ↻', s === 2 ? '.ok.pop' : (s === 1 ? '.pulse' : '.dim'))));
+        },
+        lasers(s, h) {
+            const grid = [
+                ['🔦', s >= 1 ? '—' : '', '/'],
+                ['', '', s >= 1 ? '|' : ''],
+                ['⭐', '', '💎'],
+            ];
+            return h('div.h-scene',
+                h('div.h-board3', grid.flatMap((row, r) => row.map((c, col) => {
+                    const isTarget = r === 2 && col === 2;
+                    const isMirror = r === 0 && col === 2;
+                    const isEmitter = r === 0 && col === 0;
+                    const cls = (isTarget && s === 2 ? '.ok.pop' : (isMirror && s === 1 ? '.focus.pulse' : '')) + (isEmitter ? '.laser-emitter-cell.dir-right' : '');
+                    if (c === '/' || c === '\\') {
+                        return h('span.h-cell.laser-mirror-cell' + cls, {html: (window.ThinkHopUI && window.ThinkHopUI.mirrorSvg) ? window.ThinkHopUI.mirrorSvg(c, s >= 1) : c});
+                    }
+                    if (isEmitter) {
+                        return h('span.h-cell' + cls, h('span.laser-torch', c));
+                    }
+                    return h('span.h-cell' + cls, c);
+                }))),
+                h('div.h-row',
+                    chip(h, '🔦 ➔', '.focus'),
+                    chip(h, '/ ➔ ⬇️', s >= 1 ? '.focus.pop' : '.dim'),
+                    chip(h, '💎 ✓', s === 2 ? '.ok.pop' : (s === 1 ? '.pulse' : '.dim'))));
+        },
+        cubes(s, h) {
+            const net = [
+                ['', '🍎', '', ''],
+                ['🍌', '🍇', '🍓', '🍊'],
+                ['', '🥝', '', ''],
+            ];
+            return h('div.h-scene',
+                h('div.cube-net-demo', net.map(row => h('div.cube-net-row', row.map(c => {
+                    if (!c) return h('span.cube-net-empty');
+                    const isFocus = (c === '🍌' || c === '🍓') && s >= 1;
+                    const isOk = c === '🍓' && s === 2;
+                    return h('span.cube-net-cell' + (isOk ? '.ok.pop' : (isFocus ? '.focus.pulse' : '')), c);
+                })))),
+                h('div.h-row',
+                    chip(h, '🍌 ↔ ?', '.focus'),
+                    chip(h, '🍌 · 🍇 · 🍓', s >= 1 ? '.focus.pop' : '.dim'),
+                    chip(h, '🍌 ↔ 🍓 ✓', s === 2 ? '.ok.pop' : '.dim')));
+        },
+        pipes(s, h) {
+            return h('div.h-scene',
+                h('div.pipes-demo-stage',
+                    h('div.pipe-tank-demo.tank-a' + (s === 0 ? '.focus' : ''), h('span.tank-lbl', 'A'), h('span.tank-water', '💧')),
+                    h('div.pipe-connector-demo',
+                        chip(h, 'A ➔ B: ✓', s >= 1 ? '.ok' : '.focus'),
+                        chip(h, 'A ➔ C: ✕', '.bad')),
+                    h('div.h-row',
+                        h('div.pipe-tank-demo.tank-b' + (s === 2 ? '.ok.pop' : (s === 1 ? '.focus' : '')), h('span.tank-lbl', 'B'), s >= 1 ? h('span.tank-water', '💧💧') : null),
+                        h('div.pipe-tank-demo.tank-c.dim', h('span.tank-lbl', 'C')))),
+                h('div.h-row',
+                    chip(h, '1) A ➔ B', s === 1 ? '.focus.pop' : '.dim'),
+                    chip(h, '2) B = 100% ✓', s === 2 ? '.ok.pop' : '.dim')));
+        },
+        mobiles(s, h) {
+            return h('div.h-scene',
+                h('div.h-row',
+                    chip(h, 'Braccio: ×1 vs ×2', '.focus'),
+                    chip(h, s >= 1 ? 'Momento: 6 × 1 = 6' : 'Momento: ?', s >= 1 ? '.ok' : '.dim'),
+                    chip(h, s === 2 ? '6 ÷ 2 = 3 ✓' : '? × 2 = 6', s === 2 ? '.ok.pop' : '.focus')),
+                h('div.h-row',
+                    h('div.scale-visual',
+                        h('div.scale-beam-bar' + (s === 2 ? '' : '.tilt-left'),
+                            h('div.scale-pan.pan-left', chip(h, '6 kg', '.ok')),
+                            h('div.scale-pan.pan-right', chip(h, s === 2 ? '3 kg ✓' : '?', s === 2 ? '.ok.pop' : '.focus'))))));
+        },
+        origami(s, h) {
+            return h('div.h-scene',
+                h('div.h-row',
+                    chip(h, '1) Piega ➡️', s >= 0 ? '.focus' : '.dim'),
+                    chip(h, '2) Piega ⬇️', s >= 1 ? '.focus' : '.dim'),
+                    chip(h, '3) Foro ●', s >= 1 ? '.target' : '.dim'),
+                    chip(h, '4) Simmetria ×4 ✓', s === 2 ? '.ok.pop' : '.dim')),
+                h('div.h-row',
+                    h('div.origami-mini-grid',
+                        Array.from({length: 16}, (_, i) => {
+                            const isCenter = [5, 6, 9, 10].includes(i);
+                            return h('span.origami-mini-cell' + (isCenter && s >= 1 ? '.hole' + (s === 2 ? '.ok.pop' : '') : ''));
+                        }))));
         },
     };
 
