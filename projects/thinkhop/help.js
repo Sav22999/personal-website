@@ -1123,7 +1123,7 @@
             h('div.help-head',
                 h('div.help-titles',
                     h('span.tag', t('how_to_play')),
-                    opts.paused ? h('span.tag.help-pause-tag', '⏸ ', t('help_paused')) : null,
+                    opts.paused ? h('span.tag.help-pause-tag', icon('pause'), t('help_paused')) : null,
                     h('h3', t('cat_' + cat))),
                 h('button.icon-btn', {
                     type: 'button',
@@ -1147,7 +1147,7 @@
                         stopAuto();
                         goTo(step - 1, false);
                     },
-                }, '◀'),
+                }, icon('back')),
                 dotsWrap,
                 h('button.btn.btn-soft.small', {
                     type: 'button',
@@ -1157,13 +1157,13 @@
                         stopAuto();
                         goTo(step + 1, false);
                     },
-                }, '▶'),
+                }, icon('next')),
                 h('button.btn.btn-soft.small', {
                     type: 'button',
                     title: t('help_replay'),
                     'aria-label': t('help_replay'),
                     onclick: () => goTo(0, true),
-                }, '↻')),
+                }, icon('replay'))),
             h('div.help-tip',
                 icon('bulb'),
                 h('span', M.tip(cat))),

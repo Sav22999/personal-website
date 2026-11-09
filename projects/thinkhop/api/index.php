@@ -4,10 +4,10 @@
  *
  * Public:   auth.config, auth.me, auth.register, auth.login, auth.google, auth.logout, auth.verify, board.daily
  * Before the email is confirmed only auth.resend and auth.delete work (see must_verify in lib/bootstrap.php).
- * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, sync, friends.list, friends.search, friends.add, friends.remove,
- *           notify.get, notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
+ * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, avatar.buy, avatar.set, sync,
+ *           friends.list, friends.search, friends.add, friends.remove, notify.get, notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
  * Admin:    admin.player (everything about one player, read only), admin.player.points, admin.overview, admin.settings.save, admin.questions, admin.question.save, admin.question.delete,
- *           admin.games, admin.game.delete, admin.players, admin.player.update, admin.player.delete
+ *           admin.games, admin.game.delete, admin.players, admin.player.update, admin.player.delete, admin.avatars, admin.avatar.save
  *
  * The game itself needs no server: without an account (or without credentials.php) it stays on the device.
  * Every POST of a signed-in user needs the X-CSRF-Token header (given at sign-in).
@@ -343,8 +343,56 @@ switch ($r) {
         db()->prepare('UPDATE ' . t('users') . ' SET show_in_ranking = ? WHERE id = ?')->execute([empty(body()['visible']) ? 0 : 1, $u['id']]);
         send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
+    case 'avatar.buy':
+        // Paid in points; a transaction locks the user row so two taps at once never spend the same points twice
+        $u = writer();
+        $uid = (int)$u['id'];
+        $id = s(body(), 'item', 30);
+        $st = db()->prepare('SELECT price FROM ' . t('avatar_items') . ' WHERE id = ? AND enabled = 1');
+        $st->execute([$id]);
+        $price = $st->fetchColumn();
+        if ($price === false) fail('not_found', 404);
+        $price = (int)$price;
+        $st = db()->prepare('SELECT 1 FROM ' . t('user_items') . ' WHERE user_id = ? AND item_id = ?');
+        $st->execute([$uid, $id]);
+        if ($st->fetchColumn() || $price === 0) send_json(['ok' => true, 'user' => public_user(user_row($uid))]);
+        db()->beginTransaction();
+        try {
+            $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE id = ? FOR UPDATE');
+            $st->execute([$uid]);
+            $row = $st->fetch();
+            if (!$row || user_balance($row) < $price) {
+                db()->rollBack();
+                fail('not_enough_points', 422);
+            }
+            db()->prepare('INSERT IGNORE INTO ' . t('user_items') . ' (user_id, item_id, price, bought_at) VALUES (?,?,?,?)')->execute([$uid, $id, $price, now_utc()]);
+            db()->commit();
+        } catch (PDOException $e) {
+            if (db()->inTransaction()) db()->rollBack();
+            throw $e;
+        }
+        send_json(['ok' => true, 'user' => public_user(user_row($uid))]);
+
+    case 'avatar.set':
+        // character:background:accessory:frame; an empty character is the initial. Only what is owned (or free) can be worn.
+        $u = writer();
+        $uid = (int)$u['id'];
+        $b = body();
+        $owned = array_column(array_filter(avatar_shop($uid), fn($i) => $i['owned']), 'kind', 'id');
+        $character = s($b, 'character', 30);
+        $background = s($b, 'background', 30);
+        $accessory = s($b, 'accessory', 30);
+        $frame = s($b, 'frame', 30);
+        if ($character !== '' && ($owned[$character] ?? '') !== 'character') fail('not_owned', 403);
+        if ($background !== '' && ($owned[$background] ?? '') !== 'background') fail('not_owned', 403);
+        if ($accessory !== '' && ($owned[$accessory] ?? '') !== 'accessory') fail('not_owned', 403);
+        if ($frame !== '' && ($owned[$frame] ?? '') !== 'frame') fail('not_owned', 403);
+        $code = rtrim("$character:$background:$accessory:$frame", ':');
+        db()->prepare('UPDATE ' . t('users') . ' SET avatar = ? WHERE id = ?')->execute([$code === '' ? null : $code, $uid]);
+        send_json(['ok' => true, 'user' => public_user(user_row($uid))]);
+
     case 'board.daily':
-        // Only usernames and results: nothing else about a player leaves the server
+        // Only usernames, avatars and results: nothing else about a player leaves the server
         only('POST');
         $b = body();
         $day = (string)($b['day'] ?? '');
@@ -353,7 +401,7 @@ switch ($r) {
         $me = $u ? (int)$u['id'] : 0;
         $friendsOnly = ($b['scope'] ?? '') === 'friends';
         if ($friendsOnly && !$u) fail('unauthenticated', 401);
-        $sql = 'SELECT u.id, u.username, MAX(g.score) AS score, MAX(g.correct) AS correct, MAX(g.total) AS total, MIN(g.seconds) AS seconds
+        $sql = 'SELECT u.id, u.username, u.avatar, MAX(g.score) AS score, MAX(g.correct) AS correct, MAX(g.total) AS total, MIN(g.seconds) AS seconds
             FROM ' . t('games') . ' g JOIN ' . t('users') . " u ON u.id = g.user_id
             WHERE g.mode = 'daily' AND g.day = ? AND u.username IS NOT NULL AND u.status = 'active'";
         $args = [$day];
@@ -364,29 +412,29 @@ switch ($r) {
             $sql .= ' AND (u.id = ? OR u.id IN (SELECT friend_id FROM ' . t('friends') . ' WHERE user_id = ?))';
             array_push($args, $me, $me);
         }
-        $st = db()->prepare($sql . ' GROUP BY u.id, u.username ORDER BY score DESC, seconds ASC, u.username LIMIT 1000');
+        $st = db()->prepare($sql . ' GROUP BY u.id, u.username, u.avatar ORDER BY score DESC, seconds ASC, u.username LIMIT 1000');
         $st->execute($args);
         $rows = [];
         foreach ($st->fetchAll() as $i => $x) {
             if ($i >= 50 && (int)$x['id'] !== $me) continue; // the top of the ranking, plus the player wherever they are
-            $rows[] = ['rank' => $i + 1, 'username' => $x['username'], 'score' => (int)$x['score'], 'correct' => (int)$x['correct'], 'total' => (int)$x['total'], 'seconds' => (int)$x['seconds'], 'me' => (int)$x['id'] === $me];
+            $rows[] = ['rank' => $i + 1, 'username' => $x['username'], 'avatar' => $x['avatar'] ?? null, 'score' => (int)$x['score'], 'correct' => (int)$x['correct'], 'total' => (int)$x['total'], 'seconds' => (int)$x['seconds'], 'me' => (int)$x['id'] === $me];
         }
         send_json(['ok' => true, 'rows' => $rows]);
 
     case 'friends.list':
         $u = writer();
-        $st = db()->prepare('SELECT u.username FROM ' . t('friends') . ' f JOIN ' . t('users') . " u ON u.id = f.friend_id WHERE f.user_id = ? AND u.status = 'active' AND u.username IS NOT NULL ORDER BY u.username");
+        $st = db()->prepare('SELECT u.username, u.avatar FROM ' . t('friends') . ' f JOIN ' . t('users') . " u ON u.id = f.friend_id WHERE f.user_id = ? AND u.status = 'active' AND u.username IS NOT NULL ORDER BY u.username");
         $st->execute([$u['id']]);
-        send_json(['ok' => true, 'friends' => array_map(fn($x) => ['username' => $x['username']], $st->fetchAll())]);
+        send_json(['ok' => true, 'friends' => array_map(fn($x) => ['username' => $x['username'], 'avatar' => $x['avatar'] ?? null], $st->fetchAll())]);
 
     case 'friends.search':
         $u = writer();
         $q = trim((string)(body()['q'] ?? ''));
         if (!preg_match('/^[A-Za-z0-9_]{2,20}$/', $q)) send_json(['ok' => true, 'players' => []]);
-        $st = db()->prepare('SELECT u.username, f.friend_id IS NOT NULL AS friend FROM ' . t('users') . ' u LEFT JOIN ' . t('friends') . " f ON f.friend_id = u.id AND f.user_id = ?
+        $st = db()->prepare('SELECT u.username, u.avatar, f.friend_id IS NOT NULL AS friend FROM ' . t('users') . ' u LEFT JOIN ' . t('friends') . " f ON f.friend_id = u.id AND f.user_id = ?
             WHERE u.username LIKE ? AND u.id <> ? AND u.status = 'active' ORDER BY u.username LIMIT 20");
         $st->execute([$u['id'], str_replace('_', '\\_', $q) . '%', $u['id']]);
-        send_json(['ok' => true, 'players' => array_map(fn($x) => ['username' => $x['username'], 'friend' => (bool)$x['friend']], $st->fetchAll())]);
+        send_json(['ok' => true, 'players' => array_map(fn($x) => ['username' => $x['username'], 'avatar' => $x['avatar'] ?? null, 'friend' => (bool)$x['friend']], $st->fetchAll())]);
 
     case 'friends.add':
     case 'friends.remove':
@@ -487,7 +535,7 @@ switch ($r) {
             $ins->execute([$u['id'], $c['uid'], $c['mode'], $c['stage'], $c['stars'], $c['score'], $c['spent'], $c['correct'], $c['total'], $c['seconds'], $c['cats'], $c['day'], now_utc()]);
             if ($ins->rowCount()) notify_overtaken(user_row((int)$u['id']), $c);
         }
-        send_json(['ok' => true, 'games' => user_games($u['id'])]);
+        send_json(['ok' => true, 'games' => user_games($u['id']), 'user' => public_user(user_row((int)$u['id']))]);
 
     // ======================================================== admin panel
 
@@ -573,8 +621,8 @@ switch ($r) {
     case 'admin.players':
         only('GET');
         $me = require_admin();
-        $players = db()->query('SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.created_at, u.last_login_at, u.google_sub IS NOT NULL AS google, u.email_verified_at IS NOT NULL AS verified,
-            COUNT(g.uid) AS games, ' . START_POINTS . ' + COALESCE(SUM(g.score), 0) - COALESCE(SUM(g.spent), 0) + u.points_adjust AS points, COALESCE(SUM(g.spent), 0) AS spent, COALESCE(MAX(CASE WHEN g.stars > 0 THEN g.stage END), 0) AS stage
+        $players = db()->query('SELECT u.id, u.name, u.username, u.avatar, u.email, u.role, u.status, u.created_at, u.last_login_at, u.google_sub IS NOT NULL AS google, u.email_verified_at IS NOT NULL AS verified,
+            COUNT(g.uid) AS games, GREATEST(0, ' . START_POINTS . ' + COALESCE(SUM(g.score), 0) - COALESCE(SUM(g.spent), 0) - COALESCE((SELECT SUM(price) FROM ' . t('user_items') . ' ui WHERE ui.user_id = u.id), 0) + u.points_adjust) AS points, COALESCE(SUM(g.spent), 0) AS spent, COALESCE(MAX(CASE WHEN g.stars > 0 THEN g.stage END), 0) AS stage
             FROM ' . t('users') . ' u LEFT JOIN ' . t('games') . ' g ON g.user_id = u.id GROUP BY u.id ORDER BY u.created_at DESC LIMIT 1000')->fetchAll();
         send_json(['ok' => true, 'players' => $players, 'me' => $me['id']]);
 
@@ -611,8 +659,9 @@ switch ($r) {
             COALESCE(MAX(CASE WHEN mode = 'daily' THEN score END), 0) AS best_daily, COALESCE(MAX(CASE WHEN mode = 'survival' THEN score END), 0) AS best_survival,
             MIN(played_at) AS first_game, MAX(played_at) AS last_game FROM $g WHERE user_id = ?", [$id]);
         $count = fn(string $sql) => (int)($one($sql, [$id])['n'] ?? 0);
+        $avSpent = avatar_spent($id);
         send_json(['ok' => true, 'player' => [
-            'id' => $id, 'name' => $row['name'], 'username' => $row['username'], 'email' => $row['email'], 'status' => $row['status'],
+            'id' => $id, 'name' => $row['name'], 'username' => $row['username'], 'avatar' => $row['avatar'] ?? null, 'email' => $row['email'], 'status' => $row['status'],
             'admin' => (int)$row['role'] >= ROLE_ADMIN, 'google' => !empty($row['google_sub']), 'password' => $row['password_hash'] !== '',
             'verified' => $row['email_verified_at'], 'ranking' => (int)$row['show_in_ranking'] === 1,
             'createdAt' => $row['created_at'], 'lastLogin' => $row['last_login_at'],
@@ -620,7 +669,8 @@ switch ($r) {
             'following' => $count('SELECT COUNT(*) AS n FROM ' . t('friends') . ' WHERE user_id = ?'),
             'followers' => $count('SELECT COUNT(*) AS n FROM ' . t('friends') . ' WHERE friend_id = ?'),
             'adjust' => (int)$row['points_adjust'],
-            'balance' => START_POINTS + (int)$sum['earned'] - (int)$sum['spent'] + (int)$row['points_adjust'],
+            'avatarSpent' => $avSpent,
+            'balance' => max(0, START_POINTS + (int)$sum['earned'] - (int)$sum['spent'] - $avSpent + (int)$row['points_adjust']),
         ], 'stats' => $sum,
             'games' => $all("SELECT mode, stage, stars, score, spent, correct, total, seconds, day, played_at FROM $g WHERE user_id = ? ORDER BY played_at DESC, uid LIMIT 100", [$id]),
             'log' => $all('SELECT l.action, l.detail, l.created_at, a.name AS admin FROM ' . t('admin_log') . ' l LEFT JOIN ' . t('users') . ' a ON a.id = l.admin_id WHERE l.user_id = ? ORDER BY l.id DESC LIMIT 30', [$id]),
@@ -633,9 +683,7 @@ switch ($r) {
         $row = target_player($me, $b);
         if (!is_numeric($b['balance'] ?? null)) fail('bad_request', 422);
         $want = max(0, min(10000000, (int)$b['balance']));
-        $st = db()->prepare('SELECT COALESCE(SUM(score), 0) - COALESCE(SUM(spent), 0) FROM ' . t('games') . ' WHERE user_id = ?');
-        $st->execute([$row['id']]);
-        $before = START_POINTS + (int)$st->fetchColumn() + (int)$row['points_adjust'];
+        $before = user_balance($row);
         $adjust = $want - $before + (int)$row['points_adjust'];
         db()->prepare('UPDATE ' . t('users') . ' SET points_adjust = ? WHERE id = ?')->execute([$adjust, $row['id']]);
         $note = mb_substr(trim((string)($b['note'] ?? '')), 0, 200);
@@ -647,6 +695,19 @@ switch ($r) {
         $me = admin_writer();
         $row = target_player($me, body());
         db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$row['id']]);
+        send_json(['ok' => true]);
+
+    case 'admin.avatars':
+        only('GET');
+        require_admin();
+        $rows = db()->query('SELECT i.id, i.kind, i.price, i.enabled, (SELECT COUNT(*) FROM ' . t('user_items') . ' u WHERE u.item_id = i.id) AS sold FROM ' . t('avatar_items') . ' i ORDER BY i.kind DESC, i.sort')->fetchAll();
+        send_json(['ok' => true, 'items' => array_map(fn($r) => ['id' => $r['id'], 'kind' => $r['kind'], 'price' => (int)$r['price'], 'enabled' => (int)$r['enabled'], 'sold' => (int)$r['sold']], $rows)]);
+
+    case 'admin.avatar.save':
+        admin_writer();
+        $b = body();
+        $st = db()->prepare('UPDATE ' . t('avatar_items') . ' SET price = ?, enabled = ? WHERE id = ?');
+        $st->execute([max(0, min(100000, (int)($b['price'] ?? 0))), empty($b['enabled']) ? 0 : 1, (string)($b['id'] ?? '')]);
         send_json(['ok' => true]);
 
     default:

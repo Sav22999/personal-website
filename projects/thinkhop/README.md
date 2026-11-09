@@ -10,6 +10,7 @@ Web app installabile (PWA) e app Android per Google Play. È elencata tra i prog
 - **28 tipologie di giochi di logica e ragionamento** (`CATS` in `engine.js` e `puzzles.js`), con più di 400 pattern procedurali: segno mancante, sequenze, algebra della frutta, intruso numerico e illustrato, chi arriva prima, somme strane, puro nonsense, indovinelli, sequenze di figure, lettere, mini sudoku, tartaruga in marcia, lampadine e bottoni, codici segreti, logica assurda, angeli e diavoli, il tesoro nei forzieri, chi ha cosa, calendario contorto, trappole, bilance pazze, gioco dei bussolotti, combinazione segreta (Mastermind), indagine da detective, alchimia pazza, posti a tavola, specchi e rotazioni.
 - **Guida «?» animata su ogni esercizio** (`help.js`): ogni domanda ha un pulsante `?` che mette in pausa il timer e mostra una dimostrazione guidata e animata in 3 passi per quella tipologia di esercizio.
 - **Icone Twemoji SVG integrate offline** (`twemoji.js`): tutte le emoji sono disegnate come immagini vettoriali SVG identiche su ogni sistema operativo, senza richieste di rete esterne.
+- **Immagine del profilo personalizzabile** (`avatars.js`): usando i punti guadagnati si possono sbloccare 44 personaggi (incluse le 4 mascotte di ThinkHop), 27 accessori, 18 cornici e 32 sfondi SVG. Funziona sia con account sia da ospite, ed è gestibile dal pannello admin.
 - **Superare un livello**: almeno metà delle risposte giuste. 3 stelle dal 90%, 2 dal 70%, 1 dal 50%.
 - **Quattro gradi di difficoltà**: facile, media, difficile, esperto. Il livello 100 è tutto da esperti.
 - **Punti**: 100 / 200 / 300 / 400 secondo la difficoltà, fino a +50% per la velocità e +10% per ogni risposta di fila (massimo
@@ -76,11 +77,10 @@ Si apre dal link **Admin** in fondo alla home o da `admin.html`. In **Domande** 
 `admin.html`, solo per gli account con ruolo amministratore (il server lo controlla a ogni chiamata):
 
 - **Panoramica**: giocatori, partite, risposte giuste per tipo, livelli superati su giocati.
-- **Giochi**: accende o spegne i tipi di domanda, cambia domande per livello e costo dei suggerimenti, mostra ed elimina
-  le partite recenti.
-- **Domande**: crea e modifica domande (italiano e inglese obbligatori, le altre lingue facoltative), spegne gli
-  indovinelli inclusi nel gioco. Le domande compaiono tra gli indovinelli.
-- **Giocatori**: cerca, disattiva, elimina, nomina altri amministratori.
+- **Giochi**: accende o spegne i tipi di domanda, permette di aprire il **tutorial animato `?`** e provare un **esercizio di prova interattivo** per ciascuna tipologia (scegliendo anche la variante, provando il suggerimento e vedendo la spiegazione), cambia domande per livello e costo dei suggerimenti, mostra ed elimina le partite recenti.
+- **Domande**: crea, modifica e prova domande scritte a mano (italiano e inglese obbligatori, le altre lingue facoltative), permette di provare ogni singolo esercizio generato o aprirne il tutorial `?`, e spegne singoli esercizi o indovinelli inclusi nel gioco.
+- **Giocatori**: cerca, disattiva, elimina, nomina altri amministratori, modifica i punti.
+- **Immagini profilo**: gestisce prezzi in punti, disponibilità in vendita (`enabled`) e conteggio acquisti (`sold`) per tutti i personaggi, accessori, cornici e sfondi.
 
 Il gioco legge impostazioni e domande con `auth.config` e ne tiene una copia per l'uso offline.
 

@@ -51,6 +51,12 @@
         'Change points': 'Modifica punti', 'New balance': 'Nuovo saldo', 'Note (optional)': 'Nota (facoltativa)', 'The games stay as they were played: only the balance changes.': 'Le partite restano come sono state giocate: cambia solo il saldo.',
         'Points saved': 'Punti salvati', 'Last 100 games': 'Ultime 100 partite', 'Admin changes': 'Modifiche degli admin', 'No changes.': 'Nessuna modifica.', 'Mode': 'Modalità', 'Time': 'Tempo', 'Admin': 'Admin', 'Change': 'Modifica', 'Note': 'Nota',
         'You cannot change your own points.': 'Non puoi modificare i tuoi punti.', 'Never': 'Mai',
+        'Profile pictures': 'Immagini profilo', 'Characters': 'Personaggi', 'Accessories': 'Accessori', 'Frames': 'Cornici', 'Backgrounds': 'Sfondi',
+        'Name': 'Nome', 'Price (points)': 'Prezzo (punti)', 'On sale': 'In vendita', 'Sold': 'Venduti',
+        'Players buy these with their points from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.': 'I giocatori li comprano con i punti dal profilo. A 0 un elemento è gratis per tutti. Un elemento tolto dalla vendita resta a chi lo aveva già comprato.',
+        'Spent on profile': 'Spesi nel profilo',
+        'Try': 'Prova', 'Tutorial': 'Tutorial', 'Try exercise': 'Prova esercizio', 'New example': 'Nuovo esempio',
+        'All variants': 'Tutte le varianti', 'Test hint': 'Prova suggerimento', 'Show answer': 'Mostra soluzione', 'Try another': 'Altro esercizio',
     };
     const t = (s, v) => {
         let out = I.getLang() === 'it' ? (IT[s] || s) : s;
@@ -64,7 +70,7 @@
     const when = s => s ? new Date(s.replace(' ', 'T') + 'Z').toLocaleString(I.getLang(), {dateStyle: 'short', timeStyle: 'short'}) : '–';
     const num = n => Number(n).toLocaleString(I.getLang());
 
-    const TABS = [['overview', 'Overview', 'chart'], ['games', 'Games', 'grid'], ['questions', 'Questions', 'book'], ['players', 'Players', 'user']];
+    const TABS = [['overview', 'Overview', 'chart'], ['games', 'Games', 'grid'], ['questions', 'Questions', 'book'], ['players', 'Players', 'user'], ['avatars', 'Profile pictures', 'image']];
     const tabName = () => {
         const n = location.hash.replace(/^#\/?/, '');
         return TABS.some(x => x[0] === n) ? n : 'overview';
@@ -134,6 +140,198 @@
         return h('div.cat-row', h('div.cat-label', h('span', label), h('b', `${p}% · ${num(a)}/${num(b)}`)), h('div.bar', h('i', {style: `width:${p}%`})));
     };
 
+    // ---------- tutorial & interactive exercise preview ----------
+    const RIDDLES = Object.fromEntries((window.ThinkHopRiddles || []).map(r => [r.id, r]));
+    const word = w => I.getLang() === 'de' && E.WORDS.includes(w) ? w[0].toUpperCase() + w.slice(1) : w;
+    const line = l => {
+        const v = {};
+        Object.entries(l.v || {}).forEach(([k, x]) => {
+            v[k] = x && typeof x === 'object' ? line(x) : word(x);
+        });
+        return gt(l.k, v);
+    };
+    const riddleText = q => {
+        const r = q.t ? q : RIDDLES[q.id];
+        return (r && r.t && (r.t[I.getLang()] || r.t.en)) || ['', '', ['', '', '', '']];
+    };
+    const optionText = (q, o) => {
+        if (typeof o === 'string') return o;
+        if (o.k) return gt(o.k);
+        return riddleText(q)[2][o.r];
+    };
+    const whyLines = q => q.why.map(w => {
+        if (w.lit) return h('p.why-lit', w.lit);
+        if (w.riddle) return h('p', riddleText(q)[1]);
+        const v = Object.assign({}, w.v);
+        if (w.prop) v.prop = gt(w.prop.k, w.prop.v);
+        return h('p', line({k: w.k, v}));
+    });
+    const promptText = q => {
+        if (q.pk) return line({k: q.pk, v: q.pv});
+        if (q.cat === 'sign') return gt(q.nums.length > 2 ? 'q_sign2' : 'q_sign');
+        if (q.cat === 'riddle') return riddleText(q)[0];
+        return gt('q_' + q.cat);
+    };
+    const equationView = (q, answered) => {
+        const signs = answered ? String(optionText(q, q.options[q.answer])).split(/\s+/) : [];
+        const parts = [];
+        q.nums.forEach((n, i) => {
+            if (i) parts.push(h('span.gap' + (answered ? '.filled' : ''), signs[i - 1] || '?'));
+            parts.push(h('span', String(n)));
+        });
+        return h('div.equation', parts, h('span', '='), h('span', String(q.result)));
+    };
+    const gridView = (q, answered) => {
+        const right = optionText(q, q.options[q.answer]);
+        const n = q.grid.length;
+        const edge = (i, size) => size && (i + 1) % size === 0 && i + 1 < n;
+        return h('div.grid-wrap',
+            h('div.board', {style: `--n:${n}`}, q.grid.flatMap((row, y) => row.map((cell, x) => {
+                const ask = cell === '?';
+                return h('span.cell' + (ask ? '.ask' : '') + (q.boxes && edge(x, q.boxes[1]) ? '.edge-r' : '') + (q.boxes && edge(y, q.boxes[0]) ? '.edge-b' : ''), ask && answered ? right : cell);
+            }))),
+            q.lines ? h('div.path', q.lines) : null);
+    };
+    const questionBody = (q, answered) => {
+        if (q.view === 'grid') return gridView(q, answered);
+        if (q.view === 'equation') return equationView(q, answered);
+        if (q.view === 'list') return h('div.sequence', q.items.map(n => h('span', String(n))), h('span.gap' + (answered ? '.filled' : ''), answered ? optionText(q, q.options[q.answer]) : '?'));
+        if (q.view === 'lines') return h('div.lines', q.lines.map(l => h('div', l)), h('div.ask', q.ask));
+        if (q.view === 'facts') return h('div.facts', h('ul', q.facts.map(f => h('li', line(f)))), h('p.ask', line(q.ask)));
+        return null;
+    };
+
+    function openTutorial(cat) {
+        if (window.ThinkHopHelp) window.ThinkHopHelp.open(cat);
+    }
+
+    function tryExercise(opts) {
+        opts = opts || {};
+        const cat = opts.custom ? 'riddle' : (opts.cat || 'sign');
+        const catPatterns = E.allPatterns().filter(p => p.cat === cat && !p.id.match(/^c\d+$/)).sort((a, b) => a.d - b.d);
+        let selectedPid = opts.pid || '';
+        let q = null, answered = false, picked = -1, removed = [];
+        let seedCounter = (Date.now() & 0x7fffffff) || 12345;
+        const nextSeed = () => {
+            seedCounter = (seedCounter + 0x6D2B79F5) >>> 0;
+            return seedCounter;
+        };
+
+        function generate() {
+            answered = false;
+            picked = -1;
+            removed = [];
+            const seed = nextSeed();
+            if (opts.custom) {
+                const r = E.rng(seed);
+                const order = r.shuffle([0, 1, 2, 3]);
+                const d = +opts.custom.difficulty || .25;
+                q = {
+                    pid: 'c' + opts.custom.id, cat: 'riddle', d, level: E.tierOf(d), limit: 45,
+                    view: 'riddle', id: 'c' + opts.custom.id, t: opts.custom.data,
+                    options: order.map(i => ({r: i})), answer: order.indexOf(0),
+                    why: [{riddle: 'c' + opts.custom.id}],
+                };
+                return;
+            }
+            const p = (selectedPid && catPatterns.find(x => x.id === selectedPid))
+                || catPatterns[seed % catPatterns.length]
+                || E.allPatterns()[0];
+            q = E.make(p.id, seed);
+        }
+
+        const stage = h('div.question.try-stage');
+        const lang = I.getLang() === 'it' ? 'it' : 'en';
+        const patLabel = p => RIDDLES[p.id] ? (RIDDLES[p.id].t[lang] || RIDDLES[p.id].t.en)[0].slice(0, 48) : p.id;
+        const variantSelect = !opts.custom && catPatterns.length > 1
+            ? h('select.ctl', {
+                'aria-label': t('Exercise'),
+                onchange: e => {
+                    selectedPid = e.target.value;
+                    generate();
+                    draw();
+                },
+            },
+            h('option', {value: '', selected: !selectedPid || undefined}, `${t('All variants')} (${catPatterns.length})`),
+            catPatterns.map(p => h('option', {value: p.id, selected: p.id === selectedPid || undefined}, `${patLabel(p)} · ${tierName(E.tierOf(p.d))} (${p.d.toFixed(2)})`)))
+            : null;
+
+        function draw() {
+            const right = answered && picked === q.answer;
+            const M = window.ThinkHopMascots;
+            const host = M ? M.hostOf(q.cat) : null;
+            const options = h('div.options' + (q.options.length === 5 ? '.five' : '') + (q.view === 'riddle' || q.view === 'facts' ? '.long' : '') + (q.pics ? '.pics' : ''), q.options.map((o, i) => {
+                const gone = removed.includes(i);
+                const state = !answered ? '' : (i === q.answer ? '.right' : (i === picked ? '.wrong' : ''));
+                return h('button.option' + state + (gone ? '.gone' : ''), {
+                    type: 'button', disabled: answered || gone || undefined, onclick: () => {
+                        answered = true;
+                        picked = i;
+                        draw();
+                    },
+                }, optionText(q, o));
+            }));
+            stage.replaceChildren(
+                h('div.tags',
+                    h('span.tag', gt('cat_' + q.cat)),
+                    h('span.tag.level-' + q.level, `${tierName(q.level)} · ${q.d.toFixed(2)}`),
+                    h('span.tag', q.pid),
+                    h('span.tag', icon('clock'), `${q.limit}s`)),
+                !answered && M ? h('div.guide',
+                    h('span.mascot', {html: M.svg(host, 'happy')}),
+                    h('p.bubble', h('b', host[0].toUpperCase() + host.slice(1), ' · '), M.tip(q.cat))) : null,
+                h('h1.prompt', promptText(q)),
+                questionBody(q, answered),
+                options,
+                answered
+                    ? h('section.feedback' + (right ? '.good' : '.bad'), {role: 'status'},
+                        h('h2', icon(right ? 'tick' : 'close'), gt(right ? 'right' : 'wrong')),
+                        whyLines(q),
+                        h('button.btn.btn-primary.btn-block', {
+                            type: 'button', onclick: () => {
+                                generate();
+                                draw();
+                            }
+                        }, t('Try another'), icon('arrow')))
+                    : h('div.try-hint-row',
+                        h('button.btn.btn-soft.small', {
+                            type: 'button', disabled: removed.length > 0 || undefined, onclick: () => {
+                                const wrong = q.options.map((_, i) => i).filter(i => i !== q.answer);
+                                removed = E.rng(nextSeed()).shuffle(wrong).slice(0, Math.max(1, q.options.length - 2));
+                                draw();
+                            }
+                        }, icon('bulb'), h('span', t('Test hint'))),
+                        h('button.btn.btn-ghost.small', {
+                            type: 'button', onclick: () => {
+                                answered = true;
+                                picked = q.answer;
+                                draw();
+                            }
+                        }, t('Show answer'))));
+        }
+
+        generate();
+        draw();
+        const m = modal([
+            h('div.try-head',
+                h('h3', `${t('Try exercise')} · ${gt('cat_' + cat)}`),
+                h('div.try-head-actions',
+                    h('button.help-btn', {
+                        type: 'button', title: t('Tutorial'), 'aria-label': t('Tutorial'), onclick: () => openTutorial(cat),
+                    }, '?'),
+                    h('button.btn.btn-soft.small', {
+                        type: 'button', onclick: () => {
+                            generate();
+                            draw();
+                        }
+                    }, icon('replay'), h('span', t('New example'))))),
+            variantSelect ? h('div.try-bar', variantSelect) : null,
+            stage,
+            h('div.actions', h('button.btn.btn-ghost', {type: 'button', onclick: () => m.close()}, gt('close'))),
+        ]);
+        m.box.classList.add('wide', 'try-modal');
+    }
+
     // ---------- games: types, settings, recent games ----------
     async function gamesTab(view) {
         const [o, g] = await Promise.all([call('admin.overview'), call('admin.games')]);
@@ -152,10 +350,17 @@
                 card(t('Types of question'), h('p.muted', t('Switch off a type and it no longer appears in any game.')),
                     h('div.type-list', E.CATS.map(k => h('div.type-row',
                         h('div', h('strong', gt('cat_' + k)), h('small', t('{n} kinds of exercise', {n: E.allPatterns().filter(p => p.cat === k).length}))),
-                        toggle(!s.disabledCats.includes(k), gt('cat_' + k), on => {
-                            s.disabledCats = on ? s.disabledCats.filter(x => x !== k) : [...s.disabledCats, k];
-                            saveSettings();
-                        }))))),
+                        h('div.type-actions',
+                            h('button.help-btn', {
+                                type: 'button', title: t('Tutorial'), 'aria-label': t('Tutorial'), onclick: () => openTutorial(k),
+                            }, '?'),
+                            h('button.btn.btn-soft.small', {
+                                type: 'button', title: t('Try exercise'), onclick: () => tryExercise({cat: k}),
+                            }, icon('play'), h('span', t('Try'))),
+                            toggle(!s.disabledCats.includes(k), gt('cat_' + k), on => {
+                                s.disabledCats = on ? s.disabledCats.filter(x => x !== k) : [...s.disabledCats, k];
+                                saveSettings();
+                            })))))),
                 card(t('Settings'), h('form.form', {
                         onsubmit: e => {
                             e.preventDefault();
@@ -229,6 +434,7 @@
         const custom = d.questions.map(q => h('tr',
             h('td', (q.data[lang] || q.data.en)[0]), h('td', `${(+q.difficulty).toFixed(2)} · ${tierName(q.tier)}`), h('td', Object.keys(q.data).join(' ').toUpperCase()), h('td', t(q.active ? 'Active' : 'Off')),
             h('td.row-actions',
+                h('button.btn.btn-soft.small', {type: 'button', title: t('Try exercise'), onclick: () => tryExercise({custom: q})}, icon('play'), h('span', t('Try'))),
                 h('button.icon-btn', {type: 'button', title: t('Edit'), 'aria-label': t('Edit'), onclick: () => editQuestion(q, refresh)}, icon('pen')),
                 h('button.icon-btn', {
                     type: 'button', title: t('Delete'), 'aria-label': t('Delete'), onclick: async () => {
@@ -246,7 +452,7 @@
         const draw = () => {
             const text = search.value.trim().toLowerCase();
             const list = all.filter(p => (!type.value || p.cat === type.value) && (!text || label(p).toLowerCase().includes(text)));
-            wrap.replaceChildren(table([t('Exercise'), t('Type'), t('Difficulty'), t('Tier'), t('Active')], list.map(p => {
+            wrap.replaceChildren(table([t('Exercise'), t('Type'), t('Difficulty'), t('Tier'), t('Active'), ''], list.map(p => {
                 const tierCell = h('td', tierName(E.tierOf(p.d)));
                 return h('tr', h('td', label(p)), h('td', gt('cat_' + p.cat)),
                     h('td', h('input.ctl.tiny', {
@@ -261,7 +467,10 @@
                     h('td', toggle(!s.disabledRiddles.includes(p.id), p.id, on => {
                         s.disabledRiddles = on ? s.disabledRiddles.filter(x => x !== p.id) : [...s.disabledRiddles, p.id];
                         saveAll();
-                    })));
+                    })),
+                    h('td.row-actions',
+                        h('button.help-btn', {type: 'button', title: t('Tutorial'), 'aria-label': t('Tutorial'), onclick: () => openTutorial(p.cat)}, '?'),
+                        h('button.btn.btn-soft.small', {type: 'button', title: t('Try exercise'), onclick: () => tryExercise({pid: p.id, cat: p.cat})}, icon('play'), h('span', t('Try')))));
             })));
         };
         search.addEventListener('input', draw);
@@ -285,8 +494,9 @@
             const list = d.players.filter(p => !q || (p.name + ' ' + p.email + ' ' + (p.username || '')).toLowerCase().includes(q));
             wrap.replaceChildren(table([t('Player'), t('Level'), t('Games'), t('Points'), t('Date'), t('Status'), ''], list.map(p => {
                 const self = +p.id === +d.me, admin = +p.role >= 9, off = p.status === 'disabled';
+                const av = window.ThinkHopAvatars ? window.ThinkHopAvatars.render(p.avatar, p.name, 'avatar md') : null;
                 return h('tr',
-                    h('td', h('strong', p.username ? '@' + p.username : p.name), h('small.block', `${p.name} · ${p.email}`)), h('td', String(p.stage)), h('td', num(p.games)), h('td', num(p.points)), h('td', when(p.last_login_at || p.created_at)),
+                    h('td', h('div.player-cell', av, h('div', h('strong', p.username ? '@' + p.username : p.name), h('small.block', `${p.name} · ${p.email}`)))), h('td', String(p.stage)), h('td', num(p.games)), h('td', num(p.points)), h('td', when(p.last_login_at || p.created_at)),
                     h('td', self ? t('You') : (off ? t('Disabled') : (+p.verified ? (admin ? t('Administrator') : t('Active')) : t('Email not confirmed')))),
                     h('td.row-actions', h('button.btn.btn-soft.small', {type: 'button', onclick: () => showPlayer(p.id, +d.me, refresh)}, t('Details')), self ? null : [
                         h('button.btn.btn-ghost.small', {type: 'button', onclick: () => call('admin.player.update', {id: p.id, admin: !admin, status: p.status}, refresh)}, t(admin ? 'Remove administrator' : 'Make administrator')),
@@ -325,12 +535,13 @@
         const balance = h('input.ctl', {type: 'number', min: 0, max: 10000000, step: 1, value: p.balance, disabled: self || undefined});
         const note = h('input.ctl', {type: 'text', maxlength: 200, placeholder: t('Note (optional)'), disabled: self || undefined});
         const save = h('button.btn.btn-primary', {type: 'submit', disabled: self || undefined}, t('Save'));
+        const av = window.ThinkHopAvatars ? window.ThinkHopAvatars.render(p.avatar, p.name, 'avatar lg') : null;
         body.replaceChildren(
-            h('div.player-head', h('strong', p.username ? '@' + p.username : p.name), h('span.muted', `${p.name} · ${p.email}`),
+            h('div.player-head', h('div.player-head-row', av, h('div', h('strong', p.username ? '@' + p.username : p.name), h('span.muted.block', `${p.name} · ${p.email}`))),
                 h('div.tags', badge(!!p.verified, 'Email confirmed', 'Email not confirmed'), p.google ? h('span.tag', 'Google') : null, p.password ? h('span.tag', t('Password')) : null,
                     badge(p.ranking, 'In the ranking', 'Hidden from the ranking'), p.admin ? h('span.tag.on', t('Administrator')) : null, p.status === 'disabled' ? h('span.tag.off', t('Disabled')) : null)),
             h('div.stat-grid.wide',
-                tile(t('Wallet'), num(p.balance)), tile(t('Earned'), num(s.earned)), tile(t('Spent'), num(s.spent)), tile(t('Changed by admins'), (p.adjust > 0 ? '+' : '') + num(p.adjust)),
+                tile(t('Wallet'), num(p.balance)), tile(t('Earned'), num(s.earned)), tile(t('Spent'), num(s.spent)), tile(t('Spent on profile'), num(p.avatarSpent || 0)), tile(t('Changed by admins'), (p.adjust > 0 ? '+' : '') + num(p.adjust)),
                 tile(t('Games played'), num(s.games)), tile(t('Levels passed'), num(s.levels)), tile(t('Highest level'), num(s.top_level)), tile(t('Daily challenges'), num(s.dailies)),
                 tile(t('Right answers'), share), tile(t('Play time'), clock(s.seconds)), tile(t('Best daily'), num(s.best_daily)), tile(t('Best survival'), num(s.best_survival)),
                 tile(t('Following'), num(p.following)), tile(t('Followers'), num(p.followers)), tile(t('Notification devices'), num(p.devices))),
@@ -359,8 +570,40 @@
             })) : h('p.muted', t('No changes.')));
     }
 
+    // ---------- profile pictures: prices and availability ----------
+    async function avatarsTab(view) {
+        const d = await call('admin.avatars');
+        if (!d) return;
+        const Av = window.ThinkHopAvatars;
+        const previewCode = (kind, id) => kind === 'character' ? id + ':violet' : kind === 'accessory' ? ':violet:' + id : kind === 'frame' ? ':violet::' + id : ':' + id;
+        const section = (kind, title) => card(t(title),
+            table(['', t('Name'), t('Price (points)'), t('On sale'), t('Sold'), ''], d.items.filter(x => x.kind === kind).map(x => {
+                const art = Av.item(x.id);
+                const label = art ? Av.name(art) : x.id;
+                let enabled = +x.enabled === 1;
+                const price = h('input.ctl.adm-price', {type: 'number', min: 0, max: 100000, step: 10, value: +x.price, 'aria-label': t('Price (points)')});
+                const save = () => call('admin.avatar.save', {id: x.id, price: +price.value, enabled}, () => toast(t('Saved'), 'ok'));
+                return h('tr',
+                    h('td', Av.render(previewCode(kind, x.id), kind === 'accessory' ? '' : 'A', 'md')),
+                    h('td', h('strong', label), h('small.block', x.id)),
+                    h('td', price),
+                    h('td', toggle(enabled, label, on => {
+                        enabled = on;
+                        save();
+                    })),
+                    h('td', num(x.sold || 0)),
+                    h('td.row-actions', h('button.btn.btn-soft.small', {type: 'button', onclick: save}, icon('save'), h('span', t('Save')))));
+            })));
+        view.replaceChildren(
+            card(t('Profile pictures'), h('p.muted', t('Players buy these with their points from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.'))),
+            section('character', 'Characters'),
+            section('accessory', 'Accessories'),
+            section('frame', 'Frames'),
+            section('background', 'Backgrounds'));
+    }
+
     // ---------- shell ----------
-    const VIEWS = {overview, games: gamesTab, questions: questionsTab, players: playersTab};
+    const VIEWS = {overview, games: gamesTab, questions: questionsTab, players: playersTab, avatars: avatarsTab};
 
     function gate(text, action) {
         root.replaceChildren(h('div.gate', h('img.logo', {src: 'icons/favicon.svg', alt: ''}), h('h1', 'ThinkHop Admin'), h('p.muted', text), action,
@@ -385,7 +628,7 @@
                         render();
                     }
                 }, l.toUpperCase()))),
-                h('button.icon-btn', {type: 'button', title: u.name, 'aria-label': gt('account'), onclick: A.open}, icon('user'))),
+                h('button.icon-btn', {type: 'button', title: u.name, 'aria-label': gt('account'), onclick: A.open}, window.ThinkHopAvatars ? window.ThinkHopAvatars.render(u.avatar, u.name, 'avatar sm') : icon('user'))),
             view));
         document.title = `${t(TABS.find(x => x[0] === tab)[1])} · ThinkHop Admin`;
         const shape = {overview: [skeleton('tiles', 5), h('div.admin-cols', h('section.panel', skeleton('rows', 6)), h('section.panel', skeleton('rows', 6)))], players: [h('section.panel', skeleton('table', 8))]}[tab]

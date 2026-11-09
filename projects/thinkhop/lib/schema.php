@@ -8,6 +8,44 @@
 
 declare(strict_types=1);
 
+const AVATAR_ITEMS = [
+    // Characters
+    'bit' => ['character', 0], 'pixel' => ['character', 0], 'duck' => ['character', 40], 'hamster' => ['character', 50],
+    'frog' => ['character', 60], 'owl' => ['character', 60], 'hedgehog' => ['character', 70], 'turtle' => ['character', 70],
+    'fox' => ['character', 80], 'crab' => ['character', 80], 'bee' => ['character', 80], 'axolotl' => ['character', 90],
+    'octopus' => ['character', 100], 'ghost' => ['character', 100], 'snake' => ['character', 100], 'racoon' => ['character', 110],
+    'sloth' => ['character', 110], 'snail' => ['character', 120], 'penguin' => ['character', 120], 'gopher' => ['character', 120],
+    'corgi' => ['character', 130], 'panda' => ['character', 140], 'chameleon' => ['character', 140], 'koala' => ['character', 150],
+    'alien' => ['character', 150], 'redpanda' => ['character', 160], 'narwhal' => ['character', 170], 'shark' => ['character', 180],
+    'dragon' => ['character', 200], 'viking' => ['character', 210], 'pirate' => ['character', 210], 'ninja' => ['character', 220],
+    'anvil' => ['character', 250], 'wizard' => ['character', 260], 'cyborg' => ['character', 280],
+    'punto' => ['character', 300], 'sillo' => ['character', 300], 'dedo' => ['character', 300], 'neuro' => ['character', 300],
+    'favilla' => ['character', 300], 'astronaut' => ['character', 300], 'griffin' => ['character', 320], 'phoenix' => ['character', 350], 'unicorn' => ['character', 400],
+    // Accessories
+    'glasses' => ['accessory', 0], 'bandage' => ['accessory', 30], 'bowtie' => ['accessory', 40], 'flower' => ['accessory', 40],
+    'sprout' => ['accessory', 50], 'mustache' => ['accessory', 50], 'bandana' => ['accessory', 60], 'beanie' => ['accessory', 70],
+    'cap' => ['accessory', 80], 'beret' => ['accessory', 80], 'eyepatch' => ['accessory', 80], 'scarf' => ['accessory', 90],
+    'heartglasses' => ['accessory', 90], 'shades' => ['accessory', 100], 'antlers' => ['accessory', 100], 'monocle' => ['accessory', 110],
+    'chef' => ['accessory', 110], 'coffee' => ['accessory', 120], 'gradcap' => ['accessory', 130], 'headphones' => ['accessory', 140],
+    'tophat' => ['accessory', 150], 'halo' => ['accessory', 160], 'vikinghelm' => ['accessory', 170], 'wizardhat' => ['accessory', 180],
+    'vr' => ['accessory', 200], 'tiara' => ['accessory', 220], 'crown' => ['accessory', 250],
+    // Frames
+    'ring' => ['frame', 0], 'dashed' => ['frame', 40], 'wood' => ['frame', 50], 'copper_ring' => ['frame', 60],
+    'pixel_frame' => ['frame', 70], 'neon' => ['frame', 90], 'ice' => ['frame', 100], 'emerald' => ['frame', 110],
+    'gear' => ['frame', 120], 'sakura' => ['frame', 130], 'gold_ring' => ['frame', 140], 'circuit' => ['frame', 150],
+    'lightning_ring' => ['frame', 160], 'laurel' => ['frame', 180], 'rainbow_ring' => ['frame', 200], 'fire_ring' => ['frame', 220],
+    'galaxy_ring' => ['frame', 260], 'royal' => ['frame', 300],
+    // Backgrounds
+    'violet' => ['background', 0], 'night' => ['background', 0], 'ember' => ['background', 40], 'mint' => ['background', 40],
+    'sky' => ['background', 40], 'ocean' => ['background', 40], 'forest' => ['background', 40], 'lavender' => ['background', 40],
+    'coral' => ['background', 40], 'teal' => ['background', 40], 'crimson' => ['background', 50], 'indigo' => ['background', 50],
+    'amber' => ['background', 50], 'slate' => ['background', 50], 'gold' => ['background', 60], 'pink' => ['background', 60],
+    'coal' => ['background', 60], 'cherry' => ['background', 70], 'copper' => ['background', 90], 'arctic' => ['background', 100],
+    'jungle' => ['background', 100], 'aurora' => ['background', 120], 'terminal' => ['background', 120], 'cyber' => ['background', 120],
+    'magma' => ['background', 130], 'synthwave' => ['background', 140], 'sunset' => ['background', 150], 'nebula' => ['background', 150],
+    'forge' => ['background', 160], 'matrix' => ['background', 170], 'blueprint' => ['background', 180], 'prism' => ['background', 200],
+];
+
 function schema_statements(string $p): array
 {
     $e = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
@@ -20,6 +58,7 @@ function schema_statements(string $p): array
             `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             `name` VARCHAR(80) NOT NULL,
             `username` VARCHAR(20) NULL,
+            `avatar` VARCHAR(80) NULL,
             `show_in_ranking` TINYINT(1) NOT NULL DEFAULT 1,
             `notify_off` VARCHAR(200) NULL,
             `notify_lang` CHAR(2) NULL,
@@ -35,6 +74,21 @@ function schema_statements(string $p): array
             UNIQUE KEY `uq_email` (`email`),
             UNIQUE KEY `uq_username` (`username`),
             UNIQUE KEY `uq_google` (`google_sub`)
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}avatar_items` (
+            `id` VARCHAR(30) NOT NULL PRIMARY KEY,
+            `kind` VARCHAR(12) NOT NULL,
+            `price` INT UNSIGNED NOT NULL DEFAULT 0,
+            `enabled` TINYINT(1) NOT NULL DEFAULT 1,
+            `sort` SMALLINT UNSIGNED NOT NULL DEFAULT 0
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}user_items` (
+            `user_id` INT UNSIGNED NOT NULL,
+            `item_id` VARCHAR(30) NOT NULL,
+            `price` INT UNSIGNED NOT NULL DEFAULT 0,
+            `bought_at` DATETIME NOT NULL,
+            PRIMARY KEY (`user_id`, `item_id`),
+            CONSTRAINT `fk_{$p}uitem_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}auth_tokens` (
             `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
@@ -178,6 +232,11 @@ function install_schema(PDO $pdo, string $prefix): void
     }
     // Version 8: points changed by an administrator
     if (!has_column($pdo, $prefix . 'users', 'points_adjust')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `points_adjust` INT NOT NULL DEFAULT 0 AFTER `email_verified_at`");
+    // Version 9: profile pictures and the avatar shop
+    if (!has_column($pdo, $prefix . 'users', 'avatar')) $pdo->exec("ALTER TABLE `{$prefix}users` ADD COLUMN `avatar` VARCHAR(80) NULL AFTER `username`");
+    $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}avatar_items` (id, kind, price, sort) VALUES (?,?,?,?)");
+    $sort = 0;
+    foreach (AVATAR_ITEMS as $id => [$kind, $price]) $ins->execute([$id, $kind, $price, $sort++]);
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);
 }

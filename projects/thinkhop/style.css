@@ -806,37 +806,6 @@ svg.i {
     border-top: 1px solid var(--line);
 }
 
-.switch {
-    width: 46px;
-    height: 28px;
-    border-radius: 999px;
-    background: var(--surface-3);
-    position: relative;
-    flex: none;
-    transition: background .2s;
-}
-
-.switch::after {
-    content: '';
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
-    transition: left .2s;
-}
-
-.switch.on {
-    background: var(--primary);
-}
-
-.switch.on::after {
-    left: 22px;
-}
-
 .seg {
     display: flex;
     background: var(--surface-2);
@@ -2299,6 +2268,16 @@ body {
     font-weight: 500;
 }
 
+select.ctl {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23625C7E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+}
+
 .ctl:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 1px;
@@ -2504,30 +2483,55 @@ body:has(.modal) .toast {
     font-weight: 800;
 }
 
-/* ---------- notifications ---------- */
+/* ---------- notifications & switches ---------- */
 .switch {
     position: relative;
+    display: inline-flex;
+    align-items: center;
     flex: none;
-    width: 46px;
+    width: 58px;
     height: 28px;
     padding: 0;
     border: 2px solid var(--line);
     border-radius: 99px;
     background: var(--surface-3);
+    font-family: inherit;
     cursor: pointer;
     transition: background .15s;
+}
+
+.switch::before {
+    content: 'OFF';
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: .64rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+    line-height: 1;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.switch.on::before {
+    content: 'ON';
+    left: 8px;
+    right: auto;
+    color: var(--on-accent);
 }
 
 .switch::after {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
+    top: 50%;
+    left: 3px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: var(--line);
     box-shadow: none;
+    transform: translateY(-50%);
     transition: left .15s;
 }
 
@@ -2536,7 +2540,7 @@ body:has(.modal) .toast {
 }
 
 .switch.on::after {
-    left: 20px;
+    left: calc(100% - 21px);
     background: var(--on-accent);
 }
 
@@ -3161,6 +3165,17 @@ img.twemoji {
     gap: 8px;
 }
 
+.help-controls > .btn.small {
+    width: 38px;
+    height: 36px;
+    padding: 0;
+}
+
+.help-controls > .btn.small svg.i {
+    width: 18px;
+    height: 18px;
+}
+
 .help-dots {
     display: flex;
     gap: 6px;
@@ -3230,5 +3245,223 @@ img.twemoji {
         animation: none !important;
     }
 }
+
+/* ---------- Profile pictures & Avatar shop ---------- */
+button.total {
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+button.total:hover {
+    transform: translate(-1px, -1px);
+}
+
+button.total:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+}
+
+.avatar.sm {
+    width: 24px;
+    height: 24px;
+    font-size: .75rem;
+}
+
+.avatar.md {
+    width: 52px;
+    height: 52px;
+    font-size: 1.3rem;
+}
+
+.avatar.lg {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+}
+
+.avatar.xl {
+    width: 96px;
+    height: 96px;
+    font-size: 2.4rem;
+}
+
+.avatar.drawn {
+    overflow: hidden;
+}
+
+.avatar.drawn svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.avatar-edit {
+    position: relative;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    flex: none;
+}
+
+.avatar-edit i {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+    background: var(--primary);
+    color: var(--on-primary);
+    display: grid;
+    place-items: center;
+}
+
+.avatar-edit i svg.i {
+    width: 14px;
+    height: 14px;
+}
+
+.modal .box.av-modal {
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal .box.av-modal h3,
+.modal .box.av-modal p.muted,
+.modal .box.av-modal .actions {
+    margin: 0;
+}
+
+.av-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface-2);
+}
+
+.av-preview .avatar.xl {
+    flex: none;
+}
+
+.av-preview > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.av-modal .seg {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.av-modal .seg button {
+    padding: 8px 4px;
+    font-size: .78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.av-buy {
+    display: grid;
+    gap: 8px;
+}
+
+.av-buy:empty {
+    display: none;
+}
+
+.av-buy-row {
+    display: grid;
+    gap: 4px;
+}
+
+.av-buy-row p {
+    margin: 0;
+}
+
+.av-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px;
+    max-height: 44vh;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.av-tile {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 10px 4px 8px;
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: transform .1s ease, background .1s ease;
+}
+
+.av-tile:hover {
+    background: var(--surface-2);
+}
+
+.av-tile.on, .av-tile.sel {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--on-primary-soft);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.av-tile.locked .avatar {
+    filter: saturate(.55) brightness(.9);
+}
+
+.av-name {
+    font-size: .74rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.av-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: var(--surface-3);
+    color: var(--text);
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.av-price svg.i {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    stroke: none;
+}
+
+.av-price.own, .av-price.owned {
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+
 
 

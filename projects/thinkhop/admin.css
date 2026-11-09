@@ -110,8 +110,77 @@
     color: var(--muted);
 }
 
+.type-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+}
+
+.type-actions .help-btn,
+.row-actions .help-btn {
+    margin-left: 0;
+}
+
+.modal .box.try-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal .box.try-modal .actions {
+    margin-top: 2px;
+}
+
+.try-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 2px;
+}
+
+.try-head h3 {
+    margin: 0;
+}
+
+.try-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.try-head-actions .help-btn {
+    margin-left: 0;
+}
+
+.try-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.try-stage {
+    padding: 14px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface-2);
+}
+
+.try-stage .prompt {
+    font-size: clamp(1.15rem, 3.6vw, 1.45rem);
+}
+
+.try-hint-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 button.switch {
-    border: 0;
     padding: 0;
     cursor: pointer;
     flex: none;
@@ -120,11 +189,15 @@ button.switch {
 .ctl {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 11px;
-    background: var(--surface);
+    background-color: var(--surface);
     color: var(--text);
     font: inherit;
+}
+
+select.ctl {
+    padding-right: 36px;
 }
 
 textarea.ctl {
@@ -261,6 +334,22 @@ td .block {
     margin-bottom: 14px;
 }
 
+.player-head-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.adm-price {
+    width: 96px;
+}
+
 .player-head strong {
     font-size: 1.2rem;
 }
@@ -346,7 +435,7 @@ td .block {
         bottom: 0;
         z-index: 20;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 4px;
         padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
         overflow: visible;

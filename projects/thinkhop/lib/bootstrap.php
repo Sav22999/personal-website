@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'ThinkHop';
 const AUTH_COOKIE = 'thinkhop_auth';
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 const START_POINTS = 100; // START_POINTS in engine.js: the gift every wallet starts with
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at least these
@@ -207,12 +207,44 @@ function current_user(): ?array
     return $cached = $u;
 }
 
+/** The shop as one player sees it: items on sale, plus those already bought even if taken off sale later. */
+function avatar_shop(int $uid): array
+{
+    $st = db()->prepare('SELECT i.id, i.kind, i.price, i.enabled, (u.item_id IS NOT NULL) AS owned FROM ' . t('avatar_items') . ' i
+        LEFT JOIN ' . t('user_items') . ' u ON u.item_id = i.id AND u.user_id = ? ORDER BY i.kind, i.sort');
+    $st->execute([$uid]);
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $owned = (bool)$r['owned'] || (int)$r['price'] === 0;
+        if (!$r['enabled'] && !$r['owned']) continue;
+        $out[] = ['id' => $r['id'], 'kind' => $r['kind'], 'price' => (int)$r['price'], 'owned' => $owned];
+    }
+    return $out;
+}
+
+function avatar_spent(int $uid): int
+{
+    $st = db()->prepare('SELECT COALESCE(SUM(price), 0) FROM ' . t('user_items') . ' WHERE user_id = ?');
+    $st->execute([$uid]);
+    return (int)$st->fetchColumn();
+}
+
+function user_balance(array $u): int
+{
+    $uid = (int)$u['id'];
+    $st = db()->prepare('SELECT COALESCE(SUM(score), 0) - COALESCE(SUM(spent), 0) FROM ' . t('games') . ' WHERE user_id = ?');
+    $st->execute([$uid]);
+    return max(0, START_POINTS + (int)$st->fetchColumn() + (int)($u['points_adjust'] ?? 0) - avatar_spent($uid));
+}
+
 function public_user(array $u): array
 {
+    $uid = (int)$u['id'];
     return [
-        'id' => (int)$u['id'],
+        'id' => $uid,
         'name' => $u['name'],
         'username' => $u['username'] ?? null,
+        'avatar' => $u['avatar'] ?? null,
         'ranking' => (int)($u['show_in_ranking'] ?? 1) === 1,
         'email' => $u['email'],
         'isAdmin' => (int)($u['role'] ?? 0) >= ROLE_ADMIN,
@@ -221,6 +253,8 @@ function public_user(array $u): array
         'verified' => !empty($u['email_verified_at']),
         'mustVerify' => must_verify($u),
         'pointsAdjust' => (int)($u['points_adjust'] ?? 0),
+        'avatarSpent' => avatar_spent($uid),
+        'shop' => avatar_shop($uid),
     ];
 }
 

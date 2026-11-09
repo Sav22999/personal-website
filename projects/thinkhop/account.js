@@ -70,6 +70,7 @@
                 const waiting = store.get('pending', []);
                 const send = games().filter(g => waiting.includes(g.uid));
                 const d = await api('sync', {games: send});
+                if (d.user) user = d.user;
                 // Games finished while the request was running are still only here
                 const late = store.get('pending', []).filter(u => !waiting.includes(u));
                 const known = new Set(d.games.map(g => g.uid));
@@ -101,6 +102,26 @@
         store.del('games');
         store.del('pending');
         store.del('saved');
+        store.del('avatar');
+        store.del('ownedAvatars');
+    }
+
+    const myAvatar = () => user ? (user.avatar || '') : store.get('avatar', '');
+    const avatarSpent = () => user ? (user.avatarSpent || 0) : Object.values(store.get('ownedAvatars', {})).reduce((a, b) => a + (+b || 0), 0);
+
+    function shopItems() {
+        if (user && Array.isArray(user.shop)) return user.shop;
+        const Av = window.ThinkHopAvatars;
+        const owned = store.get('ownedAvatars', {});
+        return (Av ? Av.DEFAULT_ITEMS : []).map(it => ({
+            id: it.id, kind: it.kind, price: it.price, owned: it.price === 0 || owned[it.id] !== undefined,
+        }));
+    }
+
+    function walletBalance() {
+        const s = window.ThinkHopEngine.stats(games());
+        const adj = user && user.pointsAdjust ? user.pointsAdjust : 0;
+        return Math.max(0, s.balance + adj - avatarSpent());
     }
 
     async function start(changed) {
@@ -248,7 +269,14 @@
     }
 
     function showAccountsOff() {
-        const m = modal([h('h3', t('account')), h('p.muted', t('sign_in_off')), h('div.actions', h('button.btn.btn-primary', {type: 'button', onclick: () => m.close()}, t('close')))]);
+        const m = modal([h('h3', t('account')), h('p.muted', t('sign_in_off')), h('div.actions',
+            h('button.btn.btn-soft', {
+                type: 'button', onclick: () => {
+                    m.close();
+                    openAvatarShop();
+                }
+            }, icon('image'), t('avatar_title')),
+            h('button.btn.btn-primary', {type: 'button', onclick: () => m.close()}, t('close')))]);
     }
 
     // ---------- Sign in with Google ----------
@@ -563,11 +591,145 @@
         return b;
     }
 
-    function showProfile() {
+    function openAvatarShop(parent) {
+        const Av = window.ThinkHopAvatars;
+        if (!Av) return;
+        if (parent) parent.close();
+        const labelName = user ? (user.name || user.username || '?') : 'ThinkHop';
+        const now = Av.parse(myAvatar());
+        const pick = {character: now.character, background: now.background || 'violet', accessory: now.accessory, frame: now.frame};
+        let kind = 'character';
+        const dict = {character: Av.CHARACTERS, accessory: Av.ACCESSORIES, frame: Av.FRAMES, background: Av.BACKGROUNDS};
+        const item = id => shopItems().find(x => x.id === id);
+        const owned = id => !id || !!(item(id) && item(id).owned);
+        const fmt = n => Number(n).toLocaleString(lang());
+        const preview = h('div.av-preview');
+        const buyBox = h('div.av-buy');
+        const tabs = h('div');
+        const grid = h('div.av-grid');
+        const wallet = h('p.muted.small');
+        const save = h('button.btn.btn-primary', {type: 'button', onclick: wear}, icon('tick'), t('save'));
+
+        function draw() {
+            const pts = walletBalance();
+            const topParts = [pick.character ? Av.name(Av.CHARACTERS[pick.character]) : t('avatar_initial')];
+            if (pick.accessory) topParts.push(Av.name(Av.ACCESSORIES[pick.accessory]));
+            const subParts = [Av.name(Av.BACKGROUNDS[pick.background])];
+            if (pick.frame) subParts.push(Av.name(Av.FRAMES[pick.frame]));
+            preview.replaceChildren(
+                Av.render(Av.encode(pick), labelName, 'xl'),
+                h('div', h('strong', topParts.join(' · ')), h('span.muted', subParts.join(' · '))));
+            tabs.replaceChildren(h('div.seg', [
+                ['character', 'avatar_characters'],
+                ['accessory', 'avatar_accessories'],
+                ['frame', 'avatar_frames'],
+                ['background', 'avatar_backgrounds'],
+            ].map(([k, key]) => h('button' + (k === kind ? '.sel' : ''), {
+                type: 'button', onclick: () => {
+                    kind = k;
+                    draw();
+                }
+            }, t(key)))));
+            const items = shopItems().filter(x => x.kind === kind && dict[kind][x.id]);
+            const emptyOpt = kind !== 'background' ? [{id: '', owned: true, price: 0}] : [];
+            const tiles = emptyOpt.concat(items).map(x => {
+                const on = pick[kind] === x.id;
+                const face = Av.encode(Object.assign({}, pick, {[kind]: x.id}));
+                const label = x.id ? Av.name(dict[kind][x.id]) : (kind === 'character' ? t('avatar_initial') : t('avatar_none'));
+                return h('button.av-tile' + (on ? '.on' : '') + (x.owned ? '' : '.locked'), {
+                    type: 'button', 'aria-pressed': String(on), onclick: () => {
+                        pick[kind] = x.id;
+                        draw();
+                    }
+                }, Av.render(face, labelName, 'md'), h('span.av-name', label),
+                x.owned ? h('span.av-price.own', icon('tick'), x.price ? t('avatar_owned') : t('avatar_free')) : h('span.av-price', icon('star'), fmt(x.price)));
+            });
+            grid.replaceChildren(...tiles);
+            // What is in the preview but not owned yet: buy it, one item at a time
+            const missing = [pick.character, pick.accessory, pick.frame, pick.background].filter(id => !owned(id));
+            buyBox.replaceChildren(...missing.map(id => {
+                const it = item(id);
+                if (!it) return null;
+                const short = pts < it.price;
+                const label = Av.name(Av.item(id));
+                const b = h('button.btn.btn-block' + (short ? '.btn-soft' : '.btn-primary'), {
+                    type: 'button', disabled: short || undefined, onclick: async () => {
+                        if (!await confirmBox(t('avatar_buy_title', {name: label}), t('avatar_buy_text', {n: fmt(it.price), m: fmt(pts)}), t('avatar_buy_ok'), t('cancel'))) return;
+                        try {
+                            await busy(b, async () => {
+                                if (user) {
+                                    if (store.get('pending', []).length) await sync();
+                                    const d = await api('avatar.buy', {item: id});
+                                    user = d.user;
+                                } else {
+                                    if (walletBalance() < it.price) throw new ApiError('not_enough_points');
+                                    const map = store.get('ownedAvatars', {});
+                                    map[id] = it.price;
+                                    store.set('ownedAvatars', map);
+                                }
+                            });
+                            toast(t('avatar_bought', {name: label}), 'ok');
+                            onChange();
+                            draw();
+                        } catch (e) {
+                            toast(e.message, 'bad');
+                        }
+                    }
+                }, icon('star'), t('avatar_buy_btn', {name: label, n: fmt(it.price)}));
+                return h('div.av-buy-row', b, short ? h('p.muted.small', t('avatar_need', {n: fmt(it.price - pts)})) : null);
+            }));
+            save.disabled = !!missing.length;
+            wallet.textContent = t('avatar_wallet', {n: fmt(pts)});
+        }
+
+        async function wear() {
+            try {
+                await busy(save, async () => {
+                    if (user) {
+                        const d = await api('avatar.set', pick);
+                        user = d.user;
+                    } else {
+                        const code = Av.encode(pick);
+                        store.set('avatar', code === 'violet' || code === ':violet' ? '' : code);
+                    }
+                });
+                m.close();
+                toast(t('avatar_saved'), 'ok');
+                onChange();
+                if (parent && user) showProfile();
+            } catch (e) {
+                toast(e.message, 'bad');
+            }
+        }
+
         const m = modal([
-            h('div.profile-head', h('span.avatar', (user.name || '?').slice(0, 1).toUpperCase()),
+            h('h3', t('avatar_title')),
+            preview, buyBox, tabs, grid, wallet,
+            h('div.actions',
+                h('button.btn.btn-ghost', {
+                    type: 'button', onclick: () => {
+                        m.close();
+                        if (parent && user) showProfile();
+                    }
+                }, t('cancel')),
+                save),
+        ]);
+        m.box.classList.add('av-modal');
+        draw();
+    }
+
+    function showProfile() {
+        const Av = window.ThinkHopAvatars;
+        const pic = Av ? Av.render(myAvatar(), user.name, 'lg') : h('span.avatar', (user.name || '?').slice(0, 1).toUpperCase());
+        const m = modal([
+            h('div.profile-head',
+                h('button.avatar-edit', {
+                    type: 'button', title: t('avatar_change'), 'aria-label': t('avatar_change'),
+                    onclick: () => openAvatarShop(m),
+                }, pic, h('i', icon('pen'))),
                 h('div', h('h3', t('hello', {name: user.name.split(' ')[0]})), h('p.muted', user.username ? `@${user.username} · ${user.email}` : user.email))),
             h('div.menu-list',
+                h('button', {type: 'button', onclick: () => openAvatarShop(m)}, icon('image'), h('span', t('avatar_title'))),
                 h('button', {type: 'button', onclick: () => showProfileForm(m)}, icon('pen'), h('span', t('profile_edit'))),
                 h('button', {type: 'button', onclick: () => showUsernameForm(m)}, icon('user'), h('span', t(user.username ? 'username_change' : 'username_title'))),
                 h('button', {type: 'button', onclick: () => showPasswordForm(m)}, icon('key'), h('span', t(user.hasPassword ? 'password_change' : 'password_set'))),
@@ -586,6 +748,9 @@
         installNeeded: () => !!config.installNeeded,
         needsAdmin: () => !!config.needsAdmin,
         user: () => user,
+        avatar: myAvatar,
+        avatarSpent,
+        openAvatarShop,
         open: () => (user ? (user.mustVerify ? showVerifyGate() : showProfile()) : (config.accounts ? showSignIn() : showAccountsOff())),
         askUsername: done => showUsernameForm(null, done),
         showDonate,

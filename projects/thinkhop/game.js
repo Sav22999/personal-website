@@ -159,11 +159,11 @@
         store.set('seen', [...seen(), q.sig].slice(-8000));
     }
 
-    /** The wallet also counts what an administrator changed on the account (see admin.player.points). */
+    /** The wallet also counts what an administrator changed on the account and what was spent in the avatar shop. */
     const stats = () => {
         const s = E.stats(A.games());
         const u = A.user();
-        if (u && u.pointsAdjust) s.balance = Math.max(0, s.balance + u.pointsAdjust);
+        s.balance = Math.max(0, s.balance + (u && u.pointsAdjust ? u.pointsAdjust : 0) - (A.avatarSpent ? A.avatarSpent() : 0));
         return s;
     };
     /** Points that can be spent now: the wallet plus what the current game has earned so far. */
@@ -432,8 +432,13 @@
 
     function accountButton() {
         const u = A.user();
+        const av = A.avatar ? A.avatar() : '';
+        const Av = window.ThinkHopAvatars;
+        const pic = u || av
+            ? (Av ? Av.render(av, u ? u.name : 'T', 'small') : h('span.avatar.small', (u ? u.name : 'T').slice(0, 1).toUpperCase()))
+            : icon('user');
         return h('button.account-btn', {type: 'button', onclick: A.open, title: t('account')},
-            u ? h('span.avatar.small', u.name.slice(0, 1).toUpperCase()) : icon('user'), h('span', u ? (u.username || u.name.split(' ')[0]) : t('sign_in')));
+            pic, h('span', u ? (u.username || u.name.split(' ')[0]) : t('sign_in')));
     }
 
     /** The next level to play: the last one unlocked. */
@@ -501,7 +506,7 @@
                 type: 'button', title: t('theme'), 'aria-label': t('theme'), onclick: cycleTheme,
             }, icon('moon'))),
             h('section.hero', h('img.logo', {src: 'icons/favicon.svg', alt: ''}), h('h1', NAME), h('p', t('subtitle')),
-                h('div.total', {title: t('balance')}, icon('star'), t('total_points', {n: fmtNumber(st.balance)}))),
+                h('button.total', {type: 'button', title: t('avatar_title'), onclick: () => A.openAvatarShop()}, icon('star'), t('total_points', {n: fmtNumber(st.balance)}))),
             homeGreeting(),
             h('main.home-main',
                 saved ? resumeCard(saved) : null,
