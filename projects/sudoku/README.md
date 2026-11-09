@@ -1,37 +1,36 @@
 # Sudoku
 
-Il classico rompicapo logico 9×9 sviluppato da Saverio Morelli.
-Disponibile come web app e come applicazione Android per Google Play Store.
+The classic 9×9 logic puzzle developed by Saverio Morelli.
+Available as a web app and as an Android app for the Google Play Store.
 
-## Caratteristiche
+## Features
 
-- **4 livelli di difficoltà**: Facile, Medio, Difficile, Esperto.
-- **Note a matita**: candidati automatici o manuali per ogni cella.
-- **Aiuto esplicativo**: suggerimenti logici passo per passo che spiegano *perché* una determinata cifra è corretta.
-- **Evidenziazione conflitti**: controllo immediato di errori su righe, colonne e riquadri.
-- **Tema chiaro e scuro**: stile adattivo basato sulle preferenze di sistema.
-- **Statistiche e timer**: traccia i tuoi record personali.
-- **100% offline**: nessuna connessione necessaria per giocare.
-- **Multilingua**: italiano, inglese, spagnolo, francese, tedesco.
-- **Senza account né pubblicità**: completamente gratuito.
+- **4 difficulty levels**: Easy, Medium, Hard, Expert.
+- **Pencil notes**: automatic or manual candidates for each cell.
+- **Explanatory hints**: step-by-step logical hints that explain *why* a particular number is correct.
+- **Conflict highlighting**: immediate check for errors on rows, columns, and 3×3 blocks.
+- **Light and Dark theme**: adaptive style matching system preferences.
+- **Statistics and timer**: track your personal best records.
+- **100% offline**: no internet connection required to play.
+- **Multilingual**: Italian, English, Spanish, French, German.
+- **No account, no advertisements**: completely free.
 
-## App Android (Google Play)
+## Android App (Google Play)
 
-La cartella `android/` è un progetto Android Studio (Java) con una shell nativa WebView a schermo intero:
+The `android/` directory is an Android Studio project (Java) with a full-screen native WebView shell:
 
-- Orientamento portrait ottimizzato per l'interazione con la griglia 9×9;
-- Sistema edge-to-edge con colori della barra di stato coordinati al tema chiaro/scuro;
-- Gestione della navigazione indietro con `OnBackInvokedDispatcher`;
-- Schermata di errore offline;
-- Asset completi pronti per Google Play Store (`play-store-icon-512.png`, `store/en-GB/` con immagine in primo piano e
-  screenshot 1080×1920, `store/listing.md`).
+- Portrait orientation optimised for interaction with the 9×9 grid;
+- Edge-to-edge system with status bar colours matching the light/dark theme;
+- Back navigation handling with `OnBackInvokedDispatcher`;
+- Offline error screen;
+- Complete assets ready for Google Play Store (`play-store-icon-512.png`, `store/en-GB/` with feature graphic and
+  1080×1920 screenshots, `store/listing.md`).
 
-### Compilazione e pubblicazione
+### Building and Publishing
 
-1. Apri la cartella `projects/sudoku/android` in Android Studio (File → Open).
-2. Attendi la sincronizzazione di Gradle.
-3. Copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e inserisci le credenziali della tua
-   chiave di firma per Google Play.
-4. Genera il bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
-5. Carica il file `app-release.aab` su Google Play Console.
-6. Compila i testi dello store usando `android/store/listing.md` e carica l'icona a 512px e l'immagine in primo piano.
+1. Open the `projects/sudoku/android` folder in Android Studio (File → Open).
+2. Wait for Gradle sync to complete.
+3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key details.
+4. Generate the bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
+5. Upload the `app-release.aab` file to Google Play Console.
+6. Populate the store listing using `android/store/listing.md` and upload the 512px icon and feature graphic.

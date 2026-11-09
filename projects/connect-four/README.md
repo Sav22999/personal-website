@@ -1,45 +1,39 @@
 # Connect Four (Forza Quattro)
 
-Il classico gioco di allineamento a 4 pedine sviluppato da Saverio Morelli.
-Disponibile come web app e come applicazione Android per Google Play Store.
+The classic 4-in-a-row alignment game developed by Saverio Morelli.
+Available as a web app and as an Android app for the Google Play Store.
 
-## Caratteristiche
+## Features
 
-- **Stanze online con codice**: gioca con gli amici condividendo un codice stanza a 6 caratteri o il link d'invito
-  diretto.
-- **Matchmaking casuale**: trova avversari in rete istantaneamente.
-- **Sullo stesso dispositivo**: modalità Pass & Play a turno su smartphone o tablet.
-- **Contro il computer**: motore AI con diversi livelli di sfida.
-- **Personalizzazione gettoni**: combinazioni di colori vivaci per le pedine e la griglia.
-- **Chat in tempo reale**: invia messaggi durante la partita.
-- **Tema Auto, Chiaro o Scuro**: schede su desktop, un pulsante sui telefoni (`theme.js`).
-- **Multilingua**: italiano, inglese, spagnolo, francese, tedesco.
-- **Senza registrazione né pubblicità**: 100% gratuito.
-- **Funziona anche offline**: il service worker (`sw.js`) apre il gioco senza connessione, per le partite sullo stesso
-  dispositivo o contro il computer.
-- **Nessuna richiesta a terzi**: i font (Fredoka e Nunito, licenza SIL OFL) sono in `fonts/`.
-- **Dati temporanei**: le stanze online inattive vengono cancellate ogni notte da `projects/cron/cleanup.php`.
+- **Online rooms with code**: play with friends by sharing a 6-character room code or direct invite link.
+- **Random matchmaking**: instantly find opponents online.
+- **On the same device**: turn-based Pass & Play mode on smartphone or tablet.
+- **Against the computer**: AI engine with multiple difficulty levels.
+- **Disc customisation**: vibrant colour combinations for discs and the grid.
+- **Real-time chat**: send messages during the game.
+- **Auto, Light, or Dark theme**: tabs on desktop, a toggle button on phones (`theme.js`).
+- **Multilingual**: Italian, English, Spanish, French, German.
+- **No registration, no advertisements**: 100% free.
+- **Works offline**: the service worker (`sw.js`) launches the game without a network connection for local games on the same device or against the computer.
+- **Zero third-party requests**: bundled fonts (Fredoka and Nunito, SIL OFL licence) in `fonts/`.
+- **Ephemeral data**: inactive online rooms are purged nightly by `projects/cron/cleanup.php`.
 
-## App Android (Google Play)
+## Android App (Google Play)
 
-La cartella `android/` è un progetto Android Studio (Java) con una shell nativa WebView a schermo intero:
+The `android/` directory is an Android Studio project (Java) with a full-screen native WebView shell:
 
-- Layout edge-to-edge con adattamento alla barra di sistema;
-- Deep Links / App Links automatici per l'apertura immediata delle stanze (supporta sia `/projects/connect-four/` che
-  `/projects/forza-quattro/`);
-- Tasto indietro: chiude prima ciò che è aperto nel gioco (`window.onAndroidBack` in `game.js`);
-- Schermata di errore offline;
-- Icona adattiva con simbolo trasparente e icona tematica di Android 13+ (`ic_launcher_foreground`,
-  `ic_launcher_background`, `ic_launcher_monochrome`);
-- Asset completi pronti per Google Play Store (`play-store-icon-512.png`, `store/en-GB/` con immagine in primo piano e
-  screenshot 1080×1920, `store/listing.md`).
+- Edge-to-edge layout adapting to system bars;
+- Automatic Deep Links / App Links for instant opening of rooms (supports both `/projects/connect-four/` and `/projects/forza-quattro/`);
+- Back navigation button: closes active in-game dialogs first (`window.onAndroidBack` in `game.js`);
+- Offline error screen;
+- Adaptive launcher icon with transparent foreground and Android 13+ themed icon (`ic_launcher_foreground`, `ic_launcher_background`, `ic_launcher_monochrome`);
+- Complete assets ready for Google Play Store (`play-store-icon-512.png`, `store/en-GB/` with feature graphic and 1080×1920 screenshots, `store/listing.md`).
 
-### Compilazione e pubblicazione
+### Building and Publishing
 
-1. Apri la cartella `projects/connect-four/android` in Android Studio (File → Open).
-2. Attendi il completamento della sincronizzazione di Gradle.
-3. Copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e inserisci le informazioni della tua
-   chiave di firma per Google Play.
-4. Genera il file Android App Bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
-5. Carica l'`.aab` generato (in `app/release/app-release.aab`) su Google Play Console.
-6. Copia i testi della scheda dello store da `android/store/listing.md` e usa l'icona e l'immagine in evidenza fornite.
+1. Open the `projects/connect-four/android` folder in Android Studio (File → Open).
+2. Wait for Gradle sync to complete.
+3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key details.
+4. Generate the Android App Bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
+5. Upload the generated `.aab` (in `app/release/app-release.aab`) to Google Play Console.
+6. Copy the store listing copy from `android/store/listing.md` and use the provided icon and feature graphic.

@@ -1,88 +1,78 @@
-# Rendicontazione Ore
+# Work Timesheet (Rendicontazione Ore)
 
-Registro privato delle ore di lavoro, nato per sostituire il foglio Excel annuale. Non è collegato
-dal sito (pagina progetti, portfolio, sitemap, `llms.txt`) e non viene indicizzato.
+Private work hour timesheet system, designed to replace the annual Excel spreadsheet. Not linked
+from the public website (projects showcase, portfolio, sitemap, `llms.txt`) and not indexed.
 
-PHP e JavaScript senza build e senza dipendenze: si carica la cartella sul server e funziona.
+PHP and vanilla JavaScript with zero build steps and zero dependencies: upload the folder to the server and it works.
 
-## Cosa fa
+## Features
 
-- **Settimana**: da lunedì a domenica, con i totali, il grafico dei giorni e un pulsante per segnare
-  in un colpo i giorni mancanti con l'orario solito (è una modifica sola in cronologia).
-- **Mese**: un tocco su «Giornata normale» segna la giornata di oggi. L'orario proposto si impara
-  dagli ultimi giorni, quindi segue da solo i cambi di stagione. Sabati e festivi hanno le loro regole:
-  in un festivo tutte le ore sono straordinarie, come nel foglio originale.
-  Il mese si apre nella vista dettagliata (una riga per giorno); la panoramica è un calendario con una
-  settimana per riga e il totale di ogni settimana.
-- **Giorno**: fasce orarie, straordinario, tipo di giornata (lavoro, pioggia, permesso, ferie, malattia), note.
-- **Anno**: l'equivalente del foglio «Panoramica». I totali sono in minuti interi, quindi sempre esatti.
-- **Cronologia**: ogni modifica con il prima e il dopo.
-- **Altro**: Excel, stampa, orari rapidi, dimensione del testo, colori. Per gli admin anche utenti e importazione.
+- **Week view**: Monday to Sunday, with totals, day charts, and a quick fill button to populate
+  missing work days with standard hours in a single action (logged as a single history change).
+- **Month view**: a single tap on "Normal day" logs today. Suggested hours adapt dynamically based on
+  recent days, adjusting automatically across seasonal shift changes. Saturdays and public holidays follow dedicated rules:
+  on holidays all worked hours count as overtime, matching the original spreadsheet specification.
+  The month defaults to detailed view (one row per day); the overview provides a calendar layout with one week per row and weekly totals.
+- **Day view**: time slots, overtime calculation, day category (regular work, rain, permit, vacation, sickness), notes.
+- **Year view**: equivalent to the spreadsheet "Overview". Totals are computed in integer minutes, guaranteeing precision.
+- **Audit history**: full audit trail recording state before and after each modification.
+- **Utilities**: Excel export/import, printable views, quick shift presets, font size scaling, color themes. Administrative user management and batch import.
 
-La guida per chi usa l'app è in `guida.html`, collegata dal login e da **Altro**, e si può stampare.
-Le immagini in `assets/guida/` mostrano dati inventati: se le rifai, non usare mai ore vere.
+The user guide is located in `guida.html`, linked from the login view and from **More**, and can be printed.
+Images in `assets/guida/` display mock placeholder data: never use actual private work hours when updating screenshots.
 
-## Ruoli
+## Roles
 
-| | Utente | Amministratore | Master Admin |
+| | User | Administrator | Master Admin |
 |---|:-:|:-:|:-:|
-| Segna e corregge le proprie ore | ✓ | ✓ | ✓ |
-| Legge la cronologia delle proprie ore | ✓ | ✓ | ✓ |
-| Vede e modifica le ore di tutti | | ✓ | ✓ |
-| **Annulla le modifiche dalla cronologia** | | ✓ | ✓ |
-| Approva utenti e importa da Excel | | ✓ | ✓ |
-| Nomina gli amministratori | | | ✓ |
-| Corregge nome ed email degli account | | | ✓ |
-| Elimina gli account senza ore | | | ✓ |
+| Log and modify personal hours | ✓ | ✓ | ✓ |
+| View personal hour audit log | ✓ | ✓ | ✓ |
+| View and edit all team members' hours | | ✓ | ✓ |
+| **Revert changes from audit history** | | ✓ | ✓ |
+| Approve users and import from Excel | | ✓ | ✓ |
+| Appoint and demote administrators | | | ✓ |
+| Update user names and emails | | | ✓ |
+| Delete user accounts without hour logs | | | ✓ |
 
-Un account con ore registrate non si elimina, si disattiva: così le ore restano. Cambiando l'email di una
-persona, il suo vecchio account Google smette di funzionare e le sessioni aperte vengono chiuse.
+An account with existing logged hours cannot be deleted, only deactivated: preserving historical hour records. Changing an account's email immediately revokes access via the old Google account and terminates all active sessions.
 
-Si possono annullare le modifiche alle ore (aggiunte, correzioni, cancellazioni, importazioni).
-Le modifiche ad account e orari rapidi sono elencate per gli admin ma non si annullano. Se un giorno è
-cambiato di nuovo dopo la modifica da annullare, l'app avvisa prima di procedere. Anche l'annullamento
-resta in cronologia e si può a sua volta annullare.
+Hour log edits (additions, modifications, deletions, imports) can be reverted via history. Account and shift preset modifications are logged for admins but cannot be auto-reverted. If a day has been modified again after the change to be reverted, a warning prompt is displayed. The reversion action itself is recorded in history and can also be undone.
 
-## Installazione
+## Installation
 
-1. Copia `credentials-sample.php` in `credentials.php` e compilalo. Il file non va mai su git.
-2. Carica la cartella sul server e apri la pagina: le tabelle (`dad_rend_*`) si creano da sole.
-3. Entra con Google usando l'email indicata in `$master_admin_email`: diventi Master Admin.
-4. In **Altro → Utenti** aggiungi la persona con la sua email Google: potrà entrare senza attendere.
-5. Scegli quella persona in alto («Ore di») e in **Altro → Importa da Excel** carica il foglio annuale:
-   prima di importare vedi il riepilogo mese per mese e ciò che non torna.
+1. Copy `credentials-sample.php` to `credentials.php` and fill in credentials. This file is gitignored.
+2. Upload the folder to the server and navigate to the page: tables (`dad_rend_*`) are provisioned automatically.
+3. Sign in with Google using the email configured in `$master_admin_email` to initialise Master Admin status.
+4. Under **More → Users**, invite team members using their Google email addresses: allowing instant access.
+5. Select a user in the header switcher ("Hours of") and upload their annual spreadsheet via **More → Import from Excel**:
+   a month-by-month reconciliation summary highlights any discrepancies prior to confirmation.
 
-Le tabelle `dad_rend_work_days`, `work_shifts`, `presets` e `audit_log` della prima versione, se esistono,
-non vengono usate e si possono eliminare a mano.
+Legacy tables `dad_rend_work_days`, `work_shifts`, `presets`, and `audit_log` from version 1, if present, are unused and can be safely dropped.
 
-## Sviluppo locale
+## Local Development
 
 ```bash
 php -S localhost:8080 -t ../../..
 ```
 
-Poi apri `http://localhost:8080/projects/dad/rendicontazione/`. Con il server integrato di PHP l'app usa
-sempre `data/dev.sqlite` e mai il database vero, e mostra i pulsanti di accesso di prova. Questi esistono
-solo con `php -S` da questo stesso computer (`is_local_dev()` in `lib/bootstrap.php`): su Apache non
-possono attivarsi in nessun caso.
+Then visit `http://localhost:8080/projects/dad/rendicontazione/`. Running via the built-in PHP web server automatically uses `data/dev.sqlite` instead of MySQL, rendering development login shortcuts. These test shortcuts are active exclusively when served via `php -S` from localhost (`is_local_dev()` in `lib/bootstrap.php`): they cannot be triggered on Apache.
 
-## Dati personali
+## Privacy & Sensitive Data
 
-Il repository è pubblico: credenziali, database e fogli Excel non devono mai entrarci. `.gitignore`
-esclude `credentials.php`, `data/` e `*.xlsx`; i dati stanno solo nel database e arrivano dall'importazione.
+This repository is public: production credentials, live databases, and Excel workbooks must never be committed. `.gitignore` excludes `credentials.php`, `data/`, and `*.xlsx`; all runtime records reside securely in the database or are transiently processed during imports.
 
-## Struttura
+## Structure
 
 ```
-api/index.php       le azioni JSON (api/index.php?action=...)
-assets/app.js       viste e logica dell'interfaccia
-assets/ui.js        DOM, date e ore, finestre, messaggi
-assets/app.css      stile: telefono prima di tutto, chiaro e scuro, stampa
-assets/icons/       icona dell'app
-lib/bootstrap.php   configurazione, database, risposte JSON
-lib/auth.php        account, sessioni, accesso con Google
-lib/timesheet.php   giorni, validazione, totali, orari rapidi
-lib/history.php     cronologia e annullamento
-lib/xlsx.php        lettura e scrittura Excel in PHP puro (serve solo zlib)
-lib/schema.php      tabelle per MySQL/MariaDB e SQLite
+api/index.php       JSON API endpoints (api/index.php?action=...)
+assets/app.js       application views and client logic
+assets/ui.js        DOM utilities, date/time formatting, modals, notifications
+assets/app.css      styling: mobile-first, light/dark themes, print stylesheets
+assets/icons/       app launcher icons
+lib/bootstrap.php   configuration, database connection, JSON output helpers
+lib/auth.php        user accounts, sessions, Google OAuth verification
+lib/timesheet.php   daily records, input validation, totals, shift presets
+lib/history.php     audit history logging and state rollback
+lib/xlsx.php        pure PHP Excel reader and writer (requires zlib extension only)
+lib/schema.php      database schema definitions for MySQL/MariaDB and SQLite
 ```

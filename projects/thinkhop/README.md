@@ -1,137 +1,101 @@
 # ThinkHop
 
-Il gioco di logica e matematica di Saverio Morelli: un salto di ragionamento alla volta (2 ? 3 = 8 → il segno è ^).
-Web app installabile (PWA) e app Android per Google Play. È elencata tra i progetti del sito, nella sezione «Built with AI».
+Saverio Morelli's logic and mathematics game: one cognitive leap at a time (e.g. `2 ? 3 = 8` → operation is `^`).
+Installable web app (PWA) and Android app for Google Play. Listed among website projects in the "Built with AI" section.
 
-## Il gioco
+## The Game
 
-- **500 livelli in 50 mondi**, 5 domande ciascuno. La difficoltà cresce da un livello all'altro e dentro ogni livello
-  (`stageTiers` in `engine.js`).
-- **28 tipologie di giochi di logica e ragionamento** (`CATS` in `engine.js` e `puzzles.js`), con più di 400 pattern procedurali: segno mancante, sequenze, algebra della frutta, intruso numerico e illustrato, chi arriva prima, somme strane, puro nonsense, indovinelli, sequenze di figure, lettere, mini sudoku, tartaruga in marcia, lampadine e bottoni, codici segreti, logica assurda, angeli e diavoli, il tesoro nei forzieri, chi ha cosa, calendario contorto, trappole, bilance pazze, gioco dei bussolotti, combinazione segreta (Mastermind), indagine da detective, alchimia pazza, posti a tavola, specchi e rotazioni.
-- **Guida «?» animata su ogni esercizio** (`help.js`): ogni domanda ha un pulsante `?` che mette in pausa il timer e mostra una dimostrazione guidata e animata in 3 passi per quella tipologia di esercizio.
-- **Icone Twemoji SVG integrate offline** (`twemoji.js`): tutte le emoji sono disegnate come immagini vettoriali SVG identiche su ogni sistema operativo, senza richieste di rete esterne.
-- **Immagine del profilo personalizzabile** (`avatars.js`): usando i punti guadagnati si possono sbloccare 44 personaggi (incluse le 4 mascotte di ThinkHop), 27 accessori, 18 cornici e 32 sfondi SVG. Funziona sia con account sia da ospite, ed è gestibile dal pannello admin.
-- **Superare un livello**: almeno metà delle risposte giuste. 3 stelle dal 90%, 2 dal 70%, 1 dal 50%.
-- **Quattro gradi di difficoltà**: facile, media, difficile, esperto. Il livello 100 è tutto da esperti.
-- **Punti**: 100 / 200 / 300 / 400 secondo la difficoltà, fino a +50% per la velocità e +10% per ogni risposta di fila (massimo
-  +50%). Senza limite di tempo.
-- **Suggerimenti**: si pagano con i punti (50 / 100 / 150 / 200 secondo la domanda) e nascondono risposte sbagliate. All'inizio
-  si ricevono 100 punti in regalo.
-- **Sfida del giorno**: 10 domande uguali per tutti, con la serie di giorni. **Sopravvivenza**: 3 vite.
-- **Dopo ogni domanda** si vede la spiegazione.
-- **Interfaccia e domande in cinque lingue**: italiano, inglese, spagnolo, francese, tedesco. Il pannello admin è in
-  italiano e inglese.
-- **Funziona offline** dopo la prima apertura; l'account è facoltativo.
+- **100 Worlds, 1,000 stages** (10 stages per world, 5 questions each). Difficulty scales progressively from world to world and within each stage (`stageTiers` in `engine.js`).
+- **Play by Difficulty mode**: dedicated quick-play tracks across 4 modes (Beginner, Intermediate, Hero, Impossible) with 7 difficulty tiers (Novice, Easy, Medium, Hard, Expert, Master, Legend) on a 0.00 – 9.99 scale.
+- **34 logic & reasoning puzzle types** (`CATS` in `engine.js` and `puzzles.js`), with over 500 procedural patterns: missing operator, sequences, fruit algebra, numerical & pictorial odd-one-out, order of arrival, weird sums, pure nonsense, riddles, shape progressions, letters, mini sudoku X, grid compass walk, lamps & toggles, secret codes, absurd logic, angels & devils, chest riddles, who owns what, calendar logic, tricky traps, balance scales, shell game (cups), mastermind lock cracking, detective cases, alchemy transformations, table seating arrangements, mirror symmetries & flips, gear rotations, laser reflections, 3D cube nets, connected pipes & fluid levels, kinetic balance mobiles, and origami paper-folding hole punch.
+- **Animated step-by-step "?" guide** (`help.js`): every question includes a `?` button that pauses the timer and displays a 3-step animated demonstration of the core deduction strategy.
+- **Visual step-by-step feedback**: both correct and incorrect answers display visual deduction diagrams illustrating how to reach the solution.
+- **Offline Twemoji vector icons** (`twemoji.js`): emojis render via offline bundled SVGs for crisp, uniform visuals across all operating systems without network requests.
+- **Customizable profile picture** (`avatars.js`): earned points unlock 44 characters (including the 6 official ThinkHop mascots), 27 accessories, 18 frames, and 32 SVG backgrounds. Works both with an account and in guest mode; fully customizable via the admin panel.
+- **Passing a stage**: at least 50% correct answers. 3 stars at 90%, 2 stars at 70%, 1 star at 50%.
+- **Points & wallet**: Base points scaled by difficulty (100–400+), speed bonus up to +50%, and streak bonus up to +50%. No mandatory time pressure.
+- **Hints**: purchased with in-game points (50–200 depending on question tier) to eliminate wrong answers. 100 starting bonus points provided.
+- **Daily challenge**: 10 questions identical for all players daily, tracking day streaks. **Survival mode**: 3 lives.
+- **Multi-language interface & questions**: English, Italian, Spanish, French, and German. Admin panel is available in Italian and English.
+- **Offline first**: works fully offline after first load; user accounts are optional.
 
-## Le domande
+## Questions & Generation
 
-Sette tipi sono generati da `engine.js`, gli indovinelli sono scritti a mano in `riddles.js` (la risposta giusta è sempre
-la prima). Ogni generatore garantisce una sola risposta giusta. Per controllarlo:
+Seven core mathematical types are generated by `engine.js`, while procedural riddles and verbal logic live in `riddles.js` and `riddles-more.js` (correct answer is always the first candidate internally before shuffling). Each generator ensures a unique, mathematically sound answer. To verify question integrity:
 
 ```bash
 node tools/check_questions.js
 ```
 
-Lo script genera migliaia di domande e verifica sillogismi, ordini, segni, livelli, punti e statistiche.
+The script runs automated checks across thousands of generated questions, validating syllogisms, order deductions, signs, stage progression, and scoring.
 
-## Account
+## Account System
 
-Email e password o Google. Il server tiene l'account e il riepilogo delle partite finite (`games`), mai le domande: così
-statistiche, stelle e punti sono uguali su ogni dispositivo. Chi gioca da ospite, quando accede, porta le partite
-nell'account. Password dimenticata: modulo di contatto, come FoodTrack e Giftwise.
+Sign in via email/password or Google OAuth. The server stores account credentials, sync logs, and finished game summaries (`games`), never the raw questions: stats, stars, and balances remain identical across all connected devices. Guest progress automatically syncs when creating or linking an account.
 
-Si può usare lo **stesso client OAuth «Applicazione web» di FoodTrack**: basta il Client ID in `credentials.php`
-(`$google_client_id`) o nel campo di `install-db.php`.
+Can share the **same Google OAuth web client as FoodTrack**: configure Client ID in `credentials.php` (`$google_client_id`) or in `install-db.php`.
 
-## Esercizi e difficoltà
+## Exercises & Difficulty Scaling
 
-Ogni tipo di esercizio è un «pattern» con una difficoltà `d` da 0.00 a 1.99 (`engine.js`, `puzzles.js`, `riddles.js`,
-`riddles-more.js`): il giocatore vede solo la fascia (facile < 0.50, media < 1.00, difficile < 1.50, esperto). I livelli
-chiedono una `d` sempre crescente, la matematica è limitata a una domanda su quattro e una domanda già vista non
-torna: il dispositivo ricorda le ultime 8000 (la sfida del giorno fa eccezione, perché è uguale per tutti). Allo scadere del
-tempo la domanda conta come sbagliata. `node tools/check_questions.js` controlla ogni pattern e il percorso dei 500 livelli.
+Every pattern has a numeric difficulty `d` from 0.00 to 9.99 (`engine.js`, `puzzles.js`, `riddles.js`, `riddles-more.js`). Players see friendly tier labels: Novice, Easy, Medium, Hard, Expert, Master, Legend. Stage progression uses calibrated difficulty bands, limiting pure arithmetic to at most 1 in 4 questions and preventing recently seen questions from repeating (the device caches the last 8,000 seen questions; daily challenge questions are deterministic by date).
 
-## Mascotte
+## Mascots
 
-`mascots.js`: Punto, Sillo, Dedo e Neuro si dividono i tipi di domanda, quindi si alternano da sole. Danno un consiglio di
-metodo (mai la soluzione) le prime 3 volte per tipo, poi una battuta ogni tanto; reagiscono alle risposte e al tempo che
-finisce, presentano i mondi e commentano la fine del livello.
+`mascots.js`: Punto, Sillo, Dedo, Neuro, and Favilla divide puzzle categories and alternate naturally. They offer methodological guidance (never giving away the answer) during a player's first 3 encounters with a category, chime in with witty observations, react to outcomes and low time, introduce worlds, and celebrate stage completions.
 
-## Notifiche
+## Notifications
 
-Web Push come FoodTrack (`lib/push.php`): la push non contiene dati e sveglia il service worker, che chiede a
-`notify.pending` cosa dire. Dal profilo, «Notifiche» accende il dispositivo e ogni tipologia: sfida del giorno, serie in pericolo,
-nuovi amici, sorpassi (le scelte stanno sull'account, `users.notify_off`). Amici e sorpassi partono subito; i promemoria richiedono il job
-`projects/cron/thinkhop-reminders.php` alle 18:00. Nell'app Android la WebView non riceve push.
+Web Push architecture matching FoodTrack (`lib/push.php`): pushes contain no plain text and simply wake the Service Worker, which retrieves pending items securely via `api/index.php?r=notify.pending`.
+From the profile, "Notifications" lets players toggle device push and customize each notification type:
+- **Live / immediate notifications**: new friends, ranking overtakes (dispatched in real time upon occurrence).
+- **Non-live reminders**: daily challenge reminder, streak at risk. Players can customize their preferred delivery hour (default: 18:00 in server timezone `Europe/Rome`).
+Scheduled via `projects/cron/thinkhop-reminders.php`. On Android WebView, push is handled when running as a PWA / browser.
 
-## Username, classifica e amici
+## Usernames, Rankings & Friends
 
-L'username è l'unico dato pubblico: compare nella classifica giornaliera e nella ricerca amici. Dal profilo ognuno sceglie se comparire in classifica (se dice no resta trovabile nella ricerca amici). Nome ed email non
-arrivano mai agli altri giocatori. Gli amici vanno in una sola direzione, senza richieste da accettare. I punteggi sono
-calcolati sul dispositivo: il server scarta solo quelli impossibili, quindi la classifica non è a prova di imbroglio.
+Usernames are public: they appear on the daily leaderboard and in friend search. Players can opt out of public rankings from their profile while remaining searchable for friends. Names and emails are strictly private and never shared. Friendships are one-directional without mandatory confirmations.
 
-## Pannello admin
+## Admin Panel
 
-Si apre dal link **Admin** in fondo alla home o da `admin.html`. In **Domande** si cambiano difficoltà e stato di ogni esercizio.
+Accessible via the **Admin** link in the footer or directly at `admin.html`. Restricted to accounts with `role >= 9` (enforced on every API request):
 
-`admin.html`, solo per gli account con ruolo amministratore (il server lo controlla a ogni chiamata):
+- **Overview**: player count, total games, accuracy by puzzle type, completion rates.
+- **Games**: toggle question categories on/off, adjust category appearance probability weighting (`0.0 – 1.0`), open interactive `?` tutorials and test runs for every category/variant, inspect hints and explanations, and review/delete recent game records.
+- **Questions**: view, edit, test, and toggle custom hand-written questions and difficulty ratings.
+- **Players**: search, inspect wallets, adjust point balances, toggle admin status, or lock accounts.
+- **Profile pictures (Avatar Shop)**: configure prices in points (up to 1,000,000), toggle sales availability (`enabled`), and inspect total purchases (`sold`).
 
-- **Panoramica**: giocatori, partite, risposte giuste per tipo, livelli superati su giocati.
-- **Giochi**: accende o spegne i tipi di domanda, permette di aprire il **tutorial animato `?`** e provare un **esercizio di prova interattivo** per ciascuna tipologia (scegliendo anche la variante, provando il suggerimento e vedendo la spiegazione), cambia domande per livello e costo dei suggerimenti, mostra ed elimina le partite recenti.
-- **Domande**: crea, modifica e prova domande scritte a mano (italiano e inglese obbligatori, le altre lingue facoltative), permette di provare ogni singolo esercizio generato o aprirne il tutorial `?`, e spegne singoli esercizi o indovinelli inclusi nel gioco.
-- **Giocatori**: cerca, disattiva, elimina, nomina altri amministratori, modifica i punti.
-- **Immagini profilo**: gestisce prezzi in punti, disponibilità in vendita (`enabled`) e conteggio acquisti (`sold`) per tutti i personaggi, accessori, cornici e sfondi.
+## Server Installation
 
-Il gioco legge impostazioni e domande con `auth.config` e ne tiene una copia per l'uso offline.
+1. Upload the `projects/thinkhop/` directory.
+2. Open `https://www.saveriomorelli.com/projects/thinkhop/install-db.php`: enter MySQL credentials (can share FoodTrack database; tables use prefix `th_`), configure the first administrator account, and optionally enter Google Client ID.
+3. The script initializes schema and writes `credentials.php`. Delete `install-db.php` after setup.
+Without `credentials.php`, the game runs entirely standalone and offline on the device.
+To rebuild schema tables manually: phpMyAdmin → import `install/thinkhop.sql` (regenerated via `php tools/build-sql.php`).
 
-## Installazione sul server
+## App Installation
 
-1. Carica la cartella `projects/thinkhop/`.
-2. Apri `https://www.saveriomorelli.com/projects/thinkhop/install-db.php`: inserisci le credenziali MySQL (va bene anche il
-   database di FoodTrack, le tabelle hanno il prefisso `th_`), il primo amministratore e, facoltativo, il Client ID di Google.
-3. La pagina crea le tabelle e scrive `credentials.php`, poi si blocca da sola. Per sicurezza eliminala dal server.
+- **From browser**: installable PWA via `manifest.webmanifest` and `sw.js`.
+- **Android**: `android/` contains the Android Studio project with a WebView wrapper. Native features include system Google Sign-In (`window.ThinkHopAndroid`), back button navigation, and external links in browser.
 
-Con `credentials.php` le tabelle si creano da sole alla prima richiesta e gli account si attivano subito: `install-db.php` serve per il primo amministratore e resta aperto (con la password del database) finché non ne esiste uno. Senza `credentials.php` il gioco funziona lo stesso, sul solo dispositivo. In alternativa all'installer:
-phpMyAdmin → `install/thinkhop.sql` (rigenera con `php tools/build-sql.php`), poi copia `credentials-sample.php`.
-
-## Installare l'app
-
-- **Dal browser**: `manifest.webmanifest` e `sw.js` rendono il gioco installabile.
-- **Android**: `android/` è un progetto Android Studio (Java) con la web app in una WebView. Parti native: «Continua con
-  Google» con il selettore di sistema (`window.ThinkHopAndroid`), tasto indietro, link esterni nel browser.
-
-Passaggi per Google Play:
-
-1. Apri `android/` in Android Studio e attendi Gradle. Package: `com.saverio.thinkhop` (non si può più cambiare dopo la
-   prima pubblicazione).
-2. Copia `keystore.properties.sample` in `keystore.properties` con i dati della chiave.
-3. **Login con Google**: in Google Cloud Console, nello stesso progetto del client web, crea un ID client OAuth di tipo
-   **Android** con il package e l'impronta **SHA-1** di ogni chiave che firma l'app.
-4. Genera l'`.aab`. Testi in `android/store/listing.md`. **Gli screenshot sono ancora da fare**, dal gioco pubblicato.
-5. Per aprire i link nell'app aggiungi a `/.well-known/assetlinks.json` l'oggetto di `android/assetlinks.sample.json` con
-   le impronte **SHA-256**.
-
-## Struttura
+## Project Structure
 
 ```
 thinkhop/
 ├── index.php, privacy.html, manifest.webmanifest, sw.js
-├── engine.js      domande, livelli, punti, statistiche (senza DOM)
-├── riddles.js     indovinelli in cinque lingue
+├── engine.js       puzzle generation, worlds, scoring, stats (DOM-free)
+├── riddles.js      hand-written riddles in 5 languages
+├── riddles-more.js additional verbal & deduction riddles
+├── puzzles.js      logic puzzles (scales, cups, locks, mirrors, gears, etc.)
 ├── game.js, ui.js, account.js, i18n.js, releases.js, style.css
 ├── admin.html, admin.js, admin.css
-├── api/index.php  API JSON
-├── lib/           bootstrap (sessioni, sicurezza, Google) e tabelle
+├── api/index.php   JSON API
+├── lib/            bootstrap (sessions, auth, push, mail) and schema
 ├── install-db.php, install/, credentials-sample.php
-├── tools/         controllo delle domande, icone, SQL (bloccata dal browser)
-└── android/
+├── tools/          question checker, icon generator, SQL build script
+└── android/        native Android Studio project
 ```
 
-`tools/make_icons.py` disegna tutte le icone e le immagini.
+## Security
 
-## Sicurezza
-
-Password con `password_hash`, sessione con token casuale in cookie HttpOnly/Secure/SameSite (nel database solo l'hash
-SHA-256), token CSRF su ogni modifica, limiti ai tentativi, `credentials.php`, `lib/`, `install/` e `tools/` bloccati dal
-browser. I punti partono dal dispositivo e il server ne controlla solo i limiti: vanno bene per le statistiche, ma una
-classifica pubblica richiederebbe di calcolarli sul server.
+Passwords hashed using `password_hash` (bcrypt), sessions use secure random tokens in `HttpOnly`/`Secure`/`SameSite` cookies with SHA-256 hashes stored in DB. CSRF tokens protect all state-changing endpoints. Rate-limiting safeguards login attempts. Sensitive files (`credentials.php`, `lib/`, `install/`, `tools/`) are blocked via `.htaccess`.

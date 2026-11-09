@@ -1,290 +1,176 @@
-# Fischietto — ripasso del regolamento per arbitri FIPAV
+# Fischietto — FIPAV Volleyball Referee Rulebook Revision
 
-Portale per ripassare il regolamento FIPAV: quiz, riferimenti normativi, documenti ufficiali e statistiche personali.
-Domande e riferimenti stanno nel database MySQL e arrivano da un'API autenticata; statistiche, segnalibri e quiz sospesi
-sono salvati per ogni utente.
+Portal for revising the FIPAV (Italian Volleyball Federation) rulebook: quizzes, regulatory references, official documents, and personal statistics.
+Questions and regulatory citations reside in the MySQL database and are served through an authenticated API; statistics, bookmarks, and in-progress quizzes are stored per user.
 
 Online: `https://www.saveriomorelli.com/projects/ripasso-fipav/`
 
-## Struttura
+## Structure
 
 ```
 ripasso-fipav/
-├── index.html            portale (accesso, quiz, ripasso, documenti, statistiche, profilo)
-├── admin.html            pannello di gestione (panoramica, utenti, domande, riferimenti, segnalazioni, documenti)
-├── simulazione.html      simulazione partita (beta, per tutti gli utenti)
-├── privacy.html          informativa privacy (italiano ufficiale, inglese di cortesia)
-├── manifest.webmanifest  nome, icone e avvio dell'app installabile
-├── sw.js                 service worker (app installabile, interfaccia disponibile anche con rete scarsa)
-├── api/index.php         API JSON (?r=azione): unico punto che legge e scrive i dati
-├── assets/               CSS, JavaScript, icone (assets/icons/) e note di rilascio (assets/version.js)
-├── documenti/            PDF ufficiali (fissi) scaricabili dal portale
-│   └── altri/            «Altri documenti utili», gestiti dal pannello
-├── lib/                  codice PHP e configurazione (bloccata al browser)
-│   ├── config.php        ← credenziali del database (NON su git)
+├── index.html            portal interface (auth, quiz, review, documents, statistics, profile)
+├── admin.html            management panel (overview, users, questions, references, feedback, documents)
+├── simulazione.html      match simulation (beta, available to all users)
+├── privacy.html          privacy policy (official Italian, courtesy English)
+├── manifest.webmanifest  app metadata and icons for installable PWA
+├── sw.js                 service worker (offline interface caching, network resilience)
+├── api/index.php         JSON API (?r=action): central backend endpoint validating session and permissions
+├── assets/               CSS, JavaScript, icons (assets/icons/), and release notes (assets/version.js)
+├── documenti/            static official PDF documents downloadable from the portal
+│   └── altri/            "Other useful documents", managed via the admin panel
+├── lib/                  PHP source code and configuration (blocked from direct browser access)
+│   ├── config.php        ← database credentials (gitignored)
 │   ├── config.example.php
-│   ├── mail-config.php   ← casella email noreply (NON su git)
+│   ├── mail-config.php   ← noreply SMTP credentials (gitignored)
 │   └── mail-config.example.php
-├── install.php           installazione guidata (una volta sola, poi va eliminato)
-├── install/seed.json     domande e riferimenti iniziali (bloccato al browser)
-└── sql/                  dump SQL per phpMyAdmin (NON su git, bloccato al browser)
+├── install.php           guided installer (used once, then removed)
+├── install/seed.json     seed questions and regulatory references
+└── sql/                  SQL dumps for phpMyAdmin (gitignored, blocked from browser)
 ```
 
-Le pagine sono HTML statico: non contengono dati. Tutto passa dall'API PHP, che controlla sessione e permessi a ogni
-richiesta.
+Frontend views are static HTML with no embedded private data; all state exchanges happen through the PHP API, which verifies session and access control on every request.
 
-## Aggiornare una versione già online
+## Updating a Live Deployment
 
-Carica via FTP tutti i file **tranne** `lib/config.php` (quello sul server resta com'è). Al primo accesso il database si
-aggiorna da solo:
+Deploy files via FTP **excluding** `lib/config.php` (retaining the live server configuration). On the first access, schema migrations run automatically:
 
-- aggiunge la colonna per il cambio password obbligatorio;
-- lascia un solo **master admin** (livello 10): l'account con id più basso tra quelli a 10; gli altri amministratori
-  passano a 9;
-- crea la tabella degli «Altri documenti utili»;
-- aggiunge stagione, tipo e nota di modifica ai riferimenti e segna le novità 2026/27.
+- Adds mandatory password reset column;
+- Ensures a single **master admin** (level 10: lowest ID among level 10 users; other administrators demoted to 9);
+- Creates the table for "Other useful documents";
+- Populates season, change type, and modification notes for regulatory citations (highlighting 2026/27 updates).
 
-Non serve rieseguire `install.php`.
+Re-running `install.php` is never needed.
 
-## Documenti
+## Documents
 
-La sezione «Documenti» del portale ha due parti.
+The "Documents" section is split into two categories:
 
-**Documenti ufficiali** (fissi): sono le fonti da cui sono tratte domande e riferimenti. Stanno in `documenti/` e si
-aggiornano solo via FTP, sostituendo il file con lo stesso nome. Il portale controlla da solo quali file esistono.
+**Official Documents** (static): primary sources from which questions and rule references originate. Located in `documenti/` and updated directly via FTP by replacing the file with an identical filename. The portal scans available files automatically.
 
-| Fonte                                                  | File                                 |
-|--------------------------------------------------------|--------------------------------------|
-| Regole di gioco 2025–2028                              | `regole-di-gioco-2025-2028.pdf`      |
-| Casistica ufficiale 2025–2028                          | `casistica-ufficiale-2025-2028.pdf`  |
-| Indicazioni tecniche 2025/26                           | `indicazioni-tecniche-2025-2026.pdf` |
-| Normative federali 2026/27 (con modifiche evidenziate) | `normative-federali-2026-2027.pdf`   |
-| Vademecum 2026/27                                      | `vademecum-2026-2027.pdf`            |
+| Source                                                   | Filename                             |
+|----------------------------------------------------------|--------------------------------------|
+| Rules of the Game 2025–2028                              | `regole-di-gioco-2025-2028.pdf`      |
+| Official Casebook 2025–2028                              | `casistica-ufficiale-2025-2028.pdf`  |
+| Technical Guidelines 2025/26                             | `indicazioni-tecniche-2025-2026.pdf` |
+| Federal Regulations 2026/27 (with highlighted revisions) | `normative-federali-2026-2027.pdf`   |
+| Vademecum 2026/27                                        | `vademecum-2026-2027.pdf`            |
 
-**Altri documenti utili** (gestibili): amministratori e master admin li aggiungono, modificano, sostituiscono,
-riordinano ed eliminano dal pannello (sezione Documenti). I file stanno in `documenti/altri/` e l'elenco nel database
-(tabella `fr_documents`).
+**Other Useful Documents** (managed): administrators and master admin can upload, modify, replace, reorder, and remove documents via the admin panel (Documents tab). Files reside in `documenti/altri/` with metadata indexed in MySQL (`fr_documents`).
 
-- Il pannello può scrivere solo in `documenti/altri/`: i documenti ufficiali non si possono modificare o cancellare da
-  lì.
-- Il server accetta solo veri PDF (controlla il contenuto, non solo l'estensione), fino a 24 MB o al limite di PHP se è
-  più basso (`upload_max_filesize` e `post_max_size`, oggi 25 MB nel `.user.ini` del sito). Il nome del file lo decide
-  il server a partire da titolo ed edizione.
-- In `documenti/` e `documenti/altri/` il server apre solo file `.pdf`: qualunque altro file viene bloccato.
-- Quando si sostituisce un PDF, il link cambia (`?v=`), così nessuno vede la versione vecchia rimasta in cache.
-- **Permessi su Aruba:** PHP deve poter scrivere in `documenti/altri/`. Se il pannello mostra un errore sui permessi,
-  imposta la cartella a `755` dal File Manager o dal client FTP.
+- The admin panel strictly writes to `documenti/altri/`; official documents cannot be tampered with or deleted from the panel.
+- Uploads must be authentic PDF files (MIME/magic bytes inspected, not merely file extension), up to 24 MB or the host PHP limit (`upload_max_filesize` and `post_max_size`, currently 25 MB in `.user.ini`). Clean filenames are generated by the server based on title and edition.
+- Server configuration restricts `documenti/` and `documenti/altri/` to serving `.pdf` files exclusively.
+- PDF replacements append cache-busting query strings (`?v=`) so clients receive updated versions immediately.
+- **Hosting permissions:** PHP requires write permission on `documenti/altri/` (`755`).
 
-## Regole nuove o modificate
+## New and Modified Rules
 
-Ogni riferimento può indicare la **stagione** in cui la regola è stata introdotta o cambiata (es. `2026/27`), il
-**tipo** (nuova o modificata) e una breve nota su **cosa cambia**. Si impostano dall'editor dei riferimenti nel
-pannello.
+Each reference citation can specify the **season** introduced or revised (e.g. `2026/27`), the **type** (new vs modified), and a summary note explaining **what changed**. Configured via the citation editor in the admin panel.
 
-- La stagione in corso è calcolata da sola: la stagione FIPAV parte il 1° luglio. L'etichetta della stagione in corso è
-  evidenziata; quelle delle stagioni passate restano come storico, più discrete.
-- Nel portale: etichetta sui riferimenti (Ripasso e sotto le domande), nota «Cosa cambia», filtro «Novità» nel Ripasso,
-  opzione del quiz «Solo novità della stagione» e indicatore «Novità» sulla domanda.
-- Compilazione iniziale (automatica, al primo accesso dopo l'aggiornamento, solo sui riferimenti ancora vuoti):
-    - Normative federali 2026/27 «con modifiche evidenziate»: le sezioni evidenziate in giallo nel PDF (2.8 e 4.2–4.8,
-      con 4.6.1 e 4.7.1) come «Modificata 2026/27»;
-    - Precisazioni sperimentazioni 2026/27 (NF-PR.1–4) come «Nuova 2026/27».
-- Da verificare a mano: il Vademecum 2026/27 ha molte parti evidenziate (sezioni 2, 4, 5.8–5.8.2, 6.1, 7, 10, 13, 14) ma
-  il documento non dice che siano modifiche; nelle Normative federali c'è «UNDER 23» in rosso a margine della 2.3.1.
+- The active season is computed automatically based on FIPAV calendar (commencing 1 July). Active season badges are highlighted; historical seasons remain visible in history logs.
+- Portal interface: badges on reference cards (Review and below quiz questions), "What changed" callout, "Updates" filter in Review view, and quiz filter "Only current season novelties".
+- Automated initial population:
+    - Federal Regulations 2026/27 with highlighted revisions: sections marked in yellow in the PDF (2.8 and 4.2–4.8, with 4.6.1 and 4.7.1) flagged as "Modified 2026/27";
+    - 2026/27 experimental rule adjustments (NF-PR.1–4) flagged as "New 2026/27".
 
-## Chatbot (alpha, solo amministratori)
+## Local Chatbot (Alpha, Admins Only)
 
-Sezione «Chatbot» del portale (`#chatbot`, visibile dal livello 9 in su): domande sul regolamento in linguaggio
-naturale. Codice in `assets/chatbot.js`, caricato solo quando si apre la sezione. **Nessun servizio esterno riceve le
-domande**: tutto gira nel browser.
+"Chatbot" portal tab (`#chatbot`, visible to level ≥ 9): natural language questions on volleyball regulations. Implemented in `assets/chatbot.js` and loaded dynamically. **No external services receive queries**: inference runs entirely on the client.
 
-1. **Ricerca** (sempre disponibile, istantanea): la domanda viene normalizzata, ridotta alle radici delle parole e
-   arricchita con sinonimi del gergo (battuta → servizio, cambio → sostituzione, «3 metri» → linea di attacco,
-   «quante» → numero massimo…). I riferimenti sono indicizzati con titolo, testo, testo completo e testo delle domande
-   del quiz che li citano; l'ordinamento è BM25. Se una domanda del quiz è molto simile, ne mostra anche la risposta
-   corretta. La risposta è fatta dalle frasi più pertinenti dei riferimenti, con i codici e «Apri nel Ripasso».
-2. **Assistente AI locale** (facoltativo, in tutti i browser moderni): un modello linguistico (famiglia Qwen2.5
-   Instruct) gira **sul dispositivo**. Il motore è scelto in automatico: con una WebGPU completa (Chrome/Edge, anche su
-   Android) usa la scheda grafica con WebLLM 0.2.85; altrimenti (per esempio Firefox, la cui WebGPU ha limiti troppo
-   bassi) usa il processore con Transformers.js 3.7.5 su WebAssembly, più lento ma compatibile. L'assistente opera con
-   un vincolo rigoroso: tutte le domande e le risposte sono ed interpretate esclusivamente in **italiano** nell'ambito
-   del regolamento FIPAV. Il modello legge i riferimenti più pertinenti trovati al passo 1 e sintetizza la risposta
-   citando sempre i codici tra parentesi quadre (cliccabili; se un codice è errato viene segnalato). Modelli
-   disponibili:
-    - Su scheda grafica (WebGPU): Standard (Qwen2.5-1.5B, ≈ 1 GB, predefinito e bilanciato), Qualità (Qwen2.5-3B, ≈ 2
-      GB, risposte più articolate e precise), Massima precisione (Qwen2.5-7B, ≈ 4,5 GB, per computer potenti con scheda
-      dedicata) e Leggero (Qwen2.5-0.5B, ≈ 0,4 GB).
-    - Su processore (CPU/WASM): Standard (Qwen2.5-1.5B, ≈ 1,2 GB, predefinito e consigliato per risposte affidabili) e
-      Leggero (Qwen2.5-0.5B, ≈ 0,5 GB, rapido ma risposte minime).
-      I file del modello si scaricano una volta sola e restano nella cache del browser; la libreria arriva da jsDelivr e
-      i pesi da Hugging Face (solo download: nessuna domanda o dato lascia mai il dispositivo).
+1. **Search engine** (always available, instant): query is normalized, stemmed, and expanded with volleyball domain synonyms (e.g. service terminology, substitutions, attack lines). Citations are indexed across titles, summary texts, full content, and associated quiz questions, ranked via BM25. Where a matching quiz question exists, the correct answer is also presented.
+2. **Local AI Assistant** (optional, modern browsers): executes small language models (Qwen2.5 Instruct family) **on device**. Engine is automatically selected: systems with complete WebGPU support (Chrome/Edge desktop and Android) use GPU acceleration via WebLLM 0.2.85; fallbacks (e.g. Firefox) run on CPU/WASM via Transformers.js 3.7.5. The assistant operates under strict domain prompts in Italian covering FIPAV rules, citing bracketed references that open rule cards. Available model variants:
+    - GPU (WebGPU): Standard (Qwen2.5-1.5B, ≈ 1 GB, default balanced), Quality (Qwen2.5-3B, ≈ 2 GB), Max Precision (Qwen2.5-7B, ≈ 4.5 GB), Lightweight (Qwen2.5-0.5B, ≈ 0.4 GB).
+    - CPU (WASM): Standard (Qwen2.5-1.5B, ≈ 1.2 GB), Lightweight (Qwen2.5-0.5B, ≈ 0.5 GB).
+    Model weights cache in the browser origin storage after initial download.
 
-Interfaccia: lo stato dell'assistente è una riga (ricerca, download con avanzamento, attivo, errore) con «Dettagli» per
-spiegazione e scelta del modello. Se uno o più modelli sono già stati scaricati in locale, all'apertura l'assistente si
-attiva automaticamente di default selezionando il modello più potente tra quelli disponibili; quando l'assistente è
-attivo o in caricamento, il pulsante «Passa alla ricerca» permette di tornare istantaneamente alla semplice ricerca
-testuale. Nella scelta del modello una spunta «Scaricato» contrassegna i modelli già presenti in cache per i quali non è
-necessario alcun download; i modelli sono ordinati in modo intuitivo dal più leggero al più pesante. Sotto ogni risposta
-della chat compare un'etichetta distintiva che specifica il modello impiegato (es. «Standard · Qwen2.5-1.5B-Instruct
-(GPU)») oppure «Ricerca diretta BM25». Nelle risposte della ricerca il riferimento migliore è aperto e gli altri sono
-comprimibili. I codici citati e i chip aprono un'anteprima del riferimento (finestra; su telefono pannello dal basso)
-con «Apri nel Ripasso». Mentre l'assistente scrive il pulsante di invio diventa «Ferma» (anche Esc). Azioni sotto le
-risposte: Copia, Rigenera, Chiedi all'assistente (sulle risposte della ricerca, quando l'assistente è attivo). Se la
-ricerca non trova niente, il modello non viene interpellato. La conversazione resta in `sessionStorage` (ultimi 30
-messaggi).
+Recent conversation history persists in `sessionStorage` (last 30 messages).
 
-Limiti dell'alpha: un modello piccolo può sbagliare o semplificare, perciò ogni risposta mostra i riferimenti consultati
-e un avviso. Per non dipendere da jsDelivr/Hugging Face si possono ospitare libreria e modello sul sito (attenzione: il
-`.htaccess` di Fischietto blocca i file `.json`, che il modello usa).
+## Match Simulation (Beta)
 
-## Simulazione partita (beta)
+Animated 2.5D match simulation to practice real-time refereeing decisions as 1st Referee (chair view), 2nd Referee (net side view), or solo referee (`SIM_MIN_LEVEL` in `assets/sim/ui.js`).
 
-Dalla versione 4.1.0 la simulazione è disponibile per tutti gli utenti (resta in beta): barra in alto, menu dell'account
-e statistiche nella pagina Statistiche. La soglia è `SIM_MIN_LEVEL` in `assets/sim/ui.js`.
+- `assets/sim/render3d.js`: canvas-rendered court, players, and ball across three camera angles without external dependencies.
+- `assets/sim/engine.js`: match state (scores, rotations, scoresheet, sanctions), rally construction with regulatory decision prompts.
+- `assets/sim/situations.js`: situation catalog with regulatory guidance and citations (tagged `SIM-<situation>`).
+- `assets/sim/gestures.js`: animated official referee signals (Rules 22.2.3 and 30.1, Technical Guidelines 4).
+- `assets/sim/ui.js`: simulation settings, game loop, referee decision inputs, statistics.
 
-## Profilo e menu
+## Profile and Navigation
 
-- Il menu dell'avatar contiene solo: «Il mio profilo», «Pannello di gestione» (moderatori e admin), tema, «Esci».
-- La pagina **Il mio profilo** (`#profilo`) permette di cambiare nome e password, scegliere il tema, vedere i propri
-  progressi, azzerare le statistiche e uscire. L'email non si modifica dal portale.
-- L'esportazione JSON di domande e riferimenti è nel pannello di gestione (pulsante «Esporta» nelle pagine Domande e
-  Riferimenti).
-- Amministratori e master admin gestiscono gli «Altri documenti utili» dalla sezione Documenti del pannello.
+- User menu contains: "My Profile", "Admin Panel" (moderators and admins), theme selector, "Log out".
+- **My Profile** (`#profilo`): update display name, change password, select theme, inspect progress stats, reset personal statistics, and log out.
+- JSON exports for questions and citations are available in the admin panel.
 
-## Versioni e pagina Novità
+## Versions and Release Notes
 
-Il numero di versione nel footer porta alla pagina **Novità** (`#novita`), con le note di ogni versione. Le note stanno
-in `assets/version.js`: per pubblicare una nuova versione aggiungi un elemento in cima a `APP_RELEASES` e aggiorna il
-parametro `?v=` nei tag `<script>` e `<link>` di `index.html` e `admin.html`, in `assets/boot.js` e il nome `CACHE` in
-`sw.js`. La versione è visibile anche nella schermata di accesso.
+The footer version tag links to **Release Notes** (`#novita`). Configured in `assets/version.js` via `APP_RELEASES`. Release updates bump query strings `?v=` across HTML script/link tags, `assets/boot.js`, and `CACHE` identifier in `sw.js`.
 
-**Importante:** aggiorna `?v=` ogni volta che modifichi un file CSS o JavaScript, anche per piccole correzioni. L'
-`.htaccess` del sito fa conservare CSS e JS ai browser per un mese: senza un nuovo `?v=` gli utenti continuerebbero a
-vedere la versione vecchia.
+## Progressive Web App
 
-## App installabile
+Installable via standard PWA manifest (`manifest.webmanifest` + `sw.js` over HTTPS). Service worker caches core UI assets only (HTML, CSS, JS, icons); API responses and documents are not cached locally, keeping private account data on the server.
 
-Fischietto è una web app installabile (`manifest.webmanifest` + `sw.js`, solo su HTTPS). Su Android e computer il
-pulsante «Installa l'app» compare nel menu dell'account e nella pagina Il mio profilo; su iPhone vengono mostrati i
-passaggi per «Aggiungi alla schermata Home».
+## Admin Overview
 
-Il service worker non salva mai le risposte dell'API né i PDF: conserva solo l'interfaccia (pagine, CSS, JS, icone),
-così i dati personali restano sempre sul server. Il nome della cache (`CACHE` in `sw.js`) segue la versione: aggiornalo
-insieme a `?v=`.
+Management panel dashboard tracks pending registrations and feedback reports, study progress metrics, correct answer breakdown per source, difficulty hot-spots, season updates, and catalog status. Study metrics are aggregated by `admin.overview` (level ≥ 5) anonymously without user identifying info.
 
-## Panoramica del pannello
+## User Insights (Admins)
 
-La home del pannello mostra cosa c'è da fare (registrazioni, segnalazioni), l'attività di studio, le risposte corrette
-per fonte, i riferimenti più difficili, le novità della stagione, lo stato dei contenuti (con scorciatoie agli elenchi
-già filtrati), le domande per fonte e, per gli amministratori, i documenti. I dati di studio arrivano dall'azione API
-`admin.overview` (livello ≥ 5): sono solo totali, senza nomi né email.
+Tapping a user profile in the admin table displays read-only training stats: answered, correct, and incorrect counts, performance per source, error-prone citations, saved bookmarks, and in-progress quizzes (`admin.user.stats`, level ≥ 9).
 
-## Panoramica utente (amministratori)
+## Profile Pictures
 
-Nel pannello, toccando un utente si apre la sua panoramica in sola lettura: risposte date, corrette ed errate, risultati
-per fonte, riferimenti più sbagliati, domande salvate e segnalate, quiz sospesi. Non mostra email né altri dati
-personali (azione API `admin.user.stats`, livello ≥ 9). Su telefono le sezioni del pannello sono in una barra di
-navigazione in basso.
+Avatars are generated via [Gravatar](https://gravatar.com) using SHA-256 hashes of the user email with `d=404` fallback to user initials. Plaintext emails are never disclosed.
 
-## Immagine del profilo
+## Mobile Responsiveness
 
-L'avatar viene da [Gravatar](https://gravatar.com): il server calcola l'impronta SHA-256 dell'email e il browser chiede
-l'immagine a Gravatar con `d=404`. Se l'utente non ha un'immagine su Gravatar compaiono le sue iniziali. L'email non
-viene mai inviata in chiaro a Gravatar.
+- Phone layouts transition navigation to a persistent bottom bar; modals and action sheets slide from bottom; question editor expands full-screen.
+- Text inputs use 16px font on touch to prevent unwanted auto-zooming on iOS; minimum tap targets adhere to 44px guidelines.
+- Responsive breakpoints tested at 320px, 390px, 768px, and 1280px.
 
-## Dispositivi mobili
+## Roles and Access Levels
 
-- Su telefono la navigazione passa a una barra in basso; menu, conferme e azioni si aprono come pannelli dal basso;
-  l'editor delle domande è a schermo intero.
-- Campi di testo a 16px sui dispositivi touch (niente zoom automatico su iPhone) e pulsanti da almeno 44px.
-- Verificato senza scorrimento orizzontale a 320, 390, 768 e 1280px.
+New registrations default to level 0 (**pending**) until approved by an administrator.
 
-## Ruoli
+| Level | Role              | Permissions                                                                    |
+|-------|-------------------|--------------------------------------------------------------------------------|
+| 0     | Pending           | Registered account awaiting administrator approval                             |
+| 1     | User              | Quizzes, rule revision, official documents, personal statistics                |
+| 5     | Content Moderator | + Question and citation management, inspect user feedback                      |
+| 9     | Administrator     | + Approve users, manage user accounts and moderators, manage "Other documents" |
+| 10    | Master Admin      | Exactly one: full management including appointing/demoting administrators      |
 
-Chiunque può registrarsi, ma l'account resta **in attesa** finché un amministratore non lo abilita.
+- Administrators (9) cannot edit, demote, or delete other administrators or the master admin.
+- Master admin role can be transferred to an active user via confirmation password prompt.
+- Deactivated or demoted accounts are terminated from active sessions immediately.
 
-| Livello | Ruolo                | Cosa può fare                                                                    |
-|---------|----------------------|----------------------------------------------------------------------------------|
-| 0       | Nessun accesso       | account registrato, non può entrare                                              |
-| 1       | Utente               | quiz, ripasso, documenti, statistiche                                            |
-| 5       | Moderatore contenuti | + gestione domande e riferimenti, vede le segnalazioni                           |
-| 9       | Amministratore       | + abilita gli utenti, gestisce utenti e moderatori e gli «Altri documenti utili» |
-| 10      | Master admin         | uno solo: + gestisce anche gli amministratori                                    |
+## Passwords
 
-- Gli amministratori (9) non possono modificare, reimpostare o eliminare altri amministratori né il master: solo il
-  master admin può nominare, declassare o gestire gli amministratori.
-- Il master admin non può essere modificato da nessuno. Può passare il proprio ruolo a un altro utente attivo (menu «⋯»
-  dell'utente → «Passa il ruolo di master admin», con conferma della password): lui diventa 10 e il vecchio master 9.
-- Nessuno può modificare il proprio account dal pannello (si usa il menu del profilo).
-- Chi viene disabilitato o perde l'accesso è disconnesso subito.
+- Minimum password complexity: 10 characters, at least three character classes (lowercase, uppercase, numbers, symbols), excluding user name and email.
+- **Forgotten password**: links to master admin contact form.
+- **Admin reset**: generates a single-use temporary password and invalidates active sessions; mandatory password change is enforced on first subsequent login.
 
-## Password
+## Security
 
-- Regole per ogni nuova password: almeno 10 caratteri, almeno tre tipi tra minuscole, maiuscole, numeri e simboli, senza
-  nome o email. Il portale mostra un indicatore di robustezza.
-- **Password dimenticata**: dalla schermata di accesso l'utente viene indirizzato al modulo di contatto del master admin
-  (`https://www.saveriomorelli.com/contact-me/email/`).
-- **Reset dal pannello**: genera una password temporanea (mostrata una sola volta) e chiude le sessioni dell'utente. Al
-  primo accesso l'utente deve sceglierne una nuova prima di poter usare il portale: finché non lo fa, l'API rifiuta ogni
-  altra richiesta.
+- Passwords hashed via `password_hash` (bcrypt). Session tokens use randomized identifiers in `HttpOnly`, `Secure`, and `SameSite=Lax` cookies; only SHA-256 hashes are persisted in the database.
+- State-changing actions require CSRF tokens and JSON payloads.
+- Account lockout after consecutive failed login attempts (15-minute lock).
+- Direct access blocked for `lib/`, `install/`, `sql/`, and hidden/markdown/JSON configuration files.
+- Prepared SQL statements throughout.
+- Internal code comments and documentation are maintained in English; user-facing application text is in Italian.
 
-## Sicurezza
+## Transactional Emails
 
-- Password salvate con `password_hash` (bcrypt). La sessione usa un token casuale in un cookie `HttpOnly`, `Secure` e
-  `SameSite=Lax`; nel database ne è salvato solo l'hash.
-- Tutte le modifiche richiedono un token CSRF e un corpo JSON.
-- Dopo troppi tentativi di accesso falliti l'account viene bloccato per 15 minuti; anche le registrazioni sono limitate.
-- `lib/`, `install/`, `sql/` e i file `.md`, `.json`, `.sql` e nascosti non sono raggiungibili dal browser
-  (`.htaccess`).
-- Query sempre con prepared statement.
-- I commenti nel codice sono in inglese; i testi mostrati agli utenti restano in italiano.
+Automated notifications dispatched via SMTP (`lib/mailer.php`) with HTML templates (`lib/email-template.php`):
 
-## Simulazione partita (beta)
+- **Account approved**: welcome notification with login instructions;
+- **Registration rejected**: notification prior to request purging;
+- **Password reset**: temporary credential delivery with prompt to reset on login;
+- **Role changed**: notification explaining updated privileges;
+- **New registration**: notification to configured `notify_email`.
 
-`simulazione.html` è una partita animata in 2.5D da arbitrare in tempo reale, come 1° arbitro (vista dal seggiolone), 2°
-arbitro (vista sotto la rete, lato segnapunti) o arbitro unico. Per ora è riservata agli amministratori (`SIM_MIN_LEVEL`
-in `assets/sim/ui.js`); il link è nel menu dell'account.
-
-- `assets/sim/render3d.js`: disegno del campo, dei giocatori e della palla (canvas, senza librerie), con le tre viste.
-- `assets/sim/engine.js`: stato della partita (punteggio, rotazioni, referto, sanzioni), costruzione di ogni azione con
-  le situazioni da regolamento e valutazione delle decisioni.
-- `assets/sim/situations.js`: catalogo delle situazioni con aiuto, decisione corretta e riferimenti (i codici delle
-  segnalazioni sono `SIM-<situazione>`).
-- `assets/sim/gestures.js`: animazione della segnaletica ufficiale (Regole 22.2.3 e 30.1, Indicazioni tecniche 4).
-- `assets/sim/ui.js`: impostazioni, ciclo di gioco, comandi, decisioni, esiti, statistiche.
-
-È aggiornata alle sperimentazioni FIPAV 2026/27 (Normative federali 4.1, 4.2, 4.3 e 4.7). Statistiche e segnalazioni
-sono salvate nello spazio `sim` dei dati personali; le segnalazioni compaiono in Gestione › Segnalazioni insieme a
-quelle dei quiz.
-
-## Email agli utenti
-
-Il portale invia email dalla casella noreply del sito (SMTP, senza librerie esterne: `lib/mailer.php`), con il modello
-grafico di `lib/email-template.php`:
-
-- **account abilitato**: benvenuto e indicazioni per accedere (inviata quando un account viene abilitato per la prima
-  volta);
-- **registrazione rifiutata**: avviso prima che la richiesta venga eliminata;
-- **password reimpostata**: la password temporanea, da cambiare al primo accesso;
-- **ruolo cambiato**: il nuovo ruolo e cosa permette (anche quando si passa il ruolo di master admin; non quando un
-  account viene disabilitato o riabilitato);
-- **nuova registrazione** (all'indirizzo `notify_email` di `lib/config.php`, se impostato).
-
-Agli utenti già attivi che non hanno mai ricevuto l'email di attivazione la si invia dalla sezione Utenti («Invia a
-tutti» oppure dal menu «⋯» del singolo utente). La data di invio è salvata in `activation_mail_at`.
-
-I dati della casella stanno in `lib/mail-config.php` (copia di `lib/mail-config.example.php`): escluso da git e bloccato
-al browser. Senza quel file il portale funziona ma non invia email, e il pannello lo segnala.
-
-Le icone delle email sono disegnate in SVG (`assets/email/*.svg`) e inviate come PNG, perché Gmail e Outlook non
-mostrano le immagini SVG. Se modifichi un SVG, rigenera il PNG corrispondente (144×144, sfondo trasparente).
-
-## Notifica email (facoltativa)
-
-Per ricevere un'email a ogni nuova registrazione, compila in `lib/config.php` `notify_email` (il tuo indirizzo) e
-`mail_from` (una casella del dominio, es. `noreply@saveriomorelli.com`).
+Credentials configured in `lib/mail-config.php` (gitignored). If omitted, the portal functions normally while logging skipped dispatches.
 
 ## Git
 
-`lib/config.php` e `sql/` sono esclusi da git (`.gitignore` qui e nella radice del sito). Su un nuovo server copia
-`lib/config.example.php` in `lib/config.php` e compilalo.
+`lib/config.php` and `sql/` dumps are excluded from git tracking. On fresh deployments, copy `lib/config.example.php` to `lib/config.php` and fill in credentials.

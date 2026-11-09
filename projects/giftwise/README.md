@@ -1,128 +1,122 @@
 # Giftwise
 
-Liste dei desideri da condividere con gli amici, che si organizzano tra loro **senza rovinare la sorpresa**.
+Wishlists to share with friends, coordinating among each other **without spoiling the surprise**.
 
-- Ogni utente crea le sue **liste dei desideri** (compleanno, Natale, nozze, nascita, laurea, anniversario, casa nuova,
-  altro), con data dell'evento e un messaggio per gli amici.
-- In ogni lista aggiunge i **desideri**: nome, link al prodotto, immagine, prezzo, quantità, note e «il più desiderato».
-  Incollando (o condividendo dall'app di un negozio) un link, Giftwise compila da solo nome, immagine e prezzo.
-- Ogni utente ha uno **username pubblico** (3–20 caratteri: lettere, numeri, `.` e `_`), proposto dal nome alla
-  registrazione e modificabile dal Profilo. Con lo username (o con l'email esatta) si **cercano le persone** e le si
-  **segue**; si può smettere di seguire o togliere qualcuno dai propri follower in qualsiasi momento.
-- **Si vedono le liste di chi si segue.** Di default chi vuole seguirti deve essere approvato (le liste dei desideri
-  sono personali); dal Profilo si può scegliere «Chiunque, senza chiedere».
-- Il **link d'invito** resta: chi lo apre (anche registrandosi in quel momento) e chi l'ha mandato si seguono subito a
-  vicenda.
-- Sulle liste di chi segui puoi segnare un desiderio come **«Ci sto pensando»** o **«Lo prendo io»** e **chattare** con
-  gli altri follower, per ogni desiderio o per tutta la lista.
-- **Chi ha creato la lista non vede niente di tutto questo.** La regola è applicata dal server: le API non restituiscono
-  mai prenotazioni e messaggi al proprietario della lista, e rifiutano le sue richieste di vederli o crearli (vedi il
-  commento in testa a `api/index.php`).
-- Una lista può essere visibile a tutti i follower o solo ad alcuni; si può archiviare (sparisce per gli amici) o
-  eliminare.
+- Each user creates their **wishlists** (birthday, Christmas, wedding, baby shower, graduation, anniversary, housewarming,
+  other), with an event date and a message for friends.
+- In each list, they add **wishes**: name, product link, image, price, quantity, notes, and "most wanted".
+  Pasting (or sharing from a shopping app) a link automatically extracts name, image, and price.
+- Each user has a **public username** (3–20 characters: letters, numbers, `.` and `_`), suggested from their name upon
+  registration and editable in their Profile. People can be **found and followed** by username (or exact email); you can
+  unfollow or remove someone from your followers at any time.
+- **View lists of people you follow.** By default, new followers must be approved (wishlists are personal); this can be
+  changed in Profile to "Anyone, without asking".
+- **Permanent invite links**: opening an invite link (even when registering on the spot) makes both users follow each other
+  immediately.
+- On lists of people you follow, you can mark a gift as **"Thinking about it"** or **"I'll get this"**, and **chat** with
+  fellow followers per wish or for the entire list.
+- **The list creator never sees any of this.** This rule is strictly enforced by the server: the API never returns
+  reservations or messages to the list owner and rejects attempts to read or create them (see header comment in
+  `api/index.php`).
+- A list can be visible to all followers or only selected ones; it can be archived (hidden from friends) or deleted.
 
-Web app in PHP + MySQL con lo stesso design system di FoodTrack (rosa lampone, chiaro e scuro, mobile e desktop), in
-italiano e inglese, installabile come app (PWA).
+Web app in PHP + MySQL sharing the FoodTrack design system (raspberry pink, light and dark, mobile and desktop), in
+Italian and English, installable as a Progressive Web App (PWA).
 
 ## Tutorial
 
-Al primo accesso su un dispositivo (e la prima volta che si apre una nuova versione principale, cioè quando cambia il
-primo numero di `VERSION` in `assets/app.js`) l'app mostra un breve tutorial illustrato: creazione delle liste, aggiunta
-dei desideri con anteprima automatica dei link, ricerca e follow degli amici, prenotazione segreta dei regali e chat tra
-amici. Si può rivedere in qualsiasi momento da Profilo → Preferenze → «Tutorial dell'app» (o da «Come funziona» nella
-barra laterale desktop). Nel tutorial si può scegliere la lingua; le illustrazioni sono animate (le animazioni si
-disattivano se il sistema chiede di ridurre il movimento).
+Upon first login on a device (and whenever a new major version is launched, i.e. when the major number of `VERSION` in
+`assets/app.js` changes), the app presents an illustrated onboarding tutorial: creating lists, adding wishes with link
+previews, finding and following friends, secret gift reservations, and group chat. It can be revisited at any time via
+Profile → Preferences → "App tutorial" (or "How it works" in the desktop sidebar). The language can be chosen directly in
+the tutorial; illustrations are animated (disabled when reduced motion is preferred).
 
-## Aggiornamenti del database
+## Database Updates
 
-Al primo accesso dopo un aggiornamento il database si aggiorna da solo (`migrate_schema` in `lib/schema.php`). Versione
-2: username per tutti gli account esistenti (generati dal nome, modificabili) e le vecchie amicizie diventano «follow»
-nei due sensi.
+On first access after an update, the database schema migrates automatically (`migrate_schema` in `lib/schema.php`). Version
+2: public usernames for all existing accounts (generated from names, editable) and legacy friendships convert into mutual
+follows.
 
-## Struttura
+## Structure
 
 ```
 giftwise/
 ├── index.html, privacy.html, manifest.webmanifest, sw.js
-├── install-db.php          installazione guidata (crea le tabelle gw_ e credentials.php)
-├── credentials-sample.php  modello delle credenziali (credentials.php è in .gitignore)
-├── api/index.php           API JSON
-├── lib/                    bootstrap (sessioni, sicurezza, Google), schema, anteprima link, email, traduzioni
-├── assets/                 app.js, ui.js, api.js, i18n.js, app.css + giftwise.css, icone, font
-├── install/giftwise.sql    le stesse tabelle per phpMyAdmin (rigenera con php tools/build-sql.php)
+├── install-db.php          guided installer (creates gw_ tables and credentials.php)
+├── credentials-sample.php  credentials template (credentials.php is gitignored)
+├── api/index.php           JSON API
+├── lib/                    bootstrap (sessions, security, Google), schema, link preview, email, translations
+├── assets/                 app.js, ui.js, api.js, i18n.js, app.css + giftwise.css, icons, fonts
+├── install/giftwise.sql    matching tables for phpMyAdmin (regenerate with php tools/build-sql.php)
 └── tools/build-sql.php
 ```
 
-## Installazione sul server
+## Server Installation
 
-1. Carica la cartella `projects/giftwise/` (via FTP o con il deploy del sito).
-2. Apri `https://www.saveriomorelli.com/projects/giftwise/install-db.php`, inserisci le credenziali del database MySQL
-   (va bene anche lo stesso database di FoodTrack: le tabelle hanno il prefisso `gw_`) e, facoltativo, il Client ID di
-   Google.
-3. La pagina crea le tabelle e scrive `credentials.php`. Poi si blocca da sola (si può rieseguire solo con la password
-   del database). Per sicurezza eliminala dal server.
-4. Apri l'app e crea il primo account con «Crea account».
+1. Upload the `projects/giftwise/` folder (via FTP or site deployment).
+2. Open `https://www.saveriomorelli.com/projects/giftwise/install-db.php`, enter MySQL database credentials (can share the
+   same database as FoodTrack: tables use prefix `gw_`), and optionally the Google Client ID.
+3. The page creates tables and writes `credentials.php`, then locks itself (re-executable only with the DB password). For
+   security, delete it from the server afterwards.
+4. Open the app and create the first account via "Create account".
 
-In alternativa: phpMyAdmin → importa `install/giftwise.sql`, poi copia `credentials-sample.php` in `credentials.php` e
-compilalo.
+Alternatively: import `install/giftwise.sql` in phpMyAdmin, copy `credentials-sample.php` to `credentials.php`, and fill in
+details.
 
-## Accesso con Google (facoltativo)
+## Sign in with Google (Optional)
 
-Si può usare lo **stesso client OAuth «Applicazione web» di FoodTrack**: l'origine `https://www.saveriomorelli.com` è
-già autorizzata. Copia il Client ID in `credentials.php` (`$google_client_id`) o nel campo di `install-db.php`.
+Can share the **same "Web application" OAuth client as FoodTrack**: the origin `https://www.saveriomorelli.com` is already
+authorised. Copy the Client ID into `credentials.php` (`$google_client_id`) or into the installer field.
 
-## Email
+## Emails
 
-Email di benvenuto, «X vuole seguirti» (quando serve la tua approvazione) e «X ha aperto il tuo invito», nella lingua di
-chi le riceve. Usa `$mail_config` in `credentials.php` se presente, altrimenti le impostazioni del modulo di contatto
-del sito (`/.mail-config.php`). Senza configurazione non parte nessuna email e l'app funziona lo stesso.
+Transactional emails: welcome, "X wants to follow you" (when approval is required), and "X opened your invite", in the
+recipient's language. Uses `$mail_config` in `credentials.php` if present, falling back to website contact form settings
+(`/.mail-config.php`). Without mail configuration, no emails are dispatched and the app works normally.
 
-## Aggiungere un desiderio da un'altra app
+## Adding Wishes from Other Apps
 
-- **Android (app installata dal browser)**: Giftwise compare nel menu «Condividi» di Chrome e delle app dei negozi (Web
-  Share Target): il link arriva in «Aggiungi un desiderio» già compilato.
-- **Ovunque**: copia il link del prodotto e incollalo nel campo «Link al prodotto».
+- **Android (installed from browser)**: Giftwise appears in the system "Share" menu in Chrome and shopping apps (Web
+  Share Target): the link is delivered to "Add a wish" pre-filled.
+- **Everywhere else**: copy the product link and paste it into the "Product link" input field.
 
-L'anteprima del link la fa il server (`lib/preview.php`): legge Open Graph, Twitter card, JSON-LD e microdati;
-protezioni contro le richieste alla rete interna (solo porte 80/443, IP pubblici, connessione vincolata all'IP
-controllato, redirect verificati uno per uno, timeout brevi, massimo 1,5 MB). Alcuni negozi (per esempio Amazon) a volte
-rispondono con una pagina di verifica: in quel caso il titolo viene ricavato dall'indirizzo e il resto si compila a
-mano.
+Link previews are resolved by the server (`lib/preview.php`): extracts Open Graph, Twitter cards, JSON-LD, and
+microdata; includes SSRF protection against internal network requests (ports 80/443 only, public IPs only, connection
+pinned to resolved IP, strict redirect validation, short timeouts, max 1.5 MB). If a merchant (e.g. Amazon) serves a CAPTCHA
+verification page, the title is extracted from the URL and remaining details can be entered manually.
 
-## App Android (Google Play)
+## Android App (Google Play)
 
-La cartella `android/` è un progetto **Android Studio** (Java) con un'app nativa che mostra la web app in una WebView a
-schermo intero, come FoodTrack: funziona allo stesso modo su ogni telefono e si aggiorna da sola aggiornando il sito.
+The `android/` directory is an **Android Studio** project (Java) with a native app wrapping the web app in a full-screen
+WebView, like FoodTrack: identical experience across devices and self-updating with web releases.
 
-Parti native (`MainActivity.java`, esposte alla pagina come `window.GiftwiseAndroid`, solo sulle pagine di Giftwise):
+Native features (`MainActivity.java`, exposed to the page as `window.GiftwiseAndroid`, only on Giftwise pages):
 
-- **«Continua con Google»** con il selettore di account di sistema (Credential Manager): il login Google non funziona
-  dentro una WebView;
-- **«Condividi» da qualsiasi app** (un negozio, Amazon, il browser…): Giftwise compare nel menu Condividi di Android
-  come «Aggiungi a Giftwise» e apre «Aggiungi un desiderio» con il link già compilato;
-- tasto indietro, link d'invito che aprono l'app, link esterni (pagine dei prodotti, modulo di contatto) nel browser,
-  pagina «Nessuna connessione», tema chiaro/scuro come il sistema, rotazione libera su tablet.
+- **"Continue with Google"** using the system account picker (Credential Manager), since Google login is blocked inside
+  standard WebViews;
+- **"Share" from any app** (shopping apps, Amazon, browser): Giftwise appears in Android's Share sheet as "Add to
+  Giftwise" and opens "Add a wish" with the URL pre-populated;
+- Back navigation button, invite links opening the app, external links (store pages, contact form) opening in the browser,
+  offline screen, system light/dark theme matching, free rotation on tablets.
 
-Passaggi:
+Steps:
 
-1. Apri `android/` in Android Studio (File → Open) e attendi la sincronizzazione di Gradle.
-2. **Package name**: `com.saverio.giftwise` (in `app/build.gradle.kts`): dopo la prima pubblicazione non si può più
-   cambiare.
-3. Chiave di caricamento: Build → Generate Signed App Bundle / APK → Android App Bundle → Create new… (salva il `.jks`
-   fuori dal repository), oppure copia `keystore.properties.sample` in `keystore.properties` (ignorato da git).
-4. **Login con Google nell'app**: in Google Cloud Console, nello **stesso progetto** del client «Applicazione web», crea
-   un *ID client OAuth* di tipo **Android** con package `com.saverio.giftwise` e l'impronta **SHA-1** di ogni chiave che
-   firma l'app (debug e firma di Google Play). Il codice non cambia: l'app usa il Client ID web letto dal server.
-5. Carica l'`.aab` in Play Console. Icona dello store: `android/play-store-icon-512.png`; privacy policy:
-   `https://www.saveriomorelli.com/projects/giftwise/privacy.html`. Testi, screenshot (1080×1920) e immagine in primo
-   piano (1024×500) sono in `android/store/` (`listing.md`).
-6. **Digital Asset Links** (per aprire i link d'invito nell'app): aggiungi a `/.well-known/assetlinks.json` un secondo
-   oggetto con `package_name` `com.saverio.giftwise` e le impronte **SHA-256** delle sue chiavi (vedi
-   `android/assetlinks.sample.json`).
-7. Ad ogni aggiornamento dell'app Android (raro) incrementa `versionCode` e `versionName`.
+1. Open `android/` in Android Studio (File → Open) and wait for Gradle sync.
+2. **Package name**: `com.saverio.giftwise` (in `app/build.gradle.kts`): cannot be altered after first store publication.
+3. Signing key: Build → Generate Signed App Bundle / APK → Android App Bundle → Create new… (store `.jks` outside repo), or
+   copy `keystore.properties.sample` to `keystore.properties` (gitignored).
+4. **Google Sign-In in app**: in Google Cloud Console, under the **same project** as the "Web application" client, create an
+   **Android** OAuth client ID with package `com.saverio.giftwise` and the **SHA-1** fingerprint of every signing key (debug
+   and Google Play App Signing). The code remains unchanged: the app uses the web Client ID returned by the server.
+5. Upload `.aab` to Play Console. Store icon: `android/play-store-icon-512.png`; privacy policy:
+   `https://www.saveriomorelli.com/projects/giftwise/privacy.html`. Copy, screenshots (1080×1920), and feature graphic
+   (1024×500) are located in `android/store/` (`listing.md`).
+6. **Digital Asset Links** (to open invite links in the app): add a second entry to `/.well-known/assetlinks.json` with
+   `package_name` `com.saverio.giftwise` and the **SHA-256** fingerprints of its keys (see `android/assetlinks.sample.json`).
+7. Bump `versionCode` and `versionName` on each Android app update.
 
-## Sicurezza
+## Security
 
-Password con `password_hash`, sessione con token casuale in cookie HttpOnly/Secure/SameSite (nel database solo l'hash
-SHA-256), token CSRF su ogni modifica, limiti ai tentativi (accesso, registrazione, inviti, anteprime, messaggi),
-`credentials.php`, `lib/`, `install/` e `tools/` bloccati dal browser.
+Passwords hashed with `password_hash`, sessions tracked via random tokens in HttpOnly/Secure/SameSite cookies (only SHA-256
+hash stored in DB), CSRF token on every state change, rate limiting (login, registration, invites, previews, chat messages),
+`credentials.php`, `lib/`, `install/`, and `tools/` forbidden from direct browser access.

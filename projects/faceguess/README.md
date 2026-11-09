@@ -1,39 +1,37 @@
 # FaceGuess
 
-Il gioco di deduzione fisionomica a 2 giocatori sviluppato da Saverio Morelli.
-Disponibile come web app e come applicazione Android per Google Play Store.
+The 2-player facial deduction game developed by Saverio Morelli.
+Available as a web app and as an Android app for the Google Play Store.
 
-## Caratteristiche
+## Features
 
-- **Personaggi generati proceduralmente**: a ogni partita il cast dei volti è completamente nuovo e unico.
-- **Stanze online con codice**: gioca con gli amici condividendo un codice stanza a 6 caratteri o il link d'invito
-  diretto.
-- **Matchmaking casuale**: trova avversari online in pochi istanti.
-- **Sullo stesso dispositivo**: modalità Pass & Play a turno su smartphone o tablet.
-- **Tabellone interattivo**: abbatti le carte degli indiziati con un semplice tocco.
-- **Chat in tempo reale**: fai domande e rispondi direttamente nel gioco.
-- **Tema Auto, Chiaro o Scuro**: schede su desktop, un pulsante sui telefoni (`theme.js`).
-- **Multilingua**: italiano, inglese, spagnolo, francese, tedesco.
-- **Senza registrazione né pubblicità**: 100% gratuito.
+- **Procedurally generated characters**: every match features a completely fresh and unique cast of faces.
+- **Online rooms with code**: play with friends by sharing a 6-character room code or direct invite link.
+- **Random matchmaking**: find online opponents in moments.
+- **On the same device**: turn-based Pass & Play mode on smartphone or tablet.
+- **Interactive game board**: flip down suspect cards with a single tap.
+- **Real-time chat**: ask questions and give answers directly in-game.
+- **Auto, Light, or Dark theme**: tabs on desktop, a toggle button on phones (`theme.js`).
+- **Multilingual**: Italian, English, Spanish, French, German.
+- **No registration, no advertisements**: 100% free.
 
-## App Android (Google Play)
+## Android App (Google Play)
 
-La cartella `android/` è un progetto Android Studio (Java) con una shell nativa WebView a schermo intero:
+The `android/` directory is an Android Studio project (Java) with a full-screen native WebView shell:
 
-- Layout edge-to-edge con adattamento alla barra di sistema;
-- Deep Links / App Links automatici per l'apertura immediata delle stanze
+- Edge-to-edge layout adapting to system bars;
+- Automatic Deep Links / App Links for instant opening of rooms
   (`https://www.saveriomorelli.com/projects/faceguess/?code=ABC123`);
-- Gestione della navigazione indietro con `OnBackInvokedDispatcher`;
-- Schermata di errore offline;
-- Asset completi pronti per Google Play Store (`play-store-icon-512.png`, `store/en-GB/` con immagine in primo piano e
-  screenshot 1080×1920, `store/listing.md`).
+- Back navigation handling with `OnBackInvokedDispatcher`;
+- Offline error screen;
+- Complete assets ready for Google Play Store (`play-store-icon-512.png`, `store/en-GB/` with feature graphic and
+  1080×1920 screenshots, `store/listing.md`).
 
-### Compilazione e pubblicazione
+### Building and Publishing
 
-1. Apri la cartella `projects/faceguess/android` in Android Studio (File → Open).
-2. Attendi il completamento della sincronizzazione di Gradle.
-3. Copia `keystore.properties.sample` in `keystore.properties` (ignorato da git) e inserisci le informazioni della tua
-   chiave di firma per Google Play.
-4. Genera il file Android App Bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
-5. Carica l'`.aab` generato (in `app/release/app-release.aab`) su Google Play Console.
-6. Copia i testi della scheda dello store da `android/store/listing.md` e usa l'icona e l'immagine in evidenza fornite.
+1. Open the `projects/faceguess/android` folder in Android Studio (File → Open).
+2. Wait for Gradle sync to complete.
+3. Copy `keystore.properties.sample` to `keystore.properties` (ignored by git) and enter your Google Play signing key details.
+4. Generate the Android App Bundle: **Build > Generate Signed App Bundle / APK > Android App Bundle**.
+5. Upload the generated `.aab` (in `app/release/app-release.aab`) to Google Play Console.
+6. Copy the store listing copy from `android/store/listing.md` and use the provided icon and feature graphic.
