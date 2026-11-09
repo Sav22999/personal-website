@@ -581,7 +581,7 @@
         const d = await Api.get('admin.avatars');
         const previewCode = (kind, id) => kind === 'character' ? id + ':violet' : kind === 'accessory' ? ':violet:' + id : kind === 'frame' ? ':violet::' + id : ':' + id;
         const section = (kind, title) => {
-            const rows = d.items.filter(x => x.kind === kind).map(x => {
+            const rows = d.items.filter(x => x.kind === kind).sort((a, b) => a.price - b.price).map(x => {
                 const art = Avatars.item(x.id);
                 const price = inp({type: 'number', min: 0, max: 100000, value: x.price, 'aria-label': t('Price')});
                 price.classList.add('adm-price');

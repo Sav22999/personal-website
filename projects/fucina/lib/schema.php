@@ -368,8 +368,13 @@ function install_schema(PDO $pdo, string $prefix): void
     require_once __DIR__ . '/seed.php';
     // The catalogue of profile pictures: new items arrive with their starting price, existing ones keep what the admin set
     $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}avatar_items` (id, kind, price, enabled, sort) VALUES (?,?,?,1,?)");
+    $updSort = $pdo->prepare("UPDATE `{$prefix}avatar_items` SET sort = ? WHERE id = ?");
     $n = 0;
-    foreach (AVATAR_ITEMS as $id => [$kind, $price]) $ins->execute([$id, $kind, $price, ++$n]);
+    foreach (AVATAR_ITEMS as $id => [$kind, $price]) {
+        $n++;
+        $ins->execute([$id, $kind, $price, $n]);
+        $updSort->execute([$n, $id]);
+    }
     // Version 9: the CSS board grows with the level, so it gets selectors written for each size
     $old = (int)($pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn() ?: 0);
     if ($old > 0 && $old < 9) install_seed_selectors_v9($pdo, $prefix);

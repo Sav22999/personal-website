@@ -476,7 +476,7 @@ function admin_route(string $r): void
 
         case 'admin.avatars':
             admin_reader();
-            $rows = db()->query('SELECT i.id, i.kind, i.price, i.enabled, (SELECT COUNT(*) FROM ' . t('user_items') . ' u WHERE u.item_id = i.id) AS sold FROM ' . t('avatar_items') . ' i ORDER BY i.kind DESC, i.sort')->fetchAll();
+            $rows = db()->query('SELECT i.id, i.kind, i.price, i.enabled, (SELECT COUNT(*) FROM ' . t('user_items') . ' u WHERE u.item_id = i.id) AS sold FROM ' . t('avatar_items') . ' i ORDER BY i.kind DESC, i.price, i.sort')->fetchAll();
             send_json(['ok' => true, 'items' => array_map(fn($r) => ['id' => $r['id'], 'kind' => $r['kind'], 'price' => (int)$r['price'], 'enabled' => (int)$r['enabled'], 'sold' => (int)$r['sold']], $rows)]);
 
         case 'admin.avatar.save':

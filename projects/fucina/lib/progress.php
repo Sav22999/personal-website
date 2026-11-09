@@ -14,7 +14,7 @@ const ROLE_ADMIN = 5;
 function avatar_shop(int $uid): array
 {
     $st = db()->prepare('SELECT i.id, i.kind, i.price, i.enabled, (u.item_id IS NOT NULL) AS owned FROM ' . t('avatar_items') . ' i
-        LEFT JOIN ' . t('user_items') . ' u ON u.item_id = i.id AND u.user_id = ? ORDER BY i.kind, i.sort');
+        LEFT JOIN ' . t('user_items') . ' u ON u.item_id = i.id AND u.user_id = ? ORDER BY i.kind, i.price, i.sort');
     $st->execute([$uid]);
     $out = [];
     foreach ($st->fetchAll() as $r) {

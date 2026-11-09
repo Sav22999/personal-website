@@ -1182,7 +1182,7 @@
                 kind = v;
                 draw();
             }));
-            const items = S.state.shop.filter(x => x.kind === kind && dict[kind][x.id]);
+            const items = S.state.shop.filter(x => x.kind === kind && dict[kind][x.id]).sort((a, b) => a.price - b.price);
             const emptyOpt = kind !== 'background' ? [{id: '', owned: true, price: 0}] : [];
             const tiles = emptyOpt.concat(items).map(x => {
                 const on = pick[kind] === x.id;
