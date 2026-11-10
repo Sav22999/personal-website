@@ -19,6 +19,8 @@ $canonical = '/projects/';
         <h1>What I've built.</h1>
         <p class="projects-hero-sub">Personal and open-source projects I've designed and developed on my own — apps,
             browser extensions, tools, and more.</p>
+        <a class="projects-status-link" href="/projects/status/"><span class="projects-status-dot" aria-hidden="true"></span>Status
+            of the services</a>
     </div>
 </section>
 

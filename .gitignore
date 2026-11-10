@@ -51,3 +51,6 @@ projects/*/android/app/release/
 projects/*/android/captures/
 *.apk
 *.aab
+
+# Status page cache
+projects/status/.cache.json
