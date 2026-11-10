@@ -43,7 +43,7 @@ System.out.println(nome + " ha " + anni + " anni");', 'java'),
         ], task('java', L('Dichiara `int livelli = 6;` e `String corso = "Java";`.', 'Declare `int livelli = 6;` and `String corso = "Java";`.'), '', [re('int\s+livelli\s*=\s*6\s*;', L('C’è l’intero', 'There is the int')), re('String\s+corso\s*=\s*"Java"\s*;', L('C’è la stringa', 'There is the string'))], '', 'int livelli = 6;
 String corso = "Java";'), [
             dMatch(pMatch(), [['int', L('Numero intero', 'Whole number')], ['double', L('Numero decimale', 'Decimal number')], ['boolean', L('Vero o falso', 'True or false')], ['char', L('Un carattere', 'One character')], ['String', L('Testo', 'Text')]], L('I tipi di base.', 'The basic types.')),
-            dFlash(pFlash(), [[L('In Java ogni variabile ha un tipo', 'In Java every variable has a type'), true], [L('`==` è il modo giusto di confrontare stringhe', '`==` is the right way to compare strings'), false], [L('`var` deduce il tipo', '`var` infers the type'), true]], L('Per le stringhe c’è `equals`.', 'Strings use `equals`.')),
+            dFlash(pFlash(), [[L('In Java ogni variabile ha un tipo', 'In Java every variable has a type'), true], [L('`==` è il modo giusto di confrontare stringhe', '`==` is the right way to compare strings'), false], [L('`var` deduce il tipo', '`var` infers the type'), true], [L('`int` può contenere numeri con la virgola', '`int` can hold decimal numbers'), false]], L('Per le stringhe c’è `equals`.', 'Strings use `equals`.')),
         ]),
         lesson('control', L('Condizioni e cicli', 'Conditions and loops'), [
             P('`if`/`else` sceglie, `switch` confronta un valore con molti casi, `for` e `while` ripetono. I blocchi stanno tra graffe.', '`if`/`else` chooses, `switch` compares one value with many cases, `for` and `while` repeat. Blocks sit between braces.'),
@@ -60,7 +60,7 @@ String giudizio = switch (voto) {
         ], [
             Q('c1', L('Quante volte gira `for (int i = 0; i < 3; i++)`?', 'How many times does `for (int i = 0; i < 3; i++)` run?'), ['3', '2', '4', '0'], 0, L('i = 0, 1, 2.', 'i = 0, 1, 2.')),
             Q('c2', L('Lo `switch` con `->` ha bisogno di `break`?', 'Does the `->` switch need `break`?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo nell’ultimo caso', 'Only in the last case'), L('Solo con le stringhe', 'Only with strings')], 0, L('Ogni caso è separato.', 'Each case is separate.')),
-            Q('c3', L('Quale operatore significa “e”?', 'Which operator means “and”?'), ['&&', 'and', '&', '||'], 0, L('`||` significa “o”.', '`||` means “or”.')),
+            Q('c3', L('Quale operatore significa “e”?', 'Which operator means “and”?'), ['&&', 'and', '!', '||'], 0, L('`||` significa “o” e `!` significa “non”.', '`||` means “or” and `!` means “not”.')),
         ], task('java', L('Con un `for` da 1 a 5 stampa ogni numero.', 'With a `for` from 1 to 5 print each number.'), '', [re('for\s*\(\s*int\s+\w+\s*=\s*1\s*;\s*\w+\s*<=\s*5\s*;\s*\w+\+\+\s*\)', L('Il ciclo è giusto', 'The loop is right')), re('System\.out\.println\s*\(\s*\w+\s*\)', L('Stampi il numero', 'You print the number'))], '', 'for (int i = 1; i <= 5; i++) {
     System.out.println(i);
 }'), [
@@ -113,7 +113,7 @@ corsi.add("Java");'), [
     return n * 2;
 }'), [
             dBlanks(pFill(), "static ___ media(int a, int b) {\n    ___ (a + b) / 2.0;\n}\nstatic ___ stampa(String s) {\n    System.out.println(s);\n}", ['double', 'return', 'void'], ['int', 'print', 'null'], L('Tipo di ritorno, restituzione, niente.', 'Return type, return, nothing.')),
-            dFlash(pFlash(), [[L('I parametri hanno un tipo', 'Parameters have a type'), true], [L('Un metodo `void` restituisce un valore', 'A `void` method returns a value'), false], [L('Si possono avere due metodi con lo stesso nome', 'You can have two methods with the same name'), true]], L('`void` vuol dire “niente”.', '`void` means “nothing”.')),
+            dFlash(pFlash(), [[L('I parametri hanno un tipo', 'Parameters have a type'), true], [L('Un metodo `void` restituisce un valore', 'A `void` method returns a value'), false], [L('Si possono avere due metodi con lo stesso nome', 'You can have two methods with the same name'), true], [L('Un metodo può restituire un solo valore alla volta', 'A method can return one value at a time'), true]], L('`void` vuol dire “niente”.', '`void` means “nothing”.')),
         ]),
     ],
 ];

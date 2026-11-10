@@ -1469,8 +1469,11 @@ svg.i {
 }
 
 .gap {
-    display: inline-grid;
-    place-items: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .05em;
+    white-space: nowrap;
     min-width: 1.6em;
     height: 1.6em;
     padding: 0 .2em;
@@ -2474,6 +2477,11 @@ body {
     border-bottom: 2px solid var(--line);
 }
 
+/* Sudoku X: the two diagonals that also hold every symbol once */
+.cell.diag {
+    background: rgba(124, 92, 255, .16);
+}
+
 .cell.ask {
     background: var(--accent);
     color: var(--on-accent);
@@ -2564,7 +2572,7 @@ body {
     gap: 4px;
     padding: 10px 12px;
     font-size: 1.15rem;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .options.lamps-opts .option img.twemoji {
@@ -4326,9 +4334,8 @@ button.total:active {
 }
 
 .gears-svg {
-    width: 100%;
+    max-width: 100%;
     height: auto;
-    max-height: 150px;
     overflow: visible;
 }
 
@@ -4601,6 +4608,29 @@ button.total:active {
 }
 
 /* Pipes View */
+.pipes-stage.svg {
+    display: block;
+    padding: 10px 8px 6px;
+}
+
+.pipes-svg {
+    display: block;
+    width: 100%;
+    max-width: 330px;
+    height: auto;
+    margin: 0 auto;
+    overflow: visible;
+}
+
+.pipes-svg .pipe-flow {
+    stroke-dasharray: 6 5;
+    animation: pipe-flow .6s linear infinite;
+}
+
+@keyframes pipe-flow {
+    to { stroke-dashoffset: -11; }
+}
+
 .pipes-view {
     display: flex;
     flex-direction: column;
@@ -5198,12 +5228,16 @@ button.total:active {
 }
 
 .lamps-state-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     font-size: 1.4rem;
     line-height: 1.3;
-    letter-spacing: 4px;
-    white-space: nowrap;
-    overflow-x: auto;
     max-width: 100%;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding: 4px 6px;
 }
 
 .lamps-state-row img.twemoji {
@@ -5258,6 +5292,10 @@ button.total:active {
 }
 
 .lamps-ask-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
     width: 100%;
     padding: 8px 14px;
     background: var(--surface-2);
@@ -5792,4 +5830,415 @@ button.total:active {
 .diff-play svg.i {
     width: 16px;
     height: 16px;
+}
+
+/* Replay of the answer (views.js): play, pause, again and a bar to drag */
+.anim-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.anim-stage {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.anim-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+    padding: 6px 10px;
+    border: 2px solid var(--line);
+    border-radius: 99px;
+    background: var(--surface);
+}
+
+.anim-btn {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--text);
+    cursor: pointer;
+}
+
+.anim-btn:hover {
+    filter: brightness(1.05);
+}
+
+.anim-btn:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.anim-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.anim-range {
+    flex: 1;
+    min-width: 0;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--primary) var(--p, 0%), var(--surface-3) var(--p, 0%));
+    cursor: pointer;
+}
+
+.anim-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--surface);
+}
+
+.anim-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--surface);
+}
+
+.h-chip.now {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--on-primary, #fff);
+}
+
+/* Cups moving */
+.cups-anim {
+    position: relative;
+    margin: 18px auto 4px;
+}
+
+.cups-anim-track {
+    position: relative;
+    height: 58px;
+}
+
+.cup-card.cup-moving {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50px;
+    height: 54px;
+    justify-content: center;
+    will-change: transform;
+}
+
+.cups-anim-slots {
+    display: flex;
+    margin-top: 4px;
+}
+
+.cup-slot {
+    width: 58px;
+    text-align: center;
+    font-size: .75rem;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+/* Turtle walking and turning */
+.walk-anim,
+.turn-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.walk-board {
+    position: relative;
+    display: grid;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.walk-cell {
+    display: grid;
+    place-items: center;
+    height: 44px;
+    font-weight: 800;
+    color: var(--muted);
+    border-right: 1px solid rgba(128, 128, 128, .25);
+    border-bottom: 1px solid rgba(128, 128, 128, .25);
+}
+
+.walk-cell.seen {
+    background: var(--primary-soft);
+    color: var(--text);
+}
+
+.walk-cell.ok {
+    background: var(--ok-bg);
+    color: var(--ok);
+}
+
+.walk-turtle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    pointer-events: none;
+}
+
+.walk-turtle img {
+    width: 28px;
+    height: 28px;
+}
+
+.turn-dial {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border: 2px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+}
+
+.turn-arrow {
+    position: absolute;
+    inset: 6px;
+    display: flex;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.turn-arrow img {
+    width: 30px;
+    height: 30px;
+}
+
+.turn-turtle img {
+    width: 34px;
+    height: 34px;
+}
+
+/* Lamps pressed one by one */
+.lamps-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.lamps-anim-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.lamp-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 6px 4px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    transition: transform .15s ease;
+}
+
+.lamp-cell small {
+    font-weight: 800;
+    color: var(--muted);
+}
+
+.lamp-cell.armed {
+    border-color: var(--primary);
+}
+
+.lamp-cell.flash {
+    border-color: var(--primary);
+    transform: scale(1.08);
+}
+
+.lamp-glyph img {
+    width: 26px;
+    height: 26px;
+}
+
+.lamp-btn-chip.pressed {
+    outline: 3px solid var(--primary);
+    transform: translateY(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pipes-svg .pipe-flow {
+        animation: none;
+    }
+}
+
+/* Light bulbs (ui.js bulbs): drawn, with a yellow halo when on */
+.bulb-row {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 4px;
+    vertical-align: middle;
+}
+
+.bulb-cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.bulb-cell small {
+    font-size: .7rem;
+    font-weight: 800;
+    color: var(--muted);
+    line-height: 1;
+}
+
+.bulb {
+    width: 1.5em;
+    height: 1.5em;
+    overflow: visible;
+}
+
+.bulb.on {
+    filter: drop-shadow(0 0 3px rgba(255, 204, 51, .95)) drop-shadow(0 0 9px rgba(255, 196, 0, .55));
+}
+
+.bulb.on .bulb-glass {
+    fill: #FFD93B;
+    stroke: #E2A200;
+    stroke-width: 1.2;
+}
+
+.bulb.on .bulb-wire {
+    stroke: #B57400;
+}
+
+.bulb.off .bulb-glass {
+    fill: #3D4250;
+    stroke: #232631;
+    stroke-width: 1.2;
+}
+
+.bulb.off .bulb-wire {
+    stroke: #1C1F27;
+    opacity: .7;
+}
+
+:root[data-theme="dark"] .bulb.off .bulb-glass {
+    fill: #4A5062;
+    stroke: #7A8196;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .bulb.off .bulb-glass {
+        fill: #4A5062;
+        stroke: #7A8196;
+    }
+}
+
+.lamps-state-row .bulb,
+.lamps-anim-row .bulb {
+    width: 2em;
+    height: 2em;
+}
+
+.options.lamps-opts .option .bulb {
+    width: 1.55em;
+    height: 1.55em;
+}
+
+.why-chip .bulb {
+    width: 1.25em;
+    height: 1.25em;
+}
+
+/* The buttons pressed, in order */
+.lamps-press-label {
+    font-size: .8rem;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+.lamps-press-seq {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.lamp-step {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 34px;
+    padding: 3px 8px 4px;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    background: var(--primary-soft);
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: var(--on-primary-soft);
+    line-height: 1.1;
+}
+
+.lamp-step small {
+    font-size: .62rem;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+.lamp-step-arrow {
+    color: var(--muted);
+    font-weight: 900;
+}
+
+/* On yellow chips the lit bulbs need a darker outline to stand out */
+.why-chip .bulb.on .bulb-glass,
+.h-chip .bulb.on .bulb-glass {
+    stroke: #8A5A00;
+    stroke-width: 1.7;
+}
+
+/* The halo of a lit bulb spills a little: rows of bulbs wrap instead of scrolling */
+.bulb-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 3px 4px;
+}
+
+@media (max-width: 440px) {
+    .lamps-state-row .bulb,
+    .lamps-anim-row .bulb {
+        width: 1.3em;
+        height: 1.3em;
+    }
+
+    .lamps-state-row .bulb-row {
+        gap: 2px;
+    }
 }

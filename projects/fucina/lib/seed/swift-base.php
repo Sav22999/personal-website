@@ -21,7 +21,7 @@ print("\(nome) ha \(anni) anni")', 'swift'),
         ], task('swift', L('Crea `let corso = "Swift"` e `var livello = 1`.', 'Create `let corso = "Swift"` and `var livello = 1`.'), '', [re('let\s+corso\s*(:\s*String\s*)?=\s*"Swift"', L('La costante esiste', 'The constant exists')), re('var\s+livello\s*(:\s*Int\s*)?=\s*1', L('La variabile esiste', 'The variable exists'))], '', 'let corso = "Swift"
 var livello = 1'), [
             dMatch(pMatch(), [['let', L('Costante', 'Constant')], ['var', L('Variabile', 'Variable')], ['String', L('Testo', 'Text')], ['Int', L('Intero', 'Integer')], ['Double', L('Decimale', 'Decimal')]], L('Le basi di Swift.', 'Swift basics.')),
-            dFlash(pFlash(), [[L('In Swift servono i punti e virgola', 'Swift needs semicolons'), false], [L('Il tipo si può dedurre', 'The type can be inferred'), true], [L('`let` non si può riassegnare', '`let` cannot be reassigned'), true]], L('I punti e virgola sono facoltativi.', 'Semicolons are optional.')),
+            dFlash(pFlash(), [[L('In Swift servono i punti e virgola', 'Swift needs semicolons'), false], [L('Il tipo si può dedurre', 'The type can be inferred'), true], [L('`let` non si può riassegnare', '`let` cannot be reassigned'), true], [L('`var` si può riassegnare', '`var` can be reassigned'), true]], L('I punti e virgola sono facoltativi.', 'Semicolons are optional.')),
         ]),
         lesson('optionals', L('Optional', 'Optionals'), [
             P('Un **optional** (`String?`) può contenere un valore oppure `nil`. Prima di usarlo va “scartato”: `if let` o `guard let` lo aprono in sicurezza, `??` dà un valore di riserva.', 'An **optional** (`String?`) can hold a value or `nil`. Before using it you “unwrap” it: `if let` or `guard let` open it safely, `??` gives a fallback.'),
@@ -71,7 +71,7 @@ default: print("Da ripassare")
     print(n)
 }'), [
             dOrder(pSort(), ['var conto = 3', 'while conto > 0 {', '    print(conto)', '    conto -= 1', '}', 'print("Via!")'], L('Prepara, ripeti, avanza, finisci.', 'Set up, repeat, advance, finish.')),
-            dFlash(pFlash(), [[L('`1...5` include il 5', '`1...5` includes 5'), true], [L('Nello `switch` un caso continua nel successivo', 'In `switch` a case falls into the next'), false], [L('`for-in` scorre anche gli array', '`for-in` also walks arrays'), true]], L('Niente fall-through.', 'No fall-through.')),
+            dFlash(pFlash(), [[L('`1...5` include il 5', '`1...5` includes 5'), true], [L('Nello `switch` un caso continua nel successivo', 'In `switch` a case falls into the next'), false], [L('`for-in` scorre anche gli array', '`for-in` also walks arrays'), true], [L('`1..<5` include il 5', '`1..<5` includes 5'), false]], L('Niente fall-through.', 'No fall-through.')),
         ]),
         lesson('collections', L('Array e dizionari', 'Arrays and dictionaries'), [
             P('Un **array** `[Int]` tiene valori in ordine; un **dizionario** `[String: Int]` associa chiavi e valori; un **Set** non ha doppioni. Con `let` sono immutabili, con `var` si possono cambiare.', 'An **array** `[Int]` holds values in order; a **dictionary** `[String: Int]` maps keys to values; a **Set** has no duplicates. With `let` they are immutable, with `var` they can change.'),
@@ -118,7 +118,7 @@ let raddoppia = { (n: Int) in n * 2 }', 'swift'),
     n * 2
 }'), [
             dOrder(pSort(), ['func media(_ voti: [Double]) -> Double {', '    guard !voti.isEmpty else { return 0 }', '    return voti.reduce(0, +) / Double(voti.count)', '}', 'print(media([6, 8]))'], L('Firma, controllo, calcolo, chiamata.', 'Signature, check, calculation, call.')),
-            dFlash(pFlash(), [[L('Le etichette rendono chiare le chiamate', 'Labels make calls clear'), true], [L('Un parametro non può avere un valore predefinito', 'A parameter cannot have a default value'), false], [L('Con una sola espressione si può omettere `return`', 'With a single expression `return` can be omitted'), true]], L('I valori predefiniti sono comuni.', 'Default values are common.')),
+            dFlash(pFlash(), [[L('Le etichette rendono chiare le chiamate', 'Labels make calls clear'), true], [L('Un parametro non può avere un valore predefinito', 'A parameter cannot have a default value'), false], [L('Con una sola espressione si può omettere `return`', 'With a single expression `return` can be omitted'), true], [L('`->` indica il tipo restituito', '`->` shows the return type'), true]], L('I valori predefiniti sono comuni.', 'Default values are common.')),
         ]),
     ],
 ];

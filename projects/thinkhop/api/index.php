@@ -22,7 +22,7 @@ header('X-Robots-Tag: noindex');
 set_exception_handler(function (Throwable $e) {
     if ($e->getMessage() === 'not_installed') fail('not_installed', 503);
     error_log('ThinkHop API: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-    send_json(['ok' => false, 'error' => 'server', 'detail' => $e->getMessage(), 'file' => basename($e->getFile()) . ':' . $e->getLine()], 500);
+    send_json(['ok' => false, 'error' => 'server', 'detail' => config_value('debug', false) ? $e->getMessage() : null], 500);
 });
 
 $r = (string)($_GET['r'] ?? '');
@@ -147,7 +147,7 @@ function user_games(int $uid): array
 /** The settings of the game: stored values over the defaults, which are the same as in engine.js. */
 function game_settings(): array
 {
-    $s = ['levelLength' => 5, 'hintCost' => ['novice' => 20, 'easy' => 50, 'medium' => 100, 'hard' => 150, 'expert' => 200, 'master' => 300, 'legend' => 500], 'disabledCats' => [], 'disabledRiddles' => [], 'difficulty' => (object)[], 'catWeights' => (object)[]];
+    $s = ['levelLength' => 5, 'hintCost' => ['novice' => 40, 'easy' => 60, 'medium' => 90, 'hard' => 130, 'expert' => 170, 'master' => 220, 'legend' => 280], 'disabledCats' => [], 'disabledRiddles' => [], 'difficulty' => (object)[], 'catWeights' => (object)[]];
     try {
         foreach (db()->query('SELECT k, v FROM ' . t('settings')) as $row) {
             if (!array_key_exists($row['k'], $s)) continue;

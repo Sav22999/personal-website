@@ -16,6 +16,7 @@
     const TRANSLATIONS = {
         it: {
             sol_title: 'Come ci si arriva · Passo dopo passo',
+            sol_grid_box: 'Simboli già presenti nel riquadro', sol_grid_diag: 'Simboli già presenti sulla diagonale', sol_grid_more: 'Da sola questa casella lascia ancora più simboli: completa prima le altre caselle vuote di riga, colonna e riquadro, e alla fine ne resta uno solo.', sol_walk_bump: '🚫 = la mossa porterebbe fuori dalla griglia, quindi la tartaruga resta ferma.', sol_lamp_press: '{n}ª pressione: pulsante {b}', sol_lamp_changed: 'Lampadine che hanno cambiato stato: i due pulsanti insieme devono commutare proprio queste (una commutata due volte torna com’era).', sol_cup_back: 'Parti dalla fila finale e rifai gli scambi al contrario, dall’ultimo al primo: ogni scambio annulla sé stesso.', sol_seq_diffs: 'Differenze tra numeri vicini:',
             sol_s1: '1. Punto di partenza',
             sol_s2: '2. Passaggio chiave',
             sol_s3: '3. Soluzione finale',
@@ -157,6 +158,7 @@
         },
         en: {
             sol_title: 'How to get there · Step by step',
+            sol_grid_box: 'Symbols already in the box', sol_grid_diag: 'Symbols already on the diagonal', sol_grid_more: 'This cell alone still leaves several symbols: fill in the other empty cells of its row, column and box first, and in the end only one is left.', sol_walk_bump: '🚫 = the move would leave the board, so the turtle stays put.', sol_lamp_press: 'Press {n}: button {b}', sol_lamp_changed: 'Lamps that changed: the two buttons together must switch exactly these (a lamp switched twice is back as it was).', sol_cup_back: 'Start from the final row and undo the swaps backwards, from the last to the first: every swap undoes itself.', sol_seq_diffs: 'Differences between neighbouring numbers:',
             sol_s1: '1. Starting point',
             sol_s2: '2. Key deduction',
             sol_s3: '3. Final solution',
@@ -298,6 +300,7 @@
         },
         es: {
             sol_title: 'Cómo se llega · Paso a paso',
+            sol_grid_box: 'Símbolos ya presentes en la caja', sol_grid_diag: 'Símbolos ya presentes en la diagonal', sol_grid_more: 'Esta casilla sola aún deja varios símbolos: completa antes las otras casillas vacías de su fila, columna y caja, y al final queda solo uno.', sol_walk_bump: '🚫 = el movimiento saldría del tablero, así que la tortuga se queda quieta.', sol_lamp_press: 'Pulsación {n}: botón {b}', sol_lamp_changed: 'Lámparas que cambiaron: los dos botones juntos deben conmutar justo estas (una conmutada dos veces vuelve a como estaba).', sol_cup_back: 'Parte de la fila final y deshaz los cambios al revés, del último al primero: cada cambio se anula a sí mismo.', sol_seq_diffs: 'Diferencias entre números vecinos:',
             sol_s1: '1. Punto de partida',
             sol_s2: '2. Deducción clave',
             sol_s3: '3. Solución final',
@@ -439,6 +442,7 @@
         },
         fr: {
             sol_title: 'Comment y parvenir · Pas à pas',
+            sol_grid_box: 'Symboles déjà présents dans le bloc', sol_grid_diag: 'Symboles déjà présents sur la diagonale', sol_grid_more: 'Cette case seule laisse encore plusieurs symboles : remplis d’abord les autres cases vides de sa ligne, de sa colonne et de son bloc, et à la fin il n’en reste qu’un.', sol_walk_bump: '🚫 = le mouvement sortirait de la grille, donc la tortue reste sur place.', sol_lamp_press: 'Appui {n} : bouton {b}', sol_lamp_changed: 'Lampes qui ont changé : les deux boutons ensemble doivent commuter exactement celles-ci (une lampe commutée deux fois revient comme avant).', sol_cup_back: 'Pars de la rangée finale et refais les échanges à l’envers, du dernier au premier : chaque échange s’annule lui-même.', sol_seq_diffs: 'Différences entre nombres voisins :',
             sol_s1: '1. Point de départ',
             sol_s2: '2. Déduction clé',
             sol_s3: '3. Solution finale',
@@ -580,6 +584,7 @@
         },
         de: {
             sol_title: 'Lösungsweg · Schritt für Schritt',
+            sol_grid_box: 'Symbole, die schon im Block stehen', sol_grid_diag: 'Symbole, die schon auf der Diagonale stehen', sol_grid_more: 'Dieses Feld allein lässt noch mehrere Symbole offen: Fülle zuerst die anderen leeren Felder in Zeile, Spalte und Block, am Ende bleibt nur eines übrig.', sol_walk_bump: '🚫 = der Zug würde das Brett verlassen, also bleibt die Schildkröte stehen.', sol_lamp_press: '{n}. Druck: Knopf {b}', sol_lamp_changed: 'Lampen, die sich geändert haben: Die zwei Knöpfe zusammen müssen genau diese umschalten (zweimal umgeschaltet ist wie vorher).', sol_cup_back: 'Beginne bei der Endreihe und mache die Tauschzüge rückwärts, vom letzten zum ersten: Jeder Tausch hebt sich selbst auf.', sol_seq_diffs: 'Unterschiede zwischen benachbarten Zahlen:',
             sol_s1: '1. Ausgangspunkt',
             sol_s2: '2. Wichtiger Schritt',
             sol_s3: '3. Endergebnis',
@@ -783,6 +788,8 @@
         const {h, icon} = UI;
 
         const ansVal = q.options && q.answer !== undefined ? optionStr(q, q.options[q.answer]) : '';
+        // The reasoning of the puzzle itself, as written by its generator: always right, so it closes the steps
+        const whyNote = (q.why || []).filter(w => w && !w.lit && !w.riddle).map(w => lineStr(q, w)).filter(Boolean).join(' ');
 
         function makeStep(num, title, visualEl, noteText, isWinner) {
             return h('div.why-step-card' + (isWinner ? '.winner' : ''),
@@ -828,62 +835,88 @@
         // 1. Gears
         if (q.gearsData) {
             const gd = q.gearsData;
-            const startCog = String.fromCharCode(65 + (gd.startIdx || 0));
-            const startDirStr = gd.startDir === 'cw' ? t('cw') : t('ccw');
-            const targetIdx = (gd.targetIdx !== undefined) ? gd.targetIdx : (gd.count - 1);
-            const targetCog = String.fromCharCode(65 + targetIdx);
+            const cog = i => String.fromCharCode(65 + i);
+            const sym = dir => (dir === 'cw' ? '↻' : '↺');
+            const word = dir => (dir === 'cw' ? t('cw') : t('ccw'));
+            const whyText = q.why && q.why[0] && q.why[0].k ? t(q.why[0].k, q.why[0].v) : '';
+            const startIdx = gd.startIdx || 0;
 
-            // Step 1: Initial driving gear
-            addStep(
-                t('sol_gear_start_title'),
-                flowRow(chip(t('sol_gear_start', {cog: startCog, dir: startDirStr}), 'initial')),
-                t('sol_gear_rule_note')
-            );
-
-            if (gd.jamPair) {
-                const c1 = String.fromCharCode(65 + gd.jamPair[0]);
-                const c2 = String.fromCharCode(65 + gd.jamPair[1]);
+            if (gd.speed) {
+                // Turns: teeth that go by = teeth of A × turns of A; the last gear needs its own teeth for each turn
+                const n = gd.count, total = gd.teeth[0] * gd.turns;
                 addStep(
-                    t('sol_step_deduction'),
-                    flowRow(chip(c1, 'target'), arrow('⚡'), chip(c2, 'wrong')),
-                    t('sol_gear_jam')
+                    t('sol_gear_start_title'),
+                    flowRow(chip(`A: ${gd.teeth[0]} × ${gd.turns} ↻ = ${total}`, 'initial')),
+                    ''
                 );
-                addFinalStep(
-                    t('sol_step_final'),
-                    winnerChip(t('sol_gear_jam_res')),
-                    t('why_gears_jam', {x: ansVal})
-                );
-            } else {
-                // Granular contact steps: each meshed pair contact
-                const count = gd.count || 2;
-                for (let i = 0; i < count - 1; i++) {
-                    const cA = String.fromCharCode(65 + i);
-                    const cB = String.fromCharCode(65 + i + 1);
-                    const dirA = (gd.dirs ? gd.dirs[i] : (i % 2 === 0 ? gd.startDir : (gd.startDir === 'cw' ? 'ccw' : 'cw')));
-                    const dirB = (gd.dirs ? gd.dirs[i + 1] : (dirA === 'cw' ? 'ccw' : 'cw'));
-                    const dirAStr = dirA === 'cw' ? t('cw') : t('ccw');
-                    const dirBStr = dirB === 'cw' ? t('cw') : t('ccw');
-                    const isTargetStep = (i + 1 === targetIdx);
-
+                if (n > 2) {
                     addStep(
-                        t('sol_gear_contact', {prev: cA, next: cB}),
-                        flowRow(
-                            chip(`${cA} (${dirA === 'cw' ? '↻' : '↺'})`),
-                            arrow('➔'),
-                            chip(`${cB} (${dirB === 'cw' ? '↻' : '↺'})`, isTargetStep ? 'target' : '')
-                        ),
-                        t('sol_gear_step_note', {prev: cA, next: cB, prevDir: dirAStr, nextDir: dirBStr})
+                        t('sol_gear_contact', {prev: 'A', next: 'B'}),
+                        flowRow(chip(`B: ${gd.teeth[1]}`), arrow('➔'), chip(`${total}`)),
+                        ''
                     );
-                    if (isTargetStep && targetIdx < count - 1) {
-                        break;
-                    }
                 }
-
-                const targetDir = (gd.dirs && gd.dirs[targetIdx]) ? gd.dirs[targetIdx] : (targetIdx % 2 === 0 ? gd.startDir : (gd.startDir === 'cw' ? 'ccw' : 'cw'));
-                const targetDirStr = targetDir === 'cw' ? t('cw') : t('ccw');
                 addFinalStep(
                     t('sol_step_final'),
-                    winnerChip(t('sol_gear_res', {cog: targetCog, dir: targetDirStr})),
+                    winnerChip(`${cog(n - 1)}: ${total} ÷ ${gd.teeth[n - 1]} = ${ansVal}`),
+                    whyText
+                );
+            } else if (gd.isRing) {
+                // Round the ring from the start: the directions alternate, and the ring closes on the start gear
+                const n = gd.count;
+                addStep(
+                    t('sol_gear_start_title'),
+                    flowRow(chip(t('sol_gear_start', {cog: cog(startIdx), dir: word(gd.startDir)}), 'initial')),
+                    t('sol_gear_rule_note')
+                );
+                const ring = Array.from({length: n}, (_, k) => (startIdx + k) % n);
+                addStep(
+                    t('sol_gear_flip'),
+                    flowRow(...ring.flatMap((i, k) => [k ? arrow('➔') : null, chip(`${cog(i)} ${sym(gd.dirs[i])}`)]).filter(Boolean)),
+                    ''
+                );
+                const last = ring[n - 1];
+                if (gd.isJammed) {
+                    addStep(
+                        t('sol_step_deduction'),
+                        flowRow(chip(`${cog(last)} ${sym(gd.dirs[last])}`, 'target'), arrow('⚡'), chip(`${cog(startIdx)} ${sym(gd.dirs[startIdx])}`, 'wrong')),
+                        t('sol_gear_jam')
+                    );
+                    addFinalStep(t('sol_step_final'), winnerChip(t('sol_gear_jam_res')), whyText);
+                } else {
+                    addFinalStep(t('sol_step_final'), winnerChip(t('ge_free')), whyText);
+                }
+            } else {
+                // The chain of contacts from the start gear to the asked one
+                const targetIdx = gd.targetIdx !== undefined ? gd.targetIdx : gd.count - 1;
+                const prev = {[startIdx]: -1};
+                const queue = [startIdx];
+                while (queue.length) {
+                    const at = queue.shift();
+                    gd.links.forEach(([a, b]) => {
+                        [[a, b], [b, a]].forEach(([x, y]) => {
+                            if (x === at && prev[y] === undefined) { prev[y] = at; queue.push(y); }
+                        });
+                    });
+                }
+                const chain = [];
+                for (let at = targetIdx; at !== -1 && at !== undefined; at = prev[at]) chain.unshift(at);
+                addStep(
+                    t('sol_gear_start_title'),
+                    flowRow(chip(t('sol_gear_start', {cog: cog(startIdx), dir: word(gd.startDir)}), 'initial')),
+                    t('sol_gear_rule_note')
+                );
+                for (let k = 1; k < chain.length; k++) {
+                    const a = chain[k - 1], b = chain[k];
+                    addStep(
+                        t('sol_gear_contact', {prev: cog(a), next: cog(b)}),
+                        flowRow(chip(`${cog(a)} (${sym(gd.dirs[a])})`), arrow('➔'), chip(`${cog(b)} (${sym(gd.dirs[b])})`, b === targetIdx ? 'target' : '')),
+                        t('sol_gear_step_note', {prev: cog(a), next: cog(b), prevDir: word(gd.dirs[a]), nextDir: word(gd.dirs[b])})
+                    );
+                }
+                addFinalStep(
+                    t('sol_step_final'),
+                    winnerChip(t('sol_gear_res', {cog: cog(targetIdx), dir: word(gd.dirs[targetIdx])})),
                     t('sol_gear_target_reached')
                 );
             }
@@ -986,34 +1019,21 @@
                     ''
                 );
             } else {
-                // Opposite face mode:
-                // Step 1: Rule
-                addStep(
-                    t('sol_cube_rule_title'),
-                    flowRow(chip('📦 ' + t('sol_cube_rule_title'), 'initial')),
-                    t('sol_cube_rule')
-                );
-
-                // Step 2: Locate target face
-                addStep(
-                    t('sol_cube_target_find'),
-                    flowRow(chip(targetIcon, 'initial')),
-                    t('sol_cube_target_find') + ': ' + targetIcon
-                );
-
-                // Step 3: Jump intermediate square
-                addStep(
-                    t('sol_cube_jump_step'),
-                    flowRow(chip(targetIcon), arrow('➔ ' + t('sol_skip') + ' ➔'), chip('⬜'), arrow('➔ ' + t('sol_find') + ' ➔'), chip(rightIcon, 'target')),
-                    t('sol_cube_match', {a: targetIcon, mid: '⬜', b: rightIcon})
-                );
-
-                // Final step
-                addFinalStep(
-                    t('sol_step_final'),
-                    winnerChip(t('sol_cube_res', {a: targetIcon, b: rightIcon})),
-                    ''
-                );
+                // Opposite faces, worked out by folding the net: every pair, then the one asked for
+                const opp = cd.opp || {};
+                const pairs = [], seenPairs = new Set();
+                for (let i = 0; i < 6; i++) {
+                    const j = opp[i];
+                    if (j === undefined || !cd.icons) continue;
+                    const key = Math.min(i, j) + '-' + Math.max(i, j);
+                    if (seenPairs.has(key)) continue;
+                    seenPairs.add(key);
+                    const isAsked = cd.icons[i] === targetIcon || cd.icons[j] === targetIcon;
+                    pairs.push(chip(`${cd.icons[i]} ↔ ${cd.icons[j]}`, isAsked ? 'target' : ''));
+                }
+                addStep(t('sol_cube_target_find'), flowRow(chip(targetIcon, 'initial')), '');
+                if (pairs.length) addStep(t('sol_cube_pairs_title'), flowRow(...pairs), whyNote);
+                addFinalStep(t('sol_step_final'), winnerChip(t('sol_cube_res', {a: targetIcon, b: rightIcon})), '');
             }
         }
         // 4. Pipes & communicating vessels
@@ -1030,8 +1050,9 @@
 
             // Step 2: Blocked pipes
             const connections = pd.connections || [];
-            const openFlows = connections.filter(c => !c.blocked).map(c => chip(`${c.from} ➔ ${c.to} (✓)`));
-            const blockedFlows = connections.filter(c => c.blocked).map(c => chip(`${c.from} ➔ ${c.to} (🚫)`, 'wrong'));
+            const level = c => (c.from === source && connections.filter(x => x.from === source).length > 1 ? (c.h === 2 ? ' ⬆️' : ' ⬇️') : '');
+            const openFlows = connections.filter(c => !c.blocked).map(c => chip(`${c.from} ➔ ${c.to}${level(c)} (✓)`));
+            const blockedFlows = connections.filter(c => c.blocked).map(c => chip(`${c.from} ➔ ${c.to}${level(c)} (🚫)`, 'wrong'));
 
             if (blockedFlows.length > 0) {
                 addStep(
@@ -1054,7 +1075,7 @@
             addFinalStep(
                 t('sol_step_final'),
                 winnerChip(t('sol_pipe_res', {tank: pd.winner})),
-                ''
+                whyNote
             );
         }
         // 5. Mobiles (sculptures with balance beams)
@@ -1143,411 +1164,209 @@
                 ''
             );
         }
-        // 7. Scales
-        else if (q.cat === 'scales' && q.lines && q.lines.length >= 2) {
-            addStep(
-                t('sol_scale_eq1'),
-                flowRow(chip(q.lines[0], 'initial')),
-                t('sol_scale_eq1')
-            );
-
-            addStep(
-                t('sol_scale_sub'),
-                flowRow(chip(q.lines[1])),
-                t('sol_scale_sub')
-            );
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_scale_res', {x: ansVal})),
-                ''
-            );
-        }
-        // 8. Cups (step-by-step swap animation)
-        else if (q.cat === 'cups' && q.lines && q.lines.length >= 2) {
-            const startItems = q.lines[0].split(/\s+/).filter(Boolean);
-            const moves = q.lines[1].split('·').map(s => s.trim()).filter(Boolean);
-
-            // Step 1: Initial layout
-            addStep(
-                t('sol_step_start'),
-                flowRow(...startItems.map(it => chip(it, 'initial'))),
-                t('sol_cup_start')
-            );
-
-            // Replay each move individually
-            let curRow = startItems.slice();
-            moves.forEach((moveStr, idx) => {
-                const swapMatch = moveStr.match(/(\d+)\s*↔\s*(\d+)/);
-                if (swapMatch) {
-                    const iA = parseInt(swapMatch[1], 10) - 1;
-                    const iB = parseInt(swapMatch[2], 10) - 1;
-                    if (iA >= 0 && iA < curRow.length && iB >= 0 && iB < curRow.length) {
-                        const tmp = curRow[iA];
-                        curRow[iA] = curRow[iB];
-                        curRow[iB] = tmp;
-                    }
-                } else if (moveStr.includes('⇄')) {
-                    curRow.reverse();
-                } else if (moveStr.includes('⏪')) {
-                    curRow.push(curRow.shift());
-                }
-
-                addStep(
-                    t('sol_cup_swap_step', {n: idx + 1, move: moveStr}),
-                    flowRow(
-                        chip(moveStr, 'target'),
-                        arrow('➔'),
-                        ...curRow.map(it => chip(it))
-                    ),
-                    t('sol_cup_state_after') + ' ' + curRow.join(' ')
-                );
+        // 7. Scales: every weighing as given, then the reasoning of the puzzle itself
+        else if (q.cat === 'scales' && q.lines && q.lines.length >= 1) {
+            q.lines.forEach((line, idx) => {
+                addStep(t('sol_lock_clue_n', {n: idx + 1}), flowRow(chip(line, idx ? '' : 'initial')), '');
             });
-
-            // Final step
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_cup_res', {n: ansVal})),
-                ''
-            );
+            if (q.ask) addStep(t('sol_step_deduction'), flowRow(chip(lineStr(q, q.ask), 'target')), whyNote);
+            addFinalStep(t('sol_step_final'), winnerChip(t('sol_gen_res', {ans: ansVal})), '');
         }
-        // 9. Grid (Mini-Sudoku / Sudoku X)
-        else if (q.cat === 'grid' && q.grid && Array.isArray(q.grid)) {
-            let tr = -1, tc = -1;
-            for (let r = 0; r < q.grid.length; r++) {
-                for (let c = 0; c < q.grid[r].length; c++) {
-                    if (q.grid[r][c] === '?') { tr = r; tc = c; break; }
-                }
-                if (tr >= 0) break;
-            }
-
-            if (tr >= 0) {
-                // Step 1: Target cell
-                addStep(
-                    t('sol_grid_target'),
-                    flowRow(chip(t('sol_target_cell', {r: tr + 1, c: tc + 1}), 'initial')),
-                    ''
-                );
-
-                // Step 2: Row candidates
-                const rowItems = q.grid[tr].filter(x => x && x !== '?');
-                if (rowItems.length > 0) {
-                    addStep(
-                        t('sol_grid_row', {r: tr + 1}),
-                        flowRow(...rowItems.map(s => elimChip(s))),
-                        t('sol_grid_row_note')
-                    );
-                }
-
-                // Step 3: Column candidates
-                const colItems = q.grid.map(row => row[tc]).filter(x => x && x !== '?');
-                if (colItems.length > 0) {
-                    addStep(
-                        t('sol_grid_col', {c: tc + 1}),
-                        flowRow(...colItems.map(s => elimChip(s))),
-                        t('sol_grid_col_note')
-                    );
-                }
-
-                // Step 4: Summary of all eliminated candidates
-                const seen = [...new Set([...rowItems, ...colItems])];
-                addStep(
-                    t('sol_grid_all_elim'),
-                    flowRow(...seen.map(s => elimChip(s))),
-                    t('sol_elim_row_col')
-                );
-
-                // Final step
-                addFinalStep(
-                    t('sol_step_final'),
-                    winnerChip(`${t('sol_single_cand')} ${ansVal}`),
-                    ''
-                );
-            }
-        }
-        // 10. Compass (Turn or Walk)
-        else if (q.cat === 'compass' && q.lines && q.lines.length >= 1) {
-            if (q.grid && q.lines.length === 1) {
-                // walk grid
-                addStep(
-                    t('sol_step_start'),
-                    flowRow(chip(t('sol_walk_start'), 'initial')),
-                    ''
-                );
-
-                const steps = q.lines[0].split(/\s+/).filter(Boolean);
-                steps.forEach((step, idx) => {
-                    addStep(
-                        t('sol_walk_step', {n: idx + 1, dir: step}),
-                        flowRow(chip(step)),
-                        ''
-                    );
+        // 8. Cups: the row is replayed move by move (backwards when the start is the question)
+        else if (q.cat === 'cups' && q.lines && q.lines.length >= 2) {
+            const items = line => line.split(/\s{2,}|\s+/).filter(Boolean);
+            const moves = q.lines[1].split('·').map(s => s.trim()).filter(Boolean);
+            const apply = (row, move) => {
+                const out = row.slice();
+                const m = move.match(/(\d+)\s*↔\s*(\d+)/);
+                if (m) {
+                    const a = +m[1] - 1, b = +m[2] - 1;
+                    [out[a], out[b]] = [out[b], out[a]];
+                } else if (move.includes('⇄')) out.reverse();
+                else if (move.includes('⏪')) out.push(out.shift());
+                return out;
+            };
+            const isBack = q.pk === 'q_cups_back';
+            const filled = moves.map(m => (m.includes('?') ? ansVal : m)); // the missing swap is the answer
+            if (isBack) {
+                // Swaps undo themselves: going through them backwards from the end gives the start
+                let row = items(q.lines[2]);
+                addStep(t('sol_step_start'), flowRow(...row.map(it => chip(it, 'initial'))), t('sol_cup_back'));
+                filled.slice().reverse().forEach((move, idx) => {
+                    row = apply(row, move);
+                    addStep(t('sol_cup_swap_step', {n: filled.length - idx, move}), flowRow(chip(move, 'target'), arrow('➔'), ...row.map(it => chip(it))), '');
                 });
-
-                addFinalStep(
-                    t('sol_step_final'),
-                    winnerChip(t('sol_walk_res', {ans: ansVal})),
-                    ''
-                );
             } else {
-                // turn angles
-                const startDir = q.lines[0];
-                addStep(
-                    t('sol_step_start'),
-                    flowRow(chip(startDir, 'initial')),
-                    t('sol_compass_start', {dir: startDir})
-                );
-
-                const turns = (q.lines[1] || '').split('·').map(s => s.trim()).filter(Boolean);
-                turns.forEach((turn, idx) => {
-                    addStep(
-                        t('sol_compass_turn_step', {n: idx + 1, turn}),
-                        flowRow(chip(turn)),
-                        ''
-                    );
+                let row = items(q.lines[0]);
+                addStep(t('sol_step_start'), flowRow(...row.map(it => chip(it, 'initial'))), t('sol_cup_start'));
+                filled.forEach((move, idx) => {
+                    row = apply(row, move);
+                    addStep(t('sol_cup_swap_step', {n: idx + 1, move}), flowRow(chip(move, moves[idx].includes('?') ? 'target' : ''), arrow('➔'), ...row.map(it => chip(it))), '');
                 });
-
-                addFinalStep(
-                    t('sol_step_final'),
-                    winnerChip(t('sol_compass_res', {dir: ansVal})),
-                    ''
-                );
+            }
+            addFinalStep(t('sol_step_final'), winnerChip(t('sol_gen_res', {ans: ansVal})), whyNote);
+        }
+        // 9. Grid (mini sudoku, sudoku X): what the row, column, box and diagonals rule out, then what is left
+        else if (q.cat === 'grid' && q.grid && Array.isArray(q.grid) && q.grid.some(row => row.includes('?'))) {
+            const g = q.grid, n = g.length;
+            let tr = -1, tc = -1;
+            g.forEach((row, r) => row.forEach((c, k) => { if (c === '?') { tr = r; tc = k; } }));
+            const symbols = [...new Set([...q.options.map(o => optionStr(q, o)), ...g.flat().filter(c => c && c !== '?')])];
+            addStep(t('sol_grid_target'), flowRow(chip(t('sol_target_cell', {r: tr + 1, c: tc + 1}), 'initial')), '');
+            const groups = [[t('sol_grid_row', {r: tr + 1}), g[tr]], [t('sol_grid_col', {c: tc + 1}), g.map(row => row[tc])]];
+            if (q.boxes) {
+                const [bh, bw] = q.boxes, r0 = Math.floor(tr / bh) * bh, c0 = Math.floor(tc / bw) * bw;
+                const box = [];
+                for (let r = r0; r < r0 + bh; r++) for (let c = c0; c < c0 + bw; c++) box.push(g[r][c]);
+                groups.push([t('sol_grid_box'), box]);
+            }
+            if (q.isDiag && tr === tc) groups.push([t('sol_grid_diag'), g.map((row, i) => row[i])]);
+            if (q.isDiag && tr + tc === n - 1) groups.push([t('sol_grid_diag'), g.map((row, i) => row[n - 1 - i])]);
+            const out = new Set();
+            groups.forEach(([title, cells]) => {
+                const present = cells.filter(c => c && c !== '?');
+                present.forEach(c => out.add(c));
+                if (present.length) addStep(title, flowRow(...present.map(s => elimChip(s))), '');
+            });
+            const left = symbols.filter(s => !out.has(s));
+            if (left.length === 1) {
+                addFinalStep(t('sol_step_final'), winnerChip(`${t('sol_single_cand')} ${ansVal}`), '');
+            } else {
+                // Not enough on its own: the other empty cells decide, once they are filled in
+                addStep(t('sol_step_deduction'), flowRow(...left.map(s => chip(s, s === ansVal ? 'target' : ''))), t('sol_grid_more'));
+                addFinalStep(t('sol_step_final'), winnerChip(t('sol_gen_res', {ans: ansVal})), whyNote);
+            }
+        }
+        // 10. Compass: the direction after every turn, or the square after every step
+        else if (q.cat === 'compass' && q.lines && q.lines.length >= 1) {
+            const FOUR = ['⬆️', '➡️', '⬇️', '⬅️'];
+            if (q.grid) {
+                const n = q.grid.length;
+                let y = 0, x = 0;
+                q.grid.forEach((row, r) => row.forEach((c, k) => { if (c === '🐢') { y = r; x = k; } }));
+                const label = (r, k) => String.fromCharCode(65 + r * n + k);
+                addStep(t('sol_step_start'), flowRow(chip(`🐢 = ${label(y, x)}`, 'initial')), '');
+                const MOVES = {'⬆️': [-1, 0], '➡️': [0, 1], '⬇️': [1, 0], '⬅️': [0, -1]};
+                const trail = [];
+                q.lines[0].split(/\s+/).filter(Boolean).forEach((step, idx) => {
+                    const [dy, dx] = MOVES[step] || [0, 0];
+                    const inside = y + dy >= 0 && y + dy < n && x + dx >= 0 && x + dx < n;
+                    if (inside) { y += dy; x += dx; }
+                    trail.push(chip(`${idx + 1}. ${step} ${inside ? label(y, x) : '🚫 ' + label(y, x)}`, inside ? '' : 'wrong'));
+                });
+                addStep(t('sol_walk_moves'), flowRow(...trail), q.pk === 'q_walk_bump' ? t('sol_walk_bump') : '');
+                addFinalStep(t('sol_step_final'), winnerChip(t('sol_walk_res', {ans: ansVal})), '');
+            } else {
+                const startDir = q.lines[0].replace('🐢', '').trim();
+                let at = FOUR.indexOf(startDir);
+                addStep(t('sol_step_start'), flowRow(chip('🐢 ' + startDir, 'initial')), t('sol_compass_start', {dir: startDir}));
+                const trail = [];
+                (q.lines[1] || '').split('·').map(s => s.trim()).filter(Boolean).forEach(turn => {
+                    const deg = parseInt(turn.replace(/[^\d]/g, ''), 10) || 0;
+                    const quarters = (deg / 90) % 4;
+                    at = (at + (turn.includes('↺') ? 4 - quarters : quarters)) % 4;
+                    trail.push(chip(`${turn} ➔ ${FOUR[at]}`));
+                });
+                addStep(t('sol_compass_turn'), flowRow(...trail), whyNote);
+                addFinalStep(t('sol_step_final'), winnerChip(t('sol_compass_res', {dir: ansVal})), '');
             }
         }
         // 11. Mirror
         else if (q.cat === 'mirror') {
-            const moveStr = q.lines ? q.lines.join(' · ') : (q.pv && q.pv.target ? `Specchia ${q.pv.target}` : 'Simmetria');
-            addStep(
-                t('sol_step_start'),
-                flowRow(chip(t('sol_mirror_rule', {move: moveStr}), 'initial')),
-                ''
-            );
-
-            addStep(
-                t('sol_step_deduction'),
-                flowRow(chip(t('sol_mirror_refl')), arrow('➔'), chip(t('sol_target_pos'))),
-                t('sol_mirror_pos')
-            );
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_mirror_res', {ans: ansVal})),
-                ''
-            );
+            if (q.lines) addStep(t('sol_step_start'), flowRow(chip(t('sol_mirror_rule', {move: q.lines.join(' · ')}), 'initial')), '');
+            addStep(t('sol_step_deduction'), flowRow(chip(t('sol_mirror_refl')), arrow('➔'), chip(t('sol_target_pos'))), whyNote || t('sol_mirror_pos'));
+            addFinalStep(t('sol_step_final'), winnerChip(t('sol_mirror_res', {ans: ansVal})), '');
         }
-        // 12. Locks
+        // 12. Locks: the answer checked against every clue
         else if (q.cat === 'locks' && q.lines && q.lines.length >= 1) {
+            const split = s => s.trim().split(/\s+/).length > 1 ? s.trim().split(/\s+/) : [...s.trim()];
+            const code = split(ansVal);
             q.lines.forEach((line, idx) => {
-                addStep(
-                    t('sol_lock_clue_n', {n: idx + 1}),
-                    flowRow(chip(line, 'initial')),
-                    ''
-                );
+                const [guessText] = line.split('→');
+                const guess = split(guessText);
+                const exact = guess.filter((g, i) => g === code[i]).length;
+                const common = guess.filter(g => code.includes(g)).length - exact;
+                addStep(t('sol_lock_clue_n', {n: idx + 1}), flowRow(chip(line.trim(), 'initial'), arrow('➔'), chip(`${ansVal}: ${exact} 🎯 ${common} 🔄 ✓`, 'target')), '');
             });
-
-            addStep(
-                t('sol_lock_deduction'),
-                flowRow(chip('🔍 ' + t('sol_lock_deduction'), 'target')),
-                t('why_locks', {x: ansVal})
-            );
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_lock_res', {code: ansVal})),
-                ''
-            );
+            addFinalStep(t('sol_step_final'), winnerChip(t('sol_lock_res', {code: ansVal})), whyNote);
         }
         // 13. Fruit algebra (symbols)
         else if (q.cat === 'symbols' && q.lines && q.lines.length >= 2) {
-            addStep(
-                t('sol_sym_eq1'),
-                flowRow(chip(q.lines[0], 'initial')),
-                t('sol_sym_eq1')
-            );
-
-            for (let i = 1; i < q.lines.length; i++) {
-                addStep(
-                    t('sol_sym_sub') + (q.lines.length > 2 ? ` (${i})` : ''),
-                    flowRow(chip(q.lines[i])),
-                    t('sol_sym_sub')
-                );
-            }
-
-            if (q.why && q.why[0] && q.why[0].lit) {
-                addStep(
-                    t('sol_step_deduction'),
-                    flowRow(chip(q.why[0].lit, 'target')),
-                    t('sol_gen_logic')
-                );
-            }
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_sym_res', {ans: ansVal})),
-                ''
-            );
-        }
-        // 14. Seats
-        else if (q.cat === 'seats' && q.facts && q.facts.length >= 2) {
-            addStep(
-                t('sol_seat_start'),
-                flowRow(chip(lineStr(q, q.facts[0]), 'initial')),
-                t('sol_seat_start')
-            );
-
-            q.facts.slice(1).forEach((fact, idx) => {
-                addStep(
-                    t('sol_step_deduction') + ` (${idx + 1})`,
-                    flowRow(chip(lineStr(q, fact))),
-                    t('sol_seat_step')
-                );
+            q.lines.forEach((line, idx) => {
+                addStep(idx ? t('sol_sym_sub') + (q.lines.length > 2 ? ` (${idx})` : '') : t('sol_sym_eq1'), flowRow(chip(line, idx ? '' : 'initial')), '');
             });
-
-            if (q.why && q.why[0] && q.why[0].v && q.why[0].v.x) {
-                addStep(
-                    t('sol_step_deduction'),
-                    flowRow(chip(q.why[0].v.x)),
-                    t('sol_seat_step')
-                );
-            }
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_seat_res', {name: ansVal})),
-                ''
-            );
+            if (q.why && q.why[0] && q.why[0].lit) addStep(t('sol_step_deduction'), flowRow(chip(q.why[0].lit, 'target')), t('sol_gen_logic'));
+            addFinalStep(t('sol_step_final'), winnerChip(t('sol_sym_res', {ans: ansVal})), '');
         }
-        // 15. Boxes
-        else if (q.cat === 'boxes' && q.facts && q.facts.length >= 1) {
-            addStep(
-                t('sol_box_rule'),
-                flowRow(chip(lineStr(q, q.facts[0]), 'initial')),
-                t('sol_box_rule')
-            );
-
-            q.facts.slice(1).forEach((fact, idx) => {
-                addStep(
-                    t('sol_step_deduction') + ` (${idx + 1})`,
-                    flowRow(chip(lineStr(q, fact))),
-                    t('sol_box_step')
-                );
-            });
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_box_res', {box: ansVal})),
-                ''
-            );
-        }
-        // 16. Who owns what (pets / houses)
-        else if (q.cat === 'whoowns' && q.facts && q.facts.length >= 1) {
-            const startChip = q.pv && q.pv.who && q.pv.pets
-                ? `${q.pv.who} · ${q.pv.pets}`
-                : (q.ask ? lineStr(q, q.ask) : t('sol_title'));
-            addStep(
-                t('sol_step_start'),
-                flowRow(chip(startChip, 'initial')),
-                t('sol_gen_premise')
-            );
-
+        // 14–16. Seats, treasure chests, who owns what: the clues, then the only arrangement they allow
+        else if ((q.cat === 'seats' || q.cat === 'boxes' || q.cat === 'whoowns') && q.facts && q.facts.length >= 1) {
             q.facts.forEach((fact, idx) => {
-                addStep(
-                    t('sol_step_deduction') + ` (${idx + 1})`,
-                    flowRow(chip(lineStr(q, fact))),
-                    ''
-                );
+                addStep(t('sol_lock_clue_n', {n: idx + 1}), flowRow(chip(lineStr(q, fact), idx ? '' : 'initial')), '');
             });
-
-            if (q.why && q.why[0] && q.why[0].lit) {
-                addStep(
-                    t('sol_step_deduction'),
-                    flowRow(chip(q.why[0].lit)),
-                    ''
-                );
-            }
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_gen_res', {ans: ansVal})),
-                ''
-            );
+            if (whyNote) addStep(t('sol_step_deduction'), flowRow(chip(q.ask ? lineStr(q, q.ask) : '?', 'target')), whyNote);
+            const res = q.cat === 'seats' ? t('sol_seat_res', {name: ansVal}) : (q.cat === 'boxes' ? t('sol_box_res', {box: ansVal}) : t('sol_gen_res', {ans: ansVal}));
+            addFinalStep(t('sol_step_final'), winnerChip(res), '');
         }
-        // 17. Lamps
+        // 17. Lamps: the buttons really pressed, one at a time; or the lamps that changed and the pair that changes them
         else if (q.cat === 'lamps' && q.lines && q.lines.length >= 2) {
-            addStep(
-                t('sol_lamp_start'),
-                flowRow(chip(q.lines[0], 'initial')),
-                t('sol_lamp_start')
-            );
-
-            q.lines.slice(1).forEach((line, idx) => {
-                addStep(
-                    t('sol_lamp_sw') + ` (${idx + 1})`,
-                    flowRow(chip(line.trim())),
-                    ''
-                );
+            const lamps = s => [...s.trim()].filter(c => c === '💡' || c === '⚫');
+            const buttons = {};
+            q.lines.slice(1).forEach(l => {
+                const m = l.match(/^\s*([A-Z])\s*→\s*(.*)$/);
+                if (m) buttons[m[1]] = m[2].split(/\s+/).filter(Boolean).map(Number);
             });
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_lamp_res', {ans: ansVal})),
-                ''
-            );
-        }
-        // 18. Signs / Equations
-        else if (q.cat === 'sign' && q.nums && q.result !== undefined) {
-            addStep(
-                t('sol_sign_eq'),
-                flowRow(chip(`${q.nums.join(' [ ? ] ')} = ${q.result}`, 'initial')),
-                t('sol_sign_eq')
-            );
-
-            const ops = ['+', '−', '×', '÷'].map(o => chip(`${q.nums[0]} ${o} ${q.nums[1]}`));
-            addStep(
-                t('sol_sign_test'),
-                flowRow(...ops),
-                t('sol_sign_test')
-            );
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_sign_res', {ans: ansVal})),
-                ''
-            );
-        }
-        // 19. Pattern / Sequence
-        else if ((q.cat === 'pattern' || q.cat === 'sequence') && q.items) {
-            const preview = q.items.slice(0, 4).map(x => chip(String(x)));
-            addStep(
-                t('sol_pt_repeat'),
-                flowRow(...preview),
-                t('sol_pt_repeat')
-            );
-
-            const flowSeq = [];
-            for (let i = 0; i < Math.min(q.items.length, 6); i++) {
-                if (i > 0) flowSeq.push(arrow('➔'));
-                flowSeq.push(chip(String(q.items[i])));
+            // Rows of lamps are drawn as bulbs when the page can draw them
+            const B = r => (UI.bulbs ? UI.bulbs(r.join(''), true) : r.join(''));
+            const press = (row, b) => row.map((c, i) => ((buttons[b] || []).includes(i + 1) ? (c === '💡' ? '⚫' : '💡') : c));
+            if (q.pk === 'q_lamps_back') {
+                const [from, to] = q.lines[0].split('→').map(lamps);
+                const changed = from.map((c, i) => (c !== to[i] ? i + 1 : null)).filter(Boolean);
+                addStep(t('sol_lamp_start'), flowRow(chip(B(from), 'initial'), arrow('➔'), chip(B(to))), '');
+                addStep(t('sol_step_deduction'), flowRow(...changed.map(i => chip(String(i), 'target'))), t('sol_lamp_changed'));
+                const pair = ansVal.split('+').map(s => s.trim());
+                const after = press(press(from, pair[0]), pair[1]);
+                addStep(t('sol_lamp_sw'), flowRow(chip(`${pair[0]} → ${(buttons[pair[0]] || []).join(' ')}`), chip(`${pair[1]} → ${(buttons[pair[1]] || []).join(' ')}`), arrow('➔'), chip(B(after), 'target')), t('why_lamps'));
+            } else {
+                let row = lamps(q.lines[0]);
+                addStep(t('sol_lamp_start'), flowRow(chip(B(row), 'initial')), '');
+                const order = (q.ask ? lineStr(q, q.ask) : '').split('=')[0].trim().split(/\s+/).filter(b => buttons[b]);
+                order.forEach((b, idx) => {
+                    row = press(row, b);
+                    addStep(t('sol_lamp_press', {n: idx + 1, b}), flowRow(chip(`${b} → ${buttons[b].join(' ')}`), arrow('➔'), chip(B(row), idx === order.length - 1 ? 'target' : '')), '');
+                });
             }
-            flowSeq.push(arrow('➔'));
-            flowSeq.push(chip('?', 'target'));
-
-            addStep(
-                t('sol_pt_step'),
-                flowRow(...flowSeq),
-                t('sol_pt_step')
-            );
-
-            addFinalStep(
-                t('sol_step_final'),
-                winnerChip(t('sol_pt_res', {ans: ansVal})),
-                ''
-            );
+            addFinalStep(t('sol_step_final'), winnerChip(q.pk === 'q_lamps_back' ? t('sol_gen_res', {ans: ansVal}) : (UI.bulbs ? h('span', t('sol_lamp_res', {ans: ''}), ' ', UI.bulbs(ansVal, true)) : t('sol_lamp_res', {ans: ansVal}))), '');
+        }
+        // 18. Signs: the right signs give the result, every other option gives something else
+        else if (q.cat === 'sign' && q.nums && q.result !== undefined) {
+            const E = root.ThinkHopEngine;
+            const expr = ops => q.nums.map((n, i) => (i ? ops[i - 1] + ' ' + n : String(n))).join(' ');
+            addStep(t('sol_sign_eq'), flowRow(chip(`${q.nums.join(' ? ')} = ${q.result}`, 'initial')), '');
+            const wrong = q.options.filter((o, i) => i !== q.answer).map(o => {
+                const ops = optionStr(q, o).split(/\s+/);
+                const v = E ? E.evaluate(q.nums, ops) : null;
+                return elimChip(`${expr(ops)} = ${v === null || v === undefined ? '∉ ℕ' : v} ≠ ${q.result}`);
+            });
+            addStep(t('sol_sign_test'), flowRow(...wrong), '');
+            addFinalStep(t('sol_step_final'), winnerChip(`${expr(ansVal.split(/\s+/))} = ${q.result}`), whyNote);
+        }
+        // 19. Pattern / sequence: the row, the differences when they are numbers, and the rule of the puzzle
+        else if ((q.cat === 'pattern' || q.cat === 'sequence') && q.items) {
+            const items = q.items.map(String);
+            addStep(t('sol_step_start'), flowRow(...items.flatMap((x, i) => [i ? arrow('➔') : null, chip(x)]).filter(Boolean), arrow('➔'), chip('?', 'target')), '');
+            const nums = items.map(Number);
+            if (q.cat === 'sequence' && nums.every(Number.isFinite)) {
+                const diffs = nums.slice(1).map((x, i) => x - nums[i]);
+                addStep(t('sol_seq_diffs'), flowRow(...diffs.map(d => chip((d >= 0 ? '+' : '') + d))), '');
+            }
+            addStep(t('sol_step_deduction'), flowRow(chip(ansVal, 'target')), whyNote);
+            addFinalStep(t('sol_step_final'), winnerChip(t(q.cat === 'sequence' ? 'sol_seq_res' : 'sol_pt_res', {ans: ansVal})), '');
         }
         // 20. Riddles (riddles.js & riddles-more.js)
         else if (q.cat === 'riddle' || q.view === 'riddle' || (q.why && q.why.some(w => w && w.riddle))) {
-            const rText = getRiddleText(q);
-            const questionText = (rText && rText[0]) || (q.ask ? lineStr(q, q.ask) : t('cat_riddle'));
+            const rText = q.cat === 'riddle' ? getRiddleText(q) : null;
+            const asked = [q.pk ? lineStr(q, {k: q.pk, v: q.pv}) : '', q.ask ? lineStr(q, q.ask) : ''].filter(Boolean).join(' ');
+            const questionText = (rText && rText[0]) || asked || t('cat_' + q.cat);
             const explanationText = (rText && rText[1]) || (q.why && lineStr(q, q.why[0])) || '';
 
             addStep(

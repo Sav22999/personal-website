@@ -33,7 +33,7 @@ final class Sessione {
     var pagine: Int
 }'), [
             dMatch(pMatch(), [['struct', L('Tipo per valore', 'Value type')], ['class', L('Tipo per riferimento', 'Reference type')], ['mutating', L('Metodo che modifica una struct', 'Method that changes a struct')], ['init', L('Costruttore', 'Initializer')], ['self', L('L’oggetto stesso', 'The object itself')]], L('Tipi in Swift.', 'Types in Swift.')),
-            dFlash(pFlash(), [[L('Le struct ricevono un costruttore automatico', 'Structs get an automatic initializer'), true], [L('Modificare una copia di una struct cambia l’originale', 'Changing a copy of a struct changes the original'), false], [L('Le classi possono ereditare', 'Classes can inherit'), true]], L('Le struct si copiano.', 'Structs are copied.')),
+            dFlash(pFlash(), [[L('Le struct ricevono un costruttore automatico', 'Structs get an automatic initializer'), true], [L('Modificare una copia di una struct cambia l’originale', 'Changing a copy of a struct changes the original'), false], [L('Le classi possono ereditare', 'Classes can inherit'), true], [L('Le struct sono tipi valore', 'Structs are value types'), true]], L('Le struct si copiano.', 'Structs are copied.')),
         ]),
         lesson('protocols', L('Protocolli ed estensioni', 'Protocols and extensions'), [
             P('Un **protocollo** elenca ciò che un tipo deve offrire; struct, classi ed enum possono adottarlo. Un’**estensione** aggiunge metodi a un tipo esistente, anche a quelli di sistema.', 'A **protocol** lists what a type must offer; structs, classes and enums can adopt it. An **extension** adds methods to an existing type, even system ones.'),
@@ -93,7 +93,7 @@ do {
     case sole, pioggia(mm: Int)
 }'), [
             dOrder(pSort(), ['do {', '    let dati = try carica()', '    mostra(dati)', '} catch {', '    print("Errore: \(error)")', '}'], L('Prova, usa, gestisci.', 'Try, use, handle.')),
-            dFlash(pFlash(), [[L('Un caso di enum può portare dati', 'An enum case can carry data'), true], [L('Una funzione `throws` si chiama senza `try`', 'A `throws` function is called without `try`'), false], [L('Nel `catch` generico l’errore si chiama `error`', 'In a generic `catch` the error is named `error`'), true]], L('Serve sempre `try`.', '`try` is always needed.')),
+            dFlash(pFlash(), [[L('Un caso di enum può portare dati', 'An enum case can carry data'), true], [L('Una funzione `throws` si chiama senza `try`', 'A `throws` function is called without `try`'), false], [L('Nel `catch` generico l’errore si chiama `error`', 'In a generic `catch` the error is named `error`'), true], [L('Uno `switch` su un enum deve coprire tutti i casi', 'A `switch` on an enum must cover every case'), true]], L('Serve sempre `try`.', '`try` is always needed.')),
         ]),
         lesson('concurrency', L('async e await', 'async and await'), [
             P('Una funzione `async` può sospendersi mentre aspetta (la rete, il disco) senza bloccare l’app. Si chiama con `await`. `async let` avvia più attese insieme.', 'An `async` function can suspend while waiting (network, disk) without blocking the app. You call it with `await`. `async let` starts several waits together.'),

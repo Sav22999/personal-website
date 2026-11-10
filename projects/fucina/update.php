@@ -24,6 +24,20 @@ $cfg = credentials();
 $error = null;
 $result = null;
 
+// Only from the command line or for a signed-in administrator: the schema is updated by itself anyway (ensure_schema)
+if (PHP_SAPI !== 'cli') {
+    $admin = null;
+    try {
+        $admin = $cfg ? current_user() : null;
+    } catch (Throwable $e) {
+        $admin = null;
+    }
+    if (!$admin || (int)($admin['role'] ?? 0) < 5) {
+        http_response_code(404);
+        exit;
+    }
+}
+
 if (!$cfg) {
     $error = 'File credentials.php non trovato o incompleto. Esegui prima install-db.php.';
 } else {
@@ -51,7 +65,7 @@ if (!$cfg) {
         ];
     } catch (Throwable $e) {
         error_log('[fucina] update.php: ' . get_class($e) . ': ' . $e->getMessage());
-        $error = 'Aggiornamento non riuscito: ' . $e->getMessage();
+        $error = 'Aggiornamento non riuscito: ' . (PHP_SAPI === 'cli' || config_value('debug', false) ? $e->getMessage() : 'controlla il log degli errori del server.');
     }
 }
 

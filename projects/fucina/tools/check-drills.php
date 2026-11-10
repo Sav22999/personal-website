@@ -39,12 +39,12 @@ foreach (SEED_COURSES as $id) {
             if (!isset($q['options'][$q['a']])) $say("$key {$q['id']}: the answer is not an option");
         }
         if ($l['task']) {
-            foreach ($l['task']['checks'] as $ch) if (isset($ch['re']) && @preg_match('~' . $ch['re'] . '~im', '') === false) $say("$key: bad pattern {$ch['re']}");
+            foreach ($l['task']['checks'] as $ch) if (isset($ch['re']) && @preg_match('~' . str_replace('~', '\~', $ch['re']) . '~im', '') === false) $say("$key: bad pattern {$ch['re']}");
             $hint = $l['task']['hint'] ?: (SEED_TASK_HINTS[$key] ?? '');
             if ($hint === '') $say("$key: the exercise has no solution for the hint");
             // The solution of the hint must pass the pattern checks of its own exercise
             if ($l['task']['hint'] !== '' && !in_array($l['task']['lang'], ['html', 'css'], true)) {
-                foreach ($l['task']['checks'] as $ch) if (isset($ch['re']) && !preg_match('~' . $ch['re'] . '~im', $hint)) $say("$key: the hint fails the check {$ch['re']}");
+                foreach ($l['task']['checks'] as $ch) if (isset($ch['re']) && !preg_match('~' . str_replace('~', '\~', $ch['re']) . '~im', $hint)) $say("$key: the hint fails the check {$ch['re']}");
             }
         }
     }

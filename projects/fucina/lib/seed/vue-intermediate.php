@@ -32,7 +32,7 @@ const { n, piu } = useContatore(10);', 'js'),
   return { acceso, cambia };
 }'), [
             dOrder(pSort(), ['export function useOra() {', '  const ora = ref(new Date());', '  setInterval(() => (ora.value = new Date()), 1000);', '  return { ora };', '}'], L('Stato, aggiornamento, risultato.', 'State, update, result.')),
-            dFlash(pFlash(), [[L('Un composable può usare `ref` e `computed`', 'A composable can use `ref` and `computed`'), true], [L('Un composable deve avere un template', 'A composable must have a template'), false], [L('Si chiamano spesso `useQualcosa`', 'They are often called `useSomething`'), true]], L('È solo logica, niente HTML.', 'It is only logic, no HTML.')),
+            dFlash(pFlash(), [[L('Un composable può usare `ref` e `computed`', 'A composable can use `ref` and `computed`'), true], [L('Un composable deve avere un template', 'A composable must have a template'), false], [L('Si chiamano spesso `useQualcosa`', 'They are often called `useSomething`'), true], [L('Due componenti che chiamano lo stesso composable condividono sempre lo stesso stato', 'Two components calling the same composable always share the same state'), false]], L('È solo logica, niente HTML.', 'It is only logic, no HTML.')),
         ]),
         lesson('watch', L('Watcher e ciclo di vita', 'Watchers and lifecycle'), [
             P('`watch` esegue codice quando un dato cambia: utile per salvare, cercare o chiamare il server. `onMounted` esegue codice quando il componente compare nella pagina.', '`watch` runs code when some data changes: handy for saving, searching or calling the server. `onMounted` runs code when the component appears on the page.'),
@@ -79,7 +79,7 @@ const id = computed(() => route.params.id);', 'js'),
   { path: "/", component: Home },
 ]', [re('path\s*:\s*["\']/profilo["\']\s*,\s*component\s*:\s*Profilo', L('La rotta esiste', 'The route exists'))], '', '{ path: "/profilo", component: Profilo },'), [
             dBlanks(pFill(), "<___ to=\"/corsi\">Corsi</___>\n<___ />", ['RouterLink', 'RouterLink', 'RouterView'], ['a', 'RouterPage', 'router-outlet'], L('Collegamento e contenitore.', 'Link and container.')),
-            dFlash(pFlash(), [[L('`RouterLink` ricarica la pagina', '`RouterLink` reloads the page'), false], [L('`:id` è un parametro della rotta', '`:id` is a route parameter'), true], [L('`router.push` cambia pagina via codice', '`router.push` changes page in code'), true]], L('Il router cambia pagina senza ricaricare.', 'The router changes page without reloading.')),
+            dFlash(pFlash(), [[L('`RouterLink` ricarica la pagina', '`RouterLink` reloads the page'), false], [L('`:id` è un parametro della rotta', '`:id` is a route parameter'), true], [L('`router.push` cambia pagina via codice', '`router.push` changes page in code'), true], [L('Una rotta può avere un nome', 'A route can have a name'), true]], L('Il router cambia pagina senza ricaricare.', 'The router changes page without reloading.')),
         ]),
         lesson('pinia', L('Stato condiviso con Pinia', 'Shared state with Pinia'), [
             P('Quando molti componenti devono vedere gli stessi dati (l’utente, il carrello) si usa uno **store**. Con **Pinia** si definisce con `defineStore` e si usa in ogni componente con la sua funzione.', 'When many components must see the same data (the user, the cart) you use a **store**. With **Pinia** you define it with `defineStore` and use it in any component through its function.'),

@@ -23,7 +23,7 @@ return [
 }', [re('val\s+corso\s*(:\s*String\s*)?=\s*"Kotlin"', L('Il valore esiste', 'The value exists')), re('println\s*\(\s*"Studio \$corso"\s*\)', L('Lo stampi', 'You print it'))], '', 'val corso = "Kotlin"
 println("Studio $corso")'), [
             dMatch(pMatch(), [['val', L('Non cambia', 'Does not change')], ['var', L('Può cambiare', 'Can change')], ['fun', L('Funzione', 'Function')], ['Int', L('Intero', 'Integer')], ['String', L('Testo', 'Text')]], L('Parole di base di Kotlin.', 'Basic Kotlin words.')),
-            dFlash(pFlash(), [[L('In Kotlin servono i punti e virgola', 'Kotlin needs semicolons'), false], [L('`val` non si può riassegnare', '`val` cannot be reassigned'), true], [L('Il tipo si può dedurre', 'The type can be inferred'), true]], L('Niente punti e virgola.', 'No semicolons.')),
+            dFlash(pFlash(), [[L('In Kotlin servono i punti e virgola', 'Kotlin needs semicolons'), false], [L('`val` non si può riassegnare', '`val` cannot be reassigned'), true], [L('Il tipo si può dedurre', 'The type can be inferred'), true], [L('`var` si può riassegnare', '`var` can be reassigned'), true]], L('Niente punti e virgola.', 'No semicolons.')),
         ]),
         lesson('nulls', L('Sicurezza sui null', 'Null safety'), [
             P('Un tipo con il punto di domanda (`String?`) può essere `null`. Per usarlo ci sono la **chiamata sicura** `?.`, l’**operatore Elvis** `?:` per un valore di riserva, e i controlli con `if`.', 'A type with a question mark (`String?`) can be `null`. To use it there is the **safe call** `?.`, the **Elvis operator** `?:` for a fallback, and checks with `if`.'),
@@ -91,7 +91,7 @@ println(eta["Ada"])', 'kotlin'),
         ], task('kotlin', L('Da `prezzi` ottieni `val scontati = prezzi.map { it * 0.9 }`.', 'From `prezzi` get `val scontati = prezzi.map { it * 0.9 }`.'), 'val prezzi = listOf(10.0, 20.0)
 ', [re('val\s+scontati\s*=\s*prezzi\.map\s*\{\s*it\s*\*\s*0\.9\s*\}', L('La trasformazione è giusta', 'The transformation is right'))], '', 'val scontati = prezzi.map { it * 0.9 }'), [
             dBlanks(pFill(), "val nomi = ___(\"Ada\")\nnomi.add(\"Bea\")\nval lunghi = nomi.___ { ___.length > 3 }", ['mutableListOf', 'filter', 'it'], ['listOf', 'where', 'this'], L('Lista modificabile, filtro, parametro.', 'Mutable list, filter, parameter.')),
-            dFlash(pFlash(), [[L('`mapOf` usa `to` per le coppie', '`mapOf` uses `to` for pairs'), true], [L('`listOf` si può modificare', '`listOf` can be modified'), false], [L('`sumOf { it.prezzo }` somma un campo', '`sumOf { it.prezzo }` adds up a field'), true]], L('Per modificare serve `mutable`.', 'To modify you need `mutable`.')),
+            dFlash(pFlash(), [[L('`mapOf` usa `to` per le coppie', '`mapOf` uses `to` for pairs'), true], [L('`listOf` si può modificare', '`listOf` can be modified'), false], [L('`sumOf { it.prezzo }` somma un campo', '`sumOf { it.prezzo }` adds up a field'), true], [L('`filter` restituisce una nuova lista', '`filter` returns a new list'), true]], L('Per modificare serve `mutable`.', 'To modify you need `mutable`.')),
         ]),
         lesson('functions', L('Funzioni', 'Functions'), [
             P('`fun` crea una funzione; i parametri hanno tipo, possono avere valori predefiniti e si possono passare per nome. Una funzione di una sola espressione si scrive con `=`.', '`fun` creates a function; parameters are typed, can have default values and can be passed by name. A single-expression function is written with `=`.'),

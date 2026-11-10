@@ -151,7 +151,7 @@
 
             help_seats_goal: 'Place characters around the table or bench one clue at a time.',
             help_seats_s1: 'Put 🦊 at seat 1; “🐼 sits opposite 🦊” places 🐼 at seat 3.',
-            help_seats_s2: '“🐸 sits to the right of 🦊” places 🐸 at seat 2, leaving seat 4 for 🦉.',
+            help_seats_s2: '“🐸 sits immediately after 🦊, going clockwise” places 🐸 at seat 2, leaving seat 4 for 🦉.',
             help_seats_s3: 'Every seat is fixed — read off the requested seat!',
 
             help_mirror_goal: 'Follow how the grid flips (↔️ horizontal, ↕️ vertical) or rotates (↻, ↺, 🔄).',
@@ -166,7 +166,7 @@
 
             help_lasers_goal: 'Trace the laser beam as it reflects 90° off angled mirrors to hit a target gem.',
             help_lasers_s1: 'The emitter fires a laser beam horizontally to the right.',
-            help_lasers_s2: 'The beam hits mirror / at the top corner and deflects 90° downwards.',
+            help_lasers_s2: 'The beam hits mirror \\ at the top corner and deflects 90° downwards.',
             help_lasers_s3: 'Travelling down, the beam strikes the target diamond 💎!',
 
             help_cubes_goal: 'Mentally fold the flat 2D net into a 3D cube to find opposite faces.',
@@ -174,10 +174,10 @@
             help_cubes_s2: 'Here 🍌 and 🍓 have 🍇 between them, so they fold to face each other.',
             help_cubes_s3: 'The opposite face of 🍌 is 🍓!',
 
-            help_pipes_goal: 'Identify which connected tank fills up completely first as water pours in.',
-            help_pipes_s1: 'Water enters tank A. Look at the connecting pipes: one is open, one is blocked with ✕.',
-            help_pipes_s2: 'Water reaches the open pipe at elevation 2 and flows into tank B.',
-            help_pipes_s3: 'Tank B has no outlets and fills to the top first: pick B!',
+            help_pipes_goal: 'Follow the water through the pipes and find the first tank to fill to the brim.',
+            help_pipes_s1: 'Water pours into A and its level rises. Look at A’s pipes: how high is each one, and is it open or closed (🚫)?',
+            help_pipes_s2: 'The level reaches the lowest open pipe first: from there the water flows into the next tank, and A stops rising.',
+            help_pipes_s3: 'Follow the water tank by tank: the first one with no open way out fills to the brim. Here it is B!',
 
             help_mobiles_goal: 'Find the missing counterweight that puts every hanging beam into perfect equilibrium.',
             help_mobiles_s1: 'Remember the lever principle: Torque = Weight × Distance from the center pivot.',
@@ -330,7 +330,7 @@
 
             help_seats_goal: 'Sistema i personaggi attorno al tavolo o sulla panchina seguendo un indizio alla volta.',
             help_seats_s1: 'Metti 🦊 al posto 1; «🐼 è di fronte a 🦊» colloca 🐼 al posto 3.',
-            help_seats_s2: '«🐸 è a destra di 🦊» colloca 🐸 al posto 2, lasciando il posto 4 a 🦉.',
+            help_seats_s2: '«🐸 siede subito dopo 🦊 in senso orario» colloca 🐸 al posto 2, lasciando il posto 4 a 🦉.',
             help_seats_s3: 'Tutti i posti sono assegnati: leggi chi siede nel posto richiesto!',
 
             help_mirror_goal: 'Segui come si ribalta (↔️ orizzontale, ↕️ verticale) o ruota (↻, ↺, 🔄) la griglia.',
@@ -345,7 +345,7 @@
 
             help_lasers_goal: 'Segui il raggio laser che rimbalza a 90° sugli specchi fino a colpire il bersaglio.',
             help_lasers_s1: 'Il laser spara verso destra in linea retta.',
-            help_lasers_s2: 'Il fascio incontra lo specchio / e viene deviato verso il basso di 90°.',
+            help_lasers_s2: 'Il fascio incontra lo specchio \\ e viene deviato verso il basso di 90°.',
             help_lasers_s3: 'Proseguendo verso il basso, il raggio colpisce il diamante 💎!',
 
             help_cubes_goal: 'Ripiega mentalmente lo sviluppo piatto per ricostruire il cubo 3D e trovare le facce opposte.',
@@ -353,10 +353,10 @@
             help_cubes_s2: 'Qui 🍌 e 🍓 sono separati da 🍇, quindi una volta piegati si guardano in faccia.',
             help_cubes_s3: 'La faccia opposta a 🍌 è 🍓!',
 
-            help_pipes_goal: 'Individua quale serbatoio collegato si riempie completamente per primo versando acqua.',
-            help_pipes_s1: 'L’acqua entra nel serbatoio A. Osserva i tubi: uno è aperto, l’altro è bloccato da ✕.',
-            help_pipes_s2: 'L’acqua raggiunge il tubo aperto e defluisce nel serbatoio B.',
-            help_pipes_s3: 'Il serbatoio B non ha uscite e si riempie completamente per primo: scegli B!',
+            help_pipes_goal: 'Segui l’acqua lungo i tubi e trova il primo serbatoio che si riempie fino all’orlo.',
+            help_pipes_s1: 'L’acqua entra in A e il livello sale. Guarda i tubi di A: a che altezza sono, e sono aperti o chiusi (🚫)?',
+            help_pipes_s2: 'Il livello arriva prima al tubo aperto più in basso: da lì l’acqua passa nel serbatoio successivo e A smette di salire.',
+            help_pipes_s3: 'Segui l’acqua serbatoio dopo serbatoio: il primo senza uscite aperte si riempie fino all’orlo. Qui è B!',
 
             help_mobiles_goal: 'Trova il contrappeso mancante che mette in perfetto equilibrio ciascun braccio della scultura.',
             help_mobiles_s1: 'Ricorda il principio della leva: Momento = Peso × Distanza dal perno centrale.',
@@ -509,7 +509,7 @@
 
             help_seats_goal: 'Coloca a los personajes alrededor de la mesa o en el banco pista por pista.',
             help_seats_s1: 'Pon a 🦊 en el asiento 1; «🐼 está frente a 🦊» coloca a 🐼 en el asiento 3.',
-            help_seats_s2: '«🐸 está a la derecha de 🦊» coloca a 🐸 en el 2, dejando el 4 para 🦉.',
+            help_seats_s2: '«🐸 se sienta justo después de 🦊 en sentido horario» coloca a 🐸 en el 2, dejando el 4 para 🦉.',
             help_seats_s3: 'Con todos sentados, ¡mira quién ocupa el asiento pedido!',
 
             help_mirror_goal: 'Sigue cómo se voltea (↔️ horizontal, ↕️ vertical) o gira (↻, ↺, 🔄) la cuadrícula.',
@@ -524,7 +524,7 @@
 
             help_lasers_goal: 'Sigue el rayo láser al rebotar 90° en los espejos hasta alcanzar el objetivo.',
             help_lasers_s1: 'El emisor dispara un rayo horizontalmente hacia la derecha.',
-            help_lasers_s2: 'El rayo choca con el espejo / y se desvía 90° hacia abajo.',
+            help_lasers_s2: 'El rayo choca con el espejo \\ y se desvía 90° hacia abajo.',
             help_lasers_s3: 'Siguiendo hacia abajo, ¡el rayo impacta en el diamante 💎!',
 
             help_cubes_goal: 'Pliega mentalmente el desarrollo plano para formar el cubo y hallar caras opuestas.',
@@ -532,10 +532,10 @@
             help_cubes_s2: 'Aquí 🍌 y 🍓 tienen a 🍇 en medio, así que al plegarse quedan enfrentadas.',
             help_cubes_s3: '¡La cara opuesta a 🍌 es 🍓!',
 
-            help_pipes_goal: 'Descubre qué tanque conectado se llena completamente primero al verter agua.',
-            help_pipes_s1: 'El agua entra en el tanque A. Observa los tubos: uno está abierto y otro cerrado con ✕.',
-            help_pipes_s2: 'El agua alcanza el tubo abierto y fluye hacia el tanque B.',
-            help_pipes_s3: 'El tanque B no tiene salidas y se llena por completo primero: ¡elige B!',
+            help_pipes_goal: 'Sigue el agua por los tubos y encuentra el primer tanque que se llena hasta el borde.',
+            help_pipes_s1: 'El agua entra en A y el nivel sube. Mira los tubos de A: ¿a qué altura está cada uno, y está abierto o cerrado (🚫)?',
+            help_pipes_s2: 'El nivel llega antes al tubo abierto más bajo: desde ahí el agua pasa al siguiente tanque y A deja de subir.',
+            help_pipes_s3: 'Sigue el agua tanque a tanque: el primero sin salida abierta se llena hasta el borde. ¡Aquí es B!',
 
             help_mobiles_goal: 'Halla el contrapeso que equilibra perfectamente cada brazo de la escultura móvil.',
             help_mobiles_s1: 'Recuerda la ley de la palanca: Momento = Peso × Distancia al eje central.',
@@ -688,7 +688,7 @@
 
             help_seats_goal: 'Place les personnages autour de la table ou sur le banc indice par indice.',
             help_seats_s1: 'Mets 🦊 à la place 1 ; « 🐼 est en face de 🦊 » place 🐼 en 3.',
-            help_seats_s2: '« 🐸 est à droite de 🦊 » place 🐸 en 2, laissant la place 4 à 🦉.',
+            help_seats_s2: '« 🐸 est juste après 🦊 dans le sens horaire » place 🐸 en 2, laissant la place 4 à 🦉.',
             help_seats_s3: 'Toutes les places sont fixées : lis qui occupe la place demandée !',
 
             help_mirror_goal: 'Suis comment la grille se retourne (↔️ horizontal, ↕️ vertical) ou tourne (↻, ↺, 🔄).',
@@ -703,7 +703,7 @@
 
             help_lasers_goal: 'Suis le rayon laser qui rebondit à 90° sur les miroirs pour toucher une cible.',
             help_lasers_s1: 'L’émetteur tire un rayon en ligne droite vers la droite.',
-            help_lasers_s2: 'Le faisceau rencontre le miroir / et est dévié de 90° vers le bas.',
+            help_lasers_s2: 'Le faisceau rencontre le miroir \\ et est dévié de 90° vers le bas.',
             help_lasers_s3: 'En continuant vers le bas, le rayon frappe le diamant 💎 !',
 
             help_cubes_goal: 'Plie mentalement le patron à plat pour reconstituer le cube et trouver les faces opposées.',
@@ -711,10 +711,10 @@
             help_cubes_s2: 'Ici 🍌 et 🍓 sont séparés par 🍇, donc au pliage ils se font face.',
             help_cubes_s3: 'La face opposée à 🍌 est 🍓 !',
 
-            help_pipes_goal: 'Trouve quel réservoir connecté se remplit entièrement en premier avec l’eau qui coule.',
-            help_pipes_s1: 'L’eau coule dans le réservoir A. Regarde les tuyaux : l’un est ouvert, l’autre bouché par ✕.',
-            help_pipes_s2: 'L’eau atteint le tuyau ouvert et s’écoule dans le réservoir B.',
-            help_pipes_s3: 'Le réservoir B n’a pas de sortie et se remplit à ras bord en premier : choisis B !',
+            help_pipes_goal: 'Suis l’eau dans les tuyaux et trouve le premier réservoir rempli à ras bord.',
+            help_pipes_s1: 'L’eau entre dans A et le niveau monte. Regarde les tuyaux de A : à quelle hauteur est chacun, et est-il ouvert ou fermé (🚫) ?',
+            help_pipes_s2: 'Le niveau atteint d’abord le tuyau ouvert le plus bas : de là, l’eau passe dans le réservoir suivant et A cesse de monter.',
+            help_pipes_s3: 'Suis l’eau réservoir après réservoir : le premier sans sortie ouverte se remplit à ras bord. Ici, c’est B !',
 
             help_mobiles_goal: 'Trouve le contrepoids manquant qui équilibre parfaitement chaque bras du mobile.',
             help_mobiles_s1: 'Rappelle-toi la loi du levier : Couple = Poids × Distance au pivot central.',
@@ -867,7 +867,7 @@
 
             help_seats_goal: 'Setze die Figuren Hinweis für Hinweis um den Tisch oder auf die Bank.',
             help_seats_s1: 'Setze 🦊 auf Platz 1; „🐼 sitzt 🦊 gegenüber“ setzt 🐼 auf Platz 3.',
-            help_seats_s2: '„🐸 sitzt rechts von 🦊“ setzt 🐸 auf Platz 2, Platz 4 bleibt für 🦉.',
+            help_seats_s2: '„🐸 sitzt im Uhrzeigersinn direkt nach 🦊“ setzt 🐸 auf Platz 2, Platz 4 bleibt für 🦉.',
             help_seats_s3: 'Alle Plätze sind vergeben — lies den gesuchten Platz ab!',
 
             help_mirror_goal: 'Verfolge, wie sich das Gitter spiegelt (↔️ horizontal, ↕️ vertikal) oder dreht (↻, ↺, 🔄).',
@@ -882,7 +882,7 @@
 
             help_lasers_goal: 'Verfolge den Laserstrahl bei 90°-Reflexionen an Spiegeln bis zum Ziel.',
             help_lasers_s1: 'Der Sender schießt einen Strahl geradeaus nach rechts.',
-            help_lasers_s2: 'Der Strahl trifft auf Spiegel / und wird um 90° nach unten abgelenkt.',
+            help_lasers_s2: 'Der Strahl trifft auf Spiegel \\ und wird um 90° nach unten abgelenkt.',
             help_lasers_s3: 'Auf seinem Weg nach unten trifft der Strahl den Diamanten 💎!',
 
             help_cubes_goal: 'Falte das flache Netz im Kopf zu einem 3D-Würfel, um Gegenüberflächen zu finden.',
@@ -890,10 +890,10 @@
             help_cubes_s2: 'Hier haben 🍌 und 🍓 das Feld 🍇 zwischen sich; beim Falten stehen sie sich gegenüber.',
             help_cubes_s3: 'Die gegenüberliegende Fläche von 🍌 ist 🍓!',
 
-            help_pipes_goal: 'Erkenne, welcher verbundene Tank als Erster ganz voll ist, wenn Wasser einfließt.',
-            help_pipes_s1: 'Wasser fließt in Tank A. Sieh dir die Rohre an: Eines ist offen, eines durch ✕ blockiert.',
-            help_pipes_s2: 'Das Wasser erreicht das offene Rohr und fließt in Tank B.',
-            help_pipes_s3: 'Tank B hat keinen Abfluss und wird als Erster voll: Wähle B!',
+            help_pipes_goal: 'Folge dem Wasser durch die Rohre und finde den ersten Tank, der bis zum Rand voll ist.',
+            help_pipes_s1: 'Wasser fließt in A und der Pegel steigt. Sieh dir die Rohre von A an: Wie hoch liegt jedes, und ist es offen oder zu (🚫)?',
+            help_pipes_s2: 'Der Pegel erreicht zuerst das tiefste offene Rohr: Von dort fließt das Wasser in den nächsten Tank, und A steigt nicht weiter.',
+            help_pipes_s3: 'Folge dem Wasser von Tank zu Tank: Der erste ohne offenen Ausgang wird randvoll. Hier ist es B!',
 
             help_mobiles_goal: 'Finde das Gegengewicht, das jeden Hebelarm des Mobiles perfekt ausbalanciert.',
             help_mobiles_s1: 'Nutze das Hebelgesetz: Drehmoment = Gewicht × Abstand vom Drehpunkt.',
@@ -1059,7 +1059,9 @@
                 ['🌑', '🌑', '🌑'],
             ][s];
             return h('div.h-scene',
-                h('div.h-row', states.map((l, i) => chip(h, `${i + 1}: ${l}`, s === 2 ? '.ok.pop' : '.focus'))),
+                h('div.h-row', window.ThinkHopUI && window.ThinkHopUI.bulbs
+                    ? h('span.h-chip' + (s === 2 ? '.ok.pop' : '.focus'), window.ThinkHopUI.bulbs(states.join(''), true))
+                    : states.map((l, i) => chip(h, `${i + 1}: ${l}`, s === 2 ? '.ok.pop' : '.focus'))),
                 h('div.h-row',
                     chip(h, '🔘 (1, 2)', s === 0 || s === 1 ? '.focus.pulse' : ''),
                     chip(h, '🔘 (2, 3)', s === 2 ? '.ok.pop' : (s === 1 ? '.pulse' : ''))));
@@ -1213,7 +1215,7 @@
         },
         lasers(s, h) {
             const grid = [
-                ['🔦', s >= 1 ? '—' : '', '/'],
+                ['🔦', s >= 1 ? '—' : '', '\\'],
                 ['', '', s >= 1 ? '|' : ''],
                 ['⭐', '', '💎'],
             ];
@@ -1233,7 +1235,7 @@
                 }))),
                 h('div.h-row',
                     chip(h, '🔦 ➔', '.focus'),
-                    chip(h, '/ ➔ ⬇️', s >= 1 ? '.focus.pop' : '.dim'),
+                    chip(h, '\\ ➔ ⬇️', s >= 1 ? '.focus.pop' : '.dim'),
                     chip(h, '💎 ✓', s === 2 ? '.ok.pop' : (s === 1 ? '.pulse' : '.dim'))));
         },
         cubes(s, h) {
@@ -1260,7 +1262,7 @@
                     h('div.pipe-tank-demo.tank-a' + (s === 0 ? '.focus' : ''), h('span.tank-lbl', 'A'), h('span.tank-water', '💧')),
                     h('div.pipe-connector-demo',
                         chip(h, 'A ➔ B: ✓', s >= 1 ? '.ok' : '.focus'),
-                        chip(h, 'A ➔ C: ✕', '.bad')),
+                        chip(h, 'A ➔ C: 🚫', '.bad')),
                     h('div.h-row',
                         h('div.pipe-tank-demo.tank-b' + (s === 2 ? '.ok.pop' : (s === 1 ? '.focus' : '')), h('span.tank-lbl', 'B'), s >= 1 ? h('span.tank-water', '💧💧') : null),
                         h('div.pipe-tank-demo.tank-c.dim', h('span.tank-lbl', 'C')))),
@@ -1271,8 +1273,8 @@
         mobiles(s, h) {
             return h('div.h-scene',
                 h('div.h-row',
-                    chip(h, 'Braccio: ×1 vs ×2', '.focus'),
-                    chip(h, s >= 1 ? 'Momento: 6 × 1 = 6' : 'Momento: ?', s >= 1 ? '.ok' : '.dim'),
+                    chip(h, '×1 ⚖️ ×2', '.focus'),
+                    chip(h, s >= 1 ? '6 × 1 = 6' : '6 × 1 = ?', s >= 1 ? '.ok' : '.dim'),
                     chip(h, s === 2 ? '6 ÷ 2 = 3 ✓' : '? × 2 = 6', s === 2 ? '.ok.pop' : '.focus')),
                 h('div.h-row',
                     h('div.scale-visual',
@@ -1283,10 +1285,10 @@
         origami(s, h) {
             return h('div.h-scene',
                 h('div.h-row',
-                    chip(h, '1) Piega ➡️', s >= 0 ? '.focus' : '.dim'),
-                    chip(h, '2) Piega ⬇️', s >= 1 ? '.focus' : '.dim'),
-                    chip(h, '3) Foro ●', s >= 1 ? '.target' : '.dim'),
-                    chip(h, '4) Simmetria ×4 ✓', s === 2 ? '.ok.pop' : '.dim')),
+                    chip(h, '1) ➡️', s >= 0 ? '.focus' : '.dim'),
+                    chip(h, '2) ⬇️', s >= 1 ? '.focus' : '.dim'),
+                    chip(h, '3) ✂️ ●', s >= 1 ? '.target' : '.dim'),
+                    chip(h, '4) ● ×4 ✓', s === 2 ? '.ok.pop' : '.dim')),
                 h('div.h-row',
                     h('div.origami-mini-grid',
                         Array.from({length: 16}, (_, i) => {

@@ -45,7 +45,7 @@ string? soprannome = null;    // può essere null', 'vala'),
         ], task('vala', L('Dichiara `int livelli = 6;` e `string corso = "Vala";`.', 'Declare `int livelli = 6;` and `string corso = "Vala";`.'), '', [re('int\s+livelli\s*=\s*6\s*;', L('C’è l’intero', 'There is the int')), re('string\s+corso\s*=\s*"Vala"\s*;', L('C’è la stringa', 'There is the string'))], '', 'int livelli = 6;
 string corso = "Vala";'), [
             dBlanks(pFill(), "___ nome = \"Ada\";\n___ int MASSIMO = 5;\nstring frase = ___\"Ciao \$nome\";", ['var', 'const', '@'], ['let', 'final', '$'], L('Deduzione, costante, template.', 'Inference, constant, template.')),
-            dFlash(pFlash(), [[L('`var` deduce il tipo', '`var` infers the type'), true], [L('Ogni tipo in Vala può valere null', 'Every type in Vala can be null'), false], [L('`const` non si può cambiare', '`const` cannot change'), true]], L('Serve il `?` per ammettere null.', 'You need `?` to allow null.')),
+            dFlash(pFlash(), [[L('`var` deduce il tipo', '`var` infers the type'), true], [L('Ogni tipo in Vala può valere null', 'Every type in Vala can be null'), false], [L('`const` non si può cambiare', '`const` cannot change'), true], [L('`string?` può valere null', '`string?` can be null'), true]], L('Serve il `?` per ammettere null.', 'You need `?` to allow null.')),
         ]),
         lesson('control', L('Condizioni e cicli', 'Conditions and loops'), [
             P('`if`/`else`, `switch`, `while`, `for` funzionano come in C#. `foreach` scorre gli elementi di un array o di una lista.', '`if`/`else`, `switch`, `while`, `for` work as in C#. `foreach` walks the items of an array or a list.'),
@@ -101,7 +101,7 @@ void main () {
     return n * 2;
 }'), [
             dBlanks(pFill(), "___ media (double a, double b) {\n    ___ (a + b) / 2;\n}\n___ stampa (string s) {\n    print (\"%s\\n\", s);\n}", ['double', 'return', 'void'], ['int', 'give', 'null'], L('Tipo, restituzione, nessun risultato.', 'Type, return, no result.')),
-            dFlash(pFlash(), [[L('I parametri hanno un tipo', 'Parameters have a type'), true], [L('Un metodo `void` restituisce un valore', 'A `void` method returns a value'), false], [L('I valori predefiniti sono permessi', 'Default values are allowed'), true]], L('`void` significa niente.', '`void` means nothing.')),
+            dFlash(pFlash(), [[L('I parametri hanno un tipo', 'Parameters have a type'), true], [L('Un metodo `void` restituisce un valore', 'A `void` method returns a value'), false], [L('I valori predefiniti sono permessi', 'Default values are allowed'), true], [L('Due metodi della stessa classe possono avere lo stesso nome con parametri diversi', 'Two methods of the same class can share a name with different parameters'), false]], L('`void` significa niente.', '`void` means nothing.')),
         ]),
         lesson('classes', L('Classi e GObject', 'Classes and GObject'), [
             P('Le classi che ereditano da `Object` sono **GObject**: il sistema a oggetti di GNOME. Hanno **proprietà** con `get`/`set`, un costruttore e possono emettere **segnali**.', 'Classes inheriting from `Object` are **GObjects**: GNOME’s object system. They have **properties** with `get`/`set`, a constructor and can emit **signals**.'),

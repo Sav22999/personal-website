@@ -429,6 +429,24 @@ function install_seed_drills(PDO $pdo, string $p): void
     }
 }
 
+/** Flash drills saved with three cards: when the saved cards are still the first ones of the catalogue, the catalogue's drill replaces them. */
+function install_seed_flash_v17(PDO $pdo, string $p): void
+{
+    $seed = seed_drills();
+    $rows = $pdo->query("SELECT d.id, d.data, l.course, l.slug FROM `{$p}drills` d JOIN `{$p}lessons` l ON l.id = d.lesson_id WHERE d.kind = 'flash'")->fetchAll(PDO::FETCH_ASSOC);
+    $upd = $pdo->prepare("UPDATE `{$p}drills` SET data = ? WHERE id = ?");
+    foreach ($rows as $row) {
+        $data = json_decode((string)$row['data'], true);
+        if (!is_array($data) || count($data['cards'] ?? []) >= 4) continue;
+        foreach ($seed[$row['course'] . '/' . $row['slug']] ?? [] as $d) {
+            if ($d['kind'] !== 'flash' || count($d['cards']) < 4 || array_slice($d['cards'], 0, count($data['cards'])) != $data['cards']) continue;
+            unset($d['kind']);
+            $upd->execute([json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $row['id']]);
+            break;
+        }
+    }
+}
+
 /** The drills of the catalogue, 'course/lesson' => list: from lib/seed/drills.php and from the lessons that carry their own. */
 function seed_drills(): array
 {

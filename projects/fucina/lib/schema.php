@@ -385,6 +385,8 @@ function install_schema(PDO $pdo, string $prefix): void
     if ($old > 0 && $old < 12) install_seed_php_v12($pdo, $prefix);
     install_seed($pdo, $prefix);
     install_seed_drills($pdo, $prefix);
+    // Version 17: the "Lightning" drills of the catalogue get their fourth card, unless the admin has changed them
+    if ($old > 0 && $old < 17) install_seed_flash_v17($pdo, $prefix);
     // Last: if something above fails, the next request tries again
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);

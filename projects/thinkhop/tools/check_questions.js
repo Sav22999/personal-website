@@ -9,6 +9,6 @@ const path = require('path');
 const dir = path.join(__dirname, '..');
 globalThis.window = globalThis;
 globalThis.document = {documentElement: {}};
-globalThis.navigator = {language: 'en'};
+Object.defineProperty(globalThis, 'navigator', {value: {language: 'en'}, configurable: true, writable: true});
 ['i18n.js', 'i18n-puzzles.js', 'riddles.js', 'riddles-more.js', 'twemoji.js', 'engine.js', 'puzzles.js', 'mascots.js', 'help.js'].forEach(f => require(path.join(dir, f)));
 require(path.join(dir, 'tools', 'question_checks.js'))(console.log, process.exit);

@@ -249,8 +249,8 @@
     pattern('turn-medium', 'compass', .5, r => makeTurns(r, 5, 3));
     pattern('turn-hard', 'compass', .84, r => makeTurns(r, 7, 5));
     pattern('turn-expert', 'compass', 1.16, r => makeTurns(r, 10, 6));
-    pattern('turn-long', 'compass', 1.54, r => makeTurns(r, 14, 6));
-    pattern('turn-marathon', 'compass', 1.82, r => makeTurns(r, 20, 6));
+    pattern('turn-long', 'compass', 1.2, r => makeTurns(r, 14, 6));
+    pattern('turn-marathon', 'compass', 1.36, r => makeTurns(r, 20, 6));
 
     const MOVES = {'⬆️': [-1, 0], '➡️': [0, 1], '⬇️': [1, 0], '⬅️': [0, -1]};
 
@@ -291,7 +291,7 @@
     pattern('walk-bump-long', 'compass', 1.28, r => makeWalk(r, 4, 12, true));
     pattern('walk-5', 'compass', 1.46, r => makeWalk(r, 5, 14, false));
     pattern('walk-bump-5', 'compass', 1.66, r => makeWalk(r, 5, 16, true));
-    pattern('walk-bump-5-long', 'compass', 1.9, r => makeWalk(r, 5, 22, true));
+    pattern('walk-bump-5-long', 'compass', 1.7, r => makeWalk(r, 5, 22, true));
 
     // ---------- lamps and buttons ----------
     const lampRow = s => s.map(on => on ? '💡' : '⚫').join('');
@@ -389,7 +389,7 @@
             return withOptions(r, q, right, wrong);
         }
     });
-    [['reverse', .28], ['ends', .34], ['roll', .4], ['next', .48], ['prev', .52], ['pairs', .6], ['two', .64], ['vowels', .9], ['backnext', 1.06], ['zigzag', 1.22], ['rollnext', 1.26], ['ramp', 1.46], ['backtwo', 1.58], ['pairsnext', 1.7], ['backramp', 1.86]].forEach(([k, d]) => codePattern(k, d));
+    [['reverse', .28], ['ends', .34], ['roll', .4], ['next', .48], ['prev', .52], ['pairs', .6], ['two', .64], ['vowels', .9], ['backnext', 1.06], ['zigzag', 1.22], ['rollnext', 1.26], ['ramp', 1.46], ['backtwo', 1.58], ['pairsnext', 1.7], ['backramp', 1.62]].forEach(([k, d]) => codePattern(k, d));
 
     // ---------- if-then with absurd events ----------
     const EVENTS = 16;
@@ -663,7 +663,7 @@
             options, answer: options.findIndex(o => o.k === right.k),
         };
     });
-    pattern('days-meet', 'days', 1.48, r => {
+    pattern('days-meet', 'days', 1.12, r => {
         const pairs = [[2, 3, 6], [2, 5, 10], [3, 4, 12], [3, 5, 15], [4, 5, 20], [4, 6, 12], [5, 6, 30], [3, 8, 24]];
         const [a, b, m] = r.pick(pairs);
         const day = r.int(0, 6);
@@ -914,8 +914,8 @@
         }
     }
 
-    pattern('scales-fake-4', 'scales', 1.58, r => makeFakeGem(r, 4, 1.58));
-    pattern('scales-fake-5', 'scales', 1.86, r => makeFakeGem(r, 5, 1.86));
+    pattern('scales-fake-4', 'scales', 1.16, r => makeFakeGem(r, 4, 1.16));
+    pattern('scales-fake-5', 'scales', 1.36, r => makeFakeGem(r, 5, 1.36));
 
     // ---------- shell game / cups (cups) ----------
     function applyCupMove(row, m) {
@@ -1037,8 +1037,8 @@
     pattern('cups-5-hard', 'cups', .96, r => makeCupsForward(r, 5, 5, false));
     pattern('cups-back-4', 'cups', 1.18, r => makeCupsBack(r, 4, 4));
     pattern('cups-missing-4', 'cups', 1.44, r => makeCupsMissing(r, 4, 3));
-    pattern('cups-5-expert', 'cups', 1.62, r => makeCupsForward(r, 5, 6, true));
-    pattern('cups-missing-5', 'cups', 1.84, r => makeCupsMissing(r, 5, 5));
+    pattern('cups-5-expert', 'cups', 1.4, r => makeCupsForward(r, 5, 6, true));
+    pattern('cups-missing-5', 'cups', 1.5, r => makeCupsMissing(r, 5, 5));
 
     // ---------- crack the lock / mastermind (locks) ----------
     function scoreLock(secret, guess) {
@@ -1321,7 +1321,7 @@
 
     pattern('alchemy-back-2', 'alchemy', .76, r => makeCauldronBack(r, 2, false));
     pattern('alchemy-back-3-zero', 'alchemy', 1.24, r => makeCauldronBack(r, 3, true));
-    pattern('alchemy-back-4', 'alchemy', 1.78, r => makeCauldronBack(r, 4, false));
+    pattern('alchemy-back-4', 'alchemy', 1.12, r => makeCauldronBack(r, 4, false));
 
     // ---------- around the table & on the bench (seats) ----------
     function makeSeatsRound(r, n) {
@@ -1338,8 +1338,8 @@
         const clues = [];
         ids.forEach(a => ids.forEach(b => {
             if (a === b) return;
-            clues.push({k: 'st_right', v: {a: people[a], b: people[b]}, test: c => rightOf(c, a, b)});
-            clues.push({k: 'st_left', v: {a: people[a], b: people[b]}, test: c => leftOf(c, a, b)});
+            clues.push({k: 'st_cw', v: {a: people[a], b: people[b]}, test: c => rightOf(c, a, b)});
+            clues.push({k: 'st_ccw', v: {a: people[a], b: people[b]}, test: c => leftOf(c, a, b)});
             if (a < b) {
                 clues.push({k: 'st_next', v: {a: people[a], b: people[b]}, test: c => nextTo(c, a, b)});
                 clues.push({k: 'st_not_next', v: {a: people[a], b: people[b]}, test: c => !nextTo(c, a, b)});
@@ -1434,7 +1434,7 @@
     pattern('seats-round-5', 'seats', .94, r => makeSeatsRound(r, 5));
     pattern('seats-bench-5', 'seats', 1.22, r => makeSeatsBench(r, 5));
     pattern('seats-round-6', 'seats', 1.52, r => makeSeatsRound(r, 6));
-    pattern('seats-bench-6', 'seats', 1.84, r => makeSeatsBench(r, 6));
+    pattern('seats-bench-6', 'seats', 1.72, r => makeSeatsBench(r, 6));
 
     // ---------- mirrors & flips (mirror) ----------
     const MIRROR_OPS = [
@@ -1509,9 +1509,9 @@
     pattern('mirror-point-4', 'mirror', .78, r => makeMirrorSym(r, 4, 'point'));
     pattern('mirror-combo-3', 'mirror', 1.08, r => makeMirrorMove(r, 3, 2));
     pattern('mirror-diag-4', 'mirror', 1.34, r => makeMirrorSym(r, 4, 'diag'));
-    pattern('mirror-combo-4', 'mirror', 1.58, r => makeMirrorMove(r, 4, 2));
-    pattern('mirror-triple-3', 'mirror', 1.76, r => makeMirrorMove(r, 3, 3));
-    pattern('mirror-triple-4', 'mirror', 1.94, r => makeMirrorMove(r, 4, 3));
+    pattern('mirror-combo-4', 'mirror', 1.36, r => makeMirrorMove(r, 4, 2));
+    pattern('mirror-triple-3', 'mirror', 1.46, r => makeMirrorMove(r, 3, 3));
+    pattern('mirror-triple-4', 'mirror', 1.6, r => makeMirrorMove(r, 4, 3));
 
     // ---------- mini-sudoku X (grid) ----------
     function makeGridDiag(r) {
@@ -1579,20 +1579,13 @@
         return withOptions(r, q, right, others(r, symbols, right));
     }
 
-    pattern('grid-diag-4', 'grid', 1.28, r => makeGridDiag(r));
+    pattern('grid-diag-4', 'grid', .8, r => makeGridDiag(r));
 
     // ---------- gears & rotation (gears) ----------
-    function makeGearsDir(r, n, branch) {
-        const gearNames = ['A', 'B', 'C', 'D', 'E', 'F'];
-        const links = [];
-        if (!branch) {
-            for (let i = 0; i < n - 1; i++) links.push([i, i + 1]);
-        } else {
-            links.push([0, 1], [0, 2]);
-            for (let i = 2; i < n - 1; i++) links.push([i, i + 1]);
-        }
-        const startIdx = r.int(0, n - 1);
-        const startCw = r.next() < .5;
+    const GEAR_NAMES = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+    /** Directions of every gear of a tree of links, starting from one gear. */
+    function gearDirs(n, links, startIdx, startCw) {
         const dirs = Array(n).fill(null);
         dirs[startIdx] = startCw;
         let changed = true;
@@ -1603,290 +1596,262 @@
                 if (dirs[b] !== null && dirs[a] === null) { dirs[a] = !dirs[b]; changed = true; }
             });
         }
-        const candidateTargets = [];
-        for (let i = 0; i < n; i++) if (i !== startIdx && dirs[i] !== null) candidateTargets.push(i);
-        const targetIdx = r.pick(candidateTargets);
-        const startName = gearNames[startIdx];
-        const target = gearNames[targetIdx];
+        return dirs;
+    }
+
+    function makeGearsDir(r, n, branch) {
+        const links = [];
+        if (!branch) {
+            for (let i = 0; i < n - 1; i++) links.push([i, i + 1]);
+        } else {
+            links.push([0, 1], [0, 2]);
+            for (let i = 2; i < n - 1; i++) links.push([i, i + 1]);
+        }
+        // The two ends of the train are the most interesting: start near one end, ask near the other
+        const startIdx = branch ? r.pick([1, n - 1]) : r.pick([0, n - 1]);
+        const startCw = r.next() < .5;
+        const dirs = gearDirs(n, links, startIdx, startCw);
+        // Ask about a gear in the farther half of the train, counting the contacts from the start
+        const dist = Array(n).fill(-1);
+        dist[startIdx] = 0;
+        for (let changed = true; changed;) {
+            changed = false;
+            links.forEach(([a, b]) => {
+                if (dist[a] >= 0 && dist[b] < 0) { dist[b] = dist[a] + 1; changed = true; }
+                if (dist[b] >= 0 && dist[a] < 0) { dist[a] = dist[b] + 1; changed = true; }
+            });
+        }
+        const most = Math.max(...dist);
+        const targetIdx = r.pick(dist.map((x, i) => i).filter(i => dist[i] >= Math.max(2, Math.ceil(most / 2))));
+        const startName = GEAR_NAMES[startIdx], target = GEAR_NAMES[targetIdx];
         const isCw = dirs[targetIdx];
-        const right = isCw ? {k: 'ge_cw'} : {k: 'ge_ccw'};
-        const wrong = [isCw ? {k: 'ge_ccw'} : {k: 'ge_cw'}, {k: 'ge_jammed'}];
         const startDirSym = startCw ? '↻' : '↺';
-        const gearsData = {
-            count: n,
-            links,
-            startDir: startCw ? 'cw' : 'ccw',
-            startIdx,
-            targetIdx,
-            dirs: dirs.map(d => d ? 'cw' : 'ccw'),
-        };
+        const gearsData = {count: n, links, startDir: startCw ? 'cw' : 'ccw', startIdx, targetIdx, dirs: dirs.map(d => d ? 'cw' : 'ccw')};
         const q = {
             view: 'gears', gearsData,
             lines: [`${startName} (${startDirSym}) ➔ ${target}`],
             pk: 'q_gears_dir', pv: {start: startName, dir: startDirSym, target},
             why: [{k: 'why_gears_dir', v: {target, x: isCw ? '↻' : '↺'}}],
         };
-        return withOptions(r, q, right, wrong);
+        return withOptions(r, q, isCw ? {k: 'ge_cw'} : {k: 'ge_ccw'}, [isCw ? {k: 'ge_ccw'} : {k: 'ge_cw'}, {k: 'ge_jammed'}]);
     }
 
-    function makeGearsSpeed(r) {
-        const ratios = [
-            [12, 24, 2, 1],
-            [10, 30, 3, 1],
-            [12, 36, 3, 1],
-            [15, 30, 4, 2],
-            [20, 10, 1, 2],
-            [30, 15, 2, 4],
-            [16, 32, 4, 2],
-            [24, 12, 2, 4],
-            [18, 36, 2, 1],
-            [25, 50, 4, 2],
-        ];
-        const [na, nb, ta, tb] = r.pick(ratios);
-        const right = tb;
-        const gearsData = {
-            count: 2,
-            links: [[0, 1]],
-            teeth: [na, nb],
-            turns: [ta, tb],
-            startDir: 'cw',
-            startIdx: 0,
-            targetIdx: 1,
-            dirs: ['cw', 'ccw'],
-        };
-        const q = {
-            view: 'gears', gearsData,
-            lines: [`A (${na}) · B (${nb}) · ${ta} ↻`],
-            pk: 'q_gears_speed', pv: {na, nb, ta},
-            why: [{k: 'why_gears_speed', v: {na, nb, ta, x: right}}],
-        };
-        return numberOptions(r, q, right, [ta, ta + tb, Math.max(1, Math.abs(ta - tb)), right * 2]);
+    const TEETH = [8, 10, 12, 15, 16, 18, 20, 24, 25, 30, 32, 36, 40];
+
+    /** Turns of the last gear of a train: only the first and the last gear count, the ones in between just pass it on. */
+    function makeGearsSpeed(r, idler) {
+        for (let attempt = 0; attempt < 400; attempt++) {
+            const na = r.pick(TEETH), nc = r.pick(TEETH), ta = r.int(1, idler ? 6 : 4);
+            if (na === nc || (ta * na) % nc) continue;
+            const right = ta * na / nc;
+            if (right < 1 || right > 12 || right === ta) continue;
+            const nb = idler ? r.pick(TEETH.filter(x => x !== na && x !== nc && (ta * na) % x === 0 && ta * na / x !== right)) : null;
+            if (idler && !nb) continue;
+            const n = idler ? 3 : 2;
+            const teeth = idler ? [na, nb, nc] : [na, nc];
+            const last = GEAR_NAMES[n - 1];
+            const gearsData = {
+                count: n, links: idler ? [[0, 1], [1, 2]] : [[0, 1]], teeth,
+                startDir: 'cw', startIdx: 0, targetIdx: n - 1, dirs: idler ? ['cw', 'ccw', 'cw'] : ['cw', 'ccw'], speed: true, turns: ta,
+            };
+            const q = idler ? {
+                view: 'gears', gearsData,
+                lines: [`A (${na}) · B (${nb}) · C (${nc}) · A: ${ta} ↻`],
+                pk: 'q_gears_idler', pv: {na, nb, nc, ta},
+                why: [{k: 'why_gears_idler', v: {na, nc, ta, t: ta * na, x: right}}],
+            } : {
+                view: 'gears', gearsData,
+                lines: [`A (${na}) · B (${nc}) · A: ${ta} ↻`],
+                pk: 'q_gears_speed', pv: {na, nb: nc, ta},
+                why: [{k: 'why_gears_speed', v: {na, nb: nc, ta, x: right}}],
+            };
+            // The usual mistakes: the ratio upside down, the middle gear counted, the same turns as A
+            const near = [ta * nc / na, ta, right * 2, right + 1];
+            if (idler) near.unshift(ta * na / nb);
+            q.lines.push(`${last} = ?`);
+            return numberOptions(r, q, right, near);
+        }
+        return makeGearsDir(r, 3, false);
     }
 
     function makeGearsJam(r, n) {
-        const isJammed = (n % 2 !== 0);
-        const right = isJammed ? {k: 'ge_jammed'} : {k: 'ge_free'};
-        const wrong = [isJammed ? {k: 'ge_free'} : {k: 'ge_jammed'}, {k: 'unknown'}];
+        const isJammed = n % 2 !== 0;
         const links = [];
         for (let i = 0; i < n; i++) links.push([i, (i + 1) % n]);
-        const startName = ['A', 'B', 'C', 'D', 'E'][r.int(0, n - 1)];
-        const gearsData = {
-            count: n,
-            links,
-            isRing: true,
-            isJammed,
-            startDir: 'cw',
-            dirs: Array(n).fill('cw'),
-        };
+        const startIdx = r.int(0, n - 1), startCw = r.next() < .5;
+        // Going round the ring the directions alternate: with an odd number of gears the last one meets the first in the same direction
+        const dirs = Array.from({length: n}, (_, k) => ((k - startIdx + n) % n) % 2 === 0 ? startCw : !startCw).map(d => d ? 'cw' : 'ccw');
+        const gearsData = {count: n, links, isRing: true, isJammed, startIdx, startDir: startCw ? 'cw' : 'ccw', dirs};
         const q = {
             view: 'gears', gearsData,
-            lines: [`Ring (${n}) · Start: ${startName}`],
             pk: 'q_gears_jam',
-            why: [{k: 'why_gears_jam', v: {x: isJammed ? '🚫' : '✓'}}],
+            why: [{k: isJammed ? 'why_gears_jam' : 'why_gears_free', v: {n}}],
         };
-        return withOptions(r, q, right, wrong);
+        return withOptions(r, q, {k: isJammed ? 'ge_jammed' : 'ge_free'}, [{k: isJammed ? 'ge_free' : 'ge_jammed'}, {k: 'unknown'}]);
     }
 
-    pattern('gears-dir-3', 'gears', .18, r => makeGearsDir(r, 3, false));
-    pattern('gears-dir-4', 'gears', .44, r => makeGearsDir(r, 4, false));
-    pattern('gears-branch-4', 'gears', .72, r => makeGearsDir(r, 4, true));
-    pattern('gears-speed-2', 'gears', .98, r => makeGearsSpeed(r));
-    pattern('gears-branch-5', 'gears', 1.24, r => makeGearsDir(r, 5, true));
-    pattern('gears-jam-odd', 'gears', 1.48, r => makeGearsJam(r, r.pick([3, 5])));
-    pattern('gears-speed-hard', 'gears', 1.72, r => makeGearsSpeed(r));
-    pattern('gears-branch-6', 'gears', 1.92, r => makeGearsDir(r, 6, true));
+    pattern('gears-dir-3', 'gears', .1, r => makeGearsDir(r, 3, false));
+    pattern('gears-dir-5', 'gears', .26, r => makeGearsDir(r, 5, false));
+    pattern('gears-branch-4', 'gears', .36, r => makeGearsDir(r, 4, true));
+    pattern('gears-branch-6', 'gears', .52, r => makeGearsDir(r, 6, true));
+    pattern('gears-jam', 'gears', .68, r => makeGearsJam(r, r.pick([3, 4, 5, 6])));
+    pattern('gears-speed-2', 'gears', .8, r => makeGearsSpeed(r, false));
+    pattern('gears-speed-3', 'gears', 1.02, r => makeGearsSpeed(r, true));
 
     // ---------- lasers & mirrors (lasers) ----------
     const GEMS = ['💎', '🔮', '🪙', '⭐'];
+    const BACKSLASH = String.fromCharCode(92);
 
-    function makeLasers(r, size, mirrorCount, withObstacles) {
-        for (let attempt = 0; attempt < 50; attempt++) {
-            const grid = Array.from({length: size}, () => Array(size).fill(''));
-            const startX = 0, startY = r.int(0, size - 1);
-            let dirX = 1, dirY = 0;
-            const mirrorCells = [];
-            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-                if (x === startX && y === startY) continue;
-                mirrorCells.push([x, y]);
-            }
-            const chosenMirrors = r.shuffle(mirrorCells).slice(0, mirrorCount);
-            chosenMirrors.forEach(([mx, my]) => {
-                grid[my][mx] = r.next() < .5 ? '/' : String.fromCharCode(92);
-            });
-            if (withObstacles && size >= 4) {
-                const rem = mirrorCells.filter(([x, y]) => !chosenMirrors.some(([mx, my]) => mx === x && my === y));
-                if (rem.length) {
-                    const [ox, oy] = r.pick(rem);
-                    grid[oy][ox] = '🧱';
-                }
-            }
-            let curX = startX, curY = startY;
-            let curDx = dirX, curDy = dirY;
-            const visited = new Set();
-            let reflections = 0;
-            let hitBorder = false;
-            const path = [[curX, curY]];
-            for (let step = 0; step < size * size * 2; step++) {
-                curX += curDx;
-                curY += curDy;
-                path.push([curX, curY]);
-                if (curX < 0 || curX >= size || curY < 0 || curY >= size) {
-                    hitBorder = true;
-                    break;
-                }
-                const cell = grid[curY][curX];
-                if (cell === '🧱') break;
-                if (cell === '/' || cell === String.fromCharCode(92)) {
-                    reflections++;
-                    if (cell === '/') {
-                        const ndx = -curDy, ndy = -curDx;
-                        curDx = ndx; curDy = ndy;
-                    } else {
-                        const ndx = curDy, ndy = curDx;
-                        curDx = ndx; curDy = ndy;
-                    }
-                    const sk = `${curX},${curY},${curDx},${curDy}`;
-                    if (visited.has(sk)) break;
-                    visited.add(sk);
-                }
-            }
-            if (!hitBorder || reflections < 2) continue;
-            const [exitX, exitY] = path[path.length - 2];
-            const targetGem = GEMS[0];
-            grid[exitY][exitX] = targetGem;
-            const borderCells = [];
-            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-                if ((x === 0 || x === size - 1 || y === 0 || y === size - 1) && !grid[y][x] && (x !== startX || y !== startY)) {
-                    borderCells.push([x, y]);
-                }
-            }
-            if (borderCells.length < 3) continue;
-            const decoys = r.shuffle(borderCells).slice(0, 3);
-            decoys.forEach(([dx, dy], i) => {
-                grid[dy][dx] = GEMS[i + 1];
-            });
-            grid[startY][startX] = '🔦';
-            const lasersData = {
-                size, grid,
-                startX, startY,
-                path,
-                target: targetGem,
-                reflections,
-            };
-            const q = {
-                view: 'lasers', lasersData, grid,
-                pk: 'q_lasers_hit',
-                why: [{k: 'why_lasers_hit', v: {x: targetGem}}],
-            };
-            return withOptions(r, q, targetGem, GEMS.slice(1));
+    /** The path of the beam from the torch, going right: it stops on the first thing that is not a mirror, or leaves the board. */
+    function traceLaser(grid, sx, sy) {
+        const n = grid.length;
+        let x = sx, y = sy, dx = 1, dy = 0, reflections = 0;
+        const path = [[x, y]];
+        for (let step = 0; step < n * n * 4; step++) {
+            x += dx;
+            y += dy;
+            if (x < 0 || y < 0 || x >= n || y >= n) return {path, reflections, out: true};
+            path.push([x, y]);
+            const cell = grid[y][x];
+            if (cell === '/') { [dx, dy] = [-dy, -dx]; reflections++; }
+            else if (cell === BACKSLASH) { [dx, dy] = [dy, dx]; reflections++; }
+            else if (cell) return {path, reflections, hit: cell};
         }
-        const grid = [['🔦', '/', '💎'], ['⭐', '', ''], ['🔮', '', '🪙']];
-        const lasersData = {size: 3, grid, startX: 0, startY: 0, path: [[0, 0], [1, 0], [2, 0]], target: '💎', reflections: 1};
+        return {path, reflections};
+    }
+
+    function makeLasers(r, size, mirrorCount, withObstacles, minRefl) {
+        for (let attempt = 0; attempt < 3000; attempt++) {
+            const grid = Array.from({length: size}, () => Array(size).fill(''));
+            const startY = r.int(0, size - 1);
+            grid[startY][0] = '🔦';
+            const free = [];
+            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!grid[y][x]) free.push([x, y]);
+            const spots = r.shuffle(free);
+            spots.slice(0, mirrorCount).forEach(([x, y]) => { grid[y][x] = r.next() < .5 ? '/' : BACKSLASH; });
+            if (withObstacles) {
+                const [ox, oy] = spots[mirrorCount];
+                grid[oy][ox] = '🧱';
+            }
+            const run = traceLaser(grid, 0, startY);
+            if (!run.out || run.reflections < minRefl) continue;
+            const [ex, ey] = run.path[run.path.length - 1];
+            if (grid[ey][ex]) continue; // the beam leaves from a mirror: no room for the target
+            const gems = r.shuffle(GEMS);
+            grid[ey][ex] = gems[0];
+            // The other gems wait on the border, off the path of the beam
+            const onPath = new Set(run.path.map(([x, y]) => x + ',' + y));
+            const border = [];
+            for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+                if ((x === 0 || y === 0 || x === size - 1 || y === size - 1) && !grid[y][x] && !onPath.has(x + ',' + y)) border.push([x, y]);
+            }
+            if (border.length < 3) continue;
+            r.shuffle(border).slice(0, 3).forEach(([x, y], i) => { grid[y][x] = gems[i + 1]; });
+            const check = traceLaser(grid, 0, startY);
+            if (check.hit !== gems[0] || check.reflections < minRefl) continue; // the beam must not reach the target early
+            const lasersData = {size, grid, startX: 0, startY, path: check.path, target: gems[0], reflections: check.reflections};
+            const q = {view: 'lasers', lasersData, grid, pk: 'q_lasers_hit', why: [{k: 'why_lasers_hit', v: {x: gems[0]}}]};
+            return withOptions(r, q, gems[0], gems.slice(1));
+        }
+        const grid = [['🔦', '', BACKSLASH], ['⭐', '', ''], ['🔮', '🪙', '💎']];
+        const lasersData = {size: 3, grid, startX: 0, startY: 0, path: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]], target: '💎', reflections: 1};
         const q = {view: 'lasers', lasersData, grid, pk: 'q_lasers_hit', why: [{k: 'why_lasers_hit', v: {x: '💎'}}]};
         return withOptions(r, q, '💎', ['⭐', '🔮', '🪙']);
     }
 
-    pattern('lasers-3x3', 'lasers', .24, r => makeLasers(r, 3, 2, false));
-    pattern('lasers-3x3-med', 'lasers', .54, r => makeLasers(r, 3, 2, false));
-    pattern('lasers-4x4', 'lasers', .88, r => makeLasers(r, 4, 3, false));
-    pattern('lasers-4x4-obs', 'lasers', 1.16, r => makeLasers(r, 4, 3, true));
-    pattern('lasers-5x5', 'lasers', 1.46, r => makeLasers(r, 5, 4, false));
-    pattern('lasers-5x5-obs', 'lasers', 1.74, r => makeLasers(r, 5, 5, true));
-    pattern('lasers-5x5-max', 'lasers', 1.95, r => makeLasers(r, 5, 6, true));
+    pattern('lasers-3x3', 'lasers', .16, r => makeLasers(r, 3, 2, false, 1));
+    pattern('lasers-4x4', 'lasers', .38, r => makeLasers(r, 4, 3, false, 2));
+    pattern('lasers-4x4-obs', 'lasers', .54, r => makeLasers(r, 4, 4, true, 2));
+    pattern('lasers-5x5', 'lasers', .74, r => makeLasers(r, 5, 5, false, 3));
+    pattern('lasers-5x5-obs', 'lasers', .9, r => makeLasers(r, 5, 6, true, 3));
+    pattern('lasers-5x5-max', 'lasers', 1.06, r => makeLasers(r, 5, 7, true, 4));
+    pattern('lasers-6x6', 'lasers', 1.22, r => makeLasers(r, 6, 9, true, 5));
 
     // ---------- 3D cube nets (cubes) ----------
-    const CUBE_NETS = [
-        {
-            grid: [
-                [-1, 0, -1, -1],
-                [1,  2,  3,  4],
-                [-1, 5, -1, -1],
-            ],
-            opp: {0: 5, 5: 0, 1: 3, 3: 1, 2: 4, 4: 2},
-        },
-        {
-            grid: [
-                [-1, 0, -1, -1],
-                [1,  2,  3, -1],
-                [-1, -1, 4,  5],
-            ],
-            opp: {0: 4, 4: 0, 1: 3, 3: 1, 2: 5, 5: 2},
-        },
-        {
-            grid: [
-                [0,  1, -1, -1],
-                [-1, 2,  3, -1],
-                [-1, -1, 4,  5],
-            ],
-            opp: {0: 3, 3: 0, 1: 4, 4: 1, 2: 5, 5: 2},
-        },
-    ];
+    // All the 11 nets of a cube, from the friendliest (a strip of four with a face above and one below) to the trickiest
+    const CUBE_NETS = {
+        cross: ['.X..|XXXX|.X..', '.X..|XXXX|..X.'],
+        strip: ['X...|XXXX|X...', 'X...|XXXX|.X..', 'X...|XXXX|..X.', 'X...|XXXX|...X'],
+        twisted: ['XX..|.XXX|.X..', 'XX..|.XXX|..X.', 'XX..|.XXX|...X', 'XX..|.XX.|..XX', 'XXX..|..XXX'],
+    };
 
-    function makeCubesOpp(r, netIndex) {
-        const netDef = CUBE_NETS[netIndex % CUBE_NETS.length];
+    /**
+     * Folds a net by rolling a die over it: whatever face lies on a square ends up at the bottom of the die. Returns the
+     * grid with the faces numbered in reading order and, for each face, the one opposite.
+     */
+    function foldNet(shape) {
+        const rows = shape.split('|');
+        let count = 0;
+        const grid = rows.map(row => [...row].map(c => (c === 'X' ? count++ : -1)));
+        const where = {};
+        const y0 = 0, x0 = grid[0].findIndex(v => v >= 0);
+        const seen = new Set([y0 + ',' + x0]);
+        const queue = [[y0, x0, {bottom: 'D', top: 'U', north: 'N', south: 'S', east: 'E', west: 'W'}]];
+        const roll = {
+            east: d => ({bottom: d.east, top: d.west, east: d.top, west: d.bottom, north: d.north, south: d.south}),
+            west: d => ({bottom: d.west, top: d.east, west: d.top, east: d.bottom, north: d.north, south: d.south}),
+            south: d => ({bottom: d.south, top: d.north, south: d.top, north: d.bottom, east: d.east, west: d.west}),
+            north: d => ({bottom: d.north, top: d.south, north: d.top, south: d.bottom, east: d.east, west: d.west}),
+        };
+        while (queue.length) {
+            const [y, x, die] = queue.shift();
+            where[grid[y][x]] = die.bottom;
+            [[0, 1, 'east'], [0, -1, 'west'], [1, 0, 'south'], [-1, 0, 'north']].forEach(([dy, dx, way]) => {
+                const ny = y + dy, nx = x + dx;
+                if (grid[ny] && grid[ny][nx] >= 0 && !seen.has(ny + ',' + nx)) {
+                    seen.add(ny + ',' + nx);
+                    queue.push([ny, nx, roll[way](die)]);
+                }
+            });
+        }
+        const across = {D: 'U', U: 'D', N: 'S', S: 'N', E: 'W', W: 'E'};
+        const opp = {};
+        Object.keys(where).forEach(f => {
+            opp[f] = +Object.keys(where).find(g => where[g] === across[where[f]]);
+        });
+        return {grid, opp};
+    }
+
+    function makeCubesOpp(r, family) {
+        const net = foldNet(r.pick(CUBE_NETS[family]));
         const icons = r.shuffle(r.pick(SETS)).slice(0, 6);
         const targetFace = r.int(0, 5);
-        const oppFace = netDef.opp[targetFace];
         const targetIcon = icons[targetFace];
-        const right = icons[oppFace];
-        const netGrid = netDef.grid.map(row => row.map(idx => idx >= 0 ? icons[idx] : ''));
-        const cubesData = {
-            netGrid,
-            targetIcon,
-            rightIcon: right,
-            opp: netDef.opp,
-            icons,
-        };
+        const right = icons[net.opp[targetFace]];
+        const netGrid = net.grid.map(row => row.map(idx => idx >= 0 ? icons[idx] : ''));
+        const cubesData = {netGrid, targetIcon, rightIcon: right, opp: net.opp, icons};
         const q = {
             view: 'cubes', cubesData, grid: netGrid,
-            lines: [icons.join(' ')],
             pk: 'q_cubes_opp', pv: {target: targetIcon},
             why: [{k: 'why_cubes_opp', v: {target: targetIcon, x: right}}],
         };
-        return withOptions(r, q, right, others(r, icons, right));
+        return withOptions(r, q, right, others(r, icons.filter(x => x !== targetIcon), right));
     }
 
-    function makeCubesView(r, netIndex) {
-        const netDef = CUBE_NETS[netIndex % CUBE_NETS.length];
+    function makeCubesView(r, family) {
+        const net = foldNet(r.pick(CUBE_NETS[family]));
         const icons = r.shuffle(r.pick(SETS)).slice(0, 6);
-        const validTriplets = [];
-        const invalidTriplets = [];
-        for (let a = 0; a < 6; a++) {
-            for (let b = a + 1; b < 6; b++) {
-                for (let c = b + 1; c < 6; c++) {
-                    if (netDef.opp[a] !== b && netDef.opp[a] !== c && netDef.opp[b] !== c) {
-                        validTriplets.push([a, b, c]);
-                    } else {
-                        invalidTriplets.push([a, b, c]);
-                    }
-                }
-            }
+        const valid = [], invalid = [];
+        for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) for (let c = b + 1; c < 6; c++) {
+            (net.opp[a] !== b && net.opp[a] !== c && net.opp[b] !== c ? valid : invalid).push([a, b, c]);
         }
-        const rightTriplet = r.pick(validTriplets);
-        const wrongTriplets = r.shuffle(invalidTriplets).slice(0, 3);
-        const rightText = rightTriplet.map(i => icons[i]).join(' ');
-        const wrongTexts = wrongTriplets.map(tri => tri.map(i => icons[i]).join(' '));
-        const netGrid = netDef.grid.map(row => row.map(idx => idx >= 0 ? icons[idx] : ''));
-        const cubesData = {
-            netGrid,
-            icons,
-            isViewMode: true,
-        };
+        const text = tri => tri.map(i => icons[i]).join(' ');
+        const rightText = text(r.pick(valid));
+        const netGrid = net.grid.map(row => row.map(idx => idx >= 0 ? icons[idx] : ''));
+        const cubesData = {netGrid, icons, opp: net.opp, isViewMode: true};
         const q = {
             view: 'cubes', cubesData, grid: netGrid,
-            lines: [icons.join(' ')],
             pk: 'q_cubes_view',
             why: [{k: 'why_cubes_view', v: {x: rightText}}],
         };
-        return withOptions(r, q, rightText, wrongTexts);
+        return withOptions(r, q, rightText, r.shuffle(invalid).slice(0, 3).map(text));
     }
 
-    pattern('cubes-opp-cross', 'cubes', .26, r => makeCubesOpp(r, 0));
-    pattern('cubes-opp-t', 'cubes', .58, r => makeCubesOpp(r, 1));
-    pattern('cubes-opp-step', 'cubes', .92, r => makeCubesOpp(r, 2));
-    pattern('cubes-view-cross', 'cubes', 1.22, r => makeCubesView(r, 0));
-    pattern('cubes-view-t', 'cubes', 1.54, r => makeCubesView(r, 1));
-    pattern('cubes-view-step', 'cubes', 1.86, r => makeCubesView(r, 2));
+    pattern('cubes-opp-cross', 'cubes', .3, r => makeCubesOpp(r, 'cross'));
+    pattern('cubes-opp-strip', 'cubes', .5, r => makeCubesOpp(r, 'strip'));
+    pattern('cubes-opp-twisted', 'cubes', .74, r => makeCubesOpp(r, 'twisted'));
+    pattern('cubes-view-strip', 'cubes', .84, r => makeCubesView(r, r.pick(['cross', 'strip'])));
+    pattern('cubes-view-twisted', 'cubes', 1.08, r => makeCubesView(r, 'twisted'));
 
     // ---------- pipes & fluid levels (pipes) ----------
     function makePipes(r, tankCount) {
@@ -2025,7 +1990,7 @@
         const right = winningTank;
         const q = {
             view: 'pipes', pipesData,
-            lines: connections.map(c => `${c.from} ➔ ${c.to}${c.blocked ? ' (🚫)' : ''}`),
+            lines: connections.map(c => `${c.from} ➔ ${c.to} ${c.h === 2 ? '⬆️' : '⬇️'}${c.blocked ? ' 🚫' : ''}`),
             pk: 'q_pipes_first',
             pv: {source: tA},
             why: (right === tA)
@@ -2035,137 +2000,58 @@
         return withOptions(r, q, right, others(r, tankNames, right));
     }
 
-    pattern('pipes-3', 'pipes', .22, r => makePipes(r, 3));
-    pattern('pipes-4-a', 'pipes', .55, r => makePipes(r, 4));
-    pattern('pipes-4-b', 'pipes', .90, r => makePipes(r, 4));
-    pattern('pipes-5', 'pipes', 1.35, r => makePipes(r, 5));
-    pattern('pipes-5-branch', 'pipes', 1.75, r => makePipes(r, 5));
+    pattern('pipes-3', 'pipes', .14, r => makePipes(r, 3));
+    pattern('pipes-4', 'pipes', .34, r => makePipes(r, 4));
+    pattern('pipes-5', 'pipes', .54, r => makePipes(r, 5));
 
     // ---------- hanging kinetic balance mobiles ----------
+    /**
+     * tier 1: one beam, one weight missing. tier 2: two beams, a weight of the lower beam missing (the lower beam is
+     * enough). tier 3: two beams, the weight of the upper beam missing: first add up the whole lower beam, then balance.
+     */
     function makeMobile(r, tier) {
-        let beams = [];
-        let rightAnswer = 0;
-
+        let beams, rightAnswer;
+        const weight = (val, hidden) => ({type: 'weight', val: hidden ? '?' : val, isTarget: !!hidden, realVal: val});
         if (tier === 1) {
-            const pairs = [
-                {dL: 1, dR: 1, wL: 4, wR: 4},
-                {dL: 2, dR: 1, wL: 3, wR: 6},
-                {dL: 1, dR: 2, wL: 8, wR: 4},
-                {dL: 3, dR: 1, wL: 2, wR: 6},
-                {dL: 2, dR: 3, wL: 6, wR: 4},
-                {dL: 1, dR: 3, wL: 9, wR: 3},
-                {dL: 3, dR: 2, wL: 4, wR: 6},
-                {dL: 2, dR: 1, wL: 5, wR: 10},
-            ];
-            const p = r.pick(pairs);
+            let dL, dR;
+            do { dL = r.int(1, 4); dR = r.int(1, 4); } while (dL === dR && r.next() < .8);
+            const g = dL % dR === 0 ? dR : (dR % dL === 0 ? dL : 1);
+            const m = r.int(1, 4);
+            const wL = m * dR / g, wR = m * dL / g;
             const hideRight = r.next() < .5;
-            rightAnswer = hideRight ? p.wR : p.wL;
-            beams = [{
-                id: 'b0',
-                x: 155, y: 35,
-                dL: p.dL, dR: p.dR,
-                left: {type: 'weight', val: hideRight ? p.wL : '?', isTarget: !hideRight, realVal: p.wL},
-                right: {type: 'weight', val: hideRight ? '?' : p.wR, isTarget: hideRight, realVal: p.wR},
-            }];
-        } else if (tier === 2) {
-            const sL = r.int(1, 2);
-            const sR = r.int(1, 3);
-            const k = r.int(2, 4);
-            const wSL = k * sR;
-            const wSR = k * sL;
-            const subTotal = wSL + wSR;
-
-            const dR = 1;
-            let dL = r.int(1, 2);
-            if (dL === 2 && subTotal % 2 !== 0) dL = 1;
-            const wL = (subTotal * dR) / dL;
-
-            const hideTarget = r.pick(['subRight', 'subLeft', 'mainLeft']);
-            if (hideTarget === 'subRight') rightAnswer = wSR;
-            else if (hideTarget === 'subLeft') rightAnswer = wSL;
-            else rightAnswer = wL;
-
-            const rel_min = Math.min(-dL, dR - sL);
-            const rel_max = dR + sR;
-            const b0_x = Math.round(155 - (rel_min + rel_max) * 32 / 2);
-            const b1_x = b0_x + dR * 32;
-
-            beams = [
-                {
-                    id: 'b0',
-                    x: b0_x, y: 32,
-                    dL: dL, dR: dR,
-                    left: {type: 'weight', val: hideTarget === 'mainLeft' ? '?' : wL, isTarget: hideTarget === 'mainLeft', realVal: wL},
-                    right: {type: 'beam', subBeamIdx: 1, totalWeight: subTotal},
-                },
-                {
-                    id: 'b1',
-                    x: b1_x, y: 92,
-                    dL: sL, dR: sR,
-                    left: {type: 'weight', val: hideTarget === 'subLeft' ? '?' : wSL, isTarget: hideTarget === 'subLeft', realVal: wSL},
-                    right: {type: 'weight', val: hideTarget === 'subRight' ? '?' : wSR, isTarget: hideTarget === 'subRight', realVal: wSR},
-                },
-            ];
+            rightAnswer = hideRight ? wR : wL;
+            const span = (dL + dR) * 32;
+            beams = [{id: 'b0', x: Math.round(155 - span / 2 + dL * 32), y: 35, dL, dR, left: weight(wL, !hideRight), right: weight(wR, hideRight)}];
         } else {
-            const sL = r.int(1, 3);
-            const sR = r.int(1, 3);
-            const k = r.int(2, 4);
-            const wSubA = k * sR;
-            const wSubB = k * sL;
-            const sSum = wSubA + wSubB;
-            const dL = r.int(1, 2);
-            const dR = 1;
-            const wL = (sSum * dR) / (dL === 2 && sSum % 2 !== 0 ? 1 : dL);
-            const actualDL = (dL === 2 && sSum % 2 !== 0) ? 1 : dL;
-            rightAnswer = wSubB;
-
-            const rel_min = Math.min(-actualDL, dR - sL);
-            const rel_max = dR + sR;
-            const b0_x = Math.round(155 - (rel_min + rel_max) * 32 / 2);
-            const b1_x = b0_x + dR * 32;
-
+            let sL, sR, dL, dR, wSL, wSR, wL;
+            for (;;) {
+                sL = r.int(1, 3); sR = r.int(1, 3);
+                const k = r.int(1, 4);
+                const g = sL % sR === 0 ? sR : (sR % sL === 0 ? sL : 1);
+                wSL = k * sR / g; wSR = k * sL / g;
+                dL = r.int(1, 3); dR = r.int(1, 2);
+                // the lower beam starts to the right of the upper left weight, so nothing seems to hang from the wrong beam
+                if ((wSL + wSR) * dR % dL === 0 && (sL !== sR || tier === 3) && dR - sL > -dL) break;
+            }
+            wL = (wSL + wSR) * dR / dL;
+            const hide = tier === 3 ? 'mainLeft' : r.pick(['subLeft', 'subRight']);
+            rightAnswer = {mainLeft: wL, subLeft: wSL, subRight: wSR}[hide];
+            const relMin = Math.min(-dL, dR - sL), relMax = dR + sR;
+            const b0x = Math.round(155 - (relMin + relMax) * 32 / 2);
             beams = [
-                {
-                    id: 'b0',
-                    x: b0_x, y: 32,
-                    dL: actualDL, dR: dR,
-                    left: {type: 'weight', val: wL, isTarget: false, realVal: wL},
-                    right: {type: 'beam', subBeamIdx: 1, totalWeight: sSum},
-                },
-                {
-                    id: 'b1',
-                    x: b1_x, y: 92,
-                    dL: sL, dR: sR,
-                    left: {type: 'weight', val: wSubA, isTarget: false, realVal: wSubA},
-                    right: {type: 'weight', val: '?', isTarget: true, realVal: wSubB},
-                },
+                {id: 'b0', x: b0x, y: 32, dL, dR, left: weight(wL, hide === 'mainLeft'), right: {type: 'beam', subBeamIdx: 1, totalWeight: wSL + wSR}},
+                {id: 'b1', x: b0x + dR * 32, y: 92, dL: sL, dR: sR, left: weight(wSL, hide === 'subLeft'), right: weight(wSR, hide === 'subRight')},
             ];
         }
-
-        const mobilesData = {
-            tier,
-            beams,
-            rightAnswer,
-        };
         const right = String(rightAnswer);
-        const distractors = [rightAnswer - 2, rightAnswer - 1, rightAnswer + 1, rightAnswer + 2, rightAnswer + 3, rightAnswer * 2]
-            .filter(n => n > 0 && n !== rightAnswer)
-            .map(String);
-
-        const q = {
-            view: 'mobiles', mobilesData,
-            pk: 'q_mobile_balance',
-            why: [{k: 'why_mobile', v: {x: right}}],
-        };
-        return withOptions(r, q, right, others(r, distractors, right));
+        const near = [rightAnswer - 2, rightAnswer - 1, rightAnswer + 1, rightAnswer + 2, rightAnswer + 3, rightAnswer * 2].filter(n => n > 0 && n !== rightAnswer).map(String);
+        const q = {view: 'mobiles', mobilesData: {tier, beams, rightAnswer}, pk: 'q_mobile_balance', why: [{k: 'why_mobile', v: {x: right}}]};
+        return withOptions(r, q, right, others(r, near, right));
     }
 
-    pattern('mobiles-1-easy', 'mobiles', .25, r => makeMobile(r, 1));
-    pattern('mobiles-1-med', 'mobiles', .58, r => makeMobile(r, 1));
-    pattern('mobiles-2-easy', 'mobiles', .86, r => makeMobile(r, 2));
-    pattern('mobiles-2-hard', 'mobiles', 1.25, r => makeMobile(r, 2));
-    pattern('mobiles-3-exp', 'mobiles', 1.68, r => makeMobile(r, 3));
-    pattern('mobiles-3-max', 'mobiles', 1.94, r => makeMobile(r, 3));
+    pattern('mobiles-1', 'mobiles', .2, r => makeMobile(r, 1));
+    pattern('mobiles-2', 'mobiles', .46, r => makeMobile(r, 2));
+    pattern('mobiles-3', 'mobiles', .68, r => makeMobile(r, 3));
 
     // ---------- origami paper folding and hole punch ----------
     function computeOrigamiBounds(folds, size = 4) {
@@ -2355,14 +2241,10 @@
         return withOptions(r, q, rightLetter, letterOptions.filter(l => l !== rightLetter));
     }
 
-    pattern('origami-1-easy', 'origami', .28, r => makeOrigami(r, 1, 4));
-    pattern('origami-2-med', 'origami', .68, r => makeOrigami(r, 2, 4));
-    pattern('origami-2-hard', 'origami', 1.18, r => makeOrigami(r, 2, 4));
-    pattern('origami-3-diag', 'origami', 1.55, r => makeOrigami(r, 3, 4));
-    pattern('origami-3-max', 'origami', 1.88, r => makeOrigami(r, 3, 4));
-    pattern('origami-4-med', 'origami', 3.45, r => makeOrigami(r, 3, 6));
-    pattern('origami-4-hard', 'origami', 4.85, r => makeOrigami(r, 4, 6));
-    pattern('origami-5-exp', 'origami', 6.40, r => makeOrigami(r, 5, 8));
-    pattern('origami-6-master', 'origami', 7.80, r => makeOrigami(r, 6, 8));
-    pattern('origami-7-legend', 'origami', 9.20, r => makeOrigami(r, 7, 8));
+    pattern('origami-1', 'origami', .22, r => makeOrigami(r, 1, 4));
+    pattern('origami-2', 'origami', .48, r => makeOrigami(r, 2, 4));
+    pattern('origami-3', 'origami', .7, r => makeOrigami(r, 3, 4));
+    pattern('origami-6', 'origami', .92, r => makeOrigami(r, 4, 6));
+    pattern('origami-8', 'origami', 1.18, r => makeOrigami(r, 5, 8));
+    pattern('origami-8-max', 'origami', 1.42, r => makeOrigami(r, 6, 8));
 })(typeof window !== 'undefined' ? window : globalThis);

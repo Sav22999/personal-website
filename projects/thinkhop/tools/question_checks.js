@@ -28,7 +28,72 @@
             });
         }
 
+        /** The answers of the drawn puzzles, worked out again from what the player sees. */
+        function checkPicture(q) {
+            const right = q.options[q.answer];
+            if (q.lasersData) {
+                const g = q.lasersData.grid, n = g.length;
+                let x = q.lasersData.startX, y = q.lasersData.startY, dx = 1, dy = 0, hit = null;
+                for (let s = 0; s < 200 && !hit; s++) {
+                    x += dx; y += dy;
+                    if (x < 0 || y < 0 || x >= n || y >= n) { hit = 'out'; break; }
+                    const c = g[y][x];
+                    if (c === '/') [dx, dy] = [-dy, -dx];
+                    else if (c === '\\') [dx, dy] = [dy, dx];
+                    else if (c) hit = c;
+                }
+                if (hit !== right) bad(q, 'the laser hits ' + hit);
+            }
+            if (q.mobilesData) {
+                const v = side => side.type === 'beam' ? null : side.realVal;
+                const beams = q.mobilesData.beams;
+                const total = b => v(b.left) + (b.right.type === 'beam' ? total(beams[b.right.subBeamIdx]) : v(b.right));
+                beams.forEach(b => {
+                    const l = v(b.left) * b.dL, rr = (b.right.type === 'beam' ? total(beams[b.right.subBeamIdx]) : v(b.right)) * b.dR;
+                    if (l !== rr) bad(q, 'a beam out of balance');
+                });
+                const target = beams.flatMap(b => [b.left, b.right]).filter(s => s.isTarget);
+                if (target.length !== 1 || String(target[0].realVal) !== right) bad(q, 'the missing weight is not the answer');
+            }
+            if (q.cubesData) {
+                const opp = q.cubesData.opp, faces = Object.keys(opp);
+                if (faces.length !== 6 || faces.some(f => opp[opp[f]] !== +f || opp[f] === +f)) bad(q, 'a cube net that does not fold');
+                if (!q.cubesData.isViewMode && q.cubesData.icons[opp[q.cubesData.icons.indexOf(q.cubesData.targetIcon)]] !== right) bad(q, 'wrong opposite face');
+            }
+            if (q.gearsData && !q.gearsData.speed) {
+                const d = q.gearsData;
+                d.links.forEach(([a, b]) => {
+                    if (!d.isRing && d.dirs[a] === d.dirs[b]) bad(q, 'two meshed gears turning the same way');
+                });
+                if (d.isRing && (d.count % 2 === 1) !== (right.k === 'ge_jammed')) bad(q, 'wrong jam answer');
+            }
+            if (q.origamiData) {
+                // Fold every square of the sheet forwards: a square is a hole when it lands under a punch
+                const o = q.origamiData, size = o.size;
+                const holes = [];
+                for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+                    let px = x, py = y;
+                    o.stepBounds.forEach(st => {
+                        const b = st.bBefore, midX = Math.floor((b.xMin + b.xMax) / 2), midY = Math.floor((b.yMin + b.yMax) / 2);
+                        if (st.fold === 'L_TO_R' && px <= midX) px = st.sx - px;
+                        if (st.fold === 'R_TO_L' && px > midX) px = st.sx - px;
+                        if (st.fold === 'T_TO_B' && py <= midY) py = st.sy - py;
+                        if (st.fold === 'B_TO_T' && py > midY) py = st.sy - py;
+                    });
+                    holes.push(o.punch.some(([hx, hy]) => hx === px && hy === py) ? 1 : 0);
+                }
+                const sheet = o.candidateSheets.find(c => c.letter === right);
+                if (!sheet || sheet.pattern !== holes.join('')) bad(q, 'the unfolded sheet is not the answer');
+                if (new Set(o.candidateSheets.map(c => c.pattern)).size !== 4) bad(q, 'two equal origami sheets');
+            }
+            if (q.gearsData && q.gearsData.speed) {
+                const d = q.gearsData;
+                if (d.teeth[0] * d.turns !== d.teeth[d.count - 1] * +right) bad(q, 'wrong number of turns');
+            }
+        }
+
         function check(q) {
+            checkPicture(q);
             const keys = q.options.map(o => JSON.stringify(o));
             if (new Set(keys).size !== keys.length) bad(q, 'two equal options');
             if (q.options.length < 3 || q.options.length > 5) bad(q, 'wrong number of options');

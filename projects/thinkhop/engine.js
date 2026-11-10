@@ -704,7 +704,7 @@
     }
 
     /** Same content, whatever the order of the options: that is what must not come back. */
-    const contentOf = q => JSON.stringify([q.nums, q.result, q.items, q.lines, q.ask, q.grid, q.pv, q.gearsData, q.lasersData, q.cubesData, q.pipesData, q.facts && q.facts.map(f => JSON.stringify(f)).sort(), q.options.map(o => JSON.stringify(o)).sort()]);
+    const contentOf = q => JSON.stringify([q.nums, q.result, q.items, q.lines, q.ask, q.grid, q.pv, q.gearsData, q.lasersData, q.cubesData, q.pipesData, q.mobilesData, q.origamiData, q.facts && q.facts.map(f => JSON.stringify(f)).sort(), q.options.map(o => JSON.stringify(o)).sort()]);
     const sigOf = (id, q) => id + '|' + (q ? hashSeed(contentOf(q)).toString(36) : '0');
 
     function build(p, seed) {
@@ -751,23 +751,26 @@
                 && !(p.cat === 'trap' && target >= 6.0)
                 && !(ctx.math >= ctx.mathMax && MATH.includes(p.cat)));
             const fresh = pool.filter(p => !ctx.recent.has(p.id));
-            // Do not reuse recently played patterns when widening the window slightly finds a fresh one
-            const usableNow = fresh.length ? fresh : (w >= 2.25 ? pool : []);
-            const cats = [...new Set(usableNow.map(p => p.cat))];
-            const newCats = cats.filter(c => !ctx.cats.has(c));
-            const veryFreshCats = newCats.filter(c => !ctx.recentCats || !ctx.recentCats.has(c));
-            // A type already used in this game comes back only when a wider window has nothing else to offer
-            const choice = veryFreshCats.length ? veryFreshCats : (newCats.length ? (w <= .50 ? [] : newCats) : (w < 2.25 ? [] : cats));
-            for (let tries = 0; choice.length && tries < 16; tries++) {
-                const cat = drawCat(r, choice);
-                const p = r.pick(usableNow.filter(x => x.cat === cat));
-                const q = build(p, r.int(0, 2147483647));
-                if (ctx.seen.has(q.sig)) continue;
-                ctx.pids.add(p.id);
-                ctx.cats.add(cat);
-                ctx.seen.add(q.sig);
-                if (MATH.includes(cat)) ctx.math++;
-                return q;
+            // Recently played patterns come back only when the fresh ones near the target have nothing new to give:
+            // better a known kind of puzzle with new content than a question far from the difficulty asked
+            const lists = (fresh.length ? [fresh] : []).concat(w >= 1.25 && pool.length > fresh.length ? [pool] : []);
+            for (const usableNow of lists) {
+                const cats = [...new Set(usableNow.map(p => p.cat))];
+                const newCats = cats.filter(c => !ctx.cats.has(c));
+                const veryFreshCats = newCats.filter(c => !ctx.recentCats || !ctx.recentCats.has(c));
+                // A type already used in this game comes back only when a wider window has nothing else to offer
+                const choice = veryFreshCats.length ? veryFreshCats : (newCats.length ? (w <= .50 ? [] : newCats) : (w < 2.25 ? [] : cats));
+                for (let tries = 0; choice.length && tries < 16; tries++) {
+                    const cat = drawCat(r, choice);
+                    const p = r.pick(usableNow.filter(x => x.cat === cat));
+                    const q = build(p, r.int(0, 2147483647));
+                    if (ctx.seen.has(q.sig)) continue;
+                    ctx.pids.add(p.id);
+                    ctx.cats.add(cat);
+                    ctx.seen.add(q.sig);
+                    if (MATH.includes(cat)) ctx.math++;
+                    return q;
+                }
             }
         }
         return build(r.pick(list), r.int(0, 2147483647)); // everything was seen: better an old question than none

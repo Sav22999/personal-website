@@ -37,7 +37,7 @@ fucina/
 ├── certificate.php         public certificate verification and display
 ├── reminders.php           legacy wrapper (points to projects/cron/fucina-reminders.php)
 ├── install-db.php          installation wizard (tables, initial seed, master admin)
-├── update.php              database schema migration using saved credentials
+├── update.php              database schema migration using saved credentials (CLI or signed-in admin only)
 ├── credentials-sample.php  configuration template (credentials.php is gitignored)
 ├── api/index.php           JSON API endpoints
 ├── lib/                    bootstrap, schema, courses, progress, push, admin API, email

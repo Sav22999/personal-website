@@ -184,5 +184,27 @@
         return `<svg class="mirror-svg${isReflecting ? ' reflecting' : ''}" viewBox="0 0 36 36" width="100%" height="100%" aria-hidden="true"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#0D0926" stroke-width="7" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${glow}" stroke-width="4.5" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/><circle cx="${x1}" cy="${y1}" r="2.6" fill="#FFD23F" stroke="#1B1640" stroke-width="1.2"/><circle cx="${x2}" cy="${y2}" r="2.6" fill="#FFD23F" stroke="#1B1640" stroke-width="1.2"/></svg>`;
     }
 
-    window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox, skeleton, mirrorSvg};
+    /** A light bulb, drawn rather than an emoji: on it is yellow and glows, off it is a dark grey bulb of the same shape. */
+    function bulbSvg(on) {
+        return `<svg class="bulb ${on ? 'on' : 'off'}" viewBox="0 0 36 36" aria-hidden="true">
+            <path class="bulb-glass" d="M18 2.5C11.1 2.5 6 7.6 6 14c0 4.2 2.1 6.9 4 8.9 1.3 1.4 2.2 2.8 2.2 4.6v.5h11.6v-.5c0-1.8.9-3.2 2.2-4.6 1.9-2 4-4.7 4-8.9 0-6.4-5.1-11.5-12-11.5z"/>
+            <ellipse cx="13" cy="10" rx="2.6" ry="4" transform="rotate(30 13 10)" fill="#fff" opacity="${on ? .55 : .18}"/>
+            <path class="bulb-wire" d="M14.6 23.5l1.6-6.5 1.8 3.4 1.8-3.4 1.6 6.5" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="12.2" y="28" width="11.6" height="2.7" rx="1" fill="#9AA3B2"/>
+            <rect x="12.6" y="30.7" width="10.8" height="2.3" rx="1" fill="#C3CAD5"/>
+            <path d="M15 33h6l-1.2 2.2h-3.6z" fill="#6B7280"/>
+        </svg>`;
+    }
+
+    /** A row of lamps from its text (💡 on, ⚫ or 🌑 off); with numbers, each lamp shows its position under it. */
+    function bulbs(row, numbers) {
+        const list = [...String(row)].filter(c => c === '💡' || c === '⚫' || c === '🌑');
+        const el = document.createElement('span');
+        el.className = 'bulb-row' + (numbers ? ' numbered' : '');
+        el.innerHTML = list.map((c, i) => `<span class="bulb-cell">${bulbSvg(c === '💡')}${numbers ? `<small>${i + 1}</small>` : ''}</span>`).join('');
+        return el;
+    }
+    const isBulbRow = s => typeof s === 'string' && /^[💡⚫🌑\s]+$/u.test(s);
+
+    window.ThinkHopUI = {store, h, icon, toast, modal, confirmBox, skeleton, mirrorSvg, bulbSvg, bulbs, isBulbRow};
 })();

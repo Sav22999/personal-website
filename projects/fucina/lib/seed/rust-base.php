@@ -71,7 +71,7 @@ let risultato = loop {
     println!("{i}");
 }'), [
             dBlanks(pFill(), "let taglia = ___ altezza < 170 { \"M\" } ___ { \"L\" };\n___ i in 0..3 { println!(\"{i}\"); }", ['if', 'else', 'for'], ['when', 'otherwise', 'loop'], L('Espressione condizionale e ciclo.', 'Conditional expression and loop.')),
-            dFlash(pFlash(), [[L('`if` può restituire un valore', '`if` can return a value'), true], [L('`loop` si ferma da solo dopo 100 giri', '`loop` stops by itself after 100 rounds'), false], [L('`break` può restituire un valore da `loop`', '`break` can return a value from `loop`'), true]], L('`loop` va fermato con `break`.', '`loop` must be stopped with `break`.')),
+            dFlash(pFlash(), [[L('`if` può restituire un valore', '`if` can return a value'), true], [L('`loop` si ferma da solo dopo 100 giri', '`loop` stops by itself after 100 rounds'), false], [L('`break` può restituire un valore da `loop`', '`break` can return a value from `loop`'), true], [L('Le condizioni di `if` vogliono le parentesi tonde', '`if` conditions need round brackets'), false]], L('`loop` va fermato con `break`.', '`loop` must be stopped with `break`.')),
         ]),
         lesson('functions', L('Funzioni', 'Functions'), [
             P('`fn` crea una funzione; parametri e risultato hanno sempre un tipo (`-> i32`). L’ultima espressione **senza punto e virgola** è il valore restituito.', '`fn` creates a function; parameters and result always have a type (`-> i32`). The last expression **without a semicolon** is the returned value.'),

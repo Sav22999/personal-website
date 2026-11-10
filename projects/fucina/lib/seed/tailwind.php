@@ -58,7 +58,7 @@ return [
   <div>A</div><div>B</div><div>C</div>
 </section>', [re('class="[^"]*\bgrid-cols-1\b', L('Una colonna di base', 'One column by default')), re('class="[^"]*\bmd:grid-cols-3\b', L('Tre colonne da `md`', 'Three columns from `md`'))], '', '<section class="grid grid-cols-1 md:grid-cols-3">'), [
             dOrder(pSort(), ['sm: 640px', 'md: 768px', 'lg: 1024px', 'xl: 1280px', '2xl: 1536px'], L('I punti di rottura, dal più piccolo.', 'The breakpoints, from the smallest.')),
-            dFlash(pFlash(), [[L('`md:text-lg` vale anche sui telefoni', '`md:text-lg` also applies on phones'), false], [L('`lg:` vale da 1024px in su', '`lg:` applies from 1024px up'), true], [L('Una classe senza prefisso vale ovunque', 'A class without a prefix applies everywhere'), true]], L('Il prefisso dice da dove in su.', 'The prefix says from where up.')),
+            dFlash(pFlash(), [[L('`md:text-lg` vale anche sui telefoni', '`md:text-lg` also applies on phones'), false], [L('`lg:` vale da 1024px in su', '`lg:` applies from 1024px up'), true], [L('Una classe senza prefisso vale ovunque', 'A class without a prefix applies everywhere'), true], [L('`sm:` vale da 640px in su', '`sm:` applies from 640px up'), true]], L('Il prefisso dice da dove in su.', 'The prefix says from where up.')),
         ]),
         lesson('states', L('Stati, colori e tema scuro', 'States, colours and dark mode'), [
             P('I prefissi di stato applicano una classe solo in certi momenti: `hover:` al passaggio del mouse, `focus:` quando un campo è attivo, `disabled:` sui controlli disattivati. `dark:` vale con il tema scuro.', 'State prefixes apply a class only at certain moments: `hover:` on mouse over, `focus:` when a field is active, `disabled:` on disabled controls. `dark:` applies with the dark theme.'),
@@ -97,7 +97,7 @@ return [
   @apply p-6 rounded-xl shadow;
 }'), [
             dBlanks(pFill(), "@___ \"tailwindcss\";\n@theme {\n  --color-___: #ff5b2e;\n}\n.btn { @___ px-4 py-2 bg-brace; }", ['import', 'brace', 'apply'], ['include', 'use', 'mixin'], L('Importa, definisci il colore, raccogli le classi.', 'Import, define the colour, gather the classes.')),
-            dFlash(pFlash(), [[L('Con `@theme` si aggiungono colori propri', '`@theme` adds your own colours'), true], [L('Bisogna scrivere CSS per ogni bottone', 'You must write CSS for every button'), false], [L('Le classi inutilizzate finiscono nel CSS finale', 'Unused classes end up in the final CSS'), false]], L('Si genera solo ciò che serve.', 'Only what is needed is generated.')),
+            dFlash(pFlash(), [[L('Con `@theme` si aggiungono colori propri', '`@theme` adds your own colours'), true], [L('Bisogna scrivere CSS per ogni bottone', 'You must write CSS for every button'), false], [L('Le classi inutilizzate finiscono nel CSS finale', 'Unused classes end up in the final CSS'), false], [L('Le classi di Tailwind si possono combinare nello stesso elemento', 'Tailwind classes can be combined on the same element'), true]], L('Si genera solo ciò che serve.', 'Only what is needed is generated.')),
         ]),
     ],
 ];
