@@ -301,7 +301,8 @@
                 }
             }, h('span', rich(o))));
             current.buttons = buttons;
-            panel.replaceChildren(h('h3', rich(q.q)), h('div.options', buttons));
+            // Stored options often have the right one first: show them in a random order
+            panel.replaceChildren(h('h3', rich(q.q)), h('div.options', shuffle(buttons)));
             panel.scrollIntoView({behavior: 'smooth', block: 'nearest'});
         }
 

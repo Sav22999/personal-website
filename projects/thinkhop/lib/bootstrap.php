@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'ThinkHop';
 const AUTH_COOKIE = 'thinkhop_auth';
-const SCHEMA_VERSION = 11;
+const SCHEMA_VERSION = 12;
 const START_POINTS = 100; // START_POINTS in engine.js: the gift every wallet starts with
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const REQUIRED_LANGS = ['it', 'en']; // a question of the admin panel needs at least these

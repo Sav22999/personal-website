@@ -239,6 +239,9 @@
             h('main.question',
                 h('div.tags', h('span.tag', t('cat_' + q.cat)), h('span.tag.level-' + q.level, t(q.level)),
                     G.streak > 1 ? h('span.tag.hot', icon('flame'), String(G.streak)) : null,
+                    A.enabled() && window.ThinkHopReports ? h('button.report-btn', {
+                        type: 'button', title: t('report_btn'), 'aria-label': t('report_btn'), onclick: () => reportQuestion(q),
+                    }, icon('flag')) : null,
                     h('button.help-btn', {
                         type: 'button', title: t('how_to_play'), 'aria-label': t('how_to_play'), onclick: () => showHelp(q),
                     }, '?')),
@@ -292,6 +295,27 @@
             },
             onclose: () => {
                 if (!G || G.answered || screen !== 'game') return;
+                startedAt = performance.now();
+                const bar = app.querySelector('.speed i');
+                if (bar) bar.style.animationPlayState = 'running';
+                runClock(G.questions[G.index]);
+            },
+        });
+    }
+
+    /** Reporting a question stops the clock while the form is open, like the "?" guide. */
+    function reportQuestion(q) {
+        const active = G && !G.answered;
+        window.ThinkHopReports.open(q, G ? G.picked : -1, {
+            onopen: () => {
+                if (!active) return;
+                G.clock = elapsed();
+                stopClock();
+                const bar = app.querySelector('.speed i');
+                if (bar) bar.style.animationPlayState = 'paused';
+            },
+            onclose: () => {
+                if (!active || !G || G.answered || screen !== 'game') return;
                 startedAt = performance.now();
                 const bar = app.querySelector('.speed i');
                 if (bar) bar.style.animationPlayState = 'running';
@@ -845,8 +869,13 @@
     window.addEventListener('pagehide', save);
     applyTheme();
     showHome();
+    let reportsChecked = false;
     A.start(() => {
         if (screen === 'home') showHome();
+        if (!reportsChecked && A.user() && window.ThinkHopReports) {
+            reportsChecked = true;
+            window.ThinkHopReports.checkClosed();
+        }
     });
 })();
 

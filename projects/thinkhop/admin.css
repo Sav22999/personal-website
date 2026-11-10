@@ -86,18 +86,23 @@
     align-items: start;
 }
 
-@media (max-width: 960px) {
-    .admin-cols {
-        grid-template-columns: 1fr;
-    }
-
+/* With six sections the menu gets a row of its own early, and wraps instead of hiding the last ones */
+@media (max-width: 1250px) {
     .admin-bar nav {
         order: 3;
         flex-basis: 100%;
+        flex-wrap: wrap;
+        overflow: visible;
     }
 
     .admin-bar .brand {
         margin-right: auto;
+    }
+}
+
+@media (max-width: 960px) {
+    .admin-cols {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -400,6 +405,20 @@ td .block {
 
 .row-actions .icon-btn {
     display: inline-grid;
+}
+
+/* In a table the actions stay a real cell, or the row lines break and the buttons slip off the row */
+td.row-actions {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+td.row-actions > * + * {
+    margin-left: 8px;
+}
+
+td.row-actions .help-btn {
+    vertical-align: middle;
 }
 
 .btn.small {
@@ -721,6 +740,10 @@ td .block {
         grid-template-columns: 1fr 1fr;
     }
 
+    .table-wrap td.row-actions > * + * {
+        margin-left: 0;
+    }
+
     .table-wrap td.row-actions:has(> :only-child) {
         grid-template-columns: 1fr;
     }
@@ -751,4 +774,90 @@ td .block {
     .modal .box.wide {
         padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
     }
+}
+
+/* Reports from players */
+.report-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.report-card.open {
+    border-color: var(--primary);
+}
+
+.report-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.report-card-head .tag {
+    margin-left: 6px;
+}
+
+.report-reason-line {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 10px 0;
+}
+
+.report-desc-text {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 4px solid var(--primary);
+    border-radius: 6px;
+    background: var(--surface-2);
+    white-space: pre-wrap;
+}
+
+.report-preview {
+    margin: 0;
+    padding: 12px;
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+}
+
+.report-preview .prompt {
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+}
+
+.report-preview .options .option {
+    cursor: default;
+}
+
+.report-preview .why {
+    margin-top: 10px;
+    font-size: .9rem;
+}
+
+.report-close {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.report-close .ctl {
+    flex: 1 1 200px;
+}
+
+.report-done {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.report-note {
+    margin: 0;
+    font-style: italic;
 }

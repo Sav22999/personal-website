@@ -150,6 +150,30 @@ CREATE TABLE IF NOT EXISTS `th_notifications` (
     CONSTRAINT `fk_th_note_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `th_reports` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `pid` VARCHAR(60) NOT NULL,
+    `cat` VARCHAR(20) NOT NULL,
+    `sig` VARCHAR(80) NOT NULL,
+    `lang` CHAR(2) NOT NULL DEFAULT 'en',
+    `reason` VARCHAR(20) NOT NULL,
+    `description` VARCHAR(1000) NOT NULL DEFAULT '',
+    `question` MEDIUMTEXT NOT NULL,
+    `picked` TINYINT NOT NULL DEFAULT -1,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'open',
+    `admin_note` VARCHAR(500) NOT NULL DEFAULT '',
+    `reward` INT NOT NULL DEFAULT 0,
+    `created_at` DATETIME NOT NULL,
+    `closed_at` DATETIME NULL,
+    `closed_by` INT UNSIGNED NULL,
+    `seen_at` DATETIME NULL,
+    UNIQUE KEY `uq_once` (`user_id`, `sig`),
+    KEY `ix_status` (`status`, `created_at`),
+    CONSTRAINT `fk_th_rep_user` FOREIGN KEY (`user_id`) REFERENCES `th_users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_th_rep_admin` FOREIGN KEY (`closed_by`) REFERENCES `th_users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `th_settings` (
     `k` VARCHAR(40) NOT NULL PRIMARY KEY,
     `v` TEXT NOT NULL
@@ -278,4 +302,4 @@ INSERT IGNORE INTO `th_avatar_items` (id, kind, price, sort) VALUES
 ('blueprint', 'background', 55000, 119),
 ('prism', 'background', 65000, 120);
 
-INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '11') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `th_meta` (k, v) VALUES ('schema_version', '12') ON DUPLICATE KEY UPDATE v = VALUES(v);

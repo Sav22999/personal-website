@@ -190,6 +190,18 @@
 .fam-kotlin { --fam: #7F52FF; --fam-edge: #5B33D6; }
 .fam-rust { --fam: #B7410E; --fam-edge: #842E08; }
 .fam-vala { --fam: #6B3FA0; --fam-edge: #4C2A75; }
+.fam-mysql { --fam: #00758F; --fam-edge: #00566A; }
+.fam-mariadb { --fam: #A0624A; --fam-edge: #774535; }
+.fam-postgresql { --fam: #336791; --fam-edge: #22476A; }
+.fam-sqlite { --fam: #0F80CC; --fam-edge: #0A5F99; }
+.fam-mssql { --fam: #C42B29; --fam-edge: #911E1C; }
+.fam-mongodb { --fam: #3E9A40; --fam-edge: #2B722D; }
+.fam-ai { --fam: #8B5CF6; --fam-edge: #6538D4; }
+.fam-ml { --fam: #0D9488; --fam-edge: #09706A; }
+.fam-dl { --fam: #DB2777; --fam-edge: #A61B5A; }
+.fam-prompt { --fam: #D97706; --fam-edge: #A35905; }
+.fam-llm { --fam: #4F46E5; --fam-edge: #3730B0; }
+.fam-assistants { --fam: #0891B2; --fam-edge: #066B85; }
 
 /* ---------- Base components, reshaped ---------- */
 html, body, button, input, select, textarea {

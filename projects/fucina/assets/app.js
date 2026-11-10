@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.19.4';
+    const VERSION = '1.20.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.20.0', date: '2026-11-10', it: ['6 nuovi corsi sui database: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) e MongoDB', 'Le risposte delle domande compaiono in ordine casuale (prima la giusta era quasi sempre la prima)', 'Portale admin: gli esercizi in SQL, Python, Rust e negli altri linguaggi non diventano più HTML quando li salvi'], en: ['6 new database courses: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) and MongoDB', 'Question options now appear in random order (the right one used to be almost always first)', 'Admin portal: exercises in SQL, Python, Rust and the other languages no longer turn into HTML when you save them']},
         {v: '1.19.4', date: '2026-11-09', it: ['Immagine del profilo ancora più personalizzabile: 26 nuovi personaggi, 27 accessori, 18 cornici e 21 nuovi sfondi', 'Sezione Certificati nella barra di navigazione e «Corsi» al posto di «Percorso»', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'], en: ['Even more profile picture options: 26 new characters, 27 accessories, 18 frames and 21 new backgrounds', 'Certificates section in the navigation bar and “Courses” instead of “Path”', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']},
         {v: '1.19.2', date: '2026-11-08', it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'], en: ['Course search: multiple selection of category and language chips']},
         {v: '1.19.1', date: '2026-11-08', it: ['Ricerca corsi: categorie e linguaggi sono chip da toccare, e la ricerca ha la sua lente'], en: ['Course search: categories and languages are chips to tap, and the search has its magnifier']},
@@ -51,12 +52,12 @@
 
     /** Names of the languages (course families) and what a course can be for. */
     const FAMILY_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
-        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
-    const familyName = f => FAMILY_NAMES[f] || f.toUpperCase();
+        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+    const familyName = f => FAMILY_NAMES[f] ? t(FAMILY_NAMES[f]) : f.toUpperCase();
     /** The short label in the square badge of a course card. */
-    const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA'};
+    const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA', mysql: 'MY', mariadb: 'MA', postgresql: 'PG', sqlite: 'SL', mssql: 'MS', mongodb: 'MG', ai: 'AI', ml: 'ML', dl: 'DL', prompt: 'PE', llm: 'LLM', assistants: 'AS'};
     const familyShort = f => FAMILY_SHORT[f] || f.toUpperCase();
-    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop']];
+    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI']];
 
     // ---------------------------------------------------------------- small components
 
@@ -579,7 +580,9 @@
         }
 
         function quiz(q) {
-            const buttons = q.options.map((o, i) => h('button.option', {type: 'button', onclick: () => answer(i)}, h('b.opt-key', 'ABCDEFGH'[i]), h('span', rich(o))));
+            // Buttons keep the index of their option (answers, hints and checks speak of it), but are shown in a random order
+            const order = shuffledOrder(q.options.length);
+            const buttons = q.options.map((o, i) => h('button.option', {type: 'button', onclick: () => answer(i)}, h('b.opt-key', 'ABCDEFGH'[order.indexOf(i)]), h('span', rich(o))));
             const feedback = h('div.feedback');
             const actions = h('div.step-actions');
             const hintBtn = btn(t('Hint · {n}', {n: S.state.costs.question}), {
@@ -612,7 +615,7 @@
             }
 
             actions.append(hintBtn);
-            return h('section.quiz', h('h2', rich(q.q)), h('div.options', buttons), feedback, actions);
+            return h('section.quiz', h('h2', rich(q.q)), h('div.options', order.map(i => buttons[i])), feedback, actions);
         }
 
         function taskView() {
@@ -744,6 +747,16 @@
         return el;
     }
 
+    /** 0…n-1 in a random order: the options of a question are stored with the right one often first. */
+    function shuffledOrder(n) {
+        const a = Array.from({length: n}, (_, i) => i);
+        for (let i = n - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
     /** Asks the questions one by one and resolves with the answers, keyed by keyOf(question). The result ends it early. */
     function askAll(stage, bar, questions, keyOf, onDone) {
         const answers = {};
@@ -758,13 +771,13 @@
             if (i >= questions.length) return finish();
             const q = questions[i];
             stage.replaceChildren(h('section.quiz', h('div.quiz-head', h('span.kicker', t('Question {a} of {b}', {a: i + 1, b: questions.length})), langChip(q.family)), h('h2', rich(q.q)),
-                h('div.options', q.options.map((o, k) => h('button.option', {
+                h('div.options', shuffledOrder(q.options.length).map((k, pos) => h('button.option', {
                     type: 'button', onclick: () => {
                         answers[keyOf(q)] = k;
                         i++;
                         next();
                     }
-                }, h('b.opt-key', 'ABCDEFGH'[k]), h('span', rich(o)))))));
+                }, h('b.opt-key', 'ABCDEFGH'[pos]), h('span', rich(q.options[k])))))));
             window.scrollTo(0, 0);
         };
         next();

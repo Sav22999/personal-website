@@ -120,7 +120,8 @@ function clean_body($blocks): array
 function clean_task($t): ?array
 {
     if (!is_array($t) || empty($t['lang'])) return null;
-    $lang = in_array($t['lang'], ['html', 'css', 'scss', 'sass'], true) ? $t['lang'] : 'html';
+    // html and css get a live preview; every other language (sql, python, rust…) is checked by its patterns only
+    $lang = slug_of($t['lang'], 12) ?: 'html';
     $checks = [];
     foreach (is_array($t['checks'] ?? null) ? $t['checks'] : [] as $c) {
         $label = lang_field($c['label'] ?? null, false, 300);

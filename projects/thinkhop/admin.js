@@ -60,6 +60,14 @@
         'Name': 'Nome', 'Price (points)': 'Prezzo (punti)', 'On sale': 'In vendita', 'Sold': 'Venduti',
         'Players buy these with their points from their profile. At 0 an item is free for everyone. An item taken off sale stays with whoever already bought it.': 'I giocatori li comprano con i punti dal profilo. A 0 un elemento è gratis per tutti. Un elemento tolto dalla vendita resta a chi lo aveva già comprato.',
         'Spent on profile': 'Spesi nel profilo',
+        'Reports': 'Segnalazioni', 'Open': 'Aperte', 'Closed': 'Chiuse', 'All': 'Tutte', 'No reports.': 'Nessuna segnalazione.', '{n} open': '{n} aperte',
+        'Wrong right answer': 'Risposta giusta sbagliata', 'Unclear text': 'Testo poco chiaro', 'Display problem': 'Problema grafico', 'Translation mistake': 'Errore di traduzione', 'Other': 'Altro',
+        'Fixed (+{n} points to the player)': 'Risolta (+{n} punti al giocatore)', 'Not a mistake': 'Non è un errore', 'Already reported': 'Già segnalata', 'Cannot reproduce': 'Non riproducibile', 'Will stay as it is': 'Resterà così',
+        'Closed: fixed': 'Chiusa: risolta', 'Closed: not a mistake': 'Chiusa: non è un errore', 'Closed: already reported': 'Chiusa: già segnalata', 'Closed: cannot reproduce': 'Chiusa: non riproducibile', 'Closed: will stay as it is': 'Chiusa: resterà così',
+        'How to close it': 'Come chiuderla', 'Internal note (optional)': 'Nota interna (facoltativa)', 'Close report': 'Chiudi segnalazione', 'Report closed': 'Segnalazione chiusa',
+        'Closed by {name}': 'Chiusa da {name}', 'Reopen': 'Riapri', 'Reopen this report?': 'Riaprire questa segnalazione?', 'If it was rewarded, the {n} points are taken back.': 'Se era stata premiata, i {n} punti vengono tolti al giocatore.',
+        'Reported by': 'Segnalata da', 'Report #{n}': 'Segnalazione n. {n}', 'Try it again': 'Riprova esercizio', 'This question can no longer be drawn.': 'Questa domanda non si può più disegnare.',
+        'Players report questions they think are wrong. Close a report as fixed and the player gets {n} points; any other closing gives nothing.': 'I giocatori segnalano le domande che ritengono sbagliate. Se chiudi una segnalazione come risolta il giocatore riceve {n} punti; con le altre chiusure non riceve nulla.',
         'Try': 'Prova', 'Tutorial': 'Tutorial', 'Try exercise': 'Prova esercizio', 'New example': 'Nuovo esempio',
         'All variants': 'Tutte le varianti', 'Test hint': 'Prova suggerimento', 'Show answer': 'Mostra soluzione', 'Try another': 'Altro esercizio',
     };
@@ -75,7 +83,7 @@
     const when = s => s ? new Date(s.replace(' ', 'T') + 'Z').toLocaleString(I.getLang(), {dateStyle: 'short', timeStyle: 'short'}) : '–';
     const num = n => Number(n).toLocaleString(I.getLang());
 
-    const TABS = [['overview', 'Overview', 'chart'], ['games', 'Games', 'grid'], ['questions', 'Questions', 'book'], ['players', 'Players', 'user'], ['avatars', 'Profile pictures', 'image']];
+    const TABS = [['overview', 'Overview', 'chart'], ['games', 'Games', 'grid'], ['questions', 'Questions', 'book'], ['players', 'Players', 'user'], ['avatars', 'Profile pictures', 'image'], ['reports', 'Reports', 'flag']];
     const tabName = () => {
         const n = location.hash.replace(/^#\/?/, '');
         return TABS.some(x => x[0] === n) ? n : 'overview';
@@ -577,6 +585,10 @@
             h('h4', t('Admin changes')),
             d.log.length ? table([t('Date'), t('Admin'), t('Change'), t('Note')], d.log.map(x => {
                 const v = JSON.parse(x.detail || '{}');
+                // Rewards for fixed reports, and their withdrawal when a report opens again, are changes of points too
+                if (x.action === 'report_reward' || x.action === 'report_reopen') {
+                    return h('tr', h('td', when(x.created_at)), h('td', x.admin || '–'), h('td', `${v.points > 0 ? '+' : ''}${num(v.points)}`), h('td', t('Report #{n}', {n: v.report}) + (v.pid ? ' · ' + v.pid : '')));
+                }
                 return h('tr', h('td', when(x.created_at)), h('td', x.admin || '–'), h('td', `${num(v.from)} → ${num(v.to)}`), h('td', v.note || ''));
             })) : h('p.muted', t('No changes.')));
     }
@@ -614,11 +626,89 @@
     }
 
     // ---------- shell ----------
-    const VIEWS = {overview, games: gamesTab, questions: questionsTab, players: playersTab, avatars: avatarsTab};
+    const VIEWS = {overview, games: gamesTab, questions: questionsTab, players: playersTab, avatars: avatarsTab, reports: reportsTab};
 
     function gate(text, action) {
         root.replaceChildren(h('div.gate', h('img.logo', {src: 'icons/favicon.svg', alt: ''}), h('h1', 'ThinkHop Admin'), h('p.muted', text), action,
             h('a.btn.btn-ghost', {href: './'}, t('Back to the game'))));
+    }
+
+    // ---------- reports from players ----------
+    const REPORT_REASON = {wrong_answer: 'Wrong right answer', unclear: 'Unclear text', graphics: 'Display problem', translation: 'Translation mistake', other: 'Other'};
+    const REPORT_CLOSE = {resolved: 'Fixed (+{n} points to the player)', not_error: 'Not a mistake', duplicate: 'Already reported', cannot_reproduce: 'Cannot reproduce', wont_fix: 'Will stay as it is'};
+    const REPORT_DONE = {resolved: 'Closed: fixed', not_error: 'Closed: not a mistake', duplicate: 'Closed: already reported', cannot_reproduce: 'Closed: cannot reproduce', wont_fix: 'Closed: will stay as it is'};
+    let reportFilter = 'open';
+
+    async function reportsTab(view) {
+        const d = await call('admin.reports', {status: reportFilter});
+        if (!d) return;
+        const V = window.ThinkHopViews;
+        const filters = h('div.seg', [['open', 'Open'], ['closed', 'Closed'], ['all', 'All']].map(([k, label]) => h('button' + (reportFilter === k ? '.sel' : ''), {
+            type: 'button', onclick: () => {
+                reportFilter = k;
+                reportsTab(view);
+            },
+        }, t(label))));
+
+        const reportCard = r => {
+            const q = r.question || {};
+            const open = r.status === 'open';
+            const who = r.user.username ? '@' + r.user.username : r.user.name;
+            // The question exactly as the player saw it, already answered: right option in green, theirs in red
+            let preview;
+            try {
+                const isLampsRow = q.cat === 'lamps' && typeof q.options[0] === 'string' && q.options[0].includes('💡');
+                preview = h('div.question.report-preview',
+                    h('h4.prompt', V.promptText(q)),
+                    V.questionBody(q, true),
+                    h('div.options' + (isLampsRow ? '.lamps-opts' : '') + (q.pics ? '.pics' : '') + (q.view === 'riddle' || q.view === 'facts' ? '.long' : ''), q.options.map((o, i) =>
+                        h('div.option' + (i === q.answer ? '.right' : (i === r.picked ? '.wrong' : '')), V.optionText(q, o)))),
+                    h('div.why', V.whyLines(q)));
+            } catch (e) {
+                preview = h('p.muted', t('This question can no longer be drawn.'));
+            }
+            const actions = [];
+            if (open) {
+                const sel = h('select.ctl', {'aria-label': t('How to close it')}, Object.entries(REPORT_CLOSE).map(([k, label]) => h('option', {value: k}, t(label, {n: d.reward}))));
+                const note = h('input.ctl', {type: 'text', maxlength: 500, placeholder: t('Internal note (optional)'), 'aria-label': t('Internal note (optional)')});
+                const btn = h('button.btn.btn-primary', {
+                    type: 'button', onclick: () => {
+                        btn.disabled = true;
+                        call('admin.report.close', {id: r.id, status: sel.value, note: note.value}, () => {
+                            toast(t('Report closed'), 'ok');
+                            reportsTab(view);
+                        }).then(x => { if (!x) btn.disabled = false; });
+                    },
+                }, icon('tick'), h('span', t('Close report')));
+                actions.push(h('div.report-close', sel, note, btn));
+            } else {
+                actions.push(h('div.report-done',
+                    h('span.report-status.st-' + r.status, t(REPORT_DONE[r.status] || r.status) + (r.reward ? ` · +${r.reward}` : '')),
+                    h('small.muted', t('Closed by {name}', {name: r.admin || '–'}) + ' · ' + when(r.closed)),
+                    r.note ? h('p.report-note', r.note) : null,
+                    h('button.btn.btn-soft.small', {
+                        type: 'button', onclick: async () => {
+                            if (!await confirmBox(t('Reopen this report?'), t('If it was rewarded, the {n} points are taken back.', {n: r.reward || d.reward}), t('Reopen'), t('Cancel'))) return;
+                            call('admin.report.reopen', {id: r.id}, () => reportsTab(view));
+                        },
+                    }, icon('replay'), h('span', t('Reopen')))));
+            }
+            return h('section.panel.report-card' + (open ? '.open' : ''),
+                h('div.report-card-head',
+                    h('div',
+                        h('strong', gt('cat_' + r.cat)), h('span.tag', r.pid), h('span.tag', r.lang.toUpperCase()),
+                        h('small.block.muted', t('Reported by') + ' ' + who + ' · ' + r.user.email + ' · ' + when(r.created))),
+                    h('button.btn.btn-ghost.small', {type: 'button', onclick: () => tryExercise({cat: r.cat, pid: r.pid})}, icon('play'), h('span', t('Try it again')))),
+                h('div.report-reason-line', h('span.report-status', t(REPORT_REASON[r.reason] || r.reason)), r.description ? h('blockquote.report-desc-text', r.description) : null),
+                preview,
+                actions);
+        };
+
+        view.replaceChildren(
+            card(t('Reports'),
+                h('p.muted', t('Players report questions they think are wrong. Close a report as fixed and the player gets {n} points; any other closing gives nothing.', {n: d.reward})),
+                h('div.report-toolbar', filters, h('span.muted', t('{n} open', {n: d.open})))),
+            ...(d.reports.length ? d.reports.map(reportCard) : [h('section.panel', h('p.muted', t('No reports.')))]));
     }
 
     function render() {

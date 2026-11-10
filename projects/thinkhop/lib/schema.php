@@ -194,6 +194,30 @@ function schema_statements(string $p): array
             UNIQUE KEY `uq_once` (`user_id`, `type`, `day`, `ref`),
             CONSTRAINT `fk_{$p}note_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
+        // Questions players report as wrong or unclear: a copy of the question as they saw it, then the admin's verdict
+        "CREATE TABLE IF NOT EXISTS `{$p}reports` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `pid` VARCHAR(60) NOT NULL,
+            `cat` VARCHAR(20) NOT NULL,
+            `sig` VARCHAR(80) NOT NULL,
+            `lang` CHAR(2) NOT NULL DEFAULT 'en',
+            `reason` VARCHAR(20) NOT NULL,
+            `description` VARCHAR(1000) NOT NULL DEFAULT '',
+            `question` MEDIUMTEXT NOT NULL,
+            `picked` TINYINT NOT NULL DEFAULT -1,
+            `status` VARCHAR(20) NOT NULL DEFAULT 'open',
+            `admin_note` VARCHAR(500) NOT NULL DEFAULT '',
+            `reward` INT NOT NULL DEFAULT 0,
+            `created_at` DATETIME NOT NULL,
+            `closed_at` DATETIME NULL,
+            `closed_by` INT UNSIGNED NULL,
+            `seen_at` DATETIME NULL,
+            UNIQUE KEY `uq_once` (`user_id`, `sig`),
+            KEY `ix_status` (`status`, `created_at`),
+            CONSTRAINT `fk_{$p}rep_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE,
+            CONSTRAINT `fk_{$p}rep_admin` FOREIGN KEY (`closed_by`) REFERENCES `{$p}users` (`id`) ON DELETE SET NULL
+        ) $e",
         // What the admin panel changes in the game (see game_settings in api/index.php)
         "CREATE TABLE IF NOT EXISTS `{$p}settings` (
             `k` VARCHAR(40) NOT NULL PRIMARY KEY,

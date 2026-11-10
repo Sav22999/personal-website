@@ -143,7 +143,7 @@ const SEED_TASK_HINTS = [
 const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'tailwind',
     'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate',
     'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'java-base', 'java-intermediate', 'java-advanced',
-    'sql-base', 'sql-intermediate', 'sql-advanced', 'r-base', 'r-intermediate',
+    'sql-base', 'sql-intermediate', 'sql-advanced', 'mysql', 'mariadb', 'postgresql', 'sqlite', 'mssql', 'mongodb', 'r-base', 'r-intermediate',
     'flutter-base', 'flutter-intermediate', 'swift-base', 'swift-intermediate', 'kotlin-base', 'kotlin-intermediate',
     'rust-base', 'rust-intermediate', 'rust-advanced', 'vala-base', 'vala-intermediate'];
 
@@ -154,6 +154,8 @@ const FAMILY_CATEGORIES = [
     'html' => ['frontend'], 'css' => ['frontend'], 'scss' => ['frontend'], 'sass' => ['frontend'], 'tailwind' => ['frontend'],
     'js' => ['frontend', 'backend'], 'ts' => ['frontend', 'backend'], 'angular' => ['frontend'], 'vue' => ['frontend'],
     'php' => ['backend'], 'python' => ['backend', 'data'], 'java' => ['backend', 'mobile', 'desktop'], 'sql' => ['data', 'backend'], 'r' => ['data'],
+    'mysql' => ['data', 'backend'], 'mariadb' => ['data', 'backend'], 'postgresql' => ['data', 'backend'], 'sqlite' => ['data', 'mobile', 'desktop'], 'mssql' => ['data', 'backend'], 'mongodb' => ['data', 'backend'],
+    'ai' => ['ai'], 'ml' => ['ai', 'data'], 'dl' => ['ai', 'data'], 'prompt' => ['ai'], 'llm' => ['ai', 'backend'], 'assistants' => ['ai'],
     'flutter' => ['mobile', 'desktop'], 'swift' => ['mobile', 'desktop'], 'kotlin' => ['mobile', 'backend'],
     'rust' => ['systems', 'backend'], 'vala' => ['desktop', 'systems'],
 ];
@@ -183,7 +185,7 @@ function seed_course(string $id): array
 const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' => 2, 'css-base' => 1, 'css-intermediate' => 1, 'css-advanced' => 2, 'css-animations' => 2, 'scss' => 2, 'sass' => 2,
     'js-base' => 1, 'js-intermediate' => 2, 'js-advanced' => 2, 'ts' => 2, 'php-base' => 1, 'php-intermediate' => 2, 'php-advanced' => 2, 'tailwind' => 1,
     'angular-base' => 2, 'angular-intermediate' => 2, 'vue-base' => 1, 'vue-intermediate' => 2, 'python-base' => 1, 'python-intermediate' => 2, 'python-advanced' => 2,
-    'java-base' => 1, 'java-intermediate' => 2, 'java-advanced' => 2, 'sql-base' => 1, 'sql-intermediate' => 2, 'sql-advanced' => 2, 'r-base' => 1, 'r-intermediate' => 2,
+    'java-base' => 1, 'java-intermediate' => 2, 'java-advanced' => 2, 'sql-base' => 1, 'sql-intermediate' => 2, 'sql-advanced' => 2, 'mysql' => 2, 'mariadb' => 2, 'postgresql' => 2, 'sqlite' => 2, 'mssql' => 2, 'mongodb' => 1, 'r-base' => 1, 'r-intermediate' => 2,
     'flutter-base' => 1, 'flutter-intermediate' => 2, 'swift-base' => 1, 'swift-intermediate' => 2, 'kotlin-base' => 1, 'kotlin-intermediate' => 2,
     'rust-base' => 1, 'rust-intermediate' => 2, 'rust-advanced' => 3, 'vala-base' => 1, 'vala-intermediate' => 2];
 

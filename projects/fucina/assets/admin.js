@@ -8,8 +8,13 @@
     const root = document.getElementById('admin');
     let me = null;
     let LANGS = ['it', 'en'];
+    /** Languages of a code exercise (any other slug saved in the catalogue is kept as it is). */
+    const TASK_LANGS = [['html', 'HTML'], ['css', 'CSS'], ['scss', 'SCSS'], ['sass', 'Sass'], ['js', 'JavaScript'], ['ts', 'TypeScript'], ['angular', 'Angular'], ['vue', 'Vue'],
+        ['php', 'PHP'], ['python', 'Python'], ['java', 'Java'], ['sql', 'SQL'], ['mongodb', 'MongoDB'], ['r', 'R'], ['dart', 'Dart'], ['swift', 'Swift'], ['kotlin', 'Kotlin'],
+        ['rust', 'Rust'], ['vala', 'Vala'], ['text', 'Text']];
+
     /** What a course is for (the same list as COURSE_CATEGORIES_ALL in lib/courses.php). */
-    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop']];
+    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI']];
     let GENERAL_EXAM_MINUTES = null; // the general time of the final exams, shown as a hint in the course form
 
     const TABS = [['overview', 'Overview', 'dashboard'], ['courses', 'Courses', 'book'], ['games', 'Games', 'game'], ['users', 'Users', 'group'], ['certificates', 'Certificates', 'cert'], ['avatars', 'Profile pictures', 'image'], ['settings', 'Settings', 'tune']];
@@ -229,7 +234,9 @@
 
     function taskEditor(task) {
         const on = h('input', {type: 'checkbox', checked: !!task});
-        const lang = sel([['html', 'HTML'], ['css', 'CSS'], ['scss', 'SCSS'], ['sass', 'Sass']], task ? task.lang : 'html');
+        // HTML and CSS have a live preview; the other languages are checked by patterns only
+        const langs = TASK_LANGS.some(([v]) => v === task?.lang) || !task ? TASK_LANGS : [...TASK_LANGS, [task.lang, task.lang]];
+        const lang = sel(langs, task ? task.lang : 'html');
         const prompt = multi(t('Instructions'), task && task.prompt, {rows: 2});
         const start = area({rows: 5, value: task ? task.start : '', class: 'mono'});
         const html = area({rows: 5, value: task ? task.html : '', class: 'mono'});

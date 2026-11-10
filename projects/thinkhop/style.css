@@ -6265,3 +6265,135 @@ button.total:active {
     max-width: 70vw;
     height: auto;
 }
+
+/* Reporting a question (reports.js) */
+.report-btn {
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform .1s, box-shadow .1s, color .1s;
+}
+
+.report-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.report-btn:hover {
+    color: var(--wrong);
+    transform: translate(-1px, -1px);
+}
+
+.report-btn:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.report-btn + .help-btn {
+    margin-left: 6px;
+}
+
+.report-modal h3 svg,
+.report-list + .actions svg {
+    width: 18px;
+    height: 18px;
+    vertical-align: -3px;
+}
+
+.report-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.report-reasons legend {
+    margin-bottom: 6px;
+    font-weight: 800;
+}
+
+.report-reason {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.report-reason:has(input:checked) {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--on-primary-soft);
+}
+
+.report-reason input {
+    accent-color: var(--primary);
+    width: 18px;
+    height: 18px;
+}
+
+textarea.report-desc {
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+    font: inherit;
+}
+
+.report-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.report-item {
+    padding: 10px 12px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.report-item p {
+    margin: 6px 0 0;
+}
+
+.report-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.report-status {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: .75rem;
+    font-weight: 800;
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+.report-status.st-open {
+    background: var(--primary-soft);
+    color: var(--on-primary-soft);
+}
+
+.report-status.st-resolved {
+    background: var(--ok-bg);
+    color: var(--ok);
+}

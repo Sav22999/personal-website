@@ -8,11 +8,11 @@
 declare(strict_types=1);
 
 /** What a player can turn on and off, one by one. */
-const NOTIFY_TYPES = ['daily', 'streak', 'friends', 'overtaken'];
+const NOTIFY_TYPES = ['daily', 'streak', 'friends', 'overtaken', 'reports'];
 /** Non-live / scheduled notification types where the user can pick the hour. */
 const NOTIFY_SCHEDULED = ['daily', 'streak'];
 /** Live / immediate notification types that fire in real time. */
-const NOTIFY_LIVE = ['friends', 'overtaken'];
+const NOTIFY_LIVE = ['friends', 'overtaken', 'reports'];
 const DEFAULT_NOTIFY_HOURS = ['daily' => 18, 'streak' => 18];
 const SERVER_TIMEZONE = 'Europe/Rome';
 /** Hosts of the browsers' push services: subscriptions pointing anywhere else are refused. */
@@ -21,12 +21,32 @@ const PUSH_SUBJECT = 'https://www.saveriomorelli.com/projects/thinkhop/';
 const MAX_DEVICES = 10;
 
 const NOTIFY_TEXTS = [
-    'en' => ['daily' => 'Dedo has fresh questions: today’s challenge is waiting for you!', 'streak' => 'Punto is worried: your {n}-day streak ends today!', 'friends' => '{name} added you as a friend.', 'overtaken' => '{name} overtook you in today’s ranking!'],
-    'it' => ['daily' => 'Dedo ha domande fresche: la sfida di oggi ti aspetta!', 'streak' => 'Punto è in ansia: la tua serie di {n} giorni finisce oggi!', 'friends' => '{name} ti ha aggiunto agli amici.', 'overtaken' => '{name} ti ha superato nella classifica di oggi!'],
-    'es' => ['daily' => 'Dedo trae preguntas frescas: ¡el desafío de hoy te espera!', 'streak' => 'Punto está preocupado: ¡tu racha de {n} días termina hoy!', 'friends' => '{name} te ha añadido a sus amigos.', 'overtaken' => '¡{name} te ha adelantado en la clasificación de hoy!'],
-    'fr' => ['daily' => 'Dedo a des questions fraîches : le défi du jour t’attend !', 'streak' => 'Punto s’inquiète : ta série de {n} jours se termine aujourd’hui !', 'friends' => '{name} t’a ajouté à ses amis.', 'overtaken' => '{name} t’a dépassé au classement du jour !'],
-    'de' => ['daily' => 'Dedo hat frische Fragen: Die Tagesaufgabe wartet auf dich!', 'streak' => 'Punto macht sich Sorgen: Deine Serie von {n} Tagen endet heute!', 'friends' => '{name} hat dich als Freund hinzugefügt.', 'overtaken' => '{name} hat dich in der Tagesrangliste überholt!'],
+    'en' => ['daily' => 'Dedo has fresh questions: today’s challenge is waiting for you!', 'streak' => 'Punto is worried: your {n}-day streak ends today!', 'friends' => '{name} added you as a friend.', 'overtaken' => '{name} overtook you in today’s ranking!', 'reports' => '{msg}'],
+    'it' => ['daily' => 'Dedo ha domande fresche: la sfida di oggi ti aspetta!', 'streak' => 'Punto è in ansia: la tua serie di {n} giorni finisce oggi!', 'friends' => '{name} ti ha aggiunto agli amici.', 'overtaken' => '{name} ti ha superato nella classifica di oggi!', 'reports' => '{msg}'],
+    'es' => ['daily' => 'Dedo trae preguntas frescas: ¡el desafío de hoy te espera!', 'streak' => 'Punto está preocupado: ¡tu racha de {n} días termina hoy!', 'friends' => '{name} te ha añadido a sus amigos.', 'overtaken' => '¡{name} te ha adelantado en la clasificación de hoy!', 'reports' => '{msg}'],
+    'fr' => ['daily' => 'Dedo a des questions fraîches : le défi du jour t’attend !', 'streak' => 'Punto s’inquiète : ta série de {n} jours se termine aujourd’hui !', 'friends' => '{name} t’a ajouté à ses amis.', 'overtaken' => '{name} t’a dépassé au classement du jour !', 'reports' => '{msg}'],
+    'de' => ['daily' => 'Dedo hat frische Fragen: Die Tagesaufgabe wartet auf dich!', 'streak' => 'Punto macht sich Sorgen: Deine Serie von {n} Tagen endet heute!', 'friends' => '{name} hat dich als Freund hinzugefügt.', 'overtaken' => '{name} hat dich in der Tagesrangliste überholt!', 'reports' => '{msg}'],
 ];
+
+/** What a player is told when a report of theirs is closed: rewarded when it was fixed, otherwise only the reason. */
+const REPORT_TEXTS = [
+    'en' => ['resolved' => 'Thanks! The question you reported has been fixed: +{n} points.', 'closed' => 'Your report has been closed: {why}.',
+        'not_error' => 'it is not a mistake', 'duplicate' => 'it had already been reported', 'cannot_reproduce' => 'the problem could not be reproduced', 'wont_fix' => 'the question will stay as it is'],
+    'it' => ['resolved' => 'Grazie! La domanda che hai segnalato è stata corretta: +{n} punti.', 'closed' => 'La tua segnalazione è stata chiusa: {why}.',
+        'not_error' => 'non è un errore', 'duplicate' => 'era già stata segnalata', 'cannot_reproduce' => 'il problema non si è potuto riprodurre', 'wont_fix' => 'la domanda resterà così'],
+    'es' => ['resolved' => '¡Gracias! La pregunta que reportaste ha sido corregida: +{n} puntos.', 'closed' => 'Tu reporte se ha cerrado: {why}.',
+        'not_error' => 'no es un error', 'duplicate' => 'ya se había reportado', 'cannot_reproduce' => 'no se pudo reproducir el problema', 'wont_fix' => 'la pregunta se quedará así'],
+    'fr' => ['resolved' => 'Merci ! La question que tu as signalée a été corrigée : +{n} points.', 'closed' => 'Ton signalement a été clôturé : {why}.',
+        'not_error' => 'ce n’est pas une erreur', 'duplicate' => 'il avait déjà été signalé', 'cannot_reproduce' => 'le problème n’a pas pu être reproduit', 'wont_fix' => 'la question restera telle quelle'],
+    'de' => ['resolved' => 'Danke! Die Frage, die du gemeldet hast, wurde korrigiert: +{n} Punkte.', 'closed' => 'Deine Meldung wurde geschlossen: {why}.',
+        'not_error' => 'es ist kein Fehler', 'duplicate' => 'sie war schon gemeldet', 'cannot_reproduce' => 'das Problem ließ sich nicht nachvollziehen', 'wont_fix' => 'die Frage bleibt so'],
+];
+
+function report_text(string $lang, string $status, int $reward): string
+{
+    $t = REPORT_TEXTS[$lang] ?? REPORT_TEXTS['en'];
+    return $status === 'resolved' ? str_replace('{n}', (string)$reward, $t['resolved']) : str_replace('{why}', $t[$status] ?? $status, $t['closed']);
+}
 
 function notify_off(array $user): array
 {

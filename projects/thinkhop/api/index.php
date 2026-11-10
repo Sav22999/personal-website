@@ -6,6 +6,7 @@
  * Before the email is confirmed only auth.resend and auth.delete work (see must_verify in lib/bootstrap.php).
  * Account:  auth.profile, auth.username, auth.ranking, auth.password, auth.delete, avatar.buy, avatar.set, sync,
  *           friends.list, friends.search, friends.add, friends.remove, notify.get, notify.save, notify.pending, push.key, push.subscribe, push.unsubscribe
+ *           reports.create, reports.mine, reports.seen; admin.reports, admin.report.close, admin.report.reopen
  * Admin:    admin.player (everything about one player, read only), admin.player.points, admin.overview, admin.settings.save, admin.questions, admin.question.save, admin.question.delete,
  *           admin.games, admin.game.delete, admin.players, admin.player.update, admin.player.delete, admin.avatars, admin.avatar.save
  *
@@ -44,6 +45,12 @@ function writer(bool $unverifiedOk = false): array
     require_csrf($u);
     return $u;
 }
+
+/** Why a question can be reported, and how an administrator can close a report: only 'resolved' gives the reward. */
+const REPORT_REASONS = ['wrong_answer', 'unclear', 'graphics', 'translation', 'other'];
+const REPORT_CLOSINGS = ['resolved', 'not_error', 'duplicate', 'cannot_reproduce', 'wont_fix'];
+const REPORT_REWARD = 50;
+const REPORTS_PER_DAY = 20;
 
 function validate_password(string $pw): void
 {
@@ -555,6 +562,43 @@ switch ($r) {
         set_auth_cookie('', time() - 3600);
         send_json(['ok' => true]);
 
+    // ---------- reports: a player flags a question, an administrator closes the report ----------
+    case 'reports.create':
+        $u = writer();
+        $b = body();
+        $reason = (string)($b['reason'] ?? '');
+        if (!in_array($reason, REPORT_REASONS, true)) fail('bad_request', 422);
+        $description = mb_substr(trim((string)($b['description'] ?? '')), 0, 1000);
+        if ($reason === 'other' && mb_strlen($description) < 10) fail('report_describe', 422);
+        $q = $b['question'] ?? null;
+        $json = is_array($q) ? json_encode($q, JSON_UNESCAPED_UNICODE) : '';
+        if (!$json || strlen($json) > 60000 || !isset($q['pid'], $q['cat'], $q['options'], $q['answer'])) fail('bad_request', 422);
+        $pid = mb_substr((string)$q['pid'], 0, 60);
+        $sig = mb_substr((string)($q['sig'] ?? ''), 0, 80) ?: hash('sha256', $json);
+        $st = db()->prepare('SELECT COUNT(*) FROM ' . t('reports') . ' WHERE user_id = ? AND created_at > ?');
+        $st->execute([$u['id'], gmdate('Y-m-d H:i:s', time() - 86400)]);
+        if ((int)$st->fetchColumn() >= REPORTS_PER_DAY) fail('rate_limited', 429);
+        $lang = preg_match('/^[a-z]{2}$/', (string)($b['lang'] ?? '')) ? (string)$b['lang'] : 'en';
+        $ins = db()->prepare('INSERT IGNORE INTO ' . t('reports') . ' (user_id, pid, cat, sig, lang, reason, description, question, picked, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)');
+        $ins->execute([$u['id'], $pid, mb_substr((string)$q['cat'], 0, 20), $sig, $lang, $reason, $description, $json, max(-1, min(9, (int)($b['picked'] ?? -1))), now_utc()]);
+        if (!$ins->rowCount()) fail('already_reported', 409);
+        send_json(['ok' => true]);
+
+    case 'reports.mine':
+        // The player's own reports; the closed ones not seen yet are told once, then marked as seen
+        only('GET');
+        $u = require_user();
+        $st = db()->prepare('SELECT id, pid, cat, reason, description, status, reward, created_at, closed_at, seen_at FROM ' . t('reports') . ' WHERE user_id = ? ORDER BY id DESC LIMIT 50');
+        $st->execute([$u['id']]);
+        $rows = array_map(fn($r) => ['id' => (int)$r['id'], 'pid' => $r['pid'], 'cat' => $r['cat'], 'reason' => $r['reason'], 'description' => $r['description'], 'status' => $r['status'],
+            'reward' => (int)$r['reward'], 'created' => $r['created_at'], 'closed' => $r['closed_at'], 'news' => $r['status'] !== 'open' && $r['seen_at'] === null], $st->fetchAll());
+        send_json(['ok' => true, 'reports' => $rows]);
+
+    case 'reports.seen':
+        $u = writer();
+        db()->prepare('UPDATE ' . t('reports') . " SET seen_at = ? WHERE user_id = ? AND status <> 'open' AND seen_at IS NULL")->execute([now_utc(), $u['id']]);
+        send_json(['ok' => true]);
+
     case 'sync':
         // The device sends the games the server has not seen yet and gets back all of them
         $u = writer();
@@ -748,6 +792,61 @@ switch ($r) {
         $me = admin_writer();
         $row = target_player($me, body());
         db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$row['id']]);
+        send_json(['ok' => true]);
+
+    case 'admin.reports':
+        require_admin();
+        $status = (string)(body()['status'] ?? 'open');
+        $where = $status === 'open' ? "r.status = 'open'" : ($status === 'closed' ? "r.status <> 'open'" : '1=1');
+        $rows = db()->query('SELECT r.*, u.name, u.username, u.email, a.name AS admin_name FROM ' . t('reports') . ' r JOIN ' . t('users') . ' u ON u.id = r.user_id LEFT JOIN ' . t('users') . " a ON a.id = r.closed_by WHERE $where ORDER BY r.status = 'open' DESC, r.id DESC LIMIT 200")->fetchAll();
+        $open = (int)db()->query('SELECT COUNT(*) FROM ' . t('reports') . " WHERE status = 'open'")->fetchColumn();
+        send_json(['ok' => true, 'open' => $open, 'reward' => REPORT_REWARD, 'reports' => array_map(fn($r) => [
+            'id' => (int)$r['id'], 'pid' => $r['pid'], 'cat' => $r['cat'], 'lang' => $r['lang'], 'reason' => $r['reason'], 'description' => $r['description'],
+            'question' => json_decode($r['question'], true), 'picked' => (int)$r['picked'], 'status' => $r['status'], 'note' => $r['admin_note'], 'reward' => (int)$r['reward'],
+            'created' => $r['created_at'], 'closed' => $r['closed_at'], 'admin' => $r['admin_name'],
+            'user' => ['id' => (int)$r['user_id'], 'name' => $r['name'], 'username' => $r['username'], 'email' => $r['email']],
+        ], $rows)]);
+
+    case 'admin.report.close':
+        // Fixed: the player gets the reward on top of their wallet, like any change made by an admin, and is told
+        $me = admin_writer();
+        $b = body();
+        $status = (string)($b['status'] ?? '');
+        if (!in_array($status, REPORT_CLOSINGS, true)) fail('bad_request', 422);
+        $st = db()->prepare('SELECT r.*, u.notify_lang FROM ' . t('reports') . ' r JOIN ' . t('users') . ' u ON u.id = r.user_id WHERE r.id = ?');
+        $st->execute([(int)($b['id'] ?? 0)]);
+        $r = $st->fetch();
+        if (!$r) fail('not_found', 404);
+        if ($r['status'] !== 'open') fail('report_closed', 409);
+        $reward = $status === 'resolved' ? REPORT_REWARD : 0;
+        $note = mb_substr(trim((string)($b['note'] ?? '')), 0, 500);
+        db()->beginTransaction();
+        db()->prepare('UPDATE ' . t('reports') . ' SET status = ?, admin_note = ?, reward = ?, closed_at = ?, closed_by = ?, seen_at = NULL WHERE id = ?')
+            ->execute([$status, $note, $reward, now_utc(), $me['id'], $r['id']]);
+        if ($reward) {
+            db()->prepare('UPDATE ' . t('users') . ' SET points_adjust = points_adjust + ? WHERE id = ?')->execute([$reward, $r['user_id']]);
+            db()->prepare('INSERT INTO ' . t('admin_log') . ' (user_id, admin_id, action, detail, created_at) VALUES (?,?,?,?,?)')
+                ->execute([$r['user_id'], $me['id'], 'report_reward', json_encode(['report' => (int)$r['id'], 'points' => $reward, 'pid' => $r['pid']], JSON_UNESCAPED_UNICODE), now_utc()]);
+        }
+        db()->commit();
+        notify_user((int)$r['user_id'], 'reports', gmdate('Y-m-d'), 'r' . $r['id'], ['msg' => report_text((string)($r['notify_lang'] ?: $r['lang']), $status, $reward)]);
+        send_json(['ok' => true]);
+
+    case 'admin.report.reopen':
+        // A report closed by mistake opens again; a reward already given is taken back
+        $me = admin_writer();
+        $st = db()->prepare('SELECT * FROM ' . t('reports') . ' WHERE id = ?');
+        $st->execute([(int)(body()['id'] ?? 0)]);
+        $r = $st->fetch();
+        if (!$r) fail('not_found', 404);
+        db()->beginTransaction();
+        db()->prepare('UPDATE ' . t('reports') . " SET status = 'open', admin_note = '', reward = 0, closed_at = NULL, closed_by = NULL, seen_at = NULL WHERE id = ?")->execute([$r['id']]);
+        if ((int)$r['reward']) {
+            db()->prepare('UPDATE ' . t('users') . ' SET points_adjust = points_adjust - ? WHERE id = ?')->execute([(int)$r['reward'], $r['user_id']]);
+            db()->prepare('INSERT INTO ' . t('admin_log') . ' (user_id, admin_id, action, detail, created_at) VALUES (?,?,?,?,?)')
+                ->execute([$r['user_id'], $me['id'], 'report_reopen', json_encode(['report' => (int)$r['id'], 'points' => -(int)$r['reward']], JSON_UNESCAPED_UNICODE), now_utc()]);
+        }
+        db()->commit();
         send_json(['ok' => true]);
 
     case 'admin.avatars':

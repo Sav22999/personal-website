@@ -55,6 +55,10 @@ Scheduled via `projects/cron/thinkhop-reminders.php`. On Android WebView, push i
 
 Usernames are public: they appear on the daily leaderboard and in friend search. Players can opt out of public rankings from their profile while remaining searchable for friends. Names and emails are strictly private and never shared. Friendships are one-directional without mandatory confirmations.
 
+## Reporting a Question
+
+Signed-in players can flag the question in front of them (flag button next to `?`, it pauses the timer like the guide), pick what is wrong (wrong right answer, unclear text, display problem, translation, other) and add a description. The server keeps a copy of the question exactly as it was shown (`th_reports`, `reports.js`), one report per player per question and at most 20 a day. In the admin panel, **Reports** draws each question again with the player's answer and lets an administrator close it as *fixed* (the player gets +50 points through `points_adjust`, written in the admin log), *not a mistake*, *already reported*, *cannot reproduce* or *will stay as it is* (no points). A report can be reopened, which takes a reward back. Players are told by push notification (type `reports`) and with a message the next time the game opens; their reports are listed under **My reports** in the profile.
+
 ## Admin Panel
 
 Accessible via the **Admin** link in the footer or directly at `admin.html`. Restricted to accounts with `role >= 9` (enforced on every API request):
