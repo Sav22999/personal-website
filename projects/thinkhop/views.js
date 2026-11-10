@@ -537,9 +537,89 @@
 
         return h('div.origami-view',
             h('div.origami-steps-row', stepCards),
-            answered ? h('div.h-row',
-                h('span.h-chip.ok', '✓ ' + rightLetter + ' (' + t('origami_unfolded') + ')')) : null);
+            answered ? origamiAnim(q, steps, finalBounds) : null);
     }
+
+    // ---------- origami: punch, then unfold one fold at a time ----------
+    /**
+     * The folded sheet is punched, then every fold opens again, last one first: the flap turns over the fold line and
+     * carries its holes, which lay exactly on the holes under it. At the end the whole sheet matches the right answer.
+     */
+    function origamiAnim(q, steps, finalBounds) {
+        const d = q.origamiData;
+        const N = d.size || 4;
+        const n = steps.length;
+        const C = Math.round(200 / N), PAD = 16;
+        const px = v => PAD + v * C;
+        const key = (x, y) => x + ',' + y;
+        // Holes after each unfolding: holes[m] are those on the sheet still folded m times
+        const holes = Array(n + 1);
+        holes[n] = new Set((d.punch || []).map(([x, y]) => key(x, y)));
+        for (let m = n; m > 0; m--) {
+            const s = steps[m - 1];
+            const next = new Set(holes[m]);
+            holes[m].forEach(k => {
+                const [x, y] = k.split(',').map(Number);
+                const vert = s.fold === 'L_TO_R' || s.fold === 'R_TO_L';
+                next.add(vert ? key(s.sx - x, y) : key(x, s.sy - y));
+            });
+            holes[m - 1] = next;
+        }
+        const region = m => (m === 0 ? {xMin: 0, xMax: N - 1, yMin: 0, yMax: N - 1} : steps[m - 1].bAfter);
+        const FRONT = '#FFFDF5', BACK = '#E9DCC0', EDGE = '#8E86B5', HOLE = '#2A2450';
+        const rect = (b, fill, extra) => `<rect x="${px(b.xMin)}" y="${px(b.yMin)}" width="${(b.xMax - b.xMin + 1) * C}" height="${(b.yMax - b.yMin + 1) * C}" fill="${fill}" stroke="${EDGE}" stroke-width="1.5" ${extra || ''}/>`;
+        const dots = (set, b, r) => [...set].map(k => k.split(',').map(Number))
+            .filter(([x, y]) => x >= b.xMin && x <= b.xMax && y >= b.yMin && y <= b.yMax)
+            .map(([x, y]) => `<circle cx="${px(x) + C / 2}" cy="${px(y) + C / 2}" r="${(r * C * .3).toFixed(1)}" fill="${HOLE}"/>`).join('');
+        const PUNCH = 1, OPEN = 1.6, HOLD = .5;
+        const total = PUNCH + n * OPEN + HOLD;
+        const unfoldArrow = f => ({L_TO_R: '⬅️', R_TO_L: '➡️', T_TO_B: '⬆️', B_TO_T: '⬇️'})[f];
+        const right = String(q.options[q.answer]); // the letter of the right sheet
+        const draw = tt => {
+            let u = tt * total;
+            const parts = [`<rect x="${PAD}" y="${PAD}" width="${N * C}" height="${N * C}" fill="none" stroke="${EDGE}" stroke-width="1.2" stroke-dasharray="4 4" opacity=".55"/>`];
+            let phase;
+            if (u < PUNCH) {
+                // The punch goes through every layer of the folded sheet
+                const k = ease(u / PUNCH);
+                const b = region(n);
+                parts.push(rect(b, FRONT), dots(holes[n], b, k));
+                phase = 0;
+            } else if (u < PUNCH + n * OPEN) {
+                const idx = Math.floor((u - PUNCH) / OPEN); // 0 = the last fold opens first
+                const v = ease(clamp01(((u - PUNCH) - idx * OPEN) / (OPEN * .85)));
+                const m = n - idx;
+                const s = steps[m - 1];
+                const base = region(m), whole = region(m - 1);
+                parts.push(rect(base, FRONT), dots(holes[m], base, 1));
+                let flap, line, transform;
+                const sc = -1 + 2 * v; // -1: lying on the sheet, 0: on its edge, 1: open
+                if (s.fold === 'L_TO_R') { flap = {xMin: whole.xMin, xMax: base.xMin - 1, yMin: base.yMin, yMax: base.yMax}; line = px(base.xMin); transform = `translate(${line} 0) scale(${sc.toFixed(3)} 1) translate(${-line} 0)`; }
+                if (s.fold === 'R_TO_L') { flap = {xMin: base.xMax + 1, xMax: whole.xMax, yMin: base.yMin, yMax: base.yMax}; line = px(base.xMax + 1); transform = `translate(${line} 0) scale(${sc.toFixed(3)} 1) translate(${-line} 0)`; }
+                if (s.fold === 'T_TO_B') { flap = {xMin: base.xMin, xMax: base.xMax, yMin: whole.yMin, yMax: base.yMin - 1}; line = px(base.yMin); transform = `translate(0 ${line}) scale(1 ${sc.toFixed(3)}) translate(0 ${-line})`; }
+                if (s.fold === 'B_TO_T') { flap = {xMin: base.xMin, xMax: base.xMax, yMin: base.yMax + 1, yMax: whole.yMax}; line = px(base.yMax + 1); transform = `translate(0 ${line}) scale(1 ${sc.toFixed(3)}) translate(0 ${-line})`; }
+                parts.push(`<g transform="${transform}">${rect(flap, sc < 0 ? BACK : FRONT)}${dots(holes[m - 1], flap, 1)}</g>`);
+                const vert = s.fold === 'L_TO_R' || s.fold === 'R_TO_L';
+                parts.push(vert
+                    ? `<line x1="${line}" y1="${px(base.yMin) - 6}" x2="${line}" y2="${px(base.yMax + 1) + 6}" stroke="var(--primary)" stroke-width="2" stroke-dasharray="5 4"/>`
+                    : `<line x1="${px(base.xMin) - 6}" y1="${line}" x2="${px(base.xMax + 1) + 6}" y2="${line}" stroke="var(--primary)" stroke-width="2" stroke-dasharray="5 4"/>`);
+                phase = idx + 1;
+            } else {
+                const b = region(0);
+                parts.push(rect(b, FRONT, 'stroke-width="2.5"'), dots(holes[0], b, 1));
+                phase = n + 1;
+            }
+            const svg = `<svg class="origami-anim-svg" viewBox="0 0 ${N * C + PAD * 2} ${N * C + PAD * 2}" aria-hidden="true">${parts.join('')}</svg>`;
+            const end = tt >= 1;
+            const chips = ['✂️', ...steps.slice().reverse().map(s => unfoldArrow(s.fold))].map((label, i) =>
+                h('span.h-chip' + (i === phase && !end ? '.focus.now' : (i < phase || end ? '.ok' : '')), label));
+            return h('div.origami-anim',
+                h('div.origami-anim-stage', {html: svg}),
+                h('div.cup-moves-path', chips, end ? h('span.h-chip.ok', '= ' + right) : null));
+        };
+        return player(replayKey(q, 'origami'), 1000 * total + 400, draw);
+    }
+
 
     function questionBody(q, answered) {
         if (q.view === 'mobiles' || q.cat === 'mobiles') return mobilesView(q, answered);
