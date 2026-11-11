@@ -180,14 +180,20 @@ switch ($r) {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Invalid email address.', 422, 'validation');
         validate_password($pw);
         if (empty($b['acceptPrivacy'])) fail('To create the account you must accept the privacy policy.', 422, 'validation');
-        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ?');
-        $st->execute([$email]);
-        if ($st->fetchColumn()) fail('An account with this email already exists: sign in.', 409, 'email_taken');
         record_attempt('register');
-        $uid = new_user($name, $email, password_hash($pw, PASSWORD_DEFAULT), null);
-        send_verification(user_row($uid)); // the welcome follows once the address is confirmed
-        $csrf = create_auth_session($uid);
-        send_json(['ok' => true, 'user' => public_user(user_row($uid)), 'csrf' => $csrf]);
+        // The same answer whether the address is new or already registered, so nobody can find out who has an account:
+        // the account is used after opening the link of the email, which also signs in (auth.verify)
+        $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
+        $st->execute([$email]);
+        $row = $st->fetch();
+        $hash = password_hash($pw, PASSWORD_DEFAULT);
+        if (!$row) send_verification(user_row(new_user($name, $email, $hash, null))); // the welcome follows once the address is confirmed
+        elseif (empty($row['email_verified_at']) && $row['status'] === 'active' && !too_many_attempts('verify_mail', 3, 60)) {
+            // Whoever never confirmed the address gets the link again; whoever did just signs in
+            record_attempt('verify_mail');
+            send_verification($row);
+        }
+        send_json(['ok' => true, 'checkEmail' => true]);
 
     case 'auth.login':
         only('POST');
@@ -198,10 +204,11 @@ switch ($r) {
         $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
         $st->execute([$email]);
         $row = $st->fetch();
-        if (!$row || $row['password_hash'] === '' || !password_verify($pw, $row['password_hash'])) {
+        // One answer for an unknown address, a wrong password and a Google-only account, in about the same time
+        $ok = $row && $row['password_hash'] !== '' ? password_verify($pw, $row['password_hash']) : password_hash($pw, PASSWORD_DEFAULT) === '';
+        if (!$ok) {
             record_attempt('login');
-            if ($row && $row['password_hash'] === '' && $row['google_sub']) fail('This account uses Google: sign in with “Continue with Google”.', 401, 'use_google');
-            fail('Wrong email or password.', 401, 'bad_credentials');
+            fail('Wrong email or password. If you signed up with Google, use “Continue with Google”.', 401, 'bad_credentials');
         }
         if ($row['status'] !== 'active') fail('Your account has been disabled.', 403, 'disabled');
         clear_attempts('login');

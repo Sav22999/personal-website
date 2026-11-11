@@ -51,7 +51,7 @@ if (!$cfg) {
         ];
     } catch (Throwable $e) {
         error_log('[giftwise] update.php: ' . get_class($e) . ': ' . $e->getMessage());
-        $error = 'Aggiornamento non riuscito: ' . $e->getMessage();
+        $error = 'Aggiornamento non riuscito: ' . (PHP_SAPI === 'cli' || config_value('debug', false) ? $e->getMessage() : 'controlla il log degli errori del server.');
     }
 }
 

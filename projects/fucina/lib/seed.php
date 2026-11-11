@@ -145,7 +145,9 @@ const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-ba
     'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'java-base', 'java-intermediate', 'java-advanced',
     'sql-base', 'sql-intermediate', 'sql-advanced', 'mysql', 'mariadb', 'postgresql', 'sqlite', 'mssql', 'mongodb', 'r-base', 'r-intermediate',
     'flutter-base', 'flutter-intermediate', 'swift-base', 'swift-intermediate', 'kotlin-base', 'kotlin-intermediate',
-    'rust-base', 'rust-intermediate', 'rust-advanced', 'vala-base', 'vala-intermediate'];
+    'rust-base', 'rust-intermediate', 'rust-advanced', 'vala-base', 'vala-intermediate',
+    'ai-base', 'prompt-base', 'ai-ethics', 'ai-math', 'ml-base', 'ml-intermediate', 'dl-base', 'prompt-advanced', 'llm-api',
+    'dl-advanced', 'rag', 'ai-agents', 'mlops', 'local-llm', 'chatgpt', 'claude', 'gemini', 'mistral', 'lumo', 'deepseek'];
 
 /**
  * What each course is for, to filter the catalogue. A course file may set its own 'categories'; otherwise its family decides.
@@ -187,7 +189,9 @@ const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' 
     'angular-base' => 2, 'angular-intermediate' => 2, 'vue-base' => 1, 'vue-intermediate' => 2, 'python-base' => 1, 'python-intermediate' => 2, 'python-advanced' => 2,
     'java-base' => 1, 'java-intermediate' => 2, 'java-advanced' => 2, 'sql-base' => 1, 'sql-intermediate' => 2, 'sql-advanced' => 2, 'mysql' => 2, 'mariadb' => 2, 'postgresql' => 2, 'sqlite' => 2, 'mssql' => 2, 'mongodb' => 1, 'r-base' => 1, 'r-intermediate' => 2,
     'flutter-base' => 1, 'flutter-intermediate' => 2, 'swift-base' => 1, 'swift-intermediate' => 2, 'kotlin-base' => 1, 'kotlin-intermediate' => 2,
-    'rust-base' => 1, 'rust-intermediate' => 2, 'rust-advanced' => 3, 'vala-base' => 1, 'vala-intermediate' => 2];
+    'rust-base' => 1, 'rust-intermediate' => 2, 'rust-advanced' => 3, 'vala-base' => 1, 'vala-intermediate' => 2,
+    'ai-base' => 1, 'prompt-base' => 1, 'ai-ethics' => 1, 'ai-math' => 1, 'ml-base' => 2, 'ml-intermediate' => 2, 'dl-base' => 2, 'prompt-advanced' => 2, 'llm-api' => 2,
+    'dl-advanced' => 3, 'rag' => 3, 'ai-agents' => 3, 'mlops' => 3, 'local-llm' => 3, 'chatgpt' => 1, 'claude' => 1, 'gemini' => 1, 'mistral' => 1, 'lumo' => 1, 'deepseek' => 1];
 
 /**
  * Version 12: what was "PHP advanced" becomes "PHP intermediate" (same lessons, same progress and certificates),

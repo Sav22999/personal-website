@@ -68,7 +68,14 @@ function register_user(array $in): array
     if ((int)$st->fetchColumn() >= 5) fail('Troppe registrazioni da questa rete. Riprova più tardi.', 429, 'rate_limited');
     db()->prepare('INSERT INTO ' . t('login_attempts') . " (ip, email, success, created_at) VALUES (?, '#register', 1, ?)")->execute([client_ip(), now_utc()]);
 
-    if (find_user_by_email($email)) fail('Esiste già un account con questa email.', 409, 'duplicate');
+    // An address already registered gets the same answer as a new one, so nobody can find out who has an account.
+    // Whoever never confirmed it receives the link again (at most every 10 minutes); the others just sign in
+    $existing = find_user_by_email($email);
+    if ($existing) {
+        password_hash($password, PASSWORD_DEFAULT); // the same time as a new registration
+        if (must_verify($existing)) send_verification($existing, 10);
+        return ['name' => $name, 'email' => $email];
+    }
 
     db()->prepare('INSERT INTO ' . t('users') . " (name, email, password_hash, permissions, status, created_at) VALUES (?,?,?,?, 'pending', ?)")
         ->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), PERM_NONE, now_utc()]);
@@ -121,7 +128,9 @@ function login_user(array $in): array
     }
 
     $user = find_user_by_email($email);
-    $ok = $user && password_verify($password, $user['password_hash']);
+    // An unknown address costs the same time as a wrong password: the response time does not reveal who has an account
+    if ($user) $ok = password_verify($password, $user['password_hash']);
+    else $ok = password_hash($password, PASSWORD_DEFAULT) === ''; // as slow as a check, always false
     if (!$ok) {
         $pdo->prepare('INSERT INTO ' . t('login_attempts') . ' (ip, email, success, created_at) VALUES (?,?,0,?)')->execute([$ip, $emailKey, now_utc()]);
         fail('Email o password non corretti.', 401, 'bad_credentials');

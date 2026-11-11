@@ -3850,6 +3850,22 @@
             h('li', tile('icon', 'restaurant', 'sm'), t('Recipes with the ingredients you already have')));
     }
 
+    /**
+     * After signing up: the account opens with the link of the email (or, without the mailbox, by signing in).
+     * The server gives the same answer when the address already has an account, so the text covers that case too.
+     */
+    function checkEmail(address, linkSent) {
+        store.set('authMode', 'login');
+        renderAuth('login');
+        const s = sheet({
+            title: linkSent ? t('Confirm your email') : t('Sign in'),
+            body: [h('p.sheet-text', linkSent
+                ? t('We sent a link to {email}: open it to activate your account and sign in. It may take a minute, check spam too. If you already have an account with this address, just sign in.', {email: address})
+                : t('Now sign in with your email and password. If you already had an account with this address, use its password.'))],
+            actions: [btn(t('Got it'), {onclick: () => s.close()})]
+        });
+    }
+
     function renderAuth(mode) {
         const pending = (location.hash.match(/^#\/(?:join|unisciti)\/([A-Za-z0-9]+)/) || [])[1] || '';
         mode = mode || (pending ? 'register' : store.get('authMode', 'login'));
@@ -3881,6 +3897,7 @@
                                 inviteCode: code.value,
                                 acceptPrivacy: privacy.checked
                             }, {silentAuth: true}));
+                        if (mode === 'register') return checkEmail(email.value.trim(), d.checkEmail);
                         S.user = d.user;
                         afterLogin(pending && mode === 'login' ? pending : '', false);
                     } catch (ex) {

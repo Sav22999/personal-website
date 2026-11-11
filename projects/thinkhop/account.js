@@ -386,6 +386,23 @@
             h('a.btn.btn-primary', {href: CONTACT_URL, target: '_blank', rel: 'noopener'}, t('forgot_open')))]);
     }
 
+    /**
+     * After signing up: the account opens with the link of the email. The server gives the same answer
+     * when the address already has an account, so the text covers that case too.
+     */
+    function showCheckEmail(address) {
+        const m = modal([h('div.intro', h('div.verify-icon', icon('mail')), h('h3', t('verify_title')),
+            h('p', t('verify_signup_text', {email: address}))), h('div.verify-actions',
+            h('button.btn.btn-primary.btn-block', {type: 'button', onclick: () => m.close()}, t('close')),
+            h('button.btn.btn-ghost.btn-block', {
+                type: 'button', onclick: () => {
+                    m.close();
+                    store.set('authMode', 'login');
+                    showSignIn('login');
+                }
+            }, t('sign_in')))]);
+    }
+
     function showSignIn(mode) {
         mode = mode || store.get('authMode', 'login');
         const name = input('text', '', 'name');
@@ -416,6 +433,7 @@
                                 ? api('auth.login', {email: email.value, password: pw.value})
                                 : api('auth.register', {lang: lang(), name: name.value, username: username.value, email: email.value, password: pw.value, acceptPrivacy: privacy.box.checked}));
                             m.close();
+                            if (d.checkEmail) return showCheckEmail(email.value.trim());
                             await afterSignIn(d);
                         } catch (ex) {
                             err.textContent = ex.message;

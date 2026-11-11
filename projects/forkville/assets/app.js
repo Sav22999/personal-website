@@ -1,0 +1,1403 @@
+/*
+ * Forkville — the app: accounts (email + password with mandatory email confirmation, or Google),
+ * the HUD over the 3D world, build mode, menu and recipes, garden, market, staff, friends, visits,
+ * rankings and the account panel.
+ */
+import {World} from './scene.js';
+import {Sim, dishIcon, isNight} from './sim.js';
+import {Editor} from './editor.js';
+import {swatch} from './models.js';
+import {t, n, errText, getLang, setLang} from './i18n.js';
+import {icon as svgIcon} from './icons.js';
+import {thumbFor, portrait} from './thumbs.js';
+import {seasonOf, weatherFor} from './scene.js';
+
+/** An SVG picture as an element (never emoji). */
+const ic = (group, key, cls = 'pic') => h('span.' + cls, {html: svgIcon(group, key)});
+
+const S = {user: null, csrf: '', config: null, catalog: null, game: null, mode: 'home', visit: null, world: null, sim: null, editor: null, sheet: null};
+const app = document.getElementById('app');
+
+// ---------------------------------------------------------------- helpers
+
+/** Tiny element builder: h('div.card', {onclick}, child, …). Strings become text; {html} sets innerHTML. */
+function h(tag, attrs, ...kids) {
+    let id = null;
+    const hash = tag.indexOf('#');
+    if (hash >= 0) { // 'div.a#b.c' → id b, classes a c
+        const rest = tag.slice(hash + 1), dot = rest.indexOf('.');
+        id = dot < 0 ? rest : rest.slice(0, dot);
+        tag = tag.slice(0, hash) + (dot < 0 ? '' : rest.slice(dot));
+    }
+    const [name, ...cls] = tag.split('.');
+    const el = document.createElement(name || 'div');
+    if (id) el.id = id;
+    if (cls.length) el.className = cls.join(' ');
+    if (attrs && (typeof attrs !== 'object' || attrs instanceof Node || Array.isArray(attrs))) {
+        kids.unshift(attrs);
+        attrs = null;
+    }
+    for (const [k, v] of Object.entries(attrs || {})) {
+        if (v == null || v === false) continue;
+        if (k === 'html') el.innerHTML = v;
+        else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+        else if (k === 'class') el.className += ' ' + v;
+        else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    return el;
+}
+
+/** replaceChildren that skips null/false (conditional children), which the DOM would print as text. */
+function put(el, ...kids) {
+    el.replaceChildren(...kids.flat().filter(k => k != null && k !== false));
+}
+
+async function api(route, body) {
+    const opts = {method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', headers: {}};
+    if (body !== undefined) {
+        opts.headers['Content-Type'] = 'application/json';
+        if (S.csrf) opts.headers['X-CSRF-Token'] = S.csrf;
+        opts.body = JSON.stringify(body);
+    }
+    let res;
+    try {
+        res = await fetch('api/index.php?r=' + route, opts);
+    } catch (e) {
+        throw new ApiError('network');
+    }
+    const data = await res.json().catch(() => ({ok: false, error: 'server'}));
+    if (data.csrf) S.csrf = data.csrf;
+    if (!data.ok && data.error !== 'needs_signup') throw new ApiError(data.error || 'server', data);
+    return data;
+}
+
+class ApiError extends Error {
+    constructor(code, data) {
+        super(code);
+        this.code = code;
+        this.data = data;
+    }
+}
+
+function toast(msg, kind = '') {
+    const el = h('div.toast' + (kind ? '.' + kind : ''), msg);
+    document.getElementById('toasts').append(el);
+    setTimeout(() => el.classList.add('out'), 2600);
+    setTimeout(() => el.remove(), 3100);
+}
+
+const fail = (e) => toast(errText(e.code || 'server'), 'bad');
+
+function fmtTime(sec) {
+    sec = Math.max(0, Math.round(sec));
+    if (sec < 60) return sec + 's';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm ' + (sec % 60 ? (sec % 60) + 's' : '');
+    return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
+}
+
+/** Stars drawn as SVG (filled, then empty up to max). */
+const starsEl = (filled, max = 0) => h('span.stars-svg', Array.from({length: Math.max(filled, max)}, (_, i) => h('span.star-pic' + (i < filled ? '' : '.empty'), {html: svgIcon('mood', 'star')})));
+const levelTitle = (lvl) => {
+    let k = 'kiosk';
+    for (const [from, key] of S.catalog.titles || []) if (lvl >= from) k = key;
+    return t('title_' + k);
+};
+const coin = (c) => h('span.coin-amount', h('i.coin'), String(c));
+const ingList = (obj) => Object.entries(obj).map(([k, q]) => `${n(k)} ×${q}`).join(', ');
+const nowSec = () => Date.now() / 1000 + (S.clockSkew || 0);
+
+const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6A05C"/><stop offset="1" stop-color="#C64B29"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><circle cx="32" cy="35" r="23" fill="#FFF3E0" opacity=".14"/><circle cx="32" cy="35" r="23" fill="none" stroke="#FFF3E0" stroke-opacity=".35" stroke-width="1.6"/><g fill="#7E2E16" opacity=".35" transform="translate(1.2 1.8)"><rect x="28.5" y="35" width="7" height="21" rx="3.5"/><rect x="15.5" y="29.5" width="33" height="7.5" rx="3.75"/><rect x="18.10" y="21" width="2.8" height="10"/><rect x="16.00" y="15" width="7" height="8" rx="1.2"/><rect x="26.43" y="21" width="2.8" height="10"/><rect x="24.33" y="15" width="7" height="8" rx="1.2"/><rect x="34.77" y="21" width="2.8" height="10"/><rect x="32.67" y="15" width="7" height="8" rx="1.2"/><rect x="43.10" y="21" width="2.8" height="10"/><rect x="41.00" y="15" width="7" height="8" rx="1.2"/></g><g fill="#FFF6E9"><rect x="28.5" y="35" width="7" height="21" rx="3.5"/><rect x="15.5" y="29.5" width="33" height="7.5" rx="3.75"/><rect x="18.10" y="21" width="2.8" height="10"/><rect x="16.00" y="15" width="7" height="8" rx="1.2"/><rect x="26.43" y="21" width="2.8" height="10"/><rect x="24.33" y="15" width="7" height="8" rx="1.2"/><rect x="34.77" y="21" width="2.8" height="10"/><rect x="32.67" y="15" width="7" height="8" rx="1.2"/><rect x="43.10" y="21" width="2.8" height="10"/><rect x="41.00" y="15" width="7" height="8" rx="1.2"/></g><path d="M15.10 16.2L19.50 9.6L23.90 16.2z" fill="#B43E5C" stroke="#B43E5C" stroke-width="1" stroke-linejoin="round"/><rect x="18.25" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M23.43 16.2L27.83 9.6L32.23 16.2z" fill="#7A8B3A" stroke="#7A8B3A" stroke-width="1" stroke-linejoin="round"/><rect x="26.58" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M31.77 16.2L36.17 9.6L40.57 16.2z" fill="#E2B23A" stroke="#E2B23A" stroke-width="1" stroke-linejoin="round"/><rect x="34.92" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M40.10 16.2L44.50 9.6L48.90 16.2z" fill="#3E7CB4" stroke="#3E7CB4" stroke-width="1" stroke-linejoin="round"/><rect x="43.25" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M52 8.5l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#FFF6E9"/></svg>`;
+
+function credit() {
+    return h('div.credit-block',
+        h('a.credit', {href: 'https://www.saveriomorelli.com/', target: '_blank', rel: 'noopener'}, h('span', t('credit_by')), h('span.credit-name', 'Saverio Morelli')),
+        h('span.credit-ai', t('credit_ai')));
+}
+
+// ---------------------------------------------------------------- boot
+
+async function boot() {
+    setLang(getLang());
+    put(app, h('div.splash', h('div.logo-big', {html: LOGO}), h('p', t('loading'))));
+    const verify = new URLSearchParams(location.search).get('verify');
+    try {
+        S.config = await api('auth.config');
+    } catch (e) {
+        return put(app, h('div.splash', h('div.logo-big', {html: LOGO}), h('p', errText(e.code))));
+    }
+    if (!S.config.installed) return put(app, h('div.splash', h('div.logo-big', {html: LOGO}), h('p', errText('not_installed'))));
+    if (verify && /^[a-f0-9]{64}$/.test(verify)) return verifyLinkScreen(verify);
+    const me = await api('auth.me').catch(() => ({user: null}));
+    S.user = me.user;
+    route();
+}
+
+function route() {
+    if (!S.user) return authScreen('signup');
+    if (S.user.mustVerify) return verifyScreen();
+    startGame();
+}
+
+// ---------------------------------------------------------------- accounts
+
+function authScreen(mode) {
+    const err = h('p.form-error');
+    const field = (name, label, type = 'text', extra = {}) => h('label.field', h('span', label), h('input', {name, type, required: true, ...extra}));
+    const form = h('form.auth-form', {novalidate: true},
+        mode === 'signup' && field('name', t('name'), 'text', {autocomplete: 'name', maxlength: 80}),
+        mode === 'signup' && h('label.field', h('span', t('username')), h('input', {name: 'username', required: true, autocomplete: 'username', maxlength: 20, pattern: '[A-Za-z0-9_]{3,20}'}), h('small', t('username_hint'))),
+        field('email', t('email'), 'email', {autocomplete: 'email'}),
+        h('label.field', h('span', t('password')), h('input', {name: 'password', type: 'password', required: true, autocomplete: mode === 'signup' ? 'new-password' : 'current-password'}), mode === 'signup' && h('small', t('password_hint'))),
+        mode === 'signup' && h('label.check', h('input', {type: 'checkbox', name: 'privacy'}), h('span', {html: t('privacy_accept')})),
+        err,
+        h('button.btn.btn-primary.btn-wide', {type: 'submit'}, mode === 'signup' ? t('signup') : t('signin')));
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = new FormData(form);
+        const btn = form.querySelector('button[type=submit]');
+        btn.disabled = true;
+        err.textContent = '';
+        try {
+            const body = {email: f.get('email'), password: f.get('password'), lang: getLang()};
+            if (mode === 'signup') Object.assign(body, {name: f.get('name'), username: f.get('username'), acceptPrivacy: !!f.get('privacy')});
+            const d = await api(mode === 'signup' ? 'auth.register' : 'auth.login', body);
+            // Signing up never signs in: the link in the email does (the answer is the same for a known address)
+            if (d.checkEmail) return checkEmailScreen(body.email);
+            S.user = d.user;
+            route();
+        } catch (ex) {
+            err.textContent = errText(ex.code);
+            btn.disabled = false;
+        }
+    });
+    const google = h('div.google-slot');
+    put(app, h('main.auth',
+        h('div.auth-hero', h('div.logo-big', {html: LOGO}), h('h1', 'Forkville'), h('p.tagline', t('tagline'))),
+        h('div.auth-card',
+            h('div.tabs', h('button.tab' + (mode === 'signup' ? '.on' : ''), {type: 'button', onclick: () => authScreen('signup')}, t('signup')),
+                h('button.tab' + (mode === 'signin' ? '.on' : ''), {type: 'button', onclick: () => authScreen('signin')}, t('signin'))),
+            google, S.config.googleClientId ? h('div.or', h('span', t('or'))) : null, form),
+        langSwitch(() => authScreen(mode)), credit()));
+    if (S.config.googleClientId) mountGoogle(google);
+}
+
+function langSwitch(rerender) {
+    return h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {type: 'button', onclick: () => (setLang(l), rerender())}, l.toUpperCase())));
+}
+
+function mountGoogle(slot) {
+    const init = () => {
+        window.google.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => googleSignIn(r.credential)});
+        window.google.accounts.id.renderButton(slot, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()});
+    };
+    if (window.google?.accounts?.id) return init();
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = init;
+    document.head.append(s);
+}
+
+async function googleSignIn(credential, extra = {}) {
+    try {
+        const d = await api('auth.google', {credential, lang: getLang(), ...extra});
+        if (d.error === 'needs_signup') return googleFinish(credential, d.name);
+        S.user = d.user;
+        closeModal();
+        route();
+    } catch (e) {
+        fail(e);
+    }
+}
+
+function googleFinish(credential) {
+    const err = h('p.form-error');
+    const form = h('form.auth-form',
+        h('label.field', h('span', t('username')), h('input', {name: 'username', required: true, maxlength: 20}), h('small', t('username_hint'))),
+        h('label.check', h('input', {type: 'checkbox', name: 'privacy'}), h('span', {html: t('privacy_accept')})), err,
+        h('div.row', h('button.btn', {type: 'button', onclick: closeModal}, t('cancel')), h('button.btn.btn-primary', {type: 'submit'}, t('continue'))));
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = new FormData(form);
+        try {
+            const d = await api('auth.google', {credential, username: f.get('username'), acceptPrivacy: !!f.get('privacy'), lang: getLang()});
+            S.user = d.user;
+            closeModal();
+            route();
+        } catch (ex) {
+            err.textContent = errText(ex.code);
+        }
+    });
+    modal(t('google_finish'), [h('p', t('google_finish_body')), form]);
+}
+
+/** Right after signing up: no session yet, the link in the email confirms the address and signs in. */
+function checkEmailScreen(email) {
+    put(app, h('main.auth', h('div.auth-card.verify',
+        h('div.mail-art', {html: MAIL_ART}),
+        h('h1', t('verify_title')), h('p', {html: t('verify_body', {email: escapeHtml(email)})}),
+        !S.config.mailReady && h('p.note.bad', t('verify_nomail')),
+        h('p.note', t('verify_signin_hint')),
+        h('button.btn.btn-primary.btn-wide', {onclick: () => authScreen('signin')}, t('signin'))), credit()));
+}
+
+const MAIL_ART = '<svg viewBox="0 0 120 90"><rect x="8" y="14" width="104" height="68" rx="10" fill="#FFF3E0" stroke="#3B2418" stroke-width="4"/><path d="M12 20l48 34 48-34" fill="none" stroke="#D9653B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="100" cy="18" r="13" fill="#7A8B3A"/><path d="M94 18l4 4 8-8" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>';
+
+/** The gate: an account made with email and password cannot play before confirming the address. */
+function verifyScreen() {
+    const msg = h('p.note');
+    const resend = h('button.btn', {
+        onclick: async () => {
+            resend.disabled = true;
+            try {
+                await api('auth.resend', {lang: getLang()});
+                msg.textContent = t('verify_sent');
+            } catch (e) {
+                msg.textContent = errText(e.code);
+            }
+            setTimeout(() => (resend.disabled = false), 30000);
+        },
+    }, t('verify_resend'));
+    put(app, h('main.auth', h('div.auth-card.verify',
+        h('div.mail-art', {html: MAIL_ART}),
+        h('h1', t('verify_title')), h('p', {html: t('verify_body', {email: escapeHtml(S.user.email)})}),
+        !S.user.mailReady && h('p.note.bad', t('verify_nomail')),
+        h('button.btn.btn-primary.btn-wide', {
+            onclick: async () => {
+                const me = await api('auth.me').catch(() => null);
+                if (me?.user && !me.user.mustVerify) {
+                    S.user = me.user;
+                    return route();
+                }
+                msg.textContent = t('verify_still');
+            },
+        }, t('verify_check')),
+        resend, msg,
+        h('button.btn.btn-ghost', {onclick: logout}, t('logout'))), credit()));
+}
+
+function verifyLinkScreen(token) {
+    const msg = h('p.form-error');
+    const btn = h('button.btn.btn-primary.btn-wide', {
+        onclick: async () => {
+            btn.disabled = true;
+            try {
+                const d = await api('auth.verify', {token});
+                S.user = d.user;
+                history.replaceState(null, '', location.pathname);
+                toast(t('verify_done'), 'good');
+                route();
+            } catch (e) {
+                msg.textContent = errText(e.code);
+                btn.disabled = false;
+            }
+        },
+    }, t('verify_link_btn'));
+    put(app, h('main.auth', h('div.auth-card.verify', h('div.logo-big', {html: LOGO}), h('h1', t('verify_link_title')), h('p', t('verify_link_body')), btn, msg)));
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+
+async function logout() {
+    try {
+        await api('auth.logout', {});
+    } catch (e) { /* signed out anyway */ }
+    location.href = location.pathname;
+}
+
+// ---------------------------------------------------------------- the game
+
+async function startGame() {
+    put(app, h('div.splash', h('div.logo-big', {html: LOGO}), h('p', t('loading'))));
+    try {
+        const [cat, st] = await Promise.all([api('game.catalog'), api('game.state', {})]);
+        S.catalog = cat.catalog;
+        applyState(st);
+    } catch (e) {
+        if (e.code === 'email_unverified') {
+            S.user.mustVerify = true;
+            return verifyScreen();
+        }
+        return put(app, h('div.splash', h('div.logo-big', {html: LOGO}), h('p', errText(e.code)), h('button.btn', {onclick: () => location.reload()}, 'OK')));
+    }
+    const canvas = h('canvas#world');
+    const overlay = h('div.overlay');
+    put(app, h('div.game', canvas, overlay, h('div#hud')));
+    S.world = new World(canvas, overlay);
+    S.world.catalogItems = S.catalog.items;
+    S.sim = new Sim(S.world, S.catalog, {onServe: (coins) => bumpCoins(coins)});
+    S.season = seasonOf();
+    S.gameDay = 0;
+    try {
+        const saved = JSON.parse(localStorage.getItem('forkville-clock') || 'null');
+        if (saved && saved.day === new Date().toDateString()) {
+            S.sim.clock = saved.clock;
+            S.gameDay = saved.gameDay || 0;
+        }
+    } catch (e) { /* storage blocked */ }
+    S.world.on('frame', envTick);
+    S.sim.onTick = () => {
+        const now = performance.now();
+        if (now - (S.lastHudTick || 0) < 250) return;
+        S.lastHudTick = now;
+        renderClock();
+        renderInfo();
+    };
+    S.editor = new Editor(S.world, S.catalog, {changed: renderBuild, selected: renderSelection, toast: (k) => toast(t(k), 'bad'), coins: () => S.game.restaurant.coins});
+    S.world.on('tap', onWorldTap);
+    loadHome();
+    renderHud();
+    if (S.game.away) showAway(S.game.away);
+    setInterval(sendReport, 25000);
+    setInterval(tick, 1000);
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && sendReport(true));
+}
+
+function applyState(st) {
+    const prevLevel = S.game?.restaurant.level;
+    S.game = st;
+    S.clockSkew = st.now - Date.now() / 1000;
+    S.liveCoins = 0;
+    if (S.sim?.r && S.mode === 'home') {
+        S.sim.r.popularity = st.restaurant.popularity;
+        if (S.sim.r.status !== st.restaurant.status) S.sim.setStatus(st.restaurant.status);
+    }
+    if (prevLevel && st.restaurant.level > prevLevel) setTimeout(() => showLevelUp(prevLevel, st.restaurant.level), 400);
+}
+
+function simRestaurant(r) {
+    return {size: r.size, layout: r.layout, staff: r.staff, menu: r.menu, popularity: r.popularity, status: r.status || 'open'};
+}
+
+/** Every frame: the game clock drives day and night, the weather changes each game day, the season follows the calendar. */
+function envTick() {
+    if (!S.sim) return;
+    const hour = S.sim.hour;
+    if (S.lastHour != null && hour < S.lastHour - 12) S.gameDay++;
+    S.lastHour = hour;
+    S.weather = weatherFor(S.season, new Date().toDateString() + '#' + S.gameDay);
+    S.sim.weather = S.weather;
+    S.world.setEnvironment({hour, weather: S.weather, season: S.season});
+    const now = performance.now();
+    if (now - (S.lastClockSave || 0) > 5000) {
+        S.lastClockSave = now;
+        try {
+            localStorage.setItem('forkville-clock', JSON.stringify({day: new Date().toDateString(), clock: S.sim.clock, gameDay: S.gameDay}));
+        } catch (e) { /* storage blocked */ }
+    }
+}
+
+const statusLabels = () => ({open: t('status_open'), paused: t('status_paused'), closed: t('status_closed')});
+
+function gardenForScene() {
+    return S.game.garden.map(g => ({...g, secs: S.catalog.crops[g.crop]?.secs || 300}));
+}
+
+function loadHome(keepCamera = false) {
+    S.mode = 'home';
+    S.visit = null;
+    const r = S.game.restaurant;
+    S.world.setRestaurant(r, {plots: r.plots, garden: gardenForScene(), now: nowSec(), keepCamera});
+    S.world.setDoorStatus(r.status || 'open', statusLabels());
+    S.sim.opts.visit = false;
+    S.sim.start(simRestaurant(r));
+    closePie();
+}
+
+/** After a change that touches the room (layout, staff, menu, size), rebuild scene and service. */
+function refreshHome(st, keepCamera = true) {
+    applyState(st);
+    if (S.mode === 'home') loadHome(keepCamera);
+    renderHud();
+    S.sheet?.render();
+}
+
+/** Only the numbers changed (coins, ingredients…): no need to rebuild the room. */
+function softState(st) {
+    applyState(st);
+    renderHud();
+    S.sheet?.render();
+}
+
+function bumpCoins(c) {
+    S.liveCoins = (S.liveCoins || 0) + c;
+    renderTop();
+}
+
+let reporting = false;
+
+async function sendReport(beacon = false) {
+    if (S.mode !== 'home' || reporting || !S.sim) return;
+    const b = S.sim.takeBatch();
+    const any = Object.keys(b.dishes).length || b.ratings.length;
+    if (!any) return;
+    reporting = true;
+    try {
+        const body = JSON.stringify(b);
+        if (beacon) {
+            fetch('api/index.php?r=game.report', {method: 'POST', keepalive: true, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf}, body});
+        } else {
+            const st = await api('game.report', b);
+            softState(st);
+            S.sim.r.popularity = st.restaurant.popularity;
+        }
+    } catch (e) { /* the next report will try again with fresh dishes */
+    } finally {
+        reporting = false;
+    }
+}
+
+let lastGardenStages = '';
+
+function tick() {
+    if (!S.game) return;
+    // Garden: refresh the beds when a crop changes stage, and the open garden panel every second
+    const now = nowSec();
+    const stages = S.game.garden.map(g => g.plot + ':' + (now >= g.readyAt ? 2 : 1)).join(',');
+    if (stages !== lastGardenStages && S.mode === 'home') {
+        lastGardenStages = stages;
+        S.world.setGarden(S.game.restaurant.plots, gardenForScene(), now);
+    }
+    if (S.sheet?.live) S.sheet.render();
+    renderStatus();
+}
+
+/** Sims-style clicks: a person opens their info card and a round action menu; litter is cleaned; furniture shows its actions. */
+function onWorldTap(e) {
+    if (S.mode === 'build') return;
+    closePie();
+    const agentId = S.world.agentAt(e);
+    if (agentId != null) {
+        const a = S.sim.agentById(agentId);
+        if (!a) return;
+        S.sim.selected = a;
+        S.world.select(a.mesh);
+        renderInfo();
+        if (S.mode === 'home') openPie(e, S.sim.actionsFor(a).map(x => ({...x, label: t('pie_' + x.id), run: () => toast(t(S.sim.interact(a, x.id) || 'saved_ok'))})));
+        return;
+    }
+    S.sim.selected = null;
+    S.world.select(null);
+    renderInfo();
+    if (S.mode !== 'home') return;
+    // Helping out: tapping dirt or a dirty table cleans it at once
+    const litter = S.world.litterAt(e);
+    if (litter && S.sim.cleanLitterAt(litter)) return;
+    const itemId = S.world.itemAt(e);
+    if (itemId != null) {
+        const acts = S.sim.itemActions(itemId);
+        if (acts.some(a => a.id === 'clean')) return toast(t(S.sim.interactItem(itemId, 'clean')));
+        if (acts.length) openPie(e, acts.map(x => ({...x, label: t('pie_' + x.id), run: () => toast(t(S.sim.interactItem(itemId, x.id) || 'saved_ok'))})));
+        return;
+    }
+    const plot = S.world.plotAt(e);
+    if (plot != null) openSheet('garden');
+}
+
+/** The round action menu around the click (like The Sims). */
+function openPie(e, actions) {
+    closePie();
+    if (!actions.length) return;
+    const box = document.querySelector('.game');
+    const rect = box.getBoundingClientRect();
+    const x = Math.min(rect.width - 90, Math.max(90, e.clientX - rect.left)), y = Math.min(rect.height - 110, Math.max(90, e.clientY - rect.top));
+    const pie = h('div.pie', {style: `left:${x}px;top:${y}px`});
+    const r = 72;
+    actions.forEach((a, i) => {
+        const ang = -Math.PI / 2 + (i - (actions.length - 1) / 2) * 0.95;
+        const b = h('button.pie-item' + (a.done ? '.done' : ''), {
+            style: `--x:${Math.cos(ang) * r}px;--y:${Math.sin(ang) * r}px;--d:${i * 40}ms`, disabled: a.done, title: a.label,
+            onclick: (ev) => {
+                ev.stopPropagation();
+                closePie();
+                a.run();
+            },
+        }, h('span.pie-pic', {html: svgIcon('mood', a.icon)}), h('span.pie-label', a.label));
+        pie.append(b);
+    });
+    pie.append(h('button.pie-close', {onclick: closePie, title: t('close')}, icon('x')));
+    box.append(pie);
+    S.pie = pie;
+}
+
+function closePie() {
+    S.pie?.remove();
+    S.pie = null;
+}
+
+// ---------------------------------------------------------------- HUD
+
+const ICONS = {
+    build: '<path d="M4 20h16M6 20V10l6-5 6 5v10M10 20v-5h4v5"/>',
+    menu: '<path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 0-3 3-3 6s1 4 3 4v8"/>',
+    garden: '<path d="M12 21V11M12 11c0-4 3-7 7-7 0 4-3 7-7 7zM12 14c0-3-2-5-6-5 0 3 2 5 6 5zM5 21h14"/>',
+    market: '<path d="M3 9l2-5h14l2 5M4 9h16v11H4zM9 20v-6h6v6M3 9c0 2 2 3 3 3s3-1 3-3c0 2 2 3 3 3s3-1 3-3c0 2 2 3 3 3s3-1 3-3"/>',
+    staff: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-4 3-6 6.5-6s6.5 2 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2.5.6 4 2.6 4 6"/>',
+    friends: '<path d="M12 21s-8-4.5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.5-8 11-8 11z"/>',
+    board: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>',
+    gift: '<rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1zm0 0c2-4 6-4 6-1s-6 1-6 1z"/>',
+    left: '<path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/>', right: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/>',
+    top: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/>', cube: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', center: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>', home: '<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
+    star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+};
+const icon = (name) => h('span.ic', {html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`});
+
+function renderHud() {
+    const hud = document.getElementById('hud');
+    if (!hud) return;
+    put(hud, 
+        h('div.topbar#topbar'),
+        h('div.status#status'),
+        h('div.clock#clock'),
+        h('div.infocard#infocard'),
+        h('div.camctl',
+            h('button.cam', {title: t('rotate_left'), onclick: () => S.world.rotate(Math.PI / 4)}, icon('left')),
+            h('button.cam', {title: t('rotate_right'), onclick: () => S.world.rotate(-Math.PI / 4)}, icon('right')),
+            h('button.cam#topbtn', {title: t('top_view'), onclick: () => (S.world.setTopView(!S.world.top), renderHud())}, icon(S.world.top ? 'cube' : 'top')),
+            h('button.cam', {title: t('zoom_in'), onclick: () => S.world.zoom(0.8)}, icon('plus')),
+            h('button.cam', {title: t('zoom_out'), onclick: () => S.world.zoom(1.25)}, icon('minus')),
+            h('button.cam', {title: t('recenter'), onclick: () => S.world.recenter()}, icon('center'))),
+        S.mode === 'visit' ? visitBar() : S.mode === 'build' ? h('div.buildpanel#buildpanel') : dock(),
+        h('div.selbar#selbar'));
+    renderTop();
+    renderStatus();
+    renderClock(true);
+    renderInfo();
+    if (S.mode === 'build') renderBuild();
+    requestAnimationFrame(updateInsets);
+}
+
+function renderTop() {
+    const bar = document.getElementById('topbar');
+    if (!bar || !S.game) return;
+    const r = S.game.restaurant;
+    const levels = S.catalog.levels;
+    const lo = levels[r.level - 1] || 0, hi = levels[r.level] || lo + 1;
+    const pct = Math.min(100, Math.max(0, (r.xp - lo) / (hi - lo) * 100));
+    put(bar, 
+        h('div.brand', h('div.logo-small', {html: LOGO}), h('div',
+            h('div.rname', S.mode === 'visit' ? S.visit.restaurant.name : r.name),
+            S.mode === 'visit' ? h('div.rsub', '@' + S.visit.username) : h('button.xp', {title: t('levels_title'), onclick: () => openSheet('levels')},
+                h('span.lvl', t('level_title', {n: r.level, t: levelTitle(r.level)})), h('span.xpbar', h('i', {style: `width:${pct}%`}))))),
+        h('div.pills',
+            S.mode !== 'visit' && h('button.pill.coins', {title: t('ledger_title'), onclick: () => openSheet('ledger')}, coin(r.coins + (S.liveCoins || 0))),
+            h('button.pill.stars', {title: t('reputation'), onclick: () => S.mode === 'visit' ? visitReviews() : openSheet('reviews')}, starsEl(S.mode === 'visit' ? S.visit.restaurant.stars : r.stars), h('small', String(S.mode === 'visit' ? S.visit.restaurant.popularity : r.popularity))),
+            S.mode !== 'visit' && h('button.pill.iconpill', {title: t('inbox'), onclick: () => openSheet('friends', {tab: 'inbox'})}, icon('gift'), S.game.inbox ? h('b.badge', String(S.game.inbox)) : null),
+            S.mode !== 'visit' && h('button.pill.iconpill', {title: t('account'), onclick: () => openSheet('account')}, icon('user'))));
+}
+
+/** Italian / English at any moment: texts, the door sign and the menu board in the room follow. */
+function switchLang(l) {
+    setLang(l);
+    // No restart: the service goes on, only the words change (texts, door sign, menu boards in the room)
+    const status = S.mode === 'visit' ? S.visit?.restaurant.status : S.game.restaurant.status;
+    S.world.setDoorStatus(status || 'open', statusLabels());
+    S.world.refreshItems?.(k => k === 'menu_board');
+    S.clockKey = null;
+    renderHud();
+    S.sheet?.render();
+}
+
+function renderStatus() {
+    const el = document.getElementById('status');
+    if (!el || !S.sim) return;
+    if (S.mode !== 'home') return put(el, );
+    const problems = S.sim.problems || [];
+    const guests = S.sim.agents.filter(a => a.role === 'customer').length;
+    const status = S.game.restaurant.status || 'open';
+    const label = status === 'closed' ? t('closed_status') : status === 'paused' ? t('paused_status', {n: guests}) : t('open_status', {n: guests});
+    put(el,
+        h('button.chip.status-' + status, {onclick: (e) => (e.stopPropagation(), toggleStatusMenu()), title: t('status_title')}, h('i.dot'), label, h('span.caret', S.statusMenu ? '▴' : '▾')),
+        S.statusMenu && statusMenu(status),
+        problems.length > 0 && h('button.chip.warn', {onclick: () => fixProblem(problems[0])}, ic('ui', 'warning'), t(problems[0])));
+}
+
+/** Open / no new guests / closed (saved on the server: closed restaurants earn nothing while away). It stays open across redraws. */
+function toggleStatusMenu(force) {
+    S.statusMenu = force ?? !S.statusMenu;
+    renderStatus();
+}
+
+function statusMenu(cur) {
+    return h('div.status-menu', {onclick: (e) => e.stopPropagation()}, ['open', 'paused', 'closed'].map(st => h('button.status-opt.status-' + st + (st === cur ? '.on' : ''), {
+        onclick: () => {
+            S.statusMenu = false;
+            act('game.status', {status: st}, {
+                done: () => {
+                    S.sim.setStatus(st);
+                    S.world.setDoorStatus(st, statusLabels());
+                    renderStatus();
+                    if (st === 'closed') toast(t('closed_staff_home'));
+                },
+            });
+        },
+    }, h('i.dot'), statusLabels()[st])));
+}
+
+// A click anywhere else closes the status menu
+document.addEventListener('click', () => S.statusMenu && toggleStatusMenu(false));
+
+/** The game clock with the Sims-style speed buttons, plus weather and season. */
+function renderClock(force = false) {
+    const el = document.getElementById('clock');
+    if (!el || !S.sim) return;
+    const hr = S.sim.hour;
+    const hh = String(Math.floor(hr)).padStart(2, '0'), mm = String(Math.floor((hr % 1) * 60)).padStart(2, '0'); // every game minute
+    const key = hh + mm + S.sim.speed + S.weather + S.mode + getLang();
+    if (!force && key === S.clockKey) return;
+    S.clockKey = key;
+    const night = isNight(hr);
+    const sp = (v, name, title) => h('button.speed' + (S.sim.speed === v ? '.on' : ''), {
+        title, onclick: () => {
+            S.sim.speed = v;
+            renderClock(true);
+        },
+    }, h('span.speed-pic', {html: svgIcon('ui', name)}));
+    put(el,
+        h('div.clock-time', h('span.clock-pic', {html: svgIcon('ui', night ? 'moon' : 'sun')}), h('b', `${hh}:${mm}`),
+            h('span.clock-pic', {title: t('weather_' + (S.weather || 'clear')), html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}),
+            h('small', t('season_' + S.season))),
+        S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2')), sp(3, 'play3', t('speed_3'))));
+}
+
+/** The card of the selected person: who they are, what they are doing, their mood or energy. */
+function renderInfo() {
+    const el = document.getElementById('infocard');
+    if (!el) return;
+    const a = S.sim?.selected;
+    if (!a || !S.sim.agents.includes(a)) {
+        if (S.sim?.selected) {
+            S.sim.selected = null;
+            S.world.select(null);
+        }
+        return el.childElementCount && put(el);
+    }
+    const d = S.sim.describe(a);
+    const bar = (label, v, cls) => h('div.need-bar', h('span', label), h('span.track', h('i.' + cls, {style: `width:${v}%`})), h('b', v + '%'));
+    const moodIcon = d.mood == null ? null : d.mood >= 80 ? 'love' : d.mood >= 60 ? 'happy' : d.mood >= 40 ? 'meh' : d.mood >= 20 ? 'sick' : 'angry';
+    put(el, h('div.info-head', h('span.info-pic', {html: svgIcon(d.role === 'customer' ? 'mood' : 'ui', d.role === 'customer' ? moodIcon : d.role === 'chef' ? 'chef' : d.role === 'cleaner' ? 'broom' : 'waiter')}),
+            h('div', h('b', d.name), h('small', d.role === 'customer' ? t('customer') : n(d.role)))),
+        h('button.icon-btn.small', {onclick: () => (S.sim.selected = null, S.world.select(null), renderInfo())}, icon('x')),
+        d.trait && h('div.info-trait', {title: t('trait_' + d.trait + '_d')}, t('trait') + ': ', h('b', t('trait_' + d.trait))),
+        h('div.info-doing', t('doing') + ': ', t('act_' + d.activity)),
+        d.order && h('div.info-order', t('ordered') + ': ', h('span.pic', {html: svgIcon('dish', d.order)}), n(d.order)),
+        d.mood != null && bar(t('mood'), d.mood, d.mood >= 60 ? 'good' : d.mood >= 35 ? 'mid' : 'bad'),
+        d.energy != null && bar(t('energy'), d.energy, d.energy >= 50 ? 'good' : d.energy >= 25 ? 'mid' : 'bad'));
+}
+
+function fixProblem(p) {
+    if (['need_stove', 'need_counter', 'need_seat'].includes(p)) enterBuild(p === 'need_seat' ? 'chair' : 'kitchen');
+    else if (p === 'need_menu') openSheet('menu');
+    else openSheet('staff');
+}
+
+function dock() {
+    const b = (key, ic, fn) => h('button.dockbtn', {onclick: fn}, icon(ic), h('span', t('dock_' + key)));
+    return h('nav.dock',
+        b('build', 'build', () => enterBuild()), b('menu', 'menu', () => openSheet('menu')), b('garden', 'garden', () => openSheet('garden')),
+        b('market', 'market', () => openSheet('market')), b('staff', 'staff', () => openSheet('staff')), b('friends', 'friends', () => openSheet('friends')),
+        b('reviews', 'star', () => openSheet('reviews')), b('board', 'board', () => openSheet('board')));
+}
+
+// ---------------------------------------------------------------- sheets (panels)
+
+function openSheet(kind, opts = {}) {
+    closeSheet();
+    const body = h('div.sheet-body');
+    const title = h('h2');
+    const el = h('section.sheet', h('header', title, h('button.icon-btn', {onclick: closeSheet, title: t('close')}, icon('x'))), body);
+    document.querySelector('.game').append(el); // outside #hud: redrawing the HUD keeps the panel
+    S.sheet = {kind, opts, el, live: kind === 'garden', render: () => SHEETS[kind](body, title, S.sheet.opts)};
+    updateInsets();
+    S.sheet.render();
+    requestAnimationFrame(() => el.classList.add('in'));
+}
+
+function closeSheet() {
+    if (!S.sheet) return;
+    const el = S.sheet.el;
+    el.classList.remove('in');
+    setTimeout(() => el.remove(), 200);
+    S.sheet = null;
+    updateInsets();
+}
+
+/** Keep the room in the part of the screen not covered by a panel. */
+function updateInsets() {
+    if (!S.world) return;
+    const narrow = window.innerWidth <= 640;
+    const panel = document.getElementById('buildpanel');
+    let right = 0, bottom = 0;
+    if (S.sheet) narrow ? (bottom = window.innerHeight * 0.82) : (right = Math.min(420, window.innerWidth));
+    if (panel) bottom = Math.max(bottom, panel.offsetHeight);
+    document.body.classList.toggle('sheet-open', !!S.sheet && !narrow);
+    S.world.setInsets(right, narrow && S.sheet ? 0 : bottom);
+}
+
+async function act(route, body, {rebuild = false, done} = {}) {
+    try {
+        const st = await api(route, body);
+        (rebuild ? refreshHome : softState)(st);
+        done && done(st);
+        return st;
+    } catch (e) {
+        fail(e);
+    }
+}
+
+const SHEETS = {
+    menu(body, title) {
+        title.textContent = t('menu_title');
+        const r = S.game.restaurant, rec = S.game.recipes, ing = S.game.ingredients;
+        const menu = r.menuKeys;
+        const needs = (dish, lvl) => S.catalog.dishes[dish].ings.map(i => {
+            const need = lvl <= 1 ? 1 : lvl - 1, have = ing[i] || 0;
+            return h('span.need' + (have >= need ? '.ok' : '.miss'), {title: n(i)}, ic('ing', i), `${have}/${need}`);
+        });
+        const rows = Object.entries(S.catalog.dishes).sort((a, b) => a[1].level - b[1].level).map(([k, d]) => {
+            const lvl = rec[k] || 0;
+            const locked = d.level > r.level;
+            const price = Math.round(d.price * (1 + 0.25 * (Math.max(1, lvl) - 1)));
+            const on = menu.includes(k);
+            return h('div.dish' + (locked ? '.locked' : ''),
+                h('div.dish-icon', {html: dishIcon(k)}),
+                h('div.dish-main', h('b', n(k)), h('div.dish-meta', lvl ? h('span.lv', starsEl(lvl, S.catalog.dishMax)) : h('span.muted', locked ? t('locked_level', {n: d.level}) : t('not_learned')),
+                    h('span', coin(price))),
+                    !locked && lvl < S.catalog.dishMax && h('div.needs', needs(k, lvl + 1))),
+                h('div.dish-act',
+                    lvl > 0 && h('label.switch', {title: t('on_menu')}, h('input', {
+                        type: 'checkbox', checked: on, onchange: (e) => {
+                            const next = e.target.checked ? [...menu, k] : menu.filter(x => x !== k);
+                            act('game.menu', {dishes: next}, {rebuild: true});
+                        },
+                    }), h('i')),
+                    !locked && !lvl && d.enabled !== false && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.learn', {dish: k}, {rebuild: true, done: () => toast(t('learned', {d: n(k)}), 'good')})}, t('learn')),
+                    !locked && lvl > 0 && lvl < S.catalog.dishMax && h('button.btn.btn-small', {onclick: () => act('game.upgrade', {dish: k}, {rebuild: true, done: () => toast(t('improved', {d: n(k), n: lvl + 1}), 'good')})}, t('upgrade'))));
+        });
+        put(body, 
+            h('p.muted', t('menu_slots', {n: menu.length, m: r.maxMenu})),
+            h('div.list', rows),
+            pantry());
+    },
+
+    garden(body, title) {
+        title.textContent = t('garden_title');
+        const r = S.game.restaurant, now = nowSec();
+        const byPlot = new Map(S.game.garden.map(g => [g.plot, g]));
+        const anyRipe = S.game.garden.some(g => now >= g.readyAt);
+        if (S.sheet.opts.plot != null) return cropPicker(body, S.sheet.opts.plot);
+        const plots = [];
+        for (let i = 0; i < r.plots; i++) {
+            const g = byPlot.get(i);
+            if (!g) plots.push(h('button.plot.empty', {onclick: () => ((S.sheet.opts.plot = i), S.sheet.render())}, h('span.plot-ic', '+'), h('span', t('plant'))));
+            else {
+                const crop = S.catalog.crops[g.crop];
+                const left = g.readyAt - now;
+                const pct = Math.min(100, (1 - left / crop.secs) * 100);
+                plots.push(left <= 0
+                    ? h('button.plot.ripe', {onclick: () => act('game.harvest', {plot: i}, {done: (st) => toast(t('harvested', {list: ingList(st.result.got)}), 'good')})}, h('span.plot-ic', {html: svgIcon('ing', g.crop)}), h('b', t('ready')), h('span', t('harvest')))
+                    : h('div.plot', h('span.plot-ic', {html: svgIcon('ing', g.crop)}), h('b', n(g.crop)), h('span.bar', h('i', {style: `width:${pct}%`})), h('small', t('grows_in', {t: fmtTime(left)}))));
+            }
+        }
+        put(body, 
+            anyRipe && h('button.btn.btn-primary.btn-wide', {onclick: () => act('game.harvest', {plot: -1}, {done: (st) => toast(t('harvested', {list: ingList(st.result.got)}), 'good')})}, t('harvest_all')),
+            h('div.plots', plots));
+    },
+
+    market(body, title) {
+        title.textContent = t('market_title');
+        put(body, h('p.muted', t('market_hint', {n: S.catalog.rules.marketLimit})),
+            h('div.list', S.game.market.map(m => h('div.dish',
+                h('div.dish-icon', {html: svgIcon('ing', m.ing)}), h('div.dish-main', h('b', n(m.ing)), h('div.dish-meta', coin(m.price), h('span.muted', m.left ? t('left', {n: m.left}) : t('sold_out')))),
+                h('div.dish-act',
+                    h('button.btn.btn-small', {disabled: !m.left, onclick: () => act('game.market', {ing: m.ing, qty: 1})}, t('buy')),
+                    m.left > 1 && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.market', {ing: m.ing, qty: m.left})}, t('buy_n', {n: m.left})))))),
+            pantry());
+    },
+
+    staff(body, title) {
+        title.textContent = t('staff_title');
+        const r = S.game.restaurant, mg = S.catalog.manager, roles = S.catalog.roles;
+        const roleIcon = (role) => role === 'chef' ? 'chef' : role === 'cleaner' ? 'broom' : role === 'manager' ? 'manager' : 'waiter';
+        const limits = {chef: r.staff.filter(x => x.role === 'chef').length + ' / ' + t('per_stove'), waiter: r.maxWaiters, cleaner: r.maxCleaners, manager: r.maxManagers};
+        const people = r.staff.map(s => {
+            const rank = s.rank || 1, next = mg.promote[rank + 1];
+            const select = h('select.role-select', {
+                onchange: (e) => act('game.assign', {id: s.id, role: e.target.value}, {rebuild: true, done: () => toast(t('role_changed', {n: s.name, r: n(e.target.value)}), 'good')}),
+            }, roles.map(role => h('option', {value: role, selected: role === s.role, disabled: role === 'manager' && r.level < mg.level}, n(role))));
+            return h('div.person',
+                h('div.person-head', h('img.portrait', {src: portrait(s.role, s.color, s.id * 7.3, lookOf(s)), alt: ''}), h('span.pic', {html: svgIcon('ui', roleIcon(s.role))}),
+                    h('div.staff-main', h('b', s.name), h('span.muted', s.trait ? t('trait_' + s.trait) + ' · ' + t('trait_' + s.trait + '_d') : '')), select),
+                cv(s.skills, s.role),
+                s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.08 * (s.skills?.manager ?? 5)))})),
+                h('div.row.wrap',
+                    s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.promote', {id: s.id}, {rebuild: true, done: () => toast(t('promoted', {n: s.name}), 'good')})}, t('promote'), ' · ', coin(next)),
+                    h('button.btn.btn-small', {onclick: () => openLook(s)}, t('look_title')),
+                    h('button.btn.btn-small.btn-ghost', {onclick: () => confirm(t('fire_confirm', {n: s.name})) && act('game.fire', {id: s.id}, {rebuild: true})}, t('fire'))));
+        });
+        put(body,
+            h('p.muted', t('staff_intro')),
+            h('div.role-limits', roles.map(role => h('span.limit', ic('ui', roleIcon(role)), n(role) + ': ', h('b', String(r.staff.filter(x => x.role === role).length)), ' / ', role === 'chef' ? t('per_stove') : String(limits[role])))),
+            h('button.btn.btn-primary.btn-wide', {onclick: () => openCandidates()}, t('find_staff')),
+            h('div.list', people),
+            r.level < mg.level ? h('p.muted', t('locked_level', {n: mg.level}) + ' · ' + t('manager_what')) : h('p.muted', t('manager_hint', {n: r.maxManagers, h: r.managerHours})));
+    },
+
+    ledger(body, title, opts) {
+        title.textContent = t('ledger_title');
+        put(body, h('p.muted', t('loading')));
+        api('game.ledger', {day: opts.day}).then(d => {
+            const days = d.days || {};
+            const totals = (day) => {
+                let inc = 0, out = 0;
+                for (const v of Object.values(days[day] || {})) v.sum > 0 ? (inc += v.sum) : (out -= v.sum);
+                return {inc, out};
+            };
+            const dayKeys = Array.from({length: 7}, (_, i) => new Date(Date.parse(d.day + 'T00:00:00Z') - (6 - i) * 86400000).toISOString().slice(0, 10));
+            const maxBar = Math.max(1, ...dayKeys.map(k => Math.max(totals(k).inc, totals(k).out)));
+            const fmtDay = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString(getLang() === 'it' ? 'it-IT' : 'en-GB', {weekday: 'short', day: 'numeric'});
+            const today = totals(d.day);
+            const kinds = Object.entries(days[d.day] || {}).sort((a, b) => b[1].sum - a[1].sum);
+            const hm = (ts) => new Date(ts * 1000).toLocaleTimeString(getLang() === 'it' ? 'it-IT' : 'en-GB', {hour: '2-digit', minute: '2-digit'});
+            put(body,
+                h('p.note', t('ledger_readonly')),
+                h('div.ledger-chart', dayKeys.map(k => {
+                    const tt = totals(k);
+                    return h('button.ledger-day' + (k === d.day ? '.on' : ''), {onclick: () => ((opts.day = k), S.sheet.render())},
+                        h('div.bars', h('i.inc', {style: `height:${tt.inc / maxBar * 100}%`}), h('i.out', {style: `height:${tt.out / maxBar * 100}%`})), h('small', fmtDay(k)));
+                })),
+                h('div.ledger-sum', h('div.inc', h('small', t('ledger_in')), coin(today.inc)), h('div.out', h('small', t('ledger_out')), coin(today.out)),
+                    h('div.net' + (today.inc - today.out < 0 ? '.neg' : ''), h('small', t('ledger_net')), coin(today.inc - today.out))),
+                kinds.length ? h('div.ledger-kinds', kinds.map(([k, v]) => h('div.ledger-kind' + (v.sum < 0 ? '.neg' : ''), h('span', t('lk_' + k)), h('small.muted', '×' + v.n), h('b', (v.sum > 0 ? '+' : '') + v.sum)))) : h('p.muted', t('ledger_empty')),
+                d.entries.length ? h('h3', t('ledger_moves')) : null,
+                h('div.ledger-list', d.entries.map(e => h('div.ledger-row' + (e.amount < 0 ? '.neg' : ''), h('small.muted', hm(e.at)), h('span', ledgerText(e)), h('b', (e.amount > 0 ? '+' : '') + e.amount)))));
+        }).catch(fail);
+    },
+
+    reviews(body, title) {
+        title.textContent = t('reviews_title');
+        put(body, h('p.muted', t('loading')));
+        api('game.reviews', {}).then(d => {
+            if (!d.count) return put(body, h('div.empty-art', {html: svgIcon('mood', 'greet')}), h('p.muted', t('reviews_none')));
+            const max = Math.max(...Object.values(d.distribution));
+            const factors = (obj, cls) => h('div.factors', Object.entries(obj).slice(0, 6).map(([k, v]) => h('span.factor.' + cls, t('f_' + k), h('b', '×' + v))));
+            const tips = Object.keys(d.bad).map(k => ({slow: 'tip_slow', plain: 'tip_plain', bare: 'tip_bare', dirty: 'tip_dirty', dark: 'tip_dark'})[k]).filter(Boolean).slice(0, 3);
+            put(body,
+                h('div.rep-head',
+                    h('div.rep-score', h('b', d.average.toFixed(1)), starsEl(Math.round(d.average), 5), h('small', t('reviews_window', {n: Math.min(d.count, d.window)}))),
+                    h('div.rep-dist', [5, 4, 3, 2, 1].map(st => h('div.dist-row', h('span', String(st)), h('span.star-pic', {html: svgIcon('mood', 'star')}),
+                        h('span.track', h('i', {style: `width:${max ? d.distribution[st] / max * 100 : 0}%`})), h('small', String(d.distribution[st])))))),
+                Object.keys(d.good).length ? h('div', h('h3', t('praised')), factors(d.good, 'good')) : null,
+                Object.keys(d.bad).length ? h('div', h('h3', t('blamed')), factors(d.bad, 'bad')) : null,
+                h('div.tips', h('h3', t('how_improve')), (tips.length ? tips : ['tip_good']).map(k => h('p.tip', ic('mood', k === 'tip_good' ? 'star' : 'sparkle'), t(k)))),
+                h('h3', t('reviews_title')),
+                h('div.list', d.reviews.map(reviewCard)));
+        }).catch(fail);
+    },
+
+    levels(body, title) {
+        title.textContent = t('levels_title');
+        const r = S.game.restaurant;
+        const rows = [];
+        for (let l = 1; l <= S.catalog.levels.length; l++) {
+            const u = unlocksAt(l);
+            rows.push(h('div.level-row' + (l === r.level ? '.current' : l < r.level ? '.done' : ''),
+                h('div.level-num', String(l)),
+                h('div.level-main', h('b', levelTitle(l)), l === r.level && h('span.tag-now', t('current')),
+                    h('small.muted', t('reward') + ': ', coin(l * (S.catalog.levelReward || 0)), ' · XP ' + S.catalog.levels[l - 1]),
+                    u.length ? h('div.unlocks', u.map(x => h('span.unlock', x))) : null)));
+        }
+        put(body, h('div.levels', rows));
+        requestAnimationFrame(() => body.querySelector('.level-row.current')?.scrollIntoView({block: 'center'}));
+    },
+};
+
+/** The look of a worker for the 3D model: hairstyle, hair colour, uniform from the catalog. */
+const lookOf = (s, over = {}) => {
+    const outfit = over.outfit ?? s.outfit ?? 'default';
+    return {hair: over.hair ?? s.hair, hairColor: over.hairColor ?? s.hairColor, uniform: outfit !== 'default' ? S.catalog.uniforms[outfit] : null};
+};
+
+/** Uniforms and the hairdresser, with a live 3D preview. You pay only for what changes. */
+function openLook(s) {
+    const cur = {outfit: s.outfit || 'default', hair: s.hair || 'short', hairColor: s.hairColor || S.catalog.hairColors[0]};
+    const pick = {...cur};
+    const img = h('img.look-preview', {alt: ''});
+    const total = h('b');
+    const lvl = S.game.restaurant.level;
+    const cost = () => (pick.outfit !== cur.outfit ? S.catalog.uniforms[pick.outfit].price : 0)
+        + (pick.hair !== cur.hair || pick.hairColor !== cur.hairColor ? S.catalog.hairPrice : 0);
+    const draw = () => {
+        img.src = portrait(s.role, s.color, s.id * 7.3, lookOf(s, pick));
+        put(total, coin(cost()));
+        body.querySelectorAll('[data-k]').forEach(b => b.classList.toggle('on', pick[b.dataset.k] === b.dataset.v));
+    };
+    const opt = (k, v, label, extra = {}) => h('button.look-opt', {'data-k': k, 'data-v': v, ...extra, onclick: () => ((pick[k] = v), draw())}, label);
+    const body = h('div.look',
+        h('div.look-left', img, h('p.muted', t('look_cost')), total),
+        h('div.look-right',
+            h('h3', t('uniform')),
+            h('div.look-grid', Object.entries(S.catalog.uniforms).map(([k, u]) => opt('outfit', k, [
+                h('i.uni-swatch', {style: k === 'default' ? 'background:repeating-linear-gradient(45deg,#fff 0 4px,#ddd 4px 8px)' : `background:linear-gradient(135deg, ${u.top} 50%, ${u.accent} 50%)`}),
+                h('span', t('uni_' + k)), h('small', u.level > lvl ? t('locked_level', {n: u.level}) : u.price ? String(u.price) : t('free')),
+            ], {disabled: u.level > lvl}))),
+            h('h3', t('hairstyle'), h('small.muted', ' · ' + S.catalog.hairPrice + ' ' + t('coins'))),
+            h('div.look-grid', S.catalog.hairstyles.map(k => opt('hair', k, h('span', t('hair_' + k))))),
+            h('div.look-colors', S.catalog.hairColors.map(c => opt('hairColor', c, '', {style: `background:${c}`, title: c})))));
+    modal(t('look_of', {n: s.name}), [body, h('div.row', h('button.btn', {onclick: closeModal}, t('cancel')), h('button.btn.btn-primary', {
+        style: 'flex:1', onclick: async () => {
+            if (!cost()) return closeModal();
+            const done = await act('game.style', {id: s.id, ...pick}, {rebuild: true});
+            if (done) {
+                toast(t('look_done', {n: s.name}), 'good');
+                closeModal();
+            }
+        },
+    }, t('save')))]);
+    draw();
+}
+
+/** A CV: the four skills from 0 to 10, the current role highlighted. */
+function cv(skills = {}, current = null) {
+    return h('div.cv', S.catalog.roles.map(role => {
+        const v = Math.round((skills[role] ?? 0) * 10) / 10;
+        return h('div.cv-row' + (role === current ? '.current' : ''), h('span', n(role)), h('span.track', h('i', {style: `width:${v * 10}%`})), h('b', String(Math.floor(v))));
+    }));
+}
+
+/** People looking for a job today: their CV, their price, and the role you hire them for. */
+async function openCandidates(refresh = false) {
+    let st;
+    try {
+        st = await api('game.candidates', {refresh});
+    } catch (e) {
+        return fail(e);
+    }
+    softState(st);
+    const list = st.result.candidates;
+    const cards = list.map((c, idx) => {
+        const best = S.catalog.roles.reduce((a, b) => (c.skills[b] > c.skills[a] ? b : a), 'chef');
+        const select = h('select.role-select', S.catalog.roles.map(role => h('option', {value: role, selected: role === best, disabled: role === 'manager' && S.game.restaurant.level < S.catalog.manager.level}, n(role))));
+        return h('div.candidate',
+            h('div.person-head', h('i.swatch', {style: `background:${c.color}`}), h('div.staff-main', h('b', c.name), h('span.muted', t('trait_' + c.trait) + ' · ' + t('trait_' + c.trait + '_d')))),
+            cv(c.skills, best),
+            h('div.row', select, h('button.btn.btn-small.btn-primary', {
+                disabled: c.cost > S.game.restaurant.coins,
+                onclick: async () => {
+                    const done = await act('game.hire', {idx, role: select.value}, {rebuild: true});
+                    if (done) {
+                        toast(t('hired', {n: c.name, r: n(select.value)}), 'good');
+                        closeModal();
+                    }
+                },
+            }, t('hire'), ' · ', coin(c.cost))));
+    });
+    modal(t('candidates_title'), [h('p.muted', t('candidates_intro')), list.length ? h('div.candidates', cards) : h('p.muted', t('candidates_none')),
+        h('div.row', h('button.btn', {onclick: closeModal}, t('close')), h('button.btn.btn-ghost', {onclick: () => openCandidates(true)}, t('candidates_refresh'), ' · ', coin(S.catalog.refresh)))]);
+}
+
+/** One line of the statement, in words. */
+function ledgerText(e) {
+    const [a, b] = String(e.detail || '').split('|');
+    switch (e.kind) {
+        case 'customers': return t('lt_customers', {n: a || 0});
+        case 'away': return t('lt_away', {n: a || 0});
+        case 'level': return t('lt_level', {n: a});
+        case 'hire': return t('lt_hire', {n: a, r: b ? n(b) : ''});
+        case 'market': return t('lt_market', {i: a ? n(a) : '', q: b || 1});
+        case 'plant': return t('lt_plant', {i: a ? n(a) : ''});
+        case 'expand': return t('lt_expand', {n: a});
+        case 'promote': return t('lt_promote', {n: a});
+        case 'visit': return t('lt_visit', {n: a || ''});
+        case 'admin': return t('lt_admin') + (a ? ' · ' + a : '');
+        default: return t('lk_' + e.kind);
+    }
+}
+
+/** What a level unlocks, as short labels. */
+function unlocksAt(l) {
+    const out = [];
+    const items = Object.entries(S.catalog.items).filter(([, d]) => d.level === l && d.enabled !== false).map(([k]) => n(k));
+    const dishes = Object.entries(S.catalog.dishes).filter(([, d]) => d.level === l).map(([k]) => n(k));
+    const crops = Object.entries(S.catalog.crops).filter(([, d]) => d.level === l).map(([k]) => n(k));
+    if (items.length) out.push(t('unlock_items') + ': ' + items.join(', '));
+    if (dishes.length) out.push(t('unlock_dishes') + ': ' + dishes.join(', '));
+    if (crops.length) out.push(t('unlock_crops') + ': ' + crops.join(', '));
+    for (const [side, , lvl] of S.catalog.sizes) if (lvl === l && side > S.catalog.sizes[0][0]) out.push(t('unlock_size', {n: side}));
+    const f = (fn) => fn(l) > fn(l - 1) ? fn(l) : null;
+    const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))), m = f(x => Math.min(6, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
+    const mg = f(x => x < S.catalog.manager.level ? 0 : Math.min(3, 1 + Math.floor((x - S.catalog.manager.level) / 6)));
+    if (l > 1 && w) out.push(t('unlock_waiters', {n: w}));
+    if (l > 1 && c) out.push(t('unlock_cleaners', {n: c}));
+    if (l > 1 && m) out.push(t('unlock_menu', {n: m}));
+    if (l > 1 && p) out.push(t('unlock_plots', {n: p}));
+    if (mg) out.push(t('unlock_managers', {n: mg}));
+    return out;
+}
+
+/** A review as the customer would write it, built from what they liked and disliked. */
+function reviewSentence(rv) {
+    const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+    const good = rv.good.map(k => t('f_' + k)), bad = rv.bad.map(k => t('f_' + k));
+    const parts = [];
+    if (good.length) parts.push(t('review_good', {a: cap(good.join(', '))}));
+    if (bad.length) parts.push(t(good.length ? 'review_but' : 'review_only_bad', {b: bad.join(', ')}));
+    return parts.join(' ') || t('review_neutral');
+}
+
+function reviewCard(rv) {
+    const face = rv.stars >= 5 ? 'love' : rv.stars === 4 ? 'happy' : rv.stars === 3 ? 'meh' : rv.stars === 2 ? 'sick' : 'angry';
+    return h('div.review',
+        h('span.review-face', {html: svgIcon('mood', face)}),
+        h('div.review-main', h('div.review-top', h('b', rv.name), starsEl(rv.stars, 5), h('span.pic', {html: svgIcon('dish', rv.dish)})), h('p', reviewSentence(rv))));
+}
+
+function showLevelUp(from, to) {
+    const blocks = [];
+    let reward = 0;
+    for (let l = from + 1; l <= to; l++) {
+        reward += l * (S.catalog.levelReward || 0);
+        const u = unlocksAt(l);
+        if (u.length) blocks.push(h('div.unlocks', u.map(x => h('span.unlock', x))));
+    }
+    modal(t('level_up_title', {n: to}), [h('div.away-art.levelup', {html: svgIcon('mood', 'star')}),
+        h('p', {html: t('level_up_body', {t: '<b>' + levelTitle(to) + '</b>', c: reward})}), h('h3', t('unlocks')), ...blocks,
+        h('button.btn.btn-primary.btn-wide', {onclick: closeModal}, 'OK')]);
+}
+
+function visitReviews() {
+    const list = S.visit?.reviews || [];
+    modal(t('reviews_title') + ' · @' + (S.visit?.username || ''), [list.length ? h('div.list', list.map(reviewCard)) : h('p.muted', t('reviews_none')),
+        h('button.btn.btn-wide', {onclick: closeModal}, t('close'))]);
+}
+
+const SHEETS_MORE = {
+    friends(body, title, opts) {
+        title.textContent = t('friends_title');
+        const tab = opts.tab || 'list';
+        const tabs = h('div.tabs', [['list', t('friends_title')], ['inbox', t('inbox') + (S.game.inbox ? ` (${S.game.inbox})` : '')]].map(([k, label]) =>
+            h('button.tab' + (tab === k ? '.on' : ''), {onclick: () => ((opts.tab = k), S.sheet.render())}, label)));
+        const content = h('div');
+        put(body, tabs, content);
+        if (tab === 'inbox') return renderInbox(content);
+        renderFriends(content);
+    },
+
+    board(body, title, opts) {
+        title.textContent = t('board_title');
+        opts.scope ||= 'friends';
+        opts.period ||= 'week';
+        const seg = (key, vals) => h('div.seg', vals.map(([v, label]) => h('button' + (opts[key] === v ? '.on' : ''), {onclick: () => ((opts[key] = v), S.sheet.render())}, label)));
+        const list = h('div.list', h('p.muted', t('loading')));
+        put(body, seg('scope', [['friends', t('scope_friends')], ['global', t('scope_global')]]), seg('period', [['week', t('period_week')], ['all', t('period_all')]]), list);
+        api('social.board', {scope: opts.scope, period: opts.period}).then(d => {
+            put(list, ...(d.rows.length ? d.rows.map(r => h('div.rank' + (r.username === d.me ? '.me' : ''),
+                h('b.pos', r.rank <= 3 ? ic('ui', 'medal' + r.rank) : String(r.rank)), h('span.who', '@' + r.username), h('span.muted', t('level') + ' ' + r.level),
+                h('b', t(opts.period === 'week' ? 'week_value' : 'all_value', {n: r.value})))) : [h('p.muted', t('board_empty'))]));
+        }).catch(fail);
+    },
+
+    account(body, title) {
+        title.textContent = t('account_title');
+        const r = S.game.restaurant;
+        const nameInput = h('input', {value: r.name, maxlength: 40});
+        const pwForm = h('form.auth-form',
+            S.user.hasPassword && h('label.field', h('span', t('current_password')), h('input', {type: 'password', name: 'current', autocomplete: 'current-password'})),
+            h('label.field', h('span', t('new_password')), h('input', {type: 'password', name: 'password', autocomplete: 'new-password'})),
+            h('button.btn', {type: 'submit'}, t('change_password')));
+        pwForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const f = new FormData(pwForm);
+            try {
+                const d = await api('auth.password', {current: f.get('current') || '', password: f.get('password')});
+                S.user = d.user;
+                toast(t('saved_ok'), 'good');
+                pwForm.reset();
+            } catch (ex) {
+                fail(ex);
+            }
+        });
+        put(body, 
+            h('div.acct', h('b', '@' + S.user.username), h('span.muted', S.user.email)),
+            S.user.isAdmin && h('a.btn.btn-wide', {href: 'admin.html', target: '_blank'}, ic('ui', 'gear'), t('admin_panel')),
+            h('label.field', h('span', t('restaurant_name')), h('div.row', nameInput, h('button.btn', {
+                onclick: () => act('game.rename', {name: nameInput.value}, {done: () => S.world.setSign(S.game.restaurant.name)}),
+            }, t('save')))),
+            h('div.field', h('span', t('language')), h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {type: 'button', onclick: () => switchLang(l)}, l.toUpperCase())))),
+            pwForm,
+            h('div.row.wrap', h('button.btn', {onclick: logout}, t('logout')), h('a.btn.btn-ghost', {href: 'privacy.html', target: '_blank'}, t('privacy')),
+                h('button.btn.btn-danger', {onclick: deleteAccount}, t('delete_account'))),
+            credit());
+    },
+};
+
+Object.assign(SHEETS, SHEETS_MORE);
+
+function pantry() {
+    const ing = S.game.ingredients;
+    const keys = Object.keys(ing).filter(k => ing[k] > 0);
+    const wish = S.game.restaurant.wish || '';
+    return h('div.pantry', h('h3', t('pantry')),
+        keys.length ? h('div.chips', keys.map(k => h('span.ichip', ic('ing', k), n(k) + ' ', h('b', '×' + ing[k])))) : h('p.muted', t('pantry_empty')),
+        h('label.field.inline', h('span', t('wish')), h('select', {onchange: (e) => act('game.wish', {ing: e.target.value})},
+            h('option', {value: ''}, t('wish_none')), Object.keys(S.catalog.ingredients).map(k => h('option', {value: k, selected: k === wish}, n(k))))));
+}
+
+function cropPicker(body, plot) {
+    const lvl = S.game.restaurant.level;
+    put(body, h('button.btn.btn-ghost', {onclick: () => ((S.sheet.opts.plot = null), S.sheet.render())}, '← ' + t('back')), h('h3', t('choose_crop')),
+        h('div.list', Object.entries(S.catalog.crops).filter(([, c]) => c.enabled !== false).map(([k, c]) => h('div.dish' + (c.level > lvl ? '.locked' : ''),
+            h('div.dish-icon', {html: svgIcon('ing', k)}), h('div.dish-main', h('b', n(k)), h('div.dish-meta', c.level > lvl ? t('locked_level', {n: c.level}) : t('seed', {c: c.cost, t: fmtTime(c.secs), y: c.yield}))),
+            c.level <= lvl && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.plant', {plot, crop: k}, {done: () => ((S.sheet.opts.plot = null), S.sheet.render())})}, t('plant'))))));
+}
+
+async function renderFriends(el) {
+    const search = h('input', {placeholder: t('search_ph'), maxlength: 20, autocomplete: 'off'});
+    const results = h('div.list');
+    const listEl = h('div', h('p.muted', t('loading')));
+    let timer;
+    search.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            const q = search.value.trim();
+            if (q.length < 2) return put(results, );
+            const d = await api('social.search', {q}).catch(() => ({players: []}));
+            put(results, ...d.players.map(p => h('div.friend', h('span.who', '@' + p.username),
+                p.status === 'none' ? h('button.btn.btn-small.btn-primary', {onclick: () => api('social.request', {username: p.username}).then(draw).then(() => search.dispatchEvent(new Event('input'))).catch(fail)}, t('add'))
+                    : h('span.muted', t(p.status === 'friend' ? 'friend' : 'requested')))));
+        }, 250);
+    });
+    put(el, h('div.search', search), results, listEl);
+    const draw = (d) => {
+        const bonus = (f) => S.catalog.rules.visitBase + 5 * f.level;
+        put(listEl, 
+            d.incoming.length ? h('div', h('h3', t('requests')), h('div.list', d.incoming.map(u => h('div.friend', h('span.who', '@' + u),
+                h('button.btn.btn-small.btn-primary', {onclick: () => api('social.accept', {username: u}).then(draw).catch(fail)}, t('accept')),
+                h('button.btn.btn-small.btn-ghost', {onclick: () => api('social.decline', {username: u}).then(draw).catch(fail)}, t('decline')))))) : null,
+            d.outgoing.length ? h('div.list.muted', d.outgoing.map(u => h('div.friend', h('span.who', '@' + u), h('span', t('requested'))))) : null,
+            h('h3', t('friends_title')),
+            d.friends.length ? h('div.list', d.friends.map(f => h('div.friend.card',
+                h('div.friend-main', h('b.who', '@' + f.username), h('span.muted', `${t('level')} ${f.level} `, starsEl(f.stars)), f.wish && h('span.wish', ic('ing', f.wish), t('wants', {i: n(f.wish)}))),
+                h('div.friend-act',
+                    h('button.btn.btn-small.btn-primary', {onclick: () => startVisit(f.username)}, f.visited ? t('visit') : t('visit_bonus', {c: bonus(f)})),
+                    h('button.btn.btn-small', {disabled: f.gifted, onclick: () => giftPicker(f)}, f.gifted ? t('gifted') : t('gift')),
+                    h('button.btn.btn-small.btn-ghost', {title: t('remove'), onclick: () => confirm(t('remove_confirm', {u: f.username})) && api('social.remove', {username: f.username}).then(draw).catch(fail)}, icon('x')))))) : h('p.muted', t('no_friends')));
+    };
+    api('social.friends', {}).then(draw).catch(fail);
+}
+
+function giftPicker(f) {
+    const keys = Object.keys(S.catalog.ingredients);
+    const list = h('div.chips.pick', keys.map(k => h('button.ichip' + (k === f.wish ? '.wished' : ''), {
+        onclick: async () => {
+            try {
+                await api('social.gift', {username: f.username, ing: k});
+                closeModal();
+                toast(t('gift_sent', {u: f.username}), 'good');
+                S.sheet?.render();
+            } catch (e) {
+                fail(e);
+            }
+        },
+    }, ic('ing', k), n(k))));
+    modal(t('gift_title', {u: f.username}), [list, h('div.row', h('button.btn', {onclick: closeModal}, t('cancel')))]);
+}
+
+async function renderInbox(el) {
+    put(el, h('p.muted', t('loading')));
+    const d = await api('social.inbox', {}).catch(e => (fail(e), null));
+    if (!d) return;
+    put(el, d.gifts.length
+        ? h('div', h('button.btn.btn-primary.btn-wide', {onclick: () => act('social.claim', {}, {done: (st) => toast(t('got', {list: ingList(st.result.got)}), 'good')})}, t('claim_all')),
+            h('div.list', d.gifts.map(g => h('div.friend', h('span', ic('ing', g.ing), n(g.ing)), h('span.muted', t('gift_from', {u: g.from}))))))
+        : h('p.muted', t('inbox_empty')),
+        d.incoming.length ? h('div', h('h3', t('requests')), h('div.list', d.incoming.map(u => h('div.friend', h('span.who', '@' + u),
+            h('button.btn.btn-small.btn-primary', {onclick: () => api('social.accept', {username: u}).then(() => S.sheet.render()).catch(fail)}, t('accept')))))) : null);
+}
+
+async function deleteAccount() {
+    const pw = S.user.hasPassword ? prompt(t('delete_confirm')) : (confirm(t('delete_confirm')) ? '' : null);
+    if (pw === null) return;
+    try {
+        await api('auth.delete', {password: pw});
+        location.href = location.pathname;
+    } catch (e) {
+        fail(e);
+    }
+}
+
+// ---------------------------------------------------------------- visits
+
+async function startVisit(username) {
+    await sendReport();
+    try {
+        const d = await api('social.visit', {username});
+        closeSheet();
+        S.mode = 'visit';
+        S.visit = d;
+        S.sim.stop();
+        S.world.setRestaurant(d.restaurant, {plots: 0});
+        S.sim.opts.visit = true;
+        S.sim.start(simRestaurant(d.restaurant));
+        renderHud();
+        if (d.reward) {
+            toast(t('visit_reward', {c: d.reward}), 'good');
+            S.game.restaurant.coins += d.reward;
+        }
+    } catch (e) {
+        fail(e);
+    }
+}
+
+function visitBar() {
+    const v = S.visit;
+    const stars = h('div.rate', v.rated ? h('span', t('rated'), ' ', starsEl(v.rated)) : [h('span', t('rate_it')), ...[1, 2, 3, 4, 5].map(i => h('button.star', {
+        onclick: async () => {
+            try {
+                await api('social.rate', {username: v.username, stars: i});
+                v.rated = i;
+                renderHud();
+            } catch (e) {
+                fail(e);
+            }
+        },
+    }, h('span.star-pic', {html: svgIcon('mood', 'star')})))]);
+    return h('div.visitbar', h('b', t('visiting', {u: '@' + v.username})), stars,
+        v.reviews?.length ? h('button.btn.btn-small', {onclick: visitReviews}, icon('star'), t('reviews_title')) : null,
+        h('button.btn.btn-primary', {onclick: goHome}, icon('home'), t('back_home')));
+}
+
+async function goHome() {
+    S.sim.stop();
+    try {
+        const st = await api('game.state', {});
+        applyState(st);
+    } catch (e) { /* keep the last state */
+    }
+    loadHome();
+    renderHud();
+}
+
+// ---------------------------------------------------------------- build mode
+
+const BUILD_TABS = [['table', ['table']], ['chair', ['chair']], ['kitchen', ['stove', 'counter', 'kitchen', 'service']], ['lounge', ['lounge']], ['deco', ['deco']], ['rug', ['rug']], ['floor', ['floor']], ['wall', ['wall']]];
+/** Decorations that entertain go in the lounge tab. */
+const LOUNGE_TAGS = ['music', 'fun', 'cozy', 'snack'];
+const buildTabOf = (k, d) => d.cat === 'deco' && LOUNGE_TAGS.includes((S.catalog.tags || {})[k]) ? 'lounge' : (BUILD_TABS.find(([, cats]) => cats.includes(d.cat)) || ['deco'])[0];
+let buildTab = 'table';
+
+function enterBuild(tab) {
+    closeSheet();
+    sendReport();
+    if (tab) buildTab = tab;
+    S.mode = 'build';
+    S.sim.stop();
+    S.world.setRestaurant(S.game.restaurant, {plots: S.game.restaurant.plots, garden: gardenForScene(), now: nowSec(), keepCamera: true});
+    S.editor.begin(S.game.restaurant);
+    renderHud();
+}
+
+function exitBuild() {
+    S.editor.end();
+    loadHome(true);
+    renderHud();
+}
+
+async function saveBuild() {
+    try {
+        const st = await api('game.layout', S.editor.payload());
+        S.editor.end();
+        applyState(st);
+        loadHome(true);
+        renderHud();
+        toast(t('saved'), 'good');
+    } catch (e) {
+        fail(e);
+    }
+}
+
+function renderBuild() {
+    const el = document.getElementById('buildpanel');
+    if (!el || !S.editor.active) return;
+    const r = S.game.restaurant, cat = S.catalog.items, ed = S.editor;
+    const cats = BUILD_TABS.find(x => x[0] === buildTab)[1];
+    const items = Object.entries(cat).filter(([k, d]) => buildTabOf(k, d) === buildTab && cats && (d.enabled !== false || r.finishes.includes(k))).sort((a, b) => a[1].level - b[1].level || a[1].price - b[1].price);
+    const c = ed.cost();
+    const next = S.catalog.sizes.find(s => s[0] > r.size);
+    const tile = ([k, d]) => {
+        const locked = d.level > r.level;
+        const finish = d.cat === 'floor' || d.cat === 'wall';
+        const owned = finish && r.finishes.includes(k);
+        const current = finish && ed[d.cat] === k;
+        return h('button.shopitem' + (locked ? '.locked' : '') + (current || ed.placing?.it.k === k ? '.on' : ''), {
+            disabled: locked,
+            onclick: () => finish ? ed.setFinish(k) : ed.startPlacing(k),
+        }, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
+            h('b', n(k)), d.tier ? h('span.tier.tier-' + d.tier, t('tier_' + d.tier)) : null, h('small', locked ? t('locked_level', {n: d.level}) : owned ? t('owned') : coin(d.price)),
+            d.pop > 0 && h('small.pop', t('pop', {n: d.pop})), d.speed > 1 && h('small.pop', t('speed', {n: d.speed})));
+    };
+    put(el, 
+        h('div.build-head',
+            h('div.tabs.scroll', BUILD_TABS.map(([k]) => h('button.tab' + (buildTab === k ? '.on' : ''), {onclick: () => ((buildTab = k), renderBuild())}, t('cat_' + k)))),
+            ed.placing ? h('div.placing', h('span', t('placing')), h('button.btn.btn-small', {onclick: () => ed.rotate()}, t('rotate')), h('button.btn.btn-small.btn-ghost', {onclick: () => ed.cancelPlacing()}, t('cancel')))
+                : h('small.muted', t('door_hint'))),
+        h('div.shop', items.map(tile)),
+        h('div.build-foot',
+            h('div.cost', h('span', t('spend') + ' '), coin(c.spend), c.refund ? [h('span', ' · ' + t('refund') + ' '), coin(c.refund)] : null),
+            next ? h('button.btn.btn-small.btn-ghost', {
+                disabled: next[2] > r.level, title: t('enlarge_cost', {c: next[1], l: next[2]}),
+                onclick: () => confirm(t('enlarge', {n: next[0]}) + ' — ' + t('enlarge_cost', {c: next[1], l: next[2]})) && act('game.expand', {}, {
+                    done: () => {
+                        ed.end();
+                        enterBuild();
+                    },
+                }),
+            }, t('enlarge', {n: next[0]})) : null,
+            h('button.btn', {onclick: exitBuild}, t('cancel')),
+            h('button.btn.btn-primary', {disabled: c.net > r.coins, onclick: saveBuild}, t('save'))));
+}
+
+function renderSelection(it) {
+    const el = document.getElementById('selbar');
+    if (!el) return;
+    if (!it) return put(el, );
+    const refund = it.id > 0 ? Math.floor(S.catalog.items[it.k].price * S.catalog.rules.sellBack) : S.catalog.items[it.k].price;
+    put(el, h('div.selcard', h('b', n(it.k)),
+        h('button.btn.btn-small', {onclick: () => S.editor.rotate()}, t('rotate')),
+        h('button.btn.btn-small', {onclick: () => S.editor.moveSelected()}, t('move')),
+        h('button.btn.btn-small.btn-danger', {onclick: () => S.editor.sellSelected()}, t('sell'), ' +', String(refund)),
+        h('button.icon-btn', {onclick: () => S.editor.select(null)}, icon('x'))));
+}
+
+
+// ---------------------------------------------------------------- modals
+
+function modal(title, content) {
+    closeModal();
+    const el = h('div.modal-bg', {onclick: (e) => e.target === el && closeModal()}, h('div.modal', h('h2', title), content));
+    document.body.append(el);
+}
+
+function closeModal() {
+    document.querySelector('.modal-bg')?.remove();
+}
+
+/** While you were away: who ran the restaurant, from when to when, and how to make it run longer. */
+function showAway(a) {
+    const hm = (ts) => new Date(ts * 1000).toLocaleTimeString(getLang() === 'it' ? 'it-IT' : 'en-GB', {hour: '2-digit', minute: '2-digit'});
+    const lines = [];
+    if (a.managed > 0) lines.push(h('p.away-line.ok', ic('ui', 'manager'), h('span', {html: t('away_slot_manager', {a: hm(a.from), b: hm(a.managedTo), p: a.managerPct})})));
+    if (a.aloneTo > a.managedTo) lines.push(h('p.away-line', ic('ui', 'chef'), h('span', {html: t('away_slot_alone', {a: hm(a.managedTo), b: hm(a.aloneTo), p: a.alonePct})})));
+    if (a.now - a.aloneTo > 120) lines.push(h('p.away-line.off', ic('mood', 'sleep'), h('span', {html: t('away_slot_closed', {a: hm(a.aloneTo)})})));
+    modal(t('away_title'), [h('div.away-art', {html: svgIcon('ui', a.managed ? 'manager' : 'chef')}), h('p', {html: t('away_body', {n: a.served, m: a.minutes, c: a.coins})}),
+        ...lines,
+        h('p.tip', ic('mood', 'sparkle'), t(a.hasManager ? 'away_tip_promote' : 'away_tip_hire')),
+        h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('staff'))}, t('dock_staff')), h('button.btn.btn-primary', {onclick: closeModal, style: 'flex:1'}, 'OK'))]);
+}
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+boot();

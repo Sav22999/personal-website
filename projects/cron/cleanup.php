@@ -1,9 +1,9 @@
 <?php
 /*
  * Daily clean-up: see README.md.
- * Games (Connect Four, Chess, FaceGuess): deletes the rooms with no changes and no connected player
+ * Games (Connect Four, Chess, FaceGuess, Sea Battle, Prism Mine): deletes the rooms with no changes and no connected player
  * for ROOM_RETENTION_HOURS; players, chat and cards go with them through the foreign keys.
- * Apps (FoodTrack, Giftwise, Fucina, ThinkHop, Fischietto): deletes expired sessions and old sign-in attempts and blanks the IP
+ * Apps (FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, Fischietto): deletes expired sessions and old sign-in attempts and blanks the IP
  * and browser still stored on sessions from older versions. It never touches the users' own data.
  *
  * URL:          https://www.saveriomorelli.com/projects/cron/cleanup.php?key=SECRET_KEY
@@ -11,9 +11,9 @@
  */
 
 const ROOM_RETENTION_HOURS = 24;
-const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess']; // table prefix => project
-const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_']; // project => default table prefix
-const NO_SESSION_DETAILS = ['thinkhop']; // these apps never stored the IP and browser on their sessions: no such columns
+const GAMES = ['c4' => 'connect-four', 'chess' => 'chess', 'fg' => 'faceguess', 'sb' => 'sea-battle', 'pm' => 'prism-mine']; // table prefix => project
+const APPS = ['foodtrack' => 'ft_', 'giftwise' => 'gw_', 'fucina' => 'fc_', 'thinkhop' => 'th_', 'forkville' => 'fv_']; // project => default table prefix
+const NO_SESSION_DETAILS = ['thinkhop', 'forkville']; // these apps never stored the IP and browser on their sessions: no such columns
 const ATTEMPT_RETENTION_HOURS = 2; // the longest rate limit looks back 60 minutes: older IPs serve no purpose
 
 header('Content-Type: application/json');
@@ -96,7 +96,7 @@ foreach (array_merge(array_keys(APPS), ['fischietto']) as $project) {
     }
 }
 
-// The three games share one database: any of their connections reaches all the tables
+// The games share one database: any of their connections reaches all the tables
 require __DIR__ . '/../connect-four/api/db.php';
 
 $age = 'NOW() - INTERVAL ' . ROOM_RETENTION_HOURS . ' HOUR';

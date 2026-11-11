@@ -1,0 +1,674 @@
+<?php
+header('Content-Type: application/json');
+// An unexpected error answers with a generic message: the details (SQL, paths) only go to the server log
+set_exception_handler(function (Throwable $e) {
+    error_log('[prism-mine] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) http_response_code(500);
+    echo json_encode(['error' => 'Server error']);
+});
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/engine.php';
+
+// Duel: both captains read the same mine. On your turn you send one beam or try an answer;
+// a right answer wins, a wrong one passes the turn and counts as a strike (3 strikes lose).
+const ONLINE_WINDOW_SECONDS = 15;
+const LANGS = ['en', 'it', 'es', 'fr', 'de'];
+const LEVELS = ['easy', 'medium', 'hard'];
+const TIME_CONTROLS = [0, 180, 300, 600];
+const RANDOM_TIME_CONTROL = 300;
+const MAX_STRIKES = 3;
+const ABANDON_SECONDS = 120; // an opponent gone this long loses automatically
+const CHAT_MAX_LENGTH = 200;
+const CHAT_BURST = 5;
+const CHAT_HISTORY = 50;
+
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+
+$actions = [
+    'create_room' => 'createRoom',
+    'join_room' => 'joinRoom',
+    'find_match' => 'findMatch',
+    'poll' => 'pollState',
+    'probe' => 'probe',
+    'guess' => 'guess',
+    'resign' => 'resign',
+    'rematch' => 'requestRematch',
+    'claim_win' => 'claimWin',
+    'leave' => 'leaveRoom',
+    'send_message' => 'sendMessage',
+];
+
+if (isset($actions[$action])) $actions[$action]();
+else echo json_encode(['error' => 'Unknown action']);
+
+function respondError($code)
+{
+    echo json_encode(['error' => $code]);
+}
+
+function nowMs()
+{
+    return (int)floor(microtime(true) * 1000);
+}
+
+function other($slot)
+{
+    return (int)$slot === 1 ? 2 : 1;
+}
+
+function cleanName($raw, $fallback)
+{
+    $name = trim(preg_replace('/[\p{Cc}\p{Cf}]+/u', '', (string)$raw) ?? '');
+    return mb_substr($name === '' ? $fallback : $name, 0, 30);
+}
+
+function generateRoomCode()
+{
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    $code = '';
+    for ($i = 0; $i < 6; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
+    return $code;
+}
+
+function actionList($room)
+{
+    $list = json_decode((string)$room['actions'], true);
+    return is_array($list) ? $list : [];
+}
+
+// Every action passes the turn, except the right answer, which ends the game
+function slotToAct($room)
+{
+    return count(actionList($room)) % 2 === 0 ? (int)$room['first_slot'] : other($room['first_slot']);
+}
+
+function clockRunning($room)
+{
+    return (int)$room['time_control'] > 0 && $room['status'] === 'playing';
+}
+
+// Ports already lit, as entry or exit: a second beam there tells nothing new
+function usedPorts($room)
+{
+    $mine = PrismMineEngine::decode($room['mine']);
+    $map = PrismMineEngine::buildMap($mine);
+    $used = [];
+    foreach (actionList($room) as $a) {
+        if ($a['t'] !== 'p') continue;
+        $used[$a['p']] = true;
+        $res = PrismMineEngine::trace($map, $mine, $a['p']);
+        if ($res['exit'] !== null) $used[$res['exit']] = true;
+    }
+    return $used;
+}
+
+function insertRoomWithHost($name, $timeControl, $level, $isPublic, $lang)
+{
+    global $pdo;
+    for ($i = 0; $i < 10; $i++) {
+        $code = generateRoomCode();
+        try {
+            $ms = $timeControl * 1000;
+            $pdo->prepare("INSERT INTO pm_rooms (code, is_public, lang, level, time_control, first_slot, mine, actions, p1_ms, p2_ms) VALUES (?, ?, ?, ?, ?, 1, ?, '[]', ?, ?)")
+                ->execute([$code, $isPublic ? 1 : 0, $lang, $level, $timeControl, PrismMineEngine::encode(PrismMineEngine::generate($level)), $ms, $ms]);
+            $roomId = $pdo->lastInsertId();
+            $token = bin2hex(random_bytes(32));
+            $pdo->prepare("INSERT INTO pm_players (room_id, slot, token, name) VALUES (?, 1, ?, ?)")->execute([$roomId, $token, $name]);
+            return ['code' => $code, 'token' => $token];
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23000) continue;
+            throw $e;
+        }
+    }
+    return null;
+}
+
+function startGame($roomId)
+{
+    global $pdo;
+    $pdo->prepare("UPDATE pm_rooms SET status = 'playing', turn_started_ms = ? WHERE id = ?")->execute([nowMs(), $roomId]);
+}
+
+function addSecondPlayer($roomId, $name)
+{
+    global $pdo;
+    $token = bin2hex(random_bytes(32));
+    $pdo->prepare("INSERT INTO pm_players (room_id, slot, token, name) VALUES (?, 2, ?, ?)")->execute([$roomId, $token, $name]);
+    startGame($roomId);
+    return $token;
+}
+
+function createRoom()
+{
+    $name = cleanName($_POST['name'] ?? '', 'Player 1');
+    $tc = (int)($_POST['time'] ?? 0);
+    if (!in_array($tc, TIME_CONTROLS, true)) $tc = 0;
+    $level = in_array($_POST['level'] ?? '', LEVELS, true) ? $_POST['level'] : 'medium';
+    $room = insertRoomWithHost($name, $tc, $level, false, null);
+    if (!$room) {
+        respondError('create_failed');
+        return;
+    }
+    echo json_encode(['success' => true, 'code' => $room['code'], 'token' => $room['token']]);
+}
+
+function lockRoomByCode($code)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM pm_rooms WHERE code = ? FOR UPDATE");
+    $stmt->execute([$code]);
+    return $stmt->fetch();
+}
+
+function lockRoom($id)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM pm_rooms WHERE id = ? FOR UPDATE");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+function fetchRoom($id)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM pm_rooms WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+function joinRoom()
+{
+    global $pdo;
+    $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $_POST['code'] ?? ''));
+    $name = cleanName($_POST['name'] ?? '', 'Player 2');
+    if ($code === '') {
+        respondError('code_required');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoomByCode($code);
+        $error = null;
+        if (!$room) $error = 'room_not_found';
+        elseif ($room['status'] === 'finished') $error = 'room_finished';
+        else {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM pm_players WHERE room_id = ?");
+            $stmt->execute([$room['id']]);
+            if ((int)$stmt->fetchColumn() >= 2) $error = 'room_full';
+        }
+        if ($error) {
+            $pdo->rollBack();
+            respondError($error);
+            return;
+        }
+        $token = addSecondPlayer($room['id'], $name);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true, 'code' => $code, 'token' => $token]);
+}
+
+function findOpenPublicRoom($lang, $excludeRoomId = 0)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("
+        SELECT r.id FROM pm_rooms r
+        JOIN pm_players host ON host.room_id = r.id AND host.slot = 1
+        WHERE r.is_public = 1 AND r.status = 'waiting' AND r.lang = ? AND r.id <> ?
+          AND host.is_online = 1 AND host.last_seen > NOW() - INTERVAL " . ONLINE_WINDOW_SECONDS . " SECOND
+          AND NOT EXISTS (SELECT 1 FROM pm_players p2 WHERE p2.room_id = r.id AND p2.slot = 2)
+        ORDER BY r.id LIMIT 1 FOR UPDATE
+    ");
+    $stmt->execute([$lang, $excludeRoomId]);
+    $id = $stmt->fetchColumn();
+    return $id ? (int)$id : null;
+}
+
+function findMatch()
+{
+    global $pdo;
+    $name = cleanName($_POST['name'] ?? '', 'Player');
+    $lang = in_array($_POST['lang'] ?? '', LANGS, true) ? $_POST['lang'] : 'en';
+    $pdo->beginTransaction();
+    try {
+        $roomId = findOpenPublicRoom($lang);
+        if ($roomId) {
+            $token = addSecondPlayer($roomId, $name);
+            $pdo->commit();
+            echo json_encode(['success' => true, 'token' => $token, 'matched' => true]);
+            return;
+        }
+        $room = insertRoomWithHost($name, RANDOM_TIME_CONTROL, 'medium', true, $lang);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    if (!$room) {
+        respondError('create_failed');
+        return;
+    }
+    echo json_encode(['success' => true, 'token' => $room['token'], 'matched' => false]);
+}
+
+function mergeWaitingPublicRoom($player)
+{
+    global $pdo;
+    $pdo->beginTransaction();
+    try {
+        $own = lockRoom($player['room_id']);
+        $targetId = $own && $own['status'] === 'waiting' && $own['is_public'] ? findOpenPublicRoom($player['lang'], (int)$player['room_id']) : null;
+        if (!$targetId || $targetId > (int)$player['room_id']) {
+            $pdo->rollBack();
+            return false;
+        }
+        $pdo->prepare("UPDATE pm_players SET room_id = ?, slot = 2 WHERE id = ?")->execute([$targetId, $player['id']]);
+        $pdo->prepare("UPDATE pm_rooms SET status = 'finished' WHERE id = ?")->execute([$player['room_id']]);
+        startGame($targetId);
+        $pdo->commit();
+        return true;
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        if (in_array($e->getCode(), ['40001', 'HY000'], true)) return false;
+        throw $e;
+    }
+}
+
+function getPlayer($token)
+{
+    global $pdo;
+    if (!is_string($token) || $token === '') return null;
+    $stmt = $pdo->prepare("SELECT p.*, r.lang, r.status AS room_status FROM pm_players p JOIN pm_rooms r ON r.id = p.room_id WHERE p.token = ? AND p.is_online = 1");
+    $stmt->execute([$token]);
+    $player = $stmt->fetch();
+    if (!$player) return null;
+    $pdo->prepare("UPDATE pm_players SET last_seen = NOW() WHERE id = ?")->execute([$player['id']]);
+    return $player;
+}
+
+function finishGame($room, $winnerSlot, $reason)
+{
+    global $pdo;
+    $pdo->prepare("UPDATE pm_rooms SET status = 'finished', result = ?, reason = ?, p1_ms = ?, p2_ms = ? WHERE id = ?")
+        ->execute([$winnerSlot === 1 ? '1-0' : '0-1', $reason, $room['p1_ms'], $room['p2_ms'], $room['id']]);
+    $pdo->prepare("UPDATE pm_players SET wins = wins + 1 WHERE room_id = ? AND slot = ?")->execute([$room['id'], $winnerSlot]);
+}
+
+function checkFlag(&$room)
+{
+    if (!clockRunning($room)) return false;
+    $actor = slotToAct($room);
+    $key = $actor === 1 ? 'p1_ms' : 'p2_ms';
+    if ((int)$room[$key] - (nowMs() - (int)$room['turn_started_ms']) > 0) return false;
+    $room[$key] = 0;
+    finishGame($room, other($actor), 'timeout');
+    $room['status'] = 'finished';
+    return true;
+}
+
+// The opponent lost the connection (or left) for ABANDON_SECONDS: the player still here wins
+function checkAbandon(&$room, $mySlot)
+{
+    global $pdo;
+    if (!in_array($room['status'], ['playing'], true)) return false;
+    $stmt = $pdo->prepare("SELECT is_online, TIMESTAMPDIFF(SECOND, last_seen, NOW()) AS idle FROM pm_players WHERE room_id = ? AND slot = ?");
+    $stmt->execute([$room['id'], other($mySlot)]);
+    $opp = $stmt->fetch();
+    if (!$opp || ($opp['is_online'] && (int)$opp['idle'] < ABANDON_SECONDS)) return false;
+    finishGame($room, (int)$mySlot, 'abandon');
+    $room['status'] = 'finished';
+    return true;
+}
+
+function pollState()
+{
+    global $pdo;
+    $token = $_GET['token'] ?? '';
+    $player = getPlayer($token);
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    if ($player['room_status'] === 'waiting' && mergeWaitingPublicRoom($player)) $player = getPlayer($token);
+
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoom($player['room_id']);
+        checkFlag($room);
+        checkAbandon($room, (int)$player['slot']);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    $room = fetchRoom($player['room_id']);
+
+    $stmt = $pdo->prepare("SELECT slot, name, wins, wants_rematch, is_online, TIMESTAMPDIFF(SECOND, last_seen, NOW()) AS idle FROM pm_players WHERE room_id = ? ORDER BY slot");
+    $stmt->execute([$room['id']]);
+    $players = array_map(fn($p) => [
+        'slot' => (int)$p['slot'],
+        'name' => $p['name'],
+        'online' => (bool)$p['is_online'] && (int)$p['idle'] < ONLINE_WINDOW_SECONDS,
+        'idle' => (int)$p['idle'],
+        'left' => !$p['is_online'],
+        'wins' => (int)$p['wins'],
+        'wantsRematch' => (bool)$p['wants_rematch'],
+    ], $stmt->fetchAll());
+
+    // Beams are shown with their answers; answers only say right or wrong
+    $mine = PrismMineEngine::decode($room['mine']);
+    $map = PrismMineEngine::buildMap($mine);
+    $actions = [];
+    foreach (actionList($room) as $a) {
+        if ($a['t'] === 'p') {
+            $res = PrismMineEngine::trace($map, $mine, $a['p']);
+            $actions[] = ['s' => $a['s'], 't' => 'p', 'p' => $a['p'], 'exit' => $res['exit'], 'colors' => $res['colors']];
+        } else $actions[] = ['s' => $a['s'], 't' => 'g', 'ok' => $a['ok']];
+    }
+    $gems = array_map(fn($g) => ['shape' => $g['shape'], 'color' => $g['color']], $mine);
+    usort($gems, fn($a, $b) => strcmp($a['shape'], $b['shape']));
+
+    $p1Ms = (int)$room['p1_ms'];
+    $p2Ms = (int)$room['p2_ms'];
+    $turn = slotToAct($room);
+    if (clockRunning($room)) {
+        $elapsed = nowMs() - (int)$room['turn_started_ms'];
+        if ($turn === 1) $p1Ms = max(0, $p1Ms - $elapsed);
+        else $p2Ms = max(0, $p2Ms - $elapsed);
+    }
+
+    echo json_encode([
+        'status' => $room['status'],
+        'code' => $room['code'],
+        'isPublic' => (bool)$room['is_public'],
+        'round' => (int)$room['round'],
+        'level' => $room['level'],
+        'firstSlot' => (int)$room['first_slot'],
+        'mySlot' => (int)$player['slot'],
+        'timeControl' => (int)$room['time_control'],
+        'gems' => $gems,
+        'actions' => $actions,
+        'mine' => $room['status'] === 'finished' ? $room['mine'] : null,
+        'turn' => $turn,
+        'p1Ms' => $p1Ms,
+        'p2Ms' => $p2Ms,
+        'result' => $room['result'],
+        'reason' => $room['reason'],
+        'players' => $players,
+        'messages' => chatMessages($room['id'], (int)($_GET['since'] ?? 0)),
+    ]);
+}
+
+// Shared checks for probe and guess: the room locked, the player's turn, in step with the client
+function lockForTurn($player, $n)
+{
+    global $pdo;
+    $room = lockRoom($player['room_id']);
+    if ($room['status'] !== 'playing' || checkFlag($room)) return [null, 'game_not_active', true];
+    if ($n !== count(actionList($room))) return [null, 'out_of_sync', false];
+    if (slotToAct($room) !== (int)$player['slot']) return [null, 'not_your_turn', false];
+    return [$room, null, false];
+}
+
+function spendClock(&$room, $slot, $now)
+{
+    if ((int)$room['time_control'] <= 0) return;
+    $key = (int)$slot === 1 ? 'p1_ms' : 'p2_ms';
+    $room[$key] = max(0, (int)$room[$key] - ($now - (int)$room['turn_started_ms']));
+}
+
+function saveAction(&$room, $entry, $now)
+{
+    global $pdo;
+    $list = actionList($room);
+    $list[] = $entry;
+    $room['actions'] = json_encode($list);
+    $pdo->prepare("UPDATE pm_rooms SET actions = ?, p1_ms = ?, p2_ms = ?, turn_started_ms = ? WHERE id = ?")
+        ->execute([$room['actions'], $room['p1_ms'], $room['p2_ms'], $now, $room['id']]);
+}
+
+function probe()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    $port = isset($_POST['port']) ? (int)$_POST['port'] : -1;
+    if (!$player || $port < 0 || $port >= PrismMineEngine::PORTS) {
+        respondError('invalid_request');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        [$room, $error, $commit] = lockForTurn($player, (int)($_POST['n'] ?? -1));
+        if ($error) {
+            $commit ? $pdo->commit() : $pdo->rollBack();
+            respondError($error);
+            return;
+        }
+        if (isset(usedPorts($room)[$port])) {
+            $pdo->rollBack();
+            respondError('port_used');
+            return;
+        }
+        $now = nowMs();
+        spendClock($room, $player['slot'], $now);
+        saveAction($room, ['s' => (int)$player['slot'], 't' => 'p', 'p' => $port], $now);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    $mine = PrismMineEngine::decode($room['mine']);
+    $res = PrismMineEngine::trace(PrismMineEngine::buildMap($mine), $mine, $port);
+    echo json_encode(['success' => true, 'exit' => $res['exit'], 'colors' => $res['colors']]);
+}
+
+function guess()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        [$room, $error, $commit] = lockForTurn($player, (int)($_POST['n'] ?? -1));
+        if ($error) {
+            $commit ? $pdo->commit() : $pdo->rollBack();
+            respondError($error);
+            return;
+        }
+        $hidden = PrismMineEngine::decode($room['mine']);
+        $answer = PrismMineEngine::decode($_POST['layout'] ?? '', count($hidden));
+        if (!$answer) {
+            $pdo->rollBack();
+            respondError('invalid_layout');
+            return;
+        }
+        $ok = PrismMineEngine::isCorrect($answer, $hidden);
+        $slot = (int)$player['slot'];
+        $now = nowMs();
+        spendClock($room, $slot, $now);
+        saveAction($room, ['s' => $slot, 't' => 'g', 'ok' => $ok], $now);
+        if ($ok) finishGame($room, $slot, 'solved');
+        else {
+            $strikes = count(array_filter(actionList($room), fn($a) => $a['t'] === 'g' && $a['s'] === $slot && !$a['ok']));
+            if ($strikes >= MAX_STRIKES) finishGame($room, other($slot), 'strikes');
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true, 'ok' => $ok]);
+}
+
+function cleanMessage($raw)
+{
+    if (!is_string($raw)) return '';
+    $text = preg_replace('/[\p{Cc}\p{Cf}]+/u', ' ', $raw) ?? '';
+    $text = trim(preg_replace('/\s+/u', ' ', $text) ?? '');
+    return mb_substr($text, 0, CHAT_MAX_LENGTH);
+}
+
+function formatMessage($row)
+{
+    return ['id' => (int)$row['id'], 'slot' => (int)$row['slot'], 'text' => $row['body']];
+}
+
+function chatMessages($roomId, $since)
+{
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT id, slot, body FROM pm_messages WHERE room_id = ? AND id > ? ORDER BY id DESC LIMIT " . CHAT_HISTORY);
+        $stmt->execute([$roomId, max(0, $since)]);
+        return array_map('formatMessage', array_reverse($stmt->fetchAll()));
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+function sendMessage()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    if ($player['room_status'] === 'waiting') {
+        respondError('not_started');
+        return;
+    }
+    $text = cleanMessage($_POST['text'] ?? '');
+    if ($text === '') {
+        respondError('empty_message');
+        return;
+    }
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM pm_messages WHERE room_id = ? AND slot = ? AND created_at > NOW() - INTERVAL 10 SECOND");
+    $stmt->execute([$player['room_id'], $player['slot']]);
+    if ((int)$stmt->fetchColumn() >= CHAT_BURST) {
+        respondError('too_fast');
+        return;
+    }
+    $pdo->prepare("INSERT INTO pm_messages (room_id, slot, body) VALUES (?, ?, ?)")->execute([$player['room_id'], $player['slot'], $text]);
+    $id = (int)$pdo->lastInsertId();
+    echo json_encode(['success' => true, 'message' => formatMessage(['id' => $id, 'slot' => $player['slot'], 'body' => $text])]);
+}
+
+function resign()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoom($player['room_id']);
+        if ($room['status'] !== 'playing') {
+            $pdo->commit();
+            respondError('game_not_active');
+            return;
+        }
+        finishGame($room, other($player['slot']), 'resign');
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true]);
+}
+
+function requestRematch()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoom($player['room_id']);
+        if ($room['status'] !== 'finished') {
+            $pdo->commit();
+            respondError('game_not_finished');
+            return;
+        }
+        $pdo->prepare("UPDATE pm_players SET wants_rematch = 1 WHERE id = ?")->execute([$player['id']]);
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM pm_players WHERE room_id = ? AND wants_rematch = 1 AND is_online = 1");
+        $stmt->execute([$room['id']]);
+        if ((int)$stmt->fetchColumn() >= 2) {
+            // A new mine, and the other captain starts
+            $ms = (int)$room['time_control'] * 1000;
+            $pdo->prepare("UPDATE pm_rooms SET status = 'playing', round = round + 1, first_slot = ?, mine = ?, actions = '[]', p1_ms = ?, p2_ms = ?, turn_started_ms = ?, result = NULL, reason = NULL WHERE id = ?")
+                ->execute([other($room['first_slot']), PrismMineEngine::encode(PrismMineEngine::generate($room['level'])), $ms, $ms, nowMs(), $room['id']]);
+            $pdo->prepare("UPDATE pm_players SET wants_rematch = 0 WHERE room_id = ?")->execute([$room['id']]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true]);
+}
+
+function claimWin()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoom($player['room_id']);
+        if ($room['status'] !== 'playing') {
+            $pdo->commit();
+            respondError('game_not_active');
+            return;
+        }
+        $stmt = $pdo->prepare("SELECT is_online, TIMESTAMPDIFF(SECOND, last_seen, NOW()) AS idle FROM pm_players WHERE room_id = ? AND slot = ?");
+        $stmt->execute([$room['id'], other($player['slot'])]);
+        $opp = $stmt->fetch();
+        if (!$opp || ($opp['is_online'] && (int)$opp['idle'] < ABANDON_SECONDS)) {
+            $pdo->commit();
+            respondError('cannot_claim');
+            return;
+        }
+        finishGame($room, (int)$player['slot'], 'abandon');
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true]);
+}
+
+function leaveRoom()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoom($player['room_id']);
+        $pdo->prepare("UPDATE pm_players SET is_online = 0 WHERE id = ?")->execute([$player['id']]);
+        if ($room && $room['status'] === 'playing') finishGame($room, other($player['slot']), 'abandon');
+        elseif ($room && $room['status'] === 'waiting') $pdo->prepare("UPDATE pm_rooms SET status = 'finished' WHERE id = ?")->execute([$room['id']]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true]);
+}

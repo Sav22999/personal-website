@@ -1680,6 +1680,20 @@
         return (location.hash.match(/^#\/invite\/([A-Za-z0-9]+)/) || [])[1] || '';
     }
 
+    /**
+     * After signing up: the account opens with the link of the email. The server gives the same answer
+     * when the address already has an account, so the text covers that case too.
+     */
+    function checkEmail(address) {
+        store.set('authMode', 'login');
+        renderAuth('login');
+        const s = sheet({
+            title: t('Confirm your email'),
+            body: [h('p.sheet-text', t('We sent a link to {email}: open it to activate your account and sign in. It may take a minute, check spam too. If you already have an account with this address, just sign in.', {email: address}))],
+            actions: [btn(t('Got it'), {onclick: () => s.close()})]
+        });
+    }
+
     function renderAuth(mode) {
         const pending = pendingInvite();
         mode = mode || (pending ? 'register' : store.get('authMode', 'login'));
@@ -1765,6 +1779,7 @@
                                 inviteCode: pending,
                                 acceptPrivacy: privacy.checked
                             }, {silentAuth: true}));
+                        if (d.checkEmail) return checkEmail(email.value.trim());
                         S.user = d.user;
                         afterLogin(pending);
                     } catch (ex) {

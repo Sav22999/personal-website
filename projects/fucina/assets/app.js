@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.20.0';
+    const VERSION = '1.21.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.21.0', date: '2026-11-11', it: ['20 nuovi corsi sull’intelligenza artificiale, dal base all’avanzato: fondamenti, prompt engineering, AI responsabile, matematica, machine learning, deep learning, API, RAG, agenti e MCP, MLOps e modelli locali', 'Corsi dedicati agli assistenti: ChatGPT, Claude, Gemini, Mistral (Le Chat e Vibe), Proton Lumo e DeepSeek', 'Nuova categoria AI nei filtri dei corsi', 'Nella barra laterale, accanto a Corsi, Giochi e Certificati, compare il loro numero'], en: ['20 new artificial intelligence courses, from basics to advanced: fundamentals, prompt engineering, responsible AI, maths, machine learning, deep learning, APIs, RAG, agents and MCP, MLOps and local models', 'Courses on the assistants: ChatGPT, Claude, Gemini, Mistral (Le Chat and Vibe), Proton Lumo and DeepSeek', 'New AI category in the course filters', 'In the sidebar, Courses, Games and Certificates now show how many there are']},
         {v: '1.20.0', date: '2026-11-10', it: ['6 nuovi corsi sui database: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) e MongoDB', 'Le risposte delle domande compaiono in ordine casuale (prima la giusta era quasi sempre la prima)', 'Portale admin: gli esercizi in SQL, Python, Rust e negli altri linguaggi non diventano più HTML quando li salvi'], en: ['6 new database courses: MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL) and MongoDB', 'Question options now appear in random order (the right one used to be almost always first)', 'Admin portal: exercises in SQL, Python, Rust and the other languages no longer turn into HTML when you save them']},
         {v: '1.19.4', date: '2026-11-09', it: ['Immagine del profilo ancora più personalizzabile: 26 nuovi personaggi, 27 accessori, 18 cornici e 21 nuovi sfondi', 'Sezione Certificati nella barra di navigazione e «Corsi» al posto di «Percorso»', 'Nel certificato il punteggio è in decimi, e con 10 su 10 il titolo è «Certificate of completion with honours»'], en: ['Even more profile picture options: 26 new characters, 27 accessories, 18 frames and 21 new backgrounds', 'Certificates section in the navigation bar and “Courses” instead of “Path”', 'On the certificate the score is out of 10, and with 10 of 10 the title is “Certificate of completion with honours”']},
         {v: '1.19.2', date: '2026-11-08', it: ['Ricerca corsi: selezione multipla delle chip per categorie e linguaggi'], en: ['Course search: multiple selection of category and language chips']},
@@ -52,7 +53,7 @@
 
     /** Names of the languages (course families) and what a course can be for. */
     const FAMILY_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
-        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
     const familyName = f => FAMILY_NAMES[f] ? t(FAMILY_NAMES[f]) : f.toUpperCase();
     /** The short label in the square badge of a course card. */
     const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA', mysql: 'MY', mariadb: 'MA', postgresql: 'PG', sqlite: 'SL', mssql: 'MS', mongodb: 'MG', ai: 'AI', ml: 'ML', dl: 'DL', prompt: 'PE', llm: 'LLM', assistants: 'AS'};
@@ -191,11 +192,15 @@
     }
 
     function sideNav(active) {
-        const link = (name, label, ic) => h('a.sn-link' + (active === name ? '.active' : ''), {href: '#/' + name, 'aria-current': active === name ? 'page' : null}, icon(ic), h('span', label));
+        // count: a small label after the name (how many courses and games there are, how many certificates are earned)
+        const link = (name, label, ic, count = null) => h('a.sn-link' + (active === name ? '.active' : ''), {href: '#/' + name, 'aria-current': active === name ? 'page' : null},
+            icon(ic), h('span', label), count === null ? null : h('b.sn-badge', {'aria-label': t('{n} items', {n: count})}, String(count)));
+        const st = S.state;
         return h('nav.sidenav', {'aria-label': t('Sections')},
             h('a.sn-brand', {href: '#/home'}, h('img', {src: LOGO, alt: ''}), h('strong', 'Fucina')),
             S.state ? gradeChip() : null,
-            h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Courses'), 'book'), link('games', t('Games'), 'game'), link('board', t('Ranking'), 'trophy'), link('certificates', t('Certificates'), 'cert'), link('stats', t('Stats'), 'stats')),
+            h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Courses'), 'book', st ? st.courses.length : null), link('games', t('Games'), 'game', st ? st.games.length : null),
+                link('board', t('Ranking'), 'trophy'), link('certificates', t('Certificates'), 'cert', st ? st.courses.filter(c => c.certificate).length : null), link('stats', t('Stats'), 'stats')),
             h('div.grow'),
             S.user.role >= 5 ? h('a.sn-link', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal'))) : null,
             h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm', myAvatar()), h('span', S.user.name)));
@@ -1543,6 +1548,20 @@
 
     // ---------------------------------------------------------------- sign in
 
+    /**
+     * After signing up: the account opens with the link of the email. The server gives the same answer
+     * when the address already has an account, so the text covers that case too.
+     */
+    function checkEmail(address) {
+        UI.store.set('authMode', 'login');
+        renderAuth('login');
+        const s = sheet({
+            title: t('Confirm your email'),
+            body: [h('p.sheet-text', t('We sent a link to {email}: open it to activate your account and sign in. It may take a minute, check spam too. If you already have an account with this address, just sign in.', {email: address}))],
+            actions: [btn(t('Got it'), {onclick: () => s.close()})]
+        });
+    }
+
     function renderAuth(mode) {
         mode = mode || UI.store.get('authMode', 'register');
         const err = h('div.err-box', {hidden: true});
@@ -1560,6 +1579,7 @@
                         const d = await busy(submit, () => mode === 'login'
                             ? Api.post('auth.login', {email: email.value, password: pw.value}, {silentAuth: true})
                             : Api.post('auth.register', {name: name.value, email: email.value, password: pw.value, acceptPrivacy: privacy.checked}, {silentAuth: true}));
+                        if (d.checkEmail) return checkEmail(email.value.trim());
                         S.user = d.user;
                         start();
                     } catch (ex) {

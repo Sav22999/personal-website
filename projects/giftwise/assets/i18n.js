@@ -291,6 +291,7 @@
             'Sign in with Google': 'Accedi con Google',
             'Sign out': 'Esci',
             'Confirm your email': 'Conferma la tua email',
+            'We sent a link to {email}: open it to activate your account and sign in. It may take a minute, check spam too. If you already have an account with this address, just sign in.': 'Abbiamo inviato un link a {email}: aprilo per attivare l’account e accedere. Può volerci un minuto, controlla anche lo spam. Se con questo indirizzo hai già un account, accedi e basta.',
             'We sent a link to {email}. Open it to start using your account: until then the account stays locked.': 'Abbiamo inviato un link a {email}. Aprilo per iniziare a usare il tuo account: fino ad allora l’account resta bloccato.',
             'I’ve confirmed it': 'L’ho confermata',
             'Send the link again': 'Invia di nuovo il link',

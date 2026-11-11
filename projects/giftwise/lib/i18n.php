@@ -33,7 +33,6 @@ function tr(string $en, array $vars = []): string
 function translations_it(): array
 {
     return [
-        'An account with this email already exists: sign in.' => 'Esiste già un account con questa email: accedi.',
         'Create your Giftwise account' => 'Crea il tuo account Giftwise',
         'Enter your name.' => 'Inserisci il tuo nome.',
         'Giftwise is not installed yet: open install-db.php.' => 'Giftwise non è ancora installato: apri install-db.php.',
@@ -63,7 +62,6 @@ function translations_it(): array
         'The password is too long.' => 'La password è troppo lunga.',
         'The password must be at least 8 characters long.' => 'La password deve avere almeno 8 caratteri.',
         'This Google token is not meant for Giftwise.' => 'Questo token Google non è destinato a Giftwise.',
-        'This account uses Google: sign in with “Continue with Google”.' => 'Questo account usa Google: accedi con «Continua con Google».',
         'This email is already used by another account.' => 'Questa email è già usata da un altro account.',
         'This invite link is not valid.' => 'Questo link d’invito non è valido.',
         'This is your own invite link: share it with your friends.' => 'È il tuo link d’invito: condividilo con i tuoi amici.',
@@ -78,7 +76,7 @@ function translations_it(): array
         'Unknown action.' => 'Azione sconosciuta.',
         'Unsupported Content-Type.' => 'Content-Type non supportato.',
         'Wish not found.' => 'Desiderio non trovato.',
-        'Wrong email or password.' => 'Email o password non corretti.',
+        'Wrong email or password. If you signed up with Google, use “Continue with Google”.' => 'Email o password non corretti. Se ti sei registrato con Google, usa «Continua con Google».',
         'You are already friends.' => 'Siete già amici.',
         'You reached the maximum number of lists (100).' => 'Hai raggiunto il numero massimo di liste (100).',
         'Your account has been disabled.' => 'Il tuo account è stato disabilitato.',

@@ -253,13 +253,20 @@ switch ($r) {
         validate_password($pw);
         $username = clean_username($b);
         if (empty($b['acceptPrivacy'])) fail('privacy_required', 422);
-        $st = db()->prepare('SELECT 1 FROM ' . t('users') . ' WHERE email = ?');
-        $st->execute([$email]);
-        if ($st->fetchColumn()) fail('email_taken', 409);
         record_attempt('register');
-        $id = new_user($name, $username, $email, password_hash($pw, PASSWORD_DEFAULT), null);
-        send_verification(user_row($id), mail_lang($b));
-        signed_in($id);
+        // The same answer whether the address is new or already registered, so nobody can find out who has an account:
+        // the account is used after opening the link of the email, which also signs in (auth.verify)
+        $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
+        $st->execute([$email]);
+        $row = $st->fetch();
+        $hash = password_hash($pw, PASSWORD_DEFAULT);
+        if (!$row) send_verification(user_row(new_user($name, $username, $email, $hash, null)), mail_lang($b));
+        elseif (empty($row['email_verified_at']) && $row['status'] === 'active' && !too_many_attempts('verify_mail', 3, 60)) {
+            // Whoever never confirmed the address gets the link again; whoever did just signs in
+            record_attempt('verify_mail');
+            send_verification($row, mail_lang($b));
+        }
+        send_json(['ok' => true, 'checkEmail' => true]);
 
     case 'auth.login':
         only('POST');
@@ -270,9 +277,10 @@ switch ($r) {
         $st = db()->prepare('SELECT * FROM ' . t('users') . ' WHERE email = ?');
         $st->execute([$email]);
         $row = $st->fetch();
-        if (!$row || $row['password_hash'] === '' || !password_verify($pw, $row['password_hash'])) {
+        // One answer for an unknown address, a wrong password and a Google-only account, in about the same time
+        $ok = $row && $row['password_hash'] !== '' ? password_verify($pw, $row['password_hash']) : password_hash($pw, PASSWORD_DEFAULT) === '';
+        if (!$ok) {
             record_attempt('login');
-            if ($row && $row['password_hash'] === '' && $row['google_sub']) fail('use_google', 401);
             fail('bad_credentials', 401);
         }
         if ($row['status'] !== 'active') fail('disabled', 403);

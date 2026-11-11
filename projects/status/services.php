@@ -111,6 +111,24 @@ return [
         ],
     ],
     [
+        'name' => 'Prism Mine',
+        'icon' => '/images/projects/prism-mine.png',
+        'url' => '/projects/prism-mine/',
+        'services' => [
+            ['id' => 'prism-mine-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/prism-mine/'],
+            ['id' => 'prism-mine-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'prism-mine', 'table' => 'pm_rooms'],
+        ],
+    ],
+    [
+        'name' => 'Sea Battle',
+        'icon' => '/images/projects/sea-battle.png',
+        'url' => '/projects/sea-battle/',
+        'services' => [
+            ['id' => 'sea-battle-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/sea-battle/'],
+            ['id' => 'sea-battle-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'sea-battle', 'table' => 'sb_rooms'],
+        ],
+    ],
+    [
         'name' => 'Connect Four',
         'icon' => '/images/projects/connect-four.png',
         'url' => '/projects/connect-four/',
@@ -135,6 +153,16 @@ return [
             ['id' => 'thinkhop-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/thinkhop/'],
             ['id' => 'thinkhop-db', 'name' => 'Accounts & rankings', 'type' => 'app-db', 'dir' => 'thinkhop', 'prefix' => 'th_'],
             ['id' => 'thinkhop-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:thinkhop'],
+        ],
+    ],
+    [
+        'name' => 'Forkville',
+        'icon' => '/images/projects/forkville.png?v=2',
+        'url' => '/projects/forkville/',
+        'services' => [
+            ['id' => 'forkville-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/forkville/'],
+            ['id' => 'forkville-db', 'name' => 'Accounts & restaurants', 'type' => 'app-db', 'dir' => 'forkville', 'prefix' => 'fv_'],
+            ['id' => 'forkville-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:forkville'],
         ],
     ],
 ];

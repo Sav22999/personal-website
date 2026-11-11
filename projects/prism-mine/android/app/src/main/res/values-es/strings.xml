@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Prism Mine</string>
+    <string name="offline_title">Sin conexión</string>
+    <string name="offline_text">Prism Mine necesita internet la primera vez y para los duelos en línea. Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="offline_retry">Reintentar</string>
+</resources>

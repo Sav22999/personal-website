@@ -57,7 +57,8 @@ foreach ($queries as $i => $sql) {
         $pdo->exec($sql);
         $results[] = 'Table ' . ($i + 1) . ' OK.';
     } catch (PDOException $e) {
-        $results[] = 'Table ' . ($i + 1) . ' error: ' . $e->getMessage();
+        error_log('[connect-four] setup: ' . $e->getMessage());
+        $results[] = 'Table ' . ($i + 1) . ' error (details in the server log).';
     }
 }
 

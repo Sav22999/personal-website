@@ -71,8 +71,8 @@ switch ($route) {
         only('POST');
         $u = register_user(request_body());
         send_json(['ok' => true, 'message' => mail_enabled()
-            ? 'Registrazione completata. Ti abbiamo inviato un link per confermare la tua email; poi un amministratore abiliterà il tuo account.'
-            : 'Registrazione completata. Potrai accedere quando un amministratore avrà abilitato il tuo account.', 'user' => $u], 201);
+            ? 'Registrazione ricevuta. Ti abbiamo inviato un link per confermare la tua email (controlla anche lo spam); poi un amministratore abiliterà il tuo account. Se con questo indirizzo hai già un account, accedi.'
+            : 'Registrazione ricevuta. Potrai accedere quando un amministratore avrà abilitato il tuo account. Se con questo indirizzo hai già un account, accedi.', 'user' => $u], 201);
 
     case 'auth.verify':
         only('POST');

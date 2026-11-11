@@ -1,5 +1,11 @@
 <?php
 header('Content-Type: application/json');
+// An unexpected error answers with a generic message: the details (SQL, paths) only go to the server log
+set_exception_handler(function (Throwable $e) {
+    error_log('[chess] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    if (!headers_sent()) http_response_code(500);
+    echo json_encode(['error' => 'Server error']);
+});
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/engine.php';
