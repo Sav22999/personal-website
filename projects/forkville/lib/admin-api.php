@@ -74,7 +74,7 @@ function admin_user_detail(int $id): array
         'ok' => true,
         'user' => admin_user_row($u),
         'restaurant' => $r ? [
-            'name' => $r['name'], 'coins' => $r['coins'], 'xp' => $r['xp'], 'level' => $r['level'], 'size' => $r['size'], 'popularity' => $r['popularity'],
+            'name' => $r['name'], 'coins' => $r['coins'], 'xp' => $r['xp'], 'level' => $r['level'], 'size' => $r['size'] . '×' . $r['depth'], 'popularity' => $r['popularity'],
             'stars' => stars_for($r['popularity']), 'served' => $r['served_total'], 'items' => count($r['layout']), 'staff' => $r['staff'], 'menu' => $r['menu'],
             'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null, 'friendRating' => $r['friend_n'] ? round($r['friend_sum'] / $r['friend_n'], 2) : null,
             'createdAt' => $r['created_at'], 'lastSeen' => $r['last_seen_at'],
@@ -130,12 +130,9 @@ function admin_catalog(): array
     $staff = [];
     $cur = staff_costs();
     foreach (STAFF as $role => $d) $staff[$role] = ['default' => ['base' => $d[0], 'step' => $d[1]], 'value' => ['base' => $cur[$role][0], 'step' => $cur[$role][1]]];
-    $sizes = [];
-    $cur = sizes();
-    foreach (SIZES as $i => $d) $sizes[(string)$d[0]] = ['default' => ['cost' => $d[1], 'level' => $d[2]], 'value' => ['cost' => $cur[$i][1], 'level' => $cur[$i][2]]];
     $rules = [];
     foreach (RULES as $k => [$def, $min, $max]) $rules[$k] = ['default' => $def, 'value' => rule($k), 'min' => $min, 'max' => $max];
-    return compact('items', 'dishes', 'crops', 'market', 'staff', 'sizes', 'rules');
+    return compact('items', 'dishes', 'crops', 'market', 'staff', 'rules');
 }
 
 /** Field limits: name => [min, max, is_float] */
@@ -179,7 +176,6 @@ function save_catalog(array $admin, array $c): array
         'crops' => clean_changes((array)($c['crops'] ?? []), $pick('crops'), ['cost', 'secs', 'yield', 'level', 'enabled']),
         'market' => clean_changes((array)($c['market'] ?? []), $pick('market'), ['price', 'enabled']),
         'staff' => clean_changes((array)($c['staff'] ?? []), $pick('staff'), ['base', 'step']),
-        'sizes' => clean_changes((array)($c['sizes'] ?? []), $pick('sizes'), ['cost', 'level']),
         'rules' => [],
     ];
     foreach (RULES as $k => [$def, $min, $max]) {

@@ -53,10 +53,15 @@ CREATE TABLE IF NOT EXISTS `fv_attempts` (
 CREATE TABLE IF NOT EXISTS `fv_restaurants` (
     `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
     `name` VARCHAR(40) NOT NULL,
+    `kind` VARCHAR(16) NOT NULL DEFAULT 'generic',
     `coins` BIGINT NOT NULL DEFAULT 0,
     `xp` INT UNSIGNED NOT NULL DEFAULT 0,
     `level` TINYINT UNSIGNED NOT NULL DEFAULT 1,
     `size` TINYINT UNSIGNED NOT NULL DEFAULT 10,
+    `depth` TINYINT UNSIGNED NOT NULL DEFAULT 10,
+    `parking` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `instance` VARCHAR(24) NULL,
+    `floors` VARCHAR(200) NULL,
     `floor` VARCHAR(30) NOT NULL DEFAULT 'floor_oak',
     `wall` VARCHAR(30) NOT NULL DEFAULT 'wall_cream',
     `layout` MEDIUMTEXT NOT NULL,
@@ -66,6 +71,10 @@ CREATE TABLE IF NOT EXISTS `fv_restaurants` (
     `finishes` VARCHAR(600) NOT NULL DEFAULT '["floor_oak","wall_cream"]',
     `wish` VARCHAR(20) NULL,
     `status` ENUM('open','paused','closed') NOT NULL DEFAULT 'open',
+    `paid_day` DATE NULL,
+    `closed_from` DATETIME NULL,
+    `closed_secs` INT UNSIGNED NOT NULL DEFAULT 0,
+    `game_minutes` BIGINT UNSIGNED NOT NULL DEFAULT 540,
     `popularity` INT UNSIGNED NOT NULL DEFAULT 10,
     `rating_sum` INT UNSIGNED NOT NULL DEFAULT 0,
     `rating_n` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -131,6 +140,7 @@ CREATE TABLE IF NOT EXISTS `fv_visits` (
     `host_id` INT UNSIGNED NOT NULL,
     `day` DATE NOT NULL,
     `rating` TINYINT UNSIGNED NULL,
+    `tip` INT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`user_id`, `host_id`, `day`),
     KEY `ix_host` (`host_id`, `day`),
     CONSTRAINT `fk_fv_vis_user` FOREIGN KEY (`user_id`) REFERENCES `fv_users` (`id`) ON DELETE CASCADE,
@@ -164,6 +174,17 @@ CREATE TABLE IF NOT EXISTS `fv_reviews` (
     CONSTRAINT `fk_fv_rev_user` FOREIGN KEY (`user_id`) REFERENCES `fv_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `fv_ledger` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `kind` VARCHAR(24) NOT NULL,
+    `amount` INT NOT NULL,
+    `detail` VARCHAR(120) NOT NULL DEFAULT '',
+    `created_at` DATETIME NOT NULL,
+    KEY `ix_user_time` (`user_id`, `created_at`),
+    CONSTRAINT `fk_fv_led_user` FOREIGN KEY (`user_id`) REFERENCES `fv_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `fv_settings` (
     `k` VARCHAR(40) NOT NULL PRIMARY KEY,
     `v` MEDIUMTEXT NOT NULL,
@@ -190,4 +211,4 @@ CREATE TABLE IF NOT EXISTS `fv_weekly` (
     CONSTRAINT `fk_fv_wk_user` FOREIGN KEY (`user_id`) REFERENCES `fv_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fv_meta` (k, v) VALUES ('schema_version', '4') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fv_meta` (k, v) VALUES ('schema_version', '12') ON DUPLICATE KEY UPDATE v = VALUES(v);

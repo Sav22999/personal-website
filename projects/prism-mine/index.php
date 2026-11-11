@@ -1,6 +1,6 @@
 <?php
 $description = 'Prism Mine: a free deduction game. Send beams of light into a dark mine, watch where they come out and in which colour, and work out where the gems are hidden. Solo, daily mine and online duels. No sign-up.';
-$v = 4;
+$v = 9;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';
@@ -181,7 +181,7 @@ $levelChips = function ($name, $default) {
                         <div class="mode-card" id="card-create">
                             <div class="mode-head">
                                 <div class="mode-icon"><?= $icon('<path d="M12 5v14M5 12h14"/>', 22) ?></div>
-                                <div><h3 data-i18n="create_title">Duel a friend</h3><p data-i18n="create_desc">Same mine for both, one beam each per turn: the first right answer wins.</p></div>
+                                <div><h3 data-i18n="create_title">Duel a friend</h3><p data-i18n="create_desc">Each of you hides the gems in your own mine, then you take turns finding the other: the first right answer wins.</p></div>
                             </div>
                             <div class="field"><span class="field-label" data-i18n="level_label">Level</span><?= $levelChips('online-level', 'medium') ?></div>
                             <div class="field">
@@ -273,7 +273,17 @@ $levelChips = function ($name, $default) {
         <div class="game-body">
             <section class="board-zone">
                 <div class="board-wrap">
-                    <svg class="mine-board" id="mine-board" viewBox="0 0 100 100" role="group" data-i18n-aria="board_label"></svg>
+                    <div class="view-tabs hidden" id="view-tabs" role="tablist">
+                        <button type="button" role="tab" data-view="target" data-i18n="view_target">Their mine</button>
+                        <button type="button" role="tab" data-view="mine" data-i18n="view_mine">Your mine</button>
+                    </div>
+                    <div class="board-stage">
+                        <svg class="mine-board" id="mine-board" viewBox="0 0 100 100" role="group" data-i18n-aria="board_label"></svg>
+                        <div class="gem-toolbar hidden" id="gem-toolbar">
+                            <button type="button" id="btn-gem-rotate" data-i18n-title="rotate"><?= $icon($ICON_ROTATE, 20, 2.4) ?></button>
+                            <button type="button" id="btn-gem-remove" data-i18n-title="remove_gem"><?= $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4) ?></button>
+                        </div>
+                    </div>
                 </div>
                 <div class="draft-bar">
                     <div class="example-card hidden" id="example-card" aria-live="polite">
@@ -287,10 +297,13 @@ $levelChips = function ($name, $default) {
                     <ul class="tray" id="tray" data-i18n-aria="gems_label"></ul>
                     <div class="draft-tools">
                         <button type="button" class="btn btn-secondary" id="btn-rotate"><?= $icon($ICON_ROTATE, 18, 2.2) ?><span data-i18n="rotate">Rotate</span></button>
+                        <button type="button" class="btn btn-secondary hidden" id="btn-random-place" data-i18n="random_place">Random</button>
                         <button type="button" class="btn btn-ghost" id="btn-clear" data-i18n="clear_sketch">Clear sketch</button>
                         <button type="button" class="btn btn-primary" id="btn-answer" disabled><span data-i18n="answer">Submit answer</span></button>
                     </div>
                     <p class="sketch-status muted" id="sketch-status"></p>
+                    <p class="place-countdown hidden" id="place-countdown" aria-live="off"></p>
+                    <p class="place-tip muted" id="place-tip" data-i18n="place_tip">Drag the gems onto the mine. Tap a gem to rotate or remove it; drag it out to put it back.</p>
                 </div>
             </section>
 

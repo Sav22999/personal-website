@@ -103,6 +103,13 @@ function signed_in(int $uid): void
 }
 
 /** Runs a change on the player's restaurant inside a transaction, then answers with the new state. */
+/** The copy of the game (browser tab or device) sending this request: the app makes up an id each time it opens. */
+function client_instance(): string
+{
+    $i = (string)($_SERVER['HTTP_X_INSTANCE'] ?? '');
+    return preg_match('/^[a-z0-9]{8,24}$/', $i) ? $i : '';
+}
+
 function mutate(array $u, callable $fn): void
 {
     global $r;
@@ -111,6 +118,12 @@ function mutate(array $u, callable $fn): void
     if (!$rest) {
         db()->rollBack();
         fail('no_restaurant', 409);
+    }
+    // Only one copy of the game plays at a time: the last one opened. An older tab gets told to step aside.
+    $inst = client_instance();
+    if ($inst !== '' && !empty($rest['instance']) && $rest['instance'] !== $inst) {
+        db()->rollBack();
+        fail('other_instance', 409);
     }
     $before = $rest['coins'];
     $extra = $fn($rest) ?: [];
@@ -131,6 +144,9 @@ function ledger_detail(string $route, $extra, array $b): string
         case 'game.market': return (string)($b['ing'] ?? '') . '|' . (int)($b['qty'] ?? 1);
         case 'game.plant': return (string)($b['crop'] ?? '');
         case 'game.expand': return (string)($extra['size'] ?? '');
+        case 'game.parking': return (string)($extra['parking'] ?? '');
+        case 'game.floor': return (string)($extra['floor'] ?? '');
+        case 'game.door': return (string)($extra['style'] ?? '');
         case 'game.promote': return (string)($extra['rank'] ?? '');
         case 'game.kind': return (string)($extra['kind'] ?? '');
         default: return '';
@@ -312,6 +328,7 @@ switch ($r) {
         if (!load_restaurant($u['id'])) create_restaurant($u);
         db()->beginTransaction();
         $rest = load_restaurant($u['id'], true);
+        if (client_instance() !== '') $rest['instance'] = client_instance(); // opening the game here makes this the copy that plays
         $away = apply_offline($rest);
         $wages = pay_wages($rest); // salaries of the days that ended since the last visit
         save_restaurant($rest);
@@ -355,7 +372,8 @@ switch ($r) {
             foreach ($rest['staff'] as $s) $id = max($id, (int)$s['id'] + 1);
             $c = $list[$idx];
             $new = ['id' => $id, 'role' => $role, 'name' => $c['name'], 'color' => $c['color'], 'trait' => $c['trait'], 'skills' => $c['skills'],
-                'outfit' => 'default', 'hair' => $c['hair'] ?? 'short', 'hairColor' => $c['hairColor'] ?? HAIR_COLORS[0]];
+                'outfit' => 'default', 'hair' => $c['hair'] ?? 'short', 'hairColor' => $c['hairColor'] ?? HAIR_COLORS[0],
+                'glasses' => $c['glasses'] ?? 'none', 'facial' => $c['facial'] ?? 'none', 'headwear' => 'none'];
             if ($role === 'manager') $new['rank'] = 1;
             $rest['staff'][] = $new;
             array_splice($list, $idx, 1);
@@ -421,6 +439,12 @@ switch ($r) {
                     $st['hair'] = $hair;
                     $st['hairColor'] = $color;
                 }
+                foreach (ACCESSORIES as $slot => $options) {
+                    if (!isset($b[$slot]) || (string)$b[$slot] === ($st[$slot] ?? 'none')) continue;
+                    if (!in_array((string)$b[$slot], $options, true)) fail('bad_request', 422);
+                    $cost += ACCESSORY_PRICE;
+                    $st[$slot] = (string)$b[$slot];
+                }
                 spend_coins($rest, $cost);
                 return ['spent' => $cost];
             }
@@ -445,23 +469,101 @@ switch ($r) {
 
     case 'game.expand':
         $u = writer();
-        mutate($u, function (array &$rest) {
-            foreach (sizes() as [$side, $cost, $lvl]) {
-                if ($side <= $rest['size']) continue;
-                if ($lvl > $rest['level']) fail('level_locked', 422);
-                spend_coins($rest, $cost);
-                // The terrace and the yard move out with the walls
-                $grow = $side - $rest['size'];
-                foreach ($rest['layout'] as &$it) {
-                    if ((items()[$it['k']][0] ?? '') !== 'outdoor') continue;
-                    if ($it['z'] >= $rest['size']) $it['z'] += $grow;
-                    if ($it['x'] >= $rest['size']) $it['x'] += $grow;
+        $dir = (string)(body()['dir'] ?? '');
+        $fl = (int)(body()['floor'] ?? 0);
+        if ($dir !== 'col' && $dir !== 'row') fail('bad_request', 422);
+        mutate($u, function (array &$rest) use ($dir, $fl) {
+            if ($fl > 0) {
+                // An upper floor grows within the floor below it: to the right, or to the left when the right is full
+                $f = $rest['floors'][$fl - 1] ?? null;
+                if (!$f) fail('not_found', 404);
+                [$fw, $fd, $x0] = $f;
+                $below = floor_rect($fl - 1, $rest['size'], $rest['depth'], $rest['floors']);
+                if ($dir === 'row') {
+                    if ($fd + 1 > $below[2]) fail('floor_below', 422);
+                    if ($fd >= max_side($rest['level'])) fail('level_locked', 422);
+                    $fd++;
+                } else {
+                    if ($fw >= max_side($rest['level'])) fail('level_locked', 422);
+                    if ($x0 + $fw + 1 <= $below[0] + $below[1]) $fw++;
+                    elseif ($x0 - 1 >= $below[0]) {
+                        $x0--;
+                        $fw++;
+                    } else fail('floor_below', 422);
                 }
-                unset($it);
-                $rest['size'] = $side;
-                return ['size' => $side];
+                spend_coins($rest, (int)round(expand_cost($f[0], $f[1], $dir) * 0.8));
+                $rest['floors'][$fl - 1] = [$fw, $fd, $x0];
+                return ['size' => "$fw×$fd", 'dir' => $dir, 'floor' => $fl];
             }
-            fail('max_size', 422);
+            $w = $rest['size'];
+            $d = $rest['depth'];
+            if (($dir === 'col' ? $w : $d) >= max_side($rest['level'])) fail(($dir === 'col' ? $w : $d) >= MAX_SIDE ? 'max_size' : 'level_locked', 422);
+            spend_coins($rest, expand_cost($w, $d, $dir));
+            if ($dir === 'row') {
+                // A new row at the front: the front wall, the door and the terrace move out towards the street
+                foreach ($rest['layout'] as &$it) if ((items()[$it['k']][0] ?? '') === 'outdoor' && $it['z'] >= $d) $it['z']++;
+                unset($it);
+                $rest['depth'] = $d + 1;
+            } else {
+                // A new column on the right (the door stays where it is); the east yard moves out
+                foreach ($rest['layout'] as &$it) if ((items()[$it['k']][0] ?? '') === 'outdoor' && $it['x'] >= $w) $it['x']++;
+                unset($it);
+                $rest['size'] = $w + 1;
+            }
+            return ['size' => $rest['size'] . '×' . $rest['depth'], 'dir' => $dir];
+        });
+
+    case 'game.floor':
+        // A new storey: small at first, at the back left of the floor below
+        $u = writer();
+        mutate($u, function (array &$rest) {
+            $next = count($rest['floors']) + 1;
+            if (!isset(FLOORS[$next])) fail('max_size', 422);
+            if (FLOORS[$next][0] > $rest['level']) fail('level_locked', 422);
+            $below = floor_rect($next - 1, $rest['size'], $rest['depth'], $rest['floors']);
+            spend_coins($rest, FLOORS[$next][1]);
+            $rest['floors'][] = [min(FLOOR_START, $below[1]), min(FLOOR_START, $below[2]), $below[0]];
+            return ['floor' => $next];
+        });
+
+    case 'game.door':
+        // Move the door along the front wall and/or give it another style
+        $u = writer();
+        $b = body();
+        mutate($u, function (array &$rest) use ($b) {
+            $cost = 0;
+            if (isset($b['style']) && $b['style'] !== $rest['door_style']) {
+                $st = (string)$b['style'];
+                if (!isset(DOORS[$st])) fail('bad_request', 422);
+                if (DOORS[$st][1] > $rest['level']) fail('level_locked', 422);
+                $cost += DOORS[$st][0];
+                $rest['door_style'] = $st;
+            }
+            if (isset($b['x']) && (int)$b['x'] !== $rest['door']) {
+                $x = (int)$b['x'];
+                if ($x < 1 || $x > $rest['size'] - 2) fail('door_spot', 422); // not in a corner
+                // The tile inside and the path outside must be free (rugs may stay)
+                foreach ($rest['layout'] as $it) {
+                    $cat = items()[$it['k']][0] ?? '';
+                    if ($cat === 'rug' || ($it['f'] ?? 0)) continue;
+                    foreach (footprint($it) as [$tx, $tz]) if ($tx === $x && ($tz === $rest['depth'] - 1 || ($cat === 'outdoor' && $tz >= $rest['depth']))) fail('door_spot', 422);
+                }
+                $cost += DOOR_MOVE;
+                $rest['door'] = $x;
+            }
+            spend_coins($rest, $cost);
+            return ['door' => $rest['door'], 'style' => $rest['door_style']];
+        });
+
+    case 'game.parking':
+        $u = writer();
+        mutate($u, function (array &$rest) {
+            $next = ($rest['parking'] ?? 0) + 1;
+            if (!isset(PARKING[$next])) fail('max_size', 422);
+            if (PARKING[$next][1] > $rest['level']) fail('level_locked', 422);
+            spend_coins($rest, PARKING[$next][0]);
+            $rest['parking'] = $next;
+            return ['parking' => $next];
         });
 
     case 'game.rename':
@@ -643,6 +745,12 @@ switch ($r) {
         $f = require_friend($u, (string)($b['username'] ?? ''));
         rate_visit($u['id'], $f['id'], (int)($b['stars'] ?? 0));
         send_json(['ok' => true]);
+
+    case 'social.tip':
+        $u = writer();
+        $b = body();
+        $f = require_friend($u, (string)($b['username'] ?? ''));
+        send_json(['ok' => true] + tip_friend($u['id'], $f['id'], (int)($b['coins'] ?? 0)));
 
     case 'social.gift':
         $u = writer();

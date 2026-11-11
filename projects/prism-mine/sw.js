@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const CACHE = 'pm-4';
+const CACHE = 'pm-9';
 const FILES = ['./', 'theme.js', 'style.css', 'i18n.js', 'engine.js', 'rules.js', 'releases.js', 'game.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'fonts/fredoka-latin.woff2', 'fonts/fredoka-latin-ext.woff2', 'fonts/nunito-latin.woff2', 'fonts/nunito-latin-ext.woff2'];
 
 self.addEventListener('install', event => {

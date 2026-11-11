@@ -68,6 +68,12 @@ function schema_statements(string $p): array
             `xp` INT UNSIGNED NOT NULL DEFAULT 0,
             `level` TINYINT UNSIGNED NOT NULL DEFAULT 1,
             `size` TINYINT UNSIGNED NOT NULL DEFAULT 10,
+            `depth` TINYINT UNSIGNED NOT NULL DEFAULT 10,
+            `parking` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+            `instance` VARCHAR(24) NULL,
+            `floors` VARCHAR(200) NULL,
+            `door` TINYINT UNSIGNED NULL,
+            `door_style` VARCHAR(20) NOT NULL DEFAULT 'wood',
             `floor` VARCHAR(30) NOT NULL DEFAULT 'floor_oak',
             `wall` VARCHAR(30) NOT NULL DEFAULT 'wall_cream',
             `layout` MEDIUMTEXT NOT NULL,
@@ -80,6 +86,7 @@ function schema_statements(string $p): array
             `paid_day` DATE NULL,
             `closed_from` DATETIME NULL,
             `closed_secs` INT UNSIGNED NOT NULL DEFAULT 0,
+            `game_minutes` BIGINT UNSIGNED NOT NULL DEFAULT 540,
             `popularity` INT UNSIGNED NOT NULL DEFAULT 10,
             `rating_sum` INT UNSIGNED NOT NULL DEFAULT 0,
             `rating_n` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -142,6 +149,7 @@ function schema_statements(string $p): array
             `host_id` INT UNSIGNED NOT NULL,
             `day` DATE NOT NULL,
             `rating` TINYINT UNSIGNED NULL,
+            `tip` INT UNSIGNED NOT NULL DEFAULT 0,
             PRIMARY KEY (`user_id`, `host_id`, `day`),
             KEY `ix_host` (`host_id`, `day`),
             " . $user('vis_user') . ",
@@ -233,6 +241,24 @@ function install_schema(PDO $pdo, string $prefix): void
     // Version 8: time spent closed (the staff go home and are not paid)
     $st->execute([$prefix . 'restaurants', 'closed_secs']);
     if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `closed_from` DATETIME NULL AFTER `paid_day`, ADD COLUMN `closed_secs` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `closed_from`");
+    // Version 9: the restaurant's own calendar (game minutes since it opened: year 0, 1 March, 09:00)
+    $st->execute([$prefix . 'restaurants', 'game_minutes']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `game_minutes` BIGINT UNSIGNED NOT NULL DEFAULT 540 AFTER `closed_secs`");
+    // Version 10: rooms grow by rows and columns (width = size, depth), the car park, tips between friends
+    $st = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $st->execute([$prefix . 'restaurants', 'depth']);
+    if (!(int)$st->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `depth` TINYINT UNSIGNED NOT NULL DEFAULT 10 AFTER `size`, ADD COLUMN `parking` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `depth`");
+        $pdo->exec("UPDATE `{$prefix}restaurants` SET depth = size");
+    }
+    $st->execute([$prefix . 'restaurants', 'instance']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `instance` VARCHAR(24) NULL AFTER `parking`"); // the one open copy of the game
+    $st->execute([$prefix . 'restaurants', 'floors']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `floors` VARCHAR(200) NULL AFTER `instance`"); // version 12: upper floors
+    $st->execute([$prefix . 'restaurants', 'door']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `door` TINYINT UNSIGNED NULL AFTER `floors`, ADD COLUMN `door_style` VARCHAR(20) NOT NULL DEFAULT 'wood' AFTER `door`"); // version 13: the door moves
+    $st->execute([$prefix . 'visits', 'tip']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}visits` ADD COLUMN `tip` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `rating`");
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);
 }

@@ -132,7 +132,7 @@ const SEED_TASK_HINTS = [
     'css-advanced/variables' => ":root { --brand: #E8590C; }\n.card { color: var(--brand); }",
     'css-advanced/motion' => ".card { transition: transform .2s; }\n.card:hover { transform: scale(1.05); }",
     'scss/intro' => "\$brand: #E8590C;\n.titolo { color: \$brand; }",
-    'scss/nesting' => "a {\n  &:hover { color: red; }\n}",
+    'scss/nesting' => ".card {\n  a {\n    &:hover { color: red; }\n  }\n}",
     'scss/mixins' => "@mixin ombra(\$colore) {\n  box-shadow: 0 2px 8px \$colore;\n}\n.card { @include ombra(gray); }",
     'scss/modules' => "@use \"colori\";\n@each \$nome, \$tinta in \$temi {\n  .avviso-#{\$nome} { color: \$tinta; }\n}",
     'sass/indented' => ".titolo\n  color: red",
@@ -141,13 +141,16 @@ const SEED_TASK_HINTS = [
 
 /** Courses of the first installation, in display order. */
 const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'tailwind',
-    'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate',
-    'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'java-base', 'java-intermediate', 'java-advanced',
+    'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate', 'react-base', 'react-intermediate', 'nextjs', 'node-base',
+    'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'python-pandas', 'java-base', 'java-intermediate', 'java-advanced',
     'sql-base', 'sql-intermediate', 'sql-advanced', 'mysql', 'mariadb', 'postgresql', 'sqlite', 'mssql', 'mongodb', 'r-base', 'r-intermediate',
     'flutter-base', 'flutter-intermediate', 'swift-base', 'swift-intermediate', 'kotlin-base', 'kotlin-intermediate',
     'rust-base', 'rust-intermediate', 'rust-advanced', 'vala-base', 'vala-intermediate',
     'ai-base', 'prompt-base', 'ai-ethics', 'ai-math', 'ml-base', 'ml-intermediate', 'dl-base', 'prompt-advanced', 'llm-api',
-    'dl-advanced', 'rag', 'ai-agents', 'mlops', 'local-llm', 'chatgpt', 'claude', 'gemini', 'mistral', 'lumo', 'deepseek'];
+    'dl-advanced', 'rag', 'ai-agents', 'mlops', 'local-llm', 'chatgpt', 'claude', 'gemini', 'mistral', 'lumo', 'deepseek',
+    'github-copilot', 'ms-copilot', 'perplexity', 'ai-editors', 'huggingface', 'genmedia', 'grok', 'meta-ai', 'qwen', 'apple-intelligence',
+    'git', 'bash', 'docker', 'kubernetes', 'cloud-base', 'go-base', 'csharp-base', 'c-base', 'cpp-base', 'testing', 'design-patterns', 'regex',
+    'api-design', 'redis', 'algorithms', 'web-security', 'security-basics', 'a11y', 'excel', 'powerbi'];
 
 /**
  * What each course is for, to filter the catalogue. A course file may set its own 'categories'; otherwise its family decides.
@@ -158,6 +161,10 @@ const FAMILY_CATEGORIES = [
     'php' => ['backend'], 'python' => ['backend', 'data'], 'java' => ['backend', 'mobile', 'desktop'], 'sql' => ['data', 'backend'], 'r' => ['data'],
     'mysql' => ['data', 'backend'], 'mariadb' => ['data', 'backend'], 'postgresql' => ['data', 'backend'], 'sqlite' => ['data', 'mobile', 'desktop'], 'mssql' => ['data', 'backend'], 'mongodb' => ['data', 'backend'],
     'ai' => ['ai'], 'ml' => ['ai', 'data'], 'dl' => ['ai', 'data'], 'prompt' => ['ai'], 'llm' => ['ai', 'backend'], 'assistants' => ['ai'],
+    'react' => ['frontend'], 'next' => ['frontend', 'backend'], 'node' => ['backend'], 'git' => ['devops'], 'bash' => ['devops', 'systems'], 'go' => ['backend', 'systems'],
+    'csharp' => ['backend', 'desktop'], 'c' => ['systems'], 'cpp' => ['systems', 'desktop'], 'docker' => ['devops'], 'kubernetes' => ['devops'], 'cloud' => ['devops', 'backend'],
+    'testing' => ['frontend', 'backend'], 'patterns' => ['backend', 'frontend'], 'regex' => ['backend', 'frontend'], 'security' => ['security'], 'a11y' => ['frontend'],
+    'api' => ['backend'], 'redis' => ['data', 'backend'], 'algorithms' => ['backend', 'systems'], 'excel' => ['productivity', 'data'], 'powerbi' => ['productivity', 'data'],
     'flutter' => ['mobile', 'desktop'], 'swift' => ['mobile', 'desktop'], 'kotlin' => ['mobile', 'backend'],
     'rust' => ['systems', 'backend'], 'vala' => ['desktop', 'systems'],
 ];
@@ -173,14 +180,75 @@ function seed_course_ids(): array
     return array_values(array_filter(SEED_COURSES, fn($id) => is_file(__DIR__ . '/seed/' . $id . '.php')));
 }
 
-/** A course of the catalogue, with the levels added to it after its first version. */
-function seed_course(string $id): array
+/** A course of the catalogue, with the levels added to it after its first version and the corrections of lib/seed/fixes.php. */
+function seed_course(string $id, bool $fixed = true): array
 {
     static $extra = null;
     $extra = $extra ?? require __DIR__ . '/seed/extra-levels.php';
     $c = require __DIR__ . '/seed/' . $id . '.php';
     $c['lessons'] = array_merge($c['lessons'], $extra[$id] ?? []);
+    return $fixed ? seed_apply_fixes($id, $c) : $c;
+}
+
+/** Corrections laid over the course files: rewritten distractors and less rigid exercise checks. */
+function seed_fixes(): array
+{
+    static $fixes = null;
+    return $fixes ??= is_file(__DIR__ . '/seed/fixes.php') ? require __DIR__ . '/seed/fixes.php' : ['options' => [], 'checks' => []];
+}
+
+function seed_apply_fixes(string $id, array $c): array
+{
+    $fixes = seed_fixes();
+    foreach ($c['lessons'] as &$l) {
+        foreach ($l['quiz'] as &$q) {
+            foreach ($fixes['options']["$id/{$l['id']}/{$q['id']}"] ?? [] as $i => $option) $q['options'][$i] = $option;
+        }
+        unset($q);
+        if ($l['task'] && isset($fixes['checks']["$id/{$l['id']}"])) $l['task']['checks'] = $fixes['checks']["$id/{$l['id']}"];
+    }
+    unset($l);
     return $c;
+}
+
+/**
+ * Version 20: the corrections reach the installations made before them. A question or an exercise is updated only
+ * while it is still exactly as the catalogue first installed it, so what was edited in the portal stays.
+ */
+function install_seed_fixes_v20(PDO $pdo, string $p): void
+{
+    $fixes = seed_fixes();
+    $courses = [];
+    foreach ([...array_keys($fixes['options']), ...array_keys($fixes['checks'])] as $key) $courses[explode('/', $key)[0]] = true;
+    $j = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $lesson = $pdo->prepare("SELECT id, task FROM `{$p}lessons` WHERE course = ? AND slug = ?");
+    $question = $pdo->prepare("SELECT id, options FROM `{$p}questions` WHERE lesson_id = ? AND sort = ?");
+    $setOptions = $pdo->prepare("UPDATE `{$p}questions` SET options = ? WHERE id = ?");
+    $setTask = $pdo->prepare("UPDATE `{$p}lessons` SET task = ? WHERE id = ?");
+    foreach (array_intersect(array_keys($courses), seed_course_ids()) as $id) {
+        $raw = seed_course($id, false);
+        $fixed = seed_course($id);
+        foreach ($raw['lessons'] as $li => $l) {
+            $lesson->execute([$id, $l['id']]);
+            $row = $lesson->fetch(PDO::FETCH_ASSOC);
+            if (!$row) continue;
+            foreach ($l['quiz'] as $qi => $q) {
+                if (!isset($fixes['options']["$id/{$l['id']}/{$q['id']}"])) continue;
+                $question->execute([$row['id'], $qi + 1]);
+                $saved = $question->fetch(PDO::FETCH_ASSOC);
+                if ($saved && json_decode((string)$saved['options'], true) == $q['options']) {
+                    $setOptions->execute([$j($fixed['lessons'][$li]['quiz'][$qi]['options']), $saved['id']]);
+                }
+            }
+            if ($l['task'] && $row['task'] && isset($fixes['checks']["$id/{$l['id']}"])) {
+                $task = json_decode((string)$row['task'], true);
+                if (is_array($task) && ($task['checks'] ?? null) == $l['task']['checks']) {
+                    $task['checks'] = $fixed['lessons'][$li]['task']['checks'];
+                    $setTask->execute([$j($task), $row['id']]);
+                }
+            }
+        }
+    }
 }
 
 /** Base difficulty of a course (1 easy, 2 medium, 3 hard): the second half of a course is one step harder. */
@@ -191,7 +259,11 @@ const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' 
     'flutter-base' => 1, 'flutter-intermediate' => 2, 'swift-base' => 1, 'swift-intermediate' => 2, 'kotlin-base' => 1, 'kotlin-intermediate' => 2,
     'rust-base' => 1, 'rust-intermediate' => 2, 'rust-advanced' => 3, 'vala-base' => 1, 'vala-intermediate' => 2,
     'ai-base' => 1, 'prompt-base' => 1, 'ai-ethics' => 1, 'ai-math' => 1, 'ml-base' => 2, 'ml-intermediate' => 2, 'dl-base' => 2, 'prompt-advanced' => 2, 'llm-api' => 2,
-    'dl-advanced' => 3, 'rag' => 3, 'ai-agents' => 3, 'mlops' => 3, 'local-llm' => 3, 'chatgpt' => 1, 'claude' => 1, 'gemini' => 1, 'mistral' => 1, 'lumo' => 1, 'deepseek' => 1];
+    'dl-advanced' => 3, 'rag' => 3, 'ai-agents' => 3, 'mlops' => 3, 'local-llm' => 3, 'chatgpt' => 1, 'claude' => 1, 'gemini' => 1, 'mistral' => 1, 'lumo' => 1, 'deepseek' => 1,
+    'react-base' => 2, 'react-intermediate' => 2, 'nextjs' => 3, 'node-base' => 2, 'python-pandas' => 2,
+    'github-copilot' => 1, 'ms-copilot' => 1, 'perplexity' => 1, 'ai-editors' => 2, 'huggingface' => 2, 'genmedia' => 1, 'grok' => 1, 'meta-ai' => 1, 'qwen' => 1, 'apple-intelligence' => 1,
+    'git' => 1, 'bash' => 1, 'docker' => 2, 'kubernetes' => 3, 'cloud-base' => 1, 'go-base' => 1, 'csharp-base' => 1, 'c-base' => 2, 'cpp-base' => 2, 'testing' => 2, 'design-patterns' => 2, 'regex' => 1,
+    'api-design' => 2, 'redis' => 2, 'algorithms' => 2, 'web-security' => 2, 'security-basics' => 1, 'a11y' => 1, 'excel' => 1, 'powerbi' => 1];
 
 /**
  * Version 12: what was "PHP advanced" becomes "PHP intermediate" (same lessons, same progress and certificates),

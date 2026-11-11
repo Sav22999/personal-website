@@ -13,6 +13,10 @@ class PrismMineEngine
         'slab' => [[0, 0, 'SE'], [0, 1, 'NW']],
         'pyramid' => [[0, 1, 'SE'], [1, 0, 'SE'], [1, 1, 'S']],
         'diamond' => [[0, 0, 'SE'], [0, 1, 'SW'], [1, 0, 'NE'], [1, 1, 'NW']],
+        'rod' => [[0, 0, 'S'], [0, 1, 'S']],
+        'peak' => [[0, 0, 'SE'], [0, 1, 'SW']],
+        'corner' => [[0, 0, 'S'], [1, 0, 'S'], [1, 1, 'S']],
+        'bridge' => [[0, 0, 'SE'], [0, 1, 'S'], [0, 2, 'SW']],
     ];
     public const COLORS = ['R', 'Y', 'B', 'W', 'C', 'K'];
     private const FILLED = ['NE' => [0, 1], 'SE' => [1, 2], 'SW' => [2, 3], 'NW' => [3, 0]];
@@ -147,6 +151,32 @@ class PrismMineEngine
         $keys = array_map(fn($g) => $g['shape'] . $g['color'], $gems);
         sort($keys);
         return implode(',', $keys);
+    }
+
+    public static function sameSet(array $a, array $b): bool
+    {
+        return count($a) === count($b) && self::gemSetKey($a) === self::gemSetKey($b);
+    }
+
+    // The given gems (shape and colour) placed at random, without overlaps
+    public static function randomLayout(array $set): array
+    {
+        $orient = self::orientations();
+        while (true) {
+            $gems = [];
+            foreach ($set as $g => $gem) {
+                for ($tries = 0; $tries < 200; $tries++) {
+                    $try = $gems;
+                    $try[$g] = ['shape' => $gem['shape'], 'color' => $gem['color'], 'r' => random_int(0, self::SIZE - 1), 'c' => random_int(0, self::SIZE - 1), 'rot' => random_int(0, count($orient[$gem['shape']]) - 1)];
+                    if (self::buildMap($try) !== null) {
+                        $gems = $try;
+                        break;
+                    }
+                }
+                if (count($gems) !== $g + 1) continue 2;
+            }
+            return $gems;
+        }
     }
 
     public static function isCorrect(array $guess, array $hidden): bool

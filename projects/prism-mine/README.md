@@ -2,10 +2,12 @@
 
 A deduction game developed by Saverio Morelli, inspired by light-and-mirror puzzles: send beams of light into a dark 8 × 8 mine, watch where they come out and in which colour, and work out where the gems are hidden.
 
+Inspired by the classic deduction games with beams of light, such as *Black Box* (Eric Solomon, 1977) and *Orapa Mine* (Junghee Choi and Wanjin Gill, 2024). Prism Mine has its own rules, gems and graphics, and is not affiliated with those games or their publishers. Keep other games' names out of the app title, store listing and keywords.
+
 ## How it works
 
 - 32 entrances around the mine. A beam travels straight, bounces straight back off a flat side and turns 90° off a slanted side.
-- Six gem shapes (shard, cube, wedge, slab, pyramid, diamond) built from square and triangular cells.
+- Ten gem shapes (shard, cube, wedge, slab, pyramid, diamond, rod, peak, corner, bridge) built from square and triangular cells; the rules show how each one bounces the beam.
 - Colours mix: red, yellow and blue like paint, white makes the mix paler; a clear gem bounces the beam without colour, a black one swallows it.
 - You know which gems are hidden. Any layout that gives the same answer at all 32 entrances is right, so the answer is never ambiguous.
 - Every generated mine is fair: each gem changes at least one answer.
@@ -15,7 +17,7 @@ A deduction game developed by Saverio Morelli, inspired by light-and-mirror puzz
 - **Solo**: three levels (3, 4 or 5 gems; hard adds a clear or black gem). Score = beams + 3 per wrong answer + 3 per revealed gem; best score kept per level.
 - **Mine of the day**: the same mine for everyone (seeded by the date), one counted try, a shareable result; an unfinished try survives a reload.
 - **Example game**: a fixed mine explained in 9 steps (Back/Next, arrow keys), showing the real path of each beam; it ends by starting a real easy mine.
-- **Online duel**: both players read the same mine and take turns: one beam or one answer. The first right answer wins; three wrong answers lose. Room codes, invite links (`?join=CODE`), random opponents, clock, chat, rematch. An opponent who stays disconnected for 2 minutes loses automatically, with a countdown on screen.
+- **Online duel**: like Sea Battle, both players get the same gems and hide them in their own mine (2 minutes, then at random); then they take turns on the other mine: one beam or one answer. Each player can switch between the other mine (own beams and sketch) and the own mine (the opponent's beams). The first right answer wins; three wrong answers lose. Room codes, invite links (`?join=CODE`), random opponents, clock, chat, rematch. An opponent who stays disconnected for 2 minutes loses automatically, with a countdown on screen.
 
 ## Helpers
 

@@ -4,13 +4,14 @@
  * rankings and the account panel.
  */
 import {World} from './scene.js';
-import {Sim, dishIcon, isNight} from './sim.js';
+import {Sim, dishIcon, isNight, hourMood} from './sim.js';
 import {Editor} from './editor.js';
 import {swatch} from './models.js';
 import {t, n, errText, getLang, setLang} from './i18n.js';
 import {icon as svgIcon} from './icons.js';
-import {thumbFor, portrait} from './thumbs.js';
-import {seasonOf, weatherFor} from './scene.js';
+import {thumbFor, portrait, doorThumb} from './thumbs.js';
+import {weatherFor} from './scene.js';
+import {start as startAudio, sfx, setAmbience, audioPrefs, setAudioPrefs} from './audio.js';
 
 /** An SVG picture as an element (never emoji). */
 const ic = (group, key, cls = 'pic') => h('span.' + cls, {html: svgIcon(group, key)});
@@ -53,8 +54,30 @@ function put(el, ...kids) {
     el.replaceChildren(...kids.flat().filter(k => k != null && k !== false));
 }
 
+/** This copy of the game: only the last one opened may play (see client_instance in api/index.php). */
+const INSTANCE = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => (b % 36).toString(36)).join('') + Date.now().toString(36).slice(-6);
+let channel = null;
+try {
+    channel = new BroadcastChannel('forkville');
+    channel.onmessage = (e) => e.data?.type === 'claim' && e.data.id !== INSTANCE && S.game && elsewhere();
+} catch (e) { /* old browser: the server check is enough */ }
+
+/** The game was opened in another tab or device: this copy stops and offers to take over. */
+function elsewhere() {
+    if (S.elsewhere) return;
+    S.elsewhere = true;
+    try {
+        S.sim?.stop();
+        S.editor?.active && S.editor.end();
+    } catch (e) { /* stopping anyway */ }
+    document.querySelector('.modal-bg')?.remove();
+    const el = h('div.elsewhere', h('div.modal', h('h2', t('elsewhere_title')), h('p', t('elsewhere_body')),
+        h('button.btn.btn-primary', {style: 'width:100%', onclick: () => location.reload()}, t('play_here'))));
+    document.body.append(el);
+}
+
 async function api(route, body) {
-    const opts = {method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', headers: {}};
+    const opts = {method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', headers: {'X-Instance': INSTANCE}};
     if (body !== undefined) {
         opts.headers['Content-Type'] = 'application/json';
         if (S.csrf) opts.headers['X-CSRF-Token'] = S.csrf;
@@ -68,6 +91,7 @@ async function api(route, body) {
     }
     const data = await res.json().catch(() => ({ok: false, error: 'server'}));
     if (data.csrf) S.csrf = data.csrf;
+    if (data.error === 'other_instance') elsewhere();
     if (!data.ok && data.error !== 'needs_signup') throw new ApiError(data.error || 'server', data);
     return data;
 }
@@ -314,6 +338,7 @@ async function startGame() {
         const [cat, st] = await Promise.all([api('game.catalog'), api('game.state', {})]);
         S.catalog = cat.catalog;
         applyState(st);
+        channel?.postMessage({type: 'claim', id: INSTANCE}); // other tabs of this browser step aside at once
     } catch (e) {
         if (e.code === 'email_unverified') {
             S.user.mustVerify = true;
@@ -326,16 +351,10 @@ async function startGame() {
     put(app, h('div.game', canvas, overlay, h('div#hud')));
     S.world = new World(canvas, overlay);
     S.world.catalogItems = S.catalog.items;
+    S.world.on('thunder', () => sfx.thunder());
     S.sim = new Sim(S.world, S.catalog, {onServe: (coins) => bumpCoins(coins)});
-    S.season = seasonOf();
-    S.gameDay = 0;
-    try {
-        const saved = JSON.parse(localStorage.getItem('forkville-clock') || 'null');
-        if (saved && saved.day === new Date().toDateString()) {
-            S.sim.clock = saved.clock;
-            S.gameDay = saved.gameDay || 0;
-        }
-    } catch (e) { /* storage blocked */ }
+    S.sim.clock = S.game.restaurant.gameMinutes || 540; // the restaurant's own calendar, saved on the server
+    S.season = gameDate(S.sim.clock).season;
     S.world.on('frame', envTick);
     S.sim.onTick = () => {
         const now = performance.now();
@@ -344,11 +363,18 @@ async function startGame() {
         renderClock();
         renderInfo();
     };
-    S.editor = new Editor(S.world, S.catalog, {changed: renderBuild, selected: renderSelection, toast: (k) => toast(t(k), 'bad'), coins: () => S.game.restaurant.coins});
+    S.editor = new Editor(S.world, S.catalog, {changed: renderBuild, selected: renderSelection, toast: (k) => toast(t(k), 'bad'), coins: () => S.game.restaurant.coins, name: n, text: t, placed: () => sfx.pop?.(), moveDoor: (x) => act('game.door', {x}, {done: () => {
+        S.editor.end();
+        enterBuild(buildTab);
+        toast(t('door_moved'), 'good');
+    }})});
     S.world.on('tap', onWorldTap);
     loadHome();
     renderHud();
     if (S.game.away) showAway(S.game.away);
+    // Levels earned while away are celebrated too (after the summary)
+    if (S.game.away?.levelTo > S.game.away?.levelFrom) queueModal(() => showLevelUp(S.game.away.levelFrom, S.game.away.levelTo));
+    if (S.game.wages?.paid) setTimeout(() => toast(t('wages_paid', {c: S.game.wages.paid})), 800);
     setInterval(sendReport, 25000);
     setInterval(tick, 1000);
     document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && sendReport(true));
@@ -363,29 +389,73 @@ function applyState(st) {
         S.sim.r.popularity = st.restaurant.popularity;
         if (S.sim.r.status !== st.restaurant.status) S.sim.setStatus(st.restaurant.status);
     }
-    if (prevLevel && st.restaurant.level > prevLevel) setTimeout(() => showLevelUp(prevLevel, st.restaurant.level), 400);
+    if (prevLevel && st.restaurant.level > prevLevel) setTimeout(() => queueModal(() => showLevelUp(prevLevel, st.restaurant.level)), 400);
 }
 
 function simRestaurant(r) {
-    return {size: r.size, layout: r.layout, staff: r.staff, menu: r.menu, popularity: r.popularity, status: r.status || 'open'};
+    return {size: r.size, depth: r.depth || r.size, floors: r.floors || [], door: r.door, kind: r.kind, layout: r.layout, staff: r.staff, menu: r.menu, popularity: r.popularity, status: r.status || 'open'};
 }
 
 /** Every frame: the game clock drives day and night, the weather changes each game day, the season follows the calendar. */
 function envTick() {
     if (!S.sim) return;
-    const hour = S.sim.hour;
-    if (S.lastHour != null && hour < S.lastHour - 12) S.gameDay++;
-    S.lastHour = hour;
-    S.weather = weatherFor(S.season, new Date().toDateString() + '#' + S.gameDay);
+    // The game calendar (not the real one): seasons and weather follow the restaurant's own days
+    const date = gameDate(S.sim.clock);
+    S.season = date.season;
+    S.weather = weatherFor(S.season, date.dayIndex, date.hour);
     S.sim.weather = S.weather;
-    S.world.setEnvironment({hour, weather: S.weather, season: S.season});
+    const ev = currentEvent();
+    if (S.lastEvent !== undefined && ev && ev !== S.lastEvent) toast(t('ev_started', {e: t('ev_' + ev)}), 'good');
+    S.lastEvent = ev;
+    S.sim.season = S.season;
+    S.world.setEnvironment({hour: S.sim.hour, weather: S.weather, season: S.season});
     const now = performance.now();
-    if (now - (S.lastClockSave || 0) > 5000) {
-        S.lastClockSave = now;
-        try {
-            localStorage.setItem('forkville-clock', JSON.stringify({day: new Date().toDateString(), clock: S.sim.clock, gameDay: S.gameDay}));
-        } catch (e) { /* storage blocked */ }
+    if (now - (S.lastAmb || 0) > 500) { // rain, voices in the room, day or night music
+        S.lastAmb = now;
+        setAmbience({rain: ['drizzle', 'rain', 'hail'].includes(S.weather), snow: ['light_snow', 'snow'].includes(S.weather), guests: S.sim.agents.filter(a => a.role === 'customer' && a.seat).length, isNight: isNight(S.sim.hour)});
     }
+}
+
+/**
+ * The restaurant's calendar from its game minutes: year 0 starts on 1 March at the opening;
+ * months of DAYS_PER_MONTH days, the usual month names, seasons of three months.
+ */
+function gameDate(total) {
+    const per = S.catalog?.calendar?.daysPerMonth || 10;
+    const dayIndex = Math.floor(total / 1440);
+    const year = Math.floor(dayIndex / (per * 12));
+    const inYear = dayIndex % (per * 12);
+    const month = (2 + Math.floor(inYear / per)) % 12; // 0 = January; the first month is March
+    const day = inYear % per + 1;
+    const season = [11, 0, 1].includes(month) ? 'winter' : month <= 4 ? 'spring' : month <= 7 ? 'summer' : 'autumn';
+    const hour = Math.floor((total % 1440) / 60), minute = Math.floor(total % 60);
+    return {dayIndex, year, month, day, season, hour, minute, per};
+}
+
+const monthName = (m) => new Date(2001, m, 1).toLocaleString(getLang() === 'it' ? 'it-IT' : 'en-GB', {month: 'long'});
+
+/** A calendar page: time, day, month, year, season, the days of the month and how far the season has gone. */
+function openCalendar() {
+    const d = gameDate(S.sim.clock);
+    const seasonStart = {spring: 2, summer: 5, autumn: 8, winter: 11}[d.season];
+    const monthInSeason = (d.month - seasonStart + 12) % 12;
+    const dayInSeason = monthInSeason * d.per + d.day;
+    const next = {spring: 'summer', summer: 'autumn', autumn: 'winter', winter: 'spring'}[d.season];
+    const pad = (x) => String(x).padStart(2, '0');
+    modal(t('calendar_title'), [
+        h('div.calendar',
+            h('div.cal-page',
+                h('div.cal-month', monthName(d.month) + ' · ' + t('year_n', {n: d.year})),
+                h('div.cal-day', String(d.day)),
+                h('div.cal-time', `${pad(d.hour)}:${pad(d.minute)}`)),
+            h('div.cal-info',
+                h('div.cal-season', h('span.pic', {html: svgIcon('ui', 's_' + d.season)}), h('b', t('season_' + d.season)),
+                    h('span.pic', {html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}), h('span.muted', t('weather_' + (S.weather || 'clear')))),
+                h('div.cal-grid', Array.from({length: d.per}, (_, i) => h('span.cal-cell' + (i + 1 === d.day ? '.today' : i + 1 < d.day ? '.past' : ''), String(i + 1)))),
+                h('div.cal-progress', h('small', t('season_progress', {d: dayInSeason, n: d.per * 3})), h('span.track', h('i', {style: `width:${dayInSeason / (d.per * 3) * 100}%`})),
+                    h('small.muted', t('next_season', {n: d.per * 3 - dayInSeason + 1, s: t('season_' + next)}))),
+                h('p.note', t('calendar_note')))),
+        h('button.btn.btn-primary.btn-wide', {onclick: closeModal}, 'OK')]);
 }
 
 const statusLabels = () => ({open: t('status_open'), paused: t('status_paused'), closed: t('status_closed')});
@@ -430,16 +500,19 @@ let reporting = false;
 async function sendReport(beacon = false) {
     if (S.mode !== 'home' || reporting || !S.sim) return;
     const b = S.sim.takeBatch();
-    const any = Object.keys(b.dishes).length || b.ratings.length;
+    b.clock = Math.floor(S.sim.clock);
+    const any = Object.keys(b.dishes).length || b.ratings.length || b.clock - (S.sentClock || 0) >= 10;
     if (!any) return;
+    S.sentClock = b.clock;
     reporting = true;
     try {
         const body = JSON.stringify(b);
         if (beacon) {
-            fetch('api/index.php?r=game.report', {method: 'POST', keepalive: true, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf}, body});
+            fetch('api/index.php?r=game.report', {method: 'POST', keepalive: true, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': S.csrf, 'X-Instance': INSTANCE}, body});
         } else {
             const st = await api('game.report', b);
             softState(st);
+            if (st.result?.wages?.paid) toast(t('wages_paid', {c: st.result.wages.paid}));
             S.sim.r.popularity = st.restaurant.popularity;
         }
     } catch (e) { /* the next report will try again with fresh dishes */
@@ -543,6 +616,13 @@ const ICONS = {
     plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', center: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
     x: '<path d="M6 6l12 12M18 6L6 18"/>', home: '<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
     star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5M9 12h6M12 9v6"/>',
+    car: '<path d="M3 16v-4l2-5h14l2 5v4zM3 16v2h3v-2M18 16v2h3v-2M5 12h14"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/>',
+    stairs: '<path d="M3 20h5v-5h5v-5h5V5h3"/>',
+    up: '<path d="M6 15l6-6 6 6"/>', down: '<path d="M6 9l6 6 6-6"/>',
+    door: '<path d="M5 21V4h11v17M3 21h18M13 12h.01M16 6l3 1v13l-3 1"/>',
+    walls: '<path d="M3 20h18M4 20V9h6v11M14 20v-6h6v6"/>',
+    coin: '<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10c0-1 1-2 2.5-2s2.5.8 2.5 2-1 1.6-2.5 2-2.5 1-2.5 2 1 2 2.5 2 2.5-1 2.5-2"/>',
 };
 const icon = (name) => h('span.ic', {html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`});
 
@@ -560,7 +640,14 @@ function renderHud() {
             h('button.cam#topbtn', {title: t('top_view'), onclick: () => (S.world.setTopView(!S.world.top), renderHud())}, icon(S.world.top ? 'cube' : 'top')),
             h('button.cam', {title: t('zoom_in'), onclick: () => S.world.zoom(0.8)}, icon('plus')),
             h('button.cam', {title: t('zoom_out'), onclick: () => S.world.zoom(1.25)}, icon('minus')),
-            h('button.cam', {title: t('recenter'), onclick: () => S.world.recenter()}, icon('center'))),
+            h('button.cam', {title: t('recenter'), onclick: () => S.world.recenter()}, icon('center')),
+            h('button.cam.wallmode', {title: t('walls_' + S.world.wallMode), onclick: () => {
+                const order = ['adaptive', 'low', 'high'];
+                S.world.setWallMode(order[(order.indexOf(S.world.wallMode) + 1) % 3]);
+                toast(t('walls_' + S.world.wallMode));
+                renderHud();
+            }}, icon('walls'), h('i.wm-' + S.world.wallMode))),
+        floorPicker(),
         S.mode === 'visit' ? visitBar() : S.mode === 'build' ? h('div.buildpanel#buildpanel') : dock(),
         h('div.selbar#selbar'));
     renderTop();
@@ -610,20 +697,27 @@ function renderStatus() {
     const guests = S.sim.agents.filter(a => a.role === 'customer').length;
     const status = S.game.restaurant.status || 'open';
     const label = status === 'closed' ? t('closed_status') : status === 'paused' ? t('paused_status', {n: guests}) : t('open_status', {n: guests});
+    // Redraw only when something changed (a redraw every second made the open menu flicker)
+    const key = [status, label, problems.join(), (S.sim.warnings || []).map(w => w.key + w.n).join(), !!S.statusMenu, getLang()].join('|');
+    if (key === S.statusKey && el.childElementCount) return;
+    const menuWasOpen = S.statusKey?.includes('|true|');
+    S.statusKey = key;
     put(el,
         h('button.chip.status-' + status, {onclick: (e) => (e.stopPropagation(), toggleStatusMenu()), title: t('status_title')}, h('i.dot'), label, h('span.caret', S.statusMenu ? '▴' : '▾')),
-        S.statusMenu && statusMenu(status),
-        problems.length > 0 && h('button.chip.warn', {onclick: () => fixProblem(problems[0])}, ic('ui', 'warning'), t(problems[0])));
+        S.statusMenu && statusMenu(status, menuWasOpen),
+        problems.length > 0 && h('button.chip.warn', {onclick: () => fixProblem(problems[0])}, ic('ui', 'warning'), t(problems[0])),
+        !problems.length && (S.sim.warnings || []).map(w => h('button.chip.warn', {onclick: () => enterBuild(w.key === 'need_toilet' ? 'restroom' : 'table')}, ic('ui', 'warning'), t(w.key, {n: w.n}))));
 }
 
 /** Open / no new guests / closed (saved on the server: closed restaurants earn nothing while away). It stays open across redraws. */
 function toggleStatusMenu(force) {
     S.statusMenu = force ?? !S.statusMenu;
+    S.statusKey = null;
     renderStatus();
 }
 
-function statusMenu(cur) {
-    return h('div.status-menu', {onclick: (e) => e.stopPropagation()}, ['open', 'paused', 'closed'].map(st => h('button.status-opt.status-' + st + (st === cur ? '.on' : ''), {
+function statusMenu(cur, still = false) {
+    return h('div.status-menu' + (still ? '.still' : ''), {onclick: (e) => e.stopPropagation()}, ['open', 'paused', 'closed'].map(st => h('button.status-opt.status-' + st + (st === cur ? '.on' : ''), {
         onclick: () => {
             S.statusMenu = false;
             act('game.status', {status: st}, {
@@ -647,7 +741,8 @@ function renderClock(force = false) {
     if (!el || !S.sim) return;
     const hr = S.sim.hour;
     const hh = String(Math.floor(hr)).padStart(2, '0'), mm = String(Math.floor((hr % 1) * 60)).padStart(2, '0'); // every game minute
-    const key = hh + mm + S.sim.speed + S.weather + S.mode + getLang();
+    const busy = S.mode === 'home' ? hourMood(hr, S.game.restaurant.kind || 'generic') : null;
+    const key = hh + mm + S.sim.speed + S.weather + S.mode + getLang() + busy;
     if (!force && key === S.clockKey) return;
     S.clockKey = key;
     const night = isNight(hr);
@@ -657,10 +752,13 @@ function renderClock(force = false) {
             renderClock(true);
         },
     }, h('span.speed-pic', {html: svgIcon('ui', name)}));
+    const gd = gameDate(S.sim.clock);
     put(el,
-        h('div.clock-time', h('span.clock-pic', {html: svgIcon('ui', night ? 'moon' : 'sun')}), h('b', `${hh}:${mm}`),
+        h('button.clock-time', {title: t('calendar_title'), onclick: openCalendar}, h('span.clock-pic', {html: svgIcon('ui', night ? 'moon' : 'sun')}), h('b', `${hh}:${mm}`),
+            h('small.clock-date', `${gd.day} ${monthName(gd.month).slice(0, 3)} · ${t('year_short', {n: gd.year})}`),
             h('span.clock-pic', {title: t('weather_' + (S.weather || 'clear')), html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}),
-            h('small', t('season_' + S.season))),
+            h('span.clock-pic', {title: t('season_' + S.season), html: svgIcon('ui', 's_' + S.season)})),
+        busy && h('span.busy.busy-' + busy, {title: t('busy_' + busy + '_d')}, t('busy_' + busy)),
         S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2')), sp(3, 'play3', t('speed_3'))));
 }
 
@@ -674,9 +772,19 @@ function renderInfo() {
             S.sim.selected = null;
             S.world.select(null);
         }
+        if (S.highlighted) {
+            S.world.highlightTables(null);
+            S.highlighted = null;
+        }
         return el.childElementCount && put(el);
     }
     const d = S.sim.describe(a);
+    // A selected waiter shows their tables in their colour
+    const hl = d.role === 'waiter' ? a.id + ':' + (d.tables || []).join(',') : null;
+    if (hl !== S.highlighted) {
+        S.highlighted = hl;
+        S.world.highlightTables(hl ? S.sim.tables.filter(tb => (a.tables || []).includes(tb.id)) : null, d.color || '#E2B23A');
+    }
     const bar = (label, v, cls) => h('div.need-bar', h('span', label), h('span.track', h('i.' + cls, {style: `width:${v}%`})), h('b', v + '%'));
     const moodIcon = d.mood == null ? null : d.mood >= 80 ? 'love' : d.mood >= 60 ? 'happy' : d.mood >= 40 ? 'meh' : d.mood >= 20 ? 'sick' : 'angry';
     put(el, h('div.info-head', h('span.info-pic', {html: svgIcon(d.role === 'customer' ? 'mood' : 'ui', d.role === 'customer' ? moodIcon : d.role === 'chef' ? 'chef' : d.role === 'cleaner' ? 'broom' : 'waiter')}),
@@ -684,6 +792,7 @@ function renderInfo() {
         h('button.icon-btn.small', {onclick: () => (S.sim.selected = null, S.world.select(null), renderInfo())}, icon('x')),
         d.trait && h('div.info-trait', {title: t('trait_' + d.trait + '_d')}, t('trait') + ': ', h('b', t('trait_' + d.trait))),
         h('div.info-doing', t('doing') + ': ', t('act_' + d.activity)),
+        d.tables && h('div.info-tables', t('my_tables') + ': ', d.tables.length ? d.tables.map(nm => h('b.tnum', {style: `background:${d.color || '#E2B23A'}`}, String(nm))) : h('b.warn-text', t('no_table'))),
         d.order && h('div.info-order', t('ordered') + ': ', h('span.pic', {html: svgIcon('dish', d.order)}), n(d.order)),
         d.mood != null && bar(t('mood'), d.mood, d.mood >= 60 ? 'good' : d.mood >= 35 ? 'mid' : 'bad'),
         d.energy != null && bar(t('energy'), d.energy, d.energy >= 50 ? 'good' : d.energy >= 25 ? 'mid' : 'bad'));
@@ -740,7 +849,9 @@ function updateInsets() {
 
 async function act(route, body, {rebuild = false, done} = {}) {
     try {
+        const before = S.game?.restaurant.coins;
         const st = await api(route, body);
+        if (before != null && st.restaurant && st.restaurant.coins < before) sfx.cash();
         (rebuild ? refreshHome : softState)(st);
         done && done(st);
         return st;
@@ -833,6 +944,8 @@ const SHEETS = {
                 h('div.person-head', h('img.portrait', {src: portrait(s.role, s.color, s.id * 7.3, lookOf(s)), alt: ''}), h('span.pic', {html: svgIcon('ui', roleIcon(s.role))}),
                     h('div.staff-main', h('b', s.name), h('span.muted', s.trait ? t('trait_' + s.trait) + ' · ' + t('trait_' + s.trait + '_d') : '')), select),
                 cv(s.skills, s.role),
+                h('div.wage', ic('ui', 'coin'), t('wage_day', {c: (S.game.restaurant.wages || []).find(w => w.id === s.id)?.wage ?? '—'})),
+                h('div.seniority', t('seniority', {t: seniorityText(s.years || 0)}), ' · ', t('next_point', {p: Math.floor(((s.skills?.[s.role] ?? 5) % 1) * 100)})),
                 s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.08 * (s.skills?.manager ?? 5)))})),
                 h('div.row.wrap',
                     s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.promote', {id: s.id}, {rebuild: true, done: () => toast(t('promoted', {n: s.name}), 'good')})}, t('promote'), ' · ', coin(next)),
@@ -841,6 +954,7 @@ const SHEETS = {
         });
         put(body,
             h('p.muted', t('staff_intro')),
+            h('div.payroll', t('payroll') + ': ', coin(r.payroll || 0)),
             h('div.role-limits', roles.map(role => h('span.limit', ic('ui', roleIcon(role)), n(role) + ': ', h('b', String(r.staff.filter(x => x.role === role).length)), ' / ', role === 'chef' ? t('per_stove') : String(limits[role])))),
             h('button.btn.btn-primary.btn-wide', {onclick: () => openCandidates()}, t('find_staff')),
             h('div.list', people),
@@ -885,7 +999,7 @@ const SHEETS = {
             if (!d.count) return put(body, h('div.empty-art', {html: svgIcon('mood', 'greet')}), h('p.muted', t('reviews_none')));
             const max = Math.max(...Object.values(d.distribution));
             const factors = (obj, cls) => h('div.factors', Object.entries(obj).slice(0, 6).map(([k, v]) => h('span.factor.' + cls, t('f_' + k), h('b', '×' + v))));
-            const tips = Object.keys(d.bad).map(k => ({slow: 'tip_slow', plain: 'tip_plain', bare: 'tip_bare', dirty: 'tip_dirty', dark: 'tip_dark'})[k]).filter(Boolean).slice(0, 3);
+            const tips = Object.keys(d.bad).map(k => ({slow: 'tip_slow', plain: 'tip_plain', bare: 'tip_bare', dirty: 'tip_dirty', dark: 'tip_dark', no_toilet: 'tip_no_toilet', toilet_dirty: 'tip_toilet_dirty'})[k]).filter(Boolean).slice(0, 3);
             put(body,
                 h('div.rep-head',
                     h('div.rep-score', h('b', d.average.toFixed(1)), starsEl(Math.round(d.average), 5), h('small', t('reviews_window', {n: Math.min(d.count, d.window)}))),
@@ -919,18 +1033,21 @@ const SHEETS = {
 /** The look of a worker for the 3D model: hairstyle, hair colour, uniform from the catalog. */
 const lookOf = (s, over = {}) => {
     const outfit = over.outfit ?? s.outfit ?? 'default';
-    return {hair: over.hair ?? s.hair, hairColor: over.hairColor ?? s.hairColor, uniform: outfit !== 'default' ? S.catalog.uniforms[outfit] : null};
+    return {hair: over.hair ?? s.hair, hairColor: over.hairColor ?? s.hairColor, uniform: outfit !== 'default' ? S.catalog.uniforms[outfit] : null,
+        glasses: over.glasses ?? s.glasses, facial: over.facial ?? s.facial, headwear: over.headwear ?? s.headwear};
 };
 
 /** Uniforms and the hairdresser, with a live 3D preview. You pay only for what changes. */
 function openLook(s) {
-    const cur = {outfit: s.outfit || 'default', hair: s.hair || 'short', hairColor: s.hairColor || S.catalog.hairColors[0]};
+    const cur = {outfit: s.outfit || 'default', hair: s.hair || 'short', hairColor: s.hairColor || S.catalog.hairColors[0], glasses: s.glasses || 'none', facial: s.facial || 'none', headwear: s.headwear || 'none'};
+    const ACC = S.catalog.accessories || {};
     const pick = {...cur};
     const img = h('img.look-preview', {alt: ''});
     const total = h('b');
     const lvl = S.game.restaurant.level;
     const cost = () => (pick.outfit !== cur.outfit ? S.catalog.uniforms[pick.outfit].price : 0)
-        + (pick.hair !== cur.hair || pick.hairColor !== cur.hairColor ? S.catalog.hairPrice : 0);
+        + (pick.hair !== cur.hair || pick.hairColor !== cur.hairColor ? S.catalog.hairPrice : 0)
+        + Object.keys(ACC).filter(k => pick[k] !== cur[k]).length * (S.catalog.accessoryPrice || 60);
     const draw = () => {
         img.src = portrait(s.role, s.color, s.id * 7.3, lookOf(s, pick));
         put(total, coin(cost()));
@@ -947,7 +1064,11 @@ function openLook(s) {
             ], {disabled: u.level > lvl}))),
             h('h3', t('hairstyle'), h('small.muted', ' · ' + S.catalog.hairPrice + ' ' + t('coins'))),
             h('div.look-grid', S.catalog.hairstyles.map(k => opt('hair', k, h('span', t('hair_' + k))))),
-            h('div.look-colors', S.catalog.hairColors.map(c => opt('hairColor', c, '', {style: `background:${c}`, title: c})))));
+            h('div.look-colors', S.catalog.hairColors.map(c => opt('hairColor', c, '', {style: `background:${c}`, title: c}))),
+            ...Object.entries(ACC).flatMap(([slot, options]) => [
+                h('h3', t('acc_' + slot), h('small.muted', ' · ' + (S.catalog.accessoryPrice || 60) + ' ' + t('coins'))),
+                h('div.look-grid', options.map(k => opt(slot, k, h('span', t('acc_' + slot + '_' + k))))),
+            ])));
     modal(t('look_of', {n: s.name}), [body, h('div.row', h('button.btn', {onclick: closeModal}, t('cancel')), h('button.btn.btn-primary', {
         style: 'flex:1', onclick: async () => {
             if (!cost()) return closeModal();
@@ -961,11 +1082,18 @@ function openLook(s) {
     draw();
 }
 
+/** Seniority in game time: days (120 a year) or years and days. */
+function seniorityText(years) {
+    const days = Math.floor(years * 120);
+    if (days < 120) return t('days_n', {n: days});
+    return t('years_days', {y: Math.floor(days / 120), d: days % 120});
+}
+
 /** A CV: the four skills from 0 to 10, the current role highlighted. */
 function cv(skills = {}, current = null) {
     return h('div.cv', S.catalog.roles.map(role => {
-        const v = Math.round((skills[role] ?? 0) * 10) / 10;
-        return h('div.cv-row' + (role === current ? '.current' : ''), h('span', n(role)), h('span.track', h('i', {style: `width:${v * 10}%`})), h('b', String(Math.floor(v))));
+        const v = skills[role] ?? 0;
+        return h('div.cv-row' + (role === current ? '.current' : ''), {title: v.toFixed(2)}, h('span', n(role)), h('span.track', h('i', {style: `width:${v * 10}%`})), h('b', String(Math.floor(v))));
     }));
 }
 
@@ -1014,8 +1142,22 @@ function ledgerText(e) {
         case 'promote': return t('lt_promote', {n: a});
         case 'visit': return t('lt_visit', {n: a || ''});
         case 'admin': return t('lt_admin') + (a ? ' · ' + a : '');
+        case 'wages': return t('lt_wages', {n: a || 0, d: b || 1});
+        case 'parking': return t('lt_parking', {n: a || 1});
+        case 'floor': return t('lt_floor', {n: a || 1});
+        case 'tip_given': return t('lt_tip_given', {n: a || ''});
+        case 'tip_friend': return t('lt_tip_friend', {n: a ? '@' + a : ''});
         default: return t('lk_' + e.kind);
     }
+}
+
+/** Music and sounds: on/off and volume (remembered on this device). */
+function soundSettings() {
+    const p = audioPrefs();
+    const toggle = (key, label) => h('label.check', h('input', {type: 'checkbox', checked: p[key], onchange: (e) => setAudioPrefs({[key]: e.target.checked})}), h('span', label));
+    return h('div.field', h('span', t('sound_title')),
+        h('div.row.wrap', toggle('music', t('sound_music')), toggle('sfx', t('sound_effects'))),
+        h('label.row', h('small', t('sound_volume')), h('input', {type: 'range', min: 0, max: 1, step: 0.05, value: p.volume, oninput: (e) => setAudioPrefs({volume: +e.target.value})})));
 }
 
 /** What a level unlocks, as short labels. */
@@ -1027,9 +1169,11 @@ function unlocksAt(l) {
     if (items.length) out.push(t('unlock_items') + ': ' + items.join(', '));
     if (dishes.length) out.push(t('unlock_dishes') + ': ' + dishes.join(', '));
     if (crops.length) out.push(t('unlock_crops') + ': ' + crops.join(', '));
-    for (const [side, , lvl] of S.catalog.sizes) if (lvl === l && side > S.catalog.sizes[0][0]) out.push(t('unlock_size', {n: side}));
+    if (l > 1 && maxSide(l) > maxSide(l - 1)) out.push(t('unlock_side', {n: maxSide(l)}));
+    for (const [pl, p] of Object.entries(S.catalog.parking || {})) if (p.level === l) out.push(t('unlock_parking', {n: p.spaces, l: pl}));
+    for (const [fl, p] of Object.entries(S.catalog.floors || {})) if (p.level === l) out.push(t('unlock_floor', {n: fl}));
     const f = (fn) => fn(l) > fn(l - 1) ? fn(l) : null;
-    const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))), m = f(x => Math.min(6, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
+    const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))), m = f(x => Math.min(8, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
     const mg = f(x => x < S.catalog.manager.level ? 0 : Math.min(3, 1 + Math.floor((x - S.catalog.manager.level) / 6)));
     if (l > 1 && w) out.push(t('unlock_waiters', {n: w}));
     if (l > 1 && c) out.push(t('unlock_cleaners', {n: c}));
@@ -1056,7 +1200,9 @@ function reviewCard(rv) {
         h('div.review-main', h('div.review-top', h('b', rv.name), starsEl(rv.stars, 5), h('span.pic', {html: svgIcon('dish', rv.dish)})), h('p', reviewSentence(rv))));
 }
 
+/** The level-up celebration: confetti, the new level and title, the coins won, what is unlocked. */
 function showLevelUp(from, to) {
+    sfx.levelUp();
     const blocks = [];
     let reward = 0;
     for (let l = from + 1; l <= to; l++) {
@@ -1064,9 +1210,19 @@ function showLevelUp(from, to) {
         const u = unlocksAt(l);
         if (u.length) blocks.push(h('div.unlocks', u.map(x => h('span.unlock', x))));
     }
-    modal(t('level_up_title', {n: to}), [h('div.away-art.levelup', {html: svgIcon('mood', 'star')}),
-        h('p', {html: t('level_up_body', {t: '<b>' + levelTitle(to) + '</b>', c: reward})}), h('h3', t('unlocks')), ...blocks,
-        h('button.btn.btn-primary.btn-wide', {onclick: closeModal}, 'OK')]);
+    const colors = ['#D9653B', '#7A8B3A', '#B43E5C', '#E2B23A', '#3E7CB4', '#F7A1C4'];
+    const confetti = h('div.confetti', Array.from({length: 46}, (_, i) => h('i', {
+        style: `--x:${(Math.random() * 2 - 1) * 240}px;--y:${-120 - Math.random() * 180}px;--r:${Math.random() * 720 - 360}deg;--d:${Math.random() * 0.25}s;background:${colors[i % colors.length]};` +
+            (i % 3 ? '' : 'border-radius:50%;'),
+    })));
+    modal(t('level_up_title', {n: to}), [
+        confetti,
+        h('div.lvl-badge', h('span.lvl-star', {html: svgIcon('mood', 'star')}), h('b.lvl-num', String(to))),
+        h('p.lvl-title', levelTitle(to)),
+        h('div.lvl-reward', coin('+' + reward)),
+        blocks.length ? h('h3', t('unlocks')) : null, ...blocks,
+        h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('levels'))}, t('levels_title')), h('button.btn.btn-primary', {style: 'flex:1', onclick: closeModal}, t('level_up_ok')))],
+    'levelup-modal');
 }
 
 function visitReviews() {
@@ -1124,6 +1280,14 @@ const SHEETS_MORE = {
         put(body, 
             h('div.acct', h('b', '@' + S.user.username), h('span.muted', S.user.email)),
             S.user.isAdmin && h('a.btn.btn-wide', {href: 'admin.html', target: '_blank'}, ic('ui', 'gear'), t('admin_panel')),
+            soundSettings(),
+            h('div.field', h('span', t('kind_title')), h('div.kinds', Object.entries(S.catalog.kinds).map(([k, v]) => {
+                const cur = (r.kind || 'generic') === k, locked = v.level > r.level;
+                return h('div.kind' + (cur ? '.on' : '') + (locked ? '.locked' : ''),
+                    h('b', t('kind_' + k)), h('small', t('kind_' + k + '_d')), h('small.muted', t('kind_effects', {p: v.price, c: v.customers})),
+                    cur ? h('span.tag-now', t('kind_current')) : locked ? h('small', t('locked_level', {n: v.level}))
+                        : h('button.btn.btn-small', {onclick: () => confirm(t('kind_title') + ': ' + t('kind_' + k) + '?') && act('game.kind', {kind: k}, {rebuild: true, done: () => toast(t('kind_' + k), 'good')})}, t('kind_switch', {c: v.cost})));
+            }))),
             h('label.field', h('span', t('restaurant_name')), h('div.row', nameInput, h('button.btn', {
                 onclick: () => act('game.rename', {name: nameInput.value}, {done: () => S.world.setSign(S.game.restaurant.name)}),
             }, t('save')))),
@@ -1266,7 +1430,24 @@ function visitBar() {
             }
         },
     }, h('span.star-pic', {html: svgIcon('mood', 'star')})))]);
-    return h('div.visitbar', h('b', t('visiting', {u: '@' + v.username})), stars,
+    // A tip for the friend: coins from my restaurant to theirs (a daily limit per friend)
+    const daily = S.catalog.friendTipDaily || 200;
+    const tips = h('div.tipbar', h('span', icon('coin'), t('tip_friend')), (S.catalog.friendTips || [10, 25, 50, 100]).map(c => h('button.btn.btn-small', {
+        disabled: (v.tipped || 0) + c > daily || S.game.restaurant.coins < c,
+        onclick: async () => {
+            try {
+                const d = await api('social.tip', {username: v.username, coins: c});
+                v.tipped = d.given;
+                S.game.restaurant.coins = d.coins;
+                toast(t('tip_sent', {c, u: '@' + v.username}), 'good');
+                sfx.coin?.();
+                renderHud();
+            } catch (e) {
+                fail(e);
+            }
+        },
+    }, coin(c))), v.tipped ? h('small.muted', t('tip_given_today', {c: v.tipped})) : null);
+    return h('div.visitbar', h('b', t('visiting', {u: '@' + v.username})), stars, tips,
         v.reviews?.length ? h('button.btn.btn-small', {onclick: visitReviews}, icon('star'), t('reviews_title')) : null,
         h('button.btn.btn-primary', {onclick: goHome}, icon('home'), t('back_home')));
 }
@@ -1284,10 +1465,11 @@ async function goHome() {
 
 // ---------------------------------------------------------------- build mode
 
-const BUILD_TABS = [['table', ['table']], ['chair', ['chair']], ['kitchen', ['stove', 'counter', 'kitchen', 'service']], ['lounge', ['lounge']], ['deco', ['deco']], ['rug', ['rug']], ['floor', ['floor']], ['wall', ['wall']]];
+const BUILD_TABS = [['seasonal', []], ['table', ['table']], ['chair', ['chair']], ['stairs', ['stairs']], ['kitchen', ['stove', 'counter', 'kitchen', 'service']], ['outdoor', ['outdoor']], ['restroom', ['restroom']], ['partition', ['partition']],
+    ['lounge', ['lounge']], ['deco', ['deco']], ['rug', ['rug']], ['floor', ['floor']], ['wall', ['wall']]];
 /** Decorations that entertain go in the lounge tab. */
 const LOUNGE_TAGS = ['music', 'fun', 'cozy', 'snack'];
-const buildTabOf = (k, d) => d.cat === 'deco' && LOUNGE_TAGS.includes((S.catalog.tags || {})[k]) ? 'lounge' : (BUILD_TABS.find(([, cats]) => cats.includes(d.cat)) || ['deco'])[0];
+const buildTabOf = (k, d) => S.catalog.seasonal?.[k] ? 'seasonal' : d.cat === 'deco' && LOUNGE_TAGS.includes((S.catalog.tags || {})[k]) ? 'lounge' : (BUILD_TABS.find(([, cats]) => cats.includes(d.cat)) || ['deco'])[0];
 let buildTab = 'table';
 
 function enterBuild(tab) {
@@ -1302,6 +1484,7 @@ function enterBuild(tab) {
 }
 
 function exitBuild() {
+    S.world.frameOutdoor(false);
     S.editor.end();
     loadHome(true);
     renderHud();
@@ -1320,16 +1503,28 @@ async function saveBuild() {
     }
 }
 
+/** The event going on now on the real calendar (valentine, easter, summer, autumn, christmas), or null: the server says. */
+const eventsInfo = () => S.game?.restaurant?.events || S.catalog.events || {};
+const currentEvent = () => eventsInfo().now || null;
+const inSeason = (k) => !S.catalog.seasonal?.[k] || S.catalog.seasonal[k] === currentEvent();
+/** "12 December": a date of an event window, in the player's language. */
+const eventDate = (ev, edge) => {
+    const d = eventsInfo().dates?.[ev]?.[edge];
+    return d ? new Date(d + 'T12:00:00Z').toLocaleDateString(getLang() === 'it' ? 'it-IT' : 'en-GB', {day: 'numeric', month: 'long'}) : '';
+};
+
 function renderBuild() {
     const el = document.getElementById('buildpanel');
     if (!el || !S.editor.active) return;
     const r = S.game.restaurant, cat = S.catalog.items, ed = S.editor;
     const cats = BUILD_TABS.find(x => x[0] === buildTab)[1];
-    const items = Object.entries(cat).filter(([k, d]) => buildTabOf(k, d) === buildTab && cats && (d.enabled !== false || r.finishes.includes(k))).sort((a, b) => a[1].level - b[1].level || a[1].price - b[1].price);
+    const ev = currentEvent();
+    const items = Object.entries(cat).filter(([k, d]) => buildTabOf(k, d) === buildTab && cats && (d.enabled !== false || r.finishes.includes(k)))
+        .sort((a, b) => buildTab === 'seasonal' ? (inSeason(b[0]) - inSeason(a[0])) || (S.catalog.seasonal[a[0]] > S.catalog.seasonal[b[0]] ? 1 : -1) || a[1].price - b[1].price : a[1].level - b[1].level || a[1].price - b[1].price);
     const c = ed.cost();
-    const next = S.catalog.sizes.find(s => s[0] > r.size);
     const tile = ([k, d]) => {
-        const locked = d.level > r.level;
+        const sev = S.catalog.seasonal?.[k], away = sev && !inSeason(k);
+        const locked = d.level > r.level || away;
         const finish = d.cat === 'floor' || d.cat === 'wall';
         const owned = finish && r.finishes.includes(k);
         const current = finish && ed[d.cat] === k;
@@ -1337,28 +1532,171 @@ function renderBuild() {
             disabled: locked,
             onclick: () => finish ? ed.setFinish(k) : ed.startPlacing(k),
         }, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
-            h('b', n(k)), d.tier ? h('span.tier.tier-' + d.tier, t('tier_' + d.tier)) : null, h('small', locked ? t('locked_level', {n: d.level}) : owned ? t('owned') : coin(d.price)),
+            h('b', n(k)), sev ? h('span.tier.seasonal', t('ev_' + sev)) : d.tier ? h('span.tier.tier-' + d.tier, t('tier_' + d.tier)) : null,
+            h('small', away ? t('ev_back', {m: eventDate(sev, 'from')}) : locked ? t('locked_level', {n: d.level}) : owned ? t('owned') : coin(d.price)),
             d.pop > 0 && h('small.pop', t('pop', {n: d.pop})), d.speed > 1 && h('small.pop', t('speed', {n: d.speed})));
     };
     put(el, 
         h('div.build-head',
-            h('div.tabs.scroll', BUILD_TABS.map(([k]) => h('button.tab' + (buildTab === k ? '.on' : ''), {onclick: () => ((buildTab = k), renderBuild())}, t('cat_' + k)))),
-            ed.placing ? h('div.placing', h('span', t('placing')), h('button.btn.btn-small', {onclick: () => ed.rotate()}, t('rotate')), h('button.btn.btn-small.btn-ghost', {onclick: () => ed.cancelPlacing()}, t('cancel')))
-                : h('small.muted', t('door_hint'))),
+            h('div.tabs.scroll', BUILD_TABS.map(([k]) => h('button.tab' + (buildTab === k ? '.on' : ''), {onclick: () => ((buildTab = k), S.world.frameOutdoor(k === 'outdoor'), renderBuild())}, t('cat_' + k)))),
+            ed.doorMove ? h('div.placing', h('span', t('door_pick')), h('button.btn.btn-small.btn-ghost', {onclick: () => ed.stopDoorMove()}, t('cancel'))) :
+            ed.placing ? h('div.placing',
+                    h('span', t(ed.placing.moving ? 'moving_piece' : 'placing')),
+                    h('button.icon-btn', {title: t('rotate_left') + ' (Q)', onclick: () => ed.rotate(-1)}, icon('left')),
+                    h('button.icon-btn', {title: t('rotate_right') + ' (R)', onclick: () => ed.rotate(1)}, icon('right')),
+                    h('button.btn.btn-small.btn-primary', {disabled: !ed.placing.ok, onclick: () => ed.confirm()}, t('place_here')),
+                    !ed.placing.moving ? h('label.repeat', {title: t('repeat_hint')}, h('input', {type: 'checkbox', checked: ed.repeatFor(cat[ed.placing.it.k].cat), onchange: (e) => ed.setRepeat(cat[ed.placing.it.k].cat, e.target.checked)}), h('span', t('repeat_place'))) : null,
+                    h('button.btn.btn-small.btn-ghost', {onclick: () => ed.cancelPlacing()}, t('cancel')))
+                : h('small.muted', t('build_hint'))),
+        buildTab === 'seasonal' ? h('div.event-banner' + (ev ? '.on' : ''), ic('ui', ev === 'christmas' || ev === 'autumn' ? 's_winter' : 's_spring'),
+            h('div', h('b', ev ? t('ev_now', {e: t('ev_' + ev)}) : t('ev_none')), h('small', [ev ? t('ev_until', {m: eventDate(ev, 'to')}) + ' · ' : '', t('ev_kept')].join('')))) : null,
         h('div.shop', items.map(tile)),
         h('div.build-foot',
             h('div.cost', h('span', t('spend') + ' '), coin(c.spend), c.refund ? [h('span', ' · ' + t('refund') + ' '), coin(c.refund)] : null),
-            next ? h('button.btn.btn-small.btn-ghost', {
-                disabled: next[2] > r.level, title: t('enlarge_cost', {c: next[1], l: next[2]}),
-                onclick: () => confirm(t('enlarge', {n: next[0]}) + ' — ' + t('enlarge_cost', {c: next[1], l: next[2]})) && act('game.expand', {}, {
-                    done: () => {
-                        ed.end();
-                        enterBuild();
-                    },
-                }),
-            }, t('enlarge', {n: next[0]})) : null,
+            h('button.btn.btn-small.btn-ghost', {onclick: openDoor}, icon('door'), t('door_title')),
+            h('button.btn.btn-small.btn-ghost', {onclick: openExpand}, icon('expand'), t('expand_title')),
             h('button.btn', {onclick: exitBuild}, t('cancel')),
             h('button.btn.btn-primary', {disabled: c.net > r.coins, onclick: saveBuild}, t('save'))));
+}
+
+/** The front door: its style (with a picture of each) and where it stands on the front wall. */
+function openDoor() {
+    const r = S.game.restaurant, cur = r.doorStyle || 'wood';
+    const styles = Object.entries(S.catalog.doors || {});
+    const move = () => {
+        if (S.editor.dirty()) return toast(t('door_save_first'), 'bad');
+        if (r.coins < (S.catalog.doorMove || 250)) return toast(errText('no_coins'), 'bad');
+        closeModal();
+        S.editor.startDoorMove();
+    };
+    modal(t('door_title'), h('div.doorpick',
+        h('div.door-grid', styles.map(([k, d]) => h('button.door-opt' + (k === cur ? '.on' : ''), {
+            disabled: d.level > r.level || k === cur,
+            onclick: () => {
+                if (S.editor.dirty()) return toast(t('door_save_first'), 'bad');
+                closeModal();
+                act('game.door', {style: k}, {done: () => (S.editor.end(), enterBuild(buildTab), toast(t('door_changed'), 'good'))});
+            },
+        }, h('img', {src: doorThumb(k), alt: ''}), h('b', t('door_' + k)), h('small', k === cur ? t('door_current') : d.level > r.level ? t('locked_level', {n: d.level}) : d.price ? coin(d.price) : t('free'))))),
+        h('div.expand-opt', h('div.expand-pic', icon('door')), h('div', h('b', t('door_move')), h('small.muted', t('door_move_d'))),
+            h('button.btn.btn-primary.btn-small', {onclick: move}, coin(S.catalog.doorMove || 250)))), 'door-modal');
+}
+
+/** Floor buttons (when the restaurant has upper floors): the floors above the chosen one are hidden. */
+function floorPicker() {
+    const fl = (S.mode === 'visit' ? S.visit?.restaurant?.floors : S.game?.restaurant?.floors) || [];
+    if (!fl.length) return null;
+    const cur = S.world.viewFloor || 0;
+    return h('div.floorpick',
+        h('button.cam', {title: t('floor_up') + ' (PgUp)', disabled: cur >= fl.length, onclick: () => goFloor(cur + 1)}, icon('up')),
+        h('div.floor-now', h('small', t('floor_view')), h('b', cur ? String(cur) : t('floor_ground_short'))),
+        h('button.cam', {title: t('floor_down') + ' (PgDn)', disabled: cur <= 0, onclick: () => goFloor(cur - 1)}, icon('down')));
+}
+
+/** Look at (and build on) another floor, one at a time. */
+function goFloor(f) {
+    const max = (S.mode === 'visit' ? S.visit?.restaurant?.floors : S.game?.restaurant?.floors)?.length || 0;
+    if (f < 0 || f > max) return;
+    S.world.setViewFloor(f);
+    if (S.editor?.active) S.editor.setLevel(f);
+    renderHud();
+}
+window.addEventListener('keydown', (e) => {
+    if (!S.world || e.target.closest?.('input, textarea')) return;
+    if (e.key === 'PageUp') goFloor((S.world.viewFloor || 0) + 1);
+    else if (e.key === 'PageDown') goFloor((S.world.viewFloor || 0) - 1);
+});
+
+/** How long a side of the room can be at a level (max_side in lib/catalog.php). */
+const maxSide = (l) => Math.min(S.catalog.expand?.max || 22, (S.catalog.expand?.min || 10) + Math.floor(l / 2));
+
+/** Coins to add a row or a column (expand_cost in lib/catalog.php). */
+function expandCost(w, d, dir) {
+    const area = dir === 'col' ? (w + 1) * d : w * (d + 1);
+    return Math.round((S.catalog.expand?.rate ?? 18) * area * (1 + Math.max(0, area - 100) / 200));
+}
+
+/** Enlarge the room one row or one column at a time, and buy (or enlarge) the car park. */
+function openExpand() {
+    const r = S.game.restaurant, W = r.size, D = r.depth || r.size, max = maxSide(r.level), top = S.catalog.expand?.max || 22;
+    const grow = (dir) => {
+        const side = dir === 'col' ? W : D, cost = expandCost(W, D, dir);
+        const locked = side >= max, full = side >= top;
+        const nextLevel = Array.from({length: 40}, (_, i) => i + 1).find(l => maxSide(l) > side);
+        return h('div.expand-opt',
+            h('div.expand-pic', h('div.room-mini', {style: `--w:${dir === 'col' ? W + 1 : W};--d:${dir === 'row' ? D + 1 : D}`}, h('i.add-' + dir))),
+            h('div', h('b', t(dir === 'col' ? 'add_col' : 'add_row')), h('small.muted', t(dir === 'col' ? 'add_col_d' : 'add_row_d', {w: dir === 'col' ? W + 1 : W, d: dir === 'row' ? D + 1 : D})),
+                full ? h('small', t('max_size')) : locked ? h('small', t('locked_level', {n: nextLevel})) : null),
+            h('button.btn.btn-primary.btn-small', {
+                disabled: locked || cost > r.coins,
+                onclick: () => {
+                    closeModal();
+                    act('game.expand', {dir}, {
+                        done: () => {
+                            sfx.levelUp?.();
+                            if (S.editor.active) {
+                                S.editor.end();
+                                enterBuild(buildTab);
+                            }
+                        },
+                    });
+                },
+            }, coin(cost)));
+    };
+    const pl = r.parking || 0, park = S.catalog.parking || {}, next = park[pl + 1];
+    // Upper floors: each grows inside the one below; the next one can be built from its level
+    const floors = r.floors || [], rectOf = (f) => f ? {x0: floors[f - 1][2], w: floors[f - 1][0], d: floors[f - 1][1]} : {x0: 0, w: W, d: D};
+    const growUp = (f, dir) => {
+        const me = rectOf(f), below = rectOf(f - 1), cost = Math.round(expandCost(me.w, me.d, dir) * 0.8);
+        const room = dir === 'row' ? me.d + 1 <= below.d : me.x0 + me.w + 1 <= below.x0 + below.w || me.x0 > below.x0;
+        const locked = (dir === 'col' ? me.w : me.d) >= max;
+        return h('div.expand-opt',
+            h('div.expand-pic', h('div.room-mini', {style: `--w:${dir === 'col' ? me.w + 1 : me.w};--d:${dir === 'row' ? me.d + 1 : me.d}`}, h('i.add-' + dir))),
+            h('div', h('b', t(dir === 'col' ? 'add_col' : 'add_row')), h('small.muted', `${dir === 'col' ? me.w + 1 : me.w}×${dir === 'row' ? me.d + 1 : me.d}`),
+                !room ? h('small', t('floor_below_full')) : locked ? h('small', t('locked_level', {n: Array.from({length: 40}, (_, i) => i + 1).find(l => maxSide(l) > (dir === 'col' ? me.w : me.d))})) : null),
+            h('button.btn.btn-primary.btn-small', {
+                disabled: !room || locked || cost > r.coins,
+                onclick: () => {
+                    closeModal();
+                    act('game.expand', {dir, floor: f}, {done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
+                },
+            }, coin(cost)));
+    };
+    const nextFloor = (S.catalog.floors || {})[floors.length + 1];
+    const floorSections = [
+        ...floors.flatMap((fl, i) => [h('h3', icon('stairs'), t('floor_n', {n: i + 1}), h('small.muted', ` · ${fl[0]}×${fl[1]}`)), growUp(i + 1, 'col'), growUp(i + 1, 'row')]),
+        nextFloor ? h('div.expand-opt', h('div.expand-pic', icon('stairs')),
+            h('div', h('b', t('floor_build', {n: floors.length + 1})), h('small.muted', t('floor_build_d', {s: S.catalog.floorStart || 6})), nextFloor.level > r.level ? h('small', t('locked_level', {n: nextFloor.level})) : null),
+            h('button.btn.btn-primary.btn-small', {
+                disabled: nextFloor.level > r.level || nextFloor.cost > r.coins,
+                onclick: () => {
+                    closeModal();
+                    act('game.floor', {}, {rebuild: true, done: () => {
+                        toast(t('floor_built', {n: floors.length + 1}), 'good');
+                        S.world.setViewFloor(floors.length + 1);
+                        if (S.editor.active) (S.editor.end(), enterBuild('stairs'));
+                        renderHud();
+                    }});
+                },
+            }, coin(nextFloor.cost))) : null,
+    ];
+    modal(t('expand_title'), h('div.expand',
+        h('p.muted', t('expand_now', {w: W, d: D, m: max})),
+        h('h3', icon('home'), t('floor_ground')),
+        grow('col'), grow('row'),
+        ...floorSections,
+        h('h3', icon('car'), t('parking_title')),
+        h('p.muted', t('parking_d', {p: Math.round((S.catalog.carBonus || 0.8) * 100)})),
+        pl ? h('p', t('parking_have', {n: park[pl].spaces})) : null,
+        next ? h('div.expand-opt', h('div.expand-pic', ic('ui', 'car', 'pic big')),
+            h('div', h('b', t(pl ? 'parking_more' : 'parking_buy', {n: next.spaces})), next.level > r.level ? h('small', t('locked_level', {n: next.level})) : null),
+            h('button.btn.btn-primary.btn-small', {
+                disabled: next.level > r.level || next.cost > r.coins,
+                onclick: () => {
+                    closeModal();
+                    act('game.parking', {}, {rebuild: true, done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
+                },
+            }, coin(next.cost))) : h('p', t('parking_max'))), 'expand-modal');
 }
 
 function renderSelection(it) {
@@ -1367,23 +1705,35 @@ function renderSelection(it) {
     if (!it) return put(el, );
     const refund = it.id > 0 ? Math.floor(S.catalog.items[it.k].price * S.catalog.rules.sellBack) : S.catalog.items[it.k].price;
     put(el, h('div.selcard', h('b', n(it.k)),
-        h('button.btn.btn-small', {onclick: () => S.editor.rotate()}, t('rotate')),
-        h('button.btn.btn-small', {onclick: () => S.editor.moveSelected()}, t('move')),
-        h('button.btn.btn-small.btn-danger', {onclick: () => S.editor.sellSelected()}, t('sell'), ' +', String(refund)),
-        h('button.icon-btn', {onclick: () => S.editor.select(null)}, icon('x'))));
+        h('button.icon-btn', {title: t('rotate_left') + ' (Q)', onclick: () => S.editor.rotate(-1)}, icon('left')),
+        h('button.icon-btn', {title: t('rotate_right') + ' (R)', onclick: () => S.editor.rotate(1)}, icon('right')),
+        h('button.btn.btn-small', {title: 'M', onclick: () => S.editor.moveSelected()}, t('move')),
+        h('button.btn.btn-small', {title: 'C', disabled: !inSeason(it.k), onclick: () => S.editor.copySelected()}, t('copy_piece'), ' ', coin(S.catalog.items[it.k].price)),
+        h('button.btn.btn-small.btn-danger', {title: t('key_delete'), onclick: () => S.editor.sellSelected()}, t('sell'), ' +', String(refund)),
+        h('button.icon-btn', {onclick: () => S.editor.select(null)}, icon('x')),
+        h('small.muted.selhint', t('drag_hint'))));
 }
 
 
 // ---------------------------------------------------------------- modals
 
-function modal(title, content) {
-    closeModal();
-    const el = h('div.modal-bg', {onclick: (e) => e.target === el && closeModal()}, h('div.modal', h('h2', title), content));
+function modal(title, content, cls = '') {
+    document.querySelector('.modal-bg')?.remove();
+    const el = h('div.modal-bg', {onclick: (e) => e.target === el && closeModal()}, h('div.modal' + (cls ? '.' + cls : ''), h('h2', title), content));
     document.body.append(el);
+}
+
+/** Windows that must not be lost (a level-up) wait for the open one to close. */
+const modalQueue = [];
+
+function queueModal(show) {
+    if (document.querySelector('.modal-bg')) modalQueue.push(show);
+    else show();
 }
 
 function closeModal() {
     document.querySelector('.modal-bg')?.remove();
+    if (modalQueue.length) setTimeout(() => !document.querySelector('.modal-bg') && modalQueue.shift()?.(), 250);
 }
 
 /** While you were away: who ran the restaurant, from when to when, and how to make it run longer. */
@@ -1398,6 +1748,12 @@ function showAway(a) {
         h('p.tip', ic('mood', 'sparkle'), t(a.hasManager ? 'away_tip_promote' : 'away_tip_hire')),
         h('div.row', h('button.btn', {onclick: () => (closeModal(), openSheet('staff'))}, t('dock_staff')), h('button.btn.btn-primary', {onclick: closeModal, style: 'flex:1'}, 'OK'))]);
 }
+
+// Browsers allow sound only after a tap: the first one starts the music
+document.addEventListener('pointerdown', () => startAudio(), {passive: true});
+document.addEventListener('click', (e) => {
+    if (e.target.closest?.('button, .btn, a.btn')) sfx.click();
+}, true);
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 boot();

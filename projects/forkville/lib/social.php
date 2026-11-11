@@ -110,11 +110,12 @@ function visit(int $me, int $host): array
         ledger($me, 'visit', $reward, (string)($hr['name'] ?? ''));
         ledger($host, 'visited', rule('visit_host'));
     }
-    $st = db()->prepare('SELECT rating FROM ' . t('visits') . ' WHERE user_id = ? AND host_id = ? AND day = ?');
+    $st = db()->prepare('SELECT rating, tip FROM ' . t('visits') . ' WHERE user_id = ? AND host_id = ? AND day = ?');
     $st->execute([$me, $host, today_utc()]);
-    $rated = $st->fetchColumn();
+    $row = $st->fetch() ?: ['rating' => null, 'tip' => 0];
+    $rated = $row['rating'];
     db()->commit();
-    return ['restaurant' => restaurant_public($hr, load_recipes($host)), 'reviews' => array_slice(reviews_out($host, 6)['reviews'], 0, 6), 'reward' => $reward, 'rated' => $rated !== null && $rated !== false ? (int)$rated : null];
+    return ['restaurant' => restaurant_public($hr, load_recipes($host)), 'reviews' => array_slice(reviews_out($host, 6)['reviews'], 0, 6), 'reward' => $reward, 'rated' => $rated !== null ? (int)$rated : null, 'tipped' => (int)$row['tip']];
 }
 
 function rate_visit(int $me, int $host, int $stars): void
@@ -133,6 +134,39 @@ function rate_visit(int $me, int $host, int $stars): void
     refresh_popularity($r);
     db()->prepare('UPDATE ' . t('restaurants') . ' SET friend_sum = ?, friend_n = ?, popularity = ? WHERE user_id = ?')->execute([$r['friend_sum'], $r['friend_n'], $r['popularity'], $host]);
     db()->commit();
+}
+
+/** A tip at a friend's restaurant (only while visiting it today): coins go from the visitor to the host. */
+function tip_friend(int $me, int $host, int $coins): array
+{
+    if (!in_array($coins, FRIEND_TIPS, true)) fail('bad_request', 422);
+    db()->beginTransaction();
+    $st = db()->prepare('SELECT tip FROM ' . t('visits') . ' WHERE user_id = ? AND host_id = ? AND day = ? FOR UPDATE');
+    $st->execute([$me, $host, today_utc()]);
+    $given = $st->fetchColumn();
+    if ($given === false) {
+        db()->rollBack();
+        fail('visit_first', 409);
+    }
+    if ((int)$given + $coins > FRIEND_TIP_DAILY) {
+        db()->rollBack();
+        fail('tip_limit', 409);
+    }
+    $mine = load_restaurant($me, true);
+    if ($mine['coins'] < $coins) {
+        db()->rollBack();
+        fail('no_coins', 422);
+    }
+    $hostName = (string)(load_restaurant($host)['name'] ?? '');
+    db()->prepare('UPDATE ' . t('restaurants') . ' SET coins = coins - ? WHERE user_id = ?')->execute([$coins, $me]);
+    db()->prepare('UPDATE ' . t('restaurants') . ' SET coins = coins + ? WHERE user_id = ?')->execute([$coins, $host]);
+    db()->prepare('UPDATE ' . t('visits') . ' SET tip = tip + ? WHERE user_id = ? AND host_id = ? AND day = ?')->execute([$coins, $me, $host, today_utc()]);
+    ledger($me, 'tip_given', -$coins, $hostName);
+    $who = db()->prepare('SELECT username FROM ' . t('users') . ' WHERE id = ?');
+    $who->execute([$me]);
+    ledger($host, 'tip_friend', $coins, (string)$who->fetchColumn());
+    db()->commit();
+    return ['coins' => $mine['coins'] - $coins, 'given' => (int)$given + $coins];
 }
 
 /** Gifts are free for the giver: one ingredient per friend per day. */

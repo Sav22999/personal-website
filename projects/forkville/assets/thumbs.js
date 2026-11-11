@@ -3,6 +3,7 @@
  */
 import * as THREE from '../vendor/three.module.min.js';
 import {furnitureModel, personModel} from './models.js';
+import {doorModel} from './scene.js';
 
 let renderer = null, scene = null, camera = null;
 const cache = new Map();
@@ -56,6 +57,30 @@ export function portrait(role, color, seed, look) {
         renderer.render(scene, camera);
         const url = renderer.domElement.toDataURL('image/png');
         scene.remove(model);
+        return url;
+    } catch (e) {
+        return '';
+    }
+}
+
+/** A picture of a door style (for the door window). */
+export function doorThumb(style) {
+    const key = 'door:' + style;
+    if (cache.has(key)) return cache.get(key);
+    try {
+        if (!renderer) setup();
+        const model = doorModel(style, false); // closed, seen from the street
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.4, 0.1), new THREE.MeshStandardMaterial({color: '#F3E6D2'}));
+        wall.position.set(0, 1.2, -0.1);
+        const g = new THREE.Group();
+        g.add(wall, model);
+        scene.add(g);
+        camera.position.set(0.9, 1.4, 2.8);
+        camera.lookAt(0, 1.0, 0);
+        renderer.render(scene, camera);
+        const url = renderer.domElement.toDataURL('image/png');
+        scene.remove(g);
+        cache.set(key, url);
         return url;
     } catch (e) {
         return '';

@@ -5,8 +5,8 @@
  */
 'use strict';
 
-const CACHE = 'forkville-4';
-const FILES = ['./', 'assets/app.js', 'assets/scene.js', 'assets/models.js', 'assets/sim.js', 'assets/editor.js', 'assets/i18n.js', 'assets/icons.js', 'assets/thumbs.js', 'assets/forkville.css',
+const CACHE = 'forkville-14';
+const FILES = ['./', 'assets/app.js', 'assets/scene.js', 'assets/models.js', 'assets/sim.js', 'assets/editor.js', 'assets/i18n.js', 'assets/icons.js', 'assets/thumbs.js', 'assets/audio.js', 'assets/town.js', 'assets/forkville.css',
     'vendor/three.module.min.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'assets/fonts/stack-sans-notch.ttf', 'privacy.html'];
 
 self.addEventListener('install', event => {

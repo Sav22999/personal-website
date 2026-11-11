@@ -14,7 +14,7 @@
         ['rust', 'Rust'], ['vala', 'Vala'], ['text', 'Text']];
 
     /** What a course is for (the same list as COURSE_CATEGORIES_ALL in lib/courses.php). */
-    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI']];
+    const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI'], ['devops', 'DevOps'], ['security', 'Security'], ['productivity', 'Productivity']];
     let GENERAL_EXAM_MINUTES = null; // the general time of the final exams, shown as a hint in the course form
 
     const TABS = [['overview', 'Overview', 'dashboard'], ['courses', 'Courses', 'book'], ['games', 'Games', 'game'], ['users', 'Users', 'group'], ['certificates', 'Certificates', 'cert'], ['avatars', 'Profile pictures', 'image'], ['settings', 'Settings', 'tune']];

@@ -2309,3 +2309,164 @@ input[type="text"]:focus {
 .rule-diagram .dg-beam {
     stroke-width: 1.3;
 }
+
+.rules-credits {
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+}
+
+/* ---------- Duel: the other mine and the own mine ---------- */
+.view-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+}
+
+.view-tabs button {
+    padding: 8px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.view-tabs button.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gem.own polygon {
+    stroke: var(--accent);
+    stroke-width: 0.5;
+}
+
+.draft-tools #btn-random-place:not(.hidden) ~ #btn-clear {
+    grid-column: auto;
+}
+
+.draft-tools:has(#btn-random-place:not(.hidden)) #btn-answer {
+    grid-column: 1 / -1;
+}
+
+/* With the two tabs above it the mine has a little less height available */
+@media (min-width: 821px) {
+    .board-wrap:has(#view-tabs:not(.hidden)) {
+        max-width: max(300px, calc(100dvh - 260px));
+    }
+}
+
+.mine-board:focus {
+    outline: none;
+}
+
+/* ---------- Placing gems: drag, select, toolbar ---------- */
+.board-stage {
+    position: relative;
+}
+
+.mine-board.editing {
+    touch-action: none; /* the page does not scroll while a gem moves under the finger */
+}
+
+.mine-board.editing .cell {
+    cursor: pointer;
+}
+
+.mine-board.editing .gem:not(.ghost) {
+    pointer-events: auto;
+    cursor: grab;
+}
+
+.gem.active polygon {
+    stroke: var(--accent-strong);
+    stroke-width: 0.9;
+}
+
+.gem.active {
+    filter: drop-shadow(0 0 2px var(--accent));
+}
+
+.gem.lifted {
+    opacity: 0.25;
+}
+
+.gem.ghost {
+    opacity: 0.7;
+}
+
+.gem-toolbar {
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+    transform: translate(-50%, calc(-100% - 6px));
+}
+
+.gem-toolbar.below {
+    transform: translate(-50%, 6px);
+}
+
+.gem-toolbar button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    color: var(--text);
+}
+
+.gem-toolbar button:hover {
+    background: var(--surface-2);
+}
+
+#btn-gem-remove {
+    color: var(--bad);
+}
+
+.tray-gem {
+    touch-action: none;
+    cursor: grab;
+}
+
+.place-tip {
+    font-size: 13px;
+}
+
+@media (max-width: 820px) {
+    .tray-gem {
+        width: 58px;
+        height: 58px;
+    }
+
+    .tray {
+        gap: 10px;
+    }
+
+    .place-tip {
+        text-align: center;
+    }
+}
+
+.place-countdown {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    margin-top: -6px;
+}
+
+.place-countdown.urgent {
+    color: var(--bad);
+}

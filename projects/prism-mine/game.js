@@ -268,9 +268,15 @@ function shapeIcon(shape, color, size = 34) {
 
 // ==================== GAME STATE ====================
 // probes: [{s, p, exit, colors}]; guesses: [{s, ok}]
+// In a duel each player sends beams into the other's mine: the sketch only deals with the player's own beams
+const myProbes = () => session.mode === 'online' ? session.probes.filter(pr => pr.s === session.mySlot) : session.probes;
+const theirProbes = () => session.probes.filter(pr => pr.s !== session.mySlot);
+const placingMine = () => session.mode === 'online' && session.status === 'placing';
+const viewingMine = () => session.mode === 'online' && session.view === 'mine' && (session.status === 'playing' || session.status === 'finished');
+
 const usedPorts = () => {
     const used = new Set();
-    session.probes.forEach(pr => {
+    myProbes().forEach(pr => {
         used.add(pr.p);
         if (pr.exit !== null) used.add(pr.exit);
     });
@@ -285,13 +291,16 @@ function draftComplete() {
     return session.draft.placed.every(Boolean);
 }
 
-// How the sketch answers every beam fired so far: true = same answer as the mine
+// How the sketch answers every beam fired so far: true = same answer as the mine, null = not one of the player's beams
 function sketchCheck() {
+    if (placingMine()) return null;
     const gems = draftGems();
     const placedOnly = gems.filter(Boolean);
     const map = P.buildMap(placedOnly);
     if (!map) return null;
+    const mine = new Set(myProbes());
     return session.probes.map(pr => {
+        if (!mine.has(pr)) return null;
         const res = P.trace(map, placedOnly, pr.p);
         return res.exit === pr.exit && res.colors === pr.colors;
     });
@@ -299,7 +308,7 @@ function sketchCheck() {
 
 function isMyTurn() {
     const s = session;
-    if (!s || s.status !== 'playing' || s.mode === 'example') return false;
+    if (!s || s.status !== 'playing' || s.mode === 'example' || viewingMine()) return false;
     if (s.mode !== 'online') return true;
     return s.turn === s.mySlot && !s.inFlight;
 }
@@ -333,26 +342,38 @@ function renderBoard() {
         board.appendChild(svg('rect', {x: cellX(c) + 0.3, y: cellY(r) + 0.3, width: 9.4, height: 9.4, rx: 1.2, class: 'cell', 'data-r': r, 'data-c': c}));
     }
 
-    // The sketch, or the real mine once the game is over
-    if (over && s.hidden) s.hidden.forEach(g => board.appendChild(gemSvg(g, 'real')));
+    // Own mine (duel), the real mine once the game is over, or the sketch (also used to place the own gems)
+    const ownView = viewingMine();
+    const lockedPlacement = placingMine() && s.myMine;
+    if (ownView || lockedPlacement) (s.myMine || []).forEach(g => board.appendChild(gemSvg(g, 'own')));
+    else if (over && s.hidden) s.hidden.forEach(g => board.appendChild(gemSvg(g, 'real')));
     else {
         const d = s.draft;
+        const moving = d.drag && d.drag.moved;
         draftGems().forEach((g, i) => {
-            if (g) board.appendChild(gemSvg(g, (d.locked.has(i) ? 'locked' : '') + (d.selected === i ? ' lifted' : '')));
+            if (!g) return;
+            let cls = d.locked.has(i) ? 'locked' : '';
+            if (moving && d.drag.i === i) cls += ' lifted';
+            else if (d.active === i && editable()) cls += ' active';
+            board.appendChild(gemSvg(g, cls));
         });
         const ghost = draftPreview();
         if (ghost) board.appendChild(gemSvg(ghost.gem, ghost.ok ? 'ghost' : 'ghost bad'));
     }
 
+    board.classList.toggle('editing', editable());
+    renderGemToolbar();
     const pathLayer = svg('g', {class: 'path-layer', id: 'path-layer'});
     board.appendChild(pathLayer);
     // The example shows the real path of the beam it just sent: in a real game it stays hidden
     if (s.mode === 'example' && s.examplePort !== null) drawPath(pathLayer, s.examplePort, s.hidden);
 
-    // Ports: a used one shows the colour that came out
+    // Ports: a used one shows the colour that came out (own mine: the beams the opponent sent into it)
     const used = new Map();
-    const check = prefs.check && !over ? sketchCheck() : null;
+    const check = prefs.check && !over && !ownView ? sketchCheck() : null;
+    const shown = new Set(placingMine() ? [] : ownView ? theirProbes() : myProbes());
     s.probes.forEach((pr, n) => {
+        if (!shown.has(pr)) return;
         const info = {n, pr, ok: check ? check[n] : null};
         used.set(pr.p, info);
         if (pr.exit !== null && pr.exit !== pr.p) used.set(pr.exit, info);
@@ -396,8 +417,8 @@ function showPath(p) {
     const layer = $('path-layer');
     if (!layer) return;
     layer.innerHTML = '';
-    if (!prefs.paths || s.status === 'finished') return;
-    drawPath(layer, p, draftGems().filter(Boolean));
+    if (!prefs.paths || s.status === 'finished' || placingMine()) return;
+    drawPath(layer, p, viewingMine() ? s.myMine : draftGems().filter(Boolean));
 }
 
 function drawPath(layer, p, placed) {
@@ -418,12 +439,19 @@ function renderTray() {
     const s = session;
     const d = s.draft;
     const over = s.status === 'finished';
-    $('tray').innerHTML = s.gems.map((g, i) => `<li><button type="button" class="tray-gem ${d.placed[i] ? 'placed' : ''} ${d.selected === i ? 'selected' : ''} ${d.locked.has(i) ? 'locked' : ''}" data-i="${i}" ${over || d.locked.has(i) ? 'disabled' : ''} title="${escapeHtml(gemName(g))}" aria-label="${escapeHtml(gemName(g))}">${shapeIcon(g.shape, g.color)}</button></li>`).join('');
+    $('tray').innerHTML = s.gems.map((g, i) => `<li><button type="button" class="tray-gem ${d.placed[i] ? 'placed' : ''} ${d.selected === i || d.active === i ? 'selected' : ''} ${d.locked.has(i) ? 'locked' : ''}" data-i="${i}" ${over || d.locked.has(i) ? 'disabled' : ''} title="${escapeHtml(gemName(g))}" aria-label="${escapeHtml(gemName(g))}">${shapeIcon(g.shape, g.color)}</button></li>`).join('');
+    $('tray').classList.toggle('hidden', viewingMine() || (placingMine() && !!s.myMine));
+    $('place-tip').classList.toggle('hidden', !editable() || (s.mode !== 'online' && myProbes().length > 3 && !placingMine()));
     const check = prefs.check ? sketchCheck() : null;
     let status = '';
-    if (!over) {
-        if (!s.probes.length) status = t('sketch_start');
-        else if (check) status = t('sketch_explains', {n: check.filter(Boolean).length, total: check.length});
+    if (placingMine()) status = s.myMine ? t('waiting_hide', {name: nameOf(other(s.mySlot))}) : t('hide_hint');
+    else if (viewingMine()) status = t('mine_view_note', {name: nameOf(other(s.mySlot))});
+    else if (!over) {
+        if (!myProbes().length) status = t('sketch_start');
+        else if (check) {
+            const mine = check.filter(x => x !== null);
+            status = t('sketch_explains', {n: mine.filter(Boolean).length, total: mine.length});
+        }
     }
     $('sketch-status').textContent = status;
 }
@@ -453,7 +481,10 @@ function renderStatus() {
     renderClocks();
 
     let text = '', cls = '';
-    if (s.status === 'playing') {
+    if (placingMine()) {
+        text = s.myMine ? t('waiting_hide', {name: nameOf(other(s.mySlot))}) : t('hide_title');
+        cls = s.myMine ? '' : 'mine';
+    } else if (s.status === 'playing') {
         if (s.mode === 'example') text = t('example_step', {n: s.exampleStep + 1, total: EXAMPLE.steps.length});
         else if (!online) text = s.mode === 'daily' ? t('daily_label', {date: s.date}) : t('level_' + s.level);
         else if (s.turn === s.mySlot) {
@@ -495,8 +526,8 @@ function renderLog() {
         if (h.t === 'p') {
             const pr = s.probes[h.i];
             const sw = pr.exit === null ? '#0D0B0A' : MIX[pr.colors];
-            const who = s.mode === 'online' ? `<span class="log-who">${escapeHtml(nameOf(pr.s))}</span>` : '';
-            const mark = check ? `<span class="log-check ${check[h.i] ? 'ok' : 'bad'}" aria-label="${escapeHtml(t(check[h.i] ? 'sketch_ok' : 'sketch_bad'))}">${check[h.i] ? '✓' : '✗'}</span>` : '';
+            const who = s.mode === 'online' ? `<span class="log-who">${escapeHtml(nameOf(pr.s))}${pr.s !== s.mySlot ? ' ' + escapeHtml(t('log_in_your_mine')) : ''}</span>` : '';
+            const mark = check && check[h.i] !== null ? `<span class="log-check ${check[h.i] ? 'ok' : 'bad'}" aria-label="${escapeHtml(t(check[h.i] ? 'sketch_ok' : 'sketch_bad'))}">${check[h.i] ? '✓' : '✗'}</span>` : '';
             items.push(`<li class="log-item"><span class="log-n">${h.i + 1}</span><span class="log-swatch" style="background:${sw}"></span><span class="log-text">${who}${escapeHtml(probeText(pr))}</span>${mark}</li>`);
         } else {
             const g = s.guesses[gi++];
@@ -524,115 +555,308 @@ function renderActions() {
         document.querySelector('.draft-tools').classList.add('hidden');
         return;
     }
+    const placing = placingMine();
+    const placed = placing && !!s.myMine;
     $('btn-hint').classList.toggle('hidden', online || over);
     $('btn-hint').disabled = s.draft.locked.size >= s.gems.length - 1;
     $('btn-resign').classList.toggle('hidden', over);
     $('btn-result').classList.toggle('hidden', !over);
     $('btn-chat-toggle').classList.toggle('hidden', !online);
-    $('btn-answer').disabled = over || !draftComplete() || !isMyTurn();
-    $('btn-rotate').disabled = over;
-    $('btn-clear').disabled = over;
-    document.querySelector('.draft-tools').classList.toggle('hidden', over);
+    $('btn-random-place').classList.toggle('hidden', !placing);
+    $('btn-answer').textContent = placing ? t('ready') : t('answer');
+    $('btn-answer').disabled = placing ? (placed || !draftComplete()) : (over || !draftComplete() || !isMyTurn());
+    $('btn-clear').textContent = placing ? t('clear_mine') : t('clear_sketch');
+    $('btn-rotate').disabled = over || placed;
+    $('btn-clear').disabled = over || placed;
+    $('btn-random-place').disabled = placed;
+    document.querySelector('.draft-tools').classList.toggle('hidden', over || viewingMine() || placed);
+    const tabs = online && (s.status === 'playing' || s.status === 'finished');
+    $('view-tabs').classList.toggle('hidden', !tabs);
+    document.querySelectorAll('#view-tabs [data-view]').forEach(b => {
+        const on = (s.view || 'target') === b.dataset.view;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+    });
 }
 
 // ==================== SKETCH (placing gems) ====================
+// The same tools place the own gems in a duel and the gems of the sketch while solving.
+// selected = gem of the tray waiting to be placed; active = gem on the board with its toolbar;
+// drag = a gem moving under the mouse or finger (from the tray or from the board).
 function newDraft(count) {
-    return {placed: new Array(count).fill(null), selected: null, rot: 0, hover: null, locked: new Set(), liftedFrom: null};
+    return {placed: new Array(count).fill(null), selected: null, active: null, rot: 0, hover: null, locked: new Set(), drag: null};
+}
+
+function gemBox(shape, rot) {
+    const cells = P.orientation(shape, rot);
+    return {h: Math.max(...cells.map(c => c[0])) + 1, w: Math.max(...cells.map(c => c[1])) + 1};
+}
+
+// Gem i at (r, c) with that rotation, kept inside the mine; ok = it overlaps no other gem
+function candidate(i, r, c, rot) {
+    const s = session;
+    const {h, w} = gemBox(s.gems[i].shape, rot);
+    const gem = {...s.gems[i], r: Math.max(0, Math.min(r, N - h)), c: Math.max(0, Math.min(c, N - w)), rot};
+    const others = draftGems().map((x, k) => k === i ? null : x).filter(Boolean);
+    return {gem, ok: !!P.buildMap([...others, gem])};
 }
 
 function draftPreview() {
     const s = session;
     const d = s.draft;
-    if (d.selected === null || !d.hover || s.status !== 'playing') return null;
-    const g = s.gems[d.selected];
-    const cells = P.orientation(g.shape, d.rot);
-    const h = Math.max(...cells.map(c => c[0])) + 1;
-    const w = Math.max(...cells.map(c => c[1])) + 1;
-    const gem = {...g, r: Math.min(d.hover.r, N - h), c: Math.min(d.hover.c, N - w), rot: d.rot};
-    const others = draftGems().map((x, i) => i === d.selected ? null : x).filter(Boolean);
-    return {gem, ok: !!P.buildMap([...others, gem])};
-}
-
-function onCellHover(r, c) {
-    const d = session && session.draft;
-    if (!d || d.selected === null) return;
-    if (d.hover && d.hover.r === r && d.hover.c === c) return;
-    d.hover = {r, c};
-    renderBoard();
+    if (!editable()) return null;
+    if (d.drag && d.drag.moved && d.drag.cell) {
+        const {i, offR, offC, rot, cell} = d.drag;
+        return candidate(i, cell.r - offR, cell.c - offC, rot);
+    }
+    if (d.selected === null || !d.hover) return null;
+    const {h, w} = gemBox(s.gems[d.selected].shape, d.rot);
+    return candidate(d.selected, d.hover.r - Math.floor((h - 1) / 2), d.hover.c - Math.floor((w - 1) / 2), d.rot);
 }
 
 function gemAt(r, c) {
     return draftGems().findIndex(g => g && P.gemCells(g).some(cell => cell.r === r && cell.c === c));
 }
 
-function onCellClick(r, c) {
+// The sketch can be changed while solving, and while hiding the own gems until they are confirmed
+function editable() {
     const s = session;
-    if (!s || s.status !== 'playing' || s.mode === 'example') return;
-    const d = s.draft;
-    if (d.selected === null) {
-        const i = gemAt(r, c);
-        if (i === -1) {
-            const free = d.placed.findIndex(x => !x);
-            if (free === -1) return;
-            d.selected = free;
-        } else {
-            if (d.locked.has(i)) {
-                showToast(t('gem_locked'));
-                return;
+    if (!s || s.mode === 'example' || viewingMine()) return false;
+    if (placingMine()) return !s.myMine;
+    return s.status === 'playing';
+}
+
+function sketchChanged() {
+    saveLocalGame();
+    renderAll();
+}
+
+// Mine cell under a pointer; a finger hides what is under it, so on touch the gem goes a little above it
+function cellAt(e, lift = false) {
+    const board = $('mine-board');
+    const pt = board.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const loc = pt.matrixTransform(board.getScreenCTM().inverse());
+    const y = loc.y - (lift ? 9 : 0);
+    const r = Math.floor((y - 10) / 10), c = Math.floor((loc.x - 10) / 10);
+    return {r, c, inside: loc.x >= 0 && loc.x <= 100 && loc.y >= 0 && loc.y <= 100, onGrid: r >= 0 && r < N && c >= 0 && c < N};
+}
+
+function startDrag(e, i, offR, offC, from) {
+    const d = session.draft;
+    d.drag = {i, offR, offC, rot: from ? from.rot : d.rot, from, x: e.clientX, y: e.clientY, moved: false, cell: null, touch: e.pointerType !== 'mouse'};
+}
+
+function onBoardPointerDown(e) {
+    if (!editable() || e.button > 0 || e.target.closest('.port')) return;
+    const d = session.draft;
+    const cell = cellAt(e);
+    if (!cell.onGrid) return;
+    const i = gemAt(cell.r, cell.c);
+    if (i !== -1) {
+        if (d.locked.has(i)) {
+            showToast(t('gem_locked'));
+            return;
+        }
+        const g = d.placed[i];
+        startDrag(e, i, cell.r - g.r, cell.c - g.c, g);
+    } else {
+        // An empty cell: it takes the gem chosen in the tray, if any; otherwise it only lets go of the selection
+        const next = d.selected;
+        if (next === null) {
+            if (d.active !== null) {
+                d.active = null;
+                renderAll();
             }
-            d.selected = i;
-            d.rot = d.placed[i].rot;
-            d.liftedFrom = d.placed[i];
-            d.placed[i] = null;
-            d.hover = {r, c};
+            return;
+        }
+        const {h, w} = gemBox(session.gems[next].shape, d.rot);
+        d.selected = next;
+        startDrag(e, next, Math.floor((h - 1) / 2), Math.floor((w - 1) / 2), null);
+        d.drag.cell = {r: cell.r, c: cell.c};
+    }
+    e.preventDefault();
+}
+
+function onTrayPointerDown(e) {
+    const btn = e.target.closest('.tray-gem');
+    if (!btn || btn.disabled || !editable() || e.button > 0) return;
+    const d = session.draft;
+    const i = Number(btn.dataset.i);
+    const from = d.placed[i];
+    const {h, w} = gemBox(session.gems[i].shape, from ? from.rot : d.rot);
+    startDrag(e, i, Math.floor((h - 1) / 2), Math.floor((w - 1) / 2), from);
+    d.drag.fromTray = true;
+    e.preventDefault();
+}
+
+let dragFrame = 0;
+
+function onPointerMove(e) {
+    const s = session;
+    if (!s || !s.draft) return;
+    const d = s.draft;
+    if (!d.drag) {
+        // Mouse only: the gem chosen in the tray follows the pointer before the click
+        if (e.pointerType === 'mouse' && d.selected !== null && editable() && e.target.closest && e.target.closest('#mine-board')) {
+            const cell = cellAt(e);
+            const hover = cell.onGrid ? {r: cell.r, c: cell.c} : null;
+            if (JSON.stringify(hover) !== JSON.stringify(d.hover)) {
+                d.hover = hover;
+                renderBoard();
+            }
+        }
+        return;
+    }
+    if (!d.drag.moved && Math.hypot(e.clientX - d.drag.x, e.clientY - d.drag.y) < 6) return;
+    d.drag.moved = true;
+    const cell = cellAt(e, d.drag.touch);
+    d.drag.cell = cell.onGrid || cell.inside ? {r: cell.r, c: cell.c} : null;
+    d.drag.outside = !cell.inside;
+    if (!dragFrame) dragFrame = requestAnimationFrame(() => {
+        dragFrame = 0;
+        if (session) renderBoard();
+    });
+    e.preventDefault();
+}
+
+function onPointerUp(e) {
+    const s = session;
+    if (!s || !s.draft || !s.draft.drag) return;
+    const d = s.draft;
+    const drag = d.drag;
+    d.drag = null;
+    if (!drag.moved) {
+        if (drag.fromTray) {
+            // A tap on the tray: choose that gem (or select it where it lies)
+            if (drag.from) {
+                d.active = d.active === drag.i ? null : drag.i;
+                d.selected = null;
+            } else {
+                d.selected = d.selected === drag.i ? null : drag.i;
+                d.active = null;
+            }
             renderAll();
             return;
         }
+        if (drag.from) {
+            // A tap on a gem selects it; a second tap turns it
+            if (d.active === drag.i) rotateActive();
+            else {
+                d.active = drag.i;
+                d.selected = null;
+                renderAll();
+            }
+            return;
+        }
+        // A tap on an empty cell drops the chosen gem there
+        placeGem(drag.i, candidate(drag.i, drag.cell.r - drag.offR, drag.cell.c - drag.offC, drag.rot));
+        return;
     }
-    d.hover = {r, c};
-    const ghost = draftPreview();
-    if (!ghost || !ghost.ok) {
+    if (drag.outside || !drag.cell) {
+        // Dropped outside the mine: back to the tray
+        if (drag.from) {
+            d.placed[drag.i] = null;
+            d.active = null;
+            d.selected = null;
+            sketchChanged();
+        } else renderAll();
+        return;
+    }
+    const cand = candidate(drag.i, drag.cell.r - drag.offR, drag.cell.c - drag.offC, drag.rot);
+    if (!cand.ok) {
+        showToast(t('err_overlap'));
+        renderAll();
+        return;
+    }
+    placeGem(drag.i, cand);
+}
+
+function placeGem(i, cand) {
+    const d = session.draft;
+    if (!cand.ok) {
         showToast(t('err_overlap'));
         renderBoard();
         return;
     }
-    d.placed[d.selected] = {r: ghost.gem.r, c: ghost.gem.c, rot: ghost.gem.rot};
-    d.liftedFrom = null;
-    const next = d.placed.findIndex(x => !x);
-    d.selected = next === -1 ? null : next;
-    if (d.selected !== null) d.rot = 0;
+    d.placed[i] = {r: cand.gem.r, c: cand.gem.c, rot: cand.gem.rot};
+    // The gem just placed stays selected; the next one is chosen by the player
+    d.active = i;
+    d.selected = null;
+    d.hover = null;
+    d.rot = 0;
     playSound('place');
-    renderAll();
+    sketchChanged();
 }
 
-function selectTrayGem(i) {
-    const d = session.draft;
-    if (d.selected !== null && d.liftedFrom && !d.placed[d.selected]) d.placed[d.selected] = d.liftedFrom;
-    d.liftedFrom = null;
-    if (d.selected === i) {
-        d.selected = null;
-        renderAll();
-        return;
-    }
-    if (d.placed[i]) {
-        d.liftedFrom = d.placed[i];
-        d.rot = d.placed[i].rot;
-        d.placed[i] = null;
-    } else d.rot = 0;
-    d.selected = i;
-    renderAll();
-}
-
-function rotateSelected() {
+// Turns the selected gem where it lies; if it does not fit, it moves by one cell to make room
+function rotateActive() {
     const s = session;
-    if (!s || s.status !== 'playing') return;
+    if (!editable()) return;
     const d = s.draft;
-    if (d.selected === null) {
-        showToast(t('rotate_hint'));
+    if (d.drag) {
+        d.drag.rot = (d.drag.rot + 1) % P.ORIENTATIONS[s.gems[d.drag.i].shape].length;
+        renderBoard();
         return;
     }
-    d.rot = (d.rot + 1) % P.ORIENTATIONS[s.gems[d.selected].shape].length;
-    renderBoard();
+    if (d.active === null || !d.placed[d.active]) {
+        if (d.selected === null) return showToast(t('rotate_hint'));
+        d.rot = (d.rot + 1) % P.ORIENTATIONS[s.gems[d.selected].shape].length;
+        renderBoard();
+        return;
+    }
+    const i = d.active;
+    const g = d.placed[i];
+    const count = P.ORIENTATIONS[s.gems[i].shape].length;
+    if (count === 1) return showToast(t('rotate_same'));
+    const rot = (g.rot + 1) % count;
+    for (const [dr, dc] of [[0, 0], [0, -1], [-1, 0], [-1, -1], [1, 0], [0, 1], [1, 1], [-1, 1], [1, -1], [0, -2], [-2, 0]]) {
+        const cand = candidate(i, g.r + dr, g.c + dc, rot);
+        if (cand.ok) {
+            d.placed[i] = {r: cand.gem.r, c: cand.gem.c, rot};
+            playSound('place');
+            sketchChanged();
+            return;
+        }
+    }
+    showToast(t('rotate_no_room'));
+}
+
+function removeActive() {
+    const d = session && session.draft;
+    if (!editable() || !d || d.active === null) return;
+    d.placed[d.active] = null;
+    d.selected = null;
+    d.active = null;
+    sketchChanged();
+}
+
+function moveActive(dr, dc) {
+    const d = session.draft;
+    const g = d.placed[d.active];
+    const cand = candidate(d.active, g.r + dr, g.c + dc, g.rot);
+    if (cand.ok && (cand.gem.r !== g.r || cand.gem.c !== g.c)) {
+        d.placed[d.active] = {r: cand.gem.r, c: cand.gem.c, rot: g.rot};
+        sketchChanged();
+    }
+}
+
+// The small Rotate / Remove bar floats over the selected gem
+function renderGemToolbar() {
+    const bar = $('gem-toolbar');
+    const s = session;
+    const d = s && s.draft;
+    const g = d && d.active !== null && !(d.drag && d.drag.moved) && editable() ? draftGems()[d.active] : null;
+    bar.classList.toggle('hidden', !g);
+    if (!g) return;
+    const cells = P.gemCells(g);
+    const top = Math.min(...cells.map(x => x.r)), bottom = Math.max(...cells.map(x => x.r)) + 1;
+    const left = Math.min(...cells.map(x => x.c)), right = Math.max(...cells.map(x => x.c)) + 1;
+    const below = top < 2;
+    bar.style.left = Math.max(22, Math.min(78, 10 + (left + right) * 5)) + '%'; // the bar stays over the mine
+    bar.style.top = (10 + (below ? bottom : top) * 10) + '%';
+    bar.classList.toggle('below', below);
 }
 
 // ==================== PROBES AND ANSWERS ====================
@@ -640,7 +864,7 @@ function onPortActivate(p) {
     const s = session;
     if (!s || !isMyTurn()) return;
     if (usedPorts().has(p)) {
-        const pr = s.probes.find(x => x.p === p || x.exit === p);
+        const pr = myProbes().find(x => x.p === p || x.exit === p);
         if (pr) showToast(probeText(pr));
         return;
     }
@@ -661,12 +885,31 @@ function addProbe(pr, quiet = false) {
     s.lastProbe = s.probes.length - 1;
     if (!quiet) {
         playSound(pr.exit === null ? 'absorbed' : 'beam', pr.colors);
-        showToast(probeText(pr));
+        // In a duel the opponent's beams went into the own mine
+        showToast(s.mode === 'online' && pr.s !== s.mySlot ? `${nameOf(pr.s)} ${t('log_in_your_mine')}: ${probeText(pr)}` : probeText(pr));
     }
+}
+
+// Duel: the gems placed on the board become the own hidden mine
+async function confirmMine() {
+    const s = session;
+    if (!s || !placingMine() || s.myMine || !draftComplete()) return;
+    const layout = draftGems();
+    setBusy($('btn-answer'), true);
+    const res = await api('place', {token: s.token, layout: P.encode(layout)});
+    setBusy($('btn-answer'), false);
+    if (session !== s) return;
+    if (res.error) return showError(res.error);
+    s.myMine = layout;
+    s.draft = newDraft(s.gems.length);
+    playSound('place');
+    renderAll();
+    pollServer();
 }
 
 async function submitAnswer() {
     const s = session;
+    if (placingMine()) return confirmMine();
     if (!s || !draftComplete() || !isMyTurn()) return;
     const answer = draftGems();
     if (s.mode === 'online') {
@@ -761,13 +1004,13 @@ function startSolo(level, daily = false) {
 function saveLocalGame() {
     const s = session;
     if (!s || s.mode !== 'daily' || s.status !== 'playing') return;
-    storageSet('pm_daily_progress', JSON.stringify({date: s.date, probes: s.probes, guesses: s.guesses, history: s.history, wrong: s.wrong, hints: s.hints, placed: s.draft.placed, locked: [...s.draft.locked]}));
+    storageSet('pm_daily_progress', JSON.stringify({date: s.date, mine: P.encode(s.hidden), probes: s.probes, guesses: s.guesses, history: s.history, wrong: s.wrong, hints: s.hints, placed: s.draft.placed, locked: [...s.draft.locked]}));
 }
 
 function resumeDaily() {
     try {
         const saved = JSON.parse(storageGet('pm_daily_progress') || 'null');
-        if (!saved || saved.date !== session.date) return;
+        if (!saved || saved.date !== session.date || (saved.mine && saved.mine !== P.encode(session.hidden))) return;
         Object.assign(session, {probes: saved.probes, guesses: saved.guesses, history: saved.history, wrong: saved.wrong, hints: saved.hints});
         session.draft.placed = saved.placed;
         session.draft.locked = new Set(saved.locked);
@@ -923,7 +1166,7 @@ async function findRandomGame() {
 function setupOnlineSession(code, token, slot, isPublic) {
     session = baseSession('online', {
         status: 'waiting', code, token, mySlot: slot, isPublic, names: {1: '', 2: ''}, lastMessageId: 0, players: [],
-        gems: [], draft: newDraft(0), round: 0, rematchSent: false, hidden: null,
+        gems: [], draft: newDraft(0), round: 0, rematchSent: false, hidden: null, myMine: null, view: 'target', placeLeftMs: 0,
     });
     session.names[slot] = playerName;
     sessionSet('pm_session', JSON.stringify({code, token, slot, isPublic}));
@@ -983,7 +1226,10 @@ function handlePollUpdate(data) {
         s.wins[p.slot] = p.wins;
     });
 
-    // A new round (or the first one): a new mine and an empty sketch
+    s.placeLeftMs = data.placeLeftMs;
+    s.placeSyncedAt = Date.now();
+
+    // A new round (or the first one): new gems to hide and an empty sketch
     if (data.round !== s.round) {
         s.round = data.round;
         s.gems = data.gems;
@@ -992,14 +1238,25 @@ function handlePollUpdate(data) {
         s.guesses = [];
         s.history = [];
         s.hidden = null;
+        s.myMine = null;
+        s.view = 'target';
         s.rematchSent = false;
-        if (s.status === 'finished') s.status = 'playing';
+        if (s.status === 'finished') s.status = data.status === 'finished' ? 'playing' : data.status;
         showModal('gameover-overlay', false);
     }
+    if (data.myMine && !s.myMine) s.myMine = P.decode(data.myMine);
 
     if (s.status === 'waiting' && data.status !== 'waiting') {
-        s.status = 'playing';
+        s.status = data.status === 'finished' ? 'playing' : data.status;
         enterGameScreen();
+    }
+    // Both mines are hidden: the duel starts, with an empty sketch of the other mine
+    if (s.status === 'placing' && (data.status === 'playing' || data.status === 'finished')) {
+        s.status = 'playing';
+        s.draft = newDraft(s.gems.length);
+        s.view = 'target';
+        playSound('place');
+        showToast(t('duel_starts'));
     }
 
     // New actions since the last poll: a reload brings many at once, shown quietly
@@ -1015,7 +1272,7 @@ function handlePollUpdate(data) {
     s.turn = data.turn;
 
     if (data.status === 'finished' && s.status !== 'finished') {
-        s.hidden = P.decode(data.mine);
+        s.hidden = P.decode(data.oppMine);
         const winner = data.result === '1-0' ? 1 : 2;
         endGame(winner === s.mySlot, data.reason, winner);
     }
@@ -1040,12 +1297,25 @@ async function probeOnline(p) {
     pollServer();
 }
 
+// Online clocks tick here between polls; while hiding the gems the countdown of the placement shows instead
 function startClock() {
     clearInterval(clockInterval);
     const s = session;
-    if (!s || s.mode !== 'online' || s.timeControl <= 0) return;
+    if (!s || s.mode !== 'online') return;
     clockInterval = setInterval(() => {
-        if (session !== s || s.status !== 'playing') return clearInterval(clockInterval);
+        if (session !== s || s.status === 'finished') return clearInterval(clockInterval);
+        // The countdown has a line of its own: the polls redraw the rest without touching it
+        const countdown = $('place-countdown');
+        const counting = s.status === 'placing' && !s.myMine && s.placeLeftMs > 0;
+        countdown.classList.toggle('hidden', !counting);
+        if (counting) {
+            const left = Math.ceil(Math.max(0, s.placeLeftMs - (Date.now() - s.placeSyncedAt)) / 1000);
+            const text = t('place_time_left', {sec: left});
+            if (countdown.textContent !== text) countdown.textContent = text;
+            countdown.classList.toggle('urgent', left <= 15);
+        }
+        if (s.status === 'placing') return;
+        if (s.status !== 'playing' || s.timeControl <= 0) return;
         const now = Date.now();
         s.ms[s.turn] = Math.max(0, s.ms[s.turn] - (now - s.clockSyncedAt));
         s.clockSyncedAt = now;
@@ -1056,7 +1326,7 @@ function startClock() {
 // The opponent lost the connection: a countdown to the automatic win (the server decides at zero)
 function renderOffline() {
     const s = session;
-    const opp = s && s.mode === 'online' && s.status === 'playing' ? s.players.find(p => p.slot !== s.mySlot) : null;
+    const opp = s && s.mode === 'online' && (s.status === 'playing' || s.status === 'placing') ? s.players.find(p => p.slot !== s.mySlot) : null;
     if (!opp || opp.online) {
         if (s) s.offlineDeadline = null;
         clearInterval(offlineTimer);
@@ -1196,6 +1466,7 @@ async function leaveGame() {
 }
 
 function resetToLobby() {
+    $('place-countdown').classList.add('hidden');
     clearInterval(pollTimer);
     clearInterval(clockInterval);
     session = null;
@@ -1211,15 +1482,16 @@ function resetToLobby() {
 function requestLeave() {
     const s = session;
     if (!s) return;
-    if (s.mode === 'online' && s.status === 'playing') openConfirm(t('confirm_leave_title'), t('confirm_leave_text'), t('leave'), leaveGame);
+    if (s.mode === 'online' && (s.status === 'playing' || s.status === 'placing')) openConfirm(t('confirm_leave_title'), t('confirm_leave_text'), t('leave'), leaveGame);
     else leaveGame();
 }
 
 function requestResign() {
     const s = session;
-    if (!s || s.status !== 'playing') return;
+    const active = () => session && (session.status === 'playing' || placingMine());
+    if (!s || !active()) return;
     openConfirm(t('confirm_resign_title'), t(s.mode === 'online' ? 'confirm_resign_duel' : 'confirm_resign_text'), t('resign'), async () => {
-        if (!session || session.status !== 'playing') return;
+        if (!active()) return;
         if (s.mode === 'online') {
             const res = await api('resign', {token: s.token});
             if (res.error) showError(res.error);
@@ -1272,7 +1544,8 @@ function renderRulesModal() {
         <section><h4>${r.colors_t}</h4><p>${r.colors}</p><ul class="rule-colors">${colors}</ul><ul class="rule-mix">${mixes}</ul></section>
         <section><h4>${r.answer_t}</h4><p>${r.answer}</p></section>
         <section><h4>${r.duel_t}</h4>${list(r.duel)}</section>
-        <section><h4>${r.tips_t}</h4>${list(r.tips)}</section>`;
+        <section><h4>${r.tips_t}</h4>${list(r.tips)}</section>
+        <section class="rules-credits"><h4>${escapeHtml(t('credits_title'))}</h4><p>${escapeHtml(t('credits_text'))}</p></section>`;
 }
 
 function renderHowToModal() {
@@ -1359,7 +1632,10 @@ function gemDiagram(shape) {
     }
     const turn = hits.find(h => !h.back);
     const back = hits.filter(h => h.back).find(h => !turn || Math.floor(h.p / P.SIZE) !== Math.floor(turn.p / P.SIZE)) || hits.find(h => h.back);
-    const second = turn ? (back || hits.find(h => !h.back && h.p !== turn.p && h.p !== P.trace(map, [gem], turn.p).exit)) : hits.filter(h => h.back)[1];
+    const side = (h) => Math.floor(h.p / P.SIZE);
+    // Shapes that never turn the beam: show two bounces from different sides
+    const second = turn ? (back || hits.find(h => !h.back && h.p !== turn.p && h.p !== P.trace(map, [gem], turn.p).exit))
+        : hits.filter(h => h.back).find(h => side(h) !== side(back));
     return beamDiagram([gem], [turn || back, second].filter(Boolean).map(h => h.p), [2, 2, 5, 5], 'rule-diagram');
 }
 
@@ -1434,28 +1710,21 @@ document.addEventListener('DOMContentLoaded', () => {
         joinOnlineGame();
     });
 
-    // Board: ports and cells
+    // Board: ports are clicked; gems are tapped, dragged and dropped
     const board = $('mine-board');
     board.addEventListener('click', (e) => {
         const port = e.target.closest('.port');
-        if (port) return onPortActivate(Number(port.dataset.p));
-        const cell = e.target.closest('.cell, .gem');
-        if (!cell) return;
-        const pt = board.createSVGPoint();
-        pt.x = e.clientX;
-        pt.y = e.clientY;
-        const loc = pt.matrixTransform(board.getScreenCTM().inverse());
-        const r = Math.floor((loc.y - 10) / 10), c = Math.floor((loc.x - 10) / 10);
-        if (r >= 0 && r < N && c >= 0 && c < N) onCellClick(r, c);
+        if (port) onPortActivate(Number(port.dataset.p));
     });
-    board.addEventListener('pointermove', (e) => {
-        if (e.pointerType !== 'mouse' || !session || session.draft.selected === null) return;
-        const pt = board.createSVGPoint();
-        pt.x = e.clientX;
-        pt.y = e.clientY;
-        const loc = pt.matrixTransform(board.getScreenCTM().inverse());
-        const r = Math.floor((loc.y - 10) / 10), c = Math.floor((loc.x - 10) / 10);
-        if (r >= 0 && r < N && c >= 0 && c < N) onCellHover(r, c);
+    board.addEventListener('pointerdown', onBoardPointerDown);
+    $('tray').addEventListener('pointerdown', onTrayPointerDown);
+    window.addEventListener('pointermove', onPointerMove, {passive: false});
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', () => {
+        if (session && session.draft && session.draft.drag) {
+            session.draft.drag = null;
+            renderAll();
+        }
     });
     board.addEventListener('pointerleave', () => {
         if (session && session.draft.hover) {
@@ -1481,22 +1750,61 @@ document.addEventListener('DOMContentLoaded', () => {
             onPortActivate(Number(port.dataset.p));
         }
     });
-    $('tray').addEventListener('click', (e) => {
+    // Keyboard on the tray: Enter chooses a gem (or selects it on the board)
+    $('tray').addEventListener('keydown', (e) => {
         const btn = e.target.closest('.tray-gem');
-        if (btn && session && session.status === 'playing' && session.mode !== 'example') selectTrayGem(Number(btn.dataset.i));
-    });
-    $('btn-rotate').addEventListener('click', rotateSelected);
-    $('btn-clear').addEventListener('click', () => {
-        const s = session;
-        if (!s || s.status !== 'playing') return;
-        s.draft.placed = s.draft.placed.map((x, i) => s.draft.locked.has(i) ? x : null);
-        s.draft.selected = null;
-        saveLocalGame();
+        if (!btn || !editable() || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        const d = session.draft;
+        const i = Number(btn.dataset.i);
+        if (d.placed[i]) d.active = i;
+        else d.selected = i;
         renderAll();
     });
+    $('btn-rotate').addEventListener('click', rotateActive);
+    $('btn-gem-rotate').addEventListener('click', rotateActive);
+    $('btn-gem-remove').addEventListener('click', removeActive);
+    $('btn-clear').addEventListener('click', () => {
+        const s = session;
+        if (!editable()) return;
+        s.draft.placed = s.draft.placed.map((x, i) => s.draft.locked.has(i) ? x : null);
+        s.draft.selected = null;
+        s.draft.active = null;
+        sketchChanged();
+    });
     $('btn-answer').addEventListener('click', submitAnswer);
+    $('btn-random-place').addEventListener('click', () => {
+        const s = session;
+        if (!placingMine() || s.myMine) return;
+        const layout = P.randomLayout(s.gems);
+        s.draft = newDraft(s.gems.length);
+        layout.forEach((g, i) => s.draft.placed[i] = {r: g.r, c: g.c, rot: g.rot});
+        playSound('place');
+        renderAll();
+    });
+    document.querySelectorAll('#view-tabs [data-view]').forEach(b => b.addEventListener('click', () => {
+        if (!session) return;
+        session.view = b.dataset.view;
+        session.draft.hover = null;
+        renderAll();
+    }));
+    // Keyboard: R turns, the arrows move the selected gem, Delete puts it back, Esc lets it go
     document.addEventListener('keydown', (e) => {
-        if ((e.key === 'r' || e.key === 'R') && session && !e.target.closest('input, textarea')) rotateSelected();
+        if (!session || !session.draft || !editable() || e.target.closest('input, textarea') || document.querySelector('.modal:not(.hidden)')) return;
+        const d = session.draft;
+        const moves = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
+        if (e.key === 'r' || e.key === 'R') rotateActive();
+        else if (d.active !== null && moves[e.key]) {
+            e.preventDefault();
+            moveActive(...moves[e.key]);
+        } else if (d.active !== null && (e.key === 'Delete' || e.key === 'Backspace')) {
+            e.preventDefault();
+            removeActive();
+        } else if (e.key === 'Escape' && (d.active !== null || d.selected !== null)) {
+            d.active = null;
+            d.selected = null;
+            renderAll();
+        }
     });
 
     $('btn-hint').addEventListener('click', revealGem);

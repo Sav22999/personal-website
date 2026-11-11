@@ -8,13 +8,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/catalog.php';
 
-const FURNITURE = ['table', 'chair', 'stove', 'counter', 'deco', 'kitchen', 'service', 'lounge', 'rug', 'outdoor'];
+const FURNITURE = ['table', 'chair', 'stove', 'counter', 'deco', 'kitchen', 'service', 'lounge', 'rug', 'outdoor', 'restroom', 'partition', 'stairs'];
 const MAX_ITEMS = 220;
 
 /** The door is in the middle of the front wall (the row z = size − 1); its tile must stay free. */
-function door_x(int $size): int
+function door_x(int $width): int
 {
-    return intdiv($size, 2);
+    return intdiv($width, 2);
 }
 
 /** The first restaurant: a small kitchen at the back, two tables, a plant. */
@@ -46,7 +46,9 @@ function random_staff(string $role, int $id): array
 /** A look: uniform of the role, a random hairstyle and colour. */
 function random_look(): array
 {
-    return ['outfit' => 'default', 'hair' => HAIRSTYLES[random_int(0, count(HAIRSTYLES) - 2)], 'hairColor' => HAIR_COLORS[random_int(0, 6)]];
+    // Now and then a pair of glasses or a moustache; nothing on the head (that is the player's choice)
+    return ['outfit' => 'default', 'hair' => HAIRSTYLES[random_int(0, count(HAIRSTYLES) - 2)], 'hairColor' => HAIR_COLORS[random_int(0, 6)],
+        'glasses' => random_int(0, 5) === 0 ? ACCESSORIES['glasses'][random_int(1, 2)] : 'none', 'facial' => random_int(0, 6) === 0 ? ACCESSORIES['facial'][random_int(1, 3)] : 'none', 'headwear' => 'none'];
 }
 
 /** A CV: the main role between 3 and 6 for a new hire (starters), others lower. */
@@ -113,16 +115,23 @@ function load_restaurant(int $uid, bool $lock = false): ?array
     $r = $st->fetch();
     if (!$r) return null;
     foreach (['layout', 'staff', 'menu', 'finishes'] as $k) $r[$k] = json_decode((string)$r[$k], true) ?: [];
+    $r['depth'] = (int)($r['depth'] ?? 0) ?: (int)$r['size']; // rooms from before rows and columns: square
+    $r['parking'] = (int)($r['parking'] ?? 0);
+    // The door: where the player put it on the front wall (rooms from before: in the middle), and its style
+    $r['door'] = isset($r['door']) && $r['door'] !== null ? (int)$r['door'] : door_x((int)$r['size']);
+    $r['door_style'] = isset(DOORS[$r['door_style'] ?? '']) ? $r['door_style'] : 'wood';
+    // Upper floors: [[width, depth, x offset], …] in the ground floor's coordinates
+    $r['floors'] = array_values(array_filter(array_map(fn($f) => is_array($f) && count($f) === 3 ? array_map('intval', $f) : null, json_decode((string)($r['floors'] ?? ''), true) ?: [])));
     foreach (['coins', 'xp', 'level', 'size', 'popularity', 'rating_sum', 'rating_n', 'friend_sum', 'friend_n', 'served_total', 'next_item_id'] as $k) $r[$k] = (int)$r[$k];
     return $r;
 }
 
 function save_restaurant(array $r): void
 {
-    db()->prepare('UPDATE ' . t('restaurants') . ' SET name = ?, kind = ?, coins = ?, xp = ?, level = ?, size = ?, floor = ?, wall = ?, layout = ?, staff = ?, menu = ?, finishes = ?, wish = ?, status = ?, paid_day = ?, closed_from = ?, closed_secs = ?, candidates = ?,
+    db()->prepare('UPDATE ' . t('restaurants') . ' SET name = ?, kind = ?, coins = ?, xp = ?, level = ?, size = ?, depth = ?, parking = ?, instance = ?, floors = ?, door = ?, door_style = ?, floor = ?, wall = ?, layout = ?, staff = ?, menu = ?, finishes = ?, wish = ?, status = ?, paid_day = ?, closed_from = ?, closed_secs = ?, game_minutes = ?, candidates = ?,
         popularity = ?, rating_sum = ?, rating_n = ?, friend_sum = ?, friend_n = ?, served_total = ?, next_item_id = ?, last_report_at = ?, last_seen_at = ? WHERE user_id = ?')
-        ->execute([$r['name'], $r['kind'] ?? 'generic', $r['coins'], $r['xp'], $r['level'], $r['size'], $r['floor'], $r['wall'], json_encode(array_values($r['layout'])), json_encode(array_values($r['staff'])),
-            json_encode(array_values($r['menu'])), json_encode(array_values($r['finishes'])), $r['wish'], $r['status'] ?? 'open', $r['paid_day'] ?? null, $r['closed_from'] ?? null, (int)($r['closed_secs'] ?? 0), $r['candidates'] ?? null, $r['popularity'], $r['rating_sum'], $r['rating_n'], $r['friend_sum'], $r['friend_n'],
+        ->execute([$r['name'], $r['kind'] ?? 'generic', $r['coins'], $r['xp'], $r['level'], $r['size'], $r['depth'], $r['parking'] ?? 0, $r['instance'] ?? null, json_encode(array_values($r['floors'] ?? [])), $r['door'], $r['door_style'] ?? 'wood', $r['floor'], $r['wall'], json_encode(array_values($r['layout'])), json_encode(array_values($r['staff'])),
+            json_encode(array_values($r['menu'])), json_encode(array_values($r['finishes'])), $r['wish'], $r['status'] ?? 'open', $r['paid_day'] ?? null, $r['closed_from'] ?? null, (int)($r['closed_secs'] ?? 0), (int)($r['game_minutes'] ?? 540), $r['candidates'] ?? null, $r['popularity'], $r['rating_sum'], $r['rating_n'], $r['friend_sum'], $r['friend_n'],
             $r['served_total'], $r['next_item_id'], $r['last_report_at'], $r['last_seen_at'], $r['user_id']]);
 }
 
@@ -225,43 +234,86 @@ function footprint(array $it): array
     return $tiles;
 }
 
-/** Checks one layout: known furniture, inside the room, no overlaps, door free. Returns it cleaned. */
-function clean_layout($list, int $size): array
+/** The rectangle of a floor: [x0, width, depth] (floor 0 is the ground floor, the others are upper floors). */
+function floor_rect(int $f, int $w, int $d, array $floors): ?array
+{
+    if ($f === 0) return [0, $w, $d];
+    $fl = $floors[$f - 1] ?? null;
+    return $fl ? [$fl[2], $fl[0], $fl[1]] : null;
+}
+
+function in_rect(int $x, int $z, array $rect): bool
+{
+    return $x >= $rect[0] && $x < $rect[0] + $rect[1] && $z >= 0 && $z < $rect[2];
+}
+
+/**
+ * Checks one layout: known furniture, inside its floor, no overlaps, door free, stairs and lifts that lead somewhere.
+ * Above a staircase (on the next floor) and above a lift (on every floor) the tiles stay free: that is the way up.
+ */
+function clean_layout($list, int $w, int $d, array $floors = [], ?int $door = null): array
 {
     if (!is_array($list) || count($list) > MAX_ITEMS) fail('layout_invalid', 422);
-    $grid = [];
-    $rugs = []; // rugs have their own layer: they may lie under furniture and on the door tile, not on each other
-    $grid[door_x($size) . ',' . ($size - 1)] = true;
-    $out = [];
+    $items = [];
     foreach ($list as $raw) {
         if (!is_array($raw)) fail('layout_invalid', 422);
         $k = (string)($raw['k'] ?? '');
         if (!isset(items()[$k]) || !in_array(items()[$k][0], FURNITURE, true)) fail('layout_invalid', 422);
+        $f = max(0, (int)($raw['f'] ?? 0));
+        if ($f > count($floors)) fail('layout_outside', 422);
         $it = ['id' => (int)($raw['id'] ?? 0), 'k' => $k, 'x' => (int)($raw['x'] ?? -1), 'z' => (int)($raw['z'] ?? -1), 'r' => ((int)($raw['r'] ?? 0) % 4 + 4) % 4];
-        $isRug = items()[$k][0] === 'rug';
-        $outdoor = items()[$k][0] === 'outdoor';
+        if ($f) $it['f'] = $f;
+        $items[] = $it;
+    }
+    // First the ways up: the tiles they keep free on the floors above
+    $door ??= door_x($w);
+    $grid = ['0:' . $door . ',' . ($d - 1) => true];
+    foreach ($items as $it) {
+        if (items()[$it['k']][0] !== 'stairs') continue;
+        $f = $it['f'] ?? 0;
+        $lift = (ITEM_TAGS[$it['k']] ?? '') === 'lift';
+        if ($lift && $f !== 0) fail('layout_outside', 422); // lifts start on the ground floor
+        $reached = 0;
+        for ($up = $f + 1; $up <= ($lift ? count($floors) : $f + 1); $up++) {
+            $rect = floor_rect($up, $w, $d, $floors);
+            if (!$rect) break;
+            $fits = true;
+            foreach (footprint($it) as [$x, $z]) if (!in_rect($x, $z, $rect)) $fits = false;
+            if (!$fits) break;
+            foreach (footprint($it) as [$x, $z]) $grid["$up:$x,$z"] = true;
+            $reached++;
+        }
+        if (!$reached) fail('stairs_nowhere', 422);
+    }
+    $rugs = []; // rugs have their own layer: they may lie under furniture and on the door tile, not on each other
+    foreach ($items as $it) {
+        $cat = items()[$it['k']][0];
+        $f = $it['f'] ?? 0;
+        $rect = floor_rect($f, $w, $d, $floors);
+        $outdoor = $cat === 'outdoor';
+        if ($outdoor && $f) fail('layout_outside', 422);
         foreach (footprint($it) as [$x, $z]) {
-            // Outdoor pieces go on the terrace and in the yard (never on the path to the door); the rest inside
-            if ($outdoor ? !outdoor_tile($x, $z, $size) : ($x < 0 || $z < 0 || $x >= $size || $z >= $size)) fail('layout_outside', 422);
-            if ($isRug) {
-                if (isset($rugs["$x,$z"])) fail('layout_overlap', 422);
-                $rugs["$x,$z"] = true;
+            // Outdoor pieces go on the terrace and in the yard (never on the path to the door); the rest inside its floor
+            if ($outdoor ? !outdoor_tile($x, $z, $w, $d, $door) : !in_rect($x, $z, $rect)) fail('layout_outside', 422);
+            if ($cat === 'rug') {
+                if (isset($rugs["$f:$x,$z"])) fail('layout_overlap', 422);
+                $rugs["$f:$x,$z"] = true;
                 continue;
             }
-            if (isset($grid["$x,$z"])) fail('layout_overlap', 422);
-            $grid["$x,$z"] = true;
+            if (isset($grid["$f:$x,$z"])) fail('layout_overlap', 422);
+            $grid["$f:$x,$z"] = true;
         }
-        $out[] = $it;
     }
-    return $out;
+    return $items;
 }
 
-/** The outdoor area: OUTDOOR rows in front of the restaurant and OUTDOOR columns at its east side, minus the path to the door. */
-function outdoor_tile(int $x, int $z, int $size): bool
+/** The outdoor area: OUTDOOR rows in front, OUTDOOR columns at the east side and OUTDOOR rows behind (the back garden), minus the path to the door. */
+function outdoor_tile(int $x, int $z, int $w, int $d, ?int $door = null): bool
 {
-    $front = $x >= 0 && $x < $size + OUTDOOR && $z >= $size && $z < $size + OUTDOOR;
-    $side = $x >= $size && $x < $size + OUTDOOR && $z >= 0 && $z < $size;
-    return ($front || $side) && !($x === door_x($size) && $z >= $size);
+    $front = $x >= 0 && $x < $w + OUTDOOR && $z >= $d && $z < $d + OUTDOOR;
+    $side = $x >= $w && $x < $w + OUTDOOR && $z >= 0 && $z < $d;
+    $back = $x >= 0 && $x < $w + OUTDOOR && $z >= -OUTDOOR && $z < 0; // the back garden
+    return ($front || $side || $back) && !($x === ($door ?? door_x($w)) && $z >= $d);
 }
 
 /** Price, customers and eating time of a kind of restaurant. */
@@ -382,15 +434,16 @@ function apply_offline(array &$r): ?array
     $arrive = arrival_seconds($r['popularity']) / kind_of($r)[1];
     $served = (int)floor($managed / $arrive * MANAGER_RATE + $rest / $arrive * rule('offline_rate'));
     $served = min($served, (int)floor($secs * count_items($r, 'chair') / SEAT_CYCLE));
-    $coins = (int)round($served * menu_average_price($r, $recipes) * kind_of($r)[0]);
+    $coins = (int)round($served * menu_average_price($r, $recipes) * kind_of($r)[0] * (1 + 0.1 * ($r['parking'] ?? 0)));
     if ($served <= 0) return null;
     $r['coins'] += $coins;
     ledger((int)$r['user_id'], 'away', $coins, $served . '|' . (int)round($managed / 60));
     $r['served_total'] += $served;
+    $levelFrom = $r['level'];
     $up = add_xp($r, $served);
     add_weekly((int)$r['user_id'], $coins);
     // When it happened, for the message: managers first, then the staff alone at a slower pace, then nothing
-    return ['served' => $served, 'coins' => $coins, 'minutes' => (int)round($secs / 60), 'managed' => (int)round($managed / 60), 'levelUp' => $up,
+    return ['served' => $served, 'coins' => $coins, 'minutes' => (int)round($secs / 60), 'managed' => (int)round($managed / 60), 'levelUp' => $up, 'levelFrom' => $levelFrom, 'levelTo' => $r['level'],
         'from' => $start, 'managedTo' => $start + $managed, 'aloneTo' => $start + $managed + $rest, 'now' => time(),
         'alonePct' => (int)round(rule('offline_rate') * 100), 'managerPct' => (int)round(MANAGER_RATE * 100), 'hasManager' => manager_hours($r) > 0];
 }
@@ -400,9 +453,13 @@ function apply_report(array &$r, array $b): array
 {
     $now = time();
     $elapsed = min(REPORT_WINDOW, max(0, $now - strtotime($r['last_report_at'] . ' UTC')));
+    // The game calendar moves only while playing: never back, never faster than 3× real time
+    $clock = (int)($b['clock'] ?? 0);
+    $old = (int)($r['game_minutes'] ?? 540);
+    if ($clock > $old) $r['game_minutes'] = min($clock, $old + (int)ceil(max($elapsed, 1) * GAME_MINUTES_PER_SECOND * 3) + 30);
     // Never more customers than the seats can hold, nor than can arrive at this popularity (with some slack)
     // The app has speed controls up to 3×: the cap allows that much, and no more
-    $cap = min((int)floor($elapsed * count_items($r, 'chair') * 3 / SEAT_SECONDS), (int)floor($elapsed / arrival_seconds($r['popularity']) * kind_of($r)[1] * 3.5)) + 2;
+    $cap = min((int)floor($elapsed * count_items($r, 'chair') * 3 / SEAT_SECONDS), (int)floor($elapsed / arrival_seconds($r['popularity']) * kind_of($r)[1] * 6.5)) + 2; // 3× speed at a 2× rush hour
     $recipes = load_recipes((int)$r['user_id']);
     $served = 0;
     $coins = 0;
@@ -413,6 +470,12 @@ function apply_report(array &$r, array $b): array
         $served += $n;
         $coins += (int)round($n * dish_price($dish, $recipes[$dish]) * kind_of($r)[0]);
     }
+    // Guests who came by car (the restaurant car park) spend CAR_BONUS more: no more than the spaces can bring
+    $spaces = PARKING[$r['parking'] ?? 0][2] ?? 0;
+    $cars = $served > 0 ? max(0, min((int)($b['cars'] ?? 0), $served, (int)floor($elapsed * $spaces * 3 / 60) + 1)) : 0;
+    if (!$spaces) $cars = 0;
+    $carCoins = $served > 0 ? (int)round($cars * ($coins / $served) * CAR_BONUS) : 0;
+    $coins += $carCoins;
     $tips = max(0, min((int)($b['tips'] ?? 0), (int)floor($coins * 0.3) + 20)); // tips and snacks from the food truck
     $coins += $tips;
     $ratings = array_slice(array_values(array_filter(array_map('intval', (array)($b['ratings'] ?? [])), fn($x) => $x >= 1 && $x <= 5)), 0, $served);
@@ -427,11 +490,13 @@ function apply_report(array &$r, array $b): array
     save_reviews((int)$r['user_id'], (array)($b['reviews'] ?? []), max(1, $served));
     ledger((int)$r['user_id'], 'customers', $coins - $tips, (string)$served);
     ledger((int)$r['user_id'], 'tips', $tips);
-    // Experience: everyone gets a little better at their role with every customer served
-    if ($served > 0) foreach ($r['staff'] as &$st) {
+    // Experience: with game time (only while open), everyone gets very slowly better at their role
+    $years = max(0, (int)($r['game_minutes'] ?? 540) - $old) / GAME_YEAR_MINUTES;
+    if ($years > 0 && ($r['status'] ?? 'open') !== 'closed') foreach ($r['staff'] as &$st) {
         $sk = staff_skills($st);
-        $sk[$st['role']] = min(10, round($sk[$st['role']] + $served * SKILL_GROWTH, 3));
+        $sk[$st['role']] = min(10, round($sk[$st['role']] + $years * SKILL_PER_YEAR * max(0, 1 - $sk[$st['role']] / 12), 5));
         $st['skills'] = $sk;
+        $st['years'] = round((float)($st['years'] ?? 0) + $years, 5); // seniority, shown in the staff panel
     }
     unset($st);
     $r['coins'] += $coins;
@@ -447,7 +512,7 @@ function apply_report(array &$r, array $b): array
 /** New layout and finishes from the editor: new pieces are bought, missing ones sold back at half price. */
 function apply_layout(array &$r, array $b): array
 {
-    $layout = clean_layout($b['layout'] ?? null, $r['size']);
+    $layout = clean_layout($b['layout'] ?? null, $r['size'], $r['depth'], $r['floors'] ?? [], $r['door']);
     $old = [];
     foreach ($r['layout'] as $it) $old[$it['id']] = $it;
     $cost = 0;
@@ -461,6 +526,7 @@ function apply_layout(array &$r, array $b): array
         $def = items()[$it['k']];
         if (!$def[7]) fail('not_on_sale', 422); // switched off in the admin panel: no new ones
         if ($def[2] > $r['level']) fail('level_locked', 422);
+        if (!in_season($it['k'])) fail('out_of_season', 422); // seasonal pieces: only during their event (real calendar)
         $cost += $def[1];
         $it['id'] = $r['next_item_id']++;
     }
@@ -579,7 +645,7 @@ function restaurant_public(array $r, array $recipes): array
     $menu = [];
     foreach ($r['menu'] as $d) if (isset($recipes[$d])) $menu[] = ['dish' => $d, 'level' => $recipes[$d]];
     return [
-        'name' => $r['name'], 'level' => $r['level'], 'size' => $r['size'], 'floor' => $r['floor'], 'wall' => $r['wall'],
+        'name' => $r['name'], 'level' => $r['level'], 'size' => $r['size'], 'depth' => $r['depth'], 'parking' => $r['parking'] ?? 0, 'floors' => $r['floors'] ?? [], 'door' => $r['door'], 'doorStyle' => $r['door_style'] ?? 'wood', 'floor' => $r['floor'], 'wall' => $r['wall'],
         'layout' => $r['layout'], 'staff' => $r['staff'], 'menu' => $menu, 'popularity' => $r['popularity'], 'stars' => stars_for($r['popularity']),
         'wish' => $r['wish'], 'status' => $r['status'] ?? 'open', 'kind' => $r['kind'] ?? 'generic',
         'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null,
@@ -598,8 +664,8 @@ function game_state(int $uid, ?array $away = null): array
                 'coins' => $r['coins'], 'xp' => $r['xp'], 'finishes' => $r['finishes'], 'menuKeys' => $r['menu'], 'served' => $r['served_total'],
                 'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null,
                 'friendRating' => $r['friend_n'] ? round($r['friend_sum'] / $r['friend_n'], 2) : null,
-                'payroll' => payroll($r), 'wages' => array_map(fn($st) => ['id' => $st['id'], 'wage' => wage($st)], $r['staff']),
-                'maxWaiters' => max_waiters($r['level']), 'maxCleaners' => max_cleaners($r['level']), 'maxManagers' => max_managers($r['level']), 'managerHours' => manager_hours($r), 'maxMenu' => max_menu($r['level']), 'plots' => garden_plots($r['level']),
+                'gameMinutes' => (int)($r['game_minutes'] ?? 540), 'payroll' => payroll($r), 'wages' => array_map(fn($st) => ['id' => $st['id'], 'wage' => wage($st)], $r['staff']),
+                'maxWaiters' => max_waiters($r['level']), 'maxCleaners' => max_cleaners($r['level']), 'maxManagers' => max_managers($r['level']), 'managerHours' => manager_hours($r), 'maxMenu' => max_menu($r['level']), 'events' => events_out(), 'plots' => garden_plots($r['level']),
             ],
         'recipes' => (object)$recipes,
         'ingredients' => (object)load_ingredients($uid),

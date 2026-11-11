@@ -66,7 +66,7 @@
     }
 
     const LANG_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
-        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', react: 'React', next: 'Next.js', node: 'Node.js', git: 'Git', bash: 'Bash', go: 'Go', csharp: 'C#', c: 'C', cpp: 'C++', docker: 'Docker', kubernetes: 'Kubernetes', cloud: 'Cloud', testing: 'Testing', patterns: 'Design patterns', regex: 'Regex', security: 'Security', a11y: 'Accessibility', api: 'API', redis: 'Redis', algorithms: 'Algorithms', excel: 'Excel', powerbi: 'Power BI', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
 
     /** The language of an exercise, in the colour of its course family. */
     function langChip(family) {

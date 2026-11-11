@@ -126,6 +126,7 @@ const EN = {
     "Ingredienti in vendita ogni giorno": "Ingredients on sale each day",
     "Esperienza per cliente servito": "Experience per customer served",
     "Esperienza per raccolto": "Experience per harvest",
+    "Costo degli ampliamenti (monete per casella, cresce con la sala)": "Enlargement cost (coins per tile, grows with the room)",
     "Nessuna modifica": "No changes",
     "Annulla": "Cancel",
     "Prezzi e regole salvati: valgono subito per tutti i giocatori": "Prices and rules saved: they apply to every player at once",
@@ -163,6 +164,9 @@ const EN = {
     "I valori evidenziati sono diversi da quelli predefiniti. Un oggetto tolto dalla vendita resta a chi lo possiede già.": "Highlighted values differ from the defaults. An item taken off sale stays with those who already own it.",
     "Registro delle modifiche": "Change log",
     "maturo": "ripe",
+    "Esterno": "Outdoors",
+    "Bagno": "Restroom",
+    "Muri e separè": "Walls & screens",
     "disattivato": "disabled",
     "attivo": "active",
     "finitura": "finish",
@@ -424,12 +428,12 @@ const dishKeys = () => DISH_KEYS || [];
 // ---------------------------------------------------------------- catalog (prices and rules)
 
 const CAT_TABS = [['items', T('Arredi')], ['dishes', T('Piatti')], ['crops', T('Orto')], ['market', T('Mercato')], ['staff', T('Staff e ampliamenti')], ['rules', T('Regole')]];
-const ITEM_CAT = {table: T('Tavoli'), chair: T('Sedie'), stove: T('Cucina'), counter: T('Cucina'), kitchen: T('Cucina'), service: T('Servizio'), lounge: T('Relax'), deco: T('Decori'), rug: T('Tappeti'), floor: T('Pavimenti'), wall: T('Pareti')};
+const ITEM_CAT = {table: T('Tavoli'), chair: T('Sedie'), stove: T('Cucina'), counter: T('Cucina'), kitchen: T('Cucina'), service: T('Servizio'), lounge: T('Relax'), deco: T('Decori'), rug: T('Tappeti'), outdoor: T('Esterno'), restroom: T('Bagno'), partition: T('Muri e separè'), floor: T('Pavimenti'), wall: T('Pareti')};
 const RULE_LABEL = {
     start_coins: T('Monete iniziali di un nuovo ristorante'), sell_back: T('Rimborso alla vendita di un arredo (0–1, 0,5 = metà prezzo)'),
     offline_hours: T('Ore massime di guadagno mentre il giocatore è via'), offline_rate: T('Velocità del guadagno da via (0–1 rispetto al gioco live)'),
     visit_host: T('Monete al ristorante visitato (una volta al giorno per amico)'), visit_base: T('Monete base a chi visita (+5 per livello del ristorante visitato)'),
-    level_reward: T('Monete regalate a ogni livello (× il numero del livello)'), market_limit: T('Pezzi acquistabili al giorno per ingrediente'), market_slots: T('Ingredienti in vendita ogni giorno'), xp_customer: T('Esperienza per cliente servito'), xp_harvest: T('Esperienza per raccolto'),
+    level_reward: T('Monete regalate a ogni livello (× il numero del livello)'), market_limit: T('Pezzi acquistabili al giorno per ingrediente'), market_slots: T('Ingredienti in vendita ogni giorno'), xp_customer: T('Esperienza per cliente servito'), xp_harvest: T('Esperienza per raccolto'), expand_rate: T('Costo degli ampliamenti (monete per casella, cresce con la sala)'),
 };
 
 async function catalog(main) {
@@ -445,7 +449,7 @@ async function catalog(main) {
 
 function changedCount() {
     let n = 0;
-    for (const g of ['items', 'dishes', 'crops', 'market', 'staff', 'sizes']) for (const k in S.draft[g]) if (JSON.stringify(S.draft[g][k].value) !== JSON.stringify(S.catalog[g][k].value)) n++;
+    for (const g of ['items', 'dishes', 'crops', 'market', 'staff']) for (const k in S.draft[g]) if (JSON.stringify(S.draft[g][k].value) !== JSON.stringify(S.catalog[g][k].value)) n++;
     for (const k in S.draft.rules) if (S.draft.rules[k].value !== S.catalog.rules[k].value) n++;
     return n;
 }
@@ -461,7 +465,7 @@ function drawCatalog(main) {
     };
     const save = async () => {
         const out = {};
-        for (const g of ['items', 'dishes', 'crops', 'market', 'staff', 'sizes']) out[g] = Object.fromEntries(Object.entries(S.draft[g]).map(([k, v]) => [k, v.value]));
+        for (const g of ['items', 'dishes', 'crops', 'market', 'staff']) out[g] = Object.fromEntries(Object.entries(S.draft[g]).map(([k, v]) => [k, v.value]));
         out.rules = Object.fromEntries(Object.entries(S.draft.rules).map(([k, v]) => [k, v.value]));
         try {
             S.catalog = (await api('admin.catalog.save', {catalog: out})).catalog;
@@ -524,8 +528,6 @@ function drawCatalog(main) {
         staff: () => [
             h('section.panel', h('h2', T('Assunzioni')), h('p.muted', T('Costo = primo + aumento × (assunti di quel ruolo − 1).')),
                 table([T('Ruolo'), T('Costo del primo'), T('Aumento per ogni altro'), ''], Object.keys(S.draft.staff).map(k => h('tr', h('td', h('b', nm(k))), h('td', num('staff', k, 'base')), h('td', num('staff', k, 'step')), h('td', reset('staff', k)))))),
-            h('section.panel', h('h2', T('Ampliamenti del ristorante')),
-                table([T('Dimensione'), T('Costo'), T('Livello'), ''], Object.keys(S.draft.sizes).map(k => h('tr', h('td', h('b', `${k}×${k}`)), h('td', num('sizes', k, 'cost')), h('td', num('sizes', k, 'level')), h('td', reset('sizes', k)))))),
         ],
         rules: () => h('section.panel', table([T('Regola'), T('Valore'), T('Predefinito')], Object.entries(S.draft.rules).map(([k, r]) => {
             const input = h('input', {type: 'number', step: Number.isInteger(r.default) ? 1 : 0.05, min: r.min, max: r.max, value: r.value});

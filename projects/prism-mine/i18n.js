@@ -1086,6 +1086,195 @@ Object.assign(translations.de, {
     "bounce_diamond": "Vier schräge Seiten und keine flache: Der Strahl biegt immer um 90° ab und kommt nie gerade zurück."
 });
 
+// Texts of the new gems (rod, peak, corner, bridge)
+Object.assign(translations.en, {
+    "gem_rod": "Rod",
+    "gem_peak": "Peak",
+    "gem_corner": "Corner",
+    "gem_bridge": "Bridge",
+    "bounce_rod": "Two cells long and flat on every side: the beam always comes straight back.",
+    "bounce_peak": "Flat at the base, slanted on the other two sides: on the base the beam comes back, on a slanted side it turns by 90°.",
+    "bounce_corner": "Three cells in an L, flat on every side: the beam always comes straight back.",
+    "bounce_bridge": "The flat middle and the flat base send the beam back; the two slanted ends turn it by 90°."
+});
+Object.assign(translations.it, {
+    "gem_rod": "Barra",
+    "gem_peak": "Vetta",
+    "gem_corner": "Angolo",
+    "gem_bridge": "Ponte",
+    "bounce_rod": "Lunga due caselle e piatta su ogni lato: il raggio torna sempre dritto indietro.",
+    "bounce_peak": "Piatta alla base, inclinata sugli altri due lati: sulla base il raggio torna indietro, su un lato inclinato svolta di 90°.",
+    "bounce_corner": "Tre caselle a L, piatte su ogni lato: il raggio torna sempre dritto indietro.",
+    "bounce_bridge": "Il centro piatto e la base piatta rimandano indietro il raggio; le due estremità inclinate lo fanno svoltare di 90°."
+});
+Object.assign(translations.es, {
+    "gem_rod": "Barra",
+    "gem_peak": "Pico",
+    "gem_corner": "Esquina",
+    "gem_bridge": "Puente",
+    "bounce_rod": "Mide dos casillas y es plana por todos los lados: el rayo siempre vuelve recto.",
+    "bounce_peak": "Plana en la base e inclinada en los otros dos lados: en la base el rayo vuelve, en un lado inclinado gira 90°.",
+    "bounce_corner": "Tres casillas en L, planas por todos los lados: el rayo siempre vuelve recto.",
+    "bounce_bridge": "El centro plano y la base plana devuelven el rayo; los dos extremos inclinados lo hacen girar 90°."
+});
+Object.assign(translations.fr, {
+    "gem_rod": "Barre",
+    "gem_peak": "Pic",
+    "gem_corner": "Équerre",
+    "gem_bridge": "Pont",
+    "bounce_rod": "Longue de deux cases et plate de tous les côtés : le rayon revient toujours tout droit.",
+    "bounce_peak": "Plat à la base, incliné sur les deux autres côtés : sur la base le rayon revient, sur un côté incliné il tourne de 90°.",
+    "bounce_corner": "Trois cases en L, plates de tous les côtés : le rayon revient toujours tout droit.",
+    "bounce_bridge": "Le milieu plat et la base plate renvoient le rayon ; les deux extrémités inclinées le font tourner de 90°."
+});
+Object.assign(translations.de, {
+    "gem_rod": "Stab",
+    "gem_peak": "Gipfel",
+    "gem_corner": "Winkel",
+    "gem_bridge": "Brücke",
+    "bounce_rod": "Zwei Felder lang und auf allen Seiten flach: Der Strahl kommt immer gerade zurück.",
+    "bounce_peak": "Unten flach, an den anderen zwei Seiten schräg: An der Grundseite kommt der Strahl zurück, an einer schrägen Seite biegt er um 90° ab.",
+    "bounce_corner": "Drei Felder als L, auf allen Seiten flach: Der Strahl kommt immer gerade zurück.",
+    "bounce_bridge": "Die flache Mitte und die flache Unterseite schicken den Strahl zurück; die zwei schrägen Enden lenken ihn um 90° ab."
+});
+
+// Credits shown at the end of the rules
+Object.assign(translations.en, {
+    "credits_title": "Inspiration",
+    "credits_text": "Inspired by the classic deduction games with beams of light, such as Black Box (Eric Solomon, 1977) and Orapa Mine (Junghee Choi and Wanjin Gill, 2024). Prism Mine has its own rules, gems and graphics, and is not affiliated with those games or their publishers."
+});
+Object.assign(translations.it, {
+    "credits_title": "Ispirazione",
+    "credits_text": "Ispirato ai classici giochi di deduzione con raggi di luce, come Black Box (Eric Solomon, 1977) e La Miniera di Orapa (Junghee Choi e Wanjin Gill, 2024). Prism Mine ha regole, gemme e grafica proprie e non è affiliato a quei giochi né ai loro editori."
+});
+Object.assign(translations.es, {
+    "credits_title": "Inspiración",
+    "credits_text": "Inspirado en los clásicos juegos de deducción con rayos de luz, como Black Box (Eric Solomon, 1977) y Orapa Mine (Junghee Choi y Wanjin Gill, 2024). Prism Mine tiene reglas, gemas y gráficos propios y no está afiliado a esos juegos ni a sus editoriales."
+});
+Object.assign(translations.fr, {
+    "credits_title": "Inspiration",
+    "credits_text": "Inspiré des jeux de déduction classiques avec des rayons de lumière, comme Black Box (Eric Solomon, 1977) et Orapa Mine (Junghee Choi et Wanjin Gill, 2024). Prism Mine a ses propres règles, gemmes et graphismes, et n’est pas affilié à ces jeux ni à leurs éditeurs."
+});
+Object.assign(translations.de, {
+    "credits_title": "Inspiration",
+    "credits_text": "Inspiriert von klassischen Deduktionsspielen mit Lichtstrahlen wie Black Box (Eric Solomon, 1977) und Orapa Mine (Junghee Choi und Wanjin Gill, 2024). Prism Mine hat eigene Regeln, Edelsteine und Grafiken und ist mit diesen Spielen und ihren Verlagen nicht verbunden."
+});
+
+// Texts of the duel with two mines
+Object.assign(translations.en, {
+    "hide_title": "Hide your gems",
+    "hide_hint": "Place the gems in your mine, then press Ready: your opponent will try to find them.",
+    "ready": "Ready",
+    "random_place": "Random",
+    "waiting_hide": "Waiting for {name} to hide the gems…",
+    "place_time_left": "{sec} s left, then they are placed at random.",
+    "view_target": "Their mine",
+    "view_mine": "Your mine",
+    "mine_view_note": "Your gems, and the beams {name} sent into your mine.",
+    "log_in_your_mine": "(in your mine)",
+    "duel_starts": "Both mines are ready: find the other one!",
+    "err_not_placing": "The gems can no longer be moved.",
+    "create_desc": "Each of you hides the gems in your own mine, then you take turns finding the other: the first right answer wins."
+});
+Object.assign(translations.it, {
+    "hide_title": "Nascondi le tue gemme",
+    "hide_hint": "Metti le gemme nella tua miniera e premi Pronto: l'avversario cercherà di trovarle.",
+    "ready": "Pronto",
+    "random_place": "A caso",
+    "waiting_hide": "Aspettiamo che {name} nasconda le gemme…",
+    "place_time_left": "Ancora {sec} s, poi vengono messe a caso.",
+    "view_target": "La sua miniera",
+    "view_mine": "La tua miniera",
+    "mine_view_note": "Le tue gemme e i raggi che {name} ha mandato nella tua miniera.",
+    "log_in_your_mine": "(nella tua miniera)",
+    "duel_starts": "Le miniere sono pronte: trova quella dell'avversario!",
+    "err_not_placing": "Le gemme non si possono più spostare.",
+    "create_desc": "Ognuno nasconde le gemme nella propria miniera, poi a turno cercate quella dell'altro: vince la prima risposta giusta."
+});
+Object.assign(translations.es, {
+    "hide_title": "Esconde tus gemas",
+    "hide_hint": "Coloca las gemas en tu mina y pulsa Listo: tu rival intentará encontrarlas.",
+    "ready": "Listo",
+    "random_place": "Al azar",
+    "waiting_hide": "Esperando a que {name} esconda las gemas…",
+    "place_time_left": "Quedan {sec} s; después se colocan al azar.",
+    "view_target": "Su mina",
+    "view_mine": "Tu mina",
+    "mine_view_note": "Tus gemas y los rayos que {name} envió a tu mina.",
+    "log_in_your_mine": "(en tu mina)",
+    "duel_starts": "Las dos minas están listas: ¡encuentra la del rival!",
+    "err_not_placing": "Las gemas ya no se pueden mover.",
+    "create_desc": "Cada uno esconde las gemas en su propia mina y luego, por turnos, buscáis la del otro: gana la primera respuesta correcta."
+});
+Object.assign(translations.fr, {
+    "hide_title": "Cache tes gemmes",
+    "hide_hint": "Place les gemmes dans ta mine puis appuie sur Prêt : ton adversaire essaiera de les trouver.",
+    "ready": "Prêt",
+    "random_place": "Au hasard",
+    "waiting_hide": "On attend que {name} cache ses gemmes…",
+    "place_time_left": "Encore {sec} s, puis elles sont placées au hasard.",
+    "view_target": "Sa mine",
+    "view_mine": "Ta mine",
+    "mine_view_note": "Tes gemmes et les rayons que {name} a envoyés dans ta mine.",
+    "log_in_your_mine": "(dans ta mine)",
+    "duel_starts": "Les deux mines sont prêtes : trouve celle de ton adversaire !",
+    "err_not_placing": "Les gemmes ne peuvent plus être déplacées.",
+    "create_desc": "Chacun cache les gemmes dans sa propre mine, puis vous cherchez à tour de rôle celle de l’autre : la première bonne réponse gagne."
+});
+Object.assign(translations.de, {
+    "hide_title": "Versteck deine Edelsteine",
+    "hide_hint": "Leg die Edelsteine in deine Mine und tippe auf Bereit: Dein Gegner versucht, sie zu finden.",
+    "ready": "Bereit",
+    "random_place": "Zufall",
+    "waiting_hide": "Warten, bis {name} die Edelsteine versteckt hat…",
+    "place_time_left": "Noch {sec} s, dann werden sie zufällig gelegt.",
+    "view_target": "Seine Mine",
+    "view_mine": "Deine Mine",
+    "mine_view_note": "Deine Edelsteine und die Strahlen, die {name} in deine Mine geschickt hat.",
+    "log_in_your_mine": "(in deiner Mine)",
+    "duel_starts": "Beide Minen sind bereit: Finde die andere!",
+    "err_not_placing": "Die Edelsteine können nicht mehr verschoben werden.",
+    "create_desc": "Jeder versteckt die Edelsteine in seiner eigenen Mine, dann sucht ihr abwechselnd die des anderen: Die erste richtige Antwort gewinnt."
+});
+
+Object.assign(translations.en, {clear_mine: "Clear"});
+Object.assign(translations.it, {clear_mine: "Svuota"});
+Object.assign(translations.es, {clear_mine: "Vaciar"});
+Object.assign(translations.fr, {clear_mine: "Vider"});
+Object.assign(translations.de, {clear_mine: "Leeren"});
+
+// Texts of the gem placement tools
+Object.assign(translations.en, {
+    "remove_gem": "Put back in the tray",
+    "rotate_same": "This gem looks the same whichever way you turn it.",
+    "rotate_no_room": "There's no room to turn it here.",
+    "place_tip": "Drag the gems onto the mine. Tap a gem to rotate or remove it; drag it out to put it back."
+});
+Object.assign(translations.it, {
+    "remove_gem": "Rimetti nel vassoio",
+    "rotate_same": "Questa gemma è uguale comunque la giri.",
+    "rotate_no_room": "Qui non c’è spazio per girarla.",
+    "place_tip": "Trascina le gemme nella miniera. Tocca una gemma per ruotarla o toglierla; trascinala fuori per rimetterla nel vassoio."
+});
+Object.assign(translations.es, {
+    "remove_gem": "Devolver a la bandeja",
+    "rotate_same": "Esta gema es igual la gires como la gires.",
+    "rotate_no_room": "Aquí no hay sitio para girarla.",
+    "place_tip": "Arrastra las gemas a la mina. Toca una gema para girarla o quitarla; arrástrala fuera para devolverla."
+});
+Object.assign(translations.fr, {
+    "remove_gem": "Remettre sur le plateau",
+    "rotate_same": "Cette gemme est identique dans tous les sens.",
+    "rotate_no_room": "Pas assez de place pour la tourner ici.",
+    "place_tip": "Fais glisser les gemmes dans la mine. Touche une gemme pour la tourner ou l’enlever ; fais-la glisser dehors pour la remettre."
+});
+Object.assign(translations.de, {
+    "remove_gem": "Zurück in die Ablage",
+    "rotate_same": "Dieser Edelstein sieht in jeder Richtung gleich aus.",
+    "rotate_no_room": "Hier ist kein Platz zum Drehen.",
+    "place_tip": "Zieh die Edelsteine in die Mine. Tippe einen an, um ihn zu drehen oder zu entfernen; zieh ihn hinaus, um ihn zurückzulegen."
+});
+
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 let currentLang = 'en';
 

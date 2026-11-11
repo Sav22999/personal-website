@@ -33,6 +33,27 @@ a locked transaction (`mutate()` in `api/index.php`). Live service runs in the b
 reported in batches (`game.report`), capped by elapsed time, seats and the arrival rate for the restaurant's
 popularity. Earnings while away: at most 4 hours, at a quarter of the live speed.
 
+## Game systems
+
+- **Calendar**: each restaurant has its own (year 0 = opening, months of 10 days, time passes only while playing,
+  speed 1×–3×); seasons, day/night and weather follow it. Saved on the server (`game_minutes`).
+- **Staff**: hire candidates with a CV (skills 0–10 per role), assign and change roles, traits, experience,
+  uniforms, hairstyles and accessories, managers (from level 6) who run the restaurant while you are away, daily wages
+  (not paid while closed).
+- **Restaurant**: kinds (generic, fast food, café, inn, luxury), open / no new guests (queue outside) / closed,
+  outdoor terrace and yard, equipment tiers, dirt and cleaning, reviews (reputation = last 50), levels with rewards.
+- **Room size**: width (`size`) and depth (`depth`) grow one column or row at a time (`game.expand`), up to
+  `max_side(level)`; a new column goes on the left when the door (in the middle) would move, so nothing shifts.
+- **Upper floors** (`floors`, from level 15, up to 4): each starts 6×6 and grows inside the floor below; stairs lead
+  one floor up, lifts reach every floor they fit on. The simulation keeps floors `FLOOR_STRIDE` apart along z
+  (one flat grid, with stair/lift links); the scene stacks them and shows one floor at a time.
+- **Car park** (`parking`, 3 levels): guests who come by car pay +80% and tip more (server-capped in `apply_report`).
+- **Neighbourhood**: houses multiply and grow taller with the level; cars and passers-by follow the hour (`assets/town.js`).
+- **Tips**: customers tip on good service; players can tip a friend while visiting (`social.tip`, daily cap).
+- **One copy at a time**: each open copy sends an `X-Instance` id; opening the game elsewhere pauses the older copy.
+- **Statement**: every coin movement is in `ledger` (30 days), shown by tapping the coins.
+- **Music and sounds**: synthesized live with Web Audio (`assets/audio.js`), no audio files.
+
 ## Admin panel
 
 `admin.html` (also linked from Account in the game, for administrators). Administrators are accounts with

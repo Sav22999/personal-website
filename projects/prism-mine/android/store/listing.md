@@ -31,7 +31,7 @@ HOW IT WORKS
 PLAY YOUR WAY
 • Solo: three levels, with your best score kept for each one
 • Mine of the day: the same mine for everyone, a new one every day, with a shareable result
-• Online duel: same mine for both players, one beam each per turn; the first right answer wins
+• Online duel: each player hides the gems in their own mine, then you take turns finding the other; the first right answer wins
 • Example game: a guided mine, step by step, to learn the rules in two minutes
 
 HELP WHEN YOU NEED IT
@@ -89,7 +89,7 @@ COME FUNZIONA
 GIOCA COME VUOI
 • Da solo: tre livelli, con il tuo record salvato per ciascuno
 • Miniera del giorno: la stessa per tutti, una nuova ogni giorno, con il risultato da condividere
-• Duello online: la stessa miniera per entrambi, un raggio a testa per turno; vince la prima risposta giusta
+• Duello online: ognuno nasconde le gemme nella propria miniera, poi a turno cercate quella dell'altro; vince la prima risposta giusta
 • Partita di esempio: una miniera guidata, passo dopo passo, per imparare le regole in due minuti
 
 AIUTI QUANDO SERVONO

@@ -8,8 +8,17 @@
  */
 import * as THREE from '../vendor/three.module.min.js';
 import {furnitureModel, floorMaterial, wallMaterial, cropModel, mat, forkMesh, PALETTE, glowMat, setNightGlow} from './models.js';
+import {buildNeighbourhood, Traffic} from './town.js';
 
 const WALL_H = 2.4;
+/** Height of one storey (walls + floor slab), and the z stride the simulation uses to keep floors apart (see sim.js). */
+export const FH = 2.6;
+export const FLOOR_STRIDE = 1000;
+/** Is an object (and every parent) visible? Hidden floors must not be picked by taps. */
+const shown = (o) => {
+    for (let x = o; x; x = x.parent) if (!x.visible) return false;
+    return true;
+};
 /** Depth of the outdoor area (terrace in front, yard at the side): the same as OUTDOOR in lib/catalog.php. */
 export const OUT = 3;
 const WALL_LOW = 0.14;
@@ -37,24 +46,6 @@ function skyAt(h) {
         }
     }
     return [SKY_KEYS[0][1].clone(), SKY_KEYS[0][2].clone()];
-}
-
-/** Stone paving for the terrace. */
-function pavingTexture(w, d) {
-    const c = document.createElement('canvas');
-    c.width = c.height = 128;
-    const g = c.getContext('2d');
-    g.fillStyle = '#C9BBA4';
-    g.fillRect(0, 0, 128, 128);
-    for (let y = 0; y < 4; y++) for (let x = -1; x < 4; x++) {
-        g.fillStyle = ['#E3D6C1', '#D8C9B0', '#EADFCB', '#DCCDB5'][(x + y * 3 + 8) % 4];
-        g.fillRect(x * 32 + (y % 2) * 16 + 2, y * 32 + 2, 28, 28);
-    }
-    const t = new THREE.CanvasTexture(c);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(w / 2, d / 2);
-    return t;
 }
 
 const groundCache = {};
@@ -94,19 +85,37 @@ export function seasonOf(date = new Date()) {
 }
 
 /** The weather of a game day: random but the same for everyone that day, and fitting the season. */
-export function weatherFor(season, dayKey) {
-    let h = 0;
-    for (const ch of String(dayKey)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const r = (h % 1000) / 1000;
+/** Weather kinds. Rainy ones bring puddles in, snowy ones bring snow in (see sim.js), and both keep people indoors. */
+export const RAINY = ['drizzle', 'rain', 'hail'];
+export const SNOWY = ['light_snow', 'snow'];
+export const isWet = (w) => RAINY.includes(w) || SNOWY.includes(w);
+/** How much each kind of weather covers the sky (0 clear … 1 storm). */
+const OVERCAST = {sunny: 0, clear: 0.08, cloudy: 0.45, drizzle: 0.55, rain: 0.85, hail: 0.75, light_snow: 0.5, snow: 0.8};
+
+/**
+ * The weather of one game day: it changes from day to day (a good hash of the day number, so consecutive days are
+ * unrelated), with odds by season, and it may turn in the afternoon. The same day always has the same weather.
+ */
+export function weatherFor(season, day, hour = 12) {
+    const rnd = (n) => {
+        let h = (Math.imul(day + 1, 2654435761) ^ Math.imul(n + 7, 40503)) >>> 0;
+        h = Math.imul(h ^ (h >>> 16), 2246822507) >>> 0;
+        h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0;
+        return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+    };
     const table = {
-        winter: [['snow', 0.4], ['cloudy', 0.3], ['clear', 0.3]],
-        spring: [['rain', 0.25], ['cloudy', 0.25], ['clear', 0.5]],
-        summer: [['clear', 0.7], ['cloudy', 0.15], ['rain', 0.15]],
-        autumn: [['rain', 0.35], ['cloudy', 0.35], ['clear', 0.3]],
-    }[season];
-    let acc = 0;
-    for (const [w, p] of table) if (r < (acc += p)) return w;
-    return 'clear';
+        winter: [['snow', 0.12], ['light_snow', 0.18], ['hail', 0.04], ['rain', 0.08], ['drizzle', 0.1], ['cloudy', 0.2], ['clear', 0.16], ['sunny', 0.12]],
+        spring: [['drizzle', 0.15], ['rain', 0.1], ['hail', 0.03], ['cloudy', 0.2], ['clear', 0.27], ['sunny', 0.25]],
+        summer: [['sunny', 0.45], ['clear', 0.24], ['cloudy', 0.12], ['drizzle', 0.06], ['rain', 0.09], ['hail', 0.04]],
+        autumn: [['drizzle', 0.2], ['rain', 0.16], ['hail', 0.03], ['cloudy', 0.25], ['clear', 0.2], ['sunny', 0.12], ['light_snow', 0.04]],
+    }[season] || [['clear', 1]];
+    const pick = (r) => {
+        let acc = 0;
+        for (const [w, p] of table) if (r < (acc += p)) return w;
+        return 'clear';
+    };
+    // About one day in three the weather turns after lunch
+    return hour >= 14 && rnd(2) < 0.35 ? pick(rnd(3)) : pick(rnd(1));
 }
 
 const paintings = [];
@@ -153,11 +162,115 @@ function paintingTexture(k) {
     return (paintings[k] = t);
 }
 
+/** The front door, open towards the room, in one of the styles of DOORS (lib/catalog.php). Unit space: +z = street. */
+export function doorModel(style, open = true) {
+    const g = new THREE.Group();
+    const m = (c, o) => mat(c, o);
+    const b = (w, h, d, c, x, y, z, o, parent = g) => {
+        const k = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m(c, o));
+        k.position.set(x, y + h / 2, z);
+        k.castShadow = true;
+        parent.add(k);
+        return k;
+    };
+    const H = WALL_H - 0.38;
+    const leaf = (w, hinge, amount, build) => { // a door leaf hinged at x = hinge, swung open into the room
+        const p = new THREE.Group();
+        p.position.set(hinge, 0, -0.03);
+        const l = new THREE.Group();
+        l.position.x = hinge < 0 ? w / 2 : -w / 2;
+        build(l, w);
+        p.add(l);
+        p.rotation.y = (hinge < 0 ? 1 : -1) * (open ? amount : 0);
+        g.add(p);
+    };
+    const glassO = {opacity: 0.4, roughness: 0.05};
+    const knob = (l, w, c = PALETTE.gold) => {
+        const k = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), m(c, {metalness: 0.7, roughness: 0.3}));
+        k.position.set(0, 1.0, 0);
+        k.position.x = w / 2 - 0.1;
+        l.add(k);
+    };
+    const panels = (l, w, c, frame) => {
+        b(w, H, 0.05, c, 0, 0, 0, {}, l);
+        for (const y of [0.25, 1.15]) b(w * 0.7, 0.7, 0.02, frame, 0, y, 0.03, {}, l);
+    };
+    switch (style) {
+        case 'rustic':
+            leaf(0.9, -0.45, 1.6, (l, w) => {
+                for (let i = 0; i < 5; i++) b(w / 5 - 0.01, H, 0.06, ['#5A3A22', '#6B4426'][i % 2], -w / 2 + (i + 0.5) * w / 5, 0, 0, {}, l);
+                for (const y of [0.35, 1.5]) b(w, 0.07, 0.07, '#2C2C30', 0, y, 0.02, {metalness: 0.5}, l);
+                knob(l, w, '#2C2C30');
+            });
+            break;
+        case 'glass':
+            leaf(0.9, -0.45, 1.5, (l, w) => {
+                b(w, H, 0.03, '#BFE3F0', 0, 0, 0, glassO, l);
+                for (const [x, ww] of [[-w / 2 + 0.03, 0.06], [w / 2 - 0.03, 0.06]]) b(ww, H, 0.05, '#9AA3AD', x, 0, 0, {metalness: 0.6}, l);
+                b(w, 0.06, 0.05, '#9AA3AD', 0, 0, 0, {metalness: 0.6}, l);
+                b(w, 0.06, 0.05, '#9AA3AD', 0, H - 0.06, 0, {metalness: 0.6}, l);
+                b(0.03, 0.6, 0.05, '#C9CED4', w / 2 - 0.12, 0.7, 0.04, {metalness: 0.7}, l);
+            });
+            break;
+        case 'red':
+            leaf(0.9, -0.45, 1.6, (l, w) => {
+                b(w, H, 0.05, '#C0392B', 0, 0, 0, {flat: false, roughness: 0.4}, l);
+                for (let i = 0; i < 4; i++) b(0.2, 0.2, 0.02, '#BFE3F0', -0.12 + (i % 2) * 0.24, 1.35 + Math.floor(i / 2) * 0.25, 0.03, glassO, l);
+                b(w * 0.7, 0.6, 0.02, '#A93226', 0, 0.3, 0.03, {}, l);
+                knob(l, w);
+            });
+            break;
+        case 'double':
+            for (const hinge of [-0.45, 0.45]) leaf(0.45, hinge, 1.7, (l, w) => {
+                b(w, H, 0.05, '#7B4E2C', 0, 0, 0, {}, l);
+                b(w * 0.7, 1.0, 0.02, '#BFE3F0', 0, 0.9, 0.03, glassO, l);
+                b(0.03, 0.3, 0.04, PALETTE.gold, hinge < 0 ? w / 2 - 0.06 : -w / 2 + 0.06, 0.9, 0.04, {metalness: 0.7}, l);
+            });
+            break;
+        case 'arched': {
+            leaf(0.9, -0.45, 1.6, (l, w) => panels(l, w, '#6B4426', '#5A3218'));
+            const arch = new THREE.Mesh(new THREE.CircleGeometry(0.42, 18, 0, Math.PI), m('#F6D58E', {emissive: '#F6C35E', glow: 0.4}));
+            arch.position.set(0, H + 0.01, 0.06);
+            g.add(arch);
+            break;
+        }
+        case 'french':
+            leaf(0.9, -0.45, 1.5, (l, w) => {
+                b(w, H, 0.04, '#FFFFFF', 0, 0, 0, {flat: false}, l);
+                for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) b(w / 2 - 0.08, H / 4 - 0.08, 0.02, '#BFE3F0', -w / 4 + c * w / 2, 0.04 + r * H / 4, 0.025, glassO, l);
+                knob(l, w);
+            });
+            break;
+        case 'gold':
+            for (const hinge of [-0.45, 0.45]) leaf(0.45, hinge, 1.6, (l, w) => {
+                b(w, H, 0.05, '#1E1E24', 0, 0, 0, {roughness: 0.2}, l);
+                for (const y of [0.15, 1.05]) {
+                    b(w * 0.75, 0.025, 0.02, PALETTE.gold, 0, y, 0.03, {metalness: 0.8, roughness: 0.25}, l);
+                    b(w * 0.75, 0.025, 0.02, PALETTE.gold, 0, y + 0.7, 0.03, {metalness: 0.8, roughness: 0.25}, l);
+                }
+                b(0.03, 0.4, 0.04, PALETTE.gold, hinge < 0 ? w / 2 - 0.06 : -w / 2 + 0.06, 0.85, 0.04, {metalness: 0.8}, l);
+            });
+            b(1.0, 0.08, 0.2, PALETTE.gold, 0, H, 0.02, {metalness: 0.7});
+            break;
+        default: // wood
+            leaf(0.9, -0.45, 1.6, (l, w) => {
+                panels(l, w, '#9C6B3F', '#8A5A35');
+                knob(l, w);
+            });
+    }
+    return g;
+}
+
 export class World {
     constructor(canvas, overlay) {
         this.canvas = canvas;
         this.overlay = overlay;
         this.listeners = {};
+        try {
+            this.wallMode = localStorage.getItem('forkville-walls') || 'adaptive';
+        } catch (e) {
+            this.wallMode = 'adaptive';
+        }
         this.items = new Map();
         this.clock = new THREE.Clock();
         this.time = 0;
@@ -199,6 +312,14 @@ export class World {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         this.renderer.setAnimationLoop(() => this.frame());
+    }
+
+    /** Walls: 'adaptive' (low on the camera side), 'low' (always), 'high' (always). Remembered on this device. */
+    setWallMode(mode) {
+        this.wallMode = mode;
+        try {
+            localStorage.setItem('forkville-walls', mode);
+        } catch (e) { /* storage blocked */ }
     }
 
     on(name, fn) {
@@ -277,185 +398,17 @@ export class World {
         this.scene.add(this.clouds);
     }
 
-    /** Street, sidewalk, trees and lamp posts, placed around a room of `size`. */
-    buildStreet(size) {
+    /** Street, sidewalks, the neighbourhood (grows with the level), the car park, trees and street lamps. */
+    buildStreet(r) {
         this.outdoor.clear();
         this.trees = [];
         this.bushes = [];
         this.snowCaps = [];
         this.flowers = [];
-        const side = new THREE.Mesh(new THREE.BoxGeometry(size + 30, 0.06, 2.2), mat('#E4D6C1'));
-        side.position.set(size / 2, 0.0, size + 1.4 + OUT);
-        side.receiveShadow = true;
-        const road = new THREE.Mesh(new THREE.BoxGeometry(size + 30, 0.04, 4), mat('#5B5754'));
-        road.position.set(size / 2, -0.01, size + 4.5 + OUT);
-        road.receiveShadow = true;
-        this.outdoor.add(side, road);
-        for (let x = -12; x < size + 14; x += 3) {
-            const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 0.14), mat('#F4E9C8'));
-            stripe.position.set(x, 0.0, size + 4.5 + OUT);
-            this.outdoor.add(stripe);
-        }
-        // Path from the door to the sidewalk
-        // The terrace in front (stone paving) and the path to the door across it
-        const patio = new THREE.Mesh(new THREE.PlaneGeometry(size + OUT, OUT), new THREE.MeshStandardMaterial({map: pavingTexture(size + OUT, OUT), roughness: 0.95}));
-        patio.rotation.x = -Math.PI / 2;
-        patio.position.set((size + OUT) / 2, -0.035, size + OUT / 2);
-        patio.receiveShadow = true;
-        const path = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, OUT + 0.4), mat('#D9C7AC'));
-        path.position.set(Math.floor(size / 2) + 0.5, -0.02, size + OUT / 2 + 0.1);
-        path.receiveShadow = true;
-        this.outdoor.add(patio, path);
-        const tree = (x, z, s = 1) => {
-            const g = new THREE.Group();
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * s, 0.16 * s, 1.2 * s, 7), mat(PALETTE.woodDark));
-            trunk.position.y = 0.6 * s;
-            g.add(trunk);
-            const foliage = [];
-            [[0, 1.6, 0, 0.8], [0.35, 1.35, 0.2, 0.55], [-0.3, 1.4, -0.2, 0.6], [0, 2.1, 0, 0.55]].forEach(([dx, y, dz, r], i) => {
-                const b = new THREE.Mesh(new THREE.IcosahedronGeometry(r * s, 0), mat(i % 2 ? PALETTE.leafDark : PALETTE.leaf));
-                b.position.set(dx * s, y * s, dz * s);
-                g.add(b);
-                foliage.push(b);
-            });
-            // Bare branches, shown when the tree has lost its leaves
-            const branches = new THREE.Group();
-            for (const [rx, rz, len] of [[0.6, 0, 0.9], [-0.5, 0.4, 0.8], [0.2, -0.7, 0.7], [-0.2, 0.2, 1.0]]) {
-                const br = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.06 * s, len * s, 5), mat(PALETTE.woodDark));
-                br.position.y = 1.2 * s + len * s * 0.4;
-                br.rotation.set(rx, 0, rz);
-                branches.add(br);
-            }
-            branches.visible = false;
-            g.add(branches);
-            this.trees.push({g, foliage, branches, i: this.trees.length});
-            g.position.set(x, 0, z);
-            g.traverse(o => o.isMesh && (o.castShadow = true));
-            this.outdoor.add(g);
-        };
-        const lamp = (x, z) => {
-            const g = new THREE.Group();
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 2.6, 8), mat('#2F3A3A'));
-            pole.position.y = 1.3;
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), glowMat('#FFE7A8'));
-            head.position.y = 2.7;
-            g.add(pole, head);
-            g.position.set(x, 0, z);
-            g.traverse(o => o.isMesh && (o.castShadow = true));
-            this.outdoor.add(g);
-        };
-        for (let x = -2; x <= size + 2; x += 6) tree(x, size + 7.8 + OUT, 1 + ((x * 7) % 3) * 0.12);
-        [[size + OUT + 1.6, 2, 1.2], [size + OUT + 2.5, size * 0.6, 1], [size + OUT + 1.8, size - 1, 0.9], [-6.5, size + 0.5, 1.1], [-7, 1.5, 1.2], [size / 2, -3.5, 1.3], [2, -4, 1]].forEach(([x, z, s]) => tree(x, z, s));
-        for (let x = 1; x < size; x += 5) lamp(x, size + 2.4 + OUT);
-        this.buildTown(size);
+        buildNeighbourhood(this, r);
         if (this.env) this.applySeason(this.env.season, true);
-    }
-
-    /** The neighbourhood of Forkville: little houses across the street and behind, fences, flowers, benches. */
-    buildTown(size) {
-        const rnd = (n) => Math.abs(Math.sin(n * 91.7 + size) * 4371.3) % 1;
-        const walls = ['#FFF3E0', '#F6D9B8', '#E8EFD9', '#F4E1E6', '#E3ECF4', '#FCEBC5'];
-        const roofs = ['#B43E5C', '#7A8B3A', '#E2B23A', '#3E7CB4', '#C2572B', '#6B4FA0'];
-        const glow = glowMat('#FFD27A');
-        const house = (x, z, rot, i) => {
-            const g = new THREE.Group();
-            const w = 3.2 + rnd(i) * 1.6, d = 3 + rnd(i + 3) * 1.2, h = 2.2 + rnd(i + 7) * 1.4;
-            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(walls[i % walls.length]));
-            body.position.y = h / 2;
-            const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.78, 1.6 + rnd(i + 1), 4), mat(roofs[(i * 5) % roofs.length]));
-            roof.position.y = h + (1.6 + rnd(i + 1)) / 2;
-            roof.rotation.y = Math.PI / 4;
-            roof.scale.set(w / Math.max(w, d), 1, d / Math.max(w, d));
-            const door = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.3, 0.08), mat('#7B4E2C'));
-            door.position.set(0, 0.65, d / 2 + 0.03);
-            g.add(body, roof, door);
-            const cap = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.8, 0.5, 4), mat('#F7FAFC'));
-            cap.position.y = h + (1.6 + rnd(i + 1)) * 0.78;
-            cap.rotation.y = Math.PI / 4;
-            cap.scale.set(w / Math.max(w, d), 1, d / Math.max(w, d));
-            cap.visible = false;
-            g.add(cap);
-            this.snowCaps.push(cap);
-            for (const sx of [-1, 1]) {
-                const win = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.06), glow);
-                win.position.set(sx * w * 0.3, h * 0.62, d / 2 + 0.03);
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.08, 0.1), mat('#FFFFFF'));
-                frame.position.set(sx * w * 0.3, h * 0.62 - 0.34, d / 2 + 0.05);
-                g.add(win, frame);
-            }
-            if (rnd(i + 11) > 0.4) {
-                const chim = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), mat('#9C4A2E'));
-                chim.position.set(w * 0.25, h + 0.9, -d * 0.15);
-                g.add(chim);
-            }
-            g.position.set(x, 0, z);
-            g.rotation.y = rot;
-            g.traverse(o => o.isMesh && (o.castShadow = o.receiveShadow = true));
-            this.outdoor.add(g);
-        };
-        // Across the street, facing the restaurant
-        let i = 0;
-        for (let x = -10; x <= size + 10; x += 5.6) house(x + rnd(i) * 0.8, size + 11.5 + OUT, Math.PI, i++);
-        // Behind the restaurant and on the far right
-        for (let x = -2; x <= size + 6; x += 6.2) house(x, -9 - rnd(i) * 1.5, 0, i++);
-        for (let z = 1; z < size; z += 6) house(size + OUT + 8 + rnd(i), z, -Math.PI / 2, i++);
-        // A white picket fence around the plot (open at the front)
-        const pale = mat('#FFFFFF');
-        const fence = (x1, z1, x2, z2) => {
-            const len = Math.hypot(x2 - x1, z2 - z1), n = Math.floor(len / 0.5);
-            const g = new THREE.Group();
-            for (let k = 0; k <= n; k++) {
-                const p = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.06), pale);
-                p.position.set(x1 + (x2 - x1) * k / n, 0.27, z1 + (z2 - z1) * k / n);
-                g.add(p);
-            }
-            const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.04), pale);
-            rail.position.set((x1 + x2) / 2, 0.38, (z1 + z2) / 2);
-            rail.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
-            g.add(rail);
-            g.traverse(o => o.isMesh && (o.castShadow = true));
-            this.outdoor.add(g);
-        };
-        fence(-5, -2.5, size + OUT + 0.5, -2.5);
-        fence(-5, -2.5, -5, size + OUT);
-        fence(size + OUT + 0.5, -2.5, size + OUT + 0.5, size + OUT);
-        // Flower beds and bushes along the front
-        const petals = ['#F25F5C', '#FFD23F', '#F7A1C4', '#FFFFFF', '#9B5DE5'];
-        for (let k = 0; k < 46; k++) {
-            const x = -4.5 + rnd(k + 50) * (size + 6.5), z = size + OUT + 0.2 + rnd(k + 80) * 0.15;
-            if (Math.abs(x - (Math.floor(size / 2) + 0.5)) < 1.2) continue; // keep the path clear
-            const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), mat(petals[k % petals.length]));
-            f.position.set(x, 0.18, z);
-            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 4), mat(PALETTE.leafDark));
-            stem.position.set(x, 0.09, z);
-            this.outdoor.add(f, stem);
-            this.flowers.push(f, stem);
-        }
-        for (const [x, z, r] of [[-4.3, size - 0.6, 0.5], [-4.4, size + OUT - 0.5, 0.55], [size + OUT + 1.2, -1.6, 0.6], [-4.4, 9.5, 0.45]]) {
-            const b = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), mat(PALETTE.leaf));
-            this.bushes.push(b);
-            b.position.set(x, r * 0.8, z);
-            b.castShadow = true;
-            this.outdoor.add(b);
-        }
-        // Two benches on the sidewalk
-        for (const x of [2, size - 3]) {
-            const g = new THREE.Group();
-            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.4), mat(PALETTE.wood));
-            seat.position.y = 0.42;
-            const back = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.35, 0.06), mat(PALETTE.wood));
-            back.position.set(0, 0.68, -0.18);
-            g.add(seat, back);
-            for (const sx of [-0.6, 0.6]) {
-                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.36), mat('#2F3A3A'));
-                leg.position.set(sx, 0.21, 0);
-                g.add(leg);
-            }
-            g.position.set(x, 0, size + 2.15 + OUT);
-            g.rotation.y = Math.PI;
-            g.traverse(o => o.isMesh && (o.castShadow = true));
-            this.outdoor.add(g);
-        }
+        if (!this.traffic) this.traffic = new Traffic(this);
+        this.traffic.reset();
     }
 
     // ------------------------------------------------------------ the restaurant
@@ -465,9 +418,15 @@ export class World {
         this.root.clear();
         this.items.clear();
         this.walls = [];
-        this.size = r.size;
-        this.door = Math.floor(r.size / 2);
-        this.buildStreet(r.size);
+        this.W = r.size; // width (x)
+        this.D = r.depth || r.size; // depth (z): the front wall with the door is at z = D
+        this.size = Math.max(this.W, this.D);
+        this.door = r.door ?? Math.floor(this.W / 2);
+        this.doorStyle = r.doorStyle || 'wood';
+        this.floors = r.floors || [];
+        this.layout = r.layout;
+        this.viewFloor = Math.min(this.viewFloor || 0, this.floors.length);
+        this.buildStreet(r);
         this.buildFloor(r.floor);
         this.buildWalls(r.wall, r.name);
         this.gardenGroup = new THREE.Group();
@@ -478,24 +437,28 @@ export class World {
         this.root.add(this.agentGroup);
         this.fxGroup = new THREE.Group();
         this.root.add(this.fxGroup);
+        this.layers = {agent: [this.agentGroup], fx: [this.fxGroup]};
         // Warm room lights over the dining room: they come on after sunset (see setEnvironment)
         this.roomLights = [];
-        const n = r.size <= 10 ? 2 : 3;
-        for (let i = 0; i < n; i++) for (let j = 0; j < 2; j++) {
-            const l = new THREE.PointLight('#FFD9A0', 0, r.size * 0.9, 1.2);
-            l.position.set(r.size * (i + 0.5) / n, 2.5, r.size * (j + 0.5) / 2);
+        const n = this.W <= 10 ? 2 : 3, m = this.D <= 12 ? 2 : 3;
+        for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) {
+            const l = new THREE.PointLight('#FFD9A0', 0, this.size * 0.9, 1.2);
+            l.position.set(this.W * (i + 0.5) / n, 2.5, this.D * (j + 0.5) / m);
             this.root.add(l);
             this.roomLights.push(l);
         }
+        this.upper = [];
+        for (let f = 1; f <= this.floors.length; f++) this.buildUpperFloor(f, r.floor, r.wall);
         for (const it of r.layout) this.addItem(it);
+        this.applyViewFloor();
         if (opts.plots != null) this.setGarden(opts.plots, opts.garden || [], opts.now || Date.now() / 1000);
         this.fitSun();
         if (!opts.keepCamera) this.recenter(true);
     }
 
     fitSun() {
-        const s = this.size;
-        const c = new THREE.Vector3(s / 2 - 1.5, 0, s / 2 + 1);
+        const s = this.size + (this.parkingW || 0) * 0.5;
+        const c = new THREE.Vector3(this.W / 2 - 1.5 - (this.parkingW || 0) * 0.4, 0, this.D / 2 + 1);
         this.sun.position.set(c.x + 9, 16, c.z - 6);
         this.sun.target.position.copy(c);
         const cam = this.sun.shadow.camera;
@@ -510,27 +473,28 @@ export class World {
     }
 
     buildFloor(key) {
-        const s = this.size;
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(s, s), floorMaterial(key, s));
+        const W = this.W, D = this.D;
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), floorMaterial(key, W, D));
         floor.rotation.x = -Math.PI / 2;
-        floor.position.set(s / 2, 0.01, s / 2);
+        floor.position.set(W / 2, 0.01, D / 2);
         floor.receiveShadow = true;
         this.floor = floor;
         this.root.add(floor);
         const mat_ = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.02, 0.7), mat(PALETTE.terracotta));
-        mat_.position.set(Math.floor(s / 2) + 0.5, 0.03, s - 0.45);
+        mat_.position.set(this.door + 0.5, 0.03, D - 0.45);
         mat_.receiveShadow = true;
         const matIn = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.025, 0.5), mat('#A8472A'));
         matIn.position.copy(mat_.position);
         this.root.add(mat_, matIn);
-        const base = new THREE.Mesh(new THREE.BoxGeometry(s + 0.6, 0.12, s + 0.6), mat('#CDBBA0'));
-        base.position.set(s / 2, -0.085, s / 2); // top 2.5 cm under the floor: no flicker from far away
+        const base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, 0.12, D + 0.6), mat('#CDBBA0'));
+        base.position.set(W / 2, -0.085, D / 2); // top 2.5 cm under the floor: no flicker from far away
         base.receiveShadow = true;
         this.root.add(base);
     }
 
     setFloor(key) {
-        this.floor.material = floorMaterial(key, this.size);
+        this.floor.material = floorMaterial(key, this.W, this.D);
+        for (const u of this.upper || []) if (u) u.group.children[0].material = floorMaterial(key, 1, 1);
     }
 
     setWall(key) {
@@ -538,26 +502,101 @@ export class World {
         this.walls.forEach(w => w.segments.forEach(seg => seg.userData.paint && (seg.material = m)));
     }
 
-    buildWalls(key, name) {
-        const s = this.size, T = 0.16;
+    /** The rectangle of a floor: {x0, w, d} (0 = ground floor). */
+    floorRect(f) {
+        if (!f) return {x0: 0, w: this.W, d: this.D};
+        const fl = this.floors[f - 1];
+        return fl ? {x0: fl[2], w: fl[0], d: fl[1]} : null;
+    }
+
+    /** Tiles of floor f kept free for the way up (above stairs on the floor below, above a lift). "x,z" set. */
+    shaftTiles(f, layout = this.layout, items = this.catalogItems) {
+        const out = new Set();
+        if (!f || !items) return out;
+        for (const it of layout || []) {
+            const def = items[it.k];
+            if (!def || def.cat !== 'stairs') continue;
+            const from = it.f || 0, lift = it.k.startsWith('lift');
+            if (lift ? f <= from : f !== from + 1) continue;
+            const rect = this.floorRect(f), tiles = this.footprint(it, items).tiles;
+            if (!rect || !tiles.every(([x, z]) => x >= rect.x0 && x < rect.x0 + rect.w && z >= 0 && z < rect.d)) continue;
+            if (lift) { // a lift only reaches floors it fits on all the way up
+                let ok = true;
+                for (let g = from + 1; g < f; g++) {
+                    const rr = this.floorRect(g);
+                    if (!rr || !tiles.every(([x, z]) => x >= rr.x0 && x < rr.x0 + rr.w && z >= 0 && z < rr.d)) ok = false;
+                }
+                if (!ok) continue;
+            }
+            tiles.forEach(([x, z]) => out.add(x + ',' + z));
+        }
+        return out;
+    }
+
+    /** An upper floor: its slab (with the stairwell left open), a ceiling for the room below, its walls and a light. */
+    buildUpperFloor(f, floorKey, wallKey) {
+        const rect = this.floorRect(f), y = f * FH;
+        const g = new THREE.Group();
+        g.userData.floor = f;
+        const holes = this.shaftTiles(f);
+        const pos = [], uv = [], under = [];
+        for (let x = rect.x0; x < rect.x0 + rect.w; x++) for (let z = 0; z < rect.d; z++) {
+            if (holes.has(x + ',' + z)) continue;
+            pos.push(x, 0, z, x, 0, z + 1, x + 1, 0, z, x + 1, 0, z, x, 0, z + 1, x + 1, 0, z + 1);
+            uv.push(0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0);
+            under.push(x, 0, z, x + 1, 0, z, x, 0, z + 1, x + 1, 0, z, x + 1, 0, z + 1, x, 0, z + 1);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+        geo.computeVertexNormals();
+        const slab = new THREE.Mesh(geo, floorMaterial(floorKey, 1, 1));
+        slab.position.y = y + 0.01;
+        slab.receiveShadow = true;
+        const ug = new THREE.BufferGeometry();
+        ug.setAttribute('position', new THREE.Float32BufferAttribute(under, 3));
+        ug.computeVertexNormals();
+        const ceiling = new THREE.Mesh(ug, mat('#F4EEE4'));
+        ceiling.position.y = y - 0.18;
+        g.add(slab, ceiling);
+        // The edge of the slab, between the walls below and the walls above
+        const edge = mat('#E2D3BC');
+        for (const [w, d, x, z] of [[rect.w + 0.32, 0.16, rect.x0 + rect.w / 2, -0.08], [rect.w + 0.32, 0.16, rect.x0 + rect.w / 2, rect.d + 0.08], [0.16, rect.d, rect.x0 - 0.08, rect.d / 2], [0.16, rect.d, rect.x0 + rect.w + 0.08, rect.d / 2]]) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.2, d), edge);
+            m.position.set(x, y - 0.09, z);
+            m.castShadow = m.receiveShadow = true;
+            g.add(m);
+        }
+        const light = new THREE.PointLight('#FFD9A0', 0, Math.max(rect.w, rect.d) * 1.2, 1.2);
+        light.position.set(rect.x0 + rect.w / 2, y + 2.3, rect.d / 2);
+        g.add(light);
+        this.roomLights.push(light);
+        this.root.add(g);
+        const walls = this.buildWalls(wallKey, null, f);
+        this.upper[f] = {group: g, walls};
+    }
+
+    buildWalls(key, name, f = 0) {
+        const rect = this.floorRect(f), x0 = rect.x0, W = rect.w, D = rect.d, T = 0.16;
         const paint = wallMaterial(key);
         const outside = mat('#F3E6D2');
         const trim = mat(PALETTE.woodDark);
         const glass = mat('#BFE3F0', {opacity: 0.45, roughness: 0.05});
         // Each side: where it is, which way it faces (outward normal), and which units are door or windows
         const sides = [
-            {n: [0, -1], len: s, at: (i) => [i + 0.5, -T / 2], rotY: 0, windows: [2, s - 3]},
-            {n: [0, 1], len: s, at: (i) => [i + 0.5, s + T / 2], rotY: 0, door: this.door, windows: [1, s - 2]},
-            {n: [-1, 0], len: s, at: (i) => [-T / 2, i + 0.5], rotY: Math.PI / 2, windows: [2, Math.floor(s / 2), s - 3]},
-            {n: [1, 0], len: s, at: (i) => [s + T / 2, i + 0.5], rotY: Math.PI / 2, windows: [3, s - 4]},
+            {n: [0, -1], len: W, at: (i) => [x0 + i + 0.5, -T / 2], rotY: 0, windows: [2, W - 3]},
+            {n: [0, 1], len: W, at: (i) => [x0 + i + 0.5, D + T / 2], rotY: 0, door: f ? undefined : this.door - x0, windows: f ? [1, Math.floor(W / 2), W - 2] : [1, W - 2]},
+            {n: [-1, 0], len: D, at: (i) => [x0 - T / 2, i + 0.5], rotY: Math.PI / 2, windows: [2, Math.floor(D / 2), D - 3]},
+            {n: [1, 0], len: D, at: (i) => [x0 + W + T / 2, i + 0.5], rotY: Math.PI / 2, windows: [3, D - 4]},
         ];
+        const built = [];
         for (const side of sides) {
             const g = new THREE.Group();
             const segments = [];
             const decor = [];
             for (let i = 0; i < side.len; i++) {
                 const [x, z] = side.at(i);
-                const isDoor = side.door === i;
+                const isDoor = side.door != null && side.door === i;
                 const isWin = (side.windows || []).includes(i);
                 const unit = new THREE.Group();
                 unit.position.set(x, 0, z);
@@ -588,7 +627,7 @@ export class World {
                     unit.add(pane, sill, bar);
                     segments.push(pane, sill, bar);
                 }
-                if (!isDoor && !isWin && !side.door && i % 3 === 1 && i > 0 && i < side.len - 1) {
+                if (!isDoor && !isWin && side.door == null && i % 3 === 1 && i > 0 && i < side.len - 1) {
                     // A framed painting on the room side (hidden when the wall is lowered)
                     const art = new THREE.Group();
                     const frame = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.52, 0.04), mat(PALETTE.woodDark));
@@ -601,6 +640,11 @@ export class World {
                     decor.push(art);
                 }
                 if (isDoor) {
+                    const leaf = doorModel(this.doorStyle || 'wood');
+                    leaf.position.z = inward * 0.02;
+                    if (inward > 0) leaf.rotation.y = Math.PI;
+                    unit.add(leaf);
+                    segments.push(...leaf.children.filter(c => c.isMesh));
                     for (const dx of [-0.48, 0.48]) {
                         const post = new THREE.Mesh(new THREE.BoxGeometry(0.06, WALL_H - 0.35, T + 0.04), trim);
                         post.position.set(dx, (WALL_H - 0.35) / 2, 0);
@@ -612,24 +656,28 @@ export class World {
                 g.add(unit);
             }
             // The cap on top of the wall
-            const cap = new THREE.Mesh(new THREE.BoxGeometry(side.rotY ? T + 0.04 : s + T * 2, 0.06, side.rotY ? s + T * 2 : T + 0.04), trim);
-            cap.position.set(side.rotY ? side.at(0)[0] : s / 2, WALL_H, side.rotY ? s / 2 : side.at(0)[1]);
+            const cap = new THREE.Mesh(new THREE.BoxGeometry(side.rotY ? T + 0.04 : W + T * 2, 0.06, side.rotY ? D + T * 2 : T + 0.04), trim);
+            cap.position.set(side.rotY ? side.at(0)[0] : x0 + W / 2, WALL_H, side.rotY ? D / 2 : side.at(0)[1]);
             g.add(cap);
+            g.position.y = f * FH;
             this.root.add(g);
-            this.walls.push({group: g, n: side.n, segments, cap, decor, h: null, isFront: !!side.door}); // h: set at once on the first frame
+            const wall = {group: g, n: side.n, segments, cap, decor, h: null, isFront: side.door != null, floor: f}; // h: set at once on the first frame
+            this.walls.push(wall);
+            built.push(wall);
         }
+        if (f) return built;
         // Awning and sign over the door, on the street side
         const frontWall = this.walls.find(w => w.isFront);
         const awning = new THREE.Group();
         for (let i = 0; i < 6; i++) {
             const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.05, 0.9), mat(i % 2 ? PALETTE.cream : PALETTE.terracotta));
-            stripe.position.set(this.door + 0.5 - 0.7 + i * 0.28, WALL_H - 0.1, s + 0.55);
+            stripe.position.set(this.door + 0.5 - 0.7 + i * 0.28, WALL_H - 0.1, D + 0.55);
             stripe.rotation.x = 0.35;
             stripe.castShadow = true;
             awning.add(stripe);
         }
         this.sign = this.makeSign(name);
-        this.sign.position.set(this.door + 0.5, WALL_H + 0.45, s + 0.2);
+        this.sign.position.set(this.door + 0.5, WALL_H + 0.45, D + 0.2);
         this.root.add(awning, this.sign);
         frontWall.extras = [awning, this.sign]; // hidden (not squashed) while the front wall is lowered
     }
@@ -682,18 +730,86 @@ export class World {
 
     placeObject(obj, it, items) {
         const {w, d} = this.footprint(it, items);
-        obj.position.set(it.x + w / 2, 0, it.z + d / 2);
+        obj.position.set(it.x + w / 2, (it.f || 0) * FH, it.z + d / 2);
         obj.rotation.y = it.r * Math.PI / 2;
     }
 
     addItem(it) {
         const obj = furnitureModel(it.k);
         obj.userData.itemId = it.id;
+        obj.userData.floor = it.f || 0;
         obj.traverse(o => (o.userData.itemId = it.id));
         this.placeObject(obj, it, this.catalogItems);
+        // A lift shows its doors on every floor it reaches
+        if (it.k.startsWith('lift')) for (let f = (it.f || 0) + 1; f <= this.floors.length; f++) {
+            if (!this.shaftTiles(f).has(it.x + ',' + it.z)) break;
+            const stop = furnitureModel(it.k);
+            stop.position.y = (f - (it.f || 0)) * FH;
+            stop.userData.floor = f;
+            stop.traverse(o => (o.userData.itemId = it.id));
+            obj.add(stop);
+        }
         this.itemGroup.add(obj);
         this.items.set(it.id, obj);
+        obj.visible = (it.f || 0) <= (this.viewFloor || 0);
         return obj;
+    }
+
+    /** Which floor the player looks at: the floors above it are hidden; building happens on it. */
+    setViewFloor(f) {
+        this.viewFloor = Math.max(0, Math.min(f, this.floors?.length || 0));
+        this.applyViewFloor();
+        this.emit('floor', this.viewFloor);
+    }
+
+    applyViewFloor() {
+        const k = this.viewFloor || 0;
+        this.ground.constant = -k * FH;
+        for (let f = 1; f < (this.upper || []).length; f++) {
+            const u = this.upper[f];
+            if (!u) continue;
+            u.group.visible = f <= k;
+            u.walls.forEach(w => (w.group.visible = f <= k));
+        }
+        // One floor at a time (Sims style): what stands on other floors is hidden, the garden outside stays
+        for (const obj of this.items.values()) {
+            const f = obj.userData.floor || 0, outdoor = this.catalogItems?.[obj.userData.key]?.cat === 'outdoor';
+            obj.visible = outdoor || f === k || (k > 0 && obj.children.some(c => c.userData.floor === k));
+            obj.children.forEach(c => {
+                if (c.userData.floor != null && c.userData.itemId != null && c.userData.floor > f) c.visible = c.userData.floor === k;
+                else if (c.userData.floor == null && f !== k && k > 0 && !outdoor) c.visible = false; // a lift seen from above: only its stop on this floor
+                else if (c.userData.floor == null) c.visible = true;
+            });
+        }
+        for (const kind of ['agent', 'fx']) (this.layers?.[kind] || []).forEach((l, f) => l && (l.visible = f === k));
+        // The floors below are shaded, so the one being looked at stands out
+        if (this.shades) this.root.remove(this.shades);
+        this.shades = new THREE.Group();
+        const shade = new THREE.MeshBasicMaterial({color: '#1E1410', transparent: true, opacity: 0.45, depthWrite: false});
+        for (let f = 0; f < k; f++) {
+            const rc = this.floorRect(f);
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(rc.w, rc.d), shade);
+            m.rotation.x = -Math.PI / 2;
+            m.position.set(rc.x0 + rc.w / 2, f * FH + 0.06, rc.d / 2);
+            this.shades.add(m);
+        }
+        this.root.add(this.shades);
+        // The ground floor's sign and awning stay; the camera rises to the floor
+        this.goal.target.y = k * FH;
+    }
+
+    /** A group for people (kind 'agent') or things on the floor (kind 'fx') of floor f: the simulation's floors are kept
+     *  FLOOR_STRIDE apart along z, the group puts them back on top of each other. */
+    layer(kind, f) {
+        const list = this.layers[kind];
+        if (!list[f]) {
+            const g = new THREE.Group();
+            g.position.set(0, f * FH, -f * FLOOR_STRIDE);
+            g.visible = f === (this.viewFloor || 0);
+            this.root.add(g);
+            list[f] = g;
+        }
+        return list[f];
     }
 
     /** Rebuilds the models of some items in place (e.g. menu boards after a language change). */
@@ -807,10 +923,10 @@ export class World {
         env.season = season;
         const day = smooth(5.3, 7.3, hour) * (1 - smooth(18.6, 20.6, hour));
         const night = 1 - day;
-        const over = {clear: 0, cloudy: 0.45, rain: 0.7, snow: 0.55}[weather] || 0;
+        const over = OVERCAST[weather] ?? 0;
         // Sky colours through the day, greyer under clouds
         const [top, hor] = skyAt(hour);
-        const grey = new THREE.Color(weather === 'snow' ? '#C9D3DC' : '#8F99A3');
+        const grey = new THREE.Color(SNOWY.includes(weather) ? '#C9D3DC' : weather === 'hail' ? '#9BA6B0' : '#8F99A3');
         const topC = top.clone().lerp(grey.clone().multiplyScalar(0.35 + day * 0.65), over * 0.8);
         const horC = hor.clone().lerp(grey.clone().multiplyScalar(0.45 + day * 0.55), over * 0.7);
         const u = this.sky.material.uniforms;
@@ -848,7 +964,20 @@ export class World {
             setNightGlow(glowK);
             this.itemGroup?.traverse(o => o.isPointLight && (o.intensity = 0.15 + glowK * 1.4));
         }
-        this.renderer.toneMappingExposure = 1.05 - night * 0.15;
+        this.renderer.toneMappingExposure = 1.05 - night * 0.15 + (weather === 'sunny' ? day * 0.08 : 0);
+        // A thunderstorm: now and then a flash lights everything up
+        if (weather === 'rain') {
+            if (!this.flash && Math.random() < 0.0025) this.flash = {t: 0};
+            if (this.flash) {
+                this.flash.t += 1 / 60;
+                const k = this.flash.t < 0.08 ? 1 : this.flash.t < 0.16 ? 0.2 : this.flash.t < 0.24 ? 0.8 : 0;
+                this.hemi.intensity += k * 2.5;
+                if (this.flash.t > 0.3) {
+                    this.flash = null;
+                    this.emit('thunder');
+                }
+            }
+        } else this.flash = null;
         this.clouds.children.forEach(cl => cl.children.forEach(p => p.material.color.set(over > 0.5 ? '#C9CED4' : '#FFFFFF')));
         this.clouds.scale.setScalar(1 + over * 0.6);
         this.clouds.position.y = -over * 6;
@@ -888,9 +1017,10 @@ export class World {
             this.particles.geometry.dispose();
             this.particles = null;
         }
-        let kind = weather === 'rain' ? 'rain' : weather === 'snow' ? 'snow' : season === 'autumn' ? 'leaves' : season === 'spring' ? 'petals' : null;
+        let kind = RAINY.includes(weather) && weather !== 'hail' ? 'rain' : weather === 'hail' ? 'hail' : SNOWY.includes(weather) ? 'snow' : season === 'autumn' ? 'leaves' : season === 'spring' && weather !== 'cloudy' ? 'petals' : null;
         if (!kind) return;
-        const n = {rain: 1400, snow: 1300, leaves: 140, petals: 160}[kind];
+        // How hard it falls: drizzle and light snow are a few drops and flakes, a storm or a blizzard many
+        const n = {rain: weather === 'drizzle' ? 450 : 2200, snow: weather === 'light_snow' ? 500 : 2400, hail: 900, leaves: 140, petals: 160}[kind];
         const pos = new Float32Array(n * (kind === 'rain' ? 6 : 3));
         const col = new Float32Array(n * 3);
         const leafCols = ['#E07B39', '#C8452C', '#E9B44C', '#B5562E'].map(c => new THREE.Color(c));
@@ -899,7 +1029,7 @@ export class World {
             const x = (Math.random() - 0.5) * 50, y = Math.random() * 22, z = (Math.random() - 0.5) * 50;
             if (kind === 'rain') pos.set([x, y, z, x + 0.05, y - 0.55, z], i * 6);
             else pos.set([x, y, z], i * 3);
-            const cc = kind === 'leaves' ? leafCols[i % 4] : kind === 'petals' ? petalCols[i % 3] : new THREE.Color('#FFFFFF');
+            const cc = kind === 'leaves' ? leafCols[i % 4] : kind === 'petals' ? petalCols[i % 3] : kind === 'hail' ? new THREE.Color('#E8F1F6') : new THREE.Color('#FFFFFF');
             col.set([cc.r, cc.g, cc.b], i * 3);
         }
         const g = new THREE.BufferGeometry();
@@ -908,9 +1038,9 @@ export class World {
             this.particles = new THREE.LineSegments(g, new THREE.LineBasicMaterial({color: '#B7CBDD', transparent: true, opacity: 0.55, fog: false}));
         } else {
             g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-            this.particles = new THREE.Points(g, new THREE.PointsMaterial({size: kind === 'snow' ? 0.14 : 0.22, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false}));
+            this.particles = new THREE.Points(g, new THREE.PointsMaterial({size: kind === 'snow' ? (weather === 'snow' ? 0.18 : 0.12) : kind === 'hail' ? 0.1 : 0.22, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false}));
         }
-        this.particles.userData = {kind, n, seeds: Array.from({length: n}, () => Math.random() * 10)};
+        this.particles.userData = {kind, n, heavy: weather === 'rain' || weather === 'snow', seeds: Array.from({length: n}, () => Math.random() * 10)};
         this.particles.frustumCulled = false;
         this.scene.add(this.particles);
     }
@@ -918,17 +1048,17 @@ export class World {
     updateParticles(dt) {
         const p = this.particles;
         if (!p) return;
-        const {kind, n, seeds} = p.userData;
+        const {kind, n, seeds, heavy} = p.userData;
         const a = p.geometry.attributes.position.array;
         const c = this.cam.target;
-        const fall = {rain: 16, snow: 1.3, leaves: 0.9, petals: 0.7}[kind];
+        const fall = {rain: heavy ? 20 : 11, snow: heavy ? 1.8 : 1.0, hail: 13, leaves: 0.9, petals: 0.7}[kind];
         const stride = kind === 'rain' ? 6 : 3;
         for (let i = 0; i < n; i++) {
             const k = i * stride;
             const sd = seeds[i];
             a[k + 1] -= fall * dt * (0.7 + (sd % 1) * 0.6);
-            if (kind !== 'rain') { // snow drifts, leaves and petals flutter
-                const sway = kind === 'snow' ? 0.4 : 1.4;
+            if (kind !== 'rain' && kind !== 'hail') { // snow drifts, leaves and petals flutter
+                const sway = kind === 'snow' ? (heavy ? 1.2 : 0.4) : 1.4;
                 a[k] += Math.sin(this.time * 1.3 + sd * 6) * sway * dt;
                 a[k + 2] += Math.cos(this.time * 1.1 + sd * 4) * sway * dt;
             } else a[k + 4] = a[k + 1] - 0.55;
@@ -946,7 +1076,7 @@ export class World {
 
     recenter(instant = false) {
         const s = this.size || 10;
-        this.goal.target.set(s / 2, 0, s / 2 + 0.4);
+        this.goal.target.set((this.W || s) / 2, (this.viewFloor || 0) * FH, (this.D || s) / 2 + 0.4);
         // A portrait screen needs the camera further back for the room to fit across
         const k = Math.max(1, 0.8 / Math.max(0.3, this.camera.aspect));
         this.goal.dist = (s * 1.55 + 3) * k;
@@ -981,6 +1111,21 @@ export class World {
         this.emit('topview', on);
     }
 
+    /** Build mode, outdoor tab: the camera pulls back to show the whole plot (garden, terrace, yards). */
+    frameOutdoor(on) {
+        if (!!on === !!this.outdoorFramed) return;
+        this.outdoorFramed = !!on;
+        const s = this.size || 10;
+        if (on) {
+            this.savedFrame = {target: this.goal.target.clone(), dist: this.goal.dist};
+            this.goal.target.set((this.W || s) / 2 + 0.5 - (this.parkingW || 0) * 0.3, 0, (this.D || s) / 2 + 0.8);
+            this.goal.dist = this.top ? this.topDist((s + 2 * OUT) * 2.1) : (s + 2 * OUT) * 1.55 + 3;
+        } else if (this.savedFrame) {
+            this.goal.target.copy(this.savedFrame.target);
+            this.goal.dist = this.savedFrame.dist;
+        }
+    }
+
     rotate(delta) {
         this.goal.yaw += delta;
     }
@@ -997,9 +1142,9 @@ export class World {
         const fwd = new THREE.Vector3(-Math.sin(this.cam.yaw), 0, -Math.cos(this.cam.yaw));
         const pitchK = this.top ? 1 : 1 / Math.max(0.5, Math.sin(this.cam.pitch));
         this.goal.target.addScaledVector(right, -dx * k).addScaledVector(fwd, dy * k * pitchK);
-        const s = this.size || 10;
-        this.goal.target.x = THREE.MathUtils.clamp(this.goal.target.x, -6, s + 4 + OUT);
-        this.goal.target.z = THREE.MathUtils.clamp(this.goal.target.z, -3, s + 6 + OUT);
+        const W = this.W || 10, D = this.D || 10;
+        this.goal.target.x = THREE.MathUtils.clamp(this.goal.target.x, -8 - (this.parkingW || 0), W + 6 + OUT);
+        this.goal.target.z = THREE.MathUtils.clamp(this.goal.target.z, -5 - OUT, D + 12 + OUT);
         this.cam.target.copy(this.goal.target); // panning follows the finger without lag
     }
 
@@ -1029,7 +1174,11 @@ export class World {
         const vx = Math.sin(c.yaw), vz = Math.cos(c.yaw);
         for (const w of this.walls || []) {
             const facing = w.n[0] * vx + w.n[1] * vz > 0.25;
-            const target = facing || this.wallsDown ? WALL_LOW : 1;
+            // Only the floor being looked at opens up; the floors below keep their walls (they are under it)
+            const mine = (w.floor || 0) === (this.viewFloor || 0);
+            // The player's choice: walls that open towards the camera (Sims style), always low, or always up
+            const mode = this.wallMode || 'adaptive';
+            const target = !mine ? 1 : mode === 'low' ? WALL_LOW : mode === 'high' ? 1 : (facing || this.wallsDown ? WALL_LOW : 1);
             w.h = w.h == null ? target : w.h + (target - w.h) * Math.min(1, dt * 8);
             w.group.scale.y = w.h;
             w.cap.visible = w.h > 0.5;
@@ -1043,8 +1192,14 @@ export class World {
         const pts = new Map();
         let drag = null;
         el.addEventListener('contextmenu', e => e.preventDefault());
+        let grab = null; // a press taken by build mode (dragging a piece): no orbit while it lasts
         el.addEventListener('pointerdown', e => {
             el.setPointerCapture(e.pointerId);
+            if (!pts.size && e.button === 0 && this.onPress?.(e)) {
+                grab = {id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false};
+                el.style.cursor = 'grabbing';
+                return;
+            }
             pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
             if (pts.size === 1) drag = {x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: false, pan: e.button === 2 || e.shiftKey, button: e.button};
             else if (drag) drag.moved = true;
@@ -1054,6 +1209,11 @@ export class World {
             }
         });
         el.addEventListener('pointermove', e => {
+            if (grab && e.pointerId === grab.id) {
+                if (Math.hypot(e.clientX - grab.x0, e.clientY - grab.y0) > 4) grab.moved = true;
+                this.onDragMove?.(e);
+                return;
+            }
             const prev = pts.get(e.pointerId);
             if (!prev) {
                 this.emit('hover', e);
@@ -1083,10 +1243,17 @@ export class World {
             }
         });
         const end = e => {
+            if (grab && e.pointerId === grab.id) {
+                const moved = grab.moved;
+                grab = null;
+                el.style.cursor = '';
+                this.onDragEnd?.(e, moved);
+                return;
+            }
             pts.delete(e.pointerId);
             if (pts.size < 2) this.pinch = null;
             if (drag && pts.size === 0) {
-                if (!drag.moved && performance.now() - drag.t0 < 600 && drag.button !== 2) this.emit('tap', e);
+                if (!drag.moved && performance.now() - drag.t0 < 600) this.emit(drag.button === 2 ? 'rtap' : 'tap', e);
                 drag = null;
             }
         };
@@ -1114,22 +1281,54 @@ export class World {
 
     /** The furniture id under the pointer, or null. */
     itemAt(e) {
-        const hit = this.ray(e).intersectObjects(this.itemGroup.children, true)[0];
+        const hit = this.ray(e).intersectObjects(this.itemGroup.children, true).find(h => shown(h.object));
         return hit ? hit.object.userData.itemId ?? null : null;
     }
 
     /** The person under the pointer (their agent id), or null. */
     agentAt(e) {
         if (!this.agentGroup) return null;
-        const hit = this.ray(e).intersectObjects(this.agentGroup.children, true)[0];
+        const hit = this.ray(e).intersectObjects(this.layers.agent.filter(Boolean), true).find(h => shown(h.object));
         return hit ? hit.object.userData.agentId ?? null : null;
     }
 
     /** Litter under the pointer ("x,z"), or null. */
     litterAt(e) {
         if (!this.fxGroup) return null;
-        const hit = this.ray(e).intersectObjects(this.fxGroup.children, true).find(h => h.object.userData.litterAt);
+        const hit = this.ray(e).intersectObjects(this.layers.fx.filter(Boolean), true).find(h => h.object.userData.litterAt && shown(h.object));
         return hit ? hit.object.userData.litterAt : null;
+    }
+
+    /** Coloured squares under some tiles (a waiter's tables while they are selected), with their table numbers. */
+    highlightTables(tables, color) {
+        if (this.tableMarks) this.root.remove(this.tableMarks);
+        this.tableMarks = null;
+        (this.tableLabels || []).forEach(l => l.remove());
+        this.tableLabels = [];
+        if (!tables?.length) return;
+        const g = new THREE.Group();
+        const m = new THREE.MeshBasicMaterial({color, transparent: true, opacity: 0.45, depthWrite: false});
+        for (const tb of tables) {
+            for (const [x, vz] of tb.tiles) { // tiles of the simulation: floors are FLOOR_STRIDE apart along z
+                const f = Math.max(0, Math.floor((vz + 100) / FLOOR_STRIDE)), z = vz - f * FLOOR_STRIDE;
+                const p = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), m);
+                p.rotation.x = -Math.PI / 2;
+                p.position.set(x + 0.5, f * FH + 0.05, z + 0.5);
+                g.add(p);
+            }
+            const f0 = Math.max(0, Math.floor((tb.tiles[0][1] + 100) / FLOOR_STRIDE));
+            const label = document.createElement('div');
+            label.className = 'table-num';
+            label.style.background = color;
+            label.textContent = tb.num;
+            label.dataset.x = tb.tiles[0][0] + 0.5;
+            label.dataset.z = tb.tiles[0][1] - f0 * FLOOR_STRIDE + 0.5;
+            label.dataset.y = f0 * FH + 1.3;
+            this.overlay.appendChild(label);
+            this.tableLabels.push(label);
+        }
+        this.tableMarks = g;
+        this.root.add(g);
     }
 
     /** A golden ring on the floor under the selected person (follows them every frame). */
@@ -1166,7 +1365,7 @@ export class World {
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
         const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.34), new THREE.MeshBasicMaterial({map: t, transparent: true}));
-        m.position.set(this.door + 1.15, 1.6, this.size + 0.12);
+        m.position.set(this.door + 1.15, 1.6, this.D + 0.12);
         this.doorSign = m;
         this.root.add(m);
         const front = this.walls.find(w => w.isFront);
@@ -1193,6 +1392,12 @@ export class World {
         this.updateCamera(dt);
         // Gentle life: fish swim
         for (const o of this.items.values()) {
+            // Fireplaces: flames dance
+            if (o.userData.flames) o.userData.flames.forEach((f, i) => {
+                const k = Math.sin(this.time * (9 + i * 2.3) + i * 1.7) * 0.5 + Math.sin(this.time * (17 + i) + i) * 0.25;
+                f.scale.set(1 + k * 0.12, 1 + k * 0.3, 1 + k * 0.12);
+            });
+            if (o.userData.bob) o.userData.bob.position.y = 0.75 + Math.sin(this.time * 2) * 0.07; // the little ghost floats
             if (o.userData.fish) o.userData.fish.forEach((f, i) => {
                 f.position.x = Math.sin(this.time * 0.6 + i * 2) * 0.6;
                 f.rotation.y = Math.cos(this.time * 0.6 + i * 2) > 0 ? 0 : Math.PI;
@@ -1203,10 +1408,16 @@ export class World {
         if (this.sky) this.sky.position.copy(this.camera.position);
         if (this.celestial) this.celestial.position.copy(this.camera.position);
         this.updateParticles(dt);
-        if (this.selRing && this.selTarget) {
-            this.selRing.position.set(this.selTarget.position.x, 0.04, this.selTarget.position.z);
+        for (const l of this.tableLabels || []) {
+            const p = this.project(new THREE.Vector3(+l.dataset.x, +(l.dataset.y || 1.3), +l.dataset.z));
+            l.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        }
+                if (this.selRing && this.selTarget) {
+            const wp = this.selTarget.getWorldPosition(new THREE.Vector3()); // people on upper floors live in floor layers
+            this.selRing.position.set(wp.x, wp.y + 0.04 - this.selTarget.position.y, wp.z);
             this.selRing.scale.setScalar(1 + Math.sin(this.time * 4) * 0.06);
         }
+        this.traffic?.update(dt);
         this.emit('frame', dt, this.time);
         this.renderer.render(this.scene, this.camera);
     }

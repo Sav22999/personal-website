@@ -311,7 +311,8 @@ function maybeStartBattle(&$room)
 {
     global $pdo;
     if ($room['status'] !== 'placing' || !$room['p1_fleet'] || !$room['p2_fleet']) return;
-    $pdo->prepare("UPDATE sb_rooms SET status = 'playing', turn_started_ms = ? WHERE id = ?")->execute([nowMs(), $room['id']]);
+    $room['turn_started_ms'] = nowMs(); // the clock (checked right after) starts from here
+    $pdo->prepare("UPDATE sb_rooms SET status = 'playing', turn_started_ms = ? WHERE id = ?")->execute([$room['turn_started_ms'], $room['id']]);
     $room['status'] = 'playing';
 }
 

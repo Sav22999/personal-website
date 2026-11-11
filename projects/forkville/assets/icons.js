@@ -12,7 +12,23 @@ const C = {
     purple: '#8E5BA8', gold: '#E2B23A', skin: '#F6D0A8', bread: '#E6B26B', choc: '#5A3218', beige: '#F1E3B5', plate: '#F4F1EA',
 };
 
+let uid = 0;
 const svg = (body) => `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" stroke-linejoin="round" stroke-linecap="round">${body}</svg>`;
+
+/**
+ * Food pictures get volume: a soft light from the top left (specular lighting on the shape) and a light shadow
+ * underneath. Each picture has its own filter id, so removing one never breaks another.
+ */
+const shaded = (body) => {
+    const id = 'fvl' + (++uid);
+    return svg(`<defs><filter id="${id}" x="-15%" y="-15%" width="130%" height="135%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="blur"/>
+        <feSpecularLighting in="blur" surfaceScale="2.6" specularConstant="0.75" specularExponent="16" lighting-color="#ffffff" result="spec"><fePointLight x="6" y="2" z="22"/></feSpecularLighting>
+        <feComposite in="spec" in2="SourceAlpha" operator="in" result="shine"/>
+        <feComposite in="SourceGraphic" in2="shine" operator="arithmetic" k1="0" k2="1" k3="0.55" k4="0" result="lit"/>
+        <feDropShadow in="lit" dx="0" dy="1.2" stdDeviation="0.8" flood-color="#3B2418" flood-opacity="0.28"/>
+    </filter></defs><g filter="url(#${id})">${body}</g>`);
+};
 const o = (extra = '') => `stroke="${C.ink}" stroke-width="1.6" ${extra}`;
 const plate = () => `<ellipse cx="16" cy="22" rx="13" ry="5.5" fill="${C.plate}" ${o()}/><ellipse cx="16" cy="21.5" rx="9" ry="3.6" fill="${C.white}"/>`;
 const face = (fill) => `<circle cx="16" cy="16" r="12.5" fill="${fill}" ${o()}/>`;
@@ -90,6 +106,7 @@ const MOOD = {
 };
 
 const UI = {
+    car: `<path d="M4 20v-6l3-6h18l3 6v6z" fill="${C.berry || '#B43E5C'}" ${o()}/><path d="M9 9h14l2 5H7z" fill="#BFE3F0" ${o()}/><circle cx="10" cy="21" r="3" fill="${C.ink}"/><circle cx="22" cy="21" r="3" fill="${C.ink}"/><rect x="5" y="15" width="3" height="2" fill="#FFE7A8"/><rect x="24" y="15" width="3" height="2" fill="#FFE7A8"/>`,
     gear: `<path d="M16 4l2.4.4.8 3 2.6 1.1 2.7-1.6 1.7 1.7-1.6 2.7 1.1 2.6 3 .8L29 16l-.4 2.4-3 .8-1.1 2.6 1.6 2.7-1.7 1.7-2.7-1.6-2.6 1.1-.8 3L16 28l-2.4-.4-.8-3-2.6-1.1-2.7 1.6-1.7-1.7 1.6-2.7-1.1-2.6-3-.8L3 16l.4-2.4 3-.8 1.1-2.6-1.6-2.7 1.7-1.7 2.7 1.6 2.6-1.1.8-3z" fill="${C.grey}" ${o()}/><circle cx="16" cy="16" r="4.5" fill="${C.cream}" ${o()}/>`,
     warning: `<path d="M16 3l14 25H2z" fill="${C.gold}" ${o()}/><path d="M16 11v9" stroke="${C.ink}" stroke-width="3"/><circle cx="16" cy="24" r="1.8" fill="${C.ink}"/>`,
     close: `<path d="M8 8l16 16M24 8L8 24" stroke="${C.ink}" stroke-width="3.2"/>`,
@@ -108,8 +125,22 @@ const UI = {
         return `<path d="M${16 + Math.cos(a) * 9.5} ${16 + Math.sin(a) * 9.5}L${16 + Math.cos(a) * 13} ${16 + Math.sin(a) * 13}" stroke="${C.orange}" stroke-width="2.2"/>`;
     }).join('')}`,
     w_cloudy: `<circle cx="21" cy="11" r="5" fill="${C.yellow}" ${o()}/><path d="M8 25a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="${C.white}" ${o()}/>`,
-    w_rain: `<path d="M8 19a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="${C.grey}" ${o()}/><path d="M10 23l-2 5M16 23l-2 5M22 23l-2 5" stroke="${C.blue}" stroke-width="2.2"/>`,
+    w_rain: `<path d="M8 19a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="#7D8792" ${o()}/><path d="M8 22l-2 6M13 23l-2 6M24 22l-2 6" stroke="${C.blue}" stroke-width="2.4"/><path d="M19 18l-3 6h3l-2 6 6-8h-3l2-4z" fill="${C.yellow}" ${o('stroke-width="1.1"')}/>`,
     w_snow: `<path d="M8 18a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="${C.white}" ${o()}/>${[[10, 24], [16, 27], [22, 24]].map(([x, y]) => `<path d="M${x - 2.5} ${y}h5M${x} ${y - 2.5}v5M${x - 1.8} ${y - 1.8}l3.6 3.6M${x + 1.8} ${y - 1.8}l-3.6 3.6" stroke="${C.lblue}" stroke-width="1.5"/>`).join('')}`,
+    w_sunny: `<circle cx="16" cy="16" r="7.5" fill="#FFC93C" ${o()}/>${Array.from({length: 12}, (_, i) => {
+        const a = i * Math.PI / 6, r1 = i % 2 ? 10 : 10.5, r2 = i % 2 ? 13 : 15;
+        return `<path d="M${16 + Math.cos(a) * r1} ${16 + Math.sin(a) * r1}L${16 + Math.cos(a) * r2} ${16 + Math.sin(a) * r2}" stroke="${C.orange}" stroke-width="2.4"/>`;
+    }).join('')}<circle cx="13.5" cy="14" r="1" fill="${C.ink}"/><circle cx="18.5" cy="14" r="1" fill="${C.ink}"/><path d="M13 18c1.5 1.5 4.5 1.5 6 0" stroke="${C.ink}" stroke-width="1.4" fill="none"/>`,
+    w_drizzle: `<circle cx="22" cy="10" r="4.5" fill="${C.yellow}" ${o()}/><path d="M8 19a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="${C.white}" ${o()}/><path d="M11 23l-1 3M18 24l-1 3" stroke="${C.blue}" stroke-width="2"/>`,
+    w_hail: `<path d="M8 18a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="#9BA6B0" ${o()}/>${[[10, 23], [16, 26], [22, 23], [13, 28], [19, 29]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#E8F1F6" ${o('stroke-width="1"')}/>`).join('')}`,
+    w_light_snow: `<path d="M8 19a5 5 0 0 1 0-10 7 7 0 0 1 13-2 5 5 0 0 1 3 12z" fill="${C.white}" ${o()}/>${[[12, 25], [20, 26]].map(([x, y]) => `<path d="M${x - 2.5} ${y}h5M${x} ${y - 2.5}v5" stroke="${C.lblue}" stroke-width="1.5"/>`).join('')}`,
+    s_spring: `<path d="M16 28V16" stroke="${C.dgreen}" stroke-width="2"/>${[0, 72, 144, 216, 288].map(a => `<ellipse cx="${16 + Math.cos(a * Math.PI / 180) * 6}" cy="${12 + Math.sin(a * Math.PI / 180) * 6}" rx="4.5" ry="4.5" fill="${C.pink}" ${o('stroke-width="1.2"')}/>`).join('')}<circle cx="16" cy="12" r="3" fill="${C.yellow}" ${o('stroke-width="1"')}/>`,
+    s_summer: `<circle cx="16" cy="16" r="7" fill="${C.yellow}" ${o()}/>${Array.from({length: 8}, (_, i) => {
+        const a = i * Math.PI / 4;
+        return `<path d="M${16 + Math.cos(a) * 10} ${16 + Math.sin(a) * 10}L${16 + Math.cos(a) * 14} ${16 + Math.sin(a) * 14}" stroke="${C.orange}" stroke-width="2.4"/>`;
+    }).join('')}`,
+    s_autumn: `<path d="M16 3c3 4 9 4 11 3-1 4 0 8 2 10-4 1-6 4-6 7-3-2-6-2-7 1-1-3-4-3-7-1 0-3-2-6-6-7 2-2 3-6 2-10 2 1 8 1 11-3z" fill="${C.orange}" ${o()}/><path d="M16 9v20" stroke="${C.dbrown}" stroke-width="1.8"/>`,
+    s_winter: `${[0, 60, 120].map(a => `<path d="M${16 + Math.cos(a * Math.PI / 180) * 12} ${16 + Math.sin(a * Math.PI / 180) * 12}L${16 - Math.cos(a * Math.PI / 180) * 12} ${16 - Math.sin(a * Math.PI / 180) * 12}" stroke="${C.blue}" stroke-width="2.6"/>`).join('')}<circle cx="16" cy="16" r="3" fill="${C.white}" ${o()}/>`,
     manager: `<circle cx="16" cy="11" r="6" fill="${C.skin}" ${o()}/><path d="M5 29c0-7 5-11 11-11s11 4 11 11z" fill="${C.ink}" ${o()}/><path d="M16 18l-2.5 4 2.5 7 2.5-7z" fill="${C.red}"/><path d="M10 7c2-3 10-3 12 0" stroke="${C.dbrown}" stroke-width="3" fill="none"/>`,
     pause: `<rect x="8" y="6" width="5.5" height="20" rx="1.5" fill="currentColor"/><rect x="18.5" y="6" width="5.5" height="20" rx="1.5" fill="currentColor"/>`,
     play1: `<path d="M10 6l15 10-15 10z" fill="currentColor"/>`,
@@ -119,11 +150,49 @@ const UI = {
     waiter: `<ellipse cx="16" cy="20" rx="12" ry="3" fill="${C.grey}" ${o()}/><path d="M6 19a10 9 0 0 1 20 0z" fill="${C.grey}" ${o()}/><circle cx="16" cy="9" r="2" fill="${C.ink}"/>`,
 };
 
+// New ingredients
+Object.assign(ING, {
+    lettuce: `<path d="M16 27c-7 0-11-4-11-9 0-3 2-5 4-6-1-3 2-6 5-5 1-2 4-2 5 0 3-1 6 2 5 5 2 1 4 3 4 6 0 5-4 9-12 9z" fill="${C.leaf}" ${o()}/><path d="M16 26c-4 0-7-3-7-7 0-3 3-6 7-6s7 3 7 6c0 4-3 7-7 7z" fill="#C5E384" ${o('stroke-width="1"')}/><path d="M16 14v11M12 18l4 3 4-3" stroke="${C.green}" stroke-width="1.1" fill="none"/>`,
+    corn: `<path d="M16 4c4 0 6 6 6 12s-2 11-6 11-6-5-6-11 2-12 6-12z" fill="${C.yellow}" ${o()}/>${[0, 1, 2, 3, 4, 5].map(i => `<path d="M11 ${8 + i * 3}h10" stroke="#D9A21D" stroke-width="1"/>`).join('')}<path d="M16 5v21" stroke="#D9A21D" stroke-width="1"/><path d="M10 14c-4 4-4 10 2 14 0-6 0-10-2-14zM22 14c4 4 4 10-2 14 0-6 0-10 2-14z" fill="${C.leaf}" ${o()}/>`,
+    eggplant: `<path d="M19 9c5 2 7 9 3 14s-11 5-13 1 0-8 3-11c2-3 4-5 7-4z" fill="#6B2F80" ${o()}/><path d="M17 9c0-3 2-5 4-6M15 8c2-2 6-2 8 1-2 2-6 2-8-1z" fill="${C.green}" ${o('stroke-width="1.2"')}/><ellipse cx="13" cy="17" rx="2" ry="3.5" fill="#fff" opacity=".25"/>`,
+    pumpkin: `<path d="M16 9c-7 0-12 4-12 9s5 9 12 9 12-4 12-9-5-9-12-9z" fill="${C.orange}" ${o()}/><path d="M16 9c-3 0-5 4-5 9s2 9 5 9M16 9c3 0 5 4 5 9s-2 9-5 9" stroke="#C96A12" stroke-width="1.3" fill="none"/><path d="M16 9c0-3 1-5 3-6" stroke="${C.dbrown}" stroke-width="2.2" fill="none"/>`,
+    shrimp: `<path d="M24 9c-6-3-15 0-16 7-1 6 5 10 10 8 3-1 3-4 1-5-3-1-5 0-6-2s2-5 6-5c3 0 5 1 5 3z" fill="#F58A6E" ${o()}/>${[0, 1, 2].map(i => `<path d="M${13 + i * 3} ${11 - i * 0.5}c-1 2-1 4 0 6" stroke="#D9654A" stroke-width="1" fill="none"/>`).join('')}<path d="M24 9l4-4M24 10l5-1" stroke="${C.dred}" stroke-width="1.2"/><circle cx="21" cy="10.5" r="1" fill="${C.ink}"/>`,
+    pork: `<path d="M6 13c0-4 5-6 10-6s10 2 10 6v6c0 4-5 6-10 6S6 23 6 19z" fill="#F4A9A0" ${o()}/><ellipse cx="16" cy="13" rx="10" ry="5" fill="#F8C5BE" ${o()}/><path d="M9 13c2-2 5-3 7-3s5 1 7 3" stroke="#FFFFFF" stroke-width="2" fill="none"/>`,
+    cream: `<path d="M9 10h14l-1 16a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2z" fill="${C.white}" ${o()}/><path d="M10 15h12" stroke="${C.lblue}" stroke-width="2.4"/><path d="M11 10c0-3 2-5 5-6 3 1 5 3 5 6z" fill="${C.lblue}" ${o()}/><path d="M13 20h6" stroke="${C.grey}" stroke-width="1.4"/>`,
+    butter: `<path d="M5 16l12-5 10 4-12 5z" fill="#FFF0A6" ${o()}/><path d="M5 16v5l10 4v-5z" fill="#F6DD7A" ${o()}/><path d="M15 20v5l12-5v-5z" fill="#EBCB5C" ${o()}/><path d="M8 13l5-2" stroke="#fff" stroke-width="1.4" opacity=".7"/>`,
+    honey: `<path d="M9 10h14v14a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4z" fill="#F2A93B" ${o()}/><rect x="8" y="6" width="16" height="5" rx="1.5" fill="${C.brown}" ${o()}/><path d="M9 14c3 2 5-1 7 1s4-1 7 1" stroke="#D88A1C" stroke-width="1.6" fill="none"/><path d="M12 18h8" stroke="#FFFFFF" stroke-width="1.2" opacity=".6"/>`,
+    banana: `<path d="M5 12c3 8 13 13 22 8 1-1 0-3-1-2-7 3-14 0-17-7-1-2-4-1-4 1z" fill="${C.yellow}" ${o()}/><path d="M7 11c4 6 10 9 17 8" stroke="#D9A21D" stroke-width="1.1" fill="none"/><path d="M5 12l-1-3 2-1" stroke="${C.dbrown}" stroke-width="1.8" fill="none"/>`,
+    beans: `${[[11, 13], [19, 12], [14, 20], [22, 19], [8, 21]].map(([x, y], i) => `<ellipse cx="${x}" cy="${y}" rx="4.4" ry="3" transform="rotate(${i * 35} ${x} ${y})" fill="${i % 2 ? '#9C3A2A' : '#B5462F'}" ${o('stroke-width="1.2"')}/>`).join('')}`,
+    tea: `<path d="M7 12h15v8a6 6 0 0 1-6 6h-3a6 6 0 0 1-6-6z" fill="${C.white}" ${o()}/><ellipse cx="14.5" cy="12" rx="7.5" ry="1.6" fill="#C98A3D"/><path d="M22 14h2a3 3 0 0 1 0 6h-2" fill="none" ${o()}/><path d="M18 12l4-8" stroke="${C.ink}" stroke-width="1"/><rect x="20.5" y="2" width="4" height="4" fill="${C.green}" ${o('stroke-width="1"')}/>`,
+});
+// New dishes
+Object.assign(DISH, {
+    caprese: `${plate()}${[9, 14, 19, 24].map((x, i) => `<circle cx="${x}" cy="${20 - (i % 2)}" r="3.4" fill="${i % 2 ? C.white : C.red}" ${o('stroke-width="1.2"')}/>`).join('')}<path d="M12 17l2-2M21 17l2-2" stroke="${C.green}" stroke-width="2.4"/>`,
+    garden_salad: `<path d="M4 15h24a12 10 0 0 1-24 0z" fill="#F2EEE6" ${o()}/>${[[9, 14, C.leaf], [14, 12, C.green], [19, 13, C.leaf], [24, 14, C.green]].map(([x, y, c]) => `<ellipse cx="${x}" cy="${y}" rx="4" ry="2.8" fill="${c}" ${o('stroke-width="1"')}/>`).join('')}<circle cx="13" cy="15" r="2" fill="${C.red}"/><circle cx="20" cy="15" r="1.8" fill="${C.red}"/><circle cx="17" cy="13" r="1.2" fill="#3B3F2A"/>`,
+    iced_tea: `<path d="M9 6h14l-2 21H11z" fill="#E6A65A" ${o()}/><rect x="12" y="10" width="4" height="4" fill="#F4FBFF" opacity=".8"/><rect x="16" y="15" width="4" height="4" fill="#F4FBFF" opacity=".8"/><circle cx="22" cy="7" r="3.6" fill="${C.yellow}" ${o()}/><path d="M17 3l-1 12" stroke="${C.green}" stroke-width="2"/>`,
+    pancakes: `${plate()}${[19, 16, 13].map(y => `<ellipse cx="16" cy="${y}" rx="10" ry="3.2" fill="${C.bread}" ${o()}/>`).join('')}<path d="M10 12c2 3 3 6 2 9M20 12c1 2 1 4 0 6" stroke="#E08A1C" stroke-width="2.2" fill="none"/><rect x="13.5" y="9" width="5" height="3" rx="1" fill="#FFF0A6" ${o('stroke-width="1"')}/>`,
+    milkshake: `<path d="M10 11h12l-2 17h-8z" fill="${C.pink}" ${o()}/><path d="M9 11c0-4 3-6 7-6s7 2 7 6z" fill="${C.white}" ${o()}/><circle cx="16" cy="4.5" r="2.2" fill="${C.red}" ${o('stroke-width="1"')}/><path d="M19 8l4-7" stroke="${C.blue}" stroke-width="2"/><path d="M11 18h10" stroke="#fff" stroke-width="1.2" opacity=".6"/>`,
+    corn_soup: `<path d="M4 15h24a12 10 0 0 1-24 0z" fill="${C.white}" ${o()}/><ellipse cx="16" cy="15" rx="12" ry="3" fill="${C.yellow}" ${o()}/>${[[11, 14.5], [15, 15.5], [19, 14.3], [22, 15.4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.1" fill="#E9A21D"/>`).join('')}<path d="M12 10c0-2 2-2 2-4M18 10c0-2 2-2 2-4" stroke="${C.grey}" stroke-width="1.5" fill="none"/>`,
+    banana_split: `<path d="M3 19c4 5 22 5 26 0z" fill="#DDF1F7" ${o()}/><path d="M4 18c4 4 20 4 24 0-1-2-23-2-24 0z" fill="${C.yellow}" ${o()}/>${[[10, '#F7A1C4'], [16, '#FFF3C4'], [22, '#7B4E2C']].map(([x, c]) => `<circle cx="${x}" cy="13" r="4" fill="${c}" ${o()}/>`).join('')}<circle cx="16" cy="8" r="1.8" fill="${C.red}"/><path d="M8 11c2-1 3 1 5 0s3 1 5 0 3 1 5 0" stroke="${C.choc}" stroke-width="1.4" fill="none"/>`,
+    tacos: `${plate()}${[10, 21].map(x => `<path d="M${x - 7} 20a7 7 0 0 1 14 0z" fill="#F2C76B" ${o()}/><path d="M${x - 5} 18c2-2 8-2 10 0" stroke="${C.leaf}" stroke-width="2.4" fill="none"/><circle cx="${x - 2}" cy="17" r="1.2" fill="${C.red}"/><circle cx="${x + 2}" cy="17.5" r="1.2" fill="#9C3A2A"/>`).join('')}`,
+    pumpkin_soup: `<path d="M4 15h24a12 10 0 0 1-24 0z" fill="#3E7CB4" ${o()}/><ellipse cx="16" cy="15" rx="12" ry="3" fill="${C.orange}" ${o()}/><path d="M12 15c2-1.5 6-1.5 8 0" stroke="${C.white}" stroke-width="1.6" fill="none"/>${[[14, 14.2], [18, 14.4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".8" fill="${C.dgreen}"/>`).join('')}<path d="M12 10c0-2 2-2 2-4M18 10c0-2 2-2 2-4" stroke="${C.grey}" stroke-width="1.5" fill="none"/>`,
+    veggie_lasagna: `${plate()}<path d="M7 11l14-3 5 3v8l-14 3-5-3z" fill="${C.beige}" ${o()}/><path d="M7 14l14-3 5 3M7 17l14-3 5 3" stroke="${C.red}" stroke-width="1.8" fill="none"/><path d="M7 11l14-3 5 3-14 3z" fill="#F2D06B" ${o()}/><circle cx="13" cy="11" r="1.2" fill="#6B2F80"/><circle cx="18" cy="10.5" r="1" fill="${C.green}"/>`,
+    cream_puffs: `${plate()}${[[10, 18], [22, 18], [16, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="${C.bread}" ${o()}/><path d="M${x - 4} ${y}h8" stroke="${C.white}" stroke-width="2.4"/>`).join('')}<path d="M8 10l1 1M24 9l1 1M16 6l1 1" stroke="${C.white}" stroke-width="1.6"/>`,
+    shrimp_pasta: `${plate()}<path d="M7 18c2-4 16-4 18 0-4 3-14 3-18 0z" fill="#F2D49B" ${o()}/><path d="M9 17c3-2 6 1 9-1s5 1 6 0" stroke="#D9B46B" stroke-width="1.2" fill="none"/>${[[11, 15], [19, 14.5]].map(([x, y]) => `<path d="M${x + 4} ${y}c-3-2-7 0-6 3 1 2 4 2 4 0" fill="#F58A6E" ${o('stroke-width="1.1"')}/>`).join('')}<circle cx="16" cy="16" r="1" fill="${C.green}"/>`,
+    parmigiana: `${plate()}<rect x="7" y="11" width="18" height="9" rx="2" fill="${C.red}" ${o()}/><path d="M7 14h18M7 17h18" stroke="#6B2F80" stroke-width="1.6"/><path d="M8 11c3 2 5-1 8 1s5-1 8 1" stroke="${C.beige}" stroke-width="2.4" fill="none"/><path d="M14 9l2-1" stroke="${C.green}" stroke-width="2.2"/>`,
+    pork_ribs: `${plate()}${[0, 1, 2].map(i => `<rect x="${8 + i * 5}" y="${11 + (i % 2)}" width="5" height="10" rx="2" fill="#A0522D" ${o('stroke-width="1.2"')}/><rect x="${9.5 + i * 5}" y="${8 + (i % 2)}" width="2" height="4" fill="${C.cream}" ${o('stroke-width="1"')}/>`).join('')}<path d="M8 15c4-1 10-1 15 0" stroke="#E08A1C" stroke-width="1.6" fill="none"/>`,
+    tiramisu: `${plate()}<path d="M8 12l16 0v8H8z" fill="#F4E6D0" ${o()}/><path d="M8 15h16M8 18h16" stroke="#8A5A35" stroke-width="1.8"/><rect x="8" y="10" width="16" height="3" fill="#7B4E2C" ${o()}/>${[11, 15, 19, 22].map(x => `<circle cx="${x}" cy="11.5" r=".6" fill="#3B1F0E"/>`).join('')}`,
+    sushi: `<rect x="3" y="17" width="26" height="7" rx="2" fill="${C.brown}" ${o()}/>${[8, 16, 24].map((x, i) => `<rect x="${x - 4}" y="12" width="8" height="5" rx="2" fill="${C.white}" ${o('stroke-width="1.2"')}/><path d="M${x - 4} 13c2-2 6-2 8 0v1H${x - 4}z" fill="${i === 1 ? '#F58A6E' : '#F38B5A'}" ${o('stroke-width="1"')}/><rect x="${x - 1}" y="12" width="2" height="5" fill="#2C3A2C"/>`).join('')}`,
+    paella: `<ellipse cx="16" cy="19" rx="13" ry="6.5" fill="#2C2C30" ${o()}/><ellipse cx="16" cy="18" rx="11" ry="5" fill="#F2C24A"/>${[[10, 17, C.red], [16, 20, C.leaf], [21, 17, C.red], [14, 16, '#F58A6E'], [19, 19.5, '#F58A6E']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="1.6" fill="${c}"/>`).join('')}<path d="M3 19H0M29 19h3" stroke="${C.ink}" stroke-width="2"/><path d="M23 14l3-2" stroke="${C.yellow}" stroke-width="2.4"/>`,
+    steak_fries: `${plate()}<path d="M7 17c0-4 4-6 8-6s6 2 6 5-3 5-7 5-7-1-7-4z" fill="#8A3A22" ${o()}/><path d="M10 15l6 2M12 13l5 2" stroke="#5A2412" stroke-width="1.2"/>${[0, 1, 2, 3].map(i => `<rect x="${19 + i * 2}" y="${11 + (i % 2) * 2}" width="1.8" height="8" rx=".6" fill="${C.yellow}" ${o('stroke-width=".9"')}/>`).join('')}<rect x="12" y="10" width="3" height="2" rx=".6" fill="#FFF0A6"/>`,
+});
+
 const GROUPS = {ing: ING, dish: DISH, mood: MOOD, ui: UI};
 
 export function icon(group, name) {
     const body = GROUPS[group]?.[name];
-    return svg(body || MOOD.plate);
+    // Food and moods look round and glossy; interface symbols stay flat and crisp
+    return (group === 'ui' ? svg : shaded)(body || MOOD.plate);
 }
 
 /** Same as icon(), as a data: URL (for <img> and CSS). */

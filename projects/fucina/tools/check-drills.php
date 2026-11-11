@@ -49,5 +49,21 @@ foreach (SEED_COURSES as $id) {
         }
     }
 }
+// The corrections of lib/seed/fixes.php must point to real questions and exercises, and never replace the right answer
+$fixes = seed_fixes();
+$known = [];
+foreach (SEED_COURSES as $id) foreach (seed_course($id, false)['lessons'] as $l) {
+    $known["$id/{$l['id']}"] = $l['task'] !== null;
+    foreach ($l['quiz'] as $q) $known["$id/{$l['id']}/{$q['id']}"] = $q;
+}
+foreach ($fixes['options'] as $key => $replace) {
+    $q = $known[$key] ?? null;
+    if (!is_array($q)) { $say("fixes: $key is not a question"); continue; }
+    foreach ($replace as $i => $option) {
+        if (!isset($q['options'][$i])) $say("fixes: $key has no option $i");
+        if ($i === $q['a']) $say("fixes: $key replaces the right answer");
+    }
+}
+foreach ($fixes['checks'] as $key => $checks) if (($known[$key] ?? false) !== true) $say("fixes: $key is not an exercise");
 echo count(SEED_COURSES) . " courses, $total lessons, $questions questions, " . array_sum($count) . ' drills: ' . json_encode($count) . ", $errors errors\n";
 exit($errors ? 1 : 0);

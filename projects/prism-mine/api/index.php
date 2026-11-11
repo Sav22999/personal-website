@@ -10,14 +10,17 @@ set_exception_handler(function (Throwable $e) {
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/engine.php';
 
-// Duel: both captains read the same mine. On your turn you send one beam or try an answer;
+// Duel: both players get the same set of gems and hide them in their own mine (like Sea Battle).
+// On your turn you send one beam into the other mine or try an answer about it;
 // a right answer wins, a wrong one passes the turn and counts as a strike (3 strikes lose).
+// The `mine` column only holds the set of gems of the round; p1_mine and p2_mine are the two hidden mines.
 const ONLINE_WINDOW_SECONDS = 15;
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const LEVELS = ['easy', 'medium', 'hard'];
 const TIME_CONTROLS = [0, 180, 300, 600];
 const RANDOM_TIME_CONTROL = 300;
 const MAX_STRIKES = 3;
+const PLACE_SECONDS = 120; // after this, a late player's gems are placed at random
 const ABANDON_SECONDS = 120; // an opponent gone this long loses automatically
 const CHAT_MAX_LENGTH = 200;
 const CHAT_BURST = 5;
@@ -30,6 +33,7 @@ $actions = [
     'join_room' => 'joinRoom',
     'find_match' => 'findMatch',
     'poll' => 'pollState',
+    'place' => 'placeGems',
     'probe' => 'probe',
     'guess' => 'guess',
     'resign' => 'resign',
@@ -88,14 +92,25 @@ function clockRunning($room)
     return (int)$room['time_control'] > 0 && $room['status'] === 'playing';
 }
 
-// Ports already lit, as entry or exit: a second beam there tells nothing new
-function usedPorts($room)
+function gemSet($room)
 {
-    $mine = PrismMineEngine::decode($room['mine']);
+    return array_map(fn($g) => ['shape' => $g['shape'], 'color' => $g['color']], PrismMineEngine::decode($room['mine']) ?? []);
+}
+
+// The mine hidden by a player, or null while it is not placed yet
+function mineOf($room, $slot)
+{
+    return PrismMineEngine::decode($room["p{$slot}_mine"] ?? null);
+}
+
+// Ports a player has already lit in the other mine, as entry or exit: a second beam there tells nothing new
+function usedPorts($room, $slot)
+{
+    $mine = mineOf($room, other($slot));
     $map = PrismMineEngine::buildMap($mine);
     $used = [];
     foreach (actionList($room) as $a) {
-        if ($a['t'] !== 'p') continue;
+        if ($a['t'] !== 'p' || $a['s'] !== (int)$slot) continue;
         $used[$a['p']] = true;
         $res = PrismMineEngine::trace($map, $mine, $a['p']);
         if ($res['exit'] !== null) $used[$res['exit']] = true;
@@ -124,10 +139,71 @@ function insertRoomWithHost($name, $timeControl, $level, $isPublic, $lang)
     return null;
 }
 
+// Both players are in: first each one hides the gems
 function startGame($roomId)
 {
     global $pdo;
-    $pdo->prepare("UPDATE pm_rooms SET status = 'playing', turn_started_ms = ? WHERE id = ?")->execute([nowMs(), $roomId]);
+    $pdo->prepare("UPDATE pm_rooms SET status = 'placing', place_started_ms = ? WHERE id = ?")->execute([nowMs(), $roomId]);
+}
+
+// The duel starts once both mines are ready
+function maybeStartDuel(&$room)
+{
+    global $pdo;
+    if ($room['status'] !== 'placing' || !$room['p1_mine'] || !$room['p2_mine']) return;
+    $room['turn_started_ms'] = nowMs(); // the clock (checked right after) starts from here
+    $pdo->prepare("UPDATE pm_rooms SET status = 'playing', turn_started_ms = ? WHERE id = ?")->execute([$room['turn_started_ms'], $room['id']]);
+    $room['status'] = 'playing';
+}
+
+// A player who never confirms gets the gems placed at random, so the other one is not kept waiting
+function checkPlacementTime(&$room)
+{
+    global $pdo;
+    if ($room['status'] !== 'placing' || nowMs() - (int)$room['place_started_ms'] < PLACE_SECONDS * 1000) return;
+    foreach ([1, 2] as $slot) {
+        $key = "p{$slot}_mine";
+        if (!$room[$key]) {
+            $room[$key] = PrismMineEngine::encode(PrismMineEngine::randomLayout(gemSet($room)));
+            $pdo->prepare("UPDATE pm_rooms SET $key = ? WHERE id = ?")->execute([$room[$key], $room['id']]);
+        }
+    }
+    maybeStartDuel($room);
+}
+
+function placeGems()
+{
+    global $pdo;
+    $player = getPlayer($_POST['token'] ?? '');
+    if (!$player) {
+        respondError('invalid_session');
+        return;
+    }
+    $pdo->beginTransaction();
+    try {
+        $room = lockRoom($player['room_id']);
+        $key = 'p' . (int)$player['slot'] . '_mine';
+        if ($room['status'] !== 'placing' || $room[$key]) {
+            $pdo->commit();
+            respondError('not_placing');
+            return;
+        }
+        $set = gemSet($room);
+        $layout = PrismMineEngine::decode($_POST['layout'] ?? '', count($set));
+        if (!$layout || !PrismMineEngine::sameSet($layout, $set)) {
+            $pdo->rollBack();
+            respondError('invalid_layout');
+            return;
+        }
+        $room[$key] = PrismMineEngine::encode($layout);
+        $pdo->prepare("UPDATE pm_rooms SET $key = ? WHERE id = ?")->execute([$room[$key], $room['id']]);
+        maybeStartDuel($room);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    echo json_encode(['success' => true]);
 }
 
 function addSecondPlayer($roomId, $name)
@@ -313,7 +389,7 @@ function checkFlag(&$room)
 function checkAbandon(&$room, $mySlot)
 {
     global $pdo;
-    if (!in_array($room['status'], ['playing'], true)) return false;
+    if (!in_array($room['status'], ['placing', 'playing'], true)) return false;
     $stmt = $pdo->prepare("SELECT is_online, TIMESTAMPDIFF(SECOND, last_seen, NOW()) AS idle FROM pm_players WHERE room_id = ? AND slot = ?");
     $stmt->execute([$room['id'], other($mySlot)]);
     $opp = $stmt->fetch();
@@ -337,6 +413,7 @@ function pollState()
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
+        checkPlacementTime($room);
         checkFlag($room);
         checkAbandon($room, (int)$player['slot']);
         $pdo->commit();
@@ -358,17 +435,20 @@ function pollState()
         'wantsRematch' => (bool)$p['wants_rematch'],
     ], $stmt->fetchAll());
 
-    // Beams are shown with their answers; answers only say right or wrong
-    $mine = PrismMineEngine::decode($room['mine']);
-    $map = PrismMineEngine::buildMap($mine);
+    // Every beam with its answer (each one went into the other player's mine); answers only say right or wrong
+    $mySlot = (int)$player['slot'];
+    $mines = [1 => mineOf($room, 1), 2 => mineOf($room, 2)];
+    $maps = [1 => $mines[1] ? PrismMineEngine::buildMap($mines[1]) : null, 2 => $mines[2] ? PrismMineEngine::buildMap($mines[2]) : null];
     $actions = [];
     foreach (actionList($room) as $a) {
         if ($a['t'] === 'p') {
-            $res = PrismMineEngine::trace($map, $mine, $a['p']);
+            $target = other($a['s']);
+            if (!$maps[$target]) continue;
+            $res = PrismMineEngine::trace($maps[$target], $mines[$target], $a['p']);
             $actions[] = ['s' => $a['s'], 't' => 'p', 'p' => $a['p'], 'exit' => $res['exit'], 'colors' => $res['colors']];
         } else $actions[] = ['s' => $a['s'], 't' => 'g', 'ok' => $a['ok']];
     }
-    $gems = array_map(fn($g) => ['shape' => $g['shape'], 'color' => $g['color']], $mine);
+    $gems = gemSet($room);
     usort($gems, fn($a, $b) => strcmp($a['shape'], $b['shape']));
 
     $p1Ms = (int)$room['p1_ms'];
@@ -391,7 +471,10 @@ function pollState()
         'timeControl' => (int)$room['time_control'],
         'gems' => $gems,
         'actions' => $actions,
-        'mine' => $room['status'] === 'finished' ? $room['mine'] : null,
+        'myMine' => $room["p{$mySlot}_mine"] ?: null,
+        'oppReady' => (bool)$room['p' . other($mySlot) . '_mine'],
+        'oppMine' => $room['status'] === 'finished' ? ($room['p' . other($mySlot) . '_mine'] ?: null) : null,
+        'placeLeftMs' => $room['status'] === 'placing' ? max(0, PLACE_SECONDS * 1000 - (nowMs() - (int)$room['place_started_ms'])) : 0,
         'turn' => $turn,
         'p1Ms' => $p1Ms,
         'p2Ms' => $p2Ms,
@@ -447,7 +530,7 @@ function probe()
             respondError($error);
             return;
         }
-        if (isset(usedPorts($room)[$port])) {
+        if (isset(usedPorts($room, $player['slot'])[$port])) {
             $pdo->rollBack();
             respondError('port_used');
             return;
@@ -460,7 +543,7 @@ function probe()
         $pdo->rollBack();
         throw $e;
     }
-    $mine = PrismMineEngine::decode($room['mine']);
+    $mine = mineOf($room, other($player['slot']));
     $res = PrismMineEngine::trace(PrismMineEngine::buildMap($mine), $mine, $port);
     echo json_encode(['success' => true, 'exit' => $res['exit'], 'colors' => $res['colors']]);
 }
@@ -481,7 +564,7 @@ function guess()
             respondError($error);
             return;
         }
-        $hidden = PrismMineEngine::decode($room['mine']);
+        $hidden = mineOf($room, other($player['slot']));
         $answer = PrismMineEngine::decode($_POST['layout'] ?? '', count($hidden));
         if (!$answer) {
             $pdo->rollBack();
@@ -570,7 +653,7 @@ function resign()
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'playing') {
+        if (!in_array($room['status'], ['placing', 'playing'], true)) {
             $pdo->commit();
             respondError('game_not_active');
             return;
@@ -604,9 +687,9 @@ function requestRematch()
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM pm_players WHERE room_id = ? AND wants_rematch = 1 AND is_online = 1");
         $stmt->execute([$room['id']]);
         if ((int)$stmt->fetchColumn() >= 2) {
-            // A new mine, and the other captain starts
+            // A new set of gems to hide, and the other player starts
             $ms = (int)$room['time_control'] * 1000;
-            $pdo->prepare("UPDATE pm_rooms SET status = 'playing', round = round + 1, first_slot = ?, mine = ?, actions = '[]', p1_ms = ?, p2_ms = ?, turn_started_ms = ?, result = NULL, reason = NULL WHERE id = ?")
+            $pdo->prepare("UPDATE pm_rooms SET status = 'placing', round = round + 1, first_slot = ?, mine = ?, p1_mine = NULL, p2_mine = NULL, actions = '[]', p1_ms = ?, p2_ms = ?, place_started_ms = ?, turn_started_ms = 0, result = NULL, reason = NULL WHERE id = ?")
                 ->execute([other($room['first_slot']), PrismMineEngine::encode(PrismMineEngine::generate($room['level'])), $ms, $ms, nowMs(), $room['id']]);
             $pdo->prepare("UPDATE pm_players SET wants_rematch = 0 WHERE room_id = ?")->execute([$room['id']]);
         }
@@ -629,7 +712,7 @@ function claimWin()
     $pdo->beginTransaction();
     try {
         $room = lockRoom($player['room_id']);
-        if ($room['status'] !== 'playing') {
+        if (!in_array($room['status'], ['placing', 'playing'], true)) {
             $pdo->commit();
             respondError('game_not_active');
             return;
@@ -663,7 +746,7 @@ function leaveRoom()
     try {
         $room = lockRoom($player['room_id']);
         $pdo->prepare("UPDATE pm_players SET is_online = 0 WHERE id = ?")->execute([$player['id']]);
-        if ($room && $room['status'] === 'playing') finishGame($room, other($player['slot']), 'abandon');
+        if ($room && in_array($room['status'], ['placing', 'playing'], true)) finishGame($room, other($player['slot']), 'abandon');
         elseif ($room && $room['status'] === 'waiting') $pdo->prepare("UPDATE pm_rooms SET status = 'finished' WHERE id = ?")->execute([$room['id']]);
         $pdo->commit();
     } catch (Throwable $e) {
