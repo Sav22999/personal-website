@@ -161,6 +161,11 @@ function role_room(array $rest, string $role): void
     if ($role === 'waiter' && $n >= max_waiters($rest['level'])) fail('staff_full', 422);
     if ($role === 'cleaner' && $n >= max_cleaners($rest['level'])) fail('staff_full', 422);
     if ($role === 'manager' && $n >= max_managers($rest['level'])) fail($rest['level'] < MANAGER_LEVEL ? 'level_locked' : 'staff_full', 422);
+    if ($role === 'cashier') {
+        if ($rest['level'] < CASHIER_LEVEL) fail('level_locked', 422);
+        if ($n >= max_cashiers($rest['level'])) fail('staff_full', 422);
+        if (!has_tag($rest, 'register')) fail('need_register', 422);
+    }
 }
 
 function dish_key(array $b): string

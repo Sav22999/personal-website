@@ -7,7 +7,8 @@ const MAX_STRIKES = 3;
 
 const $ = (id) => document.getElementById(id);
 const P = PrismMine;
-const N = P.SIZE;
+let N = P.SIZE; // size of the mine being played: 6, 8 or 10 (set when a game starts)
+const VIEW = () => N * 10 + 20; // the board's SVG viewBox: a 10-unit margin for the ports on each side
 const other = (slot) => slot === 1 ? 2 : 1;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -228,10 +229,10 @@ const cellX = (c) => 10 + c * 10;
 const cellY = (r) => 10 + r * 10;
 
 function portCenter(p) {
-    const side = Math.floor(p / N), k = p % N;
+    const side = Math.floor(p / N), k = p % N, far = VIEW() - 5;
     if (side === 0) return [15 + 10 * k, 5];
-    if (side === 1) return [95, 15 + 10 * k];
-    if (side === 2) return [15 + 10 * (N - 1 - k), 95];
+    if (side === 1) return [far, 15 + 10 * k];
+    if (side === 2) return [15 + 10 * (N - 1 - k), far];
     return [5, 15 + 10 * (N - 1 - k)];
 }
 
@@ -243,7 +244,7 @@ const svg = (tag, attrs = {}) => {
 
 function gemSvg(gem, cls) {
     const g = svg('g', {class: `gem gem-${gem.color} ${cls || ''}`});
-    const cells = P.gemCells(gem) || [];
+    const cells = P.gemCells(gem, N) || [];
     cells.forEach(({r, c, t: type}) => {
         const pts = CELL_POLY[type].split(' ').map(pt => {
             const [x, y] = pt.split(',').map(Number);
@@ -296,7 +297,7 @@ function sketchCheck() {
     if (placingMine()) return null;
     const gems = draftGems();
     const placedOnly = gems.filter(Boolean);
-    const map = P.buildMap(placedOnly);
+    const map = P.buildMap(placedOnly, N);
     if (!map) return null;
     const mine = new Set(myProbes());
     return session.probes.map(pr => {
@@ -337,7 +338,8 @@ function renderBoard() {
     board.innerHTML = '';
     const over = s.status === 'finished';
 
-    board.appendChild(svg('rect', {x: 9.5, y: 9.5, width: 81, height: 81, rx: 2.5, class: 'mine-floor'}));
+    board.setAttribute('viewBox', `0 0 ${VIEW()} ${VIEW()}`);
+    board.appendChild(svg('rect', {x: 9.5, y: 9.5, width: N * 10 + 1, height: N * 10 + 1, rx: 2.5, class: 'mine-floor'}));
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
         board.appendChild(svg('rect', {x: cellX(c) + 0.3, y: cellY(r) + 0.3, width: 9.4, height: 9.4, rx: 1.2, class: 'cell', 'data-r': r, 'data-c': c}));
     }
@@ -379,7 +381,7 @@ function renderBoard() {
         if (pr.exit !== null && pr.exit !== pr.p) used.set(pr.exit, info);
     });
     const canProbe = isMyTurn();
-    for (let p = 0; p < P.PORTS; p++) {
+    for (let p = 0; p < N * 4; p++) {
         const [x, y] = portCenter(p);
         const info = used.get(p);
         const g = svg('g', {class: 'port' + (info ? ' used' : canProbe ? ' free' : ''), 'data-p': p, tabindex: 0, role: 'button'});
@@ -422,7 +424,7 @@ function showPath(p) {
 }
 
 function drawPath(layer, p, placed) {
-    const map = P.buildMap(placed);
+    const map = P.buildMap(placed, N);
     if (!map) return;
     const res = P.trace(map, placed, p);
     const pts = [portCenter(p)];
@@ -499,9 +501,15 @@ function renderStatus() {
     $('turn-indicator').className = 'turn-indicator ' + cls;
 }
 
+// Time per turn: the player on turn sees the seconds left, the other one the full time of a turn
+function turnLeftMs() {
+    const s = session;
+    return Math.max(0, (s.turnLeftMs || 0) - (Date.now() - (s.clockSyncedAt || Date.now())));
+}
+
 function renderClocks() {
     const s = session;
-    const show = s.mode === 'online' && s.timeControl > 0;
+    const show = s.mode === 'online' && s.timeControl > 0 && s.status !== 'placing';
     const fmt = (ms) => {
         const sec = Math.ceil(ms / 1000);
         return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
@@ -510,9 +518,12 @@ function renderClocks() {
         const el = $('clock-' + side);
         el.classList.toggle('hidden', !show);
         if (!show) return;
-        el.textContent = fmt(s.ms[slot]);
-        el.classList.toggle('low-time', s.ms[slot] < 30000);
-        el.classList.toggle('running', s.status === 'playing' && s.turn === slot);
+        const running = s.status === 'playing' && s.turn === slot;
+        const ms = running ? turnLeftMs() : s.timeControl * 1000;
+        const text = fmt(ms);
+        if (el.textContent !== text) el.textContent = text;
+        el.classList.toggle('low-time', running && ms < 10000);
+        el.classList.toggle('running', running);
     });
 }
 
@@ -529,6 +540,8 @@ function renderLog() {
             const who = s.mode === 'online' ? `<span class="log-who">${escapeHtml(nameOf(pr.s))}${pr.s !== s.mySlot ? ' ' + escapeHtml(t('log_in_your_mine')) : ''}</span>` : '';
             const mark = check && check[h.i] !== null ? `<span class="log-check ${check[h.i] ? 'ok' : 'bad'}" aria-label="${escapeHtml(t(check[h.i] ? 'sketch_ok' : 'sketch_bad'))}">${check[h.i] ? '✓' : '✗'}</span>` : '';
             items.push(`<li class="log-item"><span class="log-n">${h.i + 1}</span><span class="log-swatch" style="background:${sw}"></span><span class="log-text">${who}${escapeHtml(probeText(pr))}</span>${mark}</li>`);
+        } else if (h.t === 'x') {
+            items.push(`<li class="log-item answer bad"><span class="log-text">${escapeHtml(t('log_timeout', {name: nameOf(h.s)}))}</span></li>`);
         } else {
             const g = s.guesses[gi++];
             items.push(`<li class="log-item answer ${g.ok ? 'ok' : 'bad'}"><span class="log-text">${escapeHtml(t(g.ok ? 'log_answer_ok' : 'log_answer_bad', {name: s.mode === 'online' ? nameOf(g.s) : t('you')}))}</span></li>`);
@@ -598,7 +611,7 @@ function candidate(i, r, c, rot) {
     const {h, w} = gemBox(s.gems[i].shape, rot);
     const gem = {...s.gems[i], r: Math.max(0, Math.min(r, N - h)), c: Math.max(0, Math.min(c, N - w)), rot};
     const others = draftGems().map((x, k) => k === i ? null : x).filter(Boolean);
-    return {gem, ok: !!P.buildMap([...others, gem])};
+    return {gem, ok: !!P.buildMap([...others, gem], N)};
 }
 
 function draftPreview() {
@@ -615,7 +628,7 @@ function draftPreview() {
 }
 
 function gemAt(r, c) {
-    return draftGems().findIndex(g => g && P.gemCells(g).some(cell => cell.r === r && cell.c === c));
+    return draftGems().findIndex(g => g && P.gemCells(g, N).some(cell => cell.r === r && cell.c === c));
 }
 
 // The sketch can be changed while solving, and while hiding the own gems until they are confirmed
@@ -640,7 +653,7 @@ function cellAt(e, lift = false) {
     const loc = pt.matrixTransform(board.getScreenCTM().inverse());
     const y = loc.y - (lift ? 9 : 0);
     const r = Math.floor((y - 10) / 10), c = Math.floor((loc.x - 10) / 10);
-    return {r, c, inside: loc.x >= 0 && loc.x <= 100 && loc.y >= 0 && loc.y <= 100, onGrid: r >= 0 && r < N && c >= 0 && c < N};
+    return {r, c, inside: loc.x >= 0 && loc.x <= VIEW() && loc.y >= 0 && loc.y <= VIEW(), onGrid: r >= 0 && r < N && c >= 0 && c < N};
 }
 
 function startDrag(e, i, offR, offC, from) {
@@ -850,12 +863,13 @@ function renderGemToolbar() {
     const g = d && d.active !== null && !(d.drag && d.drag.moved) && editable() ? draftGems()[d.active] : null;
     bar.classList.toggle('hidden', !g);
     if (!g) return;
-    const cells = P.gemCells(g);
+    const cells = P.gemCells(g, N);
     const top = Math.min(...cells.map(x => x.r)), bottom = Math.max(...cells.map(x => x.r)) + 1;
     const left = Math.min(...cells.map(x => x.c)), right = Math.max(...cells.map(x => x.c)) + 1;
     const below = top < 2;
-    bar.style.left = Math.max(22, Math.min(78, 10 + (left + right) * 5)) + '%'; // the bar stays over the mine
-    bar.style.top = (10 + (below ? bottom : top) * 10) + '%';
+    const pct = (units) => units / VIEW() * 100; // board units to a share of the board's width
+    bar.style.left = Math.max(22, Math.min(78, pct(10 + (left + right) * 5))) + '%'; // the bar stays over the mine
+    bar.style.top = pct(10 + (below ? bottom : top) * 10) + '%';
     bar.classList.toggle('below', below);
 }
 
@@ -870,7 +884,7 @@ function onPortActivate(p) {
     }
     if (s.mode === 'online') probeOnline(p);
     else {
-        const map = P.buildMap(s.hidden);
+        const map = P.buildMap(s.hidden, N);
         const res = P.trace(map, s.hidden, p);
         addProbe({s: s.mySlot, p, exit: res.exit, colors: res.colors});
         saveLocalGame();
@@ -927,7 +941,7 @@ async function submitAnswer() {
         pollServer();
         return;
     }
-    if (P.isCorrect(answer, s.hidden)) {
+    if (P.isCorrect(answer, s.hidden, N)) {
         s.guesses.push({s: s.mySlot, ok: true});
         s.history.push({t: 'g'});
         endGame(true, 'solved');
@@ -962,9 +976,9 @@ function revealGem() {
         d.placed[i] = null;
         const placedNow = draftGems();
         const target = {...s.gems[i], r: real.r, c: real.c, rot: real.rot};
-        const targetCells = P.gemCells(target).map(c => c.r * N + c.c);
+        const targetCells = P.gemCells(target, N).map(c => c.r * N + c.c);
         placedNow.forEach((g, k) => {
-            if (g && P.gemCells(g).some(c => targetCells.includes(c.r * N + c.c))) d.placed[k] = null;
+            if (g && P.gemCells(g, N).some(c => targetCells.includes(c.r * N + c.c))) d.placed[k] = null;
         });
         d.placed[i] = {r: real.r, c: real.c, rot: real.rot};
         d.locked.add(i);
@@ -982,7 +996,7 @@ function baseSession(mode, extra) {
     sessionSeq++;
     return Object.assign({
         mode, seq: sessionSeq, status: 'playing', mySlot: 1, names: {1: playerName, 2: ''}, wins: {1: 0, 2: 0},
-        probes: [], guesses: [], history: [], wrong: 0, hints: 0, turn: 1, ms: {1: 0, 2: 0}, timeControl: 0, lastProbe: null,
+        probes: [], guesses: [], history: [], wrong: 0, hints: 0, turn: 1, turnLeftMs: 0, timeControl: 0, lastProbe: null,
     }, extra);
 }
 
@@ -993,6 +1007,7 @@ function sortedGems(list) {
 function startSolo(level, daily = false) {
     initAudio();
     const date = todayKey();
+    N = daily ? P.SIZE : P.sizeOf(level); // the daily mine is always 8 x 8
     const hidden = daily ? P.generate('medium', P.seededRandom('prism-mine-' + date)) : P.generate(level);
     const gems = sortedGems(hidden);
     session = baseSession(daily ? 'daily' : 'solo', {level: daily ? 'medium' : level, date, hidden, gems, draft: newDraft(gems.length)});
@@ -1037,7 +1052,7 @@ function renderLevelNote() {
     const level = document.querySelector('input[name="solo-level"]:checked').value;
     const best = storageGet('pm_best_' + level);
     const cfg = P.LEVELS[level];
-    $('level-note').textContent = t('level_note_' + level, {n: cfg.gems}) + (best ? ' ' + t('best_score', {score: best}) : '');
+    $('level-note').textContent = t('level_note_' + level, {n: cfg.gems, size: cfg.size}) + (best ? ' ' + t('best_score', {score: best}) : '');
 }
 
 function enterGameScreen() {
@@ -1075,6 +1090,7 @@ const EXAMPLE = {
 
 function startExample() {
     initAudio();
+    N = P.SIZE; // the example mine is 8 x 8
     const hidden = EXAMPLE.mine.map(g => ({...g}));
     const gems = sortedGems(hidden);
     session = baseSession('example', {level: 'easy', hidden, gems, draft: newDraft(gems.length), exampleStep: 0, examplePort: null});
@@ -1095,7 +1111,7 @@ function showExampleStep(k) {
     s.draft = newDraft(s.gems.length);
     s.examplePort = null;
     s.lastProbe = null;
-    const map = P.buildMap(s.hidden);
+    const map = P.buildMap(s.hidden, N);
     for (let i = 0; i <= s.exampleStep; i++) {
         const step = steps[i];
         if (step.port !== undefined) {
@@ -1133,7 +1149,7 @@ async function createOnlineGame() {
     setBusy(btn, true);
     const res = await api('create_room', {
         name: playerName || t('player_one'),
-        time: parseInt(document.querySelector('input[name="time-online"]:checked').value, 10) * 60,
+        time: parseInt(document.querySelector('input[name="time-online"]:checked').value, 10), // seconds per turn
         level: document.querySelector('input[name="online-level"]:checked').value,
     });
     setBusy(btn, false);
@@ -1218,7 +1234,8 @@ function handlePollUpdate(data) {
     s.mySlot = data.mySlot;
     s.timeControl = data.timeControl;
     s.level = data.level;
-    s.ms = {1: data.p1Ms, 2: data.p2Ms};
+    N = data.size || P.sizeOf(data.level);
+    s.turnLeftMs = data.turnLeftMs || 0;
     s.clockSyncedAt = Date.now();
     s.players = data.players;
     data.players.forEach(p => {
@@ -1244,7 +1261,7 @@ function handlePollUpdate(data) {
         if (s.status === 'finished') s.status = data.status === 'finished' ? 'playing' : data.status;
         showModal('gameover-overlay', false);
     }
-    if (data.myMine && !s.myMine) s.myMine = P.decode(data.myMine);
+    if (data.myMine && !s.myMine) s.myMine = P.decode(data.myMine, N);
 
     if (s.status === 'waiting' && data.status !== 'waiting') {
         s.status = data.status === 'finished' ? 'playing' : data.status;
@@ -1263,7 +1280,11 @@ function handlePollUpdate(data) {
     const fresh = data.actions.slice(s.history.length);
     fresh.forEach((a, k) => {
         if (a.t === 'p') addProbe({s: a.s, p: a.p, exit: a.exit, colors: a.colors}, fresh.length > 2 || k < fresh.length - 1);
-        else {
+        else if (a.t === 'x') {
+            // The time of the turn ran out: the turn passed
+            s.history.push({t: 'x', s: a.s});
+            if (fresh.length <= 2) showToast(a.s === s.mySlot ? t('toast_timeout_mine') : t('log_timeout', {name: nameOf(a.s)}));
+        } else {
             s.guesses.push({s: a.s, ok: a.ok});
             s.history.push({t: 'g'});
             if (!a.ok && a.s !== s.mySlot && fresh.length <= 2) showToast(t('opp_wrong', {name: nameOf(a.s)}));
@@ -1272,7 +1293,7 @@ function handlePollUpdate(data) {
     s.turn = data.turn;
 
     if (data.status === 'finished' && s.status !== 'finished') {
-        s.hidden = P.decode(data.oppMine);
+        s.hidden = P.decode(data.oppMine, N);
         const winner = data.result === '1-0' ? 1 : 2;
         endGame(winner === s.mySlot, data.reason, winner);
     }
@@ -1316,10 +1337,13 @@ function startClock() {
         }
         if (s.status === 'placing') return;
         if (s.status !== 'playing' || s.timeControl <= 0) return;
-        const now = Date.now();
-        s.ms[s.turn] = Math.max(0, s.ms[s.turn] - (now - s.clockSyncedAt));
-        s.clockSyncedAt = now;
         renderClocks();
+        // At zero the server passes the turn: ask it right away instead of waiting for the next poll
+        if (turnLeftMs() === 0 && !s.timeoutAsked) {
+            s.timeoutAsked = true;
+            pollServer();
+        }
+        if (turnLeftMs() > 0) s.timeoutAsked = false;
     }, 250);
 }
 
@@ -1776,7 +1800,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-random-place').addEventListener('click', () => {
         const s = session;
         if (!placingMine() || s.myMine) return;
-        const layout = P.randomLayout(s.gems);
+        const layout = P.randomLayout(s.gems, N);
         s.draft = newDraft(s.gems.length);
         layout.forEach((g, i) => s.draft.placed[i] = {r: g.r, c: g.c, rot: g.rot});
         playSound('place');

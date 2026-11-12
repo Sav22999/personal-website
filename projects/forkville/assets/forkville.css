@@ -45,6 +45,25 @@ body {
     overscroll-behavior: none;
 }
 
+/* A game, not a page: no accidental text selection, no long-press menu, no blue flash on taps (fields stay usable) */
+body, button, .hud, .sheet, .modal, .buildpanel, canvas {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+input, textarea, select, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+img, svg {
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+button, a, .shopitem, .cam, .tab {
+    touch-action: manipulation; /* no double-tap zoom on controls */
+}
+
 a {
     color: var(--primary-dark);
 }
@@ -1033,6 +1052,11 @@ input, select {
 
 .clock-time b {
     font-size: 17px;
+    /* A fixed width: the clock must not grow and shrink as the minutes change (rounded fonts have uneven digits) */
+    display: inline-block;
+    min-width: 3.05em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 .clock-time small {
@@ -2019,6 +2043,38 @@ button.plot {
     right: 430px;
 }
 
+/* The clock: with the side panel open (or a narrow desktop window) it would run into the buttons on the right,
+   so it moves just under them, aligned to the right */
+.sheet-open .clock {
+    left: auto;
+    right: 430px;
+    transform: none;
+    top: calc(max(10px, env(safe-area-inset-top)) + 54px);
+}
+@media (min-width: 641px) and (max-width: 1080px) {
+    .clock {
+        left: auto;
+        right: 10px;
+        transform: none;
+        top: calc(max(10px, env(safe-area-inset-top)) + 54px);
+    }
+}
+/* Little room left beside the side panel: a compact clock (no date, no rush-hour label), down above the dock */
+@media (min-width: 641px) and (max-width: 1180px) {
+    .sheet-open .clock .clock-date,
+    .sheet-open .clock .busy { display: none; }
+    .sheet-open .clock {
+        top: auto;
+        bottom: calc(max(10px, env(safe-area-inset-bottom)) + 78px);
+        right: auto;
+        left: calc((100% - 420px) / 2);
+        transform: translateX(-50%);
+    }
+}
+@media (min-width: 641px) and (max-width: 880px) {
+    .sheet-open .clock .clock-pic { display: none; }
+}
+
 .sheet-open .dock {
     left: calc((100% - 420px) / 2);
     max-width: calc(100vw - 440px);
@@ -2435,7 +2491,7 @@ button.pill.coins { cursor: pointer; }
 
 /* ---------------------------------------------------------------- calendar */
 button.clock-time { border: 0; background: transparent; cursor: pointer; font: inherit; color: inherit; padding: 0; }
-.clock-date { color: var(--muted); font-weight: 700; font-size: 11px; white-space: nowrap; }
+.clock-date { color: var(--muted); font-weight: 700; font-size: 11px; white-space: nowrap; display: inline-block; min-width: 6.8em; font-variant-numeric: tabular-nums; }
 .calendar { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: start; }
 .cal-page { border: 2px solid var(--ink); border-radius: 16px; overflow: hidden; text-align: center; background: #fff; box-shadow: 0 4px 0 var(--ink); }
 .cal-month { background: var(--primary); color: #fff; font-weight: 800; padding: 6px 4px; text-transform: capitalize; font-size: 14px; }
@@ -2649,3 +2705,39 @@ button.clock-time { border: 0; background: transparent; cursor: pointer; font: i
 .cam.wallmode .wm-adaptive { background: linear-gradient(90deg, #7A8B3A 50%, #D9653B 50%); }
 .cam.wallmode .wm-low { background: #7A8B3A; }
 .cam.wallmode .wm-high { background: #D9653B; }
+
+/* Shop sorting */
+.build-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.sortby { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.sortby select { font: inherit; font-weight: 600; padding: 4px 8px; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+
+/* Store: which worker uses a piece */
+.shopitem { position: relative; }
+.role-badge { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 1px 0 var(--ink); display: grid; place-items: center; }
+.role-badge svg { width: 17px; height: 17px; }
+
+/* Phones: keep the left-side floor picker clear of the status pill, the camera column clear of the clock,
+   and the name card down to two short lines */
+@media (max-width: 640px) {
+    .floorpick { top: 50%; transform: translateY(-50%); }
+    .camctl { bottom: 136px; gap: 5px; }
+    .camctl .cam { width: 34px; height: 34px; }
+    .brand { max-width: calc(100vw - 190px); }
+    .brand .lvl { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .brand .xp { max-width: 100%; flex-direction: column; align-items: flex-start; gap: 3px; }
+    /* The clock stays inside the screen: no date on a phone, and a long rush-hour label is cut */
+    .clock { max-width: calc(100vw - 20px); gap: 4px; padding: 3px 4px 3px 8px; }
+    .clock .clock-date { display: none; }
+    .clock .busy { max-width: 78px; overflow: hidden; text-overflow: ellipsis; padding: 3px 6px; }
+    .clock .speed { width: 28px; }
+}
+
+/* Phones in build mode: the panel takes the lower half, so the camera and floor buttons line up in a row above it,
+   and the clock steps aside (the status pill still shows the service) */
+@media (max-width: 640px) {
+    body.building .camctl,
+    body.building .camctl:has(~ .buildpanel) { top: auto; bottom: calc(var(--panel-h, 0px) + 8px); transform: none; flex-direction: row; gap: 4px; }
+    body.building .floorpick { top: auto; bottom: calc(var(--panel-h, 0px) + 50px); transform: none; flex-direction: row; gap: 4px; right: auto; }
+    body.building .floorpick .floor-now { flex-direction: row; gap: 4px; padding: 2px 6px; }
+    body.building .clock { display: none; }
+}

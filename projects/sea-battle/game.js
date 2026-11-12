@@ -296,7 +296,8 @@ function renderPips(el, sunkSet) {
 
 // ==================== GAME STATE HELPERS ====================
 // Shots are {s: shooter, i: cell, r: 'miss' | 'hit' | 'sunk', k: ship index when sunk}
-const shotsBy = (slot) => session.shots.filter(s => s.s === slot);
+// Skipped turns (time ran out) are in the list too, as {s, r: 'skip'}: they are not shots
+const shotsBy = (slot) => session.shots.filter(s => s.s === slot && s.r !== 'skip');
 
 // The ships of `slot` that the other player has sunk, with their position
 function sunkShips(slot) {
@@ -366,9 +367,15 @@ function renderScoreboard() {
     renderClocks();
 }
 
+// Time per shot: the player on turn sees the seconds left, the other one the full time of a shot
+function turnLeftMs() {
+    const s = session;
+    return Math.max(0, (s.turnLeftMs || 0) - (Date.now() - (s.clockSyncedAt || Date.now())));
+}
+
 function renderClocks() {
     const s = session;
-    const show = s.mode === 'online' && s.timeControl > 0;
+    const show = s.mode === 'online' && s.timeControl > 0 && s.status !== 'placing';
     const fmt = (ms) => {
         const sec = Math.ceil(ms / 1000);
         return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
@@ -377,9 +384,12 @@ function renderClocks() {
         const el = $('clock-' + side);
         el.classList.toggle('hidden', !show);
         if (!show) return;
-        el.textContent = fmt(s.ms[slot]);
-        el.classList.toggle('low-time', s.ms[slot] < 30000);
-        el.classList.toggle('running', s.status === 'playing' && s.turn === slot);
+        const running = s.status === 'playing' && s.turn === slot;
+        const ms = running ? turnLeftMs() : s.timeControl * 1000;
+        const text = fmt(ms);
+        if (el.textContent !== text) el.textContent = text;
+        el.classList.toggle('low-time', running && ms < 10000);
+        el.classList.toggle('running', running);
     });
 }
 
@@ -679,7 +689,7 @@ function baseSession(mode, extra) {
         firstSlot: 1,
         bonus: false,
         timeControl: 0,
-        ms: {1: 0, 2: 0},
+        turnLeftMs: 0,
         draft: newDraft(),
         winner: 0,
         round: 1,
@@ -833,6 +843,12 @@ function hideCurtain() {
 // --- Shot feedback ---
 function announceShot(shot, quiet = false) {
     const s = session;
+    if (shot.r === 'skip') {
+        // The time of the shot ran out: the turn passed
+        addLog(t('log_timeout', {name: nameOf(shot.s)}), 'info');
+        if (!quiet) showToast(shot.s === s.mySlot ? t('toast_timeout_mine') : t('log_timeout', {name: nameOf(shot.s)}));
+        return;
+    }
     s.fresh = shot;
     const seq = s.seq;
     setTimeout(() => {
@@ -869,7 +885,7 @@ async function createOnlineGame() {
     initAudio();
     const btn = $('btn-create');
     setBusy(btn, true);
-    const tc = parseInt(document.querySelector('input[name="time-online"]:checked').value, 10) * 60;
+    const tc = parseInt(document.querySelector('input[name="time-online"]:checked').value, 10); // seconds per shot
     const res = await api('create_room', {name: playerName || t('player_one'), time: tc, bonus: $('bonus-online').checked ? 1 : 0});
     setBusy(btn, false);
     if (res.error) {
@@ -980,7 +996,7 @@ function handlePollUpdate(data) {
     s.firstSlot = data.firstSlot;
     s.timeControl = data.timeControl;
     s.bonus = data.bonus;
-    s.ms = {1: data.p1Ms, 2: data.p2Ms};
+    s.turnLeftMs = data.turnLeftMs || 0;
     s.clockSyncedAt = Date.now();
     s.players = data.players;
     s.oppShips = data.oppShips || [];
@@ -1102,10 +1118,13 @@ function startClock() {
             return;
         }
         if (s.status === 'playing' && s.timeControl > 0) {
-            const now = Date.now();
-            s.ms[s.turn] = Math.max(0, s.ms[s.turn] - (now - s.clockSyncedAt));
-            s.clockSyncedAt = now;
             renderClocks();
+            // At zero the server passes the turn: ask it right away instead of waiting for the next poll
+            const left = turnLeftMs();
+            if (left === 0 && !s.timeoutAsked) {
+                s.timeoutAsked = true;
+                pollServer();
+            } else if (left > 0) s.timeoutAsked = false;
         }
         const timer = $('place-timer');
         if (s.status === 'placing' && !s.myFleet && s.placeLeftMs) {

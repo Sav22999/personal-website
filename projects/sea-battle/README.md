@@ -12,7 +12,7 @@ The classic naval battle game developed by Saverio Morelli: hide your fleet, the
 - **Optional rule**: "hit, shoot again" (a hit gives another shot).
 - **No cheating online**: fleets stay on the server; the opponent sees only the ships they sink, and the whole fleet once the game is over. Every shot is checked by `api/engine.php`, the PHP twin of `engine.js`.
 - **Placement timer online**: 2 minutes to deploy, then the fleet is placed at random so nobody is kept waiting.
-- **Clock, chat, rematch**; an opponent who stays disconnected for 2 minutes loses automatically, with a countdown on screen.
+- **Clock per shot** (30 s, 1 or 2 minutes; when it runs out the turn passes), **chat, rematch**; an opponent who stays disconnected for 2 minutes loses automatically, with a countdown on screen.
 - **Auto, Light or Dark theme** (`theme.js`), **five languages** (en, it, es, fr, de), hull colour and options in Settings.
 - **Works offline** for local games (`sw.js`), **zero third-party requests** (bundled Inter font, SIL OFL, in `fonts/`).
 - **Ephemeral data**: inactive online rooms are purged nightly by `projects/cron/cleanup.php` (table prefix `sb_`).

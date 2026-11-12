@@ -1,7 +1,7 @@
 <?php
 // Sea Battle server-side rules: the same as engine.js.
 // Grid 10 x 10, a cell is row * 10 + column. A fleet is stored as "r,c,d;r,c,d;..." in the FLEET order.
-// Shots are stored as "slot:cell slot:cell ..." in the order they were fired.
+// Shots are stored as "slot:cell slot:cell ..." in the order they were fired; "slot:x" is a turn whose time ran out.
 
 class SeaBattleEngine
 {
@@ -125,13 +125,13 @@ class SeaBattleEngine
         if ($text === '') return [];
         return array_map(function ($part) {
             [$slot, $cell] = explode(':', $part);
-            return ['slot' => (int)$slot, 'cell' => (int)$cell];
+            return $cell === 'x' ? ['slot' => (int)$slot, 'cell' => -1, 'skip' => true] : ['slot' => (int)$slot, 'cell' => (int)$cell];
         }, explode(' ', $text));
     }
 
     public static function formatShots(array $shots): string
     {
-        return implode(' ', array_map(fn($s) => $s['slot'] . ':' . $s['cell'], $shots));
+        return implode(' ', array_map(fn($s) => $s['slot'] . ':' . (empty($s['skip']) ? $s['cell'] : 'x'), $shots));
     }
 
     /**
@@ -153,6 +153,13 @@ class SeaBattleEngine
         foreach ($shots as $shot) {
             $slot = $shot['slot'];
             $cell = $shot['cell'];
+            // The time of the turn ran out: the turn passes without a shot
+            if (!empty($shot['skip'])) {
+                if ($winner !== 0 || $slot !== $turn) return null;
+                $results[] = ['slot' => $slot, 'cell' => -1, 'result' => 'skip', 'ship' => null];
+                $turn = $slot === 1 ? 2 : 1;
+                continue;
+            }
             if ($winner !== 0 || $slot !== $turn || $cell < 0 || $cell >= self::SIZE * self::SIZE) return null;
             if (isset($fired[$slot][$cell])) return null;
             $fired[$slot][$cell] = true;

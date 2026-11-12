@@ -131,7 +131,7 @@ const coin = (c) => h('span.coin-amount', h('i.coin'), String(c));
 const ingList = (obj) => Object.entries(obj).map(([k, q]) => `${n(k)} ×${q}`).join(', ');
 const nowSec = () => Date.now() / 1000 + (S.clockSkew || 0);
 
-const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6A05C"/><stop offset="1" stop-color="#C64B29"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><circle cx="32" cy="35" r="23" fill="#FFF3E0" opacity=".14"/><circle cx="32" cy="35" r="23" fill="none" stroke="#FFF3E0" stroke-opacity=".35" stroke-width="1.6"/><g fill="#7E2E16" opacity=".35" transform="translate(1.2 1.8)"><rect x="28.5" y="35" width="7" height="21" rx="3.5"/><rect x="15.5" y="29.5" width="33" height="7.5" rx="3.75"/><rect x="18.10" y="21" width="2.8" height="10"/><rect x="16.00" y="15" width="7" height="8" rx="1.2"/><rect x="26.43" y="21" width="2.8" height="10"/><rect x="24.33" y="15" width="7" height="8" rx="1.2"/><rect x="34.77" y="21" width="2.8" height="10"/><rect x="32.67" y="15" width="7" height="8" rx="1.2"/><rect x="43.10" y="21" width="2.8" height="10"/><rect x="41.00" y="15" width="7" height="8" rx="1.2"/></g><g fill="#FFF6E9"><rect x="28.5" y="35" width="7" height="21" rx="3.5"/><rect x="15.5" y="29.5" width="33" height="7.5" rx="3.75"/><rect x="18.10" y="21" width="2.8" height="10"/><rect x="16.00" y="15" width="7" height="8" rx="1.2"/><rect x="26.43" y="21" width="2.8" height="10"/><rect x="24.33" y="15" width="7" height="8" rx="1.2"/><rect x="34.77" y="21" width="2.8" height="10"/><rect x="32.67" y="15" width="7" height="8" rx="1.2"/><rect x="43.10" y="21" width="2.8" height="10"/><rect x="41.00" y="15" width="7" height="8" rx="1.2"/></g><path d="M15.10 16.2L19.50 9.6L23.90 16.2z" fill="#B43E5C" stroke="#B43E5C" stroke-width="1" stroke-linejoin="round"/><rect x="18.25" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M23.43 16.2L27.83 9.6L32.23 16.2z" fill="#7A8B3A" stroke="#7A8B3A" stroke-width="1" stroke-linejoin="round"/><rect x="26.58" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M31.77 16.2L36.17 9.6L40.57 16.2z" fill="#E2B23A" stroke="#E2B23A" stroke-width="1" stroke-linejoin="round"/><rect x="34.92" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M40.10 16.2L44.50 9.6L48.90 16.2z" fill="#3E7CB4" stroke="#3E7CB4" stroke-width="1" stroke-linejoin="round"/><rect x="43.25" y="18" width="2.5" height="3.2" rx=".6" fill="#3B2418"/><path d="M52 8.5l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#FFF6E9"/></svg>`;
+const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB74D"/><stop offset="1" stop-color="#D6405C"/></linearGradient><clipPath id="fvclip"><rect width="64" height="64" rx="15"/></clipPath></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><path clip-path="url(#fvclip)" d="M32 34L91.7 27.7L91.7 40.3z M32 34L67.3 82.5L56.4 88.8z M32 34L7.6 88.8L-3.3 82.5z M32 34L-27.7 40.3L-27.7 27.7z M32 34L-3.3 -14.5L7.6 -20.8z M32 34L56.4 -20.8L67.3 -14.5z" fill="#FFF6E9" opacity=".16"/><ellipse cx="32" cy="48.5" rx="23" ry="5" fill="#FFF6E9" stroke="#3B2418" stroke-width="1.6"/><ellipse cx="32" cy="48.2" rx="17" ry="2.8" fill="#F1E4CF"/><path d="M14 47a18 18 0 0 1 36 0z" fill="#FFF6E9" stroke="#3B2418" stroke-width="1.8" stroke-linejoin="round"/><path d="M19.5 38.5a14 14 0 0 1 6-7" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".9"/><rect x="13" y="45" width="38" height="3.4" rx="1.7" fill="#EBDCC4" stroke="#3B2418" stroke-width="1.4"/><path d="M28.5 45V36a3.5 3.5 0 0 1 7 0v9z" fill="#D9653B" stroke="#3B2418" stroke-width="1.3" stroke-linejoin="round"/><circle cx="33.9" cy="41.2" r=".75" fill="#E2B23A"/><circle cx="21.8" cy="39.5" r="3.1" fill="#FFD27A" stroke="#3B2418" stroke-width="1.2"/><path d="M18.7 39.5h6.2M21.8 36.4v6.2" stroke="#3B2418" stroke-width=".8"/><circle cx="42.2" cy="39.5" r="3.1" fill="#FFD27A" stroke="#3B2418" stroke-width="1.2"/><path d="M39.1 39.5h6.2M42.2 36.4v6.2" stroke="#3B2418" stroke-width=".8"/><g fill="#E2B23A" stroke="#3B2418" stroke-width="1.2" stroke-linejoin="round"><rect x="30.8" y="20.5" width="2.4" height="9.5" rx="1"/><rect x="27" y="18" width="10" height="3.6" rx="1.6"/><rect x="27.4" y="10.5" width="1.9" height="9" rx=".95"/><rect x="31.05" y="10.5" width="1.9" height="9" rx=".95"/><rect x="34.7" y="10.5" width="1.9" height="9" rx=".95"/></g><path d="M52 8.5l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#FFF6E9"/><circle cx="10.5" cy="14" r="1.2" fill="#FFF6E9" opacity=".8"/></svg>`;
 
 function credit() {
     return h('div.credit-block',
@@ -483,6 +483,15 @@ function refreshHome(st, keepCamera = true) {
     S.sheet?.render();
 }
 
+/** The menu or the staff changed: the service goes on (guests stay), the simulation updates itself. */
+function liveState(st) {
+    applyState(st);
+    if (S.mode === 'home' && S.sim?.running) S.sim.refresh(simRestaurant(S.game.restaurant));
+    else if (S.mode === 'home') loadHome(true);
+    renderHud();
+    S.sheet?.render();
+}
+
 /** Only the numbers changed (coins, ingredients…): no need to rebuild the room. */
 function softState(st) {
     applyState(st);
@@ -655,7 +664,7 @@ function renderHud() {
     renderClock(true);
     renderInfo();
     if (S.mode === 'build') renderBuild();
-    requestAnimationFrame(updateInsets);
+    updateInsets(); // the panel is already in the page, so its height is known now
 }
 
 function renderTop() {
@@ -759,7 +768,7 @@ function renderClock(force = false) {
             h('span.clock-pic', {title: t('weather_' + (S.weather || 'clear')), html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}),
             h('span.clock-pic', {title: t('season_' + S.season), html: svgIcon('ui', 's_' + S.season)})),
         busy && h('span.busy.busy-' + busy, {title: t('busy_' + busy + '_d')}, t('busy_' + busy)),
-        S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2')), sp(3, 'play3', t('speed_3'))));
+        S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2')), sp(5, 'play3', t('speed_3'))));
 }
 
 /** The card of the selected person: who they are, what they are doing, their mood or energy. */
@@ -844,15 +853,19 @@ function updateInsets() {
     if (S.sheet) narrow ? (bottom = window.innerHeight * 0.82) : (right = Math.min(420, window.innerWidth));
     if (panel) bottom = Math.max(bottom, panel.offsetHeight);
     document.body.classList.toggle('sheet-open', !!S.sheet && !narrow);
+    // On a phone the camera and floor buttons sit in a row just above the build panel
+    document.body.classList.toggle('building', !!panel);
+    if (panel && !panel._ro && window.ResizeObserver) (panel._ro = new ResizeObserver(() => updateInsets())).observe(panel);
+    document.documentElement.style.setProperty('--panel-h', (panel ? panel.offsetHeight : 0) + 'px');
     S.world.setInsets(right, narrow && S.sheet ? 0 : bottom);
 }
 
-async function act(route, body, {rebuild = false, done} = {}) {
+async function act(route, body, {rebuild = false, live = false, done} = {}) {
     try {
         const before = S.game?.restaurant.coins;
         const st = await api(route, body);
         if (before != null && st.restaurant && st.restaurant.coins < before) sfx.cash();
-        (rebuild ? refreshHome : softState)(st);
+        (rebuild ? refreshHome : live ? liveState : softState)(st);
         done && done(st);
         return st;
     } catch (e) {
@@ -883,11 +896,11 @@ const SHEETS = {
                     lvl > 0 && h('label.switch', {title: t('on_menu')}, h('input', {
                         type: 'checkbox', checked: on, onchange: (e) => {
                             const next = e.target.checked ? [...menu, k] : menu.filter(x => x !== k);
-                            act('game.menu', {dishes: next}, {rebuild: true});
+                            act('game.menu', {dishes: next}, {live: true});
                         },
                     }), h('i')),
-                    !locked && !lvl && d.enabled !== false && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.learn', {dish: k}, {rebuild: true, done: () => toast(t('learned', {d: n(k)}), 'good')})}, t('learn')),
-                    !locked && lvl > 0 && lvl < S.catalog.dishMax && h('button.btn.btn-small', {onclick: () => act('game.upgrade', {dish: k}, {rebuild: true, done: () => toast(t('improved', {d: n(k), n: lvl + 1}), 'good')})}, t('upgrade'))));
+                    !locked && !lvl && d.enabled !== false && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.learn', {dish: k}, {live: true, done: () => toast(t('learned', {d: n(k)}), 'good')})}, t('learn')),
+                    !locked && lvl > 0 && lvl < S.catalog.dishMax && h('button.btn.btn-small', {onclick: () => act('game.upgrade', {dish: k}, {live: true, done: () => toast(t('improved', {d: n(k), n: lvl + 1}), 'good')})}, t('upgrade'))));
         });
         put(body, 
             h('p.muted', t('menu_slots', {n: menu.length, m: r.maxMenu})),
@@ -938,7 +951,7 @@ const SHEETS = {
         const people = r.staff.map(s => {
             const rank = s.rank || 1, next = mg.promote[rank + 1];
             const select = h('select.role-select', {
-                onchange: (e) => act('game.assign', {id: s.id, role: e.target.value}, {rebuild: true, done: () => toast(t('role_changed', {n: s.name, r: n(e.target.value)}), 'good')}),
+                onchange: (e) => act('game.assign', {id: s.id, role: e.target.value}, {live: true, done: () => toast(t('role_changed', {n: s.name, r: n(e.target.value)}), 'good')}),
             }, roles.map(role => h('option', {value: role, selected: role === s.role, disabled: role === 'manager' && r.level < mg.level}, n(role))));
             return h('div.person',
                 h('div.person-head', h('img.portrait', {src: portrait(s.role, s.color, s.id * 7.3, lookOf(s)), alt: ''}), h('span.pic', {html: svgIcon('ui', roleIcon(s.role))}),
@@ -948,9 +961,9 @@ const SHEETS = {
                 h('div.seniority', t('seniority', {t: seniorityText(s.years || 0)}), ' · ', t('next_point', {p: Math.floor(((s.skills?.[s.role] ?? 5) % 1) * 100)})),
                 s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.08 * (s.skills?.manager ?? 5)))})),
                 h('div.row.wrap',
-                    s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.promote', {id: s.id}, {rebuild: true, done: () => toast(t('promoted', {n: s.name}), 'good')})}, t('promote'), ' · ', coin(next)),
+                    s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.promote', {id: s.id}, {live: true, done: () => toast(t('promoted', {n: s.name}), 'good')})}, t('promote'), ' · ', coin(next)),
                     h('button.btn.btn-small', {onclick: () => openLook(s)}, t('look_title')),
-                    h('button.btn.btn-small.btn-ghost', {onclick: () => confirm(t('fire_confirm', {n: s.name})) && act('game.fire', {id: s.id}, {rebuild: true})}, t('fire'))));
+                    h('button.btn.btn-small.btn-ghost', {onclick: () => confirm(t('fire_confirm', {n: s.name})) && act('game.fire', {id: s.id}, {live: true})}, t('fire'))));
         });
         put(body,
             h('p.muted', t('staff_intro')),
@@ -1072,7 +1085,7 @@ function openLook(s) {
     modal(t('look_of', {n: s.name}), [body, h('div.row', h('button.btn', {onclick: closeModal}, t('cancel')), h('button.btn.btn-primary', {
         style: 'flex:1', onclick: async () => {
             if (!cost()) return closeModal();
-            const done = await act('game.style', {id: s.id, ...pick}, {rebuild: true});
+            const done = await act('game.style', {id: s.id, ...pick}, {live: true});
             if (done) {
                 toast(t('look_done', {n: s.name}), 'good');
                 closeModal();
@@ -1116,7 +1129,7 @@ async function openCandidates(refresh = false) {
             h('div.row', select, h('button.btn.btn-small.btn-primary', {
                 disabled: c.cost > S.game.restaurant.coins,
                 onclick: async () => {
-                    const done = await act('game.hire', {idx, role: select.value}, {rebuild: true});
+                    const done = await act('game.hire', {idx, role: select.value}, {live: true});
                     if (done) {
                         toast(t('hired', {n: c.name, r: n(select.value)}), 'good');
                         closeModal();
@@ -1176,6 +1189,7 @@ function unlocksAt(l) {
     const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))), m = f(x => Math.min(8, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
     const mg = f(x => x < S.catalog.manager.level ? 0 : Math.min(3, 1 + Math.floor((x - S.catalog.manager.level) / 6)));
     if (l > 1 && w) out.push(t('unlock_waiters', {n: w}));
+    if (l === (S.catalog.cashier?.level || 9)) out.push(t('unlock_cashier'));
     if (l > 1 && c) out.push(t('unlock_cleaners', {n: c}));
     if (l > 1 && m) out.push(t('unlock_menu', {n: m}));
     if (l > 1 && p) out.push(t('unlock_plots', {n: p}));
@@ -1286,7 +1300,7 @@ const SHEETS_MORE = {
                 return h('div.kind' + (cur ? '.on' : '') + (locked ? '.locked' : ''),
                     h('b', t('kind_' + k)), h('small', t('kind_' + k + '_d')), h('small.muted', t('kind_effects', {p: v.price, c: v.customers})),
                     cur ? h('span.tag-now', t('kind_current')) : locked ? h('small', t('locked_level', {n: v.level}))
-                        : h('button.btn.btn-small', {onclick: () => confirm(t('kind_title') + ': ' + t('kind_' + k) + '?') && act('game.kind', {kind: k}, {rebuild: true, done: () => toast(t('kind_' + k), 'good')})}, t('kind_switch', {c: v.cost})));
+                        : h('button.btn.btn-small', {onclick: () => confirm(t('kind_title') + ': ' + t('kind_' + k) + '?') && act('game.kind', {kind: k}, {live: true, done: () => toast(t('kind_' + k), 'good')})}, t('kind_switch', {c: v.cost})));
             }))),
             h('label.field', h('span', t('restaurant_name')), h('div.row', nameInput, h('button.btn', {
                 onclick: () => act('game.rename', {name: nameInput.value}, {done: () => S.world.setSign(S.game.restaurant.name)}),
@@ -1471,6 +1485,19 @@ const BUILD_TABS = [['seasonal', []], ['table', ['table']], ['chair', ['chair']]
 const LOUNGE_TAGS = ['music', 'fun', 'cozy', 'snack'];
 const buildTabOf = (k, d) => S.catalog.seasonal?.[k] ? 'seasonal' : d.cat === 'deco' && LOUNGE_TAGS.includes((S.catalog.tags || {})[k]) ? 'lounge' : (BUILD_TABS.find(([, cats]) => cats.includes(d.cat)) || ['deco'])[0];
 let buildTab = 'table';
+/** How the shop is sorted (remembered on this device): level (default), price, popularity, quality, name. */
+const SORTS = {
+    level: (a, b) => a[1].level - b[1].level || a[1].price - b[1].price,
+    price_asc: (a, b) => a[1].price - b[1].price || a[1].level - b[1].level,
+    price_desc: (a, b) => b[1].price - a[1].price || a[1].level - b[1].level,
+    pop: (a, b) => b[1].pop - a[1].pop || a[1].price - b[1].price,
+    tier: (a, b) => (b[1].tier || 0) - (a[1].tier || 0) || a[1].price - b[1].price,
+    name: (a, b) => n(a[0]).localeCompare(n(b[0]), getLang()),
+};
+let buildSort = 'level';
+try {
+    buildSort = SORTS[localStorage.getItem('forkville-sort')] ? localStorage.getItem('forkville-sort') : 'level';
+} catch (e) { /* storage blocked */ }
 
 function enterBuild(tab) {
     closeSheet();
@@ -1503,6 +1530,18 @@ async function saveBuild() {
     }
 }
 
+/** Which worker uses a piece (for the badge in the store): chef, waiter, cleaner, cashier, or all the staff (breaks). */
+function roleOfItem(k, d) {
+    const tag = S.catalog.tags?.[k];
+    if (d.cat === 'stove' || d.cat === 'counter' || tag === 'fridge') return 'chef';
+    if (tag === 'sink' || tag === 'drinks' || tag === 'icecream') return 'waiter';
+    if (tag === 'janitor') return 'cleaner';
+    if (tag === 'register') return 'cashier';
+    if (tag === 'coffee' || tag === 'rest') return 'staff';
+    return null;
+}
+const ROLE_ICON = {chef: ['ui', 'chef'], waiter: ['ui', 'waiter'], cleaner: ['ui', 'broom'], cashier: ['ui', 'register'], staff: ['mood', 'sleep']};
+
 /** The event going on now on the real calendar (valentine, easter, summer, autumn, christmas), or null: the server says. */
 const eventsInfo = () => S.game?.restaurant?.events || S.catalog.events || {};
 const currentEvent = () => eventsInfo().now || null;
@@ -1520,10 +1559,11 @@ function renderBuild() {
     const cats = BUILD_TABS.find(x => x[0] === buildTab)[1];
     const ev = currentEvent();
     const items = Object.entries(cat).filter(([k, d]) => buildTabOf(k, d) === buildTab && cats && (d.enabled !== false || r.finishes.includes(k)))
-        .sort((a, b) => buildTab === 'seasonal' ? (inSeason(b[0]) - inSeason(a[0])) || (S.catalog.seasonal[a[0]] > S.catalog.seasonal[b[0]] ? 1 : -1) || a[1].price - b[1].price : a[1].level - b[1].level || a[1].price - b[1].price);
+        .sort((a, b) => (buildTab === 'seasonal' ? inSeason(b[0]) - inSeason(a[0]) : 0) || SORTS[buildSort](a, b)); // in-season pieces first
     const c = ed.cost();
     const tile = ([k, d]) => {
         const sev = S.catalog.seasonal?.[k], away = sev && !inSeason(k);
+        const role = roleOfItem(k, d);
         const locked = d.level > r.level || away;
         const finish = d.cat === 'floor' || d.cat === 'wall';
         const owned = finish && r.finishes.includes(k);
@@ -1531,7 +1571,7 @@ function renderBuild() {
         return h('button.shopitem' + (locked ? '.locked' : '') + (current || ed.placing?.it.k === k ? '.on' : ''), {
             disabled: locked,
             onclick: () => finish ? ed.setFinish(k) : ed.startPlacing(k),
-        }, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
+        }, role ? h('span.role-badge', {title: t('for_role_' + role), html: svgIcon(...ROLE_ICON[role])}) : null, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
             h('b', n(k)), sev ? h('span.tier.seasonal', t('ev_' + sev)) : d.tier ? h('span.tier.tier-' + d.tier, t('tier_' + d.tier)) : null,
             h('small', away ? t('ev_back', {m: eventDate(sev, 'from')}) : locked ? t('locked_level', {n: d.level}) : owned ? t('owned') : coin(d.price)),
             d.pop > 0 && h('small.pop', t('pop', {n: d.pop})), d.speed > 1 && h('small.pop', t('speed', {n: d.speed})));
@@ -1547,7 +1587,16 @@ function renderBuild() {
                     h('button.btn.btn-small.btn-primary', {disabled: !ed.placing.ok, onclick: () => ed.confirm()}, t('place_here')),
                     !ed.placing.moving ? h('label.repeat', {title: t('repeat_hint')}, h('input', {type: 'checkbox', checked: ed.repeatFor(cat[ed.placing.it.k].cat), onchange: (e) => ed.setRepeat(cat[ed.placing.it.k].cat, e.target.checked)}), h('span', t('repeat_place'))) : null,
                     h('button.btn.btn-small.btn-ghost', {onclick: () => ed.cancelPlacing()}, t('cancel')))
-                : h('small.muted', t('build_hint'))),
+                : h('div.build-tools', h('small.muted', t('build_hint')),
+                    h('label.sortby', h('span', t('sort_by')), h('select', {
+                        onchange: (e) => {
+                            buildSort = e.target.value;
+                            try {
+                                localStorage.setItem('forkville-sort', buildSort);
+                            } catch (err) { /* storage blocked */ }
+                            renderBuild();
+                        },
+                    }, Object.keys(SORTS).map(k => h('option', {value: k, selected: k === buildSort}, t('sort_' + k))))))),
         buildTab === 'seasonal' ? h('div.event-banner' + (ev ? '.on' : ''), ic('ui', ev === 'christmas' || ev === 'autumn' ? 's_winter' : 's_spring'),
             h('div', h('b', ev ? t('ev_now', {e: t('ev_' + ev)}) : t('ev_none')), h('small', [ev ? t('ev_until', {m: eventDate(ev, 'to')}) + ' · ' : '', t('ev_kept')].join('')))) : null,
         h('div.shop', items.map(tile)),
@@ -1601,6 +1650,13 @@ function goFloor(f) {
     if (S.editor?.active) S.editor.setLevel(f);
     renderHud();
 }
+// On touch screens a long press or a double tap would select text or open the callout: only fields may
+document.addEventListener('selectstart', (e) => {
+    if (!e.target.closest?.('input, textarea, [contenteditable]')) e.preventDefault();
+});
+document.addEventListener('contextmenu', (e) => {
+    if (!e.target.closest?.('input, textarea, a')) e.preventDefault();
+});
 window.addEventListener('keydown', (e) => {
     if (!S.world || e.target.closest?.('input, textarea')) return;
     if (e.key === 'PageUp') goFloor((S.world.viewFloor || 0) + 1);

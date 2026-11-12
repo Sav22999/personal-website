@@ -267,7 +267,7 @@ const ITEMS = [
     'washbasin' => ['restroom', 220, 1, 1, 1, 0, 0],
     'washbasin_marble' => ['restroom', 800, 17, 1, 1, 2, 0],
     'hand_dryer' => ['restroom', 150, 1, 1, 1, 0, 0],
-    'toilet_cubicle' => ['restroom', 260, 5, 1, 1, 0, 0],
+    'toilet_cubicle' => ['restroom', 650, 5, 1, 1, 1, 0], // a cubicle with its own toilet inside
     'wc_sign' => ['restroom', 60, 1, 1, 1, 0, 0],
     // Partitions, screens and wall blocks (people walk around them)
     'wall_thin' => ['partition', 80, 1, 1, 1, 0, 0],
@@ -322,6 +322,18 @@ const ITEMS = [
     'reindeer' => ['outdoor', 600, 3, 1, 1, 7, 0],
     'xmas_arch' => ['outdoor', 800, 3, 1, 1, 8, 0],
     'advent_candles' => ['deco', 220, 1, 1, 1, 4, 0],
+    // Cold service: the waiter takes drinks and ice creams straight from these (no cooking)
+    'drinks_fridge' => ['kitchen', 700, 4, 1, 1, 1, 0],
+    'gelato_freezer' => ['kitchen', 1100, 6, 1, 1, 3, 0],
+    // Joints for the walls: corners, T and crosses (thin, medium and thick, like the straight pieces)
+    'wall_corner_thin' => ['partition', 90, 1, 1, 1, 0, 0],
+    'wall_corner' => ['partition', 130, 1, 1, 1, 0, 0],
+    'wall_corner_thick' => ['partition', 190, 2, 1, 1, 0, 0],
+    'wall_tee_thin' => ['partition', 110, 1, 1, 1, 0, 0],
+    'wall_tee' => ['partition', 150, 2, 1, 1, 0, 0],
+    'wall_tee_thick' => ['partition', 210, 3, 1, 1, 0, 0],
+    'wall_cross_thin' => ['partition', 130, 2, 1, 1, 0, 0],
+    'wall_cross' => ['partition', 170, 3, 1, 1, 0, 0],
     'floor_oak' => ['floor', 0, 1, 0, 0, 0, 0],
     'floor_checker' => ['floor', 400, 10, 0, 0, 4, 0],
     'floor_terracotta' => ['floor', 700, 15, 0, 0, 7, 0],
@@ -518,11 +530,11 @@ const ITEMS = [
 const ITEM_TIERS = [
     'stove_basic' => 1, 'stove_retro' => 1, 'stove_steel' => 2, 'stove_grill' => 3, 'oven_brick' => 3, 'stove_pro' => 3, 'stove_gold' => 4,
     'counter_wood' => 1, 'counter_tile' => 2, 'counter_marble' => 3, 'counter_gold' => 4,
-    'fridge' => 1, 'fridge_retro' => 2, 'fridge_pro' => 3, 'sink' => 1, 'sink_steel' => 3, 'coffee_machine' => 2, 'coffee_luxe' => 4,
+    'drinks_fridge' => 2, 'gelato_freezer' => 3, 'fridge' => 1, 'fridge_retro' => 2, 'fridge_pro' => 3, 'sink' => 1, 'sink_steel' => 3, 'coffee_machine' => 2, 'coffee_luxe' => 4,
     'table_small' => 1, 'table_rustic' => 1, 'table_picnic' => 1, 'table_round' => 2, 'table_bar' => 2, 'table_long' => 2, 'table_marble' => 3, 'table_glass' => 4,
     'chair_wood' => 1, 'chair_folding' => 1, 'stool_bar' => 1, 'bench_wood' => 1, 'chair_cushion' => 2, 'chair_rattan' => 2, 'chair_bistro' => 2,
     'chair_modern' => 3, 'chair_velvet' => 3, 'chair_armchair' => 4,
-    'cleaning_cart' => 1, 'cleaning_station' => 3, 'toilet' => 1, 'toilet_luxe' => 3, 'washbasin' => 1, 'washbasin_marble' => 3,
+    'cleaning_cart' => 1, 'cleaning_station' => 3, 'toilet' => 1, 'toilet_cubicle' => 2, 'toilet_luxe' => 3, 'washbasin' => 1, 'washbasin_marble' => 3,
     'woodstove' => 1, 'fireplace_stone' => 2, 'fireplace' => 2, 'fireplace_modern' => 3, 'fireplace_marble' => 4,
     'table_white' => 1, 'table_iron' => 2, 'table_oak' => 2, 'table_hex' => 2, 'table_mosaic' => 3, 'table_cafe' => 1, 'table_marble_round' => 3, 'table_gold' => 4,
     'table_rustic_long' => 2, 'table_banquet' => 3, 'table_booth' => 2, 'table_picnic_blue' => 1, 'chair_white' => 1, 'chair_bistro_red' => 2, 'chair_ladder' => 2, 'chair_wicker' => 2,
@@ -540,7 +552,7 @@ const ITEM_TAGS = [
     'toilet' => 'toilet', 'toilet_luxe' => 'toilet', 'washbasin' => 'washbasin', 'washbasin_marble' => 'washbasin', 'hand_dryer' => 'dryer',
     'bench_park' => 'queue', 'menu_sign' => 'attract', 'food_truck' => 'truck', 'street_lamp' => 'light',
     'lamp_floor' => 'light', 'lantern' => 'light', 'neon_sign' => 'light', 'candles' => 'light',
-    'stairs_wood' => 'stairs', 'stairs_stone' => 'stairs', 'stairs_spiral' => 'stairs', 'lift_glass' => 'lift',
+    'stairs_wood' => 'stairs', 'stairs_stone' => 'stairs', 'stairs_spiral' => 'stairs', 'lift_glass' => 'lift', 'drinks_fridge' => 'drinks', 'gelato_freezer' => 'icecream', 'toilet_cubicle' => 'toilet',
     'lemonade_stand' => 'snack', 'jack_lantern' => 'light', 'friendly_ghost' => 'light', 'xmas_arch' => 'light', 'advent_candles' => 'light',
     'fridge_double' => 'fridge', 'freezer_chest' => 'fridge', 'dishwasher' => 'sink', 'register_modern' => 'register', 'trash_recycle' => 'trash', 'bean_bags' => 'rest', 'sofa_leather' => 'rest', 'sofa_corner' => 'rest',
     'espresso_bar' => 'coffee', 'water_cooler' => 'coffee', 'radio_retro' => 'music', 'guitar_stand' => 'music', 'drum_kit' => 'music', 'harp' => 'music', 'dj_booth' => 'music', 'piano_grand' => 'music',
@@ -627,8 +639,14 @@ const DISHES = [
     'sushi' => [44, 12, 11, 24, ['fish', 'rice', 'shrimp']],
     'paella' => [46, 15, 13, 25, ['rice', 'shrimp', 'pepper']],
     'steak_fries' => [52, 14, 13, 26, ['beef', 'potato', 'butter']],
+    'gelato' => [14, 4, 6, 5, ['cream', 'sugar', 'strawberry']],
+    'cold_brew' => [10, 3, 5, 6, ['coffee', 'milk', 'sugar']],
+    'sorbet' => [12, 4, 5, 7, ['lemon', 'sugar', 'strawberry']],
 ];
 const DISH_MAX_LEVEL = 5;
+/** Cold dishes: with a drinks fridge or a gelato freezer the waiter serves them straight away (no cooking). */
+const DISH_KINDS = ['lemonade' => 'drink', 'iced_tea' => 'drink', 'milkshake' => 'drink', 'cold_brew' => 'drink',
+    'banana_split' => 'icecream', 'gelato' => 'icecream', 'sorbet' => 'icecream'];
 const REVIEW_WINDOW = 50; // reviews that make the reputation
 
 /** The restaurant's title as it grows: [from level, key] (the app translates the key). */
@@ -639,7 +657,14 @@ const START_DISHES = ['bruschetta', 'fries'];
 const START_INGREDIENTS = ['tomato' => 4, 'basil' => 4, 'potato' => 4, 'onion' => 3, 'olive' => 4, 'garlic' => 2, 'flour' => 2, 'cheese' => 2];
 
 /** Staff: role => [base hire cost, cost step per worker already hired]. */
-const STAFF = ['chef' => [250, 150], 'waiter' => [180, 120], 'cleaner' => [200, 140], 'manager' => [1500, 1000]];
+const STAFF = ['chef' => [250, 150], 'waiter' => [180, 120], 'cleaner' => [200, 140], 'manager' => [1500, 1000], 'cashier' => [700, 400]];
+/**
+ * The cashier (from CASHIER_LEVEL, needs a cash register): guests pay at the till, the bill is CASHIER_BONUS higher
+ * and a tip of at least CASHIER_TIP of the bill is always left.
+ */
+const CASHIER_LEVEL = 9;
+const CASHIER_BONUS = 0.1;
+const CASHIER_TIP = 0.08;
 /**
  * Managers run the restaurant while the player is away, as if the game were open (at MANAGER_RATE of the live
  * speed) for the hours of their rank; ranks go up with a promotion. Their hours add up.
@@ -649,14 +674,15 @@ const MANAGER_PROMOTE = [2 => 800, 3 => 1800, 4 => 3500, 5 => 6000]; // cost to 
 const MANAGER_LEVEL = 7;   // first level that can hire one
 const MANAGER_RATE = 0.6;
 /** Every person has a CV: a skill from 0 to 10 for each role. Hiring cost grows with the CV. */
-const ROLES = ['chef', 'waiter', 'cleaner', 'manager'];
+const ROLES = ['chef', 'waiter', 'cleaner', 'manager', 'cashier'];
 /** The outdoor area: OUTDOOR tiles in front of the restaurant and at its side (east). */
 const OUTDOOR = 3;
-/** The game calendar: time passes only while playing (2 game minutes per second at 1×, up to 3×). */
+/** The game calendar: time passes only while playing (2 game minutes per second at 1×, ×2 or ×5 with the speed buttons). */
+const MAX_SPEED = 5;
 const GAME_MINUTES_PER_SECOND = 2;
 const DAYS_PER_MONTH = 10; // 12 months a year; year 0 starts on 1 March
 /** Daily wages: base by role + per skill point in the role + per manager rank. Paid when a calendar day ends. */
-const WAGE_BASE = ['chef' => 30, 'waiter' => 22, 'cleaner' => 18, 'manager' => 52]; // lowered: hiring already costs coins
+const WAGE_BASE = ['chef' => 30, 'waiter' => 22, 'cleaner' => 18, 'manager' => 52, 'cashier' => 26]; // lowered: hiring already costs coins
 const WAGE_PER_SKILL = 4;
 const WAGE_PER_RANK = 18;
 const WAGE_MAX_DAYS = 7; // after a long absence at most a week is paid
@@ -729,6 +755,11 @@ const STAFF_COLORS = ['#D9653B', '#7A8B3A', '#B43E5C', '#3E7CB4', '#E0A526', '#6
 function max_waiters(int $level): int
 {
     return min(6, 1 + intdiv($level, 3));
+}
+
+function max_cashiers(int $level): int
+{
+    return $level < CASHIER_LEVEL ? 0 : min(2, 1 + intdiv($level - CASHIER_LEVEL, 8));
 }
 
 function max_managers(int $level): int
@@ -809,7 +840,7 @@ function catalog_out(): array
     for ($l = 1; $l <= MAX_LEVEL; $l++) $levels[] = xp_for_level($l);
     return [
         'items' => $items, 'dishes' => $dishes, 'crops' => $crops, 'ingredients' => INGREDIENTS, 'market' => market_prices(),
-        'expand' => ['min' => MIN_SIDE, 'max' => MAX_SIDE, 'rate' => rule('expand_rate')], 'parking' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], PARKING), 'floors' => array_map(fn($f) => ['level' => $f[0], 'cost' => $f[1]], FLOORS), 'events' => events_out(), 'seasonal' => SEASONAL, 'doors' => array_map(fn($d) => ['price' => $d[0], 'level' => $d[1]], DOORS), 'doorMove' => DOOR_MOVE, 'floorStart' => FLOOR_START, 'carBonus' => CAR_BONUS, 'friendTips' => FRIEND_TIPS, 'friendTipDaily' => FRIEND_TIP_DAILY, 'levels' => $levels, 'staff' => staff_costs(), 'tags' => ITEM_TAGS, 'roles' => ROLES, 'outdoor' => OUTDOOR, 'calendar' => ['daysPerMonth' => DAYS_PER_MONTH, 'minutesPerSecond' => GAME_MINUTES_PER_SECOND], 'wages' => ['base' => WAGE_BASE, 'skill' => WAGE_PER_SKILL, 'rank' => WAGE_PER_RANK], 'kinds' => array_map(fn($k) => ['price' => $k[0], 'customers' => $k[1], 'eat' => $k[2], 'level' => $k[3], 'cost' => $k[4]], KINDS), 'uniforms' => array_map(fn($u) => ['price' => $u[0], 'level' => $u[1], 'top' => $u[2], 'bottom' => $u[3], 'accent' => $u[4], 'cut' => $u[5]], UNIFORMS), 'hairstyles' => HAIRSTYLES, 'hairColors' => HAIR_COLORS, 'hairPrice' => HAIR_PRICE, 'accessories' => ACCESSORIES, 'accessoryPrice' => ACCESSORY_PRICE, 'refresh' => CANDIDATE_REFRESH, 'manager' => ['hours' => MANAGER_HOURS, 'promote' => MANAGER_PROMOTE, 'level' => MANAGER_LEVEL, 'rate' => MANAGER_RATE], 'traits' => STAFF_TRAITS, 'titles' => LEVEL_TITLES, 'levelReward' => rule('level_reward'), 'dishMax' => DISH_MAX_LEVEL,
+        'expand' => ['min' => MIN_SIDE, 'max' => MAX_SIDE, 'rate' => rule('expand_rate')], 'parking' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], PARKING), 'floors' => array_map(fn($f) => ['level' => $f[0], 'cost' => $f[1]], FLOORS), 'events' => events_out(), 'seasonal' => SEASONAL, 'dishKinds' => DISH_KINDS, 'cashier' => ['level' => CASHIER_LEVEL, 'bonus' => CASHIER_BONUS, 'tip' => CASHIER_TIP], 'doors' => array_map(fn($d) => ['price' => $d[0], 'level' => $d[1]], DOORS), 'doorMove' => DOOR_MOVE, 'floorStart' => FLOOR_START, 'carBonus' => CAR_BONUS, 'friendTips' => FRIEND_TIPS, 'friendTipDaily' => FRIEND_TIP_DAILY, 'levels' => $levels, 'staff' => staff_costs(), 'tags' => ITEM_TAGS, 'roles' => ROLES, 'outdoor' => OUTDOOR, 'calendar' => ['daysPerMonth' => DAYS_PER_MONTH, 'minutesPerSecond' => GAME_MINUTES_PER_SECOND], 'wages' => ['base' => WAGE_BASE, 'skill' => WAGE_PER_SKILL, 'rank' => WAGE_PER_RANK], 'kinds' => array_map(fn($k) => ['price' => $k[0], 'customers' => $k[1], 'eat' => $k[2], 'level' => $k[3], 'cost' => $k[4]], KINDS), 'uniforms' => array_map(fn($u) => ['price' => $u[0], 'level' => $u[1], 'top' => $u[2], 'bottom' => $u[3], 'accent' => $u[4], 'cut' => $u[5]], UNIFORMS), 'hairstyles' => HAIRSTYLES, 'hairColors' => HAIR_COLORS, 'hairPrice' => HAIR_PRICE, 'accessories' => ACCESSORIES, 'accessoryPrice' => ACCESSORY_PRICE, 'refresh' => CANDIDATE_REFRESH, 'manager' => ['hours' => MANAGER_HOURS, 'promote' => MANAGER_PROMOTE, 'level' => MANAGER_LEVEL, 'rate' => MANAGER_RATE], 'traits' => STAFF_TRAITS, 'titles' => LEVEL_TITLES, 'levelReward' => rule('level_reward'), 'dishMax' => DISH_MAX_LEVEL,
         'rules' => ['seatSeconds' => SEAT_SECONDS, 'sellBack' => rule('sell_back'), 'marketLimit' => rule('market_limit'), 'visitHost' => rule('visit_host'), 'visitBase' => rule('visit_base')],
     ];
 }

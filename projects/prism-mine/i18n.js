@@ -1275,6 +1275,53 @@ Object.assign(translations.de, {
     "place_tip": "Zieh die Edelsteine in die Mine. Tippe einen an, um ihn zu drehen oder zu entfernen; zieh ihn hinaus, um ihn zurückzulegen."
 });
 
+// Texts of the mine sizes and of the time per turn
+Object.assign(translations.en, {
+    "time_turn_label": "Time per turn",
+    "log_timeout": "{name} ran out of time: the turn passes.",
+    "toast_timeout_mine": "Time is up: the turn passes.",
+    "level_note_easy": "A {size} × {size} mine with {n} gems in red, yellow and blue.",
+    "level_note_medium": "An {size} × {size} mine with {n} gems, white too.",
+    "level_note_hard": "A {size} × {size} mine with {n} gems, including a clear or a black one.",
+    "random_desc": "Duel someone who speaks {language}. Medium level, 1 minute per turn."
+});
+Object.assign(translations.it, {
+    "time_turn_label": "Tempo per turno",
+    "log_timeout": "{name} ha finito il tempo: il turno passa.",
+    "toast_timeout_mine": "Tempo scaduto: il turno passa.",
+    "level_note_easy": "Miniera {size} × {size} con {n} gemme rosse, gialle e blu.",
+    "level_note_medium": "Miniera {size} × {size} con {n} gemme, anche bianche.",
+    "level_note_hard": "Miniera {size} × {size} con {n} gemme, tra cui una trasparente o una nera.",
+    "random_desc": "Sfida qualcuno che parla {language}. Livello medio, 1 minuto a turno."
+});
+Object.assign(translations.es, {
+    "time_turn_label": "Tiempo por turno",
+    "log_timeout": "A {name} se le acabó el tiempo: pasa el turno.",
+    "toast_timeout_mine": "Se acabó el tiempo: pasa el turno.",
+    "level_note_easy": "Mina de {size} × {size} con {n} gemas rojas, amarillas y azules.",
+    "level_note_medium": "Mina de {size} × {size} con {n} gemas, también blancas.",
+    "level_note_hard": "Mina de {size} × {size} con {n} gemas, entre ellas una transparente o una negra.",
+    "random_desc": "Reta a alguien que habla {language}. Nivel medio, 1 minuto por turno."
+});
+Object.assign(translations.fr, {
+    "time_turn_label": "Temps par tour",
+    "log_timeout": "{name} n’a plus de temps : le tour passe.",
+    "toast_timeout_mine": "Temps écoulé : le tour passe.",
+    "level_note_easy": "Mine de {size} × {size} avec {n} gemmes rouges, jaunes et bleues.",
+    "level_note_medium": "Mine de {size} × {size} avec {n} gemmes, dont des blanches.",
+    "level_note_hard": "Mine de {size} × {size} avec {n} gemmes, dont une transparente ou une noire.",
+    "random_desc": "Défie quelqu’un qui parle {language}. Niveau moyen, 1 minute par tour."
+});
+Object.assign(translations.de, {
+    "time_turn_label": "Zeit pro Zug",
+    "log_timeout": "{name} hat keine Zeit mehr: Der Zug geht weiter.",
+    "toast_timeout_mine": "Die Zeit ist um: Der Zug geht weiter.",
+    "level_note_easy": "Mine {size} × {size} mit {n} Edelsteinen in Rot, Gelb und Blau.",
+    "level_note_medium": "Mine {size} × {size} mit {n} Edelsteinen, auch weißen.",
+    "level_note_hard": "Mine {size} × {size} mit {n} Edelsteinen, darunter ein durchsichtiger oder schwarzer.",
+    "random_desc": "Duelliere jemanden, der {language} spricht. Mittlere Stufe, 1 Minute pro Zug."
+});
+
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 let currentLang = 'en';
 

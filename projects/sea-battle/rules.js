@@ -12,7 +12,7 @@ const RULES_TEXT = {
         online_t: 'Online games',
         online: [
             'Each captain has 2 minutes to deploy the fleet; after that it is placed at random.',
-            'With a clock, only the time of the captain who is firing runs down. When it runs out, that captain loses.',
+            'With a clock, every shot has a time limit (a bonus shot gets the full time again): when it runs out, the turn passes to the other captain.',
             'Leaving an online game counts as a defeat; if your opponent stays disconnected for 2 minutes, you win automatically.',
             'In a rematch the other captain fires first.',
         ],
@@ -36,7 +36,7 @@ const RULES_TEXT = {
         online_t: 'Partite online',
         online: [
             'Ogni capitano ha 2 minuti per schierare la flotta, poi viene piazzata a caso.',
-            "Con l'orologio scorre solo il tempo di chi sta sparando. Chi finisce il tempo perde.",
+            "Con l'orologio ogni colpo ha un tempo massimo (anche il colpo bonus riparte da capo): quando scade, il turno passa all'altro capitano.",
             "Uscire da una partita online conta come sconfitta; se l'avversario resta disconnesso per 2 minuti, vinci in automatico.",
             "Nella rivincita spara per primo l'altro capitano.",
         ],
@@ -60,7 +60,7 @@ const RULES_TEXT = {
         online_t: 'Partidas en línea',
         online: [
             'Cada capitán tiene 2 minutos para desplegar la flota; después se coloca al azar.',
-            'Con reloj, solo corre el tiempo de quien dispara. Quien se queda sin tiempo pierde.',
+            'Con reloj, cada disparo tiene un tiempo máximo (el disparo extra vuelve a empezar): cuando se acaba, el turno pasa al otro capitán.',
             'Salir de una partida en línea cuenta como derrota; si tu rival sigue desconectado 2 minutos, ganas automáticamente.',
             'En la revancha dispara primero el otro capitán.',
         ],
@@ -84,7 +84,7 @@ const RULES_TEXT = {
         online_t: 'Parties en ligne',
         online: [
             'Chaque capitaine a 2 minutes pour déployer sa flotte ; ensuite elle est placée au hasard.',
-            'Avec une pendule, seul le temps du capitaine qui tire s’écoule. Celui qui n’a plus de temps perd.',
+            'Avec une pendule, chaque tir a un temps maximum (le tir bonus repart de zéro) : quand il est écoulé, le tour passe à l’autre capitaine.',
             'Quitter une partie en ligne compte comme une défaite ; si ton adversaire reste déconnecté 2 minutes, tu gagnes automatiquement.',
             'Lors de la revanche, c’est l’autre capitaine qui tire en premier.',
         ],
@@ -108,7 +108,7 @@ const RULES_TEXT = {
         online_t: 'Online-Spiele',
         online: [
             'Jeder Kapitän hat 2 Minuten, um die Flotte aufzustellen; danach wird sie zufällig gesetzt.',
-            'Mit Uhr läuft nur die Zeit des Kapitäns, der gerade schießt. Wer keine Zeit mehr hat, verliert.',
+            'Mit Uhr hat jeder Schuss ein Zeitlimit (ein Bonusschuss beginnt von vorn): Ist es abgelaufen, geht der Zug an den anderen Kapitän.',
             'Ein verlassenes Online-Spiel zählt als Niederlage; bleibt dein Gegner 2 Minuten getrennt, gewinnst du automatisch.',
             'Bei der Revanche schießt der andere Kapitän zuerst.',
         ],

@@ -59,7 +59,7 @@ const STRINGS = {
         act_greet: 'A warm welcome!', act_joke_ok: 'They loved the joke!', act_joke_bad: 'That joke fell flat…', act_dessert: 'A sweet on the house!', act_cheer: 'Full of energy again!', act_break: 'Off for a break as soon as possible.',
         act_praise: 'They beam with pride!', act_clean: 'Spotless!', act_music: 'Music fills the room', act_fun: 'Something to watch while waiting', act_cozy: 'A cozy fire is crackling', act_water: 'The plant perks up',
         status_open: 'Open', status_paused: 'No new guests', status_closed: 'Closed', status_title: 'Restaurant status', closed_status: 'Closed', paused_status: 'Not taking new guests · {n} inside',
-        speed_pause: 'Pause', speed_1: 'Normal speed', speed_2: 'Fast', speed_3: 'Very fast',
+        speed_pause: 'Pause', speed_1: 'Real time (×1)', speed_2: 'Fast (×2)', speed_3: 'Very fast (×5)',
         season_spring: 'Spring', season_summer: 'Summer', season_autumn: 'Autumn', season_winter: 'Winter',
         weather_clear: 'Clear', weather_cloudy: 'Cloudy', weather_rain: 'Rain', weather_snow: 'Snow',
         dock_reviews: 'Reviews', reviews_title: 'Reviews', reputation: 'Reputation', reviews_window: 'Average of the last {n} reviews', reviews_none: 'No reviews yet: serve some customers!',
@@ -174,7 +174,7 @@ const STRINGS = {
         act_greet: 'Un caloroso benvenuto!', act_joke_ok: 'La barzelletta è piaciuta!', act_joke_bad: 'La barzelletta non ha fatto ridere…', act_dessert: 'Un dolcetto offerto dalla casa!', act_cheer: 'Di nuovo pieno di energia!', act_break: 'Andrà in pausa appena possibile.',
         act_praise: 'Raggiante di orgoglio!', act_clean: 'Splendente!', act_music: 'La musica riempie la sala', act_fun: 'Qualcosa da guardare nell’attesa', act_cozy: 'Il camino scoppietta', act_water: 'La pianta si rianima',
         status_open: 'Aperto', status_paused: 'Niente nuovi clienti', status_closed: 'Chiuso', status_title: 'Stato del ristorante', closed_status: 'Chiuso', paused_status: 'Non accetta nuovi clienti · {n} in sala',
-        speed_pause: 'Pausa', speed_1: 'Velocità normale', speed_2: 'Veloce', speed_3: 'Velocissimo',
+        speed_pause: 'Pausa', speed_1: 'Tempo reale (×1)', speed_2: 'Veloce (×2)', speed_3: 'Velocissimo (×5)',
         season_spring: 'Primavera', season_summer: 'Estate', season_autumn: 'Autunno', season_winter: 'Inverno',
         weather_clear: 'Sereno', weather_cloudy: 'Nuvoloso', weather_rain: 'Pioggia', weather_snow: 'Neve',
         dock_reviews: 'Recensioni', reviews_title: 'Recensioni', reputation: 'Reputazione', reviews_window: 'Media delle ultime {n} recensioni', reviews_none: 'Ancora nessuna recensione: servi qualche cliente!',
@@ -556,4 +556,27 @@ Object.assign(STRINGS.it, {
     door_current: 'Attuale', door_move: 'Sposta la porta', door_move_d: 'Poi tocca una casella verde lungo il muro davanti.', door_pick: 'Tocca una casella verde del muro davanti', door_moved: 'La porta è stata spostata!',
     door_changed: 'Nuova porta montata!', door_save_first: 'Prima salva (o annulla) le modifiche.', err_door_spot: 'Lì la porta non può andare: servono libere la casella dentro e il vialetto fuori.', door_spot: 'Lì la porta non può andare',
     walls_adaptive: 'Pareti: adattive (basse dal tuo lato)', walls_low: 'Pareti: sempre basse', walls_high: 'Pareti: sempre alte', lk_door: 'Porta',
+});
+
+Object.assign(STRINGS.en, {sort_by: 'Sort by', sort_level: 'Level', sort_price_asc: 'Price: low to high', sort_price_desc: 'Price: high to low', sort_pop: 'Popularity', sort_tier: 'Quality', sort_name: 'Name'});
+Object.assign(STRINGS.it, {sort_by: 'Ordina per', sort_level: 'Livello', sort_price_asc: 'Prezzo crescente', sort_price_desc: 'Prezzo decrescente', sort_pop: 'Popolarità', sort_tier: 'Qualità', sort_name: 'Nome'});
+
+// ---------------------------------------------------------------- cold service
+Object.assign(NAMES.en, {drinks_fridge: 'Drinks fridge', gelato_freezer: 'Gelato freezer', gelato: 'Gelato cup', sorbet: 'Lemon and strawberry sorbet', cold_brew: 'Iced coffee'});
+Object.assign(NAMES.it, {drinks_fridge: 'Frigo delle bibite', gelato_freezer: 'Vetrina dei gelati', gelato: 'Coppa di gelato', sorbet: 'Sorbetto limone e fragola', cold_brew: 'Caffè freddo'});
+Object.assign(STRINGS.en, {act_fetch: 'Fetching a cold drink or an ice cream'});
+Object.assign(STRINGS.it, {act_fetch: 'Prende una bibita fresca o un gelato'});
+
+// ---------------------------------------------------------------- cashier, joints, badges
+Object.assign(NAMES.en, {cashier: 'Cashier', wall_corner_thin: 'Thin wall corner', wall_corner: 'Wall corner', wall_corner_thick: 'Thick wall corner', wall_tee_thin: 'Thin T-joint', wall_tee: 'Wall T-joint', wall_tee_thick: 'Thick T-joint', wall_cross_thin: 'Thin wall cross', wall_cross: 'Wall cross', toilet_cubicle: 'Toilet cubicle'});
+Object.assign(NAMES.it, {cashier: 'Cassiere', wall_corner_thin: 'Angolo di muro sottile', wall_corner: 'Angolo di muro', wall_corner_thick: 'Angolo di muro spesso', wall_tee_thin: 'Muro a T sottile', wall_tee: 'Muro a T', wall_tee_thick: 'Muro a T spesso', wall_cross_thin: 'Incrocio di muri sottile', wall_cross: 'Incrocio di muri', toilet_cubicle: 'Box del bagno con WC'});
+Object.assign(STRINGS.en, {
+    act_paying: 'Paying at the till', cashier_no_till: 'Cashier without a till: add a cash register', err_need_register: 'A cashier needs a cash register: place one first.',
+    for_role_chef: 'Used by the chef', for_role_waiter: 'Used by the waiters', for_role_cleaner: 'Used by the cleaners', for_role_cashier: 'Used by the cashier', for_role_staff: 'For the staff’s breaks',
+    unlock_cashier: 'You can hire a cashier: higher bills and a tip from every guest',
+});
+Object.assign(STRINGS.it, {
+    act_paying: 'Paga alla cassa', cashier_no_till: 'Cassiere senza cassa: aggiungi un registratore di cassa', err_need_register: 'Il cassiere ha bisogno di un registratore di cassa: mettine uno prima.',
+    for_role_chef: 'Lo usa il cuoco', for_role_waiter: 'Lo usano i camerieri', for_role_cleaner: 'Lo usa l’addetto alle pulizie', for_role_cashier: 'Lo usa il cassiere', for_role_staff: 'Per le pause del personale',
+    unlock_cashier: 'Puoi assumere un cassiere: conti più alti e una mancia da ogni cliente',
 });

@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const CACHE = 'sb-3';
+const CACHE = 'sb-4';
 const FILES = ['./', 'theme.js', 'style.css', 'i18n.js', 'engine.js', 'ai.js', 'rules.js', 'releases.js', 'game.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/icon-192.png', 'fonts/inter-latin-wght-normal.woff2', 'fonts/inter-latin-ext-wght-normal.woff2'];
 
 self.addEventListener('install', event => {

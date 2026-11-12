@@ -911,6 +911,38 @@ const translations = {
     },
 };
 
+// Texts of the time per shot
+Object.assign(translations.en, {
+    "time_shot_label": "Time per shot",
+    "log_timeout": "{name} ran out of time: the turn passes.",
+    "toast_timeout_mine": "Time is up: the turn passes.",
+    "random_desc": "Play someone who speaks {language}. 1 minute per shot."
+});
+Object.assign(translations.it, {
+    "time_shot_label": "Tempo per colpo",
+    "log_timeout": "{name} ha finito il tempo: il turno passa.",
+    "toast_timeout_mine": "Tempo scaduto: il turno passa.",
+    "random_desc": "Gioca con qualcuno che parla {language}. 1 minuto per colpo."
+});
+Object.assign(translations.es, {
+    "time_shot_label": "Tiempo por disparo",
+    "log_timeout": "A {name} se le acabó el tiempo: pasa el turno.",
+    "toast_timeout_mine": "Se acabó el tiempo: pasa el turno.",
+    "random_desc": "Juega con alguien que habla {language}. 1 minuto por disparo."
+});
+Object.assign(translations.fr, {
+    "time_shot_label": "Temps par tir",
+    "log_timeout": "{name} n’a plus de temps : le tour passe.",
+    "toast_timeout_mine": "Temps écoulé : le tour passe.",
+    "random_desc": "Joue avec quelqu’un qui parle {language}. 1 minute par tir."
+});
+Object.assign(translations.de, {
+    "time_shot_label": "Zeit pro Schuss",
+    "log_timeout": "{name} hat keine Zeit mehr: Der Zug geht weiter.",
+    "toast_timeout_mine": "Die Zeit ist um: Der Zug geht weiter.",
+    "random_desc": "Spiel gegen jemanden, der {language} spricht. 1 Minute pro Schuss."
+});
+
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 let currentLang = 'en';
 

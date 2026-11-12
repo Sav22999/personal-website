@@ -388,6 +388,13 @@ function manager_hours(array $r): int
     return (int)round($h);
 }
 
+/** Does the layout have a piece with this tag (register, toilet…)? */
+function has_tag(array $r, string $tag): bool
+{
+    foreach ($r['layout'] as $it) if ((ITEM_TAGS[$it['k']] ?? '') === $tag) return true;
+    return false;
+}
+
 function count_staff(array $r, string $role): int
 {
     return count(array_filter($r['staff'], fn($s) => $s['role'] === $role));
@@ -453,13 +460,13 @@ function apply_report(array &$r, array $b): array
 {
     $now = time();
     $elapsed = min(REPORT_WINDOW, max(0, $now - strtotime($r['last_report_at'] . ' UTC')));
-    // The game calendar moves only while playing: never back, never faster than 3× real time
+    // The game calendar moves only while playing: never back, never faster than the top speed allows
     $clock = (int)($b['clock'] ?? 0);
     $old = (int)($r['game_minutes'] ?? 540);
-    if ($clock > $old) $r['game_minutes'] = min($clock, $old + (int)ceil(max($elapsed, 1) * GAME_MINUTES_PER_SECOND * 3) + 30);
+    if ($clock > $old) $r['game_minutes'] = min($clock, $old + (int)ceil(max($elapsed, 1) * GAME_MINUTES_PER_SECOND * MAX_SPEED) + 30);
     // Never more customers than the seats can hold, nor than can arrive at this popularity (with some slack)
-    // The app has speed controls up to 3×: the cap allows that much, and no more
-    $cap = min((int)floor($elapsed * count_items($r, 'chair') * 3 / SEAT_SECONDS), (int)floor($elapsed / arrival_seconds($r['popularity']) * kind_of($r)[1] * 6.5)) + 2; // 3× speed at a 2× rush hour
+    // The app has speed controls up to MAX_SPEED×: the cap allows that much, and no more
+    $cap = min((int)floor($elapsed * count_items($r, 'chair') * MAX_SPEED / SEAT_SECONDS), (int)floor($elapsed / arrival_seconds($r['popularity']) * kind_of($r)[1] * MAX_SPEED * 2.2)) + 2; // top speed at a 2× rush hour
     $recipes = load_recipes((int)$r['user_id']);
     $served = 0;
     $coins = 0;
@@ -470,9 +477,11 @@ function apply_report(array &$r, array $b): array
         $served += $n;
         $coins += (int)round($n * dish_price($dish, $recipes[$dish]) * kind_of($r)[0]);
     }
+    // A cashier at the till: every bill is CASHIER_BONUS higher (the mandatory tip comes with the tips below)
+    if (count_staff($r, 'cashier') > 0 && has_tag($r, 'register')) $coins += (int)round($coins * CASHIER_BONUS);
     // Guests who came by car (the restaurant car park) spend CAR_BONUS more: no more than the spaces can bring
     $spaces = PARKING[$r['parking'] ?? 0][2] ?? 0;
-    $cars = $served > 0 ? max(0, min((int)($b['cars'] ?? 0), $served, (int)floor($elapsed * $spaces * 3 / 60) + 1)) : 0;
+    $cars = $served > 0 ? max(0, min((int)($b['cars'] ?? 0), $served, (int)floor($elapsed * $spaces * MAX_SPEED / 60) + 1)) : 0;
     if (!$spaces) $cars = 0;
     $carCoins = $served > 0 ? (int)round($cars * ($coins / $served) * CAR_BONUS) : 0;
     $coins += $carCoins;
@@ -665,7 +674,7 @@ function game_state(int $uid, ?array $away = null): array
                 'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null,
                 'friendRating' => $r['friend_n'] ? round($r['friend_sum'] / $r['friend_n'], 2) : null,
                 'gameMinutes' => (int)($r['game_minutes'] ?? 540), 'payroll' => payroll($r), 'wages' => array_map(fn($st) => ['id' => $st['id'], 'wage' => wage($st)], $r['staff']),
-                'maxWaiters' => max_waiters($r['level']), 'maxCleaners' => max_cleaners($r['level']), 'maxManagers' => max_managers($r['level']), 'managerHours' => manager_hours($r), 'maxMenu' => max_menu($r['level']), 'events' => events_out(), 'plots' => garden_plots($r['level']),
+                'maxWaiters' => max_waiters($r['level']), 'maxCleaners' => max_cleaners($r['level']), 'maxManagers' => max_managers($r['level']), 'maxCashiers' => max_cashiers($r['level']), 'managerHours' => manager_hours($r), 'maxMenu' => max_menu($r['level']), 'events' => events_out(), 'plots' => garden_plots($r['level']),
             ],
         'recipes' => (object)$recipes,
         'ingredients' => (object)load_ingredients($uid),

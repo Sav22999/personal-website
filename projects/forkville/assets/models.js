@@ -613,9 +613,14 @@ Object.assign(FURNITURE, {
         cyl(0.04, 0.04, 0.12, '#F7A1C4', 0.32, 0.88, -0.3, 8), ball(0.05, PALETTE.leaf, 0.32, 1.05, -0.3, {}, 6)),
     hand_dryer: () => group(box(0.06, 1.0, 0.06, '#B8BEC6', 0, 0, -0.4, {metalness: 0.6}), box(0.34, 0.28, 0.2, '#E6E9EC', 0, 1.0, -0.32, {flat: false}),
         box(0.24, 0.03, 0.12, '#5B6670', 0, 0.99, -0.24), glow(new THREE.BoxGeometry(0.04, 0.04, 0.01), '#5CF2E0', 0.11, 1.18, -0.21)),
-    toilet_cubicle: () => group(box(0.06, 1.7, 0.96, '#8CC8EC', -0.45, 0.1, 0), box(0.06, 1.7, 0.96, '#8CC8EC', 0.45, 0.1, 0), box(0.96, 1.7, 0.06, '#8CC8EC', 0, 0.1, -0.45),
-        box(0.84, 1.55, 0.04, '#6FB0D9', 0.06, 0.15, 0.45).rotateY(0.5), ...[-0.45, 0.45].map(x => box(0.07, 0.1, 0.07, PALETTE.steel, x, 0, 0.45, {metalness: 0.7})),
-        box(0.08, 0.04, 0.02, PALETTE.steel, 0.3, 0.9, 0.6, {metalness: 0.8})),
+    toilet_cubicle: () => { // a cubicle with its own toilet, the door left ajar
+        const wc = FURNITURE.toilet();
+        wc.scale.setScalar(0.85);
+        wc.position.z = -0.05;
+        return group(wc, box(0.06, 1.7, 0.96, '#8CC8EC', -0.45, 0.1, 0), box(0.06, 1.7, 0.96, '#8CC8EC', 0.45, 0.1, 0), box(0.96, 1.7, 0.06, '#8CC8EC', 0, 0.1, -0.45),
+            box(0.4, 1.55, 0.04, '#6FB0D9', 0.42, 0.15, 0.62).rotateY(-1.2), ...[-0.45, 0.45].map(x => box(0.07, 0.1, 0.07, PALETTE.steel, x, 0, 0.45, {metalness: 0.7})),
+            box(0.96, 0.08, 0.06, '#6FB0D9', 0, 1.72, 0.45), cyl(0.05, 0.05, 0.12, '#FFFFFF', -0.33, 0.6, -0.3, 10).rotateZ(Math.PI / 2));
+    },
     wc_sign: () => {
         const c = document.createElement('canvas');
         c.width = 128; c.height = 128;
@@ -635,9 +640,27 @@ Object.assign(FURNITURE, {
 
 // ---------------------------------------------------------------- partitions and wall blocks (people walk around them)
 
+/** A wall joint: arms from the middle of the tile to its edges (w = −x, e = +x, n = −z, s = +z), so straight pieces meet. */
+const wallJoint = (depth, color, arms, trim = PALETTE.woodDark) => {
+    const L = 0.49 + depth / 2, g = group(box(depth, 2.0, depth, color, 0, 0, 0), box(depth + 0.04, 0.1, depth + 0.04, trim, 0, 0, 0), box(depth + 0.04, 0.05, depth + 0.04, trim, 0, 2.0, 0));
+    for (const arm of arms) {
+        const along = arm === 'w' || arm === 'e', sign = arm === 'w' || arm === 'n' ? -1 : 1, c = sign * (L / 2);
+        const [w, d, x, z] = along ? [L, depth, c, 0] : [depth, L, 0, c];
+        g.add(box(w, 2.0, d, color, x, 0, z), box(w + (along ? 0 : 0.04), 0.1, d + (along ? 0.04 : 0), trim, x, 0, z), box(w + (along ? 0 : 0.04), 0.05, d + (along ? 0.04 : 0), trim, x, 2.0, z));
+    }
+    return g;
+};
 const wallBlock = (depth, color, trim = PALETTE.woodDark, len = 0.98) => group(box(len, 2.0, depth, color, 0, 0, 0), box(len + 0.02, 0.1, depth + 0.04, trim, 0, 0, 0), box(len + 0.02, 0.05, depth + 0.04, trim, 0, 2.0, 0));
 Object.assign(FURNITURE, {
     wall_thin: () => wallBlock(0.12, '#F3E6D2'),
+    wall_corner_thin: () => wallJoint(0.12, '#F3E6D2', ['w', 's']),
+    wall_corner: () => wallJoint(0.3, '#EFE0C8', ['w', 's']),
+    wall_corner_thick: () => wallJoint(0.6, '#E8D7BC', ['w', 's']),
+    wall_tee_thin: () => wallJoint(0.12, '#F3E6D2', ['w', 'e', 's']),
+    wall_tee: () => wallJoint(0.3, '#EFE0C8', ['w', 'e', 's']),
+    wall_tee_thick: () => wallJoint(0.6, '#E8D7BC', ['w', 'e', 's']),
+    wall_cross_thin: () => wallJoint(0.12, '#F3E6D2', ['w', 'e', 'n', 's']),
+    wall_cross: () => wallJoint(0.3, '#EFE0C8', ['w', 'e', 'n', 's']),
     wall_medium: () => wallBlock(0.3, '#EFE0C8'),
     wall_thick: () => wallBlock(0.6, '#E8D7BC'),
     wall_long: () => wallBlock(0.3, '#EFE0C8', PALETTE.woodDark, 1.98),
@@ -1353,6 +1376,36 @@ Object.assign(FURNITURE, {
         ...Array.from({length: 6}, (_, i) => ball(0.025, '#D7263D', Math.cos(i + 0.4) * 0.2, 0.78, Math.sin(i + 0.4) * 0.2, {}, 5))),
 });
 
+// ---------------------------------------------------------------- cold service: drinks fridge and gelato freezer
+Object.assign(FURNITURE, {
+    drinks_fridge: () => {
+        const g = group(box(0.86, 1.95, 0.7, '#D7263D', 0, 0, -0.1, {flat: false, roughness: 0.35}), box(0.86, 0.3, 0.72, '#B5302A', 0, 1.65, -0.1, {flat: false}),
+            glow(new THREE.BoxGeometry(0.74, 0.14, 0.02), '#FFF4C2', 0, 1.79, 0.265), box(0.74, 1.45, 0.02, '#DDF1F7', 0, 0.12, 0.25, {opacity: 0.35, roughness: 0.05}),
+            glow(new THREE.BoxGeometry(0.7, 1.4, 0.01), '#EAF7FF', 0, 0.15, 0.2), box(0.04, 0.5, 0.05, '#C9CED4', 0.33, 0.6, 0.28, {metalness: 0.7}));
+        const cols = ['#2F9E8F', '#F6C945', '#E07B39', '#7FC4D9', '#9B5DE5', '#6BBF59'];
+        for (let r = 0; r < 4; r++) {
+            g.add(box(0.7, 0.02, 0.5, '#C9CED4', 0, 0.18 + r * 0.34, -0.05, {metalness: 0.5}));
+            for (let c = 0; c < 6; c++) g.add(cyl(0.035, 0.04, 0.2 + (c % 2) * 0.04, cols[(r * 2 + c) % cols.length], -0.28 + c * 0.112, 0.2 + r * 0.34, -0.02 + (c % 2) * 0.06, 8, {flat: false, roughness: 0.3}));
+        }
+        return g;
+    },
+    gelato_freezer: () => {
+        const g = group(box(0.94, 0.85, 0.72, '#FFFFFF', 0, 0, -0.08, {flat: false, roughness: 0.4}), box(0.94, 0.12, 0.74, '#F7A1C4', 0, 0.75, -0.08),
+            box(0.9, 0.04, 0.68, '#C9CED4', 0, 0.85, -0.08, {metalness: 0.5}), box(0.9, 0.4, 0.02, '#DDF1F7', 0, 0.9, 0.18, {opacity: 0.35, roughness: 0.05}).rotateX(-0.45),
+            box(0.9, 0.04, 0.3, '#DDF1F7', 0, 1.25, -0.3, {opacity: 0.4}), ...[0.15, 0.45].map(y => box(0.9, 0.05, 0.02, '#F7A1C4', 0, y, 0.285)));
+        const flavours = [['#F7A1C4', '#E63946'], ['#FFF3C4', '#E9C46A'], ['#7B4E2C', '#5A3218'], ['#9ED2C0', '#2F9E8F'], ['#F6E27A', '#F6C945'], ['#B9A3E0', '#6B4FA0']];
+        flavours.forEach(([c, top], i) => {
+            const x = -0.3 + (i % 3) * 0.3, z = -0.22 + Math.floor(i / 3) * 0.24;
+            g.add(box(0.26, 0.06, 0.2, '#B8BEC6', x, 0.84, z, {metalness: 0.5}));
+            const scoop = mesh(new THREE.SphereGeometry(0.1, 12, 8), mat(c, {flat: false}), x, 0.9, z);
+            scoop.scale.set(1.2, 0.5, 0.9);
+            g.add(scoop, ball(0.018, top, x + 0.04, 0.95, z, {}, 6));
+        });
+        g.add(cyl(0.012, 0.02, 0.2, '#C9CED4', 0.38, 0.92, 0.1, 6, {metalness: 0.7}).rotateZ(0.7)); // the scoop
+        return g;
+    },
+});
+
 // The floor lamp's shade glows at night like the others
 FURNITURE.lamp_floor = () => group(cyl(0.16, 0.18, 0.04, PALETTE.ink, 0, 0, 0, 14), cyl(0.02, 0.02, 1.35, PALETTE.ink, 0, 0.04, 0, 6),
     mesh(new THREE.CylinderGeometry(0.12, 0.24, 0.3, 14), glowMat('#F6D58E'), 0, 1.45, 0), lightBulb());
@@ -1598,6 +1651,42 @@ function makeProps(role, armL, armR, p) {
         mop.visible = false;
         p.add(mop);
         props.mop = mop;
+        // The broom: a long handle, a red head with stiff bristles (pivots at the hands, like the mop)
+        const broom = new THREE.Group();
+        broom.add(pp(new THREE.CylinderGeometry(0.013, 0.013, 0.95, 6), '#E9C46A', 0, -0.47, 0));
+        const bh = new THREE.Group();
+        bh.position.y = -0.93;
+        bh.add(pp(new THREE.BoxGeometry(0.26, 0.04, 0.05), '#D7263D'));
+        for (let i = 0; i < 9; i++) bh.add(pp(new THREE.BoxGeometry(0.02, 0.07, 0.04), '#5A3A22', -0.12 + i * 0.03, -0.05, 0));
+        broom.add(bh);
+        broom.position.set(0.06, 0.74, 0.2);
+        broom.visible = false;
+        p.add(broom);
+        props.broom = broom;
+        // A bucket on wheels with a wringer, set down beside the cleaner while mopping
+        const bucket = new THREE.Group();
+        bucket.add(pp(new THREE.CylinderGeometry(0.15, 0.12, 0.26, 12), '#F6C945', 0, 0.16, 0), pp(new THREE.CylinderGeometry(0.135, 0.135, 0.01, 12), '#7FC4D9', 0, 0.27, 0),
+            pp(new THREE.BoxGeometry(0.12, 0.08, 0.14), '#3A3F45', 0.05, 0.3, 0), pp(new THREE.TorusGeometry(0.13, 0.008, 4, 12, Math.PI), '#3A3F45', 0, 0.29, 0));
+        for (const [x, z] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) bucket.add(pp(new THREE.SphereGeometry(0.025, 6, 4), '#2C2C30', x, 0.025, z));
+        bucket.position.set(0.45, 0, 0.15);
+        bucket.visible = false;
+        p.add(bucket);
+        props.bucket = bucket;
+        // The dustpan in the left hand, and the toilet brush in the right
+        hand(armL, 'dustpan', g => {
+            const pan = new THREE.Group();
+            pan.position.set(0, -0.06, 0.06);
+            pan.add(pp(new THREE.BoxGeometry(0.22, 0.012, 0.16), '#3E7CB4', 0, 0, 0.08), pp(new THREE.BoxGeometry(0.22, 0.06, 0.012), '#3E7CB4', 0, 0.03, 0.0),
+                pp(new THREE.CylinderGeometry(0.012, 0.012, 0.14, 6), '#3E7CB4', 0, 0.08, -0.03).rotateX(-0.4));
+            g.add(pan);
+        });
+        hand(armR, 'brush', g => {
+            const b = new THREE.Group();
+            b.position.set(0, -0.02, 0.05);
+            b.rotation.x = 2.2; // pointing down-forward, into the bowl
+            b.add(pp(new THREE.CylinderGeometry(0.012, 0.012, 0.3, 6), '#FFFFFF', 0, 0.15, 0), pp(new THREE.SphereGeometry(0.045, 8, 6), '#2F9E8F', 0, 0.32, 0));
+            g.add(b);
+        });
     }
     if (role === 'customer') {
         hand(armR, 'fork', g => {
@@ -1639,12 +1728,12 @@ export function personModel(role, color, seed = 0, look = {}) {
     const rnd = (n) => Math.abs(Math.sin(seed * 12.9898 + n * 78.233) * 43758.5453) % 1;
     const skin = PALETTE.skin[Math.floor(rnd(1) * PALETTE.skin.length)];
     const uni = look.uniform && look.uniform.top ? look.uniform : null;
-    const roleTop = {chef: '#FFFFFF', waiter: '#FAFAFA', cleaner: '#7FC4D9', manager: '#3D5A8C'}[role];
-    const roleBottom = {chef: '#3B3B3B', waiter: '#22201F', cleaner: '#2F6F8F', manager: '#34405E'}[role];
+    const roleTop = {chef: '#FFFFFF', waiter: '#FAFAFA', cleaner: '#7FC4D9', manager: '#3D5A8C', cashier: '#2F9E8F'}[role];
+    const roleBottom = {chef: '#3B3B3B', waiter: '#22201F', cleaner: '#2F6F8F', manager: '#34405E', cashier: '#1E3A4A'}[role];
     const shirt = uni?.top || roleTop || (color || SHIRTS[Math.floor(rnd(2) * SHIRTS.length)]);
     const pants = uni?.bottom || roleBottom || ['#2F3B52', '#4A3B2F', '#2E2E2E', '#5B5F4A'][Math.floor(rnd(3) * 4)];
     const accent = uni?.accent || color || PALETTE.terracotta;
-    const cut = uni?.cut || {chef: 'apron', waiter: 'vest', cleaner: 'overalls', manager: 'tie'}[role] || '';
+    const cut = uni?.cut || {chef: 'apron', waiter: 'vest', cleaner: 'overalls', manager: 'tie', cashier: 'vest'}[role] || '';
     const p = new THREE.Group();
     const body = new THREE.Group();
     body.position.y = 0.5;
@@ -1866,11 +1955,25 @@ export function animatePerson(p, state, t, ctx = {}) {
                 armRz = -0.12;
                 twist *= 0.3;
                 show.tray = true;
+            } else if (ctx.tool === 'mop' || ctx.tool === 'broom') { // on the way to a job: the tool carried upright
+                armL = -w * 0.65;
+                armLz = -0.06;
+                armR = -0.5;
+                armRz = 0.1;
+                show[ctx.tool] = true;
+                if (ctx.tool === 'mop') show.bucket = true; // the bucket rolls along
+                const tool = u.props[ctx.tool];
+                if (tool) tool.rotation.set(ctx.tool === 'broom' ? -0.6 : -0.3, 0, -0.1); // leaning forward, the head just off the floor
             } else {
                 armL = -w * 0.65;
                 armR = w * 0.65;
                 armLz = -0.06;
                 armRz = 0.06;
+                if (ctx.tool === 'can') {
+                    show.can = true;
+                    armR = -0.25;
+                }
+                if (ctx.tool === 'brush') show.brush = true;
                 if (grumpy) angry = true;
             }
             break;
@@ -2016,8 +2119,37 @@ export function animatePerson(p, state, t, ctx = {}) {
             headX = 0.4;
             sway = s(t * 5) * 0.02;
             break;
+        case 'sweep': { // broom in the right hand, dustpan held low in the left: short brisk strokes into the pan
+            show.broom = show.dustpan = true;
+            const ph = t * 7;
+            armR = -0.75 + s(ph) * 0.12;
+            armRz = -0.15 + s(ph) * 0.25;
+            armL = -0.55;
+            armLz = 0.25;
+            lean = 0.3;
+            headX = 0.4;
+            twist = s(ph) * 0.12;
+            legL = 0.15;
+            legR = -0.2;
+            bodyY -= 0.04; // knees a little bent
+            if (u.props.broom) u.props.broom.rotation.set(-0.95 + c(ph) * 0.05, twist, 0.1 + s(ph) * 0.4); // bristles on the floor, swinging
+            break;
+        }
+        case 'scrub': { // bent over the toilet, scrubbing round and round with the brush
+            show.brush = true;
+            armR = -1.25 + c(t * 9) * 0.12;
+            armRz = -0.2 + s(t * 9) * 0.18;
+            armL = -0.6;
+            armLz = 0.35;
+            lean = 0.5;
+            headX = 0.45;
+            bodyY -= 0.06;
+            legL = 0.25;
+            legR = 0.25;
+            break;
+        }
         case 'mop': {
-            show.mop = true;
+            show.mop = show.bucket = true;
             const ph = t * 5;
             armL = armR = -0.9;
             armLz = 0.38 + s(ph) * 0.12;
@@ -2125,10 +2257,14 @@ export function animatePerson(p, state, t, ctx = {}) {
     u.armR.rotation.set(armR, 0, armRz);
     p.scale.setScalar(scale * (u.base || 1));
 
+    // The long tools pivot at the hands: lower while working, by the right hand while walking
+    if (u.props.broom) u.props.broom.position.set(state === 'sweep' ? 0.1 : 0.24, state === 'sweep' ? 0.62 : 0.86, state === 'sweep' ? 0.22 : 0.1);
+    if (u.props.mop) u.props.mop.position.set(state === 'mop' ? 0 : 0.22, state === 'mop' ? 0.74 : 0.9, state === 'mop' ? 0.24 : 0.08);
+    if (u.props.bucket) u.props.bucket.position.set(state === 'mop' ? 0.45 : 0.4, 0, state === 'mop' ? 0.15 : -0.2);
     // Props: only the ones this pose uses; hand props are kept level against the arm's swing
     if (u.props) for (const [name, g] of Object.entries(u.props)) {
         g.visible = !!show[name];
-        if (!g.visible || name === 'tray' || name === 'mop') continue;
+        if (!g.visible || ['tray', 'mop', 'broom', 'bucket'].includes(name)) continue;
         const left = g.parent === u.armL;
         g.rotation.set(-(left ? armL : armR) - lean, 0, -(left ? armLz : armRz));
         if (name === 'cup') g.rotation.x += Math.max(0, s(t * 1.6)) * 0.9; // tipped to drink
@@ -2544,6 +2680,31 @@ Object.assign(DISHES_3D, {
             f.rotation.y = (i % 2 ? 0.3 : -0.2);
             g.add(f);
         }
+    },
+});
+
+Object.assign(DISHES_3D, {
+    gelato: (g) => {
+        g.add(mesh(new THREE.CylinderGeometry(0.07, 0.045, 0.08, 16), food('#F7A1C4', {roughness: 0.4}), 0, 0.04, 0));
+        [['#F7A1C4', 0, 0.11, 0], ['#FFF3C4', -0.035, 0.15, 0.01], ['#7B4E2C', 0.035, 0.15, -0.01]].forEach(([c, x, y, z]) => g.add(mesh(new THREE.SphereGeometry(0.045, 12, 10), food(c), x, y, z)));
+        const wafer = mesh(new THREE.BoxGeometry(0.03, 0.08, 0.01), food('#E3A55B'), 0.03, 0.2, 0.02);
+        wafer.rotation.z = -0.4;
+        g.add(wafer, mesh(new THREE.SphereGeometry(0.014, 8, 6), food('#D7263D', {roughness: 0.3}), -0.01, 0.2, 0.0));
+    },
+    sorbet: (g) => {
+        g.add(mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.01, 14), food('#FFFFFF', {opacity: 0.6, roughness: 0.05}), 0, 0.005, 0), mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 6), food('#FFFFFF', {opacity: 0.6}), 0, 0.05, 0));
+        g.add(mesh(new THREE.SphereGeometry(0.08, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), food('#FFFFFF', {opacity: 0.5, roughness: 0.05}), 0, 0.17, 0));
+        [['#F6E27A', -0.03], ['#E63946', 0.03]].forEach(([c, x]) => g.add(mesh(new THREE.SphereGeometry(0.04, 12, 10), food(c, {roughness: 0.6}), x, 0.17, 0)));
+        g.add(leafBasil(0, 0.21, 0));
+    },
+    cold_brew: (g) => {
+        glassCup(g, '#5A3218', 0.2);
+        for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(0.025, 0.025, 0.025), food('#E8F6FF', {opacity: 0.7, roughness: 0.05}), (i - 1) * 0.022, 0.15, (i % 2) * 0.015));
+        const swirl = mesh(new THREE.TorusGeometry(0.035, 0.008, 6, 14), food('#F4E6D0'), 0, 0.12, 0);
+        swirl.rotation.x = Math.PI / 2;
+        const straw = mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.24, 6), food('#2C2C30'), 0.02, 0.2, 0);
+        straw.rotation.z = -0.2;
+        g.add(swirl, straw);
     },
 });
 

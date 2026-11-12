@@ -17,8 +17,9 @@ require_once __DIR__ . '/engine.php';
 const ONLINE_WINDOW_SECONDS = 15;
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
 const LEVELS = ['easy', 'medium', 'hard'];
-const TIME_CONTROLS = [0, 180, 300, 600];
-const RANDOM_TIME_CONTROL = 300;
+const TIME_CONTROLS = [0, 30, 60, 120]; // seconds per turn; when they run out the turn passes
+const RANDOM_TIME_CONTROL = 60;
+const MAX_SKIPS_PER_POLL = 20;
 const MAX_STRIKES = 3;
 const PLACE_SECONDS = 120; // after this, a late player's gems are placed at random
 const ABANDON_SECONDS = 120; // an opponent gone this long loses automatically
@@ -92,22 +93,28 @@ function clockRunning($room)
     return (int)$room['time_control'] > 0 && $room['status'] === 'playing';
 }
 
+// The size of the mine goes with the level: 6 x 6, 8 x 8 or 10 x 10
+function mineSize($room)
+{
+    return PrismMineEngine::sizeOf((string)$room['level']);
+}
+
 function gemSet($room)
 {
-    return array_map(fn($g) => ['shape' => $g['shape'], 'color' => $g['color']], PrismMineEngine::decode($room['mine']) ?? []);
+    return array_map(fn($g) => ['shape' => $g['shape'], 'color' => $g['color']], PrismMineEngine::decode($room['mine'], 0, mineSize($room)) ?? []);
 }
 
 // The mine hidden by a player, or null while it is not placed yet
 function mineOf($room, $slot)
 {
-    return PrismMineEngine::decode($room["p{$slot}_mine"] ?? null);
+    return PrismMineEngine::decode($room["p{$slot}_mine"] ?? null, 0, mineSize($room));
 }
 
 // Ports a player has already lit in the other mine, as entry or exit: a second beam there tells nothing new
 function usedPorts($room, $slot)
 {
     $mine = mineOf($room, other($slot));
-    $map = PrismMineEngine::buildMap($mine);
+    $map = PrismMineEngine::buildMap($mine, mineSize($room));
     $used = [];
     foreach (actionList($room) as $a) {
         if ($a['t'] !== 'p' || $a['s'] !== (int)$slot) continue;
@@ -164,7 +171,7 @@ function checkPlacementTime(&$room)
     foreach ([1, 2] as $slot) {
         $key = "p{$slot}_mine";
         if (!$room[$key]) {
-            $room[$key] = PrismMineEngine::encode(PrismMineEngine::randomLayout(gemSet($room)));
+            $room[$key] = PrismMineEngine::encode(PrismMineEngine::randomLayout(gemSet($room), mineSize($room)));
             $pdo->prepare("UPDATE pm_rooms SET $key = ? WHERE id = ?")->execute([$room[$key], $room['id']]);
         }
     }
@@ -189,7 +196,7 @@ function placeGems()
             return;
         }
         $set = gemSet($room);
-        $layout = PrismMineEngine::decode($_POST['layout'] ?? '', count($set));
+        $layout = PrismMineEngine::decode($_POST['layout'] ?? '', count($set), mineSize($room));
         if (!$layout || !PrismMineEngine::sameSet($layout, $set)) {
             $pdo->rollBack();
             respondError('invalid_layout');
@@ -373,16 +380,26 @@ function finishGame($room, $winnerSlot, $reason)
     $pdo->prepare("UPDATE pm_players SET wins = wins + 1 WHERE room_id = ? AND slot = ?")->execute([$room['id'], $winnerSlot]);
 }
 
+// Time per turn: when it runs out, the turn passes to the other player (a skip in the list of actions).
+// Never ends the game, so it always returns false (the callers still treat true as "game over").
 function checkFlag(&$room)
 {
+    global $pdo;
     if (!clockRunning($room)) return false;
-    $actor = slotToAct($room);
-    $key = $actor === 1 ? 'p1_ms' : 'p2_ms';
-    if ((int)$room[$key] - (nowMs() - (int)$room['turn_started_ms']) > 0) return false;
-    $room[$key] = 0;
-    finishGame($room, other($actor), 'timeout');
-    $room['status'] = 'finished';
-    return true;
+    $limit = (int)$room['time_control'] * 1000;
+    $list = actionList($room);
+    $started = (int)$room['turn_started_ms'];
+    $skipped = 0;
+    while (nowMs() - $started >= $limit && $skipped < MAX_SKIPS_PER_POLL) {
+        $list[] = ['s' => count($list) % 2 === 0 ? (int)$room['first_slot'] : other($room['first_slot']), 't' => 'x'];
+        $started += $limit;
+        $skipped++;
+    }
+    if (!$skipped) return false;
+    $room['actions'] = json_encode($list);
+    $room['turn_started_ms'] = $started;
+    $pdo->prepare("UPDATE pm_rooms SET actions = ?, turn_started_ms = ? WHERE id = ?")->execute([$room['actions'], $started, $room['id']]);
+    return false;
 }
 
 // The opponent lost the connection (or left) for ABANDON_SECONDS: the player still here wins
@@ -438,7 +455,8 @@ function pollState()
     // Every beam with its answer (each one went into the other player's mine); answers only say right or wrong
     $mySlot = (int)$player['slot'];
     $mines = [1 => mineOf($room, 1), 2 => mineOf($room, 2)];
-    $maps = [1 => $mines[1] ? PrismMineEngine::buildMap($mines[1]) : null, 2 => $mines[2] ? PrismMineEngine::buildMap($mines[2]) : null];
+    $size = mineSize($room);
+    $maps = [1 => $mines[1] ? PrismMineEngine::buildMap($mines[1], $size) : null, 2 => $mines[2] ? PrismMineEngine::buildMap($mines[2], $size) : null];
     $actions = [];
     foreach (actionList($room) as $a) {
         if ($a['t'] === 'p') {
@@ -446,19 +464,14 @@ function pollState()
             if (!$maps[$target]) continue;
             $res = PrismMineEngine::trace($maps[$target], $mines[$target], $a['p']);
             $actions[] = ['s' => $a['s'], 't' => 'p', 'p' => $a['p'], 'exit' => $res['exit'], 'colors' => $res['colors']];
-        } else $actions[] = ['s' => $a['s'], 't' => 'g', 'ok' => $a['ok']];
+        } elseif ($a['t'] === 'x') $actions[] = ['s' => $a['s'], 't' => 'x'];
+        else $actions[] = ['s' => $a['s'], 't' => 'g', 'ok' => $a['ok']];
     }
     $gems = gemSet($room);
     usort($gems, fn($a, $b) => strcmp($a['shape'], $b['shape']));
 
-    $p1Ms = (int)$room['p1_ms'];
-    $p2Ms = (int)$room['p2_ms'];
     $turn = slotToAct($room);
-    if (clockRunning($room)) {
-        $elapsed = nowMs() - (int)$room['turn_started_ms'];
-        if ($turn === 1) $p1Ms = max(0, $p1Ms - $elapsed);
-        else $p2Ms = max(0, $p2Ms - $elapsed);
-    }
+    $turnLeftMs = clockRunning($room) ? max(0, (int)$room['time_control'] * 1000 - (nowMs() - (int)$room['turn_started_ms'])) : 0;
 
     echo json_encode([
         'status' => $room['status'],
@@ -466,6 +479,7 @@ function pollState()
         'isPublic' => (bool)$room['is_public'],
         'round' => (int)$room['round'],
         'level' => $room['level'],
+        'size' => mineSize($room),
         'firstSlot' => (int)$room['first_slot'],
         'mySlot' => (int)$player['slot'],
         'timeControl' => (int)$room['time_control'],
@@ -476,8 +490,7 @@ function pollState()
         'oppMine' => $room['status'] === 'finished' ? ($room['p' . other($mySlot) . '_mine'] ?: null) : null,
         'placeLeftMs' => $room['status'] === 'placing' ? max(0, PLACE_SECONDS * 1000 - (nowMs() - (int)$room['place_started_ms'])) : 0,
         'turn' => $turn,
-        'p1Ms' => $p1Ms,
-        'p2Ms' => $p2Ms,
+        'turnLeftMs' => $turnLeftMs,
         'result' => $room['result'],
         'reason' => $room['reason'],
         'players' => $players,
@@ -496,13 +509,6 @@ function lockForTurn($player, $n)
     return [$room, null, false];
 }
 
-function spendClock(&$room, $slot, $now)
-{
-    if ((int)$room['time_control'] <= 0) return;
-    $key = (int)$slot === 1 ? 'p1_ms' : 'p2_ms';
-    $room[$key] = max(0, (int)$room[$key] - ($now - (int)$room['turn_started_ms']));
-}
-
 function saveAction(&$room, $entry, $now)
 {
     global $pdo;
@@ -518,7 +524,7 @@ function probe()
     global $pdo;
     $player = getPlayer($_POST['token'] ?? '');
     $port = isset($_POST['port']) ? (int)$_POST['port'] : -1;
-    if (!$player || $port < 0 || $port >= PrismMineEngine::PORTS) {
+    if (!$player || $port < 0 || $port >= 40) { // the exact limit (4 x size) is checked once the room is known
         respondError('invalid_request');
         return;
     }
@@ -530,13 +536,17 @@ function probe()
             respondError($error);
             return;
         }
+        if ($port >= mineSize($room) * 4) {
+            $pdo->rollBack();
+            respondError('invalid_request');
+            return;
+        }
         if (isset(usedPorts($room, $player['slot'])[$port])) {
             $pdo->rollBack();
             respondError('port_used');
             return;
         }
         $now = nowMs();
-        spendClock($room, $player['slot'], $now);
         saveAction($room, ['s' => (int)$player['slot'], 't' => 'p', 'p' => $port], $now);
         $pdo->commit();
     } catch (Throwable $e) {
@@ -544,7 +554,7 @@ function probe()
         throw $e;
     }
     $mine = mineOf($room, other($player['slot']));
-    $res = PrismMineEngine::trace(PrismMineEngine::buildMap($mine), $mine, $port);
+    $res = PrismMineEngine::trace(PrismMineEngine::buildMap($mine, mineSize($room)), $mine, $port);
     echo json_encode(['success' => true, 'exit' => $res['exit'], 'colors' => $res['colors']]);
 }
 
@@ -565,16 +575,15 @@ function guess()
             return;
         }
         $hidden = mineOf($room, other($player['slot']));
-        $answer = PrismMineEngine::decode($_POST['layout'] ?? '', count($hidden));
+        $answer = PrismMineEngine::decode($_POST['layout'] ?? '', count($hidden), mineSize($room));
         if (!$answer) {
             $pdo->rollBack();
             respondError('invalid_layout');
             return;
         }
-        $ok = PrismMineEngine::isCorrect($answer, $hidden);
+        $ok = PrismMineEngine::isCorrect($answer, $hidden, mineSize($room));
         $slot = (int)$player['slot'];
         $now = nowMs();
-        spendClock($room, $slot, $now);
         saveAction($room, ['s' => $slot, 't' => 'g', 'ok' => $ok], $now);
         if ($ok) finishGame($room, $slot, 'solved');
         else {

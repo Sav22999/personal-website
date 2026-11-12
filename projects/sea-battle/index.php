@@ -1,6 +1,6 @@
 <?php
 $description = 'Free online Sea Battle (Battaglia Navale): place your fleet and sink your opponent\'s. Play a friend with a room code, a random opponent, on the same device or against the computer. No sign-up.';
-$v = 3;
+$v = 4;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';
@@ -23,9 +23,9 @@ $ICON_ARROW = $icon('<path d="M5 12h14M13 6l6 6-6 6"/>', 18, 2.4);
 
 $timeChips = function ($name, $default) {
     $out = '<div class="chips" role="radiogroup">';
-    foreach ([0, 3, 5, 10] as $m) {
-        $label = $m === 0 ? '<span data-i18n="time_none">No clock</span>' : $m . ' min';
-        $out .= '<label class="chip"><input type="radio" name="' . $name . '" value="' . $m . '"' . ($m === $default ? ' checked' : '') . '><span>' . $label . '</span></label>';
+    foreach ([0 => null, 30 => '30 s', 60 => '1 min', 120 => '2 min'] as $sec => $text) {
+        $label = $text === null ? '<span data-i18n="time_none">No clock</span>' : $text;
+        $out .= '<label class="chip"><input type="radio" name="' . $name . '" value="' . $sec . '"' . ($sec === $default ? ' checked' : '') . '><span>' . $label . '</span></label>';
     }
     return $out . '</div>';
 };
@@ -197,8 +197,8 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                                 </div>
                             </div>
                             <div class="field">
-                                <span class="field-label" data-i18n="time_label">Time per player</span>
-                                <?= $timeChips('time-online', 5) ?>
+                                <span class="field-label" data-i18n="time_shot_label">Time per shot</span>
+                                <?= $timeChips('time-online', 60) ?>
                             </div>
                             <?= $bonusSwitch('bonus-online') ?>
                             <button type="button" class="btn btn-primary btn-block" id="btn-create" data-i18n="create_room">Create game</button>
@@ -221,7 +221,7 @@ $bonusSwitch = fn($id) => '<label class="option-row compact"><span><span data-i1
                                 <div class="mode-icon warm"><?= $icon($ICON_SHUFFLE, 22) ?></div>
                                 <div>
                                     <h3 data-i18n="random_title">Random opponent</h3>
-                                    <p id="random-desc">Play someone who speaks your language. 5 minutes per player.</p>
+                                    <p id="random-desc">Play someone who speaks your language. 1 minute per shot.</p>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-secondary btn-block" id="btn-random" data-i18n="random_btn">Find a player</button>

@@ -49,6 +49,13 @@ popularity. Earnings while away: at most 4 hours, at a quarter of the live speed
   (one flat grid, with stair/lift links); the scene stacks them and shows one floor at a time.
 - **Car park** (`parking`, 3 levels): guests who come by car pay +80% and tip more (server-capped in `apply_report`).
 - **Neighbourhood**: houses multiply and grow taller with the level; cars and passers-by follow the hour (`assets/town.js`).
+- **Door**: movable along the front wall (`game.door`, the tile inside and the path outside must be free) and 8 styles.
+- **Walls**: adaptive (Sims style), always low or always high, chosen with a camera button (stored on the device).
+- **Seasonal pieces**: on sale only during their event on the real calendar (Easter computed each year), kept once bought.
+- **Cold service**: with a drinks fridge or a gelato freezer the waiter serves cold drinks and ice creams himself
+  (`DISH_KINDS`), no chef needed; without them the chef prepares them.
+- **Cashier** (from level 9, needs a cash register): guests pay at the till, bills +10% and a tip of at least 8%
+  (server: `CASHIER_BONUS` in `apply_report`).
 - **Tips**: customers tip on good service; players can tip a friend while visiting (`social.tip`, daily cap).
 - **One copy at a time**: each open copy sends an `X-Instance` id; opening the game elsewhere pauses the older copy.
 - **Statement**: every coin movement is in `ledger` (30 days), shown by tapping the coins.

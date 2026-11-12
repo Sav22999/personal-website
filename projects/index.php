@@ -364,7 +364,7 @@ $canonical = '/projects/';
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
-                <img src="/images/projects/forkville.png?v=2" alt="">
+                <img src="/images/projects/forkville.png?v=3" alt="">
             </div>
             <h3>Forkville</h3>
             <p>Run your own little restaurant in 3D: build and decorate it, hire chefs and waiters, grow ingredients,

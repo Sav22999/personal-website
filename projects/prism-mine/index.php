@@ -1,6 +1,6 @@
 <?php
 $description = 'Prism Mine: a free deduction game. Send beams of light into a dark mine, watch where they come out and in which colour, and work out where the gems are hidden. Solo, daily mine and online duels. No sign-up.';
-$v = 9;
+$v = 10;
 $icon = fn($d, $size = 18, $sw = 2.2) => '<svg viewBox="0 0 24 24" width="' . $size . '" height="' . $size . '" fill="none" stroke="currentColor" stroke-width="' . $sw . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
 $ICON_CLOSE = $icon('<path d="M6 6l12 12M18 6L6 18"/>', 20, 2.4);
 $ICON_FLAG = '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>';
@@ -185,10 +185,10 @@ $levelChips = function ($name, $default) {
                             </div>
                             <div class="field"><span class="field-label" data-i18n="level_label">Level</span><?= $levelChips('online-level', 'medium') ?></div>
                             <div class="field">
-                                <span class="field-label" data-i18n="time_label">Time per player</span>
+                                <span class="field-label" data-i18n="time_turn_label">Time per turn</span>
                                 <div class="chips" role="radiogroup">
-                                    <?php foreach ([0, 3, 5, 10] as $m): ?>
-                                        <label class="chip"><input type="radio" name="time-online" value="<?= $m ?>"<?= $m === 5 ? ' checked' : '' ?>><span><?= $m === 0 ? '<span data-i18n="time_none">No clock</span>' : $m . ' min' ?></span></label>
+                                    <?php foreach ([0 => null, 30 => '30 s', 60 => '1 min', 120 => '2 min'] as $sec => $label): ?>
+                                        <label class="chip"><input type="radio" name="time-online" value="<?= $sec ?>"<?= $sec === 60 ? ' checked' : '' ?>><span><?= $label === null ? '<span data-i18n="time_none">No clock</span>' : $label ?></span></label>
                                     <?php endforeach; ?>
                                 </div>
                             </div>
@@ -205,7 +205,7 @@ $levelChips = function ($name, $default) {
                         <div class="mode-card">
                             <div class="mode-head">
                                 <div class="mode-icon warm"><?= $icon('<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>', 22) ?></div>
-                                <div><h3 data-i18n="random_title">Random opponent</h3><p id="random-desc">Duel someone who speaks your language. Medium level, 5 minutes each.</p></div>
+                                <div><h3 data-i18n="random_title">Random opponent</h3><p id="random-desc">Duel someone who speaks your language. Medium level, 1 minute per turn.</p></div>
                             </div>
                             <button type="button" class="btn btn-secondary btn-block" id="btn-random" data-i18n="random_btn">Find a player</button>
                         </div>

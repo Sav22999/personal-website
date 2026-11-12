@@ -22,7 +22,7 @@ Store assets:
 A deduction game of light and colour. Somewhere in the dark mine, gems are hiding. Send a beam from the edge: it bounces off the gems, picks up their colours and comes out somewhere else. Where it comes out, and in which colour, is your only clue.
 
 HOW IT WORKS
-• 32 entrances around an 8 × 8 mine
+• Mines of 6 × 6, 8 × 8 or 10 × 10, with entrances all around
 • Flat sides bounce the beam back, slanted sides turn it by 90°
 • Colours mix like paint: red and blue make purple, yellow and blue make green
 • A clear gem bends the beam without colour, a black one swallows it
@@ -80,7 +80,7 @@ PRIVACY-FIRST
 Un gioco di deduzione fatto di luce e colori. Da qualche parte nella miniera buia si nascondono delle gemme. Manda un raggio dal bordo: rimbalza sulle gemme, ne prende i colori ed esce da un'altra parte. Da dove esce, e di che colore, è il tuo unico indizio.
 
 COME FUNZIONA
-• 32 ingressi attorno a una miniera 8 × 8
+• Miniere 6 × 6, 8 × 8 o 10 × 10, con ingressi tutto attorno
 • I lati piatti fanno tornare indietro il raggio, quelli inclinati lo fanno svoltare di 90°
 • I colori si mescolano come i pennarelli: rosso e blu fanno viola, giallo e blu verde
 • Una gemma trasparente devia il raggio senza colorarlo, una nera lo inghiotte

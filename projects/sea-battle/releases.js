@@ -1,7 +1,17 @@
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 // Newest first. Each entry lists notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.3.0',
+        notes: {
+            en: ['Online: the clock is now per shot (30 s, 1 or 2 minutes); when it runs out, the turn passes instead of losing the game'],
+            it: ["Online: l'orologio ora è per colpo (30 s, 1 o 2 minuti); quando scade il turno passa, invece di perdere la partita"],
+            es: ['En línea: el reloj ahora es por disparo (30 s, 1 o 2 minutos); cuando se acaba pasa el turno, en lugar de perder la partida'],
+            fr: ['En ligne : la pendule est maintenant par tir (30 s, 1 ou 2 minutes) ; quand elle s’arrête, le tour passe au lieu de perdre la partie'],
+            de: ['Online: Die Uhr läuft jetzt pro Schuss (30 s, 1 oder 2 Minuten); ist sie abgelaufen, geht der Zug weiter, statt das Spiel zu verlieren'],
+        },
+    },
     {
         version: '1.2.0',
         notes: {

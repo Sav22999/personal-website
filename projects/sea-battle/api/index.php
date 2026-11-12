@@ -12,8 +12,9 @@ require_once __DIR__ . '/engine.php';
 
 const ONLINE_WINDOW_SECONDS = 15;
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
-const TIME_CONTROLS = [0, 180, 300, 600];
-const RANDOM_TIME_CONTROL = 300; // 5 minutes per player
+const TIME_CONTROLS = [0, 30, 60, 120]; // seconds for every shot; when they run out the turn passes
+const RANDOM_TIME_CONTROL = 60;
+const MAX_SKIPS_PER_POLL = 20;
 const PLACE_SECONDS = 120; // after this, a late player's fleet is placed at random
 const ABANDON_SECONDS = 120; // an opponent gone this long loses automatically
 const CHAT_MAX_LENGTH = 200;
@@ -292,18 +293,26 @@ function finishGame($room, $winnerSlot, $reason)
     $pdo->prepare("UPDATE sb_players SET wins = wins + 1 WHERE room_id = ? AND slot = ?")->execute([$room['id'], $winnerSlot]);
 }
 
+// Time per shot: when it runs out, the turn passes to the other player (a skip in the list of shots).
+// Never ends the game, so it always returns false (the callers still treat true as "game over").
 function checkFlag(&$room)
 {
+    global $pdo;
     if (!clockRunning($room)) return false;
-    $shooter = slotToFire($room);
-    $key = $shooter === 1 ? 'p1_ms' : 'p2_ms';
-    $left = (int)$room[$key] - (nowMs() - (int)$room['turn_started_ms']);
-    if ($left > 0) return false;
-
-    $room[$key] = 0;
-    finishGame($room, other($shooter), 'timeout');
-    $room['status'] = 'finished';
-    return true;
+    $limit = (int)$room['time_control'] * 1000;
+    $started = (int)$room['turn_started_ms'];
+    if (nowMs() - $started < $limit) return false;
+    $shots = SeaBattleEngine::parseShots($room['shots']);
+    $turn = slotToFire($room);
+    for ($n = 0; nowMs() - $started >= $limit && $n < MAX_SKIPS_PER_POLL; $n++) {
+        $shots[] = ['slot' => $turn, 'cell' => -1, 'skip' => true];
+        $turn = other($turn);
+        $started += $limit;
+    }
+    $room['shots'] = SeaBattleEngine::formatShots($shots);
+    $room['turn_started_ms'] = $started;
+    $pdo->prepare("UPDATE sb_rooms SET shots = ?, turn_started_ms = ? WHERE id = ?")->execute([$room['shots'], $started, $room['id']]);
+    return false;
 }
 
 // The battle starts once both fleets are down
@@ -399,14 +408,8 @@ function pollState()
         foreach ($show as $s) $oppSunk[] = ['k' => $s] + $fleets[$oppSlot][$s];
     }
 
-    $p1Ms = (int)$room['p1_ms'];
-    $p2Ms = (int)$room['p2_ms'];
     $turn = $state ? $state['turn'] : (int)$room['first_slot'];
-    if (clockRunning($room)) {
-        $elapsed = nowMs() - (int)$room['turn_started_ms'];
-        if ($turn === 1) $p1Ms = max(0, $p1Ms - $elapsed);
-        else $p2Ms = max(0, $p2Ms - $elapsed);
-    }
+    $turnLeftMs = clockRunning($room) ? max(0, (int)$room['time_control'] * 1000 - (nowMs() - (int)$room['turn_started_ms'])) : 0;
 
     echo json_encode([
         'status' => $room['status'],
@@ -423,8 +426,7 @@ function pollState()
         'shots' => $shots,
         'oppShips' => $oppSunk,
         'turn' => $turn,
-        'p1Ms' => $p1Ms,
-        'p2Ms' => $p2Ms,
+        'turnLeftMs' => $turnLeftMs,
         'clockRunning' => clockRunning($room),
         'result' => $room['result'],
         'reason' => $room['reason'],
@@ -505,15 +507,11 @@ function fire()
             return;
         }
 
-        // Only the shooter's clock runs: a bonus shot keeps it running
+        // Every shot (a bonus shot too) gets the full time again
         $now = nowMs();
-        if ((int)$room['time_control'] > 0) {
-            $key = (int)$player['slot'] === 1 ? 'p1_ms' : 'p2_ms';
-            $room[$key] = max(0, (int)$room[$key] - ($now - (int)$room['turn_started_ms']));
-        }
         $room['shots'] = SeaBattleEngine::formatShots($shots);
-        $pdo->prepare("UPDATE sb_rooms SET shots = ?, p1_ms = ?, p2_ms = ?, turn_started_ms = ? WHERE id = ?")
-            ->execute([$room['shots'], $room['p1_ms'], $room['p2_ms'], $now, $room['id']]);
+        $pdo->prepare("UPDATE sb_rooms SET shots = ?, turn_started_ms = ? WHERE id = ?")
+            ->execute([$room['shots'], $now, $room['id']]);
         if ($state['winner'] !== 0) finishGame($room, $state['winner'], 'fleet_sunk');
         $pdo->commit();
         $last = end($state['results']);

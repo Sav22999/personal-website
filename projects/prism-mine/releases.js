@@ -1,7 +1,17 @@
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 // Newest first. Each entry lists notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.4.0',
+        notes: {
+            en: ['Each level has its own mine: easy 6 × 6, medium 8 × 8, hard 10 × 10', 'Online duel: the clock is now per turn; when it runs out, the turn passes'],
+            it: ['Ogni livello ha la sua miniera: facile 6 × 6, medio 8 × 8, difficile 10 × 10', "Duello online: l'orologio ora è per turno; quando scade, il turno passa"],
+            es: ['Cada nivel tiene su mina: fácil 6 × 6, medio 8 × 8, difícil 10 × 10', 'Duelo en línea: el reloj ahora es por turno; cuando se acaba, pasa el turno'],
+            fr: ['Chaque niveau a sa mine : facile 6 × 6, moyen 8 × 8, difficile 10 × 10', 'Duel en ligne : la pendule est maintenant par tour ; quand elle s’arrête, le tour passe'],
+            de: ['Jede Stufe hat ihre eigene Mine: leicht 6 × 6, mittel 8 × 8, schwer 10 × 10', 'Online-Duell: Die Uhr läuft jetzt pro Zug; ist sie abgelaufen, geht der Zug weiter'],
+        },
+    },
     {
         version: '1.3.0',
         notes: {
