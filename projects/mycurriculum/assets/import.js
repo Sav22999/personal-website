@@ -7,7 +7,7 @@
  * one entry per date range. The result always needs a human check: the editor says so.
  */
 
-import {SECTION_KINDS} from './i18n.js';
+import {SECTION_KINDS, CV_WORDS} from './i18n.js';
 
 /** Words that open a section, per kind (lower case, without accents). */
 const HEADINGS = {
@@ -124,6 +124,7 @@ function orderSegments(segs, width) {
 function headingKind(line) {
     const n = norm(line.text.replace(/:$/, ''));
     if (!n || n.length > 42) return null;
+    if (GRID_RE.test(line.text.trim())) return null; // "UNDERSTANDING", "SPEAKING" of the Europass language grid
     // compared without spaces too: letter-spaced headings may come as "E d u c at i o n"
     const flat = n.replace(/ /g, '');
     for (const [kind, words] of Object.entries(HEADINGS)) if (words.includes(n) || words.some((w) => w.replace(/ /g, '') === flat)) return kind;
@@ -235,20 +236,81 @@ function splitTags(lines) {
 
 const LEVEL_RE = /^(?:[ABC][12]\b|native|madrelingua|mother tongue|bilingual|bilingue|fluent|fluente|basic|base|scolastico|elementare|intermediate|intermedio|advanced|avanzato|buono|ottimo|discreto|professional|proficient|courant|natif|langue maternelle|muttersprache|fließend|fliessend|grundkenntnisse|nativo|lengua materna|língua materna|moedertaal|vloeiend|ojczysty|biegły|limba maternă|modersmål|flytande)/i;
 
-/** "Inglese: C1", "English (fluent)", or the name and the level side by side on one row. */
-function parseLangs(lines) {
+/** Labels of the Europass language block: the mother tongue(s) and the heading of the other languages. */
+const NATIVE_LABEL_RE = /^(?:mother\s*tongues?|native\s*languages?|first\s*language|madrelingu[ae]|lingu[ae]\s*madr[ei]|langues?\s*maternelles?|muttersprachen?|lenguas?\s*maternas?|línguas?\s*maternas?|moedertalen|moedertaal|języki?\s*ojczyste?|j[ęe]zyk\s*ojczysty|limb[ai]\s*matern[ăe]|modersmål)\s*:?\s*(.*)$/i;
+const OTHER_LABEL_RE = /^(?:other\s*languages?|foreign\s*languages?|altr[ae]\s*lingu[ae]|lingue\s*straniere|autres?\s*langues?|weitere\s*sprachen|fremdsprachen|otr[oa]s?\s*(?:idiomas|lenguas)|outr[oa]s?\s*(?:idiomas|línguas)|andere\s*talen|inne\s*języki|języki\s*obce|alte\s*limbi|andra\s*språk)\s*:?\s*(.*)$/i;
+/** Headers and legend of the Europass level grid: never a language. */
+const GRID_RE = /^(?:understanding|speaking|writing|listening|reading|spoken(?:\s*(?:production|interaction))?|production|interaction|comprensione|parlato|produzione\s*(?:scritta|orale)|interazione|ascolto|lettura|scritta|comprendre|parler|écrire|verstehen|sprechen|schreiben|comprensión|hablar|escribir|levels?\s*:|livelli\s*:|niveaux?\s*:|common\s*european|quadro\s*comune|cadre\s*européen|gemeinsamer\s*europäischer|marco\s*común|basic\s*user|independent\s*user|proficient\s*user|utente\s*(?:base|autonomo|avanzato)|certificat|diploma)/i;
+const CEFR_ROW_RE = /^(?:[ABC][12]\s*)+$/i;
+
+function titleCase(s) {
+    return s === s.toUpperCase() ? s.toLowerCase().replace(/(^|[\s\-])\p{L}/gu, (c) => c.toUpperCase()) : s;
+}
+
+/** "B2 B2 B1 B1 B2" (a Europass grid row): the level that appears most, the higher one on a tie. */
+function cefrSummary(row) {
+    const counts = {};
+    for (const l of row.toUpperCase().match(/[ABC][12]/g)) counts[l] = (counts[l] || 0) + 1;
+    return Object.keys(counts).sort((a, b) => counts[b] - counts[a] || b.localeCompare(a))[0];
+}
+
+/**
+ * "Inglese: C1", "English (fluent)", the name and the level side by side on one row, and the Europass block
+ * ("Mother tongue(s): ITALIAN", "Other language(s):", then each language with its grid of levels).
+ */
+function parseLangs(lines, lang) {
+    const native = CV_WORDS[lang]?.native || 'Native';
     const out = [];
-    for (const piece of lines.flatMap((l) => l.text.replace(BULLET_RE, '').split(/\s*[,;•|·]\s*/).map((text) => ({text, row: l.row})))) {
-        const s = piece.text.trim();
-        if (!s) continue;
-        const m = s.match(/^([^:–\-()]+?)\s*(?:[:–\-]|\()\s*(.+?)\)?$/);
-        const last = out[out.length - 1];
-        if (m) out.push({name: m[1].trim(), level: m[2].trim(), row: piece.row});
-        else if (LEVEL_RE.test(s) && last && !last.level && last.row === piece.row) last.level = s;
-        else if (LEVEL_RE.test(s) && last && !last.level) last.level = s;
-        else out.push({name: s, level: '', row: piece.row});
+    let nativeMode = false; // after a mother-tongue label without a value: the next names are mother tongues
+    // the levels of a grid row ("English  B2 B2 B1 B1 B2") come as separate pieces: one line again
+    const rows = [];
+    for (const l of lines) {
+        const prev = rows[rows.length - 1];
+        if (prev && prev.row === l.row && CEFR_ROW_RE.test(l.text.trim())) prev.text += ' ' + l.text.trim();
+        else rows.push({...l});
     }
-    return out.filter((x) => x.name.length < 40).map(({row, ...x}) => x);
+    for (const l of rows) {
+        // "(s)" of "tongue(s)" / "language(s)" is not a level in brackets
+        let text = l.text.replace(BULLET_RE, '').replace(/\((?:s|e|i|n|es)\)/gi, '').trim();
+        if (!text || GRID_RE.test(text)) continue;
+        const nat = text.match(NATIVE_LABEL_RE);
+        if (nat) {
+            const prev = out[out.length - 1];
+            if (!nat[1] && prev && prev.row === l.row && !prev.level) {
+                prev.level = native; // "Italiano   Madrelingua": the level of the language on its left, not a label
+                continue;
+            }
+            nativeMode = !nat[1];
+            for (const name of nat[1].split(/\s*[,;/]\s*|\s+(?:and|e|et|und|y|en|i|och)\s+/i).filter(Boolean)) out.push({name: titleCase(name.trim()), level: native, row: l.row});
+            continue;
+        }
+        const other = text.match(OTHER_LABEL_RE);
+        if (other) {
+            nativeMode = false;
+            if (!other[1]) continue;
+            text = other[1];
+        }
+        const last = out[out.length - 1];
+        if (CEFR_ROW_RE.test(text)) {
+            if (last && (!last.level || last.level === '')) last.level = cefrSummary(text);
+            continue;
+        }
+        for (const piece of text.split(/\s*[,;•|·]\s*/)) {
+            const s = piece.trim();
+            if (!s) continue;
+            const prev = out[out.length - 1];
+            const cefr = s.match(/^(\p{L}[\p{L}\s]*?)\s+((?:[ABC][12]\s*)+)$/iu); // "ENGLISH B2", "English B2 B2 B1"
+            if (cefr) {
+                out.push({name: titleCase(cefr[1].trim()), level: cefrSummary(cefr[2]), row: l.row});
+                continue;
+            }
+            const m = s.match(/^([^:–\-()]+?)\s*(?:[:–\-]|\()\s*(.+?)\)?$/);
+            if (m) out.push({name: titleCase(m[1].trim()), level: m[2].trim(), row: l.row});
+            else if (LEVEL_RE.test(s) && prev && !prev.level) prev.level = s;
+            else out.push({name: titleCase(s), level: nativeMode ? native : '', row: l.row});
+        }
+    }
+    return out.filter((x) => x.name.length < 40 && /\p{L}{2}/u.test(x.name)).map(({row, ...x}) => x);
 }
 
 function parseList(lines) {
@@ -331,6 +393,9 @@ export async function importPdf(file, lang) {
     const buckets = [];
     let current = {kind: 'top', title: '', lines: []};
     let prev = null;
+    // an unknown heading in capitals stands alone on its row ("ITALIANO" next to "Madrelingua" is a value)
+    const perRow = {};
+    for (const l of lines) perRow[l.row] = (perRow[l.row] || 0) + 1;
     for (const l of lines) {
         // moving to the other column ends the section (the sidebar does not continue into the main column)
         if (prev && l.page === prev.page && l.col !== prev.col && current.kind !== 'top') {
@@ -339,7 +404,8 @@ export async function importPdf(file, lang) {
         }
         prev = l;
         if (used.has(l)) continue;
-        const k = headingKind(l);
+        let k = headingKind(l);
+        if (k === 'other' && perRow[l.row] > 1) k = null;
         if (k) {
             buckets.push(current);
             current = {kind: k, title: l.text.replace(/:$/, ''), lines: []};
@@ -375,7 +441,7 @@ export async function importPdf(file, lang) {
         const sec = {id: 'imp' + (++id), type, kind, title: b.kind === 'other' ? title : SECTION_KINDS[kind][lang] || title, show: true, text: '', items: []};
         if (type === 'timeline') sec.items = parseTimeline(ls);
         else if (type === 'skills') sec.items = splitTags(ls).map((name) => ({name, level: 0}));
-        else if (type === 'langs') sec.items = parseLangs(ls);
+        else if (type === 'langs') sec.items = parseLangs(ls, lang);
         else if (type === 'text') sec.text = joinWrapped(ls.map((l) => l.text).join('\n'));
         else {
             // an unknown heading with dates inside is probably a timeline
