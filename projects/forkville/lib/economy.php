@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/catalog.php';
 
-const FURNITURE = ['table', 'chair', 'stove', 'counter', 'deco', 'kitchen', 'service', 'lounge', 'rug', 'outdoor', 'restroom', 'partition', 'stairs'];
+const FURNITURE = ['table', 'chair', 'stove', 'counter', 'deco', 'kitchen', 'service', 'lounge', 'rug', 'outdoor', 'restroom', 'partition', 'stairs', 'window', 'ground'];
 const MAX_ITEMS = 220;
 
 /** The door is in the middle of the front wall (the row z = size − 1); its tile must stay free. */
@@ -117,20 +117,24 @@ function load_restaurant(int $uid, bool $lock = false): ?array
     foreach (['layout', 'staff', 'menu', 'finishes'] as $k) $r[$k] = json_decode((string)$r[$k], true) ?: [];
     $r['depth'] = (int)($r['depth'] ?? 0) ?: (int)$r['size']; // rooms from before rows and columns: square
     $r['parking'] = (int)($r['parking'] ?? 0);
+    $r['garage'] = (int)($r['garage'] ?? 0);
+    // The storage room: pieces bought and put away (not sold), {item key: how many}
+    $r['storage'] = array_filter(array_map('intval', json_decode((string)($r['storage'] ?? ''), true) ?: []), fn($n, $k) => $n > 0 && isset(items()[$k]), ARRAY_FILTER_USE_BOTH);
     // The door: where the player put it on the front wall (rooms from before: in the middle), and its style
     $r['door'] = isset($r['door']) && $r['door'] !== null ? (int)$r['door'] : door_x((int)$r['size']);
     $r['door_style'] = isset(DOORS[$r['door_style'] ?? '']) ? $r['door_style'] : 'wood';
     // Upper floors: [[width, depth, x offset], …] in the ground floor's coordinates
     $r['floors'] = array_values(array_filter(array_map(fn($f) => is_array($f) && count($f) === 3 ? array_map('intval', $f) : null, json_decode((string)($r['floors'] ?? ''), true) ?: [])));
     foreach (['coins', 'xp', 'level', 'size', 'popularity', 'rating_sum', 'rating_n', 'friend_sum', 'friend_n', 'served_total', 'next_item_id'] as $k) $r[$k] = (int)$r[$k];
+    ensure_windows($r);
     return $r;
 }
 
 function save_restaurant(array $r): void
 {
-    db()->prepare('UPDATE ' . t('restaurants') . ' SET name = ?, kind = ?, coins = ?, xp = ?, level = ?, size = ?, depth = ?, parking = ?, instance = ?, floors = ?, door = ?, door_style = ?, floor = ?, wall = ?, layout = ?, staff = ?, menu = ?, finishes = ?, wish = ?, status = ?, paid_day = ?, closed_from = ?, closed_secs = ?, game_minutes = ?, candidates = ?,
+    db()->prepare('UPDATE ' . t('restaurants') . ' SET name = ?, kind = ?, coins = ?, xp = ?, level = ?, size = ?, depth = ?, parking = ?, garage = ?, storage = ?, instance = ?, floors = ?, door = ?, door_style = ?, floor = ?, wall = ?, layout = ?, staff = ?, menu = ?, finishes = ?, wish = ?, status = ?, paid_day = ?, closed_from = ?, closed_secs = ?, game_minutes = ?, candidates = ?,
         popularity = ?, rating_sum = ?, rating_n = ?, friend_sum = ?, friend_n = ?, served_total = ?, next_item_id = ?, last_report_at = ?, last_seen_at = ? WHERE user_id = ?')
-        ->execute([$r['name'], $r['kind'] ?? 'generic', $r['coins'], $r['xp'], $r['level'], $r['size'], $r['depth'], $r['parking'] ?? 0, $r['instance'] ?? null, json_encode(array_values($r['floors'] ?? [])), $r['door'], $r['door_style'] ?? 'wood', $r['floor'], $r['wall'], json_encode(array_values($r['layout'])), json_encode(array_values($r['staff'])),
+        ->execute([$r['name'], $r['kind'] ?? 'generic', $r['coins'], $r['xp'], $r['level'], $r['size'], $r['depth'], $r['parking'] ?? 0, $r['garage'] ?? 0, json_encode((object)($r['storage'] ?? [])), $r['instance'] ?? null, json_encode(array_values($r['floors'] ?? [])), $r['door'], $r['door_style'] ?? 'wood', $r['floor'], $r['wall'], json_encode(array_values($r['layout'])), json_encode(array_values($r['staff'])),
             json_encode(array_values($r['menu'])), json_encode(array_values($r['finishes'])), $r['wish'], $r['status'] ?? 'open', $r['paid_day'] ?? null, $r['closed_from'] ?? null, (int)($r['closed_secs'] ?? 0), (int)($r['game_minutes'] ?? 540), $r['candidates'] ?? null, $r['popularity'], $r['rating_sum'], $r['rating_n'], $r['friend_sum'], $r['friend_n'],
             $r['served_total'], $r['next_item_id'], $r['last_report_at'], $r['last_seen_at'], $r['user_id']]);
 }
@@ -202,7 +206,7 @@ function add_xp(array &$r, int $xp): bool
 {
     $r['xp'] += $xp;
     $before = $r['level'];
-    $r['level'] = level_for_xp($r['xp']);
+    $r['level'] = max($before, level_for_xp($r['xp'])); // never down (the XP curve got steeper over time)
     // Each new level brings a gift: level × reward coins
     for ($l = $before + 1; $l <= $r['level']; $l++) {
         $r['coins'] += $l * rule('level_reward');
@@ -251,7 +255,7 @@ function in_rect(int $x, int $z, array $rect): bool
  * Checks one layout: known furniture, inside its floor, no overlaps, door free, stairs and lifts that lead somewhere.
  * Above a staircase (on the next floor) and above a lift (on every floor) the tiles stay free: that is the way up.
  */
-function clean_layout($list, int $w, int $d, array $floors = [], ?int $door = null): array
+function clean_layout($list, int $w, int $d, array $floors = [], ?int $door = null, int $doorW = 1): array
 {
     if (!is_array($list) || count($list) > MAX_ITEMS) fail('layout_invalid', 422);
     $items = [];
@@ -268,6 +272,7 @@ function clean_layout($list, int $w, int $d, array $floors = [], ?int $door = nu
     // First the ways up: the tiles they keep free on the floors above
     $door ??= door_x($w);
     $grid = ['0:' . $door . ',' . ($d - 1) => true];
+    if ($doorW > 1) $grid['0:' . ($door + 1) . ',' . ($d - 1)] = true; // a wide door keeps both tiles free
     foreach ($items as $it) {
         if (items()[$it['k']][0] !== 'stairs') continue;
         $f = $it['f'] ?? 0;
@@ -284,36 +289,121 @@ function clean_layout($list, int $w, int $d, array $floors = [], ?int $door = nu
             $reached++;
         }
         if (!$reached) fail('stairs_nowhere', 422);
+        // Stairs come out on the floor above just past their top end: that tile stays free, or nobody could step off
+        if (!$lift) {
+            [$dx, $dz] = [[0, 1], [1, 0], [0, -1], [-1, 0]][$it['r']];
+            $own = [];
+            foreach (footprint($it) as [$x, $z]) $own["$x,$z"] = true;
+            $rect = floor_rect($f + 1, $w, $d, $floors);
+            foreach (footprint($it) as [$x, $z]) {
+                [$ex, $ez] = [$x - $dx, $z - $dz];
+                if (isset($own["$ex,$ez"])) continue;
+                if (!$rect || !in_rect($ex, $ez, $rect)) fail('stairs_exit', 422);
+                $grid[($f + 1) . ":$ex,$ez"] = 'exit';
+            }
+        }
     }
     $rugs = []; // rugs have their own layer: they may lie under furniture and on the door tile, not on each other
+    $wins = []; // windows too: along the outer walls, never on each other nor in the doorway
     foreach ($items as $it) {
         $cat = items()[$it['k']][0];
         $f = $it['f'] ?? 0;
         $rect = floor_rect($f, $w, $d, $floors);
-        $outdoor = $cat === 'outdoor';
+        $outdoor = $cat === 'outdoor' || $cat === 'ground';
         if ($outdoor && $f) fail('layout_outside', 422);
+        if ($cat === 'window') {
+            foreach (footprint($it) as [$x, $z]) {
+                if (!window_tile($x, $z, $it['r'], $rect)) fail('window_wall', 422);
+                if (!$f && $it['r'] === 2 && $x >= $door && $x < $door + $doorW) fail('window_door', 422);
+                if (isset($wins["$f:$x,$z,{$it['r']}"])) fail('layout_overlap', 422);
+                $wins["$f:$x,$z,{$it['r']}"] = true;
+            }
+            continue;
+        }
         foreach (footprint($it) as [$x, $z]) {
             // Outdoor pieces go on the terrace and in the yard (never on the path to the door); the rest inside its floor
-            if ($outdoor ? !outdoor_tile($x, $z, $w, $d, $door) : !in_rect($x, $z, $rect)) fail('layout_outside', 422);
-            if ($cat === 'rug') {
+            if ($cat === 'ground' ? !outdoor_tile($x, $z, $w, $d) : ($outdoor ? !outdoor_tile($x, $z, $w, $d, $door, $doorW) : !in_rect($x, $z, $rect))) fail('layout_outside', 422);
+            if ($cat === 'rug' || $cat === 'ground') {
                 if (isset($rugs["$f:$x,$z"])) fail('layout_overlap', 422);
                 $rugs["$f:$x,$z"] = true;
                 continue;
             }
-            if (isset($grid["$f:$x,$z"])) fail('layout_overlap', 422);
+            if (isset($grid["$f:$x,$z"])) fail($grid["$f:$x,$z"] === 'exit' ? 'stairs_exit' : 'layout_overlap', 422);
             $grid["$f:$x,$z"] = true;
         }
     }
     return $items;
 }
 
-/** The outdoor area: OUTDOOR rows in front, OUTDOOR columns at the east side and OUTDOOR rows behind (the back garden), minus the path to the door. */
-function outdoor_tile(int $x, int $z, int $w, int $d, ?int $door = null): bool
+/**
+ * The outdoor area: OUTDOOR rows in front, OUTDOOR columns at the east side and OUTDOOR rows behind (the back garden),
+ * minus the path to the door (pass $door = -1 to include the path, for paving).
+ */
+function outdoor_tile(int $x, int $z, int $w, int $d, ?int $door = -1, int $doorW = 1): bool
 {
     $front = $x >= 0 && $x < $w + OUTDOOR && $z >= $d && $z < $d + OUTDOOR;
     $side = $x >= $w && $x < $w + OUTDOOR && $z >= 0 && $z < $d;
     $back = $x >= 0 && $x < $w + OUTDOOR && $z >= -OUTDOOR && $z < 0; // the back garden
-    return ($front || $side || $back) && !($x === ($door ?? door_x($w)) && $z >= $d);
+    $door ??= door_x($w);
+    return ($front || $side || $back) && !($door >= 0 && $x >= $door && $x < $door + $doorW && $z >= $d);
+}
+
+/**
+ * Is a tile on the wall a window of rotation $r looks out of? A window faces the room like any piece (DIRS in sim.js):
+ * r 0 = on the back wall (z = 0), 1 = the left wall, 2 = the front wall, 3 = the right wall.
+ */
+function window_tile(int $x, int $z, int $r, ?array $rect): bool
+{
+    if (!$rect || !in_rect($x, $z, $rect)) return false;
+    [$x0, $w, $d] = $rect;
+    return [$z === 0, $x === $x0, $z === $d - 1, $x === $x0 + $w - 1][$r] ?? false;
+}
+
+/**
+ * Rooms from before movable windows get the windows they always had (marker 'win1' in finishes), so nothing changes
+ * for them until the player moves one: ground floor and every upper floor, on all four walls.
+ */
+function ensure_windows(array &$r): void
+{
+    if (in_array('win1', $r['finishes'], true)) return;
+    $r['finishes'][] = 'win1';
+    foreach ($r['layout'] as $it) if ((items()[$it['k']][0] ?? '') === 'window') return;
+    for ($f = 0; $f <= count($r['floors']); $f++) add_default_windows($r, $f);
+}
+
+/** The usual windows of a floor (a new storey gets them too): small windows spread along its four walls. */
+function add_default_windows(array &$r, int $f): void
+{
+    $rect = floor_rect($f, $r['size'], $r['depth'], $r['floors']);
+    if (!$rect) return;
+    [$x0, $w, $d] = $rect;
+    $taken = [];
+    foreach ($r['layout'] as $it) if ((items()[$it['k']][0] ?? '') === 'window' && ($it['f'] ?? 0) === $f) foreach (footprint($it) as [$x, $z]) $taken["$x,$z,{$it['r']}"] = true;
+    $sides = [
+        0 => array_map(fn($i) => [$x0 + $i, 0], [2, $w - 3]),
+        2 => array_map(fn($i) => [$x0 + $i, $d - 1], $f ? [1, intdiv($w, 2), $w - 2] : [1, $w - 2]),
+        1 => array_map(fn($i) => [$x0, $i], [2, intdiv($d, 2), $d - 3]),
+        3 => array_map(fn($i) => [$x0 + $w - 1, $i], [3, $d - 4]),
+    ];
+    foreach ($sides as $rot => $tiles) foreach ($tiles as [$x, $z]) {
+        if (!window_tile($x, $z, $rot, $rect) || isset($taken["$x,$z,$rot"])) continue;
+        if (!$f && $rot === 2 && $x >= $r['door'] && $x < $r['door'] + door_width($r['door_style'] ?? 'wood')) continue;
+        $taken["$x,$z,$rot"] = true;
+        $it = ['id' => $r['next_item_id']++, 'k' => 'window_small', 'x' => $x, 'z' => $z, 'r' => $rot];
+        if ($f) $it['f'] = $f;
+        $r['layout'][] = $it;
+    }
+}
+
+/** Windows of a floor on one wall move with it when the room grows: $rot is the wall, ($dx, $dz) the step. */
+function shift_windows(array &$r, int $f, int $rot, int $dx, int $dz): void
+{
+    foreach ($r['layout'] as &$it) {
+        if ((items()[$it['k']][0] ?? '') !== 'window' || ($it['f'] ?? 0) !== $f || $it['r'] !== $rot) continue;
+        $it['x'] += $dx;
+        $it['z'] += $dz;
+    }
+    unset($it);
 }
 
 /** Price, customers and eating time of a kind of restaurant. */
@@ -342,15 +432,17 @@ function set_status(array &$r, string $status): void
 }
 
 /** A worker's daily wage: role, skill in the role, rank for managers. */
-function wage(array $st): int
+/** A worker's daily wage in a restaurant of a given level (see WAGE_BASE). */
+function wage(array $st, int $level = 1): int
 {
     $sk = staff_skills($st);
-    return (WAGE_BASE[$st['role']] ?? 30) + (int)round($sk[$st['role']] * WAGE_PER_SKILL) + ($st['role'] === 'manager' ? ((int)($st['rank'] ?? 1) - 1) * WAGE_PER_RANK : 0);
+    $base = (WAGE_BASE[$st['role']] ?? 30) + $sk[$st['role']] * WAGE_PER_SKILL + ($st['role'] === 'manager' ? ((int)($st['rank'] ?? 1) - 1) * WAGE_PER_RANK : 0);
+    return (int)round($base * (1 + WAGE_PER_LEVEL * (max(1, $level) - 1)));
 }
 
 function payroll(array $r): int
 {
-    return array_sum(array_map('wage', $r['staff']));
+    return array_sum(array_map(fn($st) => wage($st, (int)$r['level']), $r['staff']));
 }
 
 /**
@@ -383,9 +475,12 @@ function pay_wages(array &$r): ?array
 /** Hours a restaurant runs by itself while the player is away: the sum of its managers' ranks. */
 function manager_hours(array $r): int
 {
-    $h = 0;
-    foreach ($r['staff'] as $st) if ($st['role'] === 'manager') $h += (MANAGER_HOURS[(int)($st['rank'] ?? 1)] ?? 2) * (0.6 + 0.08 * staff_skills($st)['manager']);
-    return (int)round($h);
+    $hours = [];
+    foreach ($r['staff'] as $st) if ($st['role'] === 'manager') $hours[] = (MANAGER_HOURS[(int)($st['rank'] ?? 1)] ?? 1) * (0.6 + 0.06 * staff_skills($st)['manager']);
+    if (!$hours) return 0;
+    rsort($hours);
+    $h = array_shift($hours) + 0.25 * array_sum($hours);
+    return (int)round(min(MANAGER_MAX_HOURS, $h));
 }
 
 /** Does the layout have a piece with this tag (register, toilet…)? */
@@ -441,13 +536,13 @@ function apply_offline(array &$r): ?array
     $arrive = arrival_seconds($r['popularity']) / kind_of($r)[1];
     $served = (int)floor($managed / $arrive * MANAGER_RATE + $rest / $arrive * rule('offline_rate'));
     $served = min($served, (int)floor($secs * count_items($r, 'chair') / SEAT_CYCLE));
-    $coins = (int)round($served * menu_average_price($r, $recipes) * kind_of($r)[0] * (1 + 0.1 * ($r['parking'] ?? 0)));
+    $coins = (int)round($served * menu_average_price($r, $recipes) * kind_of($r)[0] * (1 + 0.1 * ($r['parking'] ?? 0) + 0.05 * ($r['garage'] ?? 0)));
     if ($served <= 0) return null;
     $r['coins'] += $coins;
     ledger((int)$r['user_id'], 'away', $coins, $served . '|' . (int)round($managed / 60));
     $r['served_total'] += $served;
     $levelFrom = $r['level'];
-    $up = add_xp($r, $served);
+    $up = add_xp($r, (int)floor($served * OFFLINE_XP));
     add_weekly((int)$r['user_id'], $coins);
     // When it happened, for the message: managers first, then the staff alone at a slower pace, then nothing
     return ['served' => $served, 'coins' => $coins, 'minutes' => (int)round($secs / 60), 'managed' => (int)round($managed / 60), 'levelUp' => $up, 'levelFrom' => $levelFrom, 'levelTo' => $r['level'],
@@ -480,7 +575,7 @@ function apply_report(array &$r, array $b): array
     // A cashier at the till: every bill is CASHIER_BONUS higher (the mandatory tip comes with the tips below)
     if (count_staff($r, 'cashier') > 0 && has_tag($r, 'register')) $coins += (int)round($coins * CASHIER_BONUS);
     // Guests who came by car (the restaurant car park) spend CAR_BONUS more: no more than the spaces can bring
-    $spaces = PARKING[$r['parking'] ?? 0][2] ?? 0;
+    $spaces = parking_spaces($r);
     $cars = $served > 0 ? max(0, min((int)($b['cars'] ?? 0), $served, (int)floor($elapsed * $spaces * MAX_SPEED / 60) + 1)) : 0;
     if (!$spaces) $cars = 0;
     $carCoins = $served > 0 ? (int)round($cars * ($coins / $served) * CAR_BONUS) : 0;
@@ -521,15 +616,34 @@ function apply_report(array &$r, array $b): array
 /** New layout and finishes from the editor: new pieces are bought, missing ones sold back at half price. */
 function apply_layout(array &$r, array $b): array
 {
-    $layout = clean_layout($b['layout'] ?? null, $r['size'], $r['depth'], $r['floors'] ?? [], $r['door']);
+    $layout = clean_layout($b['layout'] ?? null, $r['size'], $r['depth'], $r['floors'] ?? [], $r['door'], door_width($r['door_style'] ?? 'wood'));
     $old = [];
     foreach ($r['layout'] as $it) $old[$it['id']] = $it;
     $cost = 0;
     $kept = [];
-    foreach ($layout as &$it) {
+    foreach ($layout as $it) {
         if ($it['id'] && isset($old[$it['id']]) && !isset($kept[$it['id']])) {
             if ($old[$it['id']]['k'] !== $it['k']) fail('layout_invalid', 422);
             $kept[$it['id']] = true;
+        }
+    }
+    // Pieces taken away: put in storage (b.store lists their ids) or sold back
+    $storage = $r['storage'] ?? [];
+    $store = array_flip(array_map('intval', (array)($b['store'] ?? [])));
+    $refund = 0;
+    foreach ($old as $id => $it) {
+        if (isset($kept[$id])) continue;
+        if (isset($store[$id])) $storage[$it['k']] = ($storage[$it['k']] ?? 0) + 1;
+        else $refund += (int)floor(items()[$it['k']][1] * rule('sell_back'));
+    }
+    // New pieces: taken out of storage (b.take: {key: how many}) cost nothing, the others are bought
+    $take = array_map('intval', (array)($b['take'] ?? []));
+    foreach ($layout as &$it) {
+        if ($it['id'] && isset($kept[$it['id']])) continue;
+        if (($take[$it['k']] ?? 0) > 0 && ($storage[$it['k']] ?? 0) > 0) {
+            $take[$it['k']]--;
+            $storage[$it['k']]--;
+            $it['id'] = $r['next_item_id']++;
             continue;
         }
         $def = items()[$it['k']];
@@ -540,8 +654,7 @@ function apply_layout(array &$r, array $b): array
         $it['id'] = $r['next_item_id']++;
     }
     unset($it);
-    $refund = 0;
-    foreach ($old as $id => $it) if (!isset($kept[$id])) $refund += (int)floor(items()[$it['k']][1] * rule('sell_back'));
+    $r['storage'] = array_filter($storage, fn($n) => $n > 0);
     foreach (['floor', 'wall'] as $kind) {
         $k = (string)($b[$kind] ?? $r[$kind]);
         if ($k === $r[$kind]) continue;
@@ -557,7 +670,18 @@ function apply_layout(array &$r, array $b): array
     spend_coins($r, $cost - $refund);
     $r['layout'] = $layout;
     refresh_popularity($r);
-    return ['spent' => $cost, 'refund' => $refund];
+    return ['spent' => $cost, 'refund' => $refund, 'storage' => (object)$r['storage']];
+}
+
+/** Sell one piece from storage (at the usual sell-back price). */
+function sell_stored(array &$r, string $k): array
+{
+    if (($r['storage'][$k] ?? 0) < 1) fail('not_found', 404);
+    $r['storage'][$k]--;
+    if (!$r['storage'][$k]) unset($r['storage'][$k]);
+    $refund = (int)floor(items()[$k][1] * rule('sell_back'));
+    spend_coins($r, -$refund);
+    return ['refund' => $refund, 'storage' => (object)$r['storage']];
 }
 
 /** Stores up to 5 reviews per report (never more than the customers served), keeps the latest 120. */
@@ -654,7 +778,7 @@ function restaurant_public(array $r, array $recipes): array
     $menu = [];
     foreach ($r['menu'] as $d) if (isset($recipes[$d])) $menu[] = ['dish' => $d, 'level' => $recipes[$d]];
     return [
-        'name' => $r['name'], 'level' => $r['level'], 'size' => $r['size'], 'depth' => $r['depth'], 'parking' => $r['parking'] ?? 0, 'floors' => $r['floors'] ?? [], 'door' => $r['door'], 'doorStyle' => $r['door_style'] ?? 'wood', 'floor' => $r['floor'], 'wall' => $r['wall'],
+        'name' => $r['name'], 'level' => $r['level'], 'size' => $r['size'], 'depth' => $r['depth'], 'parking' => $r['parking'] ?? 0, 'garage' => $r['garage'] ?? 0, 'floors' => $r['floors'] ?? [], 'door' => $r['door'], 'doorStyle' => $r['door_style'] ?? 'wood', 'floor' => $r['floor'], 'wall' => $r['wall'],
         'layout' => $r['layout'], 'staff' => $r['staff'], 'menu' => $menu, 'popularity' => $r['popularity'], 'stars' => stars_for($r['popularity']),
         'wish' => $r['wish'], 'status' => $r['status'] ?? 'open', 'kind' => $r['kind'] ?? 'generic',
         'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null,
@@ -670,11 +794,11 @@ function game_state(int $uid, ?array $away = null): array
         'ok' => true,
         'now' => time(),
         'restaurant' => restaurant_public($r, $recipes) + [
-                'coins' => $r['coins'], 'xp' => $r['xp'], 'finishes' => $r['finishes'], 'menuKeys' => $r['menu'], 'served' => $r['served_total'],
+                'coins' => $r['coins'], 'xp' => $r['xp'], 'finishes' => $r['finishes'], 'storage' => (object)($r['storage'] ?? []), 'menuKeys' => $r['menu'], 'served' => $r['served_total'],
                 'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null,
                 'friendRating' => $r['friend_n'] ? round($r['friend_sum'] / $r['friend_n'], 2) : null,
-                'gameMinutes' => (int)($r['game_minutes'] ?? 540), 'payroll' => payroll($r), 'wages' => array_map(fn($st) => ['id' => $st['id'], 'wage' => wage($st)], $r['staff']),
-                'maxWaiters' => max_waiters($r['level']), 'maxCleaners' => max_cleaners($r['level']), 'maxManagers' => max_managers($r['level']), 'maxCashiers' => max_cashiers($r['level']), 'managerHours' => manager_hours($r), 'maxMenu' => max_menu($r['level']), 'events' => events_out(), 'plots' => garden_plots($r['level']),
+                'gameMinutes' => (int)($r['game_minutes'] ?? 540), 'payroll' => payroll($r), 'wages' => array_map(fn($st) => ['id' => $st['id'], 'wage' => wage($st, (int)$r['level'])], $r['staff']),
+                'maxChefs' => max_chefs($r['level']), 'maxWaiters' => max_waiters($r['level']), 'maxCleaners' => max_cleaners($r['level']), 'maxManagers' => max_managers($r['level']), 'maxCashiers' => max_cashiers($r['level']), 'managerHours' => manager_hours($r), 'maxMenu' => max_menu($r['level']), 'events' => events_out(), 'plots' => garden_plots($r['level']),
             ],
         'recipes' => (object)$recipes,
         'ingredients' => (object)load_ingredients($uid),

@@ -11,7 +11,7 @@ require_once __DIR__ . '/push.php';
 
 const APP_NAME = 'Fucina';
 const AUTH_COOKIE = 'fucina_auth';
-const SCHEMA_VERSION = 20;
+const SCHEMA_VERSION = 21;
 const APP_TIMEZONE = 'Europe/Rome'; // the "day" of streaks and daily challenges
 date_default_timezone_set(APP_TIMEZONE);
 

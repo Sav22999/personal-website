@@ -29,7 +29,7 @@ const realPos = (v) => {
     return new THREE.Vector3(v.x, v.y + f * FH, v.z - f * S);
 };
 
-const OUT = 3; // depth of the terrace in front (OUTDOOR in lib/catalog.php)
+const OUT = 5; // depth of the terrace in front (OUTDOOR in lib/catalog.php)
 
 /** SVG pictures (never emoji): dishes, moods, stars. */
 export const dishIcon = (d) => icon('dish', d);
@@ -285,7 +285,7 @@ export class Sim {
         this.inside = inside;
         const at = new Map();
         for (const it of this.layout) {
-            if (items[it.k].cat === 'rug') continue; // people walk on rugs
+            if (['rug', 'ground', 'window'].includes(items[it.k].cat)) continue; // people walk on rugs and paving; windows are in the walls
             for (const [x, z] of this.world.footprint(it, items).tiles) {
                 if (!inside(x, z)) continue;
                 this.blocked[z * W + x] = 1;
@@ -314,7 +314,7 @@ export class Sim {
         this.stoves = [];
         this.counters = [];
         this.tills = []; // cash registers: where the cashier stands (front) and where the guest pays (pay)
-        this.spots = {sink: [], rest: [], coffee: [], music: [], fun: [], cozy: [], light: [], janitor: [], toilet: [], washbasin: [], dryer: [], drinks: [], icecream: [], fridge: 0, register: 0, trash: 0, snack: 0, attract: 0, truck: [], queue: []};
+        this.spots = {sink: [], rest: [], coffee: [], music: [], fun: [], cozy: [], light: [], janitor: [], host: [], toilet: [], washbasin: [], dryer: [], drinks: [], icecream: [], fridge: 0, register: 0, trash: 0, snack: 0, attract: 0, truck: [], queue: []};
         this.kind = (this.catalog.kinds || {})[this.r.kind || 'generic'] || {price: 1, customers: 1, eat: 1};
         this.kindKey = this.r.kind || 'generic';
         this.benchSeats = [];
@@ -352,6 +352,7 @@ export class Sim {
             if (def.pop > 0) this.decor.push({...center(it), pop: def.pop, id: it.id});
             if (tag === 'fridge' || tag === 'sink' || tag === 'janitor') this.tiers[tag] = Math.max(this.tiers[tag] || 0, tierOf(it.k));
             if (def.cat === 'counter') this.tiers.counter = Math.max(this.tiers.counter, tierOf(it.k));
+            if (def.cat === 'kitchen') this.kitchenAids = (this.kitchenAids || 0) + 1;
             if (tag === 'queue') { // outdoor bench: two places to wait
                 const {w, d} = this.world.footprint(it, items);
                 const c = {x: it.x + w / 2, z: it.z + d / 2}, [fx, fz] = DIRS[it.r];
@@ -369,7 +370,7 @@ export class Sim {
                 if (typeof this.spots[tag] === 'number') this.spots[tag]++;
                 else {
                     const f = front(it);
-                    this.spots[tag].push({id: it.id, key: it.k, ...center(it), front: f, busy: null});
+                    this.spots[tag].push({id: it.id, key: it.k, ...center(it), front: f, busy: null, tier: tierOf(it.k)});
                 }
             }
             if (def.cat === 'chair') {
@@ -391,12 +392,13 @@ export class Sim {
             } else if (def.cat === 'stove') {
                 const f = front(it);
                 if (f) this.stoves.push({id: it.id, front: f, r: it.r, speed: def.speed || 1, tier: tierOf(it.k), chef: null});
-            } else if (def.cat === 'counter') {
+            } else if (def.cat === 'counter' || it.k === 'dish_lift') {
+                // Counters, and dish lifts: a lift is a counter that also sends a dish to the lift on another floor
                 const f = front(it);
                 if (!f) continue;
                 const cx = it.x + 0.5, cz = it.z + 0.5, [dx, dz] = DIRS[it.r];
-                const side = [dz, dx];
-                this.counters.push({id: it.id, front: f, slots: [-0.22, 0.22].map(o => ({pos: new THREE.Vector3(cx + side[0] * o + dx * 0.1, 0.98, cz + side[1] * o + dz * 0.1), dish: null}))});
+                const side = [dz, dx], lift = it.k === 'dish_lift';
+                this.counters.push({id: it.id, front: f, lift, floor: floorOf(it.z), slots: [-0.22, 0.22].map(o => ({pos: new THREE.Vector3(cx + side[0] * o + dx * 0.1, lift ? 0.88 : 0.98, cz + side[1] * o + dz * 0.1), dish: null}))});
             }
         }
         // Plants: the cleaner waters them every day (a thirsty plant droops and is only half as pretty)
@@ -590,21 +592,75 @@ export class Sim {
         } else if (s.role === 'waiter') {
             const c = this.counters[same % Math.max(1, this.counters.length)];
             a.home = this.nearFree(c ? c.front : {x: this.door, z: this.size - 2}, same);
-        } else if (s.role === 'manager') {
-            a.home = this.nearFree({x: this.door, z: this.size - 2}, same + 2);
+        } else if (s.role === 'manager') { // at a host stand by the entrance
+            const stand = this.spots.host.find(x => x.front && !x.staffBy);
+            if (stand) stand.staffBy = a;
+            a.station = stand || null;
+            a.home = stand ? stand.front : this.nearFree({x: this.door, z: this.size - 2}, same + 2);
         } else if (s.role === 'cashier') { // behind a cash register
             const till = this.tills.find(t => !t.cashier && t.front && t.pay);
             if (till) till.cashier = a;
             a.till = till || null;
             a.home = till ? till.front : this.nearFree({x: this.door, z: this.size - 2}, same + 3);
         } else {
-            // Cleaners wait by their cart or station (else near the sink)
-            const base = this.spots.janitor[0]?.front || this.spots.sink[0]?.front;
-            a.home = this.nearFree(base || {x: this.W - 2, z: 1}, same + 1);
-            a.supplies = 4;
+            // Each cleaner has a cart or a cleaning station of their own: without one there is nothing to work with
+            const st = this.spots.janitor.find(x => x.front && !x.staffBy);
+            if (st) st.staffBy = a;
+            a.station = st || null;
+            a.home = st ? st.front : this.nearFree(this.spots.sink[0]?.front || {x: this.W - 2, z: 1}, same + 1);
+            a.supplies = st ? 3 + (st.tier || 1) * 2 : 0;
         }
+        a.home = this.freeHome(a);
         this.place(a, a.home);
         return a;
+    }
+
+    /**
+     * Nobody waits on someone else's spot: a worker's own station front (stove, till, cart, host stand) stays theirs,
+     * the others (waiters near the counter, a chef without a stove…) take the nearest tile that no colleague uses
+     * and that is not a station front or a counter's pick-up spot.
+     */
+    freeHome(a) {
+        const own = a.stove?.front || a.till?.front || a.station?.front;
+        if (own && a.home.x === own.x && a.home.z === own.z) return a.home;
+        const fronts = [...this.stoves, ...this.counters, ...this.tills, ...this.spots.janitor, ...this.spots.host].map(x => x.front).filter(Boolean);
+        const taken = (p) => fronts.some(f => f.x === p.x && f.z === p.z)
+            || this.agents.some(o => o !== a && o.staff && !o.dismissed && o.home && o.home.x === p.x && o.home.z === p.z);
+        if (!taken(a.home)) return a.home;
+        for (let k = 0; k < 24; k++) {
+            const q = this.nearFree(a.home, k);
+            if (!taken(q)) return q;
+        }
+        return a.home;
+    }
+
+    /**
+     * Personal space: two people standing (not walking, not seated) closer than a shoulder width step apart a little,
+     * staying inside their own tile, so nobody stands inside somebody else.
+     */
+    personalSpace(dt) {
+        const ppl = this.agents.filter(a => a.mesh.visible && !a.away && a.tile && a.state !== 'walk' && a.state !== 'queue' && a.state !== 'driving' && !a.climb
+            && a.anim !== 'sit' && a.anim !== 'eat' && Math.abs(a.pos.x - a.tile.x - 0.5) < 0.6 && Math.abs(a.pos.z - a.tile.z - 0.5) < 0.6);
+        const MIN = 0.58;
+        for (let i = 0; i < ppl.length; i++) for (let j = i + 1; j < ppl.length; j++) {
+            const a = ppl[i], b = ppl[j];
+            if ((a.floor || 0) !== (b.floor || 0)) continue;
+            let dx = b.pos.x - a.pos.x, dz = b.pos.z - a.pos.z, d = Math.hypot(dx, dz);
+            if (d >= MIN) continue;
+            if (d < 1e-3) { // exactly on each other: split along a direction that depends on who they are
+                const ang = (a.id * 2.399 + b.id * 0.7) % (Math.PI * 2);
+                dx = Math.cos(ang) * 1e-3;
+                dz = Math.sin(ang) * 1e-3;
+                d = 1e-3;
+            }
+            const push = Math.min(MIN - d, dt * 1.6) / 2;
+            for (const [p, sgn] of [[a, -1], [b, 1]]) {
+                p.pos.x = THREE.MathUtils.clamp(p.pos.x + sgn * dx / d * push, p.tile.x + 0.2, p.tile.x + 0.8);
+                p.pos.z = THREE.MathUtils.clamp(p.pos.z + sgn * dz / d * push, p.tile.z + 0.2, p.tile.z + 0.8);
+                p.mesh.position.x = p.pos.x;
+                p.mesh.position.z = p.pos.z;
+            }
+        }
     }
 
     /**
@@ -625,6 +681,25 @@ export class Sim {
         const idle = waiters.filter(w => !w.tables.length).length;
         if (idle) this.warnings.push({key: 'waiter_no_table', n: idle});
         if (this.agents.some(a => a.role === 'cashier' && !a.till)) this.warnings.push({key: 'cashier_no_till'});
+        const count = (role) => this.agents.filter(a => a.role === role && !a.dismissed && this.noStation(a)).length;
+        if (count('chef')) this.warnings.push({key: 'chef_no_stove', n: count('chef')});
+        if (count('cleaner')) this.warnings.push({key: 'cleaner_no_station', n: count('cleaner')});
+        if (count('manager')) this.warnings.push({key: 'manager_no_stand'});
+    }
+
+    /** A worker with no station of their own (stove, tables, cart or cleaning station, host stand, till): they cannot work. */
+    noStation(a) {
+        if (!a.staff) return false;
+        return a.role === 'chef' ? !a.stove : a.role === 'waiter' ? !a.tables?.length : a.role === 'cashier' ? !a.till : !a.station;
+    }
+
+    /** Standing idle for want of a station: a thought bubble shows it (the station they miss, crossed by a question mark). */
+    showNoStation(a) {
+        a.activity = 'noStation';
+        if (a.state !== 'idle' || this.bubbles.has(a)) return;
+        const pic = {chef: 'stove', waiter: 'table', cleaner: 'cart', manager: 'stand', cashier: 'till'}[a.role];
+        this.bubble(a, icon('station', pic), 'bubble-thought bubble-nostation', 0);
+        a.nsBubble = true;
     }
 
     /** Is this seat at one of this waiter's tables? */
@@ -690,6 +765,53 @@ export class Sim {
     }
 
     /** Time factor for a task: skilled people are quicker (0.85× at 10, 1.3× at 0). */
+    /**
+     * Seconds a chef takes over a dish: the dish's own base time (catalog cook), shortened by the stove's speed,
+     * the fridges (up to two), the kitchen equipment (spice racks, pot shelves, mixers…: up to four) and a better
+     * counter; then the chef's skill (skillTime) and trait. Without a chef: the kitchen alone (for the menu).
+     */
+    cookTime(dish, chef, stove) {
+        const base = this.catalog.dishes[dish]?.cook || 8;
+        const kitchen = Math.pow(0.9, Math.min(2, this.spots.fridge)) * Math.pow(0.96, Math.min(4, this.kitchenAids || 0)) * (1 - 0.03 * Math.min(4, this.tiers.counter || 0));
+        const cook = chef ? (chef.trait === 'careful' ? 1.1 : chef.trait === 'speedy' ? 0.92 : 1) * this.skillTime(chef) : 1;
+        return base / (stove?.speed || 1) * kitchen * cook;
+    }
+
+    /** Where a chef puts a ready dish: a counter on their own floor and the guest's, else the dish lift, else any. */
+    pickSlot(chef, order, free) {
+        const chefF = floorOf(chef.tile?.z ?? 0), custF = floorOf(order.customer?.seat?.service?.[0]?.z ?? 0);
+        const liftThere = this.counters.some(k => k.lift && k.floor === custF && k.slots.some(s => !s.dish));
+        const score = ({k}) => k.lift
+            ? (k.floor === chefF && custF !== chefF && liftThere ? 1 : k.floor === chefF && k.floor === custF ? 0.5 : 9)
+            : (k.floor === chefF && k.floor === custF ? 0 : k.floor === chefF ? 2 : k.floor === custF ? 3 : 4);
+        return free.slice().sort((a, b) => score(a) - score(b))[0];
+    }
+
+    /** A dish put in a lift rides to the lift on the guest's floor (a few seconds), where a waiter picks it up. */
+    sendByLift(k, slot) {
+        const d = slot.dish, custF = floorOf(d.customer?.seat?.service?.[0]?.z ?? k.floor);
+        if (custF === k.floor) return; // the guest is on this floor: it simply waits here
+        d.claimed = 'lift'; // nobody takes it on the way
+        (this.lifts ||= []).push({t: 3, from: slot, d, to: custF});
+        sfx.ding?.();
+    }
+
+    arriveByLift(ride) {
+        this.lifts = this.lifts.filter(r => r !== ride);
+        const dest = this.counters.filter(k => k.lift && k.floor === ride.to).flatMap(k => k.slots).find(s => !s.dish);
+        if (!dest) { // the lift up there is full: try again in a moment
+            ride.t = 1.5;
+            this.lifts.push(ride);
+            return;
+        }
+        if (ride.from.dish === ride.d) ride.from.dish = null;
+        ride.d.mesh.parent?.remove(ride.d.mesh);
+        ride.d.mesh.position.copy(dest.pos);
+        this.fxAdd(ride.d.mesh);
+        ride.d.claimed = null;
+        dest.dish = ride.d;
+    }
+
     skillTime(a) {
         let k = 1.3 - this.skill(a) * 0.045;
         // Cleaning goes faster with proper supplies: a cart, better still a station (slower without either)
@@ -699,14 +821,14 @@ export class Sim {
 
     /** After a few jobs a cleaner goes back to the cart or station to restock. Returns true if they went. */
     restock(a) {
-        const st = this.spots.janitor.find(x => x.front);
+        const st = a.station;
         if (a.role !== 'cleaner' || !st || (a.supplies ?? 4) > 0) return false;
         a.task = 'restock';
         a.activity = 'restock';
         const ok = this.walkTo(a, [st.front], () => {
             this.face(a, st.x, st.z);
             this.busy(a, 1.6, 'wipe', () => {
-                a.supplies = 3 + this.tiers.janitor * 2; // a station holds more supplies than a cart
+                a.supplies = 3 + (st.tier || 1) * 2; // a station holds more supplies than a cart
                 this.goHome(a);
             });
         });
@@ -836,9 +958,10 @@ export class Sim {
 
     /** Paper, fruit peels and crumbs appear around the tables now and then (fewer with trash bins). */
     dropLitter(near, kind = null) {
-        const chance = this.spots.trash ? 0.14 / (1 + this.spots.trash) : 0.28;
+        const crowd = Math.min(2.5, 0.6 + 0.1 * this.guestsInside); // a full room makes more mess
+        const chance = (this.spots.trash ? 0.14 / (1 + this.spots.trash) : 0.28) * crowd;
         if (!kind && Math.random() > chance) return;
-        if (this.litter.length > 16) return;
+        if (this.litter.length >= Math.min(30, 10 + this.guestsInside)) return;
         const t = kind === 'puddle' || kind === 'snow' || kind === 'leaves' ? near : this.nearFree(near, Math.floor(Math.random() * 4));
         if (this.litter.some(l => l.x === t.x && l.z === t.z)) return;
         kind ||= ['paper', 'peel', 'crumbs', 'paper', 'peel', 'spill'][Math.floor(Math.random() * 6)];
@@ -868,6 +991,11 @@ export class Sim {
     }
 
     // ------------------------------------------------------------ customers
+
+    /** Guests in the restaurant right now: from the door bell until they walk out of the door (the line outside does not count). */
+    get guestsInside() {
+        return this.agents.filter(a => a.role === 'customer' && a.inside).length;
+    }
 
     /** People waiting outside: on benches if there are free places, otherwise standing in a line on the sidewalk. */
     get queue() {
@@ -988,6 +1116,7 @@ export class Sim {
         const fromStreet = c.pos.z > n + OUT + 1.5;
         this.walkPoints(c, [...(fromStreet ? [[dx, n + OUT + 2.6]] : [[c.pos.x, c.pos.z + 0.01]]), [dx, n + 0.4], [dx, n - 0.5]], () => {
             c.tile = {x: this.door, z: n - 1};
+            c.inside = true;
             sfx.bell(); // the door bell
             this.weatherDirt();
             const ok = this.walkTo(c, [{x: seat.x, z: seat.z}], () => this.sitDown(c));
@@ -1007,8 +1136,8 @@ export class Sim {
             return;
         }
         // Some guests come by car when there is a car park: they park, walk to the sidewalk and come in from there
-        const stalls = this.world.parkingStalls || [];
-        if (!this.opts.visit && stalls.some(s => !s.busy) && Math.random() < 0.18 + 0.07 * stalls.length / 4) {
+        const stalls = [...(this.world.parkingStalls || []), ...(this.world.garageStalls || [])]; // street car park and floor −1
+        if (!this.opts.visit && stalls.some(s => !s.busy) && Math.random() < Math.min(0.55, 0.18 + 0.07 * Math.sqrt(stalls.length / 4))) {
             const c = this.newCustomer();
             c.mesh.visible = false;
             c.state = 'driving';
@@ -1060,6 +1189,7 @@ export class Sim {
         c.mesh.position.set(c.pos.x, s.seatY, c.pos.z);
         c.mesh.rotation.y = c.yaw = s.r * Math.PI / 2;
         c.state = 'wantOrder';
+        c.wantSince = this.t;
         c.anim = 'sit';
         c.activity = 'wantOrder';
         c.seatedAt = this.t;
@@ -1074,7 +1204,7 @@ export class Sim {
         this.bubble(c, mood('alert'), 'bubble-alert');
         // A thought about the place, now and then
         setTimeout(() => {
-            if (!this.agents.includes(c) || c.state === 'leaving') return;
+            if (!this.agents.includes(c) || c.state !== 'waitFood' || !c.seat) return; // real seconds: at 5× they may already be paying
             const th = this.thoughtFor(c);
             if (th && c.state === 'waitFood') this.bubble(c, th, 'bubble-thought', 2.5);
         }, 4000 + Math.random() * 4000);
@@ -1084,7 +1214,7 @@ export class Sim {
         if (this.cleanliness < 60) return mood('sick');
         if (this.effects.music > 0) return mood('music');
         if (this.effects.fun > 0) return mood('tv');
-        if (c.seat.beauty >= 12) return mood('love');
+        if (c.seat?.beauty >= 12) return mood('love');
         if (isNight(this.hour) && this.effects.cozy > 0) return mood('fire');
         return Math.random() < 0.5 ? mood('yummy') : null;
     }
@@ -1124,10 +1254,13 @@ export class Sim {
                 });
             })) return;
         }
-        const outside = c.pos.z >= n - 0.1; // waiting outside: straight back to the street
+        const outside = c.pos.z >= n - 0.1 && c.pos.z < S / 2; // waiting outside: straight back to the street (upper floors sit at z + f·S)
         // Back to the street, then away on foot, or back to the car park and off by car
         const away = c.car ? [[c.car.x + 0.6, n + OUT + 2.6], [c.car.x + 0.6, c.car.z + 0.4]] : [[Math.random() < 0.5 ? -8 - (this.world.parkingW || 0) : this.W + OUT + 8, n + OUT + 2.8]];
-        const out = () => this.walkPoints(c, [...(outside ? [] : [[dx, n + 0.4]]), [outside ? c.pos.x : dx, n + OUT + 2.6], ...away], () => this.remove(c));
+        const out = () => {
+            c.inside = false; // through the door: no longer in the restaurant
+            this.walkPoints(c, [...(outside ? [] : [[dx, n + 0.4]]), [outside ? c.pos.x : dx, n + OUT + 2.6], ...away], () => this.remove(c));
+        };
         if (outside || !this.walkTo(c, [{x: this.door, z: n - 1}], out)) out();
     }
 
@@ -1185,8 +1318,7 @@ export class Sim {
         }
         if (this.maybeRest(w)) return;
         if (!w.tables?.length) { // no table of their own: nothing they may do
-            w.activity = 'noTable';
-            if (!this.bubbles.has(w) && Math.random() < 0.004) this.bubble(w, mood('meh'), 'bubble-thought', 1.6);
+            this.showNoStation(w);
             return;
         }
         // 1. A dish waiting on a counter
@@ -1225,35 +1357,39 @@ export class Sim {
         }
         // 2. A customer waiting to order
         const cust = this.agents.find(a => a.role === 'customer' && a.state === 'wantOrder' && !a.claimed && this.servesSeat(w, a.seat));
-        if (cust) {
-            cust.claimed = w;
-            w.task = 'order';
-            w.activity = 'order';
-            const ok = this.walkTo(w, cust.seat.service, () => {
-                this.face(w, cust.pos.x, cust.pos.z);
-                this.busy(w, (w.trait === 'chatty' ? 1.8 : 1.2) * this.skillTime(w), 'order', () => {
-                    if (cust.state === 'wantOrder') {
-                        cust.state = 'waitFood';
-                        cust.activity = 'waitFood';
-                        if (w.trait === 'chatty') cust.mood = Math.min(100, cust.mood + 6);
-                        this.bubble(cust, dishIcon(cust.order.dish), 'bubble-dish');
-                        w.energy -= 2;
-                        // A cold drink or an ice cream, and a fridge / freezer for it: the waiter fetches it at once
-                        const cold = this.coldSpotFor(cust.order.dish);
-                        if (cold && this.fetchCold(w, cust, cold)) return;
-                        this.orders.push({customer: cust, dish: cust.order.dish});
-                    }
-                    this.goHome(w);
-                });
-            });
-            if (!ok) {
-                cust.claimed = null;
-                w.task = null;
-            }
-            return;
-        }
+        if (cust && this.takeOrder(w, cust)) return;
         // 3. Clearing their own tables once the guests have gone
         this.clearTable(w);
+    }
+
+    /** Walk to the guest and take the order (a waiter at their tables, or the manager lending a hand). False if unreachable. */
+    takeOrder(w, cust) {
+        cust.claimed = w;
+        w.task = 'order';
+        w.activity = 'order';
+        const ok = this.walkTo(w, cust.seat.service, () => {
+            this.face(w, cust.pos.x, cust.pos.z);
+            this.busy(w, (w.trait === 'chatty' ? 1.8 : 1.2) * this.skillTime(w), 'order', () => {
+                if (cust.state === 'wantOrder') {
+                    cust.state = 'waitFood';
+                    cust.activity = 'waitFood';
+                    if (w.trait === 'chatty') cust.mood = Math.min(100, cust.mood + 6);
+                    if (w.role === 'manager') cust.mood = Math.min(100, cust.mood + 4); // served by the boss
+                    this.bubble(cust, dishIcon(cust.order.dish), 'bubble-dish');
+                    w.energy -= 2;
+                    // A cold drink or an ice cream, and a fridge / freezer for it: the waiter fetches it at once
+                    const cold = w.role === 'waiter' ? this.coldSpotFor(cust.order.dish) : null;
+                    if (cold && this.fetchCold(w, cust, cold)) return;
+                    this.orders.push({customer: cust, dish: cust.order.dish});
+                }
+                this.goHome(w);
+            });
+        });
+        if (!ok) {
+            cust.claimed = null;
+            w.task = null;
+        }
+        return ok;
     }
 
     /** The drinks fridge or gelato freezer that serves this dish, if the restaurant has one the waiter can reach. */
@@ -1354,7 +1490,7 @@ export class Sim {
         return ok;
     }
 
-    /** Cleaners clean the floor: paper, peels, crumbs, puddles and snow at the entrance (never the tables). */
+    /** Cleaners clean the restrooms and the floor (paper, peels, crumbs, puddles, snow), clear dirty tables, water the plants. */
     thinkCleaner(a) {
         if (a.state !== 'idle' || a.task) return;
         if (!a.closing && this.maybeRest(a)) return;
@@ -1383,7 +1519,11 @@ export class Sim {
         }
         const l = this.litter.find(x => !x.claimed);
         if (!l) {
-            if (a.closing && !this.litter.length && !this.spots.toilet.some(x => x.dirty)) this.sendHome(a); // all clean: home
+            // The floor is clean: they help clear tables left dirty (any table), then water the plants
+            a.tool = 'cloth';
+            if (this.clearTable(a, true)) return;
+            a.tool = null;
+            if (a.closing && !this.litter.length && !this.spots.toilet.some(x => x.dirty) && !this.seats.some(s => s.dirty)) this.sendHome(a); // all clean: home
             else if (!a.closing) this.waterRound(a); // nothing to clean: the plants' daily water
             return;
         }
@@ -1510,6 +1650,7 @@ export class Sim {
                     sl.dish = null;
                 }
                 c.state = 'wantOrder';
+                c.wantSince = this.t;
                 c.activity = 'wantOrder';
                 c.claimed = null;
                 this.bubble(c, mood('alert'), 'bubble-alert');
@@ -1531,6 +1672,7 @@ export class Sim {
         });
         if (a.stove) a.stove.chef = null;
         if (a.till) a.till.cashier = null;
+        if (a.station) a.station.staffBy = null;
         if (a.cookingOrder && a.cookingOrder.customer.state === 'waitFood') this.orders.unshift(a.cookingOrder); // the dish still has to be cooked
         a.cookingOrder = null;
         this.clearBubble(a);
@@ -1569,14 +1711,19 @@ export class Sim {
         if (a.till) this.face(a, a.till.x, a.till.z);
     }
 
-    /** The manager walks the room and welcomes guests (a little mood boost); the rest of the time they watch. */
+    /**
+     * The manager stays at the host stand and welcomes guests (a little mood boost). Taking orders is the waiters'
+     * job: the manager only lends a hand when a guest has been waiting to order for a while and no waiter is coming.
+     */
     thinkManager(m) {
         if (m.state !== 'idle' || m.task) return;
+        const stuck = this.agents.find(a => a.role === 'customer' && a.state === 'wantOrder' && !a.claimed && this.t - (a.wantSince ?? this.t) > 14);
+        if (stuck && this.takeOrder(m, stuck)) return;
         const guest = this.agents.find(a => a.role === 'customer' && (a.state === 'wantOrder' || a.state === 'waitFood') && !a.welcomed);
         if (guest && Math.random() < 0.02) {
             guest.welcomed = true;
             m.task = 'greet';
-            m.activity = 'order';
+            m.activity = 'greet';
             if (!this.walkTo(m, guest.seat.service, () => {
                 this.face(m, guest.pos.x, guest.pos.z);
                 this.busy(m, 1.4, 'talk', () => {
@@ -1611,8 +1758,7 @@ export class Sim {
             c.cooking = order.dish;
             const f = DIRS[st.r];
             this.face(c, st.front.x + 0.5 - f[0], st.front.z + 0.5 - f[1]);
-            const fridge = Math.pow(0.9, Math.min(2, this.spots.fridge));
-            const time = this.catalog.dishes[order.dish].cook / st.speed * fridge * (c.trait === 'careful' ? 1.1 : 1) * this.skillTime(c);
+            const time = this.cookTime(order.dish, c, st);
             // How good the dish comes out: the cook's skill and the equipment (stove, fridge, counter)
             order.quality = Math.max(0, Math.min(10, this.skill(c) * 0.55 + st.tier * 0.8 + this.tiers.fridge * 0.45 + this.tiers.counter * 0.3 + (c.trait === 'careful' ? 0.8 : 0)));
             this.bubble(c, dishIcon(order.dish), 'bubble-cook', 0, () => 1 - c.timer / Math.max(0.01, c.timerTotal));
@@ -1627,7 +1773,7 @@ export class Sim {
                     this.busy(c, 1.5, 'idle', () => (c.task = null));
                     return;
                 }
-                const target = free[0];
+                const target = this.pickSlot(c, order, free);
                 target.s.dish = {reserved: true};
                 const mesh = dishModel(order.dish);
                 mesh.traverse(o => o.isMesh && (o.castShadow = true));
@@ -1639,6 +1785,7 @@ export class Sim {
                     mesh.position.copy(target.s.pos);
                     this.fxAdd(mesh);
                     target.s.dish = {mesh, customer: order.customer, dish: order.dish, claimed: null};
+                    if (target.k.lift) this.sendByLift(target.k, target.s);
                     c.cookingOrder = null;
                     order.customer.quality = order.quality;
                     this.goHome(c);
@@ -1847,15 +1994,19 @@ export class Sim {
     update(realDt, t) {
         const dt = realDt * this.speed;
         this.t += dt;
+        // Dishes riding a dish lift come out on the other floor
+        for (const ride of [...(this.lifts || [])]) if ((ride.t -= dt) <= 0) this.arriveByLift(ride);
         this.clock += dt * GAME_MINUTES_PER_SECOND; // total game minutes since the restaurant opened (the calendar)
         for (const k in this.effects) this.effects[k] = Math.max(0, this.effects[k] - dt);
         const status = this.r.status || 'open';
-        if (dt > 0 && !this.problems.length && status !== 'closed') {
+        if (dt > 0) {
             // Kind of restaurant, menu signs outside, the hour and the weather change how many people come
             this.spawnIn -= dt * hourFactor(this.hour, this.kindKey) * ({drizzle: 0.9, rain: 0.65, hail: 0.6, light_snow: 0.85, snow: 0.6, sunny: 1.1}[this.weather] || 1) * (this.kind.customers || 1) * (1 + 0.08 * Math.min(2, this.spots.attract));
             if (this.spawnIn <= 0) {
                 this.spawnIn = arrivalSeconds(this.r.popularity) * (0.7 + Math.random() * 0.6);
-                this.spawnCustomer();
+                // Open: a guest. Closed, not taking guests, or not ready: the same person just walks on by along the sidewalk
+                if (!this.problems.length && status === 'open') this.spawnCustomer();
+                else this.world.traffic?.passBy();
             }
         }
         if (dt > 0) {
@@ -1883,6 +2034,16 @@ export class Sim {
             }
         }
         if (dt > 0) this.checkPlants();
+        // Feet, crumbs and spilt drinks: the more guests in the room, the dirtier the floor gets (trash bins help)
+        if (dt > 0) {
+            const inside = this.agents.filter(a => a.role === 'customer' && a.inside && a.tile);
+            this.trafficDirt = (this.trafficDirt || 0) + dt * inside.length * 0.006 / (1 + 0.4 * Math.min(3, this.spots.trash));
+            if (this.trafficDirt >= 1) {
+                this.trafficDirt = 0;
+                const who = inside[Math.floor(Math.random() * inside.length)];
+                if (who) this.dropLitter(who.seat ? {x: who.seat.x, z: who.seat.z} : who.tile, ['crumbs', 'paper', 'spill', 'crumbs'][Math.floor(Math.random() * 4)]);
+            }
+        }
         for (const a of [...this.agents]) {
             if (dt > 0) {
                 this.move(a, dt);
@@ -1902,7 +2063,12 @@ export class Sim {
                     else if (a.task !== 'rest') a.energy = Math.max(0, a.energy - drain * dt);
                     if (a.energy < 25 && !this.bubbles.has(a) && Math.random() < dt * 0.05) this.bubble(a, mood('tired'), 'bubble-thought', 1.8);
                 }
-                if (a.away) { /* at home */ } else if (a.role === 'waiter') this.thinkWaiter(a);
+                if (a.staff && !a.away && !a.closing && a.state === 'idle' && !a.task && this.noStation(a)) this.showNoStation(a);
+                else if (a.nsBubble && (a.away || !this.noStation(a))) {
+                    a.nsBubble = false;
+                    this.clearBubble(a);
+                }
+                if (a.away) { /* at home */ } else if (a.staff && this.noStation(a) && !a.closing) { /* nothing they can do */ } else if (a.role === 'waiter') this.thinkWaiter(a);
                 else if (a.role === 'chef') this.thinkChef(a);
                 else if (a.role === 'cleaner') this.thinkCleaner(a);
                 else if (a.role === 'manager') this.thinkManager(a);
@@ -1915,6 +2081,7 @@ export class Sim {
             a.clock = (a.clock || a.id * 3.1) + realDt * this.speed;
             animatePerson(a.mesh, anim, a.clock, {seated: a.anim === 'sit' || a.anim === 'eat', mood: a.mood, energy: a.energy, reading: a.state === 'wantOrder', tool: a.state === 'walk' ? a.tool : null});
         }
+        if (dt > 0) this.personalSpace(dt);
         for (const l of this.litter) { // rain drips from coats into the puddles
             const rp = l.mesh.userData.ripple;
             if (rp) rp.scale.setScalar(1 + ((this.world.time * 0.7 + l.x * 0.37) % 1) * 2.5);
@@ -2073,6 +2240,7 @@ export class Sim {
             id: a.id, role: a.role, name: a.staff ? a.staff.name : a.name, trait: a.trait, activity: a.activity,
             mood: a.mood != null ? Math.round(a.mood) : null, energy: a.energy != null ? Math.round(a.energy) : null,
             order: a.order ? a.order.dish : null,
+            noStation: this.noStation(a),
             tables: a.role === 'waiter' ? (a.tables || []).map(id => this.tables.find(t => t.id === id)?.num).filter(Boolean) : null,
             color: a.staff?.color,
         };

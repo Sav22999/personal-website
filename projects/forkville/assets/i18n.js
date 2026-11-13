@@ -67,12 +67,12 @@ const STRINGS = {
         f_fast: 'fast service', f_slow: 'slow service', f_tasty: 'delicious food', f_plain: 'plain food', f_pretty: 'lovely decor', f_bare: 'bare room', f_clean: 'spotless', f_dirty: 'dirty tables or litter',
         f_ambience: 'great atmosphere', f_friendly: 'friendly staff', f_dark: 'too dark in the evening', f_cozy: 'cozy evening',
         tip_slow: 'Hire another waiter or chef, add stoves, or a coffee machine and sofa so tired staff recover.', tip_plain: 'Improve your dishes in the Menu with ingredients: higher levels taste better.',
-        tip_bare: 'Put decorations, plants and rugs near the tables: customers rate the beauty around their seat.', tip_dirty: 'Dirty tables: more waiters (each clears their own tables) and a sink. Dirty floor: hire a cleaner with a cleaning cart or station, add trash bins. You can also tap tables and dirt to clean them.',
+        tip_bare: 'Put decorations, plants and rugs near the tables: customers rate the beauty around their seat.', tip_dirty: 'More guests make more mess. Dirty tables: more waiters (each clears their own tables) and a sink. Dirty floor: hire cleaners, each with their own cleaning cart or station (when the floor is clean they help clear tables too), and add trash bins. You can also tap tables and dirt to clean them.',
         tip_dark: 'Add lamps, lanterns or candles: in the evening customers like a well-lit room.', tip_good: 'Keep it up! Music, a TV and greeting your guests make them even happier.',
         review_good: '{a}!', review_but: 'But {b}.', review_only_bad: 'Sadly, {b}.', review_neutral: 'A nice meal, nothing special.',
         levels_title: 'Levels', level_title: 'Level {n} · {t}', unlocks: 'Unlocks', reward: 'Reward', level_up_title: 'Level up!', level_up_ok: 'Great!', level_up_body: 'You are now a {t}. You received {c} coins.',
         unlock_items: 'New items', unlock_dishes: 'New dishes', unlock_crops: 'New crops', unlock_size: 'Enlarge to {n}×{n}', unlock_waiters: 'Up to {n} waiters', unlock_cleaners: 'Up to {n} cleaners', unlock_menu: '{n} dishes on the menu', unlock_plots: '{n} garden beds', current: 'You are here',
-        title_kiosk: 'Kiosk', title_snack_bar: 'Snack bar', title_trattoria: 'Trattoria', title_bistro: 'Bistro', title_restaurant: 'Restaurant', title_fine_dining: 'Fine dining', title_gourmet: 'Gourmet house', title_legend: 'Legend of Forkville',
+        title_kiosk: 'Kiosk', title_snack_bar: 'Snack bar', title_trattoria: 'Trattoria', title_bistro: 'Bistro', title_restaurant: 'Restaurant', title_fine_dining: 'Fine dining', title_gourmet: 'Gourmet house', title_renowned: 'Renowned restaurant', title_star_house: 'Starred house', title_legend: 'Legend of Forkville',
         saved_ok: 'Saved', customer: 'Customer', room_clean: 'Cleanliness',
         managers: 'Managers', hire_manager: 'Hire a manager', manager: 'Manager', manager_what: 'A manager runs the restaurant while you are away, as if the game were open.',
         manager_hint: 'While you are away they run the restaurant as if the game were open. Up to {n} at your level · now {h} hours covered.',
@@ -81,7 +81,7 @@ const STRINGS = {
         away_slot_manager: 'From <b>{a}</b> to <b>{b}</b> your managers ran the restaurant ({p}% of the live pace).',
         away_slot_alone: 'From <b>{a}</b> to <b>{b}</b> the staff carried on without you, at a slow pace ({p}% of the live pace).',
         away_slot_closed: 'After <b>{a}</b> the restaurant stood still: nobody was running it.',
-        away_tip_hire: 'Hire a manager (from level 6) to keep the restaurant running at a good pace while you are away.',
+        away_tip_hire: 'Hire a manager (from level 7) to keep the restaurant running at a good pace while you are away.',
         away_tip_promote: 'Promote your managers or hire another one to cover more hours while you are away.',
 
         staff_intro: 'Hire people looking for a job, then give them a role: you can change it any time. Each CV shows their skill (0–10) as cook, waiter, cleaner and manager; it grows very slowly with experience in their role (about one point every 8 game years), only while the restaurant is open.',
@@ -121,7 +121,7 @@ const STRINGS = {
         err_email_invalid: 'This email doesn’t look right.', err_name_required: 'Write your name.', err_privacy_required: 'Please accept the privacy notice.', err_rate_limited: 'Too many attempts. Wait a little.',
         err_use_google: 'This account uses Google sign-in.', err_token_invalid: 'This link has expired or was already used.', err_no_coins: 'Not enough coins.', err_no_ingredients: 'Missing ingredients.',
         err_level_locked: 'You need a higher level.', err_layout_overlap: 'Two pieces overlap.', err_layout_outside: 'A piece is outside the room.', err_need_stove: 'Each chef needs a stove: place one first.',
-        err_staff_full: 'You have all the waiters your level allows.', err_staff_last: 'You need at least one.', err_menu_full: 'The menu is full.', err_menu_empty: 'Keep at least one dish on the menu.',
+        err_staff_full: 'You have all the workers of this role your level allows.', cook_secs: '{b}s', cook_secs_here: '{b}s → {n}s here', cook_hint: 'Base cooking time → with your best stove, fridges and kitchen equipment. A skilled chef is faster still.', cook_cold: 'Served straight from the fridge or freezer', cook_cold_short: 'ready', err_chefs_full: 'You have all the chefs your level allows: level up to hire more.', chef_stoves: 'stoves: {n}', err_staff_last: 'You need at least one.', err_menu_full: 'The menu is full.', err_menu_empty: 'Keep at least one dish on the menu.',
         err_not_ripe: 'Nothing is ripe yet.', err_plot_busy: 'This bed is already planted.', err_market_limit: 'Daily limit reached for this ingredient.', err_already_gifted: 'You already sent a gift to this friend today.',
         err_already_rated: 'You already rated today.', err_not_found: 'Player not found.', err_not_friends: 'You are not friends.', err_bad_password: 'Wrong password.', err_email_unverified: 'Confirm your email first.',
         err_google_token: 'Google sign-in failed.', err_not_installed: 'The game is not installed on this server yet.', err_max_size: 'Your restaurant is as big as it gets.', err_csrf: 'Session expired: reload the page.',
@@ -182,12 +182,12 @@ const STRINGS = {
         f_fast: 'servizio veloce', f_slow: 'servizio lento', f_tasty: 'cibo delizioso', f_plain: 'cibo banale', f_pretty: 'arredamento bellissimo', f_bare: 'sala spoglia', f_clean: 'pulitissimo', f_dirty: 'tavoli sporchi o rifiuti',
         f_ambience: 'bella atmosfera', f_friendly: 'personale gentile', f_dark: 'troppo buio la sera', f_cozy: 'serata accogliente',
         tip_slow: 'Assumi un altro cameriere o cuoco, aggiungi fornelli, oppure macchina del caffè e divano perché lo staff stanco si riprenda.', tip_plain: 'Migliora i piatti nel Menù con gli ingredienti: ai livelli alti sono più buoni.',
-        tip_bare: 'Metti decorazioni, piante e tappeti vicino ai tavoli: i clienti giudicano la bellezza intorno al loro posto.', tip_dirty: 'Tavoli sporchi: più camerieri (ognuno sparecchia i suoi tavoli) e un lavello. Pavimento sporco: assumi un addetto alle pulizie con carrello o postazione, aggiungi dei cestini. Puoi anche toccare tavoli e sporcizia per pulirli.',
+        tip_bare: 'Metti decorazioni, piante e tappeti vicino ai tavoli: i clienti giudicano la bellezza intorno al loro posto.', tip_dirty: 'Più clienti fanno più sporco. Tavoli sporchi: più camerieri (ognuno sparecchia i suoi tavoli) e un lavello. Pavimento sporco: assumi addetti alle pulizie, ognuno con il suo carrello o la sua postazione (a pavimento pulito aiutano anche a sparecchiare), e aggiungi dei cestini. Puoi anche toccare tavoli e sporcizia per pulirli.',
         tip_dark: 'Aggiungi lampade, lanterne o candele: la sera i clienti amano una sala ben illuminata.', tip_good: 'Continua così! Musica, una TV e salutare i clienti li rendono ancora più felici.',
         review_good: '{a}!', review_but: 'Però {b}.', review_only_bad: 'Peccato: {b}.', review_neutral: 'Un buon pasto, niente di speciale.',
         levels_title: 'Livelli', level_title: 'Livello {n} · {t}', unlocks: 'Sblocca', reward: 'Premio', level_up_title: 'Nuovo livello!', level_up_ok: 'Fantastico!', level_up_body: 'Ora sei un {t}. Hai ricevuto {c} monete.',
         unlock_items: 'Nuovi oggetti', unlock_dishes: 'Nuovi piatti', unlock_crops: 'Nuove colture', unlock_size: 'Allarga a {n}×{n}', unlock_waiters: 'Fino a {n} camerieri', unlock_cleaners: 'Fino a {n} addetti alle pulizie', unlock_menu: '{n} piatti nel menù', unlock_plots: '{n} aiuole nell’orto', current: 'Sei qui',
-        title_kiosk: 'Chiosco', title_snack_bar: 'Snack bar', title_trattoria: 'Trattoria', title_bistro: 'Bistrot', title_restaurant: 'Ristorante', title_fine_dining: 'Ristorante raffinato', title_gourmet: 'Casa gourmet', title_legend: 'Leggenda di Forkville',
+        title_kiosk: 'Chiosco', title_snack_bar: 'Snack bar', title_trattoria: 'Trattoria', title_bistro: 'Bistrot', title_restaurant: 'Ristorante', title_fine_dining: 'Ristorante raffinato', title_gourmet: 'Casa gourmet', title_renowned: 'Ristorante rinomato', title_star_house: 'Casa stellata', title_legend: 'Leggenda di Forkville',
         saved_ok: 'Salvato', customer: 'Cliente', room_clean: 'Pulizia',
         managers: 'Gestori', hire_manager: 'Assumi un gestore', manager: 'Gestore', manager_what: 'Un gestore manda avanti il ristorante mentre sei via, come se il gioco fosse aperto.',
         manager_hint: 'Mentre sei via mandano avanti il ristorante come se il gioco fosse aperto. Fino a {n} al tuo livello · ora coprono {h} ore.',
@@ -196,7 +196,7 @@ const STRINGS = {
         away_slot_manager: 'Dalle <b>{a}</b> alle <b>{b}</b> i tuoi gestori hanno mandato avanti il ristorante ({p}% del ritmo dal vivo).',
         away_slot_alone: 'Dalle <b>{a}</b> alle <b>{b}</b> lo staff è andato avanti senza di te, a ritmo ridotto ({p}% del ritmo dal vivo).',
         away_slot_closed: 'Dopo le <b>{a}</b> il ristorante è rimasto fermo: nessuno lo gestiva.',
-        away_tip_hire: 'Assumi un gestore (dal livello 6) per far lavorare bene il ristorante mentre sei via.',
+        away_tip_hire: 'Assumi un gestore (dal livello 7) per far lavorare bene il ristorante mentre sei via.',
         away_tip_promote: 'Promuovi i tuoi gestori o assumine un altro per coprire più ore mentre sei via.',
 
         staff_intro: 'Assumi chi cerca lavoro, poi assegna un ruolo: puoi cambiarlo quando vuoi. Ogni curriculum mostra la bravura (0–10) come cuoco, cameriere, addetto alle pulizie e gestore; cresce molto lentamente con l’esperienza nel ruolo (circa un punto ogni 8 anni di gioco), solo quando il ristorante è aperto.',
@@ -235,7 +235,7 @@ const STRINGS = {
         err_email_invalid: 'Questa email non sembra corretta.', err_name_required: 'Scrivi il tuo nome.', err_privacy_required: 'Accetta l’informativa privacy.', err_rate_limited: 'Troppi tentativi. Aspetta un po’.',
         err_use_google: 'Questo account usa l’accesso con Google.', err_token_invalid: 'Il link è scaduto o è già stato usato.', err_no_coins: 'Monete insufficienti.', err_no_ingredients: 'Mancano ingredienti.',
         err_level_locked: 'Serve un livello più alto.', err_layout_overlap: 'Due oggetti si sovrappongono.', err_layout_outside: 'Un oggetto è fuori dalla stanza.', err_need_stove: 'Ogni cuoco ha bisogno di un fornello: mettine uno prima.',
-        err_staff_full: 'Hai già tutti i camerieri che il tuo livello consente.', err_staff_last: 'Ne serve almeno uno.', err_menu_full: 'Il menù è pieno.', err_menu_empty: 'Lascia almeno un piatto nel menù.',
+        err_staff_full: 'Hai già tutto il personale di questo ruolo che il tuo livello consente.', cook_secs: '{b}s', cook_secs_here: '{b}s → {n}s qui', cook_hint: 'Tempo base di cottura → con il tuo fornello migliore, i frigoriferi e l’attrezzatura della cucina. Un cuoco bravo è ancora più veloce.', cook_cold: 'Servito subito dal frigo o dal congelatore', cook_cold_short: 'pronto', err_chefs_full: 'Hai già tutti i cuochi che il tuo livello consente: sali di livello per assumerne altri.', chef_stoves: 'fornelli: {n}', err_staff_last: 'Ne serve almeno uno.', err_menu_full: 'Il menù è pieno.', err_menu_empty: 'Lascia almeno un piatto nel menù.',
         err_not_ripe: 'Non c’è ancora niente di maturo.', err_plot_busy: 'Questa aiuola è già piantata.', err_market_limit: 'Limite giornaliero raggiunto per questo ingrediente.', err_already_gifted: 'Oggi hai già mandato un regalo a questo amico.',
         err_already_rated: 'Oggi hai già votato.', err_not_found: 'Giocatore non trovato.', err_not_friends: 'Non siete amici.', err_bad_password: 'Password errata.', err_email_unverified: 'Prima conferma la tua email.',
         err_google_token: 'Accesso con Google non riuscito.', err_not_installed: 'Il gioco non è ancora installato su questo server.', err_max_size: 'Il tuo ristorante è già al massimo.', err_csrf: 'Sessione scaduta: ricarica la pagina.',
@@ -580,3 +580,121 @@ Object.assign(STRINGS.it, {
     for_role_chef: 'Lo usa il cuoco', for_role_waiter: 'Lo usano i camerieri', for_role_cleaner: 'Lo usa l’addetto alle pulizie', for_role_cashier: 'Lo usa il cassiere', for_role_staff: 'Per le pause del personale',
     unlock_cashier: 'Puoi assumere un cassiere: conti più alti e una mancia da ogni cliente',
 });
+Object.assign(STRINGS.en, {
+    act_noStation: 'No station of their own: nothing to do', chef_no_stove: 'Chefs without a stove: {n} · add a stove', cleaner_no_station: 'Cleaners without a cart or cleaning station: {n} · add one each',
+    manager_no_stand: 'Manager without a host stand: add one by the entrance', for_role_manager: 'The manager’s station',
+});
+Object.assign(STRINGS.it, {
+    act_noStation: 'Senza una postazione: non può lavorare', chef_no_stove: 'Cuochi senza fornello: {n} · aggiungi un fornello', cleaner_no_station: 'Addetti alle pulizie senza carrello o postazione: {n} · uno a testa',
+    manager_no_stand: 'Manager senza leggio dell’accoglienza: mettine uno vicino all’ingresso', for_role_manager: 'La postazione del manager',
+});
+Object.assign(STRINGS.en, {
+    garage_title: 'Underground car park (floor −1)', garage_d: 'A ramp down to a car park under the street: many more spaces than the one outside, and every guest who parks spends more.',
+    garage_have: 'Your underground car park has {n} spaces.', garage_buy: 'Dig an underground car park ({n} spaces)', garage_more: 'Add a level of spaces ({n} spaces)',
+    garage_max: 'The underground car park is as big as it gets.', lk_garage: 'Underground car park', lt_garage: 'Underground car park, level {n}', unlock_garage: 'Underground car park level {l} ({n} spaces)',
+});
+Object.assign(STRINGS.it, {
+    garage_title: 'Parcheggio interrato (piano −1)', garage_d: 'Una rampa scende a un parcheggio sotto la strada: molti più posti di quello esterno, e chi parcheggia spende di più.',
+    garage_have: 'Il tuo parcheggio interrato ha {n} posti.', garage_buy: 'Scava un parcheggio interrato ({n} posti)', garage_more: 'Aggiungi posti ({n} posti)',
+    garage_max: 'Il parcheggio interrato è già al massimo.', lk_garage: 'Parcheggio interrato', lt_garage: 'Parcheggio interrato, livello {n}', unlock_garage: 'Parcheggio interrato livello {l} ({n} posti)',
+});
+Object.assign(STRINGS.en, {
+    todo_title: 'Requirements', todo_chip: 'To do: {n}', todo_go: 'Fix', todo_intro: 'What your guests need, in order: first what it takes to open, then what keeps them happy, then a station for every worker you hired.',
+    req_open: 'To open', req_happy: 'Happy guests', req_staff: 'A station for every worker',
+    req_seat: 'Table with a chair ({n} seats)', req_seat_d: 'A chair pushed up to a table, reachable from the door.',
+    req_stove: 'Chef’s station: a stove ({n})', req_stove_d: 'Where the chef cooks. One chef per stove.',
+    req_counter: 'Waiter’s station: a counter ({n})', req_counter_d: 'The chef puts the dishes there and the waiters pick them up.',
+    req_chef: 'A chef at a stove', req_chef_d: 'Hire a chef in Staff.',
+    req_waiter: 'A waiter with tables', req_waiter_d: 'Waiters take the orders and serve their own tables.',
+    req_menu: 'A dish on the menu ({n})', req_menu_d: 'Guests order from the menu.',
+    req_toilet: 'Toilet (WC)', req_toilet_d: 'Without one guests are unhappy and leave worse reviews.',
+    req_washbasin: 'Washbasin', req_washbasin_d: 'Guests wash their hands after the toilet.',
+    req_sink: 'Sink for the dishes', req_sink_d: 'Plates are washed faster (waiters and cleaners use it).',
+    req_cleaner: 'Cleaner with a cart or cleaning station', req_cleaner_d: 'Cleans floor and restrooms, helps clear tables, waters the plants.',
+    req_trash: 'Trash bin', req_trash_d: 'Less litter on the floor.',
+    req_light: 'Lamps (at least 2)', req_light_d: 'In the evening guests like a well-lit room.',
+    req_st_chef: 'Chefs at a stove: {n}/{m}', req_st_chef_d: 'Each chef needs a stove of their own.',
+    req_st_waiter: 'Waiters with tables: {n}/{m}', req_st_waiter_d: 'Tables are shared out among the waiters: add tables.',
+    req_st_cleaner: 'Cleaners with a cart or station: {n}/{m}', req_st_cleaner_d: 'One cleaning cart or cleaning station each.',
+    req_st_manager: 'Manager with a host stand: {n}/{m}', req_st_manager_d: 'The host stand by the entrance is the manager’s station.',
+    req_st_cashier: 'Cashiers with a till: {n}/{m}', req_st_cashier_d: 'One cash register each.',
+});
+Object.assign(STRINGS.it, {
+    todo_title: 'Requisiti', todo_chip: 'Da fare: {n}', todo_go: 'Vai', todo_intro: 'Cosa serve ai tuoi clienti, in ordine: prima quello che serve per aprire, poi quello che li rende contenti, poi una postazione per ogni dipendente assunto.',
+    req_open: 'Per aprire', req_happy: 'Clienti contenti', req_staff: 'Una postazione per ogni dipendente',
+    req_seat: 'Tavolo con sedia ({n} posti)', req_seat_d: 'Una sedia accostata a un tavolo, raggiungibile dalla porta.',
+    req_stove: 'Postazione del cuoco: un fornello ({n})', req_stove_d: 'Dove il cuoco cucina. Un cuoco per fornello.',
+    req_counter: 'Postazione del cameriere: un bancone ({n})', req_counter_d: 'Il cuoco ci posa i piatti e i camerieri li ritirano.',
+    req_chef: 'Un cuoco al fornello', req_chef_d: 'Assumi un cuoco in Staff.',
+    req_waiter: 'Un cameriere con i suoi tavoli', req_waiter_d: 'I camerieri prendono le ordinazioni e servono i loro tavoli.',
+    req_menu: 'Un piatto nel menù ({n})', req_menu_d: 'I clienti ordinano dal menù.',
+    req_toilet: 'Bagno (WC)', req_toilet_d: 'Senza, i clienti sono scontenti e lasciano recensioni peggiori.',
+    req_washbasin: 'Lavabo', req_washbasin_d: 'I clienti si lavano le mani dopo il bagno.',
+    req_sink: 'Lavello per i piatti', req_sink_d: 'I piatti si lavano più in fretta (lo usano camerieri e addetti alle pulizie).',
+    req_cleaner: 'Addetto alle pulizie con carrello o postazione', req_cleaner_d: 'Pulisce pavimento e bagni, aiuta a sparecchiare, annaffia le piante.',
+    req_trash: 'Cestino', req_trash_d: 'Meno sporcizia per terra.',
+    req_light: 'Lampade (almeno 2)', req_light_d: 'La sera i clienti amano una sala ben illuminata.',
+    req_st_chef: 'Cuochi con un fornello: {n}/{m}', req_st_chef_d: 'Ogni cuoco ha bisogno del suo fornello.',
+    req_st_waiter: 'Camerieri con tavoli: {n}/{m}', req_st_waiter_d: 'I tavoli sono divisi tra i camerieri: aggiungi tavoli.',
+    req_st_cleaner: 'Addetti alle pulizie con carrello o postazione: {n}/{m}', req_st_cleaner_d: 'Un carrello o una postazione delle pulizie a testa.',
+    req_st_manager: 'Manager con leggio dell’accoglienza: {n}/{m}', req_st_manager_d: 'Il leggio vicino all’ingresso è la postazione del manager.',
+    req_st_cashier: 'Cassieri con una cassa: {n}/{m}', req_st_cashier_d: 'Un registratore di cassa a testa.',
+});
+Object.assign(STRINGS.en, {
+    hol_started: 'Holiday in town: {h}! The neighbourhood is decorated.', hol_christmas: 'Christmas', hol_halloween: 'Halloween', hol_easter: 'Easter',
+    hol_carnival: 'Carnival', hol_valentine: 'Valentine’s Day', hol_summer: 'the summer festival',
+});
+Object.assign(STRINGS.it, {
+    hol_started: 'Festa in città: {h}! Il quartiere è addobbato.', hol_christmas: 'Natale', hol_halloween: 'Halloween', hol_easter: 'Pasqua',
+    hol_carnival: 'Carnevale', hol_valentine: 'San Valentino', hol_summer: 'la festa d’estate',
+});
+Object.assign(STRINGS.en, {
+    cat_storage: 'Storage', store_piece: 'Put away', store_hint: 'Put it in storage without selling it: place it again whenever you like, for free',
+    storage_empty: 'Nothing in storage. Select a piece in the room and choose “Put away” to keep it here without selling it.',
+    storage_free: 'Free: already yours', storage_sell_hint: 'Sell this piece from storage', storage_sold: 'Sold from storage: +{c} coins', lk_storage_sell: 'Sold from storage',
+});
+Object.assign(STRINGS.it, {
+    cat_storage: 'Archivio', store_piece: 'Archivia', store_hint: 'Mettilo in archivio senza venderlo: lo rimetti quando vuoi, gratis',
+    storage_empty: 'L’archivio è vuoto. Seleziona un oggetto nella sala e scegli “Archivia” per tenerlo qui senza venderlo.',
+    storage_free: 'Gratis: è già tuo', storage_sell_hint: 'Vendi questo oggetto dall’archivio', storage_sold: 'Venduto dall’archivio: +{c} monete', lk_storage_sell: 'Venduto dall’archivio',
+});
+
+// Windows, outdoor paving, wide doors, the later levels (31–40)
+Object.assign(STRINGS.en, {
+    cat_window: 'Windows', cat_ground: 'Paving', window_wall: 'goes along an outer wall', window_door: 'not in the doorway',
+    err_window_wall: 'A window must stand along an outer wall.', err_window_door: 'A window cannot go where the door is.',
+    door_wide_wood: 'Wide wooden door (2 tiles)', door_wide_glass: 'Wide glass door (2 tiles)', door_wide_french: 'Wide French door (2 tiles)', door_wide_grand: 'Grand entrance (2 tiles)',
+});
+Object.assign(STRINGS.it, {
+    cat_window: 'Finestre', cat_ground: 'Pavimentazioni', window_wall: 'va lungo un muro esterno', window_door: 'non sulla porta',
+    err_window_wall: 'Una finestra va lungo un muro esterno.', err_window_door: 'Una finestra non può stare dove c’è la porta.',
+    door_wide_wood: 'Porta larga di legno (2 caselle)', door_wide_glass: 'Porta larga a vetri (2 caselle)', door_wide_french: 'Porta-finestra larga (2 caselle)', door_wide_grand: 'Grande ingresso (2 caselle)',
+});
+Object.assign(NAMES.en, {
+    window_small: 'Small window', window_round: 'Round window', window_wide: 'Wide window', window_tall: 'Tall window', window_large: 'Large window', window_arched: 'Arched window',
+    glass_wall_2: 'Glass wall (2)', window_stained: 'Stained glass window', glass_wall_3: 'Glass wall (3)', glass_wall_4: 'Glass wall (4)', window_panorama: 'Panoramic glazing',
+    ground_grass: 'Lawn', ground_gravel: 'Gravel', ground_stone: 'Stone slabs', ground_deck: 'Wooden decking', ground_brick: 'Brick paving', ground_terracotta: 'Terracotta tiles',
+    ground_flowers: 'Flowery meadow', ground_mosaic: 'Mosaic', ground_marble: 'Marble paving',
+    table_glass: 'Glass table', table_banquet: 'Banquet table', table_gold_round: 'Black and gold table', chair_designer: 'Designer chair', chair_royal: 'Royal armchair',
+    stove_teppanyaki: 'Teppanyaki grill', stove_master: 'Master range', counter_marble: 'Marble counter', counter_chef_table: 'Chef’s table counter',
+    knife_rack: 'Knife rack', herb_wall: 'Herb wall', sous_vide: 'Sous-vide station', blast_chiller: 'Blast chiller', menu_tablet: 'Menu tablet stand', armchair_wing: 'Wing armchair',
+    bonsai: 'Bonsai', wine_wall: 'Wine wall', chandelier_crystal: 'Crystal chandelier', sculpture_modern: 'Modern sculpture', aquarium_wall: 'Aquarium wall',
+    planter_box_long: 'Long planter', trellis_roses: 'Rose trellis', olive_tree_big: 'Old olive tree', fire_pit: 'Fire pit', outdoor_bar: 'Garden bar', gazebo: 'Gazebo', water_wall: 'Water wall',
+    floor_black_marble: 'Black marble', floor_terrazzo: 'Terrazzo', wall_velvet: 'Velvet and gold', wall_wood_panels: 'Wood panelling',
+});
+Object.assign(NAMES.it, {
+    window_small: 'Finestrella', window_round: 'Oblò', window_wide: 'Finestra larga', window_tall: 'Finestra alta', window_large: 'Finestrone', window_arched: 'Finestra ad arco',
+    glass_wall_2: 'Vetrata (2)', window_stained: 'Vetrata colorata', glass_wall_3: 'Vetrata (3)', glass_wall_4: 'Vetrata (4)', window_panorama: 'Vetrata panoramica',
+    ground_grass: 'Prato', ground_gravel: 'Ghiaia', ground_stone: 'Lastre di pietra', ground_deck: 'Pedana di legno', ground_brick: 'Mattoni', ground_terracotta: 'Cotto',
+    ground_flowers: 'Prato fiorito', ground_mosaic: 'Mosaico', ground_marble: 'Marmo',
+    table_glass: 'Tavolo di vetro', table_banquet: 'Tavolo da banchetto', table_gold_round: 'Tavolo nero e oro', chair_designer: 'Sedia di design', chair_royal: 'Poltrona reale',
+    stove_teppanyaki: 'Piastra teppanyaki', stove_master: 'Cucina da maestro', counter_marble: 'Bancone di marmo', counter_chef_table: 'Bancone dello chef',
+    knife_rack: 'Portacoltelli', herb_wall: 'Parete di erbe aromatiche', sous_vide: 'Postazione sottovuoto', blast_chiller: 'Abbattitore', menu_tablet: 'Leggio con tablet', armchair_wing: 'Poltrona bergère',
+    bonsai: 'Bonsai', wine_wall: 'Parete dei vini', chandelier_crystal: 'Lampadario di cristallo', sculpture_modern: 'Scultura moderna', aquarium_wall: 'Parete acquario',
+    planter_box_long: 'Fioriera lunga', trellis_roses: 'Spalliera di rose', olive_tree_big: 'Ulivo secolare', fire_pit: 'Braciere', outdoor_bar: 'Bar in giardino', gazebo: 'Gazebo', water_wall: 'Parete d’acqua',
+    floor_black_marble: 'Marmo nero', floor_terrazzo: 'Graniglia', wall_velvet: 'Velluto e oro', wall_wood_panels: 'Boiserie',
+});
+Object.assign(STRINGS.en, {stairs_exit: 'the top end needs a free tile on the floor above', err_stairs_exit: 'Stairs need a free tile where they come out on the floor above.'});
+Object.assign(STRINGS.it, {stairs_exit: 'in cima serve una casella libera al piano di sopra', err_stairs_exit: 'Le scale hanno bisogno di una casella libera dove arrivano al piano di sopra.'});
+Object.assign(NAMES.en, {dish_lift: 'Dish lift'});
+Object.assign(NAMES.it, {dish_lift: 'Montavivande'});

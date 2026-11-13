@@ -3,7 +3,7 @@
  */
 import * as THREE from '../vendor/three.module.min.js';
 import {furnitureModel, personModel} from './models.js';
-import {doorModel} from './scene.js';
+import {doorModel, windowModel, WINDOW_KIND} from './scene.js';
 
 let renderer = null, scene = null, camera = null;
 const cache = new Map();
@@ -27,7 +27,7 @@ export function thumbFor(key) {
     if (cache.has(key)) return cache.get(key);
     try {
         if (!renderer) setup();
-        const model = furnitureModel(key);
+        const model = WINDOW_KIND[key] ? windowModel(key) : furnitureModel(key); // a window: a piece of wall with it
         scene.add(model);
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());

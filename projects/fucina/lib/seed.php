@@ -140,17 +140,18 @@ const SEED_TASK_HINTS = [
 ];
 
 /** Courses of the first installation, in display order. */
-const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'tailwind',
+const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'tailwind', 'bootstrap',
     'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate', 'react-base', 'react-intermediate', 'nextjs', 'node-base',
     'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'python-pandas', 'java-base', 'java-intermediate', 'java-advanced',
     'sql-base', 'sql-intermediate', 'sql-advanced', 'mysql', 'mariadb', 'postgresql', 'sqlite', 'mssql', 'mongodb', 'r-base', 'r-intermediate',
     'flutter-base', 'flutter-intermediate', 'swift-base', 'swift-intermediate', 'kotlin-base', 'kotlin-intermediate',
     'rust-base', 'rust-intermediate', 'rust-advanced', 'vala-base', 'vala-intermediate',
-    'ai-base', 'prompt-base', 'ai-ethics', 'ai-math', 'ml-base', 'ml-intermediate', 'dl-base', 'prompt-advanced', 'llm-api',
+    'ai-base', 'llm-base', 'prompt-base', 'ai-ethics', 'ai-math', 'ml-base', 'ml-intermediate', 'dl-base', 'prompt-advanced', 'llm-api',
     'dl-advanced', 'rag', 'ai-agents', 'mlops', 'local-llm', 'chatgpt', 'claude', 'gemini', 'mistral', 'lumo', 'deepseek',
     'github-copilot', 'ms-copilot', 'perplexity', 'ai-editors', 'huggingface', 'genmedia', 'grok', 'meta-ai', 'qwen', 'apple-intelligence',
     'git', 'bash', 'docker', 'kubernetes', 'cloud-base', 'go-base', 'csharp-base', 'c-base', 'cpp-base', 'testing', 'design-patterns', 'regex',
-    'api-design', 'redis', 'algorithms', 'web-security', 'security-basics', 'a11y', 'excel', 'powerbi'];
+    'api-design', 'redis', 'algorithms', 'web-security', 'security-basics', 'a11y', 'crawler', 'excel', 'powerbi',
+    'ux-base', 'ux-intermediate', 'ux-advanced', 'ux-mobile', 'ux-desktop', 'ux-vr', 'ui-base', 'ui-intermediate', 'ui-mobile', 'ui-patterns', 'material', 'ios-design', 'fluent'];
 
 /**
  * What each course is for, to filter the catalogue. A course file may set its own 'categories'; otherwise its family decides.
@@ -165,6 +166,7 @@ const FAMILY_CATEGORIES = [
     'csharp' => ['backend', 'desktop'], 'c' => ['systems'], 'cpp' => ['systems', 'desktop'], 'docker' => ['devops'], 'kubernetes' => ['devops'], 'cloud' => ['devops', 'backend'],
     'testing' => ['frontend', 'backend'], 'patterns' => ['backend', 'frontend'], 'regex' => ['backend', 'frontend'], 'security' => ['security'], 'a11y' => ['frontend'],
     'api' => ['backend'], 'redis' => ['data', 'backend'], 'algorithms' => ['backend', 'systems'], 'excel' => ['productivity', 'data'], 'powerbi' => ['productivity', 'data'],
+    'search' => ['frontend', 'backend'], 'ux' => ['design'], 'ui' => ['design', 'frontend'], 'material' => ['design', 'mobile', 'frontend'], 'ios' => ['design', 'mobile'], 'fluent' => ['design', 'desktop'], 'bootstrap' => ['frontend', 'design'],
     'flutter' => ['mobile', 'desktop'], 'swift' => ['mobile', 'desktop'], 'kotlin' => ['mobile', 'backend'],
     'rust' => ['systems', 'backend'], 'vala' => ['desktop', 'systems'],
 ];
@@ -263,7 +265,9 @@ const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' 
     'react-base' => 2, 'react-intermediate' => 2, 'nextjs' => 3, 'node-base' => 2, 'python-pandas' => 2,
     'github-copilot' => 1, 'ms-copilot' => 1, 'perplexity' => 1, 'ai-editors' => 2, 'huggingface' => 2, 'genmedia' => 1, 'grok' => 1, 'meta-ai' => 1, 'qwen' => 1, 'apple-intelligence' => 1,
     'git' => 1, 'bash' => 1, 'docker' => 2, 'kubernetes' => 3, 'cloud-base' => 1, 'go-base' => 1, 'csharp-base' => 1, 'c-base' => 2, 'cpp-base' => 2, 'testing' => 2, 'design-patterns' => 2, 'regex' => 1,
-    'api-design' => 2, 'redis' => 2, 'algorithms' => 2, 'web-security' => 2, 'security-basics' => 1, 'a11y' => 1, 'excel' => 1, 'powerbi' => 1];
+    'api-design' => 2, 'redis' => 2, 'algorithms' => 2, 'web-security' => 2, 'security-basics' => 1, 'a11y' => 1, 'excel' => 1, 'powerbi' => 1,
+    'llm-base' => 1, 'crawler' => 1, 'bootstrap' => 1, 'ux-base' => 1, 'ux-intermediate' => 2, 'ux-advanced' => 3, 'ux-mobile' => 2, 'ux-desktop' => 2, 'ux-vr' => 3,
+    'ui-base' => 1, 'ui-intermediate' => 2, 'ui-mobile' => 2, 'ui-patterns' => 2, 'material' => 2, 'ios-design' => 2, 'fluent' => 2];
 
 /**
  * Version 12: what was "PHP advanced" becomes "PHP intermediate" (same lessons, same progress and certificates),

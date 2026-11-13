@@ -145,6 +145,8 @@ function ledger_detail(string $route, $extra, array $b): string
         case 'game.plant': return (string)($b['crop'] ?? '');
         case 'game.expand': return (string)($extra['size'] ?? '');
         case 'game.parking': return (string)($extra['parking'] ?? '');
+        case 'game.garage': return (string)($extra['garage'] ?? '');
+        case 'game.storage_sell': return (string)($b['k'] ?? '') . '|' . ($extra['refund'] ?? 0);
         case 'game.floor': return (string)($extra['floor'] ?? '');
         case 'game.door': return (string)($extra['style'] ?? '');
         case 'game.promote': return (string)($extra['rank'] ?? '');
@@ -157,6 +159,7 @@ function ledger_detail(string $route, $extra, array $b): string
 function role_room(array $rest, string $role): void
 {
     $n = count_staff($rest, $role);
+    if ($role === 'chef' && $n >= max_chefs($rest['level'])) fail('chefs_full', 422);
     if ($role === 'chef' && $n >= count_items($rest, 'stove')) fail('need_stove', 422);
     if ($role === 'waiter' && $n >= max_waiters($rest['level'])) fail('staff_full', 422);
     if ($role === 'cleaner' && $n >= max_cleaners($rest['level'])) fail('staff_full', 422);
@@ -352,6 +355,11 @@ switch ($r) {
         $u = writer();
         mutate($u, fn(array &$rest) => apply_layout($rest, body()));
 
+    case 'game.storage_sell': // sell a piece that was put away
+        $u = writer();
+        $k = (string)(body()['k'] ?? '');
+        mutate($u, fn(array &$rest) => sell_stored($rest, $k));
+
     case 'game.candidates':
         // People looking for a job (with their CV); refresh = a new list for CANDIDATE_REFRESH coins
         $u = writer();
@@ -488,17 +496,21 @@ switch ($r) {
                     if ($fd + 1 > $below[2]) fail('floor_below', 422);
                     if ($fd >= max_side($rest['level'])) fail('level_locked', 422);
                     $fd++;
+                    shift_windows($rest, $fl, 2, 0, 1); // the front wall moves out a row, its windows with it
                 } else {
                     if ($fw >= max_side($rest['level'])) fail('level_locked', 422);
-                    if ($x0 + $fw + 1 <= $below[0] + $below[1]) $fw++;
-                    elseif ($x0 - 1 >= $below[0]) {
+                    if ($x0 + $fw + 1 <= $below[0] + $below[1]) {
+                        $fw++;
+                        shift_windows($rest, $fl, 3, 1, 0);
+                    } elseif ($x0 - 1 >= $below[0]) {
                         $x0--;
                         $fw++;
+                        shift_windows($rest, $fl, 1, -1, 0);
                     } else fail('floor_below', 422);
                 }
                 spend_coins($rest, (int)round(expand_cost($f[0], $f[1], $dir) * 0.8));
                 $rest['floors'][$fl - 1] = [$fw, $fd, $x0];
-                return ['size' => "$fw×$fd", 'dir' => $dir, 'floor' => $fl];
+                return ['size' => "{$fw}×{$fd}", 'dir' => $dir, 'floor' => $fl];
             }
             $w = $rest['size'];
             $d = $rest['depth'];
@@ -506,13 +518,15 @@ switch ($r) {
             spend_coins($rest, expand_cost($w, $d, $dir));
             if ($dir === 'row') {
                 // A new row at the front: the front wall, the door and the terrace move out towards the street
-                foreach ($rest['layout'] as &$it) if ((items()[$it['k']][0] ?? '') === 'outdoor' && $it['z'] >= $d) $it['z']++;
+                foreach ($rest['layout'] as &$it) if (in_array(items()[$it['k']][0] ?? '', ['outdoor', 'ground'], true) && $it['z'] >= $d) $it['z']++;
                 unset($it);
+                shift_windows($rest, 0, 2, 0, 1);
                 $rest['depth'] = $d + 1;
             } else {
                 // A new column on the right (the door stays where it is); the east yard moves out
-                foreach ($rest['layout'] as &$it) if ((items()[$it['k']][0] ?? '') === 'outdoor' && $it['x'] >= $w) $it['x']++;
+                foreach ($rest['layout'] as &$it) if (in_array(items()[$it['k']][0] ?? '', ['outdoor', 'ground'], true) && $it['x'] >= $w) $it['x']++;
                 unset($it);
+                shift_windows($rest, 0, 3, 1, 0);
                 $rest['size'] = $w + 1;
             }
             return ['size' => $rest['size'] . '×' . $rest['depth'], 'dir' => $dir];
@@ -528,6 +542,7 @@ switch ($r) {
             $below = floor_rect($next - 1, $rest['size'], $rest['depth'], $rest['floors']);
             spend_coins($rest, FLOORS[$next][1]);
             $rest['floors'][] = [min(FLOOR_START, $below[1]), min(FLOOR_START, $below[2]), $below[0]];
+            add_default_windows($rest, $next);
             return ['floor' => $next];
         });
 
@@ -544,16 +559,19 @@ switch ($r) {
                 $cost += DOORS[$st][0];
                 $rest['door_style'] = $st;
             }
-            if (isset($b['x']) && (int)$b['x'] !== $rest['door']) {
-                $x = (int)$b['x'];
-                if ($x < 1 || $x > $rest['size'] - 2) fail('door_spot', 422); // not in a corner
-                // The tile inside and the path outside must be free (rugs may stay)
+            $x = isset($b['x']) ? (int)$b['x'] : $rest['door'];
+            $moved = $x !== $rest['door'];
+            $dw = door_width($rest['door_style']);
+            if ($moved || $dw > 1) {
+                if ($x < 1 || $x + $dw - 1 > $rest['size'] - 2) fail('door_spot', 422); // not in a corner
+                // The tiles inside and the path outside must be free (rugs and paving may stay), and no window in the way
                 foreach ($rest['layout'] as $it) {
                     $cat = items()[$it['k']][0] ?? '';
-                    if ($cat === 'rug' || ($it['f'] ?? 0)) continue;
-                    foreach (footprint($it) as [$tx, $tz]) if ($tx === $x && ($tz === $rest['depth'] - 1 || ($cat === 'outdoor' && $tz >= $rest['depth']))) fail('door_spot', 422);
+                    if ($cat === 'rug' || $cat === 'ground' || ($it['f'] ?? 0)) continue;
+                    if ($cat === 'window' && $it['r'] !== 2) continue;
+                    foreach (footprint($it) as [$tx, $tz]) if ($tx >= $x && $tx < $x + $dw && ($tz === $rest['depth'] - 1 || ($cat === 'outdoor' && $tz >= $rest['depth']))) fail('door_spot', 422);
                 }
-                $cost += DOOR_MOVE;
+                if ($moved) $cost += DOOR_MOVE;
                 $rest['door'] = $x;
             }
             spend_coins($rest, $cost);
@@ -569,6 +587,17 @@ switch ($r) {
             spend_coins($rest, PARKING[$next][0]);
             $rest['parking'] = $next;
             return ['parking' => $next];
+        });
+
+    case 'game.garage': // the underground car park: one more level of spaces each time
+        $u = writer();
+        mutate($u, function (array &$rest) {
+            $next = ($rest['garage'] ?? 0) + 1;
+            if (!isset(GARAGE[$next])) fail('max_size', 422);
+            if (GARAGE[$next][1] > $rest['level']) fail('level_locked', 422);
+            spend_coins($rest, GARAGE[$next][0]);
+            $rest['garage'] = $next;
+            return ['garage' => $next];
         });
 
     case 'game.rename':

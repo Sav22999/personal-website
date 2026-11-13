@@ -90,7 +90,7 @@ function course_raw(string $id): ?array
 }
 
 /** The categories a course can have (see FAMILY_CATEGORIES in lib/seed.php for the defaults). */
-const COURSE_CATEGORIES_ALL = ['frontend', 'backend', 'mobile', 'data', 'systems', 'desktop', 'ai', 'devops', 'security', 'productivity'];
+const COURSE_CATEGORIES_ALL = ['frontend', 'backend', 'mobile', 'data', 'systems', 'desktop', 'ai', 'devops', 'security', 'productivity', 'design'];
 
 /** Minutes of a course's final exam: its own value if the admin set one, otherwise the general setting (0 = no limit). */
 function exam_minutes(array $c): int

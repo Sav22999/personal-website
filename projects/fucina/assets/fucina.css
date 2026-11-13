@@ -224,6 +224,13 @@
 .fam-algorithms { --fam: #475569; --fam-edge: #334155; }
 .fam-excel { --fam: #1D6F42; --fam-edge: #14512F; }
 .fam-powerbi { --fam: #C8A400; --fam-edge: #957A00; }
+.fam-search { --fam: #2563EB; --fam-edge: #1A47AB; }
+.fam-ux { --fam: #E11D48; --fam-edge: #A91536; }
+.fam-ui { --fam: #7C3AED; --fam-edge: #5B21B6; }
+.fam-material { --fam: #6750A4; --fam-edge: #4A3A78; }
+.fam-ios { --fam: #0A84FF; --fam-edge: #0062C2; }
+.fam-fluent { --fam: #0F6CBD; --fam-edge: #0B5190; }
+.fam-bootstrap { --fam: #7952B3; --fam-edge: #5A3C87; }
 
 /* ---------- Base components, reshaped ---------- */
 html, body, button, input, select, textarea {

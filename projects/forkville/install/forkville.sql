@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS `fv_restaurants` (
     `size` TINYINT UNSIGNED NOT NULL DEFAULT 10,
     `depth` TINYINT UNSIGNED NOT NULL DEFAULT 10,
     `parking` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `garage` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `storage` TEXT NULL,
     `instance` VARCHAR(24) NULL,
     `floors` VARCHAR(200) NULL,
     `door` TINYINT UNSIGNED NULL,
@@ -213,4 +215,4 @@ CREATE TABLE IF NOT EXISTS `fv_weekly` (
     CONSTRAINT `fk_fv_wk_user` FOREIGN KEY (`user_id`) REFERENCES `fv_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fv_meta` (k, v) VALUES ('schema_version', '13') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fv_meta` (k, v) VALUES ('schema_version', '15') ON DUPLICATE KEY UPDATE v = VALUES(v);

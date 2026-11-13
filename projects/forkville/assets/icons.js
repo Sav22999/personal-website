@@ -106,7 +106,10 @@ const MOOD = {
 };
 
 const UI = {
+    timer: `<circle cx="16" cy="18" r="11" fill="${C.cream}" ${o()}/><rect x="13" y="2.5" width="6" height="3.5" rx="1" fill="${C.ink}"/><path d="M16 18V11" stroke="${C.tomato}" stroke-width="2.6" stroke-linecap="round"/><path d="M16 18l4.5 3" stroke="${C.ink}" stroke-width="2" stroke-linecap="round"/>`,
     register: `<rect x="5" y="16" width="22" height="11" rx="2" fill="${C.brown}" ${o()}/><path d="M9 16l2-7h10l2 7z" fill="#3B3B40" ${o()}/><rect x="12" y="10.5" width="8" height="3" rx=".5" fill="#9FE0B0"/><rect x="9" y="19" width="14" height="3" rx="1" fill="${C.gold}" ${o('stroke-width="1"')}/><circle cx="25" cy="8" r="3.4" fill="${C.gold}" ${o()}/>`,
+    garage: `<path d="M3 13l13-8 13 8v15H3z" fill="#5B5754" ${o()}/><path d="M7 28V16h18v12" fill="#2A2725" ${o()}/><path d="M7 19h18M7 22h18" stroke="#6E6964" stroke-width="1"/><rect x="11" y="8.5" width="10" height="5" rx="1" fill="#2F5DA8" ${o('stroke-width="1"')}/><path d="M14.3 12.5V9.6h1.8a1.1 1.1 0 010 2.2h-1.8M18.3 11h2.2" stroke="#fff" stroke-width="1.1" fill="none"/><path d="M10 27l2-4h8l2 4z" fill="#B43E5C" ${o('stroke-width="1"')}/>`,
+    todo: `<rect x="6" y="5" width="20" height="24" rx="2.5" fill="${C.cream}" ${o()}/><rect x="11" y="3" width="10" height="5" rx="1.5" fill="${C.brown}" ${o('stroke-width="1.2"')}/><path d="M9.5 13.5l1.6 1.6 3-3M9.5 20.5l1.6 1.6 3-3" fill="none" stroke="${C.green}" stroke-width="1.8"/><path d="M17 14h6M17 21h6" stroke="${C.ink}" stroke-width="1.6"/>`,
     car: `<path d="M4 20v-6l3-6h18l3 6v6z" fill="${C.berry || '#B43E5C'}" ${o()}/><path d="M9 9h14l2 5H7z" fill="#BFE3F0" ${o()}/><circle cx="10" cy="21" r="3" fill="${C.ink}"/><circle cx="22" cy="21" r="3" fill="${C.ink}"/><rect x="5" y="15" width="3" height="2" fill="#FFE7A8"/><rect x="24" y="15" width="3" height="2" fill="#FFE7A8"/>`,
     gear: `<path d="M16 4l2.4.4.8 3 2.6 1.1 2.7-1.6 1.7 1.7-1.6 2.7 1.1 2.6 3 .8L29 16l-.4 2.4-3 .8-1.1 2.6 1.6 2.7-1.7 1.7-2.7-1.6-2.6 1.1-.8 3L16 28l-2.4-.4-.8-3-2.6-1.1-2.7 1.6-1.7-1.7 1.6-2.7-1.1-2.6-3-.8L3 16l.4-2.4 3-.8 1.1-2.6-1.6-2.7 1.7-1.7 2.7 1.6 2.6-1.1.8-3z" fill="${C.grey}" ${o()}/><circle cx="16" cy="16" r="4.5" fill="${C.cream}" ${o()}/>`,
     warning: `<path d="M16 3l14 25H2z" fill="${C.gold}" ${o()}/><path d="M16 11v9" stroke="${C.ink}" stroke-width="3"/><circle cx="16" cy="24" r="1.8" fill="${C.ink}"/>`,
@@ -194,12 +197,22 @@ Object.assign(DISH, {
     cold_brew: `<path d="M9 6h14l-2 21H11z" fill="#6B3E20" ${o()}/><rect x="12" y="11" width="4" height="4" fill="#F4FBFF" opacity=".8"/><rect x="16" y="16" width="4" height="4" fill="#F4FBFF" opacity=".8"/><path d="M11 9c3 2 7-1 10 1" stroke="#F4E6D0" stroke-width="2" fill="none"/><path d="M18 2l-1 12" stroke="${C.ink}" stroke-width="2"/>`,
 });
 
-const GROUPS = {ing: ING, dish: DISH, mood: MOOD, ui: UI};
+/** A worker without a station: the piece they miss (small, bottom left) and a question mark in a red badge. */
+const ASK = `<circle cx="23.5" cy="8.5" r="6.6" fill="${C.red}" ${o()}/><path d="M21.2 6.9c0-1.6 1.1-2.4 2.4-2.4s2.4.9 2.4 2.2c0 1.7-2.3 1.9-2.3 3.6" fill="none" stroke="${C.white}" stroke-width="1.9"/><circle cx="23.7" cy="12.6" r="1.1" fill="${C.white}"/>`;
+const STATION = {
+    stove: `<rect x="3" y="15" width="17" height="14" rx="2" fill="${C.grey}" ${o()}/><rect x="6" y="21" width="11" height="6" rx="1" fill="#3B3B40" ${o('stroke-width="1"')}/><circle cx="8" cy="17.5" r="1.4" fill="${C.ink}"/><circle cx="15" cy="17.5" r="1.4" fill="${C.ink}"/>${ASK}`,
+    table: `<rect x="2" y="17" width="19" height="4" rx="1.5" fill="${C.brown}" ${o()}/><path d="M5 21v7M18 21v7" stroke="${C.ink}" stroke-width="2.2"/><circle cx="11.5" cy="15" r="2.6" fill="${C.plate}" ${o('stroke-width="1"')}/>${ASK}`,
+    cart: `<rect x="4" y="15" width="14" height="9" rx="1.5" fill="${C.blue}" ${o()}/><path d="M18 15l3-6" stroke="${C.ink}" stroke-width="1.8"/><circle cx="7" cy="27" r="2" fill="${C.ink}"/><circle cx="15" cy="27" r="2" fill="${C.ink}"/><rect x="7" y="11" width="4" height="4" fill="${C.yellow}" ${o('stroke-width="1"')}/>${ASK}`,
+    stand: `<path d="M5 14h13l-2 4H7z" fill="${C.brown}" ${o()}/><rect x="9" y="18" width="5" height="9" fill="${C.dbrown}" ${o()}/><rect x="6" y="27" width="11" height="2.4" rx="1" fill="${C.ink}"/><rect x="8" y="11.5" width="7" height="3" rx=".6" fill="${C.cream}" ${o('stroke-width="1"')}/>${ASK}`,
+    till: `<rect x="3" y="18" width="18" height="10" rx="2" fill="${C.brown}" ${o()}/><path d="M6 18l2-6h8l2 6z" fill="#3B3B40" ${o()}/><rect x="9" y="13.5" width="6" height="2.4" rx=".5" fill="#9FE0B0"/>${ASK}`,
+};
+
+const GROUPS = {ing: ING, dish: DISH, mood: MOOD, ui: UI, station: STATION};
 
 export function icon(group, name) {
     const body = GROUPS[group]?.[name];
     // Food and moods look round and glossy; interface symbols stay flat and crisp
-    return (group === 'ui' ? svg : shaded)(body || MOOD.plate);
+    return (group === 'ui' || group === 'station' ? svg : shaded)(body || MOOD.plate);
 }
 
 /** Same as icon(), as a data: URL (for <img> and CSS). */

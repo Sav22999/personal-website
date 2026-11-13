@@ -70,6 +70,8 @@ function schema_statements(string $p): array
             `size` TINYINT UNSIGNED NOT NULL DEFAULT 10,
             `depth` TINYINT UNSIGNED NOT NULL DEFAULT 10,
             `parking` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+            `garage` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+            `storage` TEXT NULL,
             `instance` VARCHAR(24) NULL,
             `floors` VARCHAR(200) NULL,
             `door` TINYINT UNSIGNED NULL,
@@ -257,6 +259,10 @@ function install_schema(PDO $pdo, string $prefix): void
     if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `floors` VARCHAR(200) NULL AFTER `instance`"); // version 12: upper floors
     $st->execute([$prefix . 'restaurants', 'door']);
     if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `door` TINYINT UNSIGNED NULL AFTER `floors`, ADD COLUMN `door_style` VARCHAR(20) NOT NULL DEFAULT 'wood' AFTER `door`"); // version 13: the door moves
+    $st->execute([$prefix . 'restaurants', 'garage']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `garage` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `parking`"); // version 14: underground car park
+    $st->execute([$prefix . 'restaurants', 'storage']);
+    if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}restaurants` ADD COLUMN `storage` TEXT NULL AFTER `garage`"); // version 15: pieces put away (not sold)
     $st->execute([$prefix . 'visits', 'tip']);
     if (!(int)$st->fetchColumn()) $pdo->exec("ALTER TABLE `{$prefix}visits` ADD COLUMN `tip` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `rating`");
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");

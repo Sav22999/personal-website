@@ -12,14 +12,14 @@
 declare(strict_types=1);
 
 const START_COINS = 1500;
-const MAX_LEVEL = 30;
+const MAX_LEVEL = 40;
 const XP_PER_CUSTOMER = 2;
 const XP_PER_HARVEST = 1;
 const SELL_BACK = 0.5;            // furniture sells back at half price
 const SEAT_SECONDS = 18;          // the fastest a customer can sit, order, eat and pay
 const REPORT_WINDOW = 600;        // a report never counts more than 10 minutes of service
-const OFFLINE_MAX = 4 * 3600;     // earnings while away: at most 4 hours…
-const OFFLINE_RATE = 0.25;        // …at a quarter of the speed of live service
+const OFFLINE_MAX = 3 * 3600;     // earnings while away: at most 3 hours…
+const OFFLINE_RATE = 0.2;         // …at a fifth of the speed of live service
 const OFFLINE_MIN = 300;          // nothing for absences under 5 minutes
 const VISIT_COINS_HOST = 25;
 const VISIT_COINS_BASE = 40;      // the visitor gets this + 5 per host level
@@ -37,7 +37,14 @@ const MARKET_DAILY_LIMIT = 5;     // pieces of each market ingredient per day
 const FLOORS = [1 => [14, 25000], 2 => [18, 45000], 3 => [22, 70000], 4 => [26, 100000]];
 const FLOOR_START = 6;
 /** Door styles: key => [price, level]. Moving the door elsewhere on the front wall costs DOOR_MOVE. */
-const DOORS = ['wood' => [0, 1], 'rustic' => [300, 2], 'glass' => [450, 4], 'red' => [500, 5], 'double' => [800, 7], 'arched' => [1000, 10], 'french' => [1400, 13], 'gold' => [3200, 20]];
+const DOORS = ['wood' => [0, 1], 'rustic' => [300, 2], 'glass' => [450, 4], 'red' => [500, 5], 'double' => [800, 7], 'arched' => [1000, 10], 'french' => [1400, 13], 'gold' => [3200, 20],
+    'wide_wood' => [1800, 8], 'wide_glass' => [2600, 12], 'wide_french' => [3800, 18], 'wide_grand' => [6500, 26]];
+/** Doors two tiles wide (the door tile and the one at its right; both kept free inside and outside). */
+const DOOR_WIDE = ['wide_wood', 'wide_glass', 'wide_french', 'wide_grand'];
+function door_width(string $style): int
+{
+    return in_array($style, DOOR_WIDE, true) ? 2 : 1;
+}
 const DOOR_MOVE = 250;
 /**
  * Seasonal events follow the real (Gregorian) calendar: seasonal pieces can be bought only while their event is
@@ -112,7 +119,7 @@ function in_season(string $item): bool
     return event_at(time() - 43200) === $ev || event_at(time() + 43200) === $ev;
 }
 const MIN_SIDE = 10;
-const MAX_SIDE = 22;
+const MAX_SIDE = 26;
 const EXPAND_RATE = 18;
 
 function max_side(int $level): int
@@ -132,15 +139,23 @@ function expand_cost(int $w, int $d, string $dir): int
  * Guests who come by car order more (CAR_BONUS: +80% on the bill) and tip better.
  */
 const PARKING = [1 => [4000, 10, 4], 2 => [9000, 17, 8], 3 => [18000, 24, 12]];
+// Underground car park (floor −1): [cost, level, spaces]. Opens later, holds far more cars than the street one
+const GARAGE = [1 => [30000, 18, 16], 2 => [55000, 21, 28], 3 => [90000, 24, 42], 4 => [140000, 27, 60], 5 => [200000, 30, 80]];
+/** All the guests' parking spaces: street car park plus underground. */
+function parking_spaces(array $r): int
+{
+    return (PARKING[$r['parking'] ?? 0][2] ?? 0) + (GARAGE[$r['garage'] ?? 0][2] ?? 0);
+}
 const CAR_BONUS = 0.8;
 /** Tips a player can leave at a friend's restaurant while visiting: amounts, and at most this much per friend per day. */
 const FRIEND_TIPS = [10, 25, 50, 100];
 const FRIEND_TIP_DAILY = 200;
 
 /** XP needed for level L: 50·L·(L−1) (L2 = 100, L3 = 300, L4 = 600…). */
+/** XP to reach a level: steeper than before, so levels take longer (level 10 ≈ 9 000, 20 ≈ 47 000, 30 ≈ 157 000, 40 ≈ 343 000). */
 function xp_for_level(int $level): int
 {
-    return 50 * $level * ($level - 1);
+    return (int)round(60 * $level * ($level - 1) * (1 + $level / 15));
 }
 
 function level_for_xp(int $xp): int
@@ -392,7 +407,7 @@ const ITEMS = [
     'spice_rack' => ['kitchen', 180, 3, 1, 1, 1, 0],
     'shelf_pots' => ['kitchen', 260, 5, 1, 1, 1, 0],
     'mixer_station' => ['kitchen', 650, 14, 1, 1, 1, 0],
-    'host_stand' => ['service', 340, 8, 1, 1, 2, 0],
+    'host_stand' => ['service', 340, 7, 1, 1, 2, 0], // the manager's station (MANAGER_LEVEL)
     'register_modern' => ['service', 900, 19, 1, 1, 2, 0],
     'trash_recycle' => ['service', 260, 5, 1, 1, 1, 0],
     'water_station' => ['service', 300, 7, 1, 1, 2, 0],
@@ -521,6 +536,61 @@ const ITEMS = [
     'wall_tropical' => ['wall', 1300, 22, 0, 0, 10, 0],
     'wall_concrete' => ['wall', 500, 12, 0, 0, 4, 0],
     'wall_pastel' => ['wall', 400, 10, 0, 0, 3, 0],
+    // Windows (own layer, on the inner edge of an outer wall; the rotation says which wall): width in tiles
+    'window_small' => ['window', 120, 1, 1, 1, 1, 0],
+    'window_round' => ['window', 200, 3, 1, 1, 2, 0],
+    'window_wide' => ['window', 260, 4, 2, 1, 2, 0],
+    'window_tall' => ['window', 240, 6, 1, 1, 2, 0],
+    'window_large' => ['window', 420, 8, 3, 1, 3, 0],
+    'window_arched' => ['window', 380, 11, 1, 1, 3, 0],
+    'glass_wall_2' => ['window', 760, 10, 2, 1, 4, 0],
+    'window_stained' => ['window', 650, 17, 1, 1, 4, 0],
+    'glass_wall_3' => ['window', 1150, 15, 3, 1, 6, 0],
+    'glass_wall_4' => ['window', 1600, 20, 4, 1, 8, 0],
+    'window_panorama' => ['window', 2600, 31, 4, 1, 12, 0],
+    // Outdoor paving (own layer, like rugs: pieces stand on it, people walk on it, also on the path to the door)
+    'ground_grass' => ['ground', 20, 1, 1, 1, 0, 0],
+    'ground_gravel' => ['ground', 25, 1, 1, 1, 0, 0],
+    'ground_stone' => ['ground', 45, 2, 1, 1, 0, 0],
+    'ground_deck' => ['ground', 60, 3, 1, 1, 0, 0],
+    'ground_brick' => ['ground', 55, 5, 1, 1, 0, 0],
+    'ground_terracotta' => ['ground', 70, 8, 1, 1, 0, 0],
+    'ground_flowers' => ['ground', 90, 11, 1, 1, 1, 0],
+    'ground_mosaic' => ['ground', 140, 16, 1, 1, 1, 0],
+    'ground_marble' => ['ground', 220, 26, 1, 1, 1, 0],
+    // Later levels (up to 40)
+    'table_glass' => ['table', 900, 21, 1, 1, 4, 0],
+    'table_banquet' => ['table', 1600, 31, 2, 1, 6, 0],
+    'table_gold_round' => ['table', 2600, 35, 1, 1, 9, 0],
+    'chair_designer' => ['chair', 700, 24, 1, 1, 5, 0],
+    'chair_royal' => ['chair', 3000, 36, 1, 1, 12, 0],
+    'stove_teppanyaki' => ['stove', 4200, 31, 1, 1, 4, 2.0],
+    'stove_master' => ['stove', 7000, 37, 1, 1, 6, 2.4],
+    'counter_marble' => ['counter', 2400, 27, 1, 1, 5, 0],
+    'counter_chef_table' => ['counter', 3600, 33, 1, 1, 7, 0],
+    'knife_rack' => ['kitchen', 240, 4, 1, 1, 1, 0],
+    'herb_wall' => ['kitchen', 900, 15, 1, 1, 3, 0],
+    'sous_vide' => ['kitchen', 1200, 21, 1, 1, 1, 0],
+    'blast_chiller' => ['kitchen', 2200, 29, 1, 1, 1, 0],
+    'menu_tablet' => ['service', 1400, 28, 1, 1, 3, 0],
+    'dish_lift' => ['service', 2400, 14, 1, 1, 0, 0], // a dumbwaiter: chefs upstairs send dishes down (sim.js sendByLift)
+    'armchair_wing' => ['lounge', 1100, 20, 1, 1, 5, 0],
+    'bonsai' => ['deco', 600, 14, 1, 1, 6, 0],
+    'wine_wall' => ['deco', 2800, 30, 2, 1, 12, 0],
+    'chandelier_crystal' => ['deco', 4200, 32, 1, 1, 18, 0],
+    'sculpture_modern' => ['deco', 3400, 34, 1, 1, 14, 0],
+    'aquarium_wall' => ['deco', 6500, 38, 2, 1, 24, 0],
+    'planter_box_long' => ['outdoor', 300, 4, 2, 1, 3, 0],
+    'trellis_roses' => ['outdoor', 520, 9, 1, 1, 5, 0],
+    'olive_tree_big' => ['outdoor', 900, 18, 1, 1, 7, 0],
+    'fire_pit' => ['outdoor', 1100, 22, 1, 1, 6, 0],
+    'outdoor_bar' => ['outdoor', 2600, 29, 2, 1, 9, 0],
+    'gazebo' => ['outdoor', 4500, 33, 2, 2, 14, 0],
+    'water_wall' => ['outdoor', 3800, 36, 1, 1, 15, 0],
+    'floor_black_marble' => ['floor', 4200, 34, 0, 0, 26, 0],
+    'floor_terrazzo' => ['floor', 2200, 27, 0, 0, 16, 0],
+    'wall_velvet' => ['wall', 3600, 33, 0, 0, 24, 0],
+    'wall_wood_panels' => ['wall', 2000, 26, 0, 0, 14, 0],
 ];
 
 /**
@@ -528,6 +598,7 @@ const ITEMS = [
  * Stoves, fridges and counters make better dishes; sinks wash faster; chairs and tables are more comfortable.
  */
 const ITEM_TIERS = [
+    'table_glass' => 3, 'table_banquet' => 4, 'table_gold_round' => 4, 'chair_designer' => 3, 'chair_royal' => 4, 'stove_teppanyaki' => 4, 'stove_master' => 4, 'counter_marble' => 4, 'counter_chef_table' => 4,
     'stove_basic' => 1, 'stove_retro' => 1, 'stove_steel' => 2, 'stove_grill' => 3, 'oven_brick' => 3, 'stove_pro' => 3, 'stove_gold' => 4,
     'counter_wood' => 1, 'counter_tile' => 2, 'counter_marble' => 3, 'counter_gold' => 4,
     'drinks_fridge' => 2, 'gelato_freezer' => 3, 'fridge' => 1, 'fridge_retro' => 2, 'fridge_pro' => 3, 'sink' => 1, 'sink_steel' => 3, 'coffee_machine' => 2, 'coffee_luxe' => 4,
@@ -546,7 +617,7 @@ const ITEM_TIERS = [
 
 /** What some items do in the live service (the simulation in assets/sim.js reads these tags). */
 const ITEM_TAGS = [
-    'fridge' => 'fridge', 'sink' => 'sink', 'cash_register' => 'register', 'trash_bin' => 'trash', 'cleaning_cart' => 'janitor', 'cleaning_station' => 'janitor',
+    'fridge' => 'fridge', 'sink' => 'sink', 'cash_register' => 'register', 'trash_bin' => 'trash', 'cleaning_cart' => 'janitor', 'cleaning_station' => 'janitor', 'host_stand' => 'host',
     'coffee_machine' => 'coffee', 'coffee_luxe' => 'coffee', 'fridge_retro' => 'fridge', 'fridge_pro' => 'fridge', 'sink_steel' => 'sink', 'sofa' => 'rest', 'jukebox' => 'music', 'gramophone' => 'music', 'piano' => 'music',
     'tv' => 'fun', 'arcade' => 'fun', 'fireplace' => 'cozy', 'woodstove' => 'cozy', 'fireplace_stone' => 'cozy', 'fireplace_modern' => 'cozy', 'fireplace_marble' => 'cozy', 'vending' => 'snack',
     'toilet' => 'toilet', 'toilet_luxe' => 'toilet', 'washbasin' => 'washbasin', 'washbasin_marble' => 'washbasin', 'hand_dryer' => 'dryer',
@@ -560,6 +631,7 @@ const ITEM_TAGS = [
     'popcorn_machine' => 'snack', 'ice_cream_cart' => 'snack', 'candy_jars' => 'snack', 'lamp_arc' => 'light', 'lamp_tiffany' => 'light', 'lamp_paper' => 'light', 'lamp_tripod' => 'light', 'candelabra_floor' => 'light',
     'toilet_gold' => 'toilet', 'washbasin_bowl' => 'washbasin', 'mirror_led' => 'washbasin', 'towel_rack' => 'dryer', 'lamp_lantern_post' => 'light', 'lamp_double' => 'light', 'lamp_bollard' => 'light', 'lamp_string' => 'light',
     'lamp_torch' => 'light', 'lamp_modern' => 'light', 'lamp_victorian' => 'light', 'heater_patio' => 'light', 'bench_stone' => 'queue',
+    'chandelier_crystal' => 'light', 'fire_pit' => 'light', 'armchair_wing' => 'rest', 'outdoor_bar' => 'snack',
 ];
 
 /** Ingredients: key => source ('garden' or 'market'). */
@@ -601,47 +673,49 @@ const MARKET_SLOTS = 7;
 
 /**
  * Dishes: key => [base price, cook seconds, eat seconds, level, [3 ingredients]]
+ * Cook seconds is the dish's own base time (a salad is quick, a roast is slow): the live service shortens it with
+ * the stove's speed, the chef's skill and trait, the fridges and the kitchen equipment (sim.js cookTime()).
  * Learning a dish costs 1 of each ingredient; raising it to level L (2..5) costs L−1 of each.
  * Price at level L = base × (1 + 0.25·(L−1)).
  */
 const DISHES = [
-    'bruschetta' => [12, 6, 8, 1, ['tomato', 'basil', 'olive']],
-    'fries' => [10, 5, 7, 1, ['potato', 'olive', 'onion']],
-    'tomato_soup' => [15, 8, 9, 2, ['tomato', 'onion', 'garlic']],
-    'lemonade' => [8, 3, 5, 4, ['lemon', 'sugar', 'strawberry']],
+    'bruschetta' => [12, 5, 8, 1, ['tomato', 'basil', 'olive']],
+    'fries' => [10, 7, 7, 1, ['potato', 'olive', 'onion']],
+    'tomato_soup' => [15, 12, 9, 2, ['tomato', 'onion', 'garlic']],
+    'lemonade' => [8, 2, 5, 4, ['lemon', 'sugar', 'strawberry']],
     'cappuccino' => [9, 3, 5, 4, ['coffee', 'milk', 'sugar']],
-    'omelette' => [18, 7, 9, 5, ['egg', 'cheese', 'onion']],
-    'pasta_tomato' => [22, 9, 10, 6, ['flour', 'tomato', 'basil']],
-    'pizza' => [28, 11, 11, 8, ['flour', 'tomato', 'cheese']],
-    'carrot_cake' => [20, 8, 8, 11, ['carrot', 'flour', 'egg']],
+    'omelette' => [18, 6, 9, 5, ['egg', 'cheese', 'onion']],
+    'pasta_tomato' => [22, 11, 10, 6, ['flour', 'tomato', 'basil']],
+    'pizza' => [28, 14, 11, 8, ['flour', 'tomato', 'cheese']],
+    'carrot_cake' => [20, 16, 8, 11, ['carrot', 'flour', 'egg']],
     'burger' => [32, 10, 11, 11, ['beef', 'flour', 'onion']],
-    'risotto' => [30, 12, 11, 16, ['rice', 'mushroom', 'cheese']],
-    'strawberry_tart' => [26, 9, 8, 14, ['strawberry', 'flour', 'sugar']],
-    'grilled_fish' => [38, 12, 12, 22, ['fish', 'lemon', 'garlic']],
-    'stuffed_peppers' => [34, 12, 11, 19, ['pepper', 'rice', 'beef']],
-    'roast_chicken' => [42, 14, 13, 24, ['chicken', 'potato', 'garlic']],
-    'chocolate_cake' => [36, 10, 9, 21, ['chocolate', 'egg', 'milk']],
-    'caprese' => [16, 4, 7, 3, ['tomato', 'cheese', 'basil']],
-    'garden_salad' => [12, 4, 7, 4, ['lettuce', 'tomato', 'olive']],
+    'risotto' => [30, 20, 11, 16, ['rice', 'mushroom', 'cheese']],
+    'strawberry_tart' => [26, 15, 8, 14, ['strawberry', 'flour', 'sugar']],
+    'grilled_fish' => [38, 13, 12, 22, ['fish', 'lemon', 'garlic']],
+    'stuffed_peppers' => [34, 17, 11, 19, ['pepper', 'rice', 'beef']],
+    'roast_chicken' => [42, 24, 13, 24, ['chicken', 'potato', 'garlic']],
+    'chocolate_cake' => [36, 18, 9, 21, ['chocolate', 'egg', 'milk']],
+    'caprese' => [16, 3, 7, 3, ['tomato', 'cheese', 'basil']],
+    'garden_salad' => [12, 3, 7, 4, ['lettuce', 'tomato', 'olive']],
     'iced_tea' => [7, 2, 5, 3, ['tea', 'lemon', 'sugar']],
     'pancakes' => [14, 6, 8, 6, ['flour', 'egg', 'honey']],
     'milkshake' => [12, 3, 6, 5, ['milk', 'strawberry', 'cream']],
-    'corn_soup' => [15, 8, 9, 7, ['corn', 'cream', 'onion']],
+    'corn_soup' => [15, 12, 9, 7, ['corn', 'cream', 'onion']],
     'banana_split' => [16, 4, 7, 9, ['banana', 'cream', 'chocolate']],
     'tacos' => [24, 8, 9, 13, ['beef', 'corn', 'beans']],
-    'pumpkin_soup' => [22, 9, 9, 12, ['pumpkin', 'cream', 'onion']],
-    'veggie_lasagna' => [30, 13, 11, 17, ['flour', 'eggplant', 'cheese']],
-    'cream_puffs' => [28, 10, 9, 15, ['flour', 'butter', 'cream']],
-    'shrimp_pasta' => [36, 11, 11, 21, ['shrimp', 'flour', 'garlic']],
-    'parmigiana' => [32, 12, 11, 18, ['eggplant', 'tomato', 'cheese']],
-    'pork_ribs' => [40, 14, 13, 23, ['pork', 'honey', 'garlic']],
-    'tiramisu' => [34, 8, 9, 20, ['coffee', 'cream', 'egg']],
-    'sushi' => [44, 12, 11, 24, ['fish', 'rice', 'shrimp']],
-    'paella' => [46, 15, 13, 25, ['rice', 'shrimp', 'pepper']],
-    'steak_fries' => [52, 14, 13, 26, ['beef', 'potato', 'butter']],
-    'gelato' => [14, 4, 6, 5, ['cream', 'sugar', 'strawberry']],
-    'cold_brew' => [10, 3, 5, 6, ['coffee', 'milk', 'sugar']],
-    'sorbet' => [12, 4, 5, 7, ['lemon', 'sugar', 'strawberry']],
+    'pumpkin_soup' => [22, 13, 9, 12, ['pumpkin', 'cream', 'onion']],
+    'veggie_lasagna' => [30, 22, 11, 17, ['flour', 'eggplant', 'cheese']],
+    'cream_puffs' => [28, 14, 9, 15, ['flour', 'butter', 'cream']],
+    'shrimp_pasta' => [36, 12, 11, 21, ['shrimp', 'flour', 'garlic']],
+    'parmigiana' => [32, 19, 11, 18, ['eggplant', 'tomato', 'cheese']],
+    'pork_ribs' => [40, 26, 13, 23, ['pork', 'honey', 'garlic']],
+    'tiramisu' => [34, 9, 9, 20, ['coffee', 'cream', 'egg']],
+    'sushi' => [44, 10, 11, 24, ['fish', 'rice', 'shrimp']],
+    'paella' => [46, 25, 13, 25, ['rice', 'shrimp', 'pepper']],
+    'steak_fries' => [52, 15, 13, 26, ['beef', 'potato', 'butter']],
+    'gelato' => [14, 3, 6, 5, ['cream', 'sugar', 'strawberry']],
+    'cold_brew' => [10, 2, 5, 6, ['coffee', 'milk', 'sugar']],
+    'sorbet' => [12, 3, 5, 7, ['lemon', 'sugar', 'strawberry']],
 ];
 const DISH_MAX_LEVEL = 5;
 /** Cold dishes: with a drinks fridge or a gelato freezer the waiter serves them straight away (no cooking). */
@@ -650,7 +724,7 @@ const DISH_KINDS = ['lemonade' => 'drink', 'iced_tea' => 'drink', 'milkshake' =>
 const REVIEW_WINDOW = 50; // reviews that make the reputation
 
 /** The restaurant's title as it grows: [from level, key] (the app translates the key). */
-const LEVEL_TITLES = [[1, 'kiosk'], [3, 'snack_bar'], [5, 'trattoria'], [8, 'bistro'], [11, 'restaurant'], [15, 'fine_dining'], [20, 'gourmet'], [25, 'legend']];
+const LEVEL_TITLES = [[1, 'kiosk'], [3, 'snack_bar'], [5, 'trattoria'], [8, 'bistro'], [11, 'restaurant'], [15, 'fine_dining'], [20, 'gourmet'], [25, 'renowned'], [30, 'star_house'], [35, 'legend']];
 /** What a review can praise or blame (see reviewFor in assets/sim.js). */
 const REVIEW_FACTORS = ['fast', 'slow', 'tasty', 'plain', 'pretty', 'bare', 'clean', 'dirty', 'ambience', 'friendly', 'dark', 'cozy', 'comfy', 'no_toilet', 'toilet_dirty', 'toilet_clean'];
 const START_DISHES = ['bruschetta', 'fries'];
@@ -667,24 +741,32 @@ const CASHIER_BONUS = 0.1;
 const CASHIER_TIP = 0.08;
 /**
  * Managers run the restaurant while the player is away, as if the game were open (at MANAGER_RATE of the live
- * speed) for the hours of their rank; ranks go up with a promotion. Their hours add up.
+ * speed) for the hours of their rank; ranks go up with a promotion. The best manager counts in full, every other one
+ * adds a quarter of their hours, and never more than MANAGER_MAX_HOURS in all.
  */
-const MANAGER_HOURS = [1 => 2, 2 => 4, 3 => 6, 4 => 9, 5 => 12];
+const MANAGER_HOURS = [1 => 1, 2 => 2, 3 => 3, 4 => 4.5, 5 => 6];
 const MANAGER_PROMOTE = [2 => 800, 3 => 1800, 4 => 3500, 5 => 6000]; // cost to reach each rank
 const MANAGER_LEVEL = 7;   // first level that can hire one
-const MANAGER_RATE = 0.6;
+const MANAGER_RATE = 0.4;
+const MANAGER_MAX_HOURS = 8;
+const OFFLINE_XP = 0.5;    // XP per guest served while away (live service gives xp_customer)
 /** Every person has a CV: a skill from 0 to 10 for each role. Hiring cost grows with the CV. */
 const ROLES = ['chef', 'waiter', 'cleaner', 'manager', 'cashier'];
-/** The outdoor area: OUTDOOR tiles in front of the restaurant and at its side (east). */
-const OUTDOOR = 3;
+/** The outdoor area: OUTDOOR tiles in front of the restaurant, at its side (east) and behind it (the garden). */
+const OUTDOOR = 5;
 /** The game calendar: time passes only while playing (2 game minutes per second at 1×, ×2 or ×5 with the speed buttons). */
 const MAX_SPEED = 5;
 const GAME_MINUTES_PER_SECOND = 2;
 const DAYS_PER_MONTH = 10; // 12 months a year; year 0 starts on 1 March
 /** Daily wages: base by role + per skill point in the role + per manager rank. Paid when a calendar day ends. */
-const WAGE_BASE = ['chef' => 30, 'waiter' => 22, 'cleaner' => 18, 'manager' => 52, 'cashier' => 26]; // lowered: hiring already costs coins
-const WAGE_PER_SKILL = 4;
-const WAGE_PER_RANK = 18;
+/**
+ * Daily wages: (base of the role + WAGE_PER_SKILL per skill point in that role [+ WAGE_PER_RANK per manager rank])
+ * × (1 + WAGE_PER_LEVEL × (restaurant level − 1)). A famous restaurant pays its people more, and earns more too.
+ */
+const WAGE_BASE = ['chef' => 40, 'waiter' => 28, 'cleaner' => 22, 'manager' => 70, 'cashier' => 32];
+const WAGE_PER_SKILL = 7;
+const WAGE_PER_RANK = 25;
+const WAGE_PER_LEVEL = 0.09; // level 10 ×1.8, level 20 ×2.7, level 30 ×3.6
 const WAGE_MAX_DAYS = 7; // after a long absence at most a week is paid
 /**
  * Kinds of restaurant: key => [price ×, customers ×, eating time ×, level, cost to switch].
@@ -751,6 +833,12 @@ const SEAT_CYCLE = 45;     // while away: a seat serves at most one customer eve
 const STAFF_TRAITS = ['cheerful', 'speedy', 'tireless', 'careful', 'chatty', 'calm'];
 const STAFF_NAMES = ['Ada', 'Bruno', 'Carla', 'Dario', 'Elsa', 'Fabio', 'Gemma', 'Hugo', 'Irene', 'Jonas', 'Kira', 'Leo', 'Mara', 'Nico', 'Olga', 'Pino', 'Rita', 'Sami', 'Tina', 'Ugo', 'Vera', 'Walt', 'Zoe', 'Remy', 'Lia'];
 const STAFF_COLORS = ['#D9653B', '#7A8B3A', '#B43E5C', '#3E7CB4', '#E0A526', '#6B4FA0', '#2F9E8F', '#C2572B'];
+
+/** Chefs the level allows (each one also needs a stove of their own). */
+function max_chefs(int $level): int
+{
+    return min(8, 1 + intdiv($level + 1, 4)); // 1 at the start, 2 from level 3, 3 from 7 … 8 from level 27
+}
 
 function max_waiters(int $level): int
 {
@@ -840,7 +928,7 @@ function catalog_out(): array
     for ($l = 1; $l <= MAX_LEVEL; $l++) $levels[] = xp_for_level($l);
     return [
         'items' => $items, 'dishes' => $dishes, 'crops' => $crops, 'ingredients' => INGREDIENTS, 'market' => market_prices(),
-        'expand' => ['min' => MIN_SIDE, 'max' => MAX_SIDE, 'rate' => rule('expand_rate')], 'parking' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], PARKING), 'floors' => array_map(fn($f) => ['level' => $f[0], 'cost' => $f[1]], FLOORS), 'events' => events_out(), 'seasonal' => SEASONAL, 'dishKinds' => DISH_KINDS, 'cashier' => ['level' => CASHIER_LEVEL, 'bonus' => CASHIER_BONUS, 'tip' => CASHIER_TIP], 'doors' => array_map(fn($d) => ['price' => $d[0], 'level' => $d[1]], DOORS), 'doorMove' => DOOR_MOVE, 'floorStart' => FLOOR_START, 'carBonus' => CAR_BONUS, 'friendTips' => FRIEND_TIPS, 'friendTipDaily' => FRIEND_TIP_DAILY, 'levels' => $levels, 'staff' => staff_costs(), 'tags' => ITEM_TAGS, 'roles' => ROLES, 'outdoor' => OUTDOOR, 'calendar' => ['daysPerMonth' => DAYS_PER_MONTH, 'minutesPerSecond' => GAME_MINUTES_PER_SECOND], 'wages' => ['base' => WAGE_BASE, 'skill' => WAGE_PER_SKILL, 'rank' => WAGE_PER_RANK], 'kinds' => array_map(fn($k) => ['price' => $k[0], 'customers' => $k[1], 'eat' => $k[2], 'level' => $k[3], 'cost' => $k[4]], KINDS), 'uniforms' => array_map(fn($u) => ['price' => $u[0], 'level' => $u[1], 'top' => $u[2], 'bottom' => $u[3], 'accent' => $u[4], 'cut' => $u[5]], UNIFORMS), 'hairstyles' => HAIRSTYLES, 'hairColors' => HAIR_COLORS, 'hairPrice' => HAIR_PRICE, 'accessories' => ACCESSORIES, 'accessoryPrice' => ACCESSORY_PRICE, 'refresh' => CANDIDATE_REFRESH, 'manager' => ['hours' => MANAGER_HOURS, 'promote' => MANAGER_PROMOTE, 'level' => MANAGER_LEVEL, 'rate' => MANAGER_RATE], 'traits' => STAFF_TRAITS, 'titles' => LEVEL_TITLES, 'levelReward' => rule('level_reward'), 'dishMax' => DISH_MAX_LEVEL,
+        'expand' => ['min' => MIN_SIDE, 'max' => MAX_SIDE, 'rate' => rule('expand_rate')], 'parking' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], PARKING), 'garage' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], GARAGE), 'floors' => array_map(fn($f) => ['level' => $f[0], 'cost' => $f[1]], FLOORS), 'events' => events_out(), 'seasonal' => SEASONAL, 'dishKinds' => DISH_KINDS, 'cashier' => ['level' => CASHIER_LEVEL, 'bonus' => CASHIER_BONUS, 'tip' => CASHIER_TIP], 'doors' => array_map(fn($d) => ['price' => $d[0], 'level' => $d[1]], DOORS), 'doorWide' => DOOR_WIDE, 'doorMove' => DOOR_MOVE, 'floorStart' => FLOOR_START, 'carBonus' => CAR_BONUS, 'friendTips' => FRIEND_TIPS, 'friendTipDaily' => FRIEND_TIP_DAILY, 'levels' => $levels, 'staff' => staff_costs(), 'tags' => ITEM_TAGS, 'roles' => ROLES, 'outdoor' => OUTDOOR, 'calendar' => ['daysPerMonth' => DAYS_PER_MONTH, 'minutesPerSecond' => GAME_MINUTES_PER_SECOND], 'wages' => ['base' => WAGE_BASE, 'skill' => WAGE_PER_SKILL, 'rank' => WAGE_PER_RANK, 'level' => WAGE_PER_LEVEL], 'kinds' => array_map(fn($k) => ['price' => $k[0], 'customers' => $k[1], 'eat' => $k[2], 'level' => $k[3], 'cost' => $k[4]], KINDS), 'uniforms' => array_map(fn($u) => ['price' => $u[0], 'level' => $u[1], 'top' => $u[2], 'bottom' => $u[3], 'accent' => $u[4], 'cut' => $u[5]], UNIFORMS), 'hairstyles' => HAIRSTYLES, 'hairColors' => HAIR_COLORS, 'hairPrice' => HAIR_PRICE, 'accessories' => ACCESSORIES, 'accessoryPrice' => ACCESSORY_PRICE, 'refresh' => CANDIDATE_REFRESH, 'manager' => ['hours' => MANAGER_HOURS, 'promote' => MANAGER_PROMOTE, 'level' => MANAGER_LEVEL, 'rate' => MANAGER_RATE], 'traits' => STAFF_TRAITS, 'titles' => LEVEL_TITLES, 'levelReward' => rule('level_reward'), 'dishMax' => DISH_MAX_LEVEL,
         'rules' => ['seatSeconds' => SEAT_SECONDS, 'sellBack' => rule('sell_back'), 'marketLimit' => rule('market_limit'), 'visitHost' => rule('visit_host'), 'visitBase' => rule('visit_base')],
     ];
 }

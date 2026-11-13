@@ -26,7 +26,7 @@ $canonical = '/projects/';
 
 <section class="section">
     <div class="card-grid">
-        <a class="card" href="/projects/notefox/">
+        <a class="card" href="/projects/about/notefox/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -40,7 +40,7 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/sav-pdf-viewer/">
+        <a class="card" href="/projects/about/sav-pdf-viewer/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -55,7 +55,7 @@ $canonical = '/projects/';
                 <li>100K+ users</li>
             </ul>
         </a>
-        <a class="card" href="/projects/emoji/">
+        <a class="card" href="/projects/about/emoji/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -69,7 +69,7 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/savmrl/">
+        <a class="card" href="/projects/about/savmrl/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -83,7 +83,7 @@ $canonical = '/projects/';
                 <li>Web</li>
             </ul>
         </a>
-        <a class="card" href="/projects/accented-letters/">
+        <a class="card" href="/projects/about/accented-letters/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -97,7 +97,7 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/limite/">
+        <a class="card" href="/projects/about/limite/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -111,7 +111,7 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/mozita-l10n-addon/">
+        <a class="card" href="/projects/about/mozita-l10n-addon/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -142,7 +142,7 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/ripasso-fipav/">
+        <a class="card" href="/projects/about/ripasso-fipav/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -159,7 +159,7 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/foodtrack/">
+        <a class="card" href="/projects/about/foodtrack/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -178,7 +178,7 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/giftwise/">
+        <a class="card" href="/projects/about/giftwise/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -196,7 +196,7 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/fucina/">
+        <a class="card" href="/projects/about/fucina/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -222,7 +222,7 @@ $canonical = '/projects/';
         <span class="projects-divider-line"></span>
     </div>
     <div class="card-grid">
-        <a class="card" href="/projects/faceguess/">
+        <a class="card" href="/projects/about/faceguess/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -239,7 +239,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/chess/">
+        <a class="card" href="/projects/about/chess/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -256,7 +256,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/sudoku/">
+        <a class="card" href="/projects/about/sudoku/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -273,7 +273,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/prism-mine/">
+        <a class="card" href="/projects/about/prism-mine/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -290,7 +290,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/sea-battle/">
+        <a class="card" href="/projects/about/sea-battle/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -307,7 +307,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/connect-four/">
+        <a class="card" href="/projects/about/connect-four/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -324,7 +324,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/letterhop/">
+        <a class="card" href="/projects/about/letterhop/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -341,7 +341,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/thinkhop/">
+        <a class="card" href="/projects/about/thinkhop/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -358,7 +358,7 @@ $canonical = '/projects/';
                 <li>Built with Claude</li>
             </ul>
         </a>
-        <a class="card" href="/projects/forkville/">
+        <a class="card" href="/projects/about/forkville/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -435,7 +435,7 @@ $canonical = '/projects/';
         <span class="projects-divider-line"></span>
     </div>
     <div class="card-grid">
-        <a class="card faded" href="/projects/emoticolor/">
+        <a class="card faded" href="/projects/about/emoticolor/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -450,7 +450,7 @@ $canonical = '/projects/';
                 <li>Thesis project</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/word-of-the-day/">
+        <a class="card faded" href="/projects/about/word-of-the-day/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -464,7 +464,7 @@ $canonical = '/projects/';
                 <li>Android</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/cv-project/">
+        <a class="card faded" href="/projects/about/cv-project/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -478,7 +478,7 @@ $canonical = '/projects/';
                 <li>Android</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/my-code-editor/">
+        <a class="card faded" href="/projects/about/my-code-editor/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -492,7 +492,7 @@ $canonical = '/projects/';
                 <li>Windows</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/nolimit-math/">
+        <a class="card faded" href="/projects/about/nolimit-math/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -506,7 +506,7 @@ $canonical = '/projects/';
                 <li>Windows</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/scrolly/">
+        <a class="card faded" href="/projects/about/scrolly/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -520,7 +520,7 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/mozita-antispam/">
+        <a class="card faded" href="/projects/about/mozita-antispam/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -534,7 +534,7 @@ $canonical = '/projects/';
                 <li>Telegram bot</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/all-currencies/">
+        <a class="card faded" href="/projects/about/all-currencies/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -548,7 +548,7 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/mozita-myuserid-bot/">
+        <a class="card faded" href="/projects/about/mozita-myuserid-bot/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -562,7 +562,7 @@ $canonical = '/projects/';
                 <li>Telegram bot</li>
             </ul>
         </a>
-        <a class="card faded" href="/projects/mozitabot/">
+        <a class="card faded" href="/projects/about/mozitabot/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>

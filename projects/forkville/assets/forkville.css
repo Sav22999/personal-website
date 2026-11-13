@@ -1469,9 +1469,23 @@ button.pill.stars {
 
 .dish-meta {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 4px 10px;
     align-items: center;
     font-size: 13px;
+}
+
+.dish-meta .cook {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--muted, #7a6f66);
+    font-weight: 600;
+}
+
+.dish-meta .cook svg {
+    width: 15px;
+    height: 15px;
 }
 
 .dish-act {
@@ -2670,7 +2684,7 @@ button.clock-time { border: 0; background: transparent; cursor: pointer; font: i
 .elsewhere .modal { max-width: 380px; }
 
 /* Floor picker (upper floors) */
-.floorpick { pointer-events: auto; z-index: 3; position: absolute; left: 10px; top: 120px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.floorpick { pointer-events: auto; z-index: 3; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .floorpick small { font-weight: 800; font-size: 11px; background: rgba(255, 246, 233, .9); border-radius: 8px; padding: 1px 6px; }
 .floorpick .cam { font-weight: 800; font-size: 16px; }
 .floorpick .cam.on { background: var(--primary); color: #fff; }
@@ -2713,7 +2727,8 @@ button.clock-time { border: 0; background: transparent; cursor: pointer; font: i
 
 /* Store: which worker uses a piece */
 .shopitem { position: relative; }
-.role-badge { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 1px 0 var(--ink); display: grid; place-items: center; }
+.role-badges { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; }
+.role-badge { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 1px 0 var(--ink); display: grid; place-items: center; }
 .role-badge svg { width: 17px; height: 17px; }
 
 /* Phones: keep the left-side floor picker clear of the status pill, the camera column clear of the clock,
@@ -2732,6 +2747,11 @@ button.clock-time { border: 0; background: transparent; cursor: pointer; font: i
     .clock .speed { width: 28px; }
 }
 
+/* Build mode on any screen: the camera column ends above the build panel instead of running under it */
+body.building .camctl { top: auto; bottom: calc(var(--panel-h, 0px) + 10px); transform: none; }
+body.building .camctl { gap: 4px; }
+body.building .camctl .cam { width: 38px; height: 38px; }
+
 /* Phones in build mode: the panel takes the lower half, so the camera and floor buttons line up in a row above it,
    and the clock steps aside (the status pill still shows the service) */
 @media (max-width: 640px) {
@@ -2741,3 +2761,39 @@ button.clock-time { border: 0; background: transparent; cursor: pointer; font: i
     body.building .floorpick .floor-now { flex-direction: row; gap: 4px; padding: 2px 6px; }
     body.building .clock { display: none; }
 }
+
+/* A worker with no station: the thought bubble with the missing piece and a red question mark */
+.bubble-nostation .bubble-pic svg { width: 30px; height: 30px; }
+
+/* The requirements to-do list */
+.todo-chip { background: #FFF1D6; }
+.todo-chip .pic svg, .status-todo .pic svg { width: 18px; height: 18px; }
+.status-todo { border-top: 1px dashed var(--line, #E3D5C2); margin-top: 2px; }
+.todo-group { margin-top: 10px; }
+.todo-group h3 small { font-weight: 700; }
+.todo-line { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--surface-2); }
+.todo-check { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ink); background: #FDE3DF; color: #fff; display: grid; place-items: center; }
+.todo-line.done .todo-check { background: #5E9A3E; }
+.todo-check svg { width: 16px; height: 16px; }
+.todo-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.todo-text small { line-height: 1.3; }
+.todo-line.done .todo-text b { color: var(--muted); }
+
+/* The storage room in build mode */
+.shopitem.stored { position: relative; cursor: pointer; }
+.stock-count { position: absolute; top: 4px; left: 4px; background: var(--ink); color: #fff; font-weight: 800; font-size: 12px; border-radius: 999px; padding: 1px 7px; }
+.shopitem.stored .free { color: #3F7A2E; font-weight: 700; }
+.stock-sell { margin-top: 4px; padding: 2px 8px; font-size: 11px; }
+.storage-empty { padding: 12px 4px; max-width: 52ch; }
+
+/* The status chip and its menu stay above the floor buttons */
+.status { z-index: 6; }
+
+/* Walls: a small panel (adaptive, low, high) opening to the left of the camera buttons */
+.wallmode-wrap { position: relative; }
+.wall-menu { position: absolute; right: 50px; top: -52px; min-width: 210px; z-index: 6; }
+.wall-menu .wm { width: 12px; height: 12px; border-radius: 50%; flex: none; border: 1.5px solid var(--ink); }
+.wall-menu .wm-adaptive { background: linear-gradient(90deg, #7A8B3A 50%, #D9653B 50%); }
+.wall-menu .wm-low { background: #7A8B3A; }
+.wall-menu .wm-high { background: #D9653B; }
+.cam.wallmode.on { background: var(--primary); color: #fff; }

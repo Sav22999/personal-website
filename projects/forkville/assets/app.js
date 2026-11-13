@@ -11,6 +11,7 @@ import {t, n, errText, getLang, setLang} from './i18n.js';
 import {icon as svgIcon} from './icons.js';
 import {thumbFor, portrait, doorThumb} from './thumbs.js';
 import {weatherFor} from './scene.js';
+import {holidayAt} from './town.js';
 import {start as startAudio, sfx, setAmbience, audioPrefs, setAudioPrefs} from './audio.js';
 
 /** An SVG picture as an element (never emoji). */
@@ -131,7 +132,7 @@ const coin = (c) => h('span.coin-amount', h('i.coin'), String(c));
 const ingList = (obj) => Object.entries(obj).map(([k, q]) => `${n(k)} ×${q}`).join(', ');
 const nowSec = () => Date.now() / 1000 + (S.clockSkew || 0);
 
-const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB74D"/><stop offset="1" stop-color="#D6405C"/></linearGradient><clipPath id="fvclip"><rect width="64" height="64" rx="15"/></clipPath></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><path clip-path="url(#fvclip)" d="M32 34L91.7 27.7L91.7 40.3z M32 34L67.3 82.5L56.4 88.8z M32 34L7.6 88.8L-3.3 82.5z M32 34L-27.7 40.3L-27.7 27.7z M32 34L-3.3 -14.5L7.6 -20.8z M32 34L56.4 -20.8L67.3 -14.5z" fill="#FFF6E9" opacity=".16"/><ellipse cx="32" cy="48.5" rx="23" ry="5" fill="#FFF6E9" stroke="#3B2418" stroke-width="1.6"/><ellipse cx="32" cy="48.2" rx="17" ry="2.8" fill="#F1E4CF"/><path d="M14 47a18 18 0 0 1 36 0z" fill="#FFF6E9" stroke="#3B2418" stroke-width="1.8" stroke-linejoin="round"/><path d="M19.5 38.5a14 14 0 0 1 6-7" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".9"/><rect x="13" y="45" width="38" height="3.4" rx="1.7" fill="#EBDCC4" stroke="#3B2418" stroke-width="1.4"/><path d="M28.5 45V36a3.5 3.5 0 0 1 7 0v9z" fill="#D9653B" stroke="#3B2418" stroke-width="1.3" stroke-linejoin="round"/><circle cx="33.9" cy="41.2" r=".75" fill="#E2B23A"/><circle cx="21.8" cy="39.5" r="3.1" fill="#FFD27A" stroke="#3B2418" stroke-width="1.2"/><path d="M18.7 39.5h6.2M21.8 36.4v6.2" stroke="#3B2418" stroke-width=".8"/><circle cx="42.2" cy="39.5" r="3.1" fill="#FFD27A" stroke="#3B2418" stroke-width="1.2"/><path d="M39.1 39.5h6.2M42.2 36.4v6.2" stroke="#3B2418" stroke-width=".8"/><g fill="#E2B23A" stroke="#3B2418" stroke-width="1.2" stroke-linejoin="round"><rect x="30.8" y="20.5" width="2.4" height="9.5" rx="1"/><rect x="27" y="18" width="10" height="3.6" rx="1.6"/><rect x="27.4" y="10.5" width="1.9" height="9" rx=".95"/><rect x="31.05" y="10.5" width="1.9" height="9" rx=".95"/><rect x="34.7" y="10.5" width="1.9" height="9" rx=".95"/></g><path d="M52 8.5l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#FFF6E9"/><circle cx="10.5" cy="14" r="1.2" fill="#FFF6E9" opacity=".8"/></svg>`;
+const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#33264F"/><stop offset="1" stop-color="#171230"/></linearGradient><radialGradient id="fvglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF9A4A" stop-opacity=".55"/><stop offset="1" stop-color="#FF9A4A" stop-opacity="0"/></radialGradient><linearGradient id="fvroof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A4C"/><stop offset="1" stop-color="#E0483C"/></linearGradient><linearGradient id="fvwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#F2D7B4"/></linearGradient><linearGradient id="fvgold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE08A"/><stop offset="1" stop-color="#F2B33D"/></linearGradient><filter id="fvblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><circle cx="32" cy="36" r="27" fill="url(#fvglow)"/><ellipse cx="32" cy="53.5" rx="20" ry="2.4" fill="#0C0918" opacity=".55"/><g fill="url(#fvgold)"><rect x="30.7" y="14" width="2.6" height="9" rx="1.3"/><path d="M25.3 10.2h13.4v1.2c0 2.9-3 4.9-6.7 4.9s-6.7-2-6.7-4.9z"/><rect x="25.3" y="3.6" width="2.3" height="8.4" rx="1.15"/><rect x="29.15" y="3.6" width="2.3" height="8.4" rx="1.15"/><rect x="32.55" y="3.6" width="2.3" height="8.4" rx="1.15"/><rect x="36.4" y="3.6" width="2.3" height="8.4" rx="1.15"/></g><path d="M12.6 30.4L32 18.6l19.4 11.8a1.6 1.6 0 0 1-.83 2.97H13.43a1.6 1.6 0 0 1-.83-2.97z" fill="url(#fvroof)"/><rect x="16" y="32" width="32" height="21" rx="1.6" fill="url(#fvwall)"/><g><path d="M15 33.4h34v3.6H15z" fill="#E0483C"/><path d="M15 37h4.25a2.13 2.13 0 0 1-4.25 0zM23.5 37h4.25a2.13 2.13 0 0 1-4.25 0zM32 37h4.25a2.13 2.13 0 0 1-4.25 0zM40.5 37h4.25a2.13 2.13 0 0 1-4.25 0z" fill="#E0483C"/><path d="M19.25 33.4h4.25V37h-4.25zM27.75 33.4H32V37h-4.25zM36.25 33.4h4.25V37h-4.25zM44.75 33.4H49V37h-4.25z" fill="#FFF6E6"/><path d="M19.25 37h4.25a2.13 2.13 0 0 1-4.25 0zM27.75 37H32a2.13 2.13 0 0 1-4.25 0zM36.25 37h4.25a2.13 2.13 0 0 1-4.25 0zM44.75 37H49a2.13 2.13 0 0 1-4.25 0z" fill="#FFF6E6"/></g><rect x="18.6" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFC857" filter="url(#fvblur)" opacity=".9"/><rect x="18.6" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFD77A"/><rect x="37.8" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFC857" filter="url(#fvblur)" opacity=".9"/><rect x="37.8" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFD77A"/><path d="M22.4 42v6.6M18.6 45.3h7.6M41.6 42v6.6M37.8 45.3h7.6" stroke="#E9A93A" stroke-width=".8"/><path d="M28.4 53V44.4a3.6 3.6 0 0 1 7.2 0V53z" fill="#7A3B2A"/><circle cx="34" cy="48.8" r=".7" fill="#FFD77A"/><path d="M51.5 10.5l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9z" fill="#FFE08A"/><circle cx="11.5" cy="15" r="1.1" fill="#FFE08A" opacity=".85"/><circle cx="54" cy="24" r=".8" fill="#FFE08A" opacity=".6"/></svg>`;
 
 function credit() {
     return h('div.credit-block',
@@ -408,6 +409,13 @@ function envTick() {
     if (S.lastEvent !== undefined && ev && ev !== S.lastEvent) toast(t('ev_started', {e: t('ev_' + ev)}), 'good');
     S.lastEvent = ev;
     S.sim.season = S.season;
+    // Holidays of the game calendar dress up the neighbourhood
+    const hol = holidayAt(date.month, date.day);
+    if (hol !== S.holiday) {
+        if (S.holiday !== undefined && hol) toast(t('hol_started', {h: t('hol_' + hol)}), 'good');
+        S.holiday = hol;
+        S.world.setHoliday(hol);
+    }
     S.world.setEnvironment({hour: S.sim.hour, weather: S.weather, season: S.season});
     const now = performance.now();
     if (now - (S.lastAmb || 0) > 500) { // rain, voices in the room, day or night music
@@ -628,6 +636,7 @@ const ICONS = {
     expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5M9 12h6M12 9v6"/>',
     car: '<path d="M3 16v-4l2-5h14l2 5v4zM3 16v2h3v-2M18 16v2h3v-2M5 12h14"/><circle cx="7.5" cy="14" r="1"/><circle cx="16.5" cy="14" r="1"/>',
     stairs: '<path d="M3 20h5v-5h5v-5h5V5h3"/>',
+    box: '<path d="M3 8l9-4 9 4v9l-9 4-9-4z"/><path d="M3 8l9 4 9-4M12 12v9"/>',
     up: '<path d="M6 15l6-6 6 6"/>', down: '<path d="M6 9l6 6 6-6"/>',
     door: '<path d="M5 21V4h11v17M3 21h18M13 12h.01M16 6l3 1v13l-3 1"/>',
     walls: '<path d="M3 20h18M4 20V9h6v11M14 20v-6h6v6"/>',
@@ -650,12 +659,16 @@ function renderHud() {
             h('button.cam', {title: t('zoom_in'), onclick: () => S.world.zoom(0.8)}, icon('plus')),
             h('button.cam', {title: t('zoom_out'), onclick: () => S.world.zoom(1.25)}, icon('minus')),
             h('button.cam', {title: t('recenter'), onclick: () => S.world.recenter()}, icon('center')),
-            h('button.cam.wallmode', {title: t('walls_' + S.world.wallMode), onclick: () => {
-                const order = ['adaptive', 'low', 'high'];
-                S.world.setWallMode(order[(order.indexOf(S.world.wallMode) + 1) % 3]);
-                toast(t('walls_' + S.world.wallMode));
-                renderHud();
-            }}, icon('walls'), h('i.wm-' + S.world.wallMode))),
+            h('div.wallmode-wrap',
+                h('button.cam.wallmode' + (S.wallMenu ? '.on' : ''), {title: t('walls_' + S.world.wallMode), onclick: (e) => (e.stopPropagation(), (S.wallMenu = !S.wallMenu), renderHud())}, icon('walls'), h('i.wm-' + S.world.wallMode)),
+                // A small panel like the restaurant's status: the three ways of showing the walls, the current one marked
+                S.wallMenu && h('div.status-menu.wall-menu', {onclick: (e) => e.stopPropagation()}, ['adaptive', 'low', 'high'].map(m => h('button.status-opt' + (m === S.world.wallMode ? '.on' : ''), {
+                    onclick: () => {
+                        S.world.setWallMode(m);
+                        S.wallMenu = false;
+                        renderHud();
+                    },
+                }, h('i.wm.wm-' + m), t('walls_' + m)))))),
         floorPicker(),
         S.mode === 'visit' ? visitBar() : S.mode === 'build' ? h('div.buildpanel#buildpanel') : dock(),
         h('div.selbar#selbar'));
@@ -703,17 +716,19 @@ function renderStatus() {
     if (!el || !S.sim) return;
     if (S.mode !== 'home') return put(el, );
     const problems = S.sim.problems || [];
-    const guests = S.sim.agents.filter(a => a.role === 'customer').length;
+    const guests = S.sim.guestsInside; // whoever walked out of the door (or waits outside) is not in the room
     const status = S.game.restaurant.status || 'open';
     const label = status === 'closed' ? t('closed_status') : status === 'paused' ? t('paused_status', {n: guests}) : t('open_status', {n: guests});
     // Redraw only when something changed (a redraw every second made the open menu flicker)
-    const key = [status, label, problems.join(), (S.sim.warnings || []).map(w => w.key + w.n).join(), !!S.statusMenu, getLang()].join('|');
+    const todo = todoCount();
+    const key = [status, label, problems.join(), (S.sim.warnings || []).map(w => w.key + w.n).join(), !!S.statusMenu, getLang(), todo].join('|');
     if (key === S.statusKey && el.childElementCount) return;
     const menuWasOpen = S.statusKey?.includes('|true|');
     S.statusKey = key;
     put(el,
         h('button.chip.status-' + status, {onclick: (e) => (e.stopPropagation(), toggleStatusMenu()), title: t('status_title')}, h('i.dot'), label, h('span.caret', S.statusMenu ? '▴' : '▾')),
         S.statusMenu && statusMenu(status, menuWasOpen),
+        todo > 0 && h('button.chip.todo-chip', {onclick: () => openSheet('todo'), title: t('todo_title')}, ic('ui', 'todo'), t('todo_chip', {n: todo})),
         problems.length > 0 && h('button.chip.warn', {onclick: () => fixProblem(problems[0])}, ic('ui', 'warning'), t(problems[0])),
         !problems.length && (S.sim.warnings || []).map(w => h('button.chip.warn', {onclick: () => enterBuild(w.key === 'need_toilet' ? 'restroom' : 'table')}, ic('ui', 'warning'), t(w.key, {n: w.n}))));
 }
@@ -738,11 +753,12 @@ function statusMenu(cur, still = false) {
                 },
             });
         },
-    }, h('i.dot'), statusLabels()[st])));
+    }, h('i.dot'), statusLabels()[st])), h('button.status-opt.status-todo', {onclick: () => (S.statusMenu = false, openSheet('todo'))}, ic('ui', 'todo'), t('todo_title')));
 }
 
 // A click anywhere else closes the status menu
 document.addEventListener('click', () => S.statusMenu && toggleStatusMenu(false));
+document.addEventListener('click', () => S.wallMenu && ((S.wallMenu = false), renderHud()));
 
 /** The game clock with the Sims-style speed buttons, plus weather and season. */
 function renderClock(force = false) {
@@ -807,6 +823,51 @@ function renderInfo() {
         d.energy != null && bar(t('energy'), d.energy, d.energy >= 50 ? 'good' : d.energy >= 25 ? 'mid' : 'bad'));
 }
 
+/**
+ * The restaurant's to-do list: what guests strictly need (to open at all), what keeps them happy, and a station
+ * for every worker already hired. Each line knows whether it is done and where to go to fix it.
+ */
+function requirements() {
+    const sim = S.sim, r = S.game.restaurant, staff = sim.agents.filter(a => a.staff && !a.dismissed);
+    const hired = (role) => staff.filter(a => a.role === role);
+    const fix = {build: (tab) => () => (closeSheet(), enterBuild(tab)), sheet: (k) => () => openSheet(k)};
+    const line = (key, done, go, extra = {}) => ({key, done: !!done, go, ...extra});
+    const groups = [
+        ['req_open', [
+            line('req_seat', sim.seats.length, fix.build('table'), {n: sim.seats.length}),
+            line('req_stove', sim.stoves.length, fix.build('kitchen'), {n: sim.stoves.length}),
+            line('req_counter', sim.counters.length, fix.build('kitchen'), {n: sim.counters.length}),
+            line('req_chef', hired('chef').some(a => a.stove), fix.sheet('staff')),
+            line('req_waiter', hired('waiter').some(a => a.tables?.length), fix.sheet('staff')),
+            line('req_menu', r.menu.length, fix.sheet('menu'), {n: r.menu.length}),
+        ]],
+        ['req_happy', [
+            line('req_toilet', sim.spots.toilet.length, fix.build('restroom')),
+            line('req_washbasin', sim.spots.washbasin.length, fix.build('restroom')),
+            line('req_sink', sim.spots.sink.length, fix.build('kitchen')),
+            line('req_cleaner', hired('cleaner').some(a => a.station), hired('cleaner').length ? fix.build('kitchen') : fix.sheet('staff')),
+            line('req_trash', sim.spots.trash, fix.build('kitchen')),
+            line('req_light', sim.spots.light.length >= 2, fix.build('deco')),
+        ]],
+    ];
+    // Every worker already hired needs their own station
+    const st = [];
+    const per = (role, key, ok, tab) => {
+        const list = hired(role);
+        if (list.length) st.push(line(key, list.every(ok), fix.build(tab), {n: list.filter(ok).length, m: list.length}));
+    };
+    per('chef', 'req_st_chef', a => a.stove, 'kitchen');
+    per('waiter', 'req_st_waiter', a => a.tables?.length, 'table');
+    per('cleaner', 'req_st_cleaner', a => a.station, 'kitchen');
+    per('manager', 'req_st_manager', a => a.station, 'kitchen');
+    per('cashier', 'req_st_cashier', a => a.till, 'kitchen');
+    if (st.length) groups.push(['req_staff', st]);
+    return groups;
+}
+
+/** How many lines of the to-do list are still open (the chip in the status bar shows it). */
+const todoCount = () => requirements().reduce((k, [, lines]) => k + lines.filter(l => !l.done).length, 0);
+
 function fixProblem(p) {
     if (['need_stove', 'need_counter', 'need_seat'].includes(p)) enterBuild(p === 'need_seat' ? 'chair' : 'kitchen');
     else if (p === 'need_menu') openSheet('menu');
@@ -829,7 +890,7 @@ function openSheet(kind, opts = {}) {
     const title = h('h2');
     const el = h('section.sheet', h('header', title, h('button.icon-btn', {onclick: closeSheet, title: t('close')}, icon('x'))), body);
     document.querySelector('.game').append(el); // outside #hud: redrawing the HUD keeps the panel
-    S.sheet = {kind, opts, el, live: kind === 'garden', render: () => SHEETS[kind](body, title, S.sheet.opts)};
+    S.sheet = {kind, opts, el, live: kind === 'garden' || kind === 'todo', render: () => SHEETS[kind](body, title, S.sheet.opts)};
     updateInsets();
     S.sheet.render();
     requestAnimationFrame(() => el.classList.add('in'));
@@ -874,6 +935,18 @@ async function act(route, body, {rebuild = false, live = false, done} = {}) {
 }
 
 const SHEETS = {
+    todo(body, title) {
+        title.textContent = t('todo_title');
+        const groups = requirements();
+        put(body, h('p.muted', t('todo_intro')),
+            groups.map(([gk, lines]) => h('div.todo-group',
+                h('h3', t(gk), h('small.muted', ` ${lines.filter(l => l.done).length}/${lines.length}`)),
+                lines.map(l => h('div.todo-line' + (l.done ? '.done' : ''),
+                    h('span.todo-check', {html: l.done ? '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}),
+                    h('div.todo-text', h('b', t(l.key, {n: l.n ?? '', m: l.m ?? ''})), h('small.muted', t(l.key + '_d'))),
+                    !l.done && h('button.btn.btn-small', {onclick: l.go}, t('todo_go')))))));
+    },
+
     menu(body, title) {
         title.textContent = t('menu_title');
         const r = S.game.restaurant, rec = S.game.recipes, ing = S.game.ingredients;
@@ -882,6 +955,14 @@ const SHEETS = {
             const need = lvl <= 1 ? 1 : lvl - 1, have = ing[i] || 0;
             return h('span.need' + (have >= need ? '.ok' : '.miss'), {title: n(i)}, ic('ing', i), `${have}/${need}`);
         });
+        // Cooking time: the dish's base, and how long it takes on the best stove of this kitchen (before the chef's skill)
+        const best = (S.sim?.stoves || []).reduce((a, b) => (!a || b.speed > a.speed ? b : a), null);
+        const cold = (k) => S.catalog.dishKinds?.[k] && ((S.catalog.dishKinds[k] === 'drink' && S.sim?.spots.drinks.length) || (S.catalog.dishKinds[k] === 'icecream' && S.sim?.spots.icecream.length));
+        const cookEl = (k, d) => {
+            if (cold(k)) return h('span.cook', {title: t('cook_cold')}, ic('ui', 'timer'), t('cook_cold_short'));
+            const here = S.sim && best ? Math.round(S.sim.cookTime(k, null, best)) : null;
+            return h('span.cook', {title: t('cook_hint')}, ic('ui', 'timer'), here != null && here < d.cook ? t('cook_secs_here', {b: d.cook, n: here}) : t('cook_secs', {b: d.cook}));
+        };
         const rows = Object.entries(S.catalog.dishes).sort((a, b) => a[1].level - b[1].level).map(([k, d]) => {
             const lvl = rec[k] || 0;
             const locked = d.level > r.level;
@@ -890,7 +971,7 @@ const SHEETS = {
             return h('div.dish' + (locked ? '.locked' : ''),
                 h('div.dish-icon', {html: dishIcon(k)}),
                 h('div.dish-main', h('b', n(k)), h('div.dish-meta', lvl ? h('span.lv', starsEl(lvl, S.catalog.dishMax)) : h('span.muted', locked ? t('locked_level', {n: d.level}) : t('not_learned')),
-                    h('span', coin(price))),
+                    h('span', coin(price)), cookEl(k, d)),
                     !locked && lvl < S.catalog.dishMax && h('div.needs', needs(k, lvl + 1))),
                 h('div.dish-act',
                     lvl > 0 && h('label.switch', {title: t('on_menu')}, h('input', {
@@ -946,8 +1027,9 @@ const SHEETS = {
     staff(body, title) {
         title.textContent = t('staff_title');
         const r = S.game.restaurant, mg = S.catalog.manager, roles = S.catalog.roles;
-        const roleIcon = (role) => role === 'chef' ? 'chef' : role === 'cleaner' ? 'broom' : role === 'manager' ? 'manager' : 'waiter';
-        const limits = {chef: r.staff.filter(x => x.role === 'chef').length + ' / ' + t('per_stove'), waiter: r.maxWaiters, cleaner: r.maxCleaners, manager: r.maxManagers};
+        const roleIcon = (role) => role === 'chef' ? 'chef' : role === 'cleaner' ? 'broom' : role === 'manager' ? 'manager' : role === 'cashier' ? 'register' : 'waiter';
+        const stoves = r.layout.filter(it => S.catalog.items[it.k]?.cat === 'stove').length;
+        const limits = {chef: r.maxChefs ?? stoves, waiter: r.maxWaiters, cleaner: r.maxCleaners, manager: r.maxManagers, cashier: r.maxCashiers};
         const people = r.staff.map(s => {
             const rank = s.rank || 1, next = mg.promote[rank + 1];
             const select = h('select.role-select', {
@@ -959,7 +1041,7 @@ const SHEETS = {
                 cv(s.skills, s.role),
                 h('div.wage', ic('ui', 'coin'), t('wage_day', {c: (S.game.restaurant.wages || []).find(w => w.id === s.id)?.wage ?? '—'})),
                 h('div.seniority', t('seniority', {t: seniorityText(s.years || 0)}), ' · ', t('next_point', {p: Math.floor(((s.skills?.[s.role] ?? 5) % 1) * 100)})),
-                s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.08 * (s.skills?.manager ?? 5)))})),
+                s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.06 * (s.skills?.manager ?? 5)))})),
                 h('div.row.wrap',
                     s.role === 'manager' && next != null && h('button.btn.btn-small.btn-primary', {onclick: () => act('game.promote', {id: s.id}, {live: true, done: () => toast(t('promoted', {n: s.name}), 'good')})}, t('promote'), ' · ', coin(next)),
                     h('button.btn.btn-small', {onclick: () => openLook(s)}, t('look_title')),
@@ -968,7 +1050,7 @@ const SHEETS = {
         put(body,
             h('p.muted', t('staff_intro')),
             h('div.payroll', t('payroll') + ': ', coin(r.payroll || 0)),
-            h('div.role-limits', roles.map(role => h('span.limit', ic('ui', roleIcon(role)), n(role) + ': ', h('b', String(r.staff.filter(x => x.role === role).length)), ' / ', role === 'chef' ? t('per_stove') : String(limits[role])))),
+            h('div.role-limits', roles.map(role => h('span.limit', ic('ui', roleIcon(role)), n(role) + ': ', h('b', String(r.staff.filter(x => x.role === role).length)), ' / ', String(limits[role] ?? 0), role === 'chef' ? h('small.muted', ' · ' + t('chef_stoves', {n: stoves})) : null))),
             h('button.btn.btn-primary.btn-wide', {onclick: () => openCandidates()}, t('find_staff')),
             h('div.list', people),
             r.level < mg.level ? h('p.muted', t('locked_level', {n: mg.level}) + ' · ' + t('manager_what')) : h('p.muted', t('manager_hint', {n: r.maxManagers, h: r.managerHours})));
@@ -1157,6 +1239,7 @@ function ledgerText(e) {
         case 'admin': return t('lt_admin') + (a ? ' · ' + a : '');
         case 'wages': return t('lt_wages', {n: a || 0, d: b || 1});
         case 'parking': return t('lt_parking', {n: a || 1});
+        case 'garage': return t('lt_garage', {n: a || 1});
         case 'floor': return t('lt_floor', {n: a || 1});
         case 'tip_given': return t('lt_tip_given', {n: a || ''});
         case 'tip_friend': return t('lt_tip_friend', {n: a ? '@' + a : ''});
@@ -1184,6 +1267,7 @@ function unlocksAt(l) {
     if (crops.length) out.push(t('unlock_crops') + ': ' + crops.join(', '));
     if (l > 1 && maxSide(l) > maxSide(l - 1)) out.push(t('unlock_side', {n: maxSide(l)}));
     for (const [pl, p] of Object.entries(S.catalog.parking || {})) if (p.level === l) out.push(t('unlock_parking', {n: p.spaces, l: pl}));
+    for (const [gl, p] of Object.entries(S.catalog.garage || {})) if (p.level === l) out.push(t('unlock_garage', {n: p.spaces, l: gl}));
     for (const [fl, p] of Object.entries(S.catalog.floors || {})) if (p.level === l) out.push(t('unlock_floor', {n: fl}));
     const f = (fn) => fn(l) > fn(l - 1) ? fn(l) : null;
     const w = f(x => Math.min(6, 1 + Math.floor(x / 3))), c = f(x => Math.min(4, 1 + Math.floor(x / 5))), m = f(x => Math.min(8, 3 + Math.floor(x / 4))), p = f(x => Math.min(12, 4 + Math.floor(x / 2)));
@@ -1479,7 +1563,7 @@ async function goHome() {
 
 // ---------------------------------------------------------------- build mode
 
-const BUILD_TABS = [['seasonal', []], ['table', ['table']], ['chair', ['chair']], ['stairs', ['stairs']], ['kitchen', ['stove', 'counter', 'kitchen', 'service']], ['outdoor', ['outdoor']], ['restroom', ['restroom']], ['partition', ['partition']],
+const BUILD_TABS = [['storage', []], ['seasonal', []], ['table', ['table']], ['chair', ['chair']], ['stairs', ['stairs']], ['kitchen', ['stove', 'counter', 'kitchen', 'service']], ['outdoor', ['outdoor']], ['ground', ['ground']], ['restroom', ['restroom']], ['partition', ['partition']], ['window', ['window']],
     ['lounge', ['lounge']], ['deco', ['deco']], ['rug', ['rug']], ['floor', ['floor']], ['wall', ['wall']]];
 /** Decorations that entertain go in the lounge tab. */
 const LOUNGE_TAGS = ['music', 'fun', 'cozy', 'snack'];
@@ -1530,17 +1614,23 @@ async function saveBuild() {
     }
 }
 
-/** Which worker uses a piece (for the badge in the store): chef, waiter, cleaner, cashier, or all the staff (breaks). */
-function roleOfItem(k, d) {
+/**
+ * Who uses a piece (badges in the store): a list, since some pieces serve two jobs — the counter (the chef puts the
+ * dish there, the waiter picks it up), the sink (waiters and cleaners wash the plates). Breaks are for all the staff.
+ */
+function rolesOfItem(k, d) {
     const tag = S.catalog.tags?.[k];
-    if (d.cat === 'stove' || d.cat === 'counter' || tag === 'fridge') return 'chef';
-    if (tag === 'sink' || tag === 'drinks' || tag === 'icecream') return 'waiter';
-    if (tag === 'janitor') return 'cleaner';
-    if (tag === 'register') return 'cashier';
-    if (tag === 'coffee' || tag === 'rest') return 'staff';
-    return null;
+    if (d.cat === 'stove' || tag === 'fridge') return ['chef'];
+    if (d.cat === 'counter') return ['chef', 'waiter'];
+    if (tag === 'sink') return ['waiter', 'cleaner'];
+    if (tag === 'drinks' || tag === 'icecream') return ['waiter'];
+    if (tag === 'janitor' || tag === 'toilet') return ['cleaner'];
+    if (tag === 'register') return ['cashier'];
+    if (tag === 'host') return ['manager'];
+    if (tag === 'coffee' || tag === 'rest') return ['staff'];
+    return [];
 }
-const ROLE_ICON = {chef: ['ui', 'chef'], waiter: ['ui', 'waiter'], cleaner: ['ui', 'broom'], cashier: ['ui', 'register'], staff: ['mood', 'sleep']};
+const ROLE_ICON = {chef: ['ui', 'chef'], waiter: ['ui', 'waiter'], cleaner: ['ui', 'broom'], cashier: ['ui', 'register'], manager: ['ui', 'manager'], staff: ['mood', 'sleep']};
 
 /** The event going on now on the real calendar (valentine, easter, summer, autumn, christmas), or null: the server says. */
 const eventsInfo = () => S.game?.restaurant?.events || S.catalog.events || {};
@@ -1561,9 +1651,31 @@ function renderBuild() {
     const items = Object.entries(cat).filter(([k, d]) => buildTabOf(k, d) === buildTab && cats && (d.enabled !== false || r.finishes.includes(k)))
         .sort((a, b) => (buildTab === 'seasonal' ? inSeason(b[0]) - inSeason(a[0]) : 0) || SORTS[buildSort](a, b)); // in-season pieces first
     const c = ed.cost();
+    // The storage room: pieces put away, placed again for free (or sold, if they were already stored before this session)
+    const stock = ed.storageList();
+    const storeTile = ([k, count]) => {
+        const d = cat[k], sellable = (ed.storage[k] || 0) - ed.draft.filter(x => x.st && x.k === k).length > 0;
+        const refund = Math.floor(d.price * S.catalog.rules.sellBack);
+        return h('div.shopitem.stored' + (ed.placing?.it.k === k && ed.placing.it.st ? '.on' : ''), {onclick: () => ed.startPlacing(k, null, 0, true)},
+            h('span.stock-count', '×' + count), h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}), h('b', n(k)), h('small.free', t('storage_free')),
+            sellable && h('button.btn.btn-small.btn-danger.stock-sell', {
+                title: t('storage_sell_hint'),
+                onclick: (e) => {
+                    e.stopPropagation();
+                    api('game.storage_sell', {k}).then(st => {
+                        r.storage = st.restaurant?.storage || {};
+                        r.coins = st.restaurant?.coins ?? r.coins;
+                        ed.storage = {...r.storage};
+                        toast(t('storage_sold', {c: st.result?.refund ?? refund}), 'good');
+                        renderTop();
+                        renderBuild();
+                    }).catch(fail);
+                },
+            }, t('sell'), ' +', String(refund)));
+    };
     const tile = ([k, d]) => {
         const sev = S.catalog.seasonal?.[k], away = sev && !inSeason(k);
-        const role = roleOfItem(k, d);
+        const roles = rolesOfItem(k, d);
         const locked = d.level > r.level || away;
         const finish = d.cat === 'floor' || d.cat === 'wall';
         const owned = finish && r.finishes.includes(k);
@@ -1571,14 +1683,15 @@ function renderBuild() {
         return h('button.shopitem' + (locked ? '.locked' : '') + (current || ed.placing?.it.k === k ? '.on' : ''), {
             disabled: locked,
             onclick: () => finish ? ed.setFinish(k) : ed.startPlacing(k),
-        }, role ? h('span.role-badge', {title: t('for_role_' + role), html: svgIcon(...ROLE_ICON[role])}) : null, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
+        }, roles.length ? h('span.role-badges', {title: roles.map(x => t('for_role_' + x)).join(' · ')}, roles.map(x => h('span.role-badge', {html: svgIcon(...ROLE_ICON[x])}))) : null, finish ? h('img', {src: swatch(k), alt: ''}) : h('img.thumb3d', {src: thumbFor(k), alt: '', loading: 'lazy'}),
             h('b', n(k)), sev ? h('span.tier.seasonal', t('ev_' + sev)) : d.tier ? h('span.tier.tier-' + d.tier, t('tier_' + d.tier)) : null,
             h('small', away ? t('ev_back', {m: eventDate(sev, 'from')}) : locked ? t('locked_level', {n: d.level}) : owned ? t('owned') : coin(d.price)),
             d.pop > 0 && h('small.pop', t('pop', {n: d.pop})), d.speed > 1 && h('small.pop', t('speed', {n: d.speed})));
     };
     put(el, 
         h('div.build-head',
-            h('div.tabs.scroll', BUILD_TABS.map(([k]) => h('button.tab' + (buildTab === k ? '.on' : ''), {onclick: () => ((buildTab = k), S.world.frameOutdoor(k === 'outdoor'), renderBuild())}, t('cat_' + k)))),
+            h('div.tabs.scroll', BUILD_TABS.map(([k]) => h('button.tab' + (buildTab === k ? '.on' : ''), {onclick: () => ((buildTab = k), S.world.frameOutdoor(k === 'outdoor'), renderBuild())},
+                t('cat_' + k), k === 'storage' && stock.length ? ` (${stock.reduce((a, [, x]) => a + x, 0)})` : ''))),
             ed.doorMove ? h('div.placing', h('span', t('door_pick')), h('button.btn.btn-small.btn-ghost', {onclick: () => ed.stopDoorMove()}, t('cancel'))) :
             ed.placing ? h('div.placing',
                     h('span', t(ed.placing.moving ? 'moving_piece' : 'placing')),
@@ -1599,7 +1712,7 @@ function renderBuild() {
                     }, Object.keys(SORTS).map(k => h('option', {value: k, selected: k === buildSort}, t('sort_' + k))))))),
         buildTab === 'seasonal' ? h('div.event-banner' + (ev ? '.on' : ''), ic('ui', ev === 'christmas' || ev === 'autumn' ? 's_winter' : 's_spring'),
             h('div', h('b', ev ? t('ev_now', {e: t('ev_' + ev)}) : t('ev_none')), h('small', [ev ? t('ev_until', {m: eventDate(ev, 'to')}) + ' · ' : '', t('ev_kept')].join('')))) : null,
-        h('div.shop', items.map(tile)),
+        buildTab === 'storage' ? (stock.length ? h('div.shop', stock.map(storeTile)) : h('p.muted.storage-empty', t('storage_empty'))) : h('div.shop', items.map(tile)),
         h('div.build-foot',
             h('div.cost', h('span', t('spend') + ' '), coin(c.spend), c.refund ? [h('span', ' · ' + t('refund') + ' '), coin(c.refund)] : null),
             h('button.btn.btn-small.btn-ghost', {onclick: openDoor}, icon('door'), t('door_title')),
@@ -1700,6 +1813,7 @@ function openExpand() {
             }, coin(cost)));
     };
     const pl = r.parking || 0, park = S.catalog.parking || {}, next = park[pl + 1];
+    const gl = r.garage || 0, gar = S.catalog.garage || {}, gnext = gar[gl + 1];
     // Upper floors: each grows inside the one below; the next one can be built from its level
     const floors = r.floors || [], rectOf = (f) => f ? {x0: floors[f - 1][2], w: floors[f - 1][0], d: floors[f - 1][1]} : {x0: 0, w: W, d: D};
     const growUp = (f, dir) => {
@@ -1752,7 +1866,20 @@ function openExpand() {
                     closeModal();
                     act('game.parking', {}, {rebuild: true, done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
                 },
-            }, coin(next.cost))) : h('p', t('parking_max'))), 'expand-modal');
+            }, coin(next.cost))) : h('p', t('parking_max')),
+        // The underground car park (floor −1): later levels, many more spaces
+        h('h3', icon('car'), t('garage_title')),
+        h('p.muted', t('garage_d')),
+        gl ? h('p', t('garage_have', {n: gar[gl].spaces})) : null,
+        gnext ? h('div.expand-opt', h('div.expand-pic', ic('ui', 'garage', 'pic big')),
+            h('div', h('b', t(gl ? 'garage_more' : 'garage_buy', {n: gnext.spaces})), gnext.level > r.level ? h('small', t('locked_level', {n: gnext.level})) : null),
+            h('button.btn.btn-primary.btn-small', {
+                disabled: gnext.level > r.level || gnext.cost > r.coins,
+                onclick: () => {
+                    closeModal();
+                    act('game.garage', {}, {rebuild: true, done: () => S.editor.active && (S.editor.end(), enterBuild(buildTab))});
+                },
+            }, coin(gnext.cost))) : h('p', t('garage_max'))), 'expand-modal');
 }
 
 function renderSelection(it) {
@@ -1765,7 +1892,8 @@ function renderSelection(it) {
         h('button.icon-btn', {title: t('rotate_right') + ' (R)', onclick: () => S.editor.rotate(1)}, icon('right')),
         h('button.btn.btn-small', {title: 'M', onclick: () => S.editor.moveSelected()}, t('move')),
         h('button.btn.btn-small', {title: 'C', disabled: !inSeason(it.k), onclick: () => S.editor.copySelected()}, t('copy_piece'), ' ', coin(S.catalog.items[it.k].price)),
-        h('button.btn.btn-small.btn-danger', {title: t('key_delete'), onclick: () => S.editor.sellSelected()}, t('sell'), ' +', String(refund)),
+        h('button.btn.btn-small', {title: t('store_hint'), onclick: () => S.editor.storeSelected()}, icon('box'), ' ', t('store_piece')),
+        !it.st && h('button.btn.btn-small.btn-danger', {title: t('key_delete'), onclick: () => S.editor.sellSelected()}, t('sell'), ' +', String(refund)),
         h('button.icon-btn', {onclick: () => S.editor.select(null)}, icon('x')),
         h('small.muted.selhint', t('drag_hint'))));
 }

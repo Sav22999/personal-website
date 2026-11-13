@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'Forkville';
 const AUTH_COOKIE = 'forkville_auth';
-const SCHEMA_VERSION = 13; // 13: door position and style; 12: upper floors; 11: one playing copy (instance); 10: rows/columns, car park, friend tips; 2: settings and admin_log (admin panel); 3: reviews, opening status; 4: job candidates; 5: coin ledger; 6: kind of restaurant; 7: wages; 8: closed time; 9: game calendar
+const SCHEMA_VERSION = 15; // 15: furniture storage; 14: underground car park; 13: door position and style; 12: upper floors; 11: one playing copy (instance); 10: rows/columns, car park, friend tips; 2: settings and admin_log (admin panel); 3: reviews, opening status; 4: job candidates; 5: coin ledger; 6: kind of restaurant; 7: wages; 8: closed time; 9: game calendar
 const LANGS = ['en', 'it'];
 const ROLE_ADMIN = 9;
 const MAX_FRIENDS = 200;

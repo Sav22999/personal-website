@@ -7,8 +7,8 @@
  * are lowered automatically so the room is always visible.
  */
 import * as THREE from '../vendor/three.module.min.js';
-import {furnitureModel, floorMaterial, wallMaterial, cropModel, mat, forkMesh, PALETTE, glowMat, setNightGlow} from './models.js';
-import {buildNeighbourhood, Traffic} from './town.js';
+import {furnitureModel, floorMaterial, wallMaterial, cropModel, mat, forkMesh, PALETTE, glowMat, setNightGlow, useArrow} from './models.js';
+import {buildNeighbourhood, Traffic, applyHoliday} from './town.js';
 
 const WALL_H = 2.4;
 /** Height of one storey (walls + floor slab), and the z stride the simulation uses to keep floors apart (see sim.js). */
@@ -20,7 +20,7 @@ const shown = (o) => {
     return true;
 };
 /** Depth of the outdoor area (terrace in front, yard at the side): the same as OUTDOOR in lib/catalog.php. */
-export const OUT = 3;
+export const OUT = 5;
 const WALL_LOW = 0.14;
 const FOV = 40;
 const FOV_TOP = 14;
@@ -162,6 +162,81 @@ function paintingTexture(k) {
     return (paintings[k] = t);
 }
 
+/** Windows: the opening each kind cuts in a wall unit (wall slabs left: [y0, height]) and how it is glazed. */
+export const WINDOW_KIND = {window_small: 'std', window_wide: 'std', window_large: 'std', window_round: 'round', window_tall: 'tall', window_arched: 'arched',
+    window_stained: 'stained', glass_wall_2: 'full', glass_wall_3: 'full', glass_wall_4: 'full', window_panorama: 'pano'};
+const WINDOW_OPENING = {
+    std: {parts: [[0, 0.9], [1.9, WALL_H - 1.9]], y0: 0.9, y1: 1.9},
+    stained: {parts: [[0, 0.9], [1.9, WALL_H - 1.9]], y0: 0.9, y1: 1.9},
+    round: {parts: [[0, 1.05], [1.85, WALL_H - 1.85]], y0: 1.05, y1: 1.85, round: true},
+    tall: {parts: [[0, 0.3], [2.15, WALL_H - 2.15]], y0: 0.3, y1: 2.15},
+    arched: {parts: [[0, 0.55], [2.2, WALL_H - 2.2]], y0: 0.55, y1: 2.2, arch: true},
+    full: {parts: [[WALL_H - 0.14, 0.14]], y0: 0.02, y1: WALL_H - 0.14},
+    pano: {parts: [[WALL_H - 0.08, 0.08]], y0: 0.0, y1: WALL_H - 0.08, slim: true},
+};
+const STAINED = ['#D7263D', '#F6C945', '#3E7CB4', '#6BBF59', '#9B5DE5'];
+/** The glass, frame and sill of one wall unit of a window (unit space, x along the wall). */
+function windowPanes(win, T, glass, trim) {
+    const o = WINDOW_OPENING[win.kind], h = o.y1 - o.y0, out = [];
+    const add = (geo, m, x, y, z = 0) => {
+        const k = new THREE.Mesh(geo, m);
+        k.position.set(x, y, z);
+        k.castShadow = false;
+        k.receiveShadow = true;
+        out.push(k);
+        return k;
+    };
+    const frame = o.slim ? mat('#3B3B40', {metalness: 0.5, roughness: 0.3}) : trim;
+    if (o.round) { // a porthole: wall around a round glass
+        add(new THREE.BoxGeometry(0.2, h, T), mat('#F3E6D2'), -0.4, o.y0 + h / 2);
+        add(new THREE.BoxGeometry(0.2, h, T), mat('#F3E6D2'), 0.4, o.y0 + h / 2);
+        const g = add(new THREE.CircleGeometry(0.34, 20), glass, 0, o.y0 + h / 2);
+        const ring = add(new THREE.TorusGeometry(0.36, 0.045, 6, 22), frame, 0, o.y0 + h / 2);
+        for (const m of [g, ring]) m.userData.round = true;
+        const back = add(new THREE.CircleGeometry(0.34, 20), glass, 0, o.y0 + h / 2);
+        back.rotation.y = Math.PI;
+        return out;
+    }
+    const pane = win.kind === 'stained' ? mat(STAINED[(win.key.length + (win.first ? 0 : 2)) % STAINED.length], {opacity: 0.6, roughness: 0.2, emissive: STAINED[win.key.length % STAINED.length], glow: 0.15}) : glass;
+    add(new THREE.BoxGeometry(1, h, 0.03), pane, 0, o.y0 + h / 2);
+    if (o.y0 > 0.05) add(new THREE.BoxGeometry(1, 0.06, T + 0.1), trim, 0, o.y0); // the sill
+    // Frames at the ends of the window, mullions between its tiles and across the middle of plain windows
+    const bar = (x, w = 0.05) => add(new THREE.BoxGeometry(w, h, T * 0.8), frame, x, o.y0 + h / 2);
+    if (win.first) bar(-0.48, 0.06);
+    if (win.last) bar(0.48, 0.06);
+    if (!win.first && !o.slim) bar(-0.5, 0.04);
+    if (o.slim) {
+        if (!win.first) bar(-0.5, 0.02);
+    } else if (win.kind !== 'full') {
+        bar(0, 0.035);
+        add(new THREE.BoxGeometry(1, 0.035, T * 0.8), frame, 0, o.y0 + h * (win.kind === 'tall' ? 0.62 : 0.5));
+    } else add(new THREE.BoxGeometry(1, 0.05, T * 0.8), frame, 0, 0.95); // a handrail line across a glass wall
+    if (o.arch) { // a half-moon over the window
+        const top = add(new THREE.CircleGeometry(0.46, 16, 0, Math.PI), mat("#F6D58E", {opacity: 0.75, emissive: "#F6C35E", glow: 0.3}), 0, o.y1 - 0.2);
+        top.scale.y = 0.4;
+    }
+    return out;
+}
+
+/** A stretch of wall with a window in it (the shop picture of a window piece). */
+export function windowModel(key) {
+    const w = {window_wide: 2, window_large: 3, glass_wall_2: 2, glass_wall_3: 3, glass_wall_4: 4, window_panorama: 4}[key] || 1, T = 0.16;
+    const g = new THREE.Group(), paint = mat('#F3E6D2'), glass = mat('#BFE3F0', {opacity: 0.45, roughness: 0.05}), trim = mat(PALETTE.woodDark);
+    const o = WINDOW_OPENING[WINDOW_KIND[key] || 'std'];
+    for (let i = 0; i < w; i++) {
+        const unit = new THREE.Group();
+        unit.position.x = -w / 2 + 0.5 + i;
+        for (const [y0, h] of o.parts) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(1, h, T), paint);
+            m.position.y = y0 + h / 2;
+            unit.add(m);
+        }
+        unit.add(...windowPanes({kind: WINDOW_KIND[key] || 'std', first: i === 0, last: i === w - 1, key}, T, glass, trim));
+        g.add(unit);
+    }
+    return g;
+}
+
 /** The front door, open towards the room, in one of the styles of DOORS (lib/catalog.php). Unit space: +z = street. */
 export function doorModel(style, open = true) {
     const g = new THREE.Group();
@@ -252,6 +327,33 @@ export function doorModel(style, open = true) {
             });
             b(1.0, 0.08, 0.2, PALETTE.gold, 0, H, 0.02, {metalness: 0.7});
             break;
+        case 'wide_wood': case 'wide_glass': case 'wide_french': case 'wide_grand': {
+            // Two leaves, a tile each: the door is two tiles wide (DOOR_WIDE)
+            const kind = style.slice(5);
+            for (const hinge of [-0.95, 0.95]) leaf(0.95, hinge, 1.55, (l, w) => {
+                if (kind === 'glass') {
+                    b(w, H, 0.03, '#BFE3F0', 0, 0, 0, glassO, l);
+                    for (const x of [-w / 2 + 0.03, w / 2 - 0.03]) b(0.06, H, 0.05, '#9AA3AD', x, 0, 0, {metalness: 0.6}, l);
+                    for (const y of [0, H - 0.06]) b(w, 0.06, 0.05, '#9AA3AD', 0, y, 0, {metalness: 0.6}, l);
+                    b(0.03, 0.8, 0.05, '#C9CED4', hinge < 0 ? w / 2 - 0.1 : -w / 2 + 0.1, 0.6, 0.04, {metalness: 0.7}, l);
+                } else if (kind === 'french') {
+                    b(w, H, 0.04, '#F7F4EE', 0, 0, 0, {flat: false}, l);
+                    for (let r = 0; r < 5; r++) for (let c = 0; c < 2; c++) b(w / 2 - 0.08, H / 5 - 0.08, 0.02, '#BFE3F0', -w / 4 + c * w / 2, 0.04 + r * H / 5, 0.025, glassO, l);
+                    b(0.04, 0.04, 0.06, PALETTE.gold, hinge < 0 ? w / 2 - 0.08 : -w / 2 + 0.08, 1.0, 0.04, {metalness: 0.7}, l);
+                } else if (kind === 'grand') {
+                    b(w, H, 0.06, '#3A1F14', 0, 0, 0, {roughness: 0.3}, l);
+                    for (const y of [0.15, 0.85, 1.45]) b(w * 0.72, 0.5, 0.02, '#4E2A1A', 0, y, 0.035, {}, l);
+                    for (const y of [0.15, 0.85, 1.45]) b(w * 0.76, 0.025, 0.025, PALETTE.gold, 0, y + 0.5, 0.04, {metalness: 0.8, roughness: 0.25}, l);
+                    b(0.04, 0.55, 0.05, PALETTE.gold, hinge < 0 ? w / 2 - 0.08 : -w / 2 + 0.08, 0.75, 0.05, {metalness: 0.8}, l);
+                } else {
+                    panels(l, w, '#8A5A35', '#7B4E2C');
+                    b(w * 0.6, 0.5, 0.02, '#BFE3F0', 0, 1.4, 0.035, glassO, l);
+                    b(0.03, 0.3, 0.05, PALETTE.gold, hinge < 0 ? w / 2 - 0.08 : -w / 2 + 0.08, 0.9, 0.04, {metalness: 0.7}, l);
+                }
+            });
+            if (kind === 'grand') b(2.04, 0.1, 0.22, PALETTE.gold, 0, H, 0.02, {metalness: 0.7});
+            break;
+        }
         default: // wood
             leaf(0.9, -0.45, 1.6, (l, w) => {
                 panels(l, w, '#9C6B3F', '#8A5A35');
@@ -406,6 +508,7 @@ export class World {
         this.snowCaps = [];
         this.flowers = [];
         buildNeighbourhood(this, r);
+        if (this.holiday) applyHoliday(this, this.holiday);
         if (this.env) this.applySeason(this.env.season, true);
         if (!this.traffic) this.traffic = new Traffic(this);
         this.traffic.reset();
@@ -425,6 +528,10 @@ export class World {
         this.doorStyle = r.doorStyle || 'wood';
         this.floors = r.floors || [];
         this.layout = r.layout;
+        this.doorW = (r.doorWide || []).includes(this.doorStyle) || String(this.doorStyle).startsWith('wide_') ? 2 : 1;
+        this.wallKey = r.wall;
+        this.restName = r.name;
+        this.windowItems = new Map(r.layout.filter(it => WINDOW_KIND[it.k]).map(it => [it.id, it]));
         this.viewFloor = Math.min(this.viewFloor || 0, this.floors.length);
         this.buildStreet(r);
         this.buildFloor(r.floor);
@@ -500,6 +607,48 @@ export class World {
     setWall(key) {
         const m = wallMaterial(key);
         this.walls.forEach(w => w.segments.forEach(seg => seg.userData.paint && (seg.material = m)));
+        this.wallKey = key;
+    }
+
+    /** Build mode shows the window markers on the floor (in play they are hidden: the window is in the wall). */
+    showBuildMarks(on) {
+        this.buildMarks = on;
+        this.itemGroup?.traverse(o => o.userData.buildOnly && (o.visible = on));
+    }
+
+    /** Windows moved, added or taken away: the walls are built again on the next frame (once for many changes). */
+    rebuildWallsSoon() {
+        if (this.wallRebuild) return;
+        this.wallRebuild = requestAnimationFrame(() => {
+            this.wallRebuild = null;
+            this.rebuildWalls();
+        });
+    }
+
+    rebuildWalls() {
+        for (const w of this.walls) {
+            this.root.remove(w.group);
+            (w.extras || []).forEach(o => this.root.remove(o));
+        }
+        const heights = new Map(this.walls.map(w => [w.floor + ':' + w.n.join(','), w.h]));
+        this.walls = [];
+        this.buildWalls(this.wallKey, this.restName, 0);
+        for (let f = 1; f <= this.floors.length; f++) if (this.upper[f]) this.upper[f].walls = this.buildWalls(this.wallKey, null, f);
+        for (const w of this.walls) w.h = heights.get(w.floor + ':' + w.n.join(',')) ?? null;
+        this.applyViewFloor();
+    }
+
+    /** Wall units of floor f that are windows: Map "side:unit" → {kind, first, last, key}. Side 0 back, 1 front, 2 left, 3 right. */
+    windowUnits(f) {
+        const out = new Map(), rect = this.floorRect(f);
+        if (!rect || !this.catalogItems) return out;
+        for (const it of this.windowItems?.values() || []) {
+            if ((it.f || 0) !== f) continue;
+            const side = [0, 2, 1, 3][it.r];
+            const tiles = this.footprint(it, this.catalogItems).tiles.map(([x, z]) => side < 2 ? x - rect.x0 : z).sort((a, b) => a - b);
+            tiles.forEach((u, i) => out.set(side + ':' + u, {kind: WINDOW_KIND[it.k], first: i === 0, last: i === tiles.length - 1, key: it.k, side}));
+        }
+        return out;
     }
 
     /** The rectangle of a floor: {x0, w, d} (0 = ground floor). */
@@ -507,6 +656,20 @@ export class World {
         if (!f) return {x0: 0, w: this.W, d: this.D};
         const fl = this.floors[f - 1];
         return fl ? {x0: fl[2], w: fl[0], d: fl[1]} : null;
+    }
+
+    /** Tiles of floor f where stairs from the floor below come out (just past their top end): kept free. "x,z" set. */
+    stairExits(f, layout = this.layout, items = this.catalogItems) {
+        const out = new Set();
+        if (!f || !items) return out;
+        const D4 = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+        for (const it of layout || []) {
+            const def = items[it.k];
+            if (!def || def.cat !== 'stairs' || it.k.startsWith('lift') || (it.f || 0) !== f - 1) continue;
+            const [dx, dz] = D4[it.r], tiles = this.footprint(it, items).tiles, own = new Set(tiles.map(([x, z]) => x + ',' + z));
+            for (const [x, z] of tiles) if (!own.has((x - dx) + ',' + (z - dz))) out.add((x - dx) + ',' + (z - dz));
+        }
+        return out;
     }
 
     /** Tiles of floor f kept free for the way up (above stairs on the floor below, above a lift). "x,z" set. */
@@ -567,10 +730,16 @@ export class World {
             m.castShadow = m.receiveShadow = true;
             g.add(m);
         }
-        const light = new THREE.PointLight('#FFD9A0', 0, Math.max(rect.w, rect.d) * 1.2, 1.2);
-        light.position.set(rect.x0 + rect.w / 2, y + 2.3, rect.d / 2);
-        g.add(light);
-        this.roomLights.push(light);
+        // Ceiling lights like the ground floor's (a grid, so a big storey is lit all over), on after sunset and as
+        // daylight through the windows during the day (the floor above and the walls keep the sun out)
+        const n = rect.w <= 8 ? 1 : 2, m = rect.d <= 8 ? 1 : 2;
+        for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) {
+            const light = new THREE.PointLight('#FFD9A0', 0, Math.max(rect.w / n, rect.d / m) * 1.6 + 2, 1.1);
+            light.position.set(rect.x0 + rect.w * (i + 0.5) / n, y + 2.3, rect.d * (j + 0.5) / m);
+            light.userData.upper = true;
+            g.add(light);
+            this.roomLights.push(light);
+        }
         this.root.add(g);
         const walls = this.buildWalls(wallKey, null, f);
         this.upper[f] = {group: g, walls};
@@ -582,27 +751,30 @@ export class World {
         const outside = mat('#F3E6D2');
         const trim = mat(PALETTE.woodDark);
         const glass = mat('#BFE3F0', {opacity: 0.45, roughness: 0.05});
+        const skirting = mat('#8A5A35'), stone = mat('#CDBBA0'), pilaster = mat('#EADBC4');
         // Each side: where it is, which way it faces (outward normal), and which units are door or windows
+        // The windows are pieces the player places along the walls (category 'window'): see windowUnits()
+        const wins = this.windowUnits(f);
         const sides = [
-            {n: [0, -1], len: W, at: (i) => [x0 + i + 0.5, -T / 2], rotY: 0, windows: [2, W - 3]},
-            {n: [0, 1], len: W, at: (i) => [x0 + i + 0.5, D + T / 2], rotY: 0, door: f ? undefined : this.door - x0, windows: f ? [1, Math.floor(W / 2), W - 2] : [1, W - 2]},
-            {n: [-1, 0], len: D, at: (i) => [x0 - T / 2, i + 0.5], rotY: Math.PI / 2, windows: [2, Math.floor(D / 2), D - 3]},
-            {n: [1, 0], len: D, at: (i) => [x0 + W + T / 2, i + 0.5], rotY: Math.PI / 2, windows: [3, D - 4]},
+            {n: [0, -1], len: W, at: (i) => [x0 + i + 0.5, -T / 2], rotY: 0},
+            {n: [0, 1], len: W, at: (i) => [x0 + i + 0.5, D + T / 2], rotY: 0, door: f ? undefined : this.door - x0},
+            {n: [-1, 0], len: D, at: (i) => [x0 - T / 2, i + 0.5], rotY: Math.PI / 2},
+            {n: [1, 0], len: D, at: (i) => [x0 + W + T / 2, i + 0.5], rotY: Math.PI / 2},
         ];
         const built = [];
-        for (const side of sides) {
+        for (const [si, side] of sides.entries()) {
             const g = new THREE.Group();
             const segments = [];
             const decor = [];
             for (let i = 0; i < side.len; i++) {
                 const [x, z] = side.at(i);
-                const isDoor = side.door != null && side.door === i;
-                const isWin = (side.windows || []).includes(i);
+                const isDoor = side.door != null && (side.door === i || (this.doorW > 1 && side.door + 1 === i));
+                const win = !isDoor ? wins.get(si + ':' + i) : null, isWin = !!win;
                 const unit = new THREE.Group();
                 unit.position.set(x, 0, z);
                 unit.rotation.y = side.rotY;
                 // Two thin slabs: the painted one on the room side, a plain one on the street side
-                const parts = isDoor ? [[WALL_H - 0.35, 0.35]] : isWin ? [[0, 0.9], [1.9, WALL_H - 1.9]] : [[0, WALL_H]];
+                const parts = isDoor ? [[WALL_H - 0.35, 0.35]] : isWin ? WINDOW_OPENING[win.kind].parts : [[0, WALL_H]];
                 const inward = side.rotY ? -side.n[0] : -side.n[1]; // the room side, in the unit's own z
                 for (const [y0, h] of parts) {
                     const inner = new THREE.Mesh(new THREE.BoxGeometry(1, h, T / 2), paint);
@@ -617,15 +789,21 @@ export class World {
                     }
                     segments.push(inner, outer);
                 }
+                // A skirting board inside and a stone plinth outside (not under a door or a floor-length glass wall)
+                if (!isDoor && !(isWin && WINDOW_OPENING[win.kind].y0 < 0.15)) {
+                    const skirt = new THREE.Mesh(new THREE.BoxGeometry(1, 0.13, 0.03), skirting);
+                    skirt.position.set(0, 0.065, inward * (T / 2 + 0.015));
+                    const plinth = new THREE.Mesh(new THREE.BoxGeometry(1, 0.32, 0.035), stone);
+                    plinth.position.set(0, 0.16, -inward * (T / 2 + 0.017));
+                    for (const m of [skirt, plinth]) {
+                        m.receiveShadow = true;
+                        unit.add(m);
+                    }
+                }
                 if (isWin) {
-                    const pane = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.0, 0.03), glass);
-                    pane.position.y = 1.4;
-                    const sill = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, T + 0.08), trim);
-                    sill.position.y = 0.9;
-                    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.0, T), trim);
-                    bar.position.y = 1.4;
-                    unit.add(pane, sill, bar);
-                    segments.push(pane, sill, bar);
+                    const parts = windowPanes(win, T, glass, trim);
+                    unit.add(...parts);
+                    segments.push(...parts);
                 }
                 if (!isDoor && !isWin && side.door == null && i % 3 === 1 && i > 0 && i < side.len - 1) {
                     // A framed painting on the room side (hidden when the wall is lowered)
@@ -639,13 +817,18 @@ export class World {
                     unit.add(art);
                     decor.push(art);
                 }
+                if (isDoor && this.doorW > 1 && side.door + 1 === i) { // the right half of a wide door: built with the left one
+                    g.add(unit);
+                    continue;
+                }
                 if (isDoor) {
                     const leaf = doorModel(this.doorStyle || 'wood');
-                    leaf.position.z = inward * 0.02;
+                    const wide = this.doorW > 1, mid = wide ? 0.5 : 0; // a wide door sits across its two tiles
+                    leaf.position.set(mid, 0, inward * 0.02);
                     if (inward > 0) leaf.rotation.y = Math.PI;
                     unit.add(leaf);
-                    segments.push(...leaf.children.filter(c => c.isMesh));
-                    for (const dx of [-0.48, 0.48]) {
+                    leaf.traverse(c => c.isMesh && segments.push(c));
+                    for (const dx of wide ? [-0.48, 1.48] : [-0.48, 0.48]) {
                         const post = new THREE.Mesh(new THREE.BoxGeometry(0.06, WALL_H - 0.35, T + 0.04), trim);
                         post.position.set(dx, (WALL_H - 0.35) / 2, 0);
                         post.castShadow = true;
@@ -654,6 +837,13 @@ export class World {
                     }
                 }
                 g.add(unit);
+            }
+            // Corner pilasters on the outside (on the back and front walls, at both ends)
+            if (!side.rotY) for (const cx of [x0 - T / 2, x0 + W + T / 2]) {
+                const pil = new THREE.Mesh(new THREE.BoxGeometry(T + 0.14, WALL_H, T + 0.14), pilaster);
+                pil.position.set(cx, WALL_H / 2, side.at(0)[1]);
+                pil.castShadow = pil.receiveShadow = true;
+                g.add(pil);
             }
             // The cap on top of the wall
             const cap = new THREE.Mesh(new THREE.BoxGeometry(side.rotY ? T + 0.04 : W + T * 2, 0.06, side.rotY ? D + T * 2 : T + 0.04), trim);
@@ -735,7 +925,14 @@ export class World {
     }
 
     addItem(it) {
+        if (WINDOW_KIND[it.k]) {
+            const had = this.windowItems?.get(it.id);
+            this.windowItems?.set(it.id, it);
+            if (this.walls?.length && (!had || had.x !== it.x || had.z !== it.z || had.r !== it.r || (had.f || 0) !== (it.f || 0) || had.k !== it.k)) this.rebuildWallsSoon();
+        }
         const obj = furnitureModel(it.k);
+        const arrow = useArrow(this.catalogItems?.[it.k]);
+        if (arrow) obj.add(arrow);
         obj.userData.itemId = it.id;
         obj.userData.floor = it.f || 0;
         obj.traverse(o => (o.userData.itemId = it.id));
@@ -749,6 +946,10 @@ export class World {
             stop.traverse(o => (o.userData.itemId = it.id));
             obj.add(stop);
         }
+        obj.traverse(o => {
+            if (o.userData.buildOnly) o.visible = !!this.buildMarks;
+            if (o.isPointLight) Object.assign(o, {intensity: 0.4 + (this.lastGlow || 0) * 4.5, decay: 1.3, distance: Math.max(o.distance, 4.5)});
+        });
         this.itemGroup.add(obj);
         this.items.set(it.id, obj);
         obj.visible = (it.f || 0) <= (this.viewFloor || 0);
@@ -773,13 +974,17 @@ export class World {
         }
         // One floor at a time (Sims style): what stands on other floors is hidden, the garden outside stays
         for (const obj of this.items.values()) {
-            const f = obj.userData.floor || 0, outdoor = this.catalogItems?.[obj.userData.key]?.cat === 'outdoor';
+            const f = obj.userData.floor || 0, outdoor = ['outdoor', 'ground'].includes(this.catalogItems?.[obj.userData.key]?.cat);
             obj.visible = outdoor || f === k || (k > 0 && obj.children.some(c => c.userData.floor === k));
             obj.children.forEach(c => {
                 if (c.userData.floor != null && c.userData.itemId != null && c.userData.floor > f) c.visible = c.userData.floor === k;
                 else if (c.userData.floor == null && f !== k && k > 0 && !outdoor) c.visible = false; // a lift seen from above: only its stop on this floor
                 else if (c.userData.floor == null) c.visible = true;
             });
+            obj.traverse(o => {
+            if (o.userData.buildOnly) o.visible = !!this.buildMarks;
+            if (o.isPointLight) Object.assign(o, {intensity: 0.4 + (this.lastGlow || 0) * 4.5, decay: 1.3, distance: Math.max(o.distance, 4.5)});
+        }); // arrows and window markers: build mode only
         }
         for (const kind of ['agent', 'fx']) (this.layers?.[kind] || []).forEach((l, f) => l && (l.visible = f === k));
         // The floors below are shaded, so the one being looked at stands out
@@ -829,6 +1034,7 @@ export class World {
     }
 
     removeItem(id) {
+        if (this.windowItems?.delete(id)) this.rebuildWallsSoon();
         const o = this.items.get(id);
         if (o) this.itemGroup.remove(o);
         this.items.delete(id);
@@ -955,14 +1161,16 @@ export class World {
         this.sun.intensity = (day * 2.1 + night * 0.45) * (1 - over * 0.55);
         this.hemi.intensity = 0.42 + day * 0.73 - over * 0.15;
         const roomK = Math.max(smooth(17.5, 20, hour) + (1 - smooth(5.5, 7.5, hour)), over * 0.4);
-        for (const l of this.roomLights || []) l.intensity = Math.min(1, roomK) * 7;
+        // Upper floors also get light by day (through their windows); at night every floor is lit by its lamps
+        for (const l of this.roomLights || []) l.intensity = Math.min(1, roomK) * 7 + (l.userData.upper ? (1 - Math.min(1, roomK)) * day * 3.5 : 0);
         this.hemi.color.set(night > 0.5 ? '#6E7FB0' : '#EAF4FF');
         // Lamps, windows and neon glow after sunset (only touched when it changes noticeably)
         const glowK = Math.max(night, over * 0.5);
         if (Math.abs((this.lastGlow ?? -1) - glowK) > 0.02) {
             this.lastGlow = glowK;
             setNightGlow(glowK);
-            this.itemGroup?.traverse(o => o.isPointLight && (o.intensity = 0.15 + glowK * 1.4));
+            // Lamps really light up the room at night (and glow softly by day)
+            this.itemGroup?.traverse(o => o.isPointLight && (o.intensity = 0.4 + glowK * 4.5, (o.decay = 1.3), (o.distance = Math.max(o.distance, 4.5))));
         }
         this.renderer.toneMappingExposure = 1.05 - night * 0.15 + (weather === 'sunny' ? day * 0.08 : 0);
         // A thunderstorm: now and then a flash lights everything up
@@ -981,6 +1189,13 @@ export class World {
         this.clouds.children.forEach(cl => cl.children.forEach(p => p.material.color.set(over > 0.5 ? '#C9CED4' : '#FFFFFF')));
         this.clouds.scale.setScalar(1 + over * 0.6);
         this.clouds.position.y = -over * 6;
+    }
+
+    /** Holiday decorations in the neighbourhood (christmas, halloween, easter, carnival, valentine, summer) or none. */
+    setHoliday(name) {
+        if ((name || null) === (this.holiday || null)) return;
+        this.holiday = name || null;
+        applyHoliday(this, this.holiday);
     }
 
     /** Trees, bushes, ground and roofs for the season. */
@@ -1051,16 +1266,17 @@ export class World {
         const {kind, n, seeds, heavy} = p.userData;
         const a = p.geometry.attributes.position.array;
         const c = this.cam.target;
-        const fall = {rain: heavy ? 20 : 11, snow: heavy ? 1.8 : 1.0, hail: 13, leaves: 0.9, petals: 0.7}[kind];
+        // Real speeds at 1× (the game clock speed does not hurry the weather): flakes float down slowly, rain is quick
+        const fall = {rain: heavy ? 13 : 8, snow: heavy ? 0.75 : 0.5, hail: 9, leaves: 0.45, petals: 0.38}[kind];
         const stride = kind === 'rain' ? 6 : 3;
         for (let i = 0; i < n; i++) {
             const k = i * stride;
             const sd = seeds[i];
             a[k + 1] -= fall * dt * (0.7 + (sd % 1) * 0.6);
             if (kind !== 'rain' && kind !== 'hail') { // snow drifts, leaves and petals flutter
-                const sway = kind === 'snow' ? (heavy ? 1.2 : 0.4) : 1.4;
-                a[k] += Math.sin(this.time * 1.3 + sd * 6) * sway * dt;
-                a[k + 2] += Math.cos(this.time * 1.1 + sd * 4) * sway * dt;
+                const sway = kind === 'snow' ? (heavy ? 0.35 : 0.2) : 0.5;
+                a[k] += Math.sin(this.time * 0.7 + sd * 6) * sway * dt;
+                a[k + 2] += Math.cos(this.time * 0.6 + sd * 4) * sway * dt;
             } else a[k + 4] = a[k + 1] - 0.55;
             // Recycle around the camera target
             if (a[k + 1] < 0) {
@@ -1281,7 +1497,7 @@ export class World {
 
     /** The furniture id under the pointer, or null. */
     itemAt(e) {
-        const hit = this.ray(e).intersectObjects(this.itemGroup.children, true).find(h => shown(h.object));
+        const hit = this.ray(e).intersectObjects(this.itemGroup.children, true).find(h => shown(h.object) && !h.object.userData.noPick);
         return hit ? hit.object.userData.itemId ?? null : null;
     }
 

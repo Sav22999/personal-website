@@ -4,7 +4,7 @@
  * the new pieces and refunds the sold ones (the same rules as here, see apply_layout in lib/economy.php).
  */
 import * as THREE from '../vendor/three.module.min.js';
-import {furnitureModel} from './models.js';
+import {furnitureModel, useArrow} from './models.js';
 import {FH} from './scene.js';
 
 export class Editor {
@@ -98,12 +98,16 @@ export class Editor {
         this.wall = r.wall;
         this.level = this.world.viewFloor || 0; // the storey being built on (0 = ground floor)
         this.tempId = -1;
+        this.storage = {...(r.storage || {})}; // pieces put away before this session
+        this.stored = new Set(); // ids of placed pieces put away in this session (not sold)
         this.placing = null;
         this.selected = null;
         this.W = r.size;
         this.D = r.depth || r.size;
         this.marks = new THREE.Group();
         this.world.root.add(this.marks);
+        this.doorW = this.world.doorW || 1;
+        this.world.showBuildMarks?.(true); // window markers on the floor, only while building
         this.drawFloorMarks();
         this.snapshot = JSON.stringify(this.payload());
         this.doorMove = false;
@@ -117,11 +121,12 @@ export class Editor {
 
     /** Where the door may go: a front tile (not in a corner) free inside, with the path outside free. */
     doorSpotOk(x) {
-        if (x < 1 || x > this.W - 2) return false;
+        const dw = this.doorW || 1;
+        if (x < 1 || x + dw - 1 > this.W - 2) return false;
         for (const it of this.draft) {
             const cat = this.catalog.items[it.k].cat;
-            if (cat === 'rug' || it.f) continue;
-            if (this.world.footprint(it, this.catalog.items).tiles.some(([tx, tz]) => tx === x && (tz === this.D - 1 || (cat === 'outdoor' && tz >= this.D)))) return false;
+            if (cat === 'rug' || cat === 'ground' || it.f || (cat === 'window' && it.r !== 2)) continue;
+            if (this.world.footprint(it, this.catalog.items).tiles.some(([tx, tz]) => tx >= x && tx < x + dw && (tz === this.D - 1 || (cat === 'outdoor' && tz >= this.D)))) return false;
         }
         return true;
     }
@@ -156,10 +161,10 @@ export class Editor {
         this.doorMark = new THREE.Group();
         this.outdoorMarks = new THREE.Group();
         if (!this.level) {
-            this.doorMark.add(this.tileMark(this.world.door, this.D - 1, '#3E7CB4', 0.35)); // the door tile is always kept free
+            for (let k = 0; k < (this.doorW || 1); k++) this.doorMark.add(this.tileMark(this.world.door + k, this.D - 1, '#3E7CB4', 0.35)); // the door tiles are always kept free
             const O = this.catalog.outdoor || 3;
             for (let x = 0; x < this.W + O; x++) for (let z = -O; z < this.D + O; z++) if (this.outdoorTile(x, z)) this.outdoorMarks.add(this.tileMark(x, z, '#7A8B3A', 0.13));
-        } else for (const key of this.world.shaftTiles(this.level, this.draft, this.catalog.items)) { // the way up: kept free
+        } else for (const key of [...this.world.shaftTiles(this.level, this.draft, this.catalog.items), ...this.world.stairExits(this.level, this.draft, this.catalog.items)]) { // the way up and off the stairs: kept free
             const [x, z] = key.split(',').map(Number);
             this.doorMark.add(this.tileMark(x, z, '#3E7CB4', 0.3));
         }
@@ -187,6 +192,7 @@ export class Editor {
         this.world.root.remove(this.grid, this.marks, this.doorMark, this.outdoorMarks);
         this.grid = this.doorMark = this.outdoorMarks = null;
         this.active = false;
+        this.world.showBuildMarks?.(false);
     }
 
     tileMark(x, z, color, opacity = 0.45) {
@@ -200,32 +206,44 @@ export class Editor {
 
     /** Tiles taken on one layer: rugs lie under furniture (and on the door tile), never on each other. */
     occupied(exceptId, rugs = false) {
-        const set = new Set(rugs ? [] : this.level ? this.world.shaftTiles(this.level, this.draft.filter(d => d.id !== exceptId), this.catalog.items) : [this.world.door + ',' + (this.D - 1)]);
+        const layerOf = (cat) => cat === 'rug' || cat === 'ground' ? 'rug' : cat === 'window' ? 'window' : 'solid';
+        const layer = rugs === true ? 'rug' : rugs || 'solid';
+        const doorTiles = Array.from({length: this.doorW || 1}, (_, k) => (this.world.door + k) + ',' + (this.D - 1));
+        const others = this.draft.filter(d => d.id !== exceptId);
+        const set = new Set(layer !== 'solid' ? [] : this.level ? [...this.world.shaftTiles(this.level, others, this.catalog.items), ...this.world.stairExits(this.level, others, this.catalog.items)] : doorTiles);
         for (const it of this.draft) {
-            if (it.id === exceptId || (it.f || 0) !== this.level || (this.catalog.items[it.k].cat === 'rug') !== rugs) continue;
-            for (const [x, z] of this.world.footprint(it, this.catalog.items).tiles) set.add(x + ',' + z);
+            if (it.id === exceptId || (it.f || 0) !== this.level || layerOf(this.catalog.items[it.k].cat) !== layer) continue;
+            // Windows on the same tile but on two walls (a corner) do not clash: the wall is part of the key
+            for (const [x, z] of this.world.footprint(it, this.catalog.items).tiles) set.add(x + ',' + z + (layer === 'window' ? ',' + it.r : ''));
         }
         return set;
     }
 
     /** The outdoor area (same rule as outdoor_tile in lib/economy.php): terrace in front, yard at the side, never the path to the door. */
-    outdoorTile(x, z) {
+    outdoorTile(x, z, path = false) {
         const W = this.W, D = this.D, O = this.catalog.outdoor || 3;
         const front = x >= 0 && x < W + O && z >= D && z < D + O;
         const side = x >= W && x < W + O && z >= 0 && z < D;
         const back = x >= 0 && x < W + O && z >= -O && z < 0; // the back garden
-        return (front || side || back) && !(x === this.world.door && z >= D);
+        return (front || side || back) && (path || !(x >= this.world.door && x < this.world.door + (this.doorW || 1) && z >= D));
     }
 
     fits(it) {
         this.reason = null;
         const cat = this.catalog.items[it.k].cat;
-        if (cat === 'outdoor' && this.level) return false; // the garden is on the ground
-        const occ = this.occupied(it.id, cat === 'rug');
+        if ((cat === 'outdoor' || cat === 'ground') && this.level) return false; // the garden is on the ground
+        const occ = this.occupied(it.id, cat === 'rug' || cat === 'ground' ? 'rug' : cat === 'window' ? 'window' : 'solid');
         const rect = this.world.floorRect(this.level);
         const inRect = (r, x, z) => r && x >= r.x0 && x < r.x0 + r.w && z >= 0 && z < r.d;
-        const inside = (x, z) => cat === 'outdoor' ? this.outdoorTile(x, z) : inRect(rect, x, z);
         const tiles = this.world.footprint(it, this.catalog.items).tiles;
+        if (cat === 'window') { // along its wall, off the doorway, not over another window
+            this.reason = 'window_wall';
+            const on = (x, z) => inRect(rect, x, z) && [z === 0, x === rect.x0, z === rect.d - 1, x === rect.x0 + rect.w - 1][it.r];
+            if (!tiles.every(([x, z]) => on(x, z) && !occ.has(x + ',' + z + ',' + it.r))) return false;
+            if (!this.level && it.r === 2 && tiles.some(([x]) => x >= this.world.door && x < this.world.door + (this.doorW || 1))) return (this.reason = 'window_door'), false;
+            return true;
+        }
+        const inside = (x, z) => cat === 'outdoor' ? this.outdoorTile(x, z) : cat === 'ground' ? this.outdoorTile(x, z, true) : inRect(rect, x, z);
         if (!tiles.every(([x, z]) => inside(x, z) && !occ.has(x + ',' + z))) return false;
         if (cat === 'stairs') { // it must lead to a floor above (a lift starts on the ground floor)
             this.reason = 'stairs_under_floor';
@@ -234,10 +252,31 @@ export class Editor {
             if (!up) return (this.reason = 'no_floor_above'), false;
             if (!tiles.every(([x, z]) => inRect(up, x, z))) return false;
             // and nothing may stand where it comes out
-            const above = new Set(this.draft.filter(d => (d.f || 0) === this.level + 1 && this.catalog.items[d.k].cat !== 'rug').flatMap(d => this.world.footprint(d, this.catalog.items).tiles.map(([x, z]) => x + ',' + z)));
+            const above = new Set(this.draft.filter(d => (d.f || 0) === this.level + 1 && !['rug', 'window'].includes(this.catalog.items[d.k].cat)).flatMap(d => this.world.footprint(d, this.catalog.items).tiles.map(([x, z]) => x + ',' + z)));
             if (tiles.some(([x, z]) => above.has(x + ',' + z))) return false;
+            // and the tile where they come out, past the top end, must be on the floor above and free
+            if (!it.k.startsWith('lift')) {
+                const exits = [...this.world.stairExits(this.level + 1, [{...it, f: this.level}], this.catalog.items)];
+                this.reason = 'stairs_exit';
+                if (!exits.every(k => { const [x, z] = k.split(',').map(Number); return inRect(up, x, z) && !above.has(k); })) return false;
+            }
         }
         return true;
+    }
+
+    /** How many of a piece are in storage now (stored before, plus put away now, minus taken out now). */
+    inStorage(k) {
+        let n = this.storage[k] || 0;
+        for (const id of this.stored) if (this.original.get(id)?.k === k && !this.draft.some(d => d.id === id)) n++;
+        for (const it of this.draft) if (it.st && it.k === k) n--;
+        if (this.placing?.it.st && !this.placing.moving && this.placing.it.k === k) n--;
+        return n;
+    }
+
+    /** Everything in storage: [[key, count], …]. */
+    storageList() {
+        const keys = new Set([...Object.keys(this.storage), ...[...this.stored].map(id => this.original.get(id)?.k).filter(Boolean)]);
+        return [...keys].map(k => [k, this.inStorage(k)]).filter(([, n]) => n > 0);
     }
 
     cost() {
@@ -245,34 +284,44 @@ export class Editor {
         const kept = new Set();
         for (const it of this.draft) {
             if (it.id > 0 && this.original.has(it.id)) kept.add(it.id);
-            else spend += this.catalog.items[it.k].price;
+            else if (!it.st) spend += this.catalog.items[it.k].price; // out of storage: already paid for
         }
-        for (const [id, it] of this.original) if (!kept.has(id)) refund += Math.floor(this.catalog.items[it.k].price * this.catalog.rules.sellBack);
+        for (const [id, it] of this.original) if (!kept.has(id) && !this.stored.has(id)) refund += Math.floor(this.catalog.items[it.k].price * this.catalog.rules.sellBack);
         for (const kind of ['floor', 'wall']) if (this[kind] !== this.r[kind] && !this.r.finishes.includes(this[kind])) spend += this.catalog.items[this[kind]].price;
         return {spend, refund, net: spend - refund};
     }
 
     payload() {
-        return {layout: this.draft.map(it => ({id: it.id > 0 ? it.id : 0, k: it.k, x: it.x, z: it.z, r: it.r, ...(it.f ? {f: it.f} : {})})), floor: this.floor, wall: this.wall};
+        const take = {};
+        for (const it of this.draft) if (it.st) take[it.k] = (take[it.k] || 0) + 1;
+        const store = [...this.stored].filter(id => !this.draft.some(d => d.id === id));
+        return {layout: this.draft.map(it => ({id: it.id > 0 ? it.id : 0, k: it.k, x: it.x, z: it.z, r: it.r, ...(it.f ? {f: it.f} : {})})), floor: this.floor, wall: this.wall, store, take};
     }
 
     // ------------------------------------------------------------ placing
 
     /** Start placing a new piece from the shop (or an existing one being moved). */
-    startPlacing(key, existing = null, r = 0) {
+    startPlacing(key, existing = null, r = 0, fromStorage = false) {
         this.cancelPlacing();
+        if (fromStorage && this.inStorage(key) < 1) return;
         this.select(null);
-        const outdoor = this.catalog.items[key].cat === 'outdoor';
+        const outdoor = ['outdoor', 'ground'].includes(this.catalog.items[key].cat);
         // A new piece starts where the last one was (or in the middle of the room), already turned like the last one
         const last = this.lastPos && this.catalog.items[this.lastPos.k]?.cat === this.catalog.items[key].cat ? this.lastPos : null;
         const rect = this.world.floorRect(this.level);
+        const isWin = this.catalog.items[key].cat === 'window';
         const it = existing ? {...existing} : {id: this.tempId--, k: key, x: last ? last.x : outdoor ? 1 : rect.x0 + Math.floor(rect.w / 2), z: last ? last.z : outdoor ? this.D + 1 : Math.floor(rect.d / 2), r};
+        if (!existing && isWin && last) it.r = last.r ?? it.r;
+        if (!existing && isWin && !last) Object.assign(it, {x: rect.x0 + Math.max(0, Math.floor((rect.w - this.catalog.items[key].w) / 2)), z: 0, r: 0}); // starts on the back wall
         if (!existing && this.level) it.f = this.level;
+        if (!existing && fromStorage) it.st = true; // taken out of storage: free
         if (existing) {
             this.draft = this.draft.filter(d => d.id !== existing.id);
             this.world.removeItem(existing.id);
         }
         const ghost = furnitureModel(it.k);
+        const arrow = useArrow(this.catalog.items[it.k]);
+        if (arrow) ghost.add(arrow); // which side it is used from, while it is being placed
         ghost.traverse(o => {
             if (o.isMesh) {
                 o.material = o.material.clone();
@@ -302,7 +351,7 @@ export class Editor {
 
     updateGhost() {
         const p = this.placing;
-        this.lastPos = {k: p.it.k, x: p.it.x, z: p.it.z};
+        this.lastPos = {k: p.it.k, x: p.it.x, z: p.it.z, r: p.it.r};
         this.world.placeObject(p.ghost, p.it, this.catalog.items);
         p.ghost.position.y = (p.it.f || 0) * FH + 0.04;
         this.marks.clear();
@@ -344,11 +393,33 @@ export class Editor {
         }
         const t = this.world.tileAt(e);
         if (!t) return;
+        if (this.catalog.items[this.placing.it.k].cat === 'window') return this.hoverWindow(t);
         const {w, d} = this.world.footprint(this.placing.it, this.catalog.items);
         const x = Math.round(t.px - w / 2), z = Math.round(t.pz - d / 2);
         if (x === this.placing.it.x && z === this.placing.it.z) return;
         this.placing.it.x = x;
         this.placing.it.z = z;
+        this.updateGhost();
+    }
+
+    /** A window follows the pointer along the nearest outer wall, turned to look out of it. */
+    hoverWindow(t) {
+        const it = this.placing.it, rc = this.world.floorRect(this.level);
+        if (!rc) return;
+        const px = Math.min(Math.max(t.px, rc.x0), rc.x0 + rc.w), pz = Math.min(Math.max(t.pz, 0), rc.d);
+        const dist = [pz, px - rc.x0, rc.d - pz, rc.x0 + rc.w - px];
+        const r = dist.indexOf(Math.min(...dist));
+        const len = this.catalog.items[it.k].w;
+        let x, z;
+        if (r === 0 || r === 2) {
+            x = Math.min(Math.max(Math.round(px - len / 2), rc.x0), rc.x0 + rc.w - len);
+            z = r === 0 ? 0 : rc.d - 1;
+        } else {
+            z = Math.min(Math.max(Math.round(pz - len / 2), 0), rc.d - len);
+            x = r === 1 ? rc.x0 : rc.x0 + rc.w - 1;
+        }
+        if (x === it.x && z === it.z && r === it.r) return;
+        Object.assign(it, {x, z, r});
         this.updateGhost();
     }
 
@@ -389,7 +460,8 @@ export class Editor {
         this.hooks.placed?.(it);
         // Another of the same right away when "place several" is on for its category; otherwise it stays selected
         const cat = this.catalog.items[it.k].cat;
-        if (!p.moving && this.repeatFor(cat) && this.cost().net + this.catalog.items[it.k].price <= this.hooks.coins()) this.startPlacing(it.k, null, it.r);
+        if (!p.moving && it.st && this.repeatFor(cat) && this.inStorage(it.k) > 0) this.startPlacing(it.k, null, it.r, true);
+        else if (!p.moving && !it.st && this.repeatFor(cat) && this.cost().net + this.catalog.items[it.k].price <= this.hooks.coins()) this.startPlacing(it.k, null, it.r);
         else this.select(it);
         this.hooks.changed();
     }
@@ -454,8 +526,21 @@ export class Editor {
         if (this.selected) this.startPlacing(this.selected.k, this.selected);
     }
 
+    /** Put the selected piece away in storage (not sold: it can be placed again for free). */
+    storeSelected() {
+        const it = this.selected;
+        if (!it) return;
+        if (it.id > 0 && this.original.has(it.id)) this.stored.add(it.id); // a piece bought before: into storage
+        // A piece taken out of storage in this session simply goes back; a piece just bought from the shop is not bought
+        this.draft = this.draft.filter(d => d.id !== it.id);
+        this.world.removeItem(it.id);
+        this.select(null);
+        this.hooks.changed();
+    }
+
     sellSelected() {
         if (!this.selected) return;
+        if (this.selected.st) return this.storeSelected(); // out of storage in this session: it just goes back
         this.draft = this.draft.filter(d => d.id !== this.selected.id);
         this.world.removeItem(this.selected.id);
         this.select(null);

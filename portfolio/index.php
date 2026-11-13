@@ -109,7 +109,7 @@ $canonical = '/portfolio/';
     </div>
 
     <div class="portfolio-featured">
-        <a href="/projects/sav-pdf-viewer/" class="portfolio-featured-card">
+        <a href="/projects/about/sav-pdf-viewer/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Android</span>
                 <span class="portfolio-featured-tag">100K+ users</span>
@@ -125,7 +125,7 @@ $canonical = '/portfolio/';
                 </svg>
             </span>
         </a>
-        <a href="/projects/notefox/" class="portfolio-featured-card">
+        <a href="/projects/about/notefox/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Browser extension</span>
                 <span class="portfolio-featured-tag">Open source</span>
@@ -140,7 +140,7 @@ $canonical = '/portfolio/';
                 </svg>
             </span>
         </a>
-        <a href="/projects/emoticolor/" class="portfolio-featured-card">
+        <a href="/projects/about/emoticolor/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Web app</span>
                 <span class="portfolio-featured-tag">Thesis project</span>
@@ -156,7 +156,7 @@ $canonical = '/portfolio/';
                 </svg>
             </span>
         </a>
-        <a href="/projects/emoji/" class="portfolio-featured-card">
+        <a href="/projects/about/emoji/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Browser extension</span>
             </div>
