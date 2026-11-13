@@ -1,0 +1,159 @@
+/* MyCurriculum — the four CV templates (editor preview and public page). The PDF (assets/pdf.js) follows the same
+   measures: an A4 page is 794 × 1123 px here and 595 × 842 pt there. The fonts are the same files used in the PDF. */
+
+@font-face { font-family: "CV Sans"; src: url("../fonts/Roboto-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Sans"; src: url("../fonts/Roboto-Italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Sans"; src: url("../fonts/Roboto-Medium.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Sans"; src: url("../fonts/Roboto-MediumItalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Serif"; src: url("../fonts/PT_Serif-Web-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Serif"; src: url("../fonts/PT_Serif-Web-Italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Serif"; src: url("../fonts/PT_Serif-Web-Bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Serif"; src: url("../fonts/PT_Serif-Web-BoldItalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+
+.cv {
+    --cv-accent: #3D52D5;
+    --cv-ink: #1E2230;
+    --cv-soft: #5B6175;
+    --cv-line: #E3E5EC;
+    --cv-pad: 48px;
+    font-family: "CV Sans", system-ui, sans-serif;
+    color: var(--cv-ink);
+    background: #fff;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+    overflow-wrap: anywhere;
+    color-scheme: light;
+}
+.cv.cv-font-serif { font-family: "CV Serif", Georgia, serif; }
+.cv * { box-sizing: border-box; }
+.cv h1, .cv h3, .cv h4, .cv p, .cv ul, .cv dl, .cv dd { margin: 0; padding: 0; }
+.cv a { color: inherit; text-decoration: none; }
+.cv a:hover { text-decoration: underline; }
+.cv-paper { width: 794px; min-height: 1123px; padding: var(--cv-pad); }
+.cv-web { max-width: 860px; margin: 0 auto; padding: var(--cv-pad); border-radius: 14px; }
+
+.cv-name { font-size: 30px; line-height: 1.12; font-weight: 600; letter-spacing: -.01em; }
+.cv-headline { font-size: 15px; color: var(--cv-accent); margin-top: 4px !important; font-weight: 500; }
+.cv-photo { width: 104px; height: 104px; object-fit: cover; border-radius: 50%; flex: none; display: block; }
+
+.cv-contacts { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--cv-soft); }
+.cv-contacts li a, .cv-contacts li > span { display: inline-flex; }
+.cv-contacts li { display: flex; align-items: flex-start; gap: 6px; }
+.cv-contacts li a { gap: 6px; align-items: flex-start; }
+.cv-ico { width: 13px; height: 13px; flex: none; margin-top: 2px; fill: none; stroke: var(--cv-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cv-c-label { color: var(--cv-soft); }
+
+.cv-fields { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 12px; margin-top: 12px !important; }
+.cv-fields div { display: flex; gap: 5px; }
+.cv-fields dt { font-weight: 600; }
+.cv-fields dd { color: var(--cv-soft); }
+
+.cv-sec { margin-top: 20px; }
+.cv-sec h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--cv-accent); font-weight: 600; margin-bottom: 8px; }
+.cv-text { color: var(--cv-ink); }
+.cv-text p + p, .cv-text p + ul, .cv-text ul + p { margin-top: 5px; }
+.cv-text ul { padding-left: 16px; }
+.cv-text li { margin: 1px 0; }
+.cv-text li::marker { color: var(--cv-accent); }
+
+.cv-item { display: grid; grid-template-columns: 118px 1fr; gap: 14px; padding: 6px 0; break-inside: avoid; }
+.cv-when { font-size: 11.5px; color: var(--cv-soft); padding-top: 2px; }
+.cv-what h4 { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.cv-org { color: var(--cv-soft); font-size: 12.5px; }
+.cv-place { font-style: italic; }
+.cv-what .cv-text { margin-top: 4px; font-size: 12.5px; }
+.cv-item-list:not(:has(.cv-when)) { grid-template-columns: 1fr; }
+
+.cv-skills, .cv-langs { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 24px; }
+.cv-skill, .cv-lang { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cv-dots { display: inline-flex; gap: 3px; flex: none; }
+.cv-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--cv-line); }
+.cv-dots i.on { background: var(--cv-accent); }
+.cv-lvl { color: var(--cv-soft); font-size: 12px; text-align: right; }
+
+.cv-footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid var(--cv-line); font-size: 10px; color: var(--cv-soft); line-height: 1.4; }
+
+/* ---------- Classic: name and photo on top, sections under a rule, dates on the left */
+.cv-classic .cv-head { display: flex; gap: 22px; align-items: center; padding-bottom: 16px; border-bottom: 3px solid var(--cv-accent); }
+.cv-classic .cv-head-text { flex: 1; min-width: 0; }
+.cv-classic .cv-contacts { margin-top: 10px; }
+.cv-classic .cv-contacts, .cv-minimal > .cv-contacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 16px; }
+.cv-classic .cv-sec h3 { border-bottom: 1px solid var(--cv-line); padding-bottom: 4px; }
+
+/* ---------- Modern: coloured sidebar with photo, contacts, skills and languages */
+.cv-modern { --cv-pad: 0px; }
+.cv-modern .cv-cols { display: grid; grid-template-columns: 250px 1fr; min-height: inherit; }
+.cv-modern.cv-paper .cv-cols { min-height: 1123px; }
+.cv-modern .cv-side { background: var(--cv-accent); color: #fff; padding: 40px 26px; }
+.cv-modern .cv-side .cv-photo { width: 150px; height: 150px; margin: 0 auto 6px; border: 4px solid rgba(255, 255, 255, .35); }
+.cv-modern .cv-side .cv-sec h3 { color: #fff; border-bottom: 1px solid rgba(255, 255, 255, .35); padding-bottom: 4px; }
+.cv-modern .cv-side .cv-contacts { flex-direction: column; color: #fff; gap: 7px; }
+.cv-modern .cv-side .cv-ico { stroke: #fff; }
+.cv-modern .cv-side .cv-c-label, .cv-modern .cv-side .cv-fields dd, .cv-modern .cv-side .cv-lvl { color: rgba(255, 255, 255, .8); }
+.cv-modern .cv-side .cv-fields { flex-direction: column; margin-top: 0 !important; }
+.cv-modern .cv-side .cv-fields div { flex-direction: column; gap: 0; }
+.cv-modern .cv-side .cv-skills, .cv-modern .cv-side .cv-langs { grid-template-columns: 1fr; }
+.cv-modern .cv-side .cv-dots i { background: rgba(255, 255, 255, .3); }
+.cv-modern .cv-side .cv-dots i.on { background: #fff; }
+.cv-modern .cv-main { padding: 40px 38px; min-width: 0; }
+.cv-modern .cv-name { font-size: 32px; }
+.cv-modern .cv-summary { margin-top: 14px; color: var(--cv-soft); }
+.cv-modern .cv-main .cv-sec h3 { display: flex; align-items: center; gap: 10px; }
+.cv-modern .cv-main .cv-sec h3::after { content: ""; flex: 1; height: 1px; background: var(--cv-line); }
+.cv-modern .cv-main .cv-item { grid-template-columns: 1fr; gap: 0; }
+.cv-modern .cv-main .cv-when { order: 2; padding: 0; }
+.cv-modern .cv-main .cv-item .cv-what { display: contents; }
+.cv-modern .cv-main .cv-what h4 { order: 1; }
+.cv-modern .cv-main .cv-org { order: 3; }
+.cv-modern .cv-main .cv-what .cv-text { order: 4; }
+
+/* ---------- Minimal: black and white, accent only on the name, dates on the right */
+.cv-minimal { --cv-pad: 56px; }
+.cv-minimal .cv-head { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+.cv-minimal .cv-name { font-size: 34px; font-weight: 400; color: var(--cv-accent); }
+.cv-minimal .cv-headline { color: var(--cv-soft); font-weight: 400; }
+.cv-minimal .cv-photo { border-radius: 8px; width: 92px; height: 92px; }
+.cv-minimal > .cv-contacts { margin-top: 16px; }
+.cv-minimal .cv-ico { stroke: var(--cv-soft); }
+.cv-minimal .cv-summary { margin-top: 22px; font-size: 13.5px; }
+.cv-minimal .cv-sec { margin-top: 26px; }
+.cv-minimal .cv-sec h3 { color: var(--cv-ink); font-size: 11.5px; letter-spacing: .16em; }
+.cv-minimal .cv-item { grid-template-columns: 1fr auto; }
+.cv-minimal .cv-item .cv-when { grid-column: 2; grid-row: 1; text-align: right; }
+.cv-minimal .cv-item .cv-what { grid-column: 1; grid-row: 1; }
+.cv-minimal .cv-dots i.on { background: var(--cv-ink); }
+.cv-minimal .cv-text li::marker { color: var(--cv-soft); }
+
+/* ---------- Elegant: centred header, small caps titles between thin rules */
+.cv-elegant { --cv-pad: 52px; }
+.cv-elegant .cv-head { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 14px; }
+.cv-elegant .cv-photo { width: 96px; height: 96px; margin-bottom: 8px; }
+.cv-elegant .cv-name { font-size: 32px; font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
+.cv-elegant .cv-headline { color: var(--cv-soft); font-style: italic; font-weight: 400; }
+.cv-elegant .cv-contacts { justify-content: center; margin-top: 10px; gap: 4px 0; }
+.cv-elegant .cv-ico { display: none; }
+.cv-elegant .cv-contacts li + li::before { content: "·"; color: var(--cv-accent); padding: 0 12px; }
+.cv-elegant .cv-fields { justify-content: center; }
+.cv-elegant .cv-sec h3 { text-align: center; font-weight: 400; letter-spacing: .22em; font-size: 12px; color: var(--cv-accent); display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.cv-elegant .cv-sec h3::before, .cv-elegant .cv-sec h3::after { content: ""; flex: 1; height: 1px; background: var(--cv-line); }
+.cv-elegant .cv-summary .cv-text { text-align: center; font-style: italic; color: var(--cv-soft); }
+.cv-elegant .cv-footer { text-align: center; }
+
+/* ---------- The public page on small screens */
+@media (max-width: 720px) {
+    .cv-web { --cv-pad: 22px; border-radius: 0; }
+    .cv-web.cv-modern { --cv-pad: 0px; }
+    .cv-web .cv-name { font-size: 26px; }
+    .cv-web .cv-item { grid-template-columns: 1fr; gap: 2px; }
+    .cv-web.cv-minimal .cv-item .cv-when { grid-column: 1; grid-row: auto; text-align: left; order: -1; }
+    .cv-web .cv-skills, .cv-web .cv-langs, .cv-web.cv-classic .cv-contacts, .cv-web.cv-minimal > .cv-contacts { grid-template-columns: 1fr; }
+    .cv-web.cv-classic .cv-head { flex-direction: column; align-items: flex-start; }
+    .cv-web.cv-modern .cv-cols { grid-template-columns: 1fr; }
+    .cv-web.cv-modern .cv-side { order: 2; padding: 26px 22px; }
+    .cv-web.cv-modern .cv-main { padding: 28px 22px; }
+}
+
+@media print {
+    .cv-web { max-width: none; border-radius: 0; }
+}

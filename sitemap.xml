@@ -118,6 +118,11 @@
         <priority>0.7</priority>
     </url>
     <url>
+        <loc>https://www.saveriomorelli.com/projects/about/mycurriculum/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
         <loc>https://www.saveriomorelli.com/projects/about/faceguess/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
@@ -181,6 +186,11 @@
     </url>
     <url>
         <loc>https://www.saveriomorelli.com/projects/forkville/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/mycurriculum/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>

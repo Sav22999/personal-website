@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS `fc_exams` (
   `user_id` INT UNSIGNED NOT NULL,
   `course` VARCHAR(30) NOT NULL,
   `questions` TEXT NOT NULL,
+  `lang` CHAR(2) NOT NULL DEFAULT 'en',
   `score` TINYINT UNSIGNED NULL,
   `started_at` DATETIME NOT NULL,
   `submitted_at` DATETIME NULL,
@@ -273,10 +274,11 @@ CREATE TABLE IF NOT EXISTS `fc_certificates` (
   `code` CHAR(12) NOT NULL PRIMARY KEY,
   `user_id` INT UNSIGNED NOT NULL,
   `course` VARCHAR(30) NOT NULL,
+  `lang` CHAR(2) NOT NULL DEFAULT 'en',
   `name` VARCHAR(80) NOT NULL,
   `score` TINYINT UNSIGNED NOT NULL,
   `issued_at` DATETIME NOT NULL,
-  UNIQUE KEY `uq_user_course` (`user_id`, `course`),
+  UNIQUE KEY `uq_user_course_lang` (`user_id`, `course`, `lang`),
   CONSTRAINT `fk_fc_ce_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -326,7 +328,7 @@ CREATE TABLE IF NOT EXISTS `fc_badges` (
   CONSTRAINT `fk_fc_ba_user` FOREIGN KEY (`user_id`) REFERENCES `fc_users` (`id`) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '21') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `fc_meta` (k, v) VALUES ('schema_version', '22') ON DUPLICATE KEY UPDATE v = VALUES(v);
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-base','html',1,NULL,'published','{"title":{"it":"HTML base","en":"HTML Basics"},"short":{"it":"HTML base","en":"HTML Basics"},"desc":{"it":"Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.","en":"The language every web page is made of: tags, text, links, images, lists, tables and forms."},"level":{"it":"Base","en":"Basic"},"categories":["frontend"]}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-intermediate','html',2,'html-base','published','{"title":{"it":"HTML intermedio","en":"Intermediate HTML"},"short":{"it":"HTML intermedio","en":"HTML Intermediate"},"desc":{"it":"Attributi globali, link interni, testo ricco, iframe e moduli più completi.","en":"Global attributes, internal links, rich text, iframes and fuller forms."},"level":{"it":"Intermedio","en":"Intermediate"},"categories":["frontend"]}');
 INSERT INTO `fc_courses` (`id`,`family`,`sort`,`after_id`,`status`,`data`) VALUES ('html-advanced','html',3,'html-intermediate','published','{"title":{"it":"HTML avanzato","en":"Advanced HTML"},"short":{"it":"HTML avanzato","en":"Advanced HTML"},"desc":{"it":"Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.","en":"Semantic, accessible pages: structure, rich forms, media and metadata."},"level":{"it":"Avanzato","en":"Advanced"},"categories":["frontend"]}');

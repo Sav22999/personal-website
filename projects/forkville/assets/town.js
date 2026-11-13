@@ -59,6 +59,9 @@ const add = (world, o) => {
     return o;
 };
 
+/** The middle of the doorway (a wide door spans two tiles). */
+const doorMidOf = (world, W) => (world.door ?? Math.floor(W / 2)) + (world.doorW || 1) / 2;
+
 function box(w, h, d, material, x, y, z) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
     m.position.set(x, y + h / 2, z);
@@ -112,11 +115,11 @@ export function buildNeighbourhood(world, r) {
     world.junctions = [-lotW - 9.5, W + OUT + 5.5];
     world.trafficLights = [];
     for (let x = cx - len / 2 + 1; x < cx + len / 2; x += 3) {
-        if (Math.abs(x - ((world.door ?? Math.floor(W / 2)) + 0.5)) < 2) continue;
+        if (Math.abs(x - doorMidOf(world, W)) < 2) continue;
         if (world.junctions.some(j => Math.abs(x - j) < 4.4)) continue; // no centre line across a junction
         add(world, box(1.4, 0.05, 0.14, mat('#F4E9C8'), x, -0.02, roadZ));
     }
-    for (let i = 0; i < 6; i++) add(world, box(0.34, 0.05, 3.4, mat('#F4F1E8'), (world.door ?? Math.floor(W / 2)) + 0.5 - 1.1 + i * 0.44, -0.02, roadZ));
+    for (let i = 0; i < 6; i++) add(world, box(0.34, 0.05, 3.4, mat('#F4F1E8'), doorMidOf(world, W) - 1.1 + i * 0.44, -0.02, roadZ));
 
     // The terrace in front (stone paving) and the path to the door across it
     const patio = new THREE.Mesh(new THREE.PlaneGeometry(W + OUT, OUT), new THREE.MeshStandardMaterial({map: pavingTexture(W + OUT, OUT), roughness: 0.95}));
@@ -124,7 +127,7 @@ export function buildNeighbourhood(world, r) {
     patio.position.set((W + OUT) / 2, -0.035, D + OUT / 2);
     patio.receiveShadow = true;
     world.outdoor.add(patio);
-    add(world, box(1.0, 0.05, OUT + 0.4, mat('#D9C7AC'), (world.door ?? Math.floor(W / 2)) + 0.5, -0.045, D + OUT / 2 + 0.1));
+    add(world, box(world.doorW || 1, 0.05, OUT + 0.4, mat('#D9C7AC'), doorMidOf(world, W), -0.045, D + OUT / 2 + 0.1)); // the path, as wide as the door
 
     // The car park: one row of spaces, open to the street, with a sign and its own lamps
     world.parkingStalls = [];
@@ -171,7 +174,7 @@ export function buildNeighbourhood(world, r) {
     // Trees: along the far sidewalk and around the plot (not where the car park is)
     const tree = (x, z, s = 1) => {
         if (lotW && x > lotX1 - lotW - 1 && x < lotX1 + 0.5 && z > D + OUT - 6 && z < D + OUT + 1) return;
-        if (Math.abs(x - ((world.door ?? Math.floor(W / 2)) + 0.5)) < 4.5 && z > roadZ + 3 && z < roadZ + 11) return; // the square across from the door
+        if (Math.abs(x - doorMidOf(world, W)) < 4.5 && z > roadZ + 3 && z < roadZ + 11) return; // the square across from the door
         const g = new THREE.Group();
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * s, 0.16 * s, 1.2 * s, 7), mat(PALETTE.woodDark));
         trunk.position.y = 0.6 * s;
@@ -213,7 +216,15 @@ export function buildNeighbourhood(world, r) {
         add(world, l);
     }
 
-    buildHouses(world, W, D, level, lotW, rnd); // lotW: street car park and garage ramp
+    // Graphics quality (Account): low = the restaurant only (no quarter around it), medium = the streets and the
+    // buildings near the restaurant, high = the whole quarter
+    world.roundabouts = null;
+    world.secondRoad = null;
+    if ((world.quality || 'high') !== 'low') buildHouses(world, W, D, level, lotW, rnd); // lotW: street car park and garage ramp
+    else {
+        world.junctions = [];
+        world.trafficLights = [];
+    }
     buildPlot(world, W, D, rnd);
     // Every street lamp gets an empty group for the holiday ribbons
     world.holiLamps = [];
@@ -440,18 +451,19 @@ function street(world, a, b, at, along) {
     put(1, 0.04, 3.6, asphalt, 0, -0.055, 0);
     put(1, 0.06, 1.5, walk, 0, -0.035, -2.55);
     put(1, 0.06, 1.5, walk, 0, -0.035, 2.55);
-    for (let t = a + 1; t < b - 1; t += 3) g.add(along === 'x' ? box(1.3, 0.05, 0.12, line, t, -0.03, at) : box(0.12, 0.05, 1.3, line, at, -0.03, t));
+    // The centre line, kept off the last few metres at each end (junctions and their zebra crossings are there)
+    for (let t = a + 3.5; t < b - 3.5; t += 3) g.add(along === 'x' ? box(1.3, 0.05, 0.12, line, t, -0.03, at) : box(0.12, 0.05, 1.3, line, at, -0.03, t));
     mergeStatic(g, new Set());
     g.traverse(m => m.isMesh && (m.receiveShadow = true));
     world.outdoor.add(g);
 }
 
 /** Zebra stripes across a road: 'x' = the road runs along x (stripes at x), 'z' = it runs along z. */
-function zebra(world, x, z, along) {
+function zebra(world, x, z, along, len = 0.9) {
     const g = new THREE.Group(), white = mat('#F4F1E8');
     for (let i = 0; i < 7; i++) {
         const o = -1.5 + i * 0.5;
-        g.add(along === 'x' ? box(0.9, 0.05, 0.3, white, x, -0.005, z + o) : box(0.3, 0.05, 0.9, white, x + o, -0.005, z));
+        g.add(along === 'x' ? box(len, 0.05, 0.3, white, x, -0.005, z + o) : box(0.3, 0.05, len, white, x + o, -0.005, z));
     }
     mergeStatic(g, new Set());
     g.traverse(m => m.isMesh && (m.receiveShadow = true));
@@ -530,14 +542,18 @@ function buildHouses(world, W, D, level, lotW, rnd) {
     const walls = ['#FFF3E0', '#F6D9B8', '#E8EFD9', '#F4E1E6', '#E3ECF4', '#FCEBC5', '#E9DCCB', '#D8E6E0'];
     const roofs = ['#B43E5C', '#7A8B3A', '#E2B23A', '#3E7CB4', '#C2572B', '#6B4FA0', '#8A5A3C', '#2F6F8F'];
     const lit = glowMat('#FFD27A'), dark = mat('#58697A');
-    const roadZ = D + OUT + 4.5, door = (world.door ?? Math.floor(W / 2)) + 0.5;
+    const roadZ = D + OUT + 4.5, door = doorMidOf(world, W);
     const xL = -lotW - 9.5, xR = W + OUT + 5.5, zB = -OUT - 5, zF = roadZ + 20;
     const cx = W / 2, cz = D / 2;
     world.holiHosts = [];
     world.plaza = null;
+    world.roundabouts = [{x: xL, z: zF}, {x: xR, z: zF}];
+    world.secondRoad = {z: zF, xL, xR};
     let i = 0;
     // Far away buildings do not cast shadows (they would only cost time)
+    const near30 = (x, z) => Math.hypot(x - W / 2, z - D / 2) < 30;
     const place = (g, x, z, rot) => {
+        if (world.quality === 'medium' && !near30(x, z)) return; // medium: only the buildings close to the restaurant
         mergeStatic(g, new Set([...world.bushes, ...world.snowCaps]));
         g.position.set(x, 0, z);
         g.rotation.y = rot;
@@ -706,7 +722,9 @@ function buildHouses(world, W, D, level, lotW, rnd) {
     for (const x of [xL, xR]) {
         junctionPatch(world, x, roadZ);
         for (const dx of [-3.1, 3.1]) zebra(world, x + dx, roadZ, 'x');
-        for (const dz of [-4.9, 4.9]) zebra(world, x, roadZ + dz, 'z');
+        // Across the side street where the main road's sidewalks run on (the walkers cross here, on their green)
+        zebra(world, x, roadZ - 2.6, 'z', 1.5);
+        zebra(world, x, roadZ + 3.1, 'z', 1.5);
         for (const [sx, sz, rot, axis] of [[-2.7, -2.7, 0, 'main'], [2.7, 2.7, Math.PI, 'main'], [2.7, -2.7, -Math.PI / 2, 'side'], [-2.7, 2.7, Math.PI / 2, 'side']]) {
             const tl = trafficLight(axis);
             tl.group.position.set(x + sx, 0, roadZ + sz);
@@ -715,8 +733,18 @@ function buildHouses(world, W, D, level, lotW, rnd) {
             world.trafficLights.push(tl);
         }
         roundabout(world, x, zF);
+        // A zebra crossing on each arm of the roundabout, just outside the ring (cars give way to people on them)
+        zebra(world, x - 4.8, zF, 'x');
+        zebra(world, x + 4.8, zF, 'x');
+        zebra(world, x, zF - 4.8, 'z');
+        zebra(world, x, zF + 4.8, 'z');
+        // The T where the back street meets the side street: the side street's sidewalk stops for the back street's mouth
+        const inward = x === xL ? 1 : -1;
+        const mouth = box(1.7, 0.07, 3.6, mat('#5B5754'), x + inward * 2.55, -0.035, zB);
+        mouth.receiveShadow = true;
+        world.outdoor.add(mouth);
         zebra(world, x, zB + 3.1, 'z');
-        zebra(world, x + (x === xL ? 4.4 : -4.4), zB, 'x');
+        zebra(world, x + inward * 4.4, zB, 'x');
     }
 
     // The streets: one on each side of the plot, one behind, one more road across the main one
@@ -748,8 +776,25 @@ function buildHouses(world, W, D, level, lotW, rnd) {
         g.add(pave);
         const basin = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.3, 0.45, 20), mat('#CFC6B8'));
         basin.position.y = 0.22;
-        const water = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.05, 20), new THREE.MeshStandardMaterial({color: '#7EC8E3', roughness: 0.1, metalness: 0.2}));
-        water.position.y = 0.42;
+        // The water stands a little above the stone (never level with it: two surfaces at the same height flicker), inside a rim
+        const waterMat = new THREE.MeshStandardMaterial({color: '#7EC8E3', roughness: 0.15, metalness: 0.05, emissive: '#2C6E8A', emissiveIntensity: 0.15, polygonOffset: true, polygonOffsetFactor: -2});
+        const water = new THREE.Mesh(new THREE.CylinderGeometry(1.12, 1.12, 0.04, 28), waterMat);
+        water.position.y = 0.455;
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 6, 32), mat('#D8D0C2'));
+        rim.rotation.x = Math.PI / 2;
+        rim.position.y = 0.47;
+        const bowlWater = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.03, 18), waterMat);
+        bowlWater.position.y = 1.465;
+        // Jets: a spout from the top and thin streams falling from the bowl into the basin
+        const jetMat = new THREE.MeshStandardMaterial({color: '#DFF6FF', transparent: true, opacity: 0.55, roughness: 0.1, emissive: '#9FD8EC', emissiveIntensity: 0.2, depthWrite: false});
+        const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.5, 8), jetMat);
+        spout.position.y = 1.7;
+        g.add(rim, bowlWater, spout);
+        for (let k = 0; k < 6; k++) {
+            const a = k / 6 * Math.PI * 2, st = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.95, 5), jetMat);
+            st.position.set(Math.cos(a) * 0.48, 0.98, Math.sin(a) * 0.48);
+            g.add(st);
+        }
         const column = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 1.1, 10), mat('#CFC6B8'));
         column.position.y = 0.8;
         const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.25, 0.2, 14), mat('#CFC6B8'));
@@ -808,7 +853,7 @@ function buildPlot(world, W, D, rnd) {
     const petals = ['#F25F5C', '#FFD23F', '#F7A1C4', '#FFFFFF', '#9B5DE5'];
     for (let k = 0; k < 46; k++) {
         const x = -4.5 + rnd(k + 50) * (W + 6.5), z = D + OUT + 0.2 + rnd(k + 80) * 0.15;
-        if (Math.abs(x - ((world.door ?? Math.floor(W / 2)) + 0.5)) < 1.2) continue; // keep the path clear
+        if (Math.abs(x - doorMidOf(world, W)) < 1.2) continue; // keep the path clear
         const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), mat(petals[k % petals.length]));
         f.position.set(x, 0.18, z);
         const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.18, 4), mat(PALETTE.leafDark));
@@ -874,8 +919,18 @@ export class Traffic {
     addCar(points, speed, onDone, model) {
         const mesh = model || carModel(this.seed++ * 3.7);
         mesh.position.copy(points[0]);
+        if (points[1]) mesh.rotation.y = Math.atan2(points[1].x - points[0].x, points[1].z - points[0].z);
+        // Indicators: an amber light at each corner, blinking on the side of the next turn
+        const blink = {L: [], R: []};
+        for (const [side, sx] of [['L', 0.47], ['R', -0.47]]) for (const sz of [0.98, -0.98]) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.06), new THREE.MeshStandardMaterial({color: '#FF9F1C', emissive: '#FF9F1C', emissiveIntensity: 0}));
+            m.position.set(sx, 0.48, sz);
+            mesh.add(m);
+            blink[side].push(m);
+        }
+        mesh.userData.blink = blink;
         this.group.add(mesh);
-        const car = {mesh, points, i: 1, speed, onDone};
+        const car = {mesh, points, i: 1, speed, onDone, stuck: 0};
         this.cars.push(car);
         return car;
     }
@@ -887,8 +942,8 @@ export class Traffic {
         stall.busy = guest;
         const gi = this.world.garageInfo;
         if (stall.garage && gi) { // down the ramp and out of sight
-            const pts = [new THREE.Vector3(st.x0, 0, st.laneIn), new THREE.Vector3(gi.rx, 0, st.laneIn), new THREE.Vector3(gi.rx, 0, gi.zFront + 0.4),
-                new THREE.Vector3(gi.rx, -gi.drop, gi.zFront - gi.len), new THREE.Vector3(gi.rx, -gi.drop, gi.zFront - gi.len - 1.2)];
+            const pts = [new THREE.Vector3(st.x0, 0, st.laneIn), new THREE.Vector3(gi.rx - 2.2, 0, st.laneIn), new THREE.Vector3(gi.rx, 0, st.laneIn - 1.6),
+                new THREE.Vector3(gi.rx, 0, gi.zFront + 0.4), ...rampPoints(gi, false), new THREE.Vector3(gi.rx, -gi.drop, gi.zFront - gi.len - 1.2)];
             const car = this.addCar(pts, 5, () => {
                 car.parked = true;
                 car.mesh.visible = false;
@@ -904,6 +959,7 @@ export class Traffic {
             car.parked = true;
             onParked && onParked(stall);
         });
+        car.guest = true;
         stall.car = car;
         return stall;
     }
@@ -920,7 +976,8 @@ export class Traffic {
             car.mesh.visible = true;
             car.mesh.position.set(gi.rx, -gi.drop, gi.zFront - gi.len - 1.2);
             car.mesh.rotation.y = 0;
-            car.points = [car.mesh.position.clone(), new THREE.Vector3(gi.rx, -gi.drop, gi.zFront - gi.len), new THREE.Vector3(gi.rx, 0, gi.zFront + 0.4), new THREE.Vector3(gi.rx + 0.8, 0, st.laneOut), new THREE.Vector3(st.x0, 0, st.laneOut)];
+            car.points = [car.mesh.position.clone(), ...rampPoints(gi, true), new THREE.Vector3(gi.rx, 0, gi.zFront + 0.4), new THREE.Vector3(gi.rx, 0, st.laneIn + 0.2),
+                new THREE.Vector3(gi.rx - 1.4, 0, st.laneOut), new THREE.Vector3(st.x0, 0, st.laneOut)];
             car.i = 1;
             car.reverse = null;
             car.onDone = () => this.removeCar(car);
@@ -937,23 +994,31 @@ export class Traffic {
         this.cars = this.cars.filter(c => c !== car);
     }
 
-    /** Someone walking by: on the far sidewalk, or on the near one, right past the restaurant's door. */
-    addWalker(far) {
+    /**
+     * Someone walking by, always on a sidewalk: along the far one or the near one (right past the restaurant's door),
+     * or coming down a side street from the back of the quarter and turning onto the main road's sidewalk.
+     */
+    addWalker(far, fromSide = false) {
         const st = this.world.street;
         if (!st) return;
         const east = Math.random() < 0.5;
-        const z = far ? st.farWalk + (Math.random() - 0.5) * 0.8 : st.D + OUT + 1.8 + Math.random() * 0.3;
+        const z = far ? st.farWalk + (Math.random() - 0.5) * 0.6 : st.D + OUT + 1.75 + Math.random() * 0.3;
+        const xEnd = east ? st.x1 - 4 : st.x0 + 4;
+        let pts;
+        const js = this.world.junctions || [];
+        if (fromSide && js.length && !far) { // down a side street's sidewalk (the side towards where they are going)
+            const j = js[Math.floor(Math.random() * js.length)], x = j + (east ? 2.55 : -2.55);
+            pts = [new THREE.Vector3(x, 0, -OUT - 34), new THREE.Vector3(x, 0, z), new THREE.Vector3(xEnd, 0, z)];
+        } else pts = [new THREE.Vector3(east ? st.x0 + 4 : st.x1 - 4, 0, z), new THREE.Vector3(xEnd, 0, z)];
         const mesh = personModel('customer', null, Math.random() * 1000);
-        mesh.position.set(east ? st.x0 + 4 : st.x1 - 4, 0, z);
-        mesh.rotation.y = east ? Math.PI / 2 : -Math.PI / 2;
+        mesh.position.copy(pts[0]);
         this.group.add(mesh);
         const dog = Math.random() < 0.12 ? dogModel() : null;
         if (dog) {
-            dog.position.copy(mesh.position).add(new THREE.Vector3(east ? 0.7 : -0.7, 0, 0.35));
-            dog.rotation.y = mesh.rotation.y;
+            dog.position.copy(mesh.position);
             this.group.add(dog);
         }
-        this.walkers.push({mesh, dog, dir: east ? 1 : -1, speed: 1.0 + Math.random() * 0.6, clock: Math.random() * 10, end: east ? st.x1 - 4 : st.x0 + 4, mood: 50 + Math.random() * 50});
+        this.walkers.push({mesh, dog, pts, i: 1, speed: 1.0 + Math.random() * 0.6, clock: Math.random() * 10, mood: 50 + Math.random() * 50, far});
     }
 
     /** Someone who might have come in, but the restaurant is closed (or not taking guests): they walk on by. */
@@ -964,60 +1029,145 @@ export class Traffic {
     update(dt) {
         const st = this.world.street;
         if (!st) return;
-        const h = this.hour(), busy = streetBusy(h);
+        const q = this.world.quality || 'high';
+        const h = this.hour(), busy = q === 'low' ? 0 : streetBusy(h) * (q === 'medium' ? 0.5 : 1);
         const wet = ['drizzle', 'rain', 'hail', 'light_snow', 'snow'].includes(this.world.env?.weather);
-        // Passing cars
-        this.carIn -= dt;
-        const passing = this.cars.filter(c => c.passing).length;
-        if (this.carIn <= 0) {
-            this.carIn = (2 + Math.random() * 4) / Math.max(0.05, busy);
-            if (passing < 2 + Math.round(busy * 6)) {
-                const east = Math.random() < 0.5;
-                const z = east ? st.laneIn : st.laneOut;
-                const car = this.addCar([new THREE.Vector3(east ? st.x0 : st.x1, 0, z), new THREE.Vector3(east ? st.x1 : st.x0, 0, z)], 4.5 + Math.random() * 3, null);
-                car.passing = true;
-                car.onDone = () => this.removeCar(car);
-            }
-        }
         // Traffic lights: the main road has green most of the time, then the side streets (a 22 s cycle)
         this.lightClock = ((this.lightClock || 0) + dt) % 22;
         const lc = this.lightClock, main = lc < 11 ? 'green' : lc < 13.5 ? 'yellow' : 'red';
         const side = lc >= 14 && lc < 20 ? 'green' : lc >= 20 && lc < 22 ? 'yellow' : 'red';
         for (const tl of this.world.trafficLights || []) {
-            const st = tl.axis === 'main' ? main : side;
-            if (st === tl.state) continue;
-            tl.state = st;
-            for (const c of ['red', 'yellow', 'green']) tl[c].material.emissiveIntensity = c === st ? 2.2 : 0.05;
+            const s2 = tl.axis === 'main' ? main : side;
+            if (s2 === tl.state) continue;
+            tl.state = s2;
+            for (const c of ['red', 'yellow', 'green']) tl[c].material.emissiveIntensity = c === s2 ? 2.2 : 0.05;
         }
+        this.light = {main, side};
+        // Passing cars: along the main road, down a side street onto it, or off it into a side street
+        this.carIn -= dt;
+        const passing = this.cars.filter(c => c.passing).length;
+        if (this.carIn <= 0) {
+            this.carIn = (2 + Math.random() * 4) / Math.max(0.05, busy);
+            if (q !== 'low' && passing < 2 + Math.round(busy * 6)) this.spawnPassing(st, q === 'medium');
+        }
+        // The second road, with its roundabouts: its own flow of cars and of people
+        this.carIn2 = (this.carIn2 ?? 3) - dt;
+        if (this.carIn2 <= 0 && this.world.roundabouts && q === 'high') {
+            this.carIn2 = (3 + Math.random() * 5) / Math.max(0.05, busy);
+            if (this.cars.filter(c => c.second).length < 2 + Math.round(busy * 4)) this.spawnSecond(st);
+        }
+        this.walkIn2 = (this.walkIn2 ?? 2) - dt;
+        if (this.walkIn2 <= 0 && this.world.roundabouts && q === 'high') {
+            this.walkIn2 = (2.5 + Math.random() * 4) / Math.max(0.1, busy);
+            if (this.walkers.filter(w => w.second).length < Math.round((1 + busy * 5) * (wet ? 0.45 : 1))) this.addSecondWalker();
+        }
+        this.blinkClock = (this.blinkClock || 0) + dt;
+        const blinkOn = this.blinkClock % 0.7 < 0.38;
         for (const car of [...this.cars]) {
             if (car.parked) continue;
             const target = car.points[car.i];
             if (!target) continue;
             const pos = car.mesh.position;
             const dx = target.x - pos.x, dz = target.z - pos.z, dist = Math.hypot(dx, dz);
-            // Keep a distance from the car ahead in the same lane
+            const hx = dist > 0.001 ? dx / dist : 0, hz = dist > 0.001 ? dz / dist : 0;
             let speed = car.speed;
-            // Stop at the line when the light is not green (passing cars, along the main road)
-            if (car.passing && main !== 'green' && Math.abs(dx) > Math.abs(dz)) for (const j of this.world.junctions || []) {
-                const stopX = j - Math.sign(dx) * 3.6, before = (stopX - pos.x) * Math.sign(dx);
-                if (before > -0.2 && before < 4) speed = Math.min(speed, Math.max(0, before - 0.1) * 1.8);
+            const flat = Math.abs(target.y - pos.y) < 0.01 && pos.y > -0.05;
+            if (car.passing || car.guest) speed = Math.min(speed, this.lightLimit(car, pos, hx, hz));
+            // Never into the car ahead (any car, any direction: what matters is what is in front of the bonnet)
+            let blocked = false;
+            car.blockedBy = null;
+            // On a roundabout's ring only the cars on the ring count (those waiting at its edge give way, see below)
+            const onRing = (p) => (this.world.roundabouts || []).some(rb => Math.hypot(p.x - rb.x, p.z - rb.z) < 3.05);
+            const ringMe = onRing(pos);
+            // In the middle of a crossing, likewise: the cars waiting at its edges wait for this one, not the other way
+            const inCross = (p) => !!st && (this.world.junctions || []).some(j => Math.abs(p.x - j) < 2.3 && Math.abs(p.z - st.roadZ) < 2.3);
+            const crossMe = inCross(pos);
+            if (flat) for (const o of this.cars) {
+                if (o === car || (o.parked && !o.mesh.visible) || o.mesh.position.y < -0.3) continue;
+                if (ringMe && !onRing(o.mesh.position)) continue;
+                if (crossMe && !inCross(o.mesh.position)) continue;
+                const ox = o.mesh.position.x - pos.x, oz = o.mesh.position.z - pos.z;
+                const ahead = ox * hx + oz * hz, lateral = Math.abs(ox * hz - oz * hx);
+                if (ahead > 0.4 && ahead < 3.4 && lateral < 1.05) {
+                    speed = Math.min(speed, Math.max(0, ahead - 2.4) * 2);
+                    blocked = true;
+                    car.blockedBy = o;
+                }
             }
-            if (car.passing) for (const o of this.cars) {
-                if (o === car || Math.abs(o.mesh.position.z - pos.z) > 0.5) continue;
-                const ahead = (o.mesh.position.x - pos.x) * Math.sign(dx);
-                if (ahead > 0 && ahead < 3.2) speed = Math.min(speed, o.passing ? o.speed * 0.9 : 0);
+            // The middle of a crossing takes one direction at a time: don't drive in while a car going another way is in it
+            if (flat && st) for (const j of this.world.junctions || []) {
+                const inBox = (p) => Math.abs(p.x - j) < 2.3 && Math.abs(p.z - st.roadZ) < 2.3;
+                const nx = pos.x + hx * 1.6, nz = pos.z + hz * 1.6;
+                if (inBox(pos) || !inBox({x: nx, z: nz})) continue;
+                for (const o of this.cars) {
+                    if (o === car || !inBox(o.mesh.position)) continue;
+                    const oy = o.mesh.rotation.y, same = Math.abs(Math.sin(oy) - hx) < 0.35 && Math.abs(Math.cos(oy) - hz) < 0.35;
+                    if (!same) speed = 0;
+                }
             }
+            // A roundabout: wait at its edge while a car already going round is about to pass the way in
+            if (flat) for (const rb of this.world.roundabouts || []) {
+                const dIn = Math.hypot(pos.x - rb.x, pos.z - rb.z), dNext = Math.hypot(target.x - rb.x, target.z - rb.z);
+                if (dIn < 3.3 || dIn > 5.2 || dNext > 3.1) continue;
+                for (const o of this.cars) {
+                    if (o === car) continue;
+                    const op = o.mesh.position;
+                    if (Math.hypot(op.x - rb.x, op.z - rb.z) < 3.0 && Math.hypot(op.x - target.x, op.z - target.z) < 3.2) speed = 0;
+                }
+            }
+            // Joining a lane (out of the car park, out of a side street): wait for a gap in the traffic on it
+            if (flat && !car.passing && st && Math.abs(pos.z - target.z) > 0.3) for (const laneZ of [st.laneIn, st.laneOut]) {
+                if (Math.abs(target.z - laneZ) > 0.15) continue;
+                for (const o of this.cars) {
+                    if (o === car || !o.passing || Math.abs(o.mesh.position.z - laneZ) > 0.6) continue;
+                    const towards = (target.x - o.mesh.position.x) * Math.sign((o.points[o.i]?.x ?? target.x) - o.mesh.position.x);
+                    if (towards > -1.5 && towards < 8 && Math.abs(pos.z - laneZ) < 2.6) speed = 0;
+                }
+            }
+            // Nor into anyone walking across in front
+            if (flat) for (const w of this.walkers) {
+                if (!this.onRoad(w)) continue; // people on the sidewalk are no obstacle
+                const ox = w.mesh.position.x - pos.x, oz = w.mesh.position.z - pos.z;
+                const ahead = ox * hx + oz * hz, lateral = Math.abs(ox * hz - oz * hx);
+                if (ahead > 0 && ahead < 3.6 && lateral < 1.2) {
+                    speed = 0;
+                    blocked = true;
+                }
+            }
+            // Two cars waiting for each other in a crossing would wait for ever: after a while the blocked one creeps on
+            car.stuck = blocked && speed < 0.05 ? car.stuck + dt : 0;
+            const o = car.blockedBy;
+            if (car.stuck > 4 && o?.blockedBy === car && this.cars.indexOf(car) < this.cars.indexOf(o)) speed = Math.max(speed, 0.8); // mutual: one goes first
             if (car.i === car.points.length - 1 && !car.passing && car.onDone && car.reverse == null) speed = Math.min(speed, 1.2 + dist * 2); // slow down to park
+            if (!flat) speed = Math.min(speed, 2.2); // the garage ramp: slowly, nose down (or up)
             const step = Math.min(dist, speed * dt);
             if (dist > 0.001) {
-                pos.y += (target.y - pos.y) * step / dist; // the garage ramp goes down
-                pos.x += dx / dist * step;
-                pos.z += dz / dist * step;
+                const dy = target.y - pos.y;
+                pos.y += dy * step / dist;
+                pos.x += hx * step;
+                pos.z += hz * step;
                 const yaw = Math.atan2(dx, dz) + (car.reverse && car.i === 1 ? Math.PI : 0);
                 let d = yaw - car.mesh.rotation.y;
                 d = Math.atan2(Math.sin(d), Math.cos(d));
-                car.mesh.rotation.y += d * Math.min(1, dt * 8);
+                car.mesh.rotation.y += d * Math.min(1, dt * (car.passing ? 5 : 8));
+                // Tilted on the ramp: the pitch follows the slope (smoothly, so it noses over at the top)
+                const pitch = Math.abs(dy) > 0.01 ? -Math.atan2(dy, dist) * (car.reverse && car.i === 1 ? -1 : 1) : 0;
+                car.mesh.rotation.x += (pitch - car.mesh.rotation.x) * Math.min(1, dt * 5);
+                car.mesh.rotation.order = 'YXZ';
             }
+            // Indicators: when the road turns at the next point (or the one after), blink on that side
+            const next = car.points[car.i + 1];
+            let turn = 0;
+            if (next && dist < 9) {
+                const nx = next.x - target.x, nz = next.z - target.z, nl = Math.hypot(nx, nz);
+                if (nl > 0.3) {
+                    const cross = hx * (nz / nl) - hz * (nx / nl), dot = hx * nx / nl + hz * nz / nl;
+                    if (dot < 0.9) turn = cross > 0 ? -1 : 1; // +1 left, −1 right (seen from the driver)
+                }
+            }
+            if (car.reverse && car.i === 1) turn = 0;
+            const bl = car.mesh.userData.blink;
+            if (bl) for (const [k, sgn] of [['L', 1], ['R', -1]]) for (const m of bl[k]) m.material.emissiveIntensity = turn === sgn && blinkOn ? 2.4 : 0;
             if (dist < 0.05) {
                 car.i++;
                 if (car.i >= car.points.length) {
@@ -1027,30 +1177,178 @@ export class Traffic {
                 }
             }
         }
-        // People walking by on both sidewalks (fewer in the rain)
+        // People walking by (fewer in the rain), only on the sidewalks; they cross side streets on the zebras when green
         this.walkIn -= dt;
         const want = Math.round((1 + busy * 9) * (wet ? 0.45 : 1));
-        if (this.walkIn <= 0) {
+        if (this.walkIn <= 0 && q !== 'low') {
             this.walkIn = (1.5 + Math.random() * 3) / Math.max(0.1, busy);
-            if (this.walkers.length < want) this.addWalker(Math.random() < 0.55);
+            if (this.walkers.length < want) this.addWalker(Math.random() < 0.55, q === 'high' && Math.random() < 0.3);
         }
         for (const w of [...this.walkers]) {
-            w.mesh.position.x += w.dir * w.speed * dt;
-            w.clock += dt;
-            animatePerson(w.mesh, 'walk', w.clock * w.speed, {mood: w.mood});
-            if (w.dog) {
-                w.dog.position.x += w.dir * w.speed * dt;
-                const legs = w.dog.userData.legs;
-                legs.forEach((l, i) => (l.rotation.x = Math.sin(w.clock * 14 + i * Math.PI) * 0.5));
-                w.dog.userData.tail.rotation.y = Math.sin(w.clock * 12) * 0.6;
+            const target = w.pts[w.i];
+            const pos = w.mesh.position;
+            const dx = target.x - pos.x, dz = target.z - pos.z, dist = Math.hypot(dx, dz);
+            let go = w.speed;
+            // Along the main road, a side street crossing is ahead: wait at the kerb unless the walkers' light is green
+            if (Math.abs(dx) > Math.abs(dz) && Math.abs(pos.z - st.roadZ) < 4) for (const j of this.world.junctions || []) {
+                const kerb = j - Math.sign(dx) * 2.35, before = (kerb - pos.x) * Math.sign(dx);
+                if (before > -0.05 && before < 0.6 && main !== 'green') go = 0;
             }
-            if ((w.end - w.mesh.position.x) * w.dir <= 0) {
+            const step = Math.min(dist, go * dt);
+            if (dist > 0.001 && step > 0) {
+                pos.x += dx / dist * step;
+                pos.z += dz / dist * step;
+                w.mesh.rotation.y = Math.atan2(dx, dz);
+            }
+            if (go > 0) w.clock += dt;
+            animatePerson(w.mesh, go > 0 ? 'walk' : 'idle', w.clock * w.speed, {mood: w.mood});
+            if (w.dog) {
+                const side = new THREE.Vector3(Math.cos(w.mesh.rotation.y), 0, -Math.sin(w.mesh.rotation.y)).multiplyScalar(0.45);
+                w.dog.position.copy(pos).add(side);
+                w.dog.rotation.y = w.mesh.rotation.y;
+                const legs = w.dog.userData.legs;
+                if (go > 0) legs.forEach((l, i) => (l.rotation.x = Math.sin(w.clock * 14 + i * Math.PI) * 0.5));
+                w.dog.userData.tail.rotation.y = Math.sin(this.blinkClock * 12) * 0.6;
+            }
+            if (dist < 0.05 && ++w.i >= w.pts.length) {
                 this.group.remove(w.mesh);
                 if (w.dog) this.group.remove(w.dog);
                 this.walkers = this.walkers.filter(x => x !== w);
             }
         }
     }
+
+    /**
+     * How fast a car may go given the traffic lights: before a junction's stop line it slows to a stop on yellow and
+     * red. Along the main road the main light counts; coming down a side street, the side light.
+     */
+    lightLimit(car, pos, hx, hz) {
+        const st = this.world.street, L = this.light || {main: 'green', side: 'green'};
+        let lim = Infinity;
+        for (const j of this.world.junctions || []) {
+            if (Math.abs(hx) > 0.7 && Math.abs(pos.z - st.roadZ) < 1.6 && L.main !== 'green') { // along the main road
+                const stopX = j - Math.sign(hx) * 4.0, before = (stopX - pos.x) * Math.sign(hx);
+                if (before > -0.2 && before < 5) lim = Math.min(lim, Math.max(0, before - 0.1) * 1.8);
+            }
+            if (Math.abs(hz) > 0.7 && Math.abs(pos.x - j) < 1.6 && L.side !== 'green') { // down (or up) a side street
+                const stopZ = st.roadZ - Math.sign(hz) * 3.9, before = (stopZ - pos.z) * Math.sign(hz);
+                if (before > -0.2 && before < 5) lim = Math.min(lim, Math.max(0, before - 0.1) * 1.8);
+            }
+        }
+        return lim;
+    }
+
+    /** Is this person on the road (crossing it), not on a sidewalk? Only they make cars stop. */
+    onRoad(w) {
+        if (w.pts[w.i]?.cross) return true;
+        const st = this.world.street, p = w.mesh.position;
+        return Math.abs(p.z - st.roadZ) < 4 && (this.world.junctions || []).some(j => Math.abs(p.x - j) < 2.3);
+    }
+
+    /**
+     * Points round a roundabout from angle a0 to a1 (radians, always increasing: every car turns the same way round,
+     * keeping to the left as on these roads), on the ring between the island and the outer edge.
+     */
+    ring(rb, a0, a1) {
+        const pts = [];
+        if (a1 < a0) a1 += Math.PI * 2;
+        const n = Math.max(2, Math.ceil((a1 - a0) / 0.35));
+        for (let k = 0; k <= n; k++) {
+            const a = a0 + (a1 - a0) * k / n;
+            pts.push(new THREE.Vector3(rb.x + Math.cos(a) * 2.5, 0, rb.z + Math.sin(a) * 2.5));
+        }
+        return pts;
+    }
+
+    /**
+     * A car on the second road: across the quarter through both roundabouts (either way), up a south side street and
+     * round the roundabout to the main road, or from the main road down a side street and round onto the second road.
+     */
+    spawnSecond(st) {
+        const V = (x, z) => new THREE.Vector3(x, 0, z);
+        const [A, B] = this.world.roundabouts, zF = A.z, q = Math.asin(1 / 2.5), PI = Math.PI;
+        const r = Math.random();
+        let pts;
+        if (r < 0.35) { // west → east, lane on the north side (zF − 1)
+            pts = [V(st.x0, zF - 1), ...this.ring(A, PI + q, 2 * PI - q), ...this.ring(B, PI + q, 2 * PI - q), V(st.x1, zF - 1)];
+        } else if (r < 0.7) { // east → west, lane on the south side (zF + 1)
+            pts = [V(st.x1, zF + 1), ...this.ring(B, q, PI - q), ...this.ring(A, q, PI - q), V(st.x0, zF + 1)];
+        } else if (r < 0.85) { // up a south side street (lane j − 1), round, north to the main road, left onto it (west)
+            const rb = Math.random() < 0.5 ? A : B, j = rb.x;
+            pts = [V(j - 1, zF + 14), ...this.ring(rb, PI / 2 + q, 3 * PI / 2 - q), V(j - 1, st.roadZ + 4.4), V(j - 1.4, st.roadZ + 2.2), V(j - 3.4, st.laneOut), V(st.x0, st.laneOut)];
+        } else { // along the main road westwards, left down a side street (lane j + 1), round, east along the second road
+            const rb = Math.random() < 0.5 ? A : B, j = rb.x;
+            pts = [V(st.x1, st.laneOut), V(j + 3.4, st.laneOut), V(j + 1.5, st.roadZ + 1.6), V(j + 1, st.roadZ + 3.4), ...this.ring(rb, 3 * PI / 2 + q, 2 * PI - q)];
+            pts.push(...(rb === A ? this.ring(B, PI + q, 2 * PI - q) : []), V(st.x1, zF - 1));
+        }
+        if (this.startTaken(pts[0])) return;
+        const car = this.addCar(pts, 4 + Math.random() * 2.5, null);
+        car.passing = true;
+        car.second = true;
+        car.onDone = () => this.removeCar(car);
+    }
+
+    /**
+     * Someone walking along the second road's sidewalk (or coming up a south side street to it): at each roundabout they
+     * go round by the side street's sidewalk and cross on its zebra (marked .cross: on the road, cars stop for them).
+     */
+    addSecondWalker() {
+        const st = this.world.street, rbs = this.world.roundabouts, zF = rbs[0].z;
+        const V = (x, z, cross = false) => Object.assign(new THREE.Vector3(x, 0, z), {cross});
+        const east = Math.random() < 0.5, north = Math.random() < 0.5;
+        const s = north ? -1 : 1, z = zF + s * (2.55 + (Math.random() - 0.5) * 0.3), zc = zF + s * 4.8;
+        const dir = east ? 1 : -1, list = east ? rbs : [...rbs].reverse();
+        const pts = [V(east ? st.x0 + 4 : st.x1 - 4, z)];
+        for (const rb of list) pts.push(V(rb.x - dir * 2.55, z), V(rb.x - dir * 2.55, zc), V(rb.x + dir * 2.55, zc, true), V(rb.x + dir * 2.55, z));
+        pts.push(V(east ? st.x1 - 4 : st.x0 + 4, z));
+        const mesh = personModel('customer', null, Math.random() * 1000);
+        mesh.position.copy(pts[0]);
+        this.group.add(mesh);
+        this.walkers.push({mesh, dog: null, pts, i: 1, speed: 1.0 + Math.random() * 0.6, clock: Math.random() * 10, mood: 50 + Math.random() * 50, second: true});
+    }
+
+    /** A car passing through: along the main road, from a side street onto it, or from it into a side street. */
+    spawnPassing(st, mainOnly = false) {
+        const V = (x, z) => new THREE.Vector3(x, 0, z);
+        const js = mainOnly ? [] : this.world.junctions || [];
+        const r = Math.random(), east = Math.random() < 0.5;
+        const zE = st.laneIn, zW = st.laneOut, far = -OUT - 36;
+        let pts;
+        if (!js.length || r < 0.55) pts = east ? [V(st.x0, zE), V(st.x1, zE)] : [V(st.x1, zW), V(st.x0, zW)];
+        else {
+            const j = js[Math.floor(Math.random() * js.length)];
+            if (r < 0.8) { // down a side street (its lane x = j + 1), then left (east) or right (west) onto the main road
+                const top = [V(j + 1, far), V(j + 1, st.roadZ - 4.4)];
+                pts = east ? [...top, V(j + 1.4, st.roadZ - 2.2), V(j + 3.4, zE), V(st.x1, zE)]
+                    : [...top, V(j + 0.8, st.roadZ - 1.6), V(j - 0.2, zW - 0.2), V(j - 2.6, zW), V(st.x0, zW)];
+            } else { // along the main road, then off it up a side street (lane x = j − 1)
+                pts = east ? [V(st.x0, zE), V(j - 3.6, zE), V(j - 1.5, zE - 0.6), V(j - 1, st.roadZ - 3.4), V(j - 1, far)]
+                    : [V(st.x1, zW), V(j + 3.4, zW), V(j + 0.4, zW - 0.6), V(j - 0.6, st.roadZ - 1.4), V(j - 1, st.roadZ - 3.6), V(j - 1, far)];
+            }
+        }
+        if (this.startTaken(pts[0])) return;
+        const car = this.addCar(pts, 4.5 + Math.random() * 3, null);
+        car.passing = true;
+        car.onDone = () => this.removeCar(car);
+    }
+
+    /** Is a car already near where a new one would start? (Then it waits for the next turn.) */
+    startTaken(p) {
+        return this.cars.some(c => c.mesh.position.distanceTo(p) < 3.5);
+    }
+}
+
+/**
+ * Points down the garage ramp (or up it, reversed): an S curve, so the car noses over gently at the top and levels out
+ * at the bottom (its pitch follows the slope, see Traffic.update).
+ */
+function rampPoints(gi, up) {
+    const pts = [];
+    for (let k = 0; k <= 8; k++) {
+        const t = k / 8, y = -gi.drop * (t * t * (3 - 2 * t));
+        pts.push(new THREE.Vector3(gi.rx, y, gi.zFront - gi.len * t));
+    }
+    return up ? pts.reverse() : pts;
 }
 
 /** A small dog on a walk with its owner. */

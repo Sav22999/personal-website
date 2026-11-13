@@ -4823,6 +4823,60 @@ select.ctl {
     color: #fff;
 }
 
+/* The languages fold away behind this button: closed at first, with the number of languages chosen */
+.path-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-self: start;
+    align-self: flex-start;
+    min-height: 40px;
+    padding: 6px 12px 6px 14px;
+    border: 1.5px solid var(--card-border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: inherit;
+    font: 700 .95rem var(--body);
+    cursor: pointer;
+}
+
+.path-more:hover {
+    border-color: var(--primary);
+}
+
+.path-more:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.path-more .ic {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.path-more-n {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-size: .8rem;
+    text-align: center;
+}
+
+.path-more .path-more-chev {
+    transition: transform .2s;
+}
+
+.path-more.open .path-more-chev {
+    transform: rotate(180deg);
+}
+
+.path-fams[hidden] {
+    display: none;
+}
+
 .path-count {
     margin: 0;
 }

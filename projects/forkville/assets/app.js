@@ -132,7 +132,7 @@ const coin = (c) => h('span.coin-amount', h('i.coin'), String(c));
 const ingList = (obj) => Object.entries(obj).map(([k, q]) => `${n(k)} ×${q}`).join(', ');
 const nowSec = () => Date.now() / 1000 + (S.clockSkew || 0);
 
-const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#33264F"/><stop offset="1" stop-color="#171230"/></linearGradient><radialGradient id="fvglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF9A4A" stop-opacity=".55"/><stop offset="1" stop-color="#FF9A4A" stop-opacity="0"/></radialGradient><linearGradient id="fvroof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A4C"/><stop offset="1" stop-color="#E0483C"/></linearGradient><linearGradient id="fvwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#F2D7B4"/></linearGradient><linearGradient id="fvgold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFE08A"/><stop offset="1" stop-color="#F2B33D"/></linearGradient><filter id="fvblur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6"/></filter></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><circle cx="32" cy="36" r="27" fill="url(#fvglow)"/><ellipse cx="32" cy="53.5" rx="20" ry="2.4" fill="#0C0918" opacity=".55"/><g fill="url(#fvgold)"><rect x="30.7" y="14" width="2.6" height="9" rx="1.3"/><path d="M25.3 10.2h13.4v1.2c0 2.9-3 4.9-6.7 4.9s-6.7-2-6.7-4.9z"/><rect x="25.3" y="3.6" width="2.3" height="8.4" rx="1.15"/><rect x="29.15" y="3.6" width="2.3" height="8.4" rx="1.15"/><rect x="32.55" y="3.6" width="2.3" height="8.4" rx="1.15"/><rect x="36.4" y="3.6" width="2.3" height="8.4" rx="1.15"/></g><path d="M12.6 30.4L32 18.6l19.4 11.8a1.6 1.6 0 0 1-.83 2.97H13.43a1.6 1.6 0 0 1-.83-2.97z" fill="url(#fvroof)"/><rect x="16" y="32" width="32" height="21" rx="1.6" fill="url(#fvwall)"/><g><path d="M15 33.4h34v3.6H15z" fill="#E0483C"/><path d="M15 37h4.25a2.13 2.13 0 0 1-4.25 0zM23.5 37h4.25a2.13 2.13 0 0 1-4.25 0zM32 37h4.25a2.13 2.13 0 0 1-4.25 0zM40.5 37h4.25a2.13 2.13 0 0 1-4.25 0z" fill="#E0483C"/><path d="M19.25 33.4h4.25V37h-4.25zM27.75 33.4H32V37h-4.25zM36.25 33.4h4.25V37h-4.25zM44.75 33.4H49V37h-4.25z" fill="#FFF6E6"/><path d="M19.25 37h4.25a2.13 2.13 0 0 1-4.25 0zM27.75 37H32a2.13 2.13 0 0 1-4.25 0zM36.25 37h4.25a2.13 2.13 0 0 1-4.25 0zM44.75 37H49a2.13 2.13 0 0 1-4.25 0z" fill="#FFF6E6"/></g><rect x="18.6" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFC857" filter="url(#fvblur)" opacity=".9"/><rect x="18.6" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFD77A"/><rect x="37.8" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFC857" filter="url(#fvblur)" opacity=".9"/><rect x="37.8" y="42" width="7.6" height="6.6" rx="1.2" fill="#FFD77A"/><path d="M22.4 42v6.6M18.6 45.3h7.6M41.6 42v6.6M37.8 45.3h7.6" stroke="#E9A93A" stroke-width=".8"/><path d="M28.4 53V44.4a3.6 3.6 0 0 1 7.2 0V53z" fill="#7A3B2A"/><circle cx="34" cy="48.8" r=".7" fill="#FFD77A"/><path d="M51.5 10.5l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9z" fill="#FFE08A"/><circle cx="11.5" cy="15" r="1.1" fill="#FFE08A" opacity=".85"/><circle cx="54" cy="24" r=".8" fill="#FFE08A" opacity=".6"/></svg>`;
+const LOGO = `<svg aria-hidden="true" viewBox="0 0 64 64"><defs><linearGradient id="fvbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ED7E6"/><stop offset=".62" stop-color="#FFE3B8"/><stop offset="1" stop-color="#FFC48A"/></linearGradient><linearGradient id="lawn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9CD067"/><stop offset="1" stop-color="#77B348"/></linearGradient><linearGradient id="wallR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E8"/><stop offset="1" stop-color="#F6E2C6"/></linearGradient><linearGradient id="wallL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EBD6B8"/><stop offset="1" stop-color="#DCC3A0"/></linearGradient><linearGradient id="lit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF2C2"/><stop offset="1" stop-color="#FFC857"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE08A"/><stop offset="1" stop-color="#F2B33D"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#fvbg)"/><g fill="#FFFFFF" opacity=".85"><ellipse cx="13" cy="12" rx="6" ry="2.6"/><ellipse cx="16.5" cy="10.4" rx="3.6" ry="2.6"/><ellipse cx="51" cy="17" rx="5" ry="2.2"/><ellipse cx="53.6" cy="15.6" rx="3" ry="2.1"/></g><circle cx="51" cy="7.5" r="3.4" fill="#FFF3C4" opacity=".9"/><polygon points="31.00,57.50 52.65,45.00 52.65,47.20 31.00,59.70" fill="#4E8A34" /><polygon points="31.00,57.50 11.95,46.50 11.95,48.70 31.00,59.70" fill="#5E9A3E" /><polygon points="31.00,57.50 52.65,45.00 33.60,34.00 11.95,46.50" fill="url(#lawn)" /><polygon points="31.50,53.00 48.82,43.00 53.58,45.75 36.26,55.75" fill="#E9DCC6" /><line x1="34.96" y1="51.00" x2="39.73" y2="53.75" stroke="#D6C6AB" stroke-width=".5"/><line x1="38.43" y1="49.00" x2="43.19" y2="51.75" stroke="#D6C6AB" stroke-width=".5"/><line x1="41.89" y1="47.00" x2="46.65" y2="49.75" stroke="#D6C6AB" stroke-width=".5"/><line x1="45.36" y1="45.00" x2="50.12" y2="47.75" stroke="#D6C6AB" stroke-width=".5"/><polygon points="31.50,53.00 18.94,45.75 18.94,29.25 31.50,36.50" fill="url(#wallL)" /><polygon points="31.50,53.00 48.82,43.00 48.82,26.50 31.50,36.50" fill="url(#wallR)" /><polygon points="31.50,53.00 48.82,43.00 48.82,41.40 31.50,51.40" fill="#D8C3A2" /><polygon points="31.50,53.00 18.94,45.75 18.94,44.15 31.50,51.40" fill="#C6AE8B" /><polygon points="31.50,36.50 48.82,26.50 48.82,24.90 31.50,34.90" fill="#B84A33" /><polygon points="31.50,36.50 18.94,29.25 18.94,27.65 31.50,34.90" fill="#9E3B2A" /><polygon points="31.50,34.90 48.82,24.90 36.26,17.65 18.94,27.65" fill="#E0654A" /><polygon points="31.93,33.35 46.13,25.15 35.83,19.20 21.63,27.40" fill="#C9533C" /><polygon points="41.89,47.00 45.18,45.10 45.18,35.90 41.89,37.80" fill="#6B3A24" /><polygon points="42.24,46.20 44.84,44.70 44.84,36.70 42.24,38.20" fill="#8A5232" /><polygon points="42.58,41.20 44.49,40.10 44.49,37.50 42.58,38.60" fill="url(#lit)" /><circle cx="44.23" cy="41.65" r=".45" fill="#FFD77A"/><polygon points="33.23,49.40 39.81,45.60 39.81,39.60 33.23,43.40" fill="#FFD46B" /><polygon points="33.58,48.60 39.47,45.20 39.47,40.40 33.58,43.80" fill="url(#lit)" /><line x1="36.52" y1="47.50" x2="36.52" y2="41.50" stroke="#E9A93A" stroke-width=".6"/><polygon points="28.36,47.19 22.46,43.78 22.46,38.38 28.36,41.79" fill="#F2B84E" /><polygon points="27.98,46.37 22.84,43.40 22.84,39.20 27.98,42.17" fill="url(#lit)" /><line x1="25.41" y1="45.48" x2="25.41" y2="40.08" stroke="#E9A93A" stroke-width=".6"/><line x1="28.36" y1="44.49" x2="22.46" y2="41.08" stroke="#E9A93A" stroke-width=".6"/><polygon points="31.50,39.60 34.39,37.93 36.64,42.23 33.75,43.90" fill="#E0483C" /><polygon points="33.75,43.90 36.64,42.23 36.64,43.13 33.75,44.80" fill="#E0483C" /><polygon points="34.39,37.93 37.27,36.27 39.52,40.57 36.64,42.23" fill="#FFF4E4" /><polygon points="36.64,42.23 39.52,40.57 39.52,41.47 36.64,43.13" fill="#FFF4E4" /><polygon points="37.27,36.27 40.16,34.60 42.41,38.90 39.52,40.57" fill="#E0483C" /><polygon points="39.52,40.57 42.41,38.90 42.41,39.80 39.52,41.47" fill="#E0483C" /><polygon points="40.16,34.60 43.05,32.93 45.30,37.23 42.41,38.90" fill="#FFF4E4" /><polygon points="42.41,38.90 45.30,37.23 45.30,38.13 42.41,39.80" fill="#FFF4E4" /><polygon points="43.05,32.93 45.93,31.27 48.18,35.57 45.30,37.23" fill="#E0483C" /><polygon points="45.30,37.23 48.18,35.57 48.18,36.47 45.30,38.13" fill="#E0483C" /><polygon points="45.93,31.27 48.82,29.60 51.07,33.90 48.18,35.57" fill="#FFF4E4" /><polygon points="48.18,35.57 51.07,33.90 51.07,34.80 48.18,36.47" fill="#FFF4E4" /><polygon points="28.99,40.15 27.23,39.13 25.67,41.83 27.43,42.85" fill="#C73B31" /><polygon points="27.23,39.13 25.47,38.12 23.91,40.82 25.67,41.83" fill="#EFE0CB" /><polygon points="25.47,38.12 23.71,37.10 22.16,39.80 23.91,40.82" fill="#C73B31" /><polygon points="23.71,37.10 21.96,36.09 20.40,38.79 22.16,39.80" fill="#EFE0CB" /><rect x="30.98" y="19.27" width=".9" height="6.5" fill="#5A3825"/><rect x="36.48" y="19.27" width=".9" height="6.5" fill="#5A3825"/><circle cx="34.18" cy="14.27" r="7.4" fill="#3B2418"/><circle cx="34.18" cy="14.27" r="6.4" fill="url(#gold)"/><g fill="#3B2418"><rect x="33.80" y="14.07" width=".76" height="4.6" rx=".38"/><path d="M32.43 12.87h3.5v.4c0 1.05-.8 1.75-1.75 1.75s-1.75-.7-1.75-1.75z"/><rect x="32.43" y="9.87" width=".7" height="3.3" rx=".35"/><rect x="33.83" y="9.87" width=".7" height="3.3" rx=".35"/><rect x="35.23" y="9.87" width=".7" height="3.3" rx=".35"/></g><ellipse cx="39.29" cy="53.40" rx="3.2" ry="1.4" fill="#000" opacity=".12"/><rect x="38.99" y="43.60" width=".6" height="9.5" fill="#FFF4E4"/><ellipse cx="39.29" cy="50.10" rx="2.4" ry="1.1" fill="#FFFFFF"/><rect x="38.94" y="50.10" width=".7" height="3" fill="#7B4E2C"/><path d="M34.29 46.10Q39.29 40.90 44.29 46.10z" fill="#7A8B3A"/><path d="M37.59 45.00Q39.29 41.50 40.99 45.00z" fill="#9CB05A"/><rect x="35.39" y="50.70" width="1.6" height="2.4" rx=".3" fill="#B07A4A"/><rect x="35.39" y="48.70" width="1.60" height="2" rx=".3" fill="#9C6B3F"/><rect x="41.59" y="50.70" width="1.6" height="2.4" rx=".3" fill="#B07A4A"/><rect x="41.59" y="48.70" width="1.60" height="2" rx=".3" fill="#9C6B3F"/><circle cx="22.02" cy="45.55" r="2.3" fill="#4F8A34"/><circle cx="23.42" cy="44.55" r="1.6" fill="#6FAF45"/><rect x="52.28" y="33.20" width=".7" height="12" fill="#2F3A3A"/><circle cx="52.63" cy="32.60" r="3" fill="#FFE7A8" opacity=".35"/><circle cx="52.63" cy="32.60" r="1.3" fill="#FFF1C9"/></svg>`;
 
 function credit() {
     return h('div.credit-block',
@@ -420,7 +420,13 @@ function envTick() {
     const now = performance.now();
     if (now - (S.lastAmb || 0) > 500) { // rain, voices in the room, day or night music
         S.lastAmb = now;
-        setAmbience({rain: ['drizzle', 'rain', 'hail'].includes(S.weather), snow: ['light_snow', 'snow'].includes(S.weather), guests: S.sim.agents.filter(a => a.role === 'customer' && a.seat).length, isNight: isNight(S.sim.hour)});
+        runHours();
+        // Only the work being done right now makes a sound (floors not in view count for less)
+        const at = (a) => (S.sim.floorOfAgent?.(a) ?? 0) === (S.world.viewFloor || 0) ? 1 : 0.4;
+        const doing = (...anims) => S.sim.agents.filter(a => a.staff && a.state === 'busy' && anims.includes(a.anim)).reduce((n, a) => n + at(a), 0);
+        setAmbience({rain: ['drizzle', 'rain', 'hail'].includes(S.weather), snow: ['light_snow', 'snow'].includes(S.weather), guests: S.sim.agents.filter(a => a.role === 'customer' && a.seat && a.state !== 'leaving').length,
+            isNight: isNight(S.sim.hour), cooks: doing('cook'), washers: doing('wash'), sweepers: doing('sweep', 'mop'), open: (S.game.restaurant.status || 'open') !== 'closed',
+            paused: !S.sim.speed, restaurantKind: S.game.restaurant.kind || 'generic'});
     }
 }
 
@@ -694,7 +700,7 @@ function renderTop() {
                 h('span.lvl', t('level_title', {n: r.level, t: levelTitle(r.level)})), h('span.xpbar', h('i', {style: `width:${pct}%`}))))),
         h('div.pills',
             S.mode !== 'visit' && h('button.pill.coins', {title: t('ledger_title'), onclick: () => openSheet('ledger')}, coin(r.coins + (S.liveCoins || 0))),
-            h('button.pill.stars', {title: t('reputation'), onclick: () => S.mode === 'visit' ? visitReviews() : openSheet('reviews')}, starsEl(S.mode === 'visit' ? S.visit.restaurant.stars : r.stars), h('small', String(S.mode === 'visit' ? S.visit.restaurant.popularity : r.popularity))),
+            h('button.pill.stars', {title: t('reputation'), onclick: () => S.mode === 'visit' ? visitReviews() : openSheet('reviews')}, starsEl(S.mode === 'visit' ? S.visit.restaurant.stars : r.stars, 5), h('small', (S.mode === 'visit' ? S.visit.restaurant : r).rating != null ? (S.mode === 'visit' ? S.visit.restaurant : r).rating.toFixed(1) : t('not_rated'))),
             S.mode !== 'visit' && h('button.pill.iconpill', {title: t('inbox'), onclick: () => openSheet('friends', {tab: 'inbox'})}, icon('gift'), S.game.inbox ? h('b.badge', String(S.game.inbox)) : null),
             S.mode !== 'visit' && h('button.pill.iconpill', {title: t('account'), onclick: () => openSheet('account')}, icon('user'))));
 }
@@ -740,20 +746,86 @@ function toggleStatusMenu(force) {
     renderStatus();
 }
 
+/** Changes the restaurant's status (on the server, in the room and on the door sign). auto: set by the opening hours. */
+function applyStatus(st, auto = false) {
+    const hours = S.game.restaurant.hours || {mode: 'manual'};
+    // Opening by hand with "open for N hours": the countdown starts now
+    const extra = st === 'open' && hours.mode === 'timer' && !auto ? () => setHours({...hours, until: Math.round(S.sim.clock + hours.timer * 60)}) : null;
+    act('game.status', {status: st}, {
+        done: () => {
+            S.sim.setStatus(st);
+            S.world.setDoorStatus(st, statusLabels());
+            S.autoClosing = auto && st === 'paused';
+            renderStatus();
+            if (st === 'closed') toast(t(auto ? 'hours_closed' : 'closed_staff_home'));
+            else if (auto && st === 'open') toast(t('hours_opened'), 'good');
+            else if (auto && st === 'paused') toast(t('hours_last_guests'));
+            extra?.();
+        },
+    });
+}
+
+function setHours(h) {
+    act('game.hours', h, {done: () => ((S.statusKey = null), renderStatus())});
+}
+
+/** Game hour as "18:00". */
+const hh = (h) => String(h).padStart(2, '0') + ':00';
+
+/**
+ * Opening hours, run on the game clock (a few times a second): "open for N hours" ends with no new guests and, when
+ * the room is empty, closes; the schedule opens at its hour and closes the same way at the other one.
+ */
+function runHours() {
+    const r = S.game?.restaurant;
+    if (!r || S.mode === 'visit' || !S.sim || S.hoursBusy) return;
+    const h = r.hours || {mode: 'manual'}, status = r.status || 'open', clock = S.sim.clock;
+    const busy = (st, auto) => {
+        S.hoursBusy = true;
+        setTimeout(() => (S.hoursBusy = false), 1500);
+        applyStatus(st, auto);
+    };
+    const empty = S.sim.guestsInside === 0 && !(S.sim.queue || []).length;
+    if (status === 'paused' && S.autoClosing && empty) return busy('closed', true);
+    if (h.mode === 'timer' && status === 'open' && h.until && clock >= h.until) return busy('paused', true);
+    if (h.mode === 'schedule') {
+        const hour = Math.floor(clock / 60) % 24;
+        const inside = h.open < h.close ? hour >= h.open && hour < h.close : hour >= h.open || hour < h.close;
+        if (inside && status === 'closed') return busy('open', true);
+        if (!inside && status === 'open') return busy('paused', true);
+        if (!inside && status === 'paused') S.autoClosing = true;
+    }
+}
+
 function statusMenu(cur, still = false) {
+    const r = S.game.restaurant, hrs = r.hours || {mode: 'manual'};
+    const timers = S.catalog.hoursTimers || [2, 4, 6, 8, 10, 12];
+    const left = hrs.mode === 'timer' && hrs.until && cur === 'open' ? Math.max(0, hrs.until - S.sim.clock) : null;
+    const hourSel = (key, val) => h('select.hours-sel', {onchange: (e) => setHours({...hrs, [key]: +e.target.value})}, Array.from({length: 24}, (_, i) => h('option', {value: i, selected: i === val}, hh(i))));
     return h('div.status-menu' + (still ? '.still' : ''), {onclick: (e) => e.stopPropagation()}, ['open', 'paused', 'closed'].map(st => h('button.status-opt.status-' + st + (st === cur ? '.on' : ''), {
         onclick: () => {
             S.statusMenu = false;
-            act('game.status', {status: st}, {
-                done: () => {
-                    S.sim.setStatus(st);
-                    S.world.setDoorStatus(st, statusLabels());
-                    renderStatus();
-                    if (st === 'closed') toast(t('closed_staff_home'));
-                },
-            });
+            applyStatus(st);
         },
-    }, h('i.dot'), statusLabels()[st])), h('button.status-opt.status-todo', {onclick: () => (S.statusMenu = false, openSheet('todo'))}, ic('ui', 'todo'), t('todo_title')));
+    }, h('i.dot'), statusLabels()[st])),
+    // Opening hours: by hand, open for a while, or a daily schedule
+    h('div.hours',
+        h('small.muted', t('hours_title')),
+        h('div.hours-modes', ['manual', 'timer', 'schedule'].map(m => h('button.hours-mode' + (hrs.mode === m ? '.on' : ''), {
+            onclick: () => setHours(m === 'timer' ? {mode: 'timer', timer: hrs.timer || 8} : m === 'schedule' ? {mode: 'schedule', open: hrs.open ?? 9, close: hrs.close ?? 22} : {mode: 'manual'}),
+        }, t('hours_' + m)))),
+        hrs.mode === 'timer' && h('div.hours-row', t('hours_for'), h('select.hours-sel', {onchange: (e) => setHours({mode: 'timer', timer: +e.target.value, ...(cur === 'open' ? {until: Math.round(S.sim.clock + +e.target.value * 60)} : {})})},
+            timers.map(n => h('option', {value: n, selected: n === hrs.timer}, t('hours_n', {n})))),
+            h('small.muted', left != null ? t('hours_left', {t: fmtGameSpan(left)}) : t('hours_timer_hint'))),
+        hrs.mode === 'schedule' && h('div.hours-row', t('hours_from'), hourSel('open', hrs.open ?? 9), t('hours_to'), hourSel('close', hrs.close ?? 22)),
+        hrs.mode !== 'manual' && h('small.muted.hours-note', t('hours_note'))),
+    h('button.status-opt.status-todo', {onclick: () => (S.statusMenu = false, openSheet('todo'))}, ic('ui', 'todo'), t('todo_title')));
+}
+
+/** Game minutes as "3 h 20 min". */
+function fmtGameSpan(min) {
+    const hrs = Math.floor(min / 60), m = Math.round(min % 60);
+    return hrs ? t('span_hm', {h: hrs, m}) : t('span_m', {m});
 }
 
 // A click anywhere else closes the status menu
@@ -784,7 +856,7 @@ function renderClock(force = false) {
             h('span.clock-pic', {title: t('weather_' + (S.weather || 'clear')), html: svgIcon('ui', 'w_' + (S.weather || 'clear'))}),
             h('span.clock-pic', {title: t('season_' + S.season), html: svgIcon('ui', 's_' + S.season)})),
         busy && h('span.busy.busy-' + busy, {title: t('busy_' + busy + '_d')}, t('busy_' + busy)),
-        S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2')), sp(5, 'play3', t('speed_3'))));
+        S.mode !== 'build' && h('div.speeds', sp(0, 'pause', t('speed_pause')), sp(1, 'play1', t('speed_1')), sp(2, 'play2', t('speed_2'))));
 }
 
 /** The card of the selected person: who they are, what they are doing, their mood or energy. */
@@ -1039,6 +1111,7 @@ const SHEETS = {
                 h('div.person-head', h('img.portrait', {src: portrait(s.role, s.color, s.id * 7.3, lookOf(s)), alt: ''}), h('span.pic', {html: svgIcon('ui', roleIcon(s.role))}),
                     h('div.staff-main', h('b', s.name), h('span.muted', s.trait ? t('trait_' + s.trait) + ' · ' + t('trait_' + s.trait + '_d') : '')), select),
                 cv(s.skills, s.role),
+                zoneRow(s),
                 h('div.wage', ic('ui', 'coin'), t('wage_day', {c: (S.game.restaurant.wages || []).find(w => w.id === s.id)?.wage ?? '—'})),
                 h('div.seniority', t('seniority', {t: seniorityText(s.years || 0)}), ' · ', t('next_point', {p: Math.floor(((s.skills?.[s.role] ?? 5) % 1) * 100)})),
                 s.role === 'manager' && h('div.rank', starsEl(rank, 5), ' ', t('manager_rank', {h: Math.round(mg.hours[rank] * (0.6 + 0.06 * (s.skills?.manager ?? 5)))})),
@@ -1097,7 +1170,8 @@ const SHEETS = {
             const tips = Object.keys(d.bad).map(k => ({slow: 'tip_slow', plain: 'tip_plain', bare: 'tip_bare', dirty: 'tip_dirty', dark: 'tip_dark', no_toilet: 'tip_no_toilet', toilet_dirty: 'tip_toilet_dirty'})[k]).filter(Boolean).slice(0, 3);
             put(body,
                 h('div.rep-head',
-                    h('div.rep-score', h('b', d.average.toFixed(1)), starsEl(Math.round(d.average), 5), h('small', t('reviews_window', {n: Math.min(d.count, d.window)}))),
+                    // The score: the restaurant's rating (all guests, rolling); the bars: the latest written reviews
+                    h('div.rep-score', h('b', (d.rating ?? d.average).toFixed(1)), starsEl(d.stars || Math.round(d.rating ?? d.average), 5), h('small', t('rating_window', {n: d.ratingCount || d.count}))),
                     h('div.rep-dist', [5, 4, 3, 2, 1].map(st => h('div.dist-row', h('span', String(st)), h('span.star-pic', {html: svgIcon('mood', 'star')}),
                         h('span.track', h('i', {style: `width:${max ? d.distribution[st] / max * 100 : 0}%`})), h('small', String(d.distribution[st])))))),
                 Object.keys(d.good).length ? h('div', h('h3', t('praised')), factors(d.good, 'good')) : null,
@@ -1124,6 +1198,42 @@ const SHEETS = {
         requestAnimationFrame(() => body.querySelector('.level-row.current')?.scrollIntoView({block: 'center'}));
     },
 };
+
+/**
+ * Where a worker works: shared out automatically, everywhere, one floor, or (waiters and cleaners) some tables.
+ * Tables are numbered as in the room (the simulation's numbers).
+ */
+function zoneRow(s) {
+    const r = S.game.restaurant, z = s.zone || {mode: 'auto'};
+    const floors = r.floors?.length || 0;
+    const tablesOk = ['waiter', 'cleaner'].includes(s.role);
+    const tables = (S.sim?.tables || []).map(tb => ({id: tb.id, num: tb.num, floor: Math.max(0, Math.floor((tb.seats[0].z + 100) / 1000))}));
+    const cur = z.mode === 'floor' ? 'floor:' + (z.floor || 0) : z.mode;
+    const send = (body) => act('game.zone', {id: s.id, ...body}, {live: true, done: () => toast(t('zone_set', {n: s.name}), 'good')});
+    const opts = [['auto', t('zone_auto')], ['all', t('zone_all')]];
+    for (let f = 0; f <= floors; f++) opts.push(['floor:' + f, t('zone_floor', {f: f ? String(f) : t('floor_ground_short')})]);
+    if (tablesOk && tables.length) opts.push(['tables', t('zone_tables')]);
+    const select = h('select.role-select.zone-select', {
+        onchange: (e) => {
+            const v = e.target.value;
+            if (v === 'tables') return send({mode: 'tables', tables: z.mode === 'tables' ? z.tables : tables.slice(0, 2).map(x => x.id)});
+            if (v.startsWith('floor:')) return send({mode: 'floor', floor: +v.slice(6)});
+            send({mode: v});
+        },
+    }, opts.map(([v, label]) => h('option', {value: v, selected: v === cur}, label)));
+    const chips = z.mode === 'tables' && tablesOk ? h('div.zone-tables', tables.map(tb => {
+        const on = (z.tables || []).includes(tb.id);
+        return h('button.zone-chip' + (on ? '.on' : ''), {
+            title: floors ? t('zone_floor', {f: tb.floor ? String(tb.floor) : t('floor_ground_short')}) : '',
+            onclick: () => {
+                const next = on ? z.tables.filter(x => x !== tb.id) : [...(z.tables || []), tb.id];
+                if (!next.length) return toast(t('zone_one_table'), 'bad');
+                send({mode: 'tables', tables: next});
+            },
+        }, t('table_n', {n: tb.num}));
+    })) : null;
+    return h('div.zone-row', h('span.muted', t('zone_label')), select, chips);
+}
 
 /** The look of a worker for the 3D model: hairstyle, hair colour, uniform from the catalog. */
 const lookOf = (s, over = {}) => {
@@ -1248,6 +1358,19 @@ function ledgerText(e) {
 }
 
 /** Music and sounds: on/off and volume (remembered on this device). */
+/** Graphics quality, on this device: low (only the restaurant), medium (some houses around), high (the whole quarter). */
+function qualitySettings() {
+    const cur = S.world.quality || 'high';
+    return h('div.field', h('span', t('quality_title')),
+        h('div.quality-opts', ['low', 'medium', 'high'].map(q => h('button.quality-opt' + (q === cur ? '.on' : ''), {
+            onclick: () => {
+                S.world.setQuality(q, S.game.restaurant);
+                S.sheet?.render();
+                toast(t('quality_' + q), 'good');
+            },
+        }, h('b', t('quality_' + q)), h('small.muted', t('quality_' + q + '_d'))))));
+}
+
 function soundSettings() {
     const p = audioPrefs();
     const toggle = (key, label) => h('label.check', h('input', {type: 'checkbox', checked: p[key], onchange: (e) => setAudioPrefs({[key]: e.target.checked})}), h('span', label));
@@ -1379,6 +1502,7 @@ const SHEETS_MORE = {
             h('div.acct', h('b', '@' + S.user.username), h('span.muted', S.user.email)),
             S.user.isAdmin && h('a.btn.btn-wide', {href: 'admin.html', target: '_blank'}, ic('ui', 'gear'), t('admin_panel')),
             soundSettings(),
+            qualitySettings(),
             h('div.field', h('span', t('kind_title')), h('div.kinds', Object.entries(S.catalog.kinds).map(([k, v]) => {
                 const cur = (r.kind || 'generic') === k, locked = v.level > r.level;
                 return h('div.kind' + (cur ? '.on' : '') + (locked ? '.locked' : ''),

@@ -73,6 +73,29 @@ $canonical = '/projects/about/fucina/';
     </div>
 </section>
 
+<section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">The idea</h2>
+        <p>Learning to code should not cost money, feel like a chore, or require a computer science degree to
+            get started. Fucina was built as a <strong>free, gamified portal for continuous learning</strong>,
+            open to anyone from absolute beginners to experienced developers brushing up on a new language.</p>
+        <p>The name comes from the Italian word for <em>forge</em> &mdash; a place where raw material is shaped
+            into something useful. Each course in Fucina works the same way: you start with the basics, and
+            level by level you build real understanding through <strong>interactive exercises</strong>,
+            not passive reading. Multiple-choice quizzes, fill-in-the-blank challenges, code-ordering puzzles
+            and mini-games keep the pace varied and engaging.</p>
+        <p>Motivation comes from the <strong>Sparks</strong> system &mdash; an in-app currency earned by
+            completing levels, winning the daily challenge (which has its own leaderboard), and maintaining a
+            study streak. Sparks unlock certificates that mark your progress and give a tangible sense of
+            achievement.</p>
+        <p>The course catalogue covers the full spectrum: web technologies (HTML, CSS, JavaScript, Angular, Vue),
+            general-purpose languages (Python, Java, Kotlin, Swift, Rust) and databases (SQL). All content is
+            managed through a dedicated admin panel, making it easy to add new courses and keep existing ones
+            up to date without touching the codebase. The goal is a platform that grows with its community,
+            always free, always accessible.</p>
+    </div>
+</section>
+
 <?php include_once(dirname(__DIR__, 3) . '/include/footer.php'); ?>
 
 </body>

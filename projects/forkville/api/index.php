@@ -415,6 +415,38 @@ switch ($r) {
             fail('not_found', 404);
         });
 
+    case 'game.zone':
+        // Where a worker works: auto (shared out with the others), all, one floor, or (waiters, cleaners) some tables
+        $u = writer();
+        $b = body();
+        $id = (int)($b['id'] ?? 0);
+        $mode = (string)($b['mode'] ?? 'auto');
+        if (!in_array($mode, ['auto', 'all', 'floor', 'tables'], true)) fail('bad_request', 422);
+        mutate($u, function (array &$rest) use ($id, $mode, $b) {
+            foreach ($rest['staff'] as &$st) {
+                if ((int)$st['id'] !== $id) continue;
+                if ($mode === 'auto') {
+                    unset($st['zone']);
+                    return ['zone' => 'auto'];
+                }
+                $zone = ['mode' => $mode];
+                if ($mode === 'floor') {
+                    $f = (int)($b['floor'] ?? 0);
+                    if ($f < 0 || $f > count($rest['floors'])) fail('bad_request', 422);
+                    $zone['floor'] = $f;
+                }
+                if ($mode === 'tables') {
+                    $ids = [];
+                    foreach ($rest['layout'] as $it) if ((items()[$it['k']][0] ?? '') === 'table') $ids[(int)$it['id']] = true;
+                    $zone['tables'] = array_values(array_unique(array_filter(array_map('intval', (array)($b['tables'] ?? [])), fn($t) => isset($ids[$t]))));
+                    if (!$zone['tables']) fail('bad_request', 422);
+                }
+                $st['zone'] = $zone;
+                return ['zone' => $mode];
+            }
+            fail('not_found', 404);
+        });
+
     case 'game.fire':
         $u = writer();
         $id = (int)(body()['id'] ?? 0);
@@ -718,6 +750,15 @@ switch ($r) {
             $rest['last_report_at'] = now_utc();
         });
 
+    case 'game.hours':
+        // Opening hours (see clean_hours in lib/economy.php)
+        $u = writer();
+        $b = body();
+        mutate($u, function (array &$rest) use ($b) {
+            $rest['hours'] = clean_hours($b);
+            return ['hours' => $rest['hours']['mode']];
+        });
+
     case 'game.ledger':
         // Read-only statement: nothing can be undone from here
         $u = writer();
@@ -727,7 +768,7 @@ switch ($r) {
 
     case 'game.reviews':
         $u = writer();
-        send_json(['ok' => true] + reviews_out($u['id']));
+        send_json(['ok' => true] + reviews_out($u['id'], 30, load_restaurant((int)$u['id'])));
 
     case 'game.wish':
         $u = writer();

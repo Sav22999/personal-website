@@ -72,6 +72,27 @@ $canonical = '/projects/about/forkville/';
     </div>
 </section>
 
+<section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">The idea</h2>
+        <p>Forkville draws direct inspiration from <strong>Restaurant City</strong>, the beloved Facebook game
+            that let millions of players build and run their own restaurant in a social, colourful world. When
+            Restaurant City shut down, it left a gap that no browser game has properly filled since.</p>
+        <p>The goal was to bring that experience back &mdash; and modernise it. Forkville is a
+            <strong>free, browser-based 3D restaurant management game</strong> with a top-down perspective,
+            rendered entirely in the browser with no plugins or downloads required. You start with a bare plot,
+            lay out rooms, place furniture, set up the kitchen, and watch the first customers walk in.</p>
+        <p>The gameplay loop revolves around <strong>growth and creativity</strong>. Grow ingredients in your
+            garden, unlock new recipes, upgrade dishes to improve their quality and appeal, and hire staff whose
+            skills directly affect service speed and customer satisfaction. As revenue comes in, you expand:
+            more rooms, rarer decorations, exotic ingredients.</p>
+        <p>The social dimension is central. You can <strong>visit your friends' restaurants</strong>, see how
+            they have decorated, what dishes they serve, and draw inspiration for your own place. An
+            email-verified account keeps your progress safe, and the game is installable as a PWA so it feels
+            like a native app on any device.</p>
+    </div>
+</section>
+
 <?php include_once(dirname(__DIR__, 3) . '/include/footer.php'); ?>
 
 </body>

@@ -207,6 +207,7 @@ function schema_statements(string $p): array
             `user_id` INT UNSIGNED NOT NULL,
             `course` VARCHAR(30) NOT NULL,
             `questions` TEXT NOT NULL,
+            `lang` CHAR(2) NOT NULL DEFAULT 'en',
             `score` TINYINT UNSIGNED NULL,
             `started_at` DATETIME NOT NULL,
             `submitted_at` DATETIME NULL,
@@ -271,15 +272,17 @@ function schema_statements(string $p): array
             KEY `ix_user` (`user_id`, `seen`),
             CONSTRAINT `fk_{$p}bp_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
-        // code = the public, unguessable reference of certificate.php
+        // code = the public, unguessable reference of certificate.php; lang = the language the course and its exam were taken in:
+        // the same course can be certified once per language
         "CREATE TABLE IF NOT EXISTS `{$p}certificates` (
             `code` CHAR(12) NOT NULL PRIMARY KEY,
             `user_id` INT UNSIGNED NOT NULL,
             `course` VARCHAR(30) NOT NULL,
+            `lang` CHAR(2) NOT NULL DEFAULT 'en',
             `name` VARCHAR(80) NOT NULL,
             `score` TINYINT UNSIGNED NOT NULL,
             `issued_at` DATETIME NOT NULL,
-            UNIQUE KEY `uq_user_course` (`user_id`, `course`),
+            UNIQUE KEY `uq_user_course_lang` (`user_id`, `course`, `lang`),
             CONSTRAINT `fk_{$p}ce_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
         ) $e",
         // Profile pictures for sale: the drawings are in assets/avatars.js, price and sale here (admin portal)
@@ -368,6 +371,19 @@ function install_schema(PDO $pdo, string $prefix): void
     $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}daily_results`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('done_at', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `done_at` DATETIME NULL");
     if (!in_array('seconds', $columns, true)) $pdo->exec("ALTER TABLE `{$prefix}daily_results` ADD COLUMN `seconds` INT UNSIGNED NULL");
+    // Version 22: exams and certificates remember their language. What came before takes the language of its learner.
+    $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}exams`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('lang', $columns, true)) {
+        $pdo->exec("ALTER TABLE `{$prefix}exams` ADD COLUMN `lang` CHAR(2) NOT NULL DEFAULT 'en' AFTER `questions`");
+        $pdo->exec("UPDATE `{$prefix}exams` e JOIN `{$prefix}users` u ON u.id = e.user_id SET e.lang = IF(u.lang = 'it', 'it', 'en')");
+    }
+    $columns = $pdo->query("SHOW COLUMNS FROM `{$prefix}certificates`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('lang', $columns, true)) {
+        $pdo->exec("ALTER TABLE `{$prefix}certificates` ADD COLUMN `lang` CHAR(2) NOT NULL DEFAULT 'en' AFTER `course`");
+        $pdo->exec("UPDATE `{$prefix}certificates` c JOIN `{$prefix}users` u ON u.id = c.user_id SET c.lang = IF(u.lang = 'it', 'it', 'en')");
+        // One statement: the new key covers user_id, so the foreign key always has its index
+        $pdo->exec("ALTER TABLE `{$prefix}certificates` ADD UNIQUE KEY `uq_user_course_lang` (`user_id`, `course`, `lang`), DROP INDEX `uq_user_course`");
+    }
     require_once __DIR__ . '/seed.php';
     // The catalogue of profile pictures: new items arrive with their starting price, existing ones keep what the admin set
     $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}avatar_items` (id, kind, price, enabled, sort) VALUES (?,?,?,1,?)");

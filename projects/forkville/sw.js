@@ -5,9 +5,9 @@
  */
 'use strict';
 
-const CACHE = 'forkville-38';
+const CACHE = 'forkville-43';
 const FILES = ['./', 'assets/app.js', 'assets/scene.js', 'assets/models.js', 'assets/sim.js', 'assets/editor.js', 'assets/i18n.js', 'assets/icons.js', 'assets/thumbs.js', 'assets/audio.js', 'assets/town.js', 'assets/forkville.css',
-    'vendor/three.module.min.js', 'manifest.webmanifest', 'icons/favicon.svg?v=5', 'icons/icon-192.png', 'assets/fonts/stack-sans-notch.ttf', 'privacy.html'];
+    'vendor/three.module.min.js', 'manifest.webmanifest', 'icons/favicon.svg?v=7', 'icons/icon-192.png', 'assets/fonts/stack-sans-notch.ttf', 'privacy.html'];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));

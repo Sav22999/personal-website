@@ -163,18 +163,28 @@ function user_totals(int $uid): array
     [$games, $kinds, $wins] = $one('SELECT COUNT(*), COUNT(DISTINCT game), COALESCE(SUM(won),0) FROM ' . t('game_results') . ' WHERE user_id = ?');
     [$daily, $perfect] = $one('SELECT COUNT(*), COALESCE(SUM(correct = total),0) FROM ' . t('daily_results') . ' WHERE user_id = ?');
     [$drills, $drillsPerfect] = $one('SELECT COUNT(*), COALESCE(SUM(stars = 3),0) FROM ' . t('drill_done') . ' WHERE user_id = ?');
-    [$certs, $bestExam] = $one('SELECT COUNT(*), COALESCE(MAX(score),0) FROM ' . t('certificates') . ' WHERE user_id = ?');
+    // A course certified in two languages is still one course
+    [$certs, $bestExam] = $one('SELECT COUNT(DISTINCT course), COALESCE(MAX(score),0) FROM ' . t('certificates') . ' WHERE user_id = ?');
     return ['lessons' => (int)$lessons, 'stars' => (int)$stars, 'tasks' => (int)$tasks, 'games' => (int)$games, 'gameKinds' => (int)$kinds, 'wins' => (int)$wins,
         'daily' => (int)$daily, 'dailyPerfect' => (int)$perfect, 'certificates' => (int)$certs, 'bestExam' => (int)$bestExam, 'drills' => (int)$drills, 'drillsPerfect' => (int)$drillsPerfect];
 }
 
+/** The certificates of a learner: course => language => certificate (one per language the course was taken in). */
 function user_certificates(int $uid): array
 {
-    $st = db()->prepare('SELECT code, course, name, score, issued_at FROM ' . t('certificates') . ' WHERE user_id = ? ORDER BY issued_at DESC');
+    $st = db()->prepare('SELECT code, course, lang, name, score, issued_at FROM ' . t('certificates') . ' WHERE user_id = ? ORDER BY issued_at DESC');
     $st->execute([$uid]);
     $out = [];
-    foreach ($st->fetchAll() as $c) $out[$c['course']] = ['code' => $c['code'], 'course' => $c['course'], 'name' => $c['name'], 'score' => (int)$c['score'], 'issuedAt' => $c['issued_at']];
+    foreach ($st->fetchAll() as $c) {
+        $out[$c['course']][$c['lang']] = ['code' => $c['code'], 'course' => $c['course'], 'lang' => $c['lang'], 'name' => $c['name'], 'score' => (int)$c['score'], 'issuedAt' => $c['issued_at']];
+    }
     return $out;
+}
+
+/** The certificate of a course in the language in use, or null. */
+function user_certificate(int $uid, string $course): ?array
+{
+    return user_certificates($uid)[$course][lang()] ?? null;
 }
 
 /** Awards the badges just reached and returns them, ready to be celebrated by the app. */
@@ -242,9 +252,12 @@ function courses_summary(int $uid): array
 {
     $done = lesson_rows($uid);
     $certs = user_certificates($uid);
-    $st = db()->prepare('SELECT course, MAX(score) AS best FROM ' . t('exams') . ' WHERE user_id = ? AND score >= ? GROUP BY course');
-    $st->execute([$uid, setting('exam_pass_percent')]);
-    $passed = array_map('intval', array_column($st->fetchAll(), 'best', 'course'));
+    // examScore (any language) opens the next courses; langScore is the exam passed in the language in use, for its certificate
+    $st = db()->prepare('SELECT course, MAX(score) AS best, MAX(IF(lang = ?, score, 0)) AS here FROM ' . t('exams') . ' WHERE user_id = ? AND score >= ? GROUP BY course');
+    $st->execute([lang(), $uid, setting('exam_pass_percent')]);
+    $rows = $st->fetchAll();
+    $passed = array_map('intval', array_column($rows, 'best', 'course'));
+    $passedHere = array_map('intval', array_column($rows, 'here', 'course'));
     $out = [];
     $finished = [];
     foreach (course_ids() as $id) {
@@ -253,7 +266,8 @@ function courses_summary(int $uid): array
         $finished[$id] = isset($passed[$id]) || (count($c['lessons']) > 0 && count($valid) === count($c['lessons']));
         $out[] = [
             'id' => $id, 'title' => pick($c['title']), 'short' => pick($c['short']), 'desc' => pick($c['desc']), 'level' => pick($c['level']), 'family' => $c['family'], 'categories' => $c['categories'],
-            'after' => $c['after'], 'lessons' => count($c['lessons']), 'done' => count($valid), 'stars' => array_sum(array_column($valid, 'stars')), 'certificate' => $certs[$id] ?? null, 'examScore' => $passed[$id] ?? 0,
+            'after' => $c['after'], 'lessons' => count($c['lessons']), 'done' => count($valid), 'stars' => array_sum(array_column($valid, 'stars')), 'certificate' => $certs[$id][lang()] ?? null, 'certificates' => array_values($certs[$id] ?? []),
+            'examScore' => $passed[$id] ?? 0, 'examLangScore' => $passedHere[$id] ?? 0,
         ];
     }
     foreach ($out as &$o) $o['locked'] = !$o['examScore'] && $o['after'] !== null && in_array($o['after'], course_ids(), true) && !$finished[$o['after']];

@@ -1556,6 +1556,19 @@ altcha-widget {
     margin-bottom: 16px;
 }
 
+.screenshot-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin: 20px 0 10px;
+}
+
+.screenshot-label:first-of-type {
+    margin-top: 0;
+}
+
 .screenshot-grid {
     display: flex;
     gap: 16px;

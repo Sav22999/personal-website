@@ -37,8 +37,10 @@ function cert_name_lines(string $name, int $max): array
     return [$px, array_values(array_filter($lines, 'strlen'))];
 }
 
-/** The picture of a certificate: name, course title, family, score, code and date (Y-m-d H:i:s, UTC). */
-function certificate_image(string $name, string $course, string $family, int $score, string $code, string $issued)
+const CERT_LANGUAGES = ['it' => 'Italian', 'en' => 'English'];
+
+/** The picture of a certificate: name, course title, family, score, code, date (Y-m-d H:i:s, UTC) and the language it was taken in. */
+function certificate_image(string $name, string $course, string $family, int $score, string $code, string $issued, string $lang = 'en')
 {
     $img = imagecreatefrompng(__DIR__ . '/certificate/template.png');
     imagealphablending($img, true);
@@ -63,7 +65,8 @@ function certificate_image(string $name, string $course, string $family, int $sc
     imagefilledpolygon($img, [$mid, $y - 11, $mid + 11, $y, $mid, $y + 11, $mid - 11, $y], $gold);
     cert_text($img, 'Gelasio-Regular', 44, $mid, $y + 84, $soft, 'for completing the course and passing its final exam');
     cert_text($img, 'Gelasio-Bold', 88, $mid, $y + 196, $accent, $course);
-    cert_text($img, 'JetBrainsMono-Medium', 32, $mid, $y + 268, $soft, 'Score ' . ($score / 10) . " of 10  ·  No. {$code}");
+    $language = CERT_LANGUAGES[$lang] ?? 'English';
+    cert_text($img, 'JetBrainsMono-Medium', 32, $mid, $y + 268, $soft, 'Score ' . ($score / 10) . " of 10  ·  Taken in {$language}  ·  No. {$code}");
 
     $date = (new DateTimeImmutable($issued, new DateTimeZone('UTC')))->format('j M Y');
     cert_text($img, 'JetBrainsMono-Medium', 46, 530, 1472, $ink, $date);

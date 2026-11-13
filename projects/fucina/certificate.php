@@ -50,7 +50,7 @@ if ($format === 'png' || $format === 'pdf') {
         http_response_code($cert ? 503 : 404);
         exit;
     }
-    $img = certificate_image($cert['name'], $course, (string)$cert['family'], (int)$cert['score'], $cert['code'], $cert['issued_at']);
+    $img = certificate_image($cert['name'], $course, (string)$cert['family'], (int)$cert['score'], $cert['code'], $cert['issued_at'], (string)($cert['lang'] ?? 'en'));
     header('Cache-Control: no-cache');
     $file = 'fucina-certificate-' . $cert['code'];
     if ($format === 'pdf') {

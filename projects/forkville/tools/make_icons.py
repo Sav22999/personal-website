@@ -1,9 +1,9 @@
 """Forkville icons: python3 tools/make_icons.py (needs Pillow and Inkscape).
 
-The logo is icons/favicon.svg: a little restaurant (cream walls, a red-and-cream striped awning, two warm lit windows
-and a wooden door) under a terracotta roof with a golden fork as its spire, glowing on a deep night-violet gradient,
-in the same bold, outline-free style as the other projects' icons. The PNGs are that same SVG rendered by Inkscape
-(the maskable one without the rounded corners and with the drawing scaled into the safe zone).
+The logo is icons/favicon.svg, drawn by tools/icon_svg.py: an isometric low-poly restaurant like the ones in the game
+(striped awnings, lit windows, a round golden sign with a fork on the roof, a terrace table under a parasol) on a
+lawn under a sunny sky. The PNGs are that same SVG rendered by Inkscape (the maskable one without the rounded
+corners and with the drawing scaled into the safe zone).
 """
 import re
 import shutil

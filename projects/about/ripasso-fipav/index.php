@@ -72,6 +72,28 @@ $canonical = '/projects/about/ripasso-fipav/';
     </div>
 </section>
 
+<section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">The idea</h2>
+        <p>Volleyball rules evolve every season: new circulars, updated interpretations, revised case books.
+            For a referee, staying current is not optional &mdash; a wrong call can change the outcome of a
+            match. Yet most study material is scattered across PDFs, printed booklets and informal group chats,
+            with no structured way to test whether you have truly internalised a rule change.</p>
+        <p>Fischietto was created to solve exactly that. It is a <strong>personal, unofficial tool for
+                continuous knowledge maintenance</strong>, designed to keep the FIPAV rulebook fresh in a
+            referee's mind through active recall rather than passive re-reading.</p>
+        <p>The app offers <strong>topic-based quizzes</strong> at different difficulty levels, a
+            <strong>searchable rule reference</strong> that links every article to its official source,
+            downloadable official documents (circulars, guides, case books), and <strong>personal
+                statistics</strong> that highlight your weak spots so you know where to focus next.</p>
+        <p>The centrepiece is the <strong>match simulation</strong>: a mode where you referee a volleyball match
+            in real time, making calls on live-action scenarios and reviewing key moments through video replays.
+            It bridges the gap between studying the rules on paper and applying them under the pressure of a
+            real game, letting referees build confidence and sharpen their decision-making in a safe, repeatable
+            environment.</p>
+    </div>
+</section>
+
 <?php include_once(dirname(__DIR__, 3) . '/include/footer.php'); ?>
 
 </body>

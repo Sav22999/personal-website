@@ -47,6 +47,18 @@ RedirectMatch 404 ^/vendor(/|$)
 # Redirects
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # fucina.saveriomorelli.com shows Fucina (projects/fucina) at the root of its own address,
+    # when the subdomain points to this web space; www.saveriomorelli.com/projects/fucina/ keeps working too
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://fucina.saveriomorelli.com%{REQUEST_URI} [L,R=301]
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{DOCUMENT_ROOT}/projects/fucina/$1 -d
+    RewriteRule ^(.*[^/])$ https://fucina.saveriomorelli.com/$1/ [L,R=301]
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/(projects/fucina|errors)/
+    RewriteRule ^(.*)$ projects/fucina/$1 [L]
     RewriteRule ^contact/?$ /contact-me/ [L,R=301]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^(.*[^/])$ %{REQUEST_URI}/ [L,R=301]

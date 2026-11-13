@@ -56,7 +56,7 @@ function split_host(string $host, int $port = 3306): array
 
 // ---------- Settings of each project (read in function scope: their variables stay here) ----------
 
-/** credentials.php of FoodTrack, Giftwise, Fucina, ThinkHop. */
+/** credentials.php of the apps with accounts (FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, Rendicontazione). */
 function app_credentials(string $dir, string $defaultPrefix): ?array
 {
     static $memo = [];
@@ -139,8 +139,12 @@ function expected_schema(string $dir): ?int
         $src = (string)@file_get_contents(PROJECTS . '/ripasso-fipav/lib/bootstrap.php');
         return preg_match('/\$version\s*>=\s*(\d+)\)\s*return;/', $src, $m) ? (int)$m[1] : null;
     }
-    $src = (string)@file_get_contents(PROJECTS . "/$dir/lib/bootstrap.php");
-    return preg_match('/const\s+SCHEMA_VERSION\s*=\s*(\d+)\s*;/', $src, $m) ? (int)$m[1] : null;
+    // most apps declare it in lib/bootstrap.php, Rendicontazione in lib/schema.php
+    foreach (['bootstrap.php', 'schema.php'] as $file) {
+        $src = (string)@file_get_contents(PROJECTS . "/$dir/lib/$file");
+        if (preg_match('/const\s+SCHEMA_VERSION\s*=\s*(\d+)\s*;/', $src, $m)) return (int)$m[1];
+    }
+    return null;
 }
 
 // ---------- Probes ----------

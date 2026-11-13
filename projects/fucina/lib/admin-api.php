@@ -489,7 +489,7 @@ function admin_route(string $r): void
 
         case 'admin.certificates':
             admin_reader();
-            $rows = db()->query('SELECT c.code, c.course, c.name, c.score, c.issued_at, u.email FROM ' . t('certificates') . ' c JOIN ' . t('users') . ' u ON u.id = c.user_id ORDER BY c.issued_at DESC LIMIT 200')->fetchAll();
+            $rows = db()->query('SELECT c.code, c.course, c.lang, c.name, c.score, c.issued_at, u.email FROM ' . t('certificates') . ' c JOIN ' . t('users') . ' u ON u.id = c.user_id ORDER BY c.issued_at DESC LIMIT 200')->fetchAll();
             send_json(['ok' => true, 'certificates' => $rows]);
 
         case 'admin.certificate.rename':

@@ -1,8 +1,11 @@
 /*
  * Forkville — music and sounds, all synthesized live with Web Audio (no audio files).
  *
- * Music: a gentle loop (electric piano chords, bass, soft drums, a pentatonic melody) that turns calmer at night.
- * Ambience: rain when it rains, a murmur of voices that grows with the customers.
+ * Music: a gentle loop (electric piano chords, bass, soft drums, a pentatonic melody) that turns calmer at night,
+ * with its own feel for each kind of restaurant; it fades right down while the restaurant is closed or the game paused.
+ * Ambience: rain when it rains, a murmur of voices that grows with the guests seated (none when nobody is there), and
+ * the work you can hear only while it is being done: frying and chopping while a chef is cooking, running water while
+ * someone washes up, a broom while someone sweeps. Nobody at work, no sound.
  * Effects: coins, the door bell, frying, plates, sparkles, pops, clicks, the level-up fanfare.
  * Browsers start audio only after a tap: start() is called on the first pointer press.
  */
@@ -16,9 +19,9 @@ const prefs = (() => {
 })();
 
 let ctx = null, master, musicBus, sfxBus, ambBus, noiseBuf;
-let rainGain, crowdGain, crowdFilter;
+let rainGain, crowdGain, crowdFilter, fryGain, waterGain;
 let nextBar = 0, bar = 0, timer = null;
-let night = false;
+let night = false, cooking = 0, sweeping = 0, kind = 'generic', quiet = false;
 
 export const audioPrefs = () => ({...prefs});
 
@@ -74,6 +77,9 @@ export function start() {
     lfoGain.gain.value = 250;
     lfo.connect(lfoGain).connect(crowdFilter.frequency);
     lfo.start();
+    // Frying (crackling high noise) and running water (low rushing noise): their level follows the work being done
+    fryGain = loopNoise(ambBus, 'bandpass', 4200, 0);
+    waterGain = loopNoise(ambBus, 'lowpass', 900, 0);
     nextBar = ctx.currentTime + 0.2;
     timer = setInterval(schedule, 120);
 }
@@ -99,46 +105,86 @@ function loopNoise(dest, type, freq, gain) {
     return g;
 }
 
-/** Weather, time of day and how busy the room is (called a few times a second). */
-export function setAmbience({rain = false, snow = false, guests = 0, isNight = false}) {
+/**
+ * Weather, time of day, how busy the room is and who is working right now (called twice a second): cooks = chefs at
+ * the stove this moment, washers = people at a sink, sweepers = people with a broom or a mop; open = guests welcome;
+ * paused = the game clock stopped.
+ */
+export function setAmbience({rain = false, snow = false, guests = 0, isNight = false, cooks = 0, washers = 0, sweepers = 0, open = true, paused = false, restaurantKind = 'generic'}) {
     if (!ctx) return;
     night = isNight;
-    rainGain.gain.setTargetAtTime(rain ? 0.22 : snow ? 0.03 : 0, ctx.currentTime, 1.2);
-    crowdGain.gain.setTargetAtTime(Math.min(0.18, guests * 0.025), ctx.currentTime, 1.5);
+    cooking = paused ? 0 : cooks;
+    sweeping = paused ? 0 : sweepers;
+    kind = SONGS[restaurantKind] ? restaurantKind : 'generic';
+    const t = ctx.currentTime;
+    rainGain.gain.setTargetAtTime(rain ? 0.22 : snow ? 0.03 : 0, t, 1.2);
+    crowdGain.gain.setTargetAtTime(paused ? 0 : Math.min(0.18, guests * 0.025), t, 1.5);
+    fryGain.gain.setTargetAtTime(cooking ? Math.min(0.09, 0.035 + cooking * 0.02) : 0, t, cooking ? 0.25 : 0.4);
+    waterGain.gain.setTargetAtTime(!paused && washers ? Math.min(0.12, 0.06 + washers * 0.03) : 0, t, 0.3);
+    // Closed, or paused: the music almost stops (a few soft notes), so the quiet is clear
+    quiet = !open || paused;
+    if (prefs.music) musicBus.gain.setTargetAtTime(quiet ? 0.07 : 0.32, t, 1.5);
 }
 
 // ---------------------------------------------------------------- music
 
 const DAY = {tempo: 98, chords: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 65]]};   // Cmaj7 Am7 Fmaj7 G7
 const NIGHT = {tempo: 74, chords: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 59], [52, 55, 59, 62]]};  // Am7 Fmaj7 Cmaj7 Em7
+/** Each kind of restaurant has its own day song: a bistro swings, fast food bounces, an inn is folky, luxury is slow. */
+const SONGS = {
+    generic: DAY,
+    fast_food: {tempo: 118, chords: [[60, 64, 67, 72], [65, 69, 72, 77], [67, 71, 74, 79], [65, 69, 72, 77]], drums: 'busy'},   // C F G F
+    cafe: {tempo: 88, chords: [[62, 65, 69, 72], [55, 59, 62, 65], [60, 64, 67, 71], [57, 60, 64, 67]], drums: 'brush'},      // Dm7 G7 Cmaj7 Am7
+    inn: {tempo: 92, chords: [[55, 59, 62, 67], [60, 64, 67, 72], [62, 66, 69, 74], [55, 59, 62, 67]], drums: 'folk'},       // G C D G
+    luxury: {tempo: 70, chords: [[60, 64, 67, 71], [62, 65, 69, 72], [64, 67, 71, 74], [57, 60, 64, 67]], drums: 'none'},      // Cmaj7 Dm7 Em7 Am7
+};
 const PENTA = [0, 2, 4, 7, 9];
 const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 function schedule() {
     if (!ctx || ctx.state !== 'running') return;
+    workSounds();
     while (nextBar < ctx.currentTime + 0.6) {
         playBar(nextBar);
-        const song = night ? NIGHT : DAY;
+        const song = night ? NIGHT : SONGS[kind];
         nextBar += 4 * 60 / song.tempo;
         bar++;
     }
 }
 
+/** Short sounds of the work going on (every 120 ms): knife taps on the board while cooking, broom swishes while sweeping. */
+function workSounds() {
+    if (!prefs.sfx) return;
+    const t = ctx.currentTime + 0.02;
+    if (cooking && Math.random() < 0.22 * Math.min(2, cooking)) // chopping: two or three quick taps
+        for (let i = 0, n = 2 + Math.floor(Math.random() * 2); i < n; i++) noise(t + i * 0.11, 0.025, 'bandpass', 2400 + Math.random() * 600, 0.05, ambBus, 3);
+    if (cooking && Math.random() < 0.08) noise(t, 0.18, 'highpass', 5200, 0.03, ambBus, 1); // a pop of hot oil
+    if (sweeping && Math.random() < 0.18 * Math.min(2, sweeping)) noise(t, 0.28, 'bandpass', 1500 + Math.random() * 500, 0.045, ambBus, 0.8);
+}
+
 function playBar(t0) {
-    const song = night ? NIGHT : DAY;
+    const song = night ? NIGHT : SONGS[kind];
     const beat = 60 / song.tempo;
     const chord = song.chords[bar % 4];
+    if (quiet) { // closed or paused: one soft chord, nothing else
+        for (const m of chord) epiano(hz(m), t0, beat * 3.5, 0.03);
+        return;
+    }
     // Electric piano: chord on beats 1 and 3 (softly offbeat at night)
     for (const b of night ? [0, 2.5] : [0, 1.5, 2, 3.5]) for (const m of chord) epiano(hz(m), t0 + b * beat, beat * (night ? 1.6 : 0.9), 0.05);
     // Bass: root and fifth
     const root = chord[0] - 24;
     [[0, root], [2, root + 7], [3, root + (bar % 2 ? 5 : 7)]].forEach(([b, m]) => bass(hz(m), t0 + b * beat, beat * 0.9));
-    // Drums: soft kick, brushed hats (only by day)
-    if (!night) {
+    // Drums: soft kick, brushed hats (only by day); each kind of restaurant has its own groove
+    const groove = night ? 'night' : song.drums || 'soft';
+    if (groove === 'soft' || groove === 'busy' || groove === 'folk') {
         kick(t0);
         kick(t0 + 2 * beat);
-        for (let i = 0; i < 8; i++) hat(t0 + i * beat / 2, i % 2 ? 0.025 : 0.04);
-    } else hat(t0 + 1 * beat, 0.02);
+        if (groove === 'busy') kick(t0 + 2.5 * beat);
+        for (let i = 0; i < 8; i++) hat(t0 + i * beat / 2, i % 2 ? (groove === 'busy' ? 0.035 : 0.025) : 0.04);
+        if (groove === 'folk') for (const b of [1, 3]) noise(t0 + b * beat, 0.08, 'bandpass', 1800, 0.05, musicBus, 1.2); // a clap
+    } else if (groove === 'brush') for (let i = 0; i < 4; i++) noise(t0 + i * beat, 0.18, 'bandpass', 5000, 0.018, musicBus, 0.7);
+    else if (groove === 'night') hat(t0 + 1 * beat, 0.02);
     // A little melody: notes of the pentatonic scale, seeded by the bar so it repeats every 8 bars
     const seed = bar % 8;
     for (let i = 0; i < (night ? 3 : 5); i++) {
@@ -236,6 +282,12 @@ export const sfx = {
         if (!ready()) return;
         const t = now();
         for (let i = 0; i < 6; i++) noise(t + i * 0.09 + Math.random() * 0.05, 0.12, 'bandpass', 3500 + Math.random() * 2000, 0.05, sfxBus, 2);
+    },
+    ding() { // the dish lift sets off
+        if (!ready()) return;
+        const t = now();
+        osc('sine', 1318, t, 0.5, 0.05, sfxBus, 0.002);
+        osc('sine', 1046, t + 0.12, 0.6, 0.045, sfxBus, 0.002);
     },
     clink() { // a plate on the table
         if (!ready()) return;

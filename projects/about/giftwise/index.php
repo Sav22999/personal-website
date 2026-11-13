@@ -71,6 +71,28 @@ $canonical = '/projects/about/giftwise/';
     </div>
 </section>
 
+<section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">The idea</h2>
+        <p>Gift-giving should feel thoughtful, not frantic. Yet most wish-list apps treat it as a last-minute
+            exercise: a birthday approaches, you scramble to fill a list, and your friends end up buying generic
+            items you barely remember adding. Giftwise flips that model on its head.</p>
+        <p>The core principle is <strong>year-round wish accumulation</strong>. Whenever you spot something you
+            would like &mdash; walking past a shop, browsing online, chatting with a friend &mdash; you add it
+            to Giftwise straight away. Over months, the list fills organically with things you genuinely want,
+            rather than things you rushed to think of the week before your birthday.</p>
+        <p>On the other side, your followers can browse your wishes at any time. They <strong>claim an item</strong>
+            so that others know it is taken, <strong>chip in together</strong> on expensive gifts, and discuss
+            ideas in a <strong>private chat thread that the list owner never sees</strong>. The surprise stays
+            intact: you know <em>something</em> from your list is coming, but you never know <em>what</em> or
+            <em>from whom</em>.</p>
+        <p>The design goal was to keep the flow as lightweight as possible. Creating a list takes seconds, sharing
+            it is a single link, and followers do not need an account to view &mdash; only to claim or chat. The
+            result is a small, focused tool that sits quietly in the background all year and comes alive whenever
+            an occasion arrives.</p>
+    </div>
+</section>
+
 <?php include_once(dirname(__DIR__, 3) . '/include/footer.php'); ?>
 
 </body>

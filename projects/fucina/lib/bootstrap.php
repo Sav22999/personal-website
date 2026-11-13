@@ -11,7 +11,7 @@ require_once __DIR__ . '/push.php';
 
 const APP_NAME = 'Fucina';
 const AUTH_COOKIE = 'fucina_auth';
-const SCHEMA_VERSION = 21;
+const SCHEMA_VERSION = 22;
 const APP_TIMEZONE = 'Europe/Rome'; // the "day" of streaks and daily challenges
 date_default_timezone_set(APP_TIMEZONE);
 
@@ -110,13 +110,21 @@ function client_ip(): string
     return substr((string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'), 0, 45);
 }
 
-/** Folder of the app (e.g. "/projects/fucina/"), used as the cookie path. */
+/**
+ * Folder of the app as the browser sees it, used as the cookie path and in the links of emails:
+ * "/projects/fucina/" on www.saveriomorelli.com, "/" on fucina.saveriomorelli.com (rewritten to the same folder).
+ */
 function app_base_path(): string
 {
-    $dir = dirname(str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? '/')));
+    $script = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? '/'));
+    $dir = dirname($script);
     if (basename($dir) === 'api') $dir = dirname($dir);
-    $dir = rtrim($dir, '/');
-    return $dir === '' ? '/' : $dir . '/';
+    $dir = rtrim($dir, '/') . '/';
+    // The script relative to the app (e.g. "api/index.php"): what comes before it in the address is the base
+    $rel = substr($script, strlen($dir));
+    $uri = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+    if ($rel !== '' && $uri !== '' && str_ends_with($uri, '/' . $rel)) return substr($uri, 0, -strlen($rel));
+    return $dir;
 }
 
 // ---------- JSON helpers ----------

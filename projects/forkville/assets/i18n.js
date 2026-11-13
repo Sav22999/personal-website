@@ -59,7 +59,7 @@ const STRINGS = {
         act_greet: 'A warm welcome!', act_joke_ok: 'They loved the joke!', act_joke_bad: 'That joke fell flat…', act_dessert: 'A sweet on the house!', act_cheer: 'Full of energy again!', act_break: 'Off for a break as soon as possible.',
         act_praise: 'They beam with pride!', act_clean: 'Spotless!', act_music: 'Music fills the room', act_fun: 'Something to watch while waiting', act_cozy: 'A cozy fire is crackling', act_water: 'The plant perks up',
         status_open: 'Open', status_paused: 'No new guests', status_closed: 'Closed', status_title: 'Restaurant status', closed_status: 'Closed', paused_status: 'Not taking new guests · {n} inside',
-        speed_pause: 'Pause', speed_1: 'Real time (×1)', speed_2: 'Fast (×2)', speed_3: 'Very fast (×5)',
+        speed_pause: 'Pause', speed_1: 'Normal (×1)', speed_2: 'Fast (×2)',
         season_spring: 'Spring', season_summer: 'Summer', season_autumn: 'Autumn', season_winter: 'Winter',
         weather_clear: 'Clear', weather_cloudy: 'Cloudy', weather_rain: 'Rain', weather_snow: 'Snow',
         dock_reviews: 'Reviews', reviews_title: 'Reviews', reputation: 'Reputation', reviews_window: 'Average of the last {n} reviews', reviews_none: 'No reviews yet: serve some customers!',
@@ -174,7 +174,7 @@ const STRINGS = {
         act_greet: 'Un caloroso benvenuto!', act_joke_ok: 'La barzelletta è piaciuta!', act_joke_bad: 'La barzelletta non ha fatto ridere…', act_dessert: 'Un dolcetto offerto dalla casa!', act_cheer: 'Di nuovo pieno di energia!', act_break: 'Andrà in pausa appena possibile.',
         act_praise: 'Raggiante di orgoglio!', act_clean: 'Splendente!', act_music: 'La musica riempie la sala', act_fun: 'Qualcosa da guardare nell’attesa', act_cozy: 'Il camino scoppietta', act_water: 'La pianta si rianima',
         status_open: 'Aperto', status_paused: 'Niente nuovi clienti', status_closed: 'Chiuso', status_title: 'Stato del ristorante', closed_status: 'Chiuso', paused_status: 'Non accetta nuovi clienti · {n} in sala',
-        speed_pause: 'Pausa', speed_1: 'Tempo reale (×1)', speed_2: 'Veloce (×2)', speed_3: 'Velocissimo (×5)',
+        speed_pause: 'Pausa', speed_1: 'Normale (×1)', speed_2: 'Veloce (×2)',
         season_spring: 'Primavera', season_summer: 'Estate', season_autumn: 'Autunno', season_winter: 'Inverno',
         weather_clear: 'Sereno', weather_cloudy: 'Nuvoloso', weather_rain: 'Pioggia', weather_snow: 'Neve',
         dock_reviews: 'Recensioni', reviews_title: 'Recensioni', reputation: 'Reputazione', reviews_window: 'Media delle ultime {n} recensioni', reviews_none: 'Ancora nessuna recensione: servi qualche cliente!',
@@ -698,3 +698,17 @@ Object.assign(STRINGS.en, {stairs_exit: 'the top end needs a free tile on the fl
 Object.assign(STRINGS.it, {stairs_exit: 'in cima serve una casella libera al piano di sopra', err_stairs_exit: 'Le scale hanno bisogno di una casella libera dove arrivano al piano di sopra.'});
 Object.assign(NAMES.en, {dish_lift: 'Dish lift'});
 Object.assign(NAMES.it, {dish_lift: 'Montavivande'});
+Object.assign(STRINGS.en, {zone_label: 'Works on', zone_auto: 'Automatic (shared out)', zone_all: 'Everything', zone_floor: 'Floor {f} only', zone_tables: 'Chosen tables…', zone_set: '{n}: new area of work', zone_one_table: 'Keep at least one table.', table_n: 'Table {n}'});
+Object.assign(STRINGS.it, {zone_label: 'Lavora su', zone_auto: 'Automatico (suddiviso)', zone_all: 'Tutto', zone_floor: 'Solo piano {f}', zone_tables: 'Tavoli scelti…', zone_set: '{n}: nuova zona di lavoro', zone_one_table: 'Lascia almeno un tavolo.', table_n: 'Tavolo {n}'});
+Object.assign(STRINGS.en, {dishlift_alone: 'A dish lift has no twin on another floor: put one in the same place on each floor it should reach.'});
+Object.assign(STRINGS.it, {dishlift_alone: 'Un montavivande non ha un gemello su un altro piano: mettine uno nella stessa posizione su ogni piano da collegare.'});
+Object.assign(STRINGS.en, {hours_title: 'Opening hours', hours_manual: 'By hand', hours_timer: 'Open for…', hours_schedule: 'Schedule', hours_for: 'Open for', hours_n: '{n} hours',
+    hours_left: '{t} left', hours_timer_hint: 'starts when you open', hours_from: 'from', hours_to: 'to', hours_note: 'At closing time no new guests come in; once the last one has left, the restaurant closes.',
+    hours_opened: 'Opening time: the restaurant is open.', hours_last_guests: 'Closing time: no new guests, the last ones are finishing.', hours_closed: 'The last guests have left: closed.', span_hm: '{h} h {m} min', span_m: '{m} min'});
+Object.assign(STRINGS.it, {hours_title: 'Orario', hours_manual: 'A mano', hours_timer: 'Aperto per…', hours_schedule: 'Orario fisso', hours_for: 'Aperto per', hours_n: '{n} ore',
+    hours_left: 'mancano {t}', hours_timer_hint: 'parte quando apri', hours_from: 'dalle', hours_to: 'alle', hours_note: 'All’ora di chiusura non entrano nuovi clienti; uscito l’ultimo, il ristorante chiude.',
+    hours_opened: 'È ora di aprire: il ristorante è aperto.', hours_last_guests: 'È ora di chiudere: niente nuovi clienti, gli ultimi stanno finendo.', hours_closed: 'Sono usciti gli ultimi clienti: chiuso.', span_hm: '{h} h {m} min', span_m: '{m} min'});
+Object.assign(STRINGS.en, {rating_window: 'average of the last {n} guests', not_rated: 'new'});
+Object.assign(STRINGS.it, {rating_window: 'media degli ultimi {n} clienti', not_rated: 'nuovo'});
+Object.assign(STRINGS.en, {quality_title: 'Graphics', quality_low: 'Low', quality_medium: 'Medium', quality_high: 'High', quality_low_d: 'Only the restaurant: the lightest', quality_medium_d: 'Also some houses around, fewer cars', quality_high_d: 'Everything: houses, streets, cars and people everywhere'});
+Object.assign(STRINGS.it, {quality_title: 'Grafica', quality_low: 'Bassa', quality_medium: 'Media', quality_high: 'Alta', quality_low_d: 'Solo il ristorante: la più leggera', quality_medium_d: 'Anche qualche casa intorno, meno auto', quality_high_d: 'Tutto: case, strade, auto e pedoni ovunque'});

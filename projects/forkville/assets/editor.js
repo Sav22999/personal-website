@@ -315,9 +315,12 @@ export class Editor {
         if (!existing && isWin && !last) Object.assign(it, {x: rect.x0 + Math.max(0, Math.floor((rect.w - this.catalog.items[key].w) / 2)), z: 0, r: 0}); // starts on the back wall
         if (!existing && this.level) it.f = this.level;
         if (!existing && fromStorage) it.st = true; // taken out of storage: free
+        // Moving a table takes along the chairs turned towards it (moving a chair moves only the chair)
+        const attached = existing && this.catalog.items[key].cat === 'table' ? this.chairsOf(existing) : [];
         if (existing) {
-            this.draft = this.draft.filter(d => d.id !== existing.id);
+            this.draft = this.draft.filter(d => d.id !== existing.id && !attached.includes(d));
             this.world.removeItem(existing.id);
+            for (const c of attached) this.world.removeItem(c.id);
         }
         const ghost = furnitureModel(it.k);
         const arrow = useArrow(this.catalog.items[it.k]);
@@ -331,7 +334,13 @@ export class Editor {
             }
         });
         this.world.root.add(ghost);
-        this.placing = {it, ghost, moving: existing ? {...existing} : null};
+        this.placing = {it, ghost, moving: existing ? {...existing} : null, attached: attached.map(c => {
+            const g = this.ghostOf(c.k);
+            this.world.root.add(g);
+            const tf = this.world.footprint(existing, this.catalog.items);
+            // Where the chair sits, from the middle of the table (turned with it)
+            return {orig: {...c}, it: {...c}, ghost: g, cx: c.x + 0.5 - (existing.x + tf.w / 2), cz: c.z + 0.5 - (existing.z + tf.d / 2), r0: existing.r};
+        })};
         this.updateGhost();
         this.hooks.changed();
     }
@@ -340,10 +349,15 @@ export class Editor {
         if (!this.placing) return;
         const p = this.placing;
         this.world.root.remove(p.ghost);
+        for (const c of p.attached || []) this.world.root.remove(c.ghost);
         this.marks.clear();
-        if (p.moving) { // put the piece back where it was
+        if (p.moving) { // put the piece back where it was (with its chairs)
             this.draft.push(p.moving);
             this.world.addItem(p.moving);
+            for (const c of p.attached || []) {
+                this.draft.push(c.orig);
+                this.world.addItem(c.orig);
+            }
         }
         this.placing = null;
         this.hooks.changed();
@@ -355,10 +369,29 @@ export class Editor {
         this.world.placeObject(p.ghost, p.it, this.catalog.items);
         p.ghost.position.y = (p.it.f || 0) * FH + 0.04;
         this.marks.clear();
-        const ok = this.fits(p.it);
+        let ok = this.fits(p.it);
+        // The chairs that come with a table: placed around it as they were (turned with it), all must fit too
+        if (p.attached?.length) {
+            const used = new Set(this.world.footprint(p.it, this.catalog.items).tiles.map(([x, z]) => x + ',' + z));
+            const tf = this.world.footprint(p.it, this.catalog.items);
+            for (const c of p.attached) {
+                let cx = c.cx, cz = c.cz, cr = c.orig.r;
+                for (let k = 0; k < ((p.it.r - c.r0) + 4) % 4; k++) [cx, cz, cr] = [cz, -cx, (cr + 1) % 4];
+                Object.assign(c.it, {x: Math.round(p.it.x + tf.w / 2 + cx - 0.5), z: Math.round(p.it.z + tf.d / 2 + cz - 0.5), r: cr, f: p.it.f});
+                if (!c.it.f) delete c.it.f;
+                this.world.placeObject(c.ghost, c.it, this.catalog.items);
+                c.ghost.position.y = (c.it.f || 0) * FH + 0.04;
+                const key = c.it.x + ',' + c.it.z, fit = this.fits(c.it) && !used.has(key);
+                used.add(key);
+                if (!fit) ok = false;
+                this.marks.add(this.tileMark(c.it.x, c.it.z, fit ? '#9ED27F' : '#E04F4F', 0.35));
+            }
+        }
         for (const [x, z] of this.world.footprint(p.it, this.catalog.items).tiles) this.marks.add(this.tileMark(x, z, ok ? '#6BBF59' : '#E04F4F'));
         p.ok = ok;
         p.reason = ok ? null : this.reason;
+        // A dish lift: where the other floors have theirs (put it in the same place to join them)
+        if (p.it.k === 'dish_lift') for (const o of this.draft) if (o.k === 'dish_lift' && (o.f || 0) !== this.level) this.marks.add(this.tileMark(o.x, o.z, '#7FC4D9', 0.45));
         // Stairs and lifts: show where the floor above is (they must stand under it)
         if (this.catalog.items[p.it.k].cat === 'stairs') {
             const up = this.world.floorRect(this.level + 1);
@@ -373,9 +406,26 @@ export class Editor {
         } else if (this.selected) {
             const it = this.selected;
             const next = {...it, r: (it.r + dir + 4) % 4};
-            if (!this.fits(next)) return this.hooks.toast?.('no_room');
+            // A table turns with its chairs: they go round it, each still facing it
+            const chairs = this.catalog.items[it.k].cat === 'table' ? this.chairsOf(it) : [];
+            const moved = chairs.length ? this.turnChairs(it, next, chairs) : [];
+            const others = this.draft;
+            this.draft = this.draft.filter(d => !chairs.includes(d) && d !== it); // the table and its chairs do not block each other
+            const used = new Set(this.world.footprint(next, this.catalog.items).tiles.map(([x, z]) => x + ',' + z));
+            let ok = this.fits(next);
+            for (const c of moved) {
+                const key = c.x + ',' + c.z;
+                if (!ok || used.has(key) || !this.fits(c)) ok = false;
+                used.add(key);
+            }
+            this.draft = others;
+            if (!ok) return this.hooks.toast?.('no_room');
             it.r = next.r;
             this.world.placeObject(this.world.items.get(it.id), it, this.catalog.items);
+            chairs.forEach((c, k) => {
+                Object.assign(c, {x: moved[k].x, z: moved[k].z, r: moved[k].r});
+                this.world.placeObject(this.world.items.get(c.id), c, this.catalog.items);
+            });
             this.highlight();
         }
         this.hooks.changed();
@@ -455,6 +505,12 @@ export class Editor {
         this.draft.push(it);
         this.world.addItem(it);
         this.world.root.remove(p.ghost);
+        for (const c of p.attached || []) { // the table's chairs land around it
+            const ch = {...c.it};
+            this.draft.push(ch);
+            this.world.addItem(ch);
+            this.world.root.remove(c.ghost);
+        }
         this.marks.clear();
         this.placing = null;
         this.hooks.placed?.(it);
@@ -464,6 +520,41 @@ export class Editor {
         else if (!p.moving && !it.st && this.repeatFor(cat) && this.cost().net + this.catalog.items[it.k].price <= this.hooks.coins()) this.startPlacing(it.k, null, it.r);
         else this.select(it);
         this.hooks.changed();
+    }
+
+    /**
+     * Where a table's chairs go when the table turns from `from` to `to` (a quarter turn each step, round the table's
+     * middle): copies of the chairs with their new x, z and r.
+     */
+    turnChairs(from, to, chairs) {
+        const f0 = this.world.footprint(from, this.catalog.items), f1 = this.world.footprint(to, this.catalog.items);
+        const steps = ((to.r - from.r) + 4) % 4;
+        return chairs.map(c => {
+            let cx = c.x + 0.5 - (from.x + f0.w / 2), cz = c.z + 0.5 - (from.z + f0.d / 2), cr = c.r;
+            for (let k = 0; k < steps; k++) [cx, cz, cr] = [cz, -cx, (cr + 1) % 4];
+            return {...c, x: Math.round(to.x + f1.w / 2 + cx - 0.5), z: Math.round(to.z + f1.d / 2 + cz - 0.5), r: cr};
+        });
+    }
+
+    /** The chairs turned towards a table (on its floor): they move with it. */
+    chairsOf(table) {
+        const tiles = new Set(this.world.footprint(table, this.catalog.items).tiles.map(([x, z]) => x + ',' + z));
+        const D4 = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+        return this.draft.filter(c => this.catalog.items[c.k]?.cat === 'chair' && (c.f || 0) === (table.f || 0) && tiles.has((c.x + D4[c.r][0]) + ',' + (c.z + D4[c.r][1])));
+    }
+
+    /** A see-through copy of a piece, for placing. */
+    ghostOf(key) {
+        const g = furnitureModel(key);
+        g.traverse(o => {
+            if (o.isMesh) {
+                o.material = o.material.clone();
+                o.material.transparent = true;
+                o.material.opacity = 0.6;
+                o.castShadow = false;
+            }
+        });
+        return g;
     }
 
     /** A copy of the selected piece, to be placed (same turn). */

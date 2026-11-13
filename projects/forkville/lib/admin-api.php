@@ -75,7 +75,7 @@ function admin_user_detail(int $id): array
         'user' => admin_user_row($u),
         'restaurant' => $r ? [
             'name' => $r['name'], 'coins' => $r['coins'], 'xp' => $r['xp'], 'level' => $r['level'], 'size' => $r['size'] . '×' . $r['depth'], 'popularity' => $r['popularity'],
-            'stars' => stars_for($r['popularity']), 'served' => $r['served_total'], 'items' => count($r['layout']), 'staff' => $r['staff'], 'menu' => $r['menu'],
+            'stars' => rating_stars((int)$r['rating_sum'], (int)$r['rating_n']), 'served' => $r['served_total'], 'items' => count($r['layout']), 'staff' => $r['staff'], 'menu' => $r['menu'],
             'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null, 'friendRating' => $r['friend_n'] ? round($r['friend_sum'] / $r['friend_n'], 2) : null,
             'createdAt' => $r['created_at'], 'lastSeen' => $r['last_seen_at'],
         ] : null,

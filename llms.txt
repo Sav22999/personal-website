@@ -25,6 +25,7 @@ Saverio Morelli is a frontend developer and UX designer based in Italy. He build
 - [LetterHop](https://www.saveriomorelli.com/projects/letterhop/): Free word ladder game in the browser: go from one word to another changing one letter at a time. Three levels, words of 5 or 6 letters, dictionaries in five languages, and the fewer words you use, the more points you get. Built with Claude AI.
 - [ThinkHop](https://www.saveriomorelli.com/projects/thinkhop/): Free logic game in the browser: liars, treasure chests, mini sudoku, absurd reasoning and traps across 500 levels, with a daily ranking and friends. Five languages, works offline. Built with Claude AI.
 - [Forkville](https://www.saveriomorelli.com/projects/forkville/): Free 3D restaurant game in the browser: build and decorate your restaurant, hire chefs and waiters, grow ingredients, improve your dishes, visit friends and climb the weekly ranking. Italian and English. Built with Claude AI.
+- [MyCurriculum](https://www.saveriomorelli.com/projects/mycurriculum/): Free CV builder: write your CV in several languages, choose among four templates, download each language as a PDF and share it as a web page with a language menu. Import an existing CV from a PDF. Italian and English interface. Built with Claude AI.
 - [HTML per tutti](https://www.saveriomorelli.com/htmlpertutti/): A book to learn HTML from scratch, written in Italian. Available on Amazon.
 
 ## Links

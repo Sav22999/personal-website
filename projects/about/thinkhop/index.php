@@ -67,8 +67,42 @@ $canonical = '/projects/about/thinkhop/';
                     </svg>
                     Play
                 </a>
+                <a href="https://play.google.com/store/apps/details?id=com.saverio.thinkhop" target="_blank"
+                   rel="noopener" class="book-btn book-btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Google Play
+                </a>
             </div>
         </div>
+    </div>
+</section>
+
+<section class="section" style="padding-top: 0;">
+    <div class="addon-timeline">
+        <h2 class="addon-timeline-title">The idea</h2>
+        <p>Most brain-training games rely on speed: tap faster, match quicker, beat the clock. ThinkHop takes
+            the opposite approach. It is a <strong>&ldquo;non-sense&rdquo; logic game</strong> &mdash; a
+            collection of puzzles where the answer is never obvious, the rules bend from level to level, and
+            rushing guarantees a wrong answer.</p>
+        <p>The idea was to create a game that <strong>trains reasoning, not reflexes</strong>. Each level is a
+            self-contained riddle drawn from a rotating mix of categories: liar-and-truth-teller puzzles where
+            you must figure out who is lying, treasure-chest deduction where clues narrow down the right box,
+            mini sudoku grids, absurd lateral-thinking challenges, and traps specifically designed to punish
+            impulsive answers. The variety keeps the brain engaged because you can never settle into a single
+            solving strategy.</p>
+        <p>Levels are grouped into themed <strong>worlds</strong> that unlock progressively, giving a sense
+            of journey. A <strong>daily challenge</strong> adds a competitive edge: every player gets the same
+            puzzle each day, and the shared leaderboard rewards both speed and accuracy. You can pick a username
+            and add friends to compare progress, but no sign-up is required to play &mdash; the barrier to entry
+            is deliberately zero.</p>
+        <p>The game is available in five languages and works offline as a PWA, making it the kind of pocket
+            puzzle you can pull out on a commute, in a waiting room, or whenever you have a few minutes to
+            give your mind a proper workout.</p>
     </div>
 </section>
 

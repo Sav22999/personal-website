@@ -37,6 +37,13 @@ const box = (w, h, d, color, x, y, z, o) => mesh(new THREE.BoxGeometry(w, h, d),
 const cyl = (rt, rb, h, color, x, y, z, seg = 14, o) => mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(color, o), x, y + h / 2, z);
 const ball = (r, color, x, y, z, o, seg = 10) => mesh(new THREE.SphereGeometry(r, seg, Math.max(6, seg - 3)), mat(color, o), x, y, z);
 
+/** A rim around a basin: a flat ring of stone at height y (water sits just inside it, never level with a top). */
+function ring(r, t, color, y) {
+    const m = mesh(new THREE.TorusGeometry(r, t, 6, 28), mat(color), 0, y, 0);
+    m.rotation.x = Math.PI / 2;
+    return m;
+}
+
 function group(...children) {
     const g = new THREE.Group();
     children.flat().forEach(c => c && g.add(c));
@@ -118,8 +125,8 @@ const FURNITURE = {
         });
         return g;
     },
-    fountain: () => group(cyl(0.46, 0.48, 0.25, '#E6E0D6', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.24, 0, 18, {opacity: 0.7, roughness: 0.1}),
-        cyl(0.08, 0.1, 0.55, '#E6E0D6', 0, 0.25, 0, 10), cyl(0.24, 0.12, 0.1, '#E6E0D6', 0, 0.8, 0, 14), cyl(0.2, 0.2, 0.02, PALETTE.water, 0, 0.89, 0, 14, {opacity: 0.7}),
+    fountain: () => group(cyl(0.46, 0.48, 0.25, '#E6E0D6', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.262, 0, 18, {opacity: 0.85, roughness: 0.1}), ring(0.43, 0.04, '#E6E0D6', 0.3),
+        cyl(0.08, 0.1, 0.55, '#E6E0D6', 0, 0.25, 0, 10), cyl(0.24, 0.12, 0.1, '#E6E0D6', 0, 0.8, 0, 14), cyl(0.2, 0.2, 0.02, PALETTE.water, 0, 0.905, 0, 14, {opacity: 0.85}),
         ball(0.07, PALETTE.water, 0, 1.0, 0, {opacity: 0.8})),
     statue_fork: () => group(box(0.6, 0.5, 0.6, '#E6E0D6', 0, 0, 0), box(0.66, 0.06, 0.66, '#D6CFC2', 0, 0.5, 0), forkMesh(PALETTE.gold, 1.2).translateY(0.56)),
     clock_tall: () => group(box(0.5, 1.9, 0.36, PALETTE.woodDark, 0, 0, -0.2), cyl(0.18, 0.18, 0.03, PALETTE.cream, 0, 1.45, -0.01, 18).rotateX(Math.PI / 2),
@@ -462,7 +469,7 @@ Object.assign(FURNITURE, {
         box(0.45, 0.04, 0.04, '#D7263D', -0.05, 0.42, 0.12)),
     gnome: () => group(cyl(0.12, 0.15, 0.3, '#3E7CB4', 0, 0, 0, 10), ball(0.11, PALETTE.skin[0], 0, 0.38, 0, {flat: false}, 10), mesh(new THREE.ConeGeometry(0.12, 0.3, 10), mat('#D7263D'), 0, 0.58, 0),
         mesh(new THREE.ConeGeometry(0.09, 0.16, 8), mat('#FFFFFF'), 0, 0.27, 0.08).rotateX(Math.PI)),
-    garden_fountain: () => group(cyl(0.46, 0.5, 0.35, '#B8B0A2', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.34, 0, 18, {opacity: 0.75, roughness: 0.05}),
+    garden_fountain: () => group(cyl(0.46, 0.5, 0.35, '#B8B0A2', 0, 0, 0, 18), cyl(0.4, 0.4, 0.02, PALETTE.water, 0, 0.362, 0, 18, {opacity: 0.85, roughness: 0.05}), ring(0.43, 0.045, '#B8B0A2', 0.4),
         cyl(0.07, 0.09, 0.6, '#B8B0A2', 0, 0.35, 0, 10), cyl(0.22, 0.1, 0.12, '#B8B0A2', 0, 0.95, 0, 14), ball(0.12, '#B8B0A2', 0, 1.15, 0, {flat: false}),
         ball(0.05, PALETTE.water, 0.12, 1.0, 0, {opacity: 0.8}), ball(0.05, PALETTE.water, -0.12, 1.0, 0, {opacity: 0.8})),
     food_truck: () => {
@@ -1115,12 +1122,12 @@ Object.assign(FURNITURE, {
     // ---- outdoor: garden
     flower_bed: () => group(box(1.9, 0.25, 0.9, '#9C6B3F', 0, 0, 0), box(1.82, 0.05, 0.82, '#6B4A33', 0, 0.22, 0), ...Array.from({length: 24}, (_, i) => group(cyl(0.008, 0.008, 0.2, '#3F7A2E', -0.8 + (i % 8) * 0.23, 0.25, -0.3 + Math.floor(i / 8) * 0.3, 4),
         ball(0.06, ['#F25F5C', '#FFD23F', '#F7A1C4', '#FFFFFF', '#9B5DE5'][i % 5], -0.8 + (i % 8) * 0.23, 0.48, -0.3 + Math.floor(i / 8) * 0.3, {}, 5)))),
-    pond: () => group(mesh(new THREE.CylinderGeometry(0.9, 0.95, 0.12, 20), mat('#9A9488'), 0, 0, 0).translateY(0.06), mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.02, 20), mat(PALETTE.water, {opacity: 0.8, roughness: 0.05}), 0, 0.11, 0),
+    pond: () => group(mesh(new THREE.CylinderGeometry(0.9, 0.95, 0.12, 20), mat('#9A9488'), 0, 0, 0).translateY(0.06), mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.02, 20), mat(PALETTE.water, {opacity: 0.85, roughness: 0.05}), 0, 0.135, 0),
         ...[[0.3, 0.2], [-0.35, -0.1], [0.05, -0.4]].map(([x, z]) => cyl(0.12, 0.12, 0.01, '#5E9A3E', x, 0.125, z, 10)), ball(0.05, '#F7A1C4', 0.3, 0.16, 0.2, {}, 6), ...[[0.2, -0.1, '#FF8C42'], [-0.2, 0.25, '#FFFFFF']].map(([x, z, c]) => ball(0.05, c, x, 0.1, z, {}, 6)),
         ...Array.from({length: 10}, (_, i) => ball(0.1, '#B5AFA3', Math.cos(i * 0.628) * 0.92, 0.1, Math.sin(i * 0.628) * 0.92, {}, 5))),
     swing_garden: () => group(...[-0.9, 0.9].map(x => group(box(0.08, 2.0, 0.08, '#9C6B3F', x, 0, -0.3).rotateX(0.15), box(0.08, 2.0, 0.08, '#9C6B3F', x, 0, 0.3).rotateX(-0.15))), box(1.9, 0.1, 0.1, '#9C6B3F', 0, 1.95, 0),
         ...[-0.4, 0.4].map(x => cyl(0.008, 0.008, 1.3, '#C9B07A', x, 0.65, 0, 4)), box(1.0, 0.06, 0.4, '#B07A4A', 0, 0.6, 0), box(1.0, 0.4, 0.05, '#B07A4A', 0, 0.66, -0.18), box(0.9, 0.08, 0.34, '#F7A1C4', 0, 0.66, 0.02, {flat: false})),
-    bird_bath: () => group(cyl(0.15, 0.2, 0.08, '#E6E0D6', 0, 0, 0, 12), cyl(0.06, 0.08, 0.7, '#E6E0D6', 0, 0.08, 0, 10), cyl(0.3, 0.12, 0.12, '#E6E0D6', 0, 0.78, 0, 14), cyl(0.26, 0.26, 0.02, PALETTE.water, 0, 0.88, 0, 14, {opacity: 0.8}),
+    bird_bath: () => group(cyl(0.15, 0.2, 0.08, '#E6E0D6', 0, 0, 0, 12), cyl(0.06, 0.08, 0.7, '#E6E0D6', 0, 0.08, 0, 10), cyl(0.3, 0.12, 0.12, '#E6E0D6', 0, 0.78, 0, 14), cyl(0.26, 0.26, 0.02, PALETTE.water, 0, 0.902, 0, 14, {opacity: 0.85}), ring(0.28, 0.03, '#E6E0D6', 0.93),
         ball(0.05, '#3E7CB4', 0.18, 0.95, 0, {}, 6), mesh(new THREE.ConeGeometry(0.012, 0.04, 4), mat('#F6C945'), 0.23, 0.96, 0).rotateZ(-Math.PI / 2)),
     statue_garden: () => group(box(0.5, 0.4, 0.5, '#B5AFA3', 0, 0, 0), cyl(0.12, 0.16, 0.6, '#D6CFC2', 0, 0.4, 0, 10), ball(0.12, '#D6CFC2', 0, 1.12, 0, {}, 10), ...[-1, 1].map(s => box(0.06, 0.35, 0.06, '#D6CFC2', s * 0.15, 0.75, 0).rotateZ(s * -0.5)),
         cyl(0.1, 0.06, 0.12, '#D6CFC2', 0.28, 0.98, 0, 8)),
@@ -1154,7 +1161,7 @@ Object.assign(FURNITURE, {
     bench_stone: () => group(box(1.7, 0.12, 0.45, '#B5AFA3', 0, 0.38, 0), ...[-0.65, 0.65].map(x => box(0.25, 0.38, 0.4, '#9A9488', x, 0, 0)), leafy(-0.95, 0.15, 0.1, 0.12, '#4E8A3A')),
     parasol_big: () => group(cyl(0.3, 0.32, 0.06, '#2C2C30', 0, 0, 0, 12), cyl(0.03, 0.03, 2.2, '#F4F1E8', 0, 0, 0, 8), mesh(new THREE.ConeGeometry(1.0, 0.35, 8), mat('#2F9E8F'), 0, 2.25, 0),
         ...Array.from({length: 8}, (_, i) => box(0.04, 0.05, 0.6, '#FFFFFF', Math.cos(i * 0.785) * 0.7, 2.08, Math.sin(i * 0.785) * 0.7).rotateY(-i * 0.785 + Math.PI / 2)), ...roundTable('#FFFFFF', '#2C2C30', 0.45, 0.7)),
-    fountain_wall: () => group(box(1.0, 1.6, 0.3, '#B5AFA3', 0, 0, -0.3), box(0.9, 0.3, 0.5, '#9A9488', 0, 0, -0.1), box(0.8, 0.02, 0.4, PALETTE.water, 0, 0.28, -0.1, {opacity: 0.8}),
+    fountain_wall: () => group(box(1.0, 1.6, 0.3, '#B5AFA3', 0, 0, -0.3), box(0.9, 0.3, 0.5, '#9A9488', 0, 0, -0.1), box(0.8, 0.02, 0.4, PALETTE.water, 0, 0.302, -0.1, {opacity: 0.85}),
         mesh(new THREE.SphereGeometry(0.12, 10, 8), mat('#9A9488'), 0, 1.1, -0.12), box(0.06, 0.8, 0.02, PALETTE.water, 0, 0.3, -0.06, {opacity: 0.6})),
     beehive: () => group(box(0.5, 0.5, 0.5, '#F2EEE6', 0, 0.3, 0), ...[0.35, 0.55, 0.75].map(y => box(0.52, 0.02, 0.52, '#E9C46A', 0, y, 0)), mesh(new THREE.ConeGeometry(0.42, 0.25, 4), mat('#B07A4A'), 0, 0.92, 0).rotateY(Math.PI / 4),
         ...legs(0.4, 0.4, 0.3, '#5A3218', 0.03), ...Array.from({length: 4}, (_, i) => ball(0.025, '#F6C945', 0.3 + i * 0.05, 0.7 + (i % 2) * 0.1, 0.3, {}, 4))),
@@ -3496,9 +3503,28 @@ Object.assign(FURNITURE, {
         cyl(0.05, 0.05, 0.35, '#2C2C30', 0.25, 0.91, -0.15, 10), glow(new THREE.BoxGeometry(0.06, 0.04, 0.01), '#6BBF59', 0.25, 1.15, -0.1)),
     blast_chiller: () => group(box(0.92, 1.8, 0.72, '#E4E8EC', 0, 0, -0.1, metalO), box(0.84, 0.02, 0.02, '#2C2C30', 0, 0.9, 0.27), box(0.04, 0.5, 0.05, '#2C2C30', 0.35, 0.65, 0.28),
         glow(new THREE.BoxGeometry(0.3, 0.12, 0.01), '#5CB8D6', -0.2, 1.55, 0.27)),
-    dish_lift: () => group(box(0.92, 2.3, 0.62, '#B8BEC6', 0, 0, -0.18, metalO), box(0.7, 0.62, 0.4, '#2C2C30', 0, 0.62, -0.08), box(0.72, 0.04, 0.44, '#DDE2E6', 0, 0.6, -0.06, metalO),
-        box(0.7, 0.3, 0.02, '#C9CED4', 0, 1.24, 0.13, metalO), ...[0.08, 0.16, 0.24].map(y => box(0.66, 0.012, 0.02, '#9AA3AD', 0, 1.24 + y, 0.145)),
-        glow(new THREE.BoxGeometry(0.08, 0.08, 0.01), '#6BBF59', 0.3, 1.85, 0.13), box(0.1, 0.16, 0.02, '#2C2C30', 0.3, 1.55, 0.13), ball(0.025, '#E63946', 0.3, 1.66, 0.145, {}, 6), ball(0.025, '#F6C945', 0.3, 1.58, 0.145, {}, 6)),
+    dish_lift: () => {
+        // A stainless steel dumbwaiter: the shaft casing up to the ceiling, a hatch at counter height with its shelf
+        // (a tray and a cloche inside), the rolling shutter half up, a call panel with up/down buttons and floor lights
+        const steel = {metalness: 0.75, roughness: 0.28}, dark = {metalness: 0.5, roughness: 0.4};
+        return group(
+            box(0.96, 2.4, 0.5, '#AEB6BF', 0, 0, -0.24, steel),
+            box(0.98, 0.06, 0.52, '#C9CED4', 0, 2.34, -0.23, steel),
+            ...[-0.46, 0.46].map(x => box(0.05, 2.4, 0.08, '#D8DDE2', x, 0, 0.02, steel)),
+            box(0.98, 0.9, 0.6, '#9AA3AD', 0, 0, -0.08, steel), box(1.0, 0.05, 0.64, '#E4E8EC', 0, 0.9, -0.06, steel),
+            box(0.78, 0.62, 0.4, '#3A3F46', 0, 0.98, -0.2, dark), box(0.74, 0.03, 0.38, '#C9CED4', 0, 0.98, -0.2, steel),
+            box(0.4, 0.02, 0.26, '#E8DCC8', 0, 1.01, -0.18), mesh(new THREE.SphereGeometry(0.11, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#DDE2E6', steel), 0, 1.03, -0.18),
+            ball(0.018, '#9AA3AD', 0, 1.15, -0.18, steel, 6),
+            ...Array.from({length: 4}, (_, i) => box(0.8, 0.065, 0.025, i % 2 ? '#C9CED4' : '#B8BEC6', 0, 1.4 + i * 0.07, 0.03, steel)),
+            box(0.84, 0.04, 0.04, '#7D858E', 0, 1.39, 0.04, steel),
+            box(0.84, 0.05, 0.08, '#E4E8EC', 0, 1.62, 0.02, steel),
+            box(0.16, 0.36, 0.03, '#2C2C30', 0.36, 1.72, 0.04, dark),
+            glow(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 10).rotateX(Math.PI / 2), '#6BBF59', 0.36, 1.84, 0.06),
+            glow(new THREE.CylinderGeometry(0.025, 0.025, 0.02, 10).rotateX(Math.PI / 2), '#F6C945', 0.36, 1.77, 0.06),
+            mesh(new THREE.ConeGeometry(0.03, 0.04, 3), mat('#E4E8EC'), 0.36, 1.98, 0.06), mesh(new THREE.ConeGeometry(0.03, 0.04, 3).rotateZ(Math.PI), mat('#E4E8EC'), 0.36, 1.92, 0.06),
+            glow(new THREE.BoxGeometry(0.46, 0.08, 0.01), '#FFD27A', -0.12, 2.12, 0.05),
+            box(0.5, 0.12, 0.02, '#2C2C30', -0.12, 2.06, 0.04));
+    },
     menu_tablet: () => group(cyl(0.18, 0.2, 0.04, '#2C2C30', 0, 0, 0, 14), cyl(0.025, 0.025, 1.0, '#2C2C30', 0, 0.04, 0, 8), box(0.4, 0.3, 0.03, '#1E1E24', 0, 1.02, 0, {roughness: 0.2}).rotateX(-0.4),
         glow(new THREE.BoxGeometry(0.35, 0.25, 0.01), '#9FE0F7', 0, 1.18, 0.04).rotateX(-0.4)),
     armchair_wing: () => group(box(0.64, 0.24, 0.58, '#2F6F3E', 0, 0.2, 0.02, {flat: false}), box(0.64, 0.75, 0.14, '#2F6F3E', 0, 0.42, -0.22, {flat: false}),

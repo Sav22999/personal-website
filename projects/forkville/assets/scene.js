@@ -22,6 +22,8 @@ const shown = (o) => {
 /** Depth of the outdoor area (terrace in front, yard at the side): the same as OUTDOOR in lib/catalog.php. */
 export const OUT = 5;
 const WALL_LOW = 0.14;
+/** Pixel ratio cap for each graphics quality (low renders fewer pixels on sharp screens). */
+const QUALITY_DPR = {low: 1, medium: 1.5, high: 2};
 const FOV = 40;
 const FOV_TOP = 14;
 
@@ -378,7 +380,12 @@ export class World {
         this.time = 0;
 
         const r = this.renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'});
-        r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        try {
+            this.quality = ['low', 'medium', 'high'].includes(localStorage.getItem('forkville-quality')) ? localStorage.getItem('forkville-quality') : 'high';
+        } catch (e) {
+            this.quality = 'high';
+        }
+        r.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY_DPR[this.quality]));
         r.shadowMap.enabled = true;
         r.shadowMap.type = THREE.PCFSoftShadowMap;
         r.outputColorSpace = THREE.SRGBColorSpace;
@@ -500,6 +507,23 @@ export class World {
         this.scene.add(this.clouds);
     }
 
+    /**
+     * Graphics quality (chosen in Account, kept on this device): low = only the restaurant, its plot and the road in
+     * front, no passers-by, a lighter renderer; medium = the streets and the buildings near the restaurant, fewer cars;
+     * high = the whole quarter, cars and people everywhere.
+     */
+    setQuality(q, r) {
+        if (!['low', 'medium', 'high'].includes(q) || q === this.quality) return;
+        this.quality = q;
+        try {
+            localStorage.setItem('forkville-quality', q);
+        } catch (e) { /* storage blocked */ }
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY_DPR[q]));
+        this.resize?.();
+        if (r) this.buildStreet(r);
+        if (this.env) this.setParticles(this.env.weather, this.env.season);
+    }
+
     /** Street, sidewalks, the neighbourhood (grows with the level), the car park, trees and street lamps. */
     buildStreet(r) {
         this.outdoor.clear();
@@ -507,7 +531,7 @@ export class World {
         this.bushes = [];
         this.snowCaps = [];
         this.flowers = [];
-        buildNeighbourhood(this, r);
+        buildNeighbourhood(this, r); // reads this.quality
         if (this.holiday) applyHoliday(this, this.holiday);
         if (this.env) this.applySeason(this.env.season, true);
         if (!this.traffic) this.traffic = new Traffic(this);
@@ -587,10 +611,11 @@ export class World {
         floor.receiveShadow = true;
         this.floor = floor;
         this.root.add(floor);
-        const mat_ = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.02, 0.7), mat(PALETTE.terracotta));
-        mat_.position.set(this.door + 0.5, 0.03, D - 0.45);
+        const dw = this.doorW || 1; // the mat lies across the whole doorway (two tiles for a wide door)
+        const mat_ = new THREE.Mesh(new THREE.BoxGeometry(dw - 0.1, 0.02, 0.7), mat(PALETTE.terracotta));
+        mat_.position.set(this.doorMid(), 0.03, D - 0.45);
         mat_.receiveShadow = true;
-        const matIn = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.025, 0.5), mat('#A8472A'));
+        const matIn = new THREE.Mesh(new THREE.BoxGeometry(dw - 0.3, 0.025, 0.5), mat('#A8472A'));
         matIn.position.copy(mat_.position);
         this.root.add(mat_, matIn);
         const base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, 0.12, D + 0.6), mat('#CDBBA0'));
@@ -649,6 +674,11 @@ export class World {
             tiles.forEach((u, i) => out.set(side + ':' + u, {kind: WINDOW_KIND[it.k], first: i === 0, last: i === tiles.length - 1, key: it.k, side}));
         }
         return out;
+    }
+
+    /** The middle of the doorway along the front wall (a wide door spans its tile and the next one). */
+    doorMid() {
+        return this.door + (this.doorW || 1) / 2;
     }
 
     /** The rectangle of a floor: {x0, w, d} (0 = ground floor). */
@@ -859,15 +889,16 @@ export class World {
         // Awning and sign over the door, on the street side
         const frontWall = this.walls.find(w => w.isFront);
         const awning = new THREE.Group();
-        for (let i = 0; i < 6; i++) {
+        const stripes = (this.doorW || 1) > 1 ? 10 : 6; // over the whole doorway
+        for (let i = 0; i < stripes; i++) {
             const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.05, 0.9), mat(i % 2 ? PALETTE.cream : PALETTE.terracotta));
-            stripe.position.set(this.door + 0.5 - 0.7 + i * 0.28, WALL_H - 0.1, D + 0.55);
+            stripe.position.set(this.doorMid() - stripes * 0.14 + 0.14 + i * 0.28, WALL_H - 0.1, D + 0.55);
             stripe.rotation.x = 0.35;
             stripe.castShadow = true;
             awning.add(stripe);
         }
         this.sign = this.makeSign(name);
-        this.sign.position.set(this.door + 0.5, WALL_H + 0.45, D + 0.2);
+        this.sign.position.set(this.doorMid(), WALL_H + 0.45, D + 0.2);
         this.root.add(awning, this.sign);
         frontWall.extras = [awning, this.sign]; // hidden (not squashed) while the front wall is lowered
     }
@@ -1235,7 +1266,7 @@ export class World {
         let kind = RAINY.includes(weather) && weather !== 'hail' ? 'rain' : weather === 'hail' ? 'hail' : SNOWY.includes(weather) ? 'snow' : season === 'autumn' ? 'leaves' : season === 'spring' && weather !== 'cloudy' ? 'petals' : null;
         if (!kind) return;
         // How hard it falls: drizzle and light snow are a few drops and flakes, a storm or a blizzard many
-        const n = {rain: weather === 'drizzle' ? 450 : 2200, snow: weather === 'light_snow' ? 500 : 2400, hail: 900, leaves: 140, petals: 160}[kind];
+        const n = Math.round({rain: weather === 'drizzle' ? 450 : 2200, snow: weather === 'light_snow' ? 500 : 2400, hail: 900, leaves: 140, petals: 160}[kind] * ({low: 0.35, medium: 0.65}[this.quality] ?? 1));
         const pos = new Float32Array(n * (kind === 'rain' ? 6 : 3));
         const col = new Float32Array(n * 3);
         const leafCols = ['#E07B39', '#C8452C', '#E9B44C', '#B5562E'].map(c => new THREE.Color(c));
@@ -1581,7 +1612,7 @@ export class World {
         const t = new THREE.CanvasTexture(c);
         t.colorSpace = THREE.SRGBColorSpace;
         const m = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.34), new THREE.MeshBasicMaterial({map: t, transparent: true}));
-        m.position.set(this.door + 1.15, 1.6, this.D + 0.12);
+        m.position.set(this.doorMid() + (this.doorW || 1) / 2 + 0.65, 1.6, this.D + 0.12); // on the wall beside the doorway
         this.doorSign = m;
         this.root.add(m);
         const front = this.walls.find(w => w.isFront);

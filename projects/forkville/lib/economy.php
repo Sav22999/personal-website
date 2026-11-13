@@ -126,15 +126,19 @@ function load_restaurant(int $uid, bool $lock = false): ?array
     // Upper floors: [[width, depth, x offset], …] in the ground floor's coordinates
     $r['floors'] = array_values(array_filter(array_map(fn($f) => is_array($f) && count($f) === 3 ? array_map('intval', $f) : null, json_decode((string)($r['floors'] ?? ''), true) ?: [])));
     foreach (['coins', 'xp', 'level', 'size', 'popularity', 'rating_sum', 'rating_n', 'friend_sum', 'friend_n', 'served_total', 'next_item_id'] as $k) $r[$k] = (int)$r[$k];
+    // The XP curve got steeper: whoever already had a level keeps it and starts from that level's threshold (their XP
+    // was below it, so the bar stood still and the next level was out of reach)
+    $r['xp'] = max($r['xp'], xp_for_level($r['level']));
+    $r['hours'] = clean_hours(json_decode((string)($r['hours'] ?? ''), true) ?: []);
     ensure_windows($r);
     return $r;
 }
 
 function save_restaurant(array $r): void
 {
-    db()->prepare('UPDATE ' . t('restaurants') . ' SET name = ?, kind = ?, coins = ?, xp = ?, level = ?, size = ?, depth = ?, parking = ?, garage = ?, storage = ?, instance = ?, floors = ?, door = ?, door_style = ?, floor = ?, wall = ?, layout = ?, staff = ?, menu = ?, finishes = ?, wish = ?, status = ?, paid_day = ?, closed_from = ?, closed_secs = ?, game_minutes = ?, candidates = ?,
+    db()->prepare('UPDATE ' . t('restaurants') . ' SET name = ?, kind = ?, coins = ?, xp = ?, level = ?, size = ?, depth = ?, parking = ?, garage = ?, storage = ?, instance = ?, floors = ?, door = ?, door_style = ?, floor = ?, wall = ?, hours = ?, layout = ?, staff = ?, menu = ?, finishes = ?, wish = ?, status = ?, paid_day = ?, closed_from = ?, closed_secs = ?, game_minutes = ?, candidates = ?,
         popularity = ?, rating_sum = ?, rating_n = ?, friend_sum = ?, friend_n = ?, served_total = ?, next_item_id = ?, last_report_at = ?, last_seen_at = ? WHERE user_id = ?')
-        ->execute([$r['name'], $r['kind'] ?? 'generic', $r['coins'], $r['xp'], $r['level'], $r['size'], $r['depth'], $r['parking'] ?? 0, $r['garage'] ?? 0, json_encode((object)($r['storage'] ?? [])), $r['instance'] ?? null, json_encode(array_values($r['floors'] ?? [])), $r['door'], $r['door_style'] ?? 'wood', $r['floor'], $r['wall'], json_encode(array_values($r['layout'])), json_encode(array_values($r['staff'])),
+        ->execute([$r['name'], $r['kind'] ?? 'generic', $r['coins'], $r['xp'], $r['level'], $r['size'], $r['depth'], $r['parking'] ?? 0, $r['garage'] ?? 0, json_encode((object)($r['storage'] ?? [])), $r['instance'] ?? null, json_encode(array_values($r['floors'] ?? [])), $r['door'], $r['door_style'] ?? 'wood', $r['floor'], $r['wall'], json_encode($r['hours'] ?? ['mode' => 'manual']), json_encode(array_values($r['layout'])), json_encode(array_values($r['staff'])),
             json_encode(array_values($r['menu'])), json_encode(array_values($r['finishes'])), $r['wish'], $r['status'] ?? 'open', $r['paid_day'] ?? null, $r['closed_from'] ?? null, (int)($r['closed_secs'] ?? 0), (int)($r['game_minutes'] ?? 540), $r['candidates'] ?? null, $r['popularity'], $r['rating_sum'], $r['rating_n'], $r['friend_sum'], $r['friend_n'],
             $r['served_total'], $r['next_item_id'], $r['last_report_at'], $r['last_seen_at'], $r['user_id']]);
 }
@@ -201,6 +205,12 @@ function ledger_recorded(int $add = 0): int
     return $sum += $add;
 }
 
+/** XP for each guest served: grows with the level (the levels get longer too), so the bar keeps moving. */
+function xp_per_customer(int $level): int
+{
+    return rule('xp_customer') + intdiv($level, 4);
+}
+
 /** XP and the level that follows from it; returns true when the level went up. */
 function add_xp(array &$r, int $xp): bool
 {
@@ -223,8 +233,6 @@ function add_weekly(int $uid, int $coins): void
 
 function refresh_popularity(array &$r): void
 {
-    $avg = recent_review_average((int)$r['user_id']);
-    if ($avg !== null) $r['recent_avg'] = $avg;
     $r['popularity'] = popularity($r, load_recipes((int)$r['user_id']));
 }
 
@@ -431,7 +439,27 @@ function set_status(array &$r, string $status): void
     $r['status'] = $status;
 }
 
-/** A worker's daily wage: role, skill in the role, rank for managers. */
+/**
+ * Opening hours: manual (the player opens and closes), timer (open for so many game hours, then no new guests and,
+ * once the room is empty, closed; until = the game minute it ends) or schedule (opens at `open`, closes at `close`,
+ * game hours 0–23, every game day). The app runs them on the game clock.
+ */
+function clean_hours($h): array
+{
+    $mode = in_array($h['mode'] ?? '', ['manual', 'timer', 'schedule'], true) ? $h['mode'] : 'manual';
+    $out = ['mode' => $mode];
+    if ($mode === 'timer') {
+        $out['timer'] = in_array((int)($h['timer'] ?? 8), HOURS_TIMERS, true) ? (int)$h['timer'] : 8;
+        if (isset($h['until'])) $out['until'] = max(0, (int)$h['until']);
+    }
+    if ($mode === 'schedule') {
+        $out['open'] = max(0, min(23, (int)($h['open'] ?? 9)));
+        $out['close'] = max(0, min(23, (int)($h['close'] ?? 22)));
+        if ($out['open'] === $out['close']) $out['close'] = ($out['open'] + 8) % 24;
+    }
+    return $out;
+}
+
 /** A worker's daily wage in a restaurant of a given level (see WAGE_BASE). */
 function wage(array $st, int $level = 1): int
 {
@@ -542,7 +570,7 @@ function apply_offline(array &$r): ?array
     ledger((int)$r['user_id'], 'away', $coins, $served . '|' . (int)round($managed / 60));
     $r['served_total'] += $served;
     $levelFrom = $r['level'];
-    $up = add_xp($r, (int)floor($served * OFFLINE_XP));
+    $up = add_xp($r, (int)floor($served * xp_per_customer($r['level']) * OFFLINE_XP));
     add_weekly((int)$r['user_id'], $coins);
     // When it happened, for the message: managers first, then the staff alone at a slower pace, then nothing
     return ['served' => $served, 'coins' => $coins, 'minutes' => (int)round($secs / 60), 'managed' => (int)round($managed / 60), 'levelUp' => $up, 'levelFrom' => $levelFrom, 'levelTo' => $r['level'],
@@ -586,9 +614,9 @@ function apply_report(array &$r, array $b): array
     if ($ratings) {
         $r['rating_sum'] += array_sum($ratings);
         $r['rating_n'] += count($ratings);
-        if ($r['rating_n'] > 400) { // recent customers count more: halve the history
-            $r['rating_sum'] = intdiv($r['rating_sum'], 2);
-            $r['rating_n'] = intdiv($r['rating_n'], 2);
+        if ($r['rating_n'] > RATING_WINDOW) { // a rolling average: the older ratings fade out
+            $r['rating_sum'] = (int)round($r['rating_sum'] * RATING_WINDOW / $r['rating_n']);
+            $r['rating_n'] = RATING_WINDOW;
         }
     }
     save_reviews((int)$r['user_id'], (array)($b['reviews'] ?? []), max(1, $served));
@@ -605,7 +633,7 @@ function apply_report(array &$r, array $b): array
     unset($st);
     $r['coins'] += $coins;
     $r['served_total'] += $served;
-    $up = add_xp($r, $served * rule('xp_customer'));
+    $up = add_xp($r, $served * xp_per_customer($r['level']));
     add_weekly((int)$r['user_id'], $coins);
     $r['last_report_at'] = gmdate('Y-m-d H:i:s', $now);
     $r['last_seen_at'] = gmdate('Y-m-d H:i:s', $now);
@@ -725,7 +753,7 @@ function ledger_out(int $uid, string $day): array
     return ['day' => $day, 'days' => (object)$days, 'entries' => $rows];
 }
 
-function reviews_out(int $uid, int $limit = 30): array
+function reviews_out(int $uid, int $limit = 30, ?array $r = null): array
 {
     $st = db()->prepare('SELECT stars, dish, name, good, bad, created_at FROM ' . t('reviews') . ' WHERE user_id = ? ORDER BY id DESC LIMIT ' . $limit);
     $st->execute([$uid]);
@@ -743,7 +771,10 @@ function reviews_out(int $uid, int $limit = 30): array
     arsort($good);
     arsort($bad);
     $total = array_sum($dist);
-    return ['reviews' => $rows, 'distribution' => $dist, 'count' => $total, 'window' => REVIEW_WINDOW, 'good' => (object)$good, 'bad' => (object)$bad, 'average' => $total ? round(array_sum(array_map(fn($s, $n) => $s * $n, array_keys($dist), $dist)) / $total, 2) : null];
+    // The score is the restaurant's rating (every guest's stars, rolling); the reviews below are a sample of them
+    $rating = $r && $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null;
+    return ['rating' => $rating, 'ratingCount' => $r ? min($r['rating_n'], RATING_WINDOW) : 0, 'stars' => $r ? rating_stars($r['rating_sum'], $r['rating_n']) : 0,
+        'reviews' => $rows, 'distribution' => $dist, 'count' => $total, 'window' => REVIEW_WINDOW, 'good' => (object)$good, 'bad' => (object)$bad, 'average' => $total ? round(array_sum(array_map(fn($s, $n) => $s * $n, array_keys($dist), $dist)) / $total, 2) : null];
 }
 
 function garden_rows(int $uid): array
@@ -778,8 +809,8 @@ function restaurant_public(array $r, array $recipes): array
     $menu = [];
     foreach ($r['menu'] as $d) if (isset($recipes[$d])) $menu[] = ['dish' => $d, 'level' => $recipes[$d]];
     return [
-        'name' => $r['name'], 'level' => $r['level'], 'size' => $r['size'], 'depth' => $r['depth'], 'parking' => $r['parking'] ?? 0, 'garage' => $r['garage'] ?? 0, 'floors' => $r['floors'] ?? [], 'door' => $r['door'], 'doorStyle' => $r['door_style'] ?? 'wood', 'floor' => $r['floor'], 'wall' => $r['wall'],
-        'layout' => $r['layout'], 'staff' => $r['staff'], 'menu' => $menu, 'popularity' => $r['popularity'], 'stars' => stars_for($r['popularity']),
+        'name' => $r['name'], 'level' => $r['level'], 'size' => $r['size'], 'depth' => $r['depth'], 'parking' => $r['parking'] ?? 0, 'garage' => $r['garage'] ?? 0, 'floors' => $r['floors'] ?? [], 'door' => $r['door'], 'doorStyle' => $r['door_style'] ?? 'wood', 'floor' => $r['floor'], 'wall' => $r['wall'], 'hours' => $r['hours'] ?? ['mode' => 'manual'],
+        'layout' => $r['layout'], 'staff' => $r['staff'], 'menu' => $menu, 'popularity' => $r['popularity'], 'stars' => rating_stars($r['rating_sum'], $r['rating_n']), 'ratingCount' => min($r['rating_n'], RATING_WINDOW),
         'wish' => $r['wish'], 'status' => $r['status'] ?? 'open', 'kind' => $r['kind'] ?? 'generic',
         'rating' => $r['rating_n'] ? round($r['rating_sum'] / $r['rating_n'], 2) : null,
     ];

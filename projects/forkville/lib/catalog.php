@@ -749,13 +749,15 @@ const MANAGER_PROMOTE = [2 => 800, 3 => 1800, 4 => 3500, 5 => 6000]; // cost to 
 const MANAGER_LEVEL = 7;   // first level that can hire one
 const MANAGER_RATE = 0.4;
 const MANAGER_MAX_HOURS = 8;
-const OFFLINE_XP = 0.5;    // XP per guest served while away (live service gives xp_customer)
+const OFFLINE_XP = 0.5;    // share of the XP per guest (xp_per_customer) given for guests served while away
 /** Every person has a CV: a skill from 0 to 10 for each role. Hiring cost grows with the CV. */
 const ROLES = ['chef', 'waiter', 'cleaner', 'manager', 'cashier'];
 /** The outdoor area: OUTDOOR tiles in front of the restaurant, at its side (east) and behind it (the garden). */
 const OUTDOOR = 5;
 /** The game calendar: time passes only while playing (2 game minutes per second at 1×, ×2 or ×5 with the speed buttons). */
 const MAX_SPEED = 5;
+/** Opening hours: how long "open for" can last (game hours). */
+const HOURS_TIMERS = [2, 4, 6, 8, 10, 12];
 const GAME_MINUTES_PER_SECOND = 2;
 const DAYS_PER_MONTH = 10; // 12 months a year; year 0 starts on 1 March
 /** Daily wages: base by role + per skill point in the role + per manager rank. Paid when a calendar day ends. */
@@ -892,11 +894,22 @@ function popularity(array $r, array $recipes): int
     foreach ($r['layout'] as $it) $p += (int)($items[$it['k']][5] ?? 0);
     $p += (int)($items[$r['floor']][5] ?? 0) + (int)($items[$r['wall']][5] ?? 0);
     foreach ($r['menu'] as $d) $p += 4 * (int)($recipes[$d] ?? 0);
-    // Reputation: the average of the latest REVIEW_WINDOW reviews (old ones stop counting, so a restaurant can climb)
-    if (isset($r['recent_avg'])) $p += (int)round(($r['recent_avg'] - 3) * 18);
-    elseif ($r['rating_n'] > 0) $p += (int)round(($r['rating_sum'] / $r['rating_n'] - 3) * 12);
+    // Reputation: the guests' rolling average (the last RATING_WINDOW ratings: old ones fade, so a restaurant can climb)
+    if ($r['rating_n'] > 0) $p += (int)round(($r['rating_sum'] / $r['rating_n'] - 3) * 18);
     if ($r['friend_n'] > 0) $p += (int)round(($r['friend_sum'] / $r['friend_n'] - 3) * 8);
     return max(1, $p);
+}
+
+/** How many guests' ratings make the rating (a rolling average: older ones fade out). */
+const RATING_WINDOW = 50;
+
+/**
+ * The restaurant's stars: its guests' average rating, rounded (0 = not rated yet, under 3 ratings). The same number
+ * everywhere: the top bar, the reviews, friends, the board.
+ */
+function rating_stars(int $sum, int $n): int
+{
+    return $n >= 3 ? max(1, min(5, (int)round($sum / $n))) : 0;
 }
 
 function stars_for(int $popularity): int
@@ -928,7 +941,7 @@ function catalog_out(): array
     for ($l = 1; $l <= MAX_LEVEL; $l++) $levels[] = xp_for_level($l);
     return [
         'items' => $items, 'dishes' => $dishes, 'crops' => $crops, 'ingredients' => INGREDIENTS, 'market' => market_prices(),
-        'expand' => ['min' => MIN_SIDE, 'max' => MAX_SIDE, 'rate' => rule('expand_rate')], 'parking' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], PARKING), 'garage' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], GARAGE), 'floors' => array_map(fn($f) => ['level' => $f[0], 'cost' => $f[1]], FLOORS), 'events' => events_out(), 'seasonal' => SEASONAL, 'dishKinds' => DISH_KINDS, 'cashier' => ['level' => CASHIER_LEVEL, 'bonus' => CASHIER_BONUS, 'tip' => CASHIER_TIP], 'doors' => array_map(fn($d) => ['price' => $d[0], 'level' => $d[1]], DOORS), 'doorWide' => DOOR_WIDE, 'doorMove' => DOOR_MOVE, 'floorStart' => FLOOR_START, 'carBonus' => CAR_BONUS, 'friendTips' => FRIEND_TIPS, 'friendTipDaily' => FRIEND_TIP_DAILY, 'levels' => $levels, 'staff' => staff_costs(), 'tags' => ITEM_TAGS, 'roles' => ROLES, 'outdoor' => OUTDOOR, 'calendar' => ['daysPerMonth' => DAYS_PER_MONTH, 'minutesPerSecond' => GAME_MINUTES_PER_SECOND], 'wages' => ['base' => WAGE_BASE, 'skill' => WAGE_PER_SKILL, 'rank' => WAGE_PER_RANK, 'level' => WAGE_PER_LEVEL], 'kinds' => array_map(fn($k) => ['price' => $k[0], 'customers' => $k[1], 'eat' => $k[2], 'level' => $k[3], 'cost' => $k[4]], KINDS), 'uniforms' => array_map(fn($u) => ['price' => $u[0], 'level' => $u[1], 'top' => $u[2], 'bottom' => $u[3], 'accent' => $u[4], 'cut' => $u[5]], UNIFORMS), 'hairstyles' => HAIRSTYLES, 'hairColors' => HAIR_COLORS, 'hairPrice' => HAIR_PRICE, 'accessories' => ACCESSORIES, 'accessoryPrice' => ACCESSORY_PRICE, 'refresh' => CANDIDATE_REFRESH, 'manager' => ['hours' => MANAGER_HOURS, 'promote' => MANAGER_PROMOTE, 'level' => MANAGER_LEVEL, 'rate' => MANAGER_RATE], 'traits' => STAFF_TRAITS, 'titles' => LEVEL_TITLES, 'levelReward' => rule('level_reward'), 'dishMax' => DISH_MAX_LEVEL,
+        'expand' => ['min' => MIN_SIDE, 'max' => MAX_SIDE, 'rate' => rule('expand_rate')], 'parking' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], PARKING), 'garage' => array_map(fn($p) => ['cost' => $p[0], 'level' => $p[1], 'spaces' => $p[2]], GARAGE), 'floors' => array_map(fn($f) => ['level' => $f[0], 'cost' => $f[1]], FLOORS), 'events' => events_out(), 'seasonal' => SEASONAL, 'dishKinds' => DISH_KINDS, 'cashier' => ['level' => CASHIER_LEVEL, 'bonus' => CASHIER_BONUS, 'tip' => CASHIER_TIP], 'doors' => array_map(fn($d) => ['price' => $d[0], 'level' => $d[1]], DOORS), 'doorWide' => DOOR_WIDE, 'doorMove' => DOOR_MOVE, 'hoursTimers' => HOURS_TIMERS, 'floorStart' => FLOOR_START, 'carBonus' => CAR_BONUS, 'friendTips' => FRIEND_TIPS, 'friendTipDaily' => FRIEND_TIP_DAILY, 'levels' => $levels, 'staff' => staff_costs(), 'tags' => ITEM_TAGS, 'roles' => ROLES, 'outdoor' => OUTDOOR, 'calendar' => ['daysPerMonth' => DAYS_PER_MONTH, 'minutesPerSecond' => GAME_MINUTES_PER_SECOND], 'wages' => ['base' => WAGE_BASE, 'skill' => WAGE_PER_SKILL, 'rank' => WAGE_PER_RANK, 'level' => WAGE_PER_LEVEL], 'kinds' => array_map(fn($k) => ['price' => $k[0], 'customers' => $k[1], 'eat' => $k[2], 'level' => $k[3], 'cost' => $k[4]], KINDS), 'uniforms' => array_map(fn($u) => ['price' => $u[0], 'level' => $u[1], 'top' => $u[2], 'bottom' => $u[3], 'accent' => $u[4], 'cut' => $u[5]], UNIFORMS), 'hairstyles' => HAIRSTYLES, 'hairColors' => HAIR_COLORS, 'hairPrice' => HAIR_PRICE, 'accessories' => ACCESSORIES, 'accessoryPrice' => ACCESSORY_PRICE, 'refresh' => CANDIDATE_REFRESH, 'manager' => ['hours' => MANAGER_HOURS, 'promote' => MANAGER_PROMOTE, 'level' => MANAGER_LEVEL, 'rate' => MANAGER_RATE], 'traits' => STAFF_TRAITS, 'titles' => LEVEL_TITLES, 'levelReward' => rule('level_reward'), 'dishMax' => DISH_MAX_LEVEL,
         'rules' => ['seatSeconds' => SEAT_SECONDS, 'sellBack' => rule('sell_back'), 'marketLimit' => rule('market_limit'), 'visitHost' => rule('visit_host'), 'visitBase' => rule('visit_base')],
     ];
 }

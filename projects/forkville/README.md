@@ -38,7 +38,7 @@ while away give half the XP (`OFFLINE_XP`).
 ## Game systems
 
 - **Calendar**: each restaurant has its own (year 0 = opening, months of 10 days, time passes only while playing,
-  speed 1×, 2×, 5×); seasons, day/night and weather follow it. Saved on the server (`game_minutes`).
+  speed 1×, 2×); seasons, day/night and weather follow it. Saved on the server (`game_minutes`).
 - **Staff**: hire candidates with a CV (skills 0–10 per role), assign and change roles, traits, experience,
   uniforms, hairstyles and accessories, managers (from level 7) who run the restaurant while you are away, daily wages
   (not paid while closed).
@@ -98,12 +98,38 @@ while away give half the XP (`OFFLINE_XP`).
   counters, lounge, restroom, stairs…), on the placed pieces and on the one being placed.
 - **Stairs**: the tile just past their top end, on the floor above, must be inside that floor and stay free
   (`stairs_exit`), or nobody could step off.
-- **Dish lift** (`dish_lift`, from level 14): a counter that sends a dish to the lift on the guest's floor (3 s ride),
-  so a chef can cook upstairs and the waiters pick the dish up downstairs (`pickSlot` / `sendByLift` in sim.js).
+- **Dish lift** (`dish_lift`, from level 14): lifts in the same place on several floors form one shaft and link all
+  those floors; a chef puts the dish in on their floor, it rides to the guest's floor and a waiter picks it up there
+  (`pickSlot` / `sendByLift` in sim.js). A lift with no twin is flagged (`dishlift_alone`).
+- **Areas of work** (`game.zone`, `zone` on each worker): automatic (shared out, as before), everything, one floor, or
+  (waiters and cleaners) chosen tables; chefs, managers and cashiers take a station on their floor.
+- **Two dishes**: a waiter with skill 7 or more carries two dishes at once (same floor), delivering them in turn.
+- **Tables and chairs**: moving a table in build mode takes along the chairs turned towards it (turned with it);
+  moving a chair moves only the chair.
+- **Opening hours** (`hours`, `game.hours`, schema 16): by hand, open for 2–12 game hours, or a daily schedule; at
+  closing time no new guests come in and the restaurant closes once the last guest has left (`runHours` in app.js).
+- **Rating**: one rolling average of the last `RATING_WINDOW` (50) guests' ratings; the stars (`rating_stars`) are
+  that average rounded, the same in the top bar, the reviews, the friends list and the admin panel.
+- **Street traffic**: cars and pedestrians obey the traffic lights; cars keep their distance in every direction, give
+  way when joining a lane, enter a crossing only when it is free, stop for pedestrians and use their indicators; some
+  come down the side streets and turn onto the main road or leave it, people also arrive along the side streets and
+  walk only on sidewalks, crossing on the zebras. Cars go down the garage ramp slowly, along an S curve, tilted.
+- **Roundabouts**: on the second road; every car goes round the same way, gives way to the cars already on the ring
+  and (like at the crossings) a car on the ring or in a crossing ignores the cars waiting at its edge, so nobody
+  deadlocks. Cars run along the second road through both roundabouts and between it and the main road by the south
+  side streets; each arm has a zebra crossing, and people walk along the second road and cross there.
+- **Graphics quality** (Account, stored on the device, `forkville-quality`): low = the restaurant, its plot and the
+  road in front only (no other houses, no passers-by, pixel ratio 1, fewer weather particles); medium = the streets
+  and the buildings within ~30 m, main-road traffic at half density; high = everything.
+- **Sounds**: only the work going on is heard (frying and chopping while a chef cooks, water while someone washes up,
+  a broom while someone sweeps); the music has its own feel per kind of restaurant and almost stops when closed or
+  paused.
 - **Cooking time**: every dish has its own base time (`DISHES`, from 2 s for a drink to 26 s for ribs), shortened by
   the stove's speed, the fridges, the kitchen equipment, a better counter, the chef's skill and trait
   (`cookTime()` in sim.js); the menu shows the base and the time in this kitchen.
-- **Levels**: up to 40 (`xp_for_level` = 60·L·(L−1)·(1 + L/15)); a level never goes down when the curve changes.
+- **Levels**: up to 40 (`xp_for_level` = 60·L·(L−1)·(1 + L/15)); a level never goes down when the curve changes, and a
+  player's XP is lifted to the start of their level on load. Each guest gives `xp_per_customer` = 2 + level ÷ 4 XP
+  (half of it while away).
 - **Wages**: (role base + 7 per skill point [+ 25 per manager rank]) × (1 + 0.09 per restaurant level above 1).
 - **Chefs**: limited by the level (`max_chefs`: 1, then +1 every 4 levels, up to 8) and one stove each.
 - **Seasonal pieces**: on sale only during their event on the real calendar (Easter computed each year), kept once bought.

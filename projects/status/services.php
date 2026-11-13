@@ -7,7 +7,7 @@
  *   http      the server requests an external URL (no CORS issues)
  *   notefox   the Notefox health endpoint; 'part' = sync (API + database + schema) or mail
  *   app-db    database of an app with its own credentials.php: connection + schema version
- *             ('dir' = folder under /projects/, 'prefix' = default table prefix)
+ *             ('dir' = folder under /projects/, may be nested like dad/rendicontazione; 'prefix' = default table prefix)
  *   fischietto-db  same, Fischietto keeps its settings in lib/config.php
  *   game-db   shared database of the online games ('dir' with api/db.php, 'table' to read)
  *   mail      SMTP server answers with its 220 greeting; 'source' = site | fischietto | app:<dir>
@@ -163,6 +163,25 @@ return [
             ['id' => 'forkville-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/forkville/'],
             ['id' => 'forkville-db', 'name' => 'Accounts & restaurants', 'type' => 'app-db', 'dir' => 'forkville', 'prefix' => 'fv_'],
             ['id' => 'forkville-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:forkville'],
+        ],
+    ],
+    [
+        'name' => 'MyCurriculum',
+        'icon' => '/images/projects/mycurriculum.png',
+        'url' => '/projects/mycurriculum/',
+        'services' => [
+            ['id' => 'mycurriculum-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/mycurriculum/'],
+            ['id' => 'mycurriculum-db', 'name' => 'Accounts & CVs', 'type' => 'app-db', 'dir' => 'mycurriculum', 'prefix' => 'mc_'],
+            ['id' => 'mycurriculum-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:mycurriculum'],
+        ],
+    ],
+    [
+        'name' => 'Rendicontazione Ore',
+        'icon' => '/projects/dad/rendicontazione/assets/icons/icon.svg',
+        'url' => '/projects/dad/rendicontazione/',
+        'services' => [
+            ['id' => 'rendicontazione-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/dad/rendicontazione/'],
+            ['id' => 'rendicontazione-db', 'name' => 'Accounts & hours', 'type' => 'app-db', 'dir' => 'dad/rendicontazione', 'prefix' => 'dad_rend_'],
         ],
     ],
 ];

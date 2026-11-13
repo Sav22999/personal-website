@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.23.0';
+    const VERSION = '1.24.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.24.0', date: '2026-11-13', it: ['Il certificato dice in che lingua hai seguito il corso, e puoi ottenerlo in più lingue: se lo hai già in italiano, puoi fare l’esame anche in inglese', 'Nella ricerca dei corsi i linguaggi si aprono e chiudono con un pulsante; le categorie restano sempre visibili'], en: ['The certificate says which language you took the course in, and you can earn it in more than one: if you already have it in Italian, you can take the exam in English too', 'In the course search the languages open and close with a button; the categories stay always visible']},
         {v: '1.23.0', date: '2026-11-13', it: ['14 nuovi corsi di design: UX base, intermedio e avanzato, UX su mobile, su desktop e in realtà virtuale, UI base e intermedio, UI su mobile, pattern di interfaccia, Material Design, design per iOS, Fluent Design e Bootstrap', 'Nuovi corsi: come funzionano i motori di ricerca e i crawler, e come funzionano gli LLM', 'Nuova categoria: Design'], en: ['14 new design courses: UX basics, intermediate and advanced, UX on mobile, on desktop and in virtual reality, UI basics and intermediate, UI on mobile, UI design patterns, Material Design, iOS design, Fluent Design and Bootstrap', 'New courses: how search engines and crawlers work, and how LLMs work', 'New category: Design']},
         {v: '1.22.0', date: '2026-11-11', it: ['35 nuovi corsi: React, Next.js, Node.js, analisi dati con pandas, Git e GitHub, terminale Bash, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design pattern, espressioni regolari, API REST e GraphQL, Redis, algoritmi, sicurezza web e di base, accessibilità, Excel e Power BI', 'Nuovi corsi sugli strumenti AI: GitHub Copilot, Microsoft Copilot, Perplexity, editor e agenti AI, Hugging Face, AI per immagini, video e audio, Grok, Meta AI, Qwen e Apple Intelligence', 'Nuove categorie: DevOps, Sicurezza e Produttività', 'Domande più eque: la risposta giusta non è più riconoscibile perché è la più lunga', 'Esercizi meno rigidi: accettano più modi corretti di scrivere la soluzione'], en: ['35 new courses: React, Next.js, Node.js, data analysis with pandas, Git and GitHub, the Bash terminal, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design patterns, regular expressions, REST and GraphQL APIs, Redis, algorithms, web and everyday security, accessibility, Excel and Power BI', 'New courses on AI tools: GitHub Copilot, Microsoft Copilot, Perplexity, AI editors and agents, Hugging Face, AI for images, video and audio, Grok, Meta AI, Qwen and Apple Intelligence', 'New categories: DevOps, Security and Productivity', 'Fairer questions: the right answer no longer stands out by being the longest', 'Less rigid exercises: they accept more correct ways of writing the solution']},
         {v: '1.21.0', date: '2026-11-11', it: ['20 nuovi corsi sull’intelligenza artificiale, dal base all’avanzato: fondamenti, prompt engineering, AI responsabile, matematica, machine learning, deep learning, API, RAG, agenti e MCP, MLOps e modelli locali', 'Corsi dedicati agli assistenti: ChatGPT, Claude, Gemini, Mistral (Le Chat e Vibe), Proton Lumo e DeepSeek', 'Nuova categoria AI nei filtri dei corsi', 'Nella barra laterale, accanto a Corsi, Giochi e Certificati, compare il loro numero'], en: ['20 new artificial intelligence courses, from basics to advanced: fundamentals, prompt engineering, responsible AI, maths, machine learning, deep learning, APIs, RAG, agents and MCP, MLOps and local models', 'Courses on the assistants: ChatGPT, Claude, Gemini, Mistral (Le Chat and Vibe), Proton Lumo and DeepSeek', 'New AI category in the course filters', 'In the sidebar, Courses, Games and Certificates now show how many there are']},
@@ -142,6 +143,9 @@
     }
 
     const certUrl = code => `certificate.php?c=${code}&lang=${I18N.lang}`;
+    /** The name of a language a course was taken in, written in the language in use. */
+    const langName = code => ({it: t('Italian'), en: t('English')})[code] || String(code).toUpperCase();
+    const certsOf = c => c.certificates || (c.certificate ? [c.certificate] : []);
 
     function applyState(d) {
         S.state = d;
@@ -202,7 +206,7 @@
             h('a.sn-brand', {href: '#/home'}, h('img', {src: LOGO, alt: ''}), h('strong', 'Fucina')),
             S.state ? gradeChip() : null,
             h('div.sn-links', link('home', t('Home'), 'home'), link('path', t('Courses'), 'book', st ? st.courses.length : null), link('games', t('Games'), 'game', st ? st.games.length : null),
-                link('board', t('Ranking'), 'trophy'), link('certificates', t('Certificates'), 'cert', st ? st.courses.filter(c => c.certificate).length : null), link('stats', t('Stats'), 'stats')),
+                link('board', t('Ranking'), 'trophy'), link('certificates', t('Certificates'), 'cert', st ? st.courses.reduce((n, c) => n + certsOf(c).length, 0) : null), link('stats', t('Stats'), 'stats')),
             h('div.grow'),
             S.user.role >= 5 ? h('a.sn-link', {href: 'admin.html'}, icon('shield'), h('span', t('Admin portal'))) : null,
             h('a.sn-user' + (active === 'profile' ? '.active' : ''), {href: '#/profile'}, avatar(S.user.name, 'sm', myAvatar()), h('span', S.user.name)));
@@ -293,7 +297,7 @@
 
     /** The next thing to do: the first open course with lessons left. */
     function nextStep() {
-        return S.state.courses.find(c => !c.locked && !c.examScore && c.done < c.lessons) || S.state.courses.find(c => !c.locked && !c.certificate);
+        return S.state.courses.find(c => !c.locked && !c.examScore && c.done < c.lessons) || S.state.courses.find(c => !c.locked && !certsOf(c).length);
     }
 
     /** Favilla says one thing at a time, about what matters now. */
@@ -376,9 +380,25 @@
         };
         const cats = chipRow('cats', CATEGORIES.filter(([v]) => used.has(v)).map(([v, label]) => [v, t(label)]), t('Categories'));
         const langs = chipRow('fams', families.map(f => [f, familyName(f), f]), t('Languages'));
+        // The languages are many: they fold away behind a button (folded at first), which shows how many are chosen
+        const famsBox = h('div.path-fams', {id: 'path-fams'}, langs);
+        const famsToggle = h('button.path-more', {type: 'button', 'aria-controls': 'path-fams'});
+        famsToggle.onclick = () => {
+            S.path.famsOpen = !S.path.famsOpen;
+            syncFams();
+        };
+
+        function syncFams() {
+            const open = !!S.path.famsOpen, n = S.path.fams.size;
+            famsBox.hidden = !open;
+            famsToggle.classList.toggle('open', open);
+            famsToggle.setAttribute('aria-expanded', String(open));
+            famsToggle.replaceChildren(...[icon('code'), h('span', t('Languages')), n ? h('span.path-more-n', String(n)) : null, icon('chevronDown', 'path-more-chev')].filter(Boolean));
+        }
         const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         function draw() {
+            syncFams();
             const words = norm(S.path.q).split(/\s+/).filter(Boolean);
             const shown = S.state.courses.filter(c =>
                 (!S.path.cats.size || (c.categories || []).some(cat => S.path.cats.has(cat)))
@@ -406,7 +426,7 @@
         return {
             title: t('Courses'), tab: 'path', body: [
                 h('p.lead', t('Every course is a series of levels, each harder than the last. Finish a course to open the ones that follow.')),
-                h('div.path-tools', h('label.path-search-box', icon('search'), search), cats, langs, count), list,
+                h('div.path-tools', h('label.path-search-box', icon('search'), search), cats, famsToggle, famsBox, count), list,
             ]
         };
     }
@@ -415,7 +435,7 @@
         const after = c.locked ? S.state.courses.find(x => x.id === c.after) : null;
         const inner = [h('span.fam', familyShort(c.family)), h('div.grow', h('strong', c.title), h('p.muted', c.desc),
             c.locked ? h('p.lock-note', icon('lock'), t('Finish “{name}” or pass the exam', {name: after ? after.title : ''})) : h('div.bar', h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
-            h('div.meta', chip(c.level), chip(t('{n} levels', {n: c.lessons})), c.certificate ? chip(t('Certified'), 'ok', 'cert') : null))];
+            h('div.meta', chip(c.level), chip(t('{n} levels', {n: c.lessons})), certsOf(c).length ? chip(t('Certified'), 'ok', 'cert') : null))];
         return h('a.course.fam-' + c.family + (c.locked ? '.locked' : ''), {href: '#/course/' + c.id}, inner);
     }
 
@@ -499,16 +519,29 @@
         };
     }
 
+    /**
+     * Exam and certificate go by language: the exam is taken in the language in use, and its certificate says so.
+     * A certificate earned in another language invites to take the exam in this one too.
+     */
     function examCard(c, allDone) {
-        const passed = c.examScore > 0 && !c.certificate;
-        const perfect = c.examScore >= 100;
-        const text = perfect && c.certificate ? t('Passed with full marks: there is nothing left to improve.') : passed ? t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examScore, c: S.state.costs.certificate})
+        const score = c.examLangScore ?? c.examScore;
+        const passed = score > 0 && !c.certificate;
+        const perfect = score >= 100;
+        const elsewhere = certsOf(c).filter(x => x.lang !== I18N.lang);
+        const text = perfect && c.certificate ? t('Passed with full marks: there is nothing left to improve.') : passed ? t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: score, c: S.state.costs.certificate})
+            : elsewhere.length && !c.certificate ? t('You already have this certificate in {a}. Do you want to take the exam in {b} too?', {a: elsewhere.map(x => langName(x.lang)).join(', '), b: langName(I18N.lang)}) + ' '
+                + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {n: c.examQuestions, p: c.examPass, c: S.state.costs.certificate})
             : (allDone || c.examScore ? '' : t('Already know this? Take it now: if you pass, the course counts as finished and the next ones open.') + ' ')
             + t('{n} questions, pass with {p}%. Then unlock the certificate with {c} Sparks.', {n: c.examQuestions, p: c.examPass, c: S.state.costs.certificate});
+        // One button per certificate: the language goes in the label as soon as it is not the only one in the language in use
+        const own = certsOf(c).slice().sort((a, b) => (b.lang === I18N.lang) - (a.lang === I18N.lang));
+        const links = own.map(x => h('a.btn.btn-tonal', {href: certUrl(x.code), target: '_blank', rel: 'noopener'}, icon('cert'),
+            h('span', own.length === 1 && x.lang === I18N.lang ? t('Open the certificate') : t('Certificate in {l}', {l: langName(x.lang)}))));
+        const start = elsewhere.length && !c.certificate && !passed ? t('Take it in {l}', {l: langName(I18N.lang)}) : c.certificate || passed ? t('Try again') : t('Start');
         return h('section.card.exam-card', tile('icon', 'cert', 'lg'), h('div.grow', h('strong', t('Final exam')), h('p.muted', text),
-            c.certificate ? h('div.btn-row', h('a.btn.btn-tonal', {href: certUrl(c.certificate.code), target: '_blank', rel: 'noopener'}, icon('cert'), h('span', t('Open the certificate')))) : null),
+            links.length ? h('div.btn-row', links) : null),
             passed ? btn(t('Unlock · {n}', {n: S.state.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(c.id, render)}) : null,
-            perfect ? null : btn(c.certificate || passed ? t('Try again') : t('Start'), {kind: c.certificate || passed ? 'text' : 'filled', disabled: !c.items.length, onclick: () => go('exam/' + c.id)}));
+            perfect ? null : btn(start, {kind: c.certificate || passed ? 'text' : 'filled', disabled: !c.items.length, onclick: () => go('exam/' + c.id)}));
     }
 
     /** The certificate is the prize you buy with what you earned: the price is shown first. */
@@ -802,7 +835,7 @@
         const slot = h('div.clock-slot');
 
         function intro() {
-            if (c.examScore >= 100) {
+            if ((c.examLangScore ?? c.examScore) >= 100) {
                 stage.replaceChildren(h('section.done', mascot('wow', 'lg'), h('h2', c.title), h('p', t('Passed with full marks: there is nothing left to improve.')), h('div.step-actions', btn(t('Back to the course'), {onclick: () => go('course/' + courseId)}))));
                 return;
             }
@@ -1146,19 +1179,29 @@
 
     function viewCertificates() {
         const st = S.state;
-        const earned = st.courses.filter(c => c.certificate);
-        const ready = st.courses.filter(c => c.examScore > 0 && !c.certificate);
+        // One row per certificate: a course taken in two languages has two
+        const earned = st.courses.flatMap(c => certsOf(c).map(x => ({...c, certificate: x})))
+            .sort((a, b) => b.certificate.issuedAt.localeCompare(a.certificate.issuedAt));
+        const ready = st.courses.filter(c => (c.examLangScore ?? c.examScore) > 0 && !c.certificate);
+        // Certified in another language only: the exam can be taken in this one too
+        const other = st.courses.filter(c => !c.certificate && !(c.examLangScore > 0) && certsOf(c).length);
         return {
             title: t('Certificates'), tab: 'certificates', body: [
                 h('p.lead', t('Finish a course and pass its final exam to unlock its certificate with Sparks.')),
                 ready.length ? [
                     h('h2.section-title', t('Ready to unlock')),
                     h('div.group', ready.map(c => h('div.cert-row', tile('icon', 'cert'),
-                        h('div.grow', h('strong', c.title), h('p.muted', t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examScore, c: st.costs.certificate}))),
+                        h('div.grow', h('strong', c.title), h('p.muted', t('Exam passed with {n}%: unlock your certificate with {c} Sparks.', {n: c.examLangScore ?? c.examScore, c: st.costs.certificate}))),
                         btn(t('Unlock · {n}', {n: st.costs.certificate}), {icon: 'spark', onclick: () => claimCertificate(c.id, render)})))),
                 ] : null,
+                other.length ? [
+                    h('h2.section-title', t('Also in {l}?', {l: langName(I18N.lang)})),
+                    h('div.group', other.map(c => h('div.cert-row', tile('icon', 'cert'),
+                        h('div.grow', h('strong', c.title), h('p.muted', t('You already have this certificate in {a}. Do you want to take the exam in {b} too?', {a: certsOf(c).map(x => langName(x.lang)).join(', '), b: langName(I18N.lang)}))),
+                        btn(t('Take it in {l}', {l: langName(I18N.lang)}), {kind: 'tonal', onclick: () => go('exam/' + c.id)})))),
+                ] : null,
                 earned.length ? [
-                    ready.length ? h('h2.section-title', t('Your certificates')) : null,
+                    ready.length || other.length ? h('h2.section-title', t('Your certificates')) : null,
                     h('div.group', earned.map(certRow)),
                 ] : empty(t('No certificates yet.'), t('Finish a course and pass its exam to earn the first one.'), btn(t('Open the courses'), {icon: 'book', onclick: () => go('path')})),
                 h('a.btn.btn-tonal.btn-block', {href: 'verify.php'}, icon('cert'), h('span', t('Verify a certificate'))),
@@ -1167,7 +1210,7 @@
     }
 
     function certRow(c) {
-        return h('div.cert-row', tile('icon', 'cert'), h('div.grow', h('strong', c.title), h('p.muted', `${c.certificate.score}% · ${UI.fmtDate(c.certificate.issuedAt.slice(0, 10))} · ${c.certificate.name}`)),
+        return h('div.cert-row', tile('icon', 'cert'), h('div.grow', h('strong', c.title), h('p.muted', `${c.certificate.score}% · ${t('in {l}', {l: langName(c.certificate.lang)})} · ${UI.fmtDate(c.certificate.issuedAt.slice(0, 10))} · ${c.certificate.name}`)),
             h('a.icon-btn', {href: certUrl(c.certificate.code), target: '_blank', rel: 'noopener', 'aria-label': t('Open the certificate')}, icon('right')));
     }
 

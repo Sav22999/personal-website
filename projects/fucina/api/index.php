@@ -479,13 +479,14 @@ switch ($r) {
         // Open to everyone, even on a locked course: who already knows the subject can prove it and move on
         $pool = course_questions($c);
         if (!$pool) fail('Course not found.', 404, 'not_found');
-        $st = db()->prepare('SELECT 1 FROM ' . t('exams') . ' WHERE user_id = ? AND course = ? AND score >= 100 LIMIT 1');
-        $st->execute([$uid, $c['id']]);
+        // Each language has its own exam and certificate: full marks in Italian still leaves the English exam open
+        $st = db()->prepare('SELECT 1 FROM ' . t('exams') . ' WHERE user_id = ? AND course = ? AND lang = ? AND score >= 100 LIMIT 1');
+        $st->execute([$uid, $c['id'], lang()]);
         if ($st->fetchColumn()) fail('You already passed this exam with full marks.', 409, 'perfect');
         $ids = array_keys($pool);
         shuffle($ids);
         $ids = array_map('strval', array_slice($ids, 0, setting('exam_questions')));
-        db()->prepare('INSERT INTO ' . t('exams') . ' (user_id, course, questions, started_at) VALUES (?,?,?,?)')->execute([$uid, $c['id'], json_encode($ids), now_utc()]);
+        db()->prepare('INSERT INTO ' . t('exams') . ' (user_id, course, questions, lang, started_at) VALUES (?,?,?,?,?)')->execute([$uid, $c['id'], json_encode($ids), lang(), now_utc()]);
         $examId = (int)db()->lastInsertId();
         send_json(['ok' => true, 'exam' => $examId, 'pass' => setting('exam_pass_percent'), 'seconds' => exam_minutes($c) * 60, 'questions' => array_map(fn($id) => question_out($pool[$id]), $ids)]);
 
@@ -522,16 +523,18 @@ switch ($r) {
         if ($passed) solve_skipped_lessons($uid, $c, $score);
         $levelBefore = level_of($uid);
         $xp = 0;
-        $cert = user_certificates($uid)[$c['id']] ?? null;
-        // The first pass pays XP; the certificate itself is then unlocked with Sparks: see certificate.claim
-        if ($passed && !$cert && !$passedBefore) {
+        // The certificate of the language the exam was taken in
+        $certs = user_certificates($uid)[$c['id']] ?? [];
+        $cert = $certs[$exam['lang']] ?? null;
+        // The first pass pays XP once per course, whatever the language; the certificate is then unlocked with Sparks: see certificate.claim
+        if ($passed && !$certs && !$passedBefore) {
             $xp = setting('xp_certificate');
             add_xp($uid, $xp);
         } elseif ($passed && $cert && $score > $cert['score']) {
             // A better result improves the certificate, without changing its link
             db()->prepare('UPDATE ' . t('certificates') . ' SET score = ? WHERE code = ?')->execute([$score, $cert['code']]);
         }
-        $cert = user_certificates($uid)[$c['id']] ?? null;
+        $cert = user_certificates($uid)[$c['id']][$exam['lang']] ?? null;
         reward($u, $xp, $levelBefore, ['expired' => $expired, 'score' => $score, 'passed' => $passed, 'correct' => $correct, 'total' => count($ids), 'review' => $review, 'certificate' => $cert]);
 
     case 'certificate.claim':
@@ -539,17 +542,19 @@ switch ($r) {
         $u = writer();
         $uid = (int)$u['id'];
         $c = course_or_404(s(body(), 'course', 30));
-        $st = db()->prepare('SELECT MAX(score) FROM ' . t('exams') . ' WHERE user_id = ? AND course = ? AND score >= ?');
-        $st->execute([$uid, $c['id'], setting('exam_pass_percent')]);
+        // The certificate is in the language in use: its exam must have been passed in that language
+        $lang = lang();
+        $st = db()->prepare('SELECT MAX(score) FROM ' . t('exams') . ' WHERE user_id = ? AND course = ? AND lang = ? AND score >= ?');
+        $st->execute([$uid, $c['id'], $lang, setting('exam_pass_percent')]);
         $score = (int)$st->fetchColumn();
         if (!$score) fail('Pass the exam first.', 403, 'locked');
-        if (user_certificates($uid)[$c['id']] ?? null) fail('You already have this certificate.', 409, 'already');
+        if (user_certificate($uid, $c['id'])) fail('You already have this certificate.', 409, 'already');
         $cost = setting('cert_cost');
         // One transaction: the unique key stops a double click, and the Sparks go only if the certificate is created
         db()->beginTransaction();
         try {
-            db()->prepare('INSERT INTO ' . t('certificates') . ' (code, user_id, course, name, score, issued_at) VALUES (?,?,?,?,?,?)')
-                ->execute([unique_certificate_code(), $uid, $c['id'], user_row($uid)['name'], $score, now_utc()]);
+            db()->prepare('INSERT INTO ' . t('certificates') . ' (code, user_id, course, lang, name, score, issued_at) VALUES (?,?,?,?,?,?,?)')
+                ->execute([unique_certificate_code(), $uid, $c['id'], $lang, user_row($uid)['name'], $score, now_utc()]);
             $st = db()->prepare('UPDATE ' . t('users') . ' SET points = points - ? WHERE id = ? AND points >= ?');
             $st->execute([$cost, $uid, $cost]);
             if ($st->rowCount() === 0) {
@@ -561,7 +566,7 @@ switch ($r) {
             if (db()->inTransaction()) db()->rollBack();
             throw $e;
         }
-        reward($u, 0, level_of($uid), ['certificate' => user_certificates($uid)[$c['id']]]);
+        reward($u, 0, level_of($uid), ['certificate' => user_certificate($uid, $c['id'])]);
 
     // ======================================================== playing
 

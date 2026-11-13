@@ -36,14 +36,14 @@ function require_friend(array $me, string $username): array
 function friends_out(int $uid): array
 {
     $day = today_utc();
-    $st = db()->prepare('SELECT u.id, u.username, r.level, r.popularity, r.wish,
+    $st = db()->prepare('SELECT u.id, u.username, r.level, r.popularity, r.rating_sum, r.rating_n, r.wish,
             (SELECT COUNT(*) FROM ' . t('visits') . ' v WHERE v.user_id = ? AND v.host_id = u.id AND v.day = ?) AS visited,
             (SELECT COUNT(*) FROM ' . t('gifts') . ' g WHERE g.user_id = ? AND g.to_id = u.id AND g.day = ?) AS gifted
         FROM ' . t('friends') . ' f JOIN ' . t('users') . ' u ON u.id = f.friend_id LEFT JOIN ' . t('restaurants') . " r ON r.user_id = u.id
         WHERE f.user_id = ? AND f.accepted = 1 AND u.status = 'active' ORDER BY u.username");
     $st->execute([$uid, $day, $uid, $day, $uid]);
     $friends = array_map(fn($x) => [
-        'username' => $x['username'], 'level' => (int)($x['level'] ?? 1), 'stars' => stars_for((int)($x['popularity'] ?? 10)),
+        'username' => $x['username'], 'level' => (int)($x['level'] ?? 1), 'stars' => rating_stars((int)($x['rating_sum'] ?? 0), (int)($x['rating_n'] ?? 0)),
         'wish' => $x['wish'], 'visited' => (bool)$x['visited'], 'gifted' => (bool)$x['gifted'],
     ], $st->fetchAll());
     $st = db()->prepare('SELECT u.username FROM ' . t('friends') . ' f JOIN ' . t('users') . " u ON u.id = f.user_id WHERE f.friend_id = ? AND f.accepted = 0 AND u.status = 'active' ORDER BY f.created_at");

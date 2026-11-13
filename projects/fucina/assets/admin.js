@@ -556,7 +556,7 @@
     async function viewCertificates() {
         const d = await Api.get('admin.certificates');
         return page(t('Certificates'), null, d.certificates.length ? table([t('Name'), 'Email', t('Course'), t('Score'), t('Date'), ''], d.certificates.map(c => h('tr',
-            h('td', h('a', {href: `certificate.php?c=${c.code}&lang=${I18N.lang}`, target: '_blank', rel: 'noopener'}, c.name)), h('td', c.email), h('td', c.course), h('td', c.score + '%'), h('td', UI.fmtDate(c.issued_at.slice(0, 10))),
+            h('td', h('a', {href: `certificate.php?c=${c.code}&lang=${I18N.lang}`, target: '_blank', rel: 'noopener'}, c.name)), h('td', c.email), h('td', c.course + ' · ' + String(c.lang || '').toUpperCase()), h('td', c.score + '%'), h('td', UI.fmtDate(c.issued_at.slice(0, 10))),
             h('td.nowrap', iconBtn('edit', t('Name on the certificate'), () => renameCertificate(c)), iconBtn('delete', t('Revoke'), async () => {
                 if (!await confirm(t('Revoke this certificate?'), t('Its link stops working.'), t('Revoke'), true)) return;
                 await Api.post('admin.certificate.delete', {code: c.code}).catch(e => toast(e.message, 'error'));

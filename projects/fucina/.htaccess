@@ -13,13 +13,18 @@ DirectoryIndex index.html
   </IfModule>
 </FilesMatch>
 
-# PHP libraries, installer data and tools are not reachable from the browser
-RedirectMatch 404 ^/projects/fucina/(lib|install|tools|android)(/|$)
+# PHP libraries, installer data and tools are not reachable from the browser,
+# both at www.saveriomorelli.com/projects/fucina/ and at fucina.saveriomorelli.com/
+RedirectMatch 404 ^(/projects/fucina)?/(lib|install|tools|android)(/|$)
 
+# Fucina can be shown inside its own subdomain (fucina.saveriomorelli.com, also when it only frames this folder)
+# and nowhere else: frame-ancestors replaces the X-Frame-Options: SAMEORIGIN of the main site, which would block it
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set X-Frame-Options "SAMEORIGIN"
+  Header unset X-Frame-Options
+  Header always unset X-Frame-Options
+  Header set Content-Security-Policy "frame-ancestors 'self' https://fucina.saveriomorelli.com http://fucina.saveriomorelli.com https://www.saveriomorelli.com"
 </IfModule>
 
 # Force HTTPS (the session cookie is marked Secure)
