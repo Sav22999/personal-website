@@ -1,0 +1,7 @@
+# Real credentials and every data file stay out of git: this repository is public
+credentials.php
+data/
+*.sqlite
+*.sqlite-*
+*.xlsx
+.DS_Store

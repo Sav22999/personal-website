@@ -6,17 +6,17 @@
 
 declare(strict_types=1);
 
-const PERM_NONE   = 0;   // no access (pending or revoked account)
-const PERM_USER   = 1;   // can use the portal
+const PERM_NONE = 0;   // no access (pending or revoked account)
+const PERM_USER = 1;   // can use the portal
 const PERM_EDITOR = 5;   // content moderator: questions, references, reports
-const PERM_ADMIN  = 9;   // administrator: + manages users and moderators
+const PERM_ADMIN = 9;   // administrator: + manages users and moderators
 const PERM_MASTER = 10;  // master admin (only one): + manages administrators
 
 const PERMISSION_LEVELS = [
-    PERM_NONE   => 'Nessun accesso',
-    PERM_USER   => 'Utente',
+    PERM_NONE => 'Nessun accesso',
+    PERM_USER => 'Utente',
     PERM_EDITOR => 'Moderatore contenuti',
-    PERM_ADMIN  => 'Amministratore',
+    PERM_ADMIN => 'Amministratore',
     PERM_MASTER => 'Master admin',
 ];
 
@@ -64,9 +64,9 @@ function db(): PDO
             $c['host'], (int)($c['port'] ?? 3306), $c['name'], $c['charset'] ?? 'utf8mb4'
         );
         $pdo = new PDO($dsn, $c['user'], $c['pass'], [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_EMULATE_PREPARES => false,
         ]);
         $pdo->exec("SET time_zone = '+00:00'");
     }
@@ -145,9 +145,9 @@ function str_param(array $src, string $key, int $maxLen = 0, bool $required = fa
 function set_auth_cookie(string $value, int $expires): void
 {
     setcookie(AUTH_COOKIE, $value, [
-        'expires'  => $expires,
-        'path'     => app_base_path(),
-        'secure'   => is_https(),
+        'expires' => $expires,
+        'path' => app_base_path(),
+        'secure' => is_https(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -156,20 +156,16 @@ function set_auth_cookie(string $value, int $expires): void
 function create_auth_session(int $userId): array
 {
     $token = bin2hex(random_bytes(32));
-    $csrf  = bin2hex(random_bytes(24));
+    $csrf = bin2hex(random_bytes(24));
     $lifetime = (int)(config()['session_lifetime'] ?? 2592000);
     $expires = time() + $lifetime;
     $st = db()->prepare('INSERT INTO ' . t('auth_tokens') . ' (token_hash, user_id, csrf_token, user_agent, ip, created_at, last_seen_at, expires_at) VALUES (?,?,?,?,?,?,?,?)');
     $st->execute([
         hash('sha256', $token), $userId, $csrf,
-        substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255), client_ip(),
+        '', '', // user_agent and ip stay empty: nothing uses them, so they are not collected
         now_utc(), now_utc(), gmdate('Y-m-d H:i:s', $expires),
     ]);
     set_auth_cookie($token, $expires);
-    // Occasional cleanup of expired tokens
-    if (random_int(1, 50) === 1) {
-        db()->exec('DELETE FROM ' . t('auth_tokens') . " WHERE expires_at < UTC_TIMESTAMP()");
-    }
     return ['csrf' => $csrf];
 }
 
@@ -191,7 +187,7 @@ function current_session(): ?array
     $token = $_COOKIE[AUTH_COOKIE] ?? '';
     if (!is_string($token) || !preg_match('/^[a-f0-9]{64}$/', $token)) return $cached = null;
     $st = db()->prepare(
-        'SELECT u.id, u.name, u.email, u.permissions, u.status, u.must_change_password, u.created_at, a.csrf_token, a.last_seen_at, a.token_hash
+        'SELECT u.id, u.name, u.email, u.permissions, u.status, u.must_change_password, u.email_verified_at, u.created_at, a.csrf_token, a.last_seen_at, a.token_hash
          FROM ' . t('auth_tokens') . ' a JOIN ' . t('users') . ' u ON u.id = a.user_id
          WHERE a.token_hash = ? AND a.expires_at > UTC_TIMESTAMP()'
     );
@@ -215,26 +211,20 @@ function public_user(array $u): array
     $p = (int)$u['permissions'];
     $can = user_can_use($u);
     return [
-        'id'             => (int)$u['id'],
-        'name'           => $u['name'],
-        'email'          => $u['email'],
-        'permissions'    => $p,
-        'status'         => $u['status'],
-        'role'           => role_label($p),
-        'canUse'         => $can,
-        'canEdit'        => $can && $p >= PERM_EDITOR,
+        'id' => (int)$u['id'],
+        'name' => $u['name'],
+        'email' => $u['email'],
+        'permissions' => $p,
+        'status' => $u['status'],
+        'role' => role_label($p),
+        'canUse' => $can,
+        'canEdit' => $can && $p >= PERM_EDITOR,
         'canManageUsers' => $can && $p >= PERM_ADMIN,
-        'isMaster'       => $can && $p >= PERM_MASTER,
+        'isMaster' => $can && $p >= PERM_MASTER,
         'mustChangePassword' => !empty($u['must_change_password']),
-        'createdAt'      => $u['created_at'] ?? null,
-        'gravatar'       => gravatar_hash((string)$u['email']),
+        'createdAt' => $u['created_at'] ?? null,
+        'verified' => !empty($u['email_verified_at']),
     ];
-}
-
-/** Gravatar hash: SHA-256 of the normalized email (the email itself is never sent in clear text). */
-function gravatar_hash(string $email): string
-{
-    return hash('sha256', mb_strtolower(trim($email)));
 }
 
 function role_label(int $p): string
@@ -261,6 +251,7 @@ function require_user(int $minPermission = PERM_USER, bool $allowPasswordChange 
     if (!$u) fail('Sessione scaduta: accedi di nuovo.', 401, 'unauthenticated');
     if ($u['status'] === 'pending') fail('Il tuo account è in attesa di abilitazione da parte di un amministratore.', 403, 'pending');
     if ($u['status'] === 'disabled') fail('Il tuo account è stato disabilitato.', 403, 'disabled');
+    if (must_verify($u)) fail('Prima conferma la tua email: accedi di nuovo per ricevere il link.', 403, 'email_unverified');
     if ($u['permissions'] < max(PERM_USER, $minPermission)) fail('Non hai i permessi per questa operazione.', 403, 'forbidden');
     if (!$allowPasswordChange && !empty($u['must_change_password'])) {
         fail('Prima di continuare devi scegliere una nuova password.', 403, 'must_change_password');
@@ -295,7 +286,7 @@ function ensure_schema(): void
     } catch (Throwable $e) {
         return; // portal not installed yet
     }
-    if ($version >= 6) return;
+    if ($version >= 7) return;
 
     $pdo = db();
     if ($version < 2) {
@@ -338,6 +329,29 @@ function ensure_schema(): void
         $pdo->exec('ALTER TABLE ' . t('meta') . ' MODIFY `v` MEDIUMTEXT NOT NULL');
         $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '6') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
     }
+    if ($version < 7 && function_exists('email_tokens_table_sql')) {
+        // v7: confirmed email addresses. Administrators keep their access; everyone else confirms with a link at the
+        // next sign-in, so the sessions of the accounts still to confirm end now
+        $have = array_column($pdo->query('SHOW COLUMNS FROM ' . t('users'))->fetchAll(), 'Field');
+        if (!in_array('email_verified_at', $have, true)) {
+            $pdo->exec('ALTER TABLE ' . t('users') . " ADD COLUMN `email_verified_at` DATETIME NULL AFTER `activation_mail_at`");
+            $pdo->exec('UPDATE ' . t('users') . ' SET email_verified_at = UTC_TIMESTAMP() WHERE permissions >= ' . PERM_ADMIN);
+            if (mail_enabled_safe()) $pdo->exec('DELETE a FROM ' . t('auth_tokens') . ' a JOIN ' . t('users') . ' u ON u.id = a.user_id WHERE u.email_verified_at IS NULL');
+        }
+        $pdo->exec(email_tokens_table_sql());
+        $pdo->prepare('INSERT INTO ' . t('meta') . " (k, v) VALUES ('schema_version', '7') ON DUPLICATE KEY UPDATE v = VALUES(v)")->execute();
+    }
+}
+
+function mail_enabled_safe(): bool
+{
+    return function_exists('mail_enabled') && mail_enabled();
+}
+
+/** An account is usable only once its address is confirmed; without email settings nobody could, so it isn't asked. */
+function must_verify(array $u): bool
+{
+    return empty($u['email_verified_at']) && mail_enabled_safe();
 }
 
 /** Makes sure there is exactly one master admin. */
@@ -345,12 +359,24 @@ function normalize_master_admin(): void
 {
     $pdo = db();
     $rows = $pdo->query('SELECT id, permissions, status FROM ' . t('users') . " WHERE permissions >= " . PERM_ADMIN . " ORDER BY (status = 'active') DESC, id ASC")->fetchAll();
-    $masters = array_values(array_filter($rows, function ($r) { return (int)$r['permissions'] >= PERM_MASTER; }));
+    $masters = array_values(array_filter($rows, function ($r) {
+        return (int)$r['permissions'] >= PERM_MASTER;
+    }));
     $keep = null;
-    foreach ($masters as $r) { if ($r['status'] === 'active') { $keep = (int)$r['id']; break; } }
+    foreach ($masters as $r) {
+        if ($r['status'] === 'active') {
+            $keep = (int)$r['id'];
+            break;
+        }
+    }
     if ($keep === null && $masters) $keep = (int)$masters[0]['id'];
     if ($keep === null) {
-        foreach ($rows as $r) { if ($r['status'] === 'active') { $keep = (int)$r['id']; break; } }
+        foreach ($rows as $r) {
+            if ($r['status'] === 'active') {
+                $keep = (int)$r['id'];
+                break;
+            }
+        }
     }
     if ($keep === null) return;
     $pdo->prepare('UPDATE ' . t('users') . ' SET permissions = ? WHERE permissions >= ? AND id <> ?')->execute([PERM_ADMIN, PERM_ADMIN, $keep]);

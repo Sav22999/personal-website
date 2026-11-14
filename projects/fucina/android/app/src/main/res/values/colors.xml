@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#D93A14</color>
+    <color name="ic_launcher_background">#1B1B4B</color>
+    <!-- Same background as the web app (bg variable), so the system bars blend with the page -->
+    <color name="background">#FFF6EA</color>
+</resources>

@@ -17,7 +17,8 @@ $canonical = '/portfolio/';
     <div class="portfolio-hero-content">
         <p class="section-label">Portfolio</p>
         <h1>Designing &amp; building<br>digital products.</h1>
-        <p class="portfolio-hero-sub">Frontend developer and UX designer based in Italy. I create open-source tools, apps, and browser extensions — always free, always private, always ad-free.</p>
+        <p class="portfolio-hero-sub">Frontend developer and UX designer based in Italy. I create open-source tools,
+            apps, and browser extensions — always free, always private, always ad-free.</p>
     </div>
     <div class="portfolio-stats">
         <div class="portfolio-stat">
@@ -47,13 +48,15 @@ $canonical = '/portfolio/';
     <div class="portfolio-skills">
         <div class="portfolio-skill">
             <div class="portfolio-skill-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <polyline points="16 18 22 12 16 6"/>
                     <polyline points="8 6 2 12 8 18"/>
                 </svg>
             </div>
             <h3>Frontend development</h3>
-            <p>Responsive websites, single-page apps, and Progressive Web Apps with a focus on performance and accessibility.</p>
+            <p>Responsive websites, single-page apps, and Progressive Web Apps with a focus on performance and
+                accessibility.</p>
             <ul class="portfolio-skill-tags">
                 <li>HTML / CSS / JS</li>
                 <li>Vue.js</li>
@@ -63,13 +66,15 @@ $canonical = '/portfolio/';
         </div>
         <div class="portfolio-skill">
             <div class="portfolio-skill-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <rect x="5" y="2" width="14" height="20" rx="2"/>
                     <path d="M12 18h.01"/>
                 </svg>
             </div>
             <h3>App development</h3>
-            <p>Native Android apps and browser extensions — from concept to publishing on Google Play and Firefox Add-ons.</p>
+            <p>Native Android apps and browser extensions — from concept to publishing on Google Play and Firefox
+                Add-ons.</p>
             <ul class="portfolio-skill-tags">
                 <li>Android</li>
                 <li>WebExtensions</li>
@@ -78,13 +83,15 @@ $canonical = '/portfolio/';
         </div>
         <div class="portfolio-skill">
             <div class="portfolio-skill-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M12 20h9"/>
                     <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838.838-2.872a2 2 0 0 1 .506-.855z"/>
                 </svg>
             </div>
             <h3>UX &amp; UI design</h3>
-            <p>User-centered interfaces from research to hi-fi prototypes. Wireframing, usability testing, and visual design.</p>
+            <p>User-centered interfaces from research to hi-fi prototypes. Wireframing, usability testing, and visual
+                design.</p>
             <ul class="portfolio-skill-tags">
                 <li>Figma</li>
                 <li>User research</li>
@@ -102,21 +109,23 @@ $canonical = '/portfolio/';
     </div>
 
     <div class="portfolio-featured">
-        <a href="/projects/sav-pdf-viewer/" class="portfolio-featured-card">
+        <a href="/projects/about/sav-pdf-viewer/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Android</span>
                 <span class="portfolio-featured-tag">100K+ users</span>
             </div>
             <h3>Sav PDF Viewer</h3>
-            <p>A private, open-source PDF reader for Android with no ads and no tracking. Over 100,000 installs on Google Play.</p>
+            <p>A private, open-source PDF reader for Android with no ads and no tracking. Over 100,000 installs on
+                Google Play.</p>
             <span class="portfolio-featured-link">
                 View project
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
             </span>
         </a>
-        <a href="/projects/notefox/" class="portfolio-featured-card">
+        <a href="/projects/about/notefox/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Browser extension</span>
                 <span class="portfolio-featured-tag">Open source</span>
@@ -125,26 +134,29 @@ $canonical = '/portfolio/';
             <p>Take notes on any website. Private, open-source, with cloud sync across devices. Built for Firefox.</p>
             <span class="portfolio-featured-link">
                 View project
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
             </span>
         </a>
-        <a href="/projects/emoticolor/" class="portfolio-featured-card">
+        <a href="/projects/about/emoticolor/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Web app</span>
                 <span class="portfolio-featured-tag">Thesis project</span>
             </div>
             <h3>Emoticolor</h3>
-            <p>An emotion-based social network designed as a master's thesis. Ethical design, emotional literacy, and privacy by design.</p>
+            <p>An emotion-based social network designed as a master's thesis. Ethical design, emotional literacy, and
+                privacy by design.</p>
             <span class="portfolio-featured-link">
                 View project
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
             </span>
         </a>
-        <a href="/projects/emoji/" class="portfolio-featured-card">
+        <a href="/projects/about/emoji/" class="portfolio-featured-card">
             <div class="portfolio-featured-meta">
                 <span class="portfolio-featured-tag">Browser extension</span>
             </div>
@@ -152,7 +164,8 @@ $canonical = '/portfolio/';
             <p>Copy or insert any emoji with a click. Search by keywords, color, or gender. Built for Firefox.</p>
             <span class="portfolio-featured-link">
                 View project
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
             </span>
@@ -162,7 +175,8 @@ $canonical = '/portfolio/';
     <div class="portfolio-all-projects">
         <a href="/projects/" class="portfolio-all-link">
             See all projects
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
         </a>
@@ -179,7 +193,8 @@ $canonical = '/portfolio/';
             <div class="portfolio-exp-content">
                 <h3>Frontend App Developer &amp; UX Designer</h3>
                 <p class="portfolio-exp-company">Fondazione Bruno Kessler (FBK)</p>
-                <p class="portfolio-exp-desc">Designing and developing user interfaces for research-driven digital products.</p>
+                <p class="portfolio-exp-desc">Designing and developing user interfaces for research-driven digital
+                    products.</p>
             </div>
         </div>
         <div class="portfolio-exp-item">
@@ -274,7 +289,8 @@ $canonical = '/portfolio/';
         <p>Interested in collaborating? Drop me a message — no commitment, just a conversation.</p>
         <a href="/contact-me/" class="services-cta">
             <span>Get in touch</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
         </a>

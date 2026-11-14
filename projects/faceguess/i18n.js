@@ -93,8 +93,20 @@ const translations = {
         err_game_not_active: "The game isn't active.",
         err_create_failed: "Couldn't create the game. Try again.",
         end_turn: "End turn",
+        theme_title: "Theme", theme_auto: "Auto", theme_light: "Light", theme_dark: "Dark",
         credit_by: "A project by",
         credit_ai: "Built with Claude AI",
+        donate: "Donate",
+        donate_title: "Support the project",
+        donate_modal_title: "Support the project",
+        donate_modal_intro: "All my projects are free and open-source — no ads, no tracking, no subscriptions. A small donation helps cover server and maintenance costs.",
+        donate_reason_ads_title: "100% Free & No ads",
+        donate_reason_ads_desc: "No banners, no paywalls, no premium features.",
+        donate_reason_oss_title: "Open source & Private",
+        donate_reason_oss_desc: "Code open to everyone and respectful of your privacy.",
+        donate_reason_server_title: "Server & Maintenance",
+        donate_reason_server_desc: "Keeps multiplayer servers, hosting, and updates running.",
+        donate_cta: "Make a donation",
         hidden_label: "Hidden",
         rules_short: "Game rules",
         last_chance_title: "{name} guessed right!",
@@ -231,8 +243,20 @@ const translations = {
         err_game_not_active: "La partita non è attiva.",
         err_create_failed: "Impossibile creare la partita. Riprova.",
         end_turn: "Turno finito",
+        theme_title: "Tema", theme_auto: "Auto", theme_light: "Chiaro", theme_dark: "Scuro",
         credit_by: "Un progetto di",
         credit_ai: "Realizzato con Claude AI",
+        donate: "Donazione",
+        donate_title: "Sostieni il progetto",
+        donate_modal_title: "Sostieni il progetto",
+        donate_modal_intro: "Tutti i miei progetti sono gratuiti e open-source: senza pubblicità, senza tracciamento né abbonamenti. Una piccola donazione aiuta a coprire i costi di server e manutenzione.",
+        donate_reason_ads_title: "100% gratuito e senza pubblicità",
+        donate_reason_ads_desc: "Nessun banner invadente, nessun paywall né funzioni a pagamento.",
+        donate_reason_oss_title: "Open-source e trasparente",
+        donate_reason_oss_desc: "Codice aperto a tutti e massimo rispetto per la tua privacy.",
+        donate_reason_server_title: "Server e manutenzione",
+        donate_reason_server_desc: "Mantiene attivi i server multiplayer, l’hosting e gli aggiornamenti.",
+        donate_cta: "Fai una donazione",
         hidden_label: "Nascosto",
         rules_short: "Regole di gioco",
         last_chance_title: "{name} ha indovinato!",
@@ -369,8 +393,20 @@ const translations = {
         err_game_not_active: "La partida no está activa.",
         err_create_failed: "No se pudo crear la partida. Inténtalo de nuevo.",
         end_turn: "Terminar turno",
+        theme_title: "Tema", theme_auto: "Auto", theme_light: "Claro", theme_dark: "Oscuro",
         credit_by: "Un proyecto de",
         credit_ai: "Creado con Claude AI",
+        donate: "Donación",
+        donate_title: "Apoya el proyecto",
+        donate_modal_title: "Apoya el proyecto",
+        donate_modal_intro: "Todos mis proyectos son gratuitos y de código abierto: sin anuncios, sin rastreo ni suscripciones. Una pequeña donación ayuda a cubrir los costes de servidor y mantenimiento.",
+        donate_reason_ads_title: "100% gratis y sin anuncios",
+        donate_reason_ads_desc: "Sin banners molestos, sin muros de pago ni funciones de pago.",
+        donate_reason_oss_title: "Código abierto y privado",
+        donate_reason_oss_desc: "Código abierto a todos y respeto por tu privacidad.",
+        donate_reason_server_title: "Servidores y mantenimiento",
+        donate_reason_server_desc: "Mantiene activos los servidores multijugador, el alojamiento y las actualizaciones.",
+        donate_cta: "Hacer una donación",
         hidden_label: "Oculto",
         rules_short: "Reglas del juego",
         last_chance_title: "¡{name} ha acertado!",
@@ -507,8 +543,20 @@ const translations = {
         err_game_not_active: "La partie n'est pas active.",
         err_create_failed: "Impossible de créer la partie. Réessaie.",
         end_turn: "Fin du tour",
+        theme_title: "Thème", theme_auto: "Auto", theme_light: "Clair", theme_dark: "Sombre",
         credit_by: "Un projet de",
         credit_ai: "Réalisé avec Claude AI",
+        donate: "Faire un don",
+        donate_title: "Soutenir le projet",
+        donate_modal_title: "Soutenir le projet",
+        donate_modal_intro: "Tous mes projets sont gratuits et open-source : sans publicité, sans pistage ni abonnement. Un petit don aide à couvrir les coûts de serveur et de maintenance.",
+        donate_reason_ads_title: "100% gratuit et sans pub",
+        donate_reason_ads_desc: "Aucune bannière, aucun paywall, aucune fonction payante.",
+        donate_reason_oss_title: "Open-source et transparent",
+        donate_reason_oss_desc: "Code ouvert à tous et respectueux de votre vie privée.",
+        donate_reason_server_title: "Serveurs et maintenance",
+        donate_reason_server_desc: "Maintient actifs les serveurs multijoueur, l’hébergement et les mises à jour.",
+        donate_cta: "Faire un don",
         hidden_label: "Masqué",
         rules_short: "Règles du jeu",
         last_chance_title: "{name} a trouvé !",
@@ -645,8 +693,20 @@ const translations = {
         err_game_not_active: "Das Spiel ist nicht aktiv.",
         err_create_failed: "Spiel konnte nicht erstellt werden. Versuch es nochmal.",
         end_turn: "Zug beenden",
+        theme_title: "Design", theme_auto: "Auto", theme_light: "Hell", theme_dark: "Dunkel",
         credit_by: "Ein Projekt von",
         credit_ai: "Erstellt mit Claude AI",
+        donate: "Spenden",
+        donate_title: "Projekt unterstützen",
+        donate_modal_title: "Projekt unterstützen",
+        donate_modal_intro: "Alle meine Projekte sind kostenlos und quelloffen – ohne Werbung, ohne Tracking, ohne Abos. Eine kleine Spende hilft, Server- und Wartungskosten zu decken.",
+        donate_reason_ads_title: "100% kostenlos & werbefrei",
+        donate_reason_ads_desc: "Keine störenden Banner, keine Paywalls, keine Bezahlfunktionen.",
+        donate_reason_oss_title: "Quelloffen & transparent",
+        donate_reason_oss_desc: "Quelloffener Code für alle und voller Schutz deiner Privatsphäre.",
+        donate_reason_server_title: "Server & Wartung",
+        donate_reason_server_desc: "Hält Multiplayer-Server, Hosting und regelmäßige Updates am Laufen.",
+        donate_cta: "Spenden",
         hidden_label: "Verdeckt",
         rules_short: "Spielregeln",
         last_chance_title: "{name} hat richtig geraten!",
@@ -693,11 +753,26 @@ const translations = {
 
 // Example questions shown in turn as the placeholder of the question field.
 const ASK_EXAMPLES = {
-    en: { prefix: 'e.g.', items: ['Does your character wear glasses?', 'Is it a woman?', 'Do they have a beard?', 'Are they wearing a hat?', 'Do they have blonde hair?', 'Is their hair long?', 'Are they wearing earrings?', 'Do they have freckles?', 'Is their shirt red?'] },
-    it: { prefix: 'es.', items: ['Porta gli occhiali?', 'È una donna?', 'Ha la barba?', 'Indossa un cappello?', 'Ha i capelli biondi?', 'Ha i capelli lunghi?', 'Porta gli orecchini?', 'Ha le lentiggini?', 'Ha la maglia rossa?'] },
-    es: { prefix: 'p. ej.', items: ['¿Lleva gafas?', '¿Es una mujer?', '¿Tiene barba?', '¿Lleva sombrero?', '¿Tiene el pelo rubio?', '¿Tiene el pelo largo?', '¿Lleva pendientes?', '¿Tiene pecas?', '¿Lleva camiseta roja?'] },
-    fr: { prefix: 'ex.', items: ['Porte-t-il des lunettes ?', 'Est-ce une femme ?', 'A-t-il une barbe ?', 'Porte-t-il un chapeau ?', 'A-t-il les cheveux blonds ?', 'A-t-il les cheveux longs ?', 'Porte-t-il des boucles d’oreilles ?', 'A-t-il des taches de rousseur ?', 'Son t-shirt est-il rouge ?'] },
-    de: { prefix: 'z. B.', items: ['Trägt die Figur eine Brille?', 'Ist es eine Frau?', 'Hat die Figur einen Bart?', 'Trägt sie einen Hut?', 'Hat sie blonde Haare?', 'Hat sie lange Haare?', 'Trägt sie Ohrringe?', 'Hat sie Sommersprossen?', 'Ist das Shirt rot?'] },
+    en: {
+        prefix: 'e.g.',
+        items: ['Does your character wear glasses?', 'Is it a woman?', 'Do they have a beard?', 'Are they wearing a hat?', 'Do they have blonde hair?', 'Is their hair long?', 'Are they wearing earrings?', 'Do they have freckles?', 'Is their shirt red?']
+    },
+    it: {
+        prefix: 'es.',
+        items: ['Porta gli occhiali?', 'È una donna?', 'Ha la barba?', 'Indossa un cappello?', 'Ha i capelli biondi?', 'Ha i capelli lunghi?', 'Porta gli orecchini?', 'Ha le lentiggini?', 'Ha la maglia rossa?']
+    },
+    es: {
+        prefix: 'p. ej.',
+        items: ['¿Lleva gafas?', '¿Es una mujer?', '¿Tiene barba?', '¿Lleva sombrero?', '¿Tiene el pelo rubio?', '¿Tiene el pelo largo?', '¿Lleva pendientes?', '¿Tiene pecas?', '¿Lleva camiseta roja?']
+    },
+    fr: {
+        prefix: 'ex.',
+        items: ['Porte-t-il des lunettes ?', 'Est-ce une femme ?', 'A-t-il une barbe ?', 'Porte-t-il un chapeau ?', 'A-t-il les cheveux blonds ?', 'A-t-il les cheveux longs ?', 'Porte-t-il des boucles d’oreilles ?', 'A-t-il des taches de rousseur ?', 'Son t-shirt est-il rouge ?']
+    },
+    de: {
+        prefix: 'z. B.',
+        items: ['Trägt die Figur eine Brille?', 'Ist es eine Frau?', 'Hat die Figur einen Bart?', 'Trägt sie einen Hut?', 'Hat sie blonde Haare?', 'Hat sie lange Haare?', 'Trägt sie Ohrringe?', 'Hat sie Sommersprossen?', 'Ist das Shirt rot?']
+    },
 };
 
 const SUPPORTED_LANGS = Object.keys(translations);
@@ -713,8 +788,12 @@ function t(key, params) {
 
 function applyTranslations() {
     document.documentElement.lang = currentLang;
-    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         el.title = t(el.dataset.i18nTitle);
         el.setAttribute('aria-label', el.title);
@@ -725,14 +804,20 @@ function applyTranslations() {
 function setLanguage(lang) {
     if (!SUPPORTED_LANGS.includes(lang)) return;
     currentLang = lang;
-    try { localStorage.setItem('fg_lang', lang); } catch (e) { /* storage unavailable */ }
+    try {
+        localStorage.setItem('fg_lang', lang);
+    } catch (e) { /* storage unavailable */
+    }
     applyTranslations();
     if (typeof onLanguageChange === 'function') onLanguageChange();
 }
 
 function initI18n() {
     let saved = null;
-    try { saved = localStorage.getItem('fg_lang'); } catch (e) { /* storage unavailable */ }
+    try {
+        saved = localStorage.getItem('fg_lang');
+    } catch (e) { /* storage unavailable */
+    }
     if (SUPPORTED_LANGS.includes(saved)) currentLang = saved;
     document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
     applyTranslations();

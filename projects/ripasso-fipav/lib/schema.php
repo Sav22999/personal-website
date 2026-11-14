@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 5; // fresh installs start here: ensure_schema() in bootstrap.php applies the later steps (v6, v7)
 
 function schema_statements(): array
 {
@@ -26,11 +26,14 @@ function schema_statements(): array
             `approved_at` DATETIME NULL,
             `approved_by` INT UNSIGNED NULL,
             `activation_mail_at` DATETIME NULL,
+            `email_verified_at` DATETIME NULL,
             `last_login_at` DATETIME NULL,
             `last_seen_at` DATETIME NULL,
             UNIQUE KEY `uq_email` (`email`),
             KEY `idx_status` (`status`)
         ) $opts",
+
+        'email_tokens' => email_tokens_table_sql(),
 
         'auth_tokens' => 'CREATE TABLE IF NOT EXISTS ' . t('auth_tokens') . " (
             `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
@@ -134,6 +137,19 @@ function documents_table_sql(): string
             `updated_by` INT UNSIGNED NULL,
             UNIQUE KEY `uq_file` (`file_name`),
             KEY `idx_position` (`position`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+}
+
+/** Single-use links that confirm an email address: only their hash is kept. */
+function email_tokens_table_sql(): string
+{
+    return 'CREATE TABLE IF NOT EXISTS ' . t('email_tokens') . " (
+            `token_hash` CHAR(64) NOT NULL PRIMARY KEY,
+            `user_id` INT UNSIGNED NOT NULL,
+            `created_at` DATETIME NOT NULL,
+            `expires_at` DATETIME NOT NULL,
+            KEY `idx_user` (`user_id`),
+            CONSTRAINT `fk_" . prefix_raw() . "etok_user` FOREIGN KEY (`user_id`) REFERENCES " . t('users') . " (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 }
 

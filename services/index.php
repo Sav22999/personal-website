@@ -17,10 +17,12 @@ $canonical = '/services/';
     <div class="services-hero-content">
         <p class="section-label">Services</p>
         <h1>Got an idea?<br>Let's make it real.</h1>
-        <p class="services-hero-sub">I design and build digital products — from a quick landing page to a full app. Tell me what you need, and I'll take care of the rest.</p>
+        <p class="services-hero-sub">I design and build digital products — from a quick landing page to a full app. Tell
+            me what you need, and I'll take care of the rest.</p>
         <a href="/contact-me/email/?reason=Project+request" class="services-cta">
             <span>Get in touch</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
         </a>
@@ -31,7 +33,8 @@ $canonical = '/services/';
     <div class="services-grid">
         <div class="service-card">
             <div class="service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <rect x="2" y="3" width="20" height="14" rx="2"/>
                     <path d="M8 21h8M12 17v4"/>
                 </svg>
@@ -48,7 +51,8 @@ $canonical = '/services/';
 
         <div class="service-card">
             <div class="service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <rect x="5" y="2" width="14" height="20" rx="2"/>
                     <path d="M12 18h.01"/>
                 </svg>
@@ -64,7 +68,8 @@ $canonical = '/services/';
 
         <div class="service-card">
             <div class="service-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M12 20h9"/>
                     <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838.838-2.872a2 2 0 0 1 .506-.855z"/>
                 </svg>
@@ -111,7 +116,8 @@ $canonical = '/services/';
         <p>Drop me a message — no commitment, just a conversation.</p>
         <a href="/contact-me/email/?reason=Project+request" class="services-cta">
             <span>Request a project</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
         </a>

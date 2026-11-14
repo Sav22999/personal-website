@@ -25,12 +25,15 @@ require __DIR__ . '/../lib/documents.php';
 set_exception_handler(function (Throwable $e) {
     error_log('[fipav-ripasso] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     $debug = false;
-    try { $debug = !empty(config()['debug']); } catch (Throwable $ignored) {}
+    try {
+        $debug = !empty(config()['debug']);
+    } catch (Throwable $ignored) {
+    }
     fail('Errore interno del server.' . ($debug ? ' ' . $e->getMessage() : ''), 500, 'server_error');
 });
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$route  = (string)($_GET['r'] ?? '');
+$route = (string)($_GET['r'] ?? '');
 
 // Every request that changes data must be a POST with a JSON body:
 // forms on other sites cannot send JSON without a CORS preflight, which is not allowed here.
@@ -67,7 +70,18 @@ switch ($route) {
     case 'auth.register':
         only('POST');
         $u = register_user(request_body());
-        send_json(['ok' => true, 'message' => 'Registrazione completata. Potrai accedere quando un amministratore avrà abilitato il tuo account.', 'user' => $u], 201);
+        send_json(['ok' => true, 'message' => mail_enabled()
+            ? 'Registrazione ricevuta. Ti abbiamo inviato un link per confermare la tua email (controlla anche lo spam); poi un amministratore abiliterà il tuo account. Se con questo indirizzo hai già un account, accedi.'
+            : 'Registrazione ricevuta. Potrai accedere quando un amministratore avrà abilitato il tuo account. Se con questo indirizzo hai già un account, accedi.', 'user' => $u], 201);
+
+    case 'auth.verify':
+        only('POST');
+        $u = verify_email_token((string)(request_body()['token'] ?? ''));
+        // Like a magic link it signs in, but only an account already enabled by an administrator
+        if (!user_can_use($u)) send_json(['ok' => true, 'message' => 'Email confermata. Potrai accedere quando un amministratore avrà abilitato il tuo account.']);
+        db()->prepare('UPDATE ' . t('users') . ' SET last_login_at = ?, last_seen_at = ? WHERE id = ?')->execute([now_utc(), now_utc(), $u['id']]);
+        $sess = create_auth_session((int)$u['id']);
+        send_json(['ok' => true, 'user' => public_user($u), 'csrf' => $sess['csrf']]);
 
     case 'auth.login':
         only('POST');
@@ -143,7 +157,10 @@ switch ($route) {
         $del = db()->prepare('DELETE FROM ' . t('user_state') . ' WHERE user_id = ? AND state_key = ?');
         foreach ($items as $key => $value) {
             if (!in_array($key, STATE_KEYS, true)) fail('Chiave non valida: ' . $key, 422, 'validation');
-            if ($value === null) { $del->execute([$s['id'], $key]); continue; }
+            if ($value === null) {
+                $del->execute([$s['id'], $key]);
+                continue;
+            }
             if (!is_string($value)) fail('Valore non valido.', 422, 'validation');
             if (strlen($value) > 4 * 1024 * 1024) fail('Dati troppo grandi.', 413, 'too_large');
             json_decode($value);

@@ -77,11 +77,13 @@ foreach ($queries as $i => $sql) {
         $pdo->exec($sql);
         $results[] = "Table " . ($i + 1) . " OK.";
     } catch (PDOException $e) {
-        $results[] = "Table " . ($i + 1) . " error: " . $e->getMessage();
+        error_log('[faceguess] setup: ' . $e->getMessage());
+        $results[] = 'Table ' . ($i + 1) . ' error (details in the server log).';
     }
 }
 
-function columnExists($pdo, $table, $column) {
+function columnExists($pdo, $table, $column)
+{
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
     $stmt->execute([$table, $column]);
     return (int)$stmt->fetchColumn() > 0;
@@ -128,7 +130,8 @@ try {
         $results[] = "Dropped obsolete fg_players.target_card.";
     }
 } catch (PDOException $e) {
-    $results[] = "Migration error: " . $e->getMessage();
+    error_log('[faceguess] setup migration: ' . $e->getMessage());
+    $results[] = 'Migration error (details in the server log).';
 }
 
 header('Content-Type: application/json');

@@ -41,44 +41,156 @@
         <priority>0.7</priority>
     </url>
 
-    <!-- Active projects -->
+    <!-- Active projects — about pages -->
     <url>
-        <loc>https://www.saveriomorelli.com/projects/notefox/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/notefox/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/sav-pdf-viewer/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/sav-pdf-viewer/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/emoji/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/emoji/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/savmrl/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/savmrl/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/accented-letters/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/accented-letters/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/limite/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/limite/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/mozita-l10n-addon/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/mozita-l10n-addon/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.6</priority>
     </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/ripasso-fipav/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/foodtrack/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/giftwise/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/fucina/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/sudoku/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/letterhop/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/thinkhop/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/forkville/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/mycurriculum/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/faceguess/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/chess/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/prism-mine/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/sea-battle/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/about/connect-four/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- Active projects — webapps -->
     <url>
         <loc>https://www.saveriomorelli.com/projects/ripasso-fipav/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/foodtrack/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/giftwise/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/fucina/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/sudoku/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/letterhop/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/thinkhop/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/forkville/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/mycurriculum/</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
@@ -92,55 +204,70 @@
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/prism-mine/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/sea-battle/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.saveriomorelli.com/projects/connect-four/</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
 
     <!-- Discontinued projects -->
     <url>
-        <loc>https://www.saveriomorelli.com/projects/emoticolor/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/emoticolor/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/word-of-the-day/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/word-of-the-day/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/cv-project/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/cv-project/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/my-code-editor/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/my-code-editor/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/nolimit-math/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/nolimit-math/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/scrolly/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/scrolly/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/mozita-antispam/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/mozita-antispam/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/all-currencies/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/all-currencies/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/mozita-myuserid-bot/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/mozita-myuserid-bot/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://www.saveriomorelli.com/projects/mozitabot/</loc>
+        <loc>https://www.saveriomorelli.com/projects/about/mozitabot/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
     </url>

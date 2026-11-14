@@ -1,8 +1,8 @@
 const API_URL = 'api/index.php';
 const POLL_MS = 1500;
 const CLAIM_AFTER_S = 60;
-const MATERIAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-const START_COUNT = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+const MATERIAL = {p: 1, n: 3, b: 3, r: 5, q: 9, k: 0};
+const START_COUNT = {p: 8, n: 2, b: 2, r: 2, q: 1};
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,16 +13,33 @@ let pollTimer = null;
 let tipsOn = true;
 
 function storageGet(key) {
-    try { return localStorage.getItem(key); } catch (e) { return null; }
+    try {
+        return localStorage.getItem(key);
+    } catch (e) {
+        return null;
+    }
 }
+
 function storageSet(key, value) {
-    try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) { /* storage unavailable */
+    }
 }
+
 function sessionGet(key) {
-    try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    try {
+        return sessionStorage.getItem(key);
+    } catch (e) {
+        return null;
+    }
 }
+
 function sessionSet(key, value) {
-    try { value === null ? sessionStorage.removeItem(key) : sessionStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
+    try {
+        value === null ? sessionStorage.removeItem(key) : sessionStorage.setItem(key, value);
+    } catch (e) { /* storage unavailable */
+    }
 }
 
 // --- UI helpers ---
@@ -35,6 +52,7 @@ function showModal(id, visible) {
 }
 
 let toastTimer = null;
+
 function showToast(msg) {
     const toast = $('toast');
     toast.textContent = msg;
@@ -48,7 +66,7 @@ function showError(code) {
 }
 
 // Moves are shown in figurine notation: a small (always light) piece instead of the English letter, files in capitals.
-const FIGURINES = { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘' };
+const FIGURINES = {K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘'};
 const upperFiles = (str) => str.replace(/[a-h]/g, c => c.toUpperCase());
 
 function sanHtml(san) {
@@ -76,6 +94,7 @@ function setBusy(button, busy) {
 }
 
 let confirmAction = null;
+
 function openConfirm(title, text, yesLabel, onYes) {
     $('confirm-title').textContent = title;
     $('confirm-text').textContent = text;
@@ -92,16 +111,16 @@ const fmtPoints = (p2) => (p2 >= 2 || p2 === 0 ? String(Math.floor(p2 / 2)) : ''
 async function api(action, data = {}) {
     try {
         if (action === 'poll') {
-            const resp = await fetch(`${API_URL}?${new URLSearchParams({ action, ...data })}`, { cache: 'no-store' });
+            const resp = await fetch(`${API_URL}?${new URLSearchParams({action, ...data})}`, {cache: 'no-store'});
             return await resp.json();
         }
         const form = new FormData();
         form.append('action', action);
         for (const [k, v] of Object.entries(data)) form.append(k, v);
-        const resp = await fetch(API_URL, { method: 'POST', body: form });
+        const resp = await fetch(API_URL, {method: 'POST', body: form});
         return await resp.json();
     } catch (e) {
-        return { error: 'network' };
+        return {error: 'network'};
     }
 }
 
@@ -109,6 +128,7 @@ async function api(action, data = {}) {
 let worker = null;
 let workerSeq = 0;
 const workerWaiters = new Map();
+
 function askEngine(state, level) {
     if (worker === null) {
         try {
@@ -118,7 +138,9 @@ function askEngine(state, level) {
                 workerWaiters.delete(e.data.id);
                 if (done) done(e.data.uci);
             };
-            worker.onerror = () => { worker = false; };
+            worker.onerror = () => {
+                worker = false;
+            };
         } catch (e) {
             worker = false;
         }
@@ -127,7 +149,7 @@ function askEngine(state, level) {
     const id = ++workerSeq;
     return new Promise(resolve => {
         workerWaiters.set(id, resolve);
-        worker.postMessage({ id, state, level });
+        worker.postMessage({id, state, level});
     });
 }
 
@@ -143,7 +165,7 @@ function newSession(mode, opts) {
         myColor: opts.myColor || null,
         level: opts.level || null,
         timeMs: opts.timeMs || 0,
-        clocks: { w: opts.timeMs || 0, b: opts.timeMs || 0 },
+        clocks: {w: opts.timeMs || 0, b: opts.timeMs || 0},
         turnStartedAt: 0,
         viewColor: opts.myColor || 'w',
         manualFlip: false,
@@ -161,7 +183,7 @@ function newSession(mode, opts) {
         serverAt: 0,
         drawOffer: null,
         rematchSent: false,
-        chat: { lastId: 0, messages: [], unread: 0 },
+        chat: {lastId: 0, messages: [], unread: 0},
     };
 }
 
@@ -198,7 +220,7 @@ function goToStep(step) {
     $('btn-step-1').disabled = step !== 2;
     $('btn-step-1').title = step === 2 ? t('change_name') : '';
     if (step === 1) $('player-name').focus();
-    else $('greeting-text').textContent = t('greeting', { name: playerName });
+    else $('greeting-text').textContent = t('greeting', {name: playerName});
 }
 
 function selectTab(tab) {
@@ -230,14 +252,14 @@ async function copyText(text, okMessage) {
 
 async function shareInvite() {
     try {
-        await navigator.share({ title: 'Chess', text: t('share_text', { code: session.code }), url: inviteLink() });
+        await navigator.share({title: 'Chess', text: t('share_text', {code: session.code}), url: inviteLink()});
     } catch (e) {
         if (e && e.name !== 'AbortError') copyText(inviteLink(), t('link_copied'));
     }
 }
 
 function startOnline(token, extra = {}) {
-    session = newSession('online', { token, players: [] });
+    session = newSession('online', {token, players: []});
     Object.assign(session, extra);
     sessionSet('chess_token', token);
     startPolling();
@@ -246,10 +268,10 @@ function startOnline(token, extra = {}) {
 async function createRoom() {
     const btn = $('btn-create');
     setBusy(btn, true);
-    const result = await api('create_room', { name: playerName, time: radioValue('time-online') * 60 });
+    const result = await api('create_room', {name: playerName, time: radioValue('time-online') * 60});
     setBusy(btn, false);
     if (result.error) return showError(result.error);
-    startOnline(result.token, { code: result.code });
+    startOnline(result.token, {code: result.code});
     showWaiting();
 }
 
@@ -258,26 +280,26 @@ async function joinRoom() {
     if (code.length !== 6) return showError('code_required');
     const btn = $('btn-join');
     setBusy(btn, true);
-    const result = await api('join_room', { name: playerName, code });
+    const result = await api('join_room', {name: playerName, code});
     setBusy(btn, false);
     if (result.error) return showError(result.error);
-    startOnline(result.token, { code: result.code });
+    startOnline(result.token, {code: result.code});
 }
 
 async function findRandomMatch() {
     const btn = $('btn-random');
     setBusy(btn, true);
-    const result = await api('find_match', { name: playerName, lang: currentLang });
+    const result = await api('find_match', {name: playerName, lang: currentLang});
     setBusy(btn, false);
     if (result.error) return showError(result.error);
-    startOnline(result.token, { isPublic: true });
+    startOnline(result.token, {isPublic: true});
     if (!result.matched) showWaiting();
 }
 
 function showWaiting() {
     const pub = session.isPublic;
     $('waiting-title').textContent = pub ? t('searching_title') : t('waiting_title');
-    $('waiting-public-desc').textContent = pub ? t('searching_desc', { language: t('lang_' + currentLang) }) : '';
+    $('waiting-public-desc').textContent = pub ? t('searching_desc', {language: t('lang_' + currentLang)}) : '';
     $('waiting-public-desc').classList.toggle('hidden', !pub);
     $('waiting-private').classList.toggle('hidden', pub);
     $('btn-share-link').classList.toggle('hidden', pub);
@@ -285,7 +307,7 @@ function showWaiting() {
     $('btn-leave-waiting').textContent = pub ? t('cancel') : t('leave');
     $('display-code').textContent = session.code || '';
     const tc = session.server ? session.server.timeControl : radioValue('time-online') * 60;
-    $('waiting-time-note').textContent = tc ? t('time_note', { min: tc / 60 }) : t('time_none');
+    $('waiting-time-note').textContent = tc ? t('time_note', {min: tc / 60}) : t('time_none');
     showScreen('waiting');
 }
 
@@ -293,7 +315,7 @@ function startLocal() {
     const opponent = $('local-opponent').value.trim().slice(0, 30) || t('player_two');
     storageSet('chess_opponent', opponent);
     session = newSession('local', {
-        players: [{ name: playerName, color: 'w', points2: 0, me: true }, { name: opponent, color: 'b', points2: 0 }],
+        players: [{name: playerName, color: 'w', points2: 0, me: true}, {name: opponent, color: 'b', points2: 0}],
         timeMs: radioValue('time-local') * 60000,
     });
     enterGame();
@@ -303,7 +325,12 @@ function startAi() {
     let color = radioValue('ai-color');
     const level = radioValue('ai-level');
     session = newSession('ai', {
-        players: [{ name: playerName, color: 'w', points2: 0, me: true }, { name: t('computer'), color: 'b', points2: 0, computer: true }],
+        players: [{name: playerName, color: 'w', points2: 0, me: true}, {
+            name: t('computer'),
+            color: 'b',
+            points2: 0,
+            computer: true
+        }],
         myColor: 'w',
         level,
         timeMs: radioValue('time-ai') * 60000,
@@ -348,7 +375,7 @@ function stopPolling() {
 async function poll() {
     if (!isOnline()) return;
     const s = session;
-    const data = await api('poll', { token: s.token, since: s.chat.lastId });
+    const data = await api('poll', {token: s.token, since: s.chat.lastId});
     // The player may have left (or started another game) while this request was in flight.
     if (session !== s) return;
     if (data.error) {
@@ -373,7 +400,7 @@ function syncOnline(data) {
     s.isPublic = data.isPublic;
     s.myColor = data.myColor;
     s.drawOffer = data.drawOffer;
-    s.players = data.players.map(p => ({ ...p, me: p.slot === data.mySlot }));
+    s.players = data.players.map(p => ({...p, me: p.slot === data.mySlot}));
 
     if (data.status === 'waiting') {
         if (!$('screen-waiting').classList.contains('active')) showWaiting();
@@ -388,7 +415,7 @@ function syncOnline(data) {
         s.selected = null;
         s.hint = null;
         showModal('gameover-overlay', false);
-        showToast(t('new_round', { color: t(data.myColor === 'w' ? 'white' : 'black') }));
+        showToast(t('new_round', {color: t(data.myColor === 'w' ? 'white' : 'black')}));
     }
     s.round = data.round;
     s.viewColor = data.myColor;
@@ -414,7 +441,7 @@ function syncOnline(data) {
     }
 
     if (data.status === 'finished' && !s.over && data.result) {
-        s.over = { result: data.result, reason: data.reason };
+        s.over = {result: data.result, reason: data.reason};
         renderAll(animate);
         showGameOver();
         return;
@@ -430,7 +457,7 @@ function targetsFrom(sq) {
     if (!p) return [];
     const color = Chess.colorOf(p);
     const state = session.chess.state;
-    const s = color === state.turn ? state : { ...state, turn: color, ep: -1 };
+    const s = color === state.turn ? state : {...state, turn: color, ep: -1};
     return Chess.legalMoves(s).filter(m => m.from === sq);
 }
 
@@ -500,7 +527,7 @@ function commitMove(uci) {
 
     s.pending = true;
     renderAll(entry);
-    api('move', { token: s.token, uci, ply: s.chess.history.length - 1 }).then(result => {
+    api('move', {token: s.token, uci, ply: s.chess.history.length - 1}).then(result => {
         if (session !== s) return;
         s.pending = false;
         if (result.error) {
@@ -542,18 +569,18 @@ function clockValues() {
     if (isOnline()) {
         const d = s.server;
         if (!d || !d.timeControl) return null;
-        const v = { w: d.whiteMs, b: d.blackMs };
+        const v = {w: d.whiteMs, b: d.blackMs};
         if (d.clockRunning && !s.over) {
             const toMove = d.moves.length % 2 === 0 ? 'w' : 'b';
             v[toMove] = Math.max(0, v[toMove] - (performance.now() - s.serverAt));
         }
-        return { values: v, running: d.clockRunning && !s.over ? (d.moves.length % 2 === 0 ? 'w' : 'b') : null };
+        return {values: v, running: d.clockRunning && !s.over ? (d.moves.length % 2 === 0 ? 'w' : 'b') : null};
     }
     if (!s.timeMs) return null;
-    const v = { ...s.clocks };
+    const v = {...s.clocks};
     const running = localClockRunning() ? s.chess.turn : null;
     if (running) v[running] = Math.max(0, v[running] - (performance.now() - s.turnStartedAt));
-    return { values: v, running };
+    return {values: v, running};
 }
 
 function fmtClock(ms) {
@@ -563,6 +590,7 @@ function fmtClock(ms) {
 }
 
 let lastFlagPoll = 0;
+
 function tickClocks() {
     if (!session || !$('screen-game').classList.contains('active')) return;
     const c = clockValues();
@@ -575,7 +603,10 @@ function tickClocks() {
     });
     if (c.running && c.values[c.running] <= 0) {
         if (isOnline()) {
-            if (performance.now() - lastFlagPoll > 1000) { lastFlagPoll = performance.now(); poll(); }
+            if (performance.now() - lastFlagPoll > 1000) {
+                lastFlagPoll = performance.now();
+                poll();
+            }
         } else {
             session.clocks[c.running] = 0;
             const winner = other(c.running);
@@ -617,7 +648,10 @@ let drag = null;
 let renderDeferred = false;
 
 function renderBoard(animate = null) {
-    if (drag && drag.started) { renderDeferred = true; return; }
+    if (drag && drag.started) {
+        renderDeferred = true;
+        return;
+    }
     const s = session;
     const state = s.chess.state;
     const last = s.chess.history[s.chess.history.length - 1];
@@ -690,7 +724,10 @@ function animatePiece(to, fromRect) {
     pc.getBoundingClientRect();
     pc.style.transition = `transform ${220 * speed}ms cubic-bezier(0.4, 0, 0.2, 1)`;
     pc.style.transform = '';
-    setTimeout(() => { pc.classList.remove('anim'); pc.style.transition = ''; }, 260 * speed);
+    setTimeout(() => {
+        pc.classList.remove('anim');
+        pc.style.transition = '';
+    }, 260 * speed);
 }
 
 // The taken piece stays on its square for a moment, then spins away under the arriving piece.
@@ -703,13 +740,19 @@ function animateCapture(entry) {
     const ghost = el.lastElementChild;
     ghost.classList.add('capture-ghost');
     const burst = ghost.previousElementSibling;
-    setTimeout(() => { ghost.remove(); burst.remove(); }, 750 * ANIM_SPEED[options.anim]);
+    setTimeout(() => {
+        ghost.remove();
+        burst.remove();
+    }, 750 * ANIM_SPEED[options.anim]);
 }
 
 function drawArrows() {
     const svg = $('board-arrows');
     const h = session.hint;
-    if (!h) { svg.innerHTML = ''; return; }
+    if (!h) {
+        svg.innerHTML = '';
+        return;
+    }
     const center = (sq) => {
         const di = displayIndex(sq);
         return [(di % 8) * 100 + 50, Math.floor(di / 8) * 100 + 50];
@@ -730,14 +773,14 @@ function drawArrows() {
 
 // Pieces each side has taken, and who is ahead in material.
 function capturedSummary() {
-    const count = { w: {}, b: {} };
+    const count = {w: {}, b: {}};
     for (const p of session.chess.state.board) {
         if (!p) continue;
         const c = Chess.colorOf(p);
         const k = p.toLowerCase();
         count[c][k] = (count[c][k] || 0) + 1;
     }
-    const taken = { w: [], b: [] };
+    const taken = {w: [], b: []};
     let material = 0;
     for (const color of ['w', 'b']) {
         for (const k of ['q', 'r', 'b', 'n', 'p']) {
@@ -746,17 +789,17 @@ function capturedSummary() {
         }
         for (const [k, n] of Object.entries(count[color])) material += (color === 'w' ? 1 : -1) * MATERIAL[k] * n;
     }
-    return { taken, material };
+    return {taken, material};
 }
 
 function renderBars() {
     const s = session;
     const bottom = bottomColor();
-    const { taken, material } = capturedSummary();
+    const {taken, material} = capturedSummary();
     const clocks = clockValues();
     const anyScore = s.players.some(p => p.points2 > 0);
     const bar = (color) => {
-        const p = playerOf(color) || { name: t(color === 'w' ? 'white' : 'black') };
+        const p = playerOf(color) || {name: t(color === 'w' ? 'white' : 'black')};
         const adv = color === 'w' ? material : -material;
         const thinking = s.mode === 'ai' && s.aiThinking && color !== s.myColor ? '<span class="thinking"><i></i><i></i><i></i></span>' : '';
         const dot = isOnline() && !p.me ? `<span class="online-dot${p.online ? ' on' : ''}" title="${escapeHtml(t(p.online ? 'online' : 'offline'))}"></span>` : '';
@@ -786,13 +829,13 @@ function renderHeader() {
         text = t('game_over');
         cls = 'done';
     } else if (s.mode === 'local') {
-        text = t('to_move', { name: playerOf(turn).name });
+        text = t('to_move', {name: playerOf(turn).name});
         cls = 'my-turn';
     } else if (turn === s.myColor) {
         text = t('your_move');
         cls = 'my-turn';
     } else {
-        text = s.mode === 'ai' ? t('computer_thinking') : t('their_move', { name: (playerOf(turn) || {}).name || '' });
+        text = s.mode === 'ai' ? t('computer_thinking') : t('their_move', {name: (playerOf(turn) || {}).name || ''});
     }
     if (!s.over && s.chess.inCheck()) text += ' · ' + t('check');
     el.textContent = text;
@@ -801,7 +844,7 @@ function renderHeader() {
     let badge = '';
     if (s.mode === 'local') badge = t('tab_local');
     else if (s.mode === 'ai') badge = t('level_' + s.level);
-    else if (s.server && s.server.timeControl) badge = t('time_note', { min: s.server.timeControl / 60 });
+    else if (s.server && s.server.timeControl) badge = t('time_note', {min: s.server.timeControl / 60});
     $('mode-badge').textContent = badge;
 }
 
@@ -896,6 +939,7 @@ function renderChat(stickToBottom = false) {
 // On phones the on-screen keyboard only shrinks the visual viewport, so a sheet fixed to the bottom
 // would end up underneath it. Keep the chat sheet on top of the keyboard and as tall as the space left.
 let chatKeyboardOffset = -1;
+
 function fitChatToKeyboard() {
     const vv = window.visualViewport;
     const root = document.documentElement.style;
@@ -937,7 +981,7 @@ async function sendChat(e) {
     const text = input.value.trim();
     if (!text || !isOnline()) return;
     input.value = '';
-    const res = await api('send_message', { token: s.token, text });
+    const res = await api('send_message', {token: s.token, text});
     if (session !== s) return;
     if (res.error) {
         if (!input.value) input.value = text;
@@ -957,12 +1001,12 @@ function renderBanner() {
         const opp = s.players.find(p => !p.me);
         const theirOffer = s.drawOffer !== null && s.drawOffer !== s.server.mySlot;
         if (theirOffer) {
-            html = `<span>${escapeHtml(t('draw_offer_received', { name: opp ? opp.name : '' }))}</span>
+            html = `<span>${escapeHtml(t('draw_offer_received', {name: opp ? opp.name : ''}))}</span>
                 <button type="button" class="btn btn-primary" data-draw-answer="1">${escapeHtml(t('accept'))}</button>
                 <button type="button" class="btn btn-secondary" data-draw-answer="0">${escapeHtml(t('decline'))}</button>`;
         } else if (opp && !opp.online && s.server.status === 'playing') {
             warn = true;
-            html = `<span>${escapeHtml(t('opponent_offline', { name: opp.name }))}</span>`;
+            html = `<span>${escapeHtml(t('opponent_offline', {name: opp.name}))}</span>`;
             if (opp.idle >= CLAIM_AFTER_S || opp.left) html += `<button type="button" class="btn btn-accent" id="btn-claim">${escapeHtml(t('claim_win'))}</button>`;
         }
     }
@@ -991,7 +1035,7 @@ function renderTip() {
     const state = s.chess.state;
     let html;
     if (s.hint) {
-        html = `<div class="tip-empty">${BULB}<span>${t('hint_text', { san: `<strong>${sanHtml(s.hint.san)}</strong>` })}</span></div>`;
+        html = `<div class="tip-empty">${BULB}<span>${t('hint_text', {san: `<strong>${sanHtml(s.hint.san)}</strong>`})}</span></div>`;
     } else if (s.selected !== null && state.board[s.selected]) {
         html = pieceTip(Tips.analyze(state, s.selected));
     } else {
@@ -999,7 +1043,7 @@ function renderTip() {
         const lines = [];
         if (Chess.inCheck(state, me) && state.turn === me) lines.push(t('tip_in_check'));
         const hang = Tips.hanging(state, me).slice(0, 2);
-        for (const h of hang) lines.push(t('tip_hanging', { piece: escapeHtml(pieceName(h.piece)), sq: on(h.sq) }));
+        for (const h of hang) lines.push(t('tip_hanging', {piece: escapeHtml(pieceName(h.piece)), sq: on(h.sq)}));
         if (!lines.length) lines.push(t(state.turn === me || s.mode === 'local' ? 'tip_select' : 'tip_select_wait'));
         html = `<div class="tip-empty">${BULB}<span>${lines.join('<br>')}</span></div>`;
     }
@@ -1008,7 +1052,7 @@ function renderTip() {
 
 function pieceTip(a) {
     const name = escapeHtml(pieceName(a.piece));
-    const owner = a.inspectOnly && (session.mode === 'local' || a.color !== session.myColor) ? t('tip_opponent_piece') : t('tip_on_square', { sq: upperFiles(Chess.sqName(a.sq)) });
+    const owner = a.inspectOnly && (session.mode === 'local' || a.color !== session.myColor) ? t('tip_opponent_piece') : t('tip_on_square', {sq: upperFiles(Chess.sqName(a.sq))});
     const facts = [];
     const n = a.targets.length;
     if (a.inspectOnly) facts.push(fact('special', t(a.color === session.myColor ? 'tip_not_turn_mine' : 'tip_threats')));
@@ -1018,16 +1062,19 @@ function pieceTip(a) {
     if (!n && !a.pinned) facts.push(fact('unsafe', t('tip_no_moves')));
     if (n) {
         const unsafe = a.targets.filter(x => !x.captured && x.unsafe).length;
-        facts.push(fact('safe', t('tip_moves', { n })));
-        if (unsafe) facts.push(fact('unsafe', t('tip_unsafe', { n: unsafe })));
+        facts.push(fact('safe', t('tip_moves', {n})));
+        if (unsafe) facts.push(fact('unsafe', t('tip_unsafe', {n: unsafe})));
     }
     for (const x of a.targets.filter(x => x.captured).slice(0, 3)) {
-        facts.push(fact('capture', t(x.unsafe ? 'tip_capture_trade' : 'tip_capture_free', { piece: escapeHtml(pieceName(x.captured)), sq: on(x.to) })));
+        facts.push(fact('capture', t(x.unsafe ? 'tip_capture_trade' : 'tip_capture_free', {
+            piece: escapeHtml(pieceName(x.captured)),
+            sq: on(x.to)
+        })));
     }
     const mates = a.targets.filter(x => x.mate);
     const checks = a.targets.filter(x => x.check && !x.mate);
-    if (mates.length) facts.push(fact('check', t('tip_mate', { san: `<strong>${sanHtml(mates[0].san)}</strong>` })));
-    if (checks.length) facts.push(fact('check', t('tip_checks', { list: checks.slice(0, 3).map(x => `<strong>${sanHtml(x.san)}</strong>`).join(', ') })));
+    if (mates.length) facts.push(fact('check', t('tip_mate', {san: `<strong>${sanHtml(mates[0].san)}</strong>`})));
+    if (checks.length) facts.push(fact('check', t('tip_checks', {list: checks.slice(0, 3).map(x => `<strong>${sanHtml(x.san)}</strong>`).join(', ')})));
     const specials = new Set(a.targets.map(x => x.special).filter(Boolean));
     for (const sp of specials) facts.push(fact('special', t('tip_special_' + sp)));
     return `<div class="tip-head"><span class="tip-piece">${PIECE_SVG.html(a.piece)}</span><div><strong>${name}</strong><small>${escapeHtml(owner)}</small></div></div>
@@ -1053,9 +1100,9 @@ async function showHint() {
     setBusy(btn, false);
     if (session !== s || s.chess.history.length !== ply || !uci) return renderActions();
     const move = s.chess.legal().find(m => Chess.toUci(m) === uci);
-    s.hint = { from: move.from, to: move.to, san: Chess.toSAN(s.chess.state, move) };
+    s.hint = {from: move.from, to: move.to, san: Chess.toSAN(s.chess.state, move)};
     s.selected = null;
-    if (!tipsOn) showToast(t('hint_text', { san: sanText(s.hint.san) }));
+    if (!tipsOn) showToast(t('hint_text', {san: sanText(s.hint.san)}));
     renderAll();
 }
 
@@ -1081,7 +1128,16 @@ function onBoardDown(e) {
         const wasSelected = s.selected === sq;
         if (s.hint) s.hint = null;
         select(sq);
-        drag = { sq, x: e.clientX, y: e.clientY, started: false, wasSelected, can: actionable(sq), ghost: null, hover: -1 };
+        drag = {
+            sq,
+            x: e.clientX,
+            y: e.clientY,
+            started: false,
+            wasSelected,
+            can: actionable(sq),
+            ghost: null,
+            hover: -1
+        };
         $('board').setPointerCapture(e.pointerId);
     } else {
         clearSelection();
@@ -1113,7 +1169,10 @@ function onBoardMove(e) {
     drag.ghost.style.top = (e.clientY - drag.size / 2) + 'px';
     const over = squareFromPoint(e.clientX, e.clientY);
     if (over !== drag.hover) {
-        if (drag.hover >= 0) { const prev = squareEl(drag.hover); if (prev) prev.classList.remove('hover'); }
+        if (drag.hover >= 0) {
+            const prev = squareEl(drag.hover);
+            if (prev) prev.classList.remove('hover');
+        }
         drag.hover = over;
         const cur = over >= 0 ? squareEl(over) : null;
         if (cur && cur.classList.contains('target')) cur.classList.add('hover');
@@ -1127,7 +1186,10 @@ function endDrag() {
     if (d && d.started) {
         const el = squareEl(d.sq);
         if (el) el.classList.remove('drag-origin');
-        if (renderDeferred) { renderDeferred = false; renderAll(); }
+        if (renderDeferred) {
+            renderDeferred = false;
+            renderAll();
+        }
     }
     return d;
 }
@@ -1150,8 +1212,10 @@ function undoMove() {
     if (s.over || s.mode === 'online') return;
     let n = 1;
     if (s.mode === 'ai') {
-        if (s.aiThinking) { s.aiThinking = false; n = 1; }
-        else n = s.chess.turn === s.myColor ? 2 : 1;
+        if (s.aiThinking) {
+            s.aiThinking = false;
+            n = 1;
+        } else n = s.chess.turn === s.myColor ? 2 : 1;
     }
     const moves = s.chess.history.map(h => h.uci).slice(0, Math.max(0, s.chess.history.length - n));
     s.chess = Chess.Game.fromMoves(moves);
@@ -1171,7 +1235,7 @@ function flipBoard() {
 function offerDraw() {
     const s = session;
     if (s.mode === 'online') {
-        api('offer_draw', { token: s.token }).then(r => {
+        api('offer_draw', {token: s.token}).then(r => {
             if (r.error) return showError(r.error);
             showToast(t('draw_sent'));
             poll();
@@ -1188,7 +1252,7 @@ function offerDraw() {
 }
 
 function answerDraw(accept) {
-    api('answer_draw', { token: session.token, accept: accept ? '1' : '0' }).then(r => {
+    api('answer_draw', {token: session.token, accept: accept ? '1' : '0'}).then(r => {
         if (r.error) showError(r.error);
         poll();
     });
@@ -1197,10 +1261,13 @@ function answerDraw(accept) {
 function resign() {
     const s = session;
     const loser = s.mode === 'local' ? s.chess.turn : s.myColor;
-    const text = s.mode === 'local' ? t('resign_local_text', { name: playerOf(loser).name }) : t('resign_text');
+    const text = s.mode === 'local' ? t('resign_local_text', {name: playerOf(loser).name}) : t('resign_text');
     openConfirm(t('resign_title'), text, t('resign'), () => {
         if (s.mode === 'online') {
-            api('resign', { token: s.token }).then(r => { if (r.error) showError(r.error); poll(); });
+            api('resign', {token: s.token}).then(r => {
+                if (r.error) showError(r.error);
+                poll();
+            });
         } else {
             finishLocal(loser === 'w' ? '0-1' : '1-0', 'resign');
         }
@@ -1208,7 +1275,7 @@ function resign() {
 }
 
 async function claimWin() {
-    const r = await api('claim_win', { token: session.token });
+    const r = await api('claim_win', {token: session.token});
     if (r.error) showError(r.error);
     poll();
 }
@@ -1216,14 +1283,18 @@ async function claimWin() {
 function finishLocal(result, reason) {
     const s = session;
     if (s.over) return;
-    s.over = { result, reason };
+    s.over = {result, reason};
     s.aiThinking = false;
     s.selected = null;
     s.hint = null;
-    if (result === '1/2-1/2') s.players.forEach(p => { p.points2 += 1; });
+    if (result === '1/2-1/2') s.players.forEach(p => {
+        p.points2 += 1;
+    });
     else playerOf(result === '1-0' ? 'w' : 'b').points2 += 2;
     renderAll();
-    setTimeout(() => { if (session === s && s.over) showGameOver(); }, 450);
+    setTimeout(() => {
+        if (session === s && s.over) showGameOver();
+    }, 450);
 }
 
 // --- Game over ---
@@ -1236,21 +1307,34 @@ const GAMEOVER_ICONS = {
 
 function showGameOver() {
     const s = session;
-    const { result, reason } = s.over;
+    const {result, reason} = s.over;
     const draw = result === '1/2-1/2';
     const winnerColor = draw ? null : (result === '1-0' ? 'w' : 'b');
     const winner = winnerColor ? playerOf(winnerColor) : null;
     const loser = winnerColor ? playerOf(other(winnerColor)) : null;
     let title;
     let icon;
-    if (draw) { title = t('draw_result'); icon = 'draw'; }
-    else if (s.mode === 'local') { title = t('player_wins', { name: winner.name }); icon = 'trophy'; }
-    else if (winnerColor === s.myColor) { title = t('you_win'); icon = 'win'; }
-    else { title = t('you_lose'); icon = 'lose'; }
+    if (draw) {
+        title = t('draw_result');
+        icon = 'draw';
+    } else if (s.mode === 'local') {
+        title = t('player_wins', {name: winner.name});
+        icon = 'trophy';
+    } else if (winnerColor === s.myColor) {
+        title = t('you_win');
+        icon = 'win';
+    } else {
+        title = t('you_lose');
+        icon = 'lose';
+    }
 
     // The side whose clock ran out is the one that didn't win (or either side in a flag-fall draw).
     const flagged = reason === 'timeout_draw' ? playerOf(s.chess.turn) : loser;
-    const names = { winner: winner ? winner.name : '', loser: loser ? loser.name : '', flagged: flagged ? flagged.name : '' };
+    const names = {
+        winner: winner ? winner.name : '',
+        loser: loser ? loser.name : '',
+        flagged: flagged ? flagged.name : ''
+    };
     $('gameover-title').textContent = title;
     $('gameover-text').textContent = t('reason_' + reason, names);
     $('gameover-icon').innerHTML = GAMEOVER_ICONS[icon];
@@ -1289,15 +1373,15 @@ function updateRematchUI() {
     btn.textContent = t('rematch');
     if (!opp || opp.left) {
         btn.disabled = true;
-        status.textContent = t('opponent_left', { name: opp ? opp.name : '' });
+        status.textContent = t('opponent_left', {name: opp ? opp.name : ''});
         status.classList.add('warn');
     } else if (me && me.wantsRematch) {
         btn.disabled = true;
-        status.textContent = t('rematch_waiting', { name: opp.name });
+        status.textContent = t('rematch_waiting', {name: opp.name});
     } else {
         btn.disabled = false;
         if (opp.wantsRematch) {
-            status.textContent = t('rematch_invite', { name: opp.name });
+            status.textContent = t('rematch_invite', {name: opp.name});
             status.classList.add('invite');
         }
     }
@@ -1307,24 +1391,30 @@ async function playAgain() {
     const s = session;
     if (s.mode === 'online') {
         setBusy($('btn-rematch'), true);
-        const r = await api('rematch', { token: s.token });
+        const r = await api('rematch', {token: s.token});
         setBusy($('btn-rematch'), false);
         if (r.error) return showError(r.error);
         poll();
         return;
     }
     const players = s.players;
-    if (s.mode === 'local') players.forEach(p => { p.color = other(p.color); });
-    const next = newSession(s.mode, { players, timeMs: s.timeMs, level: s.level, myColor: s.myColor });
+    if (s.mode === 'local') players.forEach(p => {
+        p.color = other(p.color);
+    });
+    const next = newSession(s.mode, {players, timeMs: s.timeMs, level: s.level, myColor: s.myColor});
     next.colorChoice = s.colorChoice;
     session = next;
     if (s.mode === 'ai') {
         if (s.colorChoice === 'r') assignAiColors();
-        else { session.myColor = s.myColor === 'w' ? 'b' : 'w'; session.players[0].color = session.myColor; session.players[1].color = other(session.myColor); }
+        else {
+            session.myColor = s.myColor === 'w' ? 'b' : 'w';
+            session.players[0].color = session.myColor;
+            session.players[1].color = other(session.myColor);
+        }
         session.viewColor = session.myColor;
     }
     enterGame();
-    showToast(t('new_round', { color: t((session.mode === 'local' ? players[0].color : session.myColor) === 'w' ? 'white' : 'black') }));
+    showToast(t('new_round', {color: t((session.mode === 'local' ? players[0].color : session.myColor) === 'w' ? 'white' : 'black')}));
 }
 
 function spawnConfetti() {
@@ -1379,7 +1469,7 @@ function backToLobby() {
 }
 
 async function leaveGame() {
-    if (isOnline() && session.token) await api('leave', { token: session.token });
+    if (isOnline() && session.token) await api('leave', {token: session.token});
     backToLobby();
 }
 
@@ -1412,15 +1502,19 @@ function renderStylePicker() {
     }).join('');
 }
 
-const BOARD_THEMES = ['classic', 'green', 'brown', 'blue', 'grey', 'purple', 'coral'];
+const BOARD_THEMES = ['classic', 'green', 'brown', 'blue', 'grey', 'purple', 'coral', 'flat'];
 
 // Game options. Most work through attributes on <html> (see style.css), so changes show at once.
-const DEFAULT_OPTIONS = { coords: true, lastMove: true, dots: true, autoQueen: false, anim: 'normal' };
-const ANIM_SPEED = { normal: 1, fast: 0.5, off: 0 };
-let options = { ...DEFAULT_OPTIONS };
+const DEFAULT_OPTIONS = {coords: true, lastMove: true, dots: true, autoQueen: false, anim: 'normal'};
+const ANIM_SPEED = {normal: 1, fast: 0.5, off: 0};
+let options = {...DEFAULT_OPTIONS};
 
 function loadOptions() {
-    try { options = { ...DEFAULT_OPTIONS, ...JSON.parse(storageGet('chess_options') || '{}') }; } catch (e) { options = { ...DEFAULT_OPTIONS }; }
+    try {
+        options = {...DEFAULT_OPTIONS, ...JSON.parse(storageGet('chess_options') || '{}')};
+    } catch (e) {
+        options = {...DEFAULT_OPTIONS};
+    }
     if (!(options.anim in ANIM_SPEED)) options.anim = 'normal';
     applyOptions();
 }
@@ -1435,7 +1529,9 @@ function applyOptions() {
 }
 
 function renderOptions() {
-    document.querySelectorAll('[data-opt]').forEach(i => { i.checked = !!options[i.dataset.opt]; });
+    document.querySelectorAll('[data-opt]').forEach(i => {
+        i.checked = !!options[i.dataset.opt];
+    });
     document.querySelectorAll('[data-anim-opt]').forEach(b => {
         const on = b.dataset.animOpt === options.anim;
         b.classList.toggle('active', on);
@@ -1523,8 +1619,8 @@ function renderReleaseNotes() {
 // --- Setup ---
 function onLanguageChange() {
     if (isOnline()) renderChat();
-    if (playerName) $('greeting-text').textContent = t('greeting', { name: playerName });
-    $('random-desc').textContent = t('random_desc', { language: t('lang_' + currentLang) });
+    if (playerName) $('greeting-text').textContent = t('greeting', {name: playerName});
+    $('random-desc').textContent = t('random_desc', {language: t('lang_' + currentLang)});
     $('lang-current').textContent = currentLang.toUpperCase();
     document.querySelectorAll('.lang-option').forEach(o => {
         const active = o.dataset.lang === currentLang;
@@ -1533,7 +1629,10 @@ function onLanguageChange() {
     });
     if (!$('release-overlay').classList.contains('hidden')) renderReleaseNotes();
     if (!$('rules-overlay').classList.contains('hidden')) renderRules();
-    if (!$('style-overlay').classList.contains('hidden')) { renderStylePicker(); renderBoardPicker(); }
+    if (!$('style-overlay').classList.contains('hidden')) {
+        renderStylePicker();
+        renderBoardPicker();
+    }
     if (session && $('screen-game').classList.contains('active')) {
         if (session.mode === 'ai') session.players[1].name = t('computer');
         renderAll();
@@ -1558,8 +1657,13 @@ function init() {
     tipsOn = storageGet('chess_tips') !== '0';
     $('app-version').textContent = 'v' + APP_VERSION;
 
-    $('btn-version').addEventListener('click', () => { renderReleaseNotes(); showModal('release-overlay', true); });
+    $('btn-version').addEventListener('click', () => {
+        renderReleaseNotes();
+        showModal('release-overlay', true);
+    });
     $('btn-close-release').addEventListener('click', () => showModal('release-overlay', false));
+    $('btn-donate')?.addEventListener('click', () => showModal('donate-overlay', true));
+    $('btn-close-donate')?.addEventListener('click', () => showModal('donate-overlay', false));
     $('btn-howto').addEventListener('click', () => showModal('howto-overlay', true));
     $('btn-close-howto').addEventListener('click', () => showModal('howto-overlay', false));
     $('btn-step-1').addEventListener('click', () => goToStep(1));
@@ -1615,7 +1719,9 @@ function init() {
         $('card-join').classList.add('highlight');
     }
 
-    nameInput.addEventListener('input', () => { $('btn-continue').disabled = nameInput.value.trim() === ''; });
+    nameInput.addEventListener('input', () => {
+        $('btn-continue').disabled = nameInput.value.trim() === '';
+    });
     $('step-name').addEventListener('submit', (e) => {
         e.preventDefault();
         playerName = nameInput.value.trim().slice(0, 30);
@@ -1631,7 +1737,10 @@ function init() {
         $('btn-join').disabled = codeInput.value.length !== 6;
     });
     $('btn-create').addEventListener('click', createRoom);
-    $('card-join').addEventListener('submit', (e) => { e.preventDefault(); joinRoom(); });
+    $('card-join').addEventListener('submit', (e) => {
+        e.preventDefault();
+        joinRoom();
+    });
     $('btn-random').addEventListener('click', findRandomMatch);
     $('btn-start-local').addEventListener('click', startLocal);
     $('btn-start-ai').addEventListener('click', startAi);
@@ -1646,7 +1755,10 @@ function init() {
     board.addEventListener('pointerdown', onBoardDown);
     board.addEventListener('pointermove', onBoardMove);
     board.addEventListener('pointerup', onBoardUp);
-    board.addEventListener('pointercancel', () => { endDrag(); if (session) renderBoard(); });
+    board.addEventListener('pointercancel', () => {
+        endDrag();
+        if (session) renderBoard();
+    });
     board.addEventListener('contextmenu', (e) => e.preventDefault());
 
     $('btn-tips').addEventListener('click', toggleTips);
@@ -1699,3 +1811,7 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// Lets the game open without a connection (see sw.js)
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {
+}));

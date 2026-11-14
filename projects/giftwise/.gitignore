@@ -1,0 +1,17 @@
+# Real database credentials: never commit them (use credentials-sample.php as a template)
+credentials.php
+# The SQL script for phpMyAdmin is part of the project (it contains no data or credentials)
+!install/*.sql
+# Android: signing keys, local SDK path and build output
+android/keystore.properties
+android/**/*.jks
+android/**/*.keystore
+android/local.properties
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/app/release/
+android/captures/
+*.apk
+*.aab

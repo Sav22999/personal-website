@@ -1,0 +1,20 @@
+{
+  "name": "LetterHop: Word Ladder",
+  "short_name": "LetterHop",
+  "description": "From one word to another, changing one letter at a time. Fewer words, more points.",
+  "id": "/projects/letterhop/",
+  "start_url": "/projects/letterhop/",
+  "scope": "/projects/letterhop/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8F1",
+  "theme_color": "#E8590C",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
