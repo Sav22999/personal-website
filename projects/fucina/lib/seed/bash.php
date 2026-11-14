@@ -86,5 +86,21 @@ echo "Fatto il $data"', 'bash'),
             dBug(pBug(), ['#!/usr/bin/env bash', 'citta = "Udine"', 'echo "Benvenuto a $citta"'], 1, 'citta="Udine"', L('In Bash niente spazi attorno a `=`.', 'In Bash no spaces around `=`.')),
             dOrder(pSort(), ['#!/usr/bin/env bash', 'set -euo pipefail', 'for f in *.txt; do', '  echo "$f"', 'done'], L('Shebang, sicurezza, ciclo.', 'Shebang, safety, loop.')),
         ]),
+        lesson('text-tools', L('Cercare e trasformare testo', 'Searching and transforming text'), [
+            P('Il terminale è fortissimo con il testo. `grep` trova le righe che contengono un modello, `find` cerca file per nome o data, `sed` sostituisce, `awk` lavora per colonne, `sort` e `uniq -c` contano le ripetizioni.', 'The terminal is very strong with text. `grep` finds lines containing a pattern, `find` searches files by name or date, `sed` replaces, `awk` works by columns, `sort` and `uniq -c` count repeats.'),
+            C('grep -rn "TODO" src/                      # righe con TODO, con numero di riga
+find . -name "*.log" -mtime +7 -delete      # cancella log più vecchi di 7 giorni
+sed -i "s/vecchio/nuovo/g" config.txt       # sostituisce in tutto il file
+awk -F, \'{print $2}\' clienti.csv           # seconda colonna di un CSV
+cut -d, -f3 ordini.csv | sort | uniq -c | sort -rn | head', 'bash'),
+            P('Prima di un comando distruttivo (come `-delete` o `sed -i`) provalo **senza** l’opzione per vedere su cosa agisce. Le virgolette proteggono spazi e caratteri speciali.', 'Before a destructive command (like `-delete` or `sed -i`) try it **without** the option to see what it acts on. Quotes protect spaces and special characters.'),
+        ], [
+            Q('tt1', L('Quale comando trova righe che contengono un testo?', 'Which command finds lines containing some text?'), ['grep', 'find', 'cut', 'mv'], 0, L('`-r` per cercare nelle cartelle.', '`-r` to search folders.')),
+            Q('tt2', L('Che cosa fa `uniq -c` dopo `sort`?', 'What does `uniq -c` do after `sort`?'), [L('Conta le righe uguali', 'Counts identical lines'), L('Cancella il file', 'Deletes the file'), L('Ordina al contrario', 'Sorts in reverse'), L('Unisce due file', 'Joins two files')], 0, L('Serve l’ordinamento prima.', 'It needs sorting first.')),
+            Q('tt3', L('Come provi un `find … -delete` in sicurezza?', 'How do you try a `find … -delete` safely?'), [L('Prima senza `-delete`', 'First without `-delete`'), L('Con sudo', 'With sudo'), L('Due volte di fila', 'Twice in a row'), L('Non si può', 'You cannot')], 0, L('Vedi cosa verrebbe cancellato.', 'You see what would be deleted.')),
+        ], task('bash', L('Cerca in modo ricorsivo `password` nella cartella `config/`, mostrando i numeri di riga.', 'Recursively search for `password` in the `config/` folder, showing line numbers.'), '', [re('grep\s+(-rn|-nr|-r\s+-n|-n\s+-r)\s+["\']?password["\']?\s+config/?', L('La ricerca è giusta', 'The search is right'))], '', 'grep -rn "password" config/'), [
+            dMatch(pMatch(), [['grep', L('Trova righe', 'Finds lines')], ['find', L('Trova file', 'Finds files')], ['sed', L('Sostituisce', 'Replaces')], ['awk', L('Lavora per colonne', 'Works by columns')], ['uniq -c', L('Conta le ripetizioni', 'Counts repeats')]], L('Gli attrezzi del testo.', 'Text tools.')),
+            dOrder(pSort(), ['cut -d, -f3 ordini.csv', '| sort', '| uniq -c', '| sort -rn', '| head'], L('Estrai, ordina, conta, classifica, mostra i primi.', 'Extract, sort, count, rank, show the top.')),
+        ]),
     ],
 ];

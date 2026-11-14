@@ -254,6 +254,7 @@
             'Certificate': 'Certificato',
             'Certificates': 'Certificati',
             'Certified': 'Certificato',
+            'In progress': 'In corso',
             'Italian': 'italiano',
             'English': 'inglese',
             'You already have this certificate in {a}. Do you want to take the exam in {b} too?': 'Hai già questo certificato in {a}. Vuoi fare l’esame anche in {b}?',

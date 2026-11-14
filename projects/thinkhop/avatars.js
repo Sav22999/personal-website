@@ -581,6 +581,9 @@ ${line('M29 32h6M12 31l3 1M52 31l-3 1', INK, 2.4)}${line('M18 30l3 3M38 30l3 3',
     };
     const encode = p => [p.character || '', p.background || '', p.accessory || '', p.frame || ''].join(':').replace(/:+$/, '');
 
+    // Backgrounds too bright for a white initial (contrast under 3:1): the initial is drawn in ink on them
+    const LIGHT_BACKGROUNDS = new Set(['gold', 'amber', 'mint', 'coral', 'cyber', 'sunset', 'forge', 'prism']);
+
     /** The picture of a player: their character (or initial), accessory and frame on their background. */
     function render(code, label, cls) {
         const {character, background, accessory, frame} = parse(code);
@@ -594,11 +597,16 @@ ${line('M29 32h6M12 31l3 1M52 31l-3 1', INK, 2.4)}${line('M18 30l3 3M38 30l3 3',
             el.className = 'avatar' + (cleanCls ? ' ' + cleanCls.replace(/\./g, ' ') : '') + (drawn ? ' drawn' : '');
             el.setAttribute('aria-hidden', 'true');
         }
-        if (background) el.style.background = BACKGROUNDS[background].css;
+        // The background is the same in both themes, so the initial gets a fixed colour too (the theme's --on-primary was dark on violet in dark mode)
+        const ink = background && LIGHT_BACKGROUNDS.has(background) ? '#1B1640' : '#fff';
+        if (background) {
+            el.style.background = BACKGROUNDS[background].css;
+            el.style.color = ink;
+        }
         const ch = String(label || '?').trim().charAt(0).toUpperCase().replace(/[<>&"]/g, '');
         if (drawn) {
             const base = character ? CHARACTERS[character].svg
-                : ch ? `<text x="32" y="42" text-anchor="middle" fill="#fff" font-family="'Inter', system-ui, sans-serif" font-weight="800" font-size="28">${ch}</text>` : '';
+                : ch ? `<text x="32" y="42" text-anchor="middle" fill="${background ? ink : 'currentColor'}" font-family="'Inter', system-ui, sans-serif" font-weight="800" font-size="28">${ch}</text>` : '';
             el.innerHTML = `<svg viewBox="0 0 64 64">${base}${accessory ? ACCESSORIES[accessory].svg : ''}${frame ? FRAMES[frame].svg : ''}</svg>`;
         } else {
             el.textContent = ch || '?';

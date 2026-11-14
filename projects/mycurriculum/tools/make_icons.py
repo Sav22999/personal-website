@@ -77,6 +77,68 @@ def og_image():
     return img
 
 
+ANDROID = ROOT / 'android'
+DENSITIES = {'mdpi': 1, 'hdpi': 1.5, 'xhdpi': 2, 'xxhdpi': 3, 'xxxhdpi': 4}
+
+
+def android_foreground(size):
+    """Adaptive icon foreground: the drawing without its tile, inside the 66/108 safe zone, on transparency."""
+    body = re.search(r'(<rect width="64" height="64" rx="15" fill="url\(#bg\)"/>)(.*)(</svg>)', SVG, re.S)
+    svg = SVG[:body.start(1)] + '<g transform="translate(32 32) scale(.62) translate(-32 -32)">' + body.group(2) + '</g>' + SVG[body.end(2):]
+    return render(svg, size)
+
+
+def android_icons():
+    """Launcher icons for android/: legacy square and round icons plus the adaptive foreground, every density."""
+    for name, k in DENSITIES.items():
+        d = ANDROID / 'app/src/main/res' / f'mipmap-{name}'
+        d.mkdir(parents=True, exist_ok=True)
+        legacy = logo(round(48 * k))
+        legacy.save(d / 'ic_launcher.png')
+        full = logo(round(48 * k), maskable=True)
+        mask = Image.new('L', full.size, 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, full.size[0] - 1, full.size[1] - 1), fill=255)
+        rnd = Image.new('RGBA', full.size, (0, 0, 0, 0))
+        rnd.paste(full, (0, 0), mask)
+        rnd.save(d / 'ic_launcher_round.png')
+        android_foreground(round(108 * k)).save(d / 'ic_launcher_foreground.png')
+    # Google Play: 512×512, full bleed (the store applies its own mask)
+    logo(512, maskable=True).convert('RGB').save(ANDROID / 'play-store-icon-512.png')
+
+
+def feature_graphic(lang):
+    """Google Play feature graphic (1024×500): name and tagline, and a phone showing the CV preview screenshot."""
+    W, H = 1024, 500
+    img = Image.new('RGB', (W, H))
+    d = ImageDraw.Draw(img)
+    for x in range(W):  # indigo gradient, like the icon
+        t = x / W
+        d.line([(x, 0), (x, H)], fill=(int(84 + (44 - 84) * t), int(104 + (60 - 104) * t), int(234 + (168 - 234) * t)))
+    shot = ROOT / 'store' / 'screens' / lang / '2-preview.png'
+    if shot.exists():
+        phone_w, phone_h = 250, 444
+        sc = Image.open(shot).convert('RGB').resize((phone_w - 20, phone_h - 20))
+        frame = Image.new('RGBA', (phone_w, phone_h), (0, 0, 0, 0))
+        ImageDraw.Draw(frame).rounded_rectangle((0, 0, phone_w - 1, phone_h - 1), radius=34, fill=(27, 31, 59))
+        m = Image.new('L', sc.size, 0)
+        ImageDraw.Draw(m).rounded_rectangle((0, 0, sc.size[0] - 1, sc.size[1] - 1), radius=26, fill=255)
+        frame.paste(sc, (10, 10), m)
+        img.paste(frame, (W - phone_w - 70, 56), frame)
+    serif = ImageFont.truetype(str(ROOT / 'fonts' / 'PT_Serif-Web-Bold.ttf'), 58)
+    sans = ImageFont.truetype(str(ROOT / 'fonts' / 'Roboto-Regular.ttf'), 26)
+    mark = logo(84)
+    img.paste(mark, (70, 70), mark)
+    d.text((170, 92), 'MyCurriculum', font=ImageFont.truetype(str(ROOT / 'fonts' / 'Roboto-Medium.ttf'), 40), fill=(255, 255, 255))
+    lines = {'it': ('Il tuo CV,', 'in ogni lingua'), 'en': ('Your CV,', 'in every language')}[lang]
+    d.text((70, 200), lines[0], font=serif, fill=(255, 255, 255))
+    d.text((70, 268), lines[1], font=serif, fill=(255, 205, 140))
+    sub = {'it': 'Modelli · PDF · Pagina web · Importa dal PDF', 'en': 'Templates · PDF · Web page · Import from PDF'}[lang]
+    d.text((72, 370), sub, font=sans, fill=(220, 226, 255))
+    out = ANDROID / 'store' / {'it': 'it-IT', 'en': 'en-GB'}[lang]
+    out.mkdir(parents=True, exist_ok=True)
+    img.save(out / 'feature-graphic-1024x500.png')
+
+
 def main():
     logo(32).save(ICONS / 'favicon-32.png')
     flat = logo(180)
@@ -89,6 +151,10 @@ def main():
     logo(512, maskable=True).save(ICONS / 'icon-maskable-512.png')
     logo(256).save(SITE_IMAGE)
     og_image().save(ICONS / 'og-image.png')
+    if ANDROID.exists():
+        android_icons()
+        for lang in ('it', 'en'):
+            feature_graphic(lang)
     print('icons written')
 
 

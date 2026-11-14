@@ -73,5 +73,23 @@ $font-family-base: "Inter", system-ui, sans-serif;
             dOrder(pSort(), ['$primary: #e8590c;', '$border-radius: .75rem;', '$enable-shadows: true;', '@import "bootstrap/scss/bootstrap";'], L('Prima le variabili, poi l’import.', 'Variables first, then the import.')),
             dFlash(pFlash(), [[L('Bootstrap espone variabili CSS come --bs-primary', 'Bootstrap exposes CSS variables like --bs-primary'), true], [L('Le variabili Sass vanno cambiate dopo l’import', 'Sass variables must be changed after the import'), false], [L('data-bs-theme="dark" funziona anche su un singolo componente', 'data-bs-theme="dark" works on a single component too'), true], [L('Un sito Bootstrap non si può personalizzare', 'A Bootstrap site cannot be customised'), false]], L('Bootstrap con identità.', 'Bootstrap with identity.')),
         ]),
+        lesson('forms-js', L('Form, modali e JavaScript', 'Forms, modals and JavaScript'), [
+            P('I form di Bootstrap usano `.form-label`, `.form-control` per i campi e `.form-select` per i menu. La validazione mostra i messaggi con `.is-invalid` e `.invalid-feedback`. Tieni sempre l’etichetta collegata al campo con `for` e `id`.', 'Bootstrap forms use `.form-label`, `.form-control` for fields and `.form-select` for menus. Validation shows messages with `.is-invalid` and `.invalid-feedback`. Always keep the label tied to the field with `for` and `id`.'),
+            C('<div class="mb-3">
+  <label for="email" class="form-label">Email</label>
+  <input id="email" type="email" class="form-control is-invalid">
+  <div class="invalid-feedback">Scrivi un indirizzo valido.</div>
+</div>
+
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#conferma">Apri</button>', 'html'),
+            P('I componenti interattivi (modali, menu a tendina, tooltip) funzionano con il file `bootstrap.bundle.js` e gli attributi **`data-bs-*`**: `data-bs-toggle` dice cosa aprire, `data-bs-target` quale elemento. Nessuna riga di JavaScript da scrivere per i casi semplici.', 'Interactive components (modals, dropdowns, tooltips) work with the `bootstrap.bundle.js` file and the **`data-bs-*`** attributes: `data-bs-toggle` says what to open, `data-bs-target` which element. No JavaScript to write for simple cases.'),
+        ], [
+            Q('fj1', L('Quale classe dà lo stile a un campo di testo?', 'Which class styles a text field?'), ['.form-control', '.input', '.field', '.form-text-box'], 0, L('`.form-select` per i menu.', '`.form-select` for menus.')),
+            Q('fj2', L('Che cosa apre un modale senza scrivere JavaScript?', 'What opens a modal without writing JavaScript?'), [L('`data-bs-toggle="modal"` con `data-bs-target`', '`data-bs-toggle="modal"` with `data-bs-target`'), L('La classe `.open`', 'The `.open` class'), L('Un link a `#modal`', 'A link to `#modal`'), L('`onclick="modal()"`', '`onclick="modal()"`')], 0, L('Serve `bootstrap.bundle.js`.', 'It needs `bootstrap.bundle.js`.')),
+            Q('fj3', L('Come mostri un campo non valido?', 'How do you show an invalid field?'), [L('`.is-invalid` più `.invalid-feedback`', '`.is-invalid` plus `.invalid-feedback`'), L('`.error`', '`.error`'), L('`.text-red`', '`.text-red`'), L('`.bad`', '`.bad`')], 0, L('Il messaggio compare sotto il campo.', 'The message appears under the field.')),
+        ], task('html', L('Crea un campo con etichetta `Nome` (`for="nome"`) e un `<input id="nome">` con la classe `form-control`.', 'Create a field with the label `Nome` (`for="nome"`) and an `<input id="nome">` with the `form-control` class.'), '', [has('label[for="nome"]', L('C’è l’etichetta collegata', 'The linked label is there'), 'Nome'), has('input#nome.form-control', L('Il campo ha la classe giusta', 'The field has the right class'))], '', "<label for=\"nome\" class=\"form-label\">Nome</label>\n<input id=\"nome\" class=\"form-control\">"), [
+            dMatch(pMatch(), [['.form-control', L('Campo di testo', 'Text field')], ['.form-select', L('Menu a tendina', 'Select menu')], ['.is-invalid', L('Campo non valido', 'Invalid field')], ['data-bs-toggle', L('Cosa aprire', 'What to open')], ['data-bs-target', L('Quale elemento', 'Which element')]], L('Form e componenti.', 'Forms and components.')),
+            dFlash(pFlash(), [[L('I modali funzionano con bootstrap.bundle.js', 'Modals work with bootstrap.bundle.js'), true], [L('L’etichetta non serve se c’è il placeholder', 'The label is not needed if there is a placeholder'), false], [L('.invalid-feedback mostra il messaggio d’errore', '.invalid-feedback shows the error message'), true], [L('Ogni modale richiede JavaScript scritto a mano', 'Every modal needs hand-written JavaScript'), false]], L('Form e interazione.', 'Forms and interaction.')),
+        ]),
     ],
 ];

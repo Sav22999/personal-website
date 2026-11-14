@@ -10,6 +10,48 @@
 @font-face { font-family: "CV Serif"; src: url("../fonts/PT_Serif-Web-Bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
 @font-face { font-family: "CV Serif"; src: url("../fonts/PT_Serif-Web-BoldItalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
 
+/* More typefaces (fonts/<id>/): static TTF files, subset to the Latin alphabet; the same files go into the PDF */
+@font-face { font-family: "CV Inter"; src: url("../fonts/inter/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Inter"; src: url("../fonts/inter/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Inter"; src: url("../fonts/inter/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Inter"; src: url("../fonts/inter/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Open Sans"; src: url("../fonts/opensans/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Open Sans"; src: url("../fonts/opensans/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Open Sans"; src: url("../fonts/opensans/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Open Sans"; src: url("../fonts/opensans/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Source Sans 3"; src: url("../fonts/sourcesans/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Source Sans 3"; src: url("../fonts/sourcesans/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Source Sans 3"; src: url("../fonts/sourcesans/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Source Sans 3"; src: url("../fonts/sourcesans/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Montserrat"; src: url("../fonts/montserrat/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Montserrat"; src: url("../fonts/montserrat/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Montserrat"; src: url("../fonts/montserrat/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Montserrat"; src: url("../fonts/montserrat/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Poppins"; src: url("../fonts/poppins/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Poppins"; src: url("../fonts/poppins/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Poppins"; src: url("../fonts/poppins/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Poppins"; src: url("../fonts/poppins/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Lora"; src: url("../fonts/lora/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Lora"; src: url("../fonts/lora/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Lora"; src: url("../fonts/lora/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Lora"; src: url("../fonts/lora/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Merriweather"; src: url("../fonts/merriweather/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Merriweather"; src: url("../fonts/merriweather/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Merriweather"; src: url("../fonts/merriweather/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Merriweather"; src: url("../fonts/merriweather/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV EB Garamond"; src: url("../fonts/garamond/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV EB Garamond"; src: url("../fonts/garamond/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV EB Garamond"; src: url("../fonts/garamond/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV EB Garamond"; src: url("../fonts/garamond/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Libre Baskerville"; src: url("../fonts/baskerville/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Libre Baskerville"; src: url("../fonts/baskerville/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Libre Baskerville"; src: url("../fonts/baskerville/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Libre Baskerville"; src: url("../fonts/baskerville/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Playfair Display"; src: url("../fonts/playfair/regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Playfair Display"; src: url("../fonts/playfair/italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "CV Playfair Display"; src: url("../fonts/playfair/bold.ttf") format("truetype"); font-weight: 500 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "CV Playfair Display"; src: url("../fonts/playfair/bolditalic.ttf") format("truetype"); font-weight: 500 800; font-style: italic; font-display: swap; }
+
 .cv {
     --cv-accent: #3D52D5;
     --cv-ink: #1E2230;
@@ -26,6 +68,16 @@
     color-scheme: light;
 }
 .cv.cv-font-serif { font-family: "CV Serif", Georgia, serif; }
+.cv.cv-font-inter { font-family: "CV Inter", system-ui, sans-serif; }
+.cv.cv-font-opensans { font-family: "CV Open Sans", system-ui, sans-serif; }
+.cv.cv-font-sourcesans { font-family: "CV Source Sans 3", system-ui, sans-serif; }
+.cv.cv-font-montserrat { font-family: "CV Montserrat", system-ui, sans-serif; }
+.cv.cv-font-poppins { font-family: "CV Poppins", system-ui, sans-serif; }
+.cv.cv-font-lora { font-family: "CV Lora", Georgia, serif; }
+.cv.cv-font-merriweather { font-family: "CV Merriweather", Georgia, serif; }
+.cv.cv-font-garamond { font-family: "CV EB Garamond", Georgia, serif; }
+.cv.cv-font-baskerville { font-family: "CV Libre Baskerville", Georgia, serif; }
+.cv.cv-font-playfair { font-family: "CV Playfair Display", Georgia, serif; }
 .cv * { box-sizing: border-box; }
 .cv h1, .cv h3, .cv h4, .cv p, .cv ul, .cv dl, .cv dd { margin: 0; padding: 0; }
 .cv a { color: inherit; text-decoration: none; }
@@ -42,14 +94,16 @@
 .cv-contacts li { display: flex; align-items: flex-start; gap: 6px; }
 .cv-contacts li a { gap: 6px; align-items: flex-start; }
 .cv-ico { width: 13px; height: 13px; flex: none; margin-top: 2px; fill: none; stroke: var(--cv-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.cv-c-label { color: var(--cv-soft); }
+.cv-c-label { color: var(--cv-soft); margin-right: .3em; } /* the contact sits in a flex box, where a plain space would vanish */
 
 .cv-fields { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 12px; margin-top: 12px !important; }
 .cv-fields div { display: flex; gap: 5px; }
 .cv-fields dt { font-weight: 600; }
 .cv-fields dd { color: var(--cv-soft); }
 
-.cv-sec { margin-top: 20px; }
+/* Spacing scale (the PDF follows it, see pdf.js): sections 22 px apart; heading → first entry 8 px; entries of one
+   section 12 px apart; inside an entry title, organisation and dates are close (1–3 px) and the description 4 px below. */
+.cv-sec { margin-top: 22px; }
 .cv-sec h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--cv-accent); font-weight: 600; margin-bottom: 8px; }
 .cv-text { color: var(--cv-ink); }
 .cv-text p + p, .cv-text p + ul, .cv-text ul + p { margin-top: 5px; }
@@ -57,12 +111,14 @@
 .cv-text li { margin: 1px 0; }
 .cv-text li::marker { color: var(--cv-accent); }
 
-.cv-item { display: grid; grid-template-columns: 118px 1fr; gap: 14px; padding: 6px 0; break-inside: avoid; }
+.cv-item { display: grid; grid-template-columns: 118px 1fr; column-gap: 14px; row-gap: 0; padding: 0; break-inside: avoid; }
+.cv-item + .cv-item { margin-top: 12px; }
 .cv-when { font-size: 11.5px; color: var(--cv-soft); padding-top: 2px; }
 .cv-what h4 { font-size: 14px; font-weight: 600; line-height: 1.3; }
-.cv-org { color: var(--cv-soft); font-size: 12.5px; }
+.cv-org { color: var(--cv-soft); font-size: 12.5px; margin-top: 1px; }
 .cv-place { font-style: italic; }
 .cv-what .cv-text { margin-top: 4px; font-size: 12.5px; }
+.cv-what h4 + .cv-text, .cv-what .cv-org + .cv-text { margin-top: 4px; }
 .cv-item-list:not(:has(.cv-when)) { grid-template-columns: 1fr; }
 
 .cv-skills, .cv-langs { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 24px; }
@@ -71,6 +127,7 @@
 .cv-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--cv-line); }
 .cv-dots i.on { background: var(--cv-accent); }
 .cv-lvl { color: var(--cv-soft); font-size: 12px; text-align: right; }
+.cv-lang-r { display: inline-flex; align-items: center; gap: 8px; flex: none; }
 
 .cv-footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid var(--cv-line); font-size: 10px; color: var(--cv-soft); line-height: 1.4; }
 
@@ -118,6 +175,7 @@
 .cv-minimal .cv-ico { stroke: var(--cv-soft); }
 .cv-minimal .cv-summary { margin-top: 22px; font-size: 13.5px; }
 .cv-minimal .cv-sec { margin-top: 26px; }
+.cv-minimal .cv-sec h3 { margin-bottom: 10px; }
 .cv-minimal .cv-sec h3 { color: var(--cv-ink); font-size: 11.5px; letter-spacing: .16em; }
 .cv-minimal .cv-item { grid-template-columns: 1fr auto; }
 .cv-minimal .cv-item .cv-when { grid-column: 2; grid-row: 1; text-align: right; }
@@ -131,14 +189,139 @@
 .cv-elegant .cv-photo { width: 96px; height: 96px; margin-bottom: 8px; }
 .cv-elegant .cv-name { font-size: 32px; font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
 .cv-elegant .cv-headline { color: var(--cv-soft); font-style: italic; font-weight: 400; }
-.cv-elegant .cv-contacts { justify-content: center; margin-top: 10px; gap: 4px 0; }
+.cv-elegant .cv-contacts { justify-content: center; margin-top: 10px; gap: 4px 26px; }
 .cv-elegant .cv-ico { display: none; }
-.cv-elegant .cv-contacts li + li::before { content: "·"; color: var(--cv-accent); padding: 0 12px; }
+/* separators sit in the gap between contacts (absolute: they take no room, so hiding one never moves anything) */
+.cv-elegant .cv-contacts li, .cv-banner .cv-contacts li { position: relative; }
+.cv-elegant .cv-contacts li + li::before { content: "·"; color: var(--cv-accent); position: absolute; left: -16px; top: 0; }
+/* a contact that starts a new line has no separator before it (see fixContactSeparators in cv.js) */
+.cv-elegant .cv-contacts li.line-start::before, .cv-banner .cv-contacts li.line-start::before { visibility: hidden; }
 .cv-elegant .cv-fields { justify-content: center; }
 .cv-elegant .cv-sec h3 { text-align: center; font-weight: 400; letter-spacing: .22em; font-size: 12px; color: var(--cv-accent); display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
 .cv-elegant .cv-sec h3::before, .cv-elegant .cv-sec h3::after { content: ""; flex: 1; height: 1px; background: var(--cv-line); }
 .cv-elegant .cv-summary .cv-text { text-align: center; font-style: italic; color: var(--cv-soft); }
 .cv-elegant .cv-footer { text-align: center; }
+
+.cv-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 3px; font-size: 11.5px; color: var(--cv-soft); }
+.cv-meta span:first-child { font-weight: 600; }
+.cv-link { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11.5px; color: var(--cv-accent); }
+.cv-link .cv-ico { margin-top: 0; }
+
+/* ---------- Banner: a coloured band on top, entries as "TITLE – ORGANIZATION – dates" */
+.cv-banner { --cv-pad: 0px; }
+.cv-banner .cv-head { display: flex; gap: 24px; align-items: center; background: var(--cv-accent); color: #fff; padding: 30px 44px; }
+.cv-banner .cv-head-text { flex: 1; min-width: 0; }
+.cv-banner .cv-photo { width: 116px; height: 116px; border: 3px solid rgba(255, 255, 255, .85); }
+.cv-banner .cv-name { font-size: 28px; font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, .55); }
+.cv-banner .cv-headline { color: #fff; opacity: .9; }
+.cv-banner .cv-contacts { margin-top: 10px; color: #fff; gap: 6px 21px; }
+.cv-banner .cv-contacts li + li::before { content: ""; position: absolute; left: -11px; top: 2px; width: 1px; height: 13px; background: rgba(255, 255, 255, .5); }
+.cv-banner .cv-head .cv-ico { stroke: #fff; }
+.cv-banner .cv-c-label { color: #fff; font-weight: 600; }
+.cv-banner .cv-body { padding: 6px 44px 40px; }
+.cv-banner .cv-sec h3 { color: var(--cv-ink); font-weight: 700; font-size: 14px; letter-spacing: .02em; border-bottom: 1.5px solid var(--cv-accent); padding: 0 0 3px 16px; position: relative; }
+.cv-banner .cv-sec h3::before { content: ""; position: absolute; left: 0; top: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--cv-accent); }
+.cv-banner .cv-item { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; row-gap: 0; padding: 0 0 0 16px; }
+.cv-banner .cv-item .cv-what { display: contents; }
+.cv-banner .cv-item h4 { order: 1; text-transform: uppercase; font-size: 12.5px; font-weight: 700; color: #444a5c; }
+.cv-banner .cv-item .cv-org { order: 2; text-transform: uppercase; font-size: 12.5px; font-weight: 700; color: #444a5c; }
+.cv-banner .cv-item .cv-org::before, .cv-banner .cv-item .cv-when::before { content: "– "; }
+.cv-banner .cv-item .cv-org .cv-place { text-transform: none; font-weight: 400; font-style: normal; }
+.cv-banner .cv-item .cv-when { order: 3; padding: 0; font-size: 12px; }
+.cv-banner .cv-item .cv-when:empty { display: none; }
+.cv-banner .cv-item .cv-text, .cv-banner .cv-item .cv-meta, .cv-banner .cv-item .cv-link { order: 5; flex-basis: 100%; }
+.cv-banner .cv-item .cv-text { border-top: 1px solid var(--cv-line); padding-top: 4px; margin-top: 4px; }
+.cv-banner .cv-item .cv-when { white-space: nowrap; } /* the dates wrap as a whole, never "– Jan 2022" alone */
+.cv-banner .cv-summary .cv-text, .cv-banner .cv-sec > .cv-text, .cv-banner .cv-skills, .cv-banner .cv-langs { padding-left: 16px; }
+.cv-banner .cv-fields { padding-left: 16px; margin-top: 16px !important; }
+
+/* ---------- Timeline: a vertical line with a dot for each entry */
+.cv-timeline .cv-head { display: flex; gap: 22px; align-items: center; justify-content: space-between; }
+.cv-timeline .cv-head-text { flex: 1; min-width: 0; }
+.cv-timeline .cv-name { font-size: 32px; font-weight: 700; }
+.cv-timeline .cv-contacts { margin-top: 12px; }
+.cv-timeline .cv-sec h3 { display: inline-block; background: var(--cv-accent); color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 11.5px; letter-spacing: .1em; }
+.cv-timeline .cv-sec-timeline, .cv-timeline .cv-sec-list { padding-left: 4px; }
+.cv-timeline .cv-item { position: relative; grid-template-columns: 1fr; gap: 0; padding: 2px 0 12px 22px; border-left: 2px solid var(--cv-line); margin-left: 5px; }
+.cv-timeline .cv-item::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--cv-accent); box-sizing: border-box; }
+.cv-timeline .cv-item:last-child { padding-bottom: 2px; }
+.cv-timeline .cv-item + .cv-item { margin-top: 0; }
+.cv-timeline .cv-when { color: var(--cv-accent); font-weight: 600; padding: 0 0 1px; }
+
+/* ---------- Compact: smaller text, header in one row, two columns without a coloured sidebar */
+.cv-compact { --cv-pad: 36px; font-size: 11.5px; }
+.cv-compact .cv-head { display: flex; gap: 16px; align-items: center; padding-bottom: 12px; border-bottom: 2px solid var(--cv-ink); }
+.cv-compact .cv-head-text { flex: 1; min-width: 0; }
+.cv-compact .cv-photo { width: 72px; height: 72px; border-radius: 8px; }
+.cv-compact .cv-name { font-size: 25px; font-weight: 700; }
+.cv-compact .cv-headline { font-size: 13px; }
+.cv-compact .cv-head .cv-contacts { flex-direction: column; gap: 3px; font-size: 11px; max-width: 44%; }
+.cv-compact .cv-summary { margin-top: 12px; }
+.cv-compact .cv-cols { display: grid; grid-template-columns: 1fr 210px; gap: 26px; }
+.cv-compact .cv-sec { margin-top: 14px; }
+.cv-compact .cv-sec h3 { font-size: 11.5px; color: var(--cv-ink); border-bottom: 2px solid var(--cv-accent); padding-bottom: 3px; margin-bottom: 6px; }
+.cv-compact .cv-item { grid-template-columns: 1fr; gap: 0; padding: 0; }
+.cv-compact .cv-item + .cv-item { margin-top: 9px; }
+.cv-compact .cv-what h4 { font-size: 12.5px; }
+.cv-compact .cv-org, .cv-compact .cv-what .cv-text { font-size: 11.5px; }
+.cv-compact .cv-when { font-size: 10.5px; padding: 0; }
+.cv-compact .cv-side .cv-skills, .cv-compact .cv-side .cv-langs { grid-template-columns: 1fr; gap: 4px; }
+.cv-compact .cv-side .cv-fields { flex-direction: column; margin-top: 0 !important; }
+
+/* ---------- Studio: accent rule under the name, a light tinted column on the right */
+.cv-studio .cv-head { display: flex; gap: 20px; align-items: center; padding-bottom: 16px; border-bottom: 3px solid var(--cv-accent); }
+.cv-studio .cv-head-text { flex: 1; min-width: 0; }
+.cv-studio .cv-name { font-size: 32px; font-weight: 700; }
+.cv-studio .cv-photo { width: 92px; height: 92px; }
+.cv-studio .cv-cols { display: grid; grid-template-columns: 1fr 228px; gap: 28px; align-items: start; }
+.cv-studio .cv-side { background: color-mix(in srgb, var(--cv-accent) 8%, #fff); border-radius: 10px; padding: 2px 18px 20px; margin-top: 22px; }
+.cv-studio .cv-side .cv-contacts { flex-direction: column; gap: 6px; }
+.cv-studio .cv-side .cv-fields { flex-direction: column; margin-top: 0 !important; }
+.cv-studio .cv-side .cv-skills, .cv-studio .cv-side .cv-langs { grid-template-columns: 1fr; }
+.cv-studio .cv-sec h3 { color: var(--cv-ink); font-weight: 700; }
+.cv-studio .cv-main .cv-item { grid-template-columns: 1fr; gap: 0; }
+.cv-studio .cv-main .cv-when { padding: 0 0 1px; color: var(--cv-accent); font-weight: 600; }
+
+/* ---------- Monogram: initials in a circle, headings with a vertical bar */
+.cv-monogram .cv-head { display: flex; gap: 22px; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--cv-line); }
+.cv-monogram .cv-head-text { flex: 1; min-width: 0; }
+.cv-monogram .cv-mono { width: 96px; height: 96px; border-radius: 50%; background: var(--cv-accent); color: #fff; display: grid; place-items: center; flex: none; overflow: hidden; }
+.cv-monogram .cv-mono span { font-size: 36px; font-weight: 600; letter-spacing: .04em; }
+.cv-monogram .cv-mono .cv-photo { width: 100%; height: 100%; }
+.cv-monogram .cv-contacts { margin-top: 10px; }
+.cv-monogram .cv-sec h3 { color: var(--cv-ink); font-weight: 700; border-left: 4px solid var(--cv-accent); padding-left: 9px; line-height: 1.1; }
+
+/* ---------- Contrast: dark header, short accent stroke under headings, dates on the right */
+.cv-contrast { --cv-pad: 0px; }
+.cv-contrast .cv-head { display: flex; gap: 24px; align-items: center; background: #1E2230; color: #fff; padding: 34px 48px 30px; }
+.cv-contrast .cv-head-text { flex: 1; min-width: 0; }
+.cv-contrast .cv-name { font-size: 36px; font-weight: 800; letter-spacing: -.02em; }
+.cv-contrast .cv-headline { color: color-mix(in srgb, var(--cv-accent) 55%, #fff); }
+.cv-contrast .cv-head .cv-contacts { margin-top: 14px; color: #C9CCD8; }
+.cv-contrast .cv-head .cv-ico { stroke: color-mix(in srgb, var(--cv-accent) 55%, #fff); }
+.cv-contrast .cv-photo { width: 100px; height: 100px; border-radius: 12px; }
+.cv-contrast .cv-body { padding: 4px 48px 44px; }
+.cv-contrast .cv-sec h3 { color: var(--cv-ink); font-size: 15px; font-weight: 800; letter-spacing: .04em; }
+.cv-contrast .cv-sec h3::after { content: ""; display: block; width: 36px; height: 3px; background: var(--cv-accent); margin-top: 5px; border-radius: 2px; }
+.cv-contrast .cv-summary .cv-text { font-size: 13.5px; }
+.cv-contrast .cv-item { grid-template-columns: 1fr auto; }
+.cv-contrast .cv-item .cv-when { grid-column: 2; grid-row: 1; text-align: right; font-weight: 600; color: var(--cv-accent); }
+.cv-contrast .cv-item .cv-what { grid-column: 1; grid-row: 1; }
+
+/* ---------- Swiss: title column on the left, content on the right, fine rules */
+.cv-swiss { --cv-pad: 52px; }
+.cv-swiss .cv-head { display: grid; grid-template-columns: 1fr auto auto; gap: 22px; align-items: end; padding-bottom: 18px; border-bottom: 2px solid var(--cv-ink); }
+.cv-swiss .cv-name { font-size: 38px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+.cv-swiss .cv-headline { color: var(--cv-soft); font-weight: 400; }
+.cv-swiss .cv-head .cv-contacts { flex-direction: column; gap: 3px; font-size: 11.5px; }
+.cv-swiss .cv-photo { width: 76px; height: 76px; border-radius: 0; }
+.cv-swiss .cv-sec { display: grid; grid-template-columns: 150px 1fr; column-gap: 24px; padding-top: 14px; border-top: 1px solid var(--cv-line); }
+.cv-swiss .cv-sec > h3 { grid-column: 1; grid-row: 1 / span 99; margin: 2px 0 0; font-size: 11px; letter-spacing: .14em; color: var(--cv-accent); }
+.cv-swiss .cv-sec > :not(h3) { grid-column: 2; }
+.cv-swiss .cv-sec > .cv-item + .cv-item { margin-top: 12px; }
+.cv-swiss .cv-item { grid-template-columns: 1fr; gap: 0; }
+.cv-swiss .cv-when { padding: 0 0 1px; }
+.cv-swiss .cv-fields { margin-top: 14px !important; }
 
 /* ---------- The public page on small screens */
 @media (max-width: 720px) {
@@ -152,6 +335,24 @@
     .cv-web.cv-modern .cv-cols { grid-template-columns: 1fr; }
     .cv-web.cv-modern .cv-side { order: 2; padding: 26px 22px; }
     .cv-web.cv-modern .cv-main { padding: 28px 22px; }
+    .cv-web.cv-banner { --cv-pad: 0px; }
+    .cv-web.cv-banner .cv-head { flex-direction: column; align-items: flex-start; padding: 24px 22px; }
+    .cv-web.cv-banner .cv-body { padding: 4px 22px 28px; }
+    .cv-web.cv-banner .cv-contacts { flex-direction: column; }
+    .cv-web.cv-banner .cv-contacts li + li::before { display: none; }
+    .cv-web.cv-timeline .cv-head { flex-direction: column-reverse; align-items: flex-start; }
+    .cv-web.cv-compact .cv-head { flex-direction: column; align-items: flex-start; }
+    .cv-web.cv-compact .cv-head .cv-contacts { max-width: none; }
+    .cv-web.cv-compact .cv-cols { grid-template-columns: 1fr; gap: 0; }
+    .cv-web.cv-studio .cv-cols { grid-template-columns: 1fr; gap: 0; }
+    .cv-web.cv-studio .cv-head, .cv-web.cv-monogram .cv-head { flex-direction: column; align-items: flex-start; }
+    .cv-web.cv-contrast { --cv-pad: 0px; }
+    .cv-web.cv-contrast .cv-head { flex-direction: column-reverse; align-items: flex-start; padding: 26px 22px; }
+    .cv-web.cv-contrast .cv-body { padding: 4px 22px 28px; }
+    .cv-web.cv-contrast .cv-item .cv-when { grid-column: 1; grid-row: auto; text-align: left; order: -1; }
+    .cv-web.cv-swiss .cv-head { grid-template-columns: 1fr; align-items: start; }
+    .cv-web.cv-swiss .cv-sec { grid-template-columns: 1fr; }
+    .cv-web.cv-swiss .cv-sec > h3, .cv-web.cv-swiss .cv-sec > :not(h3) { grid-column: 1; grid-row: auto; margin-bottom: 8px; }
 }
 
 @media print {

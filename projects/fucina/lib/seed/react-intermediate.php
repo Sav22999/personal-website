@@ -111,5 +111,25 @@ const [tema, setTema] = useLocalStorage("tema", "chiaro");', 'jsx'),
             dBug(pBug(), ['function contaClic() {', '  const [n, setN] = useState(0);', '  return [n, () => setN(n + 1)];', '}'], 0, 'function useContaClic() {', L('Un hook personalizzato deve iniziare con `use`.', 'A custom hook must start with `use`.')),
             dMatch(pMatch(), [['useLocalStorage', L('Hook personalizzato', 'Custom hook')], ['useMemo', L('Ricorda un calcolo', 'Remembers a calculation')], ['memo', L('Evita rendering inutili', 'Avoids useless renders')], [L('Primo livello', 'Top level'), L('Dove chiamare gli hook', 'Where to call hooks')]], L('Hook e prestazioni.', 'Hooks and performance.')),
         ]),
+        lesson('reducer-tests', L('useReducer e test dei componenti', 'useReducer and component tests'), [
+            P('Quando lo stato ha molte azioni collegate, **`useReducer`** le raccoglie in una funzione pura: `(stato, azione) => nuovoStato`. I componenti chiamano `dispatch({type: "aggiungi"})` invece di tanti `setX`.', 'When state has many related actions, **`useReducer`** gathers them in a pure function: `(state, action) => newState`. Components call `dispatch({type: "add"})` instead of many `setX` calls.'),
+            C('function carrello(stato, azione) {
+  switch (azione.type) {
+    case "aggiungi": return [...stato, azione.prodotto];
+    case "svuota": return [];
+    default: return stato;
+  }
+}
+const [voci, dispatch] = useReducer(carrello, []);
+dispatch({ type: "aggiungi", prodotto: "Libro" });', 'jsx'),
+            P('Con **React Testing Library** si prova il componente come lo usa una persona: lo si disegna con `render`, si trovano gli elementi per ruolo o testo (`getByRole`) e si simula il clic. Si controlla ciò che si **vede**, non lo stato interno.', 'With **React Testing Library** you test the component the way a person uses it: draw it with `render`, find elements by role or text (`getByRole`) and simulate the click. You check what is **seen**, not the internal state.'),
+        ], [
+            Q('rt1', L('Che cosa riceve un reducer?', 'What does a reducer receive?'), [L('Lo stato attuale e un’azione', 'The current state and an action'), L('Solo le props', 'Only props'), L('Il DOM', 'The DOM'), L('Un URL', 'A URL')], 0, L('E restituisce il nuovo stato.', 'And returns the new state.')),
+            Q('rt2', L('Un reducer deve…', 'A reducer must…'), [L('Restituire un nuovo stato senza modificare il vecchio', 'Return a new state without changing the old one'), L('Chiamare il server', 'Call the server'), L('Modificare lo stato in place', 'Change state in place'), L('Usare setTimeout', 'Use setTimeout')], 0, L('È una funzione pura.', 'It is a pure function.')),
+            Q('rt3', L('Che cosa controlla un buon test di componente?', 'What does a good component test check?'), [L('Ciò che l’utente vede e fa', 'What the user sees and does'), L('Le variabili interne', 'Internal variables'), L('Il numero di render', 'The number of renders'), L('Il nome dei file', 'File names')], 0, L('Così il test sopravvive ai refactoring.', 'That way the test survives refactors.')),
+        ], task('jsx', L('Scrivi `const [n, dispatch] = useReducer(contatore, 0);` e poi `dispatch({ type: "piu" });`.', 'Write `const [n, dispatch] = useReducer(contatore, 0);` and then `dispatch({ type: "piu" });`.'), '', [re('const\s*\[\s*n\s*,\s*dispatch\s*\]\s*=\s*useReducer\(\s*contatore\s*,\s*0\s*\)', L('Usi useReducer', 'You use useReducer')), re('dispatch\(\s*\{\s*type\s*:\s*["\']piu["\']\s*\}\s*\)', L('Invii l’azione', 'You dispatch the action'))], '', "const [n, dispatch] = useReducer(contatore, 0);\ndispatch({ type: \"piu\" });"), [
+            dOrder(pSort(), ['render(<Contatore />);', 'const btn = screen.getByRole("button");', 'fireEvent.click(btn);', 'expect(screen.getByText("1")).toBeInTheDocument();'], L('Disegna, trova, agisci, verifica.', 'Render, find, act, assert.')),
+            dFlash(pFlash(), [[L('Un reducer è una funzione pura', 'A reducer is a pure function'), true], [L('dispatch modifica direttamente lo stato', 'dispatch changes state directly'), false], [L('getByRole trova gli elementi come li vede l’utente', 'getByRole finds elements as the user sees them'), true], [L('I test devono leggere lo stato interno', 'Tests must read internal state'), false]], L('Reducer e test.', 'Reducers and tests.')),
+        ]),
     ],
 ];

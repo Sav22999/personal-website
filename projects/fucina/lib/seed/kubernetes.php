@@ -102,5 +102,22 @@ kubectl autoscale deployment web --cpu-percent=70 --min=2 --max=10', 'bash'),
             dMatch(pMatch(), [['ConfigMap', L('Configurazione normale', 'Normal configuration')], ['Secret', L('Password e chiavi', 'Passwords and keys')], ['autoscale', L('Pod in base al carico', 'Pods by load')], ['readinessProbe', L('Pronto per il traffico?', 'Ready for traffic?')], ['livenessProbe', L('Va riavviato?', 'Needs restarting?')]], L('Configurare e crescere.', 'Configuring and growing.')),
             dFlash(pFlash(), [[L('I Secret sono codificati in base64', 'Secrets are base64-encoded'), true], [L('La configurazione va scritta nell’immagine', 'Configuration belongs in the image'), false], [L('Le sonde aiutano a riavviare i pod bloccati', 'Probes help restart stuck pods'), true], [L('L’autoscaling aumenta solo, mai diminuisce', 'Autoscaling only grows, never shrinks'), false]], L('Elastico e configurabile.', 'Elastic and configurable.')),
         ]),
+        lesson('debug', L('Diagnosi, salute e aggiornamenti', 'Diagnosis, health and updates'), [
+            P('Quando un pod non parte, i comandi da conoscere sono: `kubectl get pods` (lo stato), `kubectl describe pod` (gli **eventi**, per esempio un’immagine non trovata) e `kubectl logs` (l’output dell’applicazione). Stati tipici: `CrashLoopBackOff`, `ImagePullBackOff`, `Pending`.', 'When a pod will not start, the commands to know are: `kubectl get pods` (status), `kubectl describe pod` (the **events**, for example an image not found) and `kubectl logs` (the app’s output). Typical states: `CrashLoopBackOff`, `ImagePullBackOff`, `Pending`.'),
+            C('kubectl get pods
+kubectl describe pod web-7d9f-abcde
+kubectl logs web-7d9f-abcde --previous
+kubectl set image deployment/web web=registro/web:1.3
+kubectl rollout status deployment/web
+kubectl rollout undo deployment/web', 'bash'),
+            P('Le **sonde** dicono a Kubernetes come sta l’app: la **readiness** decide se il pod riceve traffico, la **liveness** riavvia il container bloccato. Un Deployment aggiorna i pod **a scaglioni** (rolling update) e con `rollout undo` torni alla versione precedente.', '**Probes** tell Kubernetes how the app is doing: **readiness** decides whether the pod gets traffic, **liveness** restarts a stuck container. A Deployment updates pods **in batches** (rolling update) and with `rollout undo` you go back to the previous version.'),
+        ], [
+            Q('kd1', L('Dove leggi gli eventi di un pod?', 'Where do you read a pod’s events?'), ['kubectl describe pod', 'kubectl get svc', 'kubectl apply', 'kubectl top'], 0, L('In fondo all’output.', 'At the bottom of the output.')),
+            Q('kd2', L('Che cosa fa la readiness probe?', 'What does the readiness probe do?'), [L('Decide se il pod riceve traffico', 'Decides whether the pod gets traffic'), L('Riavvia il nodo', 'Restarts the node'), L('Scarica l’immagine', 'Pulls the image'), L('Cancella il pod', 'Deletes the pod')], 0, L('La liveness invece riavvia.', 'Liveness restarts instead.')),
+            Q('kd3', L('Come torni alla versione precedente?', 'How do you go back to the previous version?'), ['kubectl rollout undo', 'kubectl delete', 'kubectl scale --replicas=0', 'kubectl logs'], 0, L('Il Deployment ricorda le versioni.', 'The Deployment remembers versions.')),
+        ], task('bash', L('Mostra i log del pod `api-1` e poi annulla l’ultimo rollout del deployment `api`.', 'Show the logs of pod `api-1` and then undo the last rollout of deployment `api`.'), '', [re('kubectl\s+logs\s+api-1', L('Leggi i log', 'You read the logs')), re('kubectl\s+rollout\s+undo\s+deployment/api', L('Annulli il rollout', 'You undo the rollout'))], '', "kubectl logs api-1\nkubectl rollout undo deployment/api"), [
+            dMatch(pMatch(), [['CrashLoopBackOff', L('Il container continua a crashare', 'The container keeps crashing')], ['ImagePullBackOff', L('Immagine non scaricabile', 'Image cannot be pulled')], ['Pending', L('Nessun nodo disponibile', 'No node available')], ['readiness', L('Pronto per il traffico', 'Ready for traffic')], ['liveness', L('Vivo o da riavviare', 'Alive or to restart')]], L('Leggere lo stato.', 'Reading the state.')),
+            dOrder(pSort(), ['kubectl get pods', 'kubectl describe pod web-1', 'kubectl logs web-1', L('Correggi e ridistribuisci', 'Fix and redeploy'), 'kubectl rollout status deployment/web'], L('Dalla diagnosi alla correzione.', 'From diagnosis to fix.')),
+        ]),
     ],
 ];

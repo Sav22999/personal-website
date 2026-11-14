@@ -62,5 +62,25 @@ return [
             dMatch(pMatch(), [['NavigationView', L('Sezioni dell’app', 'App sections')], ['CommandBar', L('Comandi principali', 'Main commands')], ['ContentDialog', L('Conferme', 'Confirmations')], ['InfoBar', L('Messaggi persistenti', 'Persistent messages')], ['Snap Layout', L('Finestre affiancate', 'Side-by-side windows')]], L('Componenti Windows.', 'Windows components.')),
             dFlash(pFlash(), [[L('Le app Windows dovrebbero supportare Snap Layout', 'Windows apps should support Snap Layouts'), true], [L('La NavigationView sta sempre e solo in basso', 'NavigationView is always and only at the bottom'), false], [L('Una InfoBar mostra messaggi nella pagina', 'An InfoBar shows messages in the page'), true], [L('La penna non va considerata', 'The pen should not be considered'), false]], L('App Windows ben fatte.', 'Well-made Windows apps.')),
         ]),
+        lesson('code', L('Fluent nel codice', 'Fluent in code'), [
+            P('Per il web Microsoft offre **Fluent UI React** (v9): componenti come `Button`, `Input`, `Dialog` già accessibili, con i token di Fluent 2. L’app si avvolge in un `FluentProvider` che sceglie il tema, chiaro, scuro o ad alto contrasto.', 'For the web Microsoft offers **Fluent UI React** (v9): components such as `Button`, `Input`, `Dialog`, already accessible, with Fluent 2 tokens. The app is wrapped in a `FluentProvider` that picks the theme, light, dark or high contrast.'),
+            C('import { FluentProvider, webLightTheme, Button } from "@fluentui/react-components";
+
+export function App() {
+  return (
+    <FluentProvider theme={webLightTheme}>
+      <Button appearance="primary">Salva</Button>
+    </FluentProvider>
+  );
+}', 'jsx'),
+            P('Per le app Windows native c’è **WinUI 3**, con controlli in XAML che usano già Mica, i colori d’accento dell’utente e i temi di sistema. Su entrambi, usa i **token** invece di valori fissi: così il tema scuro e l’alto contrasto funzionano da soli.', 'For native Windows apps there is **WinUI 3**, with XAML controls already using Mica, the user’s accent colours and system themes. On both, use **tokens** instead of fixed values: that way dark theme and high contrast just work.'),
+        ], [
+            Q('fc1', L('Che cosa fa `FluentProvider`?', 'What does `FluentProvider` do?'), [L('Applica il tema ai componenti', 'Applies the theme to components'), L('Carica i font da Google', 'Loads fonts from Google'), L('Crea le rotte', 'Creates routes'), L('Gestisce il login', 'Handles login')], 0, L('Chiaro, scuro, alto contrasto.', 'Light, dark, high contrast.')),
+            Q('fc2', L('Con che cosa si fanno le app Windows native Fluent?', 'What are native Fluent Windows apps built with?'), ['WinUI 3', 'jQuery', 'Bootstrap', 'SwiftUI'], 0, L('Controlli XAML.', 'XAML controls.')),
+            Q('fc3', L('Perché usare i token invece di colori fissi?', 'Why use tokens instead of fixed colours?'), [L('Temi scuro e alto contrasto funzionano da soli', 'Dark and high-contrast themes just work'), L('Sono più corti da scrivere', 'They are shorter to write'), L('Lo chiede la legge', 'The law requires it'), L('Non c’è differenza', 'There is no difference')], 0, L('Il valore cambia con il tema.', 'The value changes with the theme.')),
+        ], task('jsx', L('Avvolgi un `<Button appearance="primary">` in `<FluentProvider theme={webLightTheme}>`.', 'Wrap a `<Button appearance="primary">` in `<FluentProvider theme={webLightTheme}>`.'), '', [re('<FluentProvider\s+theme\s*=\s*\{\s*webLightTheme\s*\}\s*>', L('Il tema è applicato', 'The theme is applied')), re('<Button\s+appearance\s*=\s*["\']primary["\']\s*>', L('C’è il pulsante primario', 'The primary button is there')), re('</FluentProvider>', L('Il provider è chiuso', 'The provider is closed'))], '', "<FluentProvider theme={webLightTheme}>\n  <Button appearance=\"primary\">Salva</Button>\n</FluentProvider>"), [
+            dOrder(pSort(), ['import { FluentProvider, webLightTheme, Button } from "@fluentui/react-components";', 'export function App() {', '  return (', '    <FluentProvider theme={webLightTheme}>', '      <Button appearance="primary">Salva</Button>', '    </FluentProvider>', '  );', '}'], L('Import, provider, componente.', 'Import, provider, component.')),
+            dFlash(pFlash(), [[L('I componenti Fluent UI React sono già accessibili', 'Fluent UI React components are already accessible'), true], [L('WinUI 3 serve per i siti web', 'WinUI 3 is for websites'), false], [L('I token rendono facile il tema scuro', 'Tokens make dark theme easy'), true], [L('FluentProvider va messo dentro ogni pulsante', 'FluentProvider goes inside every button'), false]], L('Fluent per sviluppatori.', 'Fluent for developers.')),
+        ]),
     ],
 ];

@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'MyCurriculum';
 const AUTH_COOKIE = 'mycurriculum_auth';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2; // 2: cvs.rev (a save must start from the latest version)
 const LANGS = ['en', 'it']; // languages of the app itself
 // Languages a CV can be written in (each one is a full copy of the texts)
 const CV_LANGS = ['it', 'en', 'fr', 'de', 'es', 'pt', 'nl', 'pl', 'ro', 'sv'];

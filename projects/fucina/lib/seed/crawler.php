@@ -70,5 +70,25 @@ ricerca "pizza napoli" → intersezione → pagina 12', 'text'),
             dMatch(pMatch(), [[L('Pertinenza', 'Relevance'), L('Risponde alla domanda', 'Answers the query')], [L('Autorevolezza', 'Authority'), L('Link da altri siti', 'Links from other sites')], ['Core Web Vitals', L('Velocità e stabilità', 'Speed and stability')], ['hreflang', L('Versioni per lingua', 'Versions per language')]], L('I segnali del ranking.', 'Ranking signals.')),
             dFlash(pFlash(), [[L('La velocità della pagina è un segnale di ranking', 'Page speed is a ranking signal'), true], [L('Più parole chiave ripetute danno sempre il primo posto', 'More repeated keywords always give first place'), false], [L('Un solo h1 chiaro aiuta a capire la pagina', 'A single clear h1 helps understand the page'), true], [L('I link comprati sono premiati', 'Bought links are rewarded'), false]], L('Qualità prima dei trucchi.', 'Quality before tricks.')),
         ]),
+        lesson('structured', L('Dati strutturati e Search Console', 'Structured data and Search Console'), [
+            P('I **dati strutturati** descrivono il contenuto di una pagina in un formato che i motori capiscono: un articolo, una ricetta, un evento, un corso. Si scrivono in **JSON-LD** con il vocabolario di **schema.org** e possono produrre risultati arricchiti (stelle, date, prezzi).', '**Structured data** describes a page’s content in a format engines understand: an article, a recipe, an event, a course. It is written in **JSON-LD** with the **schema.org** vocabulary and can produce rich results (stars, dates, prices).'),
+            C('<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "HTML base",
+  "description": "Le basi dell’HTML a livelli",
+  "provider": { "@type": "Organization", "name": "Fucina" }
+}
+</script>', 'html'),
+            P('**Google Search Console** mostra come Google vede il sito: pagine indicizzate o escluse (e perché), query che portano visite, errori dei dati strutturati, problemi su mobile. Lì si invia la sitemap e si chiede di indicizzare di nuovo una pagina corretta.', '**Google Search Console** shows how Google sees the site: pages indexed or excluded (and why), queries that bring visits, structured data errors, mobile issues. There you submit the sitemap and ask to reindex a fixed page.'),
+        ], [
+            Q('sd1', L('In che formato si scrivono di solito i dati strutturati?', 'In what format is structured data usually written?'), ['JSON-LD', 'CSV', 'XML-RPC', 'YAML'], 0, L('Dentro uno `<script type="application/ld+json">`.', 'Inside a `<script type="application/ld+json">`.')),
+            Q('sd2', L('Quale vocabolario si usa?', 'Which vocabulary is used?'), ['schema.org', 'w3schools', 'MDN', 'OpenAPI'], 0, L('Tipi come Course, Article, Event.', 'Types like Course, Article, Event.')),
+            Q('sd3', L('Che cosa trovi in Search Console?', 'What do you find in Search Console?'), [L('Pagine indicizzate, query ed errori', 'Indexed pages, queries and errors'), L('Il codice sorgente di Google', 'Google’s source code'), L('Le password degli utenti', 'Users’ passwords'), L('Gli annunci a pagamento soltanto', 'Paid ads only')], 0, L('Lo sguardo di Google sul sito.', 'Google’s view of the site.')),
+        ], task('html', L('Aggiungi uno `<script type="application/ld+json">` con `"@type": "Course"` e `"name": "CSS base"`.', 'Add a `<script type="application/ld+json">` with `"@type": "Course"` and `"name": "CSS base"`.'), '', [has('script[type="application/ld+json"]', L('C’è lo script JSON-LD di tipo Course', 'The Course JSON-LD script is there'), 'Course'), has('script[type="application/ld+json"]', L('Il nome del corso è giusto', 'The course name is right'), 'CSS base')], '', "<script type=\"application/ld+json\">\n{ \"@context\": \"https://schema.org\", \"@type\": \"Course\", \"name\": \"CSS base\" }\n</script>"), [
+            dMatch(pMatch(), [['JSON-LD', L('Formato dei dati strutturati', 'Structured data format')], ['schema.org', L('Vocabolario dei tipi', 'Type vocabulary')], ['@type', L('Che cosa descrive', 'What it describes')], ['Search Console', L('Come Google vede il sito', 'How Google sees the site')], [L('Risultato arricchito', 'Rich result'), L('Stelle, date, prezzi', 'Stars, dates, prices')]], L('Parlare ai motori.', 'Talking to engines.')),
+            dFlash(pFlash(), [[L('I dati strutturati possono dare risultati arricchiti', 'Structured data can give rich results'), true], [L('JSON-LD va scritto nel file robots.txt', 'JSON-LD goes in robots.txt'), false], [L('In Search Console si invia la sitemap', 'The sitemap is submitted in Search Console'), true], [L('Search Console garantisce il primo posto', 'Search Console guarantees first place'), false]], L('Visibilità con metodo.', 'Visibility with method.')),
+        ]),
     ],
 ];

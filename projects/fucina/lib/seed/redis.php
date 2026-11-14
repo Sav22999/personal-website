@@ -87,5 +87,24 @@ bind 127.0.0.1', 'text'),
             dMatch(pMatch(), [['RDB', L('Snapshot periodici', 'Periodic snapshots')], ['AOF', L('Registro delle scritture', 'Write log')], ['maxmemory', L('Limite di memoria', 'Memory limit')], ['SCAN', L('Scorre le chiavi senza bloccare', 'Iterates keys without blocking')], ['requirepass', L('Password', 'Password')]], L('Redis in produzione.', 'Redis in production.')),
             dFlash(pFlash(), [[L('Redis può salvare su disco', 'Redis can save to disk'), true], [L('Conviene esporre Redis su internet senza password', 'Exposing Redis to the internet without a password is fine'), false], [L('SCAN è più sicuro di KEYS in produzione', 'SCAN is safer than KEYS in production'), true], [L('Una cache non deve mai perdere dati', 'A cache must never lose data'), false]], L('Veloce e protetto.', 'Fast and protected.')),
         ]),
+        lesson('realtime', L('Pub/Sub, stream e limiti di velocità', 'Pub/Sub, streams and rate limits'), [
+            P('Con **Pub/Sub** un client pubblica un messaggio su un canale e tutti gli iscritti lo ricevono subito: utile per notifiche e chat. I messaggi però non restano: chi non era collegato li perde. Gli **Stream** invece li conservano, con ID e gruppi di consumatori.', 'With **Pub/Sub** a client publishes a message to a channel and every subscriber receives it at once: useful for notifications and chat. But messages are not kept: whoever was not connected misses them. **Streams** instead keep them, with IDs and consumer groups.'),
+            C('SUBSCRIBE notifiche
+PUBLISH notifiche "Nuovo corso!"
+
+XADD ordini * prodotto libro qty 1
+XREAD COUNT 10 STREAMS ordini 0
+
+INCR limite:utente42
+EXPIRE limite:utente42 60     # finestra di 60 secondi', 'redis'),
+            P('Un **limite di velocità** semplice: `INCR` su una chiave per utente e `EXPIRE` di 60 secondi alla prima richiesta; se il contatore supera la soglia, rifiuti. Redis è veloce e atomico, perfetto per questi contatori.', 'A simple **rate limit**: `INCR` on a key per user and `EXPIRE` of 60 seconds on the first request; if the counter goes over the threshold, you refuse. Redis is fast and atomic, perfect for these counters.'),
+        ], [
+            Q('rr1', L('Che cosa succede a un messaggio Pub/Sub se nessuno ascolta?', 'What happens to a Pub/Sub message if nobody listens?'), [L('Va perso', 'It is lost'), L('Resta in coda', 'It stays queued'), L('Torna al mittente', 'It goes back to the sender'), L('Finisce in uno stream', 'It goes into a stream')], 0, L('Pub/Sub non conserva.', 'Pub/Sub does not store.')),
+            Q('rr2', L('Quale comando aggiunge a uno stream?', 'Which command adds to a stream?'), ['XADD', 'PUBLISH', 'LPUSH', 'SET'], 0, L('`*` genera l’ID.', '`*` generates the ID.')),
+            Q('rr3', L('Come fai una finestra di 60 secondi per un contatore?', 'How do you make a 60-second window for a counter?'), ['EXPIRE chiave 60', 'TTL chiave 60', 'WAIT 60', 'SLEEP 60'], 0, L('Con `INCR` prima.', 'With `INCR` first.')),
+        ], task('redis', L('Incrementa `richieste:ip1` con `INCR` e falla scadere dopo `60` secondi con `EXPIRE`.', 'Increment `richieste:ip1` with `INCR` and make it expire after `60` seconds with `EXPIRE`.'), '', [re('INCR\s+richieste:ip1', L('Incrementi il contatore', 'You increment the counter')), re('EXPIRE\s+richieste:ip1\s+60', L('Imposti la scadenza', 'You set the expiry'))], '', "INCR richieste:ip1\nEXPIRE richieste:ip1 60"), [
+            dMatch(pMatch(), [['PUBLISH', L('Invia a un canale', 'Sends to a channel')], ['SUBSCRIBE', L('Ascolta un canale', 'Listens to a channel')], ['XADD', L('Aggiunge a uno stream', 'Adds to a stream')], ['INCR', L('Contatore atomico', 'Atomic counter')], ['EXPIRE', L('Scadenza', 'Expiry')]], L('Redis in tempo reale.', 'Redis in real time.')),
+            dFlash(pFlash(), [[L('Gli stream conservano i messaggi', 'Streams keep messages'), true], [L('Pub/Sub ricorda i messaggi persi', 'Pub/Sub remembers missed messages'), false], [L('INCR è atomico', 'INCR is atomic'), true], [L('EXPIRE cancella subito la chiave', 'EXPIRE deletes the key at once'), false]], L('Messaggi e contatori.', 'Messages and counters.')),
+        ]),
     ],
 ];

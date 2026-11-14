@@ -86,5 +86,24 @@ test("un utente può iscriversi alla newsletter", async ({ page }) => {
             dOrder(pSort(), [L('Scrivi un test che fallisce (rosso)', 'Write a failing test (red)'), L('Scrivi il codice minimo per farlo passare (verde)', 'Write minimal code to pass it (green)'), L('Migliora il codice tenendo i test verdi (refactor)', 'Improve the code keeping tests green (refactor)')], L('Il ciclo del TDD.', 'The TDD cycle.')),
             dMatch(pMatch(), [['Playwright', L('Browser automatizzato', 'Automated browser')], ['TDD', L('Prima il test', 'Test first')], ['CI', L('Test automatici a ogni push', 'Automatic tests on every push')], ['GitHub Actions', L('Servizio di CI', 'CI service')], ['getByRole', L('Trova un elemento come un utente', 'Finds an element like a user')]], L('Qualità automatica.', 'Automated quality.')),
         ]),
+        lesson('quality', L('Copertura, casi limite e test fragili', 'Coverage, edge cases and flaky tests'), [
+            P('La **copertura** (coverage) dice quali righe sono state eseguite dai test, non se sono state **verificate**: l’80% di copertura con controlli deboli vale poco. Meglio cercare i **casi limite**: lista vuota, zero, numeri negativi, testo con accenti, date a fine mese.', '**Coverage** tells which lines the tests ran, not whether they were **checked**: 80% coverage with weak assertions is worth little. Better to look for **edge cases**: empty list, zero, negative numbers, accented text, month-end dates.'),
+            C('test.each([
+  [[], 0],
+  [[5], 5],
+  [[2, -3], -1],
+  [[0.1, 0.2], 0.3],
+])("somma(%j) = %d", (lista, atteso) => {
+  expect(somma(lista)).toBeCloseTo(atteso);
+});', 'js'),
+            P('Un test **fragile** (flaky) a volte passa e a volte no: dipende dall’ora, dalla rete, da un ordine casuale o da un `sleep`. Si cura fissando l’orologio, simulando la rete e rendendo i test **indipendenti** tra loro.', 'A **flaky** test sometimes passes and sometimes fails: it depends on the time, the network, a random order or a `sleep`. It is cured by fixing the clock, faking the network and making tests **independent** of each other.'),
+        ], [
+            Q('qa1', L('Che cosa misura la copertura?', 'What does coverage measure?'), [L('Le righe eseguite dai test', 'The lines run by the tests'), L('I bug trovati', 'Bugs found'), L('La velocità', 'Speed'), L('La qualità dei controlli', 'The quality of assertions')], 0, L('Eseguito non vuol dire verificato.', 'Run does not mean checked.')),
+            Q('qa2', L('Quale è un caso limite?', 'Which one is an edge case?'), [L('Una lista vuota', 'An empty list'), L('Una lista di tre numeri normali', 'A list of three normal numbers'), L('Il nome del file', 'The file name'), L('Il colore del report', 'The report colour')], 0, L('I bug si nascondono ai bordi.', 'Bugs hide at the edges.')),
+            Q('qa3', L('Come si cura un test fragile legato all’ora?', 'How do you cure a flaky test tied to the time?'), [L('Fissando l’orologio nel test', 'By fixing the clock in the test'), L('Rilanciandolo finché passa', 'Rerunning it until it passes'), L('Aggiungendo uno sleep', 'Adding a sleep'), L('Cancellandolo', 'Deleting it')], 0, L('Il test deve essere ripetibile.', 'The test must be repeatable.')),
+        ], task('js', L('Scrivi un `test.each` con almeno i casi `[[], 0]` e `[[5], 5]` che verifica `somma(lista)` con `toBe(atteso)`.', 'Write a `test.each` with at least the cases `[[], 0]` and `[[5], 5]` checking `somma(lista)` with `toBe(atteso)`.'), '', [re('test\.each\(\s*\[', L('Usi test.each', 'You use test.each')), re('\[\s*\[\s*\]\s*,\s*0\s*\]', L('C’è la lista vuota', 'The empty list is there')), re('expect\(\s*somma\(\s*lista\s*\)\s*\)\.toBe\(\s*atteso\s*\)', L('Verifichi il risultato', 'You check the result'))], '', "test.each([\n  [[], 0],\n  [[5], 5],\n])(\"somma\", (lista, atteso) => {\n  expect(somma(lista)).toBe(atteso);\n});"), [
+            dMatch(pMatch(), [[L('Copertura', 'Coverage'), L('Righe eseguite', 'Lines run')], [L('Caso limite', 'Edge case'), L('Lista vuota, zero', 'Empty list, zero')], [L('Test fragile', 'Flaky test'), L('Passa a caso', 'Passes at random')], ['test.each', L('Molti casi in un test', 'Many cases in one test')]], L('Test di qualità.', 'Quality tests.')),
+            dFlash(pFlash(), [[L('100% di copertura non garantisce zero bug', '100% coverage does not guarantee zero bugs'), true], [L('Un sleep rende un test più stabile', 'A sleep makes a test more stable'), false], [L('I test dovrebbero essere indipendenti tra loro', 'Tests should be independent of each other'), true], [L('Un test fragile si sistema rilanciandolo', 'A flaky test is fixed by rerunning it'), false]], L('Fiducia nei test.', 'Trust in tests.')),
+        ]),
     ],
 ];

@@ -99,5 +99,29 @@ for (const auto& [nome, qta] : magazzino) { /* … */ }  // structured bindings'
             dMatch(pMatch(), [['unique_ptr', L('Un solo proprietario', 'A single owner')], ['shared_ptr', L('Proprietà condivisa', 'Shared ownership')], ['auto', L('Tipo dedotto', 'Inferred type')], ['std::optional', L('Valore che può mancare', 'Value that may be missing')], [L('Lambda', 'Lambda'), L('Funzione anonima', 'Anonymous function')]], L('Il C++ moderno.', 'Modern C++.')),
             dBug(pBug(), ['void crea() {', '    Giocatore* g = new Giocatore("Bo");', '    g->salta();', '}'], 1, '    auto g = std::make_unique<Giocatore>("Bo");', L('Senza delete la memoria si perde: usa uno smart pointer.', 'Without delete memory leaks: use a smart pointer.')),
         ]),
+        lesson('algorithms', L('Algoritmi, lambda e templates', 'Algorithms, lambdas and templates'), [
+            P('L’intestazione `<algorithm>` offre funzioni pronte su qualunque contenitore: `std::sort`, `std::find`, `std::count_if`, `std::transform`. Si combinano con le **lambda**, funzioni scritte al volo: `[](int x) { return x > 0; }`.', 'The `<algorithm>` header offers ready-made functions on any container: `std::sort`, `std::find`, `std::count_if`, `std::transform`. They combine with **lambdas**, functions written on the spot: `[](int x) { return x > 0; }`.'),
+            C('#include <algorithm>
+#include <vector>
+
+std::vector<int> voti{7, 4, 9, 6};
+std::sort(voti.begin(), voti.end());
+auto sufficienti = std::count_if(voti.begin(), voti.end(),
+                                 [](int v) { return v >= 6; });
+
+template <typename T>
+T massimo(T a, T b) { return a > b ? a : b; }
+
+int m = massimo(3, 8);          // T = int
+double d = massimo(2.5, 1.0);   // T = double', 'cpp'),
+            P('Un **template** scrive una funzione o una classe una volta sola per più tipi: il compilatore genera la versione giusta per `int`, `double` o `std::string`. Così funziona tutta la libreria standard.', 'A **template** writes a function or a class once for many types: the compiler generates the right version for `int`, `double` or `std::string`. That is how the whole standard library works.'),
+        ], [
+            Q('ag1', L('Che cosa fa `std::count_if`?', 'What does `std::count_if` do?'), [L('Conta gli elementi che rispettano una condizione', 'Counts elements meeting a condition'), L('Ordina il vettore', 'Sorts the vector'), L('Cancella elementi', 'Deletes elements'), L('Conta i byte', 'Counts bytes')], 0, L('La condizione è spesso una lambda.', 'The condition is often a lambda.')),
+            Q('ag2', L('Che cos’è una lambda?', 'What is a lambda?'), [L('Una funzione scritta al volo', 'A function written on the spot'), L('Un tipo di vettore', 'A vector type'), L('Una macro', 'A macro'), L('Un puntatore nullo', 'A null pointer')], 0, L('`[](int x) { … }`.', '`[](int x) { … }`.')),
+            Q('ag3', L('A che cosa servono i template?', 'What are templates for?'), [L('Scrivere codice valido per più tipi', 'Writing code valid for many types'), L('Formattare il testo', 'Formatting text'), L('Gestire i file', 'Handling files'), L('Velocizzare la compilazione', 'Speeding up compilation')], 0, L('Il compilatore genera le versioni.', 'The compiler generates the versions.')),
+        ], task('cpp', L('Ordina il vettore `v` con `std::sort(v.begin(), v.end());`.', 'Sort the vector `v` with `std::sort(v.begin(), v.end());`.'), '', [re('std::sort\(\s*v\.begin\(\)\s*,\s*v\.end\(\)\s*\)\s*;', L('Ordini il vettore', 'You sort the vector'))], '', 'std::sort(v.begin(), v.end());'), [
+            dMatch(pMatch(), [['std::sort', L('Ordina', 'Sorts')], ['std::find', L('Cerca un valore', 'Finds a value')], ['std::count_if', L('Conta con condizione', 'Counts with a condition')], ['[](int x){}', L('Lambda', 'Lambda')], ['template', L('Codice per più tipi', 'Code for many types')]], L('Gli attrezzi della STL.', 'STL tools.')),
+            dFlash(pFlash(), [[L('Gli algoritmi STL lavorano con begin e end', 'STL algorithms work with begin and end'), true], [L('Un template funziona solo con int', 'A template only works with int'), false], [L('Una lambda può essere passata a count_if', 'A lambda can be passed to count_if'), true], [L('std::sort esiste solo per gli array C', 'std::sort only exists for C arrays'), false]], L('Algoritmi generici.', 'Generic algorithms.')),
+        ]),
     ],
 ];

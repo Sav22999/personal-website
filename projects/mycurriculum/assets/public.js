@@ -4,8 +4,8 @@
  * The data is the public copy embedded by lib/public-page.php: the same things the PDF shows, nothing more.
  */
 
-import {t, getLang, LANG_NAMES, flagSrc} from './i18n.js';
-import {buildModel, renderCV, esc} from './cv.js';
+import {t, getLang, flagSrc} from './i18n.js';
+import {buildModel, renderCV, esc, langLabel, fixContactSeparators} from './cv.js';
 import {downloadPdf, pdfFileName} from './pdf.js';
 
 const root = document.getElementById('pub');
@@ -18,7 +18,9 @@ const SVG = (p) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${p}
 const CHEV = '<path d="m6 9 6 6 6-6"/>';
 const DL = '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>';
 const CHECK = '<path d="m5 12 5 5 9-10"/>';
-const flag = (l) => `<img class="flag" src="${flagSrc(l)}" alt="" width="20" height="15">`;
+const GLOBE = '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>';
+// a language added by the owner has no flag: a globe instead
+const flag = (l) => (flagSrc(l) ? `<img class="flag" src="${flagSrc(l)}" alt="" width="20" height="15">` : `<span class="flag flag-globe">${SVG(GLOBE)}</span>`);
 
 function brand() {
     return `<a class="brand" href="./"><img src="icons/favicon.svg" alt=""><span><b>My</b>Curriculum</span></a>`;
@@ -40,11 +42,11 @@ function draw() {
     root.innerHTML = `
         <header class="pub-bar">${brand()}<span class="spacer"></span>
             ${langs.length > 1 ? `<div class="lang-menu">
-                <button class="lang-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(LANG_NAMES[lang])}">
-                    ${flag(lang)}<span class="lang-name">${esc(LANG_NAMES[lang])}</span>${SVG(CHEV).replace('class="ico"', 'class="ico chev"')}
+                <button class="lang-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(langLabel(cv, lang))}">
+                    ${flag(lang)}<span class="lang-name">${esc(langLabel(cv, lang))}</span>${SVG(CHEV).replace('class="ico"', 'class="ico chev"')}
                 </button>
                 <ul class="lang-list" role="listbox" tabindex="-1" hidden>
-                    ${langs.map((l) => `<li role="option" data-lang="${l}" aria-selected="${l === lang}" lang="${l}">${flag(l)}<span>${esc(LANG_NAMES[l])}</span>${SVG(CHECK).replace('class="ico"', 'class="ico tick"')}</li>`).join('')}
+                    ${langs.map((l) => `<li role="option" data-lang="${l}" aria-selected="${l === lang}" lang="${l}">${flag(l)}<span>${esc(langLabel(cv, l))}</span>${SVG(CHECK).replace('class="ico"', 'class="ico tick"')}</li>`).join('')}
                 </ul></div>` : ''}
             ${cv.settings.allowPdf ? `<button class="btn btn-primary pdf-btn" type="button">${SVG(DL)}<span class="hide-sm">${esc(t('pdf'))}</span></button>` : ''}
         </header>
@@ -53,6 +55,8 @@ function draw() {
             ${renderCV(m, 'web')}
         </main>${foot()}`;
     document.title = (m.name || 'CV') + ' — CV';
+    fixContactSeparators(root);
+    document.fonts?.ready.then(() => fixContactSeparators(root));
     root.querySelector('.pdf-btn')?.addEventListener('click', async (e) => {
         const b = e.currentTarget;
         b.disabled = true;
@@ -121,3 +125,10 @@ function setupMenu() {
     });
     for (const li of items) li.addEventListener('click', () => choose(li.dataset.lang));
 }
+
+// the contacts wrap differently at another width: put the separators right again
+let resizeTimer = 0;
+addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => fixContactSeparators(root), 120);
+});

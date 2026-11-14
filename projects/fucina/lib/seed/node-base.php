@@ -97,5 +97,24 @@ app.use((err, req, res, next) => {
             dBug(pBug(), ['app.use((err, req, res, next) => {', '  res.status(500).json({ errore: err.stack });', '});'], 1, '  res.status(500).json({ errore: "Errore interno" });', L('Lo stack trace non va mostrato all’utente.', 'The stack trace must not be shown to the user.')),
             dFlash(pFlash(), [[L('I segreti vanno nelle variabili d’ambiente', 'Secrets belong in environment variables'), true], [L('process.env restituisce numeri', 'process.env returns numbers'), false], [L('Un errore non gestito può far cadere il processo', 'An unhandled error can crash the process'), true], [L('Conviene mostrare lo stack trace agli utenti', 'Showing stack traces to users is wise'), false]], L('Robusto e riservato.', 'Robust and discreet.')),
         ]),
+        lesson('database', L('Database, validazione e test', 'Databases, validation and tests'), [
+            P('Un’API vera salva i dati in un database. Con un client come `pg` (PostgreSQL) usa sempre le **query parametrizzate** (`$1`, `$2`): i dati dell’utente non diventano mai codice SQL. Prima di salvare, **valida** l’input e rispondi `400` se manca qualcosa.', 'A real API saves data in a database. With a client such as `pg` (PostgreSQL) always use **parameterised queries** (`$1`, `$2`): user data never becomes SQL code. Before saving, **validate** the input and answer `400` if something is missing.'),
+            C('app.post("/api/note", async (req, res) => {
+  const { testo } = req.body;
+  if (!testo || testo.length > 500) {
+    return res.status(400).json({ errore: "Testo mancante o troppo lungo" });
+  }
+  const r = await pool.query("INSERT INTO note (testo) VALUES ($1) RETURNING id", [testo]);
+  res.status(201).json({ id: r.rows[0].id });
+});', 'js'),
+            P('Node ha un test runner incluso: `node --test`. Con `node:test` e `node:assert` provi le funzioni; con librerie come `supertest` chiami le rotte senza avviare il server sul serio.', 'Node has a built-in test runner: `node --test`. With `node:test` and `node:assert` you test functions; with libraries like `supertest` you call routes without really starting the server.'),
+        ], [
+            Q('db1', L('Perché le query parametrizzate?', 'Why parameterised queries?'), [L('Evitano la SQL injection', 'They prevent SQL injection'), L('Sono più corte', 'They are shorter'), L('Servono solo per MySQL', 'They are only for MySQL'), L('Disattivano gli indici', 'They disable indexes')], 0, L('I dati restano dati.', 'Data stays data.')),
+            Q('db2', L('Che codice rispondi a un input non valido?', 'Which code do you answer to invalid input?'), ['400', '200', '500', '301'], 0, L('Errore del client.', 'Client error.')),
+            Q('db3', L('Come avvii i test integrati di Node?', 'How do you run Node’s built-in tests?'), ['node --test', 'npm build', 'node --inspect', 'npx serve'], 0, L('Con `node:test` e `node:assert`.', 'With `node:test` and `node:assert`.')),
+        ], task('js', L('Esegui `pool.query` con la query `SELECT * FROM utenti WHERE id = $1` e il parametro `[id]`.', 'Run `pool.query` with the query `SELECT * FROM utenti WHERE id = $1` and the parameter `[id]`.'), '', [re('pool\.query\(\s*["\'`]SELECT \* FROM utenti WHERE id = \$1["\'`]\s*,\s*\[\s*id\s*\]\s*\)', L('La query è parametrizzata', 'The query is parameterised'))], '', 'const r = await pool.query("SELECT * FROM utenti WHERE id = $1", [id]);'), [
+            dBug(pBug(), ['app.get("/api/utenti/:id", async (req, res) => {', '  const sql = "SELECT * FROM utenti WHERE id = " + req.params.id;', '  const r = await pool.query(sql);', '  res.json(r.rows[0]);', '});'], 1, '  const r = await pool.query("SELECT * FROM utenti WHERE id = $1", [req.params.id]);', L('Concatenare l’input apre alla SQL injection.', 'Concatenating input opens SQL injection.')),
+            dFlash(pFlash(), [[L('201 significa risorsa creata', '201 means resource created'), true], [L('Si può fidarsi di req.body senza controlli', 'req.body can be trusted without checks'), false], [L('Node ha un test runner incluso', 'Node has a built-in test runner'), true], [L('I parametri $1 vanno concatenati a mano', '$1 parameters must be concatenated by hand'), false]], L('API sicure e provate.', 'Safe, tested APIs.')),
+        ]),
     ],
 ];

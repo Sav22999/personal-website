@@ -64,5 +64,25 @@ print(r.choices[0].message.content)', 'python'),
             dMatch(pMatch(), [['Qwen', L('Molte dimensioni e varianti', 'Many sizes and variants')], ['DeepSeek', L('Grandi modelli MoE e ragionamento', 'Large MoE models and reasoning')], [L('Entrambi', 'Both'), L('Pesi aperti', 'Open weights')], [L('Dati riservati', 'Confidential data'), L('Meglio in locale', 'Better local')]], L('Due laboratori a confronto.', 'Two labs compared.')),
             dFlash(pFlash(), [[L('Qwen e DeepSeek offrono API compatibili con OpenAI', 'Qwen and DeepSeek offer OpenAI-compatible APIs'), true], [L('Nessuno dei due pubblica i pesi', 'Neither publishes weights'), false], [L('Per dati riservati conviene l’uso in locale', 'Local use suits confidential data'), true], [L('Le loro risposte non vanno mai verificate', 'Their answers never need checking'), false]], L('Scelte informate.', 'Informed choices.')),
         ]),
+        lesson('coding', L('Qwen per il codice e gli strumenti', 'Qwen for code and tools'), [
+            P('La famiglia Qwen comprende modelli specializzati nel **codice** (Qwen Coder), che completano funzioni, spiegano errori e scrivono test in molti linguaggi. Esistono in taglie diverse: le piccole si eseguono in locale accanto all’editor.', 'The Qwen family includes models specialised in **code** (Qwen Coder), which complete functions, explain errors and write tests in many languages. They come in several sizes: the small ones run locally next to the editor.'),
+            P('I modelli Qwen supportano il **tool calling**: ricevono la descrizione di funzioni (nome, parametri in JSON Schema) e rispondono chiedendo di chiamarne una con certi argomenti. Il tuo programma esegue la funzione e rimanda il risultato.', 'Qwen models support **tool calling**: they receive function descriptions (name, parameters in JSON Schema) and answer by asking to call one with certain arguments. Your program runs the function and sends back the result.'),
+            C('{
+  "name": "meteo",
+  "description": "Previsioni per una città",
+  "parameters": {
+    "type": "object",
+    "properties": { "citta": { "type": "string" } },
+    "required": ["citta"]
+  }
+}', 'json'),
+        ], [
+            Q('qc1', L('A che cosa servono i modelli Qwen Coder?', 'What are Qwen Coder models for?'), [L('Scrivere e spiegare codice', 'Writing and explaining code'), L('Generare musica', 'Generating music'), L('Tradurre solo il cinese', 'Translating Chinese only'), L('Montare video', 'Editing video')], 0, L('Completano, spiegano, testano.', 'They complete, explain, test.')),
+            Q('qc2', L('Nel tool calling, chi esegue la funzione?', 'In tool calling, who runs the function?'), [L('Il tuo programma', 'Your program'), L('Il modello', 'The model'), L('Il server di Qwen, sempre', 'Qwen’s server, always'), L('Nessuno', 'Nobody')], 0, L('Il modello chiede soltanto.', 'The model only asks.')),
+            Q('qc3', L('Come si descrivono i parametri di uno strumento?', 'How are a tool’s parameters described?'), [L('Con JSON Schema', 'With JSON Schema'), L('Con un’immagine', 'With an image'), L('In un file Excel', 'In an Excel file'), L('Non si descrivono', 'They are not described')], 0, L('Tipo, proprietà, obbligatori.', 'Type, properties, required.')),
+        ], task('json', L('Scrivi la descrizione JSON di uno strumento con `"name": "somma"` e il parametro obbligatorio `"a"` di tipo `number`.', 'Write the JSON description of a tool with `"name": "somma"` and the required parameter `"a"` of type `number`.'), '', [re('"name"\s*:\s*"somma"', L('Il nome è giusto', 'The name is right')), re('"a"\s*:\s*\{\s*"type"\s*:\s*"number"\s*\}', L('Il parametro è un numero', 'The parameter is a number')), re('"required"\s*:\s*\[\s*"a"\s*\]', L('Il parametro è obbligatorio', 'The parameter is required'))], '', "{\n  \"name\": \"somma\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": { \"a\": { \"type\": \"number\" } },\n    \"required\": [\"a\"]\n  }\n}"), [
+            dOrder(pSort(), [L('Descrivi gli strumenti', 'Describe the tools'), L('Il modello chiede una chiamata', 'The model requests a call'), L('Il programma esegue la funzione', 'The program runs the function'), L('Il risultato torna al modello', 'The result goes back to the model'), L('Il modello risponde', 'The model answers')], L('Il giro del tool calling.', 'The tool-calling loop.')),
+            dFlash(pFlash(), [[L('Qwen Coder è pensato per il codice', 'Qwen Coder is designed for code'), true], [L('Il modello esegue da solo le funzioni', 'The model runs functions by itself'), false], [L('I parametri si descrivono in JSON Schema', 'Parameters are described in JSON Schema'), true], [L('Esiste una sola taglia di Qwen', 'There is only one Qwen size'), false]], L('Codice e strumenti.', 'Code and tools.')),
+        ]),
     ],
 ];

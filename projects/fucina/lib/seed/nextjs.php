@@ -91,5 +91,28 @@ export async function GET(req: Request) {
             dMatch(pMatch(), [['route.ts', L('Endpoint API', 'API endpoint')], ['next build', L('Versione ottimizzata', 'Optimised build')], ['next start', L('Avvia in produzione', 'Starts in production')], ['.env.local', L('Segreti locali', 'Local secrets')], ['NEXT_PUBLIC_', L('Visibile nel browser', 'Visible in the browser')]], L('Dal codice alla produzione.', 'From code to production.')),
             dBug(pBug(), ['# .env.local', 'NEXT_PUBLIC_STRIPE_SECRET=sk_live_…', 'NEXT_PUBLIC_SITO=https://esempio.it'], 1, 'STRIPE_SECRET=sk_live_…', L('Un segreto con NEXT_PUBLIC_ finisce nel browser.', 'A secret with NEXT_PUBLIC_ ends up in the browser.')),
         ]),
+        lesson('actions-seo', L('Server Actions, metadati e SEO', 'Server Actions, metadata and SEO'), [
+            P('Una **Server Action** è una funzione asincrona con `"use server"` che gira sul server: la passi a un `<form action={...}>` e riceve i dati in un `FormData`, senza scrivere un’API a parte. Dopo il salvataggio, `revalidatePath()` aggiorna le pagine in cache.', 'A **Server Action** is an async function with `"use server"` that runs on the server: you pass it to a `<form action={...}>` and it receives the data as `FormData`, with no separate API to write. After saving, `revalidatePath()` refreshes cached pages.'),
+            C('// app/commenti/page.tsx
+async function aggiungi(dati: FormData) {
+  "use server";
+  await db.commento.create({ data: { testo: String(dati.get("testo")) } });
+  revalidatePath("/commenti");
+}
+
+export const metadata = { title: "Commenti", description: "Dite la vostra" };
+
+export default function Pagina() {
+  return <form action={aggiungi}><input name="testo" /><button>Invia</button></form>;
+}', 'tsx'),
+            P('L’oggetto **`metadata`** (o la funzione `generateMetadata` per le pagine dinamiche) genera `<title>`, descrizione e immagini di anteprima. Le pagine rese sul server sono già leggibili dai motori di ricerca.', 'The **`metadata`** object (or the `generateMetadata` function for dynamic pages) generates `<title>`, description and preview images. Pages rendered on the server are already readable by search engines.'),
+        ], [
+            Q('as1', L('Dove gira una Server Action?', 'Where does a Server Action run?'), [L('Sul server', 'On the server'), L('Nel browser', 'In the browser'), L('In un service worker', 'In a service worker'), L('Nel CDN soltanto', 'Only in the CDN')], 0, L('Lo dice `"use server"`.', '`"use server"` says so.')),
+            Q('as2', L('A che cosa serve `revalidatePath`?', 'What is `revalidatePath` for?'), [L('Aggiornare la cache di una pagina', 'Refreshing a page’s cache'), L('Validare il form', 'Validating the form'), L('Cambiare rotta', 'Changing route'), L('Cancellare i cookie', 'Deleting cookies')], 0, L('Così si vede il nuovo commento.', 'So the new comment shows.')),
+            Q('as3', L('Come imposti il titolo di una pagina?', 'How do you set a page’s title?'), [L('Esportando `metadata`', 'By exporting `metadata`'), L('Con `document.title` nel server', 'With `document.title` on the server'), L('In `next.config.js`', 'In `next.config.js`'), L('Non si può', 'You cannot')], 0, L('O `generateMetadata` per le pagine dinamiche.', 'Or `generateMetadata` for dynamic pages.')),
+        ], task('ts', L('Esporta `metadata` con `title: "Chi siamo"`.', 'Export `metadata` with `title: "Chi siamo"`.'), '', [re('export\s+const\s+metadata\s*=\s*\{[^}]*title\s*:\s*["\']Chi siamo["\']', L('I metadati sono esportati', 'The metadata is exported'))], '', 'export const metadata = { title: "Chi siamo" };'), [
+            dMatch(pMatch(), [['"use server"', L('Funzione sul server', 'Function on the server')], ['FormData', L('I dati del form', 'The form data')], ['revalidatePath', L('Aggiorna la cache', 'Refreshes the cache')], ['metadata', L('Titolo e descrizione', 'Title and description')], ['generateMetadata', L('Metadati dinamici', 'Dynamic metadata')]], L('Azioni e SEO.', 'Actions and SEO.')),
+            dFlash(pFlash(), [[L('Una Server Action può ricevere un form', 'A Server Action can receive a form'), true], [L('Le Server Action girano nel browser', 'Server Actions run in the browser'), false], [L('Le pagine rese sul server aiutano la SEO', 'Server-rendered pages help SEO'), true], [L('metadata va scritto in index.html', 'metadata goes in index.html'), false]], L('Next.js sul server.', 'Next.js on the server.')),
+        ]),
     ],
 ];

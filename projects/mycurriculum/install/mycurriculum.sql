@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS `mc_cvs` (
     `profile` TEXT NOT NULL,
     `content` MEDIUMTEXT NOT NULL,
     `views` INT UNSIGNED NOT NULL DEFAULT 0,
+    `rev` INT UNSIGNED NOT NULL DEFAULT 0,
     `created_at` DATETIME NOT NULL,
     `updated_at` DATETIME NOT NULL,
     CONSTRAINT `fk_mc_cv_user` FOREIGN KEY (`user_id`) REFERENCES `mc_users` (`id`) ON DELETE CASCADE
@@ -71,4 +72,4 @@ CREATE TABLE IF NOT EXISTS `mc_photos` (
     CONSTRAINT `fk_mc_photo_user` FOREIGN KEY (`user_id`) REFERENCES `mc_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `mc_meta` (k, v) VALUES ('schema_version', '1') ON DUPLICATE KEY UPDATE v = VALUES(v);
+INSERT INTO `mc_meta` (k, v) VALUES ('schema_version', '2') ON DUPLICATE KEY UPDATE v = VALUES(v);

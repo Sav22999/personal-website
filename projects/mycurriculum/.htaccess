@@ -14,15 +14,16 @@ DirectoryIndex index.php
 </FilesMatch>
 
 # PHP libraries, installer data and tools are not reachable from the browser
-RedirectMatch 404 ^/projects/mycurriculum/(lib|install|tools)(/|$)
+RedirectMatch 404 ^/projects/mycurriculum/(lib|install|tools|android)(/|$)
 
 <IfModule mod_headers.c>
   Header set X-Content-Type-Options "nosniff"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set X-Frame-Options "SAMEORIGIN"
-  <Files "sw.js">
+  # ES modules import each other without a version: the browser asks every time whether they changed (ETag, cheap)
+  <FilesMatch "\.(js|mjs|css)$">
     Header set Cache-Control "no-cache"
-  </Files>
+  </FilesMatch>
 </IfModule>
 
 # Force HTTPS (the session cookie is marked Secure)

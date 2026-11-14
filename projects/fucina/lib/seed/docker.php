@@ -91,5 +91,26 @@ docker compose down       # ferma e rimuove (i volumi restano)', 'bash'),
             dMatch(pMatch(), [['services', L('Elenco dei servizi', 'List of services')], ['build: .', L('Costruisce dal Dockerfile', 'Builds from the Dockerfile')], ['image', L('Usa un’immagine pronta', 'Uses a ready image')], ['depends_on', L('Ordine di avvio', 'Start order')], ['volumes', L('Dati persistenti', 'Persistent data')]], L('Il file di Compose.', 'The Compose file.')),
             dFlash(pFlash(), [[L('Compose avvia più servizi con un comando', 'Compose starts several services with one command'), true], [L('docker compose down cancella sempre i volumi', 'docker compose down always deletes volumes'), false], [L('I servizi si chiamano per nome', 'Services call each other by name'), true], [L('Compose sostituisce sempre Kubernetes', 'Compose always replaces Kubernetes'), false]], L('Più servizi, un comando.', 'Many services, one command.')),
         ]),
+        lesson('production', L('Immagini leggere e sicure', 'Light and secure images'), [
+            P('Un **build multi-stage** usa un’immagine grande per compilare e copia solo il risultato in un’immagine piccola: meno peso, meno software inutile, meno falle. Il file **`.dockerignore`** evita di copiare `node_modules`, `.git` e segreti nel contesto di build.', 'A **multi-stage build** uses a large image to compile and copies only the result into a small image: less weight, less needless software, fewer flaws. The **`.dockerignore`** file avoids copying `node_modules`, `.git` and secrets into the build context.'),
+            C('FROM node:22 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+USER nginx', 'dockerfile'),
+            P('Altre buone regole: fissa la versione dell’immagine base (`node:22`, non `latest`), esegui come utente **non root** con `USER`, non scrivere segreti nel Dockerfile, e aggiungi un `HEALTHCHECK` per sapere se il servizio risponde.', 'Other good rules: pin the base image version (`node:22`, not `latest`), run as a **non-root** user with `USER`, never write secrets in the Dockerfile, and add a `HEALTHCHECK` to know whether the service answers.'),
+        ], [
+            Q('pd1', L('Perché un build multi-stage?', 'Why a multi-stage build?'), [L('L’immagine finale contiene solo il necessario', 'The final image holds only what is needed'), L('Compila più lentamente', 'It compiles more slowly'), L('Serve per Windows', 'It is for Windows'), L('Evita il Dockerfile', 'It avoids the Dockerfile')], 0, L('Più piccola e più sicura.', 'Smaller and safer.')),
+            Q('pd2', L('A che cosa serve `.dockerignore`?', 'What is `.dockerignore` for?'), [L('Escludere file dal contesto di build', 'Excluding files from the build context'), L('Ignorare gli errori', 'Ignoring errors'), L('Nascondere i container', 'Hiding containers'), L('Fermare Docker', 'Stopping Docker')], 0, L('Come `node_modules` e `.git`.', 'Like `node_modules` and `.git`.')),
+            Q('pd3', L('Perché evitare il tag `latest`?', 'Why avoid the `latest` tag?'), [L('Cambia nel tempo e rende il build imprevedibile', 'It changes over time, making builds unpredictable'), L('È più pesante', 'It is heavier'), L('Non esiste', 'It does not exist'), L('È a pagamento', 'It costs money')], 0, L('Fissa la versione.', 'Pin the version.')),
+        ], task('dockerfile', L('Scrivi la seconda fase: `FROM nginx:alpine` e copia `/app/dist` dalla fase `build` in `/usr/share/nginx/html`.', 'Write the second stage: `FROM nginx:alpine` and copy `/app/dist` from the `build` stage into `/usr/share/nginx/html`.'), '', [re('^FROM\s+nginx:alpine', L('L’immagine finale è leggera', 'The final image is light')), re('^COPY\s+--from=build\s+/app/dist\s+/usr/share/nginx/html', L('Copi il risultato', 'You copy the result'))], '', "FROM nginx:alpine\nCOPY --from=build /app/dist /usr/share/nginx/html"), [
+            dOrder(pSort(), ['FROM node:22 AS build', 'COPY package*.json ./', 'RUN npm ci', 'RUN npm run build', 'FROM nginx:alpine', 'COPY --from=build /app/dist /usr/share/nginx/html'], L('Prima si costruisce, poi si copia il risultato.', 'Build first, then copy the result.')),
+            dFlash(pFlash(), [[L('USER evita di eseguire come root', 'USER avoids running as root'), true], [L('I segreti vanno scritti nel Dockerfile', 'Secrets belong in the Dockerfile'), false], [L('.dockerignore riduce il contesto di build', '.dockerignore shrinks the build context'), true], [L('latest è sempre la versione più sicura', 'latest is always the safest version'), false]], L('Immagini da produzione.', 'Production images.')),
+        ]),
     ],
 ];

@@ -94,5 +94,24 @@ def bfs(grafo, inizio):   # visita in ampiezza: trova i percorsi più brevi
             dMatch(pMatch(), [[L('Ricorsione', 'Recursion'), L('Funzione che chiama sé stessa', 'Function calling itself')], [L('Caso base', 'Base case'), L('Ferma la ricorsione', 'Stops recursion')], [L('Albero', 'Tree'), L('Struttura gerarchica', 'Hierarchical structure')], [L('Grafo', 'Graph'), L('Nodi e archi', 'Nodes and edges')], ['BFS', L('Percorsi più brevi', 'Shortest paths')]], L('Strutture annidate.', 'Nested structures.')),
             dBug(pBug(), ['def conto_alla_rovescia(n):', '    print(n)', '    conto_alla_rovescia(n - 1)'], 2, '    if n > 0: conto_alla_rovescia(n - 1)', L('Senza caso base la ricorsione non finisce.', 'Without a base case recursion never ends.')),
         ]),
+        lesson('dp-greedy', L('Programmazione dinamica e algoritmi greedy', 'Dynamic programming and greedy algorithms'), [
+            P('La **programmazione dinamica** risolve problemi che si ripetono in sottoproblemi uguali: salva i risultati già calcolati (**memoizzazione**) invece di rifarli. Fibonacci ricorsivo ingenuo è esponenziale; con una cache diventa lineare.', '**Dynamic programming** solves problems that repeat into identical subproblems: it saves results already computed (**memoisation**) instead of redoing them. Naive recursive Fibonacci is exponential; with a cache it becomes linear.'),
+            C('const memo = new Map();
+function fib(n) {
+  if (n < 2) return n;
+  if (memo.has(n)) return memo.get(n);
+  const r = fib(n - 1) + fib(n - 2);
+  memo.set(n, r);
+  return r;
+}', 'js'),
+            P('Un algoritmo **greedy** (goloso) sceglie a ogni passo l’opzione migliore **in quel momento**. È semplice e veloce, ma non sempre ottimo: per dare il resto con monete da 1, 3 e 4, il greedy su 6 dà 4+1+1 (tre monete) invece di 3+3 (due).', 'A **greedy** algorithm picks the best option **at that moment** at each step. It is simple and fast, but not always optimal: to give change with coins of 1, 3 and 4, greedy on 6 gives 4+1+1 (three coins) instead of 3+3 (two).'),
+        ], [
+            Q('dp1', L('Che cosa fa la memoizzazione?', 'What does memoisation do?'), [L('Salva i risultati già calcolati', 'Saves results already computed'), L('Ordina i dati', 'Sorts data'), L('Cancella la ricorsione', 'Deletes recursion'), L('Usa meno variabili', 'Uses fewer variables')], 0, L('Niente calcoli ripetuti.', 'No repeated work.')),
+            Q('dp2', L('Fibonacci con memoizzazione diventa…', 'Fibonacci with memoisation becomes…'), ['O(n)', 'O(2ⁿ)', 'O(n²)', 'O(1)'], 0, L('Ogni valore si calcola una volta.', 'Each value is computed once.')),
+            Q('dp3', L('Un algoritmo greedy è sempre ottimo?', 'Is a greedy algorithm always optimal?'), [L('No, dipende dal problema', 'No, it depends on the problem'), L('Sì, sempre', 'Yes, always'), L('Solo con i numeri pari', 'Only with even numbers'), L('Solo se ricorsivo', 'Only if recursive')], 0, L('Vedi l’esempio delle monete.', 'See the coin example.')),
+        ], task('js', L('In `fib`, prima di calcolare, restituisci `memo.get(n)` se `memo.has(n)`.', 'In `fib`, before computing, return `memo.get(n)` if `memo.has(n)`.'), '', [re('if\s*\(\s*memo\.has\(\s*n\s*\)\s*\)\s*\{?\s*return\s+memo\.get\(\s*n\s*\)', L('Usi la cache', 'You use the cache'))], '', 'if (memo.has(n)) return memo.get(n);'), [
+            dOrder(pSort(), ['function fib(n) {', '  if (n < 2) return n;', '  if (memo.has(n)) return memo.get(n);', '  const r = fib(n - 1) + fib(n - 2);', '  memo.set(n, r);', '  return r;', '}'], L('Caso base, cache, calcolo, salvataggio.', 'Base case, cache, compute, save.')),
+            dFlash(pFlash(), [[L('La programmazione dinamica riusa i sottoproblemi', 'Dynamic programming reuses subproblems'), true], [L('Il greedy trova sempre l’ottimo', 'Greedy always finds the optimum'), false], [L('Fibonacci ingenuo è esponenziale', 'Naive Fibonacci is exponential'), true], [L('La memoizzazione rende il codice più lento', 'Memoisation makes code slower'), false]], L('Strategie di soluzione.', 'Solving strategies.')),
+        ]),
     ],
 ];

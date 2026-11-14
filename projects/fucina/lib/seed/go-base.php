@@ -110,5 +110,30 @@ func main() {
             dMatch(pMatch(), [['go f()', L('Avvia una goroutine', 'Starts a goroutine')], ['make(chan T)', L('Crea un canale', 'Creates a channel')], ['ch <- v', L('Invia', 'Sends')], ['<-ch', L('Riceve', 'Receives')], ['WaitGroup', L('Aspetta un gruppo', 'Waits for a group')]], L('Concorrenza in Go.', 'Concurrency in Go.')),
             dFlash(pFlash(), [[L('Si possono avviare migliaia di goroutine', 'You can start thousands of goroutines'), true], [L('Ricevere da un canale non aspetta mai', 'Receiving from a channel never waits'), false], [L('I canali permettono di comunicare tra goroutine', 'Channels let goroutines communicate'), true], [L('Docker è scritto in PHP', 'Docker is written in PHP'), false]], L('Parallelo, ma ordinato.', 'Concurrent, but orderly.')),
         ]),
+        lesson('http', L('Un server HTTP e i test', 'An HTTP server and tests'), [
+            P('La libreria standard di Go basta per un server web: `net/http` gestisce le rotte, `encoding/json` converte le struct in JSON. I **tag** delle struct (`json:"nome"`) decidono i nomi dei campi.', 'Go’s standard library is enough for a web server: `net/http` handles routes, `encoding/json` turns structs into JSON. Struct **tags** (`json:"name"`) decide the field names.'),
+            C('type Corso struct {
+    ID    int    `json:"id"`
+    Titolo string `json:"titolo"`
+}
+
+func corsi(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode([]Corso{{1, "Go base"}})
+}
+
+func main() {
+    http.HandleFunc("GET /api/corsi", corsi)
+    log.Fatal(http.ListenAndServe(":8080", nil))
+}', 'go'),
+            P('I test stanno in file che finiscono con `_test.go`, in funzioni `TestXxx(t *testing.T)`, e si lanciano con `go test ./...`. In Go si usano spesso i **test a tabella**: una lista di casi con input e risultato atteso.', 'Tests live in files ending in `_test.go`, in `TestXxx(t *testing.T)` functions, and run with `go test ./...`. Go often uses **table tests**: a list of cases with input and expected result.'),
+        ], [
+            Q('gh1', L('Quale pacchetto avvia un server web?', 'Which package starts a web server?'), ['net/http', 'fmt', 'os', 'strings'], 0, L('Con `ListenAndServe`.', 'With `ListenAndServe`.')),
+            Q('gh2', L('A che cosa serve `json:"titolo"`?', 'What is `json:"titolo"` for?'), [L('Dà il nome al campo nel JSON', 'Names the field in the JSON'), L('Commenta il campo', 'Comments the field'), L('Rende il campo privato', 'Makes the field private'), L('Lo cifra', 'Encrypts it')], 0, L('È un tag della struct.', 'It is a struct tag.')),
+            Q('gh3', L('Come lanci tutti i test?', 'How do you run all tests?'), ['go test ./...', 'go run test', 'go build -t', 'go vet'], 0, L('I file finiscono in `_test.go`.', 'Files end in `_test.go`.')),
+        ], task('go', L('Scrivi `func TestSomma(t *testing.T)` che chiama `t.Errorf("errore")` se `Somma(2, 3) != 5`.', 'Write `func TestSomma(t *testing.T)` calling `t.Errorf("errore")` if `Somma(2, 3) != 5`.'), '', [re('func\s+TestSomma\(\s*t\s+\*testing\.T\s*\)', L('La funzione di test esiste', 'The test function exists')), re('if\s+Somma\(\s*2\s*,\s*3\s*\)\s*!=\s*5\s*\{\s*t\.Errorf\(', L('Controlli il risultato', 'You check the result'))], '', "func TestSomma(t *testing.T) {\n    if Somma(2, 3) != 5 {\n        t.Errorf(\"errore\")\n    }\n}"), [
+            dMatch(pMatch(), [['net/http', L('Server web', 'Web server')], ['encoding/json', L('Conversione JSON', 'JSON conversion')], ['_test.go', L('File di test', 'Test file')], ['t.Errorf', L('Segnala un errore', 'Reports a failure')], ['go test ./...', L('Lancia i test', 'Runs the tests')]], L('Web e test in Go.', 'Web and tests in Go.')),
+            dFlash(pFlash(), [[L('La libreria standard basta per un server', 'The standard library is enough for a server'), true], [L('I test di Go stanno in file .spec.go', 'Go tests live in .spec.go files'), false], [L('I test a tabella elencano più casi', 'Table tests list several cases'), true], [L('I tag json sono commenti ignorati', 'json tags are ignored comments'), false]], L('Go pratico.', 'Practical Go.')),
+        ]),
     ],
 ];

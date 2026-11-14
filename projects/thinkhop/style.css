@@ -44,7 +44,7 @@
     --text: #1B1640;
     --muted: #625C7E;
     --line: #1B1640;
-    --wrong: #D92D3A;
+    --wrong: #C41E2D;
     --wrong-bg: #FFE1E3;
     --ok: #0F7A4F;
     --ok-bg: #CFF7E3;
@@ -498,7 +498,6 @@ svg.i {
     gap: 5px;
     font-size: 12px;
     color: var(--muted);
-    opacity: .8;
 }
 
 .credit-ai svg {
@@ -1187,7 +1186,6 @@ svg.i {
 
 .daily:disabled {
     cursor: default;
-    opacity: .85;
 }
 
 .daily:hover:not(:disabled), .survival:hover {
@@ -1900,7 +1898,6 @@ details.why-stepflow[open] .why-stepflow-chevron {
     font-size: .85rem;
     color: var(--wrong);
     text-decoration: line-through;
-    opacity: .9;
 }
 
 .win-box .trophy.lost {
@@ -2009,6 +2006,17 @@ details.why-stepflow[open] .why-stepflow-chevron {
 .btn-danger {
     background: var(--wrong);
     color: #fff;
+}
+
+/* In dark mode the red is a light coral: white text on it is unreadable */
+:root[data-theme="dark"] .btn-danger {
+    color: #150E33;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .btn-danger {
+        color: #150E33;
+    }
 }
 
 .divider {
@@ -2792,9 +2800,14 @@ body {
     border-color: var(--line);
 }
 
-:root[data-theme="dark"] .home-tip-close:hover,
-:root:not([data-theme="light"]) .home-tip-close:hover {
+:root[data-theme="dark"] .home-tip-close:hover {
     background: rgba(255, 255, 255, .1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .home-tip-close:hover {
+        background: rgba(255, 255, 255, .1);
+    }
 }
 
 .home-tip-close svg.i {
@@ -5113,7 +5126,6 @@ button.total:active {
 
 .chair-spot.ok .chair-num {
     color: var(--ok);
-    opacity: .75;
 }
 
 .chair-num {
@@ -5430,7 +5442,7 @@ button.total:active {
 .origami-blank-lbl {
     font-size: .62rem;
     font-weight: 900;
-    color: var(--muted);
+    color: #625C7E; /* the sheet is white paper in both themes */
     text-transform: uppercase;
     letter-spacing: .04em;
     pointer-events: none;
@@ -5623,17 +5635,17 @@ button.total:active {
     border-color: #0F7A4F;
 }
 .tier-easy {
-    color: #1E824C;
+    color: #18703F;
     background: #E8F8F0;
     border-color: #1E824C;
 }
 .tier-medium {
-    color: #0277BD;
+    color: #0268A6;
     background: #E1F5FE;
     border-color: #0277BD;
 }
 .tier-hard {
-    color: #D97706;
+    color: #9A5200;
     background: #FEF3C7;
     border-color: #D97706;
 }
@@ -5643,7 +5655,7 @@ button.total:active {
     border-color: #7C3AED;
 }
 .tier-master {
-    color: #DC2626;
+    color: #B91C1C;
     background: #FEE2E2;
     border-color: #DC2626;
 }
@@ -6115,6 +6127,11 @@ button.total:active {
     font-weight: 800;
     color: var(--muted);
     line-height: 1;
+}
+
+/* On the yellow target chip the muted grey (light in dark mode) is unreadable */
+.why-chip.target .bulb-cell small {
+    color: var(--on-accent);
 }
 
 .bulb {

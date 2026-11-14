@@ -285,14 +285,17 @@ switch ($r) {
         // The whole document at once (the editor saves a few seconds after the last change)
         $u = writer();
         $b = body();
-        $content = clean_content($b['content'] ?? null);
+        $content = clean_content($b['content'] ?? null, clean_custom_langs($b['settings']['customLangs'] ?? null));
         if (!$content) fail('cv_no_language', 422);
         foreach ($content as $c) if (strlen(json_out($c)) > MAX_CV_BYTES) fail('cv_too_big', 413);
         $settings = clean_settings($b['settings'] ?? null, array_keys($content));
         // Languages removed from the settings are removed from the content too
         $content = array_intersect_key($content, array_flip($settings['langs']));
-        save_cv((int)$u['id'], $settings, clean_profile($b['profile'] ?? null), $content);
-        send_json(['ok' => true, 'savedAt' => now_utc()]);
+        // base: the revision the editor knows; a newer one means another window or device saved meanwhile
+        $base = isset($b['base']) && is_numeric($b['base']) ? (int)$b['base'] : null;
+        $rev = save_cv((int)$u['id'], $settings, clean_profile($b['profile'] ?? null), $content, $base);
+        if ($rev === null) fail('cv_conflict', 409);
+        send_json(['ok' => true, 'savedAt' => now_utc(), 'rev' => $rev]);
 
     case 'cv.photoSet':
         $u = writer();

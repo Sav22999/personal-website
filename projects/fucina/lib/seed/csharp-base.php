@@ -103,5 +103,29 @@ app.Run();', 'csharp'),
             dBug(pBug(), ['public async Task<string> LeggiAsync()', '{', '    var testo = File.ReadAllTextAsync("dati.txt");', '    return testo;', '}'], 2, '    var testo = await File.ReadAllTextAsync("dati.txt");', L('Senza await hai un Task, non il testo.', 'Without await you get a Task, not the text.')),
             dMatch(pMatch(), [['async', L('Metodo asincrono', 'Async method')], ['await', L('Aspetta senza bloccare', 'Waits without blocking')], ['Task', L('Operazione in corso', 'Ongoing operation')], ['MapGet', L('Endpoint GET', 'GET endpoint')], ['.Result', L('Da evitare', 'To avoid')]], L('Asincronia in .NET.', 'Async in .NET.')),
         ]),
+        lesson('records', L('Record, null e pattern matching', 'Records, null and pattern matching'), [
+            P('Un **record** è un tipo pensato per i dati: si scrive in una riga, è immutabile e due record con gli stessi valori sono **uguali**. Con `with` crei una copia cambiando solo alcuni campi.', 'A **record** is a type designed for data: written in one line, immutable, and two records with the same values are **equal**. With `with` you create a copy changing only some fields.'),
+            C('public record Studente(string Nome, int Voto);
+
+var a = new Studente("Ada", 8);
+var b = a with { Voto = 9 };
+
+string giudizio = b.Voto switch {
+    >= 9 => "Ottimo",
+    >= 6 => "Sufficiente",
+    _    => "Insufficiente"
+};
+
+string? soprannome = null;
+Console.WriteLine(soprannome ?? "nessuno");', 'csharp'),
+            P('Con i **tipi nullable** (`string?`) il compilatore avvisa quando un valore può essere `null`. `??` dà un valore di riserva, `?.` accede a un membro solo se l’oggetto esiste. L’espressione **`switch`** con i pattern sostituisce lunghe catene di `if`.', 'With **nullable types** (`string?`) the compiler warns when a value may be `null`. `??` gives a fallback value, `?.` accesses a member only if the object exists. The **`switch` expression** with patterns replaces long `if` chains.'),
+        ], [
+            Q('cr1', L('Quando due record sono uguali?', 'When are two records equal?'), [L('Quando hanno gli stessi valori', 'When they have the same values'), L('Solo se sono lo stesso oggetto', 'Only if they are the same object'), L('Mai', 'Never'), L('Se hanno lo stesso nome di tipo e basta', 'If they just share the type name')], 0, L('Uguaglianza per valore.', 'Value equality.')),
+            Q('cr2', L('Che cosa fa `??`?', 'What does `??` do?'), [L('Dà un valore se a sinistra c’è null', 'Gives a value if the left is null'), L('Confronta due numeri', 'Compares two numbers'), L('Lancia un’eccezione', 'Throws an exception'), L('Concatena stringhe', 'Concatenates strings')], 0, L('Il valore di riserva.', 'The fallback value.')),
+            Q('cr3', L('Che cosa fa `a with { Voto = 9 }`?', 'What does `a with { Voto = 9 }` do?'), [L('Crea una copia con Voto cambiato', 'Creates a copy with Voto changed'), L('Modifica a', 'Changes a'), L('Cancella Voto', 'Deletes Voto'), L('Confronta i voti', 'Compares marks')], 0, L('I record sono immutabili.', 'Records are immutable.')),
+        ], task('csharp', L('Dichiara `public record Libro(string Titolo, int Pagine);` e stampa `nome ?? "anonimo"` con `Console.WriteLine`.', 'Declare `public record Libro(string Titolo, int Pagine);` and print `nome ?? "anonimo"` with `Console.WriteLine`.'), '', [re('public\s+record\s+Libro\(\s*string\s+Titolo\s*,\s*int\s+Pagine\s*\)\s*;', L('Il record è dichiarato', 'The record is declared')), re('Console\.WriteLine\(\s*nome\s*\?\?\s*"anonimo"\s*\)', L('Usi il valore di riserva', 'You use the fallback'))], '', "public record Libro(string Titolo, int Pagine);\nConsole.WriteLine(nome ?? \"anonimo\");"), [
+            dMatch(pMatch(), [['record', L('Tipo per dati immutabili', 'Type for immutable data')], ['with', L('Copia con modifiche', 'Copy with changes')], ['??', L('Valore di riserva', 'Fallback value')], ['?.', L('Accesso sicuro', 'Safe access')], ['switch =>', L('Scelta con pattern', 'Choice with patterns')]], L('C# moderno.', 'Modern C#.')),
+            dFlash(pFlash(), [[L('string? può contenere null', 'string? can hold null'), true], [L('I record si modificano in place', 'Records are changed in place'), false], [L('_ nello switch è il caso predefinito', '_ in a switch is the default case'), true], [L('?. lancia sempre un’eccezione', '?. always throws'), false]], L('Dati e null.', 'Data and null.')),
+        ]),
     ],
 ];

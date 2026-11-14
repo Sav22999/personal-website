@@ -33,6 +33,11 @@ RedirectMatch 404 ^(/projects/fucina)?/(lib|install|tools|android)(/|$)
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # A subfolder without its final slash: add it staying on https (Apache's own slash would answer http:// behind
+  # Aruba's proxy). The folder of Fucina itself is handled by the RedirectMatch of the main .htaccess.
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_URI} !/$
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI}/ [L,R=301]
 </IfModule>
 
 <IfModule mod_mime.c>

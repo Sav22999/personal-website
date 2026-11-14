@@ -66,5 +66,23 @@ for blocco in msg.content:
             dBlanks(pFill(), "msg = client.messages.___(\n    model=\"claude-opus-5-5\",\n    ___=1024,\n    messages=[{\"role\": \"___\", \"content\": \"Ciao\"}],\n)", ['create', 'max_tokens', 'user'], ['send', 'tokens', 'assistant'], L('La chiamata minima.', 'The minimal call.')),
             dBug(pBug(), ['msg = client.messages.create(model="claude-opus-5-5", max_tokens=1024, messages=m)', 'print(msg.text)'], 1, 'print("".join(b.text for b in msg.content if b.type == "text"))', L('Il testo sta nei blocchi di `msg.content`.', 'The text lives in the blocks of `msg.content`.')),
         ]),
+        lesson('prompting', L('Scrivere buoni prompt per Claude', 'Writing good prompts for Claude'), [
+            P('Claude rende meglio con richieste **chiare e complete**: lo scopo, il pubblico, il formato atteso e un esempio. Per separare istruzioni e materiali si usano spesso **tag in stile XML**, come `<documento>` e `</documento>`: il modello capisce dove inizia e dove finisce ciascuna parte.', 'Claude does best with **clear, complete** requests: the goal, the audience, the expected format and an example. To separate instructions from material, **XML-style tags** are often used, such as `<document>` and `</document>`: the model sees where each part starts and ends.'),
+            C('Riassumi il verbale per il consiglio di classe.
+Pubblico: genitori, linguaggio semplice.
+Formato: 5 punti, poi le decisioni prese.
+
+<verbale>
+…testo incollato…
+</verbale>', 'text'),
+            P('Con documenti lunghi metti il materiale **prima** e la domanda **alla fine**. Puoi chiedere di citare i passaggi su cui si basa la risposta, e di dire “non lo so” quando l’informazione manca: riduce le invenzioni.', 'With long documents put the material **first** and the question **at the end**. You can ask it to quote the passages its answer relies on, and to say “I don’t know” when the information is missing: it reduces made-up answers.'),
+        ], [
+            Q('pr1', L('A che cosa servono i tag come `<documento>`?', 'What are tags like `<document>` for?'), [L('Separare istruzioni e materiali', 'Separating instructions from material'), L('Formattare in HTML', 'Formatting in HTML'), L('Pagare meno token', 'Paying fewer tokens'), L('Attivare un plugin', 'Turning on a plugin')], 0, L('Il modello vede i confini.', 'The model sees the boundaries.')),
+            Q('pr2', L('Con un documento lungo dove metti la domanda?', 'With a long document where do you put the question?'), [L('Alla fine, dopo il materiale', 'At the end, after the material'), L('Solo all’inizio', 'Only at the start'), L('In mezzo', 'In the middle'), L('In un’altra chat', 'In another chat')], 0, L('Materiale prima, domanda dopo.', 'Material first, question after.')),
+            Q('pr3', L('Come riduci le risposte inventate?', 'How do you reduce made-up answers?'), [L('Chiedi citazioni e permetti “non lo so”', 'Ask for quotes and allow “I don’t know”'), L('Scrivi in maiuscolo', 'Write in capitals'), L('Chiedi di essere sicuro', 'Ask it to be sure'), L('Usa meno parole', 'Use fewer words')], 0, L('Le fonti si possono controllare.', 'Sources can be checked.')),
+        ], task('text', L('Scrivi un prompt con una riga `Formato:` e il testo racchiuso tra `<articolo>` e `</articolo>`.', 'Write a prompt with a `Formato:` line and the text wrapped in `<articolo>` and `</articolo>`.'), '', [re('^Formato\s*:\s*\S+', L('Indichi il formato', 'You state the format')), re('<articolo>[\s\S]+</articolo>', L('Il testo è tra i tag', 'The text is inside the tags'))], '', "Riassumi l’articolo per studenti di terza media.\nFormato: 3 punti brevi.\n<articolo>\n…testo…\n</articolo>"), [
+            dOrder(pSort(), [L('Scopo e pubblico', 'Goal and audience'), L('Formato atteso', 'Expected format'), L('Materiale tra tag', 'Material inside tags'), L('La domanda finale', 'The final question')], L('Un prompt ben costruito.', 'A well-built prompt.')),
+            dFlash(pFlash(), [[L('Un esempio di risposta aiuta il modello', 'An example answer helps the model'), true], [L('Più il prompt è vago, meglio è', 'The vaguer the prompt, the better'), false], [L('Chiedere citazioni aiuta a verificare', 'Asking for quotes helps verify'), true], [L('I tag XML vanno dichiarati prima', 'XML tags must be declared first'), false]], L('Prompt chiari.', 'Clear prompts.')),
+        ]),
     ],
 ];

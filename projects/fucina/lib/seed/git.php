@@ -72,5 +72,22 @@ git stash pop                      # le riprende', 'bash'),
             dMatch(pMatch(), [['git restore', L('Butta le modifiche locali', 'Discards local changes')], ['--staged', L('Toglie dallo stage', 'Unstages')], ['--amend', L('Corregge l’ultimo commit', 'Fixes the last commit')], ['revert', L('Annulla un commit pubblicato', 'Undoes a pushed commit')], ['stash', L('Mette da parte', 'Sets aside')]], L('La cassetta del pronto soccorso.', 'The first-aid kit.')),
             dFlash(pFlash(), [[L('git revert crea un nuovo commit', 'git revert creates a new commit'), true], [L('--amend va bene su commit già pubblicati e condivisi', '--amend is fine on pushed, shared commits'), false], [L('git stash pop riprende le modifiche', 'git stash pop brings changes back'), true], [L('push --force è sempre sicuro', 'push --force is always safe'), false]], L('Sbagliare si può, rimediare anche.', 'Mistakes happen, fixes too.')),
         ]),
+        lesson('history', L('Rebase, tag e storia pulita', 'Rebase, tags and a clean history'), [
+            P('`git rebase main` riapplica i commit del tuo branch **sopra** l’ultima versione di `main`: la storia diventa una linea dritta, senza commit di merge. Usalo sui tuoi branch **locali**, mai su commit già condivisi.', '`git rebase main` replays your branch’s commits **on top of** the latest `main`: history becomes a straight line, with no merge commits. Use it on your **local** branches, never on commits already shared.'),
+            C('git switch mia-funzione
+git fetch origin
+git rebase origin/main          # porta il branch in cima a main
+git tag -a v1.2.0 -m "Versione 1.2.0"
+git push origin v1.2.0          # pubblica il tag
+git log --oneline --graph       # la storia come grafico', 'bash'),
+            P('Un **tag** dà un nome stabile a un commit, di solito una versione (`v1.2.0`). Con `git log --graph` vedi branch e merge disegnati; con `git blame file` scopri chi ha cambiato ogni riga e in quale commit.', 'A **tag** gives a stable name to a commit, usually a version (`v1.2.0`). With `git log --graph` you see branches and merges drawn; with `git blame file` you find who changed each line and in which commit.'),
+        ], [
+            Q('hi1', L('Che cosa fa `git rebase main`?', 'What does `git rebase main` do?'), [L('Riapplica i tuoi commit sopra main', 'Replays your commits on top of main'), L('Cancella main', 'Deletes main'), L('Crea un tag', 'Creates a tag'), L('Unisce con un commit di merge', 'Merges with a merge commit')], 0, L('Storia lineare.', 'Linear history.')),
+            Q('hi2', L('Quando evitare il rebase?', 'When should you avoid rebase?'), [L('Su commit già condivisi', 'On commits already shared'), L('Sui branch locali', 'On local branches'), L('Prima di una PR', 'Before a PR'), L('Mai', 'Never')], 0, L('Riscrive la storia.', 'It rewrites history.')),
+            Q('hi3', L('A che cosa serve un tag?', 'What is a tag for?'), [L('Dare un nome stabile a un commit, come una versione', 'Giving a commit a stable name, like a version'), L('Creare un branch', 'Creating a branch'), L('Annullare un commit', 'Undoing a commit'), L('Nascondere file', 'Hiding files')], 0, L('Per esempio `v1.2.0`.', 'For example `v1.2.0`.')),
+        ], task('bash', L('Crea il tag annotato `v2.0.0` con il messaggio `Versione 2` e pubblicalo su `origin`.', 'Create the annotated tag `v2.0.0` with the message `Versione 2` and push it to `origin`.'), '', [re('git\s+tag\s+-a\s+v2\.0\.0\s+-m\s+["\']Versione 2["\']', L('Crei il tag', 'You create the tag')), re('git\s+push\s+origin\s+v2\.0\.0', L('Lo pubblichi', 'You push it'))], '', "git tag -a v2.0.0 -m \"Versione 2\"\ngit push origin v2.0.0"), [
+            dMatch(pMatch(), [['rebase', L('Storia lineare', 'Linear history')], ['tag', L('Nome di una versione', 'A version’s name')], ['blame', L('Chi ha cambiato la riga', 'Who changed the line')], ['log --graph', L('Storia disegnata', 'Drawn history')]], L('Leggere e ordinare la storia.', 'Reading and tidying history.')),
+            dFlash(pFlash(), [[L('Il rebase riscrive i commit', 'Rebase rewrites commits'), true], [L('Il rebase su main condiviso è innocuo', 'Rebasing shared main is harmless'), false], [L('I tag vanno pubblicati con push', 'Tags must be pushed'), true], [L('git blame cancella le righe sbagliate', 'git blame deletes wrong lines'), false]], L('Una storia pulita.', 'A clean history.')),
+        ]),
     ],
 ];

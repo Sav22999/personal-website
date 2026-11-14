@@ -30,11 +30,11 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
     <meta property="og:description" content="Your CV in every language you speak: templates, PDF download and a public web page.">
     <meta property="og:image" content="icons/og-image.png">
     <meta property="og:type" content="website">
-    <link rel="stylesheet" href="assets/app.css?v=1">
-    <link rel="stylesheet" href="assets/cv.css?v=1">
+    <link rel="stylesheet" href="assets/app.css?v=2">
+    <link rel="stylesheet" href="assets/cv.css?v=2">
 </head>
 <body>
 <div id="app"><noscript>MyCurriculum needs JavaScript.</noscript></div>
-<script type="module" src="assets/app.js?v=1"></script>
+<script type="module" src="assets/app.js?v=2"></script>
 </body>
 </html>

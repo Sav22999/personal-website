@@ -89,5 +89,28 @@ query {
             dMatch(pMatch(), [['query', L('Legge dati', 'Reads data')], ['mutation', L('Modifica dati', 'Changes data')], ['type', L('Definisce la forma dei dati', 'Defines data shape')], ['ID!', L('Identificatore obbligatorio', 'Required identifier')], ['[Ordine!]!', L('Lista di ordini', 'List of orders')]], L('Il vocabolario di GraphQL.', 'GraphQL vocabulary.')),
             dFlash(pFlash(), [[L('In GraphQL il client sceglie i campi', 'In GraphQL the client picks the fields'), true], [L('GraphQL non usa uno schema', 'GraphQL uses no schema'), false], [L('Le query troppo profonde vanno limitate', 'Overly deep queries must be limited'), true], [L('GraphQL sostituisce sempre REST', 'GraphQL always replaces REST'), false]], L('REST o GraphQL: dipende.', 'REST or GraphQL: it depends.')),
         ]),
+        lesson('docs', L('Documentazione, limiti e webhook', 'Documentation, limits and webhooks'), [
+            P('Un’API si usa bene solo se è **documentata**. Lo standard **OpenAPI** descrive in YAML o JSON rotte, parametri, risposte ed errori; da quel file nascono pagine interattive, client generati e test di contratto.', 'An API is only easy to use if it is **documented**. The **OpenAPI** standard describes routes, parameters, responses and errors in YAML or JSON; from that file come interactive pages, generated clients and contract tests.'),
+            C('paths:
+  /corsi/{id}:
+    get:
+      summary: Un corso
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Il corso }
+        "404": { description: Corso non trovato }', 'yaml'),
+            P('Il **rate limiting** protegge il servizio: oltre un certo numero di richieste si risponde `429 Too Many Requests` con l’intestazione `Retry-After`. I **webhook** fanno il contrario di una chiamata: è il servizio che avvisa te, con una POST al tuo indirizzo, quando succede qualcosa; va verificata con una **firma**.', '**Rate limiting** protects the service: beyond a certain number of requests you answer `429 Too Many Requests` with the `Retry-After` header. **Webhooks** do the opposite of a call: the service notifies you, with a POST to your address, when something happens; it must be verified with a **signature**.'),
+        ], [
+            Q('dc1', L('Che cosa descrive un file OpenAPI?', 'What does an OpenAPI file describe?'), [L('Rotte, parametri, risposte ed errori', 'Routes, parameters, responses and errors'), L('Il database', 'The database'), L('Il design grafico', 'The graphic design'), L('I server fisici', 'The physical servers')], 0, L('Da lì nascono documentazione e client.', 'Docs and clients come from it.')),
+            Q('dc2', L('Quale codice indica troppe richieste?', 'Which code means too many requests?'), ['429', '404', '500', '201'], 0, L('Con `Retry-After`.', 'With `Retry-After`.')),
+            Q('dc3', L('Perché verificare la firma di un webhook?', 'Why verify a webhook’s signature?'), [L('Per sapere che arriva davvero dal servizio', 'To know it really comes from the service'), L('Per renderlo più veloce', 'To make it faster'), L('Per tradurlo', 'To translate it'), L('Non serve', 'It is not needed')], 0, L('Chiunque può fare una POST.', 'Anyone can send a POST.')),
+        ], task('yaml', L('Scrivi la risposta `"429"` con `description: Troppe richieste` sotto `responses:`.', 'Write the `"429"` response with `description: Troppe richieste` under `responses:`.'), '', [re('responses\s*:', L('C’è responses', 'responses is there')), re('"?429"?\s*:\s*\{?\s*description\s*:\s*Troppe richieste', L('La risposta 429 è descritta', 'The 429 response is described'))], '', "responses:\n  \"429\": { description: Troppe richieste }"), [
+            dMatch(pMatch(), [['OpenAPI', L('Descrive l’API', 'Describes the API')], ['429', L('Troppe richieste', 'Too many requests')], ['Retry-After', L('Quando riprovare', 'When to retry')], ['Webhook', L('Il servizio ti avvisa', 'The service notifies you')], [L('Firma', 'Signature'), L('Prova l’origine', 'Proves the origin')]], L('API mature.', 'Mature APIs.')),
+            dFlash(pFlash(), [[L('Da un file OpenAPI si generano client', 'Clients can be generated from an OpenAPI file'), true], [L('Un webhook è una GET del client', 'A webhook is a GET from the client'), false], [L('Il rate limiting protegge il servizio', 'Rate limiting protects the service'), true], [L('429 significa risorsa creata', '429 means resource created'), false]], L('Documentare e proteggere.', 'Documenting and protecting.')),
+        ]),
     ],
 ];

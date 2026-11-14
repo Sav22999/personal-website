@@ -105,5 +105,33 @@ int main(void) {
             dMatch(pMatch(), [['&x', L('Indirizzo di x', 'Address of x')], ['*p', L('Valore puntato', 'Pointed value')], ['malloc', L('Chiede memoria', 'Requests memory')], ['free', L('Restituisce memoria', 'Returns memory')], ['NULL', L('Puntatore a niente', 'Pointer to nothing')]], L('Puntatori in C.', 'Pointers in C.')),
             dBug(pBug(), ['int *p = malloc(sizeof *p);', 'free(p);', '*p = 10;'], 2, 'p = NULL;', L('Dopo free la memoria non va più usata.', 'After free the memory must not be used.')),
         ]),
+        lesson('structs-files', L('Struct, memoria dinamica e file', 'Structs, dynamic memory and files'), [
+            P('Una **struct** raggruppa dati diversi sotto un nome. Con `malloc` chiedi memoria mentre il programma gira; ogni `malloc` va restituito con `free`, e il risultato va sempre controllato: può essere `NULL`.', 'A **struct** groups different data under one name. With `malloc` you request memory while the program runs; every `malloc` must be given back with `free`, and the result must always be checked: it can be `NULL`.'),
+            C('#include <stdio.h>
+#include <stdlib.h>
+
+struct Punto { int x; int y; };
+
+int main(void) {
+    struct Punto *p = malloc(sizeof *p);
+    if (p == NULL) return 1;
+    p->x = 3; p->y = 4;
+
+    FILE *f = fopen("punto.txt", "w");
+    if (f == NULL) { free(p); return 1; }
+    fprintf(f, "%d %d\n", p->x, p->y);
+    fclose(f);
+    free(p);
+    return 0;
+}', 'c'),
+            P('I file si aprono con `fopen` (modalità `"r"`, `"w"`, `"a"`), si scrivono con `fprintf` e si chiudono con `fclose`. Con un puntatore a struct si usa `->` per raggiungere i campi.', 'Files are opened with `fopen` (modes `"r"`, `"w"`, `"a"`), written with `fprintf` and closed with `fclose`. With a pointer to a struct you use `->` to reach the fields.'),
+        ], [
+            Q('sf1', L('Che cosa restituisce `malloc` se fallisce?', 'What does `malloc` return if it fails?'), ['NULL', '0 byte', '-1', L('Un errore di compilazione', 'A compile error')], 0, L('Controllalo sempre.', 'Always check it.')),
+            Q('sf2', L('Che cosa succede senza `free`?', 'What happens without `free`?'), [L('Una perdita di memoria', 'A memory leak'), L('Il programma è più veloce', 'The program is faster'), L('Niente mai', 'Never anything'), L('Il file si chiude', 'The file closes')], 0, L('Memory leak.', 'Memory leak.')),
+            Q('sf3', L('Come raggiungi un campo da un puntatore a struct?', 'How do you reach a field from a pointer to a struct?'), ['p->x', 'p.x', 'p::x', 'p[x]'], 0, L('`->` equivale a `(*p).x`.', '`->` equals `(*p).x`.')),
+        ], task('c', L('Apri `log.txt` in modalità `"a"` con `fopen`, controlla che non sia `NULL`, scrivi con `fprintf` e chiudi con `fclose`.', 'Open `log.txt` in `"a"` mode with `fopen`, check it is not `NULL`, write with `fprintf` and close with `fclose`.'), '', [re('fopen\(\s*"log\.txt"\s*,\s*"a"\s*\)', L('Apri in aggiunta', 'You open in append mode')), re('==\s*NULL', L('Controlli NULL', 'You check NULL')), re('fprintf\(\s*f\s*,', L('Scrivi nel file', 'You write to the file')), re('fclose\(\s*f\s*\)', L('Chiudi il file', 'You close the file'))], '', "FILE *f = fopen(\"log.txt\", \"a\");\nif (f == NULL) return 1;\nfprintf(f, \"avvio\\n\");\nfclose(f);"), [
+            dBug(pBug(), ['FILE *f = fopen("dati.txt", "w");', 'if (f = NULL) return 1;', 'fprintf(f, "ciao");', 'fclose(f);'], 1, 'if (f == NULL) return 1;', L('`=` assegna, `==` confronta: così f diventa NULL.', '`=` assigns, `==` compares: this way f becomes NULL.')),
+            dFlash(pFlash(), [[L('Ogni malloc richiede un free', 'Every malloc needs a free'), true], [L('fopen non può mai fallire', 'fopen can never fail'), false], [L('"a" aggiunge in fondo al file', '"a" appends to the end of the file'), true], [L('p.x funziona con un puntatore', 'p.x works with a pointer'), false]], L('Memoria e file.', 'Memory and files.')),
+        ]),
     ],
 ];

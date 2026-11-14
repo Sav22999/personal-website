@@ -61,12 +61,12 @@ header('Cache-Control: private, no-store');
     <meta name="theme-color" content="<?= $esc($data['settings']['accent'] ?? '#3D52D5') ?>">
     <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
-    <link rel="stylesheet" href="assets/app.css?v=1">
-    <link rel="stylesheet" href="assets/cv.css?v=1">
+    <link rel="stylesheet" href="assets/app.css?v=2">
+    <link rel="stylesheet" href="assets/cv.css?v=2">
 </head>
 <body>
 <div id="pub"><noscript><?= $data ? $esc($name) : 'Not found' ?></noscript></div>
 <script type="application/json" id="cv-data"><?= json_encode(['cv' => $data, 'lang' => $lang, 'preview' => $preview], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script type="module" src="assets/public.js?v=1"></script>
+<script type="module" src="assets/public.js?v=2"></script>
 </body>
 </html>

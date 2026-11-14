@@ -95,5 +95,29 @@ function Contatore() {
             dBug(pBug(), ['<ul>', '  {prodotti.map(p => (', '    <li>{p.nome}</li>', '  ))}', '</ul>'], 2, '    <li key={p.id}>{p.nome}</li>', L('Ogni elemento di una lista vuole una `key`.', 'Every list item needs a `key`.')),
             dMatch(pMatch(), [['map', L('Array → elementi', 'Array → elements')], ['key', L('Identità dell’elemento', 'Item identity')], ['cond && <A/>', L('Mostra A se vero', 'Shows A if true')], ['a ? b : c', L('Uno o l’altro', 'One or the other')]], L('Liste e condizioni in JSX.', 'Lists and conditions in JSX.')),
         ]),
+        lesson('forms', L('Form ed eventi dell’utente', 'Forms and user events'), [
+            P('Un campo **controllato** prende il valore dallo stato e lo aggiorna con `onChange`: React resta l’unica fonte di verità. Nel `submit` chiama `e.preventDefault()` per non ricaricare la pagina.', 'A **controlled** field takes its value from state and updates it with `onChange`: React stays the single source of truth. In `submit` call `e.preventDefault()` so the page does not reload.'),
+            C('function Iscrizione() {
+  const [email, setEmail] = useState("");
+  function invia(e) {
+    e.preventDefault();
+    alert("Iscritto: " + email);
+  }
+  return (
+    <form onSubmit={invia}>
+      <input value={email} onChange={e => setEmail(e.target.value)} />
+      <button disabled={!email}>Iscriviti</button>
+    </form>
+  );
+}', 'jsx'),
+            P('Gli eventi in JSX si scrivono in **camelCase** (`onClick`, `onChange`, `onSubmit`) e ricevono una **funzione**, non una chiamata: `onClick={salva}`, non `onClick={salva()}`.', 'Events in JSX are written in **camelCase** (`onClick`, `onChange`, `onSubmit`) and receive a **function**, not a call: `onClick={salva}`, not `onClick={salva()}`.'),
+        ], [
+            Q('fo1', L('Che cos’è un campo controllato?', 'What is a controlled field?'), [L('Un campo il cui valore viene dallo stato', 'A field whose value comes from state'), L('Un campo disabilitato', 'A disabled field'), L('Un campo con validazione HTML', 'A field with HTML validation'), L('Un campo nascosto', 'A hidden field')], 0, L('`value` più `onChange`.', '`value` plus `onChange`.')),
+            Q('fo2', L('Perché `e.preventDefault()` nel submit?', 'Why `e.preventDefault()` in submit?'), [L('Per non ricaricare la pagina', 'So the page does not reload'), L('Per svuotare il form', 'To empty the form'), L('Per inviare due volte', 'To send twice'), L('Per bloccare React', 'To block React')], 0, L('Il comportamento normale del form ricarica.', 'The form’s default behaviour reloads.')),
+            Q('fo3', L('Quale scrittura è giusta?', 'Which is right?'), ['onClick={salva}', 'onclick="salva()"', 'onClick={salva()}', 'on-click={salva}'], 0, L('Passi la funzione, non il risultato.', 'You pass the function, not its result.')),
+        ], task('jsx', L('Scrivi un `<input>` controllato con `value={nome}` e `onChange` che chiama `setNome(e.target.value)`.', 'Write a controlled `<input>` with `value={nome}` and `onChange` calling `setNome(e.target.value)`.'), '', [re('<input[^>]*value\s*=\s*\{\s*nome\s*\}', L('Il valore viene dallo stato', 'The value comes from state')), re('onChange\s*=\s*\{\s*\(?\s*e\s*\)?\s*=>\s*setNome\(\s*e\.target\.value\s*\)\s*\}', L('`onChange` aggiorna lo stato', '`onChange` updates state'))], '', '<input value={nome} onChange={e => setNome(e.target.value)} />'), [
+            dBug(pBug(), ['function Bottone() {', '  function saluta() { alert("Ciao"); }', '  return <button onClick={saluta()}>Ciao</button>;', '}'], 2, '  return <button onClick={saluta}>Ciao</button>;', L('Passa la funzione, non chiamarla.', 'Pass the function, do not call it.')),
+            dFlash(pFlash(), [[L('onChange aggiorna lo stato a ogni tasto', 'onChange updates state on every key'), true], [L('Gli eventi JSX si scrivono tutti minuscoli', 'JSX events are all lowercase'), false], [L('preventDefault evita il ricaricamento', 'preventDefault avoids the reload'), true], [L('onClick={f()} esegue f solo al clic', 'onClick={f()} runs f only on click'), false]], L('Eventi e form.', 'Events and forms.')),
+        ]),
     ],
 ];

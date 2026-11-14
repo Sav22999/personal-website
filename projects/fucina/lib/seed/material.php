@@ -57,5 +57,29 @@ return [
             dMatch(pMatch(), [['Compact', L('Meno di 600 dp', 'Under 600 dp')], ['Medium', '600-839 dp'], ['Expanded', L('840 dp e oltre', '840 dp and up')], ['Navigation drawer', L('Navigazione su schermi grandi', 'Navigation on large screens')], ['Container transform', L('Un elemento si espande in schermata', 'An element expands into a screen')]], L('Adattarsi alle finestre.', 'Adapting to windows.')),
             dFlash(pFlash(), [[L('I telefoni pieghevoli aperti sono spesso medium', 'Open foldables are often medium'), true], [L('In M3 l’elevazione usa solo ombre', 'In M3 elevation uses only shadows'), false], [L('Su schermi grandi si usa spesso la lista-dettaglio', 'Large screens often use list-detail'), true], [L('M3 usa lo stesso layout su tutti gli schermi', 'M3 uses the same layout on every screen'), false]], L('Material adattivo.', 'Adaptive Material.')),
         ]),
+        lesson('code', L('Material 3 nel codice', 'Material 3 in code'), [
+            P('Il **Material Theme Builder** parte da un colore sorgente (o da un’immagine) e genera l’intera palette: ruoli chiari e scuri come `primary`, `on-primary`, `surface`, `outline`. Si esporta come token per il web (variabili CSS), per Android (Compose) e per Flutter.', 'The **Material Theme Builder** starts from a source colour (or an image) and generates the whole palette: light and dark roles such as `primary`, `on-primary`, `surface`, `outline`. It exports as tokens for the web (CSS variables), Android (Compose) and Flutter.'),
+            C(':root {
+  --md-sys-color-primary: #6750A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-surface: #FEF7FF;
+}
+.btn-filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-radius: 20px;
+}', 'css'),
+            P('In **Jetpack Compose** il tema si applica con `MaterialTheme(colorScheme = …)`, e su Android 12+ `dynamicLightColorScheme(context)` prende i colori dallo sfondo dell’utente. In **Flutter** basta `ThemeData(colorSchemeSeed: …, useMaterial3: true)`.', 'In **Jetpack Compose** the theme is applied with `MaterialTheme(colorScheme = …)`, and on Android 12+ `dynamicLightColorScheme(context)` takes colours from the user’s wallpaper. In **Flutter** `ThemeData(colorSchemeSeed: …, useMaterial3: true)` is enough.'),
+        ], [
+            Q('mc1', L('Da che cosa parte il Theme Builder?', 'What does the Theme Builder start from?'), [L('Un colore sorgente o un’immagine', 'A source colour or an image'), L('Un font', 'A font'), L('Un logo vettoriale soltanto', 'Only a vector logo'), L('Un file CSS esistente', 'An existing CSS file')], 0, L('Genera tutti i ruoli.', 'It generates every role.')),
+            Q('mc2', L('Quale colore va sul testo di un pulsante `primary`?', 'Which colour goes on a `primary` button’s text?'), ['on-primary', 'primary', 'surface', 'outline'], 0, L('“on” = sopra a.', '“on” = on top of.')),
+            Q('mc3', L('Come attivi Material 3 in Flutter con un colore seme?', 'How do you enable Material 3 in Flutter with a seed colour?'), [L('`ThemeData(colorSchemeSeed: …, useMaterial3: true)`', '`ThemeData(colorSchemeSeed: …, useMaterial3: true)`'), L('`MaterialApp(color: …)`', '`MaterialApp(color: …)`'), L('`Theme.of(context)`', '`Theme.of(context)`'), L('Non si può', 'You cannot')], 0, L('Il resto lo genera Flutter.', 'Flutter generates the rest.')),
+        ], task('css', L('Dai a `.btn` lo sfondo `var(--md-sys-color-primary)` e il colore del testo `var(--md-sys-color-on-primary)`.', 'Give `.btn` the background `var(--md-sys-color-primary)` and text colour `var(--md-sys-color-on-primary)`.'), ':root {
+  --md-sys-color-primary: #6750A4;
+  --md-sys-color-on-primary: #FFFFFF;
+}', [css('.btn', 'background-color', 'rgb(103, 80, 164)', L('Lo sfondo è primary', 'The background is primary')), css('.btn', 'color', 'rgb(255, 255, 255)', L('Il testo è on-primary', 'The text is on-primary'))], '<button class="btn">Salva</button>', ":root {\n  --md-sys-color-primary: #6750A4;\n  --md-sys-color-on-primary: #FFFFFF;\n}\n.btn {\n  background: var(--md-sys-color-primary);\n  color: var(--md-sys-color-on-primary);\n}"), [
+            dMatch(pMatch(), [['primary', L('Colore principale', 'Main colour')], ['on-primary', L('Testo sopra primary', 'Text on primary')], ['surface', L('Sfondo delle superfici', 'Surface background')], ['dynamicLightColorScheme', L('Colori dallo sfondo', 'Colours from the wallpaper')], ['colorSchemeSeed', L('Colore seme in Flutter', 'Seed colour in Flutter')]], L('Material nel codice.', 'Material in code.')),
+            dFlash(pFlash(), [[L('Il Theme Builder esporta variabili CSS', 'The Theme Builder exports CSS variables'), true], [L('Il colore dinamico funziona su ogni versione di Android', 'Dynamic colour works on every Android version'), false], [L('on-surface va sul testo sopra surface', 'on-surface goes on text over surface'), true], [L('Material 3 richiede di scegliere ogni colore a mano', 'Material 3 requires picking every colour by hand'), false]], L('Dal seme alla palette.', 'From seed to palette.')),
+        ]),
     ],
 ];

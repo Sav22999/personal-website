@@ -1017,7 +1017,9 @@
             parts.push(`<path d="M${x - W / 2} ${y} L${x - W / 2} ${y + H - 6} Q${x - W / 2} ${y + H} ${x - W / 2 + 6} ${y + H} L${x + W / 2 - 6} ${y + H} Q${x + W / 2} ${y + H} ${x + W / 2} ${y + H - 6} L${x + W / 2} ${y}" fill="none" stroke="${isWin ? 'var(--ok)' : 'var(--text)'}" stroke-width="${isWin ? 3.5 : 2.5}" stroke-linecap="round"/>`);
             parts.push(`<text x="${x}" y="${y + 22}" font-size="17" font-weight="900" text-anchor="middle" style="fill:var(--text)" paint-order="stroke" stroke="var(--surface)" stroke-width="4">${tk}</text>`);
             if (tk === source) {
-                parts.push(`<text x="${x}" y="${y - 6}" font-size="18" text-anchor="middle">🚰</text>`);
+                // The tap is drawn with the theme colours: an emoji was grey and almost invisible on the dark blackboard
+                const sp = `M${x - 18} ${y - 15} H${x} V${y - 4}`;
+                parts.push(`<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${sp}" stroke="var(--text)" stroke-width="8"/><path d="${sp}" stroke="var(--surface-2)" stroke-width="3.5"/><path d="M${x - 9} ${y - 19} V${y - 25} M${x - 14} ${y - 25} H${x - 4}" stroke="var(--text)" stroke-width="3"/></g>`);
                 if (state.pouring) parts.push(`<line x1="${x}" y1="${y - 2}" x2="${x}" y2="${wy.toFixed(1)}" stroke="#3AA8F7" stroke-width="3" stroke-linecap="round" class="pipe-flow"/>`);
             }
         });

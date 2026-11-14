@@ -258,6 +258,10 @@ function courses_summary(int $uid): array
     $rows = $st->fetchAll();
     $passed = array_map('intval', array_column($rows, 'best', 'course'));
     $passedHere = array_map('intval', array_column($rows, 'here', 'course'));
+    // When each course was last played: the courses in progress are listed from the most recent
+    $st = db()->prepare('SELECT course, MAX(completed_at) AS last FROM ' . t('lesson_progress') . ' WHERE user_id = ? AND skipped = 0 GROUP BY course');
+    $st->execute([$uid]);
+    $last = array_column($st->fetchAll(), 'last', 'course');
     $out = [];
     $finished = [];
     foreach (course_ids() as $id) {
@@ -267,7 +271,7 @@ function courses_summary(int $uid): array
         $out[] = [
             'id' => $id, 'title' => pick($c['title']), 'short' => pick($c['short']), 'desc' => pick($c['desc']), 'level' => pick($c['level']), 'family' => $c['family'], 'categories' => $c['categories'],
             'after' => $c['after'], 'lessons' => count($c['lessons']), 'done' => count($valid), 'stars' => array_sum(array_column($valid, 'stars')), 'certificate' => $certs[$id][lang()] ?? null, 'certificates' => array_values($certs[$id] ?? []),
-            'examScore' => $passed[$id] ?? 0, 'examLangScore' => $passedHere[$id] ?? 0,
+            'examScore' => $passed[$id] ?? 0, 'examLangScore' => $passedHere[$id] ?? 0, 'lastAt' => $last[$id] ?? null,
         ];
     }
     foreach ($out as &$o) $o['locked'] = !$o['examScore'] && $o['after'] !== null && in_array($o['after'], course_ids(), true) && !$finished[$o['after']];

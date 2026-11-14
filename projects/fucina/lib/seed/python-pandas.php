@@ -77,5 +77,24 @@ mensili.plot(kind="bar", title="Vendite mensili")', 'python'),
             dOrder(pSort(), ['vendite = pd.read_csv("vendite.csv")', 'vendite = vendite.dropna(subset=["importo"])', 'per_regione = vendite.groupby("regione")["importo"].sum()', 'per_regione.sort_values(ascending=False).plot(kind="bar")'], L('Carica, pulisci, raggruppa, disegna.', 'Load, clean, group, plot.')),
             dMatch(pMatch(), [['groupby', 'GROUP BY'], ['merge', 'JOIN'], ['sort_values', 'ORDER BY'], ['df[df.x > 0]', 'WHERE'], ['agg(["sum", "mean"])', L('Più aggregazioni', 'Several aggregations')]], L('pandas e SQL a confronto.', 'pandas and SQL compared.')),
         ]),
+        lesson('time', L('Date, serie temporali ed esportazione', 'Dates, time series and export'), [
+            P('Le date lette da un CSV sono testo: `pd.to_datetime()` le converte. Con la colonna data come indice, `resample("M")` raggruppa per mese e `rolling(7).mean()` calcola una media mobile su 7 righe.', 'Dates read from a CSV are text: `pd.to_datetime()` converts them. With the date column as index, `resample("M")` groups by month and `rolling(7).mean()` computes a 7-row moving average.'),
+            C('df["data"] = pd.to_datetime(df["data"])
+df = df.set_index("data")
+mensile = df["vendite"].resample("M").sum()
+df["media7"] = df["vendite"].rolling(7).mean()
+df["mese"] = df.index.month
+
+mensile.to_csv("vendite_mensili.csv")
+df.to_excel("report.xlsx", sheet_name="Dati")', 'python'),
+            P('Alla fine si **esporta**: `to_csv`, `to_excel`, `to_json`. Per file grandi, `to_parquet` è più compatto e veloce. Aggiungi `index=False` se l’indice non serve nel file.', 'At the end you **export**: `to_csv`, `to_excel`, `to_json`. For large files, `to_parquet` is more compact and faster. Add `index=False` if the index is not needed in the file.'),
+        ], [
+            Q('ti1', L('Come converti una colonna di testo in date?', 'How do you convert a text column into dates?'), ['pd.to_datetime()', 'df.astype("date")', 'pd.date()', 'df.parse()'], 0, L('Poi puoi usare `.dt` e `resample`.', 'Then you can use `.dt` and `resample`.')),
+            Q('ti2', L('Che cosa fa `resample("M").sum()`?', 'What does `resample("M").sum()` do?'), [L('Somma per mese', 'Sums by month'), L('Ordina per mese', 'Sorts by month'), L('Cancella i mesi vuoti', 'Deletes empty months'), L('Conta le righe', 'Counts rows')], 0, L('Serve un indice di date.', 'It needs a date index.')),
+            Q('ti3', L('A che cosa serve `index=False` in `to_csv`?', 'What is `index=False` for in `to_csv`?'), [L('Non scrivere l’indice nel file', 'Not writing the index to the file'), L('Ordinare le righe', 'Sorting rows'), L('Comprimere il file', 'Compressing the file'), L('Saltare le intestazioni', 'Skipping headers')], 0, L('Spesso l’indice è solo un numero di riga.', 'Often the index is just a row number.')),
+        ], task('python', L('Converti `df["giorno"]` in date con `pd.to_datetime` e salva `df` in `pulito.csv` senza indice.', 'Convert `df["giorno"]` to dates with `pd.to_datetime` and save `df` to `pulito.csv` without the index.'), '', [re('df\[\s*["\']giorno["\']\s*\]\s*=\s*pd\.to_datetime\(\s*df\[\s*["\']giorno["\']\s*\]\s*\)', L('Converti le date', 'You convert the dates')), re('df\.to_csv\(\s*["\']pulito\.csv["\']\s*,\s*index\s*=\s*False\s*\)', L('Esporti senza indice', 'You export without index'))], '', "df[\"giorno\"] = pd.to_datetime(df[\"giorno\"])\ndf.to_csv(\"pulito.csv\", index=False)"), [
+            dOrder(pSort(), ['df = pd.read_csv("vendite.csv")', 'df["data"] = pd.to_datetime(df["data"])', 'df = df.set_index("data")', 'mensile = df["vendite"].resample("M").sum()', 'mensile.to_csv("mensile.csv")'], L('Leggi, converti, indicizza, raggruppa, esporta.', 'Read, convert, index, group, export.')),
+            dMatch(pMatch(), [['to_datetime', L('Testo in date', 'Text to dates')], ['resample', L('Raggruppa nel tempo', 'Groups over time')], ['rolling', L('Media mobile', 'Moving average')], ['to_excel', L('Esporta in Excel', 'Exports to Excel')], ['to_parquet', L('Formato compatto', 'Compact format')]], L('Tempo ed esportazione.', 'Time and export.')),
+        ]),
     ],
 ];

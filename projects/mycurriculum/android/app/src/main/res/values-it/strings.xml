@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_title">Nessuna connessione</string>
+    <string name="offline_text">MyCurriculum ha bisogno di internet per caricare e salvare il tuo CV. Controlla la connessione e riprova.</string>
+    <string name="offline_retry">Riprova</string>
+    <string name="pdf_saved">PDF salvato</string>
+    <string name="pdf_not_saved">Impossibile salvare il PDF</string>
+    <string name="share_with">Condividi il tuo CV</string>
+</resources>

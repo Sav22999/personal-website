@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MyCurriculum</string>
+    <string name="host_name" translatable="false">www.saveriomorelli.com</string>
+    <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/mycurriculum/</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_text">MyCurriculum needs the internet to load and save your CV. Check your connection and try again.</string>
+    <string name="offline_retry">Try again</string>
+    <string name="pdf_saved">PDF saved</string>
+    <string name="pdf_not_saved">The PDF could not be saved</string>
+    <string name="share_with">Share your CV</string>
+</resources>

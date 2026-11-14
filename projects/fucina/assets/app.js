@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.24.0';
+    const VERSION = '1.25.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.25.0', date: '2026-11-14', it: ['50 nuovi livelli: ogni corso ne ha almeno cinque, dagli assistenti AI al design, da Git a Excel', 'I corsi iniziati e non finiti sono in cima, nella home e nella pagina dei corsi, dal più recente'], en: ['50 new levels: every course has at least five, from AI assistants to design, from Git to Excel', 'Courses started and not finished are at the top, on the home page and the courses page, most recent first']},
         {v: '1.24.0', date: '2026-11-13', it: ['Il certificato dice in che lingua hai seguito il corso, e puoi ottenerlo in più lingue: se lo hai già in italiano, puoi fare l’esame anche in inglese', 'Nella ricerca dei corsi i linguaggi si aprono e chiudono con un pulsante; le categorie restano sempre visibili'], en: ['The certificate says which language you took the course in, and you can earn it in more than one: if you already have it in Italian, you can take the exam in English too', 'In the course search the languages open and close with a button; the categories stay always visible']},
         {v: '1.23.0', date: '2026-11-13', it: ['14 nuovi corsi di design: UX base, intermedio e avanzato, UX su mobile, su desktop e in realtà virtuale, UI base e intermedio, UI su mobile, pattern di interfaccia, Material Design, design per iOS, Fluent Design e Bootstrap', 'Nuovi corsi: come funzionano i motori di ricerca e i crawler, e come funzionano gli LLM', 'Nuova categoria: Design'], en: ['14 new design courses: UX basics, intermediate and advanced, UX on mobile, on desktop and in virtual reality, UI basics and intermediate, UI on mobile, UI design patterns, Material Design, iOS design, Fluent Design and Bootstrap', 'New courses: how search engines and crawlers work, and how LLMs work', 'New category: Design']},
         {v: '1.22.0', date: '2026-11-11', it: ['35 nuovi corsi: React, Next.js, Node.js, analisi dati con pandas, Git e GitHub, terminale Bash, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design pattern, espressioni regolari, API REST e GraphQL, Redis, algoritmi, sicurezza web e di base, accessibilità, Excel e Power BI', 'Nuovi corsi sugli strumenti AI: GitHub Copilot, Microsoft Copilot, Perplexity, editor e agenti AI, Hugging Face, AI per immagini, video e audio, Grok, Meta AI, Qwen e Apple Intelligence', 'Nuove categorie: DevOps, Sicurezza e Produttività', 'Domande più eque: la risposta giusta non è più riconoscibile perché è la più lunga', 'Esercizi meno rigidi: accettano più modi corretti di scrivere la soluzione'], en: ['35 new courses: React, Next.js, Node.js, data analysis with pandas, Git and GitHub, the Bash terminal, Docker, Kubernetes, cloud, Go, C#, C, C++, testing, design patterns, regular expressions, REST and GraphQL APIs, Redis, algorithms, web and everyday security, accessibility, Excel and Power BI', 'New courses on AI tools: GitHub Copilot, Microsoft Copilot, Perplexity, AI editors and agents, Hugging Face, AI for images, video and audio, Grok, Meta AI, Qwen and Apple Intelligence', 'New categories: DevOps, Security and Productivity', 'Fairer questions: the right answer no longer stands out by being the longest', 'Less rigid exercises: they accept more correct ways of writing the solution']},
@@ -295,9 +296,25 @@
                 h('p.rank-xp', t('{n} XP to the next grade', {n: l.need - l.into}))));
     }
 
-    /** The next thing to do: the first open course with lessons left. */
+    /** Courses started and not finished yet (no exam passed), the most recently played first. */
+    function startedCourses() {
+        return S.state.courses.filter(c => c.done > 0 && c.done < c.lessons && !c.examScore)
+            .sort((a, b) => String(b.lastAt || '').localeCompare(String(a.lastAt || '')));
+    }
+
+    /** The next thing to do: the course played last, else the first open course with lessons left. */
     function nextStep() {
-        return S.state.courses.find(c => !c.locked && !c.examScore && c.done < c.lessons) || S.state.courses.find(c => !c.locked && !certsOf(c).length);
+        return startedCourses()[0] || S.state.courses.find(c => !c.locked && !c.examScore && c.done < c.lessons) || S.state.courses.find(c => !c.locked && !certsOf(c).length);
+    }
+
+    /** A row of the courses in progress, small cards sliding sideways; skip = a course already shown above. */
+    function startedRow(skip) {
+        const list = startedCourses().filter(c => c.id !== skip);
+        if (!list.length) return null;
+        return [h('h2.section-title', t('In progress')), h('div.started-row', list.map(c => h('a.started.fam-' + c.family, {href: '#/course/' + c.id},
+            h('span.fam', familyShort(c.family)), h('strong', c.title),
+            h('div.bar', {role: 'progressbar', 'aria-valuenow': c.done, 'aria-valuemax': c.lessons}, h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
+            h('span.muted.small', t('Level {a} of {b}', {a: c.done + 1, b: c.lessons})))))];
     }
 
     /** Favilla says one thing at a time, about what matters now. */
@@ -320,6 +337,7 @@
                 n ? h('a.cta.fam-' + n.family, {href: '#/course/' + n.id}, h('span.kicker', n.done ? t('Pick up where you left off') : t('Start here')), h('strong', n.title),
                     h('div.bar', h('i', {style: {width: Math.round(n.done * 100 / Math.max(1, n.lessons)) + '%'}})),
                     h('div.cta-foot', h('span', n.done < n.lessons ? t('Level {a} of {b}', {a: n.done + 1, b: n.lessons}) : t('Ready for the exam')), h('span.cta-go', icon('play')))) : null,
+                startedRow(n && n.id),
                 h('h2.section-title', t('Today')),
                 h('div.quick',
                     quick('#/daily', 'calendar', 'sun', t('Daily challenge'), d ? t('Done: {a} out of {b}', {a: d.correct, b: d.total}) : t('Five questions from all the courses'), d ? 'check' : null),
@@ -426,6 +444,7 @@
         return {
             title: t('Courses'), tab: 'path', body: [
                 h('p.lead', t('Every course is a series of levels, each harder than the last. Finish a course to open the ones that follow.')),
+                startedRow(),
                 h('div.path-tools', h('label.path-search-box', icon('search'), search), cats, famsToggle, famsBox, count), list,
             ]
         };

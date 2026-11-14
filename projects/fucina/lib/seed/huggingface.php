@@ -77,5 +77,23 @@ gr.Interface(fn=traduci, inputs="text", outputs="text", title="Italiano → Ingl
             dOrder(pSort(), ['import gradio as gr', 'def saluta(nome):', '    return f"Ciao {nome}!"', 'gr.Interface(fn=saluta, inputs="text", outputs="text").launch()'], L('Importa, definisci, crea l’interfaccia.', 'Import, define, create the interface.')),
             dMatch(pMatch(), [['gr.Interface', L('Crea l’interfaccia', 'Creates the interface')], ['fn', L('La funzione da chiamare', 'The function to call')], ['launch()', L('Avvia l’app', 'Starts the app')], ['requirements.txt', L('Librerie dello Space', 'The Space’s libraries')]], L('Una demo in cinque minuti.', 'A demo in five minutes.')),
         ]),
+        lesson('finetune', L('Fine-tuning e condivisione', 'Fine-tuning and sharing'), [
+            P('Il **fine-tuning** adatta un modello già addestrato a un compito tuo (per esempio classificare recensioni) con pochi dati. Con **PEFT/LoRA** si allenano solo piccoli strati aggiuntivi: serve molta meno memoria e il risultato pesa pochi megabyte.', '**Fine-tuning** adapts an already trained model to your own task (for example classifying reviews) with little data. With **PEFT/LoRA** only small extra layers are trained: it needs far less memory and the result weighs a few megabytes.'),
+            C('from transformers import AutoModelForSequenceClassification, Trainer, TrainingArguments
+
+modello = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+args = TrainingArguments(output_dir="recensioni", num_train_epochs=2)
+trainer = Trainer(model=modello, args=args, train_dataset=train, eval_dataset=test)
+trainer.train()
+trainer.push_to_hub()   # pubblica il modello sul tuo account', 'python'),
+            P('Prima di pubblicare scrivi la **model card**: dati usati, limiti, licenza, risultati. Tieni separati dati di addestramento e di **valutazione**, altrimenti i numeri saranno troppo ottimisti.', 'Before publishing write the **model card**: data used, limits, licence, results. Keep training and **evaluation** data separate, or the numbers will be too optimistic.'),
+        ], [
+            Q('ft1', L('Che cos’è il fine-tuning?', 'What is fine-tuning?'), [L('Adattare un modello addestrato a un compito tuo', 'Adapting a trained model to your task'), L('Addestrare da zero', 'Training from scratch'), L('Comprimere un file', 'Compressing a file'), L('Tradurre la model card', 'Translating the model card')], 0, L('Parti da un modello esistente.', 'You start from an existing model.')),
+            Q('ft2', L('Perché LoRA?', 'Why LoRA?'), [L('Allena pochi parametri, serve meno memoria', 'Trains few parameters, needs less memory'), L('Rende il modello più grande', 'Makes the model bigger'), L('Elimina i dati', 'Removes the data'), L('Serve solo per le immagini', 'Only for images')], 0, L('Strati piccoli aggiuntivi.', 'Small extra layers.')),
+            Q('ft3', L('Perché separare dati di valutazione?', 'Why keep evaluation data separate?'), [L('Per misurare onestamente il modello', 'To measure the model honestly'), L('Per risparmiare spazio', 'To save space'), L('Lo chiede la licenza', 'The licence requires it'), L('Non serve', 'It is not needed')], 0, L('Altrimenti i numeri mentono.', 'Otherwise the numbers lie.')),
+        ], task('python', L('Crea `TrainingArguments(output_dir="mio-modello", num_train_epochs=3)` e chiama `trainer.push_to_hub()`.', 'Create `TrainingArguments(output_dir="mio-modello", num_train_epochs=3)` and call `trainer.push_to_hub()`.'), '', [re('TrainingArguments\(\s*output_dir\s*=\s*["\']mio-modello["\']\s*,\s*num_train_epochs\s*=\s*3\s*\)', L('Gli argomenti sono giusti', 'The arguments are right')), re('trainer\.push_to_hub\(\s*\)', L('Pubblichi il modello', 'You publish the model'))], '', "args = TrainingArguments(output_dir=\"mio-modello\", num_train_epochs=3)\ntrainer.push_to_hub()"), [
+            dOrder(pSort(), ['modello = AutoModelForSequenceClassification.from_pretrained(nome)', 'args = TrainingArguments(output_dir="out")', 'trainer = Trainer(model=modello, args=args, train_dataset=train)', 'trainer.train()', 'trainer.push_to_hub()'], L('Carica, configura, allena, pubblica.', 'Load, configure, train, publish.')),
+            dMatch(pMatch(), [['Fine-tuning', L('Adattare un modello', 'Adapting a model')], ['LoRA', L('Pochi parametri allenati', 'Few trained parameters')], ['push_to_hub', L('Pubblica sull’Hub', 'Publishes to the Hub')], ['Model card', L('Dati, limiti, licenza', 'Data, limits, licence')]], L('Allenare e condividere.', 'Training and sharing.')),
+        ]),
     ],
 ];

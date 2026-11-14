@@ -95,5 +95,25 @@ ordineCreato.emetti({ id: 42 });', 'ts'),
             dMatch(pMatch(), [['Strategy', L('Algoritmi intercambiabili', 'Interchangeable algorithms')], ['Observer', L('Avvisare chi ascolta', 'Notifying listeners')], ['Command', L('Azione come oggetto', 'Action as object')], ['addEventListener', 'Observer']], L('Collaborare tra oggetti.', 'Objects collaborating.')),
             dFlash(pFlash(), [[L('In TypeScript una Strategy può essere una funzione', 'In TypeScript a Strategy can be a function'), true], [L('L’Observer non permette più ascoltatori', 'Observer does not allow several listeners'), false], [L('Il Command aiuta a implementare annulla', 'Command helps implement undo'), true], [L('I nomi dei pattern non servono a comunicare', 'Pattern names do not help communication'), false]], L('Un vocabolario comune.', 'A shared vocabulary.')),
         ]),
+        lesson('architecture', L('Architettura e refactoring', 'Architecture and refactoring'), [
+            P('L’**iniezione delle dipendenze** passa a un oggetto ciò di cui ha bisogno (un database, un servizio email) invece di farglielo creare dentro: il codice si testa sostituendo il vero servizio con un finto. È la “D” di SOLID in pratica.', '**Dependency injection** hands an object what it needs (a database, an email service) instead of letting it create it inside: the code can be tested by swapping the real service for a fake one. It is the “D” of SOLID in practice.'),
+            C('// Prima: dipendenza nascosta
+class Ordini { salva(o) { new MySqlDb().insert(o); } }
+
+// Dopo: dipendenza iniettata
+class Ordini {
+  constructor(db) { this.db = db; }
+  salva(o) { this.db.insert(o); }
+}
+const ordini = new Ordini(new DbFinto());   // nei test', 'js'),
+            P('Il **refactoring** migliora la struttura senza cambiare il comportamento, a piccoli passi e con i test verdi: estrarre una funzione, rinominare, togliere duplicati. I segnali (**code smell**): funzioni lunghissime, troppi parametri, codice copiato, nomi vaghi come `dati2`.', '**Refactoring** improves structure without changing behaviour, in small steps with green tests: extract a function, rename, remove duplication. The signals (**code smells**): very long functions, too many parameters, copied code, vague names like `data2`.'),
+        ], [
+            Q('ar1', L('Che cosa fa l’iniezione delle dipendenze?', 'What does dependency injection do?'), [L('Passa all’oggetto ciò di cui ha bisogno', 'Hands the object what it needs'), L('Crea tutto dentro la classe', 'Creates everything inside the class'), L('Inietta codice malevolo', 'Injects malicious code'), L('Cancella le dipendenze', 'Deletes dependencies')], 0, L('Così si testa con un finto.', 'So it can be tested with a fake.')),
+            Q('ar2', L('Che cosa non deve cambiare in un refactoring?', 'What must not change in a refactoring?'), [L('Il comportamento', 'The behaviour'), L('I nomi', 'The names'), L('La struttura', 'The structure'), L('I file', 'The files')], 0, L('Solo la forma migliora.', 'Only the shape improves.')),
+            Q('ar3', L('Quale è un code smell?', 'Which is a code smell?'), [L('Codice copiato in più punti', 'Code copied in several places'), L('Una funzione con un nome chiaro', 'A function with a clear name'), L('Un test verde', 'A green test'), L('Un commento utile', 'A useful comment')], 0, L('La duplicazione va tolta.', 'Duplication should go.')),
+        ], task('js', L('Scrivi la classe `Avvisi` con un `constructor(mailer)` che salva `this.mailer = mailer`.', 'Write the `Avvisi` class with a `constructor(mailer)` saving `this.mailer = mailer`.'), '', [re('class\s+Avvisi\s*\{', L('La classe esiste', 'The class exists')), re('constructor\(\s*mailer\s*\)\s*\{\s*this\.mailer\s*=\s*mailer', L('La dipendenza è iniettata', 'The dependency is injected'))], '', "class Avvisi {\n  constructor(mailer) { this.mailer = mailer; }\n}"), [
+            dMatch(pMatch(), [[L('Iniezione delle dipendenze', 'Dependency injection'), L('Passare i servizi da fuori', 'Passing services from outside')], ['Refactoring', L('Migliora senza cambiare il comportamento', 'Improves without changing behaviour')], [L('Estrai funzione', 'Extract function'), L('Spezza codice lungo', 'Splits long code')], ['Code smell', L('Segnale di problema', 'Problem signal')]], L('Codice che invecchia bene.', 'Code that ages well.')),
+            dFlash(pFlash(), [[L('Il refactoring si fa con i test verdi', 'Refactoring is done with green tests'), true], [L('Un refactoring aggiunge nuove funzioni', 'A refactoring adds new features'), false], [L('Un servizio iniettato si sostituisce nei test', 'An injected service can be swapped in tests'), true], [L('Nomi come dati2 sono chiari', 'Names like data2 are clear'), false]], L('Struttura sana.', 'Healthy structure.')),
+        ]),
     ],
 ];

@@ -2,10 +2,11 @@
 /**
  * MyCurriculum — the CV document: cleaning what the editor sends, and the public copy.
  *
- * settings  { template, accent, font, langs[], defaultLang, public, allowPdf, show{photo,email,phone,website,links,birth,location} }
+ * settings  { template, accent, font, langs[], defaultLang, public, allowPdf, pageNumbers, customLangs{code: {name, words}}, show{photo,email,phone,website,links,birth,location} }
  * profile   { firstName, lastName, email, phone, website, birthDate, links[{label,url}] }   (shared by every language)
  * content   { <lang>: { headline, location, summary, fields[{label,value,show}], sections[], footer } }
  * section   { id, type (timeline|skills|langs|list|text), kind, title, show, text, items[] }
+ * timeline item { title, org, place, start, end, current, text, url, eqf (0 = none, 1–8), grade }
  *
  * Everything the browser sends is rebuilt here field by field: unknown keys are dropped, strings are cut,
  * lists are capped. The public copy (web page and PDF) never contains what the owner chose to hide.
@@ -13,8 +14,9 @@
 
 declare(strict_types=1);
 
-const TEMPLATES = ['classic', 'modern', 'minimal', 'elegant'];
+const TEMPLATES = ['classic', 'modern', 'minimal', 'elegant', 'banner', 'timeline', 'compact', 'studio', 'monogram', 'contrast', 'swiss'];
 const SECTION_TYPES = ['timeline', 'skills', 'langs', 'list', 'text'];
+const FONTS = ['sans', 'inter', 'opensans', 'sourcesans', 'montserrat', 'poppins', 'serif', 'lora', 'merriweather', 'garamond', 'baskerville', 'playfair']; // see FONTS in assets/cv.js
 const SHOW_KEYS = ['photo', 'email', 'phone', 'website', 'links', 'birth', 'location'];
 
 function str_of($v, int $max): string
@@ -49,29 +51,68 @@ function default_settings(string $lang): array
 {
     return [
         'template' => 'modern', 'accent' => '#3D52D5', 'font' => 'sans',
-        'langs' => [$lang], 'defaultLang' => $lang, 'public' => false, 'allowPdf' => true,
+        'langs' => [$lang], 'defaultLang' => $lang, 'public' => false, 'allowPdf' => true, 'pageNumbers' => true,
         'show' => ['photo' => true, 'email' => true, 'phone' => true, 'website' => true, 'links' => true, 'birth' => false, 'location' => true],
     ];
+}
+
+const CV_WORD_KEYS = ['present', 'born', 'profile', 'contacts', 'native', 'eqf', 'grade', 'link', 'pageOf'];
+const MAX_CUSTOM_LANGS = 10;
+
+/**
+ * Languages added by the user besides CV_LANGS: { code => {name, words{}} }. The code is an ISO 639 code, maybe with a
+ * region (hr, cs, el, pt-br): it formats the dates. words: the small words printed on the CV (see CV_WORDS in i18n.js);
+ * a missing word falls back to English.
+ */
+function clean_custom_langs($c): array
+{
+    $out = [];
+    if (!is_array($c)) return $out;
+    foreach ($c as $code => $v) {
+        $code = strtolower((string)$code);
+        if (!preg_match('/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/', $code) || in_array($code, CV_LANGS, true) || !is_array($v)) continue;
+        $name = str_of($v['name'] ?? '', 40);
+        if ($name === '') continue;
+        $words = [];
+        foreach (CV_WORD_KEYS as $k) {
+            $w = str_of($v['words'][$k] ?? '', 60);
+            if ($w !== '') $words[$k] = $w;
+        }
+        if (isset($words['pageOf']) && (strpos($words['pageOf'], '{x}') === false || strpos($words['pageOf'], '{y}') === false)) unset($words['pageOf']);
+        $out[$code] = ['name' => $name, 'words' => $words];
+        if (count($out) >= MAX_CUSTOM_LANGS) break;
+    }
+    return $out;
+}
+
+function cv_lang_ok(string $l, array $custom): bool
+{
+    return in_array($l, CV_LANGS, true) || isset($custom[$l]);
 }
 
 function clean_settings($s, array $contentLangs): array
 {
     $s = is_array($s) ? $s : [];
+    $custom = clean_custom_langs($s['customLangs'] ?? null);
+    $contentLangs = array_values(array_filter($contentLangs, fn($l) => cv_lang_ok((string)$l, $custom)));
     $langs = [];
-    foreach ((array)($s['langs'] ?? []) as $l) if (in_array($l, CV_LANGS, true) && in_array($l, $contentLangs, true) && !in_array($l, $langs, true)) $langs[] = $l;
+    foreach ((array)($s['langs'] ?? []) as $l) if (is_string($l) && cv_lang_ok($l, $custom) && in_array($l, $contentLangs, true) && !in_array($l, $langs, true)) $langs[] = $l;
     foreach ($contentLangs as $l) if (!in_array($l, $langs, true)) $langs[] = $l;
+    $custom = array_intersect_key($custom, array_flip($langs)); // definitions of removed languages go too
     $show = [];
     foreach (SHOW_KEYS as $k) $show[$k] = bool_of($s['show'][$k] ?? false);
     $accent = (string)($s['accent'] ?? '');
     return [
         'template' => in_array($s['template'] ?? '', TEMPLATES, true) ? $s['template'] : 'modern',
         'accent' => preg_match('/^#[0-9a-fA-F]{6}$/', $accent) ? strtoupper($accent) : '#3D52D5',
-        'font' => ($s['font'] ?? '') === 'serif' ? 'serif' : 'sans',
+        'font' => in_array($s['font'] ?? '', FONTS, true) ? $s['font'] : 'sans',
         'langs' => $langs,
         'defaultLang' => in_array($s['defaultLang'] ?? '', $langs, true) ? $s['defaultLang'] : ($langs[0] ?? 'en'),
         'public' => bool_of($s['public'] ?? false),
         'allowPdf' => bool_of($s['allowPdf'] ?? true),
+        'pageNumbers' => bool_of($s['pageNumbers'] ?? true), // "Page X of Y" at the bottom of the PDF
         'show' => $show,
+        'customLangs' => $custom,
     ];
 }
 
@@ -104,11 +145,15 @@ function clean_item(string $type, array $i): array
                 'title' => str_of($i['title'] ?? '', 120), 'org' => str_of($i['org'] ?? '', 120), 'place' => str_of($i['place'] ?? '', 80),
                 'start' => str_of($i['start'] ?? '', 20), 'end' => str_of($i['end'] ?? '', 20), 'current' => bool_of($i['current'] ?? false),
                 'text' => str_of($i['text'] ?? '', 3000),
+                // optional: a link (projects), the EQF level 1–8 and the final grade (education)
+                'url' => url_of($i['url'] ?? ''), 'eqf' => max(0, min(8, (int)($i['eqf'] ?? 0))), 'grade' => str_of($i['grade'] ?? '', 40),
             ];
         case 'skills':
             return ['name' => str_of($i['name'] ?? '', 80), 'level' => max(0, min(5, (int)($i['level'] ?? 0)))];
         case 'langs':
-            return ['name' => str_of($i['name'] ?? '', 60), 'level' => str_of($i['level'] ?? '', 60)];
+            // dots: null = from the written level (C1, Native…), 0 = none, 1–5 chosen by hand
+            $dots = isset($i['dots']) && is_numeric($i['dots']) ? max(0, min(5, (int)$i['dots'])) : null;
+            return ['name' => str_of($i['name'] ?? '', 60), 'level' => str_of($i['level'] ?? '', 60), 'dots' => $dots];
         default: // list
             return [
                 'title' => str_of($i['title'] ?? '', 160), 'subtitle' => str_of($i['subtitle'] ?? '', 160), 'date' => str_of($i['date'] ?? '', 40),
@@ -147,11 +192,11 @@ function clean_lang_content($c): array
     ];
 }
 
-function clean_content($c): array
+function clean_content($c, array $custom = []): array
 {
     $out = [];
     if (!is_array($c)) return $out;
-    foreach ($c as $lang => $v) if (in_array($lang, CV_LANGS, true)) $out[$lang] = clean_lang_content($v);
+    foreach ($c as $lang => $v) if (cv_lang_ok((string)$lang, $custom)) $out[$lang] = clean_lang_content($v);
     return $out;
 }
 
@@ -170,15 +215,33 @@ function load_cv(int $uid): ?array
         'content' => $content,
         'views' => (int)$r['views'],
         'updatedAt' => $r['updated_at'],
+        'rev' => (int)($r['rev'] ?? 0),
     ];
 }
 
-function save_cv(int $uid, array $settings, array $profile, array $content): void
+/**
+ * Saves the CV. $base: the revision the editor started from; when the stored one is newer (another window or device
+ * saved in the meantime) nothing is written and null is returned. Otherwise the new revision.
+ */
+function save_cv(int $uid, array $settings, array $profile, array $content, ?int $base = null): ?int
 {
     $now = now_utc();
+    $json = [json_out($settings), json_out($profile), json_out($content)];
+    if ($base !== null) {
+        $st = db()->prepare('UPDATE ' . t('cvs') . ' SET settings = ?, profile = ?, content = ?, updated_at = ?, rev = rev + 1 WHERE user_id = ? AND rev = ?');
+        $st->execute([...$json, $now, $uid, $base]);
+        if ($st->rowCount() === 0) {
+            $exists = db()->prepare('SELECT 1 FROM ' . t('cvs') . ' WHERE user_id = ?');
+            $exists->execute([$uid]);
+            if ($exists->fetchColumn()) return null; // someone saved a newer revision
+        } else return $base + 1;
+    }
     db()->prepare('INSERT INTO ' . t('cvs') . ' (user_id, settings, profile, content, created_at, updated_at) VALUES (?,?,?,?,?,?)
-        ON DUPLICATE KEY UPDATE settings = VALUES(settings), profile = VALUES(profile), content = VALUES(content), updated_at = VALUES(updated_at)')
-        ->execute([$uid, json_out($settings), json_out($profile), json_out($content), $now, $now]);
+        ON DUPLICATE KEY UPDATE settings = VALUES(settings), profile = VALUES(profile), content = VALUES(content), updated_at = VALUES(updated_at), rev = rev + 1')
+        ->execute([$uid, ...$json, $now, $now]);
+    $st = db()->prepare('SELECT rev FROM ' . t('cvs') . ' WHERE user_id = ?');
+    $st->execute([$uid]);
+    return (int)$st->fetchColumn();
 }
 
 function json_out($v): string
@@ -258,7 +321,7 @@ function public_cv(array $user, array $cv): array
     $hash = $show['photo'] ? photo_hash((int)$user['id']) : null;
     return [
         'username' => $user['username'],
-        'settings' => ['template' => $s['template'], 'accent' => $s['accent'], 'font' => $s['font'], 'langs' => $s['langs'], 'defaultLang' => $s['defaultLang'], 'allowPdf' => $s['allowPdf'], 'show' => $show],
+        'settings' => ['template' => $s['template'], 'accent' => $s['accent'], 'font' => $s['font'], 'langs' => $s['langs'], 'defaultLang' => $s['defaultLang'], 'allowPdf' => $s['allowPdf'], 'pageNumbers' => $s['pageNumbers'], 'show' => $show, 'customLangs' => $s['customLangs']],
         'profile' => $profile,
         'content' => $content,
         'photo' => $hash ? 'api/?r=cv.photo&user=' . rawurlencode($user['username']) . '&v=' . $hash : null,

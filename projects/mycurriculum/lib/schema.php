@@ -67,6 +67,7 @@ function schema_statements(string $p): array
             `profile` TEXT NOT NULL,
             `content` MEDIUMTEXT NOT NULL,
             `views` INT UNSIGNED NOT NULL DEFAULT 0,
+            `rev` INT UNSIGNED NOT NULL DEFAULT 0,
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             " . $user('cv_user') . "
@@ -86,6 +87,9 @@ function schema_statements(string $p): array
 function install_schema(PDO $pdo, string $prefix): void
 {
     foreach (schema_statements($prefix) as $sql) $pdo->exec($sql);
+    // v2: the revision of each CV (tables created by v1 do not have it)
+    $has = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$prefix}cvs' AND COLUMN_NAME = 'rev'")->fetchColumn();
+    if (!(int)$has) $pdo->exec("ALTER TABLE `{$prefix}cvs` ADD `rev` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `views`");
     $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)")
         ->execute([(string)SCHEMA_VERSION]);
 }
