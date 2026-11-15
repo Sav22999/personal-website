@@ -500,6 +500,32 @@ input, select {
     min-width: 0;
 }
 
+/* The name column may shrink with the card: long names and level titles are cut, never pushed past the border */
+.brand {
+    max-width: min(46vw, 420px);
+}
+
+.brand > div:last-child {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.brand .rname {
+    max-width: 100%;
+}
+
+.brand button.xp {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.brand .lvl {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .logo-small svg {
     width: 38px;
     height: 38px;
@@ -2049,6 +2075,10 @@ button.plot {
 }
 
 /* Desktop: the side panel is open, the HUD moves out of its way */
+.sheet-up .status {
+    display: none;
+}
+
 .sheet-open .topbar {
     right: 430px;
 }
@@ -2737,7 +2767,10 @@ button.clock-time { border: 0; background: transparent; cursor: pointer; font: i
     .floorpick { top: 50%; transform: translateY(-50%); }
     .camctl { bottom: 136px; gap: 5px; }
     .camctl .cam { width: 34px; height: 34px; }
-    .brand { max-width: calc(100vw - 190px); }
+    .brand { max-width: calc(100vw - 132px); }
+    /* the pills sit on the right, out of the flow: the coins beside the name card, stars and gifts on the row
+       below it, so the card can use the width they would otherwise reserve */
+    .topbar .pills { position: absolute; top: 0; right: 0; max-width: 220px; row-gap: 22px; }
     .brand .lvl { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     .brand .xp { max-width: 100%; flex-direction: column; align-items: flex-start; gap: 3px; }
     /* The clock stays inside the screen: no date on a phone, and a long rush-hour label is cut */
@@ -2820,3 +2853,7 @@ body.building .camctl .cam { width: 38px; height: 38px; }
 .quality-opt small { font-size: 11px; line-height: 1.25; }
 .quality-opt.on { border-color: var(--primary); background: var(--surface-2); }
 @media (max-width: 420px) { .quality-opts { grid-template-columns: 1fr; } }
+
+/* "Continue with Google" in the Android app (native account picker instead of Google's web button) */
+.btn-google { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 300px; max-width: 100%; background: #fff; color: #1F1F1F; border: 1px solid #747775; border-radius: 999px; padding: 10px 16px; font-weight: 600; }
+.btn-google .g-logo { display: inline-flex; }

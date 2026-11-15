@@ -211,7 +211,60 @@ function langSwitch(rerender) {
     return h('div.lang-switch', ['it', 'en'].map(l => h('button' + (getLang() === l ? '.on' : ''), {type: 'button', onclick: () => (setLang(l), rerender())}, l.toUpperCase())));
 }
 
+// ---------------------------------------------------------------- the Android app (android/: a WebView, see MainActivity)
+
+/** The Android app's bridge (window.ForkvilleAndroid), when the game runs inside it. */
+const nativeApp = window.ForkvilleAndroid || null;
+const nativeWait = {};
+window.ForkvilleNative = {
+    // Called by the Android app with the result of a native request: (kind, value, error)
+    result(kind, value, error) {
+        const w = nativeWait[kind];
+        delete nativeWait[kind];
+        if (w) (error ? w.reject(new Error(error)) : w.resolve(value));
+    },
+};
+
+/**
+ * The Android back key (MainActivity asks before leaving): closes what is open, one thing at a time; true when the
+ * page used it, false at the top (then the app goes to the background).
+ */
+window.onAndroidBack = function () {
+    if (document.querySelector('.modal-bg')) return closeModal(), true;
+    if (S.statusMenu) return toggleStatusMenu(false), true;
+    if (S.wallMenu) return (S.wallMenu = false), renderHud(), true;
+    if (S.sheet) return closeSheet(), true;
+    if (S.mode === 'build') {
+        if (S.editor?.placing) S.editor.cancelPlacing();
+        else if (S.editor?.selected) S.editor.select(null);
+        else exitBuild();
+        return true;
+    }
+    if (S.mode === 'visit') return goHome(), true;
+    return false;
+};
+
 function mountGoogle(slot) {
+    if (nativeApp?.googleSignIn) { // Android app: Google sign-in does not run in a WebView, the system account picker does
+        const b = h('button.btn.btn-google', {
+            type: 'button', onclick: async () => {
+                b.disabled = true;
+                try {
+                    const token = await new Promise((resolve, reject) => {
+                        nativeWait.google = {resolve, reject};
+                        nativeApp.googleSignIn(S.config.googleClientId);
+                    });
+                    if (token) googleSignIn(token);
+                } catch (e) {
+                    if (e.message !== 'cancelled') toast(t('google_unavailable'), 'bad');
+                } finally {
+                    b.disabled = false;
+                }
+            },
+        }, h('span.g-logo', {html: G_LOGO}), t('continue_google'));
+        slot.replaceChildren(b);
+        return;
+    }
     const init = () => {
         window.google.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => googleSignIn(r.credential)});
         window.google.accounts.id.renderButton(slot, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()});
@@ -986,6 +1039,8 @@ function updateInsets() {
     if (S.sheet) narrow ? (bottom = window.innerHeight * 0.82) : (right = Math.min(420, window.innerWidth));
     if (panel) bottom = Math.max(bottom, panel.offsetHeight);
     document.body.classList.toggle('sheet-open', !!S.sheet && !narrow);
+    // On a phone the sheet rises from the bottom: the status chips would sit on its title
+    document.body.classList.toggle('sheet-up', !!S.sheet && narrow);
     // On a phone the camera and floor buttons sit in a row just above the build panel
     document.body.classList.toggle('building', !!panel);
     if (panel && !panel._ro && window.ResizeObserver) (panel._ro = new ResizeObserver(() => updateInsets())).observe(panel);
@@ -2030,6 +2085,8 @@ function modal(title, content, cls = '') {
     const el = h('div.modal-bg', {onclick: (e) => e.target === el && closeModal()}, h('div.modal' + (cls ? '.' + cls : ''), h('h2', title), content));
     document.body.append(el);
 }
+
+const G_LOGO = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
 
 /** Windows that must not be lost (a level-up) wait for the open one to close. */
 const modalQueue = [];

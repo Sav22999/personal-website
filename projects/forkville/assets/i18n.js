@@ -712,3 +712,5 @@ Object.assign(STRINGS.en, {rating_window: 'average of the last {n} guests', not_
 Object.assign(STRINGS.it, {rating_window: 'media degli ultimi {n} clienti', not_rated: 'nuovo'});
 Object.assign(STRINGS.en, {quality_title: 'Graphics', quality_low: 'Low', quality_medium: 'Medium', quality_high: 'High', quality_low_d: 'Only the restaurant: the lightest', quality_medium_d: 'Also some houses around, fewer cars', quality_high_d: 'Everything: houses, streets, cars and people everywhere'});
 Object.assign(STRINGS.it, {quality_title: 'Grafica', quality_low: 'Bassa', quality_medium: 'Media', quality_high: 'Alta', quality_low_d: 'Solo il ristorante: la più leggera', quality_medium_d: 'Anche qualche casa intorno, meno auto', quality_high_d: 'Tutto: case, strade, auto e pedoni ovunque'});
+Object.assign(STRINGS.en, {continue_google: 'Continue with Google', google_unavailable: 'Google sign-in is not available right now.'});
+Object.assign(STRINGS.it, {continue_google: 'Continua con Google', google_unavailable: 'L’accesso con Google ora non è disponibile.'});

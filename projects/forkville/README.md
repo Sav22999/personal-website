@@ -142,6 +142,24 @@ while away give half the XP (`OFFLINE_XP`).
 - **Statement**: every coin movement is in `ledger` (30 days), shown by tapping the coins.
 - **Music and sounds**: synthesized live with Web Audio (`assets/audio.js`), no audio files.
 
+## Android app
+
+`android/` is the Android Studio project (as for the other games): the web game in a full-screen WebView
+(`com.saverio.forkville`, WebGL, portrait or landscape as the phone is held). Native parts, exposed to the page as
+`window.ForkvilleAndroid` only on the Forkville pages:
+
+- "Continue with Google" with the system account picker (Credential Manager): Google sign-in does not run inside a
+  WebView, so the app gets the ID token and the page sends it to `auth.google` as on the website (`mountGoogle` in
+  `assets/app.js`).
+- The back key asks the page first (`window.onAndroidBack`): it closes a window, the status menu, a panel, the piece
+  being placed, build mode or a visit, one at a time; at the top the app goes to the background.
+- Links to the game (also the email confirmation `?verify=…`) open in the app; other links open in the browser.
+
+Release: copy `keystore.properties.sample` to `keystore.properties` (git-ignored) with the upload key, raise
+`versionCode` / `versionName` in `app/build.gradle.kts`, then Build › Generate Signed App Bundle. For the app links,
+add the package and the Play signing key's SHA-256 to the site's `/.well-known/assetlinks.json` (see
+`assetlinks.sample.json`). Icons and store graphics: `python3 tools/make_icons.py`; listing texts: `store/listing.md`.
+
 ## Admin panel
 
 `admin.html` (also linked from Account in the game, for administrators). Administrators are accounts with

@@ -102,7 +102,42 @@ icon(512, rounded_corners=False, scale=.66).save(out / 'icon-maskable-512.png')
 icon(180, rounded_corners=False).save(out / 'apple-touch-icon.png')
 (out / 'favicon.svg').write_text('''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B2876"/><stop offset="1" stop-color="#11103A"/></linearGradient><linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD65C"/><stop offset="1" stop-color="#FF481C"/></linearGradient></defs><rect width="100" height="100" rx="23" fill="url(#n)"/><g transform="translate(9 9) scale(.82)"><path d="M27 25 8.500 50 27 75M73 25l18.500 25L73 75" fill="none" stroke="url(#h)" stroke-width="11.500" stroke-linecap="round" stroke-linejoin="round"/><path fill="#FFF4CD" d="M58 8 31 55h16l-7 37 30-51H54z"/></g></svg>
 ''')
-icon(512, rounded_corners=False).save(ROOT / 'android/play-store-icon-512.png')
+# Google Play wants the store icon without transparency (24-bit PNG)
+icon(512, rounded_corners=False).convert('RGB').save(ROOT / 'android/play-store-icon-512.png')
+
+
+def feature_graphic(w=1024, h=500):
+    """The Google Play feature graphic: the mark on the left, name and tagline on the right, on midnight blue."""
+    from PIL import ImageFont
+    k = 2
+    W, H = w * k, h * k
+    img = gradient(max(W, H), NIGHT_TOP, NIGHT_BOTTOM).resize((W, H)).convert('RGBA')
+    # a warm glow behind the mark, as if the forge were lit
+    glow = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(glow).ellipse((W * .02, H * .02, W * .5, H * .98), fill=90)
+    img.alpha_composite(Image.merge('RGBA', (*Image.new('RGB', (W, H), (255, 96, 30)).split(), glow.filter(ImageFilter.GaussianBlur(60 * k)))))
+    m = mark(380 * k, .9, anvil=False)
+    img.alpha_composite(m, (int(60 * k), (H - m.height) // 2))
+    paths = ['/System/Library/Fonts/SFNSRounded.ttf', '/System/Library/Fonts/Supplemental/Arial Rounded Bold.ttf', '/System/Library/Fonts/Supplemental/Arial Bold.ttf']
+    path = next(p for p in paths if Path(p).exists())
+    big, small = ImageFont.truetype(path, 132 * k), ImageFont.truetype(path, 40 * k)
+    for f in (big, small):
+        try:
+            f.set_variation_by_name('Bold')
+        except Exception:
+            pass
+    d = ImageDraw.Draw(img)
+    x = 470 * k
+    d.text((x, 150 * k), 'Fucina', font=big, fill=STEEL)
+    d.text((x + 6 * k, 318 * k), 'Learn to code by playing', font=small, fill=HOT_TOP + (255,))
+    for cx, cy, r in [(440, 80, 5), (960, 70, 4), (930, 430, 6), (500, 440, 3.5)]:
+        d.ellipse(((cx - r) * k, (cy - r) * k, (cx + r) * k, (cy + r) * k), fill=(255, 214, 92, 255))
+    return img.resize((w, h), Image.LANCZOS).convert('RGB')
+
+
+store = ROOT / 'android/store/en-GB'
+store.mkdir(parents=True, exist_ok=True)
+feature_graphic().save(store / 'feature-graphic-1024x500.png', optimize=True)
 res = ROOT / 'android/app/src/main/res'
 for name, px in {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}.items():
     folder = res / f'mipmap-{name}'

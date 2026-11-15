@@ -49,8 +49,9 @@ def house(d, x, y, w, h, wall, roof, k):
     d.rectangle([x + w * 0.7, y - h * 0.82, x + w * 0.88, y - h * 0.6], fill=(255, 226, 150))
 
 
-def og_image():
-    W, H, k = 1200, 630, 2
+def og_image(W=1200, H=630):
+    k = 2
+    sy = H / 630  # the feature graphic (1024×500) is the same picture, a little shorter
     img = Image.new('RGBA', (W * k, H * k))
     g = ImageDraw.Draw(img)
     for y in range(H * k):
@@ -59,15 +60,18 @@ def og_image():
     d = ImageDraw.Draw(img)
     # Awning stripes along the top
     for i in range(0, W * k, 120 * k):
-        d.rectangle([i, 0, i + 60 * k, 64 * k], fill=(224, 72, 60))
-    d.rectangle([0, 64 * k, W * k, 70 * k], fill=INK)
+        d.rectangle([i, 0, i + 60 * k, int(64 * sy * k)], fill=(224, 72, 60))
+    d.rectangle([0, int(64 * sy * k), W * k, int(70 * sy * k)], fill=INK)
     # A little village along the bottom
-    d.rectangle([0, 560 * k, W * k, H * k], fill=(156, 191, 106))
-    for i, x in enumerate(range(640, 1200, 110)):
-        house(d, x * k, 562 * k, 80 * k, (90 + (i % 3) * 22) * k, (255, 243, 224), ROOFS[i % 4], k)
+    ground = int((H - 70) * k)
+    d.rectangle([0, ground, W * k, H * k], fill=(156, 191, 106))
+    hk = sy * sy  # shorter houses on the shorter picture, so they stay clear of the tagline
+    for i, x in enumerate(range(int(W * (0.53 if sy >= 1 else 0.6)), W, 110)):
+        house(d, x * k, ground + 2 * k, 80 * k, int((90 + (i % 3) * 22) * hk) * k, (255, 243, 224), ROOFS[i % 4], k)
     # The icon
-    big = logo(300 * k)
-    img.alpha_composite(big, (90 * k, 140 * k))
+    size = int(300 * sy)
+    big = logo(size * k)
+    img.alpha_composite(big, (int(90 * W / 1200) * k, int((H - size) / 2 + 10 * sy) * k))
     font_paths = ['/System/Library/Fonts/SFNSRounded.ttf', '/System/Library/Fonts/Supplemental/Arial Rounded Bold.ttf', '/System/Library/Fonts/Supplemental/Arial Bold.ttf']
     font = small = None
     for p in font_paths:
@@ -77,8 +81,9 @@ def og_image():
             break
     font = font or ImageFont.load_default()
     small = small or ImageFont.load_default()
-    d.text((430 * k, 180 * k), 'Forkville', fill=INK, font=font)
-    d.text((436 * k, 330 * k), 'Your own little restaurant, in 3D', fill=(138, 110, 92), font=small)
+    x0 = int(90 * W / 1200) + size + 40
+    d.text((x0 * k, int(180 * sy) * k), 'Forkville', fill=INK, font=font)
+    d.text(((x0 + 6) * k, int(330 * sy) * k), 'Your own little restaurant, in 3D', fill=(138, 110, 92), font=small)
     return img.convert('RGB').resize((W, H), Image.LANCZOS)
 
 
@@ -89,6 +94,40 @@ logo(512, maskable=True).save(ICONS / 'icon-maskable-512.png')
 logo(180, radius=False).save(ICONS / 'apple-touch-icon.png')
 logo(32).save(ICONS / 'favicon-32.png')
 og_image().save(ICONS / 'og-image.png')
+
+# ---------------------------------------------------------------- the Android app (android/)
+
+def no_sky(svg):
+    """The logo without its sky (background, clouds and sun): the restaurant alone, for the adaptive icon's layer."""
+    svg = re.sub(r'<rect width="64" height="64" rx="15" fill="url\(#fvbg\)"/>', '', svg)
+    svg = re.sub(r'<g fill="#FFFFFF" opacity="\.85">.*?</g>', '', svg)
+    return re.sub(r'<circle cx="51" cy="7\.5"[^>]*/>', '', svg)
+
+
+def layer(size, scale=0.8):
+    """The adaptive icon's foreground (108 dp): the restaurant in the middle, inside the 66 dp safe zone."""
+    body = re.search(r'(</defs>)(.*)(</svg>)', no_sky(SVG), re.S)
+    svg = no_sky(SVG)[:body.start(2)] + f'<g transform="translate(32 33) scale({scale}) translate(-32 -33)">' + body.group(2) + '</g>' + no_sky(SVG)[body.end(2):]
+    return render(svg, size)
+
+
+def round_icon(size):
+    """The round launcher icon (older launchers): the whole logo in a circle."""
+    return render(SVG.replace('<rect width="64" height="64" rx="15"', '<rect width="64" height="64" rx="32"'), size)
+
+
+A = ROOT / 'android'
+if A.is_dir():
+    (A / 'store' / 'en-GB').mkdir(parents=True, exist_ok=True)
+    logo(512, radius=False).convert('RGB').save(A / 'play-store-icon-512.png')  # 512×512, no transparency
+    og_image(1024, 500).save(A / 'store' / 'en-GB' / 'feature-graphic-1024x500.png', optimize=True)
+    for name, launcher, layers in (('mdpi', 48, 108), ('hdpi', 72, 162), ('xhdpi', 96, 216), ('xxhdpi', 144, 324), ('xxxhdpi', 192, 432)):
+        r = A / 'app' / 'src' / 'main' / 'res' / f'mipmap-{name}'
+        r.mkdir(parents=True, exist_ok=True)
+        logo(launcher).save(r / 'ic_launcher.png')
+        round_icon(launcher).save(r / 'ic_launcher_round.png')
+        layer(layers).save(r / 'ic_launcher_foreground.png')
+
 site = ROOT.parent.parent / 'images' / 'projects'
 if site.is_dir():
     logo(256).save(site / 'forkville.png')
