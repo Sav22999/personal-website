@@ -83,5 +83,53 @@
         "CD:7D:93:2D:7F:1F:BE:1D:A3:32:C2:74:89:92:5E:84:71:D6:0C:D8:AD:41:FD:AF:C8:90:94:3F:85:F8:84:34"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.mycurriculum",
+      "sha256_cert_fingerprints": [
+        "C0:E6:E3:05:58:91:64:E3:34:DC:87:3A:4B:F2:C3:A7:4A:96:3D:15:DE:36:21:49:A2:C1:4C:A5:37:1A:9C:8D"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.thinkhop",
+      "sha256_cert_fingerprints": [
+        "F7:47:22:F2:54:0E:47:F0:60:BC:07:1A:6D:06:A2:F0:65:CF:86:68:9D:7D:0D:8A:1D:0C:3E:28:C0:55:A2:23"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.fucina",
+      "sha256_cert_fingerprints": [
+        "71:7D:59:05:17:B6:CD:4D:41:01:FE:38:5A:B9:3A:46:95:E0:DA:E5:7D:04:54:3D:6D:B3:D8:C2:31:85:EB:59"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.forkville",
+      "sha256_cert_fingerprints": [
+        "24:7E:D8:B1:25:D9:6C:51:43:A1:E4:49:B2:52:0F:57:2B:D3:2D:B6:22:7D:CE:4F:F3:31:C5:0B:E3:B7:B8:7D"
+      ]
+    }
   }
 ]

@@ -4303,8 +4303,11 @@ button.profile-stat:hover, a.profile-stat:hover {
 .alpha-tag {
     background: var(--red-soft);
     color: var(--red);
-    margin-left: 6px;
     vertical-align: middle;
+}
+
+.nav-chat .alpha-tag {
+    margin-left: 0;
 }
 
 .nav-chat {

@@ -7,7 +7,7 @@
  * are lowered automatically so the room is always visible.
  */
 import * as THREE from '../vendor/three.module.min.js';
-import {furnitureModel, floorMaterial, wallMaterial, cropModel, mat, forkMesh, PALETTE, glowMat, setNightGlow, useArrow} from './models.js';
+import {furnitureModel, floorMaterial, wallMaterial, cropModel, mat, forkMesh, PALETTE, glowMat, setNightGlow, useArrow, liftCabin} from './models.js';
 import {buildNeighbourhood, Traffic, applyHoliday} from './town.js';
 
 const WALL_H = 2.4;
@@ -544,6 +544,7 @@ export class World {
     setRestaurant(r, opts = {}) {
         this.root.clear();
         this.items.clear();
+        this.lifts = new Map();
         this.walls = [];
         this.W = r.size; // width (x)
         this.D = r.depth || r.size; // depth (z): the front wall with the door is at z = D
@@ -977,6 +978,23 @@ export class World {
             stop.traverse(o => (o.userData.itemId = it.id));
             obj.add(stop);
         }
+        if (it.k.startsWith('lift')) { // its doors on each floor, and the cabin that rides between them
+            const f0 = it.f || 0, doors = {};
+            obj.traverse(o => {
+                if (o.userData.liftDoor == null) return;
+                let p = o, f = f0;
+                while (p && p !== obj) {
+                    if (p.userData.floor != null) f = p.userData.floor;
+                    p = p.parent;
+                }
+                (doors[f] ||= []).push({mesh: o, x0: o.position.x, side: o.userData.liftDoor});
+            });
+            const cabin = liftCabin();
+            cabin.traverse(o => (o.userData.itemId = it.id));
+            obj.add(cabin);
+            (this.lifts ||= new Map()).set(it.id, {f0, doors, cabin, at: f0, open: {}, target: {}});
+            this.liftAnim(it.id, {});
+        }
         obj.traverse(o => {
             if (o.userData.buildOnly) o.visible = !!this.buildMarks;
             if (o.isPointLight) Object.assign(o, {intensity: 0.4 + (this.lastGlow || 0) * 4.5, decay: 1.3, distance: Math.max(o.distance, 4.5)});
@@ -1017,6 +1035,7 @@ export class World {
             if (o.isPointLight) Object.assign(o, {intensity: 0.4 + (this.lastGlow || 0) * 4.5, decay: 1.3, distance: Math.max(o.distance, 4.5)});
         }); // arrows and window markers: build mode only
         }
+        for (const id of this.lifts?.keys() || []) this.liftAnim(id, {}); // the cabin shows on the floor it is at
         for (const kind of ['agent', 'fx']) (this.layers?.[kind] || []).forEach((l, f) => l && (l.visible = f === k));
         // The floors below are shaded, so the one being looked at stands out
         if (this.shades) this.root.remove(this.shades);
@@ -1064,7 +1083,39 @@ export class World {
         }
     }
 
+    /**
+     * Moves a lift (the simulation drives it while someone rides): cabin = the floor the cabin is at (fractional while
+     * moving), doors = {floor: 0 closed … 1 open} targets (the doors slide there smoothly, see updateLifts).
+     */
+    liftAnim(id, {cabin = null, doors = null}) {
+        const L = this.lifts?.get(id);
+        if (!L) return;
+        if (cabin != null) L.at = cabin;
+        if (doors) Object.assign(L.target, doors);
+        L.cabin.position.y = (L.at - L.f0) * FH;
+        L.cabin.visible = Math.abs(L.at - (this.viewFloor || 0)) < 0.98 && (this.viewFloor || 0) >= L.f0;
+    }
+
+    liftFloor(id) {
+        return this.lifts?.get(id)?.at ?? 0;
+    }
+
+    /** Lift doors slide towards their targets (about half a second to open or close). */
+    updateLifts(dt) {
+        for (const L of this.lifts?.values() || []) for (const [f, list] of Object.entries(L.doors)) {
+            const cur = L.open[f] ?? 0, goal = L.target[f] ?? 0;
+            if (Math.abs(cur - goal) < 0.001) continue;
+            const k = cur + Math.sign(goal - cur) * Math.min(Math.abs(goal - cur), dt * 2.2);
+            L.open[f] = k;
+            for (const d of list) { // each door slides to its side, folding behind the post
+                d.mesh.position.x = d.x0 + d.side * 0.36 * k;
+                d.mesh.scale.x = 1 - 0.75 * k;
+            }
+        }
+    }
+
     removeItem(id) {
+        this.lifts?.delete(id);
         if (this.windowItems?.delete(id)) this.rebuildWallsSoon();
         const o = this.items.get(id);
         if (o) this.itemGroup.remove(o);
@@ -1655,6 +1706,7 @@ export class World {
         if (this.sky) this.sky.position.copy(this.camera.position);
         if (this.celestial) this.celestial.position.copy(this.camera.position);
         this.updateParticles(dt);
+        this.updateLifts(dt);
         for (const l of this.tableLabels || []) {
             const p = this.project(new THREE.Vector3(+l.dataset.x, +(l.dataset.y || 1.3), +l.dataset.z));
             l.style.transform = `translate(${p.x}px, ${p.y}px)`;

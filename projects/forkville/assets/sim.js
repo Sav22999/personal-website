@@ -322,6 +322,7 @@ export class Sim {
         this.tiers = {fridge: 0, sink: 0, counter: 0};
         const tierOf = (k) => items[k].tier || 1;
         this.links = new Map(); // tile key → tiles on other floors (stairs and lifts)
+        this.liftStops = new Map(); // "x,z" of the tile in front of a lift's doors → {id, f0, cx, cz, floor}
         const link = (a, b) => {
             const ka = a.z * W + a.x, kb = b.z * W + b.x;
             (this.links.get(ka) || this.links.set(ka, []).get(ka)).push(kb);
@@ -336,10 +337,16 @@ export class Sim {
                 const f = floorOf(it.z), tiles = this.world.footprint(it, items).tiles;
                 if (tag === 'lift') { // the same spot in front of the doors, on every floor the lift reaches
                     const stops = [entry];
+                    // Each stop knows its lift (for the ride: cabin, doors, inside the shaft; see rideLift)
+                    const info = {id: it.id, f0: f, cx: it.x + 0.5, cz: it.z + 0.5};
+                    this.liftStops.set(entry.x + ',' + entry.z, {...info, floor: f});
                     for (let g = f + 1; g < this.rects.length; g++) {
                         if (!this.world.shaftTiles(g, this.r.layout, items).has(it.x + ',' + (it.z - f * S))) break;
                         const st = {x: entry.x, z: entry.z + (g - f) * S};
-                        if (free(st.x, st.z)) stops.push(st);
+                        if (free(st.x, st.z)) {
+                            stops.push(st);
+                            this.liftStops.set(st.x + ',' + st.z, {...info, floor: g});
+                        }
                     }
                     for (let i = 0; i < stops.length; i++) for (let j = i + 1; j < stops.length; j++) link(stops[i], stops[j]);
                 } else { // stairs: up at the front, out on the floor above just past the top end
@@ -885,6 +892,7 @@ export class Sim {
         const w = a.way[0];
         // Changing floor (stairs or lift): a short climb in real space, then on with the walk on the other floor
         const fw = floorOf(w.z), fa = a.floor ?? floorOf(a.pos.z);
+        if (a.ride || (fw !== fa && !a.climb && this.liftRide(a, w, fa, fw))) return this.rideLift(a, dt);
         if (fw !== fa || a.climb) {
             if (!a.climb) {
                 const from = realPos(a.pos), to = realPos(new THREE.Vector3(w.x, 0, w.z));
@@ -927,6 +935,82 @@ export class Sim {
         } else a.pos.set(a.pos.x + dx / d * step, 0, a.pos.z + dz / d * step);
         a.mesh.position.x = a.pos.x;
         a.mesh.position.z = a.pos.z;
+    }
+
+    /** Starts a lift ride when this floor change goes from one stop of a lift to another stop of the same lift. */
+    liftRide(a, w, fa, fw) {
+        const A = this.liftStops?.get(a.tile.x + ',' + a.tile.z), B = this.liftStops?.get(w.tile?.x + ',' + w.tile?.z);
+        if (!A || !B || A.id !== B.id || !this.world.liftFloor) return false;
+        const from0 = this.world.liftFloor(A.id);
+        // Seconds of each phase: the cabin may first have to come from another floor
+        const T = {call: Math.abs(from0 - fa) * 1.1, open: 0.55, walk: 0.7, close: 0.5, ride: 0.6 + Math.abs(fw - fa) * 1.1, open2: 0.55, out: 0.7};
+        a.ride = {A, w, fa, fw, t: 0, T, from0, start: {x: a.pos.x, z: a.pos.z}, inPos: {x: A.cx, z: A.cz + (fa - A.f0) * S}};
+        return true;
+    }
+
+    /**
+     * The ride, phase by phase: the cabin comes, the doors open, in, turn round, the doors close, the cabin goes up
+     * (or down) with them inside, the doors open on the other floor, out; the doors close behind them.
+     */
+    rideLift(a, dt) {
+        const R = a.ride, T = R.T, id = R.A.id, ease = (k) => k * k * (3 - 2 * k);
+        R.t += dt;
+        let t = R.t;
+        const phase = (d) => {
+            if (t < d) return t / d;
+            t -= d;
+            return null;
+        };
+        const walk = (p, q, k) => {
+            a.mesh.position.set(p.x + (q.x - p.x) * k, 0, p.z + (q.z - p.z) * k);
+            if (Math.hypot(q.x - p.x, q.z - p.z) > 0.01) a.yaw = Math.atan2(q.x - p.x, q.z - p.z);
+            a.rideStill = false;
+        };
+        const stand = () => (a.rideStill = true); // waiting for the doors or riding: standing still
+        let k;
+        if ((k = phase(T.call)) != null) { // the cabin comes to this floor
+            this.world.liftAnim(id, {cabin: R.from0 + (R.fa - R.from0) * ease(k)});
+            return stand();
+        }
+        if ((k = phase(T.open)) != null) {
+            this.world.liftAnim(id, {cabin: R.fa, doors: {[R.fa]: 1}});
+            return stand();
+        }
+        if ((k = phase(T.walk)) != null) return walk(R.start, R.inPos, k);
+        if ((k = phase(T.close)) != null) { // inside: they turn to face the doors, which close
+            a.yaw = Math.atan2(R.start.x - R.inPos.x, R.start.z - R.inPos.z);
+            this.world.liftAnim(id, {doors: {[R.fa]: 0}});
+            return stand();
+        }
+        if ((k = phase(T.ride)) != null) { // up (or down), smoothly: they ride in the cabin
+            const f = R.fa + (R.fw - R.fa) * ease(k);
+            this.world.liftAnim(id, {cabin: f});
+            a.mesh.position.set(R.inPos.x, (f - R.fa) * FH, R.inPos.z);
+            return stand();
+        }
+        if ((k = phase(T.open2)) != null) {
+            this.world.liftAnim(id, {cabin: R.fw, doors: {[R.fw]: 1}});
+            a.mesh.position.set(R.inPos.x, (R.fw - R.fa) * FH, R.inPos.z);
+            return stand();
+        }
+        // Out on the other floor (its own layer: the same spot, FLOOR_STRIDE further along z)
+        const inside = {x: R.inPos.x, z: R.inPos.z + (R.fw - R.fa) * S};
+        if (a.floor !== R.fw) this.toFloor(a, R.fw);
+        if ((k = phase(T.out)) != null) return walk(inside, R.w, k);
+        // Arrived: the doors close behind, the walk goes on
+        this.world.liftAnim(id, {doors: {[R.fw]: 0}});
+        a.ride = null;
+        a.pos.set(R.w.x, 0, R.w.z);
+        a.tile = R.w.tile;
+        a.way.shift();
+        a.mesh.position.copy(a.pos);
+        a.rideStill = false;
+        if (!a.way.length) {
+            a.state = 'idle';
+            const fn = a.then;
+            a.then = null;
+            fn && fn();
+        }
     }
 
     face(a, x, z) {
@@ -2134,7 +2218,7 @@ export class Sim {
                 else if (a.role === 'customer') this.updateCustomer(a, dt);
             }
             if (dt > 0) this.turn(a, realDt * Math.max(1, this.speed));
-            let anim = a.state === 'walk' ? (a.anim === 'carry' ? 'carry' : 'walk') : a.anim === 'walk' ? 'idle' : a.anim;
+            let anim = a.state === 'walk' ? (a.ride && a.rideStill ? 'idle' : a.anim === 'carry' ? 'carry' : 'walk') : a.anim === 'walk' ? 'idle' : a.anim;
             if (a.anim2 && this.t < a.anim2.until && a.state !== 'walk') anim = a.anim2.name;
             a.clock = (a.clock || a.id * 3.1) + realDt * this.speed;
             animatePerson(a.mesh, anim, a.clock, {seated: a.anim === 'sit' || a.anim === 'eat', mood: a.mood, energy: a.energy, reading: a.state === 'wantOrder', tool: a.state === 'walk' ? a.tool : null});

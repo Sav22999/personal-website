@@ -312,7 +312,47 @@
 
     const G_LOGO = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
 
+    /**
+     * Google's button arrives late (first its script, then a frame of its own): until that frame has loaded a disabled
+     * look-alike holds its place, so the button is there from the start and the form below does not jump.
+     */
+    function googleHold(slot, label, dark, width) {
+        const ph = document.createElement('button');
+        ph.type = 'button';
+        ph.className = 'g-hold' + (dark ? ' dark' : '');
+        ph.disabled = true;
+        ph.setAttribute('aria-busy', 'true');
+        ph.style.width = width + 'px';
+        ph.innerHTML = G_LOGO + '<span></span>';
+        ph.lastChild.textContent = label;
+        slot.replaceChildren(ph);
+        return {
+            // render(host) draws Google's button in host, kept invisible over the look-alike until its frame has loaded
+            swap(render) {
+                const host = document.createElement('div');
+                host.className = 'g-host';
+                slot.append(host);
+                let frame = null;
+                const done = () => {
+                    mo.disconnect();
+                    host.classList.add('ready');
+                    ph.remove();
+                };
+                const watch = () => {
+                    const f = host.querySelector('iframe');
+                    if (f && f !== frame) (frame = f).addEventListener('load', done, {once: true});
+                };
+                const mo = new MutationObserver(watch);
+                mo.observe(host, {childList: true, subtree: true});
+                render(host);
+                watch();
+                setTimeout(done, 8000); // never wait forever on Google's frame
+            },
+        };
+    }
+
     async function googleButton(slot, onCredential, text) {
+        const label = t(text === 'signup_with' ? 'google_signup' : 'google_continue');
         if (native && native.googleSignIn) {
             // Android app: Google Identity Services does not run in a WebView, the system account picker does
             const b = h('button.btn.btn-google.btn-block', {
@@ -330,10 +370,14 @@
                         b.disabled = false;
                     }
                 }
-            }, h('span.g', {html: G_LOGO}), h('span', t(text === 'signup_with' ? 'google_signup' : 'google_continue')));
+            }, h('span.g', {html: G_LOGO}), h('span', label));
             slot.replaceChildren(b);
             return;
         }
+        const root = document.documentElement;
+        const dark = root.getAttribute('data-theme') === 'dark' || (!root.hasAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+        const width = Math.min(Math.max(slot.clientWidth, 220), 400);
+        const hold = googleHold(slot, label, dark, width);
         try {
             const g = await loadGis();
             g.accounts.id.initialize({
@@ -345,13 +389,10 @@
                 itp_support: true,
                 use_fedcm_for_button: true,
             });
-            const root = document.documentElement;
-            const dark = root.getAttribute('data-theme') === 'dark' || (!root.hasAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
-            slot.replaceChildren();
-            g.accounts.id.renderButton(slot, {
+            hold.swap(host => g.accounts.id.renderButton(host, {
                 type: 'standard', theme: dark ? 'filled_black' : 'outline', size: 'large', text: text || 'continue_with', shape: 'pill',
-                logo_alignment: 'center', locale: lang(), width: Math.min(Math.max(slot.clientWidth, 220), 400),
-            });
+                logo_alignment: 'center', locale: lang(), width,
+            }));
         } catch (e) {
             slot.replaceChildren(h('p.muted.center', t('google_off')));
         }

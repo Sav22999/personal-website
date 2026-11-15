@@ -114,6 +114,12 @@ while away give half the XP (`OFFLINE_XP`).
   way when joining a lane, enter a crossing only when it is free, stop for pedestrians and use their indicators; some
   come down the side streets and turn onto the main road or leave it, people also arrive along the side streets and
   walk only on sidewalks, crossing on the zebras. Cars go down the garage ramp slowly, along an S curve, tilted.
+- **Lift rides** (`rideLift` in sim.js, `liftAnim` / `updateLifts` in scene.js): the cabin comes to the floor, the
+  doors slide open, the person walks in and turns round, the doors close, the cabin rises or goes down with them
+  inside (eased), the doors open on the other floor, out, and the doors close behind.
+- **Pedestrian signals**: at both ends of every crossing at the junctions (red standing figure, green walking one,
+  blinking before it turns red): across the side streets green with the main road, across the main road green with
+  the side streets. Walkers wait for their green at the kerb; some coming down a side street cross the main road.
 - **Roundabouts**: on the second road; every car goes round the same way, gives way to the cars already on the ring
   and (like at the crossings) a car on the ring or in a crossing ignores the cars waiting at its edge, so nobody
   deadlocks. Cars run along the second road through both roundabouts and between it and the main road by the south

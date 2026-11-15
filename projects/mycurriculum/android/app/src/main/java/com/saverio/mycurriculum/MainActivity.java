@@ -302,7 +302,11 @@ public class MainActivity extends Activity {
 
                     @Override
                     public void onError(GetCredentialException e) {
-                        if (e instanceof GetCredentialCancellationException) sendResult("google", null, "cancelled");
+                        // "[16] Account reauth failed" also arrives as a cancellation, right after an account is picked: Google refused
+                        // this app (its package + signing SHA-1 is not an Android OAuth client in Google Cloud). Not the user: say so.
+                        String m = e.getMessage() == null ? "" : e.getMessage();
+                        if (m.contains("[16]") || m.toLowerCase(java.util.Locale.ROOT).contains("reauth")) sendResult("google", null, "error 16");
+                        else if (e instanceof GetCredentialCancellationException) sendResult("google", null, "cancelled");
                         else sendResult("google", null, e.getClass().getSimpleName());
                     }
                 });

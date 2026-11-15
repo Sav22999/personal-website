@@ -114,6 +114,7 @@ export function buildNeighbourhood(world, r) {
     // Where the side streets cross the main road (same places as in buildHouses): junctions with traffic lights
     world.junctions = [-lotW - 9.5, W + OUT + 5.5];
     world.trafficLights = [];
+    world.pedLights = [];
     for (let x = cx - len / 2 + 1; x < cx + len / 2; x += 3) {
         if (Math.abs(x - doorMidOf(world, W)) < 2) continue;
         if (world.junctions.some(j => Math.abs(x - j) < 4.4)) continue; // no centre line across a junction
@@ -224,6 +225,7 @@ export function buildNeighbourhood(world, r) {
     else {
         world.junctions = [];
         world.trafficLights = [];
+        world.pedLights = [];
     }
     buildPlot(world, W, D, rnd);
     // Every street lamp gets an empty group for the holiday ribbons
@@ -494,6 +496,54 @@ function trafficLight(axis) {
     return {group: g, axis, red: lamp('#E63946', 2.84), yellow: lamp('#F6C945', 2.6), green: lamp('#4CAF50', 2.36), state: null};
 }
 
+/** A little person drawn on a canvas for the pedestrian signal: standing (red) or walking (green). */
+const pedIcons = {};
+function pedIcon(kind) {
+    if (pedIcons[kind]) return pedIcons[kind];
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    g.fillStyle = '#111';
+    g.fillRect(0, 0, 64, 64);
+    g.fillStyle = kind === 'walk' ? '#6BFF7A' : '#FF4D4D';
+    g.strokeStyle = g.fillStyle;
+    g.lineCap = 'round';
+    g.lineWidth = 7;
+    g.beginPath();
+    g.arc(32, 13, 7, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    if (kind === 'walk') { // mid-stride, arms swinging
+        g.moveTo(31, 22); g.lineTo(28, 40); g.lineTo(18, 56);
+        g.moveTo(28, 40); g.lineTo(40, 55);
+        g.moveTo(30, 26); g.lineTo(19, 36);
+        g.moveTo(30, 26); g.lineTo(42, 33);
+    } else { // standing still
+        g.moveTo(32, 22); g.lineTo(32, 40);
+        g.moveTo(32, 40); g.lineTo(26, 57);
+        g.moveTo(32, 40); g.lineTo(38, 57);
+        g.moveTo(32, 25); g.lineTo(22, 40);
+        g.moveTo(32, 25); g.lineTo(42, 40);
+    }
+    g.stroke();
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return (pedIcons[kind] = t);
+}
+
+/** A pedestrian signal on a pole (facing +z before rotation): a red standing figure over a green walking one. */
+function pedLight(axis) {
+    const g = new THREE.Group(), dark = mat('#2C2C30');
+    g.add(box(0.08, 2.0, 0.08, dark, 0, 0, 0), box(0.3, 0.62, 0.18, dark, 0, 1.75, 0.04), box(0.36, 0.05, 0.22, dark, 0, 2.37, 0.04));
+    const panel = (kind, y) => {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), new THREE.MeshBasicMaterial({map: pedIcon(kind), color: '#444444'}));
+        m.position.set(0, y, 0.135);
+        g.add(m);
+        return m;
+    };
+    return {group: g, axis, red: panel('stop', 2.21), green: panel('walk', 1.93), state: null};
+}
+
 /** A roundabout: asphalt disc, a grassy island with a kerb and a little tree, a dashed ring and give-way lines. */
 function roundabout(world, x, z) {
     const g = new THREE.Group();
@@ -731,6 +781,19 @@ function buildHouses(world, W, D, level, lotW, rnd) {
             tl.group.rotation.y = rot;
             add(world, tl.group);
             world.trafficLights.push(tl);
+        }
+        // Pedestrian signals at both ends of each crossing, facing the people waiting on the other side:
+        // across the side street ('main': green with the main road), across the main road ('side': green with the side streets)
+        for (const [px, pz, rot, axis] of [
+            [x - 2.15, roadZ - 2.6, Math.PI / 2, 'main'], [x + 2.15, roadZ - 2.6, -Math.PI / 2, 'main'],
+            [x - 2.15, roadZ + 3.1, Math.PI / 2, 'main'], [x + 2.15, roadZ + 3.1, -Math.PI / 2, 'main'],
+            [x - 3.1, roadZ - 2.3, 0, 'side'], [x - 3.1, roadZ + 2.3, Math.PI, 'side'],
+            [x + 3.1, roadZ - 2.3, 0, 'side'], [x + 3.1, roadZ + 2.3, Math.PI, 'side']]) {
+            const pl = pedLight(axis);
+            pl.group.position.set(px, 0, pz);
+            pl.group.rotation.y = rot;
+            add(world, pl.group);
+            world.pedLights.push(pl);
         }
         roundabout(world, x, zF);
         // A zebra crossing on each arm of the roundabout, just outside the ring (cars give way to people on them)
@@ -1008,7 +1071,11 @@ export class Traffic {
         const js = this.world.junctions || [];
         if (fromSide && js.length && !far) { // down a side street's sidewalk (the side towards where they are going)
             const j = js[Math.floor(Math.random() * js.length)], x = j + (east ? 2.55 : -2.55);
-            pts = [new THREE.Vector3(x, 0, -OUT - 34), new THREE.Vector3(x, 0, z), new THREE.Vector3(xEnd, 0, z)];
+            pts = [new THREE.Vector3(x, 0, -OUT - 34), new THREE.Vector3(x, 0, z)];
+            if (Math.random() < 0.5) { // and some cross the main road on the zebra, on their green, to the far sidewalk
+                const cx = j + (east ? 3.1 : -3.1), zf = st.farWalk;
+                pts.push(new THREE.Vector3(cx, 0, z), Object.assign(new THREE.Vector3(cx, 0, zf), {cross: true, light: 'side'}), new THREE.Vector3(xEnd, 0, zf));
+            } else pts.push(new THREE.Vector3(xEnd, 0, z));
         } else pts = [new THREE.Vector3(east ? st.x0 + 4 : st.x1 - 4, 0, z), new THREE.Vector3(xEnd, 0, z)];
         const mesh = personModel('customer', null, Math.random() * 1000);
         mesh.position.copy(pts[0]);
@@ -1043,6 +1110,18 @@ export class Traffic {
             for (const c of ['red', 'yellow', 'green']) tl[c].material.emissiveIntensity = c === s2 ? 2.2 : 0.05;
         }
         this.light = {main, side};
+        // Pedestrians: green while the cars they cross are stopped (a little before the cars' green comes back),
+        // the green figure blinks in its last seconds
+        const ped = {main: lc < 9 ? 'walk' : lc < 11 ? 'blink' : 'stop', side: lc >= 14.5 && lc < 18 ? 'walk' : lc >= 18 && lc < 20 ? 'blink' : 'stop'};
+        this.ped = ped;
+        const blinkPed = (this.lightClock % 0.6) < 0.3;
+        for (const pl of this.world.pedLights || []) {
+            const st = ped[pl.axis] === 'blink' ? (blinkPed ? 'walk' : 'off') : ped[pl.axis];
+            if (st === pl.state) continue;
+            pl.state = st;
+            pl.red.material.color.set(st === 'stop' ? '#FFFFFF' : '#444444');
+            pl.green.material.color.set(st === 'walk' ? '#FFFFFF' : '#444444');
+        }
         // Passing cars: along the main road, down a side street onto it, or off it into a side street
         this.carIn -= dt;
         const passing = this.cars.filter(c => c.passing).length;
@@ -1189,10 +1268,16 @@ export class Traffic {
             const pos = w.mesh.position;
             const dx = target.x - pos.x, dz = target.z - pos.z, dist = Math.hypot(dx, dz);
             let go = w.speed;
+            // About to cross on a signal: wait at the kerb until the green figure shows (never start on a blinking one)
+            if (target.light && !w.crossing) {
+                if ((this.ped?.[target.light] ?? 'walk') !== 'walk') go = 0;
+                else w.crossing = true;
+            }
+            if (!target.light) w.crossing = false;
             // Along the main road, a side street crossing is ahead: wait at the kerb unless the walkers' light is green
             if (Math.abs(dx) > Math.abs(dz) && Math.abs(pos.z - st.roadZ) < 4) for (const j of this.world.junctions || []) {
                 const kerb = j - Math.sign(dx) * 2.35, before = (kerb - pos.x) * Math.sign(dx);
-                if (before > -0.05 && before < 0.6 && main !== 'green') go = 0;
+                if (before > -0.05 && before < 0.6 && this.ped?.main !== 'walk') go = 0; // the pedestrian signal across the side street
             }
             const step = Math.min(dist, go * dt);
             if (dist > 0.001 && step > 0) {

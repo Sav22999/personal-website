@@ -397,3 +397,10 @@ body.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: non
     .pub-main { padding: 0; }
     .pub-main .cv-web { box-shadow: none; }
 }
+
+/* Google's button arrives late: until its frame has loaded a disabled look-alike holds the place (googleHold) */
+.google-slot { position: relative; }
+.g-hold { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 40px; max-width: 100%; margin: 0; padding: 0 12px; border: 1px solid #dadce0; border-radius: 999px; background: #fff; color: #3c4043; font: 500 14px/1 Roboto, Arial, sans-serif; letter-spacing: .25px; box-shadow: none; opacity: .65; cursor: progress; }
+.g-hold.dark { background: #131314; border-color: #8e918f; color: #e3e3e3; }
+.g-hold svg { width: 18px; height: 18px; flex: none; }
+.g-host:not(.ready) { position: absolute; inset: 0; opacity: 0; pointer-events: none; }

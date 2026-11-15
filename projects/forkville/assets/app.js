@@ -244,6 +244,65 @@ window.onAndroidBack = function () {
     return false;
 };
 
+let gisPromise = null;
+
+/** Google Identity Services, loaded once (a re-render while it loads must not add the script again). */
+function loadGis() {
+    if (!gisPromise) {
+        gisPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://accounts.google.com/gsi/client';
+            s.async = true;
+            s.onload = () => resolve(window.google);
+            s.onerror = () => {
+                gisPromise = null;
+                reject(new Error('Google unreachable'));
+            };
+            document.head.append(s);
+        });
+    }
+    return gisPromise;
+}
+
+/**
+ * Google's button arrives late (first its script, then a frame of its own): until that frame has loaded a disabled
+ * look-alike holds its place, so the button is there from the start and the form below does not jump.
+ */
+function googleHold(slot, label, dark, width) {
+    const ph = document.createElement('button');
+    ph.type = 'button';
+    ph.className = 'g-hold' + (dark ? ' dark' : '');
+    ph.disabled = true;
+    ph.setAttribute('aria-busy', 'true');
+    ph.style.width = width + 'px';
+    ph.innerHTML = G_LOGO + '<span></span>';
+    ph.lastChild.textContent = label;
+    slot.replaceChildren(ph);
+    return {
+        // render(host) draws Google's button in host, kept invisible over the look-alike until its frame has loaded
+        swap(render) {
+            const host = document.createElement('div');
+            host.className = 'g-host';
+            slot.append(host);
+            let frame = null;
+            const done = () => {
+                mo.disconnect();
+                host.classList.add('ready');
+                ph.remove();
+            };
+            const watch = () => {
+                const f = host.querySelector('iframe');
+                if (f && f !== frame) (frame = f).addEventListener('load', done, {once: true});
+            };
+            const mo = new MutationObserver(watch);
+            mo.observe(host, {childList: true, subtree: true});
+            render(host);
+            watch();
+            setTimeout(done, 8000); // never wait forever on Google's frame
+        },
+    };
+}
+
 function mountGoogle(slot) {
     if (nativeApp?.googleSignIn) { // Android app: Google sign-in does not run in a WebView, the system account picker does
         const b = h('button.btn.btn-google', {
@@ -265,16 +324,11 @@ function mountGoogle(slot) {
         slot.replaceChildren(b);
         return;
     }
-    const init = () => {
-        window.google.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => googleSignIn(r.credential)});
-        window.google.accounts.id.renderButton(slot, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()});
-    };
-    if (window.google?.accounts?.id) return init();
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.onload = init;
-    document.head.append(s);
+    const hold = googleHold(slot, t('continue_google'), false, 300);
+    loadGis().then((g) => {
+        g.accounts.id.initialize({client_id: S.config.googleClientId, callback: (r) => googleSignIn(r.credential)});
+        hold.swap((host) => g.accounts.id.renderButton(host, {theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300, locale: getLang()}));
+    }, () => put(slot, h('p.note', t('google_unavailable'))));
 }
 
 async function googleSignIn(credential, extra = {}) {

@@ -1207,10 +1207,19 @@ Object.assign(FURNITURE, {
         return group(box(0.94, 0.06, 0.94, '#5D6D7E', 0, 0, 0, {metalness: 0.5}), box(0.94, 0.08, 0.94, '#5D6D7E', 0, 2.38, 0, {metalness: 0.5}),
             ...[[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]].map(([x, z]) => box(0.06, 2.4, 0.06, '#5D6D7E', x, 0, z, {metalness: 0.5})),
             box(0.88, 2.3, 0.02, '#CFE8F2', 0, 0.06, -0.45, glassM), box(0.02, 2.3, 0.88, '#CFE8F2', -0.45, 0.06, 0, glassM), box(0.02, 2.3, 0.88, '#CFE8F2', 0.45, 0.06, 0, glassM),
-            box(0.42, 2.2, 0.03, '#B8BEC6', -0.21, 0.08, 0.46, {metalness: 0.6, roughness: 0.25}), box(0.42, 2.2, 0.03, '#B8BEC6', 0.21, 0.08, 0.46, {metalness: 0.6, roughness: 0.25}),
+            // The two sliding doors (scene.js opens them: userData.liftDoor = which way they slide)
+            Object.assign(box(0.42, 2.2, 0.03, '#B8BEC6', -0.21, 0.08, 0.46, {metalness: 0.6, roughness: 0.25}), {userData: {liftDoor: -1}}),
+            Object.assign(box(0.42, 2.2, 0.03, '#B8BEC6', 0.21, 0.08, 0.46, {metalness: 0.6, roughness: 0.25}), {userData: {liftDoor: 1}}),
             glow(new THREE.BoxGeometry(0.16, 0.08, 0.02), '#7FD1F0', 0, 2.22, 0.48), box(0.06, 0.14, 0.02, '#2C2C30', 0.5, 1.1, 0.46), ball(0.015, '#FFD23F', 0.5, 1.13, 0.475, {emissive: '#FFD23F', glow: 1}, 6));
     },
 });
+
+/** The lift's cabin, which rides up and down the shaft: a floor, a back rail, a mirror and a ceiling light. */
+export function liftCabin() {
+    return group(box(0.84, 0.05, 0.84, '#8A9097', 0, 0.02, 0, {metalness: 0.5}), box(0.84, 0.04, 0.84, '#D8DDE2', 0, 2.26, 0, {metalness: 0.4}),
+        box(0.7, 0.03, 0.03, '#C9CED4', 0, 0.95, -0.38, {metalness: 0.8, roughness: 0.2}), box(0.5, 0.9, 0.01, '#DDEFF6', 0, 1.15, -0.41, {metalness: 0.6, roughness: 0.05}),
+        glow(new THREE.BoxGeometry(0.4, 0.02, 0.4), '#FFF4D6', 0, 2.24, 0));
+}
 
 // ---------------------------------------------------------------- seasonal pieces (Valentine, Easter, summer, autumn, Christmas)
 
