@@ -211,7 +211,10 @@
         hasNativeGoogle: !!(native && native.googleSignIn),
         googleSignIn: clientId => nativeCall('google', () => native.googleSignIn(clientId)),
         notificationsSupported: () => !!native || 'Notification' in window,
-        notificationPermission: () => native ? String(native.notificationPermission()) : ('Notification' in window ? Notification.permission : 'denied'),
+        notificationPermission: () => native && native.notificationPermission ? String(native.notificationPermission()) : ('Notification' in window ? Notification.permission : 'denied'),
+        // Notifications with the app closed through Firebase: false in older app versions and in builds without Firebase
+        pushAvailable: () => !!(native && native.pushAvailable && native.pushAvailable()),
+        pushToken: () => nativeCall('push', () => native.pushToken()),
         requestNotifications: () => native ? nativeCall('notify', () => native.requestNotificationPermission()) : Notification.requestPermission(),
         notify: (title, body) => {
             if (native) {

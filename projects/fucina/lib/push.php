@@ -7,6 +7,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/fcm.php'; // the Android apps
+
 const NOTIFY_KINDS = ['daily', 'streak', 'prizes', 'friends'];
 const NOTIFY_LIVE = ['prizes', 'friends'];
 const NOTIFY_SCHEDULED = ['daily', 'streak'];
@@ -100,6 +102,7 @@ function notify_pending(int $uid): array
 
 function push_endpoint_allowed(string $url): bool
 {
+    if (fcm_is($url)) return fcm_endpoint_valid($url);
     $p = parse_url($url);
     if (($p['scheme'] ?? '') !== 'https' || empty($p['host'])) return false;
     foreach (PUSH_HOSTS as $h) {
@@ -156,12 +159,19 @@ function vapid_header(string $endpoint, array $keys, string $subject): ?string
 /** Wakes up the devices of some users. A device that no longer exists is forgotten. */
 function send_pushes(array $userIds): void
 {
-    if (!$userIds || !function_exists('curl_multi_init') || !($keys = vapid_keys())) return;
+    if (!$userIds || !function_exists('curl_multi_init')) return;
+    $keys = vapid_keys();
+    $native = [];
     $in = implode(',', array_map('intval', $userIds));
     $subs = db()->query('SELECT id, endpoint FROM ' . t('push_subscriptions') . " WHERE user_id IN ($in)")->fetchAll();
     $mh = curl_multi_init();
     $handles = [];
     foreach ($subs as $s) {
+        if (fcm_is($s['endpoint'])) {
+            $native[(int)$s['id']] = $s['endpoint'];
+            continue;
+        }
+        if (!$keys) continue;
         $auth = vapid_header($s['endpoint'], $keys, 'https://www.saveriomorelli.com/projects/fucina/');
         if (!$auth) continue;
         $ch = curl_init($s['endpoint']);
@@ -183,4 +193,5 @@ function send_pushes(array $userIds): void
         curl_multi_remove_handle($mh, $ch);
     }
     curl_multi_close($mh);
+    foreach (fcm_send($native) as $id) $drop->execute([$id]);
 }

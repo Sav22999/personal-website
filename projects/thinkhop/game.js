@@ -554,7 +554,22 @@
         if (screen === 'home') showHome();
     });
 
+    /** Inside the Google Play app (the Android WebView adds ThinkHopApp/Android to the user agent). */
+    function isAndroidApp() {
+        return !!window.ThinkHopAndroid || /ThinkHopApp\/Android/.test(navigator.userAgent || '');
+    }
+
+    /** A computer rather than a phone or tablet: no install or notification tips there. */
+    function isDesktop() {
+        const ua = navigator.userAgent || '';
+        if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean' && navigator.userAgentData.mobile) return false;
+        if (/Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(ua)) return false;
+        if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return false; // iPadOS presents itself as a Mac
+        return true;
+    }
+
     function isAppInstalled() {
+        if (isAndroidApp()) return true;
         if (window.matchMedia && (
             window.matchMedia('(display-mode: standalone)').matches ||
             window.matchMedia('(display-mode: fullscreen)').matches ||
@@ -576,6 +591,7 @@
     }
 
     function areNotificationsActive() {
+        if (isAndroidApp()) return store.get('notify_device') === true && !!store.get('native_endpoint');
         if (!('Notification' in window)) return false;
         if (Notification.permission !== 'granted') return false;
         if (store.get('notify_device') === false) return false;
@@ -692,6 +708,7 @@
 
     function homeTips() {
         const tips = [];
+        if (isDesktop()) return null;
         const isInstalled = isAppInstalled();
         const notifyActive = areNotificationsActive();
 
@@ -707,7 +724,8 @@
             }));
         }
 
-        if (!notifyActive && !store.get('tip_dismiss_notify')) {
+        // In the app the tip appears only when this version can receive notifications
+        if (!notifyActive && !store.get('tip_dismiss_notify') && (!isAndroidApp() || (S && S.pushSupported()))) {
             tips.push(makeHomeTip({
                 id: 'notify',
                 iconName: 'bell',
@@ -870,8 +888,13 @@
     applyTheme();
     showHome();
     let reportsChecked = false;
+    let deviceChecked = false;
     A.start(() => {
         if (screen === 'home') showHome();
+        if (!deviceChecked && A.user() && S && S.refreshDevice) {
+            deviceChecked = true;
+            S.refreshDevice();
+        }
         if (!reportsChecked && A.user() && window.ThinkHopReports) {
             reportsChecked = true;
             window.ThinkHopReports.checkClosed();

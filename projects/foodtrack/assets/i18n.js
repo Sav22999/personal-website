@@ -91,7 +91,7 @@
             "Someone plans a meal": "Qualcuno pianifica un pasto",
             "Members and household": "Membri e casa",
             "Someone joins or leaves, the household changes": "Qualcuno entra o esce, la casa cambia",
-            "With the app open you see what the others do right away. In the browser it also arrives with the app closed; in the Android app it can take about 15 minutes.": "Con l’app aperta vedi subito cosa fanno gli altri. Nel browser gli avvisi arrivano anche con l’app chiusa; nell’app Android possono servire circa 15 minuti.",
+            "With the app open you see what the others do right away. With the app closed it arrives as a notification, in the browser and in the Android app.": "Con l’app aperta vedi subito cosa fanno gli altri. Con l’app chiusa arriva una notifica, nel browser e nell’app Android.",
             "When you share a household, you can also choose what to hear about the other members.": "Quando condividi una casa, potrai scegliere anche cosa sapere degli altri membri.",
             "Undone": "Annullata",
             "View actions and undo accidental changes": "Vedi le azioni e annulla modifiche per errore",

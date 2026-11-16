@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.25.0';
+    const VERSION = '1.25.1';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.25.1', date: '2026-11-16', it: ['Nell’app Android le notifiche arrivano anche ad app chiusa'], en: ['In the Android app notifications arrive even when the app is closed']},
         {v: '1.25.0', date: '2026-11-14', it: ['50 nuovi livelli: ogni corso ne ha almeno cinque, dagli assistenti AI al design, da Git a Excel', 'I corsi iniziati e non finiti sono in cima, nella home e nella pagina dei corsi, dal più recente'], en: ['50 new levels: every course has at least five, from AI assistants to design, from Git to Excel', 'Courses started and not finished are at the top, on the home page and the courses page, most recent first']},
         {v: '1.24.0', date: '2026-11-13', it: ['Il certificato dice in che lingua hai seguito il corso, e puoi ottenerlo in più lingue: se lo hai già in italiano, puoi fare l’esame anche in inglese', 'Nella ricerca dei corsi i linguaggi si aprono e chiudono con un pulsante; le categorie restano sempre visibili'], en: ['The certificate says which language you took the course in, and you can earn it in more than one: if you already have it in Italian, you can take the exam in English too', 'In the course search the languages open and close with a button; the categories stay always visible']},
         {v: '1.23.0', date: '2026-11-13', it: ['14 nuovi corsi di design: UX base, intermedio e avanzato, UX su mobile, su desktop e in realtà virtuale, UI base e intermedio, UI su mobile, pattern di interfaccia, Material Design, design per iOS, Fluent Design e Bootstrap', 'Nuovi corsi: come funzionano i motori di ricerca e i crawler, e come funzionano gli LLM', 'Nuova categoria: Design'], en: ['14 new design courses: UX basics, intermediate and advanced, UX on mobile, on desktop and in virtual reality, UI basics and intermediate, UI on mobile, UI design patterns, Material Design, iOS design, Fluent Design and Bootstrap', 'New courses: how search engines and crawlers work, and how LLMs work', 'New category: Design']},
@@ -148,10 +149,16 @@
     const langName = code => ({it: t('Italian'), en: t('English')})[code] || String(code).toUpperCase();
     const certsOf = c => c.certificates || (c.certificate ? [c.certificate] : []);
 
+    let deviceChecked = false;
+
     function applyState(d) {
         S.state = d;
         S.user = d.user;
         showSparks();
+        if (!deviceChecked && d.user) {
+            deviceChecked = true;
+            refreshNativeDevice();
+        }
     }
 
     /** The counter in the app bar stays on screen while the content below it changes. */
@@ -1385,7 +1392,9 @@
         root.replaceChildren(h('div.auth', h('div.auth-top', mascot('happy', 'auth-pet'), h('h1', changing ? t('Change username') : t('Choose your username')), h('p', t('This is how others find you'))), h('div.auth-body', form)));
     }
 
-    const pushReady = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    // In the Android app notifications go through Firebase (UI.app.pushToken), in the browser through Web Push
+    const nativePush = () => UI.app.pushAvailable();
+    const pushReady = () => nativePush() || ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window);
 
     function keyBytes(text) {
         const raw = atob(text.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - text.length % 4) % 4));
@@ -1394,11 +1403,32 @@
 
     /** This device receives notifications when the browser allows them and it is subscribed. */
     async function deviceSubscription() {
+        if (nativePush()) {
+            const endpoint = UI.store.get('nativeEndpoint', '');
+            return endpoint && UI.app.notificationPermission() === 'granted' ? {endpoint} : null;
+        }
         if (!pushReady() || Notification.permission !== 'granted') return null;
         return (await navigator.serviceWorker.ready).pushManager.getSubscription();
     }
 
     async function setDevice(on) {
+        if (nativePush()) {
+            if (!on) {
+                const endpoint = UI.store.get('nativeEndpoint', '');
+                if (endpoint) await Api.post('push.unsubscribe', {endpoint});
+                UI.store.set('nativeEndpoint', '');
+                return;
+            }
+            let endpoint;
+            try {
+                endpoint = 'fcm:' + await UI.app.pushToken();
+            } catch (e) {
+                throw new Error(e.message === 'denied' ? t('Permission denied: you can turn them on in the phone settings.') : t('Notifications are not available on this device.'));
+            }
+            await Api.post('push.subscribe', {endpoint});
+            UI.store.set('nativeEndpoint', endpoint);
+            return;
+        }
         const reg = await navigator.serviceWorker.ready;
         let sub = await reg.pushManager.getSubscription();
         if (!on) {
@@ -1413,6 +1443,13 @@
         if (!publicKey) throw new Error(t('Notifications are not available on this device.'));
         if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: keyBytes(publicKey)});
         await Api.post('push.subscribe', {endpoint: sub.endpoint});
+    }
+
+    /** In the app: registers the device token again at every start, since Firebase can replace it. */
+    function refreshNativeDevice() {
+        if (!nativePush() || !UI.store.get('nativeEndpoint', '') || UI.app.notificationPermission() !== 'granted') return;
+        setDevice(true).catch(() => {
+        });
     }
 
     /** The device is a choice of this browser; the kinds and reminder hours follow the account, on every device. */

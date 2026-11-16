@@ -9,6 +9,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/fcm.php'; // the Android apps
+
 /** Categories a user can turn off: action of the history => category. Other actions are never notified. */
 const NOTIFIED_ACTIONS = [
     'add' => 'products', 'delete' => 'products', 'consume' => 'products', 'move_from_list' => 'products',
@@ -28,6 +30,7 @@ function notify_off(array $user): array
 
 function push_endpoint_allowed(string $url): bool
 {
+    if (fcm_is($url)) return fcm_endpoint_valid($url);
     $p = parse_url($url);
     if (($p['scheme'] ?? '') !== 'https' || empty($p['host'])) return false;
     foreach (PUSH_HOSTS as $h) {
@@ -114,11 +117,18 @@ function send_pushes(array $events): void
             if (!in_array($e['category'], notify_off($s), true)) $subs[(int)$s['id']] = $s['endpoint'];
         }
     }
-    if (!$subs || !($keys = vapid_keys())) return;
+    if (!$subs) return;
+    $keys = vapid_keys();
+    $native = [];
     $subject = (is_https() ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . app_base_path();
     $mh = curl_multi_init();
     $handles = [];
     foreach ($subs as $id => $endpoint) {
+        if (fcm_is($endpoint)) {
+            $native[$id] = $endpoint;
+            continue;
+        }
+        if (!$keys) continue;
         $auth = vapid_header($endpoint, $keys, $subject);
         if (!$auth) continue;
         $ch = curl_init($endpoint);
@@ -142,6 +152,8 @@ function send_pushes(array $events): void
         curl_multi_remove_handle($mh, $ch);
     }
     curl_multi_close($mh);
+    $gone = fcm_send($native);
+    foreach (array_keys($native) as $id) in_array($id, $gone, true) ? $drop->execute([$id]) : $touch->execute([now_utc(), $id]);
 }
 
 /** Text of one household event, in the language of the request. */

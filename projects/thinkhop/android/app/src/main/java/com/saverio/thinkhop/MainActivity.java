@@ -49,6 +49,7 @@ import java.util.concurrent.Executor;
  * Native parts, exposed to the page as window.ThinkHopAndroid (only on the ThinkHop pages):
  *  - "Continue with Google" with the system account picker (Credential Manager): Google sign-in
  *    does not work inside a WebView, so the app gets the ID token and hands it to the page.
+ *  - notifications with the app closed through Firebase Cloud Messaging (see Push and PushService).
  * Links outside the app (contact form, donations…) open in the browser.
  */
 public class MainActivity extends Activity {
@@ -252,6 +253,28 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.googleSignIn(webClientId));
         }
 
+        /** True when this build can receive notifications (Firebase is set up). */
+        @JavascriptInterface
+        public boolean pushAvailable() {
+            return onAppPage && Push.available(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public String notificationPermission() {
+            return onAppPage ? Push.permission(MainActivity.this) : "denied";
+        }
+
+        /** Asks for the permission if needed, then answers with ThinkHopNative.result("push", token, error). */
+        @JavascriptInterface
+        public void pushToken() {
+            if (!onAppPage) return;
+            runOnUiThread(() -> Push.requestToken(MainActivity.this, MainActivity.this::sendResult));
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == Push.REQ_NOTIFICATIONS) Push.onPermissionResult(this, this::sendResult);
     }
 
     // ------------------------------------------------------------------ lifecycle
@@ -265,6 +288,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        Push.appVisible = false;
         CookieManager.getInstance().flush();
         web.onPause();
     }
@@ -272,6 +296,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        Push.appVisible = true;
         web.onResume();
     }
 

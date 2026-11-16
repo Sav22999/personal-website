@@ -7,6 +7,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/fcm.php'; // the Android apps
+
 /** What a player can turn on and off, one by one. */
 const NOTIFY_TYPES = ['daily', 'streak', 'friends', 'overtaken', 'reports'];
 /** Non-live / scheduled notification types where the user can pick the hour. */
@@ -77,6 +79,7 @@ function notify_text(string $lang, string $type, array $data): string
 
 function push_endpoint_allowed(string $url): bool
 {
+    if (fcm_is($url)) return fcm_endpoint_valid($url);
     $p = parse_url($url);
     if (($p['scheme'] ?? '') !== 'https' || empty($p['host'])) return false;
     foreach (PUSH_HOSTS as $h) {
@@ -176,14 +179,20 @@ function queue_push(int $userId): void
 /** Wakes up the devices of these players. */
 function send_pushes(array $userIds): void
 {
-    if (!$userIds || !function_exists('curl_multi_init') || !($keys = vapid_keys())) return;
+    if (!$userIds || !function_exists('curl_multi_init')) return;
+    $keys = vapid_keys();
+    $native = [];
     $marks = implode(',', array_fill(0, count($userIds), '?'));
     $st = db()->prepare('SELECT id, endpoint FROM ' . t('push_subscriptions') . " WHERE user_id IN ($marks)");
     $st->execute($userIds);
     $mh = curl_multi_init();
     $handles = [];
     foreach ($st->fetchAll() as $s) {
-        if (!push_endpoint_allowed($s['endpoint'])) continue;
+        if (fcm_is($s['endpoint'])) {
+            $native[(int)$s['id']] = $s['endpoint'];
+            continue;
+        }
+        if (!$keys || !push_endpoint_allowed($s['endpoint'])) continue;
         $auth = vapid_header($s['endpoint'], $keys);
         if (!$auth) continue;
         $ch = curl_init($s['endpoint']);
@@ -207,6 +216,8 @@ function send_pushes(array $userIds): void
         curl_multi_remove_handle($mh, $ch);
     }
     curl_multi_close($mh);
+    $gone = fcm_send($native);
+    foreach (array_keys($native) as $id) in_array($id, $gone, true) ? $drop->execute([$id]) : $touch->execute([now_utc(), $id]);
 }
 
 /** Tells the friends who just lost a place in today's ranking. Who stays out of the ranking overtakes nobody. */

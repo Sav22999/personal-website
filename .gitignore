@@ -1,5 +1,6 @@
 # Credentials and secrets
 .mail-config.php
+.fcm-service-account.json
 old/include/variables.php
 old/api/emoticolor/credentials.php
 projects/ripasso-fipav/lib/config.php
@@ -48,6 +49,8 @@ projects/*/android/.idea/
 projects/*/android/build/
 projects/*/android/app/build/
 projects/*/android/app/release/
+# Firebase config (API key): kept only on the computer that builds the apps, from the Firebase console
+projects/*/android/app/google-services.json
 projects/*/android/captures/
 *.apk
 *.aab

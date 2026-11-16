@@ -6,4 +6,5 @@
     <string name="offline_title">No connection</string>
     <string name="offline_text">Fucina needs the internet to load your lessons. Check your connection and try again.</string>
     <string name="offline_retry">Try again</string>
+    <string name="channel_news">Reminders and news</string>
 </resources>

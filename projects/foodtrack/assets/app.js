@@ -3480,7 +3480,7 @@
                     paint();
                     syncBackgroundNotifications();
                 }, sw(notifyOn(key))))),
-                hasCollaborators() ? h('p.helper', t('With the app open you see what the others do right away. In the browser it also arrives with the app closed; in the Android app it can take about 15 minutes.'))
+                hasCollaborators() ? h('p.helper', t('With the app open you see what the others do right away. With the app closed it arrives as a notification, in the browser and in the Android app.'))
                     : h('p.helper', t('When you share a household, you can also choose what to hear about the other members.')));
         }
 
@@ -4259,7 +4259,24 @@
     async function syncBackgroundNotifications(signingOut) {
         const wanted = !signingOut && !!S.user && wantsActivity() && store.get('notify', false) && UI.app.notificationPermission() === 'granted';
         if (UI.app.isAndroidApp) {
-            UI.app.backgroundActivity(wanted, await activityCursor(), I18N.lang);
+            // With Firebase the server wakes the app right away; otherwise (or if it fails) the app checks every 15 minutes
+            let instant = false;
+            if (UI.app.pushAvailable()) {
+                const saved = store.get('nativeEndpoint', '');
+                try {
+                    if (wanted) {
+                        const endpoint = 'fcm:' + await UI.app.pushToken();
+                        await Api.post('push.subscribe', {endpoint}, {silentAuth: true});
+                        store.set('nativeEndpoint', endpoint);
+                        instant = true;
+                    } else if (saved) {
+                        await Api.post('push.unsubscribe', {endpoint: saved}, {silentAuth: true});
+                        store.set('nativeEndpoint', '');
+                    }
+                } catch (e) { /* no connection or no token: the 15-minute check stays on */
+                }
+            }
+            UI.app.backgroundActivity(wanted && !instant, await activityCursor(), I18N.lang);
             return;
         }
         if (!('PushManager' in window) || !navigator.serviceWorker) return;

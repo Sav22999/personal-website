@@ -28,6 +28,7 @@ import java.net.URL;
  *
  * A WebView cannot receive Web Push, so the app asks the API about every 15 minutes (the shortest period
  * Android allows; it can be later to save battery). The request uses the session of the WebView.
+ * With Firebase set up, PushService runs the same check right away and the page turns this one off.
  */
 public class ActivityJobService extends JobService {
 
@@ -60,7 +61,7 @@ public class ActivityJobService extends JobService {
         new Thread(() -> {
             boolean retry = false;
             try {
-                check();
+                check(this);
             } catch (Exception e) {
                 retry = true; // No connection or server error: tried again later
             }
@@ -74,10 +75,10 @@ public class ActivityJobService extends JobService {
         return true;
     }
 
-    private void check() throws Exception {
-        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+    static synchronized void check(Context ctx) throws Exception {
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);
         String after = prefs.getString(KEY_AFTER, "0");
-        String base = getString(R.string.launch_url);
+        String base = ctx.getString(R.string.launch_url);
         String cookie = CookieManager.getInstance().getCookie(base);
         if (cookie == null) return;
 
@@ -89,7 +90,7 @@ public class ActivityJobService extends JobService {
         try {
             int status = c.getResponseCode();
             if (status == 401) {
-                configure(this, false, after, prefs.getString(KEY_LANG, "it")); // Signed out
+                configure(ctx, false, after, prefs.getString(KEY_LANG, "it")); // Signed out
                 return;
             }
             if (status != 200) throw new IllegalStateException("HTTP " + status);
@@ -97,7 +98,7 @@ public class ActivityJobService extends JobService {
             long last = d.optLong("lastId", 0);
             if (last > 0) prefs.edit().putString(KEY_AFTER, String.valueOf(last)).apply();
             String text = d.isNull("text") ? "" : d.optString("text", "");
-            if (!text.isEmpty()) showNotification(text);
+            if (!text.isEmpty()) showNotification(ctx, text);
         } finally {
             c.disconnect();
         }
@@ -110,24 +111,24 @@ public class ActivityJobService extends JobService {
         return out.toString("UTF-8");
     }
 
-    private void showNotification(String body) {
-        NotificationManager nm = getSystemService(NotificationManager.class);
+    private static void showNotification(Context ctx, String body) {
+        NotificationManager nm = ctx.getSystemService(NotificationManager.class);
         if (nm == null || !nm.areNotificationsEnabled()) return;
         Notification.Builder b;
         if (Build.VERSION.SDK_INT >= 26) {
-            nm.createNotificationChannel(new NotificationChannel(CHANNEL_ACTIVITY, getString(R.string.channel_activity), NotificationManager.IMPORTANCE_DEFAULT));
-            b = new Notification.Builder(this, CHANNEL_ACTIVITY);
+            nm.createNotificationChannel(new NotificationChannel(CHANNEL_ACTIVITY, ctx.getString(R.string.channel_activity), NotificationManager.IMPORTANCE_DEFAULT));
+            b = new Notification.Builder(ctx, CHANNEL_ACTIVITY);
         } else {
             //noinspection deprecation
-            b = new Notification.Builder(this);
+            b = new Notification.Builder(ctx);
         }
-        Intent open = new Intent(this, MainActivity.class)
-                .setData(Uri.parse(getString(R.string.launch_url) + "#/history"))
+        Intent open = new Intent(ctx, MainActivity.class)
+                .setData(Uri.parse(ctx.getString(R.string.launch_url) + "#/history"))
                 .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pi = PendingIntent.getActivity(this, 1, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pi = PendingIntent.getActivity(ctx, 1, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         b.setSmallIcon(R.drawable.ic_notification_icon)
-                .setColor(getColor(R.color.primary))
-                .setContentTitle(getString(R.string.app_name))
+                .setColor(ctx.getColor(R.color.primary))
+                .setContentTitle(ctx.getString(R.string.app_name))
                 .setContentText(body)
                 .setStyle(new Notification.BigTextStyle().bigText(body))
                 .setContentIntent(pi)

@@ -87,6 +87,7 @@
             'Notify me about': 'Avvisami per',
             'Your choices follow your account. The content never passes through the push services.': 'Le scelte seguono il tuo account. I contenuti non passano mai dai servizi di notifica.',
             'Permission denied: you can turn them on in the browser settings.': 'Permesso negato: puoi attivarle dalle impostazioni del browser.',
+            'Permission denied: you can turn them on in the phone settings.': 'Permesso negato: puoi attivarle dalle impostazioni del telefono.',
             'Notifications are not available on this device.': 'Le notifiche non sono disponibili su questo dispositivo.',
             'Notifications': 'Notifiche',
             'Verify a certificate': 'Verifica un certificato',

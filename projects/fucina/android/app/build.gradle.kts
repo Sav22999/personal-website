@@ -4,6 +4,10 @@ plugins {
     id("com.android.application")
 }
 
+// Notifications (Firebase Cloud Messaging): set up only when app/google-services.json is there, downloaded from the
+// Firebase console. Without it the app builds the same, and notifications are reported as not supported.
+if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google-services")
+
 // Signing data for the release build: keystore.properties (git-ignored, see keystore.properties.sample)
 val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore.properties")
@@ -19,8 +23,8 @@ android {
         applicationId = "com.saverio.fucina"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -53,4 +57,8 @@ dependencies {
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Notifications with the app closed (a WebView cannot receive Web Push)
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
 }

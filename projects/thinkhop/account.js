@@ -291,6 +291,19 @@
         },
     };
 
+    /** Calls the Android app, which answers later through ThinkHopNative.result(kind, …). */
+    function nativeCall(kind, fn) {
+        return new Promise((resolve, reject) => {
+            nativeWait[kind] = {resolve, reject};
+            try {
+                fn();
+            } catch (e) {
+                delete nativeWait[kind];
+                reject(e);
+            }
+        });
+    }
+
     let gisPromise = null;
 
     function loadGis() {
@@ -803,7 +816,7 @@
     }
 
     window.ThinkHopAccount = {
-        start, addGame, games, api,
+        start, addGame, games, api, nativeCall,
         enabled: () => config.accounts,
         installNeeded: () => !!config.installNeeded,
         needsAdmin: () => !!config.needsAdmin,

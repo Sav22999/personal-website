@@ -68,7 +68,7 @@ In shared households, members are notified about activity from others: products,
 
 - **App foreground:** polled every 30 seconds, displays toast message.
 - **Browser, app background/closed:** Web Push. The server dispatches a content-free wake-up ping (VAPID key pair generated on first use and stored in `meta`); the service worker fetches notifications securely from `activity.pending` using the authenticated session. Push gateways never receive household data. On iOS, requires adding the PWA to the Home Screen.
-- **Android App, closed:** WebViews do not support Web Push directly; `ActivityJobService` polls `activity.pending` approximately every 15 minutes (subject to OS battery optimisation).
+- **Android App, closed:** WebViews do not support Web Push, so the app registers a Firebase Cloud Messaging token (`fcm:<token>` in `push_subscriptions`, sent by `lib/fcm.php`): the message only wakes `PushService`, which polls `activity.pending` right away. Builds without `android/app/google-services.json` fall back to `ActivityJobService`, which polls approximately every 15 minutes (subject to OS battery optimisation).
 
 ## Measurement Units
 

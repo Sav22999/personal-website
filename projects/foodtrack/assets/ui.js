@@ -200,6 +200,9 @@
         notificationsSupported: () => !!native || 'Notification' in window,
         notificationPermission: () => native ? String(native.notificationPermission()) : ('Notification' in window ? Notification.permission : 'denied'),
         requestNotifications: () => native ? nativeCall('notify', () => native.requestNotificationPermission()) : Notification.requestPermission(),
+        // Household activity right away through Firebase: false in older app versions and in builds without Firebase
+        pushAvailable: () => !!(native && native.pushAvailable && native.pushAvailable()),
+        pushToken: () => nativeCall('push', () => native.pushToken()),
         backgroundActivity: (on, after, lang) => {
             if (native && native.setBackgroundActivity) native.setBackgroundActivity(on, String(after), lang); // Older app versions don't have it
         },

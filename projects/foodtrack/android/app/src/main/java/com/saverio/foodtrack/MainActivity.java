@@ -57,6 +57,7 @@ import java.util.concurrent.Executor;
  *  - "Continue with Google" with the system account picker (Credential Manager): Google sign-in
  *    does not work inside a WebView, so the app gets the ID token and hands it to the page;
  *  - notifications for expiring products, and the background check of household activity (ActivityJobService);
+ *  - household activity right away with the app closed, through Firebase Cloud Messaging (Push, PushService);
  *  - camera permission for the barcode scanner, file picker for image uploads (admin portal).
  * Links outside the app (contact form, Open Food Facts, …) open in the browser.
  */
@@ -365,6 +366,19 @@ public class MainActivity extends Activity {
             ActivityJobService.configure(MainActivity.this, on, after, lang);
         }
 
+        /** True when this build can receive Firebase messages (it has google-services.json). */
+        @JavascriptInterface
+        public boolean pushAvailable() {
+            return onAppPage && Push.available(MainActivity.this);
+        }
+
+        /** Answers with FoodTrackNative.result("push", token, error); the page asks for the permission first. */
+        @JavascriptInterface
+        public void pushToken() {
+            if (!onAppPage) return;
+            runOnUiThread(() -> Push.requestToken(MainActivity.this, notificationState(), MainActivity.this::sendResult));
+        }
+
         @JavascriptInterface
         public void notify(String title, String body) {
             if (!onAppPage) return;
@@ -383,6 +397,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        Push.appVisible = false;
         CookieManager.getInstance().flush();
         web.onPause();
     }
@@ -390,6 +405,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        Push.appVisible = true;
         web.onResume();
     }
 
