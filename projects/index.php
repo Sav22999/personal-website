@@ -173,6 +173,7 @@ $canonical = '/projects/';
                 have.</p>
             <ul class="project-tags">
                 <li>Web app</li>
+                <li>Android</li>
                 <li>English</li>
                 <li>Italian</li>
             </ul>
@@ -226,7 +227,40 @@ $canonical = '/projects/';
                 page to share. Start from the CV you already have by importing its PDF.</p>
             <ul class="project-tags">
                 <li>Web app</li>
+                <li>Android</li>
                 <li>Multilingual</li>
+            </ul>
+        </a>
+        <a class="card" href="/projects/about/opennewsletter/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/opennewsletter.png" alt="">
+            </div>
+            <h3>OpenNewsletter</h3>
+            <p>Newsletters written, approved and sent as a team: a drag-and-drop editor, roles and an approval step,
+                subscribers in every language, a ready subscription page and a widget for any website.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>English</li>
+                <li>Italian</li>
+            </ul>
+        </a>
+        <a class="card" href="/projects/about/savcomponents/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/savcomponents.png" alt="">
+            </div>
+            <h3>SavComponents</h3>
+            <p>34 ready-to-use web components for any website or web app. Standard HTML tags, no framework,
+                no build step, no dependencies. Five styles, customisable with CSS variables or a live customiser.</p>
+            <ul class="project-tags">
+                <li>Library</li>
             </ul>
         </a>
     </div>

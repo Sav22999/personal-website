@@ -3,7 +3,9 @@
 `cleanup.php` performs two tasks:
 
 - **Games:** Deletes rooms for Connect Four, Chess, FaceGuess, Sea Battle and Prism Mine that have had no changes and no connected players for 24 hours, along with players, chat messages, and cards. Run once a day, data remains for at most ~48 hours since last activity: this matches the retention stated in privacy policies and store listings.
-- **FoodTrack, Giftwise, Fucina, ThinkHop, and Fischietto:** Cleans up expired sessions and login attempts older than 2 hours (IP addresses are only used for rate limiting over the past 60 minutes) and strips IP/browser data left on sessions from earlier versions. It never alters lists, items, wishes, stats, progress, or other user data.
+- **FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, OpenNewsletter, SavComponents and Fischietto:** Cleans up expired sessions and login attempts older than 2 hours (IP addresses are only used for rate limiting over the past 60 minutes) and strips IP/browser data left on sessions from earlier versions. It never alters lists, items, wishes, stats, progress, or other user data.
+- **OpenNewsletter only:** also deletes subscriptions never confirmed within 7 days (as its terms promise) and expired account-confirmation links.
+- **SavComponents only:** also deletes expired email links (confirm / new password) and accounts never confirmed within 7 days.
 
 ## ThinkHop Reminders
 
@@ -36,3 +38,33 @@ It can be scheduled **hourly** (e.g. `0 * * * *`) or once a day at 18:00. At mos
 
 - **URL:** `https://www.saveriomorelli.com/projects/cron/fucina-reminders.php?key=YOUR_KEY` (same key)
 - **Command line:** `php /path/to/site/projects/cron/fucina-reminders.php` (no key required)
+
+## OpenNewsletter
+
+Both scripts read `projects/opennewsletter/credentials.php`. Schedule them **every 30 minutes** (e.g. `0,30 * * * *`):
+newsletters leave on 30-minute slots chosen in each group's timezone.
+
+### opennewsletter-schedule.php
+
+1. Proposals whose slot has passed without a publisher's approval become `expired` and go back to their author (email).
+2. Approved newsletters whose slot has come start sending: recipients are fixed at that moment (active subscribers, of
+   the newsletter's language if it has one).
+3. The queue is sent from each group's own SMTP, at most 400 messages / 4 minutes per run and never more than the
+   group's **emails per hour** (Settings → Outgoing address, default 200): larger lists continue at the next runs.
+   Messages leave 0.15 s apart. A temporary refusal (4xx, e.g. "too many messages", or a connection problem) stops that
+   newsletter for this run and the address is retried later, at the end of the queue; only permanent refusals (5xx)
+   count as failed. After 3 days whatever is still queued is given up. When a newsletter is finished its author gets an
+   email with the numbers. A lock file prevents two runs at once.
+
+- **URL:** `https://www.saveriomorelli.com/projects/cron/opennewsletter-schedule.php?key=YOUR_KEY` (same key)
+- **Command line:** `php /path/to/site/projects/cron/opennewsletter-schedule.php` (no key required)
+- **Response:** `{"ok": true, "expired": 0, "started": 1, "messages": {"sent": 120, "failed": 0, "deferred": 0, "finished": 1}, "utc": "2026-11-16 18:30"}`
+
+### opennewsletter-reminders.php
+
+When a newsletter waiting for approval is less than 24 hours from its proposed slot, its group's publishers, admins
+and owner get one reminder email (at most one per proposal).
+
+- **URL:** `https://www.saveriomorelli.com/projects/cron/opennewsletter-reminders.php?key=YOUR_KEY` (same key)
+- **Command line:** `php /path/to/site/projects/cron/opennewsletter-reminders.php` (no key required)
+- **Response:** `{"ok": true, "reminded": 1}`

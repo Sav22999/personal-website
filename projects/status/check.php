@@ -56,7 +56,7 @@ function split_host(string $host, int $port = 3306): array
 
 // ---------- Settings of each project (read in function scope: their variables stay here) ----------
 
-/** credentials.php of the apps with accounts (FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, Rendicontazione). */
+/** credentials.php of the apps with accounts (FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, OpenNewsletter, SavComponents, Rendicontazione). */
 function app_credentials(string $dir, string $defaultPrefix): ?array
 {
     static $memo = [];

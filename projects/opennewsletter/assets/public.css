@@ -1,0 +1,121 @@
+/* OpenNewsletter — public pages (subscribe, unsubscribe, terms) and the widget iframe. --accent comes from the group. */
+@font-face { font-family: "Inter"; src: url("../fonts/inter-regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("../fonts/inter-bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../fonts/poppins-bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+
+:root {
+    --accent: #5B3DF5; --on-accent: #fff; --btn-radius: 999px;
+    --bg: #F4F2FB; --card: #FFFFFF; --ink: #1A1830; --soft: #6B6886; --line: #E3E0F0; --field: #FBFAFF; --danger: #C8323C;
+}
+:root[data-theme="dark"] { --bg: #121120; --card: #1C1A2E; --ink: #F1EFFA; --soft: #A7A3C2; --line: #34304D; --field: #24213A; --danger: #FF7C84; }
+@media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] { --bg: #121120; --card: #1C1A2E; --ink: #F1EFFA; --soft: #A7A3C2; --line: #34304D; --field: #24213A; --danger: #FF7C84; }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+    font: 16px/1.55 var(--pub-font, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif); color: var(--ink); background: var(--bg);
+    background-image: radial-gradient(1200px 500px at 10% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
+        radial-gradient(900px 500px at 110% 110%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%);
+    min-height: 100vh;
+}
+[data-embed="1"] body { background: transparent; min-height: 0; }
+
+.pub { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; gap: 18px; }
+[data-embed="1"] .pub { min-height: 0; padding: 2px; gap: 10px; }
+.pub-card {
+    width: 100%; max-width: 480px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 32px 28px;
+    box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--accent) 45%, transparent), 0 2px 6px rgba(20, 16, 60, .05);
+}
+[data-embed="1"] .pub-card { max-width: none; box-shadow: none; padding: 22px 20px; border-radius: 18px; }
+.pub-logo { display: block; max-height: 56px; max-width: 70%; width: auto; margin: 0 0 18px; }
+
+h1 { font-family: var(--pub-display, Poppins, Inter, sans-serif); font-size: 26px; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 10px; }
+[data-embed="1"] h1 { font-size: 21px; }
+p { margin: 0 0 16px; }
+.pub-intro { color: var(--soft); }
+.pub-count { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent); font-size: 14px; margin-top: -6px; }
+.pub-count svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+.pub-form { display: flex; flex-direction: column; gap: 14px; margin: 0; }
+.pub-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
+.pub-field input, .pub-field select, .pub-field textarea {
+    font: inherit; font-weight: 400; font-size: 16px; color: var(--ink); background: var(--field); border: 1.5px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; width: 100%; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.pub-field textarea { resize: vertical; min-height: 64px; }
+.pub-field input:focus, .pub-field select:focus, .pub-field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); }
+.pub-check-row { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; }
+.pub-check-row input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); flex: none; }
+.pub-check-row a, .pub-link { color: var(--accent); font-weight: 700; }
+.pub-link { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; }
+.pub-terms { font-size: 13px; color: var(--soft); background: var(--field); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; max-height: 220px; overflow: auto; }
+.pub-reasons { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 9px; }
+.pub-reasons legend { font-size: 14px; font-weight: 700; margin-bottom: 8px; padding: 0; }
+.pub-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.pub-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 700; font-size: 16px;
+    color: var(--on-accent); background: var(--accent); border: 0; border-radius: var(--btn-radius); padding: 14px 22px; cursor: pointer;
+    text-decoration: none; transition: transform .12s, filter .12s, box-shadow .12s; box-shadow: 0 10px 24px -12px var(--accent);
+}
+.pub-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.pub-btn:active { transform: translateY(0); }
+.pub-btn:disabled { opacity: .6; cursor: default; transform: none; }
+.pub-btn.is-busy::after { content: ""; width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+.pub-btn-ghost { background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.pub-error { color: var(--danger); font-weight: 700; font-size: 14px; margin: 0; }
+.pub-note { font-size: 12.5px; color: var(--soft); margin: 0; }
+.pub-check { width: 64px; height: 64px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 14%, transparent); margin: 0 0 16px; position: relative; }
+.pub-check::after { content: ""; position: absolute; left: 22px; top: 16px; width: 14px; height: 26px; border: solid var(--accent); border-width: 0 4px 4px 0; transform: rotate(45deg); }
+.pub-mail::after { left: 17px; top: 21px; width: 30px; height: 21px; border: 3px solid var(--accent); border-radius: 4px; transform: none; }
+.pub-mail::before { content: ""; position: absolute; left: 22px; top: 17px; width: 18px; height: 18px; border: solid var(--accent); border-width: 0 3px 3px 0; transform: rotate(45deg) skew(8deg, 8deg); }
+
+.pub-powered { display: inline-flex; align-items: center; gap: 6px; color: var(--soft); font-size: 13px; text-decoration: none; }
+.pub-powered strong { color: var(--ink); }
+.pub-powered:hover strong { color: var(--accent); }
+
+/* terms.php */
+.doc { max-width: 760px; margin: 0 auto; padding: 40px 18px 64px; }
+.doc h1 { font-size: 32px; }
+.doc h2 { font-family: Poppins, Inter, sans-serif; font-size: 20px; margin: 32px 0 8px; }
+.doc a { color: var(--accent); }
+.doc .lang-switch { display: flex; gap: 8px; margin: 0 0 22px; }
+.doc .lang-switch a { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); text-decoration: none; font-size: 14px; }
+.doc .lang-switch a.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+/* ---------- looks of the page and widget (group setting "style", or data-style on the widget) */
+/* minimal: no card, the form sits on the host page */
+[data-style="minimal"] .pub-card { background: transparent; border: 0; box-shadow: none; padding: 8px 0; }
+[data-style="minimal"]:not([data-embed="1"]) body { background-image: none; }
+[data-style="minimal"] .pub-field input, [data-style="minimal"] .pub-field select { background: var(--card); }
+/* outline: a frame in the accent colour, no shadow */
+[data-style="outline"] .pub-card { box-shadow: none; border: 2px solid var(--accent); }
+[data-style="outline"] .pub-btn { box-shadow: none; }
+/* bold: the whole card in the accent colour */
+[data-style="bold"] .pub-card { background: var(--accent); color: var(--on-accent); border: 0; }
+[data-style="bold"] .pub-intro, [data-style="bold"] .pub-note, [data-style="bold"] .pub-count { color: var(--on-accent); opacity: .85; }
+[data-style="bold"] .pub-field input, [data-style="bold"] .pub-field select { background: #fff; color: #1A1830; border-color: transparent; }
+[data-style="bold"] .pub-field input:focus { box-shadow: 0 0 0 4px rgba(255, 255, 255, .35); }
+[data-style="bold"] .pub-btn { background: var(--on-accent); color: var(--accent); box-shadow: none; }
+[data-style="bold"] .pub-check-row a, [data-style="bold"] .pub-link { color: var(--on-accent); }
+[data-style="bold"] .pub-check-row input { accent-color: var(--on-accent); }
+[data-style="bold"] .pub-error { color: var(--on-accent); background: rgba(0, 0, 0, .18); padding: 6px 10px; border-radius: 8px; }
+[data-style="bold"] .pub-check { background: rgba(255, 255, 255, .2); }
+[data-style="bold"] .pub-check::after, [data-style="bold"] .pub-mail::before { border-color: var(--on-accent); }
+[data-style="bold"] .pub-terms { color: #1A1830; background: #fff; }
+/* compact: one line with the address and the button, a smaller title */
+[data-style="compact"] .pub-card { padding: 20px 22px; }
+[data-style="compact"] h1 { font-size: 20px; }
+[data-style="compact"] .pub-intro { font-size: 14px; margin-bottom: 12px; }
+[data-style="compact"] .pub-form { gap: 10px; }
+.pub-inline { display: flex; gap: 8px; align-items: flex-end; }
+.pub-inline .pub-field { flex: 1; min-width: 0; }
+.pub-inline .pub-field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.pub-inline .pub-btn { flex: none; padding: 13px 20px; }
+@media (max-width: 380px) { .pub-inline { flex-direction: column; align-items: stretch; } }
+/* in the widget the line under the card sits on the host site (any colour): it gets the card background */
+[data-embed="1"] .pub-powered { background: var(--card); border: 1px solid var(--line); padding: 4px 12px; border-radius: 999px; }

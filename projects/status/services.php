@@ -176,6 +176,28 @@ return [
         ],
     ],
     [
+        'name' => 'OpenNewsletter',
+        'icon' => '/projects/opennewsletter/icons/icon-192.png',
+        'url' => '/projects/opennewsletter/',
+        'services' => [
+            ['id' => 'opennewsletter-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/opennewsletter/'],
+            ['id' => 'opennewsletter-subscribe', 'name' => 'Subscription pages & widget', 'type' => 'page', 'url' => '/projects/opennewsletter/widget.js'],
+            ['id' => 'opennewsletter-db', 'name' => 'Accounts, groups & subscribers', 'type' => 'app-db', 'dir' => 'opennewsletter', 'prefix' => 'on_'],
+            ['id' => 'opennewsletter-mail', 'name' => 'Platform emails', 'type' => 'mail', 'source' => 'app:opennewsletter'],
+        ],
+    ],
+    [
+        'name' => 'SavComponents',
+        'icon' => 'https://savcomponents.com/docs/logo.svg',
+        'url' => 'https://savcomponents.com/',
+        'services' => [
+            ['id' => 'savcomponents-web', 'name' => 'Website & library', 'type' => 'http', 'url' => 'https://savcomponents.com/'],
+            ['id' => 'savcomponents-api', 'name' => 'Accounts API', 'type' => 'page', 'url' => '/projects/savcomponents/api/?r=auth.config'],
+            ['id' => 'savcomponents-db', 'name' => 'Accounts, favourites & themes', 'type' => 'app-db', 'dir' => 'savcomponents', 'prefix' => 'sc_'],
+            ['id' => 'savcomponents-mail', 'name' => 'Account emails', 'type' => 'mail', 'source' => 'app:savcomponents'],
+        ],
+    ],
+    [
         'name' => 'Rendicontazione Ore',
         'icon' => '/projects/dad/rendicontazione/assets/icons/icon.svg',
         'url' => '/projects/dad/rendicontazione/',
