@@ -217,7 +217,7 @@ sav-select:not(:defined) > option {
   --sav-button-border-color: initial; --sav-button-letter-spacing: initial; --sav-button-text-transform: initial; --sav-button-font-scale: initial;
   --sav-control-shadow: initial; --sav-alert-shadow: initial; --sav-backdrop: initial; --sav-panel-shadow: initial; --sav-panel-lift: initial; --sav-panel-back: initial; --sav-panel-arrow: initial; --sav-tooltip-shadow: initial;
   --sav-sheen: initial; --sav-fill-opacity: initial; --sav-button-backdrop: initial; --sav-badge-shadow: initial; --sav-track-shadow: initial; --sav-switch-track: initial;
-  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-details-shadow: initial; --sav-copy-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
+  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-details-shadow: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
   --sav-range-height: initial; --sav-range-radius: initial; --sav-range-track-shadow: initial; --sav-range-thumb-width: initial; --sav-range-thumb-height: initial; --sav-range-thumb-radius: initial;
   --sav-range-thumb-tilt: initial; --sav-range-thumb-fill: initial; --sav-range-thumb-ink: initial; --sav-range-thumb-border-width: initial; --sav-range-thumb-shadow: initial; --sav-range-thumb-bg: initial;
 }
@@ -281,6 +281,9 @@ sav-select:not(:defined) > option {
   --sav-tab-vertical-rail-padding: 0 .5rem 0 0;
   --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border);
   --sav-tab-vertical-hover: var(--sav-color-surface-2);
+  /* breadcrumb: the current page is a leaning blue tile */
+  --sav-breadcrumb-current-bg: var(--sav-color-primary);
+  --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
 }
 
 /* Sharp: straight corners, crisp lines, offset tinted shadows */
@@ -312,6 +315,10 @@ sav-select:not(:defined) > option {
   /* no round shapes: badges, tags, pill tabs and avatars get the same small corners */
   --sav-radius-pill: 3px;
   --sav-avatar-radius: 3px;
+  /* breadcrumb: the current page is underlined */
+  --sav-breadcrumb-current-bg: transparent;
+  --sav-breadcrumb-current-fg: var(--sav-color-text);
+  --sav-breadcrumb-current-shadow: inset 0 -2px 0 oklch(from var(--sav-color-primary) calc(l * var(--sav-indicator-l, 1)) c h);
 }
 
 /* Brutal: thick ink borders and hard shadows that press down when clicked */
@@ -362,6 +369,10 @@ sav-select:not(:defined) > option {
   --sav-tab-vertical-rail-padding: 0 .5rem 0 0;
   --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border);
   --sav-tab-vertical-hover: var(--sav-color-surface-2);
+  /* breadcrumb: the current page is an inked block */
+  --sav-breadcrumb-current-bg: var(--sav-color-primary);
+  --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
+  --sav-breadcrumb-current-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
 }
 
 /* Glass: translucent surfaces that blur what is behind them (best on a colourful background) */
@@ -406,6 +417,10 @@ sav-select:not(:defined) > option {
   --sav-tab-vertical-active-bg: var(--sav-tab-active-bg);
   --sav-tab-vertical-active-fg: var(--sav-color-text);
   --sav-tab-vertical-active-shadow: var(--sav-tab-segment-shadow);
+  /* breadcrumb: the current page is a glass plate */
+  --sav-breadcrumb-current-bg: var(--sav-tab-active-bg);
+  --sav-breadcrumb-current-fg: var(--sav-color-text);
+  --sav-breadcrumb-current-shadow: var(--sav-tab-segment-shadow);
 }
 .sav-theme-dark.sav-style-glass,
 .sav-theme-dark .sav-style-glass:not(.sav-theme-light),
@@ -504,4 +519,5 @@ sav-select:not(:defined) > option {
   --sav-spinner-tiles: 1; --sav-ring-radius: 0px; --sav-ring-tilt: 10deg; --sav-ring-start: 12.5;
   --sav-panel-back: block; --sav-panel-arrow: none; --sav-panel-shadow: 0 16px 40px rgb(0 0 0 / .22);
   --sav-tab-vertical-rail: transparent; --sav-tab-vertical-rail-padding: 0 .5rem 0 0; --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border); --sav-tab-vertical-hover: var(--sav-color-surface-2);
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
 }
