@@ -1,13 +1,13 @@
 <?php
-/** JavaScript basics: values, decisions, loops, functions, arrays and objects. */
+/** JavaScript basics: values, decisions, loops, functions, arrays and objects, string and number methods, scope and references. */
 
 return [
     'id' => 'js-base', 'family' => 'js', 'after' => 'html-base',
     'title' => L('JavaScript base', 'JavaScript Basics'), 'short' => L('JS base', 'JS Basics'), 'level' => L('Base', 'Basic'),
-    'desc' => L('Il linguaggio del web: variabili, condizioni, cicli, funzioni, array e oggetti.', 'The language of the web: variables, conditions, loops, functions, arrays and objects.'),
+    'desc' => L('Il linguaggio del web: variabili, condizioni, cicli, funzioni, array e oggetti, metodi di stringhe e numeri, ambito e riferimenti.', 'The language of the web: variables, conditions, loops, functions, arrays and objects, string and number methods, scope and references.'),
     'lessons' => [
         lesson('variables', L('Variabili e tipi', 'Variables and types'), [
-            P('JavaScript dà vita alle pagine. Una **variabile** è una scatola con un nome: `const` non si può riassegnare, `let` sì. I tipi di base sono numeri, stringhe, booleani, `null` e `undefined`.', 'JavaScript brings pages to life. A **variable** is a box with a name: `const` cannot be reassigned, `let` can. The basic types are numbers, strings, booleans, `null` and `undefined`.'),
+            P('JavaScript dà vita alle pagine. Una **variabile** è una scatola con un nome: `const` non si può riassegnare, `let` sì. I tipi di base sono numeri, stringhe, booleani, `null` e `undefined` (più `bigint` e `symbol`, che userai di rado).', 'JavaScript brings pages to life. A **variable** is a box with a name: `const` cannot be reassigned, `let` can. The basic types are numbers, strings, booleans, `null` and `undefined` (plus `bigint` and `symbol`, which you will rarely use).'),
             C('const nome = "Sav";
 let punti = 10;
 punti = punti + 5;
@@ -143,6 +143,84 @@ Object.keys(utente); // ["nome", "punti", "saluta"]', 'js'),
         ], task('js', L('Crea l’oggetto `libro` con `titolo` e `pagine`, poi cambia `pagine` a `100`.', 'Create the object `libro` with `titolo` and `pagine`, then change `pagine` to `100`.'), '', [re('libro\s*=\s*\{[\s\S]*titolo\s*:[\s\S]*pagine\s*:', L('L’oggetto ha le due chiavi', 'The object has both keys')), re('libro\.pagine\s*=\s*100', L('Cambi `pagine`', 'You change `pagine`'))], '', "const libro = { titolo: \"Fucina\", pagine: 50 };\nlibro.pagine = 100;"), [
             dBlanks(pFill(), "const gatto = {\n  nome___ \"Micio\",\n  zampe: 4___\n};\ngatto___nome;", [':', ',', '.'], ['=', ';', '->'], L('Due punti tra chiave e valore, punto per leggere.', 'A colon between key and value, a dot to read.')),
             dBug(pBug(), ['const utente = {', '  nome = "Sav",', '  punti: 10,', '};'], 1, '  nome: "Sav",', L('Dentro un oggetto si usano i due punti, non l’uguale.', 'Inside an object you use a colon, not an equals sign.')),
+        ]),
+        lesson('strings', L('Metodi delle stringhe', 'String methods'), [
+            P('Le stringhe hanno molti metodi pronti. Nessuno cambia la stringa originale: le stringhe sono **immutabili**, quindi ogni metodo restituisce una stringa nuova.', 'Strings have many ready-made methods. None of them changes the original string: strings are **immutable**, so every method gives back a new string.'),
+            C('const frase = "  Ciao Fucina  ";
+frase.trim();                // "Ciao Fucina"
+frase.trim().toLowerCase();  // "ciao fucina"
+"Fucina".includes("cin");    // true
+"Fucina".startsWith("Fu");   // true
+"Fucina".slice(0, 3);        // "Fuc"
+"Fucina".at(-1);             // "a"
+"a,b,c".split(",");          // ["a", "b", "c"]
+["a", "b"].join("-");        // "a-b"
+"gatto".replace("g", "r");   // "ratto"', 'js'),
+            P('`slice(inizio, fine)` prende i caratteri da `inizio` fino a `fine` **escluso**. `split` divide una stringa in un array, `join` fa il contrario. Per tenere il risultato salvalo: `nome = nome.trim()`.', '`slice(start, end)` takes the characters from `start` up to `end`, **excluded**. `split` breaks a string into an array, `join` does the opposite. To keep the result, store it: `nome = nome.trim()`.'),
+        ], [
+            Q('s1', L('Quanto vale `"Fucina".slice(1, 3)`?', 'What is `"Fucina".slice(1, 3)`?'), ['"Fuc"', '"ucin"', '"uc"', '"uci"'], 2, L('Prende gli indici 1 e 2: la fine è esclusa.', 'It takes indexes 1 and 2: the end is excluded.')),
+            Q('s2', L('Che cosa fa `trim()`?', 'What does `trim()` do?'), [L('Toglie tutti gli spazi, anche in mezzo', 'Removes every space, even in the middle'), L('Toglie gli spazi all’inizio e alla fine', 'Removes the spaces at the start and the end'), L('Taglia la stringa a metà', 'Cuts the string in half'), L('Rende la stringa minuscola', 'Makes the string lowercase')], 1, L('Gli spazi in mezzo restano.', 'The spaces in the middle stay.')),
+            Q('s3', L('Dopo `let s = "ciao"; s.toUpperCase();` quanto vale `s`?', 'After `let s = "ciao"; s.toUpperCase();` what is `s`?'), ['"CIAO"', '"Ciao"', 'undefined', '"ciao"'], 3, L('Il metodo restituisce una stringa nuova: per tenerla serve `s = s.toUpperCase()`.', 'The method gives back a new string: to keep it you need `s = s.toUpperCase()`.')),
+        ], task('js', L('Da `email` crea la costante `pulita`, usando `trim()` e `toLowerCase()`.', 'From `email` create the constant `pulita`, using `trim()` and `toLowerCase()`.'), 'const email = "  Ada@Example.COM ";
+', [re('(const|let)\s+pulita\s*=\s*email', L('Crei `pulita` da `email`', 'You create `pulita` from `email`')), re('\.trim\(\s*\)', L('Togli gli spazi', 'You remove the spaces')), re('\.toLowerCase\(\s*\)', L('Passi alle minuscole', 'You switch to lowercase'))], '', 'const email = "  Ada@Example.COM ";
+const pulita = email.trim().toLowerCase();'), [
+            dMatch(pMatch(), [['trim()', L('Toglie gli spazi ai lati', 'Removes the spaces at the sides')], ['split(",")', L('Divide in un array', 'Splits into an array')], ['includes()', L('Contiene?', 'Does it contain?')], ['slice(0, 3)', L('I primi tre caratteri', 'The first three characters')], ['toUpperCase()', L('Tutto maiuscolo', 'All uppercase')]], L('I metodi che userai ogni giorno.', 'The methods you will use every day.')),
+            dBlanks(pFill(), "const nomi = \"Ada,Bea\".___(\",\");\nconst iniziale = nomi[0].___(0, 1);\nconst grande = iniziale.___();", ['split', 'slice', 'toUpperCase'], ['join', 'push', 'upper'], L('Dividi, taglia, trasforma.', 'Split, cut, transform.')),
+            dFlash(pFlash(), [[L('`"ciao".length` vale 4', '`"ciao".length` is 4'), true], [L('`trim()` cambia la stringa originale', '`trim()` changes the original string'), false], [L('`"abc".at(-1)` vale `"c"`', '`"abc".at(-1)` is `"c"`'), true], [L('`"a-b".split("-")` dà `"ab"`', '`"a-b".split("-")` gives `"ab"`'), false]], L('`split` restituisce un array: `["a", "b"]`.', '`split` gives back an array: `["a", "b"]`.')),
+        ]),
+        lesson('numbers', L('Numeri, conversioni e Math', 'Numbers, conversions and Math'), [
+            P('In JavaScript interi e decimali sono lo stesso tipo: `number`. Quello che arriva da un campo di testo però è una **stringa**: per fare i conti va convertito con `Number()`. Se la conversione fallisce ottieni `NaN`, «not a number».', 'In JavaScript whole and decimal numbers are the same type: `number`. What comes from a text field, though, is a **string**: to do maths you convert it with `Number()`. If the conversion fails you get `NaN`, “not a number”.'),
+            C('"5" + 2;                 // "52": unisce due testi
+Number("5") + 2;         // 7
+Number("ciao");          // NaN
+Number.isNaN(Number("ciao")); // true
+parseInt("42px");        // 42
+(3.14159).toFixed(2);    // "3.14"
+Math.round(2.5);         // 3
+Math.max(4, 9, 1);       // 9
+Math.floor(Math.random() * 6) + 1; // un dado da 1 a 6', 'js'),
+            P('Attenzione ai decimali: `0.1 + 0.2` dà `0.30000000000000004`, perché il computer li salva in binario. Per i prezzi lavora in centesimi oppure arrotonda solo quando mostri il risultato, con `toFixed`.', 'Watch out for decimals: `0.1 + 0.2` gives `0.30000000000000004`, because the computer stores them in binary. For prices work in cents, or round only when you show the result, with `toFixed`.'),
+        ], [
+            Q('n1', L('Quanto vale `"5" + 2`?', 'What is `"5" + 2`?'), ['7', '"52"', 'NaN', L('Dà errore', 'It errors')], 1, L('Se c’è una stringa, `+` unisce i testi.', 'If there is a string, `+` joins the texts.')),
+            Q('n2', L('Come controlli che una conversione sia fallita?', 'How do you check that a conversion failed?'), ['x === NaN', 'x == undefined', 'typeof x === "NaN"', 'Number.isNaN(x)'], 3, L('`NaN` non è uguale nemmeno a se stesso: `x === NaN` è sempre falso.', '`NaN` is not even equal to itself: `x === NaN` is always false.')),
+            Q('n3', L('Che cosa restituisce `Math.floor(Math.random() * 6) + 1`?', 'What does `Math.floor(Math.random() * 6) + 1` give back?'), [L('Un intero da 1 a 6', 'A whole number from 1 to 6'), L('Un decimale da 0 a 6', 'A decimal from 0 to 6'), L('Un intero da 0 a 5', 'A whole number from 0 to 5'), L('Sempre 6', 'Always 6')], 0, L('`random` va da 0 a quasi 1: per 6 dà da 0 a quasi 6, `floor` toglie i decimali, `+ 1` sposta.', '`random` goes from 0 to almost 1: times 6 it gives 0 to almost 6, `floor` drops the decimals, `+ 1` shifts it.')),
+        ], task('js', L('Converti `testo` in numero con `Number()` e salvalo in `eta`, poi crea `adulto` uguale a `eta >= 18`.', 'Convert `testo` to a number with `Number()` and store it in `eta`, then create `adulto` equal to `eta >= 18`.'), 'const testo = "21";
+', [re('(const|let)\s+eta\s*=\s*Number\s*\(\s*testo\s*\)', L('Converti il testo', 'You convert the text')), re('adulto\s*=\s*eta\s*>=\s*18', L('Confronti con 18', 'You compare with 18'))], '', 'const testo = "21";
+const eta = Number(testo);
+const adulto = eta >= 18;'), [
+            dFlash(pFlash(), [[L('`typeof 3.5` è `"number"`', '`typeof 3.5` is `"number"`'), true], [L('`Number("")` dà `NaN`', '`Number("")` gives `NaN`'), false], [L('`0.1 + 0.2 === 0.3` è vero', '`0.1 + 0.2 === 0.3` is true'), false], [L('`Math.max(2, 8)` vale 8', '`Math.max(2, 8)` is 8'), true]], L('Un solo tipo per i numeri. E occhio: `Number("")` vale 0.', 'One type for all numbers. And watch out: `Number("")` is 0.')),
+            dMatch(pMatch(), [['Math.round(2.6)', '3'], ['Math.floor(2.9)', '2'], ['Math.abs(-5)', '5'], ['Math.max(1, 4)', '4'], ['parseInt("7kg")', '7']], L('`round` arrotonda, `floor` scende, `abs` toglie il segno.', '`round` rounds, `floor` goes down, `abs` drops the sign.')),
+            dBug(pBug(), ['const prezzo = "10";', 'const spedizione = 5;', 'const totale = prezzo + spedizione;', 'console.log(totale); // "105"'], 2, 'const totale = Number(prezzo) + spedizione;', L('Con una stringa `+` unisce i testi: prima va convertita.', 'With a string `+` joins the texts: convert it first.')),
+        ]),
+        lesson('scope', L('Ambito, valori e riferimenti', 'Scope, values and references'), [
+            P('L’**ambito** (scope) dice dove una variabile esiste. `let` e `const` vivono solo nel blocco `{ }` in cui sono nate: fuori non si vedono. La vecchia `var` ignora i blocchi e vale per tutta la funzione: per questo oggi si evita.', '**Scope** tells where a variable exists. `let` and `const` live only in the `{ }` block where they were born: outside they cannot be seen. The old `var` ignores blocks and is valid for the whole function: that is why it is avoided today.'),
+            C('const livello = 1;
+if (livello > 0) {
+  const messaggio = "Via!";   // esiste solo nel blocco
+  console.log(livello, messaggio);
+}
+console.log(messaggio);       // ReferenceError
+
+const a = { punti: 1 };
+const b = a;                  // stesso oggetto, non una copia
+b.punti = 99;
+console.log(a.punti);         // 99
+const c = { ...a };           // una copia vera
+c.punti = 0;
+console.log(a.punti);         // ancora 99', 'js'),
+            P('Numeri, stringhe e booleani si copiano per **valore**. Oggetti e array invece passano per **riferimento**: due variabili possono indicare lo stesso oggetto, e cambiarlo da una lo cambia anche per l’altra. Per una copia usa lo spread: `{ ...a }` o `[...lista]`.', 'Numbers, strings and booleans are copied by **value**. Objects and arrays instead pass by **reference**: two variables can point to the same object, and changing it through one changes it for the other too. For a copy use spread: `{ ...a }` or `[...lista]`.'),
+            Tip('`[1] === [1]` è falso: `===` tra oggetti controlla se sono lo **stesso** oggetto, non se hanno lo stesso contenuto.', '`[1] === [1]` is false: `===` between objects checks whether they are the **same** object, not whether they have the same content.'),
+        ], [
+            Q('sc1', L('Dove si vede una `const` dichiarata dentro un `if`?', 'Where can a `const` declared inside an `if` be seen?'), [L('Ovunque nel file', 'Anywhere in the file'), L('Solo dentro quel blocco', 'Only inside that block'), L('In tutta la funzione', 'In the whole function'), L('Solo dopo l’`if`', 'Only after the `if`')], 1, L('`let` e `const` rispettano i blocchi.', '`let` and `const` respect blocks.')),
+            Q('sc2', L('Con `a` oggetto, dopo `const b = a; b.punti = 5;` quanto vale `a.punti`?', 'With `a` an object, after `const b = a; b.punti = 5;` what is `a.punti`?'), [L('Il valore che aveva prima', 'The value it had before'), 'undefined', L('Dà errore', 'It errors'), '5'], 3, L('`a` e `b` indicano lo stesso oggetto.', '`a` and `b` point to the same object.')),
+            Q('sc3', L('Perché oggi si evita `var`?', 'Why is `var` avoided today?'), [L('È più lenta di `let`', 'It is slower than `let`'), L('Non funziona nei browser', 'It does not work in browsers'), L('Ignora i blocchi e può creare confusione', 'It ignores blocks and can cause confusion'), L('Accetta solo numeri', 'It only accepts numbers')], 2, L('`let` e `const` sono più prevedibili.', '`let` and `const` are more predictable.')),
+        ], task('js', L('Crea `copia`, una copia di `lista` fatta con lo spread `[...lista]`, poi aggiungi `4` a `copia` con `push`.', 'Create `copia`, a copy of `lista` made with spread `[...lista]`, then add `4` to `copia` with `push`.'), 'const lista = [1, 2, 3];
+', [re('(const|let)\s+copia\s*=\s*(\[\s*\.\.\.\s*lista\s*\]|lista\.slice\(\s*\)|Array\.from\(\s*lista\s*\)|structuredClone\(\s*lista\s*\))', L('`copia` è una copia di `lista`', '`copia` is a copy of `lista`')), re('copia\.push\(\s*4\s*\)', L('Aggiungi 4 alla copia', 'You add 4 to the copy'))], '', 'const lista = [1, 2, 3];
+const copia = [...lista];
+copia.push(4);'), [
+            dFlash(pFlash(), [[L('Una `let` dentro `{ }` non si vede fuori', 'A `let` inside `{ }` cannot be seen outside'), true], [L('`const b = a` copia un oggetto', '`const b = a` copies an object'), false], [L('Un numero si copia per valore', 'A number is copied by value'), true], [L('`[1] === [1]` è vero', '`[1] === [1]` is true'), false]], L('Gli oggetti si passano per riferimento.', 'Objects are passed by reference.')),
+            dBug(pBug(), ['const originale = { vite: 3 };', 'const copia = originale;', 'copia.vite = 0;', 'console.log(originale.vite); // deve restare 3'], 1, 'const copia = { ...originale };', L('Senza spread `copia` è lo stesso oggetto di `originale`.', 'Without spread `copia` is the same object as `originale`.')),
+            dBlanks(pFill(), "const a = { n: 1 };\nconst b = { ___a };\nb.n = 2;\nconsole.log(a.n); // ___", ['...', '1'], ['&', '2', 'undefined'], L('Lo spread crea un oggetto nuovo: `a` non cambia.', 'Spread creates a new object: `a` does not change.')),
         ]),
     ],
 ];

@@ -15,7 +15,7 @@ vendite |>
   mutate(totale = prezzo * pezzi) |>
   select(prodotto, totale) |>
   arrange(desc(totale))', 'r'),
-            P('Dentro i verbi di dplyr le colonne si scrivono senza `$` né virgolette.', 'Inside dplyr verbs, columns are written without `$` or quotes.'),
+            P('Dentro i verbi di dplyr le colonne si scrivono senza `$` né virgolette. Il pipe nativo `|>` esiste da R 4.1; nel codice più vecchio trovi `%>%` del pacchetto magrittr, che funziona quasi allo stesso modo.', 'Inside dplyr verbs, columns are written without `$` or quotes. The native pipe `|>` exists since R 4.1; in older code you find `%>%` from the magrittr package, which works almost the same way.'),
         ], [
             Q('p1', L('Che cosa fa `mutate`?', 'What does `mutate` do?'), [L('Crea o cambia una colonna', 'Creates or changes a column'), L('Filtra le righe', 'Filters rows'), L('Ordina', 'Sorts'), L('Cancella il data frame', 'Deletes the data frame')], 0, L('`filter` tiene le righe.', '`filter` keeps rows.')),
             Q('p2', L('Che cosa fa `|>`?', 'What does `|>` do?'), [L('Passa il risultato alla funzione dopo', 'Passes the result to the next function'), L('Confronta', 'Compares'), L('Commenta', 'Comments'), L('Assegna', 'Assigns')], 0, L('Si legge “e poi”.', 'Read it as “and then”.')),

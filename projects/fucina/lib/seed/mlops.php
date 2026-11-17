@@ -15,7 +15,7 @@ with mlflow.start_run():
     mlflow.log_param("dati", "clienti_2026_10.parquet")
     modello.fit(X_train, y_train)
     mlflow.log_metric("f1", f1_score(y_test, modello.predict(X_test)))
-    mlflow.sklearn.log_model(modello, "modello")', 'python'),
+    mlflow.sklearn.log_model(modello, name="modello")', 'python'),
             P('Strumenti come MLflow o Weights & Biases salvano tutto e mostrano i confronti. La **riproducibilità** (stessi dati + stesso codice = stesso modello) è la base per fidarsi di un risultato.', 'Tools such as MLflow or Weights & Biases store everything and show comparisons. **Reproducibility** (same data + same code = same model) is the basis for trusting a result.'),
         ], [
             Q('k1', L('Che cosa si traccia in un esperimento?', 'What do you track in an experiment?'), [L('Parametri, metriche, versioni e modello', 'Parameters, metrics, versions and model'), L('Solo il nome del file', 'Only the file name'), L('L’ora di pranzo', 'Lunch time'), L('Niente', 'Nothing')], 0, L('Tutto quello che serve a ripeterlo.', 'Everything needed to repeat it.')),

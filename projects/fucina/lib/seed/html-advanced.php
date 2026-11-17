@@ -94,7 +94,7 @@ return [
 <meta name="description" content="Corsi di HTML e CSS">
 <meta property="og:title" content="Fucina">
 <link rel="stylesheet" href="style.css">'),
-            P('Alcuni tag sono interattivi senza JavaScript: `<details>` e `<summary>` creano una sezione apribile, `<dialog>` una finestra.', 'Some tags are interactive with no JavaScript: `<details>` and `<summary>` create a collapsible section, `<dialog>` a window.'),
+            P('Alcuni tag sono interattivi senza JavaScript: `<details>` e `<summary>` creano una sezione apribile, `<dialog>` una finestra che un pulsante può aprire con gli attributi `commandfor` e `command`.', 'Some tags are interactive with no JavaScript: `<details>` and `<summary>` create a collapsible section, `<dialog>` a window a button can open with the `commandfor` and `command` attributes.'),
             C('<details>
   <summary>Come funziona?</summary>
   <p>Si apre con un tocco.</p>

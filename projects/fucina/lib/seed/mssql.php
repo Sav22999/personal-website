@@ -55,10 +55,10 @@ BEGIN TRY
     COMMIT;
 END TRY
 BEGIN CATCH
-    ROLLBACK;
-    PRINT ERROR_MESSAGE();
+    IF @@TRANCOUNT > 0 ROLLBACK;
+    THROW;   -- rilancia l’errore a chi ha chiamato
 END CATCH;', 'sql'),
-            P('`OUTPUT inserted.Id` dopo un `INSERT` restituisce le righe appena inserite, come `RETURNING` in PostgreSQL.', '`OUTPUT inserted.Id` after an `INSERT` returns the rows just inserted, like `RETURNING` in PostgreSQL.'),
+            P('Nel `CATCH`, `IF @@TRANCOUNT > 0` annulla solo se c’è davvero una transazione aperta, e `THROW` rilancia l’errore invece di nasconderlo. `OUTPUT inserted.Id` dopo un `INSERT` restituisce le righe appena inserite, come `RETURNING` in PostgreSQL.', 'In the `CATCH`, `IF @@TRANCOUNT > 0` rolls back only if a transaction is really open, and `THROW` re-raises the error instead of hiding it. `OUTPUT inserted.Id` after an `INSERT` returns the rows just inserted, like `RETURNING` in PostgreSQL.'),
         ], [
             Q('v1', L('Con che cosa inizia una variabile T-SQL?', 'What does a T-SQL variable start with?'), ['@', '$', ':', '#'], 0, L('`#` invece indica una tabella temporanea.', '`#` marks a temporary table instead.')),
             Q('v2', L('Che cosa succede nel blocco `CATCH`?', 'What happens in the `CATCH` block?'), [L('Si gestisce l’errore del blocco `TRY`', 'The error of the `TRY` block is handled'), L('Si dichiarano le variabili', 'Variables are declared'), L('Si crea la tabella', 'The table is created'), L('Niente, è un commento', 'Nothing, it is a comment')], 0, L('Tipicamente `ROLLBACK`.', 'Typically `ROLLBACK`.')),

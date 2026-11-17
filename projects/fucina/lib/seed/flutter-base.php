@@ -1,10 +1,10 @@
 <?php
-/** Flutter basics: Dart, widgets, layout, stateful widgets and navigation. */
+/** Flutter basics: Dart, widgets, layout, stateful widgets, navigation, Dart functions and classes, input, packages and assets. */
 
 return [
     'id' => 'flutter-base', 'family' => 'flutter', 'after' => null,
     'title' => L('Flutter base', 'Flutter Basics'), 'short' => L('Flutter base', 'Flutter Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('App per telefono, web e desktop con un solo codice: Dart, widget, layout, stato e navigazione.', 'Apps for phone, web and desktop from one codebase: Dart, widgets, layout, state and navigation.'),
+    'desc' => L('App per telefono, web e desktop con un solo codice: Dart, widget, layout, stato, navigazione, input, pacchetti e immagini.', 'Apps for phone, web and desktop from one codebase: Dart, widgets, layout, state, navigation, input, packages and images.'),
     'lessons' => [
         lesson('dart', L('Un assaggio di Dart', 'A taste of Dart'), [
             P('Flutter si scrive in **Dart**. Le variabili si dichiarano con il tipo o con `var`/`final`; `final` non cambia più. Le stringhe accettano valori con `$nome` o `${espressione}`.', 'Flutter is written in **Dart**. Variables are declared with a type or with `var`/`final`; `final` never changes again. Strings take values with `$nome` or `${expression}`.'),
@@ -18,7 +18,7 @@ return [
 }', 'dart'),
             P('Dart è **null-safe**: una variabile può contenere `null` solo se il tipo ha il punto di domanda (`int?`).', 'Dart is **null-safe**: a variable can hold `null` only if its type has a question mark (`int?`).'),
         ], [
-            Q('d1', L('Come inserisci una variabile in una stringa Dart?', 'How do you put a variable in a Dart string?'), ['"Ciao $nome"', '"Ciao {nome}"', '"Ciao " . nome', 'f"Ciao {nome}"'], 0, L('Per le espressioni `${…}`.', 'For expressions `${…}`.')),
+            Q('d1', L('Come inserisci una variabile in una stringa Dart?', 'How do you put a variable in a Dart string?'), ['"Ciao $nome"', '"Ciao {nome}"', '"Ciao " . nome', 'f"Ciao {nome}"'], 0, L('Con `$nome`; per le espressioni serve `${…}`.', 'With `$nome`; expressions need `${…}`.')),
             Q('d2', L('Che cosa significa `int?`', 'What does `int?` mean?'), [L('Un intero che può essere null', 'An int that may be null'), L('Un intero casuale', 'A random int'), L('Un errore', 'An error'), L('Un intero positivo', 'A positive int')], 0, L('Null safety.', 'Null safety.')),
             Q('d3', L('Da quale funzione parte un programma Dart?', 'Which function does a Dart program start from?'), ['main', 'start', 'run', 'init'], 0, L('`void main()`.', '`void main()`.')),
         ], task('dart', L('Dichiara `final citta = "Udine";` e stampa `"Vivo a $citta"`.', 'Declare `final citta = "Udine";` and print `"Vivo a $citta"`.'), 'void main() {
@@ -44,7 +44,7 @@ class App extends StatelessWidget {
     );
   }
 }', 'dart'),
-            P('`MaterialApp` dà lo stile Material, `Scaffold` la struttura della pagina (barra, corpo, bottone flottante). `const` dice a Flutter che quel widget non cambierà mai.', '`MaterialApp` gives the Material style, `Scaffold` the page structure (bar, body, floating button). `const` tells Flutter the widget will never change.'),
+            P('`MaterialApp` dà lo stile Material, `Scaffold` la struttura della pagina (barra, corpo, bottone flottante). `const` crea il widget una volta sola, già in compilazione: Flutter lo riusa senza ricostruirlo.', '`MaterialApp` gives the Material style, `Scaffold` the page structure (bar, body, floating button). `const` builds the widget once, at compile time: Flutter reuses it without rebuilding it.'),
         ], [
             Q('w1', L('Quale metodo descrive l’interfaccia di un widget?', 'Which method describes a widget’s interface?'), ['build', 'render', 'draw', 'paint'], 0, L('Restituisce un `Widget`.', 'It returns a `Widget`.')),
             Q('w2', L('Che cosa dà `Scaffold`?', 'What does `Scaffold` give?'), [L('La struttura di una pagina', 'The structure of a page'), L('Un database', 'A database'), L('Un font', 'A font'), L('Un’animazione', 'An animation')], 0, L('Barra, corpo, bottoni.', 'Bar, body, buttons.')),
@@ -77,7 +77,7 @@ class App extends StatelessWidget {
         ], [
             Q('l1', L('Quale widget mette i figli in verticale?', 'Which widget stacks children vertically?'), ['Column', 'Row', 'Stack', 'Wrap'], 0, L('`Row` li mette in orizzontale.', '`Row` puts them horizontally.')),
             Q('l2', L('Che cosa fa `Expanded`?', 'What does `Expanded` do?'), [L('Occupa lo spazio rimasto', 'Takes the remaining space'), L('Ingrandisce il testo', 'Enlarges text'), L('Apre un menu', 'Opens a menu'), L('Niente', 'Nothing')], 0, L('Dentro `Row` o `Column`.', 'Inside `Row` or `Column`.')),
-            Q('l3', L('Come aggiungi 16 di spazio tutto intorno?', 'How do you add 16 of space all around?'), ['EdgeInsets.all(16)', 'Margin(16)', 'Space(16)', 'Pad(16)'], 0, L('Nel widget `Padding`.', 'In the `Padding` widget.')),
+            Q('l3', L('Come aggiungi 16 pixel logici di spazio tutto intorno?', 'How do you add 16 logical pixels of space all around?'), ['EdgeInsets.all(16)', 'Margin(16)', 'Space(16)', 'Pad(16)'], 0, L('Nel widget `Padding`.', 'In the `Padding` widget.')),
         ], task('dart', L('Crea una `Row` con `children: [Icon(Icons.home), Text("Casa")]`.', 'Create a `Row` with `children: [Icon(Icons.home), Text("Casa")]`.'), '', [re('Row\s*\(\s*children\s*:\s*\[', L('È una riga', 'It is a row')), re('Icon\s*\(\s*Icons\.home\s*\)', L('C’è l’icona', 'There is the icon')), re('Text\s*\(\s*"Casa"\s*\)', L('C’è il testo', 'There is the text'))], '', 'Row(children: [Icon(Icons.home), Text("Casa")])'), [
             dBlanks(pFill(), "___(\n  children: [\n    Text(\"A\"),\n    ___(height: 12),\n    ___(child: Text(\"B\")),\n  ],\n)", ['Column', 'SizedBox', 'Expanded'], ['List', 'Space', 'Grow'], L('Colonna, spazio fisso, spazio rimasto.', 'Column, fixed gap, remaining space.')),
             dFlash(pFlash(), [[L('`Row` dispone in orizzontale', '`Row` lays out horizontally'), true], [L('`Padding` cambia il colore', '`Padding` changes the colour'), false], [L('`Expanded` funziona dentro Row e Column', '`Expanded` works inside Row and Column'), true], [L('`Column` dispone i figli in orizzontale', '`Column` lays its children out horizontally'), false]], L('`Padding` aggiunge spazio.', '`Padding` adds space.')),
@@ -101,7 +101,7 @@ class _ContatoreState extends State<Contatore> {
     );
   }
 }', 'dart'),
-            P('Il trattino basso davanti al nome (`_ContatoreState`) rende la classe privata al file.', 'The underscore in front of the name (`_ContatoreState`) makes the class private to the file.'),
+            P('Il trattino basso davanti al nome (`_ContatoreState`) rende la classe privata al file (alla sua libreria, per la precisione).', 'The underscore in front of the name (`_ContatoreState`) makes the class private to the file (to its library, to be precise).'),
         ], [
             Q('s1', L('Perché si usa `setState`?', 'Why use `setState`?'), [L('Per ridisegnare il widget', 'To redraw the widget'), L('Per salvare su disco', 'To save to disk'), L('Per chiudere l’app', 'To close the app'), L('Per cambiare tema', 'To change theme')], 0, L('Senza, lo schermo non si aggiorna.', 'Without it the screen does not update.')),
             Q('s2', L('Dove vive lo stato di un StatefulWidget?', 'Where does a StatefulWidget’s state live?'), [L('Nella classe State', 'In the State class'), L('Nel widget stesso', 'In the widget itself'), L('Nel main', 'In main'), L('In un file JSON', 'In a JSON file')], 0, L('Creata da `createState`.', 'Created by `createState`.')),
@@ -137,6 +137,111 @@ class _ContatoreState extends State<Contatore> {
 )', [re('onTap\s*:\s*\(\)\s*(=>|\{)\s*Navigator\.pop\s*\(\s*context\s*\)', L('Torni indietro', 'You go back'))], '', 'onTap: () => Navigator.pop(context),'), [
             dBlanks(pFill(), "ListView.___(\n  itemCount: note.length,\n  itemBuilder: (context, i) => ListTile(\n    title: Text(note[i]),\n    onTap: () => Navigator.___(context, MaterialPageRoute(builder: (_) => Dettaglio(note[i]))),\n  ),\n)", ['builder', 'push'], ['list', 'open', 'go'], L('Lista pigra, nuova pagina.', 'Lazy list, new page.')),
             dMatch(pMatch(), [['ListView.builder', L('Lista lunga ed efficiente', 'Long, efficient list')], ['ListTile', L('Riga pronta', 'Ready-made row')], ['Navigator.push', L('Apre una pagina', 'Opens a page')], ['Navigator.pop', L('Torna indietro', 'Goes back')]], L('Liste e pagine.', 'Lists and pages.')),
+        ]),
+        lesson('dart-functions', L('Funzioni e classi in Dart', 'Functions and classes in Dart'), [
+            P('In Dart le funzioni hanno parametri posizionali e **parametri con nome**, scritti tra graffe: si passano indicando il nome e possono essere `required` o avere un valore predefinito. Una funzione di una sola espressione si scrive con la freccia `=>`.', 'In Dart functions have positional parameters and **named parameters**, written in braces: you pass them by name and they can be `required` or have a default value. A single-expression function is written with the arrow `=>`.'),
+            C('int somma(int a, int b) => a + b;
+
+String saluta({required String nome, String saluto = "Ciao"}) {
+  return "$saluto, $nome!";
+}
+
+class Corso {
+  final String titolo;
+  final int livello;
+  const Corso(this.titolo, {this.livello = 1});
+
+  String get etichetta => "$titolo (livello $livello)";
+}
+
+void main() {
+  print(somma(2, 3));
+  print(saluta(nome: "Ada"));
+  final c = Corso("Flutter", livello: 2);
+  print(c.etichetta);
+}', 'dart'),
+            P('`this.titolo` nel costruttore assegna il campo in un colpo solo; `get` crea una proprietà calcolata. I widget sono classi fatte proprio così: per questo scrivi `Text("Ciao", style: …)` con parametri con nome.', '`this.titolo` in the constructor sets the field in one go; `get` creates a computed property. Widgets are classes built exactly like this: that is why you write `Text("Ciao", style: …)` with named parameters.'),
+        ], [
+            Q('f1', L('Come dichiari un parametro con nome obbligatorio?', 'How do you declare a required named parameter?'), ['[String nome]', '(named String nome)', '{required String nome}', '{String! nome}'], 2, L('Le graffe lo rendono con nome, `required` obbligatorio. Le quadre servono per i posizionali facoltativi.', 'Braces make it named, `required` makes it mandatory. Square brackets are for optional positional ones.')),
+            Q('f2', L('Che cosa fa `int doppio(int n) => n * 2;`?', 'What does `int doppio(int n) => n * 2;` do?'), [L('Dichiara una variabile chiamata doppio', 'Declares a variable called doppio'), L('Restituisce il doppio di n', 'Returns double n'), L('Confronta n con 2 e restituisce un bool', 'Compares n with 2 and returns a bool'), L('Crea una lista con n elementi', 'Creates a list of n items')], 1, L('La freccia equivale a `{ return n * 2; }`.', 'The arrow is the same as `{ return n * 2; }`.')),
+            Q('f3', L('Nel costruttore `Corso(this.titolo)`, che cosa fa `this.titolo`?', 'In the constructor `Corso(this.titolo)`, what does `this.titolo` do?'), [L('Legge il titolo da un file', 'Reads the title from a file'), L('Rende il campo facoltativo', 'Makes the field optional'), L('Crea un getter chiamato titolo', 'Creates a getter called titolo'), L('Assegna il parametro al campo titolo', 'Assigns the parameter to the titolo field')], 3, L('Una scorciatoia per `this.titolo = titolo`.', 'A shortcut for `this.titolo = titolo`.')),
+        ], task('dart', L('Scrivi la classe `Libro` con il campo `final String titolo;` e il costruttore `Libro(this.titolo);`.', 'Write the class `Libro` with the field `final String titolo;` and the constructor `Libro(this.titolo);`.'), 'class Libro {
+}', [re('class\s+Libro\s*\{', L('La classe esiste', 'The class exists')), re('final\s+String\s+titolo\s*;', L('C’è il campo', 'There is the field')), re('(const\s+)?Libro\s*\(\s*this\.titolo\s*\)\s*;', L('C’è il costruttore', 'There is the constructor'))], '', 'class Libro {
+  final String titolo;
+  Libro(this.titolo);
+}'), [
+            dBlanks(pFill(), "String saluta({___ String nome}) => \"Ciao \$nome\";\nclass Punto {\n  final int x, y;\n  const Punto(___.x, this.y);\n}\nprint(saluta(___: \"Ada\"));", ['required', 'this', 'nome'], ['final', 'self', 'name'], L('Parametro obbligatorio, campo dal costruttore, argomento con nome.', 'Required parameter, field from the constructor, named argument.')),
+            dFlash(pFlash(), [[L('I parametri con nome si scrivono tra graffe', 'Named parameters are written in braces'), true], [L('`=>` si usa solo nelle funzioni anonime', '`=>` is only used in anonymous functions'), false], [L('Un campo `final` si assegna una sola volta', 'A `final` field is set only once'), true], [L('Ogni classe Dart ha bisogno di un costruttore scritto a mano', 'Every Dart class needs a hand-written constructor'), false]], L('Se non lo scrivi, Dart crea un costruttore vuoto.', 'If you do not write one, Dart creates an empty constructor.')),
+        ]),
+        lesson('input', L('Bottoni e campi di testo', 'Buttons and text fields'), [
+            P('Material 3 offre più bottoni: `FilledButton` per l’azione principale, `OutlinedButton` e `TextButton` per quelle secondarie, `IconButton` per un’icona sola. Se `onPressed` è `null`, il bottone appare disattivato.', 'Material 3 offers several buttons: `FilledButton` for the main action, `OutlinedButton` and `TextButton` for secondary ones, `IconButton` for a lone icon. If `onPressed` is `null`, the button shows as disabled.'),
+            C('class _RicercaState extends State<Ricerca> {
+  final _controller = TextEditingController();
+  String _testo = "";
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      TextField(
+        controller: _controller,
+        decoration: const InputDecoration(labelText: "Cerca"),
+        onChanged: (v) => setState(() => _testo = v),
+      ),
+      FilledButton(
+        onPressed: _testo.isEmpty ? null : () => cerca(_testo),
+        child: const Text("Vai"),
+      ),
+    ]);
+  }
+}', 'dart'),
+            P('`onChanged` riceve il testo a ogni tasto. Il controller va liberato in `dispose`, che Flutter chiama quando il widget sparisce; il suo gemello `initState` è il posto per preparare le cose una volta sola, all’inizio.', '`onChanged` receives the text at every keystroke. The controller must be released in `dispose`, which Flutter calls when the widget goes away; its twin `initState` is the place to set things up once, at the start.'),
+        ], [
+            Q('i1', L('Come mostri un bottone disattivato?', 'How do you show a disabled button?'), [L('Con `enabled: false` dentro il `Text`', 'With `enabled: false` inside the `Text`'), L('Togliendo il `child` del bottone', 'By removing the button’s `child`'), L('Passando `null` a `onPressed`', 'By passing `null` to `onPressed`'), L('Con `visible: false` sul bottone', 'With `visible: false` on the button')], 2, L('Flutter lo disegna spento e ignora i tocchi.', 'Flutter draws it greyed out and ignores taps.')),
+            Q('i2', L('Quando viene chiamato `onChanged` di un `TextField`?', 'When is a `TextField`’s `onChanged` called?'), [L('A ogni modifica del testo', 'At every change of the text'), L('Solo quando premi Invio', 'Only when you press Enter'), L('Solo quando il campo perde il focus', 'Only when the field loses focus'), L('Una volta sola, alla creazione', 'Once, when it is created')], 0, L('Per l’Invio c’è `onSubmitted`.', 'For Enter there is `onSubmitted`.')),
+            Q('i3', L('In quale metodo liberi un `TextEditingController`?', 'In which method do you release a `TextEditingController`?'), ['initState', 'build', 'setState', 'dispose'], 3, L('`dispose` viene chiamato quando il widget lascia lo schermo per sempre.', '`dispose` is called when the widget leaves the screen for good.')),
+        ], task('dart', L('Aggiungi al `TextField` un `onChanged` che salva il testo con `setState(() => nome = v)`.', 'Add to the `TextField` an `onChanged` that stores the text with `setState(() => nome = v)`.'), 'TextField(
+  decoration: const InputDecoration(labelText: "Nome"),
+)', [re('onChanged\s*:\s*\(\s*(\w+)\s*\)\s*(=>|\{)\s*setState\s*\(\s*\(\s*\)\s*(=>|\{)\s*nome\s*=\s*\1', L('Salvi il testo nello stato', 'You store the text in the state'))], '', 'TextField(
+  decoration: const InputDecoration(labelText: "Nome"),
+  onChanged: (v) => setState(() => nome = v),
+)'), [
+            dMatch(pMatch(), [['FilledButton', L('Azione principale', 'Main action')], ['TextButton', L('Azione secondaria, solo testo', 'Secondary action, text only')], ['IconButton', L('Bottone con un’icona', 'Button with an icon')], ['onPressed: null', L('Bottone disattivato', 'Disabled button')]], L('I bottoni di Material 3.', 'Material 3 buttons.')),
+            dBug(pBug(), ['TextField(', '  controller: _controller,', '  onChanged: (v) => _testo = v,', ')'], 2, '  onChanged: (v) => setState(() => _testo = v),', L('Senza `setState` il valore cambia ma lo schermo che lo usa non si aggiorna.', 'Without `setState` the value changes but the screen using it does not update.')),
+        ]),
+        lesson('assets-packages', L('Pacchetti, immagini e hot reload', 'Packages, images and hot reload'), [
+            P('Ogni progetto ha un file `pubspec.yaml`: nome, versione di Dart, **dipendenze** e risorse. I pacchetti si cercano su **pub.dev** e si aggiungono con `flutter pub add nome`, che aggiorna il file e li scarica.', 'Every project has a `pubspec.yaml` file: name, Dart version, **dependencies** and assets. Packages are found on **pub.dev** and added with `flutter pub add name`, which updates the file and downloads them.'),
+            C('name: fucina_app
+environment:
+  sdk: ^3.5.0
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/', 'yaml'),
+            C('Image.asset("assets/images/logo.png", width: 120)
+Image.network("https://example.com/foto.jpg", fit: BoxFit.cover)', 'dart'),
+            P('Con l’**hot reload** (tasto `r` nel terminale di `flutter run`) le modifiche appaiono in un attimo e lo stato resta; l’**hot restart** (`R`) riparte da `main` e azzera lo stato. Serve il restart quando cambi `main`, `initState` o le variabili globali.', 'With **hot reload** (the `r` key in the `flutter run` terminal) changes appear in a moment and state is kept; **hot restart** (`R`) starts again from `main` and resets state. You need a restart when you change `main`, `initState` or global variables.'),
+        ], [
+            Q('a1', L('Quale file elenca le dipendenze di un progetto Flutter?', 'Which file lists a Flutter project’s dependencies?'), ['package.json', 'build.gradle', 'pubspec.yaml', 'Cargo.toml'], 2, L('Gli altri sono di npm, Gradle e Cargo.', 'The others belong to npm, Gradle and Cargo.')),
+            Q('a2', L('Un contatore segna 5. Dopo un hot reload, che cosa mostra?', 'A counter shows 5. After a hot reload, what does it show?'), [L('Riparte da 0', 'It starts again from 0'), L('Resta a 5', 'It stays at 5'), L('Diventa null', 'It becomes null'), L('L’app si chiude', 'The app closes')], 1, L('L’hot reload aggiorna il codice ma tiene lo stato; l’hot restart lo azzera.', 'Hot reload updates the code but keeps state; hot restart resets it.')),
+            Q('a3', L('Come mostri un’immagine inclusa nell’app?', 'How do you show an image bundled with the app?'), ['Image.network("assets/logo.png")', 'Picture.load("assets/logo.png")', 'Asset.image("logo.png")', 'Image.asset("assets/logo.png")'], 3, L('E la sua cartella va dichiarata sotto `assets:` nel pubspec.yaml.', 'And its folder must be listed under `assets:` in pubspec.yaml.')),
+        ], task('dart', L('Nel `child` mostra `assets/logo.png` largo 120 con `Image.asset`.', 'In the `child` show `assets/logo.png` 120 wide with `Image.asset`.'), 'Center(
+  child: ,
+)', [re('child\s*:\s*Image\.asset\s*\(\s*["\']assets/logo\.png["\']\s*,\s*width\s*:\s*120(\.0)?\s*[,)]', L('L’immagine è larga 120', 'The image is 120 wide'))], '', 'Center(
+  child: Image.asset("assets/logo.png", width: 120),
+)'), [
+            dOrder(pSort(), ['flutter create fucina_app', 'cd fucina_app', 'flutter pub add http', 'flutter run'], L('Crea, entra nella cartella, aggiungi il pacchetto, avvia.', 'Create, enter the folder, add the package, run.')),
+            dFlash(pFlash(), [[L('I pacchetti Dart si trovano su pub.dev', 'Dart packages are found on pub.dev'), true], [L('L’hot restart conserva lo stato', 'Hot restart keeps state'), false], [L('Le immagini locali vanno dichiarate nel pubspec.yaml', 'Local images must be listed in pubspec.yaml'), true], [L('`flutter pub add` modifica il pubspec.yaml', '`flutter pub add` edits pubspec.yaml'), true]], L('Il restart riparte da zero.', 'A restart starts from scratch.')),
         ]),
     ],
 ];

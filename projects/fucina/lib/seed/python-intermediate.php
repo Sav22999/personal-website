@@ -33,9 +33,9 @@ with open("note.txt", encoding="utf-8") as f:
         print(riga.strip())
 
 import json
-with open("dati.json") as f:
+with open("dati.json", encoding="utf-8") as f:
     dati = json.load(f)', 'python'),
-            P('Indica sempre `encoding="utf-8"` per le lettere accentate. Il modulo `json` legge e scrive dati strutturati.', 'Always give `encoding="utf-8"` for accented letters. The `json` module reads and writes structured data.'),
+            P('Indica sempre `encoding="utf-8"` per le lettere accentate: Python 3.15 usa UTF-8 di serie, ma le versioni precedenti, soprattutto su Windows, possono scegliere un’altra codifica. Il modulo `json` legge e scrive dati strutturati.', 'Always give `encoding="utf-8"` for accented letters: Python 3.15 uses UTF-8 by default, but earlier versions, especially on Windows, may pick another encoding. The `json` module reads and writes structured data.'),
         ], [
             Q('f1', L('Perché usare `with open(...)`?', 'Why use `with open(...)`?'), [L('Il file si chiude da solo', 'The file closes by itself'), L('È più veloce', 'It is faster'), L('Cripta il file', 'It encrypts the file'), L('Crea una copia', 'It makes a copy')], 0, L('Anche in caso di errore.', 'Even when an error occurs.')),
             Q('f2', L('Quale modalità aggiunge in fondo?', 'Which mode appends at the end?'), ['"a"', '"w"', '"r"', '"x"'], 0, L('`"w"` cancellerebbe il contenuto.', '`"w"` would wipe the content.')),

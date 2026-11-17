@@ -188,7 +188,7 @@ function user_certificate(int $uid, string $course): ?array
 }
 
 /** Awards the badges just reached and returns them, ready to be celebrated by the app. */
-function award_badges(int $uid): array
+function award_badges(int $uid, int $depth = 0): array
 {
     $st = db()->prepare('SELECT xp, best_streak, best_win_streak, best_drill_streak FROM ' . t('users') . ' WHERE id = ?');
     $st->execute([$uid]);
@@ -224,13 +224,19 @@ function award_badges(int $uid): array
     $new = [];
     foreach ($reached as $id => $ok) {
         if (!$ok || in_array($id, $have, true)) continue;
-        db()->prepare('INSERT IGNORE INTO ' . t('badges') . ' (user_id, badge, earned_at) VALUES (?,?,?)')->execute([$uid, $id, now_utc()]);
+        // Only a badge really saved counts: one that the column could not hold would look new at every check
+        $st = db()->prepare('INSERT IGNORE INTO ' . t('badges') . ' (user_id, badge, earned_at) VALUES (?,?,?)');
+        $st->execute([$uid, $id, now_utc()]);
+        if ($st->rowCount() !== 1) {
+            error_log("Fucina: badge $id not saved for user $uid");
+            continue;
+        }
         $new[] = ['id' => $id, 'reward' => setting('xp_badge')] + deep_pick($catalog[$id]);
     }
-    // Every new badge pays XP and Sparks; that XP can reach a grade badge in turn, so look once more
+    // Every new badge pays XP and Sparks; that XP can reach a grade badge in turn, so look once more (a few times at most)
     if ($new && setting('xp_badge') > 0) {
         add_xp($uid, setting('xp_badge') * count($new));
-        $new = array_merge($new, award_badges($uid));
+        if ($depth < 3) $new = array_merge($new, award_badges($uid, $depth + 1));
     }
     return $new;
 }

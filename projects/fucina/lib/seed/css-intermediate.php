@@ -84,7 +84,7 @@ p {
             P('Le ultime tre regole, insieme, troncano una riga con i puntini di sospensione.', 'The last three rules, together, cut a line with an ellipsis.'),
         ], [
             Q('o1', L('Quale valore mette le barre solo se servono?', 'Which value adds scrollbars only if needed?'), ['auto', 'scroll', 'hidden', 'bars'], 0, L('`scroll` le mostra sempre.', '`scroll` always shows them.')),
-            Q('o2', L('`z-index` funziona su un elemento `static`?', 'Does `z-index` work on a `static` element?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo sui link', 'Only on links'), L('Solo su `body`', 'Only on `body`')], 0, L('Serve un elemento posizionato.', 'It needs a positioned element.')),
+            Q('o2', L('`z-index` funziona su un normale elemento `static`, fuori da flex e grid?', 'Does `z-index` work on a plain `static` element, outside flex and grid?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo sui link', 'Only on links'), L('Solo su `body`', 'Only on `body`')], 0, L('Serve un elemento posizionato, oppure un figlio di un contenitore flex o grid.', 'It needs a positioned element, or a child of a flex or grid container.')),
             Q('o3', L('Che cosa aggiunge `text-overflow: ellipsis`?', 'What does `text-overflow: ellipsis` add?'), [L('I puntini', 'An ellipsis'), L('Una barra', 'A scrollbar'), L('Un’ombra', 'A shadow'), L('Un link', 'A link')], 0, L('Funziona con `overflow: hidden`.', 'It works with `overflow: hidden`.')),
         ], task('css', L('Dai a `.lista` un `height` di `40px` e `overflow: auto`.', 'Give `.lista` a `height` of `40px` and `overflow: auto`.'), '.lista {
 

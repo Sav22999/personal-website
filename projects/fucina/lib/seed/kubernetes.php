@@ -1,10 +1,11 @@
 <?php
-/** Kubernetes: why an orchestrator, pods and deployments, services and ingress, configuration, secrets and scaling. */
+/** Kubernetes: why an orchestrator, pods and deployments, services and ingress, configuration, secrets and scaling, debugging,
+ *  persistent storage, Jobs/CronJobs/DaemonSets, namespaces and RBAC, Gateway API, Helm and Kustomize. */
 
 return [
     'id' => 'kubernetes', 'family' => 'kubernetes', 'after' => 'docker',
     'title' => L('Kubernetes', 'Kubernetes'), 'short' => L('Kubernetes', 'Kubernetes'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Far girare container su tante macchine: pod e deployment, service e ingress, ConfigMap e Secret, scalabilità, aggiornamenti e kubectl.', 'Running containers across many machines: pods and deployments, services and ingress, ConfigMaps and Secrets, scaling, updates and kubectl.'),
+    'desc' => L('Far girare container su tante macchine: pod e deployment, service, ingress e Gateway API, ConfigMap e Secret, scalabilità e aggiornamenti, volumi persistenti, job, permessi, Helm e Kustomize.', 'Running containers across many machines: pods and deployments, services, ingress and Gateway API, ConfigMaps and Secrets, scaling and updates, persistent volumes, jobs, permissions, Helm and Kustomize.'),
     'lessons' => [
         lesson('why', L('Perché un orchestratore', 'Why an orchestrator'), [
             P('Quando i container sono tanti e girano su più macchine, serve qualcuno che decida dove avviarli, li riavvii se cadono, li distribuisca e li aggiorni senza interruzioni. **Kubernetes** (K8s) è l’**orchestratore** più usato: tu descrivi lo **stato desiderato** in file YAML e il cluster lavora continuamente per raggiungerlo.', 'When containers are many and run on several machines, someone must decide where to start them, restart them if they crash, spread them and update them without downtime. **Kubernetes** (K8s) is the most used **orchestrator**: you describe the **desired state** in YAML files and the cluster works continuously to reach it.'),
@@ -74,7 +75,7 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: web, port: { number: 80 } } }', 'yaml'),
-            P('Dentro il cluster, gli altri pod raggiungono il servizio con il nome `web` (come in Docker Compose). Il `selector` del Service deve corrispondere alle etichette dei pod, altrimenti il traffico non arriva da nessuna parte.', 'Inside the cluster, other pods reach the service by the name `web` (as in Docker Compose). The Service’s `selector` must match the pods’ labels, otherwise traffic goes nowhere.'),
+            P('Dentro il cluster, gli altri pod raggiungono il servizio con il nome `web` (come in Docker Compose). Il `selector` del Service deve corrispondere alle etichette dei pod, altrimenti il traffico non arriva da nessuna parte. L’Ingress funziona solo con un **controller** installato e oggi è stabile ma congelato: le novità arrivano nella più recente **Gateway API**.', 'Inside the cluster, other pods reach the service by the name `web` (as in Docker Compose). The Service’s `selector` must match the pods’ labels, otherwise traffic goes nowhere. Ingress works only with an installed **controller** and today it is stable but frozen: new features go into the newer **Gateway API**.'),
         ], [
             Q('s1', L('A che cosa serve un Service?', 'What is a Service for?'), [L('Dare un indirizzo stabile ai pod e distribuire il traffico', 'Giving pods a stable address and spreading traffic'), L('Salvare i file', 'Saving files'), L('Costruire immagini', 'Building images'), L('Gestire gli utenti', 'Managing users')], 0, L('I pod cambiano, il Service resta.', 'Pods change, the Service stays.')),
             Q('s2', L('Che cosa fa un Ingress?', 'What does an Ingress do?'), [L('Porta il traffico esterno ai servizi per dominio e percorso', 'Routes outside traffic to services by domain and path'), L('Cancella i pod', 'Deletes pods'), L('Scala il cluster', 'Scales the cluster'), L('Fa i backup', 'Makes backups')], 0, L('E gestisce HTTPS.', 'And handles HTTPS.')),
@@ -87,7 +88,7 @@ spec:
             P('La configurazione sta fuori dall’immagine: una **ConfigMap** per i valori normali, un **Secret** per password e chiavi, passati ai container come variabili d’ambiente o file. Attenzione: i Secret sono solo codificati in base64, non cifrati, a meno di attivare la cifratura o usare un gestore esterno.', 'Configuration lives outside the image: a **ConfigMap** for normal values, a **Secret** for passwords and keys, passed to containers as environment variables or files. Beware: Secrets are only base64-encoded, not encrypted, unless you enable encryption or use an external manager.'),
             C('kubectl create secret generic db --from-literal=password=segreta
 kubectl scale deployment web --replicas=5
-kubectl autoscale deployment web --cpu-percent=70 --min=2 --max=10', 'bash'),
+kubectl autoscale deployment web --cpu=70% --min=2 --max=10', 'bash'),
             C('env:
   - name: LIVELLO_LOG
     valueFrom: { configMapKeyRef: { name: config-web, key: livello } }
@@ -115,9 +116,185 @@ kubectl rollout undo deployment/web', 'bash'),
             Q('kd1', L('Dove leggi gli eventi di un pod?', 'Where do you read a pod’s events?'), ['kubectl describe pod', 'kubectl get svc', 'kubectl apply', 'kubectl top'], 0, L('In fondo all’output.', 'At the bottom of the output.')),
             Q('kd2', L('Che cosa fa la readiness probe?', 'What does the readiness probe do?'), [L('Decide se il pod riceve traffico', 'Decides whether the pod gets traffic'), L('Riavvia il nodo', 'Restarts the node'), L('Scarica l’immagine', 'Pulls the image'), L('Cancella il pod', 'Deletes the pod')], 0, L('La liveness invece riavvia.', 'Liveness restarts instead.')),
             Q('kd3', L('Come torni alla versione precedente?', 'How do you go back to the previous version?'), ['kubectl rollout undo', 'kubectl delete', 'kubectl scale --replicas=0', 'kubectl logs'], 0, L('Il Deployment ricorda le versioni.', 'The Deployment remembers versions.')),
-        ], task('bash', L('Mostra i log del pod `api-1` e poi annulla l’ultimo rollout del deployment `api`.', 'Show the logs of pod `api-1` and then undo the last rollout of deployment `api`.'), '', [re('kubectl\s+logs\s+api-1', L('Leggi i log', 'You read the logs')), re('kubectl\s+rollout\s+undo\s+deployment/api', L('Annulli il rollout', 'You undo the rollout'))], '', "kubectl logs api-1\nkubectl rollout undo deployment/api"), [
-            dMatch(pMatch(), [['CrashLoopBackOff', L('Il container continua a crashare', 'The container keeps crashing')], ['ImagePullBackOff', L('Immagine non scaricabile', 'Image cannot be pulled')], ['Pending', L('Nessun nodo disponibile', 'No node available')], ['readiness', L('Pronto per il traffico', 'Ready for traffic')], ['liveness', L('Vivo o da riavviare', 'Alive or to restart')]], L('Leggere lo stato.', 'Reading the state.')),
+        ], task('bash', L('Mostra i log del pod `api-1` e poi annulla l’ultimo rollout del deployment `api`.', 'Show the logs of pod `api-1` and then undo the last rollout of deployment `api`.'), '', [re('kubectl\s+logs\s+api-1', L('Leggi i log', 'You read the logs')), re('kubectl\s+rollout\s+undo\s+(deployment|deploy|deployments)[/\s]api\b', L('Annulli il rollout', 'You undo the rollout'))], '', "kubectl logs api-1\nkubectl rollout undo deployment/api"), [
+            dMatch(pMatch(), [['CrashLoopBackOff', L('Il container continua a crashare', 'The container keeps crashing')], ['ImagePullBackOff', L('Immagine non scaricabile', 'Image cannot be pulled')], ['Pending', L('Non ancora avviato, spesso senza un nodo adatto', 'Not started yet, often no suitable node')], ['readiness', L('Pronto per il traffico', 'Ready for traffic')], ['liveness', L('Vivo o da riavviare', 'Alive or to restart')]], L('Leggere lo stato.', 'Reading the state.')),
             dOrder(pSort(), ['kubectl get pods', 'kubectl describe pod web-1', 'kubectl logs web-1', L('Correggi e ridistribuisci', 'Fix and redeploy'), 'kubectl rollout status deployment/web'], L('Dalla diagnosi alla correzione.', 'From diagnosis to fix.')),
+        ]),
+        lesson('storage', L('Volumi persistenti e StatefulSet', 'Persistent volumes and StatefulSets'), [
+            P('I pod sono usa e getta: quello che scrivono nel container sparisce quando vengono ricreati. Per i dati da conservare l’app chiede spazio con un **PersistentVolumeClaim** (PVC); il cluster lo soddisfa con un **PersistentVolume**, spesso creato al momento da una **StorageClass** (per esempio un disco del fornitore cloud).', 'Pods are disposable: what they write in the container vanishes when they are recreated. For data to keep, the app requests space with a **PersistentVolumeClaim** (PVC); the cluster fulfils it with a **PersistentVolume**, often created on the fly by a **StorageClass** (for example a cloud provider disk).'),
+            C('apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: caricati
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi', 'yaml'),
+            C('# nel template del pod
+spec:
+  containers:
+    - name: web
+      image: registro.esempio.it/web:1.4
+      volumeMounts:
+        - name: dati
+          mountPath: /app/caricati
+  volumes:
+    - name: dati
+      persistentVolumeClaim:
+        claimName: caricati', 'yaml'),
+            P('`ReadWriteOnce` vuol dire che il volume è montato in scrittura da **un nodo alla volta**; `ReadWriteMany` richiede uno storage che lo supporti. Per i database replicati c’è lo **StatefulSet**: pod con nomi stabili (`db-0`, `db-1`) e un volume per ciascuno. Molte squadre però tengono i database su servizi gestiti, fuori dal cluster.', '`ReadWriteOnce` means the volume is mounted read-write by **one node at a time**; `ReadWriteMany` needs storage that supports it. For replicated databases there is the **StatefulSet**: pods with stable names (`db-0`, `db-1`) and a volume each. Many teams, though, keep databases on managed services, outside the cluster.'),
+        ], [
+            Q('pv1', L('Che cos’è un PersistentVolumeClaim?', 'What is a PersistentVolumeClaim?'), [L('Un pod che contiene un database', 'A pod containing a database'), L('Una richiesta di spazio persistente fatta per un’app', 'A request for persistent space made for an app'), L('Un backup automatico del cluster', 'An automatic cluster backup'), L('Un nodo riservato ai dischi', 'A node reserved for disks')], 1, L('Il cluster la soddisfa con un PersistentVolume.', 'The cluster fulfils it with a PersistentVolume.')),
+            Q('pv2', L('Perché usare uno StatefulSet per un database replicato?', 'Why use a StatefulSet for a replicated database?'), [L('Scala più in fretta di un Deployment', 'It scales faster than a Deployment'), L('Non ha bisogno di immagini', 'It needs no images'), L('Dà nomi stabili e un volume a ogni replica', 'It gives stable names and a volume to each replica'), L('Cifra i dati in automatico', 'It encrypts data automatically')], 2, L('`db-0` resta `db-0`, con i suoi dati.', '`db-0` stays `db-0`, with its data.')),
+            Q('pv3', L('Che cosa significa `ReadWriteOnce`?', 'What does `ReadWriteOnce` mean?'), [L('Il volume si può scrivere una sola volta', 'The volume can be written only once'), L('Tutti i pod leggono, uno solo scrive', 'All pods read, only one writes'), L('Il volume si cancella dopo la prima lettura', 'The volume is deleted after the first read'), L('Lo monta in scrittura un solo nodo alla volta', 'It is mounted read-write by one node at a time')], 3, L('Per più nodi serve ReadWriteMany.', 'Several nodes need ReadWriteMany.')),
+        ], task('yaml', L('Scrivi il PVC `foto` con `accessModes` `ReadWriteOnce` e una richiesta di `5Gi`.', 'Write the `foto` PVC with `accessModes` `ReadWriteOnce` and a request of `5Gi`.'), "apiVersion: v1\nkind: PersistentVolumeClaim\n", [re('name:\s*["\']?foto["\']?\s*$', L('Il nome', 'The name')), re('accessModes:\s*(\[\s*["\']?ReadWriteOnce["\']?\s*\]|\n\s+-\s*["\']?ReadWriteOnce)', L('La modalità di accesso', 'The access mode')), re('storage:\s*["\']?5Gi["\']?', L('Lo spazio richiesto', 'The requested space'))], '', "apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: foto\nspec:\n  accessModes: [ReadWriteOnce]\n  resources:\n    requests:\n      storage: 5Gi"), [
+            dMatch(pMatch(), [['PersistentVolumeClaim', L('Richiesta di spazio', 'Request for space')], ['PersistentVolume', L('Lo spazio vero e proprio', 'The actual space')], ['StorageClass', L('Tipo di disco e creazione automatica', 'Disk type and automatic creation')], ['StatefulSet', L('Nomi stabili, un volume a testa', 'Stable names, a volume each')], ['ReadWriteOnce', L('Un nodo alla volta', 'One node at a time')]], L('Dati che restano.', 'Data that stays.')),
+            dFlash(pFlash(), [[L('I file scritti nel container senza volume sopravvivono alla ricreazione del pod', 'Files written in the container without a volume survive the pod being recreated'), false], [L('I pod di uno StatefulSet si chiamano db-0, db-1…', 'A StatefulSet’s pods are named db-0, db-1…'), true], [L('ReadWriteMany funziona con qualsiasi storage', 'ReadWriteMany works with any storage'), false], [L('Una StorageClass può creare il volume quando serve', 'A StorageClass can create the volume when needed'), true]], L('Persistenza nel cluster.', 'Persistence in the cluster.')),
+        ]),
+        lesson('workloads', L('Job, CronJob e DaemonSet', 'Jobs, CronJobs and DaemonSets'), [
+            P('Non tutto è un server sempre acceso. Un **Job** esegue un pod **fino alla fine** (una migrazione, un’importazione) e lo riprova se fallisce, fino a `backoffLimit`. Un **CronJob** crea dei Job a orario, con la sintassi di cron. Un **DaemonSet** fa girare un pod su **ogni nodo**, per esempio l’agente che raccoglie log o metriche.', 'Not everything is an always-on server. A **Job** runs a pod **to completion** (a migration, an import) and retries it on failure, up to `backoffLimit`. A **CronJob** creates Jobs on a schedule, with cron syntax. A **DaemonSet** runs a pod on **every node**, for example the agent collecting logs or metrics.'),
+            C('apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-notturno
+spec:
+  schedule: "0 3 * * *"          # ogni giorno alle 3:00
+  timeZone: "Europe/Rome"
+  concurrencyPolicy: Forbid      # mai due backup insieme
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: registro.esempio.it/backup:1.0
+              args: ["--destinazione", "s3://backup-fucina"]', 'yaml'),
+            C('kubectl create job prova --from=cronjob/backup-notturno   # lancialo subito
+kubectl get jobs
+kubectl logs job/prova', 'bash'),
+            P('I pod di un Job devono avere `restartPolicy: OnFailure` o `Never`, non `Always`: devono poter finire. Quando aggiungi un nodo al cluster, il DaemonSet ci mette da solo il suo pod.', 'A Job’s pods must have `restartPolicy: OnFailure` or `Never`, not `Always`: they must be able to finish. When you add a node to the cluster, the DaemonSet places its pod there by itself.'),
+        ], [
+            Q('wl1', L('Che cosa usi per una migrazione del database da fare una volta a ogni rilascio?', 'What do you use for a database migration to run once per release?'), ['Deployment', 'Job', 'DaemonSet', 'Service'], 1, L('Gira fino alla fine e si ferma.', 'It runs to completion and stops.')),
+            Q('wl2', L('Che cosa significa `schedule: "0 3 * * *"`?', 'What does `schedule: "0 3 * * *"` mean?'), [L('Ogni 3 minuti', 'Every 3 minutes'), L('Il giorno 3 di ogni mese', 'On the 3rd of every month'), L('Tre volte al giorno', 'Three times a day'), L('Ogni giorno alle 3:00', 'Every day at 3:00')], 3, L('Minuto 0, ora 3, ogni giorno, mese e giorno della settimana.', 'Minute 0, hour 3, every day, month and weekday.')),
+            Q('wl3', L('Quale risorsa per un agente che raccoglie i log su ogni nodo?', 'Which resource for an agent collecting logs on every node?'), ['Job', 'CronJob', 'DaemonSet', 'StatefulSet'], 2, L('Un pod per nodo, anche per quelli nuovi.', 'One pod per node, new ones included.')),
+        ], task('yaml', L('Completa il CronJob `pulizia`: deve girare ogni giorno alle 2:30 (`"30 2 * * *"`) con un pod che ha `restartPolicy: OnFailure`.', 'Complete the `pulizia` CronJob: it must run every day at 2:30 (`"30 2 * * *"`) with a pod that has `restartPolicy: OnFailure`.'), "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: pulizia\nspec:\n", [re('schedule:\s*["\']30 2 \* \* \*["\']', L('L’orario', 'The schedule')), re('jobTemplate:', L('Il modello del Job', 'The Job template')), re('restartPolicy:\s*(OnFailure|Never)\b', L('Il pod può finire', 'The pod can finish'))], '', "apiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: pulizia\nspec:\n  schedule: \"30 2 * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n            - name: pulizia\n              image: registro.esempio.it/pulizia:1.0"), [
+            dMatch(pMatch(), [['Job', L('Gira fino alla fine', 'Runs to completion')], ['CronJob', L('Job a orario', 'Scheduled Jobs')], ['DaemonSet', L('Un pod su ogni nodo', 'A pod on every node')], ['backoffLimit', L('Quanti tentativi', 'How many retries')], ['concurrencyPolicy: Forbid', L('Niente esecuzioni sovrapposte', 'No overlapping runs')]], L('Lavori a tempo e di servizio.', 'Timed and service work.')),
+            dBug(pBug(), ['apiVersion: batch/v1', 'kind: Job', 'metadata:', '  name: migrazione', 'spec:', '  template:', '    spec:', '      restartPolicy: Always', '      containers:', '        - name: migra', '          image: registro.esempio.it/migra:1.0'], 7, '      restartPolicy: OnFailure', L('Un Job deve poter finire: `Always` non è ammesso.', 'A Job must be able to finish: `Always` is not allowed.')),
+        ]),
+        lesson('access', L('Namespace, RBAC e pod sicuri', 'Namespaces, RBAC and secure pods'), [
+            P('I **namespace** dividono un cluster in aree (`negozio`, `staging`) con nomi, quote e permessi propri. Con **RBAC** un **Role** elenca le azioni (verbi) permesse su certe risorse di un namespace e un **RoleBinding** le assegna a un utente o a un **ServiceAccount** (l’identità dei pod). Per tutto il cluster ci sono ClusterRole e ClusterRoleBinding.', '**Namespaces** split a cluster into areas (`negozio`, `staging`) with their own names, quotas and permissions. With **RBAC** a **Role** lists the actions (verbs) allowed on certain resources in a namespace and a **RoleBinding** grants them to a user or a **ServiceAccount** (the pods’ identity). For the whole cluster there are ClusterRole and ClusterRoleBinding.'),
+            C('apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lettore-pod
+  namespace: negozio
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ada-legge-pod
+  namespace: negozio
+subjects:
+  - kind: User
+    name: ada@esempio.it
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: lettore-pod
+  apiGroup: rbac.authorization.k8s.io', 'yaml'),
+            C('kubectl create namespace negozio
+kubectl get pods -n negozio
+kubectl auth can-i delete pods -n negozio --as ada@esempio.it   # no', 'bash'),
+            P('Nel pod, un `securityContext` limita i danni se l’app viene violata: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem: true` e nessuna capability in più. Con l’etichetta `pod-security.kubernetes.io/enforce: restricted` un namespace rifiuta i pod che non rispettano queste regole.', 'In the pod, a `securityContext` limits the damage if the app is breached: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem: true` and no extra capabilities. With the label `pod-security.kubernetes.io/enforce: restricted` a namespace rejects pods that break these rules.'),
+        ], [
+            Q('rb1', L('Che cosa fa un RoleBinding?', 'What does a RoleBinding do?'), [L('Crea un nuovo namespace', 'Creates a new namespace'), L('Collega un Service ai suoi pod', 'Connects a Service to its pods'), L('Assegna i permessi di un Role a un utente o ServiceAccount', 'Grants a Role’s permissions to a user or ServiceAccount'), L('Unisce due cluster in uno', 'Merges two clusters into one')], 2, L('Il Role dice cosa, il binding a chi.', 'The Role says what, the binding to whom.')),
+            Q('rb2', L('Quale comando verifica se un utente può fare un’azione?', 'Which command checks whether a user may perform an action?'), ['kubectl describe user', 'kubectl auth can-i', 'kubectl get roles --check', 'kubectl whoami --can'], 1, L('Con `--as` provi per conto di un altro.', 'With `--as` you test on someone else’s behalf.')),
+            Q('rb3', L('Quale impostazione impedisce a un container di girare come root?', 'Which setting stops a container from running as root?'), ['privileged: true', 'hostNetwork: true', 'replicas: 0', 'runAsNonRoot: true'], 3, L('Va nel securityContext.', 'It goes in the securityContext.')),
+        ], task('bash', L('Crea il namespace `staging` e poi elenca i pod che contiene.', 'Create the `staging` namespace and then list the pods it contains.'), '', [re('kubectl\s+create\s+(namespace|ns)\s+staging\b', L('Crei il namespace', 'You create the namespace')), re('kubectl\s+get\s+(pods?|po)\b[^\n]*(-n|--namespace)[=\s]+staging\b', L('Elenchi i suoi pod', 'You list its pods'))], '', "kubectl create namespace staging\nkubectl get pods -n staging"), [
+            dMatch(pMatch(), [['Namespace', L('Area separata del cluster', 'Separate area of the cluster')], ['Role', L('Permessi in un namespace', 'Permissions in a namespace')], ['ClusterRole', L('Permessi su tutto il cluster', 'Permissions across the cluster')], ['RoleBinding', L('Assegna i permessi', 'Grants the permissions')], ['ServiceAccount', L('Identità dei pod', 'The pods’ identity')]], L('Chi può fare cosa.', 'Who can do what.')),
+            dFlash(pFlash(), [[L('Conviene dare cluster-admin a ogni app', 'Giving cluster-admin to every app is wise'), false], [L('runAsNonRoot blocca i container che partirebbero come root', 'runAsNonRoot blocks containers that would start as root'), true], [L('Namespace diversi possono avere permessi diversi', 'Different namespaces can have different permissions'), true], [L('I verbi get e list permettono di cancellare', 'The get and list verbs allow deleting'), false]], L('Il minimo indispensabile.', 'The bare minimum.')),
+        ]),
+        lesson('gateway', L('Gateway API', 'Gateway API'), [
+            P('La **Gateway API** è l’evoluzione dell’Ingress, stabile dalla versione 1.0. Divide i ruoli: la **GatewayClass** indica il controller che la realizza, il **Gateway** è il punto d’ingresso con porte e certificati (gestito da chi cura la piattaforma), le **HTTPRoute** sono le regole di ogni app (gestite dai team delle app). Pesi, intestazioni e reindirizzamenti si scrivono nello standard, senza annotazioni diverse per ogni controller.', 'The **Gateway API** is the evolution of Ingress, stable since version 1.0. It splits roles: the **GatewayClass** names the controller that implements it, the **Gateway** is the entry point with ports and certificates (managed by whoever runs the platform), **HTTPRoutes** are each app’s rules (managed by the app teams). Weights, headers and redirects are written in the standard, without different annotations for each controller.'),
+            C('apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: pubblico
+spec:
+  gatewayClassName: esempio-gw
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.esempio.it"
+      tls:
+        certificateRefs:
+          - name: certificato-esempio
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: negozio
+spec:
+  parentRefs:
+    - name: pubblico
+  hostnames: ["www.esempio.it"]
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: /api }
+      backendRefs:
+        - name: api
+          port: 80
+    - backendRefs:            # il resto: 90% alla versione 1, 10% alla 2
+        - name: web-v1
+          port: 80
+          weight: 90
+        - name: web-v2
+          port: 80
+          weight: 10', 'yaml'),
+            P('L’Ingress resta supportato, ma è congelato e il diffuso controller ingress-nginx è stato ritirato nel marzo 2026: niente più correzioni di sicurezza. Per i nuovi cluster si sceglie un controller che implementa la Gateway API, e per migrare esistono strumenti come ingress2gateway.', 'Ingress is still supported, but it is frozen and the widespread ingress-nginx controller was retired in March 2026: no more security fixes. For new clusters you choose a controller implementing the Gateway API, and tools such as ingress2gateway help with migration.'),
+        ], [
+            Q('gw1', L('Chi gestisce di solito il Gateway e chi le HTTPRoute?', 'Who usually manages the Gateway and who the HTTPRoutes?'), [L('Entrambi li gestisce il fornitore cloud', 'The cloud provider manages both'), L('Il Gateway il team della piattaforma, le HTTPRoute i team delle app', 'The Gateway the platform team, the HTTPRoutes the app teams'), L('Il Gateway i team delle app, le HTTPRoute nessuno', 'The Gateway the app teams, the HTTPRoutes nobody'), L('Li crea Kubernetes da solo per ogni Service', 'Kubernetes creates them by itself for each Service')], 1, L('Ruoli separati, permessi separati.', 'Separate roles, separate permissions.')),
+            Q('gw2', L('Come mandi il 10% del traffico a una nuova versione con una HTTPRoute?', 'How do you send 10% of traffic to a new version with an HTTPRoute?'), [L('Con 10 repliche della nuova versione', 'With 10 replicas of the new version'), L('Con un’annotazione nginx sul Service', 'With an nginx annotation on the Service'), L('Con un CronJob che cambia versione ogni ora', 'With a CronJob switching version every hour'), L('Con due backendRefs con i pesi 90 e 10', 'With two backendRefs weighted 90 and 10')], 3, L('Il rilascio graduale è nello standard.', 'Gradual rollout is part of the standard.')),
+            Q('gw3', L('Qual è oggi lo stato dell’Ingress?', 'What is the state of Ingress today?'), [L('È stato rimosso da Kubernetes', 'It has been removed from Kubernetes'), L('Resta supportato ma è congelato: le novità vanno nella Gateway API', 'It is still supported but frozen: new features go into the Gateway API'), L('È diventato obbligatorio al posto dei Service', 'It has become mandatory instead of Services'), L('Funziona solo con il controller ingress-nginx', 'It works only with the ingress-nginx controller')], 1, L('Ma il controller ingress-nginx non è più mantenuto.', 'But the ingress-nginx controller is no longer maintained.')),
+        ], task('yaml', L('Completa la HTTPRoute `blog`: collegala al Gateway `principale`, con hostname `blog.esempio.it` e il traffico al Service `blog` sulla porta `80`.', 'Complete the `blog` HTTPRoute: attach it to the `principale` Gateway, with hostname `blog.esempio.it` and traffic to the `blog` Service on port `80`.'), "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: blog\nspec:\n", [re('parentRefs:\s*(\n\s+-\s*name:\s*["\']?principale|\[\s*\{\s*name:\s*["\']?principale)', L('Il Gateway', 'The Gateway')), re('hostnames:\s*(\[\s*["\']?blog\.esempio\.it|\n\s+-\s*["\']?blog\.esempio\.it)', L('L’hostname', 'The hostname')), re('backendRefs:\s*(\n\s+-\s*name:\s*["\']?blog["\']?\s*\n\s+port:\s*80\b|\[\s*\{\s*name:\s*["\']?blog["\']?\s*,\s*port:\s*80\s*\})', L('Il Service di destinazione', 'The target Service'))], '', "apiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: blog\nspec:\n  parentRefs:\n    - name: principale\n  hostnames: [\"blog.esempio.it\"]\n  rules:\n    - backendRefs:\n        - name: blog\n          port: 80"), [
+            dMatch(pMatch(), [['GatewayClass', L('Il controller che la realizza', 'The controller implementing it')], ['Gateway', L('Ingresso con porte e TLS', 'Entry point with ports and TLS')], ['HTTPRoute', L('Le regole di un’app', 'An app’s rules')], ['weight', L('Quota di traffico', 'Share of traffic')], ['parentRefs', L('A quale Gateway si collega', 'Which Gateway it attaches to')]], L('Il nuovo ingresso.', 'The new entrance.')),
+            dFlash(pFlash(), [[L('La Gateway API è stabile (v1)', 'The Gateway API is stable (v1)'), true], [L('ingress-nginx riceve ancora correzioni di sicurezza dal progetto Kubernetes', 'ingress-nginx still gets security fixes from the Kubernetes project'), false], [L('Una HTTPRoute può dividere il traffico con dei pesi', 'An HTTPRoute can split traffic with weights'), true], [L('Con la Gateway API i Service non servono più', 'With the Gateway API Services are no longer needed'), false]], L('Instradare con lo standard.', 'Routing with the standard.')),
+        ]),
+        lesson('packaging', L('Helm, Kustomize e GitOps', 'Helm, Kustomize and GitOps'), [
+            P('Copiare a mano i YAML per ogni ambiente porta a errori. **Kustomize**, integrato in `kubectl` (`-k`), parte da una **base** e applica per ogni ambiente delle **patch**, senza template. **Helm** impacchetta un’app in un **chart** con template e un file `values.yaml`; installa, aggiorna e riporta indietro le **release**.', 'Copying YAML by hand for each environment leads to mistakes. **Kustomize**, built into `kubectl` (`-k`), starts from a **base** and applies **patches** for each environment, with no templates. **Helm** packages an app into a **chart** with templates and a `values.yaml` file; it installs, upgrades and rolls back **releases**.'),
+            C('# overlays/produzione/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: produzione
+images:
+  - name: registro.esempio.it/web
+    newTag: "1.5"
+patches:
+  - path: repliche.yaml', 'yaml'),
+            C('kubectl apply -k overlays/produzione
+helm install negozio ./chart -n negozio -f valori-produzione.yaml
+helm upgrade negozio ./chart -n negozio --set image.tag=1.5
+helm history negozio -n negozio
+helm rollback negozio 3 -n negozio
+helm install metriche oci://registro.esempio.it/charts/metriche --version 2.4.1', 'bash'),
+            P('Qualunque strumento scegli, tieni i file in Git e lascia che il cluster si allinei da solo (**GitOps**, con strumenti come Argo CD o Flux): ogni modifica è un commit rivisto e tornare indietro è un revert. Fissa sempre la versione dei chart che installi.', 'Whichever tool you choose, keep the files in Git and let the cluster align itself (**GitOps**, with tools such as Argo CD or Flux): every change is a reviewed commit and going back is a revert. Always pin the version of the charts you install.'),
+        ], [
+            Q('pk1', L('Come adatta Kustomize i YAML a ogni ambiente?', 'How does Kustomize adapt YAML to each environment?'), [L('Con template scritti in un linguaggio di programmazione', 'With templates written in a programming language'), L('Con una base e delle patch per ogni ambiente', 'With a base and patches for each environment'), L('Scaricando i file da un registro pubblico', 'By downloading the files from a public registry'), L('Creando un cluster diverso per ogni ambiente', 'By creating a different cluster per environment')], 1, L('Niente template: solo modifiche dichiarate.', 'No templates: only declared changes.')),
+            Q('pk2', L('Dove imposti i valori di un chart Helm per un ambiente?', 'Where do you set a Helm chart’s values for an environment?'), [L('Nel Dockerfile dell’app', 'In the app’s Dockerfile'), L('Nei log del cluster', 'In the cluster logs'), L('In un ConfigMap del namespace kube-system', 'In a ConfigMap in the kube-system namespace'), L('In un file di valori passato con -f, o con --set', 'In a values file passed with -f, or with --set')], 3, L('I valori riempiono i template del chart.', 'The values fill in the chart’s templates.')),
+            Q('pk3', L('Che cos’è il GitOps?', 'What is GitOps?'), [L('Usare Git al posto di kubectl per leggere i log', 'Using Git instead of kubectl to read logs'), L('Fare il backup del cluster dentro GitHub', 'Backing up the cluster inside GitHub'), L('Il cluster si allinea da solo ai file versionati in Git', 'The cluster aligns itself to the files versioned in Git'), L('Modificare il cluster a mano e poi fare un commit', 'Changing the cluster by hand and then committing')], 2, L('Git è la fonte di verità.', 'Git is the source of truth.')),
+        ], task('bash', L('Applica l’overlay Kustomize `overlays/staging`, poi aggiorna la release Helm `negozio` dal chart `./chart` impostando `image.tag=2.1`.', 'Apply the Kustomize overlay `overlays/staging`, then upgrade the Helm release `negozio` from the `./chart` chart setting `image.tag=2.1`.'), '', [re('kubectl\s+apply\s+-k\s+(\./)?overlays/staging/?', L('Applichi l’overlay', 'You apply the overlay')), re('helm\s+upgrade\s+((--install|-i)\s+)?negozio\s+\./chart/?(\s|$)[^\n]*--set\s+image\.tag=["\']?2\.1', L('Aggiorni la release', 'You upgrade the release'))], '', "kubectl apply -k overlays/staging\nhelm upgrade negozio ./chart --set image.tag=2.1"), [
+            dMatch(pMatch(), [['kubectl apply -k', L('Applica Kustomize', 'Applies Kustomize')], ['values.yaml', L('Valori predefiniti del chart', 'The chart’s default values')], ['helm upgrade', L('Aggiorna una release', 'Upgrades a release')], ['helm rollback', L('Torna a una revisione', 'Goes back to a revision')], ['GitOps', L('Git come fonte di verità', 'Git as source of truth')]], L('Impacchettare e distribuire.', 'Packaging and delivering.')),
+            dFlash(pFlash(), [[L('Kustomize è integrato in kubectl', 'Kustomize is built into kubectl'), true], [L('Helm può riportare una release a una revisione precedente', 'Helm can roll a release back to an earlier revision'), true], [L('Senza versione fissata un chart installa sempre la stessa cosa', 'Without a pinned version a chart always installs the same thing'), false], [L('GitOps vuol dire modificare il cluster a mano', 'GitOps means changing the cluster by hand'), false]], L('Ambienti ripetibili.', 'Repeatable environments.')),
         ]),
     ],
 ];

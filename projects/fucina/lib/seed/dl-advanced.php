@@ -8,7 +8,8 @@ return [
     'lessons' => [
         lesson('embeddings', L('Tokenizzazione ed embedding', 'Tokenisation and embeddings'), [
             P('Prima di tutto il testo viene diviso in **token** da un tokenizzatore e ogni token diventa un numero (il suo id nel vocabolario). Poi uno strato di **embedding** trasforma ogni id in un vettore di centinaia o migliaia di numeri, imparato durante l’addestramento.', 'First the text is split into **tokens** by a tokeniser and each token becomes a number (its id in the vocabulary). Then an **embedding** layer turns each id into a vector of hundreds or thousands of numbers, learned during training.'),
-            C('from transformers import AutoTokenizer
+            C('import torch
+from transformers import AutoTokenizer
 
 tok = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
 ids = tok("Il gatto dorme")["input_ids"]
@@ -43,8 +44,8 @@ def attention(Q, K, V):
             dOrder(pSort(), ['punteggi = Q @ K.transpose(-2, -1)', 'punteggi = punteggi / math.sqrt(d)', 'pesi = torch.softmax(punteggi, dim=-1)', 'uscita = pesi @ V'], L('Prodotto, scala, softmax, media pesata.', 'Product, scale, softmax, weighted average.')),
         ]),
         lesson('transformer', L('Il transformer', 'The transformer'), [
-            P('Il **transformer** (2017) è una pila di blocchi uguali: ogni blocco ha attention, una piccola rete *feed-forward*, connessioni residue e normalizzazione. Poiché l’attention non conosce l’ordine, si aggiunge un’informazione di **posizione** agli embedding.', 'The **transformer** (2017) is a stack of identical blocks: each block has attention, a small feed-forward network, residual connections and normalisation. Since attention does not know order, **position** information is added to the embeddings.'),
-            C('Ingresso → embedding + posizione
+            P('Il **transformer** (2017) è una pila di blocchi uguali: ogni blocco ha attention, una piccola rete *feed-forward*, connessioni residue e normalizzazione. Poiché l’attention non conosce l’ordine, serve un’informazione di **posizione**: il transformer originale la sommava agli embedding, molti modelli moderni la applicano direttamente a query e key (RoPE).', 'The **transformer** (2017) is a stack of identical blocks: each block has attention, a small feed-forward network, residual connections and normalisation. Since attention does not know order, **position** information is needed: the original transformer added it to the embeddings, many modern models apply it directly to queries and keys (RoPE).'),
+            C('Ingresso → embedding (+ informazione di posizione)
   └─ blocco × N:  attention (mascherata) → somma e normalizza
                   feed-forward          → somma e normalizza
 → strato finale → probabilità del prossimo token', 'text'),

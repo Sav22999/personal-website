@@ -28,7 +28,7 @@ a:hover { color: green; }   /* il link sotto al mouse */', 'css'),
 ', [css('.nota', 'color', 'rgb(255, 0, 0)', L('La nota è rossa', 'The note is red')), css('#box', 'width', '200px', L('Il box è largo 200px', 'The box is 200px wide'))], $page)),
 
         lesson('colors', L('Colori e testi', 'Colours and text'), [
-            P('Un colore si può scrivere in molti modi: per nome, in esadecimale, in `rgb()` o in `hsl()`. L’ultimo numero o la barra indicano la trasparenza.', 'A colour can be written in many ways: by name, in hexadecimal, in `rgb()` or in `hsl()`. A final value after a slash sets the transparency.'),
+            P('Un colore si può scrivere in molti modi: per nome, in esadecimale, in `rgb()` o in `hsl()`. Un ultimo valore dopo la barra indica la trasparenza.', 'A colour can be written in many ways: by name, in hexadecimal, in `rgb()` or in `hsl()`. A final value after a slash sets the transparency.'),
             C('h1 {
   color: #E8590C;
   background-color: rgb(255 240 230);
@@ -81,7 +81,7 @@ a:hover { color: green; }   /* il link sotto al mouse */', 'css'),
         ], task('css', L('Fai diventare il link un `inline-block` con `padding` di `10px`, e nascondi `.nota` con `display: none`.', 'Turn the link into an `inline-block` with `10px` of `padding`, and hide `.nota` with `display: none`.'), '', [css('a', 'display', 'inline-block', L('Il link è inline-block', 'The link is inline-block')), css('a', 'padding-left', '10px', L('Il link ha 10px di padding', 'The link has 10px of padding')), css('.nota', 'display', 'none', L('La nota è nascosta', 'The note is hidden'))], $page)),
 
         lesson('position', L('Il posizionamento', 'Positioning'), [
-            P('`position` sposta gli elementi fuori dal flusso normale. Il valore predefinito è `static`. Con `relative` l’elemento resta al suo posto e fa da riferimento per i figli `absolute`.', '`position` moves elements out of the normal flow. The default value is `static`. With `relative` the element stays in place and acts as a reference for `absolute` children.'),
+            P('`position` cambia il modo in cui un elemento si colloca rispetto al flusso normale. Il valore predefinito è `static`. Con `relative` l’elemento resta al suo posto e fa da riferimento per i figli `absolute`.', '`position` changes how an element is placed relative to the normal flow. The default value is `static`. With `relative` the element stays in place and acts as a reference for `absolute` children.'),
             C('.card { position: relative; }
 .etichetta { position: absolute; top: 8px; right: 8px; }
 .barra { position: sticky; top: 0; }

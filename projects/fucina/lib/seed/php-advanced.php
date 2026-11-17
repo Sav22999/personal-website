@@ -1,10 +1,10 @@
 <?php
-/** PHP advanced: namespaces and Composer, interfaces and traits, enums, generators, tests and security. */
+/** PHP advanced: namespaces and Composer, interfaces and traits, enums, generators, tests, security, attributes, property hooks, PHP 8.4/8.5 features, static analysis and performance. */
 
 return [
     'id' => 'php-advanced', 'family' => 'php', 'after' => 'php-intermediate',
     'title' => L('PHP avanzato', 'Advanced PHP'), 'short' => L('PHP avanzato', 'PHP Advanced'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Namespace e Composer, interfacce e trait, enum, generatori, test automatici e sicurezza.', 'Namespaces and Composer, interfaces and traits, enums, generators, automated tests and security.'),
+    'desc' => L('Namespace e Composer, interfacce e trait, enum, generatori, test automatici, sicurezza, attributi, hook delle proprietà, novità di PHP 8.4 e 8.5, analisi statica e prestazioni.', 'Namespaces and Composer, interfaces and traits, enums, generators, automated tests, security, attributes, property hooks, PHP 8.4 and 8.5 features, static analysis and performance.'),
     'lessons' => [
         lesson('namespaces', L('Namespace e Composer', 'Namespaces and Composer'), [
             P('Un **namespace** è il cognome di una classe: due classi `Utente` possono convivere se stanno in namespace diversi. `use` importa una classe per chiamarla con il nome corto.', 'A **namespace** is the surname of a class: two `Utente` classes can live together in different namespaces. `use` imports a class so you can call it by its short name.'),
@@ -122,7 +122,7 @@ function numeri(int $n): Generator {
             dFlash(pFlash(), [[L('`array_map` applica una funzione a ogni elemento', '`array_map` applies a function to each item'), true], [L('Un generatore restituisce un array', 'A generator returns an array'), false], [L('`array_filter` tiene gli elementi che passano un test', '`array_filter` keeps the items that pass a test'), true], [L('`fn` può contenere più istruzioni', '`fn` can contain several statements'), false]], L('`fn` ha una sola espressione.', '`fn` has a single expression.')),
         ]),
         lesson('testing', L('Test automatici', 'Automated tests'), [
-            P('Un **test** è codice che controlla altro codice. Con **PHPUnit** ogni metodo che inizia per `test` prepara una situazione, esegue e verifica con le **asserzioni**.', 'A **test** is code that checks other code. With **PHPUnit** every method starting with `test` sets up a situation, runs it and checks with **assertions**.'),
+            P('Un **test** è codice che controlla altro codice. Con **PHPUnit** ogni metodo pubblico che inizia per `test` (o segnato con l’attributo `#[Test]`) prepara una situazione, esegue e verifica con le **asserzioni**.', 'A **test** is code that checks other code. With **PHPUnit** every public method starting with `test` (or marked with the `#[Test]` attribute) sets up a situation, runs it and checks with **assertions**.'),
             C('<?php
 use PHPUnit\Framework\TestCase;
 
@@ -174,6 +174,194 @@ $nome = $_GET["nome"] ?? "";
 echo htmlspecialchars($nome, ENT_QUOTES, "UTF-8");'), [
             dBug(pBug(), ['$q = $_GET["q"] ?? "";', 'echo "<h1>Risultati per " . $q . "</h1>";', '$st = $pdo->prepare("SELECT * FROM corsi WHERE titolo LIKE ?");'], 1, 'echo "<h1>Risultati per " . htmlspecialchars($q) . "</h1>";', L('Ciò che scrive l’utente va escapato prima di mostrarlo.', 'What the user writes must be escaped before it is shown.')),
             dMatch(pMatch(), [['XSS', L('Script iniettato nella pagina', 'Script injected into the page')], ['CSRF', L('Richiesta falsa da un altro sito', 'Forged request from another site')], ['SQL injection', L('Dati che diventano comandi', 'Data that becomes commands')], ['HttpOnly', L('Il cookie non si legge da JS', 'JS cannot read the cookie')]], L('Gli attacchi e le loro difese.', 'Attacks and their defences.')),
+        ]),
+        lesson('attributes', L('Attributi e Reflection', 'Attributes and Reflection'), [
+            P('Un **attributo** `#[...]` aggiunge metadati a classi, metodi, proprietà o parametri. Da solo non fa nulla: lo legge un framework o il tuo codice con la **Reflection**. Symfony e Doctrine li usano per rotte, validazione e tabelle.', 'An **attribute** `#[...]` adds metadata to classes, methods, properties or parameters. On its own it does nothing: a framework or your code reads it through **Reflection**. Symfony and Doctrine use them for routes, validation and tables.'),
+            C('<?php
+#[Attribute(Attribute::TARGET_METHOD)]
+final class Rotta {
+    public function __construct(public string $percorso) {}
+}
+
+final class CorsiController {
+    #[Rotta("/corsi")]
+    public function elenco(): string { return "Tutti i corsi"; }
+}
+
+$metodo = new ReflectionMethod(CorsiController::class, "elenco");
+foreach ($metodo->getAttributes(Rotta::class) as $attr) {
+    echo $attr->newInstance()->percorso;   // /corsi
+}', 'php'),
+            C('<?php
+class Base {
+    public function prezzo(): float { return 10.0; }
+}
+class Scontato extends Base {
+    #[\Override]
+    public function prezzo(): float { return 8.0; }
+}
+function accedi(string $utente, #[\SensitiveParameter] string $password): void {}', 'php'),
+            P('Alcuni attributi li controlla il motore stesso: `#[\Override]` (PHP 8.3) dà errore se il padre non ha quel metodo, `#[\SensitiveParameter]` nasconde il valore nelle tracce degli errori, `#[\Deprecated]` (PHP 8.4) segnala codice da non usare più.', 'Some attributes are checked by the engine itself: `#[\Override]` (PHP 8.3) fails if the parent has no such method, `#[\SensitiveParameter]` hides the value in error traces, `#[\Deprecated]` (PHP 8.4) flags code not to use any more.'),
+        ], [
+            Q('a1', L('Come si scrive un attributo in PHP?', 'How do you write an attribute in PHP?'), ['@Rotta("/corsi")', '#[Rotta("/corsi")]', '<<Rotta("/corsi")>>', '/** Rotta("/corsi") */'], 1, L('Cancelletto e parentesi quadre, da PHP 8.0.', 'Hash and square brackets, since PHP 8.0.')),
+            Q('a2', L('Che cosa succede se segni con `#[\Override]` un metodo che il padre non ha?', 'What happens if you mark with `#[\Override]` a method the parent does not have?'), [L('PHP lo ignora in silenzio', 'PHP silently ignores it'), L('Il metodo diventa astratto', 'The method becomes abstract'), L('Errore: il metodo non sovrascrive niente', 'Error: the method overrides nothing'), L('Il metodo viene rinominato', 'The method gets renamed')], 2, L('Ti protegge dai refusi nei nomi dei metodi.', 'It protects you from typos in method names.')),
+            Q('a3', L('Come legge un attributo il tuo codice?', 'How does your code read an attribute?'), [L('Con `$_SERVER["ATTRIBUTES"]`', 'With `$_SERVER["ATTRIBUTES"]`'), L('Con un `include` del file della classe', 'With an `include` of the class file'), L('Lo legge solo il browser', 'Only the browser reads it'), L('Con la Reflection, ad esempio `getAttributes()`', 'With Reflection, for example `getAttributes()`')], 3, L('`newInstance()` crea l’oggetto attributo con i suoi argomenti.', '`newInstance()` builds the attribute object with its arguments.')),
+        ], task('php', L('Segna il metodo `totale()` della classe figlia con `#[\Override]`.', 'Mark the child class’s `totale()` method with `#[\Override]`.'), '<?php
+class Carrello extends Base {
+    public function totale(): float { return 0.0; }
+}', [re('#\[\s*\\\\?Override\s*\]\s*public\s+function\s+totale', L('Il metodo è segnato', 'The method is marked'))], '', '<?php
+class Carrello extends Base {
+    #[\Override]
+    public function totale(): float { return 0.0; }
+}'), [
+            dMatch(pMatch(), [['#[\Override]', L('Deve sovrascrivere un metodo', 'Must override a method')], ['#[\SensitiveParameter]', L('Nasconde il valore nelle tracce', 'Hides the value in traces')], ['#[\Deprecated]', L('Codice da non usare più', 'Code not to use any more')], ['#[Attribute]', L('Dichiara una classe attributo', 'Declares an attribute class')], ['getAttributes()', L('Legge gli attributi', 'Reads the attributes')]], L('Attributi del motore e attributi tuoi.', 'Engine attributes and your own.')),
+            dFlash(pFlash(), [[L('Un attributo da solo non esegue codice', 'An attribute runs no code on its own'), true], [L('`#[\Override]` è controllato dal motore di PHP', '`#[\Override]` is checked by the PHP engine'), true], [L('Gli attributi si scrivono dentro i commenti', 'Attributes are written inside comments'), false], [L('Un attributo può avere argomenti', 'An attribute can take arguments'), true]], L('Metadati che il codice può leggere.', 'Metadata that code can read.')),
+        ]),
+        lesson('property-hooks', L('Hook delle proprietà e visibilità asimmetrica', 'Property hooks and asymmetric visibility'), [
+            P('Da **PHP 8.4** una proprietà può avere degli **hook**: un blocco `set` che controlla o trasforma il valore quando viene assegnato, un blocco `get` che lo calcola quando viene letto. Così spariscono molti getter e setter scritti a mano.', 'Since **PHP 8.4** a property can have **hooks**: a `set` block that checks or transforms the value when it is assigned, a `get` block that computes it when it is read. Many hand-written getters and setters disappear.'),
+            C('<?php
+final class Utente {
+    public private(set) string $email;
+
+    public string $nome {
+        set(string $valore) {
+            $this->nome = trim($valore);
+        }
+    }
+
+    public string $iniziale {
+        get => strtoupper($this->nome[0]);
+    }
+
+    public function __construct(string $nome, string $email) {
+        $this->nome = $nome;
+        $this->email = strtolower($email);
+    }
+}
+
+$u = new Utente("  ada ", "ADA@Example.com");
+echo $u->nome;        // ada
+echo $u->iniziale;    // A
+$u->email = "x@y.it"; // Errore: si scrive solo dentro la classe', 'php'),
+            P('`public private(set)` è la **visibilità asimmetrica**: tutti leggono, solo la classe scrive. Una proprietà con il solo `get` che non usa il proprio valore è **virtuale**: viene calcolata a ogni lettura e non si può assegnare. Gli hook non si possono mettere sulle proprietà `static`.', '`public private(set)` is **asymmetric visibility**: everyone reads, only the class writes. A property with only a `get` hook that does not use its own value is **virtual**: it is computed on every read and cannot be assigned. Hooks cannot be put on `static` properties.'),
+        ], [
+            Q('p1', L('Che cosa permette `public private(set) string $email`?', 'What does `public private(set) string $email` allow?'), [L('Leggerla da fuori, scriverla solo dentro la classe', 'Reading it from outside, writing it only inside the class'), L('Scriverla da fuori ma non leggerla', 'Writing it from outside but not reading it'), L('Leggerla solo dalle sottoclassi', 'Reading it only from subclasses'), L('Assegnarla una volta sola in tutto il programma', 'Assigning it only once in the whole program')], 0, L('Visibilità diversa per lettura e scrittura.', 'Different visibility for reading and writing.')),
+            Q('p2', L('Da quale versione di PHP esistono gli hook delle proprietà?', 'Since which PHP version do property hooks exist?'), ['PHP 7.4', 'PHP 8.0', 'PHP 8.4', 'PHP 8.2'], 2, L('Arrivati a novembre 2024, insieme alla visibilità asimmetrica.', 'They arrived in November 2024, together with asymmetric visibility.')),
+            Q('p3', L('Una proprietà con il solo hook `get` che non usa il proprio valore…', 'A property with only a `get` hook that does not use its own value…'), [L('Si può scrivere ma non leggere', 'Can be written but not read'), L('Viene salvata nella sessione', 'Is saved in the session'), L('Diventa automaticamente statica', 'Automatically becomes static'), L('È calcolata a ogni lettura e non si può assegnare', 'Is computed on every read and cannot be assigned')], 3, L('È una proprietà virtuale.', 'It is a virtual property.')),
+        ], task('php', L('Aggiungi la proprietà virtuale `public float $lordo` con un hook `get` che restituisce `$this->netto * 1.22`.', 'Add the virtual property `public float $lordo` with a `get` hook returning `$this->netto * 1.22`.'), '<?php
+final class Prezzo {
+    public function __construct(public float $netto) {}
+}', [re('public\s+float\s+\$lordo\s*\{\s*get\s*(=>\s*\$this->netto\s*\*\s*1\.22|\{\s*return\s+\$this->netto\s*\*\s*1\.22\s*;\s*\})', L('Il lordo si calcola dal netto', 'The gross is computed from the net'))], '', '<?php
+final class Prezzo {
+    public float $lordo {
+        get => $this->netto * 1.22;
+    }
+    public function __construct(public float $netto) {}
+}'), [
+            dBlanks(pFill(), 'public string $titolo {
+    ___(string $v) {
+        $this->titolo = ucfirst($v);
+    }
+}
+public ___(set) int $voti = 0;
+public string $sigla {
+    ___ => strtoupper($this->titolo);
+}', ['set', 'private', 'get'], ['put', 'readonly', 'read'], L('Hook in scrittura, visibilità asimmetrica, hook in lettura.', 'Write hook, asymmetric visibility, read hook.')),
+            dFlash(pFlash(), [[L('Gli hook evitano molti getter e setter scritti a mano', 'Hooks avoid many hand-written getters and setters'), true], [L('`private(set)` impedisce anche la lettura da fuori', '`private(set)` also blocks reading from outside'), false], [L('Una proprietà virtuale non occupa spazio nell’oggetto', 'A virtual property takes no space in the object'), true], [L('Gli hook si possono mettere anche sulle proprietà `static`', 'Hooks can also go on `static` properties'), false]], L('Logica dentro la proprietà, non in metodi a parte.', 'Logic inside the property, not in separate methods.')),
+        ]),
+        lesson('modern-php', L('Novità di PHP 8.4 e 8.5', 'What is new in PHP 8.4 and 8.5'), [
+            P('PHP esce con una versione nuova ogni novembre. La **8.4** ha aggiunto `array_find`, `array_any` e `array_all`, che evitano cicli scritti a mano, e permette `new Classe()->metodo()` senza parentesi in più. La **8.5** ha portato l’operatore **pipe** `|>` e le funzioni `array_first` e `array_last`.', 'PHP ships a new version every November. **8.4** added `array_find`, `array_any` and `array_all`, which avoid hand-written loops, and allows `new Class()->method()` without extra parentheses. **8.5** brought the **pipe** operator `|>` and the functions `array_first` and `array_last`.'),
+            C('<?php
+$corsi = [
+    ["titolo" => "PHP", "livello" => 3],
+    ["titolo" => "Go", "livello" => 1],
+];
+
+// PHP 8.4
+$facile = array_find($corsi, fn($c) => $c["livello"] === 1);   // il corso Go
+$tuttiValidi = array_all($corsi, fn($c) => $c["titolo"] !== "");
+$oggi = new DateTimeImmutable()->format("Y-m-d");
+
+// PHP 8.5
+$slug = "  Corso di PHP  "
+    |> trim(...)
+    |> strtolower(...)
+    |> (fn($s) => str_replace(" ", "-", $s));                  // corso-di-php
+$ultimo = array_last($corsi);', 'php'),
+            P('Il pipe passa il valore a sinistra come unico argomento della funzione a destra: la catena si legge dall’alto in basso. `trim(...)` è la sintassi delle **callable di prima classe** (PHP 8.1): trasforma una funzione in un valore. Una funzione freccia dentro una pipe va tra parentesi.', 'The pipe passes the left-hand value as the only argument of the function on the right: the chain reads top to bottom. `trim(...)` is the **first-class callable** syntax (PHP 8.1): it turns a function into a value. An arrow function inside a pipe goes in parentheses.'),
+            Tip('Prima di usare una novità, controlla la versione del server con `php -v` o `PHP_VERSION`: un hosting rimasto indietro darebbe un errore di sintassi.', 'Before using a new feature, check the server’s version with `php -v` or `PHP_VERSION`: a hosting that lags behind would throw a syntax error.'),
+        ], [
+            Q('m1', L('Che cosa restituisce `array_find`?', 'What does `array_find` return?'), [L('L’indice di tutti gli elementi trovati', 'The index of every item found'), L('true se almeno un elemento va bene', 'true if at least one item matches'), L('Un nuovo array con gli elementi trovati', 'A new array with the items found'), L('Il primo elemento che soddisfa la condizione, oppure null', 'The first item that meets the condition, or null')], 3, L('Per sapere solo se c’è, usa `array_any`.', 'To know only whether one exists, use `array_any`.')),
+            Q('m2', L('Che cosa fa `$x |> strtoupper(...)`?', 'What does `$x |> strtoupper(...)` do?'), [L('Confronta $x con strtoupper', 'Compares $x with strtoupper'), L('Passa $x a strtoupper e ne restituisce il risultato', 'Passes $x to strtoupper and returns its result'), L('Aggiunge strtoupper a un array', 'Appends strtoupper to an array'), L('Crea un generatore', 'Creates a generator')], 1, L('È come scrivere `strtoupper($x)`.', 'It is like writing `strtoupper($x)`.')),
+            Q('m3', L('Che cos’è `trim(...)`?', 'What is `trim(...)`?'), [L('Una chiamata di trim senza argomenti', 'A call to trim with no arguments'), L('Un errore di sintassi', 'A syntax error'), L('Una callable di prima classe che rappresenta trim', 'A first-class callable standing for trim'), L('Un parametro variadico', 'A variadic parameter')], 2, L('I tre punti fanno parte della sintassi.', 'The three dots are part of the syntax.')),
+        ], task('php', L('Con `array_any` scrivi in `$ciSonoGratis` se in `$prezzi` c’è almeno un valore uguale a `0`.', 'With `array_any` store in `$ciSonoGratis` whether `$prezzi` has at least one value equal to `0`.'), '<?php
+$prezzi = [12.5, 0, 8];
+', [re('\$ciSonoGratis\s*=\s*array_any\s*\(\s*\$prezzi\s*,\s*(static\s+)?fn\s*\(\s*(\w+\s+)?\$(\w+)\s*\)\s*=>\s*(\$\3\s*===?\s*0(\.0)?|0(\.0)?\s*===?\s*\$\3)\s*\)', L('Usi array_any con una funzione freccia', 'You use array_any with an arrow function'))], '', '<?php
+$ciSonoGratis = array_any($prezzi, fn($p) => $p == 0);'), [
+            dMatch(pMatch(), [['array_find', L('Primo elemento che va bene', 'First matching item')], ['array_any', L('Almeno uno va bene?', 'Does at least one match?')], ['array_all', L('Vanno bene tutti?', 'Do they all match?')], ['|>', L('Passa il risultato avanti', 'Passes the result along')], ['array_first', L('Primo valore dell’array', 'First value of the array')]], L('Novità recenti di PHP.', 'Recent PHP additions.')),
+            dOrder(pSort(), ['$titolo = "  Ciao Mondo  "', '    |> trim(...)', '    |> strtolower(...)', '    |> ucfirst(...);', 'echo $titolo; // Ciao mondo'], L('Il valore attraversa le funzioni dall’alto in basso.', 'The value flows through the functions top to bottom.')),
+        ]),
+        lesson('static-analysis', L('Analisi statica e qualità', 'Static analysis and quality'), [
+            P('PHP controlla i tipi solo mentre il codice gira. Uno strumento di **analisi statica** come **PHPStan** (o Psalm) legge il codice senza eseguirlo e trova prima metodi chiamati su `null`, tipi sbagliati e codice morto. Si sceglie un livello di severità e lo si alza piano piano.', 'PHP checks types only while the code runs. A **static analysis** tool such as **PHPStan** (or Psalm) reads the code without running it and finds methods called on `null`, wrong types and dead code beforehand. You pick a strictness level and raise it step by step.'),
+            C('composer require --dev phpstan/phpstan
+vendor/bin/phpstan analyse src --level 8', 'bash'),
+            C('<?php
+/**
+ * @param list<int> $voti
+ * @return array{media: float|int, max: int}
+ */
+function riepilogo(array $voti): array {
+    return ["media" => array_sum($voti) / count($voti), "max" => max($voti)];
+}
+
+function trova(int $id): ?Utente { /* ... */ }
+echo trova(7)->nome;   // PHPStan: possibile accesso su null', 'php'),
+            P('I commenti `@param` e `@return` aggiungono ciò che il linguaggio non sa dire, come il tipo degli elementi di un array. Uno strumento di stile come **PHP-CS-Fixer** sistema la formattazione. Lanciali a ogni push, nell’integrazione continua.', 'The `@param` and `@return` comments add what the language cannot express, such as the type of an array’s items. A style tool such as **PHP-CS-Fixer** fixes the formatting. Run them on every push, in continuous integration.'),
+        ], [
+            Q('s1', L('Che cosa fa PHPStan?', 'What does PHPStan do?'), [L('Esegue i test più in fretta', 'Runs tests faster'), L('Comprime i file PHP per il server', 'Compresses PHP files for the server'), L('Analizza il codice senza eseguirlo e trova errori', 'Analyses code without running it and finds errors'), L('Traduce PHP in JavaScript', 'Translates PHP into JavaScript')], 2, L('Gli errori emergono prima di arrivare in produzione.', 'Errors show up before reaching production.')),
+            Q('s2', L('Che cosa significa `@param list<int> $voti`?', 'What does `@param list<int> $voti` mean?'), [L('Che $voti ha al massimo un elemento', 'That $voti has at most one item'), L('Che $voti è un singolo intero', 'That $voti is a single int'), L('Che $voti è facoltativo', 'That $voti is optional'), L('Che $voti è una lista di interi con indici 0, 1, 2…', 'That $voti is a list of ints indexed 0, 1, 2…')], 3, L('`array` da solo non dice che cosa contiene.', '`array` alone does not say what it holds.')),
+            Q('s3', L('Perché PHPStan segnala `trova(7)->nome`?', 'Why does PHPStan flag `trova(7)->nome`?'), [L('Perché `nome` non è un metodo', 'Because `nome` is not a method'), L('Perché `trova` può restituire null', 'Because `trova` may return null'), L('Perché manca `declare(strict_types=1)`', 'Because `declare(strict_types=1)` is missing'), L('Perché 7 non è una stringa', 'Because 7 is not a string')], 1, L('Il tipo di ritorno è `?Utente`.', 'The return type is `?Utente`.')),
+        ], task('php', L('Aggiungi il commento `/** @return list<string> */` sopra la funzione `nomi()`.', 'Add the comment `/** @return list<string> */` above the `nomi()` function.'), '<?php
+function nomi(): array {
+    return ["Ada", "Bea"];
+}', [re('/\*\*[\s\S]*@return\s+(list|array)<\s*string\s*>[\s\S]*\*/\s*function\s+nomi', L('Il tipo di ritorno è descritto', 'The return type is described'))], '', '<?php
+/** @return list<string> */
+function nomi(): array {
+    return ["Ada", "Bea"];
+}'), [
+            dMatch(pMatch(), [['PHPStan', L('Analisi statica', 'Static analysis')], ['PHP-CS-Fixer', L('Sistema lo stile', 'Fixes the style')], ['@param', L('Tipo di un parametro', 'Type of a parameter')], ['--level', L('Quanto essere severi', 'How strict to be')], ['CI', L('Controlli a ogni push', 'Checks on every push')]], L('Gli attrezzi della qualità.', 'The quality tools.')),
+            dFlash(pFlash(), [[L('PHPStan deve eseguire il codice per trovare errori', 'PHPStan must run the code to find errors'), false], [L('I commenti `@return` possono descrivere la forma di un array', '`@return` comments can describe an array’s shape'), true], [L('Conviene partire da un livello basso e alzarlo', 'It pays to start at a low level and raise it'), true], [L('L’analisi statica sostituisce del tutto i test', 'Static analysis fully replaces tests'), false]], L('Analisi statica e test si completano.', 'Static analysis and tests complement each other.')),
+        ]),
+        lesson('performance', L('Prestazioni: OPcache, cache e misure', 'Performance: OPcache, caching and measuring'), [
+            P('**OPcache** tiene in memoria il codice PHP già compilato, così non viene ricompilato a ogni richiesta: in produzione va sempre attivo. Il **JIT** (da PHP 8.0) compila in codice macchina e aiuta nei calcoli pesanti, poco nelle pagine che aspettano il database.', '**OPcache** keeps already compiled PHP code in memory, so it is not recompiled on every request: in production it must always be on. The **JIT** (since PHP 8.0) compiles to machine code and helps heavy computation, little with pages waiting on the database.'),
+            C('; php.ini in produzione
+opcache.enable=1
+opcache.memory_consumption=256
+opcache.validate_timestamps=0', 'ini'),
+            C('<?php
+$inizio = hrtime(true);
+
+$corsi = apcu_fetch("corsi_popolari", $trovato);
+if (!$trovato) {
+    $corsi = $pdo->query("SELECT * FROM corsi ORDER BY iscritti DESC LIMIT 10")->fetchAll();
+    apcu_store("corsi_popolari", $corsi, 300);   // 5 minuti
+}
+
+$ms = (hrtime(true) - $inizio) / 1e6;
+error_log("corsi in {$ms} ms");', 'php'),
+            P('Prima misura, poi ottimizza. Spesso il collo di bottiglia è il database: una query dentro un ciclo (il problema **N+1**) costa più di qualsiasi trucco. Con `validate_timestamps=0` PHP non ricontrolla i file: dopo ogni rilascio va svuotata la cache, ad esempio riavviando PHP-FPM.', 'Measure first, then optimise. Often the bottleneck is the database: a query inside a loop (the **N+1** problem) costs more than any trick. With `validate_timestamps=0` PHP does not recheck the files: after every release the cache must be cleared, for example by restarting PHP-FPM.'),
+        ], [
+            Q('o1', L('Che cosa fa OPcache?', 'What does OPcache do?'), [L('Tiene in memoria il codice già compilato', 'Keeps already compiled code in memory'), L('Comprime le pagine prima di inviarle', 'Compresses pages before sending them'), L('Salva le sessioni nel database', 'Saves sessions in the database'), L('Riduce il peso delle immagini', 'Shrinks images')], 0, L('Niente ricompilazione a ogni richiesta.', 'No recompiling on every request.')),
+            Q('o2', L('Che cos’è il problema N+1?', 'What is the N+1 problem?'), [L('Un errore di arrotondamento nei float', 'A rounding error in floats'), L('Un server con un processo di troppo', 'A server with one process too many'), L('Un ciclo che gira una volta in più', 'A loop running one extra time'), L('Una query in più per ogni elemento di un elenco', 'One extra query for every item of a list')], 3, L('Meglio una sola query con JOIN o GROUP BY.', 'A single query with JOIN or GROUP BY is better.')),
+            Q('o3', L('Quando il JIT di PHP aiuta davvero?', 'When does PHP’s JIT really help?'), [L('Nelle pagine che aspettano il database', 'In pages waiting on the database'), L('Nei calcoli pesanti sulla CPU', 'In heavy CPU computation'), L('Nel caricamento delle immagini', 'In loading images'), L('Nell’invio delle email', 'In sending emails')], 1, L('Le attese di rete non diventano più corte.', 'Network waits do not get shorter.')),
+        ], task('php', L('Misura il tempo di `calcola()`: salva `hrtime(true)` in `$inizio` prima della chiamata e calcola `$ms` dopo, dividendo la differenza per `1e6`.', 'Time `calcola()`: save `hrtime(true)` in `$inizio` before the call and compute `$ms` afterwards, dividing the difference by `1e6`.'), '<?php
+calcola();
+', [re('\$inizio\s*=\s*hrtime\s*\(\s*true\s*\)\s*;[\s\S]*calcola\s*\(\s*\)', L('Parti dal tempo iniziale', 'You start from the initial time')), re('\$ms\s*=\s*\(\s*hrtime\s*\(\s*true\s*\)\s*-\s*\$inizio\s*\)\s*/\s*(1e6|1_?000_?000)', L('Calcoli i millisecondi', 'You compute the milliseconds'))], '', '<?php
+$inizio = hrtime(true);
+calcola();
+$ms = (hrtime(true) - $inizio) / 1e6;'), [
+            dBug(pBug(), ['$corsi = $pdo->query("SELECT * FROM corsi")->fetchAll();', 'foreach ($corsi as $c) {', '    $n = $pdo->query("SELECT COUNT(*) FROM lezioni WHERE corso_id = " . (int) $c["id"])->fetchColumn();', '}'], 2, '    $n = $conteggi[$c["id"]] ?? 0; // da una sola query con GROUP BY', L('Una query per ogni corso: con 1000 corsi sono 1001 query. Meglio contarle tutte con una sola query e `GROUP BY`.', 'One query per course: with 1000 courses that is 1001 queries. Better to count them all with one query and `GROUP BY`.')),
+            dMatch(pMatch(), [['OPcache', L('Bytecode in memoria', 'Bytecode in memory')], ['APCu', L('Cache nella memoria del server', 'Cache in server memory')], ['hrtime()', L('Misura il tempo', 'Measures time')], ['JIT', L('Compila in codice macchina', 'Compiles to machine code')], ['N+1', L('Troppe query', 'Too many queries')]], L('Gli attrezzi delle prestazioni.', 'The performance tools.')),
         ]),
     ],
 ];

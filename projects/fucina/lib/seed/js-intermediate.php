@@ -1,10 +1,10 @@
 <?php
-/** JavaScript intermediate: the DOM, events, array methods, modern syntax and JSON. */
+/** JavaScript intermediate: the DOM, events, array methods, modern syntax, JSON, dates and errors, Map and Set, sorting and copying, event delegation. */
 
 return [
     'id' => 'js-intermediate', 'family' => 'js', 'after' => 'js-base',
     'title' => L('JavaScript intermedio', 'Intermediate JavaScript'), 'short' => L('JS intermedio', 'JS Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Fai reagire le pagine: DOM, eventi, metodi degli array, sintassi moderna, JSON e salvataggio dati.', 'Make pages react: DOM, events, array methods, modern syntax, JSON and saving data.'),
+    'desc' => L('Fai reagire le pagine: DOM, eventi e delega, metodi degli array, Map e Set, ordinare e copiare, sintassi moderna, JSON e salvataggio dati.', 'Make pages react: DOM, events and delegation, array methods, Map and Set, sorting and copying, modern syntax, JSON and saving data.'),
     'lessons' => [
         lesson('dom', L('Il DOM', 'The DOM'), [
             P('Il **DOM** è la pagina vista da JavaScript: un albero di elementi. `querySelector` ne trova uno con un selettore CSS, poi puoi cambiarne testo, classi e attributi.', 'The **DOM** is the page as JavaScript sees it: a tree of elements. `querySelector` finds one with a CSS selector, then you can change its text, classes and attributes.'),
@@ -127,6 +127,85 @@ try {
         ], task('js', L('Con `setTimeout`, esegui `fine()` dopo `2000` millisecondi.', 'With `setTimeout`, run `fine()` after `2000` milliseconds.'), '', [re('setTimeout\(', L('Usi `setTimeout`', 'You use `setTimeout`')), re('fine', L('Chiami `fine`', 'You call `fine`')), re('2000', L('Aspetti 2 secondi', 'You wait 2 seconds'))], '', "setTimeout(fine, 2000);"), [
             dBlanks(pFill(), "___ {\n  JSON.parse(testo);\n} ___ (errore) {\n  mostra(\"Oops\");\n}", ['try', 'catch'], ['if', 'else', 'do'], L('Si prova, e se va male si gestisce.', 'Try it, and if it goes wrong handle it.')),
             dFlash(pFlash(), [[L('`setTimeout` parte una volta sola', '`setTimeout` runs only once'), true], [L('`setInterval` si ripete', '`setInterval` repeats'), true], [L('`setTimeout(f, 1)` aspetta un secondo', '`setTimeout(f, 1)` waits one second'), false], [L('`try` senza `catch` o `finally` è valido', '`try` without `catch` or `finally` is valid'), false]], L('Un `try` ha sempre bisogno di `catch` o `finally`.', 'A `try` always needs `catch` or `finally`.')),
+        ]),
+        lesson('map-set', L('Map e Set', 'Map and Set'), [
+            P('Un **Set** è una raccolta di valori **senza doppioni**: aggiungere due volte lo stesso valore non cambia niente. Una **Map** è come un oggetto, ma le chiavi possono essere di qualsiasi tipo e l’ordine di inserimento è garantito.', 'A **Set** is a collection of values **without duplicates**: adding the same value twice changes nothing. A **Map** is like an object, but keys can be of any type and insertion order is guaranteed.'),
+            C('const tag = new Set(["js", "css", "js"]);
+tag.size;            // 2
+tag.add("html");
+tag.has("css");      // true
+const unici = [...new Set([3, 1, 3, 2])]; // [3, 1, 2]
+
+const punti = new Map();
+punti.set("Ada", 10);
+punti.set("Bea", 7);
+punti.get("Ada");    // 10
+for (const [nome, p] of punti) {
+  console.log(nome, p);
+}
+
+Object.entries({ a: 1, b: 2 }); // [["a", 1], ["b", 2]]', 'js'),
+            P('Per scorrere un oggetto normale usa `Object.entries(obj)`, che dà coppie `[chiave, valore]`. `Object.groupBy(lista, fn)` raggruppa gli elementi di un array secondo il valore restituito dalla funzione.', 'To walk a plain object use `Object.entries(obj)`, which gives `[key, value]` pairs. `Object.groupBy(list, fn)` groups the items of an array by the value the function returns.'),
+        ], [
+            Q('ms1', L('Quanto vale `new Set([1, 1, 2]).size`?', 'What is `new Set([1, 1, 2]).size`?'), ['3', '1', '2', '0'], 2, L('Il doppione `1` conta una volta sola.', 'The duplicate `1` counts only once.')),
+            Q('ms2', L('Come leggi un valore da una Map?', 'How do you read a value from a Map?'), ['mappa["chiave"]', 'mappa.get("chiave")', 'mappa.read("chiave")', 'mappa.chiave()'], 1, L('Le parentesi quadre leggono le proprietà dell’oggetto, non le voci della Map.', 'Square brackets read the object’s properties, not the Map’s entries.')),
+            Q('ms3', L('Che cosa dà `Object.entries({ a: 1 })`?', 'What does `Object.entries({ a: 1 })` give?'), ['["a"]', '[1]', '{ a: 1 }', '[["a", 1]]'], 3, L('Un array di coppie chiave-valore.', 'An array of key-value pairs.')),
+        ], task('js', L('Togli i doppioni da `voti` creando `unici` con `new Set` e lo spread.', 'Remove the duplicates from `voti` by creating `unici` with `new Set` and spread.'), 'const voti = [7, 8, 7, 9];
+', [re('(const|let)\s+unici\s*=\s*(\[\s*\.\.\.\s*new\s+Set\s*\(\s*voti\s*\)\s*\]|Array\.from\s*\(\s*new\s+Set\s*\(\s*voti\s*\)\s*\))', L('`unici` nasce da un Set', '`unici` comes from a Set'))], '', 'const voti = [7, 8, 7, 9];
+const unici = [...new Set(voti)];'), [
+            dMatch(pMatch(), [['new Set()', L('Valori senza doppioni', 'Values without duplicates')], ['new Map()', L('Coppie chiave-valore', 'Key-value pairs')], ['.has()', L('C’è?', 'Is it there?')], ['.size', L('Quanti sono', 'How many')], ['Object.entries()', L('Coppie da un oggetto', 'Pairs from an object')]], L('Raccolte diverse per bisogni diversi.', 'Different collections for different needs.')),
+            dFlash(pFlash(), [[L('Un Set tiene i doppioni', 'A Set keeps duplicates'), false], [L('Una Map accetta chiavi di ogni tipo', 'A Map accepts keys of any type'), true], [L('`mappa.get("x")` legge una voce', '`mappa.get("x")` reads an entry'), true], [L('`set.length` dice quanti valori ci sono', '`set.length` says how many values there are'), false]], L('Set e Map usano `size`, non `length`.', 'Set and Map use `size`, not `length`.')),
+        ]),
+        lesson('sort-copy', L('Ordinare e copiare', 'Sorting and copying'), [
+            P('`sort` ordina un array **sul posto**: cambia l’originale. Senza argomenti confronta i valori come testi, quindi `[10, 9, 1].sort()` dà `[1, 10, 9]`. Per i numeri passa una funzione di confronto: `(a, b) => a - b`.', '`sort` sorts an array **in place**: it changes the original. Without arguments it compares values as text, so `[10, 9, 1].sort()` gives `[1, 10, 9]`. For numbers pass a compare function: `(a, b) => a - b`.'),
+            C('const voti = [10, 9, 1];
+voti.sort();                  // [1, 10, 9]: ordine da testo!
+voti.sort((a, b) => a - b);   // [1, 9, 10]
+
+const nomi = ["Bea", "ada", "Carlo"];
+const ordinati = nomi.toSorted((a, b) => a.localeCompare(b)); // nomi non cambia
+const alContrario = nomi.toReversed();
+const corretto = nomi.with(1, "Ada");
+
+const profonda = structuredClone({ utente: { nome: "Ada" } });', 'js'),
+            P('`toSorted`, `toReversed` e `with` restituiscono un **nuovo** array e lasciano intatto l’originale: perfetti quando non vuoi effetti a sorpresa. Lo spread copia solo il primo livello; per una copia completa di oggetti annidati c’è `structuredClone`.', '`toSorted`, `toReversed` and `with` give back a **new** array and leave the original untouched: perfect when you want no surprise side effects. Spread copies only the first level; for a full copy of nested objects there is `structuredClone`.'),
+        ], [
+            Q('so1', L('Quanto vale `[10, 9, 1].sort()`?', 'What is `[10, 9, 1].sort()`?'), ['[1, 9, 10]', '[10, 9, 1]', '[1, 10, 9]', '[9, 10, 1]'], 2, L('Senza funzione confronta i testi: `"10"` viene prima di `"9"`.', 'Without a function it compares text: `"10"` comes before `"9"`.')),
+            Q('so2', L('Quale funzione ordina i numeri dal più piccolo al più grande?', 'Which function sorts numbers from smallest to largest?'), ['(a, b) => a - b', '(a, b) => b - a', '(a, b) => a + b', '(a, b) => a * b'], 0, L('Un risultato negativo mette `a` prima di `b`.', 'A negative result puts `a` before `b`.')),
+            Q('so3', L('Che differenza c’è tra `sort` e `toSorted`?', 'What is the difference between `sort` and `toSorted`?'), [L('Nessuna', 'None'), L('`toSorted` lascia intatto l’originale', '`toSorted` leaves the original untouched'), L('`sort` funziona solo con i testi', '`sort` only works with text'), L('`toSorted` ordina sempre al contrario', '`toSorted` always sorts in reverse')], 1, L('`sort` cambia l’array, `toSorted` ne crea uno nuovo.', '`sort` changes the array, `toSorted` creates a new one.')),
+        ], task('js', L('Crea `classifica` ordinando `punti` dal più alto al più basso con `toSorted`, senza cambiare `punti`.', 'Create `classifica` by sorting `punti` from highest to lowest with `toSorted`, without changing `punti`.'), 'const punti = [40, 95, 70];
+', [re('(const|let)\s+classifica\s*=\s*punti\.toSorted\s*\(', L('Usi `toSorted`', 'You use `toSorted`')), re('\(\s*(\w+)\s*,\s*(\w+)\s*\)\s*=>\s*\2\s*-\s*\1', L('Dal più alto al più basso', 'From highest to lowest'))], '', 'const punti = [40, 95, 70];
+const classifica = punti.toSorted((a, b) => b - a);'), [
+            dBug(pBug(), ['const prezzi = [5, 20, 100];', 'prezzi.sort();', 'console.log(prezzi[0]); // il più basso'], 1, 'prezzi.sort((a, b) => a - b);', L('Senza funzione `"100"` viene prima di `"20"` e di `"5"`.', 'Without a function `"100"` comes before `"20"` and `"5"`.')),
+            dMatch(pMatch(), [['sort()', L('Ordina l’originale', 'Sorts the original')], ['toSorted()', L('Ordina una copia', 'Sorts a copy')], ['toReversed()', L('Copia al contrario', 'Reversed copy')], ['with(i, v)', L('Copia con un elemento cambiato', 'Copy with one item changed')], ['structuredClone()', L('Copia completa', 'Full copy')]], L('Cambiare o copiare: scegli consapevolmente.', 'Change or copy: choose on purpose.')),
+        ]),
+        lesson('delegation', L('Propagazione e delega degli eventi', 'Event bubbling and delegation'), [
+            P('Un evento non resta sull’elemento cliccato: **risale** (bubbling) verso i genitori, fino al documento. Così puoi mettere un solo ascoltatore sul contenitore e capire con `e.target` quale figlio è stato toccato: è la **delega degli eventi**.', 'An event does not stay on the clicked element: it **bubbles up** to the parents, all the way to the document. So you can put a single listener on the container and find out with `e.target` which child was touched: that is **event delegation**.'),
+            C('const lista = document.querySelector("#lista");
+lista.addEventListener("click", e => {
+  const voce = e.target.closest("li");
+  if (!voce) return;             // click fuori da un <li>
+  voce.classList.toggle("fatto");
+  console.log(voce.dataset.id);  // da <li data-id="7">: "7"
+});
+
+// funziona anche per le voci aggiunte dopo
+const nuova = document.createElement("li");
+nuova.textContent = "Comprare il pane";
+lista.append(nuova);', 'js'),
+            P('`closest(selettore)` risale dall’elemento al primo antenato che corrisponde, o restituisce `null`. `e.stopPropagation()` ferma la risalita, ma usalo con parsimonia. Gli attributi `data-*` portano informazioni sugli elementi e si leggono con `dataset`, sempre come stringhe.', '`closest(selector)` climbs from the element to the first matching ancestor, or gives back `null`. `e.stopPropagation()` stops the bubbling, but use it sparingly. `data-*` attributes carry information on elements and are read with `dataset`, always as strings.'),
+        ], [
+            Q('dl1', L('Che cosa significa che un evento «risale»?', 'What does it mean that an event “bubbles up”?'), [L('Si ripete due volte', 'It repeats twice'), L('Va solo al primo figlio', 'It only goes to the first child'), L('Passa dall’elemento ai suoi genitori', 'It passes from the element to its parents'), L('Viene annullato dal browser', 'The browser cancels it')], 2, L('Per questo il contenitore lo sente.', 'That is why the container hears it.')),
+            Q('dl2', L('Perché la delega funziona anche con le voci aggiunte dopo?', 'Why does delegation also work with items added later?'), [L('L’ascoltatore sta sul contenitore, che esiste già', 'The listener is on the container, which already exists'), L('Il browser copia gli ascoltatori sui nuovi elementi', 'The browser copies listeners onto new elements'), L('`append` aggiunge anche l’evento', '`append` also adds the event'), L('`closest` crea gli ascoltatori mancanti', '`closest` creates the missing listeners')], 0, L('I nuovi figli fanno risalire i loro click allo stesso contenitore.', 'The new children bubble their clicks up to the same container.')),
+            Q('dl3', L('Con `<li data-id="7">`, che cosa vale `voce.dataset.id`?', 'With `<li data-id="7">`, what is `voce.dataset.id`?'), ['7', '"7"', 'undefined', '"data-id"'], 1, L('`dataset` restituisce sempre stringhe.', '`dataset` always gives back strings.')),
+        ], task('js', L('Aggiungi a `menu` un solo ascoltatore di `click` che con `e.target.closest("button")` trova il bottone cliccato.', 'Add to `menu` a single `click` listener that finds the clicked button with `e.target.closest("button")`.'), 'const menu = document.querySelector("nav");
+', [re('menu\.addEventListener\(\s*["\']click["\']', L('Ascolti il click sul contenitore', 'You listen to the click on the container')), re('\.closest\(\s*["\']button["\']\s*\)', L('Trovi il bottone', 'You find the button'))], '', 'const menu = document.querySelector("nav");
+menu.addEventListener("click", e => {
+  const btn = e.target.closest("button");
+  if (btn) console.log(btn.textContent);
+});'), [
+            dOrder(pSort(), ['lista.addEventListener("click", e => {', '  const voce = e.target.closest("li");', '  if (!voce) return;', '  voce.classList.toggle("fatto");', '});'], L('Ascolta, trova la voce, controlla, agisci.', 'Listen, find the item, check, act.')),
+            dFlash(pFlash(), [[L('Un click su un `<li>` arriva anche alla `<ul>`', 'A click on an `<li>` also reaches the `<ul>`'), true], [L('`closest` cerca tra i figli', '`closest` searches among the children'), false], [L('`dataset` restituisce stringhe', '`dataset` gives back strings'), true], [L('Con la delega serve un ascoltatore per ogni voce', 'With delegation you need one listener per item'), false]], L('`closest` risale verso gli antenati.', '`closest` climbs towards the ancestors.')),
         ]),
     ],
 ];

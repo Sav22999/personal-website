@@ -19,9 +19,9 @@ return [
 
     &:hover
       color: red', 'sass'),
-            P('Ogni dichiarazione sta su una riga e il rientro deve essere coerente in tutto il file. Il risultato compilato è identico a quello di SCSS: cambia solo come si scrive.', 'Each declaration sits on its own line and the indentation must be consistent across the file. The compiled result is identical to SCSS: only the writing changes.'),
+            P('Ogni dichiarazione sta su una riga e il rientro deve essere coerente in tutto il file. Le versioni recenti di Dart Sass tollerano un `;` finale, ma di solito non si scrive. Il risultato compilato è identico a quello di SCSS: cambia solo come si scrive.', 'Each declaration sits on its own line and the indentation must be consistent across the file. Recent versions of Dart Sass tolerate a trailing `;`, but it is usually left out. The compiled result is identical to SCSS: only the writing changes.'),
         ], [
-            Q('i1', L('Che cosa manca in un file `.sass`?', 'What is missing from a `.sass` file?'), [L('Le variabili', 'Variables'), L('Le graffe e i punti e virgola', 'Braces and semicolons'), L('L’annidamento', 'Nesting'), L('I mixin', 'Mixins')], 1, L('Al loro posto ci sono gli a capo e il rientro.', 'Line breaks and indentation take their place.')),
+            Q('i1', L('Che cosa manca in un file `.sass`?', 'What is missing from a `.sass` file?'), [L('Le variabili', 'Variables'), L('Le graffe e i punti e virgola', 'Braces and semicolons'), L('L’annidamento', 'Nesting'), L('I mixin', 'Mixins')], 1, L('Al loro posto ci sono gli a capo e il rientro (un `;` finale oggi è tollerato, ma non serve).', 'Line breaks and indentation take their place (a trailing `;` is tolerated today, but not needed).')),
             Q('i2', L('Che cosa definisce un blocco in `.sass`?', 'What defines a block in `.sass`?'), [L('Le parentesi', 'Brackets'), L('Il rientro', 'Indentation'), L('La parola `end`', 'The word `end`'), L('Il colore', 'The colour')], 1, L('Un rientro sbagliato cambia il significato o dà errore.', 'Wrong indentation changes the meaning or raises an error.')),
             Q('i3', L('Il CSS prodotto da `.sass` e `.scss` è diverso?', 'Is the CSS produced by `.sass` and `.scss` different?'), [L('Sì, sempre', 'Yes, always'), L('No, è lo stesso', 'No, it is the same'), L('Solo nei colori', 'Only in colours'), L('Solo nelle media query', 'Only in media queries')], 1, L('Sono due sintassi dello stesso linguaggio.', 'They are two syntaxes of the same language.')),
         ], task('sass', L('Riscrivi in Sass: `.titolo { color: red; }`', 'Rewrite in Sass: `.titolo { color: red; }`'), '', [re('^\s*\.titolo\s*$', L('Il selettore sta da solo sulla riga', 'The selector stands alone on its line')), re('^[ \t]+color:\s*red\s*$', L('`color: red` è rientrato, senza `;`', '`color: red` is indented, with no `;`'))])),
@@ -44,8 +44,8 @@ return [
 
         lesson('choose', L('Sass o SCSS?', 'Sass or SCSS?'), [
             P('I due formati fanno le stesse cose. SCSS è il più diffuso perché è un’estensione del CSS: si copia del CSS esistente e funziona. Sass è più sintetico, ma non accetta il CSS così com’è.', 'The two formats do the same things. SCSS is more common because it extends CSS: paste existing CSS and it works. Sass is more concise, but it does not accept CSS as it is.'),
-            C('sass --watch stile.sass:stile.css
-sass-convert stile.scss stile.sass   # vecchi strumenti
+            C('sass stile.sass stile.css
+sass --watch stile.sass:stile.css
 sass --style=compressed stile.scss stile.css', 'bash'),
             P('Con `--watch` il compilatore ricompila a ogni salvataggio; con `--style=compressed` il CSS esce minimizzato per la pubblicazione. In un progetto si sceglie un solo formato, anche se Sass può caricare file di entrambi i tipi.', 'With `--watch` the compiler rebuilds on every save; with `--style=compressed` the CSS comes out minified for publishing. In a project you pick one format, although Sass can load files of both kinds.'),
             Tip('In un team conviene SCSS, salvo una preferenza chiara: chi conosce il CSS lo legge subito.', 'In a team SCSS is the safer choice, unless there is a clear preference: anyone who knows CSS reads it at once.'),

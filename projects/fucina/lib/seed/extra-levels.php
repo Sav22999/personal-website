@@ -198,12 +198,12 @@ p:first-child { font-weight: 700; }', 'css'),
 @each $nome, $tinta in $temi
   .avviso-#{$nome}
     color: $tinta', 'sass'),
-            P('Una mappa si scrive su una riga sola: nella sintassi indentata andare a capo ha un significato.', 'A map is written on one line: in the indented syntax a line break has a meaning.'),
+            P('Nella sintassi indentata andare a capo chiude l’istruzione. Dentro le parentesi, però, una mappa lunga può andare su più righe (da Dart Sass 1.84).', 'In the indented syntax a line break ends the statement. Inside brackets, though, a long map can span several lines (since Dart Sass 1.84).'),
         ], [
             Q('v1', L('Come inizia una variabile Sass?', 'How does a Sass variable start?'), ['$', '@', '--', '#'], 0, L('Identica a SCSS.', 'Same as SCSS.')),
             Q('v2', L('`@each` funziona in Sass?', 'Does `@each` work in Sass?'), [L('Sì', 'Yes'), L('Solo in SCSS', 'Only in SCSS'), L('No', 'No'), L('Solo in CSS', 'Only in CSS')], 0, L('Le funzioni sono le stesse.', 'The features are the same.')),
             Q('v3', L('Che cosa segna il blocco di `@each`?', 'What marks the `@each` block?'), [L('Il rientro', 'The indent'), L('Le graffe', 'The braces'), L('Il punto e virgola', 'The semicolon'), L('Le parentesi', 'The brackets')], 0, L('In Sass il rientro sostituisce le graffe.', 'In Sass indentation replaces braces.')),
-        ], task('sass', L('Definisci `$brand: orange` e usalo come `color` di `.titolo`.', 'Define `$brand: orange` and use it as the `color` of `.titolo`.'), '', [re('^\$brand:\s*orange', L('Definisci `$brand`', 'You define `$brand`')), re('^\s+color:\s*\$brand\s*$', L('Lo usi, senza punto e virgola', 'You use it, with no semicolon'))], '', "\$brand: orange\n.titolo\n  color: \$brand"), [
+        ], task('sass', L('Definisci `$brand: orange` e usalo come `color` di `.titolo`.', 'Define `$brand: orange` and use it as the `color` of `.titolo`.'), '', [re('^\$brand:\s*orange', L('Definisci `$brand`', 'You define `$brand`')), re('^\s+color:\s*\$brand\s*;?\s*$', L('Lo usi come `color`, rientrato', 'You use it as the indented `color`'))], '', "\$brand: orange\n.titolo\n  color: \$brand"), [
             dBug(pBug(), ['$colore: red', '.card {', '  color: $colore', '}'], 1, '.card', L('In Sass non ci sono graffe: basta il rientro.', 'There are no braces in Sass: the indent is enough.')),
             dOrder(pSort(), ['$temi: (ok: green)', '@each $nome, $tinta in $temi', '  .avviso-#{$nome}', '    color: $tinta'], L('Prima i dati, poi il ciclo, poi quello che genera.', 'First the data, then the loop, then what it generates.')),
         ]),

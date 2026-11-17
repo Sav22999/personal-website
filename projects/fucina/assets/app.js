@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.25.1';
+    const VERSION = '1.26.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.26.0', date: '2026-11-17', it: ['2 nuovi corsi su SavComponents, la libreria di componenti web senza framework: base (installazione, pulsanti, card, avvisi e form) e intermedio (temi e stili, token, dialoghi, navigazione, eventi, grafici e integrazione)', 'I corsi appena arrivati hanno l’etichetta «Nuovo» e una sezione tutta loro nella home'], en: ['2 new courses on SavComponents, the framework-free web component library: basics (installation, buttons, cards, alerts and forms) and intermediate (themes and styles, tokens, dialogs, navigation, events, charts and integration)', 'Just-added courses carry a “New” label and get their own section on the home page']},
         {v: '1.25.1', date: '2026-11-16', it: ['Nell’app Android le notifiche arrivano anche ad app chiusa'], en: ['In the Android app notifications arrive even when the app is closed']},
         {v: '1.25.0', date: '2026-11-14', it: ['50 nuovi livelli: ogni corso ne ha almeno cinque, dagli assistenti AI al design, da Git a Excel', 'I corsi iniziati e non finiti sono in cima, nella home e nella pagina dei corsi, dal più recente'], en: ['50 new levels: every course has at least five, from AI assistants to design, from Git to Excel', 'Courses started and not finished are at the top, on the home page and the courses page, most recent first']},
         {v: '1.24.0', date: '2026-11-13', it: ['Il certificato dice in che lingua hai seguito il corso, e puoi ottenerlo in più lingue: se lo hai già in italiano, puoi fare l’esame anche in inglese', 'Nella ricerca dei corsi i linguaggi si aprono e chiudono con un pulsante; le categorie restano sempre visibili'], en: ['The certificate says which language you took the course in, and you can earn it in more than one: if you already have it in Italian, you can take the exam in English too', 'In the course search the languages open and close with a button; the categories stay always visible']},
@@ -58,11 +59,26 @@
 
     /** Names of the languages (course families) and what a course can be for. */
     const FAMILY_NAMES = {html: 'HTML', css: 'CSS', scss: 'SCSS', sass: 'Sass', tailwind: 'Tailwind CSS', js: 'JavaScript', ts: 'TypeScript', angular: 'Angular', vue: 'Vue',
-        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', react: 'React', next: 'Next.js', node: 'Node.js', git: 'Git', bash: 'Bash', go: 'Go', csharp: 'C#', c: 'C', cpp: 'C++', docker: 'Docker', kubernetes: 'Kubernetes', cloud: 'Cloud', testing: 'Testing', patterns: 'Design patterns', regex: 'Regex', security: 'Security', a11y: 'Accessibility', api: 'API', redis: 'Redis', algorithms: 'Algorithms', excel: 'Excel', powerbi: 'Power BI', search: 'Search engines', ux: 'UX design', ui: 'UI design', material: 'Material Design', ios: 'iOS design', fluent: 'Fluent Design', bootstrap: 'Bootstrap', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
+        php: 'PHP', python: 'Python', java: 'Java', sql: 'SQL', mysql: 'MySQL', mariadb: 'MariaDB', postgresql: 'PostgreSQL', sqlite: 'SQLite', mssql: 'SQL Server', mongodb: 'MongoDB', ai: 'AI fundamentals', ml: 'Machine learning', dl: 'Deep learning', prompt: 'Prompt engineering', llm: 'LLM', assistants: 'AI assistants', react: 'React', next: 'Next.js', node: 'Node.js', git: 'Git', bash: 'Bash', go: 'Go', csharp: 'C#', c: 'C', cpp: 'C++', docker: 'Docker', kubernetes: 'Kubernetes', cloud: 'Cloud', testing: 'Testing', patterns: 'Design patterns', regex: 'Regex', security: 'Security', a11y: 'Accessibility', api: 'API', redis: 'Redis', algorithms: 'Algorithms', excel: 'Excel', powerbi: 'Power BI', search: 'Search engines', ux: 'UX design', ui: 'UI design', material: 'Material Design', ios: 'iOS design', fluent: 'Fluent Design', bootstrap: 'Bootstrap', savcomponents: 'SavComponents', r: 'R', flutter: 'Flutter', swift: 'Swift', kotlin: 'Kotlin', rust: 'Rust', vala: 'Vala'};
     const familyName = f => FAMILY_NAMES[f] ? t(FAMILY_NAMES[f]) : f.toUpperCase();
     /** The short label in the square badge of a course card. */
-    const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA', mysql: 'MY', mariadb: 'MA', postgresql: 'PG', sqlite: 'SL', mssql: 'MS', mongodb: 'MG', ai: 'AI', ml: 'ML', dl: 'DL', prompt: 'PE', llm: 'LLM', assistants: 'AS', react: 'RE', next: 'NX', node: 'ND', bash: 'SH', csharp: 'C#', docker: 'DK', kubernetes: 'K8S', cloud: 'CL', testing: 'QA', patterns: 'DP', regex: 'RX', security: 'SEC', a11y: 'A11Y', redis: 'RD', algorithms: 'ALG', excel: 'XL', powerbi: 'BI', search: 'SEO', material: 'M3', ios: 'iOS', fluent: 'FL2', bootstrap: 'BS'};
+    const FAMILY_SHORT = {tailwind: 'TW', angular: 'NG', python: 'PY', flutter: 'FL', kotlin: 'KT', swift: 'SW', rust: 'RS', vala: 'VA', mysql: 'MY', mariadb: 'MA', postgresql: 'PG', sqlite: 'SL', mssql: 'MS', mongodb: 'MG', ai: 'AI', ml: 'ML', dl: 'DL', prompt: 'PE', llm: 'LLM', assistants: 'AS', react: 'RE', next: 'NX', node: 'ND', bash: 'SH', csharp: 'C#', docker: 'DK', kubernetes: 'K8S', cloud: 'CL', testing: 'QA', patterns: 'DP', regex: 'RX', security: 'SEC', a11y: 'A11Y', redis: 'RD', algorithms: 'ALG', excel: 'XL', powerbi: 'BI', search: 'SEO', material: 'M3', ios: 'iOS', fluent: 'FL2', bootstrap: 'BS', savcomponents: 'SC'};
     const familyShort = f => FAMILY_SHORT[f] || f.toUpperCase();
+    /** Free logos (assets/icons/brands, see CREDITS.md) shown in the badge instead of the short label: by family, or by course when a family mixes brands. */
+    const LOGOS = {html: 'html5', css: 'css', tailwind: 'tailwindcss', bootstrap: 'bootstrap', savcomponents: 'savcomponents', js: 'javascript', ts: 'typescript', angular: 'angular',
+        react: 'react', next: 'nextdotjs', node: 'nodedotjs', php: 'php', python: 'python', go: 'go', mysql: 'mysql', mariadb: 'mariadb', postgresql: 'postgresql', sqlite: 'sqlite',
+        mongodb: 'mongodb', redis: 'redis', r: 'r', flutter: 'flutter', swift: 'swift', kotlin: 'kotlin', rust: 'rust', vala: 'vala', c: 'c', cpp: 'cplusplus', git: 'git',
+        bash: 'gnubash', docker: 'docker', kubernetes: 'kubernetes', material: 'materialdesign', ios: 'apple'};
+    const COURSE_LOGOS = {'python-pandas': 'pandas', claude: 'claude', gemini: 'googlegemini', mistral: 'mistralai', lumo: 'proton', deepseek: 'deepseek', 'github-copilot': 'githubcopilot',
+        perplexity: 'perplexity', huggingface: 'huggingface', 'meta-ai': 'meta', qwen: 'qwen', 'apple-intelligence': 'apple'};
+    /** The square badge of a course: its logo in white when there is a free one, otherwise the short label of its family. */
+    const famBadge = c => {
+        const logo = COURSE_LOGOS[c.id] || LOGOS[c.family];
+        return logo ? h('span.fam.has-logo', {title: familyName(c.family)}, h('i.logo', {style: {webkitMaskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)', maskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)'}})) : h('span.fam', familyShort(c.family));
+    };
+    /** Courses just added, shown as new until the given day (included): a "New" chip on their cards and a spot on the home page. */
+    const NEW_COURSES = {'savcomponents-base': '2026-12-17', 'savcomponents-intermediate': '2026-12-17'};
+    const isNew = c => !!NEW_COURSES[c.id] && new Date().toLocaleDateString('sv') <= NEW_COURSES[c.id]; // 'sv' writes the local day as YYYY-MM-DD
     const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI'], ['devops', 'DevOps'], ['security', 'Security'], ['productivity', 'Productivity'], ['design', 'Design']];
 
     // ---------------------------------------------------------------- small components
@@ -142,6 +158,74 @@
 
     function codeBlock(code, lang) {
         return h('figure.code', lang ? h('figcaption', lang) : null, h('pre', h('code', colour(code))));
+    }
+
+    /**
+     * Libraries that a preview page loads for the courses whose code needs them (components, frameworks). Those pages run
+     * scripts, so their frame has no access to the app (sandbox without allow-same-origin): a small helper inside answers the
+     * exercise checks and reports the height of the page through postMessage.
+     */
+    const PREVIEW_LIBS = {
+        savcomponents: '<link rel="stylesheet" href="https://www.savcomponents.com/v/1.0.0/sav.css"><script src="https://www.savcomponents.com/v/1.0.0/sav.js"></script>',
+        bootstrap: '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>',
+        tailwind: '<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.13"></script>',
+    };
+    /** Courses whose HTML samples are shown rendered under the code, in the theory of a level. */
+    const PREVIEW_FAMILIES = ['html', 'css', 'a11y', 'search', 'savcomponents', 'bootstrap', 'tailwind'];
+    const PREVIEW_HELPER = '<script>(function () {'
+        + 'function size() { parent.postMessage({fucina: "size", h: Math.ceil(document.body.getBoundingClientRect().height) + 24}, "*"); }'
+        + 'addEventListener("load", function () { size(); setTimeout(size, 400); if (window.ResizeObserver) new ResizeObserver(size).observe(document.body); });'
+        + 'addEventListener("message", function (e) { var d = e.data; if (!d || d.fucina !== "checks") return;'
+        + ' parent.postMessage({fucina: "checks", id: d.id, results: d.checks.map(function (ch) { try { var el = document.querySelector(ch.sel); if (!el) return false;'
+        + ' if (ch.prop) return getComputedStyle(el).getPropertyValue(ch.prop).trim() === ch.value; return !ch.text || el.textContent.indexOf(ch.text) >= 0; } catch (x) { return false; } })}, "*"); });'
+        + '})();<\/script>';
+    const previewScripted = family => !!PREVIEW_LIBS[family];
+    /** The page of a preview: the code as it is, or, for a course with a library, the library and the helper first. */
+    const previewPage = (family, body) => previewScripted(family) ? '<!doctype html><meta charset="utf-8">' + PREVIEW_HELPER + PREVIEW_LIBS[family] + body : body;
+
+    function previewFrame(family, cls) {
+        return h('iframe.preview' + (cls ? '.' + cls : ''), {sandbox: previewScripted(family) ? 'allow-scripts' : 'allow-same-origin', title: t('Preview')});
+    }
+
+    /** The checks with a selector, answered by the helper inside a frame with scripts (false when it does not answer). */
+    function frameChecks(frame, checks) {
+        if (!checks.length) return Promise.resolve([]);
+        const id = Math.random().toString(36).slice(2);
+        return new Promise(resolve => {
+            const done = results => {
+                removeEventListener('message', on);
+                clearTimeout(timer);
+                resolve(results);
+            };
+            const on = e => {
+                if (e.source === frame.contentWindow && e.data && e.data.fucina === 'checks' && e.data.id === id) done(e.data.results);
+            };
+            const timer = setTimeout(() => done(checks.map(() => false)), 4000);
+            addEventListener('message', on);
+            frame.contentWindow.postMessage({fucina: 'checks', id, checks}, '*');
+        });
+    }
+
+    /** A sample of the theory, rendered: only when it shows something (not a page head, not "…" alone). */
+    function samplePreview(code, family) {
+        const visible = code.replace(/<head[\s\S]*?<\/head>|<!--[\s\S]*?-->|<!doctype[^>]*>|<\/?(html|head|body)\b[^>]*>|<(title|script|style)\b[\s\S]*?<\/\3>|<(meta|link|base)\b[^>]*>/gi, '').replace(/[\s…]+/g, '');
+        if (!visible) return null;
+        const frame = previewFrame(family, 'sample');
+        const fit = px => frame.style.height = Math.max(60, Math.min(520, px)) + 'px';
+        if (previewScripted(family)) {
+            const on = e => {
+                if (!frame.isConnected && frame.dataset.shown) return removeEventListener('message', on);
+                if (e.source === frame.contentWindow && e.data && e.data.fucina === 'size') fit(e.data.h);
+            };
+            addEventListener('message', on);
+        } else frame.addEventListener('load', () => {
+            try {
+                fit(Math.ceil(frame.contentDocument.body.getBoundingClientRect().height) + 24);
+            } catch (e) { /* the frame cannot be read: it keeps its height */ }
+        });
+        frame.srcdoc = previewPage(family, code);
+        frame.dataset.shown = '1';
+        return h('div.sample-preview', h('span.pane-label', icon('eye'), t('Preview')), frame);
     }
 
     const certUrl = code => `certificate.php?c=${code}&lang=${I18N.lang}`;
@@ -319,9 +403,18 @@
         const list = startedCourses().filter(c => c.id !== skip);
         if (!list.length) return null;
         return [h('h2.section-title', t('In progress')), h('div.started-row', list.map(c => h('a.started.fam-' + c.family, {href: '#/course/' + c.id},
-            h('span.fam', familyShort(c.family)), h('strong', c.title),
+            famBadge(c), h('strong', c.title),
             h('div.bar', {role: 'progressbar', 'aria-valuenow': c.done, 'aria-valuemax': c.lessons}, h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
             h('span.muted.small', t('Level {a} of {b}', {a: c.done + 1, b: c.lessons})))))];
+    }
+
+    /** The courses just added, advertised on the home page until they stop being new or the learner has finished them. */
+    function newCoursesRow() {
+        const list = S.state.courses.filter(c => isNew(c) && !c.examScore && !(c.lessons && c.done === c.lessons));
+        if (!list.length) return null;
+        return [h('h2.section-title', t('New courses')), h('div.started-row.new-row', list.map(c => h('a.started.new-course.fam-' + c.family, {href: '#/course/' + c.id},
+            h('div.new-top', famBadge(c), chip(t('New'), 'new', 'spark')), h('strong', c.title), h('p.muted.small', c.desc),
+            h('span.new-go', c.done ? t('Level {a} of {b}', {a: c.done + 1, b: c.lessons}) : c.locked ? t('To unlock') : t('Start now'), icon(c.locked && !c.done ? 'lock' : 'right')))))];
     }
 
     /** Favilla says one thing at a time, about what matters now. */
@@ -345,6 +438,7 @@
                     h('div.bar', h('i', {style: {width: Math.round(n.done * 100 / Math.max(1, n.lessons)) + '%'}})),
                     h('div.cta-foot', h('span', n.done < n.lessons ? t('Level {a} of {b}', {a: n.done + 1, b: n.lessons}) : t('Ready for the exam')), h('span.cta-go', icon('play')))) : null,
                 startedRow(n && n.id),
+                newCoursesRow(),
                 h('h2.section-title', t('Today')),
                 h('div.quick',
                     quick('#/daily', 'calendar', 'sun', t('Daily challenge'), d ? t('Done: {a} out of {b}', {a: d.correct, b: d.total}) : t('Five questions from all the courses'), d ? 'check' : null),
@@ -459,9 +553,9 @@
 
     function courseCard(c) {
         const after = c.locked ? S.state.courses.find(x => x.id === c.after) : null;
-        const inner = [h('span.fam', familyShort(c.family)), h('div.grow', h('strong', c.title), h('p.muted', c.desc),
+        const inner = [famBadge(c), h('div.grow', h('strong', c.title), h('p.muted', c.desc),
             c.locked ? h('p.lock-note', icon('lock'), t('Finish “{name}” or pass the exam', {name: after ? after.title : ''})) : h('div.bar', h('i', {style: {width: Math.round(c.done * 100 / Math.max(1, c.lessons)) + '%'}})),
-            h('div.meta', chip(c.level), chip(t('{n} levels', {n: c.lessons})), certsOf(c).length ? chip(t('Certified'), 'ok', 'cert') : null))];
+            h('div.meta', isNew(c) ? chip(t('New'), 'new', 'spark') : null, chip(c.level), chip(t('{n} levels', {n: c.lessons})), certsOf(c).length ? chip(t('Certified'), 'ok', 'cert') : null))];
         return h('a.course.fam-' + c.family + (c.locked ? '.locked' : ''), {href: '#/course/' + c.id}, inner);
     }
 
@@ -641,7 +735,7 @@
         };
 
         function theory() {
-            return h('article.theory', lesson.body.map(b => b.t === 'code' ? codeBlock(b.code, b.lang) : b.t === 'tip' ? h('aside.tip', mascot('happy', 'still'), h('p', rich(b.text))) : h('p', rich(b.text))),
+            return h('article.theory', lesson.body.map(b => b.t === 'code' ? [codeBlock(b.code, b.lang), b.lang === 'html' && PREVIEW_FAMILIES.includes(c.family) ? samplePreview(b.code, c.family) : null] : b.t === 'tip' ? h('aside.tip', mascot('happy', 'still'), h('p', rich(b.text))) : h('p', rich(b.text))),
                 h('div.step-actions', btn(lesson.drills.length ? t('Let’s play') : t('Go to the questions'), {icon: 'right', onclick: next})));
         }
 
@@ -688,10 +782,11 @@
             const task = lesson.task;
             const ta = h('textarea.editor', {spellcheck: false, autocapitalize: 'off', autocomplete: 'off', value: task.start, 'aria-label': t('Your code')});
             const live = task.lang === 'html' || task.lang === 'css';
-            const frame = live ? h('iframe.preview', {sandbox: 'allow-same-origin', title: t('Preview')}) : null;
-            const list = h('ul.checks', task.checks.map(ch => h('li', icon('check'), h('span', rich(ch.label)))));
+            const frame = live ? previewFrame(c.family) : null;
+            const scripted = live && previewScripted(c.family);
+            const list = h('ul.checks', task.checks.map(ch => h('li', h('span.mark', icon('check')), h('span', rich(ch.label)))));
             const hintBox = h('div');
-            const page = () => task.lang === 'css' ? `<!doctype html><style>${ta.value}</style>${task.html}` : ta.value;
+            const page = () => task.lang === 'css' ? (scripted ? previewPage(c.family, `<style>${ta.value}</style>${task.html}`) : `<!doctype html><style>${ta.value}</style>${task.html}`) : previewPage(c.family, ta.value);
             let timer = null;
 
             ta.addEventListener('keydown', e => {
@@ -712,9 +807,20 @@
 
             async function verify() {
                 await refreshFrame();
-                const doc = frame ? frame.contentDocument : null;
-                const results = task.checks.map(ch => runCheck(ch, ta.value, doc));
-                [...list.children].forEach((li, i) => li.className = results[i] ? 'ok' : 'ko');
+                let results;
+                if (scripted) {
+                    // The page runs the library's scripts: its helper answers the checks with a selector
+                    const answers = await frameChecks(frame, task.checks.filter(ch => !ch.re));
+                    let k = 0;
+                    results = task.checks.map(ch => ch.re ? runCheck(ch, ta.value, null) : !!answers[k++]);
+                } else {
+                    const doc = frame ? frame.contentDocument : null;
+                    results = task.checks.map(ch => runCheck(ch, ta.value, doc));
+                }
+                [...list.children].forEach((li, i) => {
+                    li.className = results[i] ? 'ok' : 'ko';
+                    li.firstChild.replaceChildren(icon(results[i] ? 'check' : 'close'));
+                });
                 if (results.every(Boolean)) {
                     taskDone = true;
                     actions.replaceChildren(btn(t('Continue'), {icon: 'right', onclick: next}));

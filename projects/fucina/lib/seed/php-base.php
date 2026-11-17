@@ -1,10 +1,10 @@
 <?php
-/** PHP basics: the server side of the web. */
+/** PHP basics: the server side of the web, from variables and arrays to forms, sessions, types, files and dates. */
 
 return [
     'id' => 'php-base', 'family' => 'php', 'after' => 'html-base',
     'title' => L('PHP base', 'PHP Basics'), 'short' => L('PHP base', 'PHP Basics'), 'level' => L('Base', 'Basic'),
-    'desc' => L('Il lato server del web: variabili, condizioni, array, funzioni, moduli e sicurezza di base.', 'The server side of the web: variables, conditions, arrays, functions, forms and basic security.'),
+    'desc' => L('Il lato server del web: variabili, condizioni, array, funzioni, moduli e sicurezza di base, sessioni, tipi, file e date.', 'The server side of the web: variables, conditions, arrays, functions, forms and basic security, sessions, types, files and dates.'),
     'lessons' => [
         lesson('hello', L('Ciao dal server', 'Hello from the server'), [
             P('**PHP** gira sul server e produce la pagina prima che arrivi al browser. Il codice sta tra `<?php` e `?>`. Le variabili iniziano con `$` e ogni istruzione finisce con `;`.', '**PHP** runs on the server and produces the page before it reaches the browser. Code lives between `<?php` and `?>`. Variables start with `$` and every statement ends with `;`.'),
@@ -97,7 +97,7 @@ trim("  ciao  ");        // "ciao"', 'php'),
         ], task('php', L('Scrivi `function saluta(string $nome): string` che restituisce `"Ciao " . $nome`.', 'Write `function saluta(string $nome): string` that gives back `"Ciao " . $nome`.'), '<?php
 ', [re('function\s+saluta\s*\(\s*string\s+\$nome\s*\)\s*:\s*string', L('La firma è giusta', 'The signature is right')), re('return\s+"Ciao "\s*\.\s*\$nome', L('Restituisci il saluto', 'You give back the greeting'))], '', "<?php\nfunction saluta(string \$nome): string {\n    return \"Ciao \" . \$nome;\n}"), [
             dMatch(pMatch(), [['strlen()', L('Lunghezza', 'Length')], ['strtoupper()', L('Maiuscolo', 'Uppercase')], ['str_replace()', L('Sostituisce', 'Replaces')], ['explode()', L('Divide', 'Splits')], ['trim()', L('Toglie gli spazi', 'Removes spaces')]], L('Gli attrezzi per lavorare i testi.', 'The tools for working with text.')),
-            dBug(pBug(), ['$bonus = 5;', 'function totale(int $p): int {', '    return $p + $bonus;', '}'], 2, '    return $p + 5;', L('`$bonus` è fuori dalla funzione: dentro non esiste. Va passato come parametro.', '`$bonus` is outside the function: it does not exist inside. It must be passed as a parameter.')),
+            dBug(pBug(), ['$bonus = 5;', 'function totale(int $p): int {', '    return $p + $bonus;', '}'], 2, '    return $p + 5;', L('`$bonus` è fuori dalla funzione: dentro non esiste. Usa il valore direttamente o passalo come parametro.', '`$bonus` is outside the function: it does not exist inside. Use the value directly or pass it as a parameter.')),
         ]),
         lesson('forms', L('Moduli e sicurezza', 'Forms and security'), [
             P('I dati di un modulo arrivano in `$_POST` o `$_GET`. **Non fidarti mai** di ciò che arriva: controllalo e, prima di stamparlo, proteggilo con `htmlspecialchars`.', 'Form data arrives in `$_POST` or `$_GET`. **Never trust** what arrives: check it and, before printing it, protect it with `htmlspecialchars`.'),
@@ -109,7 +109,7 @@ if ($nome === "") {
     echo "Ciao " . htmlspecialchars($nome);
 }
 $email = filter_var($_POST["email"] ?? "", FILTER_VALIDATE_EMAIL);', 'php'),
-            P('Senza `htmlspecialchars`, un utente potrebbe inserire un tag `<script>` che verrebbe eseguito: si chiama **XSS**. `??` dà un valore se il campo manca.', 'Without `htmlspecialchars`, a user could insert a `<script>` tag that would run: it is called **XSS**. `??` gives a value if the field is missing.'),
+            P('Senza `htmlspecialchars`, un utente potrebbe inserire un tag `<script>` che verrebbe eseguito: si chiama **XSS**. Da PHP 8.1 la funzione protegge di serie anche gli apici. `??` dà un valore se il campo manca.', 'Without `htmlspecialchars`, a user could insert a `<script>` tag that would run: it is called **XSS**. Since PHP 8.1 the function escapes quotes too by default. `??` gives a value if the field is missing.'),
         ], [
             Q('s1', L('Dove arrivano i dati di un POST?', 'Where does POST data arrive?'), ['$_POST', '$POST', '$_FORM', '$_DATA'], 0, L('È un array già pronto.', 'It is a ready-made array.')),
             Q('s2', L('Che cosa blocca `htmlspecialchars`?', 'What does `htmlspecialchars` block?'), [L('L’inserimento di HTML e script', 'Injecting HTML and scripts'), L('Lo spam', 'Spam'), L('Le immagini', 'Images'), L('I cookie', 'Cookies')], 0, L('Trasforma `<` in `&lt;`.', 'It turns `<` into `&lt;`.')),
@@ -143,6 +143,85 @@ exit;', 'php'),
 ', [re('session_start\(\)', L('Avvii la sessione', 'You start the session')), re('\$_SESSION\[\s*["\']utente["\']\s*\]\s*=', L('Salvi l’utente', 'You save the user'))], '', "<?php\nsession_start();\n\$_SESSION[\"utente\"] = \"Sav\";"), [
             dOrder(pSort(), ['<?php', 'session_start();', '$_SESSION["utente"] = "Sav";', 'header("Location: home.php");', 'exit;'], L('Sessione, dati, reindirizzamento e uscita.', 'Session, data, redirect and exit.')),
             dBug(pBug(), ['<?php', 'echo "Benvenuto";', 'session_start();'], 2, 'session_start(); // prima di echo', L('Dopo un `echo` è troppo tardi: `session_start` va chiamato prima di ogni output.', 'After an `echo` it is too late: `session_start` must come before any output.')),
+        ]),
+        lesson('types', L('Tipi, null e conversioni', 'Types, null and conversions'), [
+            P('Ogni valore PHP ha un **tipo**: `int` (interi), `float` (decimali), `string`, `bool` (vero/falso), `array` e `null` (nessun valore). `var_dump` mostra tipo e valore insieme: è il primo attrezzo per capire che cosa contiene una variabile.', 'Every PHP value has a **type**: `int` (whole numbers), `float` (decimals), `string`, `bool` (true/false), `array` and `null` (no value). `var_dump` shows type and value together: it is the first tool for finding out what a variable holds.'),
+            C('<?php
+$n = 42;                    // int
+$prezzo = 9.5;              // float
+$attivo = true;             // bool
+$nulla = null;
+var_dump($prezzo);          // float(9.5)
+
+$eta = (int) "36";          // 36
+var_dump("10" == 10);       // bool(true)
+var_dump("10" === 10);      // bool(false)
+echo $nulla ?? "vuoto";     // vuoto
+echo is_numeric("3.14") ? "numero" : "testo";', 'php'),
+            P('`(int)` e `intval()` convertono un valore in intero. `==` converte i tipi prima di confrontare, `===` no: preferisci sempre `===`. `??` restituisce il valore di destra se quello di sinistra è `null` o non esiste.', '`(int)` and `intval()` turn a value into an integer. `==` converts types before comparing, `===` does not: always prefer `===`. `??` returns the right-hand value if the left one is `null` or does not exist.'),
+        ], [
+            Q('t1', L('Che cosa stampa `var_dump(9.5)`?', 'What does `var_dump(9.5)` print?'), ['int(9)', 'string(3) "9.5"', 'float(9.5)', 'number(9.5)'], 2, L('Il tipo dei decimali è `float`.', 'The type for decimals is `float`.')),
+            Q('t2', L('Quale espressione vale `false`?', 'Which expression is `false`?'), ['10 === 10', '"a" === "a"', '"10" == 10', '"10" === 10'], 3, L('`===` controlla anche il tipo: una stringa e un intero sono tipi diversi.', '`===` also checks the type: a string and an int are different types.')),
+            Q('t3', L('Che cosa dà `null ?? "ospite"`?', 'What does `null ?? "ospite"` give?'), ['null', '"ospite"', L('Un errore fatale', 'A fatal error'), L('Una stringa vuota', 'An empty string')], 1, L('A sinistra c’è `null`, quindi vince il valore di destra.', 'The left side is `null`, so the right-hand value wins.')),
+        ], task('php', L('Converti `$testo` in intero con `(int)`, salvalo in `$numero` e mostra tipo e valore con `var_dump($numero)`.', 'Convert `$testo` to an integer with `(int)`, save it in `$numero` and show type and value with `var_dump($numero)`.'), '<?php
+$testo = "25";
+', [re('\$numero\s*=\s*(\(\s*int\s*\)\s*\$testo|intval\s*\(\s*\$testo\s*\))', L('Converti il testo', 'You convert the text')), re('var_dump\s*\(\s*\$numero\s*\)', L('Mostri tipo e valore', 'You show type and value'))], '', '<?php
+$testo = "25";
+$numero = (int) $testo;
+var_dump($numero);'), [
+            dMatch(pMatch(), [['42', 'int'], ['9.5', 'float'], ['"ciao"', 'string'], ['true', 'bool'], ['null', L('Nessun valore', 'No value')]], L('I tipi di base di PHP.', 'PHP’s basic types.')),
+            dFlash(pFlash(), [[L('`===` confronta anche il tipo', '`===` also compares the type'), true], [L('`(int) "7"` dà 7', '`(int) "7"` gives 7'), true], [L('`null ?? "x"` dà null', '`null ?? "x"` gives null'), false], [L('`var_dump` mostra solo il valore, senza il tipo', '`var_dump` shows only the value, without the type'), false]], L('`var_dump` e `===` evitano molte sorprese.', '`var_dump` and `===` avoid many surprises.')),
+        ]),
+        lesson('files', L('Leggere e scrivere file', 'Reading and writing files'), [
+            P('`file_put_contents` scrive un testo in un file (e lo crea se non c’è), `file_get_contents` lo legge tutto in una stringa, `file()` lo legge come array di righe. `__DIR__` è la cartella del file PHP corrente: usala per costruire percorsi sicuri.', '`file_put_contents` writes text to a file (creating it if missing), `file_get_contents` reads it all into a string, `file()` reads it as an array of lines. `__DIR__` is the folder of the current PHP file: use it to build reliable paths.'),
+            C('<?php
+$percorso = __DIR__ . "/note.txt";
+file_put_contents($percorso, "Prima riga\n");
+file_put_contents($percorso, "Seconda riga\n", FILE_APPEND);
+
+if (file_exists($percorso)) {
+    $testo = file_get_contents($percorso);
+    $righe = file($percorso, FILE_IGNORE_NEW_LINES);
+    echo count($righe); // 2
+}', 'php'),
+            P('Senza `FILE_APPEND` il file viene riscritto da capo. Non usare mai un nome di file arrivato dall’utente senza controllarlo: potrebbe puntare a `../config.php` e mostrare i tuoi segreti.', 'Without `FILE_APPEND` the file is rewritten from scratch. Never use a file name sent by the user without checking it: it could point to `../config.php` and reveal your secrets.'),
+        ], [
+            Q('f1', L('Che cosa fa `FILE_APPEND`?', 'What does `FILE_APPEND` do?'), [L('Cancella il file prima di scrivere', 'Wipes the file before writing'), L('Aggiunge il testo in fondo al file', 'Adds the text at the end of the file'), L('Apre il file in sola lettura', 'Opens the file read-only'), L('Crea una copia di sicurezza', 'Makes a backup copy')], 1, L('Senza, il contenuto precedente sparisce.', 'Without it, the previous content disappears.')),
+            Q('f2', L('Quale funzione legge un file intero in una stringa?', 'Which function reads a whole file into a string?'), ['file()', 'fopen()', 'file_get_contents()', 'readfile_all()'], 2, L('`file()` restituisce invece un array di righe.', '`file()` returns an array of lines instead.')),
+            Q('f3', L('Perché è pericoloso `file_get_contents($_GET["f"])`?', 'Why is `file_get_contents($_GET["f"])` dangerous?'), [L('L’utente può leggere file riservati del server', 'The user can read private files on the server'), L('Il file viene letto due volte di seguito', 'The file is read twice in a row'), L('La funzione non accetta variabili', 'The function does not accept variables'), L('Rallenta solo la prima richiesta', 'It slows down only the first request')], 0, L('Il percorso lo decide chi visita la pagina.', 'Whoever visits the page decides the path.')),
+        ], task('php', L('Scrivi `"Ciao"` nel file `saluto.txt` con `file_put_contents`, poi rileggilo in `$testo` con `file_get_contents`.', 'Write `"Ciao"` to the file `saluto.txt` with `file_put_contents`, then read it back into `$testo` with `file_get_contents`.'), '<?php
+', [re('file_put_contents\s*\([^;]*saluto\.txt["\']\s*,\s*["\']Ciao', L('Scrivi il file', 'You write the file')), re('\$testo\s*=\s*file_get_contents\s*\([^;]*saluto\.txt', L('Lo rileggi', 'You read it back'))], '', '<?php
+file_put_contents("saluto.txt", "Ciao");
+$testo = file_get_contents("saluto.txt");'), [
+            dBlanks(pFill(), '<?php
+___("log.txt", "Accesso\n", ___);
+$righe = ___("log.txt", FILE_IGNORE_NEW_LINES);', ['file_put_contents', 'FILE_APPEND', 'file'], ['file_write', 'APPEND_FILE', 'read'], L('Scrivi in coda, poi leggi le righe.', 'Append, then read the lines.')),
+            dOrder(pSort(), ['$f = __DIR__ . "/dati.txt";', 'if (file_exists($f)) {', '    $testo = file_get_contents($f);', '    echo strlen($testo);', '}'], L('Percorso, controllo, lettura, uso.', 'Path, check, read, use.')),
+        ]),
+        lesson('dates-format', L('Date e numeri formattati', 'Dates and formatted numbers'), [
+            P('`date("d/m/Y")` scrive la data di oggi nel formato che vuoi. Per i calcoli usa `DateTimeImmutable`: `modify` sposta la data, `diff` misura la distanza tra due date, `format` la trasforma in testo. Imposta il fuso orario, altrimenti PHP usa quello del server.', '`date("d/m/Y")` writes today’s date in the format you want. For calculations use `DateTimeImmutable`: `modify` moves the date, `diff` measures the gap between two dates, `format` turns it into text. Set the time zone, otherwise PHP uses the server’s.'),
+            C('<?php
+date_default_timezone_set("Europe/Rome");
+echo date("d/m/Y H:i");                  // 17/11/2026 09:30
+
+$oggi = new DateTimeImmutable("2026-11-17");
+$scadenza = $oggi->modify("+30 days");
+echo $scadenza->format("d/m/Y");         // 17/12/2026
+echo $oggi->diff($scadenza)->days;       // 30
+
+echo number_format(1234.5, 2, ",", "."); // 1.234,50
+echo sprintf("%s ha %d punti", "Ada", 42);', 'php'),
+            P('`DateTimeImmutable` non cambia mai: `modify` restituisce un oggetto nuovo. Con `DateTime` invece cambia anche l’originale, una fonte di bug sottili. `number_format` sceglie decimali, separatore decimale e separatore delle migliaia.', '`DateTimeImmutable` never changes: `modify` returns a new object. With `DateTime` the original changes too, a source of subtle bugs. `number_format` picks the decimals, the decimal separator and the thousands separator.'),
+        ], [
+            Q('d1', L('Che cosa stampa `date("Y")`?', 'What does `date("Y")` print?'), [L('L’anno con quattro cifre', 'The four-digit year'), L('Il giorno del mese', 'The day of the month'), L('Il nome del mese', 'The name of the month'), L('I secondi passati dal 1970', 'The seconds since 1970')], 0, L('`y` minuscola darebbe solo due cifre.', 'Lowercase `y` would give just two digits.')),
+            Q('d2', L('Che cosa dà `number_format(1234.5, 2, ",", ".")`?', 'What does `number_format(1234.5, 2, ",", ".")` give?'), ['1,234.50', '1234,5', '1.234,5', '1.234,50'], 3, L('Due decimali, la virgola per i decimali e il punto per le migliaia.', 'Two decimals, a comma for decimals and a dot for thousands.')),
+            Q('d3', L('Perché preferire `DateTimeImmutable` a `DateTime`?', 'Why prefer `DateTimeImmutable` to `DateTime`?'), [L('È l’unica classe che conosce i fusi orari', 'It is the only class that knows time zones'), L('Le modifiche creano un oggetto nuovo e l’originale resta uguale', 'Changes create a new object and the original stays the same'), L('Scrive le date direttamente nel database', 'It writes dates straight into the database'), L('Funziona anche senza indicare il formato', 'It works even without a format')], 1, L('Niente modifiche a sorpresa.', 'No surprise changes.')),
+        ], task('php', L('Crea `$oggi = new DateTimeImmutable();` e stampa la data tra 7 giorni nel formato `d/m/Y`.', 'Create `$oggi = new DateTimeImmutable();` and print the date 7 days from now in the `d/m/Y` format.'), '<?php
+', [re('new\s+DateTimeImmutable\s*\(', L('Crei la data', 'You create the date')), re('->modify\s*\(\s*["\']\+\s*7\s*days?["\']\s*\)|->add\s*\(\s*new\s+DateInterval\s*\(\s*["\']P7D["\']\s*\)\s*\)', L('Aggiungi 7 giorni', 'You add 7 days')), re('->format\s*\(\s*["\']d/m/Y["\']\s*\)', L('La formatti', 'You format it'))], '', '<?php
+$oggi = new DateTimeImmutable();
+echo $oggi->modify("+7 days")->format("d/m/Y");'), [
+            dMatch(pMatch(), [['d', L('Giorno con due cifre', 'Two-digit day')], ['m', L('Mese con due cifre', 'Two-digit month')], ['Y', L('Anno con quattro cifre', 'Four-digit year')], ['H', L('Ore da 00 a 23', 'Hours 00 to 23')], ['i', L('Minuti', 'Minutes')]], L('Le lettere dei formati di data.', 'The letters of date formats.')),
+            dBug(pBug(), ['$inizio = new DateTime("2026-01-01");', '$fine = $inizio->modify("+1 month");', 'echo $inizio->format("d/m/Y"); // voglio 01/01/2026'], 0, '$inizio = new DateTimeImmutable("2026-01-01");', L('`DateTime` è mutabile: `modify` cambia anche `$inizio`, che diventa 01/02/2026.', '`DateTime` is mutable: `modify` changes `$inizio` too, which becomes 01/02/2026.')),
         ]),
     ],
 ];

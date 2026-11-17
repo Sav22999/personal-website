@@ -325,7 +325,7 @@ function schema_statements(string $p): array
         ) $e",
         "CREATE TABLE IF NOT EXISTS `{$p}badges` (
             `user_id` INT UNSIGNED NOT NULL,
-            `badge` VARCHAR(30) NOT NULL,
+            `badge` VARCHAR(80) NOT NULL,
             `earned_at` DATETIME NOT NULL,
             PRIMARY KEY (`user_id`, `badge`),
             CONSTRAINT `fk_{$p}ba_user` FOREIGN KEY (`user_id`) REFERENCES `{$p}users` (`id`) ON DELETE CASCADE
@@ -384,6 +384,10 @@ function install_schema(PDO $pdo, string $prefix): void
         // One statement: the new key covers user_id, so the foreign key always has its index
         $pdo->exec("ALTER TABLE `{$prefix}certificates` ADD UNIQUE KEY `uq_user_course_lang` (`user_id`, `course`, `lang`), DROP INDEX `uq_user_course`");
     }
+    // Version 25: badge ids grew longer than the old column (course_savcomponents-intermediate): repair, then widen it
+    $old = (int)($pdo->query("SELECT v FROM `{$prefix}meta` WHERE k = 'schema_version'")->fetchColumn() ?: 0);
+    if ($old > 0 && $old < 25) repair_badge_loop_v25($pdo, $prefix);
+    $pdo->exec("ALTER TABLE `{$prefix}badges` MODIFY COLUMN `badge` VARCHAR(80) NOT NULL");
     require_once __DIR__ . '/seed.php';
     // The catalogue of profile pictures: new items arrive with their starting price, existing ones keep what the admin set
     $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}avatar_items` (id, kind, price, enabled, sort) VALUES (?,?,?,1,?)");
@@ -405,7 +409,85 @@ function install_schema(PDO $pdo, string $prefix): void
     if ($old > 0 && $old < 17) install_seed_flash_v17($pdo, $prefix);
     // Version 20: rewritten distractors and less rigid exercise checks, unless the admin has changed them
     if ($old > 0 && $old < 20) install_seed_fixes_v20($pdo, $prefix);
+    // Version 26: the course review corrects the texts still as first installed, unless the admin has changed them
+    if ($old > 0 && $old < 26) install_seed_corrections_v26($pdo, $prefix);
     // Last: if something above fails, the next request tries again
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);
+}
+
+/**
+ * Version 25. The badges column held 30 characters, and "course_savcomponents-intermediate" has 33: INSERT IGNORE stored it
+ * cut short, so the badge looked new at every check and award_badges() paid XP and Sparks over and over, until PHP stopped
+ * mid-response. Every reward after the course was completed ran the loop again.
+ *
+ * For each account with a cut badge, from the first day of the loop, each day keeps at most the XP its records can explain
+ * (generous bounds: 50 per lesson played, the daily challenge, game XP, drills, badges and certificates earned that day;
+ * level badges are left out, since the loop's own XP reached them);
+ * the rest, in steps of the badge reward, comes off the day, the total XP and the Sparks. Level badges that the corrected XP
+ * no longer reaches go away. The cut badge takes its full name.
+ */
+function repair_badge_loop_v25(PDO $pdo, string $p): void
+{
+    $full = [];
+    foreach ($pdo->query("SELECT id FROM `{$p}courses`")->fetchAll(PDO::FETCH_COLUMN) as $id) {
+        $badge = 'course_' . $id;
+        if (strlen($badge) > 30) $full[substr($badge, 0, 30)] = $badge;
+    }
+    if (!$full) return;
+    // The full names must fit before they are written back
+    $pdo->exec("ALTER TABLE `{$p}badges` MODIFY COLUMN `badge` VARCHAR(80) NOT NULL");
+    $set = function (string $k, int $default) use ($pdo, $p): int {
+        $st = $pdo->prepare("SELECT v FROM `{$p}settings` WHERE k = ?");
+        $st->execute([$k]);
+        $v = $st->fetchColumn();
+        return $v === false ? $default : (int)$v;
+    };
+    $step = max(1, $set('xp_badge', 50));
+    $lessonMax = $set('xp_lesson_base', 10) + 3 * $set('xp_lesson_star', 10) + $set('xp_task', 10);
+    $dailyMax = 10 * $set('xp_daily_correct', 5) + $set('xp_daily_perfect', 10);
+    $drillMax = $set('xp_drill', 5) + $set('xp_drill_perfect', 5);
+    $certXp = $set('xp_certificate', 100);
+    $tz = new DateTimeZone(defined('APP_TIMEZONE') ? APP_TIMEZONE : 'Europe/Rome');
+    $day = fn(string $utc) => (new DateTimeImmutable($utc, new DateTimeZone('UTC')))->setTimezone($tz)->format('Y-m-d');
+    // Records of a local day, counted over the UTC hours that can fall in it
+    $count = function (string $sql, int $uid, string $d) use ($pdo, $tz, $day): int {
+        $st = $pdo->prepare($sql);
+        $st->execute([$uid, (new DateTimeImmutable($d . ' 00:00', $tz))->modify('-1 day')->format('Y-m-d H:i:s'), (new DateTimeImmutable($d . ' 00:00', $tz))->modify('+2 day')->format('Y-m-d H:i:s')]);
+        return count(array_filter($st->fetchAll(PDO::FETCH_COLUMN), fn($t) => $t && $day($t) === $d));
+    };
+    $in = implode(',', array_map([$pdo, 'quote'], array_keys($full)));
+    foreach ($pdo->query("SELECT user_id, badge, earned_at FROM `{$p}badges` WHERE badge IN ($in) ORDER BY earned_at")->fetchAll(PDO::FETCH_ASSOC) as $cut) {
+        $uid = (int)$cut['user_id'];
+        $from = $day($cut['earned_at']);
+        $st = $pdo->prepare("SELECT day, xp, game_xp, lessons FROM `{$p}activity` WHERE user_id = ? AND day >= ?");
+        $st->execute([$uid, $from]);
+        $excess = 0;
+        foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $a) {
+            $d = (string)$a['day'];
+            $lessons = max((int)$a['lessons'], $count("SELECT completed_at FROM `{$p}lesson_progress` WHERE user_id = ? AND skipped = 0 AND completed_at BETWEEN ? AND ?", $uid, $d));
+            $daily = $pdo->prepare("SELECT COUNT(*) FROM `{$p}daily_results` WHERE user_id = ? AND day = ?");
+            $daily->execute([$uid, $d]);
+            $explained = $lessons * $lessonMax + (int)$daily->fetchColumn() * $dailyMax + (int)$a['game_xp']
+                + $count("SELECT done_at FROM `{$p}drill_done` WHERE user_id = ? AND done_at BETWEEN ? AND ?", $uid, $d) * $drillMax
+                + $count("SELECT earned_at FROM `{$p}badges` WHERE user_id = ? AND badge NOT IN ('level_5', 'level_10') AND earned_at BETWEEN ? AND ?", $uid, $d) * $step
+                + $count("SELECT submitted_at FROM `{$p}exams` WHERE user_id = ? AND score IS NOT NULL AND submitted_at BETWEEN ? AND ?", $uid, $d) * $certXp;
+            $cutXp = intdiv(max(0, (int)$a['xp'] - $explained), $step) * $step;
+            if ($cutXp <= 0) continue;
+            $pdo->prepare("UPDATE `{$p}activity` SET xp = xp - ? WHERE user_id = ? AND day = ?")->execute([$cutXp, $uid, $d]);
+            $excess += $cutXp;
+        }
+        if ($excess > 0) {
+            $pdo->prepare("UPDATE `{$p}users` SET xp = GREATEST(0, CAST(xp AS SIGNED) - ?), points = GREATEST(0, CAST(points AS SIGNED) - ?) WHERE id = ?")->execute([$excess, $excess, $uid]);
+            $st = $pdo->prepare("SELECT xp FROM `{$p}users` WHERE id = ?");
+            $st->execute([$uid]);
+            $xp = (int)$st->fetchColumn();
+            // Level n starts at 50·n·(n−1) XP (level_info)
+            foreach (['level_5' => 5, 'level_10' => 10] as $badge => $n) {
+                if ($xp < 50 * $n * ($n - 1)) $pdo->prepare("DELETE FROM `{$p}badges` WHERE user_id = ? AND badge = ?")->execute([$uid, $badge]);
+            }
+            error_log("Fucina update 25: user $uid lost $excess XP and Sparks paid by the badge loop");
+        }
+        $pdo->prepare("UPDATE `{$p}badges` SET badge = ? WHERE user_id = ? AND badge = ?")->execute([$full[$cut['badge']], $uid, $cut['badge']]);
+    }
 }

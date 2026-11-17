@@ -101,7 +101,7 @@ asyncio.run(main())', 'python'),
         ], [
             Q('a1', L('Dove si può usare `await`?', 'Where can you use `await`?'), [L('Dentro una funzione `async`', 'Inside an `async` function'), L('Ovunque', 'Anywhere'), L('Solo nei cicli', 'Only in loops'), L('Solo nelle classi', 'Only in classes')], 0, L('Fuori serve `asyncio.run`.', 'Outside you need `asyncio.run`.')),
             Q('a2', L('Che cosa fa `asyncio.gather`?', 'What does `asyncio.gather` do?'), [L('Esegue più coroutine insieme', 'Runs several coroutines together'), L('Raccoglie la spazzatura', 'Collects garbage'), L('Ordina una lista', 'Sorts a list'), L('Chiude il programma', 'Ends the program')], 0, L('E restituisce tutti i risultati.', 'And returns all the results.')),
-            Q('a3', L('L’asincrono velocizza un calcolo pesante?', 'Does async speed up heavy computation?'), [L('No, aiuta con le attese', 'No, it helps with waiting'), L('Sì, sempre', 'Yes, always'), L('Solo su Linux', 'Only on Linux'), L('Solo con i numeri', 'Only with numbers')], 0, L('Per i calcoli servono processi.', 'Computation needs processes.')),
+            Q('a3', L('L’asincrono velocizza un calcolo pesante?', 'Does async speed up heavy computation?'), [L('No, aiuta con le attese', 'No, it helps with waiting'), L('Sì, sempre', 'Yes, always'), L('Solo su Linux', 'Only on Linux'), L('Solo con i numeri', 'Only with numbers')], 0, L('Per i calcoli servono processi (o i thread della build senza GIL).', 'Computation needs processes (or threads on the build without the GIL).')),
         ], task('python', L('Scrivi `async def saluta():` che fa `await asyncio.sleep(1)` e restituisce `"ciao"`.', 'Write `async def saluta():` that does `await asyncio.sleep(1)` and returns `"ciao"`.'), 'import asyncio
 ', [re('async\s+def\s+saluta\s*\(\s*\)\s*:', L('La coroutine esiste', 'The coroutine exists')), re('await\s+asyncio\.sleep\s*\(\s*1\s*\)', L('Aspetta un secondo', 'It waits one second')), re('return\s+["\']ciao["\']', L('Restituisce “ciao”', 'It returns “ciao”'))], '', 'async def saluta():
     await asyncio.sleep(1)
@@ -112,6 +112,7 @@ asyncio.run(main())', 'python'),
         lesson('pytest', L('Context manager e pytest', 'Context managers and pytest'), [
             P('Un **context manager** prepara e chiude qualcosa intorno a un blocco `with`; il modo più semplice è `@contextmanager` con un `yield`. **pytest** trova le funzioni che iniziano per `test_` e controlla con `assert`.', 'A **context manager** sets up and tears down something around a `with` block; the simplest way is `@contextmanager` with a `yield`. **pytest** finds functions starting with `test_` and checks with `assert`.'),
             C('from contextlib import contextmanager
+import time
 import pytest
 
 @contextmanager

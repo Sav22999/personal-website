@@ -140,7 +140,7 @@ const SEED_TASK_HINTS = [
 ];
 
 /** Courses of the first installation, in display order. */
-const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'tailwind', 'bootstrap',
+const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'savcomponents-base', 'savcomponents-intermediate', 'tailwind', 'bootstrap',
     'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate', 'react-base', 'react-intermediate', 'nextjs', 'node-base',
     'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'python-pandas', 'java-base', 'java-intermediate', 'java-advanced',
     'sql-base', 'sql-intermediate', 'sql-advanced', 'mysql', 'mariadb', 'postgresql', 'sqlite', 'mssql', 'mongodb', 'r-base', 'r-intermediate',
@@ -166,7 +166,7 @@ const FAMILY_CATEGORIES = [
     'csharp' => ['backend', 'desktop'], 'c' => ['systems'], 'cpp' => ['systems', 'desktop'], 'docker' => ['devops'], 'kubernetes' => ['devops'], 'cloud' => ['devops', 'backend'],
     'testing' => ['frontend', 'backend'], 'patterns' => ['backend', 'frontend'], 'regex' => ['backend', 'frontend'], 'security' => ['security'], 'a11y' => ['frontend'],
     'api' => ['backend'], 'redis' => ['data', 'backend'], 'algorithms' => ['backend', 'systems'], 'excel' => ['productivity', 'data'], 'powerbi' => ['productivity', 'data'],
-    'search' => ['frontend', 'backend'], 'ux' => ['design'], 'ui' => ['design', 'frontend'], 'material' => ['design', 'mobile', 'frontend'], 'ios' => ['design', 'mobile'], 'fluent' => ['design', 'desktop'], 'bootstrap' => ['frontend', 'design'],
+    'search' => ['frontend', 'backend'], 'ux' => ['design'], 'ui' => ['design', 'frontend'], 'material' => ['design', 'mobile', 'frontend'], 'ios' => ['design', 'mobile'], 'fluent' => ['design', 'desktop'], 'bootstrap' => ['frontend', 'design'], 'savcomponents' => ['frontend', 'design'],
     'flutter' => ['mobile', 'desktop'], 'swift' => ['mobile', 'desktop'], 'kotlin' => ['mobile', 'backend'],
     'rust' => ['systems', 'backend'], 'vala' => ['desktop', 'systems'],
 ];
@@ -211,6 +211,75 @@ function seed_apply_fixes(string $id, array $c): array
     }
     unset($l);
     return $c;
+}
+
+/**
+ * Version 26: the course review (facts brought up to date, wrong answers and code fixed) reaches the installations made
+ * before it. lib/seed/corrections-v26.json, built by tools/build-corrections.php, holds a hash of every old text and its
+ * new value: a course field, lesson field, question or drill is replaced only while it is still exactly as the old
+ * catalogue installed it, so what was edited in the admin portal stays.
+ */
+function install_seed_corrections_v26(PDO $pdo, string $p): void
+{
+    $file = __DIR__ . '/seed/corrections-v26.json';
+    $fix = is_file($file) ? json_decode((string)file_get_contents($file), true) : null;
+    if (!is_array($fix)) return;
+    $j = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // A saved value is "as installed" when, decoded and encoded again like the catalogue does, it has the old hash
+    $same = fn(?string $saved, string $hash) => sha1($j($saved === null ? null : json_decode($saved, true))) === $hash;
+
+    $getCourse = $pdo->prepare("SELECT data FROM `{$p}courses` WHERE id = ?");
+    $setCourse = $pdo->prepare("UPDATE `{$p}courses` SET data = ? WHERE id = ?");
+    foreach ($fix['courses'] ?? [] as $id => $fields) {
+        $getCourse->execute([$id]);
+        $data = json_decode((string)$getCourse->fetchColumn(), true);
+        if (!is_array($data)) continue;
+        $changed = false;
+        foreach ($fields as $k => [$hash, $value]) {
+            if (array_key_exists($k, $data) && sha1($j($data[$k])) === $hash) {
+                $data[$k] = $value;
+                $changed = true;
+            }
+        }
+        if ($changed) $setCourse->execute([$j($data), $id]);
+    }
+
+    $ids = [];
+    foreach ($pdo->query("SELECT id, course, slug FROM `{$p}lessons`")->fetchAll(PDO::FETCH_ASSOC) as $l) $ids[$l['course'] . '/' . $l['slug']] = (int)$l['id'];
+    $getLesson = $pdo->prepare("SELECT title, body, task FROM `{$p}lessons` WHERE id = ?");
+    foreach ($fix['lessons'] ?? [] as $key => $fields) {
+        if (!isset($ids[$key])) continue;
+        $getLesson->execute([$ids[$key]]);
+        $row = $getLesson->fetch(PDO::FETCH_ASSOC);
+        foreach ($fields as $k => [$hash, $value]) {
+            if (!in_array($k, ['title', 'body', 'task'], true) || !$row || !$same($row[$k], $hash)) continue;
+            $pdo->prepare("UPDATE `{$p}lessons` SET `$k` = ? WHERE id = ?")->execute([$value === null ? null : $j($value), $ids[$key]]);
+        }
+    }
+
+    $getQuestion = $pdo->prepare("SELECT id, q, options, answer, why FROM `{$p}questions` WHERE lesson_id = ? AND sort = ?");
+    $setQuestion = $pdo->prepare("UPDATE `{$p}questions` SET q = ?, options = ?, answer = ?, why = ? WHERE id = ?");
+    foreach ($fix['questions'] ?? [] as $key => [$hash, $value]) {
+        $lesson = substr($key, 0, strrpos($key, '/'));
+        if (!isset($ids[$lesson])) continue;
+        $getQuestion->execute([$ids[$lesson], (int)substr($key, strrpos($key, '/') + 1)]);
+        $row = $getQuestion->fetch(PDO::FETCH_ASSOC);
+        if (!$row) continue;
+        $saved = ['q' => json_decode((string)$row['q'], true), 'options' => json_decode((string)$row['options'], true), 'answer' => (int)$row['answer'], 'why' => json_decode((string)$row['why'], true)];
+        if (sha1($j($saved)) !== $hash) continue;
+        $setQuestion->execute([$j($value['q']), $j($value['options']), (int)$value['answer'], $j($value['why']), $row['id']]);
+    }
+
+    $getDrill = $pdo->prepare("SELECT id, kind, data FROM `{$p}drills` WHERE lesson_id = ? AND sort = ?");
+    $setDrill = $pdo->prepare("UPDATE `{$p}drills` SET kind = ?, data = ? WHERE id = ?");
+    foreach ($fix['drills'] ?? [] as $key => [$hash, $value]) {
+        $lesson = substr($key, 0, strrpos($key, '/'));
+        if (!isset($ids[$lesson])) continue;
+        $getDrill->execute([$ids[$lesson], (int)substr($key, strrpos($key, '/') + 1)]);
+        $row = $getDrill->fetch(PDO::FETCH_ASSOC);
+        if (!$row || sha1($j(['kind' => $row['kind'], 'data' => json_decode((string)$row['data'], true)])) !== $hash) continue;
+        $setDrill->execute([$value['kind'], $j($value['data']), $row['id']]);
+    }
 }
 
 /**
@@ -266,7 +335,7 @@ const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' 
     'github-copilot' => 1, 'ms-copilot' => 1, 'perplexity' => 1, 'ai-editors' => 2, 'huggingface' => 2, 'genmedia' => 1, 'grok' => 1, 'meta-ai' => 1, 'qwen' => 1, 'apple-intelligence' => 1,
     'git' => 1, 'bash' => 1, 'docker' => 2, 'kubernetes' => 3, 'cloud-base' => 1, 'go-base' => 1, 'csharp-base' => 1, 'c-base' => 2, 'cpp-base' => 2, 'testing' => 2, 'design-patterns' => 2, 'regex' => 1,
     'api-design' => 2, 'redis' => 2, 'algorithms' => 2, 'web-security' => 2, 'security-basics' => 1, 'a11y' => 1, 'excel' => 1, 'powerbi' => 1,
-    'llm-base' => 1, 'crawler' => 1, 'bootstrap' => 1, 'ux-base' => 1, 'ux-intermediate' => 2, 'ux-advanced' => 3, 'ux-mobile' => 2, 'ux-desktop' => 2, 'ux-vr' => 3,
+    'llm-base' => 1, 'crawler' => 1, 'bootstrap' => 1, 'savcomponents-base' => 1, 'savcomponents-intermediate' => 2, 'ux-base' => 1, 'ux-intermediate' => 2, 'ux-advanced' => 3, 'ux-mobile' => 2, 'ux-desktop' => 2, 'ux-vr' => 3,
     'ui-base' => 1, 'ui-intermediate' => 2, 'ui-mobile' => 2, 'ui-patterns' => 2, 'material' => 2, 'ios-design' => 2, 'fluent' => 2];
 
 /**

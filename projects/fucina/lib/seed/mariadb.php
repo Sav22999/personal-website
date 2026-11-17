@@ -7,16 +7,16 @@ return [
     'desc' => L('Il fork libero di MySQL: compatibilità, `RETURNING`, sequenze, tabelle con la storia dei dati, motori e cluster Galera.', 'The open fork of MySQL: compatibility, `RETURNING`, sequences, tables that keep data history, engines and Galera clusters.'),
     'lessons' => [
         lesson('fork', L('Un fork di MySQL', 'A fork of MySQL'), [
-            P('MariaDB nasce nel 2009 dagli sviluppatori originali di MySQL, dopo l’acquisizione di MySQL da parte di Oracle. Resta **compatibile** in gran parte: stesso protocollo, stesso client, stessa sintassi di base, e molte distribuzioni Linux la installano al posto di MySQL.', 'MariaDB was born in 2009 from MySQL’s original developers, after Oracle acquired MySQL. It stays largely **compatible**: same protocol, same client, same basic syntax, and many Linux distributions install it in place of MySQL.'),
+            P('MariaDB nasce nel 2009 dagli sviluppatori originali di MySQL, mentre Oracle acquisiva Sun, e con essa MySQL. Resta **compatibile** in gran parte: stesso protocollo, stesso client, stessa sintassi di base, e molte distribuzioni Linux la installano al posto di MySQL.', 'MariaDB was born in 2009 from MySQL’s original developers, while Oracle was acquiring Sun, and MySQL with it. It stays largely **compatible**: same protocol, same client, same basic syntax, and many Linux distributions install it in place of MySQL.'),
             C('mariadb -u root -p
 
-SELECT VERSION();          -- 11.4.x-MariaDB
+SELECT VERSION();          -- per esempio 12.3.3-MariaDB
 SHOW ENGINES;
 SELECT @@version_comment;', 'sql'),
             P('Con il tempo le due strade si sono separate: MariaDB ha funzioni sue (sequenze, tabelle versionate, motori in più), MySQL altre. I connettori di PHP, Python e Java funzionano con entrambi.', 'Over time the two paths drifted apart: MariaDB has features of its own (sequences, versioned tables, extra engines), MySQL others. PHP, Python and Java connectors work with both.'),
             Tip('Su un hosting condiviso “MySQL” spesso è in realtà MariaDB: `SELECT VERSION();` lo rivela.', 'On shared hosting “MySQL” is often MariaDB in disguise: `SELECT VERSION();` gives it away.'),
         ], [
-            Q('f1', L('Chi ha creato MariaDB?', 'Who created MariaDB?'), [L('Gli sviluppatori originali di MySQL', 'MySQL’s original developers'), L('Oracle', 'Oracle'), L('Microsoft', 'Microsoft'), L('Il team di PostgreSQL', 'The PostgreSQL team')], 0, L('Dopo l’acquisizione di MySQL da parte di Oracle.', 'After Oracle acquired MySQL.')),
+            Q('f1', L('Chi ha creato MariaDB?', 'Who created MariaDB?'), [L('Gli sviluppatori originali di MySQL', 'MySQL’s original developers'), L('Oracle', 'Oracle'), L('Microsoft', 'Microsoft'), L('Il team di PostgreSQL', 'The PostgreSQL team')], 0, L('Quando Oracle stava acquisendo Sun, proprietaria di MySQL.', 'When Oracle was acquiring Sun, the owner of MySQL.')),
             Q('f2', L('Come scopri se il server è MariaDB?', 'How do you find out whether the server is MariaDB?'), ['SELECT VERSION();', 'SHOW USERS;', 'DESCRIBE server;', 'SELECT ENGINE();'], 0, L('La versione contiene “MariaDB”.', 'The version contains “MariaDB”.')),
             Q('f3', L('Il connettore MySQL di PHP funziona con MariaDB?', 'Does PHP’s MySQL connector work with MariaDB?'), [L('Sì, il protocollo è lo stesso', 'Yes, the protocol is the same'), L('No, serve un driver diverso', 'No, it needs another driver'), L('Solo in sola lettura', 'Only read only'), L('Solo su Windows', 'Only on Windows')], 0, L('PDO e mysqli si collegano senza cambiare nulla.', 'PDO and mysqli connect with no changes.')),
         ], task('sql', L('Mostra la versione del server con `SELECT VERSION();` e poi l’elenco dei motori con `SHOW ENGINES;`.', 'Show the server version with `SELECT VERSION();` and then the list of engines with `SHOW ENGINES;`.'), '', [re('SELECT\s+VERSION\s*\(\s*\)\s*;', L('Chiedi la versione', 'You ask for the version')), re('SHOW\s+ENGINES\s*;', L('Elenchi i motori', 'You list the engines'))], '', "SELECT VERSION();\nSHOW ENGINES;"), [
@@ -31,7 +31,7 @@ RETURNING id, creato_il;
 
 DELETE FROM sessioni WHERE scadenza < NOW()
 RETURNING utente_id;', 'sql'),
-            P('In MySQL lo stesso si ottiene con `LAST_INSERT_ID()` subito dopo l’`INSERT`, ma vale solo per l’`AUTO_INCREMENT` e solo per l’ultima riga.', 'In MySQL you get the same with `LAST_INSERT_ID()` right after the `INSERT`, but it only covers the `AUTO_INCREMENT`, and only the last row.'),
+            P('In MySQL lo stesso si ottiene con `LAST_INSERT_ID()` subito dopo l’`INSERT`, ma vale solo per l’`AUTO_INCREMENT` e, con un inserimento di più righe, restituisce l’id della prima.', 'In MySQL you get the same with `LAST_INSERT_ID()` right after the `INSERT`, but it only covers the `AUTO_INCREMENT` and, with a multi-row insert, it returns the id of the first row.'),
         ], [
             Q('r1', L('Che cosa aggiunge `RETURNING` a un `INSERT`?', 'What does `RETURNING` add to an `INSERT`?'), [L('Restituisce le colonne delle righe inserite', 'Returns the columns of the inserted rows'), L('Annulla l’inserimento', 'Undoes the insert'), L('Inserisce due volte', 'Inserts twice'), L('Ordina la tabella', 'Sorts the table')], 0, L('Niente query in più per leggere l’id.', 'No extra query to read the id.')),
             Q('r2', L('Si può usare `RETURNING` con `DELETE`?', 'Can you use `RETURNING` with `DELETE`?'), [L('Sì', 'Yes'), L('No', 'No'), L('Solo con `LIMIT 1`', 'Only with `LIMIT 1`'), L('Solo da root', 'Only as root')], 0, L('Vedi cosa hai cancellato.', 'You see what you deleted.')),
@@ -41,7 +41,7 @@ RETURNING utente_id;', 'sql'),
             dBug(pBug(), ['DELETE FROM carrelli', 'WHERE aggiornato_il < NOW() - INTERVAL 30 DAY', 'RETURN id;'], 2, 'RETURNING id;', L('La parola chiave è `RETURNING`, in fondo all’istruzione.', 'The keyword is `RETURNING`, at the end of the statement.')),
         ]),
         lesson('sequences', L('Sequenze', 'Sequences'), [
-            P('Una **sequenza** è un contatore indipendente dalle tabelle: ogni `NEXTVAL` dà il numero successivo, anche a più tabelle o a più server. Utile per numeri di fattura o codici condivisi.', 'A **sequence** is a counter independent of tables: every `NEXTVAL` gives the next number, even to several tables or servers. Handy for invoice numbers or shared codes.'),
+            P('Una **sequenza** è un contatore indipendente dalle tabelle: ogni `NEXTVAL` dà il numero successivo, anche a più tabelle. Utile per numeri di fattura o codici condivisi.', 'A **sequence** is a counter independent of tables: every `NEXTVAL` gives the next number, even to several tables. Handy for invoice numbers or shared codes.'),
             C('CREATE SEQUENCE fatture START WITH 1000 INCREMENT BY 1;
 
 SELECT NEXTVAL(fatture);   -- 1000
@@ -84,7 +84,7 @@ SELECT * FROM prezzi FOR SYSTEM_TIME ALL WHERE prodotto_id = 1;', 'sql'),
             dFlash(pFlash(), [[L('Una tabella versionata perde le righe cancellate', 'A versioned table loses deleted rows'), false], [L('`FOR SYSTEM_TIME ALL` mostra tutte le versioni', '`FOR SYSTEM_TIME ALL` shows every version'), true], [L('Le versioni occupano spazio', 'Versions take up space'), true], [L('Serve un trigger scritto a mano', 'It needs a hand-written trigger'), false]], L('La storia la tiene il database.', 'The database keeps the history.')),
         ]),
         lesson('engines', L('Motori e Galera', 'Engines and Galera'), [
-            P('Oltre a InnoDB, MariaDB offre motori per esigenze diverse: **Aria** (sostituto sicuro di MyISAM, usato per le tabelle di sistema), **ColumnStore** (analisi su grandi volumi, dati per colonna), **Spider** (tabelle divise su più server).', 'Beyond InnoDB, MariaDB offers engines for different needs: **Aria** (a crash-safe replacement for MyISAM, used for system tables), **ColumnStore** (analytics on big volumes, data stored by column), **Spider** (tables split across servers).'),
+            P('Oltre a InnoDB, MariaDB offre motori per esigenze diverse: **Aria** (sostituto sicuro di MyISAM, usato per le tabelle di sistema), **ColumnStore** (analisi su grandi volumi, dati per colonna), **Spider** (tabelle divise su più server). ColumnStore e Spider si installano come plugin a parte.', 'Beyond InnoDB, MariaDB offers engines for different needs: **Aria** (a crash-safe replacement for MyISAM, used for system tables), **ColumnStore** (analytics on big volumes, data stored by column), **Spider** (tables split across servers). ColumnStore and Spider are installed as separate plugins.'),
             C('CREATE TABLE log_visite (
     giorno DATE,
     pagina VARCHAR(200),
@@ -100,6 +100,50 @@ SHOW STATUS LIKE \'wsrep_cluster_size\';  -- nodi del cluster Galera', 'sql'),
         ], task('sql', L('Crea la tabella `eventi (giorno DATE, tipo VARCHAR(50))` con il motore `Aria`.', 'Create the table `eventi (giorno DATE, tipo VARCHAR(50))` with the `Aria` engine.'), '', [re('CREATE\s+TABLE\s+eventi', L('La tabella esiste', 'The table exists')), re('giorno\s+DATE', L('C’è la data', 'There is the date')), re('ENGINE\s*=\s*Aria', L('Usa Aria', 'It uses Aria'))], '', "CREATE TABLE eventi (\n    giorno DATE,\n    tipo VARCHAR(50)\n) ENGINE=Aria;"), [
             dMatch(pMatch(), [['InnoDB', L('Transazioni, uso generale', 'Transactions, general use')], ['Aria', L('Erede sicuro di MyISAM', 'Crash-safe heir of MyISAM')], ['ColumnStore', L('Analisi per colonna', 'Column analytics')], ['Spider', L('Tabelle su più server', 'Tables across servers')], ['Galera', L('Cluster sincrono', 'Synchronous cluster')]], L('Lo strumento giusto per ogni lavoro.', 'The right tool for each job.')),
             dBug(pBug(), ['CREATE TABLE statistiche (', '    giorno DATE, visite INT', ') MOTORE=ColumnStore;'], 2, ') ENGINE=ColumnStore;', L('La parola chiave è `ENGINE`.', 'The keyword is `ENGINE`.')),
+        ]),
+        lesson('vector', L('Ricerca vettoriale', 'Vector search'), [
+            P('Da MariaDB 11.7 (e quindi nelle LTS 11.8 e 12.3) esiste il tipo **`VECTOR(n)`**: una lista di `n` numeri, l’**embedding** con cui un modello di IA rappresenta il significato di un testo o di un’immagine. Testi simili hanno vettori vicini, quindi si cerca «per significato» ordinando per distanza.', 'Since MariaDB 11.7 (and so in the 11.8 and 12.3 LTS releases) there is the **`VECTOR(n)`** type: a list of `n` numbers, the **embedding** an AI model uses to represent the meaning of a text or an image. Similar texts have nearby vectors, so you search “by meaning” by sorting on distance.'),
+            C('CREATE TABLE documenti (
+    id INT PRIMARY KEY,
+    testo TEXT,
+    embedding VECTOR(3) NOT NULL,
+    VECTOR INDEX (embedding)
+);
+
+INSERT INTO documenti VALUES (1, \'Gatti\', VEC_FromText(\'[0.1, 0.8, 0.3]\'));
+
+SELECT id, testo FROM documenti
+ORDER BY VEC_DISTANCE_EUCLIDEAN(embedding, VEC_FromText(\'[0.2, 0.7, 0.3]\'))
+LIMIT 5;', 'sql'),
+            P('`VEC_FromText` trasforma un array JSON in vettore; `VEC_DISTANCE_EUCLIDEAN` e `VEC_DISTANCE_COSINE` misurano la distanza. Il **`VECTOR INDEX`** rende veloce la ricerca dei più vicini anche su milioni di righe (la colonna deve essere `NOT NULL`). Gli embedding veri hanno centinaia di dimensioni e li calcola un modello esterno.', '`VEC_FromText` turns a JSON array into a vector; `VEC_DISTANCE_EUCLIDEAN` and `VEC_DISTANCE_COSINE` measure distance. The **`VECTOR INDEX`** makes nearest-neighbour search fast even on millions of rows (the column must be `NOT NULL`). Real embeddings have hundreds of dimensions and an external model computes them.'),
+        ], [
+            Q('x1', L('Che cosa contiene una colonna `VECTOR(384)`?', 'What does a `VECTOR(384)` column hold?'), [L('Un testo lungo al massimo 384 caratteri', 'A text up to 384 characters long'), L('Un’immagine di 384 pixel', 'A 384-pixel image'), L('Una lista di 384 numeri, un embedding', 'A list of 384 numbers, an embedding'), L('384 righe collegate', '384 linked rows')], 2, L('Il significato tradotto in numeri.', 'Meaning turned into numbers.')),
+            Q('x2', L('Come trovi i documenti più simili a una domanda?', 'How do you find the documents most similar to a question?'), [L('Ordini per distanza dal vettore della domanda', 'You sort by distance from the question’s vector'), L('Usi `LIKE` con le parole della domanda', 'You use `LIKE` with the question’s words'), L('Ordini per `id` decrescente', 'You sort by descending `id`'), L('Usi `GROUP BY` sul testo', 'You use `GROUP BY` on the text')], 0, L('I più vicini sono i più simili.', 'The nearest are the most similar.')),
+            Q('x3', L('A che cosa serve `VECTOR INDEX`?', 'What is `VECTOR INDEX` for?'), [L('A comprimere i vettori sul disco', 'Compressing vectors on disk'), L('A rendere veloce la ricerca dei vicini', 'Making nearest-neighbour search fast'), L('A calcolare gli embedding dal testo', 'Computing embeddings from text'), L('A vietare i vettori duplicati', 'Forbidding duplicate vectors')], 1, L('Gli embedding li calcola un modello esterno.', 'An external model computes the embeddings.')),
+        ], task('sql', L('Dalla tabella `frasi` prendi le 3 righe più vicine al vettore `\'[0.5, 0.1, 0.9]\'`, ordinando per `VEC_DISTANCE_COSINE(embedding, VEC_FromText(…))`.', 'From the table `frasi` take the 3 rows nearest to the vector `\'[0.5, 0.1, 0.9]\'`, sorting by `VEC_DISTANCE_COSINE(embedding, VEC_FromText(…))`.'), 'SELECT id, testo FROM frasi', [re('ORDER\s+BY\s+VEC_DISTANCE_COSINE\s*\(\s*embedding\s*,\s*VEC_FromText\s*\(\s*\'\[\s*0\.5\s*,\s*0\.1\s*,\s*0\.9\s*\]\'\s*\)\s*\)', L('Ordini per distanza', 'You sort by distance')), re('LIMIT\s+3', L('Tieni i 3 più vicini', 'You keep the 3 nearest'))], '', "SELECT id, testo FROM frasi\nORDER BY VEC_DISTANCE_COSINE(embedding, VEC_FromText('[0.5, 0.1, 0.9]'))\nLIMIT 3;"), [
+            dBlanks(pFill(), "CREATE TABLE immagini (\n    id INT PRIMARY KEY,\n    embedding ___(512) NOT NULL,\n    VECTOR ___ (embedding)\n);\nSELECT id FROM immagini\nORDER BY ___(embedding, VEC_FromText(@q)) LIMIT 10;", ['VECTOR', 'INDEX', 'VEC_DISTANCE_EUCLIDEAN'], ['ARRAY', 'KEY', 'DISTANCE'], L('Tipo, indice, distanza.', 'Type, index, distance.')),
+            dFlash(pFlash(), [[L('Testi simili hanno embedding vicini', 'Similar texts have nearby embeddings'), true], [L('MariaDB calcola da sola gli embedding dal testo', 'MariaDB computes embeddings from text by itself'), false], [L('`VEC_FromText` accetta un array in stile JSON', '`VEC_FromText` accepts a JSON-style array'), true], [L('La colonna di un `VECTOR INDEX` può contenere NULL', 'A `VECTOR INDEX` column can contain NULL'), false]], L('Cercare per significato.', 'Searching by meaning.')),
+        ]),
+        lesson('types', L('Tipi propri e versioni', 'Its own types and versions'), [
+            P('MariaDB ha tipi che MySQL non ha: **`UUID`** (salvato in 16 byte, mostrato come testo), **`INET6`** per gli indirizzi IP (anche IPv4). Il suo `JSON` invece è un alias di `LONGTEXT` con un controllo `JSON_VALID`: le funzioni JSON ci sono quasi tutte, ma gli operatori `->` e `->>` di MySQL mancano fino alla 12.3 LTS (arrivano con la serie 13).', 'MariaDB has types MySQL lacks: **`UUID`** (stored in 16 bytes, shown as text), **`INET6`** for IP addresses (IPv4 too). Its `JSON`, instead, is an alias of `LONGTEXT` with a `JSON_VALID` check: almost all JSON functions are there, but MySQL’s `->` and `->>` operators are missing up to the 12.3 LTS (they arrive with the 13 series).'),
+            C('CREATE TABLE accessi (
+    id UUID PRIMARY KEY DEFAULT UUID(),
+    ip INET6 NOT NULL,
+    dettagli JSON,
+    quando DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO accessi (ip, dettagli) VALUES (\'192.168.1.10\', \'{"browser": "Firefox"}\');
+
+SELECT ip, JSON_VALUE(dettagli, \'$.browser\') AS browser FROM accessi;', 'sql'),
+            P('Le versioni **LTS** escono ogni anno (la «.3» di ogni serie, come 12.3) con tre anni di correzioni; le altre sono versioni a rotazione con le novità. MariaDB sostituisce senza problemi un vecchio MySQL 5.x, ma da MySQL 8 in poi non è più un rimpiazzo immediato: le due strade si sono separate.', '**LTS** versions come out every year (the “.3” of each series, such as 12.3) with three years of fixes; the others are rolling releases with the new features. MariaDB replaces an old MySQL 5.x smoothly, but from MySQL 8 onwards it is no longer a drop-in replacement: the two paths have parted.'),
+        ], [
+            Q('t1', L('Che cos’è `JSON` in MariaDB?', 'What is `JSON` in MariaDB?'), [L('Un formato binario come JSONB', 'A binary format like JSONB'), L('Un tipo che accetta solo numeri', 'A type that accepts only numbers'), L('Una tabella speciale di sistema', 'A special system table'), L('Un alias di `LONGTEXT` con il controllo `JSON_VALID`', 'An alias of `LONGTEXT` with the `JSON_VALID` check')], 3, L('Si legge con funzioni come `JSON_VALUE`.', 'You read it with functions such as `JSON_VALUE`.')),
+            Q('t2', L('Quale tipo conviene per salvare indirizzi IP?', 'Which type suits storing IP addresses?'), ['INET6', 'VARCHAR(4)', 'UUID', 'POINT'], 0, L('Regge IPv6 e IPv4 in modo compatto.', 'It holds IPv6 and IPv4 compactly.')),
+            Q('t3', L('Ogni quanto esce una LTS di MariaDB?', 'How often does a MariaDB LTS come out?'), [L('Ogni mese', 'Every month'), L('Ogni dieci anni', 'Every ten years'), L('Ogni anno, con tre anni di correzioni', 'Every year, with three years of fixes'), L('Solo quando cambia il nome', 'Only when the name changes')], 2, L('La «.3» di ogni serie.', 'The “.3” of each series.')),
+        ], task('sql', L('Crea la tabella `dispositivi` con `id UUID PRIMARY KEY DEFAULT UUID()` e `ip INET6 NOT NULL`.', 'Create the table `dispositivi` with `id UUID PRIMARY KEY DEFAULT UUID()` and `ip INET6 NOT NULL`.'), '', [re('CREATE\s+TABLE\s+dispositivi', L('La tabella esiste', 'The table exists')), re('id\s+UUID\s+PRIMARY\s+KEY\s+DEFAULT\s+\(?\s*UUID\s*\(\s*\)\s*\)?', L('L’id è un UUID automatico', 'The id is an automatic UUID')), re('ip\s+INET6\s+NOT\s+NULL', L('L’IP ha il suo tipo', 'The IP has its own type'))], '', "CREATE TABLE dispositivi (\n    id UUID PRIMARY KEY DEFAULT UUID(),\n    ip INET6 NOT NULL\n);"), [
+            dMatch(pMatch(), [['UUID', L('Identificatore universale in 16 byte', 'Universal identifier in 16 bytes')], ['INET6', L('Indirizzi IP', 'IP addresses')], ['JSON', L('Testo con controllo di validità', 'Text with a validity check')], ['JSON_VALUE', L('Legge un valore dal JSON', 'Reads a value from JSON')], ['LTS', L('Tre anni di correzioni', 'Three years of fixes')]], L('Le particolarità di MariaDB.', 'MariaDB’s peculiarities.')),
+            dBug(pBug(), ['SELECT ip,', '       dettagli->>\'$.browser\' AS browser', 'FROM accessi;'], 1, '       JSON_VALUE(dettagli, \'$.browser\') AS browser', L('Fino alla 12.3 LTS MariaDB non ha l’operatore `->>` di MySQL: si usa `JSON_VALUE`, che funziona in tutte le versioni.', 'Up to the 12.3 LTS MariaDB lacks MySQL’s `->>` operator: you use `JSON_VALUE`, which works in every version.')),
         ]),
     ],
 ];

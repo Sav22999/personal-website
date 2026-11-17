@@ -1,10 +1,10 @@
 <?php
-/** Kotlin intermediate: classes and data classes, sealed types, coroutines, flows and Jetpack Compose. */
+/** Kotlin intermediate: classes and data classes, sealed types, coroutines, flows, Jetpack Compose, scope functions, generics and Compose state with ViewModel. */
 
 return [
     'id' => 'kotlin-intermediate', 'family' => 'kotlin', 'after' => 'kotlin-base',
     'title' => L('Kotlin intermedio', 'Intermediate Kotlin'), 'short' => L('Kotlin intermedio', 'Kotlin Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Classi e data class, interfacce, sealed class, coroutine, Flow e le prime schermate con Jetpack Compose.', 'Classes and data classes, interfaces, sealed classes, coroutines, Flow and first screens with Jetpack Compose.'),
+    'desc' => L('Classi e data class, interfacce, sealed class, coroutine, Flow, Jetpack Compose, funzioni di scope, generics e stato con ViewModel.', 'Classes and data classes, interfaces, sealed classes, coroutines, Flow, Jetpack Compose, scope functions, generics and state with ViewModel.'),
     'lessons' => [
         lesson('classes', L('Classi e data class', 'Classes and data classes'), [
             P('Il costruttore principale sta nella riga della classe: `class Conto(val titolare: String)`. Una **data class** è fatta per contenere dati: Kotlin genera `equals`, `toString` e `copy`.', 'The primary constructor sits on the class line: `class Conto(val titolare: String)`. A **data class** is made to hold data: Kotlin generates `equals`, `toString` and `copy`.'),
@@ -89,7 +89,7 @@ conto().map { "Mancano $it" }.collect { println(it) }
 
 class CorsiViewModel : ViewModel() {
     private val _stato = MutableStateFlow<Stato>(Stato.Caricamento)
-    val stato: StateFlow<Stato> = _stato
+    val stato: StateFlow<Stato> = _stato.asStateFlow()
 }', 'kotlin'),
             P('La versione `Mutable` resta privata nel ViewModel; fuori si espone quella in sola lettura.', 'The `Mutable` version stays private in the ViewModel; outside you expose the read-only one.'),
         ], [
@@ -105,7 +105,7 @@ val conta: StateFlow<Int> = _conta'), [
             P('**Jetpack Compose** descrive l’interfaccia Android con funzioni `@Composable`. `remember { mutableStateOf(…) }` tiene uno stato che, quando cambia, ridisegna solo ciò che serve. `Column`, `Row` e `Box` dispongono gli elementi.', '**Jetpack Compose** describes the Android interface with `@Composable` functions. `remember { mutableStateOf(…) }` holds state that, when it changes, redraws only what is needed. `Column`, `Row` and `Box` lay out the elements.'),
             C('@Composable
 fun Contatore() {
-    var n by remember { mutableStateOf(0) }
+    var n by remember { mutableIntStateOf(0) }
     Column(
         modifier = Modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -125,6 +125,92 @@ fun Campo() {
 TextField(value = testo, onValueChange = { testo = it })'), [
             dBlanks(pFill(), "@___\nfun Saluto(nome: String) {\n    ___(modifier = Modifier.padding(8.dp)) {\n        Text(\"Ciao \$nome\")\n    }\n}", ['Composable', 'Column'], ['View', 'Div', 'Layout'], L('Annotazione e contenitore.', 'Annotation and container.')),
             dFlash(pFlash(), [[L('In Compose l’interfaccia è fatta di funzioni', 'In Compose the interface is made of functions'), true], [L('Senza `remember` lo stato sopravvive ai ridisegni', 'Without `remember` state survives redraws'), false], [L('Il Modifier concatena margini e dimensioni', 'The Modifier chains padding and size'), true], [L('Una funzione `@Composable` può chiamarne altre', 'A `@Composable` function can call others'), true]], L('Serve `remember`.', '`remember` is needed.')),
+        ]),
+        lesson('scope-functions', L('Funzioni di scope', 'Scope functions'), [
+            P('`let`, `apply`, `also`, `run` e `with` eseguono un blocco di codice su un oggetto. Cambiano in due cose: come chiami l’oggetto nel blocco (`it` oppure `this`) e che cosa restituiscono (l’oggetto stesso o il risultato del blocco).', '`let`, `apply`, `also`, `run` and `with` run a block of code on an object. They differ in two things: how you refer to the object in the block (`it` or `this`) and what they return (the object itself or the block’s result).'),
+            C('val email: String? = trovaEmail()
+email?.let { println("Scrivo a $it") }          // solo se non è null
+
+val utente = Utente().apply {                    // configura e restituisce l’oggetto
+    nome = "Ada"
+    eta = 36
+}
+
+val lista = mutableListOf(1, 2).also { println("Creata: $it") }
+
+val lunghezza = with(StringBuilder()) {
+    append("Fucina")
+    length                                       // risultato del blocco
+}', 'kotlin'),
+            P('Regola pratica: `?.let` per usare un valore nullable, `apply` per configurare un oggetto appena creato, `also` per un’azione in più (come un log), `run` e `with` per calcolare un risultato usando l’oggetto. Non annidarle troppo: il codice diventa difficile da leggere.', 'Rule of thumb: `?.let` to use a nullable value, `apply` to configure a freshly created object, `also` for an extra action (such as a log), `run` and `with` to compute a result using the object. Do not nest them too deeply: the code becomes hard to read.'),
+        ], [
+            Q('sf1', L('Che cosa restituisce `apply`?', 'What does `apply` return?'), [L('Il risultato dell’ultima riga', 'The result of the last line'), 'Unit', L('L’oggetto su cui è chiamata', 'The object it is called on'), L('Un Boolean', 'A Boolean')], 2, L('Per questo è perfetta per configurare.', 'That is why it is perfect for configuring.')),
+            Q('sf2', L('Quale forma esegue un blocco solo se il valore non è null?', 'Which form runs a block only if the value is not null?'), ['x?.let { }', 'x!!.run { }', 'with(x) { }', 'x?.also = { }'], 0, L('La chiamata sicura salta il blocco se x è null.', 'The safe call skips the block if x is null.')),
+            Q('sf3', L('Dentro `apply`, come ti riferisci all’oggetto?', 'Inside `apply`, how do you refer to the object?'), [L('Con `it`', 'With `it`'), L('Con `self`', 'With `self`'), L('Con `obj`', 'With `obj`'), L('Con `this`, spesso sottinteso', 'With `this`, often implicit')], 3, L('Per questo scrivi direttamente `nome = "Ada"`.', 'That is why you write `nome = "Ada"` directly.')),
+        ], task('kotlin', L('Configura il paragrafo con `apply`: `val p = Paragrafo().apply { testo = "Ciao" }`.', 'Configure the paragraph with `apply`: `val p = Paragrafo().apply { testo = "Ciao" }`.'), 'class Paragrafo { var testo = "" }
+', [re('val\s+p\s*=\s*Paragrafo\s*\(\s*\)\s*\.apply\s*\{\s*(this\.)?testo\s*=\s*"Ciao"\s*\}', L('Configuri con apply', 'You configure with apply'))], '', 'val p = Paragrafo().apply { testo = "Ciao" }'), [
+            dMatch(pMatch(), [['let', L('`it`, restituisce il risultato del blocco', '`it`, returns the block’s result')], ['apply', L('`this`, restituisce l’oggetto', '`this`, returns the object')], ['also', L('`it`, restituisce l’oggetto', '`it`, returns the object')], ['run', L('`this`, restituisce il risultato del blocco', '`this`, returns the block’s result')]], L('Le quattro combinazioni.', 'The four combinations.')),
+            dFlash(pFlash(), [[L('`apply` restituisce l’oggetto stesso', '`apply` returns the object itself'), true], [L('`x?.let { }` gira anche se x è null', '`x?.let { }` runs even if x is null'), false], [L('`also` è comodo per aggiungere un log', '`also` is handy for adding a log'), true], [L('`with` riceve l’oggetto come argomento', '`with` takes the object as an argument'), true]], L('Con null la chiamata sicura salta il blocco.', 'With null the safe call skips the block.')),
+        ]),
+        lesson('generics', L('Generics e varianza', 'Generics and variance'), [
+            P('Classi e funzioni **generiche** lavorano con un tipo segnaposto: `class Scatola<T>(val contenuto: T)`. Con un vincolo (`T : Comparable<T>`) chiedi che il tipo sappia fare qualcosa.', '**Generic** classes and functions work with a placeholder type: `class Scatola<T>(val contenuto: T)`. With a constraint (`T : Comparable<T>`) you require the type to be able to do something.'),
+            C('class Scatola<T>(val contenuto: T)
+
+fun <T : Comparable<T>> massimo(a: T, b: T): T = if (a > b) a else b
+
+val s = Scatola("libro")          // Scatola<String>
+println(massimo(3, 8))            // 8
+
+interface Sorgente<out T> { fun prossimo(): T }
+interface Confronto<in T> { fun confronta(a: T, b: T): Int }
+
+val numeri: List<Int> = listOf(1, 2)
+val qualsiasi: List<Any> = numeri   // va bene: List è covariante (out)
+
+inline fun <reified T> Any.eDi(): Boolean = this is T
+println("ciao".eDi<String>())       // true', 'kotlin'),
+            P('`out T` vuol dire che il tipo esce soltanto (viene prodotto): così una `List<Int>` vale anche come `List<Any>`. `in T` vuol dire che entra soltanto (viene consumato). `reified`, nelle funzioni `inline`, conserva il tipo a runtime, che di solito viene cancellato.', '`out T` means the type only comes out (it is produced): that is why a `List<Int>` also works as a `List<Any>`. `in T` means it only goes in (it is consumed). `reified`, in `inline` functions, keeps the type at runtime, where it is normally erased.'),
+        ], [
+            Q('g1', L('Perché `val a: List<Any> = listOf(1, 2)` compila?', 'Why does `val a: List<Any> = listOf(1, 2)` compile?'), [L('Kotlin converte gli Int in String', 'Kotlin converts the Ints to Strings'), L('List è covariante: è dichiarata con `out`', 'List is covariant: it is declared with `out`'), L('List non ha un tipo', 'List has no type'), L('Perché Any è un sottotipo di Int', 'Because Any is a subtype of Int')], 1, L('`MutableList` invece non lo è.', '`MutableList` is not.')),
+            Q('g2', L('Che cosa significa `in T` in un’interfaccia?', 'What does `in T` mean in an interface?'), [L('T può solo uscire dai metodi', 'T can only come out of methods'), L('T è un tipo interno al modulo', 'T is a module-internal type'), L('T può solo entrare, come parametro', 'T can only go in, as a parameter'), L('T è facoltativo', 'T is optional')], 2, L('È la controvarianza.', 'It is contravariance.')),
+            Q('g3', L('A che cosa serve `reified`?', 'What is `reified` for?'), [L('A rendere la funzione più veloce', 'Making the function faster'), L('A creare una data class', 'Creating a data class'), L('A rendere T nullable', 'Making T nullable'), L('A conoscere il tipo T a runtime in una funzione inline', 'Knowing type T at runtime in an inline function')], 3, L('Permette controlli come `is T`.', 'It allows checks such as `is T`.')),
+        ], task('kotlin', L('Scrivi `class Coppia<A, B>(val primo: A, val secondo: B)`.', 'Write `class Coppia<A, B>(val primo: A, val secondo: B)`.'), '', [re('class\s+Coppia\s*<\s*A\s*,\s*B\s*>\s*\(\s*val\s+primo\s*:\s*A\s*,\s*val\s+secondo\s*:\s*B\s*\)', L('La classe ha due tipi generici', 'The class has two generic types'))], '', 'class Coppia<A, B>(val primo: A, val secondo: B)'), [
+            dBlanks(pFill(), "class Pila<___> {\n    private val voci = mutableListOf<T>()\n    fun push(v: T) = voci.add(v)\n}\nfun <T : ___<T>> minimo(a: T, b: T) = if (a < b) a else b\ninterface Produttore<___ T> { fun crea(): T }", ['T', 'Comparable', 'out'], ['Any', 'Equatable', 'in'], L('Segnaposto, vincolo, varianza.', 'Placeholder, constraint, variance.')),
+            dMatch(pMatch(), [['<T>', L('Tipo segnaposto', 'Placeholder type')], ['out T', L('Il tipo esce soltanto', 'The type only comes out')], ['in T', L('Il tipo entra soltanto', 'The type only goes in')], ['reified', L('Tipo noto a runtime', 'Type known at runtime')], ['T : Comparable<T>', L('Vincolo sul tipo', 'Type constraint')]], L('Generics in Kotlin.', 'Generics in Kotlin.')),
+        ]),
+        lesson('compose-state', L('Stato e ViewModel in Compose', 'State and ViewModel in Compose'), [
+            P('In Compose conviene **sollevare lo stato** (state hoisting): una composable riceve il valore e una funzione per cambiarlo, invece di tenerlo dentro. Così è riutilizzabile e facile da provare. Lo stato di una schermata vive in un **ViewModel**, che sopravvive alla rotazione dello schermo.', 'In Compose it pays to **hoist state**: a composable receives the value and a function to change it, instead of keeping it inside. That makes it reusable and easy to test. A screen’s state lives in a **ViewModel**, which survives screen rotation.'),
+            C('class ContatoreViewModel : ViewModel() {
+    private val _conta = MutableStateFlow(0)
+    val conta: StateFlow<Int> = _conta.asStateFlow()
+    fun aumenta() { _conta.update { it + 1 } }
+}
+
+@Composable
+fun ContatoreScreen(vm: ContatoreViewModel = viewModel()) {
+    val conta by vm.conta.collectAsStateWithLifecycle()
+    Contatore(valore = conta, onAumenta = vm::aumenta)
+}
+
+@Composable
+fun Contatore(valore: Int, onAumenta: () -> Unit) {
+    Button(onClick = onAumenta) { Text("Clic: $valore") }
+}', 'kotlin'),
+            P('`collectAsStateWithLifecycle()` trasforma il Flow in stato Compose e smette di raccogliere quando l’app va in background. `rememberSaveable` è come `remember` ma sopravvive anche alla rotazione: va bene per piccoli valori della sola interfaccia.', '`collectAsStateWithLifecycle()` turns the Flow into Compose state and stops collecting when the app goes to the background. `rememberSaveable` is like `remember` but also survives rotation: fine for small, interface-only values.'),
+        ], [
+            Q('cs1', L('Che cos’è lo state hoisting?', 'What is state hoisting?'), [L('Salvare lo stato in un file', 'Saving state to a file'), L('Passare a una composable il valore e una funzione per cambiarlo', 'Passing a composable the value and a function to change it'), L('Mettere tutto lo stato in variabili globali', 'Putting all state in global variables'), L('Ricreare lo stato a ogni ridisegno', 'Recreating state at every redraw')], 1, L('Lo stato sale verso chi lo possiede.', 'State moves up to its owner.')),
+            Q('cs2', L('Perché lo stato di una schermata sta in un ViewModel?', 'Why does a screen’s state live in a ViewModel?'), [L('Sopravvive ai cambi di configurazione come la rotazione', 'It survives configuration changes such as rotation'), L('Disegna l’interfaccia più in fretta', 'It draws the interface faster'), L('Sostituisce il database', 'It replaces the database'), L('È obbligatorio per usare Text', 'It is required to use Text')], 0, L('E separa la logica dall’interfaccia.', 'And it separates logic from the interface.')),
+            Q('cs3', L('Che cosa fa `collectAsStateWithLifecycle()`?', 'What does `collectAsStateWithLifecycle()` do?'), [L('Salva il Flow su disco', 'Saves the Flow to disk'), L('Converte uno StateFlow in LiveData', 'Converts a StateFlow into LiveData'), L('Avvia un nuovo thread', 'Starts a new thread'), L('Trasforma un Flow in stato Compose rispettando il ciclo di vita', 'Turns a Flow into Compose state, respecting the lifecycle')], 3, L('In background smette di raccogliere.', 'In the background it stops collecting.')),
+        ], task('kotlin', L('Solleva lo stato: `Interruttore` deve ricevere `acceso: Boolean` e `onCambia: (Boolean) -> Unit` e usarli in `Switch(checked = acceso, onCheckedChange = onCambia)`.', 'Hoist the state: `Interruttore` must take `acceso: Boolean` and `onCambia: (Boolean) -> Unit` and use them in `Switch(checked = acceso, onCheckedChange = onCambia)`.'), '@Composable
+fun Interruttore() {
+    var acceso by remember { mutableStateOf(false) }
+    Switch(checked = acceso, onCheckedChange = { acceso = it })
+}', [re('fun\s+Interruttore\s*\(\s*acceso\s*:\s*Boolean\s*,\s*onCambia\s*:\s*\(\s*Boolean\s*\)\s*->\s*Unit\s*,?\s*\)', L('La composable riceve stato ed evento', 'The composable takes state and event')), re('Switch\s*\(\s*checked\s*=\s*acceso\s*,\s*onCheckedChange\s*=\s*onCambia\s*\)', L('Lo Switch usa i parametri', 'The Switch uses the parameters'))], '', '@Composable
+fun Interruttore(acceso: Boolean, onCambia: (Boolean) -> Unit) {
+    Switch(checked = acceso, onCheckedChange = onCambia)
+}'), [
+            dOrder(pSort(), ['class NoteViewModel : ViewModel() {', '    private val _note = MutableStateFlow(listOf<String>())', '    val note = _note.asStateFlow()', '    fun aggiungi(n: String) { _note.update { it + n } }', '}'], L('Stato privato, vista in sola lettura, azione.', 'Private state, read-only view, action.')),
+            dFlash(pFlash(), [[L('Una composable senza stato interno è più facile da riutilizzare', 'A composable with no internal state is easier to reuse'), true], [L('Il ViewModel viene ricreato a ogni rotazione', 'The ViewModel is recreated at every rotation'), false], [L('`rememberSaveable` sopravvive alla rotazione', '`rememberSaveable` survives rotation'), true], [L('`update { }` cambia un MutableStateFlow in modo sicuro', '`update { }` changes a MutableStateFlow safely'), true]], L('Il ViewModel resta, la schermata si ridisegna.', 'The ViewModel stays, the screen is redrawn.')),
         ]),
     ],
 ];

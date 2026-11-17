@@ -34,7 +34,7 @@ for blocco in risposta.content:
             P('Le API si pagano a **token**, con prezzi diversi per i token in **ingresso** (prompt, storia, documenti) e quelli in **uscita** (la risposta, di solito più cari). Ogni risposta riporta quanti token ha usato.', 'APIs are billed per **token**, with different prices for **input** tokens (prompt, history, documents) and **output** tokens (the answer, usually pricier). Each response reports how many tokens it used.'),
             C('print(risposta.usage.input_tokens, risposta.usage.output_tokens)
 
-# stima: 20.000 token in ingresso a 4 $ per milione + 1.000 in uscita a 20 $ per milione
+# stima con prezzi di esempio: 20.000 token in ingresso a 4 $ per milione + 1.000 in uscita a 20 $ per milione
 costo = 20_000 / 1_000_000 * 4 + 1_000 / 1_000_000 * 20
 print(f"{costo:.3f} $")   # 0.100 $', 'python'),
             P('La **finestra di contesto** limita quanto può stare in una richiesta (storia + documenti + risposta). Per risparmiare: scegli il modello adatto al compito (i piccoli costano molto meno), accorcia la storia, e usa il **prompt caching** per le parti che si ripetono.', 'The **context window** limits how much fits in a request (history + documents + answer). To save: pick the model that suits the task (small ones cost far less), trim the history, and use **prompt caching** for repeated parts.'),

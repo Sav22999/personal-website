@@ -183,7 +183,29 @@ function clean_config(string $kind, $raw): array
     }
     $text = s($raw, 'text', 200);
     $tag = is_string($raw['tag'] ?? null) && preg_match('/^sav-[a-z][a-z-]{0,30}$/', $raw['tag']) ? $raw['tag'] : null;
-    return ['tag' => $tag, 'attrs' => $attrs, 'text' => $text, 'tokens' => clean_tokens($raw['tokens'] ?? [])];
+    $out = ['tag' => $tag, 'attrs' => $attrs, 'text' => $text, 'tokens' => clean_tokens($raw['tokens'] ?? [])];
+    // saved from the component builder: how the preview looked, the events to listen to, the element id and the HTML inside
+    // (the HTML is only ever shown back to its owner, and the portal cleans it again before drawing it)
+    if (is_array($raw['builder'] ?? null)) {
+        $b = $raw['builder'];
+        $pick = fn($v, array $ok, string $def) => in_array($v, $ok, true) ? $v : $def;
+        $events = [];
+        foreach ((array)($b['events'] ?? []) as $e) {
+            if (is_string($e) && preg_match('/^[a-z][a-z-]{0,40}$/', $e)) $events[] = $e;
+            if (count($events) >= 12) break;
+        }
+        $id = s($b, 'id', 60);
+        $out['builder'] = [
+            'style' => $pick($b['style'] ?? '', STYLES, 'soft'),
+            'mode' => $pick($b['mode'] ?? '', ['light', 'dark'], 'light'),
+            'device' => $pick($b['device'] ?? '', ['desktop', 'tablet', 'phone'], 'desktop'),
+            'bg' => $pick($b['bg'] ?? '', ['page', 'surface', 'dots', 'colour'], 'page'),
+            'events' => $events,
+            'id' => preg_match('/^[A-Za-z][\w-]{0,59}$/', $id) ? $id : '',
+            'children' => s($b, 'children', 4000),
+        ];
+    }
+    return $out;
 }
 
 function item_out(array $i): array

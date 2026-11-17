@@ -231,6 +231,7 @@
 .fam-ios { --fam: #0A84FF; --fam-edge: #0062C2; }
 .fam-fluent { --fam: #0F6CBD; --fam-edge: #0B5190; }
 .fam-bootstrap { --fam: #7952B3; --fam-edge: #5A3C87; }
+.fam-savcomponents { --fam: #1F7FB8; --fam-edge: #165E89; }
 
 /* ---------- Base components, reshaped ---------- */
 html, body, button, input, select, textarea {
@@ -1236,6 +1237,64 @@ h1, h2, h3, .section-title, .appbar h1, .auth-top h1, .sheet-title, .sn-brand st
     background: var(--fam);
 }
 
+/* New courses: the "New" chip and the cards that advertise them on the home page */
+.status.new {
+    background: var(--warn-container);
+    color: var(--on-warn-container);
+    border-radius: 999px;
+    font-weight: 800;
+}
+
+.new-row {
+    grid-auto-columns: minmax(240px, 300px);
+}
+
+.new-course {
+    border-color: var(--fam);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--fam) 14%, var(--surface)), var(--surface) 70%);
+}
+
+.new-course .new-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.new-course p {
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.new-go {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: auto;
+    font-weight: 800;
+    color: var(--fam-edge);
+}
+
+.new-go .ic {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* On a dark page the dark edge of the family would not read: the link takes the text colour, mixed with the family */
+:root[data-theme="dark"] .new-go {
+    color: color-mix(in srgb, var(--fam) 45%, var(--text));
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .new-go {
+        color: color-mix(in srgb, var(--fam) 45%, var(--text));
+    }
+}
+
 .quick {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1409,6 +1468,15 @@ a.course:active, a.game-card:active {
     color: #fff;
     background: var(--fam);
     box-shadow: 0 3px 0 var(--fam-edge);
+}
+
+/* The free logo of the course, drawn in white through its own shape (assets/icons/brands) */
+.fam .logo {
+    width: 30px;
+    height: 30px;
+    background: #fff;
+    -webkit-mask: center / contain no-repeat;
+    mask: center / contain no-repeat;
 }
 
 /* The levels on a winding trail */
@@ -1932,6 +2000,18 @@ code {
     border-radius: var(--r-md);
 }
 
+/* A sample of the theory, rendered under its code */
+.sample-preview {
+    display: grid;
+    gap: 6px;
+    margin: -4px 0 14px;
+}
+
+.preview.sample {
+    min-height: 0;
+    height: 120px;
+}
+
 .checks {
     list-style: none;
     padding: 0;
@@ -1942,28 +2022,49 @@ code {
 
 .checks li {
     display: flex;
-    gap: 6px;
-    align-items: flex-start;
-    font-size: .92rem;
+    gap: 10px;
+    align-items: center;
+    font-size: .95rem;
 }
 
-.checks .ic {
-    width: 18px;
-    height: 18px;
+/* Each check has a round, filled mark: grey ring while untested, green tick when passed, red cross when not */
+.checks .mark {
     flex: none;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 2px solid var(--outline);
+    background: var(--surface);
+}
+
+.checks .mark .ic {
+    width: 16px;
+    height: 16px;
     fill: var(--outline);
 }
 
-.checks li.ok .ic {
-    fill: var(--ok);
+.checks li.ok .mark {
+    background: var(--ok);
+    border-color: var(--ok);
+}
+
+.checks li.ko .mark {
+    background: var(--bad);
+    border-color: var(--bad);
+}
+
+.checks li.ok .mark .ic, .checks li.ko .mark .ic {
+    fill: var(--surface);
+}
+
+.checks li.ok {
+    font-weight: 700;
 }
 
 .checks li.ko {
     color: var(--bad);
-}
-
-.checks li.ko .ic {
-    fill: var(--bad);
 }
 
 .page-src {

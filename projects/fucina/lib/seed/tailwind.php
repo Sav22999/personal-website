@@ -1,5 +1,5 @@
 <?php
-/** Tailwind CSS: utility classes, layout, responsive design, states and components. */
+/** Tailwind CSS v4: utility classes, layout, responsive design, states and components. */
 
 return [
     'id' => 'tailwind', 'family' => 'tailwind', 'after' => 'css-base',
@@ -67,7 +67,7 @@ return [
                disabled:opacity-50 dark:bg-orange-400">
   Salva
 </button>', 'html'),
-            P('I colori hanno una scala da 50 (chiarissimo) a 950 (scurissimo): `bg-orange-500` è il tono medio.', 'Colours have a scale from 50 (lightest) to 950 (darkest): `bg-orange-500` is the middle shade.'),
+            P('I colori hanno una scala da 50 (chiarissimo) a 950 (scurissimo): `bg-orange-500` è il tono medio. Di base `dark:` segue il tema del sistema (`prefers-color-scheme`), e in v4 `hover:` vale solo sui dispositivi che hanno davvero un puntatore.', 'Colours have a scale from 50 (lightest) to 950 (darkest): `bg-orange-500` is the middle shade. By default `dark:` follows the system theme (`prefers-color-scheme`), and in v4 `hover:` only applies on devices that really have a pointer that can hover.'),
         ], [
             Q('s1', L('Quale prefisso vale al passaggio del mouse?', 'Which prefix applies on mouse over?'), ['hover:', 'focus:', 'active:', 'over:'], 0, L('Come la pseudo-classe `:hover`.', 'Like the `:hover` pseudo-class.')),
             Q('s2', L('Quale tono è più scuro?', 'Which shade is darker?'), ['bg-blue-900', 'bg-blue-100', 'bg-blue-300', 'bg-blue-50'], 0, L('Più alto il numero, più scuro.', 'The higher the number, the darker.')),
@@ -77,7 +77,7 @@ return [
             dBug(pBug(), ['<button class="bg-sky-500', '  hover-bg-sky-600', '  text-white rounded px-4 py-2">', '  Invia', '</button>'], 1, '  hover:bg-sky-600', L('Il prefisso si separa con i due punti, non con un trattino.', 'The prefix is separated by a colon, not a dash.')),
         ]),
         lesson('config', L('Componenti e configurazione', 'Components and configuration'), [
-            P('Le stesse classi ripetute in molti punti si raccolgono in un **componente** (in React, Vue, un partial…) oppure con `@apply` in un file CSS. Il file di configurazione o il blocco `@theme` aggiunge colori e font del tuo marchio.', 'The same classes repeated in many places go into a **component** (in React, Vue, a partial…) or into a CSS file with `@apply`. The configuration file or the `@theme` block adds your brand’s colours and fonts.'),
+            P('Le stesse classi ripetute in molti punti si raccolgono in un **componente** (in React, Vue, un partial…) oppure con `@apply` in un file CSS. Da Tailwind v4 la configurazione si scrive nel CSS: il blocco `@theme` aggiunge colori e font del tuo marchio. Un vecchio `tailwind.config.js` si può ancora caricare con `@config`.', 'The same classes repeated in many places go into a **component** (in React, Vue, a partial…) or into a CSS file with `@apply`. Since Tailwind v4 configuration is written in CSS: the `@theme` block adds your brand’s colours and fonts. An old `tailwind.config.js` can still be loaded with `@config`.'),
             C('@import "tailwindcss";
 
 @theme {

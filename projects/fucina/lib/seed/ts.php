@@ -1,13 +1,13 @@
 <?php
-/** TypeScript: JavaScript with types. */
+/** TypeScript: JavaScript with types, from basics to discriminated unions, computed types and today's tooling. */
 
 return [
     'id' => 'ts', 'family' => 'ts', 'after' => 'js-intermediate',
     'title' => L('TypeScript', 'TypeScript'), 'short' => L('TypeScript', 'TypeScript'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('JavaScript con i tipi: errori trovati prima di eseguire, interfacce, unioni e generici.', 'JavaScript with types: errors found before running, interfaces, unions and generics.'),
+    'desc' => L('JavaScript con i tipi: errori trovati prima di eseguire, interfacce, unioni e generici, tipi calcolati e TypeScript con Node.', 'JavaScript with types: errors found before running, interfaces, unions and generics, computed types and TypeScript with Node.'),
     'lessons' => [
         lesson('types', L('Perché i tipi', 'Why types'), [
-            P('**TypeScript** è JavaScript con i tipi. Dici che cosa contiene una variabile e il compilatore segnala gli errori prima ancora di eseguire. Il browser non lo legge: viene compilato in JavaScript.', '**TypeScript** is JavaScript with types. You say what a variable holds and the compiler flags errors before anything runs. The browser does not read it: it is compiled to JavaScript.'),
+            P('**TypeScript** è JavaScript con i tipi. Dici che cosa contiene una variabile e il compilatore segnala gli errori prima ancora di eseguire. Il browser non lo legge: viene compilato in JavaScript (le versioni recenti di Node.js sanno eseguirlo togliendo i tipi, ma senza controllarli).', '**TypeScript** is JavaScript with types. You say what a variable holds and the compiler flags errors before anything runs. The browser does not read it: it is compiled to JavaScript (recent Node.js versions can run it by stripping the types, but without checking them).'),
             C('let nome: string = "Sav";
 let punti: number = 10;
 let attivo: boolean = true;
@@ -18,7 +18,7 @@ let vite = 3;    // tipo dedotto: number', 'ts'),
             P('Spesso il tipo non serve scriverlo: TypeScript lo **deduce** dal valore. `any` spegne i controlli: evitalo.', 'Often you need not write the type: TypeScript **infers** it from the value. `any` switches checks off: avoid it.'),
         ], [
             Q('t1', L('Quando TypeScript trova gli errori?', 'When does TypeScript find errors?'), [L('Prima di eseguire', 'Before running'), L('Solo in produzione', 'Only in production'), L('Mai', 'Never'), L('Dopo il deploy', 'After deploying')], 0, L('È il suo grande vantaggio.', 'That is its big advantage.')),
-            Q('t2', L('Il browser esegue TypeScript?', 'Does the browser run TypeScript?'), [L('No, viene compilato', 'No, it is compiled'), L('Sì, sempre', 'Yes, always'), L('Solo Chrome', 'Only Chrome'), L('Solo in `<head>`', 'Only in `<head>`')], 0, L('Il risultato è JavaScript normale.', 'The result is plain JavaScript.')),
+            Q('t2', L('Il browser esegue TypeScript?', 'Does the browser run TypeScript?'), [L('No, viene compilato', 'No, it is compiled'), L('Sì, sempre', 'Yes, always'), L('Solo Chrome', 'Only Chrome'), L('Solo in `<head>`', 'Only in `<head>`')], 0, L('Il risultato è JavaScript normale. Anche Node, quando avvia un `.ts`, toglie solo i tipi.', 'The result is plain JavaScript. Node too, when it starts a `.ts`, only strips the types.')),
             Q('t3', L('Che cosa fa `any`?', 'What does `any` do?'), [L('Spegne i controlli', 'Switches checks off'), L('Accetta solo numeri', 'Takes numbers only'), L('Crea un array', 'Creates an array'), L('Compila', 'Compiles')], 0, L('Usalo il meno possibile.', 'Use it as little as possible.')),
         ], task('ts', L('Dichiara `nome` di tipo `string` e `voti` come array di `number`.', 'Declare `nome` of type `string` and `voti` as an array of `number`.'), '', [re('nome\s*:\s*string', L('`nome` è una stringa', '`nome` is a string')), re('voti\s*:\s*number\[\]', L('`voti` è un array di numeri', '`voti` is an array of numbers'))], '', "let nome: string = \"Sav\";\nlet voti: number[] = [7, 8];"), [
             dBlanks(pFill(), "let nome___ string = \"Sav\";\nlet punti: ___ = 10;\nlet voti: number___ = [7];", [':', 'number', '[]'], ['=', 'int', '{}'], L('I due punti annunciano il tipo.', 'The colon announces the type.')),
@@ -108,7 +108,7 @@ const s: Scatola<number> = { contenuto: 5 };', 'ts'),
             dBlanks(pFill(), "function prendi___(lista: T[]): ___ {\n  return lista[0];\n}\nconst s: Scatola___ = { contenuto: 5 };", ['<T>', 'T', '<number>'], ['(T)', 'any', '[T]'], L('Si dichiara `T`, lo si usa, e si sceglie il tipo concreto.', 'Declare `T`, use it, and choose the concrete type.')),
         ]),
         lesson('tooling', L('Il compilatore e le classi', 'The compiler and classes'), [
-            P('`tsconfig.json` regola il compilatore: `strict` attiva tutti i controlli. `tsc` compila. Nelle classi `private` e `public` limitano l’accesso, e un costruttore può dichiarare i campi da solo.', '`tsconfig.json` sets up the compiler: `strict` turns on all the checks. `tsc` compiles. In classes `private` and `public` limit access, and a constructor can declare fields by itself.'),
+            P('`tsconfig.json` regola il compilatore: `strict` attiva tutti i controlli (da TypeScript 6 è acceso di default). `tsc` compila: da TypeScript 7 il compilatore è riscritto in Go ed è molto più veloce, ma il comando resta lo stesso. Nelle classi `private` e `public` limitano l’accesso, e un costruttore può dichiarare i campi da solo.', '`tsconfig.json` sets up the compiler: `strict` turns on all the checks (since TypeScript 6 it is on by default). `tsc` compiles: since TypeScript 7 the compiler is rewritten in Go and is much faster, but the command stays the same. In classes `private` and `public` limit access, and a constructor can declare fields by itself.'),
             C('// tsconfig.json
 {
   "compilerOptions": {
@@ -122,12 +122,93 @@ class Eroe {
 }', 'ts'),
             P('Per le librerie scritte in JavaScript esistono i pacchetti `@types`, che aggiungono i tipi. Un file `.d.ts` contiene solo tipi.', 'For libraries written in JavaScript there are `@types` packages, which add the types. A `.d.ts` file holds only types.'),
         ], [
-            Q('c1', L('Che cosa attiva `strict`?', 'What does `strict` turn on?'), [L('Tutti i controlli severi', 'All the strict checks'), L('Il minify', 'Minifying'), L('Il server', 'The server'), L('I commenti', 'Comments')], 0, L('Va tenuto acceso nei progetti nuovi.', 'Keep it on in new projects.')),
+            Q('c1', L('Che cosa attiva `strict`?', 'What does `strict` turn on?'), [L('Tutti i controlli severi', 'All the strict checks'), L('Il minify', 'Minifying'), L('Il server', 'The server'), L('I commenti', 'Comments')], 0, L('Da TypeScript 6 è acceso di default: tienilo così.', 'Since TypeScript 6 it is on by default: keep it that way.')),
             Q('c2', L('Quale comando compila?', 'Which command compiles?'), ['tsc', 'ts-run', 'compile', 'node'], 0, L('Legge `tsconfig.json`.', 'It reads `tsconfig.json`.')),
             Q('c3', L('Che cosa contiene un file `.d.ts`?', 'What does a `.d.ts` file hold?'), [L('Solo tipi', 'Only types'), L('Solo CSS', 'Only CSS'), L('Immagini', 'Images'), L('Dati', 'Data')], 0, L('Descrive codice che esiste altrove.', 'It describes code that lives elsewhere.')),
         ], task('ts', L('Scrivi una classe `Conto` con un campo `private saldo: number`.', 'Write a class `Conto` with a `private saldo: number` field.'), '', [re('class\s+Conto', L('La classe esiste', 'The class exists')), re('private\s+saldo\s*:\s*number', L('Il campo è privato', 'The field is private'))], '', "class Conto {\n  private saldo: number = 0;\n}"), [
             dMatch(pMatch(), [['tsc', L('Il compilatore', 'The compiler')], ['tsconfig.json', L('Le impostazioni', 'The settings')], ['strict', L('I controlli severi', 'The strict checks')], ['@types', L('Tipi per le librerie', 'Types for libraries')], ['.d.ts', L('File di soli tipi', 'Types-only file')]], L('Gli attrezzi del mestiere.', 'The tools of the trade.')),
             dFlash(pFlash(), [[L('`private` è controllato in compilazione', '`private` is checked at compile time'), true], [L('`strict` rende TypeScript meno utile', '`strict` makes TypeScript less useful'), false], [L('`tsc` produce JavaScript', '`tsc` produces JavaScript'), true], [L('`@types` aggiunge funzioni nuove alla libreria', '`@types` adds new functions to the library'), false]], L('`@types` descrive, non aggiunge: solo tipi.', '`@types` describes, it does not add: types only.')),
+        ]),
+        lesson('discriminated', L('Unioni discriminate e never', 'Discriminated unions and never'), [
+            P('Un’**unione discriminata** è un’unione di oggetti che hanno tutti una proprietà comune con un valore fisso diverso, di solito `tipo` o `kind`. Controllando quella proprietà, TypeScript sa esattamente quale forma hai in mano.', 'A **discriminated union** is a union of objects that all share a property with a different fixed value, usually `tipo` or `kind`. By checking that property, TypeScript knows exactly which shape you are holding.'),
+            C('type Forma =
+  | { tipo: "cerchio"; raggio: number }
+  | { tipo: "rettangolo"; base: number; altezza: number };
+
+function area(f: Forma): number {
+  switch (f.tipo) {
+    case "cerchio":
+      return Math.PI * f.raggio ** 2;
+    case "rettangolo":
+      return f.base * f.altezza;
+    default: {
+      const mai: never = f; // errore se dimentichi un caso
+      return mai;
+    }
+  }
+}', 'ts'),
+            P('`never` è il tipo che non ha valori. Assegnare `f` a `never` nel `default` è un controllo di **completezza**: se domani aggiungi `{ tipo: "triangolo" }` e non lo gestisci, il compilatore lo segnala. Per i tuoi controlli puoi scrivere una **type guard**: una funzione che restituisce `x is Tipo`.', '`never` is the type with no values. Assigning `f` to `never` in the `default` is an **exhaustiveness** check: if tomorrow you add `{ tipo: "triangolo" }` and do not handle it, the compiler flags it. For your own checks you can write a **type guard**: a function returning `x is Type`.'),
+            C('function eStringa(x: unknown): x is string {
+  return typeof x === "string";
+}', 'ts'),
+        ], [
+            Q('dn1', L('Che cosa rende «discriminata» un’unione?', 'What makes a union “discriminated”?'), [L('Il fatto di contenere solo numeri', 'Containing only numbers'), L('Una proprietà comune con valori fissi diversi', 'A shared property with different fixed values'), L('La parola chiave `discriminate`', 'The `discriminate` keyword'), L('Un’interfaccia che la estende', 'An interface extending it')], 1, L('Il valore di `tipo` dice quale forma è.', 'The value of `tipo` tells which shape it is.')),
+            Q('dn2', L('A che cosa serve `const mai: never = f` nel `default`?', 'What is `const mai: never = f` in the `default` for?'), [L('A cancellare `f`', 'To delete `f`'), L('A rendere `f` facoltativo', 'To make `f` optional'), L('A convertire `f` in stringa', 'To turn `f` into a string'), L('A segnalare in compilazione i casi dimenticati', 'To flag forgotten cases at compile time')], 3, L('Se resta un caso non gestito, `f` non è `never` e c’è errore.', 'If a case is left unhandled, `f` is not `never` and there is an error.')),
+            Q('dn3', L('Che cosa promette una funzione con risultato `x is string`?', 'What does a function with result `x is string` promise?'), [L('Che restituisce sempre una stringa', 'That it always gives back a string'), L('Che se restituisce `true`, `x` è una stringa', 'That if it gives back `true`, `x` is a string'), L('Che lancia un errore con i numeri', 'That it throws an error with numbers'), L('Che `x` diventa `any`', 'That `x` becomes `any`')], 1, L('Dentro `if (eStringa(v))` TypeScript tratta `v` come `string`.', 'Inside `if (eStringa(v))` TypeScript treats `v` as `string`.')),
+        ], task('ts', L('Crea il tipo `Esito` come unione di `{ ok: true; dati: string }` e `{ ok: false; errore: string }`.', 'Create the type `Esito` as a union of `{ ok: true; dati: string }` and `{ ok: false; errore: string }`.'), '', [re('type\s+Esito\s*=', L('Il tipo esiste', 'The type exists')), re('\{\s*ok\s*:\s*true\s*[;,]\s*dati\s*:\s*string\s*[;,]?\s*\}', L('C’è il caso riuscito', 'The success case is there')), re('\{\s*ok\s*:\s*false\s*[;,]\s*errore\s*:\s*string\s*[;,]?\s*\}', L('C’è il caso fallito', 'The failure case is there')), re('\}\s*\|\s*\{', L('Sono uniti con `|`', 'They are joined with `|`'))], '', 'type Esito =
+  | { ok: true; dati: string }
+  | { ok: false; errore: string };'), [
+            dBlanks(pFill(), "type Animale =\n  | { ___: \"cane\"; abbaia: boolean }\n  | { specie: \"gatto\"; fusa: boolean };\nfunction verso(a: Animale) {\n  if (a.specie === ___) return a.abbaia;\n  return a.fusa;\n}", ['specie', '"cane"'], ['tipo', '"gatto"', 'kind'], L('Stessa proprietà in ogni caso, poi il controllo che restringe.', 'The same property in every case, then the check that narrows.')),
+            dFlash(pFlash(), [[L('`never` non ha nessun valore', '`never` has no values'), true], [L('Una type guard restituisce `x is Tipo`', 'A type guard returns `x is Type`'), true], [L('In uno `switch` sul discriminante il tipo non si restringe', 'In a `switch` on the discriminant the type does not narrow'), false], [L('Aggiungere un caso all’unione non cambia niente negli `switch` completi', 'Adding a case to the union changes nothing in exhaustive `switch`es'), false]], L('Il compilatore ti avvisa dei casi nuovi.', 'The compiler warns you about new cases.')),
+        ]),
+        lesson('type-ops', L('keyof, typeof e satisfies', 'keyof, typeof and satisfies'), [
+            P('TypeScript può **calcolare** tipi da altri tipi. `keyof T` dà l’unione dei nomi delle chiavi, `typeof valore` ricava il tipo da una variabile, `T["chiave"]` legge il tipo di una proprietà.', 'TypeScript can **compute** types from other types. `keyof T` gives the union of the key names, `typeof value` derives the type from a variable, `T["key"]` reads the type of a property.'),
+            C('const tema = {
+  chiaro: "#ffffff",
+  scuro: "#111111",
+} as const;
+
+type NomeTema = keyof typeof tema;      // "chiaro" | "scuro"
+type Colore = (typeof tema)[NomeTema];  // "#ffffff" | "#111111"
+
+function leggi<T, K extends keyof T>(obj: T, chiave: K): T[K] {
+  return obj[chiave];
+}
+
+const config = { porta: 3000, host: "localhost" } satisfies Record<string, string | number>;
+config.porta.toFixed(); // ok: resta number', 'ts'),
+            P('`as const` rende i valori letterali e in sola lettura. `satisfies` controlla che un valore rispetti un tipo **senza allargarlo**: con `: Record<…>` `config.porta` diventerebbe `string | number`, con `satisfies` resta `number`.', '`as const` makes the values literal and read-only. `satisfies` checks that a value respects a type **without widening it**: with `: Record<…>` `config.porta` would become `string | number`, with `satisfies` it stays `number`.'),
+        ], [
+            Q('to1', L('Che cosa dà `keyof { a: 1; b: 2 }`?', 'What does `keyof { a: 1; b: 2 }` give?'), ['1 | 2', '["a", "b"]', '"a" | "b"', 'string'], 2, L('L’unione dei nomi delle chiavi.', 'The union of the key names.')),
+            Q('to2', L('Che differenza c’è tra `: Tipo` e `satisfies Tipo`?', 'What is the difference between `: Type` and `satisfies Type`?'), [L('Nessuna', 'None'), L('`satisfies` controlla senza allargare il tipo dedotto', '`satisfies` checks without widening the inferred type'), L('`satisfies` spegne i controlli', '`satisfies` switches checks off'), L('`: Tipo` funziona solo con le classi', '`: Type` only works with classes')], 1, L('Hai il controllo e mantieni la precisione.', 'You get the check and keep the precision.')),
+            Q('to3', L('Che effetto ha `as const` su un oggetto?', 'What effect does `as const` have on an object?'), [L('Lo rende modificabile', 'It makes it editable'), L('Lo converte in una classe', 'It turns it into a class'), L('Lo cancella in compilazione', 'It deletes it on compiling'), L('Rende i valori letterali e in sola lettura', 'It makes the values literal and read-only')], 3, L('`"#ffffff"` invece di `string`.', '`"#ffffff"` instead of `string`.')),
+        ], task('ts', L('Dal valore `ruoli` ricava il tipo `Ruolo` con `keyof typeof`.', 'From the value `ruoli` derive the type `Ruolo` with `keyof typeof`.'), 'const ruoli = { admin: 1, ospite: 2 } as const;
+', [re('type\s+Ruolo\s*=\s*keyof\s+typeof\s+ruoli', L('`Ruolo` nasce dalle chiavi di `ruoli`', '`Ruolo` comes from the keys of `ruoli`'))], '', 'const ruoli = { admin: 1, ospite: 2 } as const;
+type Ruolo = keyof typeof ruoli;'), [
+            dMatch(pMatch(), [['keyof T', L('Nomi delle chiavi', 'Key names')], ['typeof x', L('Tipo di una variabile', 'Type of a variable')], ['T["k"]', L('Tipo di una proprietà', 'Type of a property')], ['as const', L('Valori letterali e fissi', 'Literal, fixed values')], ['satisfies', L('Controlla senza allargare', 'Checks without widening')]], L('Tipi calcolati da altri tipi.', 'Types computed from other types.')),
+            dBug(pBug(), ['const porte = { web: 80, ssh: 22 };', 'type NomePorta = keyof porte;', 'const p: NomePorta = "web";'], 1, 'type NomePorta = keyof typeof porte;', L('`keyof` lavora sui tipi: per partire da un valore serve `typeof`.', '`keyof` works on types: to start from a value you need `typeof`.')),
+        ]),
+        lesson('modern-setup', L('TypeScript oggi: Node e sintassi cancellabile', 'TypeScript today: Node and erasable syntax'), [
+            P('Oggi puoi eseguire TypeScript in più modi. Le versioni recenti di **Node.js** avviano direttamente un file `.ts`: tolgono i tipi e non controllano niente, quindi il controllo resta compito di `tsc --noEmit` o dell’editor. Strumenti come Vite ed esbuild fanno lo stesso per il browser.', 'Today you can run TypeScript in several ways. Recent versions of **Node.js** start a `.ts` file directly: they strip the types and check nothing, so checking stays the job of `tsc --noEmit` or the editor. Tools like Vite and esbuild do the same for the browser.'),
+            C('node app.ts          # Node toglie i tipi ed esegue
+npx tsc --noEmit     # controlla i tipi senza produrre file', 'bash'),
+            C('import type { Utente } from "./tipi.ts";
+import { salva, type Opzioni } from "./db.ts";
+
+// sintassi «cancellabile»: basta togliere i tipi
+type Stato = "attesa" | "fatto";
+const LIVELLI = { base: 1, medio: 2 } as const;
+
+// questa invece genera codice JavaScript
+enum Colore { Rosso, Verde }', 'ts'),
+            P('Chi toglie soltanto i tipi non sa gestire la sintassi che produce codice: `enum`, `namespace` con codice e proprietà dichiarate nel costruttore. L’opzione `erasableSyntaxOnly` la segnala; al posto di un `enum` usa un’unione di stringhe o un oggetto `as const`. `import type` dice chiaramente che un import serve solo ai tipi e sparirà.', 'Tools that only strip types cannot handle syntax that produces code: `enum`, `namespace` with code and properties declared in the constructor. The `erasableSyntaxOnly` option flags it; instead of an `enum` use a union of strings or an `as const` object. `import type` says clearly that an import is only for types and will vanish.'),
+        ], [
+            Q('mo1', L('Che cosa fa Node.js quando esegue un file `.ts`?', 'What does Node.js do when it runs a `.ts` file?'), [L('Controlla i tipi e poi esegue', 'Checks the types, then runs'), L('Toglie i tipi senza controllarli ed esegue', 'Strips the types without checking them and runs'), L('Lo converte in un eseguibile', 'Turns it into an executable'), L('Rifiuta il file', 'Rejects the file')], 1, L('Per il controllo serve `tsc` o l’editor.', 'Checking needs `tsc` or the editor.')),
+            Q('mo2', L('Quale di queste NON è sintassi cancellabile?', 'Which of these is NOT erasable syntax?'), ['type Stato = "a" | "b"', 'interface Utente { nome: string }', 'enum Colore { Rosso }', 'let n: number = 1'], 2, L('Un `enum` diventa un oggetto JavaScript.', 'An `enum` becomes a JavaScript object.')),
+            Q('mo3', L('A che cosa serve `tsc --noEmit`?', 'What is `tsc --noEmit` for?'), [L('A controllare i tipi senza produrre file', 'To check types without producing files'), L('A cancellare i file `.js`', 'To delete the `.js` files'), L('Ad avviare il programma', 'To start the program'), L('A installare i pacchetti `@types`', 'To install `@types` packages')], 0, L('Perfetto in CI, accanto a chi esegue il codice.', 'Perfect in CI, next to whatever runs the code.')),
+        ], task('ts', L('Sostituisci l’`enum` con un tipo unione `Livello` che accetta `"base"`, `"medio"` e `"avanzato"`.', 'Replace the `enum` with a union type `Livello` accepting `"base"`, `"medio"` and `"avanzato"`.'), 'enum Livello { Base, Medio, Avanzato }', [re('type\s+Livello\s*=', L('`Livello` è un tipo', '`Livello` is a type')), re('["\']base["\']\s*\|\s*["\']medio["\']\s*\|\s*["\']avanzato["\']', L('Accetta i tre valori', 'It accepts the three values'))], '', 'type Livello = "base" | "medio" | "avanzato";'), [
+            dFlash(pFlash(), [[L('Node.js controlla i tipi quando esegue un `.ts`', 'Node.js checks types when it runs a `.ts`'), false], [L('`import type` sparisce dal JavaScript finale', '`import type` vanishes from the final JavaScript'), true], [L('Un `enum` genera codice JavaScript', 'An `enum` generates JavaScript code'), true], [L('`tsc --noEmit` produce i file `.js`', '`tsc --noEmit` produces the `.js` files'), false]], L('Eseguire e controllare sono due passi diversi.', 'Running and checking are two different steps.')),
+            dMatch(pMatch(), [['node app.ts', L('Esegue togliendo i tipi', 'Runs by stripping types')], ['tsc --noEmit', L('Controlla senza produrre file', 'Checks without producing files')], ['import type', L('Import solo per i tipi', 'Import for types only')], ['erasableSyntaxOnly', L('Vieta la sintassi che genera codice', 'Forbids syntax that generates code')]], L('Gli attrezzi di oggi.', 'Today’s tools.')),
         ]),
     ],
 ];

@@ -1,10 +1,10 @@
 <?php
-/** Python basics: values and variables, conditions, loops, lists and functions. */
+/** Python basics: values and variables, conditions, loops, lists and functions, strings, input and types, tuples and sets, built-in functions. */
 
 return [
     'id' => 'python-base', 'family' => 'python', 'after' => null,
     'title' => L('Python base', 'Python Basics'), 'short' => L('Python base', 'Python Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Il linguaggio più amato per iniziare: variabili, condizioni, cicli, liste e funzioni.', 'The best-loved language to start with: variables, conditions, loops, lists and functions.'),
+    'desc' => L('Il linguaggio più amato per iniziare: variabili, condizioni, cicli, liste e funzioni, stringhe, input e tipi, tuple e insiemi, funzioni integrate.', 'The best-loved language to start with: variables, conditions, loops, lists and functions, strings, input and types, tuples and sets, built-in functions.'),
     'lessons' => [
         lesson('hello', L('Ciao, Python', 'Hello, Python'), [
             P('Python si legge quasi come l’inglese. `print()` scrive sullo schermo, una **variabile** nasce quando le dai un valore con `=`. Non servono punti e virgola né tipi da dichiarare.', 'Python reads almost like English. `print()` writes to the screen, a **variable** is born when you give it a value with `=`. No semicolons, no types to declare.'),
@@ -104,6 +104,106 @@ def saluta(nome: str) -> str:
     return n * 2'), [
             dBug(pBug(), ['def media(numeri):', '    totale = sum(numeri)', '    totale / len(numeri)', 'print(media([6, 8]))'], 2, '    return totale / len(numeri)', L('Senza `return` la funzione restituisce `None`.', 'Without `return` the function gives back `None`.')),
             dOrder(pSort(), ['def benvenuto(nome, lingua="it"):', '    if lingua == "it":', '        return f"Ciao {nome}"', '    return f"Hello {nome}"', 'print(benvenuto("Ada"))'], L('Definisci, decidi, restituisci, chiama.', 'Define, decide, return, call.')),
+        ]),
+        lesson('strings', L('Stringhe e slicing', 'Strings and slicing'), [
+            P('Le stringhe hanno tanti metodi pronti: `strip` toglie gli spazi ai lati, `upper` e `lower` cambiano le maiuscole, `replace` sostituisce, `split` divide in una lista e `join` riunisce. Con lo **slicing** `testo[inizio:fine]` prendi un pezzo di stringa.', 'Strings have many ready-made methods: `strip` trims spaces at the ends, `upper` and `lower` change case, `replace` substitutes, `split` breaks into a list and `join` puts it back together. With **slicing** `text[start:end]` you take a piece of a string.'),
+            C('frase = "  Ciao, Mondo!  "
+pulita = frase.strip()           # "Ciao, Mondo!"
+print(pulita.upper())            # CIAO, MONDO!
+print(pulita.replace("Mondo", "Ada"))
+print(pulita[0:4])               # Ciao
+print(pulita[-6:])               # Mondo!
+print(len(pulita))               # 12
+
+parole = "a,b,c".split(",")      # ["a", "b", "c"]
+print("-".join(parole))          # a-b-c', 'python'),
+            P('Le stringhe sono **immutabili**: i metodi non le cambiano, ne restituiscono una nuova. Nello slicing l’inizio è incluso e la fine esclusa; gli indici negativi contano dalla fine.', 'Strings are **immutable**: methods do not change them, they return a new one. In slicing the start is included and the end excluded; negative indexes count from the end.'),
+        ], [
+            Q('s1', L('Che cosa dà `"Python"[0:2]`?', 'What does `"Python"[0:2]` give?'), ['"Py"', '"Pyt"', '"yt"', '"P"'], 0, L('Le posizioni 0 e 1: la 2 è esclusa.', 'Positions 0 and 1: 2 is excluded.')),
+            Q('s2', L('Che cosa fa `" ciao ".strip()`?', 'What does `" ciao ".strip()` do?'), [L('Divide la stringa in parole', 'Splits the string into words'), L('Mette tutto in maiuscolo', 'Uppercases everything'), L('Toglie gli spazi all’inizio e alla fine', 'Removes spaces at the start and end'), L('Conta gli spazi presenti', 'Counts the spaces')], 2, L('Utile per pulire ciò che scrive l’utente.', 'Handy for cleaning what the user types.')),
+            Q('s3', L('Che cosa dà `"a-b".split("-")`?', 'What does `"a-b".split("-")` give?'), ['"ab"', '["a", "b"]', '("a", "b")', '["a-b"]'], 1, L('Una lista con i pezzi tra i separatori.', 'A list with the pieces between separators.')),
+        ], task('python', L('Da `nome` ottieni in `pulito` il testo senza spazi ai lati e con le iniziali maiuscole, usando `strip()` e `title()`.', 'From `nome` get into `pulito` the text without spaces at the ends and with capitalised initials, using `strip()` and `title()`.'), 'nome = "  ada lovelace "
+', [re('pulito\s*=\s*nome\.strip\s*\(\s*\)\.title\s*\(\s*\)|pulito\s*=\s*nome\.title\s*\(\s*\)\.strip\s*\(\s*\)', L('Pulisci e metti le iniziali maiuscole', 'You trim and capitalise'))], '', 'pulito = nome.strip().title()'), [
+            dMatch(pMatch(), [['upper()', L('Tutto maiuscolo', 'All uppercase')], ['strip()', L('Toglie gli spazi ai lati', 'Trims spaces at the ends')], ['split()', L('Divide in una lista', 'Splits into a list')], ['join()', L('Unisce una lista', 'Joins a list')], ['replace()', L('Sostituisce', 'Replaces')]], L('I metodi più usati delle stringhe.', 'The most used string methods.')),
+            dFlash(pFlash(), [[L('`"ciao"[1]` è `"i"`', '`"ciao"[1]` is `"i"`'), true], [L('Una stringa si può modificare carattere per carattere', 'A string can be changed character by character'), false], [L('`"abc"[-1]` è `"c"`', '`"abc"[-1]` is `"c"`'), true], [L('`s[0:3]` include il carattere in posizione 3', '`s[0:3]` includes the character at position 3'), false]], L('Inizio incluso, fine esclusa.', 'Start included, end excluded.')),
+        ]),
+        lesson('input-types', L('Input e conversioni di tipo', 'Input and type conversion'), [
+            P('`input()` mostra una domanda e aspetta che l’utente scriva. Restituisce sempre una **stringa**: per fare calcoli va convertita con `int()` o `float()`. `type()` dice di che tipo è un valore.', '`input()` shows a question and waits for the user to type. It always returns a **string**: to do maths it must be converted with `int()` or `float()`. `type()` tells you the type of a value.'),
+            C('nome = input("Come ti chiami? ")
+anni = int(input("Quanti anni hai? "))
+altezza = float("1.75")
+print(type(anni))                 # <class \'int\'>
+print(str(anni) + " anni")
+
+print(10 / 4, 10 // 4, 10 % 4)    # 2.5 2 2
+print(bool(0), bool("ciao"))      # False True', 'python'),
+            P('`/` dà sempre un decimale, `//` la divisione intera, `%` il resto. Sommare una stringa e un numero dà `TypeError`: Python non converte da solo. Se il testo non è un numero, `int()` lancia `ValueError`.', '`/` always gives a decimal, `//` integer division, `%` the remainder. Adding a string and a number raises `TypeError`: Python does not convert by itself. If the text is not a number, `int()` raises `ValueError`.'),
+        ], [
+            Q('i1', L('Che tipo restituisce `input()`?', 'What type does `input()` return?'), ['int', 'str', 'float', 'bool'], 1, L('Anche se l’utente scrive un numero.', 'Even if the user types a number.')),
+            Q('i2', L('Quanto fa `7 // 2`?', 'What is `7 // 2`?'), ['3.5', '4', '3', '1'], 2, L('Divisione intera: la parte decimale sparisce.', 'Integer division: the decimal part goes away.')),
+            Q('i3', L('Che cosa succede con `"5" + 3`?', 'What happens with `"5" + 3`?'), [L('Dà 8', 'It gives 8'), L('Dà "53"', 'It gives "53"'), L('Dà 5.3', 'It gives 5.3'), L('Un errore TypeError', 'A TypeError')], 3, L('Prima converti: `int("5") + 3`.', 'Convert first: `int("5") + 3`.')),
+        ], task('python', L('Leggi un numero con `input`, convertilo con `int` in `n` e stampa il suo doppio.', 'Read a number with `input`, convert it with `int` into `n` and print its double.'), '', [re('n\s*=\s*int\s*\(\s*input\s*\(', L('Leggi e converti', 'You read and convert')), re('print\s*\(\s*(n\s*\*\s*2|2\s*\*\s*n)\s*\)', L('Stampi il doppio', 'You print the double'))], '', 'n = int(input("Numero: "))
+print(n * 2)'), [
+            dMatch(pMatch(), [['int("4")', '4'], ['float("2.5")', '2.5'], ['str(7)', '"7"'], ['10 // 3', '3'], ['10 % 3', '1']], L('Conversioni e divisioni.', 'Conversions and divisions.')),
+            dBug(pBug(), ['prezzo = "9.5"', 'totale = int(prezzo) * 2', 'print(totale)'], 1, 'totale = float(prezzo) * 2', L('`int("9.5")` dà `ValueError`: per i decimali serve `float`.', '`int("9.5")` raises `ValueError`: decimals need `float`.')),
+        ]),
+        lesson('tuples-sets', L('Tuple, insiemi e spacchettamento', 'Tuples, sets and unpacking'), [
+            P('Una **tupla** `(3, 4)` è come una lista ma non si modifica: perfetta per valori che stanno insieme, come coordinate. Con lo **spacchettamento** `x, y = punto` assegni ogni elemento a una variabile. Un **insieme** (`set`) non ha doppioni né ordine.', 'A **tuple** `(3, 4)` is like a list but cannot change: perfect for values that belong together, such as coordinates. With **unpacking** `x, y = point` you assign each item to a variable. A **set** has no duplicates and no order.'),
+            C('punto = (3, 4)
+x, y = punto                      # spacchettamento
+a, b = 1, 2
+a, b = b, a                       # scambio: a vale 2, b vale 1
+
+colori = {"rosso", "verde", "rosso"}
+print(len(colori))                # 2: niente doppioni
+colori.add("blu")
+print("verde" in colori)          # True
+
+pari = {2, 4, 6}
+piccoli = {1, 2, 3}
+print(pari & piccoli)             # {2}
+print(pari | piccoli)             # {1, 2, 3, 4, 6}', 'python'),
+            P('Controllare se un elemento è in un insieme è velocissimo, anche con milioni di elementi. Attenzione: `{}` crea un **dizionario** vuoto; l’insieme vuoto si scrive `set()`.', 'Checking whether an item is in a set is very fast, even with millions of items. Watch out: `{}` creates an empty **dictionary**; the empty set is written `set()`.'),
+        ], [
+            Q('u1', L('Che cosa crea `{}`?', 'What does `{}` create?'), [L('Un insieme vuoto', 'An empty set'), L('Un dizionario vuoto', 'An empty dictionary'), L('Una tupla vuota', 'An empty tuple'), L('Un errore', 'An error')], 1, L('Per l’insieme vuoto serve `set()`.', 'The empty set needs `set()`.')),
+            Q('u2', L('Dopo `a, b = 1, 2` e `a, b = b, a`, quanto vale `a`?', 'After `a, b = 1, 2` and `a, b = b, a`, what is `a`?'), ['(2, 1)', '1', 'None', '2'], 3, L('Le due variabili si scambiano i valori.', 'The two variables swap values.')),
+            Q('u3', L('Che cosa dà `len({1, 1, 2})`?', 'What does `len({1, 1, 2})` give?'), ['3', '1', '2', '0'], 2, L('Il doppione 1 conta una volta sola.', 'The duplicate 1 counts only once.')),
+        ], task('python', L('Togli i doppioni da `nomi` trasformandola nell’insieme `unici`, poi stampa quanti sono con `len`.', 'Remove duplicates from `nomi` by turning it into the set `unici`, then print how many there are with `len`.'), 'nomi = ["Ada", "Bea", "Ada", "Cleo"]
+', [re('unici\s*=\s*set\s*\(\s*nomi\s*\)', L('Crei l’insieme', 'You create the set')), re('print\s*\(\s*len\s*\(\s*unici\s*\)\s*\)', L('Stampi quanti sono', 'You print how many'))], '', 'unici = set(nomi)
+print(len(unici))'), [
+            dBlanks(pFill(), 'citta = ("Udine", "Trieste")
+prima, seconda = ___
+visti = ___()
+visti.___("Udine")', ['citta', 'set', 'add'], ['tuple', 'dict', 'append'], L('Spacchetta, crea un insieme vuoto, aggiungi.', 'Unpack, create an empty set, add.')),
+            dFlash(pFlash(), [[L('Una tupla si può modificare dopo la creazione', 'A tuple can be changed after creation'), false], [L('Un set non contiene doppioni', 'A set holds no duplicates'), true], [L('`set()` crea un insieme vuoto', '`set()` creates an empty set'), true], [L('Un set mantiene l’ordine di inserimento', 'A set keeps insertion order'), false]], L('Tuple fisse, insiemi senza doppioni.', 'Fixed tuples, sets without duplicates.')),
+        ]),
+        lesson('builtins', L('Funzioni integrate utili', 'Handy built-in functions'), [
+            P('Python ha funzioni pronte per i compiti di tutti i giorni: `sum`, `min`, `max` riassumono una lista, `sorted` la ordina, `enumerate` dà indice e valore insieme, `zip` scorre più liste in parallelo, `any` e `all` controllano una condizione su tutti gli elementi.', 'Python has ready-made functions for everyday jobs: `sum`, `min`, `max` summarise a list, `sorted` sorts it, `enumerate` gives index and value together, `zip` walks several lists side by side, `any` and `all` check a condition on every item.'),
+            C('voti = [7, 9, 6, 8]
+print(sum(voti), min(voti), max(voti))   # 30 6 9
+print(sorted(voti))                      # [6, 7, 8, 9]
+print(sorted(voti, reverse=True))        # [9, 8, 7, 6]
+
+for i, voto in enumerate(voti, start=1):
+    print(i, voto)
+
+nomi = ["Ada", "Bea"]
+eta = [36, 28]
+for nome, anni in zip(nomi, eta):
+    print(nome, anni)
+
+print(round(3.14159, 2), abs(-3))        # 3.14 3
+print(any(v < 6 for v in voti), all(v >= 6 for v in voti))   # False True', 'python'),
+            P('`sorted` restituisce una **lista nuova**, mentre `lista.sort()` ordina quella esistente e restituisce `None`. Prima di scrivere un ciclo, chiediti se c’è già una funzione integrata che lo fa.', '`sorted` returns a **new list**, while `list.sort()` sorts the existing one and returns `None`. Before writing a loop, ask yourself whether a built-in function already does it.'),
+        ], [
+            Q('b1', L('Che cosa fa `sorted(voti)`?', 'What does `sorted(voti)` do?'), [L('Ordina voti e restituisce None', 'Sorts voti and returns None'), L('Restituisce una nuova lista ordinata', 'Returns a new sorted list'), L('Restituisce il voto più alto', 'Returns the highest mark'), L('Mescola la lista a caso', 'Shuffles the list randomly')], 1, L('La lista originale non cambia.', 'The original list does not change.')),
+            Q('b2', L('Che cosa produce `enumerate(["a", "b"])`?', 'What does `enumerate(["a", "b"])` produce?'), [L('Le coppie (0, "a") e (1, "b")', 'The pairs (0, "a") and (1, "b")'), L('Il numero 2', 'The number 2'), L('Le lettere in maiuscolo', 'The letters in uppercase'), L('La coppia ("a", "b")', 'The pair ("a", "b")')], 0, L('Indice e valore, partendo da 0 se non dici altro.', 'Index and value, starting at 0 unless told otherwise.')),
+            Q('b3', L('Che cosa fa `zip(nomi, eta)`?', 'What does `zip(nomi, eta)` do?'), [L('Comprime le liste in un file', 'Compresses the lists into a file'), L('Unisce le liste una dopo l’altra', 'Joins the lists one after the other'), L('Ordina le due liste insieme', 'Sorts both lists together'), L('Abbina gli elementi nella stessa posizione', 'Pairs the items at the same position')], 3, L('Il primo nome con la prima età, e così via.', 'The first name with the first age, and so on.')),
+        ], task('python', L('Con `enumerate` stampa ogni elemento di `spesa` preceduto dal suo numero, partendo da 1.', 'With `enumerate` print each item of `spesa` preceded by its number, starting from 1.'), 'spesa = ["pane", "latte", "uova"]
+', [re('for\s+(\w+)\s*,\s*(\w+)\s+in\s+enumerate\s*\(\s*spesa\s*,\s*(start\s*=\s*)?1\s*\)\s*:', L('Usi enumerate da 1', 'You use enumerate from 1')), re('print\s*\(', L('Stampi ogni riga', 'You print each line'))], '', 'for i, cosa in enumerate(spesa, start=1):
+    print(i, cosa)'), [
+            dMatch(pMatch(), [['sum', L('Somma', 'Sum')], ['max', L('Il più grande', 'The largest')], ['sorted', L('Nuova lista ordinata', 'New sorted list')], ['enumerate', L('Indice e valore', 'Index and value')], ['zip', L('Liste in parallelo', 'Lists side by side')]], L('Funzioni integrate da conoscere.', 'Built-in functions worth knowing.')),
+            dBug(pBug(), ['numeri = [3, 1, 2]', 'ordinati = numeri.sort()', 'print(ordinati[0])'], 1, 'ordinati = sorted(numeri)', L('`sort()` ordina sul posto e restituisce `None`.', '`sort()` sorts in place and returns `None`.')),
         ]),
     ],
 ];

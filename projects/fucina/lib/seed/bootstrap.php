@@ -1,10 +1,10 @@
 <?php
-/** Bootstrap 5: the grid, utilities, components and customisation with Sass variables and CSS variables. */
+/** Bootstrap 5.3: the grid, utilities, components and customisation with Sass variables and CSS variables. */
 
 return [
     'id' => 'bootstrap', 'family' => 'bootstrap', 'after' => 'css-base', 'categories' => ['frontend', 'design'],
     'title' => L('Bootstrap', 'Bootstrap'), 'short' => L('Bootstrap', 'Bootstrap'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Il framework CSS più diffuso: griglia a 12 colonne e breakpoint, classi di utilità, componenti come navbar, card, modali e form, temi e personalizzazione.', 'The most widespread CSS framework: 12-column grid and breakpoints, utility classes, components such as navbars, cards, modals and forms, themes and customisation.'),
+    'desc' => L('Uno dei framework CSS più diffusi, nella versione stabile 5.3: griglia a 12 colonne e breakpoint, classi di utilità, componenti come navbar, card, modali e form, temi e personalizzazione.', 'One of the most widespread CSS frameworks, in its stable 5.3 release: 12-column grid and breakpoints, utility classes, components such as navbars, cards, modals and forms, themes and customisation.'),
     'lessons' => [
         lesson('grid', L('La griglia', 'The grid'), [
             P('**Bootstrap** è un framework CSS (con un po’ di JavaScript) che offre una griglia, classi di utilità e componenti pronti. La **griglia** usa `.container` (larghezza massima centrata), `.row` (una riga flex) e `.col` (colonne). Ogni riga ha **12 colonne**: `.col-4` occupa un terzo, `.col-6` metà.', '**Bootstrap** is a CSS framework (with some JavaScript) offering a grid, utility classes and ready-made components. The **grid** uses `.container` (centred max width), `.row` (a flex row) and `.col` (columns). Every row has **12 columns**: `.col-4` takes a third, `.col-6` half.'),
@@ -64,7 +64,8 @@ $border-radius: .75rem;
 $font-family-base: "Inter", system-ui, sans-serif;
 
 @import "bootstrap/scss/bootstrap";', 'scss'),
-            P('Bootstrap 5 espone anche **variabili CSS** (`--bs-primary`, `--bs-body-font-size`, `--bs-border-radius`) modificabili senza ricompilare, e la **modalità colore**: con `data-bs-theme="dark"` su `<html>` o su un singolo componente si attiva il tema scuro.', 'Bootstrap 5 also exposes **CSS variables** (`--bs-primary`, `--bs-body-font-size`, `--bs-border-radius`) you can change without recompiling, and **colour modes**: with `data-bs-theme="dark"` on `<html>` or on a single component you turn on the dark theme.'),
+            Tip('Bootstrap 5.3 è scritto con `@import`, che Dart Sass segnala come deprecato: gli avvisi sono normali e si possono silenziare con `--silence-deprecation=import`. Il passaggio ai moduli `@use` è previsto con Bootstrap 6, ancora in sviluppo.', 'Bootstrap 5.3 is written with `@import`, which Dart Sass flags as deprecated: the warnings are normal and can be silenced with `--silence-deprecation=import`. The move to `@use` modules is planned for Bootstrap 6, still in development.'),
+            P('Bootstrap 5 espone anche **variabili CSS** (`--bs-primary`, `--bs-body-font-size`, `--bs-border-radius`) modificabili senza ricompilare, e dalla 5.3 le **modalità colore**: con `data-bs-theme="dark"` su `<html>` o su un singolo componente si attiva il tema scuro.', 'Bootstrap 5 also exposes **CSS variables** (`--bs-primary`, `--bs-body-font-size`, `--bs-border-radius`) you can change without recompiling, and since 5.3 **colour modes**: with `data-bs-theme="dark"` on `<html>` or on a single component you turn on the dark theme.'),
         ], [
             Q('t1', L('Quando si cambiano le variabili Sass di Bootstrap?', 'When do you change Bootstrap’s Sass variables?'), [L('Prima di importare il framework', 'Before importing the framework'), L('Dopo averlo importato', 'After importing it'), L('Nel file HTML', 'In the HTML file'), L('Non si possono cambiare', 'They cannot be changed')], 0, L('Così il framework le usa.', 'So the framework uses them.')),
             Q('t2', L('Come si attiva il tema scuro in Bootstrap 5.3?', 'How do you turn on dark theme in Bootstrap 5.3?'), ['data-bs-theme="dark"', 'class="dark-mode"', 'theme="night"', 'style="dark"'], 0, L('Su html o su un componente.', 'On html or a component.')),

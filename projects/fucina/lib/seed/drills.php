@@ -153,7 +153,7 @@ return [
     ],
 
     'sass/indented' => [
-        $bug($hunt, ['.titolo', '  color: red;', '  font-size: 2rem'], 1, '  color: red', L('Nella sintassi indentata non ci sono né graffe né punti e virgola.', 'The indented syntax has no braces and no semicolons.')),
+        $bug($hunt, ['.titolo', 'color: red', '  font-size: 2rem'], 1, '  color: red', L('Senza rientro `color` non sta dentro `.titolo`: nella sintassi indentata è il rientro a dire che cosa sta dentro che cosa.', 'Without an indent `color` is not inside `.titolo`: in the indented syntax the indent says what goes inside what.')),
         $order(L('Rimetti in ordine il codice Sass.', 'Put the Sass code back in order.'), ['$brand: orange', '.card', '  color: $brand', '  .titolo', '    font-size: 2rem'], L('Il rientro dice che cosa sta dentro che cosa.', 'Indentation says what goes inside what.')),
         $flash($quick, [[L('In Sass contano i rientri', 'In Sass indentation matters'), true], [L('I file Sass finiscono in `.sass`', 'Sass files end in `.sass`'), true], [L('Sass usa le parentesi graffe', 'Sass uses curly braces'), false], [L('Un rientro sbagliato cambia il significato', 'A wrong indent changes the meaning'), true], [L('Ogni riga finisce con `;`', 'Every line ends with `;`'), false]], L('Meno simboli, ma il rientro diventa parte del codice.', 'Fewer symbols, but indentation becomes part of the code.')),
     ],
