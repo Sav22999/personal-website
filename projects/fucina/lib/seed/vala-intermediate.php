@@ -1,10 +1,10 @@
 <?php
-/** Vala intermediate: interfaces, collections with GLib and Gee, errors, async and a GTK window. */
+/** Vala intermediate: interfaces, collections with GLib and Gee, errors, async, a GTK window, memory management, libadwaita and Meson. */
 
 return [
     'id' => 'vala-intermediate', 'family' => 'vala', 'after' => 'vala-base',
     'title' => L('Vala intermedio', 'Intermediate Vala'), 'short' => L('Vala intermedio', 'Vala Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Interfacce, collezioni, errori, metodi asincroni e una prima finestra GTK per il desktop GNOME.', 'Interfaces, collections, errors, async methods and a first GTK window for the GNOME desktop.'),
+    'desc' => L('Interfacce, collezioni, errori, metodi asincroni, una prima finestra GTK, gestione della memoria, app con libadwaita e compilazione con Meson.', 'Interfaces, collections, errors, async methods, a first GTK window, memory management, libadwaita apps and building with Meson.'),
     'lessons' => [
         lesson('interfaces', L('Interfacce ed ereditarietà', 'Interfaces and inheritance'), [
             P('Una classe eredita da una sola classe ma può implementare più **interfacce**. I metodi da ridefinire sono `virtual` (o `abstract`) nella classe madre e `override` nella figlia.', 'A class inherits from one class but can implement several **interfaces**. Methods to redefine are `virtual` (or `abstract`) in the parent and `override` in the child.'),
@@ -103,7 +103,7 @@ leggi_titolo.begin (File.new_for_path ("note.txt"), (obj, res) => {
         ], task('vala', L('Dichiara `async void aggiorna () { yield carica_dati (); }`.', 'Declare `async void aggiorna () { yield carica_dati (); }`.'), '', [re('async\s+void\s+aggiorna\s*\(\s*\)', L('Il metodo è async', 'The method is async')), re('yield\s+carica_dati\s*\(\s*\)\s*;', L('Aspetta i dati', 'It waits for the data'))], '', 'async void aggiorna () {
     yield carica_dati ();
 }'), [
-            dOrder(pSort(), ['scarica.begin (url, (obj, res) => {', '    try {', '        var testo = scarica.end (res);', '        print ("%s\n", testo);', '    } catch (Error e) {', '        warning (e.message);', '    }', '});'], L('Avvia, poi raccogli nella callback.', 'Start, then collect in the callback.')),
+            dOrder(pSort(), ['scarica.begin (url, (obj, res) => {', '    try {', '        var testo = scarica.end (res);', '        print ("%s\n", testo);', '    } catch (Error e) {', '        warning ("%s", e.message);', '    }', '});'], L('Avvia, poi raccogli nella callback.', 'Start, then collect in the callback.')),
             dFlash(pFlash(), [[L('Un metodo async non blocca l’interfaccia', 'An async method does not block the interface'), true], [L('In Vala si scrive `await`', 'In Vala you write `await`'), false], [L('`.end` può lanciare un errore', '`.end` can throw an error'), true], [L('Dentro un metodo async si aspetta con `yield`', 'Inside an async method you wait with `yield`'), true]], L('Si usa `yield`.', 'You use `yield`.')),
         ]),
         lesson('gtk', L('Una finestra GTK', 'A GTK window'), [
@@ -134,6 +134,115 @@ leggi_titolo.begin (File.new_for_path ("note.txt"), (obj, res) => {
 ', [re('bottone\.clicked\.connect\s*\(\s*\(\s*\)\s*=>', L('Ascolti il clic', 'You listen to the click'))], '', 'bottone.clicked.connect (() => print ("Clic!\n"));'), [
             dBlanks(pFill(), "var box = new Gtk.___ (Gtk.Orientation.VERTICAL, 6);\nbox.___ (new Gtk.Label (\"Ciao\"));\nfinestra.___ = box;", ['Box', 'append', 'child'], ['Column', 'add', 'content'], L('Contenitore, aggiunta, contenuto della finestra.', 'Container, adding, window content.')),
             dMatch(pMatch(), [['Gtk.Application', L('L’app', 'The app')], ['Gtk.ApplicationWindow', L('La finestra', 'The window')], ['Gtk.Box', L('Contenitore in fila', 'Row/column container')], ['Gtk.Label', L('Un testo', 'A text')], ['present ()', L('Mostra la finestra', 'Shows the window')]], L('I pezzi di un’app GTK.', 'The pieces of a GTK app.')),
+        ]),
+        lesson('memory', L('Memoria: owned, unowned e weak', 'Memory: owned, unowned and weak'), [
+            P('Vala non ha garbage collector: gestisce la memoria con il **conteggio dei riferimenti**. Ogni oggetto sa quante variabili lo tengono; quando il conto arriva a zero viene liberato subito. Il compilatore inserisce da solo le chiamate a `ref` e `unref`.', 'Vala has no garbage collector: it manages memory with **reference counting**. Every object knows how many variables hold it; when the count reaches zero it is freed at once. The compiler inserts the `ref` and `unref` calls by itself.'),
+            C('public class Nodo : Object {
+    public string nome;
+    public Nodo? figlio;          // riferimento forte: tiene vivo il figlio
+    public weak Nodo? genitore;   // debole: non tiene vivo il genitore
+
+    public Nodo (string nome) { this.nome = nome; }
+}
+
+void main () {
+    var radice = new Nodo ("radice");
+    var foglia = new Nodo ("foglia");
+    radice.figlio = foglia;
+    foglia.genitore = radice;     // con un riferimento forte sarebbe un ciclo
+}
+
+// I valori restituiti sono owned: chi chiama ne diventa proprietario.
+string crea_saluto () { return "ciao"; }
+// unowned: chi chiama lo usa senza diventarne proprietario.
+unowned string nome_di (Nodo n) { return n.nome; }', 'vala'),
+            P('Se due oggetti si tengono a vicenda con riferimenti forti, nessuno dei due arriva mai a zero: è un **ciclo** e la memoria si perde. La soluzione è segnare `weak` il riferimento che “torna indietro”, come quello verso il genitore. `unowned` indica un valore che usi senza possederlo; `owned` trasferisce la proprietà.', 'If two objects hold each other with strong references, neither ever reaches zero: it is a **cycle** and the memory leaks. The fix is to mark `weak` the reference that “points back”, such as the one to the parent. `unowned` marks a value you use without owning it; `owned` transfers ownership.'),
+        ], [
+            Q('me1', L('Come libera la memoria Vala?', 'How does Vala free memory?'), [L('Con un garbage collector che passa ogni tanto', 'With a garbage collector that runs now and then'), L('Con il conteggio dei riferimenti', 'With reference counting'), L('Solo a fine programma', 'Only at the end of the program'), L('Con `free` scritto a mano ovunque', 'With hand-written `free` everywhere')], 1, L('Gli oggetti spariscono appena nessuno li tiene.', 'Objects go as soon as nobody holds them.')),
+            Q('me2', L('Che cosa provoca un ciclo di riferimenti forti?', 'What does a cycle of strong references cause?'), [L('Una perdita di memoria: gli oggetti non vengono mai liberati', 'A memory leak: the objects are never freed'), L('Un crash immediato', 'An immediate crash'), L('Un errore di compilazione', 'A compile error'), L('Niente di particolare', 'Nothing special')], 0, L('Il conto non arriva mai a zero.', 'The count never reaches zero.')),
+            Q('me3', L('Quale parola si usa sul riferimento che rompe il ciclo?', 'Which keyword goes on the reference that breaks the cycle?'), ['owned', 'static', 'virtual', 'weak'], 3, L('Un riferimento `weak` non aumenta il conto e diventa null quando l’oggetto sparisce.', 'A `weak` reference does not raise the count and becomes null when the object goes.')),
+        ], task('vala', L('Rendi debole il riferimento al genitore: `public weak Nodo? genitore;`.', 'Make the reference to the parent weak: `public weak Nodo? genitore;`.'), 'public class Nodo : Object {
+    public Nodo? genitore;
+}', [re('public\s+weak\s+Nodo\?\s+genitore\s*;', L('Il riferimento è debole', 'The reference is weak'))], '', 'public class Nodo : Object {
+    public weak Nodo? genitore;
+}'), [
+            dMatch(pMatch(), [['ref / unref', L('Aumenta e diminuisce il conto', 'Raises and lowers the count')], ['weak', L('Non tiene vivo l’oggetto', 'Does not keep the object alive')], ['owned', L('Trasferisce la proprietà', 'Transfers ownership')], ['unowned', L('Usa senza possedere', 'Uses without owning')]], L('La memoria in Vala.', 'Memory in Vala.')),
+            dFlash(pFlash(), [[L('Vala usa un garbage collector', 'Vala uses a garbage collector'), false], [L('Un oggetto viene liberato quando il suo conto arriva a zero', 'An object is freed when its count reaches zero'), true], [L('Due oggetti che si tengono a vicenda possono non essere mai liberati', 'Two objects holding each other may never be freed'), true], [L('`weak` aumenta il conteggio dei riferimenti', '`weak` raises the reference count'), false]], L('Conteggio dei riferimenti, niente garbage collector.', 'Reference counting, no garbage collector.')),
+        ]),
+        lesson('adwaita', L('App moderne con libadwaita', 'Modern apps with libadwaita'), [
+            P('**libadwaita** estende GTK 4 con i widget e lo stile delle app GNOME: tema chiaro e scuro automatico, barre adattive, pagine di stato, dialoghi. Un’app parte da `Adw.Application` e la finestra è una `Adw.ApplicationWindow`, il cui contenuto si imposta con `content` (non `child`).', '**libadwaita** extends GTK 4 with the widgets and style of GNOME apps: automatic light and dark theme, adaptive bars, status pages, dialogs. An app starts from `Adw.Application` and the window is an `Adw.ApplicationWindow`, whose content is set with `content` (not `child`).'),
+            C('public class App : Adw.Application {
+    public App () {
+        Object (application_id: "it.esempio.Note", flags: ApplicationFlags.DEFAULT_FLAGS);
+    }
+
+    protected override void activate () {
+        var vista = new Adw.ToolbarView ();
+        vista.add_top_bar (new Adw.HeaderBar ());
+        vista.content = new Adw.StatusPage () {
+            icon_name = "document-edit-symbolic",
+            title = "Nessuna nota",
+            description = "Premi + per crearne una"
+        };
+
+        var finestra = new Adw.ApplicationWindow (this) {
+            title = "Note",
+            default_width = 480,
+            default_height = 600,
+            content = vista
+        };
+        finestra.present ();
+    }
+}
+
+int main (string[] args) {
+    return new App ().run (args);
+}', 'vala'),
+            P('Si compila con `valac --pkg libadwaita-1 note.vala` (GTK 4 arriva insieme). `Adw.ToolbarView` mette barre in alto e in basso intorno al contenuto; `Adw.StyleManager` segue il tema chiaro o scuro del sistema.', 'You compile with `valac --pkg libadwaita-1 note.vala` (GTK 4 comes along). `Adw.ToolbarView` puts bars at the top and bottom around the content; `Adw.StyleManager` follows the system’s light or dark theme.'),
+        ], [
+            Q('ad1', L('Con quale proprietà imposti il contenuto di una `Adw.ApplicationWindow`?', 'Which property sets the content of an `Adw.ApplicationWindow`?'), ['child', 'body', 'content', 'view'], 2, L('`child` è quella della `Gtk.ApplicationWindow`.', '`child` is the one of `Gtk.ApplicationWindow`.')),
+            Q('ad2', L('Da quale classe parte un’app libadwaita?', 'Which class does a libadwaita app start from?'), ['Adw.Application', 'Gtk.Window', 'GLib.MainLoop', 'Adw.Widget'], 0, L('Prepara anche lo stile Adwaita.', 'It also sets up the Adwaita style.')),
+            Q('ad3', L('Quale pacchetto passi a valac per libadwaita?', 'Which package do you pass to valac for libadwaita?'), ['--pkg adwaita', '--pkg gnome-ui', '--pkg gtk5', '--pkg libadwaita-1'], 3, L('Il numero è la versione principale dell’API.', 'The number is the major API version.')),
+        ], task('vala', L('Crea la finestra con `new Adw.ApplicationWindow (this)` e imposta `content = vista`.', 'Create the window with `new Adw.ApplicationWindow (this)` and set `content = vista`.'), 'var vista = new Adw.ToolbarView ();
+', [re('new\s+Adw\.ApplicationWindow\s*\(\s*this\s*\)', L('Crei la finestra Adwaita', 'You create the Adwaita window')), re('content\s*=\s*vista', L('Imposti il contenuto', 'You set the content'))], '', 'var finestra = new Adw.ApplicationWindow (this) {
+    content = vista
+};
+finestra.present ();'), [
+            dMatch(pMatch(), [['Adw.Application', L('L’applicazione', 'The application')], ['Adw.ApplicationWindow', L('La finestra', 'The window')], ['Adw.HeaderBar', L('Barra del titolo', 'Title bar')], ['Adw.ToolbarView', L('Barre intorno al contenuto', 'Bars around the content')], ['Adw.StatusPage', L('Pagina vuota con icona e testo', 'Empty page with icon and text')]], L('I pezzi di un’app GNOME moderna.', 'The pieces of a modern GNOME app.')),
+            dBug(pBug(), ['var finestra = new Adw.ApplicationWindow (this);', 'finestra.child = vista;', 'finestra.present ();'], 1, 'finestra.content = vista;', L('In una `Adw.ApplicationWindow` il contenuto va in `content`.', 'In an `Adw.ApplicationWindow` the content goes in `content`.')),
+        ]),
+        lesson('meson', L('Meson e distribuzione', 'Meson and distribution'), [
+            P('Le app GNOME si compilano con **Meson**, che legge il file `meson.build` e prepara la compilazione con Ninja. Meson conosce Vala: basta elencare sorgenti e dipendenze, e penserà lui a chiamare valac e il compilatore C.', 'GNOME apps are built with **Meson**, which reads the `meson.build` file and prepares the build with Ninja. Meson knows Vala: you just list sources and dependencies, and it takes care of calling valac and the C compiler.'),
+            C('project(\'note\', \'vala\', \'c\', version: \'1.0.0\')
+
+dipendenze = [
+  dependency(\'gtk4\'),
+  dependency(\'libadwaita-1\'),
+]
+
+executable(\'note\',
+  \'src/main.vala\',
+  \'src/finestra.vala\',
+  dependencies: dipendenze,
+  install: true,
+)', 'text'),
+            C('meson setup build
+meson compile -C build
+./build/note
+meson install -C build', 'bash'),
+            P('Per distribuire l’app su qualsiasi distribuzione Linux, GNOME consiglia **Flatpak**, con **Flathub** come negozio. Un manifest descrive il runtime (`org.gnome.Platform`) e i moduli da compilare; GNOME Builder prepara tutto con pochi clic.', 'To ship the app on any Linux distribution, GNOME recommends **Flatpak**, with **Flathub** as the store. A manifest describes the runtime (`org.gnome.Platform`) and the modules to build; GNOME Builder sets it all up in a few clicks.'),
+        ], [
+            Q('ms1', L('Quale file descrive un progetto Meson?', 'Which file describes a Meson project?'), ['Makefile', 'meson.build', 'CMakeLists.txt', 'package.json'], 1, L('Uno per cartella, se serve.', 'One per folder, if needed.')),
+            Q('ms2', L('Quale comando prepara la cartella di compilazione?', 'Which command prepares the build folder?'), ['meson setup build', 'meson init', 'ninja start', 'valac --meson'], 0, L('Poi `meson compile -C build`.', 'Then `meson compile -C build`.')),
+            Q('ms3', L('Come si distribuiscono di solito le app GNOME?', 'How are GNOME apps usually distributed?'), [L('Solo come sorgenti da compilare', 'Only as source code to build'), L('Con un file .exe', 'As an .exe file'), L('Dall’App Store di Apple', 'From Apple’s App Store'), L('Come Flatpak, spesso su Flathub', 'As Flatpaks, often on Flathub')], 3, L('Un solo pacchetto per tutte le distribuzioni.', 'One package for every distribution.')),
+        ], task('text', L('Nel `meson.build` aggiungi `dependency(\'libadwaita-1\')` all’elenco delle dipendenze.', 'In `meson.build` add `dependency(\'libadwaita-1\')` to the list of dependencies.'), 'dipendenze = [
+  dependency(\'gtk4\'),
+]', [re('dependency\s*\(\s*["\']libadwaita-1["\']\s*\)', L('libadwaita è tra le dipendenze', 'libadwaita is among the dependencies'))], '', 'dipendenze = [
+  dependency(\'gtk4\'),
+  dependency(\'libadwaita-1\'),
+]'), [
+            dOrder(pSort(), ['meson setup build', 'meson compile -C build', 'meson install -C build'], L('Prepara, compila, installa.', 'Set up, build, install.')),
+            dMatch(pMatch(), [['meson.build', L('Descrive il progetto', 'Describes the project')], ['dependency()', L('Una libreria richiesta', 'A required library')], ['executable()', L('Il programma da creare', 'The program to build')], ['Flatpak', L('Pacchetto per ogni distribuzione', 'Package for every distribution')], ['Flathub', L('Negozio di app Flatpak', 'Flatpak app store')]], L('Dal sorgente agli utenti.', 'From source to users.')),
         ]),
     ],
 ];

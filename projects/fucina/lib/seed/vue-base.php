@@ -1,10 +1,10 @@
 <?php
-/** Vue basics: the single-file component, reactivity, directives, events and lists. */
+/** Vue basics: the single-file component, reactivity, directives, events and lists, dynamic classes, slots and v-model on components. */
 
 return [
     'id' => 'vue-base', 'family' => 'vue', 'after' => 'js-base',
     'title' => L('Vue base', 'Vue Basics'), 'short' => L('Vue base', 'Vue Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Componenti in un file, dati reattivi con `ref`, direttive, eventi e liste: interfacce vive con poco codice.', 'Single-file components, reactive data with `ref`, directives, events and lists: live interfaces with little code.'),
+    'desc' => L('Componenti in un file, dati reattivi con `ref`, direttive, eventi e liste, classi dinamiche, slot e `v-model` sui componenti: interfacce vive con poco codice.', 'Single-file components, reactive data with `ref`, directives, events and lists, dynamic classes, slots and `v-model` on components: live interfaces with little code.'),
     'lessons' => [
         lesson('sfc', L('Il componente in un file', 'The single-file component'), [
             P('Un componente Vue vive in un file `.vue` con tre blocchi: `<script setup>` per la logica, `<template>` per l’HTML e `<style scoped>` per lo stile che vale solo lì.', 'A Vue component lives in a `.vue` file with three blocks: `<script setup>` for logic, `<template>` for HTML and `<style scoped>` for styles that apply only there.'),
@@ -122,6 +122,93 @@ defineProps({ titolo: String, livelli: Number });
 </ul>', [re('<li[^>]*v-for\s*=\s*"p\s+in\s+prodotti"', L('Il ciclo è giusto', 'The loop is right')), re('<li[^>]*:key\s*=\s*"p\.id"', L('Ogni voce ha la sua chiave', 'Each item has its key'))], '', '<li v-for="p in prodotti" :key="p.id">{{ p.nome }}</li>'), [
             dOrder(pSort(), ['<script setup>', 'defineProps({ nome: String });', 'const emit = defineEmits(["scelto"]);', '</script>', '<template>', '  <button @click="emit(\'scelto\')">{{ nome }}</button>', '</template>'], L('Props ed eventi nello script, poi il template.', 'Props and events in the script, then the template.')),
             dMatch(pMatch(), [['v-for', L('Ripete', 'Repeats')], [':key', L('Identità della voce', 'Identity of the item')], ['defineProps', L('Dati dal padre', 'Data from the parent')], ['defineEmits', L('Eventi verso il padre', 'Events to the parent')]], L('Liste e comunicazione.', 'Lists and communication.')),
+        ]),
+        lesson('class-style', L('Classi e stili dinamici', 'Dynamic classes and styles'), [
+            P('`:class` aggiunge o toglie classi secondo delle condizioni: passi un oggetto `{ classe: condizione }` oppure un array. `:style` imposta gli stili da un oggetto, con i nomi delle proprietà in camelCase.', '`:class` adds or removes classes based on conditions: you pass an object `{ class: condition }` or an array. `:style` sets styles from an object, with property names in camelCase.'),
+            C('<script setup>
+import { ref } from "vue";
+const attivo = ref(false);
+const errore = ref(true);
+const larghezza = ref(120);
+</script>
+
+<template>
+  <button class="tasto" :class="{ attivo, rosso: errore }" @click="attivo = !attivo">
+    Premi
+  </button>
+  <div :style="{ width: larghezza + \'px\', backgroundColor: \'tomato\' }"></div>
+</template>', 'vue'),
+            P('Le classi scritte con `class` normale restano e si sommano a quelle dinamiche. `{ attivo }` è la forma breve di `{ attivo: attivo }`.', 'Classes written with plain `class` stay and add up with the dynamic ones. `{ attivo }` is short for `{ attivo: attivo }`.'),
+        ], [
+            Q('cl1', L('Che cosa fa `:class="{ rosso: errore }"`?', 'What does `:class="{ rosso: errore }"` do?'), [L('Colora sempre di rosso', 'Always colours it red'), L('Crea una variabile `rosso`', 'Creates a `rosso` variable'), L('Aggiunge `rosso` quando `errore` è vero', 'Adds `rosso` when `errore` is true'), L('Cancella la classe `errore`', 'Removes the `errore` class')], 2, L('La chiave è la classe, il valore la condizione.', 'The key is the class, the value the condition.')),
+            Q('cl2', L('Come scrivi `background-color` in un `:style`?', 'How do you write `background-color` in a `:style`?'), ['backgroundColor', 'background_color', 'BackgroundColor()', 'bg-color'], 0, L('Nomi in camelCase, come in JavaScript.', 'camelCase names, as in JavaScript.')),
+            Q('cl3', L('Che succede a `class="tasto"` se aggiungi anche `:class`?', 'What happens to `class="tasto"` if you also add `:class`?'), [L('Viene sostituita', 'It gets replaced'), L('Si somma alle classi dinamiche', 'It adds up with the dynamic classes'), L('Dà errore', 'It errors'), L('Viene ignorata', 'It is ignored')], 1, L('Classi fisse e dinamiche convivono.', 'Fixed and dynamic classes live together.')),
+        ], task('vue', L('Al `<li>` aggiungi `:class="{ fatto: completato }"`.', 'Add `:class="{ fatto: completato }"` to the `<li>`.'), '<li>{{ testo }}</li>', [re('<li[^>]*:class\s*=\s*"\{\s*fatto\s*:\s*completato\s*\}"', L('La classe dipende da `completato`', 'The class depends on `completato`'))], '', '<li :class="{ fatto: completato }">{{ testo }}</li>'), [
+            dMatch(pMatch(), [[':class="{ a: x }"', L('Classe secondo una condizione', 'Class based on a condition')], [':class="[a, b]"', L('Più classi da un array', 'Several classes from an array')], [':style="{ color: c }"', L('Uno stile da un dato', 'A style from data')], ['class="fisso"', L('Classe sempre presente', 'Class always present')]], L('Classi e stili guidati dai dati.', 'Classes and styles driven by data.')),
+            dBug(pBug(), ['<div', '  :class="{ attivo: selezionato }"', '  :style="{ font-size: dimensione + \'px\' }"', '></div>'], 2, '  :style="{ fontSize: dimensione + \'px\' }"', L('Nell’oggetto di stile i nomi vanno in camelCase.', 'In the style object names go in camelCase.')),
+        ]),
+        lesson('slots', L('Gli slot', 'Slots'), [
+            P('Con le props un componente riceve dati; con gli **slot** riceve **HTML**. Nel figlio scrivi `<slot />` dove deve comparire il contenuto messo dal padre tra i tag del componente.', 'With props a component receives data; with **slots** it receives **HTML**. In the child you write `<slot />` where the content the parent put between the component’s tags should appear.'),
+            C('<!-- Scheda.vue -->
+<template>
+  <article class="scheda">
+    <header><slot name="titolo">Senza titolo</slot></header>
+    <slot />
+  </article>
+</template>
+
+<!-- App.vue -->
+<Scheda>
+  <template #titolo><h2>Corso di Vue</h2></template>
+  <p>Otto lezioni per iniziare.</p>
+</Scheda>', 'vue'),
+            P('Gli **slot con nome** si riempiono con `<template #nome>`. Il testo dentro `<slot>` è il contenuto di riserva, mostrato se il padre non passa niente. Il contenuto dello slot usa i dati del padre.', '**Named slots** are filled with `<template #name>`. The text inside `<slot>` is fallback content, shown if the parent passes nothing. Slot content uses the parent’s data.'),
+        ], [
+            Q('sl1', L('Che cosa riceve un componente con uno slot?', 'What does a component receive through a slot?'), [L('Solo numeri', 'Only numbers'), L('Un file CSS', 'A CSS file'), L('Una rotta', 'A route'), L('HTML scritto dal padre', 'HTML written by the parent')], 3, L('Le props portano dati, gli slot contenuto.', 'Props carry data, slots carry content.')),
+            Q('sl2', L('Come riempi lo slot `titolo`?', 'How do you fill the `titolo` slot?'), ['<template #titolo>', '<slot titolo>', ':titolo="…"', '<titolo-slot>'], 0, L('`#titolo` è la forma breve di `v-slot:titolo`.', '`#titolo` is short for `v-slot:titolo`.')),
+            Q('sl3', L('Quando si vede il testo dentro `<slot>…</slot>`?', 'When does the text inside `<slot>…</slot>` show?'), [L('Sempre', 'Always'), L('Quando il padre non passa contenuto', 'When the parent passes no content'), L('Mai', 'Never'), L('Solo in sviluppo', 'Only in development')], 1, L('È il contenuto di riserva.', 'It is the fallback content.')),
+        ], task('vue', L('Nel template di `Pannello.vue` mostra il contenuto del padre con `<slot />` dentro il `<div>`.', 'In the `Pannello.vue` template show the parent’s content with `<slot />` inside the `<div>`.'), '<template>
+  <div class="pannello"></div>
+</template>', [re('<div[^>]*>\s*<slot\s*/?>(\s*</slot>)?\s*</div>', L('Lo slot è nel div', 'The slot is in the div'))], '', '<template>
+  <div class="pannello"><slot /></div>
+</template>'), [
+            dBlanks(pFill(), "<!-- Finestra.vue -->\n<header><slot ___=\"titolo\" /></header>\n<___ />\n<!-- padre -->\n<Finestra><template ___>Ciao</template></Finestra>", ['name', 'slot', '#titolo'], ['id', ':titolo', 'content'], L('Slot con nome, slot predefinito, e il padre che li riempie.', 'Named slot, default slot, and the parent filling them.')),
+            dFlash(pFlash(), [[L('Gli slot permettono di passare HTML a un componente', 'Slots let you pass HTML to a component'), true], [L('Un componente può avere più slot con nome', 'A component can have several named slots'), true], [L('Il contenuto dello slot usa i dati del figlio', 'Slot content uses the child’s data'), false], [L('Uno slot non può avere contenuto di riserva', 'A slot cannot have fallback content'), false]], L('Il contenuto è del padre, la posizione del figlio.', 'The content belongs to the parent, the position to the child.')),
+        ]),
+        lesson('component-model', L('v-model sui componenti', 'v-model on components'), [
+            P('`v-model` funziona anche sui tuoi componenti. Nel figlio `defineModel()` crea un `ref` collegato al padre: leggerlo dà il valore del padre, cambiarlo aggiorna il padre.', '`v-model` also works on your own components. In the child `defineModel()` creates a `ref` linked to the parent: reading it gives the parent’s value, changing it updates the parent.'),
+            C('<!-- Stelle.vue -->
+<script setup>
+const voto = defineModel({ type: Number, default: 0 });
+</script>
+<template>
+  <button v-for="n in 5" :key="n" @click="voto = n">
+    {{ n <= voto ? "★" : "☆" }}
+  </button>
+</template>
+
+<!-- App.vue -->
+<Stelle v-model="valutazione" />
+<p>Hai scelto {{ valutazione }} stelle</p>', 'vue'),
+            P('Dietro le quinte `v-model` passa la prop `modelValue` e ascolta l’evento `update:modelValue`. Puoi averne più di uno, con un nome: `v-model:titolo="t"` nel padre e `defineModel("titolo")` nel figlio. `defineModel` esiste da Vue 3.4.', 'Behind the scenes `v-model` passes the `modelValue` prop and listens to the `update:modelValue` event. You can have more than one, with a name: `v-model:titolo="t"` in the parent and `defineModel("titolo")` in the child. `defineModel` has existed since Vue 3.4.'),
+        ], [
+            Q('cm1', L('Che cosa crea `defineModel()` nel figlio?', 'What does `defineModel()` create in the child?'), [L('Una rotta', 'A route'), L('Uno store Pinia', 'A Pinia store'), L('Un ref collegato al `v-model` del padre', 'A ref linked to the parent’s `v-model`'), L('Un evento del DOM', 'A DOM event')], 2, L('Leggi e scrivi come un `ref` qualsiasi.', 'You read and write it like any `ref`.')),
+            Q('cm2', L('Quale prop usa `v-model` dietro le quinte?', 'Which prop does `v-model` use behind the scenes?'), ['value', 'modelValue', 'model', 'vModel'], 1, L('Insieme all’evento `update:modelValue`.', 'Together with the `update:modelValue` event.')),
+            Q('cm3', L('Come colleghi un secondo valore chiamato `titolo`?', 'How do you bind a second value called `titolo`?'), ['v-model:titolo="t"', 'v-model="titolo"', ':model.titolo="t"', 'v-titolo="t"'], 0, L('E nel figlio `defineModel("titolo")`.', 'And in the child `defineModel("titolo")`.')),
+        ], task('vue', L('Nel figlio crea `const testo = defineModel()` e collegalo all’input con `v-model="testo"`.', 'In the child create `const testo = defineModel()` and bind it to the input with `v-model="testo"`.'), '<script setup>
+</script>
+
+<template>
+  <input />
+</template>', [re('const\s+testo\s*=\s*defineModel\s*\(', L('Crei il modello', 'You create the model')), re('<input[^>]*v-model\s*=\s*"testo"', L('L’input è collegato', 'The input is bound'))], '', '<script setup>
+const testo = defineModel();
+</script>
+
+<template>
+  <input v-model="testo" />
+</template>'), [
+            dMatch(pMatch(), [['defineModel()', L('Il valore collegato al padre', 'The value linked to the parent')], ['v-model="x"', L('Collegamento nei due sensi', 'Two-way binding')], ['modelValue', L('La prop nascosta', 'The hidden prop')], ['update:modelValue', L('L’evento nascosto', 'The hidden event')]], L('Che cosa fa davvero `v-model`.', 'What `v-model` really does.')),
+            dOrder(pSort(), ['<script setup>', 'const aperto = defineModel({ type: Boolean });', '</script>', '<template>', '  <button @click="aperto = !aperto">Menu</button>', '</template>'], L('Il modello nello script, poi il template che lo usa.', 'The model in the script, then the template using it.')),
         ]),
     ],
 ];

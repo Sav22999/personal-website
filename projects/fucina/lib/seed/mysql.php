@@ -1,10 +1,10 @@
 <?php
-/** MySQL: the server, utf8mb4, upserts, JSON columns, users, privileges and transactions. */
+/** MySQL: the server, utf8mb4, upserts, JSON columns, users and privileges, EXPLAIN ANALYZE, backups and replication, versions. */
 
 return [
     'id' => 'mysql', 'family' => 'mysql', 'after' => 'sql-base',
     'title' => L('MySQL', 'MySQL'), 'short' => L('MySQL', 'MySQL'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Uno dei database più diffusi sul web: client, InnoDB, `utf8mb4`, upsert, colonne JSON, utenti, permessi e transazioni.', 'One of the most widely used databases on the web: client, InnoDB, `utf8mb4`, upserts, JSON columns, users, privileges and transactions.'),
+    'desc' => L('Uno dei database più diffusi sul web: client, InnoDB, `utf8mb4`, upsert, colonne JSON, utenti e permessi, `EXPLAIN ANALYZE`, backup e replica, versioni LTS.', 'One of the most widely used databases on the web: client, InnoDB, `utf8mb4`, upserts, JSON columns, users and privileges, `EXPLAIN ANALYZE`, backups and replication, LTS versions.'),
     'lessons' => [
         lesson('server', L('Server, client e database', 'Server, client and databases'), [
             P('MySQL è un **server**: un programma sempre acceso che custodisce i database e risponde a chi si collega. Ci si collega con il client a riga di comando, con phpMyAdmin o da un linguaggio come PHP o Python.', 'MySQL is a **server**: an always-on program that keeps the databases and answers whoever connects. You connect with the command-line client, with phpMyAdmin or from a language such as PHP or Python.'),

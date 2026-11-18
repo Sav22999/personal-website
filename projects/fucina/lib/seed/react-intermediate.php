@@ -1,10 +1,10 @@
 <?php
-/** Intermediate React: useEffect and data fetching, forms, lifting state and context, custom hooks and performance. */
+/** Intermediate React: useEffect and data fetching, forms, lifting state and context, custom hooks and performance, useReducer and tests, React 19 actions, Suspense and use, React Router. */
 
 return [
     'id' => 'react-intermediate', 'family' => 'react', 'after' => 'react-base',
     'title' => L('React intermedio', 'Intermediate React'), 'short' => L('React intermedio', 'React Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Effetti e dati dal server con `useEffect`, moduli controllati, stato condiviso e Context, hook personalizzati e prestazioni.', 'Effects and server data with `useEffect`, controlled forms, shared state and Context, custom hooks and performance.'),
+    'desc' => L('Effetti e dati dal server con `useEffect`, moduli e azioni di React 19, Context, hook personalizzati e prestazioni, Suspense e `use`, più pagine con React Router.', 'Effects and server data with `useEffect`, forms and React 19 actions, Context, custom hooks and performance, Suspense and `use`, multiple pages with React Router.'),
     'lessons' => [
         lesson('effects', L('useEffect e dati dal server', 'useEffect and server data'), [
             P('**`useEffect`** esegue codice *dopo* il rendering: caricare dati, iscriversi a eventi, avviare un timer. Il secondo argomento è l’elenco delle **dipendenze**: l’effetto si ripete quando una di esse cambia; con `[]` gira una volta sola, al montaggio.', '**`useEffect`** runs code *after* rendering: loading data, subscribing to events, starting a timer. The second argument is the **dependency** list: the effect re-runs when one of them changes; with `[]` it runs once, on mount.'),
@@ -68,10 +68,10 @@ return [
 function App() {
   const [tema, setTema] = useState("chiaro");
   return (
-    <TemaContext.Provider value={tema}>
+    <TemaContext value={tema}>
       <Pagina />
       <button onClick={() => setTema(tema === "chiaro" ? "scuro" : "chiaro")}>Cambia tema</button>
-    </TemaContext.Provider>
+    </TemaContext>
   );
 }
 
@@ -79,14 +79,14 @@ function Pulsante() {
   const tema = useContext(TemaContext);   // nessuna prop da passare
   return <button className={tema}>OK</button>;
 }', 'jsx'),
-            P('Il Context è perfetto per dati “globali” e poco frequenti: tema, lingua, utente collegato. Per stato complesso e molto aggiornato esistono librerie dedicate (Redux, Zustand) o `useReducer`.', 'Context is perfect for “global”, rarely changing data: theme, language, signed-in user. For complex, frequently updated state there are dedicated libraries (Redux, Zustand) or `useReducer`.'),
+            P('Da React 19 il contesto stesso fa da provider: `<TemaContext value={…}>` (prima si scriveva `<TemaContext.Provider>`, che funziona ancora). Il Context è perfetto per dati “globali” e poco frequenti: tema, lingua, utente collegato. Per stato complesso e molto aggiornato esistono librerie dedicate (Redux, Zustand) o `useReducer`.', 'Since React 19 the context itself acts as the provider: `<TemaContext value={…}>` (before, you wrote `<TemaContext.Provider>`, which still works). Context is perfect for “global”, rarely changing data: theme, language, signed-in user. For complex, frequently updated state there are dedicated libraries (Redux, Zustand) or `useReducer`.'),
         ], [
             Q('x1', L('Che cos’è il prop drilling?', 'What is prop drilling?'), [L('Passare props attraverso molti livelli', 'Passing props through many levels'), L('Un errore di React', 'A React error'), L('Un tipo di hook', 'A type of hook'), L('Un modo di fare CSS', 'A way of doing CSS')], 0, L('Il Context lo evita.', 'Context avoids it.')),
             Q('x2', L('Quale hook legge un Context?', 'Which hook reads a Context?'), ['useContext', 'useState', 'useEffect', 'useRef'], 0, L('Dentro un Provider.', 'Inside a Provider.')),
             Q('x3', L('Per quali dati è adatto il Context?', 'What data suits Context?'), [L('Tema, lingua, utente collegato', 'Theme, language, signed-in user'), L('Ogni carattere digitato', 'Every typed character'), L('I dati di un solo componente', 'Data of a single component'), L('Nessuno', 'None')], 0, L('Globali e poco frequenti.', 'Global and infrequent.')),
         ], task('jsx', L('Crea `LinguaContext` con `createContext("it")` e nel componente `Saluto` leggi la lingua con `useContext(LinguaContext)`.', 'Create `LinguaContext` with `createContext("it")` and in the `Saluto` component read the language with `useContext(LinguaContext)`.'), '', [re('const\s+LinguaContext\s*=\s*createContext\s*\(\s*["\']it["\']\s*\)', L('Il Context', 'The Context')), re('function\s+Saluto[\s\S]*useContext\s*\(\s*LinguaContext\s*\)', L('Saluto lo legge', 'Saluto reads it'))], '', "const LinguaContext = createContext(\"it\");\n\nfunction Saluto() {\n  const lingua = useContext(LinguaContext);\n  return <p>{lingua === \"it\" ? \"Ciao\" : \"Hello\"}</p>;\n}"), [
             dMatch(pMatch(), [['createContext', L('Crea il contesto', 'Creates the context')], ['Provider', L('Fornisce il valore', 'Provides the value')], ['useContext', L('Legge il valore', 'Reads the value')], [L('Sollevare lo stato', 'Lifting state'), L('Spostarlo nel genitore comune', 'Moving it to the common parent')]], L('Condividere lo stato.', 'Sharing state.')),
-            dFlash(pFlash(), [[L('Il Context evita di passare props a mano per molti livelli', 'Context avoids passing props by hand through many levels'), true], [L('useContext funziona fuori da qualsiasi Provider con il valore dato', 'useContext outside any Provider gets the given value'), false], [L('Il tema è un buon uso del Context', 'Theme is a good use of Context'), true], [L('Ogni stato va messo nel Context', 'All state belongs in Context'), false]], L('Globale solo quando serve.', 'Global only when needed.')),
+            dFlash(pFlash(), [[L('Il Context evita di passare props a mano per molti livelli', 'Context avoids passing props by hand through many levels'), true], [L('Fuori da ogni Provider useContext lancia un errore', 'Outside any Provider useContext throws an error'), false], [L('Il tema è un buon uso del Context', 'Theme is a good use of Context'), true], [L('Ogni stato va messo nel Context', 'All state belongs in Context'), false]], L('Fuori da ogni Provider useContext restituisce il valore di default di createContext. Globale solo quando serve.', 'Outside any Provider useContext returns the default value of createContext. Global only when needed.')),
         ]),
         lesson('hooks', L('Hook personalizzati e prestazioni', 'Custom hooks and performance'), [
             P('Un **hook personalizzato** è una funzione che inizia con `use` e usa altri hook: così la logica ripetuta (caricare dati, leggere dal localStorage) si scrive una volta e si riusa.', 'A **custom hook** is a function starting with `use` that uses other hooks: that way repeated logic (loading data, reading localStorage) is written once and reused.'),
@@ -102,7 +102,7 @@ function Pulsante() {
 }
 
 const [tema, setTema] = useLocalStorage("tema", "chiaro");', 'jsx'),
-            P('Regole degli hook: chiamali solo al primo livello del componente (mai dentro `if` o cicli) e solo da componenti o altri hook. Per le prestazioni, **`useMemo`** ricorda un calcolo costoso e **`memo`** evita di ridisegnare un componente con le stesse props: usali solo dove misuri un problema.', 'Rules of hooks: call them only at the top level of the component (never inside `if` or loops) and only from components or other hooks. For performance, **`useMemo`** remembers an expensive calculation and **`memo`** avoids redrawing a component with the same props: use them only where you measure a problem.'),
+            P('Regole degli hook: chiamali solo al primo livello del componente (mai dentro `if` o cicli) e solo da componenti o altri hook. Per le prestazioni, **`useMemo`** ricorda un calcolo costoso e **`memo`** evita di ridisegnare un componente con le stesse props: usali solo dove misuri un problema. Il **React Compiler** può aggiungere queste ottimizzazioni da solo durante la build.', 'Rules of hooks: call them only at the top level of the component (never inside `if` or loops) and only from components or other hooks. For performance, **`useMemo`** remembers an expensive calculation and **`memo`** avoids redrawing a component with the same props: use them only where you measure a problem. The **React Compiler** can add these optimisations by itself at build time.'),
         ], [
             Q('h1', L('Con che cosa inizia il nome di un hook?', 'What does a hook’s name start with?'), ['use', 'hook', 'get', 'on'], 0, L('Per esempio `useLocalStorage`.', 'For example `useLocalStorage`.')),
             Q('h2', L('Si può chiamare un hook dentro un `if`?', 'Can you call a hook inside an `if`?'), [L('No, solo al primo livello', 'No, only at the top level'), L('Sì, sempre', 'Yes, always'), L('Solo useState', 'Only useState'), L('Solo nei cicli', 'Only in loops')], 0, L('L’ordine degli hook deve restare uguale.', 'Hook order must stay the same.')),
@@ -122,7 +122,7 @@ const [tema, setTema] = useLocalStorage("tema", "chiaro");', 'jsx'),
 }
 const [voci, dispatch] = useReducer(carrello, []);
 dispatch({ type: "aggiungi", prodotto: "Libro" });', 'jsx'),
-            P('Con **React Testing Library** si prova il componente come lo usa una persona: lo si disegna con `render`, si trovano gli elementi per ruolo o testo (`getByRole`) e si simula il clic. Si controlla ciò che si **vede**, non lo stato interno.', 'With **React Testing Library** you test the component the way a person uses it: draw it with `render`, find elements by role or text (`getByRole`) and simulate the click. You check what is **seen**, not the internal state.'),
+            P('Con **React Testing Library** si prova il componente come lo usa una persona: lo si disegna con `render`, si trovano gli elementi per ruolo o testo (`getByRole`) e si simula il clic (meglio con `user-event`, più realistico). Si controlla ciò che si **vede**, non lo stato interno.', 'With **React Testing Library** you test the component the way a person uses it: draw it with `render`, find elements by role or text (`getByRole`) and simulate the click (better with `user-event`, more realistic). You check what is **seen**, not the internal state.'),
         ], [
             Q('rt1', L('Che cosa riceve un reducer?', 'What does a reducer receive?'), [L('Lo stato attuale e un’azione', 'The current state and an action'), L('Solo le props', 'Only props'), L('Il DOM', 'The DOM'), L('Un URL', 'A URL')], 0, L('E restituisce il nuovo stato.', 'And returns the new state.')),
             Q('rt2', L('Un reducer deve…', 'A reducer must…'), [L('Restituire un nuovo stato senza modificare il vecchio', 'Return a new state without changing the old one'), L('Chiamare il server', 'Call the server'), L('Modificare lo stato in place', 'Change state in place'), L('Usare setTimeout', 'Use setTimeout')], 0, L('È una funzione pura.', 'It is a pure function.')),
@@ -130,6 +130,132 @@ dispatch({ type: "aggiungi", prodotto: "Libro" });', 'jsx'),
         ], task('jsx', L('Scrivi `const [n, dispatch] = useReducer(contatore, 0);` e poi `dispatch({ type: "piu" });`.', 'Write `const [n, dispatch] = useReducer(contatore, 0);` and then `dispatch({ type: "piu" });`.'), '', [re('const\s*\[\s*n\s*,\s*dispatch\s*\]\s*=\s*useReducer\(\s*contatore\s*,\s*0\s*\)', L('Usi useReducer', 'You use useReducer')), re('dispatch\(\s*\{\s*type\s*:\s*["\']piu["\']\s*\}\s*\)', L('Invii l’azione', 'You dispatch the action'))], '', "const [n, dispatch] = useReducer(contatore, 0);\ndispatch({ type: \"piu\" });"), [
             dOrder(pSort(), ['render(<Contatore />);', 'const btn = screen.getByRole("button");', 'fireEvent.click(btn);', 'expect(screen.getByText("1")).toBeInTheDocument();'], L('Disegna, trova, agisci, verifica.', 'Render, find, act, assert.')),
             dFlash(pFlash(), [[L('Un reducer è una funzione pura', 'A reducer is a pure function'), true], [L('dispatch modifica direttamente lo stato', 'dispatch changes state directly'), false], [L('getByRole trova gli elementi come li vede l’utente', 'getByRole finds elements as the user sees them'), true], [L('I test devono leggere lo stato interno', 'Tests must read internal state'), false]], L('Reducer e test.', 'Reducers and tests.')),
+        ]),
+        lesson('actions', L('Azioni dei form in React 19', 'Form actions in React 19'), [
+            P('In React 19 un `<form>` accetta una **azione**: `action={funzione}`. La funzione riceve un `FormData` con i campi, anche se è asincrona, e React gestisce l’invio. Con `useActionState` ottieni anche il risultato dell’ultima azione e lo stato di attesa.', 'In React 19 a `<form>` accepts an **action**: `action={function}`. The function receives a `FormData` with the fields, even when it is async, and React handles the submit. With `useActionState` you also get the result of the last action and the pending state.'),
+            C('import { useActionState } from "react";
+
+async function iscrivi(statoPrecedente, dati) {
+  const email = String(dati.get("email"));
+  if (!email.includes("@")) return { errore: "Email non valida" };
+  await salva(email);
+  return { ok: true };
+}
+
+function Iscrizione() {
+  const [stato, azione, inAttesa] = useActionState(iscrivi, {});
+  return (
+    <form action={azione}>
+      <input name="email" type="email" />
+      <button disabled={inAttesa}>{inAttesa ? "Invio…" : "Iscriviti"}</button>
+      {stato.errore && <p>{stato.errore}</p>}
+    </form>
+  );
+}', 'jsx'),
+            P('Non servono `preventDefault` né uno stato per ogni campo: i valori arrivano nel `FormData` grazie all’attributo `name`. Dopo un’azione riuscita React svuota i campi non controllati. `useFormStatus` (da `react-dom`) dà `pending` a un componente dentro il form, e `useOptimistic` mostra subito il risultato atteso mentre il server risponde.', 'You need neither `preventDefault` nor a state per field: values reach the `FormData` thanks to the `name` attribute. After a successful action React resets uncontrolled fields. `useFormStatus` (from `react-dom`) gives `pending` to a component inside the form, and `useOptimistic` shows the expected result straight away while the server answers.'),
+        ], [
+            Q('ac1', L('Che cosa riceve la funzione passata a `<form action={…}>`?', 'What does the function passed to `<form action={…}>` receive?'), [L('Un evento da fermare con `preventDefault`', 'An event to stop with `preventDefault`'), L('Un `FormData` con i campi', 'A `FormData` with the fields'), L('Solo il primo campo', 'Only the first field'), L('Niente', 'Nothing')], 1, L('Si legge con `dati.get("nome")`.', 'You read it with `dati.get("nome")`.')),
+            Q('ac2', L('Che cosa restituisce `useActionState`?', 'What does `useActionState` return?'), [L('Solo una Promise', 'Only a Promise'), L('Un ref al form', 'A ref to the form'), L('Stato, azione da passare al form e stato di attesa', 'State, action to pass to the form and pending state'), L('Il DOM del form', 'The form’s DOM')], 2, L('`[stato, azione, inAttesa]`.', '`[state, action, isPending]`.')),
+            Q('ac3', L('Come fa un campo a finire nel `FormData`?', 'How does a field end up in the `FormData`?'), [L('Con `value={…}`', 'With `value={…}`'), L('Con l’attributo `id`', 'With the `id` attribute'), L('Con `onChange`', 'With `onChange`'), L('Con l’attributo `name`', 'With the `name` attribute')], 3, L('Come in un form HTML normale.', 'As in a normal HTML form.')),
+        ], task('jsx', L('Collega il form all’azione: `const [stato, azione, inAttesa] = useActionState(salva, null)` e `<form action={azione}>`.', 'Connect the form to the action: `const [stato, azione, inAttesa] = useActionState(salva, null)` and `<form action={azione}>`.'), 'function Nota() {
+  return (
+    <form>
+      <input name="testo" />
+      <button>Salva</button>
+    </form>
+  );
+}', [re('const\s*\[\s*stato\s*,\s*azione\s*(,\s*inAttesa\s*)?\]\s*=\s*useActionState\s*\(\s*salva\s*,', L('Usi `useActionState`', 'You use `useActionState`')), re('<form[^>]*action\s*=\s*\{\s*azione\s*\}', L('Il form usa l’azione', 'The form uses the action'))], '', 'function Nota() {
+  const [stato, azione, inAttesa] = useActionState(salva, null);
+  return (
+    <form action={azione}>
+      <input name="testo" />
+      <button disabled={inAttesa}>Salva</button>
+    </form>
+  );
+}'), [
+            dMatch(pMatch(), [['action={fn}', L('L’azione del form', 'The form’s action')], ['useActionState', L('Risultato e attesa dell’azione', 'Result and pending state of the action')], ['useFormStatus', L('Il form è in invio?', 'Is the form submitting?')], ['useOptimistic', L('Mostra subito il risultato atteso', 'Shows the expected result at once')], ['name="email"', L('Il campo nel FormData', 'The field in the FormData')]], L('Il kit dei form di React 19.', 'React 19’s form kit.')),
+            dOrder(pSort(), ['async function invia(prec, dati) {', '  const testo = dati.get("testo");', '  await salva(testo);', '  return { ok: true };', '}'], L('Leggi il campo, salva, restituisci il nuovo stato.', 'Read the field, save, return the new state.')),
+        ]),
+        lesson('suspense-use', L('Suspense, use ed error boundary', 'Suspense, use and error boundaries'), [
+            P('`<Suspense>` mostra un contenuto di riserva (`fallback`) mentre una parte dell’albero aspetta qualcosa: il codice di un componente caricato con `lazy` o i dati letti con `use`. Il resto della pagina resta visibile.', '`<Suspense>` shows fallback content while part of the tree waits for something: the code of a component loaded with `lazy` or data read with `use`. The rest of the page stays visible.'),
+            C('import { Suspense, lazy, use } from "react";
+
+const Grafico = lazy(() => import("./Grafico.jsx"));
+
+function Commenti({ promessa }) {
+  const commenti = use(promessa); // sospende finché la promessa non si risolve
+  return <ul>{commenti.map(c => <li key={c.id}>{c.testo}</li>)}</ul>;
+}
+
+function Pagina({ promessaCommenti }) {
+  return (
+    <>
+      <Suspense fallback={<p>Caricamento grafico…</p>}>
+        <Grafico />
+      </Suspense>
+      <Suspense fallback={<p>Caricamento commenti…</p>}>
+        <Commenti promessa={promessaCommenti} />
+      </Suspense>
+    </>
+  );
+}', 'jsx'),
+            P('`use` legge il valore di una promessa (o di un contesto) e, a differenza degli altri hook, si può chiamare anche dentro un `if`. La promessa va creata **fuori** dal componente che la legge, per esempio in un componente server o in una libreria di dati: se la ricrei a ogni rendering, l’attesa non finisce mai. Se la promessa fallisce, l’errore arriva al più vicino **error boundary**, che mostra un messaggio al posto del pezzo rotto (una classe con `componentDidCatch` o la libreria `react-error-boundary`).', '`use` reads the value of a promise (or a context) and, unlike other hooks, can be called even inside an `if`. The promise must be created **outside** the component reading it, for example in a server component or a data library: if you recreate it on every render, the wait never ends. If the promise fails, the error reaches the nearest **error boundary**, which shows a message in place of the broken piece (a class with `componentDidCatch` or the `react-error-boundary` library).'),
+        ], [
+            Q('ub1', L('Che cosa mostra `<Suspense>` mentre aspetta?', 'What does `<Suspense>` show while waiting?'), [L('Niente', 'Nothing'), L('Il contenuto di `fallback`', 'The `fallback` content'), L('Un errore', 'An error'), L('La pagina precedente', 'The previous page')], 1, L('Solo per la parte che aspetta.', 'Only for the part that is waiting.')),
+            Q('ub2', L('Che cosa ha di speciale `use` rispetto agli altri hook?', 'What is special about `use` compared with other hooks?'), [L('Funziona solo nelle classi', 'It only works in classes'), L('Non restituisce valori', 'It returns no values'), L('Va chiamato solo sul server', 'It must only be called on the server'), L('Si può chiamare dentro un `if`', 'It can be called inside an `if`')], 3, L('Le altre regole degli hook restano valide.', 'The other rules of hooks still apply.')),
+            Q('ub3', L('Dove va creata la promessa passata a `use`?', 'Where should the promise passed to `use` be created?'), [L('Dentro il componente che la legge, a ogni rendering', 'Inside the component reading it, on every render'), L('In un file CSS', 'In a CSS file'), L('Fuori dal componente che la legge', 'Outside the component reading it'), L('Non serve una promessa', 'No promise is needed')], 2, L('Una promessa nuova a ogni rendering ricomincia l’attesa da capo.', 'A new promise on every render restarts the wait.')),
+        ], task('jsx', L('Avvolgi `<Profilo />` in `<Suspense fallback={<p>Caricamento…</p>}>`.', 'Wrap `<Profilo />` in `<Suspense fallback={<p>Caricamento…</p>}>`.'), 'function App() {
+  return <Profilo />;
+}', [re('<Suspense\s+fallback\s*=\s*\{\s*<p>[^<]*</p>\s*\}\s*>\s*<Profilo\s*/>\s*</Suspense>', L('Il profilo ha un contenuto di riserva', 'The profile has fallback content'))], '', 'function App() {
+  return (
+    <Suspense fallback={<p>Caricamento…</p>}>
+      <Profilo />
+    </Suspense>
+  );
+}'), [
+            dMatch(pMatch(), [['<Suspense>', L('Riserva durante l’attesa', 'Fallback while waiting')], ['lazy()', L('Carica il codice di un componente quando serve', 'Loads a component’s code when needed')], ['use(promessa)', L('Legge il valore di una promessa', 'Reads the value of a promise')], ['Error boundary', L('Mostra un messaggio se qualcosa si rompe', 'Shows a message if something breaks')]], L('Attese ed errori, senza bloccare tutta la pagina.', 'Waits and errors, without blocking the whole page.')),
+            dFlash(pFlash(), [[L('`use` può leggere anche un contesto', '`use` can also read a context'), true], [L('Un `<Suspense>` blocca tutta la pagina', 'A `<Suspense>` blocks the whole page'), false], [L('`lazy` divide il codice in pezzi caricati quando servono', '`lazy` splits code into pieces loaded when needed'), true], [L('Creare la promessa a ogni rendering va benissimo con `use`', 'Creating the promise on every render is fine with `use`'), false]], L('La promessa nasce fuori, `use` la legge.', 'The promise is born outside, `use` reads it.')),
+        ]),
+        lesson('router', L('Più pagine con React Router', 'Multiple pages with React Router'), [
+            P('React da solo non gestisce gli indirizzi. **React Router** collega ogni percorso a un componente e cambia pagina senza ricaricare. Dalla versione 7 si importa tutto dal pacchetto `react-router`.', 'React alone does not handle addresses. **React Router** maps each path to a component and changes page without reloading. Since version 7 everything is imported from the `react-router` package.'),
+            C('import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from "react-router";
+
+function Corso() {
+  const { id } = useParams();
+  const vai = useNavigate();
+  return (
+    <>
+      <h1>Corso {id}</h1>
+      <button onClick={() => vai("/")}>Torna alla home</button>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <nav><Link to="/">Home</Link> <Link to="/corsi/react">React</Link></nav>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/corsi/:id" element={<Corso />} />
+        <Route path="*" element={<NonTrovato />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}', 'jsx'),
+            P('`:id` è un parametro letto con `useParams`, `*` cattura gli indirizzi inesistenti e `useNavigate` cambia pagina dal codice. Se ti servono anche il rendering sul server e il caricamento dei dati per rotta, valuta un framework: React Router in modalità framework oppure Next.js.', '`:id` is a parameter read with `useParams`, `*` catches addresses that do not exist and `useNavigate` changes page from code. If you also need server rendering and per-route data loading, consider a framework: React Router in framework mode or Next.js.'),
+        ], [
+            Q('ro1', L('Con che cosa crei un collegamento interno senza ricaricare?', 'What makes an internal link without reloading?'), ['<a href>', '<Link to>', '<Route>', '<Routes>'], 1, L('`<a>` farebbe ricaricare tutta la pagina.', '`<a>` would reload the whole page.')),
+            Q('ro2', L('Come leggi `:id` nel componente?', 'How do you read `:id` in the component?'), ['useState("id")', 'window.id', 'useParams()', L('`props.id`, sempre', '`props.id`, always')], 2, L('`const { id } = useParams()`.', '`const { id } = useParams()`.')),
+            Q('ro3', L('Quale percorso cattura le pagine inesistenti?', 'Which path catches missing pages?'), ['/', '404', ':id', '*'], 3, L('Mettilo come ultima rotta.', 'Put it as the last route.')),
+        ], task('jsx', L('Aggiungi la rotta `<Route path="/profilo" element={<Profilo />} />` dentro `<Routes>`.', 'Add the route `<Route path="/profilo" element={<Profilo />} />` inside `<Routes>`.'), '<Routes>
+  <Route path="/" element={<Home />} />
+</Routes>', [re('<Route\s+path\s*=\s*["\']/profilo["\']\s+element\s*=\s*\{\s*<Profilo\s*/>\s*\}\s*/>', L('La rotta del profilo esiste', 'The profile route exists'))], '', '<Routes>
+  <Route path="/" element={<Home />} />
+  <Route path="/profilo" element={<Profilo />} />
+</Routes>'), [
+            dMatch(pMatch(), [['<Link to>', L('Collegamento interno', 'Internal link')], ['<Route>', L('Percorso → componente', 'Path → component')], ['useParams', L('Legge i parametri', 'Reads the parameters')], ['useNavigate', L('Cambia pagina dal codice', 'Changes page from code')], ['path="*"', L('Pagina non trovata', 'Page not found')]], L('I pezzi del router.', 'The parts of the router.')),
+            dBug(pBug(), ['import { Link } from "react-router";', 'function Menu() {', '  return <Link href="/corsi">Corsi</Link>;', '}'], 2, '  return <Link to="/corsi">Corsi</Link>;', L('`Link` usa la prop `to`, non `href`.', '`Link` uses the `to` prop, not `href`.')),
         ]),
     ],
 ];

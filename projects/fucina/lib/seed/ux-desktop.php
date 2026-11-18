@@ -1,10 +1,10 @@
 <?php
-/** UX on desktop: large screens and layouts, pointer and keyboard, power users and shortcuts, windows and multitasking. */
+/** UX on desktop: large screens and layouts, pointer and keyboard, power users and shortcuts, windows and multitasking, data tables, learning complex software, web and native apps. */
 
 return [
     'id' => 'ux-desktop', 'family' => 'ux', 'after' => 'ux-base', 'categories' => ['design', 'desktop'],
     'title' => L('UX su desktop', 'UX on Desktop'), 'short' => L('UX desktop', 'Desktop UX'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Progettare per schermi grandi: layout e densità, mouse, hover e menu contestuali, tastiera e scorciatoie, utenti esperti, finestre e multitasking.', 'Designing for large screens: layout and density, mouse, hover and context menus, keyboard and shortcuts, power users, windows and multitasking.'),
+    'desc' => L('Progettare per schermi grandi: layout e densità, mouse e menu contestuali, tastiera e utenti esperti, finestre e multitasking, tabelle e annulla, software complessi da imparare un po’ alla volta, web app, PWA e app native.', 'Designing for large screens: layout and density, mouse and context menus, keyboard and power users, windows and multitasking, tables and undo, complex software learned step by step, web apps, PWAs and native apps.'),
     'lessons' => [
         lesson('layout', L('Schermi grandi, layout e densità', 'Large screens, layout and density'), [
             P('Sul desktop si lavora seduti, a lungo, spesso su compiti complessi: scrivere, analizzare dati, gestire molti elementi. Lo spazio permette **più informazioni in vista** e layout a più colonne: barra laterale di navigazione, area principale, pannello di dettaglio (lo schema **lista-dettaglio** di email e file manager).', 'On desktop people work seated, for long stretches, often on complex tasks: writing, analysing data, managing many items. The space allows **more information in view** and multi-column layouts: side navigation bar, main area, detail panel (the **list-detail** pattern of email clients and file managers).'),

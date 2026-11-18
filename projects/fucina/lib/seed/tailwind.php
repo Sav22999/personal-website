@@ -1,10 +1,10 @@
 <?php
-/** Tailwind CSS v4: utility classes, layout, responsive design, states and components. */
+/** Tailwind CSS v4: utility classes, layout, responsive design, states and components, installation, custom values and utilities, container queries. */
 
 return [
     'id' => 'tailwind', 'family' => 'tailwind', 'after' => 'css-base',
     'title' => L('Tailwind CSS', 'Tailwind CSS'), 'short' => L('Tailwind', 'Tailwind'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Lo stile scritto con le classi: spazi, colori, flex e griglie, schermi diversi, stati e componenti.', 'Styling with classes: spacing, colours, flex and grids, screen sizes, states and components.'),
+    'desc' => L('Lo stile scritto con le classi di Tailwind v4: spazi, colori, flex e griglie, schermi diversi, stati, group e peer, valori e utilità su misura, container query e installazione.', 'Styling with Tailwind v4 classes: spacing, colours, flex and grids, screen sizes, states, group and peer, custom values and utilities, container queries and installation.'),
     'lessons' => [
         lesson('utilities', L('Le classi di utilità', 'Utility classes'), [
             P('Tailwind non ha componenti già pronti: ha migliaia di **classi piccole**, una per ogni proprietà. `p-4` mette il padding, `text-lg` ingrandisce il testo, `bg-white` colora lo sfondo. Si combinano direttamente nell’HTML.', 'Tailwind has no ready-made components: it has thousands of **small classes**, one per property. `p-4` sets padding, `text-lg` enlarges text, `bg-white` colours the background. You combine them right in the HTML.'),
@@ -98,6 +98,114 @@ return [
 }'), [
             dBlanks(pFill(), "@___ \"tailwindcss\";\n@theme {\n  --color-___: #ff5b2e;\n}\n.btn { @___ px-4 py-2 bg-brace; }", ['import', 'brace', 'apply'], ['include', 'use', 'mixin'], L('Importa, definisci il colore, raccogli le classi.', 'Import, define the colour, gather the classes.')),
             dFlash(pFlash(), [[L('Con `@theme` si aggiungono colori propri', '`@theme` adds your own colours'), true], [L('Bisogna scrivere CSS per ogni bottone', 'You must write CSS for every button'), false], [L('Le classi inutilizzate finiscono nel CSS finale', 'Unused classes end up in the final CSS'), false], [L('Le classi di Tailwind si possono combinare nello stesso elemento', 'Tailwind classes can be combined on the same element'), true]], L('Si genera solo ciò che serve.', 'Only what is needed is generated.')),
+        ]),
+        lesson('install', L('Installare Tailwind v4', 'Installing Tailwind v4'), [
+            P('Tailwind è un programma che legge i tuoi file, trova le classi che usi e genera il CSS. Con Vite si installa il pacchetto `tailwindcss` insieme al plugin `@tailwindcss/vite`, si aggiunge il plugin alla configurazione e nel file CSS basta una riga: `@import "tailwindcss";`.', 'Tailwind is a program that reads your files, finds the classes you use and generates the CSS. With Vite you install the `tailwindcss` package together with the `@tailwindcss/vite` plugin, add the plugin to the configuration, and in the CSS file one line is enough: `@import "tailwindcss";`.'),
+            C('npm install tailwindcss @tailwindcss/vite
+
+// vite.config.js
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+
+export default defineConfig({
+  plugins: [tailwindcss()],
+});', 'js'),
+            C('/* src/style.css */
+@import "tailwindcss";
+@source "../node_modules/mia-libreria";', 'css'),
+            P('Tailwind trova da solo i file da analizzare e salta quelli elencati in `.gitignore`. Con `@source` aggiungi una cartella che non vedrebbe, come una libreria in `node_modules`. Senza Vite c’è la riga di comando: `npx @tailwindcss/cli -i input.css -o output.css --watch`.', 'Tailwind finds the files to scan by itself and skips those listed in `.gitignore`. With `@source` you add a folder it would not see, like a library in `node_modules`. Without Vite there is the command line: `npx @tailwindcss/cli -i input.css -o output.css --watch`.'),
+        ], [
+            Q('n1', L('Che cosa scrivi nel file CSS per usare Tailwind v4?', 'What do you write in the CSS file to use Tailwind v4?'), ['@tailwind base;', '@use "tailwind";', '@import "tailwindcss";', '<script src="tailwind.js">'], 2, L('Le vecchie direttive `@tailwind` erano di v3.', 'The old `@tailwind` directives belonged to v3.')),
+            Q('n2', L('A che cosa serve `@source`?', 'What is `@source` for?'), [L('A indicare file in più da analizzare in cerca di classi', 'To point to extra files to scan for classes'), L('A importare un font', 'To import a font'), L('A pubblicare il sito', 'To publish the site'), L('A scegliere il tema scuro', 'To choose the dark theme')], 0, L('Il resto lo trova da solo.', 'It finds the rest by itself.')),
+            Q('n3', L('Quali file salta Tailwind quando cerca le classi?', 'Which files does Tailwind skip when looking for classes?'), [L('Tutti i file HTML', 'All HTML files'), L('I file con più di cento righe', 'Files with more than a hundred lines'), L('I file JavaScript', 'JavaScript files'), L('Quelli elencati in `.gitignore`', 'Those listed in `.gitignore`')], 3, L('Per includerne uno escluso si usa `@source`.', 'To include an excluded one you use `@source`.')),
+        ], task('css', L('Scrivi il file CSS: importa Tailwind e aggiungi con `@source` la cartella `../componenti`.', 'Write the CSS file: import Tailwind and add the folder `../componenti` with `@source`.'), '', [re('@import\s+["\']tailwindcss["\']\s*;', L('Tailwind è importato', 'Tailwind is imported')), re('@source\s+["\']\.\./componenti/?["\']\s*;', L('La cartella è aggiunta', 'The folder is added'))], '<p class="text-lg">Ciao</p>', "@import \"tailwindcss\";\n@source \"../componenti\";"), [
+            dOrder(pSort(), ['npm install tailwindcss @tailwindcss/vite', L('aggiungi tailwindcss() ai plugin di Vite', 'add tailwindcss() to the Vite plugins'), L('scrivi @import "tailwindcss"; nel CSS', 'write @import "tailwindcss"; in the CSS'), 'npm run dev'], L('Installa, configura, importa, avvia.', 'Install, configure, import, start.')),
+            dFlash(pFlash(), [[L('In v4 la riga principale è `@import "tailwindcss";`', 'In v4 the main line is `@import "tailwindcss";`'), true], [L('Bisogna elencare a mano ogni file HTML', 'You must list every HTML file by hand'), false], [L('Esiste un plugin ufficiale per Vite', 'There is an official Vite plugin'), true], [L('Tailwind genera tutte le classi possibili nel CSS finale', 'Tailwind puts every possible class in the final CSS'), false]], L('Poche righe di installazione, poi solo classi.', 'A few lines of setup, then just classes.')),
+        ]),
+        lesson('arbitrary', L('Valori su misura', 'Custom values'), [
+            P('Quando la scala non basta, metti il valore tra parentesi quadre: `w-[37px]`, `bg-[#bada55]`, `grid-cols-[200px_1fr]` (il trattino basso sta per lo spazio). Per leggere una variabile CSS si usano le parentesi tonde: `bg-(--brand)`.', 'When the scale is not enough, put the value in square brackets: `w-[37px]`, `bg-[#bada55]`, `grid-cols-[200px_1fr]` (the underscore stands for a space). To read a CSS variable you use round brackets: `bg-(--brand)`.'),
+            C('<div class="w-[37px] bg-[#bada55]"></div>
+<div class="grid grid-cols-[200px_1fr] gap-4">…</div>
+<p class="bg-(--brand) text-white">Colore del marchio</p>
+<div class="[mask-type:luminance]">Proprietà su misura</div>
+<p class="text-red-500!">Importante</p>', 'html'),
+            P('Con `[proprietà:valore]` scrivi perfino una proprietà che Tailwind non ha. Il `!` finale rende la classe `!important`. Usa i valori su misura come eccezione: se ripeti lo stesso valore, aggiungilo al tema con `@theme`.', 'With `[property:value]` you can even write a property Tailwind does not have. A trailing `!` makes the class `!important`. Use custom values as the exception: if you repeat the same value, add it to the theme with `@theme`.'),
+        ], [
+            Q('a1', L('Come scrivi una larghezza di esattamente 37px?', 'How do you write a width of exactly 37px?'), ['w-37', 'w-[37px]', 'w(37px)', 'width-37px'], 1, L('Le parentesi quadre contengono un valore qualsiasi.', 'Square brackets hold any value.')),
+            Q('a2', L('In v4, come usi la variabile `--brand` come sfondo?', 'In v4, how do you use the `--brand` variable as a background?'), ['bg-[--brand]', 'bg-var-brand', 'bg-$brand', 'bg-(--brand)'], 3, L('In v4 le variabili vanno tra parentesi tonde.', 'In v4 variables go in round brackets.')),
+            Q('a3', L('Che cosa indica il trattino basso in `grid-cols-[200px_1fr]`?', 'What does the underscore mean in `grid-cols-[200px_1fr]`?'), [L('Uno spazio', 'A space'), L('Una sottrazione', 'A subtraction'), L('Un commento', 'A comment'), L('Un errore', 'A mistake')], 0, L('Nelle classi non si possono scrivere spazi.', 'Spaces cannot be written in classes.')),
+        ], task('html', L('Dai al `div` una larghezza di `250px` e lo sfondo `#ffe8d6` con due valori su misura.', 'Give the `div` a width of `250px` and the background `#ffe8d6` with two custom values.'), '<div class="p-4">Carta</div>', [re('class="[^"]*\bw-\[250px\]', L('La larghezza è 250px', 'The width is 250px')), re('class="[^"]*\bbg-\[#ffe8d6\]', L('Lo sfondo è giusto', 'The background is right'))], '', '<div class="p-4 w-[250px] bg-[#ffe8d6]">Carta</div>'), [
+            dMatch(pMatch(), [['w-[37px]', L('Valore su misura', 'Custom value')], ['bg-(--brand)', L('Variabile CSS', 'CSS variable')], ['[mask-type:luminance]', L('Proprietà su misura', 'Custom property')], ['text-red-500!', L('Classe importante', 'Important class')], ['grid-cols-[1fr_2fr]', L('Spazio scritto con `_`', 'Space written as `_`')]], L('Una via d’uscita quando la scala non basta.', 'A way out when the scale is not enough.')),
+            dBug(pBug(), ['<div class="grid', '  grid-cols-[200px 1fr]', '  gap-4">'], 1, '  grid-cols-[200px_1fr]', L('Lo spazio spezzerebbe la classe in due: si scrive `_`.', 'The space would split the class in two: you write `_`.')),
+        ]),
+        lesson('group-peer', L('Group, peer e altri stati', 'Group, peer and other states'), [
+            P('Per reagire allo stato di un altro elemento: segna il genitore con `group` e usa `group-hover:` sui figli; segna un fratello con `peer` e usa `peer-invalid:` (o un altro stato) sugli elementi che **lo seguono**. Il `peer` deve venire prima nel codice.', 'To react to another element’s state: mark the parent with `group` and use `group-hover:` on the children; mark a sibling with `peer` and use `peer-invalid:` (or another state) on the elements that **follow it**. The `peer` must come first in the code.'),
+            C('<a href="#" class="group block p-4 rounded-lg hover:bg-orange-500">
+  <h3 class="font-bold group-hover:text-white">Corso CSS</h3>
+  <p class="text-gray-600 group-hover:text-orange-100">10 livelli</p>
+</a>
+
+<input type="email" class="peer border rounded px-2">
+<p class="hidden peer-invalid:block text-red-600">Email non valida</p>
+
+<label class="has-checked:bg-orange-50 p-2"><input type="checkbox"> Newsletter</label>
+<button aria-expanded="false" class="aria-expanded:rotate-180">▾</button>', 'html'),
+            P('Altri prefissi utili: `has-checked:` reagisce a ciò che l’elemento contiene, `aria-expanded:` e `data-[stato=aperto]:` leggono gli attributi, `not-` nega uno stato, `*:` applica una classe a tutti i figli diretti.', 'Other handy prefixes: `has-checked:` reacts to what the element contains, `aria-expanded:` and `data-[stato=aperto]:` read attributes, `not-` negates a state, `*:` applies a class to every direct child.'),
+        ], [
+            Q('g1', L('Che cosa serve sul genitore per usare `group-hover:` sui figli?', 'What does the parent need for `group-hover:` on its children?'), [L('La classe `group`', 'The `group` class'), L('La classe `parent`', 'The `parent` class'), L('L’attributo `hover`', 'The `hover` attribute'), L('Niente', 'Nothing')], 0, L('`group` segna l’elemento da osservare.', '`group` marks the element to watch.')),
+            Q('g2', L('Dove deve stare l’elemento con `peer`?', 'Where must the element with `peer` sit?'), [L('Dopo l’elemento che reagisce', 'After the element that reacts'), L('Prima, come fratello dell’elemento che reagisce', 'Before, as a sibling of the element that reacts'), L('Dentro l’elemento che reagisce', 'Inside the element that reacts'), L('Ovunque nella pagina', 'Anywhere on the page')], 1, L('Il CSS sa guardare solo ai fratelli precedenti.', 'CSS can only look at previous siblings.')),
+            Q('g3', L('Quale prefisso reagisce a una casella spuntata contenuta nell’elemento?', 'Which prefix reacts to a ticked box inside the element?'), ['peer-checked:', 'group-checked:', 'checked:', 'has-checked:'], 3, L('`has-` guarda dentro, come `:has()`.', '`has-` looks inside, like `:has()`.')),
+        ], task('html', L('Mostra il messaggio solo quando l’email non è valida: dai `peer` all’`input` e `hidden peer-invalid:block` al paragrafo.', 'Show the message only when the email is invalid: give `peer` to the `input` and `hidden peer-invalid:block` to the paragraph.'), '<input type="email" class="border px-2">
+<p class="text-red-600">Email non valida</p>', [re('<input[^>]*class="[^"]*\bpeer\b', L('L’input è il `peer`', 'The input is the `peer`')), re('<p[^>]*class="[^"]*\bhidden\b', L('Il messaggio parte nascosto', 'The message starts hidden')), re('<p[^>]*class="[^"]*\bpeer-invalid:block\b', L('Compare se l’email non è valida', 'It shows if the email is invalid'))], '', "<input type=\"email\" class=\"peer border px-2\">\n<p class=\"hidden peer-invalid:block text-red-600\">Email non valida</p>"), [
+            dMatch(pMatch(), [['group-hover:', L('Il genitore è sotto il mouse', 'The parent is under the mouse')], ['peer-invalid:', L('Un fratello precedente non è valido', 'A previous sibling is invalid')], ['has-checked:', L('Contiene una casella spuntata', 'It holds a ticked box')], ['aria-expanded:', L('Attributo `aria-expanded="true"`', 'Attribute `aria-expanded="true"`')], ['*:', L('Tutti i figli diretti', 'All direct children')]], L('Stati che passano da un elemento all’altro.', 'States passed from one element to another.')),
+            dBug(pBug(), ['<input type="email" class="border px-2">', '<p class="hidden peer-invalid:block">Errore</p>'], 0, '<input type="email" class="peer border px-2">', L('Senza la classe `peer` sull’input, `peer-invalid:` non ha nessuno da osservare.', 'Without the `peer` class on the input, `peer-invalid:` has nothing to watch.')),
+        ]),
+        lesson('custom', L('Utilità e varianti su misura', 'Custom utilities and variants'), [
+            P('In v4 le tue classi si definiscono nel CSS. `@utility` crea una nuova classe che funziona con tutti i prefissi (`hover:`, `md:`…). `@custom-variant` crea un nuovo prefisso. `@plugin` carica un plugin, come quello ufficiale per la tipografia.', 'In v4 your own classes are defined in CSS. `@utility` creates a new class that works with every prefix (`hover:`, `md:`…). `@custom-variant` creates a new prefix. `@plugin` loads a plugin, like the official typography one.'),
+            C('@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@utility scorri-nascosto {
+  scrollbar-width: none;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant tema-notte (&:where([data-tema="notte"] *));', 'css'),
+            P('La variante `dark` riscritta così segue la classe `.dark` su un antenato invece del tema di sistema: utile se il sito ha un interruttore. Con il plugin di tipografia la classe `prose` dà uno stile curato a un intero articolo.', 'Rewritten like this, the `dark` variant follows the `.dark` class on an ancestor instead of the system theme: useful if the site has a toggle. With the typography plugin the `prose` class gives a whole article a polished style.'),
+        ], [
+            Q('c1', L('Come crei in v4 una classe che funziona anche con `hover:` e `md:`?', 'How do you create in v4 a class that also works with `hover:` and `md:`?'), [L('Con una regola CSS normale', 'With a normal CSS rule'), L('Con `@apply` in un file JavaScript', 'With `@apply` in a JavaScript file'), L('Con `@utility`', 'With `@utility`'), L('Con `@layer base`', 'With `@layer base`')], 2, L('Tailwind la tratta come una delle sue.', 'Tailwind treats it as one of its own.')),
+            Q('c2', L('Che cosa crea `@custom-variant`?', 'What does `@custom-variant` create?'), [L('Un nuovo colore', 'A new colour'), L('Un nuovo breakpoint fisso', 'A new fixed breakpoint'), L('Un nuovo file CSS', 'A new CSS file'), L('Un nuovo prefisso, come `tema-notte:`', 'A new prefix, like `tema-notte:`')], 3, L('Il selettore decide quando il prefisso vale.', 'The selector decides when the prefix applies.')),
+            Q('c3', L('Come carichi un plugin in v4?', 'How do you load a plugin in v4?'), ['@plugin "@tailwindcss/typography";', 'plugins: [typography]', '@use "typography";', '<script src="typography.js">'], 0, L('Direttamente nel CSS, come il resto della configurazione.', 'Right in the CSS, like the rest of the configuration.')),
+        ], task('css', L('Crea con `@utility` la classe `centro` con `display: grid` e `place-items: center`.', 'Create with `@utility` the `centro` class with `display: grid` and `place-items: center`.'), '@import "tailwindcss";
+', [re('@utility\s+centro\s*\{', L('Definisci `centro`', 'You define `centro`')), re('@utility\s+centro\s*\{[^}]*display\s*:\s*grid', L('Usa la griglia', 'It uses grid')), re('@utility\s+centro\s*\{[^}]*place-items\s*:\s*center', L('Centra il contenuto', 'It centres the content'))], '<div class="centro h-40">Al centro</div>', "@import \"tailwindcss\";\n\n@utility centro {\n  display: grid;\n  place-items: center;\n}"), [
+            dBlanks(pFill(), "@import \"tailwindcss\";\n___ \"@tailwindcss/typography\";\n___ scorri-nascosto {\n  scrollbar-width: none;\n}\n___ dark (&:where(.dark, .dark *));", ['@plugin', '@utility', '@custom-variant'], ['@include', '@mixin', '@media'], L('Plugin, classe nuova, prefisso nuovo.', 'Plugin, new class, new prefix.')),
+            dFlash(pFlash(), [[L('Una classe creata con `@utility` funziona con `hover:`', 'A class created with `@utility` works with `hover:`'), true], [L('In v4 `dark:` di base segue la classe `.dark`', 'In v4 `dark:` follows the `.dark` class by default'), false], [L('`prose` arriva dal plugin di tipografia', '`prose` comes from the typography plugin'), true], [L('I plugin in v4 si caricano solo da un file JavaScript', 'In v4 plugins can only be loaded from a JavaScript file'), false]], L('Di base `dark:` segue il sistema; per una classe serve `@custom-variant`.', 'By default `dark:` follows the system; a class needs `@custom-variant`.')),
+        ]),
+        lesson('container-motion', L('Container query e movimento', 'Container queries and motion'), [
+            P('Le container query sono integrate in v4: segna il genitore con `@container` e usa sui figli prefissi come `@md:`, che guardano la larghezza del contenitore invece dello schermo. `@md` vale da 28rem (448px) di contenitore; `@max-md:` vale sotto.', 'Container queries are built into v4: mark the parent with `@container` and use prefixes like `@md:` on the children, which look at the container’s width instead of the screen. `@md` applies from a 28rem (448px) container; `@max-md:` applies below it.'),
+            C('<div class="@container">
+  <article class="flex flex-col @md:flex-row gap-4">
+    <img class="@md:w-48" src="foto.jpg" alt="Forgia">
+    <p>La card si adatta allo spazio che ha.</p>
+  </article>
+</div>
+
+<button class="transition duration-300 ease-out hover:-translate-y-1
+               motion-reduce:transition-none">Salva</button>
+<svg class="animate-spin motion-reduce:hidden" aria-hidden="true">…</svg>', 'html'),
+            P('`transition`, `duration-300` ed `ease-out` animano i cambi di stato; `animate-spin`, `animate-pulse` e `animate-bounce` sono animazioni pronte. `motion-reduce:` vale per chi chiede meno movimento, `motion-safe:` solo per chi non lo chiede.', '`transition`, `duration-300` and `ease-out` animate state changes; `animate-spin`, `animate-pulse` and `animate-bounce` are ready-made animations. `motion-reduce:` applies to people asking for less motion, `motion-safe:` only to those who do not.'),
+        ], [
+            Q('q1', L('A che cosa guarda `@md:flex-row`?', 'What does `@md:flex-row` look at?'), [L('Alla larghezza dello schermo', 'The screen width'), L('Al sistema operativo', 'The operating system'), L('Alla larghezza del contenitore segnato con `@container`', 'The width of the container marked with `@container`'), L('All’altezza della pagina', 'The page height')], 2, L('`md:` guarda lo schermo, `@md:` il contenitore.', '`md:` looks at the screen, `@md:` at the container.')),
+            Q('q2', L('Quale prefisso vale per chi chiede meno movimento?', 'Which prefix applies to people asking for less motion?'), ['motion-safe:', 'motion-reduce:', 'reduce:', 'still:'], 1, L('Segue `prefers-reduced-motion`.', 'It follows `prefers-reduced-motion`.')),
+            Q('q3', L('Che cosa fa `duration-300` insieme a `transition`?', 'What does `duration-300` do together with `transition`?'), [L('Ritarda la pagina di 300ms', 'It delays the page by 300ms'), L('Ripete l’animazione 300 volte', 'It repeats the animation 300 times'), L('Ingrandisce del 300%', 'It enlarges by 300%'), L('Fa durare la transizione 300ms', 'It makes the transition last 300ms')], 3, L('Il numero è in millisecondi.', 'The number is in milliseconds.')),
+        ], task('html', L('Segna il `div` esterno con `@container` e fai passare l’`article` da `flex-col` a `@md:flex-row`.', 'Mark the outer `div` with `@container` and make the `article` go from `flex-col` to `@md:flex-row`.'), '<div class="">
+  <article class="flex gap-4">
+    <img src="foto.jpg" alt="Forgia">
+    <p>Testo</p>
+  </article>
+</div>', [re('<div[^>]*class="[^"]*@container', L('Il contenitore è segnato', 'The container is marked')), re('<article[^>]*class="[^"]*\bflex-col\b', L('In colonna di base', 'A column by default')), re('<article[^>]*class="[^"]*@md:flex-row', L('In riga da `@md`', 'A row from `@md`'))], '', "<div class=\"@container\">\n  <article class=\"flex flex-col @md:flex-row gap-4\">\n    <img src=\"foto.jpg\" alt=\"Forgia\">\n    <p>Testo</p>\n  </article>\n</div>"), [
+            dMatch(pMatch(), [['@container', L('Segna il contenitore', 'Marks the container')], ['@md:', L('Contenitore da 28rem in su', 'Container from 28rem up')], ['md:', L('Schermo da 768px in su', 'Screen from 768px up')], ['animate-spin', L('Rotazione continua', 'Continuous spin')], ['motion-reduce:', L('Chi chiede meno movimento', 'People asking for less motion')]], L('Componenti che si adattano e si muovono con garbo.', 'Components that adapt and move gracefully.')),
+            dFlash(pFlash(), [[L('In v4 le container query non richiedono plugin', 'In v4 container queries need no plugin'), true], [L('`@md:` guarda la larghezza dello schermo', '`@md:` looks at the screen width'), false], [L('`motion-safe:` vale solo per chi non chiede meno movimento', '`motion-safe:` only applies to people not asking for less motion'), true], [L('`animate-pulse` richiede JavaScript', '`animate-pulse` needs JavaScript'), false]], L('Lo spazio del componente conta più dello schermo.', 'The component’s space counts more than the screen.')),
         ]),
     ],
 ];

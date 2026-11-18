@@ -1,5 +1,5 @@
 <?php
-/** CSS intermediate: the step before flexbox and grid. */
+/** CSS intermediate: the step before flexbox and grid (selectors, states, typography, overflow, components, logical properties, forms, images and filters). */
 
 $page = '<nav class="menu"><a href="#">Home</a><a href="#">Corsi</a></nav>
 <h1 class="titolo">Fucina</h1>
@@ -10,7 +10,7 @@ $page = '<nav class="menu"><a href="#">Home</a><a href="#">Corsi</a></nav>
 return [
     'id' => 'css-intermediate', 'family' => 'css', 'after' => 'css-base',
     'title' => L('CSS intermedio', 'Intermediate CSS'), 'short' => L('CSS intermedio', 'CSS Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Selettori avanzati, stati, tipografia, overflow e stile di menu e bottoni.', 'Advanced selectors, states, typography, overflow and styling menus and buttons.'),
+    'desc' => L('Selettori avanzati, stati, tipografia, overflow, menu e bottoni, proprietà logiche, stile dei moduli, immagini e filtri.', 'Advanced selectors, states, typography, overflow, menus and buttons, logical properties, form styling, images and filters.'),
     'lessons' => [
         lesson('combinators', L('Combinatori e attributi', 'Combinators and attributes'), [
             P('I combinatori legano due selettori: lo spazio significa «dentro», `>` «figlio diretto», `+` «subito dopo», `~` «fratelli successivi». Con le parentesi quadre scegli in base a un attributo.', 'Combinators link two selectors: a space means “inside”, `>` “direct child”, `+` “right after”, `~` “following siblings”. Square brackets pick by attribute.'),
@@ -118,6 +118,74 @@ p {
 }', [css('.btn', 'padding-top', '12px', L('Il padding è 12px', 'The padding is 12px')), css('.btn', 'border-top-left-radius', '12px', L('Gli angoli sono tondi', 'The corners are round')), css('.btn', 'cursor', 'pointer', L('Il cursore è giusto', 'The cursor is right'))], $page, ".btn {\n  padding: 12px;\n  border-radius: 12px;\n  cursor: pointer;\n}"), [
             dOrder(pSort(), ['.btn {', '  padding: 10px 18px;', '  border-radius: 12px;', '}', '.btn:hover {', '  background: tomato;', '}'], L('Prima lo stato normale, poi quello al passaggio.', 'First the normal state, then the hover one.')),
             dFlash(pFlash(), [[L('Un link può sembrare un bottone', 'A link can look like a button'), true], [L('`cursor: pointer` serve sui bottoni', '`cursor: pointer` is for buttons'), true], [L('`padding` allarga l’area da toccare', '`padding` widens the tap area'), true], [L('`text-decoration: none` toglie il colore', '`text-decoration: none` removes the colour'), false]], L('Il `padding` rende più grande anche l’area cliccabile.', '`padding` also enlarges the clickable area.')),
+        ]),
+        lesson('logical', L('Proprietà logiche', 'Logical properties'), [
+            P('Le proprietà logiche descrivono i lati seguendo la direzione del testo, non lo schermo. `inline` è la direzione della riga (orizzontale in italiano), `block` quella in cui le righe si impilano. `margin-inline-start` è il margine sinistro in italiano e quello destro in arabo.', 'Logical properties describe sides by the direction of the text, not by the screen. `inline` is the direction of the line (horizontal in English), `block` the one in which lines stack. `margin-inline-start` is the left margin in English and the right one in Arabic.'),
+            C('.card {
+  padding-block: 16px;      /* sopra e sotto */
+  padding-inline: 24px;     /* ai lati */
+  margin-inline: auto;      /* centra il blocco */
+  border-inline-start: 4px solid #FF5B2E;
+  inline-size: min(100%, 40rem); /* la larghezza */
+}', 'css'),
+            P('`inline-size` è la larghezza, `block-size` l’altezza. Con `dir="rtl"` sulla pagina tutto si ribalta da solo, senza regole nuove.', '`inline-size` is the width, `block-size` the height. With `dir="rtl"` on the page everything flips by itself, with no new rules.'),
+        ], [
+            Q('l1', L('In italiano, qual è la direzione `inline`?', 'In English, what is the `inline` direction?'), [L('Verticale', 'Vertical'), L('Orizzontale', 'Horizontal'), L('Diagonale', 'Diagonal'), L('Dipende dallo schermo', 'It depends on the screen')], 1, L('È la direzione in cui scorre una riga di testo.', 'It is the direction a line of text runs in.')),
+            Q('l2', L('Che cosa fa `margin-inline: auto` su un blocco con una larghezza?', 'What does `margin-inline: auto` do on a block with a width?'), [L('Toglie tutti i margini', 'It removes all margins'), L('Lo centra in verticale', 'It centres it vertically'), L('Lo centra orizzontalmente', 'It centres it horizontally'), L('Niente, non è valido', 'Nothing, it is not valid')], 2, L('È il `margin: 0 auto` logico.', 'It is the logical `margin: 0 auto`.')),
+            Q('l3', L('Quale proprietà è la larghezza logica?', 'Which property is the logical width?'), ['block-size', 'line-width', 'size-x', 'inline-size'], 3, L('`block-size` è l’altezza.', '`block-size` is the height.')),
+        ], task('css', L('Con le proprietà logiche dai a `.nota` un `padding-inline` di `20px` e un `border-inline-start` di `4px solid orange`.', 'Using logical properties, give `.nota` a `padding-inline` of `20px` and a `border-inline-start` of `4px solid orange`.'), '.nota {
+
+}', [re('padding-inline\s*:\s*20px', L('Usi `padding-inline`', 'You use `padding-inline`')), re('border-inline-start\s*:', L('Usi `border-inline-start`', 'You use `border-inline-start`')), css('.nota', 'padding-left', '20px', L('Il padding laterale è 20px', 'The side padding is 20px')), css('.nota', 'border-left-width', '4px', L('Il bordo d’inizio è 4px', 'The start border is 4px'))], $page, ".nota {\n  padding-inline: 20px;\n  border-inline-start: 4px solid orange;\n}"), [
+            dMatch(pMatch(), [['padding-inline', L('Spazio ai lati della riga', 'Space at the sides of the line')], ['padding-block', L('Spazio sopra e sotto', 'Space above and below')], ['inline-size', L('Larghezza', 'Width')], ['block-size', L('Altezza', 'Height')], ['margin-inline-start', L('Margine all’inizio della riga', 'Margin at the start of the line')]], L('Lati che seguono la lingua, non lo schermo.', 'Sides that follow the language, not the screen.')),
+            dFlash(pFlash(), [[L('In arabo `inline-start` è a destra', 'In Arabic `inline-start` is on the right'), true], [L('In italiano `block` è la direzione orizzontale', 'In English `block` is the horizontal direction'), false], [L('`padding-inline: 8px` vale per entrambi i lati', '`padding-inline: 8px` applies to both sides'), true], [L('Le proprietà logiche richiedono JavaScript', 'Logical properties need JavaScript'), false]], L('Scrivi una volta, vale per ogni lingua.', 'Write once, it works for every language.')),
+        ]),
+        lesson('forms-style', L('Stile dei moduli', 'Styling forms'), [
+            P('Anche i campi dei moduli si possono stilare. `accent-color` colora in una riga checkbox, radio e cursori. `:user-invalid` segna un campo sbagliato solo dopo che l’utente l’ha toccato, mentre `:invalid` scatta già all’apertura della pagina. `::placeholder` dà lo stile al testo di esempio.', 'Form fields can be styled too. `accent-color` colours checkboxes, radios and sliders in one line. `:user-invalid` marks a field wrong only after the user has touched it, while `:invalid` already fires when the page opens. `::placeholder` styles the sample text.'),
+            C('input, select, textarea {
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid #999;
+  border-radius: 8px;
+}
+:root { accent-color: #FF5B2E; }
+input:user-invalid { border-color: crimson; }
+input::placeholder { color: #767676; }
+input:focus-visible { outline: 3px solid gold; }', 'css'),
+            P('I campi di serie non ereditano il carattere della pagina: `font: inherit` sistema tutto. Un segnaposto chiaro deve comunque avere abbastanza contrasto, e non sostituisce la `label`.', 'Fields do not inherit the page font by default: `font: inherit` fixes it. A light placeholder still needs enough contrast, and it does not replace the `label`.'),
+        ], [
+            Q('s1', L('Quale proprietà colora checkbox e radio?', 'Which property colours checkboxes and radios?'), ['color', 'fill', 'accent-color', 'tint'], 2, L('Una riga sola, anche su `:root`, perché si eredita.', 'A single line, even on `:root`, because it is inherited.')),
+            Q('s2', L('Qual è la differenza tra `:user-invalid` e `:invalid`?', 'What is the difference between `:user-invalid` and `:invalid`?'), [L('`:user-invalid` scatta solo dopo che l’utente ha interagito', '`:user-invalid` only fires after the user has interacted'), L('Nessuna, sono sinonimi', 'None, they are synonyms'), L('`:user-invalid` controlla i dati sul server', '`:user-invalid` checks the data on the server'), L('`:invalid` vale solo dopo l’invio', '`:invalid` only applies after submitting')], 0, L('Niente bordi rossi prima ancora di cominciare a scrivere.', 'No red borders before you even start typing.')),
+            Q('s3', L('Perché scrivere `font: inherit` sui campi?', 'Why write `font: inherit` on fields?'), [L('Rende il testo in grassetto', 'It makes the text bold'), L('È obbligatorio nei moduli', 'It is mandatory in forms'), L('Velocizza l’invio del modulo', 'It speeds up sending the form'), L('Di serie i campi non ereditano il font della pagina', 'By default fields do not inherit the page font')], 3, L('Altrimenti il testo dei campi sembra di un’altra pagina.', 'Otherwise the field text looks like it belongs to another page.')),
+        ], task('css', L('Imposta su `:root` un `accent-color` `#FF5B2E`, dai agli `input` `font: inherit` e un bordo `crimson` agli `input:user-invalid`.', 'Set an `accent-color` of `#FF5B2E` on `:root`, give `input` elements `font: inherit` and a `crimson` border to `input:user-invalid`.'), '', [css('input[type="checkbox"]', 'accent-color', 'rgb(255, 91, 46)', L('La casella usa il colore del marchio', 'The checkbox uses the brand colour')), re('input\s*\{[^}]*font\s*:\s*inherit', L('I campi ereditano il font', 'Fields inherit the font')), re('input:user-invalid\s*\{[^}]*border(-color)?\s*:[^;}]*crimson', L('L’errore si vede dopo il tocco', 'The error shows after touching'))], '<form>
+  <label for="m">Email</label>
+  <input id="m" type="email" required>
+  <label><input type="checkbox" checked> Ricordami</label>
+</form>', ":root { accent-color: #FF5B2E; }\ninput { font: inherit; }\ninput:user-invalid { border-color: crimson; }"), [
+            dBlanks(pFill(), ":root { ___: #FF5B2E; }\ninput { font: ___; }\ninput:___ { border-color: crimson; }", ['accent-color', 'inherit', 'user-invalid'], ['color', 'initial', 'hover'], L('Colore dei controlli, font della pagina, errore dopo il tocco.', 'Control colour, page font, error after touching.')),
+            dMatch(pMatch(), [['accent-color', L('Colore di checkbox e radio', 'Colour of checkboxes and radios')], [':user-invalid', L('Errore dopo l’interazione', 'Error after interaction')], ['::placeholder', L('Testo di esempio', 'Sample text')], ['font: inherit', L('Il font della pagina', 'The page font')], [':focus-visible', L('Focus da tastiera', 'Keyboard focus')]], L('Moduli belli e chiari, senza librerie.', 'Nice, clear forms, with no libraries.')),
+        ]),
+        lesson('images-filters', L('Immagini e filtri', 'Images and filters'), [
+            P('`object-fit` decide come un’immagine riempie la sua scatola: `cover` la riempie tutta e taglia ciò che avanza, `contain` la mostra intera e lascia spazio vuoto. `object-position` sceglie quale parte resta visibile.', '`object-fit` decides how an image fills its box: `cover` fills it all and crops what is left over, `contain` shows it whole and leaves empty space. `object-position` picks which part stays visible.'),
+            C('.copertina {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center top;
+}
+.spento { filter: grayscale(1); }
+.spento:hover { filter: none; }
+.vetro {
+  background: rgb(255 255 255 / .6);
+  backdrop-filter: blur(8px);
+}', 'css'),
+            P('`filter` applica effetti da fotoritocco all’elemento stesso: `blur()`, `brightness()`, `grayscale()`, `contrast()`. `backdrop-filter` li applica a ciò che sta **dietro** l’elemento, per l’effetto vetro smerigliato.', '`filter` applies photo-editing effects to the element itself: `blur()`, `brightness()`, `grayscale()`, `contrast()`. `backdrop-filter` applies them to what is **behind** the element, for the frosted-glass effect.'),
+        ], [
+            Q('o1', L('Quale valore di `object-fit` riempie la scatola tagliando l’immagine?', 'Which `object-fit` value fills the box by cropping the image?'), ['contain', 'fill', 'none', 'cover'], 3, L('`fill` invece la deforma per farla entrare.', '`fill` stretches it to fit instead.')),
+            Q('o2', L('Che cosa fa `filter: grayscale(1)`?', 'What does `filter: grayscale(1)` do?'), [L('Rende l’elemento in bianco e nero', 'It makes the element black and white'), L('Nasconde l’elemento', 'It hides the element'), L('Inverte i colori', 'It inverts the colours'), L('Lo sfoca', 'It blurs it')], 0, L('`0` lascia i colori, `1` li toglie del tutto.', '`0` keeps the colours, `1` removes them completely.')),
+            Q('o3', L('Su che cosa agisce `backdrop-filter`?', 'What does `backdrop-filter` act on?'), [L('Sull’elemento stesso', 'On the element itself'), L('Su ciò che sta dietro l’elemento', 'On what is behind the element'), L('Solo sul testo', 'Only on the text'), L('Solo sui figli', 'Only on the children')], 1, L('Serve uno sfondo almeno in parte trasparente per vedere l’effetto.', 'It needs an at least partly transparent background to show.')),
+        ], task('css', L('Dai a `.copertina` `object-fit: cover` e un filtro `grayscale` che la renda in bianco e nero.', 'Give `.copertina` `object-fit: cover` and a `grayscale` filter that makes it black and white.'), ".copertina {\n  width: 100%;\n  aspect-ratio: 16 / 9;\n}", [css('.copertina', 'object-fit', 'cover', L('L’immagine riempie la scatola', 'The image fills the box')), re('filter\s*:\s*grayscale\(\s*(1|100%)\s*\)', L('È in bianco e nero', 'It is black and white'))], '<img class="copertina" src="paesaggio.jpg" alt="Un paesaggio">', ".copertina {\n  width: 100%;\n  aspect-ratio: 16 / 9;\n  object-fit: cover;\n  filter: grayscale(1);\n}"), [
+            dMatch(pMatch(), [['cover', L('Riempie e taglia', 'Fills and crops')], ['contain', L('Intera, con spazio vuoto', 'Whole, with empty space')], ['blur()', L('Sfoca', 'Blurs')], ['grayscale()', L('Toglie i colori', 'Removes the colours')], ['backdrop-filter', L('Effetto su ciò che sta dietro', 'Effect on what is behind')]], L('Effetti da fotoritocco, scritti in CSS.', 'Photo-editing effects, written in CSS.')),
+            dFlash(pFlash(), [[L('`object-fit: cover` può tagliare i bordi dell’immagine', '`object-fit: cover` can crop the image edges'), true], [L('`filter` modifica il file dell’immagine sul server', '`filter` changes the image file on the server'), false], [L('Si possono combinare più filtri nella stessa regola', 'Several filters can be combined in one rule'), true], [L('`contain` deforma l’immagine', '`contain` stretches the image'), false]], L('Il file resta com’è: cambia solo come lo disegna il browser.', 'The file stays as it is: only how the browser draws it changes.')),
         ]),
     ],
 ];

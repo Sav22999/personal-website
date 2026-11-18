@@ -1,10 +1,10 @@
 <?php
-/** UI on mobile: screen sizes and units, safe areas, mobile components, dark mode and platform conventions. */
+/** UI on mobile: screen sizes and units, safe areas, mobile components, dark mode and platform conventions, first run, tablets and foldables, app icons and launch screens. */
 
 return [
     'id' => 'ui-mobile', 'family' => 'ui', 'after' => 'ui-base', 'categories' => ['design', 'mobile'],
     'title' => L('UI su mobile', 'UI on Mobile'), 'short' => L('UI mobile', 'Mobile UI'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Disegnare interfacce per telefono: dimensioni, densità e unità, safe area e notch, componenti mobile, tema scuro e convenzioni di iOS e Android.', 'Drawing phone interfaces: sizes, density and units, safe areas and notches, mobile components, dark theme and iOS and Android conventions.'),
+    'desc' => L('Disegnare interfacce per telefono: dimensioni, densità e unità, safe area, componenti mobile, tema scuro e convenzioni di iOS e Android, tablet e pieghevoli, icona dell’app e schermata di avvio.', 'Drawing phone interfaces: sizes, density and units, safe areas, mobile components, dark theme and iOS and Android conventions, tablets and foldables, app icon and launch screen.'),
     'lessons' => [
         lesson('units', L('Schermi, densità e unità', 'Screens, density and units'), [
             P('I telefoni hanno schermi con **densità** diverse: lo stesso pulsante deve avere la stessa dimensione fisica su tutti. Per questo si progetta in unità indipendenti: **punti** (pt) su iOS, **dp** su Android, **px CSS** sul web, che il sistema moltiplica per la densità (2×, 3×). Un iPhone comune è largo circa **390-440 pt**, molti Android **360-412 dp**.', 'Phones have screens with different **densities**: the same button must have the same physical size on all of them. That is why you design in independent units: **points** (pt) on iOS, **dp** on Android, **CSS px** on the web, which the system multiplies by density (2×, 3×). A common iPhone is about **390-440 pt** wide, many Androids **360-412 dp**.'),

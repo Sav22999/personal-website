@@ -1,10 +1,10 @@
 <?php
-/** Angular intermediate: inputs and outputs, routing, reactive forms, RxJS and guards. */
+/** Angular intermediate: inputs and outputs, routing, reactive forms, RxJS and guards, content projection, lazy loading and @defer, resources, Signal Forms. */
 
 return [
     'id' => 'angular-intermediate', 'family' => 'angular', 'after' => 'angular-base',
     'title' => L('Angular intermedio', 'Intermediate Angular'), 'short' => L('Angular intermedio', 'Angular Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Componenti che si parlano, rotte, moduli reattivi, RxJS e guardie per un’app completa.', 'Components that talk, routes, reactive forms, RxJS and guards for a complete app.'),
+    'desc' => L('Componenti che si parlano, rotte e caricamento pigro, moduli reattivi e Signal Forms, RxJS e resource, guardie per un’app completa.', 'Components that talk, routes and lazy loading, reactive forms and Signal Forms, RxJS and resources, guards for a complete app.'),
     'lessons' => [
         lesson('io', L('Input e output', 'Inputs and outputs'), [
             P('Un componente figlio riceve dati con `input()` e manda eventi al padre con `output()`. Il padre li collega con le quadre e le tonde, come per gli elementi HTML.', 'A child component receives data with `input()` and sends events to the parent with `output()`. The parent binds them with square and round brackets, as with HTML elements.'),
@@ -25,7 +25,7 @@ return [
 }', [re('titolo\s*=\s*input\.required<string>\(\)', L('C’è l’input', 'There is the input')), re('chiudi\s*=\s*output<void>\(\)', L('C’è l’output', 'There is the output'))], '', 'titolo = input.required<string>();
 chiudi = output<void>();'), [
             dBlanks(pFill(), "<app-voto [___]=\"media()\" (___)=\"salva(\$event)\" />", ['stelle', 'cambia'], ['(stelle)', 'emit', 'value'], L('Quadre per il dato, tonde per l’evento.', 'Brackets for data, parentheses for the event.')),
-            dFlash(pFlash(), [[L('I dati scendono dal padre al figlio', 'Data goes down from parent to child'), true], [L('Un figlio può cambiare un input da solo', 'A child can change an input by itself'), false], [L('`emit` manda un valore al padre', '`emit` sends a value to the parent'), true], [L('Un `@Output` serve a ricevere dati dal padre', 'An `@Output` is for receiving data from the parent'), false]], L('Dati in giù, eventi in su.', 'Data down, events up.')),
+            dFlash(pFlash(), [[L('I dati scendono dal padre al figlio', 'Data goes down from parent to child'), true], [L('Un figlio può cambiare un input da solo', 'A child can change an input by itself'), false], [L('`emit` manda un valore al padre', '`emit` sends a value to the parent'), true], [L('Un `output()` serve a ricevere dati dal padre', 'An `output()` is for receiving data from the parent'), false]], L('Dati in giù, eventi in su.', 'Data down, events up.')),
         ]),
         lesson('routing', L('Le rotte', 'Routing'), [
             P('Il **router** associa un indirizzo a un componente. Le rotte si elencano in un array; `<router-outlet />` è il punto della pagina dove compare il componente scelto, e `routerLink` crea i collegamenti.', 'The **router** maps an address to a component. Routes are listed in an array; `<router-outlet />` is the spot where the chosen component appears, and `routerLink` makes the links.'),
@@ -111,6 +111,131 @@ export const conToken: HttpInterceptorFn = (req, next) =>
         ], task('angular', L('Proteggi la rotta `admin` con `canActivate: [soloAdmin]`.', 'Protect the `admin` route with `canActivate: [soloAdmin]`.'), '{ path: "admin", component: AdminComponent }', [re('path\s*:\s*["\']admin["\'][^}]*canActivate\s*:\s*\[\s*soloAdmin\s*\]', L('La rotta è protetta', 'The route is protected'))], '', '{ path: "admin", component: AdminComponent, canActivate: [soloAdmin] }'), [
             dBug(pBug(), ['export const soloUtenti: CanActivateFn = () => {', '  const auth = inject(AuthService);', '  return auth.loggato() ? "/login" : true;', '};'], 2, '  return auth.loggato() ? true : inject(Router).parseUrl("/login");', L('Chi è dentro passa, gli altri vanno al login.', 'Signed-in users pass, the others go to login.')),
             dFlash(pFlash(), [[L('`canActivate` può restituire un altro indirizzo', '`canActivate` can return another address'), true], [L('Un intercettore vede tutte le richieste HTTP', 'An interceptor sees every HTTP request'), true], [L('Con una guardia il server non deve controllare', 'With a guard the server need not check'), false], [L('Una guardia può bloccare l’accesso a una rotta', 'A guard can block access to a route'), true]], L('La sicurezza vera è sul server.', 'Real security is on the server.')),
+        ]),
+        lesson('projection', L('Proiezione dei contenuti', 'Content projection'), [
+            P('Un componente può ricevere **HTML dal padre**, non solo dati: nel suo template scrivi `<ng-content />` dove quel contenuto deve comparire. È il modo di creare contenitori riutilizzabili come schede, finestre e pannelli.', 'A component can receive **HTML from its parent**, not just data: in its template you write `<ng-content />` where that content should appear. It is how you build reusable containers like cards, dialogs and panels.'),
+            C('@Component({
+  selector: "app-scheda",
+  template: `
+    <article class="scheda">
+      <header><ng-content select="[titolo]" /></header>
+      <ng-content />
+    </article>
+  `,
+})
+export class SchedaComponent {}
+
+<!-- nel padre -->
+<app-scheda>
+  <h2 titolo>Corso di Angular</h2>
+  <p>Dieci lezioni, dalle basi alle rotte.</p>
+</app-scheda>', 'ts'),
+            P('Con `select` crei più «slot»: il contenuto che corrisponde al selettore va lì, il resto finisce nell’`<ng-content />` senza selettore. Il contenuto proiettato appartiene al padre: usa i suoi dati e i suoi binding.', 'With `select` you create several “slots”: content matching the selector goes there, the rest ends up in the `<ng-content />` without a selector. Projected content belongs to the parent: it uses the parent’s data and bindings.'),
+        ], [
+            Q('pj1', L('Che cosa fa `<ng-content />`?', 'What does `<ng-content />` do?'), [L('Carica un file esterno', 'Loads an external file'), L('Mostra l’HTML passato dal padre', 'Shows the HTML passed by the parent'), L('Crea una rotta', 'Creates a route'), L('Svuota il componente', 'Empties the component')], 1, L('Il padre scrive il contenuto tra i tag del componente.', 'The parent writes the content between the component’s tags.')),
+            Q('pj2', L('A che cosa serve `select="[titolo]"`?', 'What is `select="[titolo]"` for?'), [L('A scegliere quale parte del contenuto va in quello slot', 'To choose which part of the content goes in that slot'), L('A dare uno stile al titolo', 'To style the title'), L('A rendere obbligatorio il titolo', 'To make the title required'), L('A tradurre il titolo', 'To translate the title')], 0, L('Gli elementi con l’attributo `titolo` finiscono lì.', 'Elements with the `titolo` attribute end up there.')),
+            Q('pj3', L('Di chi sono i dati usati nel contenuto proiettato?', 'Whose data does projected content use?'), [L('Del figlio che lo mostra', 'The child that shows it'), L('Di un servizio globale', 'A global service'), L('Del padre che lo scrive', 'The parent that writes it'), L('Del router', 'The router')], 2, L('Il figlio decide solo dove mostrarlo.', 'The child only decides where to show it.')),
+        ], task('angular', L('Nel template di `app-pannello` aggiungi `<ng-content />` dentro il `<div>`.', 'In the `app-pannello` template add `<ng-content />` inside the `<div>`.'), '@Component({
+  selector: "app-pannello",
+  template: `<div class="pannello"></div>`,
+})', [re('<div[^>]*>\s*<ng-content\s*/?>(\s*</ng-content>)?\s*</div>', L('Il contenuto del padre compare nel div', 'The parent’s content appears in the div'))], '', '@Component({
+  selector: "app-pannello",
+  template: `<div class="pannello"><ng-content /></div>`,
+})'), [
+            dBlanks(pFill(), "template: `\n  <header><___ select=\"[titolo]\" /></header>\n  <ng-content />\n`\n<!-- padre -->\n<app-scheda><h2 ___>Ciao</h2></app-scheda>", ['ng-content', 'titolo'], ['slot', '[titolo]', 'ng-template'], L('Lo slot con `select` e l’attributo che lo riempie.', 'The slot with `select` and the attribute that fills it.')),
+            dFlash(pFlash(), [[L('`<ng-content />` mostra l’HTML scritto dal padre', '`<ng-content />` shows the HTML written by the parent'), true], [L('Un componente può avere più slot con `select`', 'A component can have several slots with `select`'), true], [L('Il contenuto proiettato usa i dati del figlio', 'Projected content uses the child’s data'), false], [L('`ng-content` funziona solo con il testo', '`ng-content` only works with text'), false]], L('Contenitori riutilizzabili, contenuto del padre.', 'Reusable containers, parent’s content.')),
+        ]),
+        lesson('lazy-defer', L('Caricamento pigro e @defer', 'Lazy loading and @defer'), [
+            P('Un’app grande non deve scaricare tutto all’avvio. Con `loadComponent` una rotta carica il suo componente solo quando qualcuno la visita; con `loadChildren` carica un intero gruppo di rotte.', 'A big app should not download everything at start-up. With `loadComponent` a route loads its component only when someone visits it; with `loadChildren` it loads a whole group of routes.'),
+            C('export const routes: Routes = [
+  { path: "", component: HomeComponent },
+  {
+    path: "admin",
+    loadComponent: () => import("./admin/admin.component").then(m => m.AdminComponent),
+  },
+  {
+    path: "negozio",
+    loadChildren: () => import("./negozio/negozio.routes").then(m => m.ROTTE_NEGOZIO),
+  },
+];', 'ts'),
+            C('@defer (on viewport) {
+  <app-grafico [dati]="vendite()" />
+} @placeholder {
+  <p>Il grafico apparirà qui.</p>
+} @loading (minimum 300ms) {
+  <p>Caricamento…</p>
+}', 'html'),
+            P('`@defer` rimanda il caricamento di una parte del template: il codice di `app-grafico` si scarica quando il blocco entra nello schermo (`on viewport`), al clic (`on interaction`) o quando il browser è libero (`on idle`, il predefinito). `@placeholder` si vede prima, `@loading` durante lo scaricamento.', '`@defer` postpones loading part of the template: the code of `app-grafico` is downloaded when the block enters the screen (`on viewport`), on click (`on interaction`) or when the browser is idle (`on idle`, the default). `@placeholder` shows before, `@loading` while downloading.'),
+        ], [
+            Q('lz1', L('Che cosa fa `loadComponent`?', 'What does `loadComponent` do?'), [L('Carica tutti i componenti all’avvio', 'Loads every component at start-up'), L('Crea un componente vuoto', 'Creates an empty component'), L('Duplica la rotta', 'Duplicates the route'), L('Carica il componente solo quando si visita la rotta', 'Loads the component only when the route is visited')], 3, L('Il primo download è più leggero.', 'The first download is lighter.')),
+            Q('lz2', L('Quando si carica `@defer (on viewport)`?', 'When does `@defer (on viewport)` load?'), [L('All’avvio dell’app', 'At app start-up'), L('Quando il blocco entra nello schermo', 'When the block enters the screen'), L('Dopo dieci secondi', 'After ten seconds'), L('Mai', 'Never')], 1, L('Perfetto per i contenuti in fondo alla pagina.', 'Perfect for content at the bottom of the page.')),
+            Q('lz3', L('Che cosa mostra `@placeholder`?', 'What does `@placeholder` show?'), [L('Il contenuto prima che il blocco venga caricato', 'The content before the block is loaded'), L('Un errore di rete', 'A network error'), L('Il codice sorgente', 'The source code'), L('La rotta precedente', 'The previous route')], 0, L('`@loading` invece compare durante lo scaricamento.', '`@loading` instead shows while downloading.')),
+        ], task('angular', L('Rendi pigra la rotta `profilo` con `loadComponent: () => import("./profilo/profilo.component").then(m => m.ProfiloComponent)`.', 'Make the `profilo` route lazy with `loadComponent: () => import("./profilo/profilo.component").then(m => m.ProfiloComponent)`.'), '{ path: "profilo", component: ProfiloComponent }', [re('path\s*:\s*["\']profilo["\']', L('La rotta è `profilo`', 'The route is `profilo`')), re('loadComponent\s*:\s*\(\s*\)\s*=>\s*import\s*\(\s*["\'][^"\']*profilo[^"\']*["\']\s*\)', L('Il componente si carica con `import()`', 'The component loads with `import()`'))], '', '{
+  path: "profilo",
+  loadComponent: () => import("./profilo/profilo.component").then(m => m.ProfiloComponent),
+}'), [
+            dMatch(pMatch(), [['loadComponent', L('Un componente pigro per una rotta', 'A lazy component for a route')], ['loadChildren', L('Un gruppo di rotte pigre', 'A group of lazy routes')], ['@defer', L('Rimanda una parte del template', 'Postpones part of the template')], ['@placeholder', L('Prima del caricamento', 'Before loading')], ['@loading', L('Durante il caricamento', 'While loading')]], L('Scarica solo quello che serve, quando serve.', 'Download only what is needed, when it is needed.')),
+            dOrder(pSort(), ['@defer (on interaction) {', '  <app-commenti />', '} @placeholder {', '  <button>Mostra i commenti</button>', '}'], L('Prima il blocco rimandato, poi il segnaposto.', 'First the deferred block, then the placeholder.')),
+        ]),
+        lesson('resource', L('Dati asincroni con resource', 'Async data with resource'), [
+            P('Le **resource** portano i dati asincroni nel mondo dei signal. `httpResource` fa una richiesta HTTP e la ripete da sola quando cambiano i signal usati per costruire l’indirizzo. Il risultato espone signal pronti per il template: `value()`, `isLoading()`, `error()` e `hasValue()`.', '**Resources** bring async data into the world of signals. `httpResource` makes an HTTP request and repeats it by itself when the signals used to build the address change. The result exposes signals ready for the template: `value()`, `isLoading()`, `error()` and `hasValue()`.'),
+            C('export class CorsoComponent {
+  id = input.required<string>();
+  corso = httpResource<Corso>(() => `/api/corsi/${this.id()}`);
+}
+
+<!-- template -->
+@if (corso.isLoading()) {
+  <p>Caricamento…</p>
+} @else if (corso.error()) {
+  <p>Impossibile caricare il corso.</p>
+} @else if (corso.hasValue()) {
+  <h1>{{ corso.value().titolo }}</h1>
+}', 'ts'),
+            P('Per qualsiasi altra operazione asincrona c’è `resource({ params, loader })`, e `rxResource` per gli Observable. Da Angular 22 queste API sono stabili. Se i parametri cambiano prima della risposta, la richiesta vecchia viene scartata, come con `switchMap`.', 'For any other async operation there is `resource({ params, loader })`, and `rxResource` for Observables. Since Angular 22 these APIs are stable. If the parameters change before the response, the old request is discarded, as with `switchMap`.'),
+        ], [
+            Q('rs1', L('Quando `httpResource` ripete la richiesta?', 'When does `httpResource` repeat the request?'), [L('A ogni clic sulla pagina', 'On every click on the page'), L('Quando cambiano i signal usati per costruire l’indirizzo', 'When the signals used to build the address change'), L('Ogni minuto', 'Every minute'), L('Solo se ricarichi la pagina', 'Only if you reload the page')], 1, L('Come un `computed`, ma asincrono.', 'Like a `computed`, but asynchronous.')),
+            Q('rs2', L('Quale signal dice che i dati stanno arrivando?', 'Which signal says the data is on its way?'), ['value()', 'error()', 'isLoading()', 'hasValue()'], 2, L('Utile per mostrare un messaggio di attesa.', 'Handy for showing a waiting message.')),
+            Q('rs3', L('Che cosa usi per caricare dati da una promessa qualsiasi?', 'What do you use to load data from any promise?'), ['httpResource', 'computed', L('`effect` con un `setTimeout`', '`effect` with a `setTimeout`'), 'resource({ params, loader })'], 3, L('`httpResource` è solo per le richieste HTTP.', '`httpResource` is only for HTTP requests.')),
+        ], task('angular', L('Crea `meteo` con `httpResource<Meteo>()` che chiama `/api/meteo/` seguito da `this.citta()`.', 'Create `meteo` with `httpResource<Meteo>()` calling `/api/meteo/` followed by `this.citta()`.'), 'export class MeteoComponent {
+  citta = input.required<string>();
+}', [re('meteo\s*=\s*httpResource\s*(<\s*Meteo\s*>)?\s*\(\s*\(\s*\)\s*=>', L('Crei la resource', 'You create the resource')), re('this\.citta\s*\(\s*\)', L('L’indirizzo dipende da `citta`', 'The address depends on `citta`'))], '', 'meteo = httpResource<Meteo>(() => `/api/meteo/${this.citta()}`);'), [
+            dMatch(pMatch(), [['value()', L('Il dato caricato', 'The loaded data')], ['isLoading()', L('Sta caricando?', 'Is it loading?')], ['error()', L('L’errore, se c’è', 'The error, if any')], ['httpResource', L('Richiesta HTTP come signal', 'HTTP request as a signal')], ['rxResource', L('Da un Observable', 'From an Observable')]], L('I pezzi di una resource.', 'The parts of a resource.')),
+            dFlash(pFlash(), [[L('Una resource si aggiorna quando cambiano i suoi parametri', 'A resource updates when its parameters change'), true], [L('`httpResource` restituisce una Promise', '`httpResource` returns a Promise'), false], [L('Nel template si può controllare `isLoading()`', 'The template can check `isLoading()`'), true], [L('Con le resource bisogna sempre chiamare `subscribe`', 'With resources you must always call `subscribe`'), false]], L('Dati asincroni, letti come signal.', 'Async data, read as signals.')),
+        ]),
+        lesson('signal-forms', L('Signal Forms', 'Signal Forms'), [
+            P('Le **Signal Forms**, stabili da Angular 22, costruiscono un modulo a partire da un signal con i dati. `form()` crea un albero di campi che segue la forma del modello; le regole di validazione si scrivono in uno **schema** con funzioni come `required` ed `email`.', '**Signal Forms**, stable since Angular 22, build a form from a signal holding the data. `form()` creates a tree of fields that follows the model’s shape; validation rules go in a **schema** with functions like `required` and `email`.'),
+            C('import { form, FormField, required, email } from "@angular/forms/signals";
+
+@Component({
+  selector: "app-iscrizione",
+  imports: [FormField],
+  template: `
+    <input type="email" [formField]="modulo.email" />
+    @if (modulo.email().touched() && modulo.email().invalid()) {
+      <p>Email non valida</p>
+    }
+    <button [disabled]="modulo().invalid()">Iscriviti</button>
+  `,
+})
+export class IscrizioneComponent {
+  dati = signal({ email: "", nome: "" });
+  modulo = form(this.dati, campo => {
+    required(campo.email);
+    email(campo.email);
+  });
+}', 'ts'),
+            P('Ogni campo si legge come un signal: `modulo.email()` dà il suo stato, con `value()`, `invalid()`, `touched()` ed `errors()`. Scrivere nel campo aggiorna direttamente il signal `dati`. I moduli reattivi con `FormGroup` restano supportati, ma nei progetti nuovi le Signal Forms sono più semplici.', 'Each field is read like a signal: `modulo.email()` gives its state, with `value()`, `invalid()`, `touched()` and `errors()`. Typing in the field updates the `dati` signal directly. Reactive forms with `FormGroup` are still supported, but in new projects Signal Forms are simpler.'),
+        ], [
+            Q('sf1', L('Da che cosa parte una Signal Form?', 'What does a Signal Form start from?'), [L('Da un FormGroup', 'From a FormGroup'), L('Da un file JSON', 'From a JSON file'), L('Da un signal con i dati del modello', 'From a signal with the model data'), L('Da un servizio HTTP', 'From an HTTP service')], 2, L('`form(this.dati, …)`.', '`form(this.dati, …)`.')),
+            Q('sf2', L('In una Signal Form, quale direttiva collega un input a un campo?', 'In a Signal Form, which directive binds an input to a field?'), ['[formField]', 'formControlName', '[(ngModel)]', '[field-name]'], 0, L('`formControlName` appartiene ai moduli reattivi.', '`formControlName` belongs to reactive forms.')),
+            Q('sf3', L('Dove si scrivono le regole come `required`?', 'Where do rules like `required` go?'), [L('Nel template', 'In the template'), L('Nello schema passato a `form()`', 'In the schema passed to `form()`'), L('Nel CSS', 'In the CSS'), L('In `main.ts`', 'In `main.ts`')], 1, L('Lo schema riceve i percorsi dei campi.', 'The schema receives the field paths.')),
+        ], task('angular', L('Nello schema rendi obbligatorio il campo `nome` con `required(campo.nome)`.', 'In the schema make the `nome` field required with `required(campo.nome)`.'), 'modulo = form(this.dati, campo => {
+});', [re('required\s*\(\s*campo\.nome\s*\)', L('Il nome è obbligatorio', 'The name is required'))], '', 'modulo = form(this.dati, campo => {
+  required(campo.nome);
+});'), [
+            dBlanks(pFill(), "dati = ___({ email: \"\" });\nmodulo = ___(this.dati, c => {\n  required(c.email);\n});\n<input [___]=\"modulo.email\" />", ['signal', 'form', 'formField'], ['FormGroup', 'formControlName', 'ngModel'], L('Modello, modulo, collegamento.', 'Model, form, binding.')),
+            dFlash(pFlash(), [[L('Scrivere nell’input aggiorna il signal del modello', 'Typing in the input updates the model signal'), true], [L('Le regole delle Signal Forms si scrivono nel template', 'Signal Forms rules are written in the template'), false], [L('`modulo.email().invalid()` dice se il campo non è valido', '`modulo.email().invalid()` says whether the field is invalid'), true], [L('Le Signal Forms richiedono RxJS', 'Signal Forms require RxJS'), false]], L('Moduli fatti di signal.', 'Forms made of signals.')),
         ]),
     ],
 ];

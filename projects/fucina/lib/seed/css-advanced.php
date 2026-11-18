@@ -1,5 +1,5 @@
 <?php
-/** CSS avanzato: flexbox, grid, responsive design, custom properties and animation. */
+/** CSS avanzato: flexbox, grid, responsive design, custom properties and animation; pseudo-elements, modern CSS, cascade layers, grid areas and modern colours are in extra-levels.php. */
 
 $cards = '<div class="lista">
   <div class="card">Uno</div>
@@ -10,7 +10,7 @@ $cards = '<div class="lista">
 return [
     'id' => 'css-advanced', 'family' => 'css', 'after' => 'css-intermediate',
     'title' => L('CSS avanzato', 'Advanced CSS'), 'short' => L('CSS avanzato', 'Advanced CSS'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Impaginazioni moderne: flexbox, grid, responsive, variabili, transizioni e animazioni.', 'Modern layouts: flexbox, grid, responsive design, variables, transitions and animations.'),
+    'desc' => L('Impaginazioni moderne: flexbox, grid e aree, responsive, variabili, animazioni, :has() e container query, livelli a cascata e colori moderni.', 'Modern layouts: flexbox, grid and areas, responsive design, variables, animations, :has() and container queries, cascade layers and modern colours.'),
     'lessons' => [
         lesson('flex', L('Flexbox', 'Flexbox'), [
             P('Flexbox dispone i figli lungo **una dimensione**. Si attiva sul contenitore con `display: flex`.', 'Flexbox lays out children along **one dimension**. You turn it on for the container with `display: flex`.'),

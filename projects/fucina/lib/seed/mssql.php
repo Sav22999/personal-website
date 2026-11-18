@@ -1,10 +1,10 @@
 <?php
-/** Microsoft SQL Server and T-SQL: TOP, types and IDENTITY, variables and TRY/CATCH, stored procedures, paging and MERGE. */
+/** Microsoft SQL Server and T-SQL: TOP, types and IDENTITY, TRY/CATCH, stored procedures, paging and MERGE, temporary tables, indexes and JSON. */
 
 return [
     'id' => 'mssql', 'family' => 'mssql', 'after' => 'sql-base',
     'title' => L('SQL Server (T-SQL)', 'SQL Server (T-SQL)'), 'short' => L('SQL Server', 'SQL Server'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Il database di Microsoft e il suo dialetto T-SQL: `TOP`, `IDENTITY`, `NVARCHAR`, variabili, `TRY…CATCH`, stored procedure, paginazione e `MERGE`.', 'Microsoft’s database and its T-SQL dialect: `TOP`, `IDENTITY`, `NVARCHAR`, variables, `TRY…CATCH`, stored procedures, paging and `MERGE`.'),
+    'desc' => L('Il database di Microsoft e il suo dialetto T-SQL: `TOP`, `IDENTITY`, `NVARCHAR`, variabili, `TRY…CATCH`, stored procedure, paginazione e `MERGE`, tabelle temporanee, indici e JSON.', 'Microsoft’s database and its T-SQL dialect: `TOP`, `IDENTITY`, `NVARCHAR`, variables, `TRY…CATCH`, stored procedures, paging and `MERGE`, temporary tables, indexes and JSON.'),
     'lessons' => [
         lesson('basics', L('Il dialetto T-SQL', 'The T-SQL dialect'), [
             P('SQL Server parla **T-SQL** (Transact-SQL). Ci si lavora con SQL Server Management Studio, con l’estensione per VS Code o con `sqlcmd`. Le tabelle stanno in schemi: il predefinito è `dbo`.', 'SQL Server speaks **T-SQL** (Transact-SQL). You work with SQL Server Management Studio, the VS Code extension or `sqlcmd`. Tables live in schemas: the default is `dbo`.'),
@@ -111,6 +111,71 @@ WHEN NOT MATCHED THEN INSERT (ProdottoId, Prezzo) VALUES (o.ProdottoId, o.Prezzo
         ], task('sql', L('Mostra la seconda pagina di 10 righe di `dbo.Clienti`, ordinata per `Nome`.', 'Show the second page of 10 rows of `dbo.Clienti`, sorted by `Nome`.'), 'SELECT Id, Nome FROM dbo.Clienti', [re('ORDER\s+BY\s+\[?Nome\]?', L('Ordini per nome', 'You sort by name')), re('OFFSET\s+10\s+ROWS\s+FETCH\s+NEXT\s+10\s+ROWS\s+ONLY', L('Salti 10 righe e ne prendi 10', 'You skip 10 rows and take 10'))], '', "SELECT Id, Nome FROM dbo.Clienti\nORDER BY Nome\nOFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY;"), [
             dOrder(pSort(), ['MERGE dbo.Stock AS d', 'USING dbo.Arrivi AS o ON d.Codice = o.Codice', 'WHEN MATCHED THEN UPDATE SET d.Qta = d.Qta + o.Qta', 'WHEN NOT MATCHED THEN INSERT (Codice, Qta) VALUES (o.Codice, o.Qta);'], L('Destinazione, origine, poi i due casi.', 'Target, source, then the two cases.')),
             dBlanks(pFill(), "SELECT Titolo FROM dbo.Articoli\nORDER BY Data DESC\n___ 20 ROWS ___ NEXT 10 ROWS ONLY;", ['OFFSET', 'FETCH'], ['SKIP', 'LIMIT', 'TAKE'], L('La paginazione standard di T-SQL.', 'T-SQL’s standard paging.')),
+        ]),
+        lesson('temp', L('Tabelle temporanee e variabili tabella', 'Temporary tables and table variables'), [
+            P('Per i risultati intermedi T-SQL offre le **tabelle temporanee**: il nome inizia con `#` e la tabella vive solo nella tua sessione (con `##` è globale, visibile a tutti). Le **variabili tabella** (`DECLARE @t TABLE (…)`) vivono solo nel blocco di codice in cui le dichiari.', 'For intermediate results T-SQL offers **temporary tables**: the name starts with `#` and the table lives only in your session (with `##` it is global, visible to everyone). **Table variables** (`DECLARE @t TABLE (…)`) live only in the batch where you declare them.'),
+            C('SELECT ClienteId, SUM(Totale) AS Speso
+INTO #Spese
+FROM dbo.Ordini
+WHERE CreatoIl >= \'2026-01-01\'
+GROUP BY ClienteId;
+
+CREATE INDEX IX_Spese ON #Spese (Speso);
+SELECT TOP (10) * FROM #Spese ORDER BY Speso DESC;
+DROP TABLE IF EXISTS #Spese;
+
+DECLARE @Nuovi TABLE (Id INT PRIMARY KEY, Nome NVARCHAR(80));
+INSERT INTO @Nuovi (Id, Nome) VALUES (1, N\'Ada\');', 'sql'),
+            P('`SELECT … INTO #Tabella` crea la tabella e la riempie in un colpo solo. Le tabelle temporanee stanno nel database di sistema `tempdb`, hanno statistiche e si possono indicizzare: convengono per molte righe. Le variabili tabella sono comode per pochi dati. Per un risultato usato una volta sola basta spesso una CTE.', '`SELECT … INTO #Table` creates the table and fills it in one go. Temporary tables live in the `tempdb` system database, have statistics and can be indexed: they suit many rows. Table variables are handy for small data. For a result used only once a CTE is often enough.'),
+        ], [
+            Q('m1', L('Che cosa indica il `#` all’inizio del nome di una tabella?', 'What does `#` at the start of a table name mean?'), [L('Una tabella di sistema in sola lettura', 'A read-only system table'), L('Una tabella cifrata', 'An encrypted table'), L('Una tabella temporanea della sessione', 'A session temporary table'), L('Un commento', 'A comment')], 2, L('Sparisce quando la sessione si chiude.', 'It vanishes when the session closes.')),
+            Q('m2', L('Che cosa fa `SELECT … INTO #Spese`?', 'What does `SELECT … INTO #Spese` do?'), [L('Crea la tabella e la riempie con il risultato', 'Creates the table and fills it with the result'), L('Aggiunge righe a una tabella che deve già esistere', 'Adds rows to a table that must already exist'), L('Esporta il risultato in un file', 'Exports the result to a file'), L('Assegna il risultato a una variabile', 'Assigns the result to a variable')], 0, L('Per aggiungere a una tabella esistente si usa `INSERT INTO … SELECT`.', 'To add to an existing table you use `INSERT INTO … SELECT`.')),
+            Q('m3', L('Dove vengono salvate le tabelle temporanee?', 'Where are temporary tables stored?'), [L('Nella memoria del client', 'In the client’s memory'), L('Nel database `master`', 'In the `master` database'), L('In un file accanto alla query', 'In a file next to the query'), L('Nel database di sistema `tempdb`', 'In the `tempdb` system database')], 3, L('È condiviso da tutto il server.', 'It is shared by the whole server.')),
+        ], task('sql', L('Copia in una tabella temporanea `#Attivi` gli `Id` e i `Nome` di `dbo.Clienti` con `Attivo = 1`, usando `SELECT … INTO`.', 'Copy into a temporary table `#Attivi` the `Id` and `Nome` of `dbo.Clienti` with `Attivo = 1`, using `SELECT … INTO`.'), '', [re('SELECT\s+\[?Id\]?\s*,\s*\[?Nome\]?\s+INTO\s+#Attivi\s+FROM\s+dbo\.Clienti', L('Crei la tabella temporanea', 'You create the temporary table')), re('WHERE\s+\[?Attivo\]?\s*=\s*1', L('Solo i clienti attivi', 'Only active customers'))], '', "SELECT Id, Nome\nINTO #Attivi\nFROM dbo.Clienti\nWHERE Attivo = 1;"), [
+            dMatch(pMatch(), [['#Tabella', L('Temporanea della sessione', 'Session temporary')], ['##Tabella', L('Temporanea globale', 'Global temporary')], ['@Tabella', L('Variabile tabella', 'Table variable')], ['tempdb', L('Dove vivono le temporanee', 'Where temporary tables live')], ['SELECT … INTO', L('Crea e riempie', 'Creates and fills')]], L('I contenitori temporanei di T-SQL.', 'T-SQL’s temporary containers.')),
+            dBug(pBug(), ['DECLARE Lista TABLE (Id INT);', 'INSERT INTO @Lista (Id) VALUES (1), (2);', 'SELECT * FROM @Lista;'], 0, 'DECLARE @Lista TABLE (Id INT);', L('Anche le variabili tabella iniziano con `@`.', 'Table variables also start with `@`.')),
+        ]),
+        lesson('indexes', L('Indici clustered e non clustered', 'Clustered and nonclustered indexes'), [
+            P('In SQL Server ogni tabella può avere un solo indice **clustered**: decide l’ordine fisico delle righe ed è creato di base sulla chiave primaria. Gli indici **non clustered** sono strutture separate che puntano alle righe; con `INCLUDE` vi aggiungi colonne extra, così la query trova tutto nell’indice (indice *coprente*).', 'In SQL Server each table can have only one **clustered** index: it sets the physical order of the rows and is created on the primary key by default. **Nonclustered** indexes are separate structures pointing to the rows; with `INCLUDE` you add extra columns, so the query finds everything in the index (a *covering* index).'),
+            C('CREATE NONCLUSTERED INDEX IX_Ordini_Cliente
+ON dbo.Ordini (ClienteId, CreatoIl DESC)
+INCLUDE (Totale);
+
+-- indice filtrato: solo le righe che interessano
+CREATE INDEX IX_Ordini_DaSpedire
+ON dbo.Ordini (CreatoIl)
+WHERE Spedito = 0;
+
+SET STATISTICS IO ON;
+SELECT CreatoIl, Totale FROM dbo.Ordini WHERE ClienteId = 42;', 'sql'),
+            P('Il **piano di esecuzione effettivo** (in SSMS con Ctrl+M) mostra se la query fa un `Index Seek` (ricerca mirata, bene) o uno `Scan` (lettura completa); un `Key Lookup` ripetuto suggerisce di aggiungere colonne con `INCLUDE`. `SET STATISTICS IO ON` conta le pagine lette: meno pagine, query più leggera.', 'The **actual execution plan** (Ctrl+M in SSMS) shows whether the query does an `Index Seek` (a targeted lookup, good) or a `Scan` (a full read); a repeated `Key Lookup` suggests adding columns with `INCLUDE`. `SET STATISTICS IO ON` counts the pages read: fewer pages, lighter query.'),
+        ], [
+            Q('i1', L('Quanti indici clustered può avere una tabella?', 'How many clustered indexes can a table have?'), [L('Uno solo', 'Only one'), L('Uno per colonna', 'One per column'), L('Fino a 999', 'Up to 999'), L('Nessuno', 'None')], 0, L('Decide l’ordine fisico delle righe.', 'It sets the physical order of the rows.')),
+            Q('i2', L('A che cosa serve `INCLUDE` in un indice?', 'What is `INCLUDE` for in an index?'), [L('A includere tutte le tabelle collegate', 'Including every linked table'), L('A rendere l’indice unico', 'Making the index unique'), L('A ordinare per più colonne', 'Sorting by several columns'), L('Ad aggiungere colonne extra per coprire la query', 'Adding extra columns to cover the query')], 3, L('Evita i `Key Lookup` sulla tabella.', 'It avoids `Key Lookup`s on the table.')),
+            Q('i3', L('Che cosa è meglio vedere nel piano per una ricerca su pochi valori?', 'What is best to see in the plan for a lookup of a few values?'), ['Table Scan', 'Index Scan', 'Index Seek', 'Sort'], 2, L('Una ricerca mirata, non una lettura completa.', 'A targeted lookup, not a full read.')),
+        ], task('sql', L('Crea l’indice non clustered `IX_Prodotti_Categoria` su `dbo.Prodotti (CategoriaId)` che includa le colonne `Nome` e `Prezzo`.', 'Create the nonclustered index `IX_Prodotti_Categoria` on `dbo.Prodotti (CategoriaId)` including the columns `Nome` and `Prezzo`.'), '', [re('CREATE\s+(NONCLUSTERED\s+)?INDEX\s+IX_Prodotti_Categoria\s+ON\s+dbo\.Prodotti\s*\(\s*\[?CategoriaId\]?\s*\)', L('L’indice sulla categoria', 'The index on the category')), re('INCLUDE\s*\(\s*(\[?Nome\]?\s*,\s*\[?Prezzo\]?|\[?Prezzo\]?\s*,\s*\[?Nome\]?)\s*\)', L('Include nome e prezzo', 'It includes name and price'))], '', "CREATE NONCLUSTERED INDEX IX_Prodotti_Categoria\nON dbo.Prodotti (CategoriaId)\nINCLUDE (Nome, Prezzo);"), [
+            dMatch(pMatch(), [['Clustered', L('Ordine fisico delle righe', 'Physical row order')], ['Nonclustered', L('Struttura separata', 'Separate structure')], ['INCLUDE', L('Colonne extra nell’indice', 'Extra columns in the index')], ['Index Seek', L('Ricerca mirata', 'Targeted lookup')], ['Key Lookup', L('Viaggio in più verso la tabella', 'Extra trip to the table')]], L('Gli indici di SQL Server.', 'SQL Server indexes.')),
+            dFlash(pFlash(), [[L('La chiave primaria crea di base un indice clustered', 'The primary key creates a clustered index by default'), true], [L('Una tabella può avere più indici clustered', 'A table can have several clustered indexes'), false], [L('Un indice filtrato copre solo alcune righe', 'A filtered index covers only some rows'), true], [L('Uno `Scan` su una tabella enorme è sempre ideale', 'A `Scan` on a huge table is always ideal'), false]], L('Seek bene, scan da controllare.', 'Seek good, scan to check.')),
+        ]),
+        lesson('json', L('JSON in T-SQL', 'JSON in T-SQL'), [
+            P('SQL Server legge e scrive JSON con funzioni dedicate: `JSON_VALUE` estrae un valore semplice, `JSON_QUERY` un oggetto o un array, `ISJSON` controlla la validità, `OPENJSON` trasforma un documento in righe e `FOR JSON PATH` fa il contrario. Fino alla versione 2022 il JSON si salva in `NVARCHAR(MAX)`; SQL Server 2025 aggiunge un tipo **`json`** nativo, salvato in forma binaria.', 'SQL Server reads and writes JSON with dedicated functions: `JSON_VALUE` extracts a simple value, `JSON_QUERY` an object or array, `ISJSON` checks validity, `OPENJSON` turns a document into rows and `FOR JSON PATH` does the opposite. Up to the 2022 version JSON is stored in `NVARCHAR(MAX)`; SQL Server 2025 adds a native **`json`** type, stored in binary form.'),
+            C('DECLARE @Doc NVARCHAR(MAX) = N\'{"cliente": "Ada", "righe": [{"cod": "A1", "qta": 2}, {"cod": "B7", "qta": 1}]}\';
+
+SELECT JSON_VALUE(@Doc, \'$.cliente\') AS Cliente;
+
+SELECT r.Cod, r.Qta
+FROM OPENJSON(@Doc, \'$.righe\')
+     WITH (Cod NVARCHAR(10) \'$.cod\', Qta INT \'$.qta\') AS r;
+
+SELECT TOP (3) Id, Nome FROM dbo.Clienti FOR JSON PATH;', 'sql'),
+            P('`OPENJSON … WITH (…)` dichiara le colonne e i loro percorsi: il risultato si usa come una tabella, per esempio in un `INSERT … SELECT`. Per una colonna JSON salvata come testo aggiungi un vincolo `CHECK (ISJSON(Colonna) = 1)`.', '`OPENJSON … WITH (…)` declares the columns and their paths: the result is used like a table, for example in an `INSERT … SELECT`. For a JSON column stored as text add a `CHECK (ISJSON(Column) = 1)` constraint.'),
+        ], [
+            Q('o1', L('Quale funzione estrae un valore semplice da un JSON?', 'Which function extracts a simple value from JSON?'), ['JSON_QUERY', 'JSON_VALUE', 'OPENJSON', 'ISJSON'], 1, L('`JSON_QUERY` restituisce oggetti e array.', '`JSON_QUERY` returns objects and arrays.')),
+            Q('o2', L('Che cosa fa `OPENJSON`?', 'What does `OPENJSON` do?'), [L('Apre un file JSON dal disco', 'Opens a JSON file from disk'), L('Controlla che il testo sia JSON', 'Checks that the text is JSON'), L('Trasforma un documento JSON in righe', 'Turns a JSON document into rows'), L('Trasforma le righe in JSON', 'Turns rows into JSON')], 2, L('Il contrario lo fa `FOR JSON PATH`.', '`FOR JSON PATH` does the opposite.')),
+            Q('o3', L('Che cosa aggiunge SQL Server 2025 per il JSON?', 'What does SQL Server 2025 add for JSON?'), [L('Un tipo `json` nativo in forma binaria', 'A native binary `json` type'), L('Il divieto di salvare JSON', 'A ban on storing JSON'), L('Gli operatori `->` di MySQL', 'MySQL’s `->` operators'), L('Niente di nuovo', 'Nothing new')], 0, L('Prima si usava `NVARCHAR(MAX)`.', 'Before, you used `NVARCHAR(MAX)`.')),
+        ], task('sql', L('Dalla tabella `dbo.Ordini` leggi `Id` e il valore `$.citta` della colonna JSON `Spedizione` con `JSON_VALUE`, chiamandolo `Citta`.', 'From the table `dbo.Ordini` read `Id` and the value `$.citta` of the JSON column `Spedizione` with `JSON_VALUE`, naming it `Citta`.'), '', [re('JSON_VALUE\s*\(\s*\[?Spedizione\]?\s*,\s*N?\'\$\.citta\'\s*\)\s+(AS\s+)?\[?Citta\]?', L('Estrai la città', 'You extract the city')), re('FROM\s+dbo\.Ordini', L('Dalla tabella giusta', 'From the right table'))], '', "SELECT Id, JSON_VALUE(Spedizione, '$.citta') AS Citta\nFROM dbo.Ordini;"), [
+            dMatch(pMatch(), [['JSON_VALUE', L('Un valore semplice', 'A simple value')], ['JSON_QUERY', L('Un oggetto o un array', 'An object or array')], ['ISJSON', L('Controlla la validità', 'Checks validity')], ['OPENJSON', L('JSON in righe', 'JSON into rows')], ['FOR JSON PATH', L('Righe in JSON', 'Rows into JSON')]], L('Le funzioni JSON di T-SQL.', 'T-SQL’s JSON functions.')),
+            dBlanks(pFill(), "SELECT r.Cod, r.Qta\nFROM ___(@Doc, '$.righe')\n     ___ (Cod NVARCHAR(10) '$.cod', Qta INT '$.qta') AS r;\nSELECT Id, Nome FROM dbo.Clienti FOR JSON ___;", ['OPENJSON', 'WITH', 'PATH'], ['READJSON', 'AS', 'AUTO_ALL'], L('Da JSON a righe, e ritorno.', 'From JSON to rows, and back.')),
         ]),
     ],
 ];

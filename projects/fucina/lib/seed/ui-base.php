@@ -1,10 +1,10 @@
 <?php
-/** UI basics: visual hierarchy, colour and contrast, typography, spacing and grids. */
+/** UI basics: visual hierarchy, colour and contrast, typography, spacing and grids, Gestalt, buttons, links and fields, responsive layout. */
 
 return [
     'id' => 'ui-base', 'family' => 'ui', 'after' => null, 'categories' => ['design', 'frontend'],
     'title' => L('UI: le basi', 'UI Basics'), 'short' => L('UI base', 'UI Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('I fondamenti del design di interfacce: gerarchia visiva, colore e contrasto, tipografia, spaziatura e griglie.', 'The foundations of interface design: visual hierarchy, colour and contrast, typography, spacing and grids.'),
+    'desc' => L('I fondamenti del design di interfacce: gerarchia visiva, colore e contrasto, tipografia, spaziatura e griglie, Gestalt, pulsanti, link e campi, layout responsive.', 'The foundations of interface design: visual hierarchy, colour and contrast, typography, spacing and grids, Gestalt, buttons, links and fields, responsive layout.'),
     'lessons' => [
         lesson('hierarchy', L('Gerarchia visiva', 'Visual hierarchy'), [
             P('La **gerarchia visiva** decide in che ordine l’occhio legge una schermata. Gli strumenti sono **dimensione** (più grande = più importante), **peso** del carattere, **colore e contrasto**, **posizione** (in alto e a sinistra si guarda prima, nelle lingue che si leggono da sinistra) e **spazio** intorno a un elemento.', '**Visual hierarchy** decides in which order the eye reads a screen. The tools are **size** (bigger = more important), font **weight**, **colour and contrast**, **position** (top and left are seen first, in left-to-right languages) and **space** around an element.'),

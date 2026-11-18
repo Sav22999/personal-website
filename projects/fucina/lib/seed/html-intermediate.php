@@ -1,10 +1,10 @@
 <?php
-/** HTML intermediate: the step between the first tags and semantic pages. */
+/** HTML intermediate: the step between the first tags and semantic pages (attributes, paths, rich text, iframes, inputs, tables, figures, sending forms). */
 
 return [
     'id' => 'html-intermediate', 'family' => 'html', 'after' => 'html-base',
     'title' => L('HTML intermedio', 'Intermediate HTML'), 'short' => L('HTML intermedio', 'HTML Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Attributi globali, link interni, testo ricco, iframe e moduli più completi.', 'Global attributes, internal links, rich text, iframes and fuller forms.'),
+    'desc' => L('Attributi globali, link interni, testo ricco, iframe, tabelle accessibili, figure e date, moduli più completi e come si inviano.', 'Global attributes, internal links, rich text, iframes, accessible tables, figures and dates, fuller forms and how they are sent.'),
     'lessons' => [
         lesson('attributes', L('Attributi globali', 'Global attributes'), [
             P('Alcuni attributi valgono su quasi tutti i tag: `id` identifica un elemento, `class` lo raggruppa, `title` aggiunge un suggerimento, `hidden` lo nasconde, `lang` ne indica la lingua.', 'Some attributes work on almost every tag: `id` identifies an element, `class` groups it, `title` adds a tooltip, `hidden` hides it, `lang` states its language.'),
@@ -84,6 +84,78 @@ return [
         ], task('html', L('Crea un campo `range` da `0` a `10` e un campo `date`.', 'Create a `range` field from `0` to `10` and a `date` field.'), '', [has('input[type="range"][min="0"][max="10"]', L('Il cursore va da 0 a 10', 'The slider goes from 0 to 10')), has('input[type="date"]', L('C’è la data', 'The date is there'))], '', "<input type=\"range\" min=\"0\" max=\"10\">\n<input type=\"date\">"), [
             dMatch(pMatch(), [['type="date"', L('Calendario', 'Calendar')], ['type="range"', L('Cursore', 'Slider')], ['type="color"', L('Tavolozza', 'Palette')], ['type="number"', L('Solo cifre', 'Digits only')], ['type="search"', L('Ricerca', 'Search')]], L('Il tipo giusto regala un controllo pronto.', 'The right type gives you a ready-made control.')),
             dOrder(pSort(), ['<select name="corso">', '  <option value="html">HTML</option>', '  <option value="css">CSS</option>', '</select>'], L('`select` avvolge le sue `option`.', '`select` wraps its `option`s.')),
+        ]),
+        lesson('tables-plus', L('Tabelle chiare e accessibili', 'Clear, accessible tables'), [
+            P('`<caption>` dà un titolo alla tabella, e lo screen reader lo legge per primo. `scope="col"` o `scope="row"` su un `<th>` dice se l’intestazione vale per la colonna o per la riga. `<tfoot>` raccoglie le righe dei totali.', '`<caption>` gives the table a title, and the screen reader reads it first. `scope="col"` or `scope="row"` on a `<th>` says whether the header applies to the column or to the row. `<tfoot>` holds the total rows.'),
+            C('<table>
+  <caption>Spese di marzo</caption>
+  <thead>
+    <tr><th scope="col">Voce</th><th scope="col">Euro</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Affitto</th><td>600</td></tr>
+    <tr><th scope="row">Spesa</th><td>250</td></tr>
+  </tbody>
+  <tfoot>
+    <tr><th scope="row">Totale</th><td>850</td></tr>
+  </tfoot>
+</table>', 'html'),
+            P('Un `<th>` può stare anche all’inizio di una riga: dà il nome a quella riga. Così chi ascolta la tabella sente «Affitto, Euro, 600» invece di un numero senza contesto.', 'A `<th>` can also start a row: it names that row. That way someone listening to the table hears “Affitto, Euro, 600” instead of a number without context.'),
+        ], [
+            Q('t1', L('Quale tag dà un titolo a una tabella?', 'Which tag gives a table a title?'), ['<title>', '<legend>', '<caption>', '<summary>'], 2, L('Va subito dopo `<table>`.', 'It goes right after `<table>`.')),
+            Q('t2', L('Che cosa dice `scope="row"` su un `<th>`?', 'What does `scope="row"` say on a `<th>`?'), [L('Che l’intestazione vale per la colonna', 'That the header applies to the column'), L('Che l’intestazione vale per la sua riga', 'That the header applies to its row'), L('Che la riga è nascosta', 'That the row is hidden'), L('Che la cella occupa due righe', 'That the cell spans two rows')], 1, L('`col` per le colonne, `row` per le righe.', '`col` for columns, `row` for rows.')),
+            Q('t3', L('Dove vanno le righe dei totali?', 'Where do the total rows go?'), ['<thead>', '<tbody>', '<caption>', '<tfoot>'], 3, L('`tfoot` è il piede della tabella.', '`tfoot` is the foot of the table.')),
+        ], task('html', L('Aggiungi alla tabella un `caption` e metti `scope="col"` su entrambi i `th`.', 'Add a `caption` to the table and put `scope="col"` on both `th` cells.'), "<table>\n  <tr><th>Città</th><th>Abitanti</th></tr>\n  <tr><td>Udine</td><td>97 000</td></tr>\n</table>", [has('table > caption', L('La tabella ha un titolo', 'The table has a title')), has('th[scope="col"] + th[scope="col"]', L('Entrambe le intestazioni hanno `scope="col"`', 'Both headers have `scope="col"`'))], '', "<table>\n  <caption>Città del Friuli</caption>\n  <tr><th scope=\"col\">Città</th><th scope=\"col\">Abitanti</th></tr>\n  <tr><td>Udine</td><td>97 000</td></tr>\n</table>"), [
+            dBlanks(pFill(), "<table>\n  <___>Voti</caption>\n  <tr><th ___=\"col\">Nome</th></tr>\n</table>", ['caption', 'scope'], ['title', 'legend', 'span'], L('Titolo della tabella e direzione dell’intestazione.', 'The table title and the header’s direction.')),
+            dMatch(pMatch(), [['<caption>', L('Titolo della tabella', 'Title of the table')], ['<thead>', L('Righe di intestazione', 'Header rows')], ['<tbody>', L('Righe dei dati', 'Data rows')], ['<tfoot>', L('Righe dei totali', 'Total rows')], ['scope', L('Quali celle copre un’intestazione', 'Which cells a header covers')]], L('Una tabella ben fatta si capisce anche ascoltandola.', 'A well-made table makes sense even when listened to.')),
+        ]),
+        lesson('figure-time', L('Figure, date e liste di definizioni', 'Figures, dates and description lists'), [
+            P('`<figure>` racchiude un’immagine, un grafico o un pezzo di codice insieme alla sua didascalia `<figcaption>`. `<time datetime="…">` scrive una data in un formato che i programmi capiscono, mentre il testo resta libero. `<dl>` è una lista di definizioni: `<dt>` il termine, `<dd>` la descrizione.', '`<figure>` wraps an image, a chart or a piece of code together with its caption `<figcaption>`. `<time datetime="…">` writes a date in a format programs understand, while the text stays free. `<dl>` is a description list: `<dt>` the term, `<dd>` the description.'),
+            C('<figure>
+  <img src="forgia.jpg" alt="Una forgia accesa">
+  <figcaption>La forgia di bottega, 1920.</figcaption>
+</figure>
+
+<p>Corso aggiornato il <time datetime="2026-11-17">17 novembre</time>.</p>
+
+<dl>
+  <dt>HTML</dt>
+  <dd>La struttura della pagina.</dd>
+  <dt>CSS</dt>
+  <dd>Il suo aspetto.</dd>
+</dl>', 'html'),
+            P('`<address>` contiene i contatti di chi ha scritto la pagina o l’articolo, non un indirizzo qualsiasi.', '`<address>` holds the contact details of whoever wrote the page or the article, not just any address.'),
+        ], [
+            Q('f1', L('Quale tag è la didascalia di una `<figure>`?', 'Which tag is the caption of a `<figure>`?'), ['<caption>', '<figcaption>', '<legend>', '<label>'], 1, L('`<caption>` è la didascalia delle tabelle.', '`<caption>` is the caption of tables.')),
+            Q('f2', L('A che cosa serve `datetime` su `<time>`?', 'What is `datetime` on `<time>` for?'), [L('Mostra un orologio nella pagina', 'It shows a clock on the page'), L('Imposta il fuso orario della pagina', 'It sets the page’s time zone'), L('Mette la data in grassetto', 'It makes the date bold'), L('Dà la data in un formato che i programmi capiscono', 'It gives the date in a format programs understand')], 3, L('Il testo visibile può essere «ieri» o «17 novembre».', 'The visible text can be “yesterday” or “17 November”.')),
+            Q('f3', L('In una `<dl>`, quale tag contiene il termine?', 'In a `<dl>`, which tag holds the term?'), ['<dd>', '<dl>', '<dt>', '<li>'], 2, L('`dt` è il termine, `dd` la sua descrizione.', '`dt` is the term, `dd` its description.')),
+        ], task('html', L('Crea una `figure` con un’immagine (con `alt`) e una `figcaption`.', 'Create a `figure` with an image (with an `alt`) and a `figcaption`.'), '', [has('figure img[alt]:not([alt=""])', L('C’è l’immagine con `alt`', 'The image with an `alt` is there')), has('figure figcaption', L('C’è la didascalia', 'The caption is there'))], '', "<figure>\n  <img src=\"porto.jpg\" alt=\"Il porto al tramonto\">\n  <figcaption>Il porto di Trieste</figcaption>\n</figure>"), [
+            dOrder(pSort(), ['<dl>', '  <dt>Forgia</dt>', '  <dd>Il laboratorio del fabbro.</dd>', '</dl>'], L('Prima il termine, poi la sua descrizione.', 'First the term, then its description.')),
+            dFlash(pFlash(), [[L('`<figcaption>` va dentro `<figure>`', '`<figcaption>` goes inside `<figure>`'), true], [L('`<time>` cambia l’aspetto della data', '`<time>` changes how the date looks'), false], [L('`<dd>` descrive il `<dt>` che lo precede', '`<dd>` describes the `<dt>` before it'), true], [L('`<figure>` si usa solo per le foto', '`<figure>` is only for photos'), false]], L('Tag piccoli che danno un significato preciso.', 'Small tags that give a precise meaning.')),
+        ]),
+        lesson('form-send', L('Come si inviano i moduli', 'How forms are sent'), [
+            P('`action` dice dove vanno i dati, `method` come. Con `get` finiscono nell’indirizzo (`/cerca?q=gatti`): va bene per le ricerche, che si possono salvare e condividere. Con `post` viaggiano nel corpo della richiesta: si usa per dati privati o che cambiano qualcosa.', '`action` says where the data goes, `method` how. With `get` it ends up in the address (`/cerca?q=gatti`): fine for searches, which can be bookmarked and shared. With `post` it travels in the body of the request: used for private data or data that changes something.'),
+            C('<form action="/cerca" method="get">
+  <label for="q">Cerca</label>
+  <input id="q" name="q" type="search">
+  <button>Vai</button>
+</form>
+
+<form action="/messaggio" method="post">
+  <label for="testo">Messaggio</label>
+  <textarea id="testo" name="testo" rows="4" maxlength="500"></textarea>
+  <label for="tel">Telefono</label>
+  <input id="tel" name="tel" type="tel" autocomplete="tel">
+  <button>Invia</button>
+</form>', 'html'),
+            P('`<textarea>` è il campo per il testo su più righe. `autocomplete` aiuta il browser a compilare i dati che conosce già (nome, email, telefono). Un `<button>` dentro un modulo lo invia; con `type="button"` non invia nulla.', '`<textarea>` is the field for multi-line text. `autocomplete` helps the browser fill in data it already knows (name, email, phone). A `<button>` inside a form submits it; with `type="button"` it submits nothing.'),
+        ], [
+            Q('m1', L('Con quale `method` i dati finiscono nell’indirizzo?', 'With which `method` does the data end up in the address?'), ['post', 'put', 'get', 'send'], 2, L('Si vedono dopo il `?`.', 'You see it after the `?`.')),
+            Q('m2', L('Quale `method` usi per un modulo con la password?', 'Which `method` do you use for a form with a password?'), ['get', 'post', 'url', 'link'], 1, L('Nell’indirizzo resterebbe nella cronologia.', 'In the address it would stay in the history.')),
+            Q('m3', L('Che cosa fa un `<button>` senza `type` dentro un modulo?', 'What does a `<button>` with no `type` do inside a form?'), [L('Svuota il modulo', 'It clears the form'), L('Niente, finché non ha JavaScript', 'Nothing, until it has JavaScript'), L('Apre una nuova finestra', 'It opens a new window'), L('Invia il modulo', 'It submits the form')], 3, L('Il tipo predefinito è `submit`.', 'The default type is `submit`.')),
+        ], task('html', L('Completa il modulo con `action="/messaggio"` e `method="post"`, e aggiungi una `textarea` con `name="testo"` e la sua `label`.', 'Complete the form with `action="/messaggio"` and `method="post"`, and add a `textarea` with `name="testo"` and its `label`.'), "<form>\n  <button>Invia</button>\n</form>", [has('form[action="/messaggio"][method="post"]', L('Il modulo va a /messaggio in POST', 'The form goes to /messaggio by POST')), has('form textarea[name="testo"]', L('C’è la `textarea`', 'The `textarea` is there')), has('form label[for]', L('C’è una `label` collegata', 'There is a linked `label`'))], '', "<form action=\"/messaggio\" method=\"post\">\n  <label for=\"testo\">Messaggio</label>\n  <textarea id=\"testo\" name=\"testo\"></textarea>\n  <button>Invia</button>\n</form>"), [
+            dMatch(pMatch(), [['method="get"', L('Dati nell’indirizzo', 'Data in the address')], ['method="post"', L('Dati nel corpo della richiesta', 'Data in the request body')], ['action', L('Dove vanno i dati', 'Where the data goes')], ['<textarea>', L('Testo su più righe', 'Multi-line text')], ['autocomplete', L('Il browser compila i dati noti', 'The browser fills in known data')]], L('Dove e come partono i dati di un modulo.', 'Where and how a form’s data leaves.')),
+            dBug(pBug(), ['<form action="/login" method="get">', '  <input name="utente">', '  <input name="password" type="password">', '  <button>Entra</button>', '</form>'], 0, '<form action="/login" method="post">', L('Con `get` la password finirebbe nell’indirizzo, nella cronologia e nei log.', 'With `get` the password would end up in the address, the history and the logs.')),
         ]),
     ],
 ];

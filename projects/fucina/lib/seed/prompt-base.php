@@ -1,10 +1,10 @@
 <?php
-/** Prompt engineering basics: clear requests, context, examples, output format and iterating. */
+/** Prompt engineering basics: clear requests, context, examples, output format, iterating, recipes for common tasks, checks and neutral questions. */
 
 return [
     'id' => 'prompt-base', 'family' => 'prompt', 'after' => null,
     'title' => L('Prompt engineering base', 'Prompt Engineering Basics'), 'short' => L('Prompt base', 'Prompt Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Scrivere richieste che funzionano: chiarezza, contesto, ruolo, esempi, formato della risposta e miglioramento passo per passo.', 'Writing requests that work: clarity, context, role, examples, answer format and step-by-step improvement.'),
+    'desc' => L('Scrivere richieste che funzionano: chiarezza, contesto, ruolo, esempi, formato della risposta, miglioramento passo per passo, ricette per i compiti comuni, verifiche e domande neutre.', 'Writing requests that work: clarity, context, role, examples, answer format, step-by-step improvement, recipes for common tasks, checks and neutral questions.'),
     'lessons' => [
         lesson('clear', L('Chiaro e specifico', 'Clear and specific'), [
             P('Un **prompt** è il testo che dai al modello. Il modello non legge nel pensiero: più sei **specifico** su compito, pubblico, lunghezza e tono, migliore è la risposta. Immagina di dare istruzioni a un collega bravissimo appena arrivato, che non sa nulla del tuo progetto.', 'A **prompt** is the text you give the model. The model cannot read your mind: the more **specific** you are about task, audience, length and tone, the better the answer. Picture briefing a brilliant colleague who just joined and knows nothing about your project.'),

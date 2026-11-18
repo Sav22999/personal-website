@@ -1,10 +1,10 @@
 <?php
-/** Maths for AI, the intuition: vectors and similarity, matrices, probability, derivatives and gradient descent, with NumPy. */
+/** Maths for AI, the intuition: vectors and similarity, matrices, probability, derivatives and gradient descent, statistics and standardisation, logarithms and cross-entropy, with NumPy. */
 
 return [
     'id' => 'ai-math', 'family' => 'ai', 'after' => 'ai-base',
     'title' => L('Matematica per l’AI', 'Maths for AI'), 'short' => L('Matematica AI', 'AI Maths'), 'level' => L('Base', 'Basics'),
-    'desc' => L('La matematica che serve davvero, spiegata con l’intuizione e NumPy: vettori e somiglianza, matrici, probabilità, derivate e discesa del gradiente.', 'The maths you really need, explained through intuition and NumPy: vectors and similarity, matrices, probability, derivatives and gradient descent.'),
+    'desc' => L('La matematica che serve davvero, spiegata con l’intuizione e NumPy: vettori e somiglianza, matrici, probabilità, derivate e discesa del gradiente, media e standardizzazione, logaritmi ed entropia incrociata.', 'The maths you really need, explained through intuition and NumPy: vectors and similarity, matrices, probability, derivatives and gradient descent, mean and standardisation, logarithms and cross-entropy.'),
     'lessons' => [
         lesson('vectors', L('Vettori', 'Vectors'), [
             P('Per un modello tutto diventa numeri. Un **vettore** è un elenco di numeri che descrive qualcosa: una casa come `[metri, stanze, anni]`, una parola come centinaia di numeri (un **embedding**). In Python si usano gli array di **NumPy**.', 'To a model everything becomes numbers. A **vector** is a list of numbers describing something: a house as `[metres, rooms, years]`, a word as hundreds of numbers (an **embedding**). In Python you use **NumPy** arrays.'),

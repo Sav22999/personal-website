@@ -1,10 +1,10 @@
 <?php
-/** Responsible AI: bias and fairness, privacy and personal data, copyright, transparency and the EU AI Act, safe everyday use. */
+/** Responsible AI: bias and fairness, privacy, copyright, the EU AI Act, everyday habits, labelling generated content, automated decisions and rights, impact on environment and work. */
 
 return [
     'id' => 'ai-ethics', 'family' => 'ai', 'after' => 'ai-base',
     'title' => L('AI responsabile e privacy', 'Responsible AI and Privacy'), 'short' => L('AI responsabile', 'Responsible AI'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Usare l’AI senza fare danni: bias ed equità, dati personali, diritto d’autore, trasparenza, AI Act europeo e buone abitudini quotidiane.', 'Using AI without causing harm: bias and fairness, personal data, copyright, transparency, the EU AI Act and good everyday habits.'),
+    'desc' => L('Usare l’AI senza fare danni: bias ed equità, dati personali, diritto d’autore, AI Act europeo, buone abitudini, etichette sui contenuti generati, decisioni automatiche e diritti, impatto su ambiente e lavoro.', 'Using AI without causing harm: bias and fairness, personal data, copyright, the EU AI Act, good habits, labels on generated content, automated decisions and rights, impact on environment and work.'),
     'lessons' => [
         lesson('bias', L('Bias ed equità', 'Bias and fairness'), [
             P('Un modello impara dai dati, compresi i loro **pregiudizi**. Se in passato un’azienda ha assunto soprattutto uomini, un modello addestrato su quei curriculum può penalizzare le donne. Questo è un **bias**: un errore sistematico che svantaggia un gruppo.', 'A model learns from data, prejudices included. If a company mostly hired men in the past, a model trained on those CVs may penalise women. That is a **bias**: a systematic error that disadvantages a group.'),

@@ -1,10 +1,10 @@
 <?php
-/** PostgreSQL: psql, rich types, RETURNING and upserts, JSONB, indexes and EXPLAIN, roles and schemas. */
+/** PostgreSQL: psql, rich types, RETURNING and upserts, JSONB, roles and EXPLAIN, PL/pgSQL, MVCC and VACUUM, full-text search, extensions. */
 
 return [
     'id' => 'postgresql', 'family' => 'postgresql', 'after' => 'sql-base',
     'title' => L('PostgreSQL', 'PostgreSQL'), 'short' => L('PostgreSQL', 'PostgreSQL'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Il database open source più avanzato: `psql`, tipi ricchi, upsert con `ON CONFLICT`, JSONB, indici, `EXPLAIN`, ruoli e schemi.', 'The most advanced open source database: `psql`, rich types, upserts with `ON CONFLICT`, JSONB, indexes, `EXPLAIN`, roles and schemas.'),
+    'desc' => L('Il database open source più avanzato: `psql`, tipi ricchi, upsert con `ON CONFLICT`, JSONB, ruoli ed `EXPLAIN`, PL/pgSQL e trigger, MVCC e `VACUUM`, ricerca full-text, pgvector e PostGIS.', 'The most advanced open source database: `psql`, rich types, upserts with `ON CONFLICT`, JSONB, roles and `EXPLAIN`, PL/pgSQL and triggers, MVCC and `VACUUM`, full-text search, pgvector and PostGIS.'),
     'lessons' => [
         lesson('psql', L('psql e i primi passi', 'psql and first steps'), [
             P('`psql` è il client a riga di comando di PostgreSQL. Oltre all’SQL accetta i **meta-comandi** che iniziano con la barra rovesciata: `\l` elenca i database, `\c` si collega a uno, `\dt` mostra le tabelle, `\d nome` descrive una tabella, `\q` esce.', '`psql` is PostgreSQL’s command-line client. Besides SQL it accepts **meta-commands** starting with a backslash: `\l` lists databases, `\c` connects to one, `\dt` shows tables, `\d name` describes a table, `\q` quits.'),

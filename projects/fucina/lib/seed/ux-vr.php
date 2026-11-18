@@ -1,10 +1,10 @@
 <?php
-/** UX in VR and XR: presence and comfort, motion sickness and locomotion, spatial interfaces, input and interaction. */
+/** UX in VR and XR: presence and comfort, motion sickness and locomotion, spatial interfaces, input and interaction, first run and testing, visionOS and Android XR, shared experiences and safety. */
 
 return [
     'id' => 'ux-vr', 'family' => 'ux', 'after' => 'ux-intermediate', 'categories' => ['design'],
     'title' => L('UX in realtà virtuale', 'UX in VR'), 'short' => L('UX in VR', 'VR UX'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Progettare esperienze immersive in VR, AR e realtà mista: presenza e comfort, chinetosi e locomozione, interfacce spaziali, mani, controller, sguardo e voce.', 'Designing immersive experiences in VR, AR and mixed reality: presence and comfort, motion sickness and locomotion, spatial interfaces, hands, controllers, gaze and voice.'),
+    'desc' => L('Progettare esperienze immersive in VR, AR e realtà mista: presenza e comfort, chinetosi e locomozione, interfacce spaziali, mani, controller, sguardo e voce, visionOS e Android XR, esperienze condivise e sicurezza.', 'Designing immersive experiences in VR, AR and mixed reality: presence and comfort, motion sickness and locomotion, spatial interfaces, hands, controllers, gaze and voice, visionOS and Android XR, shared experiences and safety.'),
     'lessons' => [
         lesson('presence', L('Presenza, VR, AR e realtà mista', 'Presence, VR, AR and mixed reality'), [
             P('La **realtà virtuale** (VR) sostituisce ciò che vedi con un mondo digitale; la **realtà aumentata** (AR) aggiunge oggetti digitali al mondo reale (anche dal telefono); la **realtà mista** (MR) li fa interagire con lo spazio vero, come su Meta Quest o Apple Vision Pro. Insieme si chiamano **XR**.', '**Virtual reality** (VR) replaces what you see with a digital world; **augmented reality** (AR) adds digital objects to the real world (even from a phone); **mixed reality** (MR) makes them interact with real space, as on Meta Quest or Apple Vision Pro. Together they are called **XR**.'),

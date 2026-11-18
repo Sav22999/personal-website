@@ -1,10 +1,10 @@
 <?php
-/** MongoDB: documents and collections, find with operators, updates, the aggregation pipeline, indexes and data modelling. */
+/** MongoDB: documents and collections, find with operators, updates, aggregation, indexes and modelling, arrays, schema validation and transactions. */
 
 return [
     'id' => 'mongodb', 'family' => 'mongodb', 'after' => null,
     'title' => L('MongoDB', 'MongoDB'), 'short' => L('MongoDB', 'MongoDB'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Il database NoSQL a documenti: collezioni, `find` e operatori, aggiornamenti, pipeline di aggregazione, indici e come modellare i dati.', 'The NoSQL document database: collections, `find` and operators, updates, the aggregation pipeline, indexes and how to model data.'),
+    'desc' => L('Il database NoSQL a documenti: collezioni, `find` e operatori, aggiornamenti, pipeline di aggregazione, indici e modellazione, array, validazione dello schema e transazioni.', 'The NoSQL document database: collections, `find` and operators, updates, the aggregation pipeline, indexes and modelling, arrays, schema validation and transactions.'),
     'lessons' => [
         lesson('documents', L('Documenti e collezioni', 'Documents and collections'), [
             P('MongoDB non usa tabelle ma **collezioni** di **documenti**: oggetti simili al JSON (salvati in BSON) con campi, array e oggetti annidati. Due documenti della stessa collezione possono avere campi diversi.', 'MongoDB uses no tables but **collections** of **documents**: JSON-like objects (stored as BSON) with fields, arrays and nested objects. Two documents in the same collection can have different fields.'),
@@ -94,6 +94,76 @@ db.ordini.find({ cliente: "ada" }).explain("executionStats")
         ], task('mongodb', L('Crea un indice unico sul campo `username` della collezione `utenti`.', 'Create a unique index on the `username` field of the `utenti` collection.'), '', [re('db\.utenti\.createIndex\s*\(\s*\{\s*username\s*:\s*1\s*\}', L('Indice su username', 'Index on username')), re('\{\s*unique\s*:\s*true\s*\}', L('È unico', 'It is unique'))], '', 'db.utenti.createIndex({ username: 1 }, { unique: true })'), [
             dFlash(pFlash(), [[L('`IXSCAN` significa che usa un indice', '`IXSCAN` means it uses an index'), true], [L('Un documento può pesare 1 GB', 'A document can weigh 1 GB'), false], [L('I commenti di un post si possono incorporare', 'A post’s comments can be embedded'), true], [L('MongoDB non ha indici unici', 'MongoDB has no unique indexes'), false]], L('Velocità e forma dei dati.', 'Speed and shape of data.')),
             dBlanks(pFill(), "db.ordini.___({ cliente: 1, data: -1 })\ndb.ordini.find({ cliente: \"ada\" }).___(\"executionStats\")", ['createIndex', 'explain'], ['addIndex', 'analyze', 'index'], L('Creare l’indice e verificarlo.', 'Create the index and verify it.')),
+        ]),
+        lesson('arrays', L('Lavorare con gli array', 'Working with arrays'), [
+            P('Gli array sono il cuore dei documenti. Per cercarli: `$all` vuole tutti i valori elencati, `$size` una lunghezza precisa, **`$elemMatch`** un elemento che rispetti **insieme** più condizioni. Per modificarli: `$addToSet` aggiunge senza doppioni, `$pull` toglie gli elementi che corrispondono.', 'Arrays are the heart of documents. To search them: `$all` wants every listed value, `$size` an exact length, **`$elemMatch`** one element meeting several conditions **together**. To change them: `$addToSet` adds without duplicates, `$pull` removes matching elements.'),
+            C('db.post.find({ tag: { $all: ["mongodb", "database"] } })
+db.ordini.find({ righe: { $elemMatch: { prodotto: "Tazza", qta: { $gte: 2 } } } })
+
+db.post.updateOne({ _id: 1 }, { $addToSet: { tag: "nosql" } })
+db.post.updateOne({ _id: 1 }, { $pull: { tag: "vecchio" } })
+
+// $ = il primo elemento trovato dal filtro
+db.ordini.updateOne(
+  { _id: 7, "righe.prodotto": "Tazza" },
+  { $set: { "righe.$.qta": 3 } }
+)', 'js'),
+            P('Senza `$elemMatch`, `{ "righe.prodotto": "Tazza", "righe.qta": { $gte: 2 } }` può trovare un documento in cui le due condizioni valgono per **elementi diversi**. L’operatore posizionale `$` aggiorna l’elemento trovato dal filtro; `$[]` li aggiorna tutti.', 'Without `$elemMatch`, `{ "righe.prodotto": "Tazza", "righe.qta": { $gte: 2 } }` can match a document where the two conditions hold for **different elements**. The positional `$` operator updates the element found by the filter; `$[]` updates them all.'),
+        ], [
+            Q('r1', L('Quale operatore aggiunge a un array solo se il valore manca?', 'Which operator adds to an array only if the value is missing?'), ['$push', '$addToSet', '$set', '$inc'], 1, L('`$push` invece aggiunge sempre.', '`$push` instead always adds.')),
+            Q('r2', L('Perché usare `$elemMatch`?', 'Why use `$elemMatch`?'), [L('Per contare gli elementi di un array', 'To count an array’s elements'), L('Per ordinare gli elementi di un array', 'To sort an array’s elements'), L('Per unire due array in uno', 'To merge two arrays into one'), L('Perché più condizioni valgano per lo stesso elemento', 'So several conditions hold for the same element')], 3, L('Altrimenti possono valere per elementi diversi.', 'Otherwise they may hold for different elements.')),
+            Q('r3', L('Che cosa aggiorna `"righe.$.qta"`?', 'What does `"righe.$.qta"` update?'), [L('Tutti gli elementi di `righe`', 'Every element of `righe`'), L('L’ultimo elemento di `righe`', 'The last element of `righe`'), L('L’elemento trovato dal filtro', 'The element found by the filter'), L('Un nuovo campo chiamato `$`', 'A new field called `$`')], 2, L('Per tutti si usa `$[]`.', 'For all of them you use `$[]`.')),
+        ], task('mongodb', L('Nella collezione `post` togli il tag `"bozza"` dall’array `tag` del documento con `_id: 5`, usando `$pull`.', 'In the `post` collection remove the tag `"bozza"` from the `tag` array of the document with `_id: 5`, using `$pull`.'), '', [re('db\.post\.updateOne\s*\(\s*\{\s*_id\s*:\s*5\s*\}', L('Trovi il post', 'You find the post')), re('\$pull\s*:\s*\{\s*tag\s*:\s*["\']bozza["\']\s*\}', L('Togli il tag', 'You remove the tag'))], '', 'db.post.updateOne({ _id: 5 }, { $pull: { tag: "bozza" } })'), [
+            dMatch(pMatch(), [['$all', L('Tutti i valori elencati', 'Every listed value')], ['$size', L('Lunghezza esatta', 'Exact length')], ['$elemMatch', L('Condizioni sullo stesso elemento', 'Conditions on the same element')], ['$addToSet', L('Aggiunge senza doppioni', 'Adds without duplicates')], ['$pull', L('Toglie gli elementi', 'Removes elements')]], L('Gli operatori degli array.', 'The array operators.')),
+            dBlanks(pFill(), "db.utenti.updateOne(\n  { _id: 3, \"indirizzi.tipo\": \"casa\" },\n  { ___: { \"indirizzi.___.citta\": \"Udine\" } }\n)\ndb.utenti.updateOne({ _id: 3 }, { ___: { preferiti: \"sql\" } })", ['$set', '$', '$addToSet'], ['$update', '0', '$append'], L('Aggiornare un elemento trovato, poi aggiungere senza doppioni.', 'Update a found element, then add without duplicates.')),
+        ]),
+        lesson('validation', L('Validare lo schema', 'Schema validation'), [
+            P('Lo schema flessibile non vuol dire «senza regole». Con un **validatore** `$jsonSchema` la collezione rifiuta i documenti che non rispettano la forma prevista: campi obbligatori, tipi, valori minimi, testi che seguono un modello.', 'A flexible schema does not mean “no rules”. With a `$jsonSchema` **validator** the collection rejects documents that do not match the expected shape: required fields, types, minimum values, texts following a pattern.'),
+            C('db.createCollection("utenti", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["email", "nome"],
+      properties: {
+        email: { bsonType: "string", pattern: "^.+@.+$" },
+        eta: { bsonType: "int", minimum: 0 }
+      }
+    }
+  }
+})
+
+db.utenti.insertOne({ nome: "Ada" })   // rifiutato: manca email', 'js'),
+            P('Per una collezione che esiste già si usa il comando `collMod`. `validationAction: "warn"` registra solo un avviso invece di rifiutare: utile per introdurre le regole senza rompere l’app. I campi non elencati in `properties` restano liberi, a meno di `additionalProperties: false`.', 'For an existing collection you use the `collMod` command. `validationAction: "warn"` only logs a warning instead of rejecting: useful to introduce rules without breaking the app. Fields not listed in `properties` stay free, unless you set `additionalProperties: false`.'),
+        ], [
+            Q('v1', L('Che cosa succede inserendo un documento che non rispetta il validatore?', 'What happens when inserting a document that breaks the validator?'), [L('Viene rifiutato con un errore', 'It is rejected with an error'), L('Viene corretto in automatico', 'It is fixed automatically'), L('Viene salvato in un’altra collezione', 'It is saved in another collection'), L('Viene salvato senza i campi sbagliati', 'It is saved without the wrong fields')], 0, L('Con l’azione predefinita, `error`.', 'With the default action, `error`.')),
+            Q('v2', L('Come aggiungi un validatore a una collezione esistente?', 'How do you add a validator to an existing collection?'), [L('Ricreando il database', 'By recreating the database'), L('Con `createIndex`', 'With `createIndex`'), L('Con un trigger', 'With a trigger'), L('Con il comando `collMod`', 'With the `collMod` command')], 3, L('`db.runCommand({ collMod: "utenti", validator: … })`.', '`db.runCommand({ collMod: "utenti", validator: … })`.')),
+            Q('v3', L('A che cosa serve `validationAction: "warn"`?', 'What is `validationAction: "warn"` for?'), [L('A cancellare i documenti sbagliati', 'Deleting wrong documents'), L('A registrare un avviso senza rifiutare', 'Logging a warning without rejecting'), L('A mandare un’email all’amministratore', 'Emailing the administrator'), L('A bloccare tutte le letture', 'Blocking every read')], 1, L('Per introdurre le regole con calma.', 'To bring rules in gently.')),
+        ], task('mongodb', L('Crea la collezione `prodotti` con un validatore `$jsonSchema` che renda obbligatori i campi `nome` e `prezzo`.', 'Create the `prodotti` collection with a `$jsonSchema` validator making the fields `nome` and `prezzo` required.'), '', [re('db\.createCollection\s*\(\s*["\']prodotti["\']', L('Crei la collezione', 'You create the collection')), re('validator\s*:\s*\{\s*\$jsonSchema\s*:', L('Con un validatore', 'With a validator')), re('required\s*:\s*\[\s*(["\']nome["\']\s*,\s*["\']prezzo["\']|["\']prezzo["\']\s*,\s*["\']nome["\'])\s*\]', L('Nome e prezzo obbligatori', 'Name and price required'))], '', 'db.createCollection("prodotti", {
+  validator: { $jsonSchema: { bsonType: "object", required: ["nome", "prezzo"] } }
+})'), [
+            dMatch(pMatch(), [['$jsonSchema', L('Descrive la forma dei documenti', 'Describes the documents’ shape')], ['required', L('Campi obbligatori', 'Required fields')], ['bsonType', L('Il tipo del campo', 'The field’s type')], ['collMod', L('Modifica una collezione esistente', 'Changes an existing collection')], ['warn', L('Avvisa senza rifiutare', 'Warns without rejecting')]], L('Regole per i documenti.', 'Rules for documents.')),
+            dFlash(pFlash(), [[L('MongoDB può rifiutare documenti senza un campo obbligatorio', 'MongoDB can reject documents missing a required field'), true], [L('Un validatore si può aggiungere solo creando la collezione', 'A validator can only be added when creating the collection'), false], [L('I campi non elencati restano liberi di base', 'Unlisted fields stay free by default'), true], [L('Con `warn` i documenti sbagliati vengono cancellati', 'With `warn` wrong documents are deleted'), false]], L('Flessibile, ma con regole.', 'Flexible, but with rules.')),
+        ]),
+        lesson('transactions', L('Transazioni e replica set', 'Transactions and replica sets'), [
+            P('In MongoDB un’operazione su **un solo documento** è già atomica: per questo incorporare i dati collegati spesso evita le transazioni. Quando devi modificare più documenti insieme (un bonifico tra due conti) usi una **transazione multi-documento**, che richiede un **replica set** o un cluster sharded.', 'In MongoDB an operation on **a single document** is already atomic: that is why embedding related data often avoids transactions. When you must change several documents together (a transfer between two accounts) you use a **multi-document transaction**, which requires a **replica set** or a sharded cluster.'),
+            C('// Node.js, driver ufficiale
+const session = client.startSession();
+try {
+  await session.withTransaction(async () => {
+    await conti.updateOne({ _id: 1 }, { $inc: { saldo: -50 } }, { session });
+    await conti.updateOne({ _id: 2 }, { $inc: { saldo: 50 } }, { session });
+  });
+} finally {
+  await session.endSession();
+}', 'js'),
+            P('Ogni operazione riceve la `session`; `withTransaction` conferma alla fine e ripete in automatico in caso di errori temporanei. Un **replica set** è un gruppo di server con le stesse copie dei dati: uno primario riceve le scritture, i secondari lo seguono e lo sostituiscono se cade. Con `writeConcern: { w: "majority" }` una scrittura è confermata solo quando la maggioranza l’ha ricevuta.', 'Each operation receives the `session`; `withTransaction` commits at the end and retries automatically on transient errors. A **replica set** is a group of servers holding the same copies of the data: a primary receives writes, the secondaries follow it and replace it if it fails. With `writeConcern: { w: "majority" }` a write is confirmed only once the majority has received it.'),
+        ], [
+            Q('x1', L('Serve una transazione per aggiornare un solo documento?', 'Do you need a transaction to update a single document?'), [L('Sì, sempre', 'Yes, always'), L('Solo se il documento ha array', 'Only if the document has arrays'), L('No, è già atomico', 'No, it is already atomic'), L('Solo nei giorni festivi', 'Only on holidays')], 2, L('Anche se cambia più campi.', 'Even if it changes several fields.')),
+            Q('x2', L('Che cosa richiedono le transazioni multi-documento?', 'What do multi-document transactions require?'), [L('Un replica set o un cluster sharded', 'A replica set or a sharded cluster'), L('Un server senza indici', 'A server with no indexes'), L('Una collezione con validatore', 'A collection with a validator'), L('Il pacchetto di SQL Server', 'The SQL Server package')], 0, L('Un singolo server autonomo non basta.', 'A single standalone server is not enough.')),
+            Q('x3', L('Che cosa garantisce `w: "majority"`?', 'What does `w: "majority"` guarantee?'), [L('Che la scrittura sia più veloce', 'That the write is faster'), L('Che la scrittura vada su un solo server', 'That the write goes to a single server'), L('Che i dati siano cifrati', 'That the data is encrypted'), L('Che la maggioranza dei nodi abbia ricevuto la scrittura', 'That the majority of nodes received the write')], 3, L('Così sopravvive alla caduta del primario.', 'So it survives the primary failing.')),
+        ], task('js', L('Completa la transazione: dentro `session.withTransaction(async () => { … })` aggiungi `-1` a `pezzi` del prodotto `_id: 9` in `magazzino`, passando `{ session }`.', 'Complete the transaction: inside `session.withTransaction(async () => { … })` add `-1` to `pezzi` of product `_id: 9` in `magazzino`, passing `{ session }`.'), "const session = client.startSession();\n", [re('session\.withTransaction\s*\(\s*async\s*\(\s*\)\s*=>', L('Usi withTransaction', 'You use withTransaction')), re('magazzino\.updateOne\s*\(\s*\{\s*_id\s*:\s*9\s*\}\s*,\s*\{\s*\$inc\s*:\s*\{\s*pezzi\s*:\s*-1\s*\}\s*\}\s*,\s*\{\s*session\s*(:\s*session\s*)?\}\s*\)', L('Aggiorni dentro la sessione', 'You update inside the session'))], '', "await session.withTransaction(async () => {\n  await magazzino.updateOne({ _id: 9 }, { \$inc: { pezzi: -1 } }, { session });\n});"), [
+            dOrder(pSort(), ['const session = client.startSession();', 'await session.withTransaction(async () => {', '  await ordini.insertOne({ prodotto: 9 }, { session });', '  await magazzino.updateOne({ _id: 9 }, { $inc: { pezzi: -1 } }, { session });', '});', 'await session.endSession();'], L('Sessione, transazione, operazioni, chiusura.', 'Session, transaction, operations, close.')),
+            dMatch(pMatch(), [[L('Primario', 'Primary'), L('Riceve le scritture', 'Receives writes')], [L('Secondario', 'Secondary'), L('Copia il primario', 'Copies the primary')], ['withTransaction', L('Conferma o ripete', 'Commits or retries')], ['majority', L('Conferma della maggioranza', 'Majority confirmation')], [L('Documento singolo', 'Single document'), L('Già atomico', 'Already atomic')]], L('Affidabilità in MongoDB.', 'Reliability in MongoDB.')),
         ]),
     ],
 ];

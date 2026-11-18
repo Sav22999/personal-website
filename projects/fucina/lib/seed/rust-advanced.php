@@ -1,10 +1,10 @@
 <?php
-/** Rust advanced: lifetimes, smart pointers, threads and channels, async with Tokio, tests and crates. */
+/** Rust advanced: lifetimes, smart pointers, threads and channels, async with Tokio, tests and crates, macros, unsafe and FFI, advanced traits. */
 
 return [
     'id' => 'rust-advanced', 'family' => 'rust', 'after' => 'rust-intermediate',
     'title' => L('Rust avanzato', 'Advanced Rust'), 'short' => L('Rust avanzato', 'Rust Advanced'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Lifetime, smart pointer, thread e canali, async con Tokio, test e crate.', 'Lifetimes, smart pointers, threads and channels, async with Tokio, tests and crates.'),
+    'desc' => L('Lifetime, smart pointer, thread e canali, async con Tokio, test e crate, macro, unsafe e FFI, trait avanzati.', 'Lifetimes, smart pointers, threads and channels, async with Tokio, tests and crates, macros, unsafe and FFI, advanced traits.'),
     'lessons' => [
         lesson('lifetimes', L('Lifetime', 'Lifetimes'), [
             P('Un **lifetime** dice al compilatore per quanto tempo un riferimento resta valido. Quando una funzione riceve più riferimenti e ne restituisce uno, l’annotazione `\'a` collega le loro durate.', 'A **lifetime** tells the compiler how long a reference stays valid. When a function takes several references and returns one, the `\'a` annotation links their lifetimes.'),
@@ -112,7 +112,7 @@ let s = saluto().await;'), [
             C('pub fn somma(a: i32, b: i32) -> i32 { a + b }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
@@ -134,14 +134,123 @@ mod test {
             Q('x2', L('Quale macro confronta due valori in un test?', 'Which macro compares two values in a test?'), ['assert_eq!', 'compare!', 'equal!', 'check!'], 0, L('Mostra entrambi se diversi.', 'It shows both when different.')),
             Q('x3', L('Come aggiungi una libreria?', 'How do you add a library?'), ['cargo add nome', 'cargo install nome', 'npm install nome', 'use nome'], 0, L('Aggiorna il Cargo.toml.', 'It updates Cargo.toml.')),
         ], task('rust', L('Scrivi un `#[test]` chiamato `doppio_di_due` con `assert_eq!(doppio(2), 4);`.', 'Write a `#[test]` named `doppio_di_due` with `assert_eq!(doppio(2), 4);`.'), '#[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 }', [re('#\[test\]\s*fn\s+doppio_di_due\s*\(\s*\)', L('Il test esiste', 'The test exists')), re('assert_eq!\s*\(\s*doppio\s*\(\s*2\s*\)\s*,\s*4\s*\)', L('L’asserzione è giusta', 'The assertion is right'))], '', '#[test]
 fn doppio_di_due() {
     assert_eq!(doppio(2), 4);
 }'), [
-            dOrder(pSort(), ['cargo new progetto', 'cargo add serde', 'cargo fmt', 'cargo clippy', 'cargo test'], L('Crea, aggiungi, formatta, controlla, prova.', 'Create, add, format, lint, test.')),
+            dOrder(pSort(), ['#[cfg(test)]', 'mod tests {', '    use super::*;', '    #[test]', '    fn somma_funziona() {', '        assert_eq!(somma(2, 3), 5);', '    }', '}'], L('Modulo solo per i test, import, attributo, funzione, asserzione.', 'Test-only module, import, attribute, function, assertion.')),
             dMatch(pMatch(), [['cargo test', L('Esegue i test', 'Runs tests')], ['cargo fmt', L('Formatta il codice', 'Formats code')], ['cargo clippy', L('Suggerimenti', 'Suggestions')], ['cargo add', L('Aggiunge una crate', 'Adds a crate')], ['Cargo.toml', L('Configurazione del progetto', 'Project configuration')]], L('Gli strumenti di Cargo.', 'Cargo tools.')),
+        ]),
+        lesson('macros', L('Macro dichiarative', 'Declarative macros'), [
+            P('Una **macro** genera codice prima della compilazione: per questo `println!` accetta un numero variabile di argomenti. Con `macro_rules!` scrivi le tue: ogni regola confronta un **pattern** di token e lo sostituisce con codice.', 'A **macro** generates code before compilation: that is why `println!` accepts any number of arguments. With `macro_rules!` you write your own: each rule matches a **pattern** of tokens and replaces it with code.'),
+            C('macro_rules! quadrato {
+    ($x:expr) => {
+        $x * $x
+    };
+}
+
+macro_rules! mappa {
+    ($($chiave:expr => $valore:expr),* $(,)?) => {{
+        let mut m = std::collections::HashMap::new();
+        $( m.insert($chiave, $valore); )*
+        m
+    }};
+}
+
+let n = quadrato!(7);                       // 49
+let eta = mappa!("Ada" => 36, "Bea" => 28);', 'rust'),
+            P('`$x:expr` cattura un’espressione (ci sono anche `ident`, `ty`, `tt`…); `$( … ),*` ripete per ogni elemento separato da virgole. A differenza delle macro di C lavorano sulla struttura del codice: `quadrato!(1 + 2)` dà 9, non 5. Le **macro procedurali**, come `#[derive(Serialize)]`, sono funzioni Rust che generano codice e vivono in una crate a parte.', '`$x:expr` captures an expression (there are also `ident`, `ty`, `tt`…); `$( … ),*` repeats for each comma-separated item. Unlike C macros they work on the structure of the code: `quadrato!(1 + 2)` gives 9, not 5. **Procedural macros**, such as `#[derive(Serialize)]`, are Rust functions that generate code and live in a separate crate.'),
+        ], [
+            Q('ma1', L('Che cosa cattura `$x:expr`?', 'What does `$x:expr` capture?'), [L('Un identificatore', 'An identifier'), L('Un’espressione', 'An expression'), L('Un tipo', 'A type'), L('Un file', 'A file')], 1, L('Per un nome si usa `ident`, per un tipo `ty`.', 'For a name you use `ident`, for a type `ty`.')),
+            Q('ma2', L('Quanto vale `quadrato!(1 + 2)` con la macro dell’esempio?', 'What does `quadrato!(1 + 2)` give with the sample macro?'), ['5', '3', '9', L('Errore di compilazione', 'Compile error')], 2, L('L’espressione resta un blocco unico: (1 + 2) * (1 + 2).', 'The expression stays one unit: (1 + 2) * (1 + 2).')),
+            Q('ma3', L('Che cosa fa `$( … ),*` in una regola?', 'What does `$( … ),*` do in a rule?'), [L('Ripete il pezzo per ogni elemento separato da virgole', 'Repeats the piece for each comma-separated item'), L('Commenta il codice', 'Comments out the code'), L('Moltiplica i valori', 'Multiplies the values'), L('Rende pubblica la macro', 'Makes the macro public')], 0, L('`*` vuol dire zero o più volte, `+` una o più.', '`*` means zero or more times, `+` one or more.')),
+        ], task('rust', L('Scrivi `macro_rules! doppio` con la regola `($x:expr) => { $x * 2 };`.', 'Write `macro_rules! doppio` with the rule `($x:expr) => { $x * 2 };`.'), '', [re('macro_rules!\s*doppio\s*\{', L('La macro esiste', 'The macro exists')), re('\(\s*\$x\s*:\s*expr\s*\)\s*=>\s*\{\s*\$x\s*\*\s*2\s*\}', L('La regola è giusta', 'The rule is right'))], '', 'macro_rules! doppio {
+    ($x:expr) => { $x * 2 };
+}'), [
+            dBlanks(pFill(), "macro_rules! saluta {\n    (\$nome:___) => {\n        println!(\"Ciao {}\", \$nome)\n    };\n}\n___!(\"Ada\");", ['expr', 'saluta'], ['string', 'macro', 'fn'], L('Frammento e chiamata con il punto esclamativo.', 'Fragment and call with the exclamation mark.')),
+            dFlash(pFlash(), [[L('Le macro si espandono prima della compilazione', 'Macros expand before compilation'), true], [L('`println!` è una funzione normale', '`println!` is an ordinary function'), false], [L('`#[derive]` usa macro procedurali', '`#[derive]` uses procedural macros'), true], [L('`macro_rules!` lavora su token, non su testo grezzo', '`macro_rules!` works on tokens, not raw text'), true]], L('Il punto esclamativo segnala una macro.', 'The exclamation mark marks a macro.')),
+        ]),
+        lesson('unsafe-ffi', L('unsafe e FFI', 'unsafe and FFI'), [
+            P('Il compilatore non può verificare tutto. Dentro un blocco `unsafe` puoi fare alcune cose in più, come dereferenziare puntatori grezzi e chiamare funzioni `unsafe`: sei tu a garantire che siano corrette. `unsafe` non spegne il borrow checker, apre solo quelle porte.', 'The compiler cannot check everything. Inside an `unsafe` block you can do a few extra things, such as dereferencing raw pointers and calling `unsafe` functions: you guarantee they are correct. `unsafe` does not switch off the borrow checker, it only opens those doors.'),
+            C('let mut x = 10;
+let p = &mut x as *mut i32;      // puntatore grezzo: crearlo è sicuro
+unsafe {
+    *p += 1;                     // usarlo no
+}
+
+// Chiamare una funzione C (edizione 2024: il blocco è `unsafe extern`)
+unsafe extern "C" {
+    fn abs(n: i32) -> i32;
+}
+
+fn valore_assoluto(n: i32) -> i32 {
+    unsafe { abs(n) }
+}
+
+// Esportare una funzione Rust verso il C
+#[unsafe(no_mangle)]
+pub extern "C" fn somma(a: i32, b: i32) -> i32 { a + b }', 'rust'),
+            P('**FFI** (Foreign Function Interface) è il ponte verso il C: le librerie di sistema e molte altre parlano C. La pratica migliore è chiudere l’`unsafe` in una piccola funzione sicura, come `valore_assoluto`, e scrivere in un commento perché è corretto. **Miri** (`cargo miri test`) aiuta a scovare comportamenti indefiniti.', '**FFI** (Foreign Function Interface) is the bridge to C: system libraries and many others speak C. Best practice is to wrap the `unsafe` in a small safe function, like `valore_assoluto`, and explain in a comment why it is correct. **Miri** (`cargo miri test`) helps find undefined behaviour.'),
+        ], [
+            Q('un1', L('Che cosa fa un blocco `unsafe`?', 'What does an `unsafe` block do?'), [L('Disattiva il borrow checker', 'Switches off the borrow checker'), L('Rende il codice più veloce', 'Makes the code faster'), L('Permette alcune operazioni che il compilatore non può verificare', 'Allows some operations the compiler cannot check'), L('Fa girare il codice in un altro thread', 'Runs the code in another thread')], 2, L('Le altre regole restano attive.', 'The other rules stay active.')),
+            Q('un2', L('Creare un puntatore grezzo `*const i32` richiede `unsafe`?', 'Does creating a raw pointer `*const i32` need `unsafe`?'), [L('No, serve solo per dereferenziarlo', 'No, only dereferencing it does'), L('Sì, sempre', 'Yes, always'), L('Solo in modalità release', 'Only in release mode'), L('Solo nelle librerie', 'Only in libraries')], 0, L('Il pericolo è leggere o scrivere attraverso il puntatore.', 'The danger is reading or writing through the pointer.')),
+            Q('un3', L('Come si dichiara, nell’edizione 2024, un blocco di funzioni C da chiamare?', 'In the 2024 edition, how do you declare a block of C functions to call?'), ['extern "C" { … }', 'import C { … }', 'ffi "C" { … }', 'unsafe extern "C" { … }'], 3, L('Dichiarare male una firma è già un rischio, quindi il blocco va segnato `unsafe`.', 'Getting a signature wrong is already a risk, so the block must be marked `unsafe`.')),
+        ], task('rust', L('Dereferenzia il puntatore dentro un blocco unsafe: `unsafe { println!("{}", *p); }`.', 'Dereference the pointer inside an unsafe block: `unsafe { println!("{}", *p); }`.'), 'let x = 5;
+let p = &x as *const i32;
+', [re('unsafe\s*\{[\s\S]*\*\s*p[\s\S]*\}', L('Dereferenzi dentro unsafe', 'You dereference inside unsafe'))], '', 'unsafe {
+    println!("{}", *p);
+}'), [
+            dBug(pBug(), ['let v = 42;', 'let p = &v as *const i32;', 'println!("{}", *p);'], 2, 'println!("{}", unsafe { *p });', L('Dereferenziare un puntatore grezzo richiede `unsafe`.', 'Dereferencing a raw pointer needs `unsafe`.')),
+            dMatch(pMatch(), [['unsafe { }', L('Operazioni non verificate', 'Unchecked operations')], ['*const T', L('Puntatore grezzo in lettura', 'Read-only raw pointer')], ['extern "C"', L('Convenzione di chiamata del C', 'C calling convention')], ['#[unsafe(no_mangle)]', L('Nome del simbolo invariato', 'Symbol name kept as is')], ['Miri', L('Trova comportamenti indefiniti', 'Finds undefined behaviour')]], L('Ai confini della sicurezza.', 'At the edges of safety.')),
+        ]),
+        lesson('advanced-traits', L('Trait avanzati', 'Advanced traits'), [
+            P('Un trait può avere un **tipo associato**: un tipo scelto da chi lo implementa. L’esempio più famoso è `Iterator`, con `type Item`: implementando solo `next` ottieni gratis `map`, `filter`, `sum` e tutti gli altri adattatori.', 'A trait can have an **associated type**: a type chosen by the implementer. The best-known example is `Iterator`, with `type Item`: implementing only `next` gives you `map`, `filter`, `sum` and all the other adapters for free.'),
+            C('struct Conto { da: u32, a: u32 }
+
+impl Iterator for Conto {
+    type Item = u32;
+    fn next(&mut self) -> Option<u32> {
+        if self.da > self.a { return None; }
+        let v = self.da;
+        self.da += 1;
+        Some(v)
+    }
+}
+
+let pari: Vec<u32> = Conto { da: 1, a: 10 }.filter(|n| n % 2 == 0).collect();
+
+use std::ops::Add;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Vettore { x: f64, y: f64 }
+
+impl Add for Vettore {
+    type Output = Vettore;
+    fn add(self, o: Vettore) -> Vettore { Vettore { x: self.x + o.x, y: self.y + o.y } }
+}
+
+let v = Vettore { x: 1.0, y: 2.0 } + Vettore { x: 3.0, y: 4.0 };', 'rust'),
+            P('I trait di `std::ops` (`Add`, `Mul`, `Index`…) ridefiniscono gli operatori. Con `impl<T: Display> Descrivi for T` si implementa un trait per tutti i tipi che rispettano un vincolo (**blanket implementation**). Con un tipo associato un tipo implementa il trait una volta sola; con un parametro generico (`trait Converti<T>`) può farlo per più `T`.', 'The `std::ops` traits (`Add`, `Mul`, `Index`…) redefine operators. With `impl<T: Display> Descrivi for T` you implement a trait for every type meeting a bound (**blanket implementation**). With an associated type a type implements the trait only once; with a generic parameter (`trait Converti<T>`) it can do so for several `T`.'),
+        ], [
+            Q('at1', L('Che cosa basta implementare per avere un Iterator completo?', 'What is enough to implement for a complete Iterator?'), [L('`map` e `filter`', '`map` and `filter`'), L('Il metodo `next` e il tipo `Item`', 'The `next` method and the `Item` type'), L('Il metodo `collect`', 'The `collect` method'), L('`into_iter` e `len`', '`into_iter` and `len`')], 1, L('Gli adattatori sono metodi predefiniti del trait.', 'The adapters are default methods of the trait.')),
+            Q('at2', L('Quale trait ridefinisce l’operatore `+`?', 'Which trait redefines the `+` operator?'), ['Plus', 'Sum', 'Operator', 'std::ops::Add'], 3, L('`Sum` serve a `.sum()` sugli iteratori.', '`Sum` powers `.sum()` on iterators.')),
+            Q('at3', L('Che cos’è una blanket implementation?', 'What is a blanket implementation?'), [L('Un trait senza metodi', 'A trait with no methods'), L('Un’implementazione vuota da completare', 'An empty implementation to fill in'), L('Implementare un trait per tutti i tipi che rispettano un vincolo', 'Implementing a trait for every type meeting a bound'), L('Un trait implementato solo nei test', 'A trait implemented only in tests')], 2, L('La libreria standard implementa così `ToString` per ogni `Display`.', 'This is how the standard library implements `ToString` for every `Display`.')),
+        ], task('rust', L('Completa `impl Iterator for Contatore` dichiarando `type Item = u32;`.', 'Complete `impl Iterator for Contatore` by declaring `type Item = u32;`.'), 'impl Iterator for Contatore {
+    fn next(&mut self) -> Option<Self::Item> {
+        self.n += 1;
+        Some(self.n)
+    }
+}', [re('type\s+Item\s*=\s*u32\s*;', L('Il tipo associato è dichiarato', 'The associated type is declared'))], '', 'impl Iterator for Contatore {
+    type Item = u32;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.n += 1;
+        Some(self.n)
+    }
+}'), [
+            dBlanks(pFill(), "impl Iterator for Dado {\n    ___ Item = u8;\n    fn ___(&mut self) -> Option<u8> { Some(4) }\n}\nimpl std::ops::___ for Punto {\n    type Output = Punto;\n    fn add(self, o: Punto) -> Punto { Punto(self.0 + o.0) }\n}", ['type', 'next', 'Add'], ['let', 'iter', 'Plus'], L('Tipo associato, metodo richiesto, operatore.', 'Associated type, required method, operator.')),
+            dMatch(pMatch(), [['type Item', L('Tipo associato di Iterator', 'Iterator’s associated type')], ['next', L('Unico metodo da scrivere', 'The only method to write')], ['std::ops::Add', L('Operatore +', 'The + operator')], ['impl<T: X> Y for T', L('Blanket implementation', 'Blanket implementation')]], L('Trait avanzati.', 'Advanced traits.')),
         ]),
     ],
 ];

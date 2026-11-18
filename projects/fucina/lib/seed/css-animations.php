@@ -1,5 +1,5 @@
 <?php
-/** Animations with CSS: transitions, transforms, keyframes and how to make them feel good. */
+/** Animations with CSS: transitions, transforms, keyframes and how to make them feel good, then 3D, entry and exit, scroll-driven animations and view transitions. */
 
 $page = '<div class="card">Una card</div>
 <button class="btn">Inizia</button>
@@ -8,7 +8,7 @@ $page = '<div class="card">Una card</div>
 return [
     'id' => 'css-animations', 'family' => 'css', 'after' => 'css-intermediate',
     'title' => L('Animazioni con CSS', 'CSS Animations'), 'short' => L('Animazioni', 'Animations'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Transizioni, trasformazioni, keyframes, tempi e animazioni rispettose.', 'Transitions, transforms, keyframes, timing and respectful animation.'),
+    'desc' => L('Transizioni, trasformazioni e 3D, keyframes, tempi, entrate e uscite, animazioni legate allo scorrimento, transizioni di vista e animazioni rispettose.', 'Transitions, transforms and 3D, keyframes, timing, entry and exit, scroll-driven animations, view transitions and respectful animation.'),
     'lessons' => [
         lesson('transitions', L('Transizioni', 'Transitions'), [
             P('Una **transizione** rende graduale un cambiamento. Indichi la proprietà, la durata e, se vuoi, la curva e il ritardo.', 'A **transition** makes a change gradual. You give the property, the duration and, if you want, the curve and the delay.'),
@@ -101,6 +101,97 @@ return [
         ], task('css', L('Scrivi la media query `prefers-reduced-motion: reduce` che mette `animation: none` su `.palla`.', 'Write the `prefers-reduced-motion: reduce` media query that sets `animation: none` on `.palla`.'), '', [re('@media\s*\(prefers-reduced-motion:\s*reduce\)', L('La media query è giusta', 'The media query is right')), re('\.palla\s*\{[^}]*animation\s*:\s*none', L('L’animazione si ferma', 'The animation stops'))], $page, "@media (prefers-reduced-motion: reduce) {\n  .palla {\n    animation: none;\n  }\n}"), [
             dBlanks(pFill(), "@media (___: reduce) {\n  .palla { ___: none; }\n}", ['prefers-reduced-motion', 'animation'], ['max-width', 'display', 'motion'], L('Una riga di rispetto per chi soffre il movimento.', 'One line of respect for those who suffer from movement.')),
             dFlash(pFlash(), [[L('Animare `transform` è più leggero di `left`', 'Animating `transform` is lighter than `left`'), true], [L('`opacity` è economica da animare', '`opacity` is cheap to animate'), true], [L('Più animazioni ci sono, meglio è', 'The more animations, the better'), false], [L('Il movimento può far stare male', 'Movement can make people feel ill'), true], [L('Animare `height` è gratis', 'Animating `height` is free'), false]], L('Bella, leggera e rispettosa: così si anima.', 'Beautiful, light and respectful: that is how to animate.')),
+        ]),
+        lesson('individual-3d', L('Trasformazioni separate e 3D', 'Separate transforms and 3D'), [
+            P('Oltre a `transform` esistono le proprietà separate `translate`, `rotate` e `scale`: ognuna si cambia e si anima da sola, senza riscrivere le altre. Il browser le applica sempre in quest’ordine: spostamento, rotazione, scala.', 'Besides `transform` there are the separate properties `translate`, `rotate` and `scale`: each changes and animates on its own, without rewriting the others. The browser always applies them in this order: translation, rotation, scale.'),
+            C('.card {
+  rotate: 5deg;
+  transition: scale .2s, translate .2s;
+}
+.card:hover { scale: 1.05; translate: 0 -4px; } /* la rotazione resta */
+
+.scena { perspective: 600px; }
+.moneta { transition: rotate .6s; }
+.moneta:hover { rotate: y 180deg; }
+.moneta .retro { backface-visibility: hidden; }', 'css'),
+            P('`perspective` sul genitore dà profondità alla scena: più il valore è piccolo, più l’effetto è forte. `rotate: y 180deg` gira l’elemento attorno all’asse verticale, come una moneta; `backface-visibility: hidden` nasconde il lato che finisce sul retro.', '`perspective` on the parent gives the scene depth: the smaller the value, the stronger the effect. `rotate: y 180deg` turns the element around the vertical axis, like a coin; `backface-visibility: hidden` hides the side that ends up at the back.'),
+        ], [
+            Q('i1', L('Che vantaggio hanno `translate`, `rotate` e `scale` separate?', 'What is the advantage of separate `translate`, `rotate` and `scale`?'), [L('Sono più veloci di `opacity`', 'They are faster than `opacity`'), L('Funzionano senza unità di misura', 'They work without units'), L('Ognuna si cambia senza riscrivere le altre', 'Each one changes without rewriting the others'), L('Spostano anche gli elementi vicini', 'They also move nearby elements')], 2, L('Con `transform` dovresti ripetere tutta la lista di funzioni.', 'With `transform` you would have to repeat the whole list of functions.')),
+            Q('i2', L('Che cosa succede se riduci `perspective` da 1000px a 300px?', 'What happens if you reduce `perspective` from 1000px to 300px?'), [L('L’effetto 3D diventa più forte', 'The 3D effect gets stronger'), L('L’effetto 3D sparisce', 'The 3D effect disappears'), L('L’elemento si rimpicciolisce', 'The element shrinks'), L('Niente, conta solo sui telefoni', 'Nothing, it only matters on phones')], 0, L('È come guardare la scena da più vicino.', 'It is like looking at the scene from closer up.')),
+            Q('i3', L('Che cosa fa `rotate: y 180deg`?', 'What does `rotate: y 180deg` do?'), [L('Ruota nel piano dello schermo', 'It rotates in the plane of the screen'), L('Sposta l’elemento in verticale', 'It moves the element vertically'), L('Capovolge solo il testo', 'It flips only the text'), L('Gira l’elemento attorno all’asse verticale', 'It turns the element around the vertical axis')], 3, L('Come una moneta che mostra il retro.', 'Like a coin showing its back.')),
+        ], task('css', L('Dai a `.card` `rotate: 10deg` e una `transition` su `scale`; su `.card:hover` imposta `scale: 1.1`.', 'Give `.card` `rotate: 10deg` and a `transition` on `scale`; on `.card:hover` set `scale: 1.1`.'), '', [css('.card', 'rotate', '10deg', L('La card è ruotata', 'The card is rotated')), re('\.card\s*\{[^}]*transition\s*:[^;}]*\bscale\b', L('La scala ha una transizione', 'The scale has a transition')), re('\.card:hover\s*\{[^}]*\bscale\s*:\s*1\.1', L('Cresce al passaggio', 'It grows on hover'))], $page, ".card {\n  rotate: 10deg;\n  transition: scale .2s;\n}\n.card:hover {\n  scale: 1.1;\n}"), [
+            dMatch(pMatch(), [['translate', L('Sposta', 'Moves')], ['rotate', L('Ruota', 'Rotates')], ['scale', L('Ingrandisce', 'Scales')], ['perspective', L('Profondità della scena', 'Depth of the scene')], ['backface-visibility', L('Mostra o nasconde il retro', 'Shows or hides the back')]], L('Proprietà separate, animazioni più semplici.', 'Separate properties, simpler animations.')),
+            dBug(pBug(), ['.scena {', '  perspective: 600px;', '}', '.moneta:hover {', '  rotate: y 180;', '}'], 4, '  rotate: y 180deg;', L('Un angolo vuole la sua unità: `deg`.', 'An angle needs its unit: `deg`.')),
+        ]),
+        lesson('entry-exit', L('Animare entrate e uscite', 'Animating entry and exit'), [
+            P('Un elemento che compare (passa da `display: none` a visibile, o viene appena aggiunto) non ha uno stato «prima», quindi una transizione non saprebbe da dove partire. `@starting-style` gli dà quello stato di partenza. `transition-behavior: allow-discrete`, o la parola `allow-discrete` nella transizione, fa scattare `display` al momento giusto: all’inizio quando entra, alla fine quando esce.', 'An element that appears (goes from `display: none` to visible, or has just been added) has no “before” state, so a transition would not know where to start. `@starting-style` gives it that starting state. `transition-behavior: allow-discrete`, or the word `allow-discrete` in the transition, makes `display` flip at the right moment: at the start when entering, at the end when leaving.'),
+            C('.avviso {
+  opacity: 1;
+  translate: 0 0;
+  transition: opacity .3s, translate .3s, display .3s allow-discrete;
+}
+.avviso[hidden] {
+  display: none;
+  opacity: 0;
+}
+@starting-style {
+  .avviso { opacity: 0; translate: 0 20px; }
+}', 'css'),
+            P('Quando togli `hidden`, l’avviso parte trasparente e 20px più in basso e arriva al suo posto; quando lo rimetti, svanisce e solo alla fine sparisce davvero. Nei browser che non conoscono queste regole l’elemento compare e scompare di colpo: nessun danno.', 'When you remove `hidden`, the notice starts transparent and 20px lower and moves into place; when you add it back, it fades and only disappears for real at the end. In browsers that do not know these rules the element appears and disappears at once: no harm done.'),
+        ], [
+            Q('e1', L('Che cosa definisce `@starting-style`?', 'What does `@starting-style` define?'), [L('Lo stile della pagina all’apertura', 'The page style when it opens'), L('Lo stato da cui parte la transizione d’entrata', 'The state the entry transition starts from'), L('L’ultima tappa di un’animazione', 'The last stage of an animation'), L('Lo stile di stampa', 'The print style')], 1, L('Vale solo nel primo istante in cui l’elemento viene disegnato.', 'It only applies at the first moment the element is drawn.')),
+            Q('e2', L('Perché serve `allow-discrete` su `display`?', 'Why does `display` need `allow-discrete`?'), [L('Per animare `display` a valori intermedi', 'To animate `display` through in-between values'), L('Per rendere la transizione più veloce', 'To make the transition faster'), L('Per far scattare `display` al momento giusto', 'To make `display` flip at the right moment'), L('Per nascondere l’elemento ai lettori di schermo', 'To hide the element from screen readers')], 2, L('`display` non ha valori intermedi: si sceglie solo quando cambia.', '`display` has no in-between values: you only choose when it changes.')),
+            Q('e3', L('Che cosa succede nei browser che non supportano `@starting-style`?', 'What happens in browsers that do not support `@starting-style`?'), [L('La pagina va in errore', 'The page breaks'), L('L’elemento non compare mai', 'The element never appears'), L('Il CSS viene ignorato tutto', 'All the CSS is ignored'), L('L’elemento compare senza animazione', 'The element appears without animation')], 3, L('È un miglioramento progressivo.', 'It is a progressive enhancement.')),
+        ], task('css', L('Scrivi un `@starting-style` che dia a `.card` `opacity: 0`, e dai a `.card` una `transition` su `opacity` di `.4s`.', 'Write a `@starting-style` that gives `.card` `opacity: 0`, and give `.card` a `transition` on `opacity` of `.4s`.'), '', [re('@starting-style\s*\{[^{}]*\.card\s*\{[^}]*opacity\s*:\s*0', L('C’è lo stato di partenza', 'The starting state is there')), re('\.card\s*\{[^}]*transition\s*:[^;}]*opacity\s+0?\.4s', L('L’opacità ha una transizione', 'Opacity has a transition'))], $page, "@starting-style {\n  .card { opacity: 0; }\n}\n.card {\n  transition: opacity .4s;\n}"), [
+            dBlanks(pFill(), ".avviso {\n  transition: opacity .3s, display .3s ___;\n}\n___ {\n  .avviso { opacity: 0; }\n}", ['allow-discrete', '@starting-style'], ['ease-out', '@keyframes', '@media'], L('`display` che scatta al momento giusto e uno stato di partenza.', '`display` flipping at the right moment and a starting state.')),
+            dFlash(pFlash(), [[L('Un elemento appena comparso non ha uno stato «prima»', 'A newly shown element has no “before” state'), true], [L('Con `allow-discrete`, `display` sfuma tra `none` e `block`', 'With `allow-discrete`, `display` fades between `none` and `block`'), false], [L('`@starting-style` funziona anche con i popover', '`@starting-style` also works with popovers'), true], [L('Per animare un’entrata serve per forza JavaScript', 'Animating an entry always needs JavaScript'), false]], L('Entrate e uscite morbide, scritte solo in CSS.', 'Smooth entries and exits, written in CSS alone.')),
+        ]),
+        lesson('scroll-driven', L('Animazioni guidate dallo scorrimento', 'Scroll-driven animations'), [
+            P('Con `animation-timeline` un’animazione segue lo scorrimento invece dell’orologio. `scroll()` la lega allo scorrimento di un contenitore, per esempio per una barra che mostra quanto hai letto; `view()` al passaggio dell’elemento dentro lo schermo, per farlo apparire mentre entra.', 'With `animation-timeline` an animation follows scrolling instead of the clock. `scroll()` ties it to a container’s scrolling, for example for a bar showing how much you have read; `view()` to the element passing through the screen, to make it appear as it enters.'),
+            C('@keyframes cresci { from { scale: 0 1; } to { scale: 1 1; } }
+.progresso {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 4px;
+  background: #FF5B2E;
+  transform-origin: left;
+  animation: cresci linear both;
+  animation-timeline: scroll();
+}
+
+@keyframes appari { from { opacity: 0; translate: 0 40px; } }
+.card {
+  animation: appari linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 30%;
+}', 'css'),
+            P('Scrivi `animation-timeline` **dopo** la scorciatoia `animation`, che altrimenti la riporta al valore predefinito. Non serve una durata: la dà lo scorrimento. I browser principali le supportano solo nelle versioni più recenti, quindi proteggile con `@supports (animation-timeline: scroll())` e rispetta `prefers-reduced-motion`.', 'Write `animation-timeline` **after** the `animation` shorthand, which would otherwise reset it to its default. No duration is needed: scrolling provides it. The main browsers support them only in their latest versions, so guard them with `@supports (animation-timeline: scroll())` and respect `prefers-reduced-motion`.'),
+        ], [
+            Q('d1', L('Qual è la differenza tra `scroll()` e `view()`?', 'What is the difference between `scroll()` and `view()`?'), [L('`scroll()` segue lo scorrimento del contenitore, `view()` il passaggio dell’elemento nello schermo', '`scroll()` follows the container’s scrolling, `view()` the element passing through the screen'), L('Sono due nomi della stessa cosa', 'They are two names for the same thing'), L('`view()` funziona solo con i video', '`view()` only works with videos'), L('`scroll()` serve solo in orizzontale', '`scroll()` is only for horizontal scrolling')], 0, L('Barra di avanzamento con `scroll()`, comparse con `view()`.', 'A progress bar with `scroll()`, reveals with `view()`.')),
+            Q('d2', L('Perché `animation-timeline` va scritta dopo `animation`?', 'Why must `animation-timeline` come after `animation`?'), [L('Per una questione di stile', 'As a matter of style'), L('Perché la scorciatoia `animation` la azzera', 'Because the `animation` shorthand resets it'), L('Perché il browser legge il CSS al contrario', 'Because the browser reads CSS backwards'), L('Non importa l’ordine', 'The order does not matter')], 1, L('Una scorciatoia reimposta tutte le sue sotto-proprietà.', 'A shorthand resets all of its sub-properties.')),
+            Q('d3', L('Che durata serve a un’animazione guidata dallo scorrimento?', 'What duration does a scroll-driven animation need?'), [L('Almeno 1 secondo', 'At least 1 second'), L('Esattamente 100ms', 'Exactly 100ms'), L('Una durata per ogni pagina', 'One duration per page'), L('Nessuna: il tempo lo sostituisce lo scorrimento', 'None: scrolling replaces time')], 3, L('Di solito si usa la curva `linear`, per seguire il dito alla pari.', 'The `linear` curve is usually used, to follow the finger evenly.')),
+        ], task('css', L('Scrivi `@keyframes cresci` e applicalo a `.palla` con `animation: cresci linear both` seguita da `animation-timeline: scroll()`.', 'Write `@keyframes cresci` and apply it to `.palla` with `animation: cresci linear both` followed by `animation-timeline: scroll()`.'), '', [re('@keyframes\s+cresci', L('I keyframes esistono', 'The keyframes exist')), re('\.palla\s*\{[^}]*animation\s*:[^;}]*cresci[^}]*animation-timeline\s*:\s*scroll\(\s*\)', L('La palla segue lo scorrimento', 'The ball follows scrolling'))], $page, "@keyframes cresci {\n  from { scale: 0; }\n  to { scale: 1; }\n}\n.palla {\n  animation: cresci linear both;\n  animation-timeline: scroll();\n}"), [
+            dOrder(pSort(), ['.progresso {', '  transform-origin: left;', '  animation: cresci linear both;', '  animation-timeline: scroll();', '}'], L('La scorciatoia prima, la linea temporale dopo.', 'The shorthand first, the timeline after.')),
+            dMatch(pMatch(), [['scroll()', L('Scorrimento del contenitore', 'Container scrolling')], ['view()', L('Passaggio dell’elemento nello schermo', 'The element passing through the screen')], ['animation-range', L('Da dove a dove gira', 'From where to where it runs')], ['@supports', L('Protegge i browser vecchi', 'Guards old browsers')]], L('Il dito che scorre diventa l’orologio.', 'The scrolling finger becomes the clock.')),
+        ]),
+        lesson('view-transitions', L('Transizioni di vista', 'View transitions'), [
+            P('Le **View Transitions** animano il passaggio tra due stati della pagina: il browser fotografa lo stato vecchio, tu aggiorni il contenuto, e lui sfuma dall’uno all’altro. Nella stessa pagina si avviano da JavaScript con `document.startViewTransition()`; tra due pagine dello stesso sito basta una regola CSS su entrambe.', '**View Transitions** animate the change between two states of the page: the browser snapshots the old state, you update the content, and it fades from one to the other. Within a page you start them from JavaScript with `document.startViewTransition()`; between two pages of the same site one CSS rule on both is enough.'),
+            C('@view-transition { navigation: auto; }
+
+.foto-prodotto { view-transition-name: foto; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: .4s;
+}', 'css'),
+            C('document.startViewTransition(() => mostraDettaglio());', 'js'),
+            P('Un elemento con lo stesso `view-transition-name` nei due stati «vola» dalla vecchia posizione alla nuova. Ogni nome deve essere unico nella pagina. Nei browser senza supporto la pagina cambia normalmente, quindi è un miglioramento sicuro; ricordati di ridurlo con `prefers-reduced-motion`.', 'An element with the same `view-transition-name` in both states “flies” from the old position to the new one. Each name must be unique on the page. In browsers without support the page changes normally, so it is a safe enhancement; remember to tone it down with `prefers-reduced-motion`.'),
+        ], [
+            Q('v1', L('Che cosa fa `view-transition-name` su un elemento?', 'What does `view-transition-name` do on an element?'), [L('Gli dà un titolo per i motori di ricerca', 'It gives it a title for search engines'), L('Lo nasconde durante la transizione', 'It hides it during the transition'), L('Lo fa animare dalla vecchia alla nuova posizione', 'It makes it animate from the old position to the new one'), L('Lo carica prima degli altri', 'It loads it before the others')], 2, L('Lo stesso nome lega i due stati dell’elemento.', 'The same name links the element’s two states.')),
+            Q('v2', L('Come si attivano le transizioni tra due pagine dello stesso sito?', 'How do you turn on transitions between two pages of the same site?'), ['@view-transition { navigation: auto; }', '<meta name="transition">', 'transition: page 1s;', '@keyframes page'], 0, L('La regola va nel CSS di entrambe le pagine.', 'The rule goes in the CSS of both pages.')),
+            Q('v3', L('Che cosa succede in un browser senza supporto?', 'What happens in a browser without support?'), [L('La pagina non si apre', 'The page does not open'), L('La pagina cambia normalmente, senza animazione', 'The page changes normally, without animation'), L('Compare un avviso all’utente', 'A warning appears for the user'), L('Il sito diventa lento', 'The site becomes slow')], 1, L('Nessun danno: solo niente effetto.', 'No harm: just no effect.')),
+        ], task('css', L('Attiva le transizioni tra pagine con `@view-transition { navigation: auto; }` e dai a `.card` `view-transition-name: scheda`.', 'Turn on transitions between pages with `@view-transition { navigation: auto; }` and give `.card` `view-transition-name: scheda`.'), '', [re('@view-transition\s*\{[^}]*navigation\s*:\s*auto', L('Le transizioni tra pagine sono attive', 'Transitions between pages are on')), re('\.card\s*\{[^}]*view-transition-name\s*:\s*scheda', L('La card ha un nome di transizione', 'The card has a transition name'))], $page, "@view-transition {\n  navigation: auto;\n}\n.card {\n  view-transition-name: scheda;\n}"), [
+            dMatch(pMatch(), [['startViewTransition()', L('Transizione nella stessa pagina', 'Transition within a page')], ['@view-transition', L('Transizione tra pagine', 'Transition between pages')], ['view-transition-name', L('L’elemento che vola', 'The element that flies')], ['::view-transition-old()', L('La foto dello stato vecchio', 'The snapshot of the old state')], ['::view-transition-new()', L('Lo stato nuovo', 'The new state')]], L('Il browser fa le foto, tu decidi il movimento.', 'The browser takes the snapshots, you choose the movement.')),
+            dFlash(pFlash(), [[L('Due elementi della stessa pagina possono avere lo stesso `view-transition-name`', 'Two elements on the same page can share a `view-transition-name`'), false], [L('Senza supporto il sito funziona lo stesso', 'Without support the site still works'), true], [L('Le View Transitions richiedono un framework', 'View Transitions need a framework'), false], [L('La durata si cambia con gli pseudo-elementi `::view-transition-*`', 'The duration is changed with the `::view-transition-*` pseudo-elements'), true]], L('Un effetto da app nativa, con poche righe.', 'A native-app feel, in a few lines.')),
         ]),
     ],
 ];

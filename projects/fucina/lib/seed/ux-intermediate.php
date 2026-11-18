@@ -1,10 +1,10 @@
 <?php
-/** Intermediate UX: research methods, information architecture, user flows and journey maps, prototyping and testing. */
+/** Intermediate UX: research methods, information architecture, user flows and journey maps, prototyping and testing, synthesis, surveys and analytics, ideation workshops. */
 
 return [
     'id' => 'ux-intermediate', 'family' => 'ux', 'after' => 'ux-base', 'categories' => ['design'],
     'title' => L('UX: livello intermedio', 'UX Intermediate'), 'short' => L('UX intermedio', 'UX Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Metodi di ricerca qualitativa e quantitativa, architettura dell’informazione e card sorting, user flow e customer journey, prototipi e test di usabilità ben condotti.', 'Qualitative and quantitative research methods, information architecture and card sorting, user flows and customer journeys, prototypes and well-run usability tests.'),
+    'desc' => L('Metodi di ricerca qualitativa e quantitativa, architettura dell’informazione e card sorting, user flow e customer journey, prototipi e test di usabilità, sintesi e priorità, questionari e analytics, ideazione e design sprint.', 'Qualitative and quantitative research methods, information architecture and card sorting, user flows and customer journeys, prototypes and usability tests, synthesis and priorities, surveys and analytics, ideation and design sprints.'),
     'lessons' => [
         lesson('research', L('Metodi di ricerca', 'Research methods'), [
             P('La ricerca si divide in **qualitativa** (perché le persone fanno qualcosa: interviste, osservazione sul campo, test moderati) e **quantitativa** (quanto e quanti: questionari, analytics, A/B test). Le due si completano: i numeri dicono **dove** c’è un problema, le interviste dicono **perché**.', 'Research splits into **qualitative** (why people do something: interviews, field observation, moderated tests) and **quantitative** (how much and how many: surveys, analytics, A/B tests). The two complement each other: numbers tell you **where** there is a problem, interviews tell you **why**.'),

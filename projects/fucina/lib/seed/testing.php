@@ -1,10 +1,10 @@
 <?php
-/** Testing: why test and the pyramid, unit tests, mocks and doubles, integration and end-to-end, TDD and CI. */
+/** Testing: why test and the pyramid, unit tests, mocks and doubles, integration and end-to-end, TDD and CI, coverage, async code and fake time, network mocks, UI tests. */
 
 return [
     'id' => 'testing', 'family' => 'testing', 'after' => 'js-base',
     'title' => L('Testing del software', 'Software Testing'), 'short' => L('Testing', 'Testing'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Scrivere codice che si può fidare: piramide dei test, test unitari, mock, test di integrazione ed end-to-end, TDD e integrazione continua.', 'Writing code you can trust: the test pyramid, unit tests, mocks, integration and end-to-end tests, TDD and continuous integration.'),
+    'desc' => L('Scrivere codice di cui fidarsi: piramide dei test, test unitari, mock e rete simulata, codice asincrono, interfacce, integrazione ed end-to-end, TDD e integrazione continua.', 'Writing code you can trust: the test pyramid, unit tests, mocks and fake networks, async code, interfaces, integration and end-to-end tests, TDD and continuous integration.'),
     'lessons' => [
         lesson('why', L('Perché testare', 'Why test'), [
             P('Un **test automatico** è codice che controlla altro codice: lo esegui in un secondo, quante volte vuoi. I test trovano errori prima degli utenti, permettono di **modificare senza paura** (se rompi qualcosa lo scopri subito) e documentano come il codice dovrebbe comportarsi.', 'An **automated test** is code that checks other code: you run it in a second, as often as you like. Tests find bugs before users do, let you **change code without fear** (if you break something you know at once) and document how the code should behave.'),
@@ -82,7 +82,7 @@ test("un utente può iscriversi alla newsletter", async ({ page }) => {
             Q('e1', L('Che cosa fa Playwright?', 'What does Playwright do?'), [L('Automatizza un browser per i test end-to-end', 'Automates a browser for end-to-end tests'), L('Gestisce database', 'Manages databases'), L('Compila C++', 'Compiles C++'), L('Disegna grafici', 'Draws charts')], 0, L('Simula l’utente.', 'It simulates the user.')),
             Q('e2', L('Qual è l’ordine del TDD?', 'What is the TDD order?'), [L('Rosso, verde, refactor', 'Red, green, refactor'), L('Verde, rosso, cancella', 'Green, red, delete'), L('Codice, poi test un anno dopo', 'Code, then tests a year later'), L('Refactor, rosso, verde', 'Refactor, red, green')], 0, L('Prima il test che fallisce.', 'Failing test first.')),
             Q('e3', L('Che cosa fa la CI con i test?', 'What does CI do with tests?'), [L('Li esegue a ogni push e pull request', 'Runs them on every push and pull request'), L('Li cancella', 'Deletes them'), L('Li scrive da sola', 'Writes them by itself'), L('Niente', 'Nothing')], 0, L('Niente merge se rosso.', 'No merge if red.')),
-        ], task('yaml', L('Scrivi un workflow GitHub Actions che, a ogni `push`, su `ubuntu-latest` esegue `npm ci` e poi `npm test`.', 'Write a GitHub Actions workflow that, on every `push`, on `ubuntu-latest` runs `npm ci` and then `npm test`.'), "name: Test\n", [re('^on:\s*(\[\s*push|push|\n\s+push)', L('Si avvia al push', 'It triggers on push')), re('runs-on:\s*ubuntu-latest', L('La macchina', 'The machine')), re('-\s*run:\s*npm ci[\s\S]*-\s*run:\s*npm test', L('Installa e testa', 'It installs and tests'))], '', "name: Test\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with: { node-version: 22 }\n      - run: npm ci\n      - run: npm test"), [
+        ], task('yaml', L('Scrivi un workflow GitHub Actions che, a ogni `push`, su `ubuntu-latest` esegue `npm ci` e poi `npm test`.', 'Write a GitHub Actions workflow that, on every `push`, on `ubuntu-latest` runs `npm ci` and then `npm test`.'), "name: Test\n", [re('^on:\s*(\[\s*push|push|\n\s+push)', L('Si avvia al push', 'It triggers on push')), re('runs-on:\s*ubuntu-latest', L('La macchina', 'The machine')), re('-\s*run:\s*npm ci[\s\S]*-\s*run:\s*npm test', L('Installa e testa', 'It installs and tests'))], '', "name: Test\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v6\n      - uses: actions/setup-node@v6\n        with: { node-version: lts/* }\n      - run: npm ci\n      - run: npm test"), [
             dOrder(pSort(), [L('Scrivi un test che fallisce (rosso)', 'Write a failing test (red)'), L('Scrivi il codice minimo per farlo passare (verde)', 'Write minimal code to pass it (green)'), L('Migliora il codice tenendo i test verdi (refactor)', 'Improve the code keeping tests green (refactor)')], L('Il ciclo del TDD.', 'The TDD cycle.')),
             dMatch(pMatch(), [['Playwright', L('Browser automatizzato', 'Automated browser')], ['TDD', L('Prima il test', 'Test first')], ['CI', L('Test automatici a ogni push', 'Automatic tests on every push')], ['GitHub Actions', L('Servizio di CI', 'CI service')], ['getByRole', L('Trova un elemento come un utente', 'Finds an element like a user')]], L('Qualità automatica.', 'Automated quality.')),
         ]),
@@ -104,6 +104,102 @@ test("un utente può iscriversi alla newsletter", async ({ page }) => {
         ], task('js', L('Scrivi un `test.each` con almeno i casi `[[], 0]` e `[[5], 5]` che verifica `somma(lista)` con `toBe(atteso)`.', 'Write a `test.each` with at least the cases `[[], 0]` and `[[5], 5]` checking `somma(lista)` with `toBe(atteso)`.'), '', [re('test\.each\(\s*\[', L('Usi test.each', 'You use test.each')), re('\[\s*\[\s*\]\s*,\s*0\s*\]', L('C’è la lista vuota', 'The empty list is there')), re('expect\(\s*somma\(\s*lista\s*\)\s*\)\.toBe\(\s*atteso\s*\)', L('Verifichi il risultato', 'You check the result'))], '', "test.each([\n  [[], 0],\n  [[5], 5],\n])(\"somma\", (lista, atteso) => {\n  expect(somma(lista)).toBe(atteso);\n});"), [
             dMatch(pMatch(), [[L('Copertura', 'Coverage'), L('Righe eseguite', 'Lines run')], [L('Caso limite', 'Edge case'), L('Lista vuota, zero', 'Empty list, zero')], [L('Test fragile', 'Flaky test'), L('Passa a caso', 'Passes at random')], ['test.each', L('Molti casi in un test', 'Many cases in one test')]], L('Test di qualità.', 'Quality tests.')),
             dFlash(pFlash(), [[L('100% di copertura non garantisce zero bug', '100% coverage does not guarantee zero bugs'), true], [L('Un sleep rende un test più stabile', 'A sleep makes a test more stable'), false], [L('I test dovrebbero essere indipendenti tra loro', 'Tests should be independent of each other'), true], [L('Un test fragile si sistema rilanciandolo', 'A flaky test is fixed by rerunning it'), false]], L('Fiducia nei test.', 'Trust in tests.')),
+        ]),
+        lesson('async-time', L('Codice asincrono e tempo finto', 'Async code and fake time'), [
+            P('Per testare una funzione asincrona rendi il test `async` e usa `await`, oppure le forme `resolves` e `rejects` di `expect`. Se dimentichi `await`, il test finisce prima della promessa e può passare anche quando il codice è sbagliato.', 'To test an async function make the test `async` and use `await`, or the `resolves` and `rejects` forms of `expect`. If you forget `await`, the test ends before the promise and can pass even when the code is wrong.'),
+            C('import { it, expect, vi, beforeEach, afterEach } from "vitest";
+
+it("carica il profilo", async () => {
+  await expect(caricaProfilo(1)).resolves.toMatchObject({ id: 1 });
+});
+
+it("rifiuta un id negativo", async () => {
+  await expect(caricaProfilo(-1)).rejects.toThrow("id non valido");
+});
+
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => vi.useRealTimers());
+
+it("salva la bozza dopo 2 secondi", () => {
+  const salva = vi.fn();
+  avviaAutosalvataggio(salva);
+  vi.advanceTimersByTime(2000);
+  expect(salva).toHaveBeenCalledOnce();
+});', 'js'),
+            P('I **timer finti** sostituiscono `setTimeout` e `setInterval`: fai avanzare il tempo con `vi.advanceTimersByTime` invece di aspettarlo davvero. `vi.setSystemTime(new Date("2026-12-31"))` fissa anche la data, così un test su «fine anno» passa tutti i giorni.', '**Fake timers** replace `setTimeout` and `setInterval`: you move time forward with `vi.advanceTimersByTime` instead of really waiting. `vi.setSystemTime(new Date("2026-12-31"))` also fixes the date, so a test about “end of year” passes every day.'),
+        ], [
+            Q('at1', L('Che succede se dimentichi `await` su `expect(…).rejects`?', 'What happens if you forget `await` on `expect(…).rejects`?'), [L('Il test diventa più veloce e preciso', 'The test gets faster and more precise'), L('Vitest aggiunge `await` da solo', 'Vitest adds `await` by itself'), L('Il test può passare anche se il codice è sbagliato', 'The test can pass even if the code is wrong'), L('Il test viene saltato', 'The test is skipped')], 2, L('Il controllo arriva dopo la fine del test.', 'The check arrives after the test has ended.')),
+            Q('at2', L('A che cosa serve `vi.advanceTimersByTime(2000)`?', 'What is `vi.advanceTimersByTime(2000)` for?'), [L('Aspetta davvero 2 secondi', 'Really waits 2 seconds'), L('Fa avanzare il tempo finto di 2 secondi', 'Moves fake time forward by 2 seconds'), L('Rallenta il test', 'Slows the test down'), L('Cambia il fuso orario', 'Changes the time zone')], 1, L('I timer scattano subito, senza attesa reale.', 'Timers fire at once, with no real wait.')),
+            Q('at3', L('Come rendi ripetibile un test che dipende dalla data di oggi?', 'How do you make a test that depends on today’s date repeatable?'), [L('Eseguendolo sempre alla stessa ora', 'By always running it at the same time'), L('Con uno `sleep`', 'With a `sleep`'), L('Togliendo il test', 'By removing the test'), L('Con `vi.setSystemTime(…)`', 'With `vi.setSystemTime(…)`')], 3, L('La data finta è la stessa a ogni esecuzione.', 'The fake date is the same on every run.')),
+        ], task('js', L('Scrivi un test `async` che verifica `await expect(dividi(1, 0)).rejects.toThrow()`.', 'Write an `async` test that checks `await expect(dividi(1, 0)).rejects.toThrow()`.'), 'import { it, expect } from "vitest";
+import { dividi } from "./mate.js";
+', [re('it\s*\(\s*["\'][^"\']+["\']\s*,\s*async\s*\(\s*\)\s*=>', L('Il test è asincrono', 'The test is async')), re('await\s+expect\s*\(\s*dividi\s*\(\s*1\s*,\s*0\s*\)\s*\)\.rejects\.toThrow\s*\(', L('Aspetti il rifiuto', 'You await the rejection'))], '', 'it("rifiuta la divisione per zero", async () => {
+  await expect(dividi(1, 0)).rejects.toThrow();
+});'), [
+            dBug(pBug(), ['it("carica i dati", () => {', '  expect(carica()).resolves.toEqual([1, 2]);', '});'], 1, '  return expect(carica()).resolves.toEqual([1, 2]);', L('Senza `await` o `return` il test non aspetta la promessa.', 'Without `await` or `return` the test does not wait for the promise.')),
+            dMatch(pMatch(), [['resolves', L('La promessa riesce con…', 'The promise succeeds with…')], ['rejects', L('La promessa fallisce', 'The promise fails')], ['vi.useFakeTimers()', L('Timer finti', 'Fake timers')], ['vi.advanceTimersByTime()', L('Fa avanzare il tempo', 'Moves time forward')], ['vi.setSystemTime()', L('Fissa la data', 'Fixes the date')]], L('Promesse e tempo sotto controllo.', 'Promises and time under control.')),
+        ]),
+        lesson('network-mocks', L('Simulare la rete con MSW', 'Mocking the network with MSW'), [
+            P('Invece di sostituire `fetch` a mano, puoi intercettare le richieste di rete con **MSW** (Mock Service Worker): descrivi come risponde ogni indirizzo, e il tuo codice fa richieste vere che ricevono risposte finte. Funziona nei test con Node e anche nel browser.', 'Instead of replacing `fetch` by hand, you can intercept network requests with **MSW** (Mock Service Worker): you describe how each address answers, and your code makes real requests that get fake responses. It works in Node tests and in the browser too.'),
+            C('import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { beforeAll, afterEach, afterAll, it, expect } from "vitest";
+
+const server = setupServer(
+  http.get("https://api.esempio.it/corsi", () =>
+    HttpResponse.json([{ id: 1, titolo: "Testing" }]),
+  ),
+);
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+it("segnala un errore se il server cade", async () => {
+  server.use(http.get("https://api.esempio.it/corsi", () => new HttpResponse(null, { status: 500 })));
+  await expect(caricaCorsi()).rejects.toThrow();
+});', 'js'),
+            P('Così provi anche i casi difficili: errori 500, risposte lente, dati vuoti. `server.use` cambia la risposta solo per un test e `resetHandlers` la ripristina dopo. Il vantaggio rispetto a un mock di `fetch`: se cambi libreria HTTP, i test restano validi.', 'This way you also try the hard cases: 500 errors, slow responses, empty data. `server.use` changes the response for one test only and `resetHandlers` restores it afterwards. The advantage over a `fetch` mock: if you change HTTP library, the tests stay valid.'),
+        ], [
+            Q('nm1', L('Che cosa fa MSW?', 'What does MSW do?'), [L('Velocizza il server vero', 'Speeds up the real server'), L('Scrive i test da solo', 'Writes the tests by itself'), L('Sostituisce il database', 'Replaces the database'), L('Intercetta le richieste di rete e dà risposte finte', 'Intercepts network requests and gives fake responses')], 3, L('Il codice non sa di parlare con un finto server.', 'The code does not know it is talking to a fake server.')),
+            Q('nm2', L('A che cosa serve `server.resetHandlers()` dopo ogni test?', 'What is `server.resetHandlers()` after each test for?'), [L('Spegne il server', 'Shuts down the server'), L('Toglie le risposte cambiate con `server.use`', 'Removes the responses changed with `server.use`'), L('Cancella i test', 'Deletes the tests'), L('Svuota la cache del browser', 'Clears the browser cache')], 1, L('Ogni test riparte dalle risposte di base.', 'Each test restarts from the base responses.')),
+            Q('nm3', L('Che vantaggio ha MSW su un mock scritto a mano di `fetch`?', 'What advantage does MSW have over a hand-written `fetch` mock?'), [L('I test restano validi anche se cambi libreria HTTP', 'Tests stay valid even if you change HTTP library'), L('Non servono più test', 'Tests are no longer needed'), L('È sempre più veloce di tutto', 'It is always faster than anything'), L('Funziona senza JavaScript', 'It works without JavaScript')], 0, L('Simula la rete, non una funzione precisa.', 'It fakes the network, not one specific function.')),
+        ], task('js', L('Aggiungi un gestore MSW che risponde a `GET /api/utenti` con `HttpResponse.json([])`.', 'Add an MSW handler that answers `GET /api/utenti` with `HttpResponse.json([])`.'), 'import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+
+const server = setupServer(
+);', [re('http\.get\s*\(\s*["\'][^"\']*/api/utenti["\']\s*,', L('Intercetti la richiesta', 'You intercept the request')), re('HttpResponse\.json\s*\(\s*\[\s*\]\s*\)', L('Rispondi con una lista vuota', 'You answer with an empty list'))], '', 'const server = setupServer(
+  http.get("/api/utenti", () => HttpResponse.json([])),
+);'), [
+            dOrder(pSort(), ['const server = setupServer(...gestori);', 'beforeAll(() => server.listen());', 'afterEach(() => server.resetHandlers());', 'afterAll(() => server.close());'], L('Crea, avvia, ripristina dopo ogni test, chiudi alla fine.', 'Create, start, reset after each test, close at the end.')),
+            dFlash(pFlash(), [[L('Con MSW il codice fa richieste vere che ricevono risposte finte', 'With MSW the code makes real requests that get fake responses'), true], [L('`server.use` cambia le risposte di tutti i test, per sempre', '`server.use` changes the responses of every test, forever'), false], [L('Con MSW si può simulare un errore 500', 'With MSW you can fake a 500 error'), true], [L('MSW funziona solo nel browser', 'MSW only works in the browser'), false]], L('La rete, sotto controllo.', 'The network, under control.')),
+        ]),
+        lesson('ui-components', L('Testare le interfacce come un utente', 'Testing interfaces like a user'), [
+            P('Per i componenti di un’interfaccia (React, Vue, Angular o HTML semplice) la famiglia **Testing Library** propone la stessa idea: trova gli elementi come li trova una persona, per **ruolo**, etichetta o testo, e interagisci come lei con **user-event**.', 'For interface components (React, Vue, Angular or plain HTML) the **Testing Library** family offers the same idea: find elements the way a person does, by **role**, label or text, and interact like them with **user-event**.'),
+            C('import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { it, expect } from "vitest";
+import Iscrizione from "./Iscrizione.jsx";
+
+it("conferma l’iscrizione", async () => {
+  const utente = userEvent.setup();
+  render(<Iscrizione />);
+  await utente.type(screen.getByLabelText("Email"), "ada@example.com");
+  await utente.click(screen.getByRole("button", { name: "Iscriviti" }));
+  expect(await screen.findByText("Grazie!")).toBeInTheDocument();
+});', 'jsx'),
+            P('`getBy…` trova subito o fallisce, `queryBy…` restituisce `null` se non c’è (utile per verificare che qualcosa **non** compaia), `findBy…` aspetta che l’elemento appaia. Se un elemento si trova solo con un `data-testid`, spesso è il segnale che manca un’etichetta accessibile.', '`getBy…` finds at once or fails, `queryBy…` returns `null` if it is not there (handy to check that something does **not** appear), `findBy…` waits for the element to appear. If an element can only be found with a `data-testid`, it is often a sign that an accessible label is missing.'),
+        ], [
+            Q('ui1', L('Quale ricerca aspetta un elemento che apparirà dopo una richiesta?', 'Which query waits for an element that will appear after a request?'), ['getByText', 'queryByText', 'findByText', 'getAllByText'], 2, L('`findBy…` restituisce una promessa.', '`findBy…` returns a promise.')),
+            Q('ui2', L('Come verifichi che un messaggio di errore NON ci sia?', 'How do you check that an error message is NOT there?'), ['expect(screen.getByText("Errore")).toBeNull()', 'expect(screen.queryByText("Errore")).toBeNull()', 'expect(findByText("Errore")).toBe(false)', 'expect(screen).not.toBe("Errore")'], 1, L('`getBy…` lancerebbe un errore prima del controllo.', '`getBy…` would throw before the check.')),
+            Q('ui3', L('Perché preferire `getByRole` a una classe CSS?', 'Why prefer `getByRole` over a CSS class?'), [L('Trova gli elementi come un utente e premia l’accessibilità', 'It finds elements like a user and rewards accessibility'), L('È l’unico metodo che esiste', 'It is the only method there is'), L('È sempre più veloce da scrivere', 'It is always quicker to write'), L('Le classi non funzionano nei test', 'Classes do not work in tests')], 0, L('Il test sopravvive anche se cambi lo stile.', 'The test survives even if you change the styling.')),
+        ], task('jsx', L('Con `userEvent`, clicca il bottone con nome `Salva`: `await utente.click(screen.getByRole("button", { name: "Salva" }))`.', 'With `userEvent`, click the button named `Salva`: `await utente.click(screen.getByRole("button", { name: "Salva" }))`.'), 'const utente = userEvent.setup();
+render(<Nota />);
+', [re('await\s+utente\.click\s*\(\s*screen\.getByRole\s*\(\s*["\']button["\']\s*,\s*\{\s*name\s*:\s*["\']Salva["\']\s*\}\s*\)\s*\)', L('Clicchi il bottone giusto', 'You click the right button'))], '', 'const utente = userEvent.setup();
+render(<Nota />);
+await utente.click(screen.getByRole("button", { name: "Salva" }));'), [
+            dMatch(pMatch(), [['getBy…', L('Trova subito o fallisce', 'Finds at once or fails')], ['queryBy…', L('null se non c’è', 'null if it is not there')], ['findBy…', L('Aspetta che appaia', 'Waits for it to appear')], ['userEvent', L('Interazioni realistiche', 'Realistic interactions')], ['getByLabelText', L('Trova un campo dalla sua etichetta', 'Finds a field by its label')]], L('Cerca come cerca un utente.', 'Search the way a user searches.')),
+            dFlash(pFlash(), [[L('`findBy…` restituisce una promessa', '`findBy…` returns a promise'), true], [L('`getBy…` restituisce `null` se non trova niente', '`getBy…` returns `null` if it finds nothing'), false], [L('Testing Library esiste per React, Vue e Angular', 'Testing Library exists for React, Vue and Angular'), true], [L('Un buon test controlla lo stato interno del componente', 'A good test checks the component’s internal state'), false]], L('Ciò che si vede, non ciò che c’è dentro.', 'What is seen, not what is inside.')),
         ]),
     ],
 ];

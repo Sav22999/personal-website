@@ -1,10 +1,10 @@
 <?php
-/** How large language models work: tokens, next-token prediction, transformers and attention, training, context, limits. */
+/** How large language models work: tokens, next-token prediction, transformers and attention, training, context, limits, tools, reasoning models, choosing a model. */
 
 return [
     'id' => 'llm-base', 'family' => 'llm', 'after' => 'ai-base', 'categories' => ['ai'],
     'title' => L('LLM: come funzionano', 'LLMs: how they work'), 'short' => L('LLM', 'LLMs'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Che cosa c’è dentro un modello linguistico: token, previsione della parola successiva, transformer e attenzione, addestramento, finestra di contesto, temperatura e allucinazioni.', 'What is inside a language model: tokens, next-token prediction, transformers and attention, training, context window, temperature and hallucinations.'),
+    'desc' => L('Che cosa c’è dentro un modello linguistico: token, previsione della parola successiva, transformer e attenzione, addestramento, finestra di contesto, temperatura e allucinazioni, modelli che ragionano e come scegliere un modello.', 'What is inside a language model: tokens, next-token prediction, transformers and attention, training, context window, temperature and hallucinations, reasoning models and how to choose a model.'),
     'lessons' => [
         lesson('tokens', L('Token e previsione del prossimo token', 'Tokens and next-token prediction'), [
             P('Un **LLM** (Large Language Model) non legge lettere né parole intere: il testo viene spezzato in **token**, pezzi di parola presi da un vocabolario fisso (in inglese un token vale in media circa 3/4 di parola; l’italiano ne usa un po’ di più). Ogni token diventa un numero, e il modello lavora solo con numeri.', 'An **LLM** (Large Language Model) does not read letters or whole words: text is split into **tokens**, word pieces taken from a fixed vocabulary (in English a token is on average about 3/4 of a word; Italian uses a few more). Each token becomes a number, and the model works only with numbers.'),

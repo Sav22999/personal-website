@@ -1,10 +1,10 @@
 <?php
-/** Go basics: packages and types, functions and errors, structs and interfaces, goroutines and channels. */
+/** Go basics: packages and types, functions and errors, structs and interfaces, goroutines and channels, HTTP and tests, control flow, slices and maps, pointers, modules. */
 
 return [
     'id' => 'go-base', 'family' => 'go', 'after' => null,
     'title' => L('Go base', 'Go Basics'), 'short' => L('Go base', 'Go Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Il linguaggio semplice e veloce dei servizi cloud: pacchetti e tipi, funzioni ed errori, struct e interfacce, goroutine e canali.', 'The simple, fast language of cloud services: packages and types, functions and errors, structs and interfaces, goroutines and channels.'),
+    'desc' => L('Il linguaggio semplice e veloce dei servizi cloud: pacchetti e tipi, funzioni ed errori, struct e interfacce, goroutine e canali, cicli, slice e mappe, puntatori e moduli.', 'The simple, fast language of cloud services: packages and types, functions and errors, structs and interfaces, goroutines and channels, loops, slices and maps, pointers and modules.'),
     'lessons' => [
         lesson('basics', L('Pacchetti, variabili e tipi', 'Packages, variables and types'), [
             P('**Go** è un linguaggio compilato creato da Google: semplice, veloce, con un solo modo idiomatico di fare le cose. Docker e Kubernetes sono scritti in Go. Ogni file appartiene a un **pacchetto**; il programma parte dalla funzione `main` del pacchetto `main`.', '**Go** is a compiled language created at Google: simple, fast, with one idiomatic way of doing things. Docker and Kubernetes are written in Go. Every file belongs to a **package**; the program starts from the `main` function of the `main` package.'),
@@ -80,7 +80,7 @@ stampaArea(Rettangolo{Base: 3, Altezza: 4})   // 12.00', 'go'),
             dFlash(pFlash(), [[L('Go non ha classi', 'Go has no classes'), true], [L('Bisogna scrivere implements per soddisfare un’interfaccia', 'You must write implements to satisfy an interface'), false], [L('I nomi in minuscolo sono privati al pacchetto', 'Lowercase names are package-private'), true], [L('Le struct non possono avere metodi', 'Structs cannot have methods'), false]], L('Semplice e implicito.', 'Simple and implicit.')),
         ]),
         lesson('concurrency', L('Goroutine e canali', 'Goroutines and channels'), [
-            P('La **concorrenza** è il punto forte di Go. Una **goroutine** è una funzione che gira in parallelo, leggerissima: se ne possono avviare migliaia con `go funzione()`. I **canali** (`chan`) servono a comunicare tra goroutine in modo sicuro.', '**Concurrency** is Go’s strong point. A **goroutine** is a very lightweight function running concurrently: you can start thousands with `go function()`. **Channels** (`chan`) let goroutines communicate safely.'),
+            P('La **concorrenza** è il punto forte di Go. Una **goroutine** è una funzione che gira in modo concorrente, leggerissima: se ne possono avviare migliaia con `go funzione()`. I **canali** (`chan`) servono a comunicare tra goroutine in modo sicuro.', '**Concurrency** is Go’s strong point. A **goroutine** is a very lightweight function running concurrently: you can start thousands with `go function()`. **Channels** (`chan`) let goroutines communicate safely.'),
             C('func scarica(url string, risultati chan<- string) {
     resp, err := http.Get(url)
     if err != nil {
@@ -101,7 +101,7 @@ func main() {
         fmt.Println(<-risultati)    // aspetta ogni risposta
     }
 }', 'go'),
-            P('`ch <- v` invia, `<-ch` riceve (e aspetta). Per aspettare un gruppo di goroutine si usa `sync.WaitGroup`. Il motto di Go: “non comunicare condividendo memoria; condividi memoria comunicando”.', '`ch <- v` sends, `<-ch` receives (and waits). To wait for a group of goroutines you use `sync.WaitGroup`. Go’s motto: “do not communicate by sharing memory; share memory by communicating”.'),
+            P('`ch <- v` invia, `<-ch` riceve (e aspetta). Per aspettare un gruppo di goroutine si usa `sync.WaitGroup` (da Go 1.25 con il comodo `wg.Go(f)`). Il motto di Go: “non comunicare condividendo memoria; condividi memoria comunicando”.', '`ch <- v` sends, `<-ch` receives (and waits). To wait for a group of goroutines you use `sync.WaitGroup` (since Go 1.25 with the handy `wg.Go(f)`). Go’s motto: “do not communicate by sharing memory; share memory by communicating”.'),
         ], [
             Q('g1', L('Come si avvia una goroutine?', 'How do you start a goroutine?'), ['go funzione()', 'async funzione()', 'thread funzione()', 'run funzione()'], 0, L('Leggerissime.', 'Very lightweight.')),
             Q('g2', L('Che cosa fa `<-ch`?', 'What does `<-ch` do?'), [L('Riceve dal canale, aspettando', 'Receives from the channel, waiting'), L('Chiude il canale', 'Closes the channel'), L('Invia al canale', 'Sends to the channel'), L('Cancella il canale', 'Deletes the channel')], 0, L('`ch <- v` invia.', '`ch <- v` sends.')),
@@ -134,6 +134,138 @@ func main() {
         ], task('go', L('Scrivi `func TestSomma(t *testing.T)` che chiama `t.Errorf("errore")` se `Somma(2, 3) != 5`.', 'Write `func TestSomma(t *testing.T)` calling `t.Errorf("errore")` if `Somma(2, 3) != 5`.'), '', [re('func\s+TestSomma\(\s*t\s+\*testing\.T\s*\)', L('La funzione di test esiste', 'The test function exists')), re('if\s+Somma\(\s*2\s*,\s*3\s*\)\s*!=\s*5\s*\{\s*t\.Errorf\(', L('Controlli il risultato', 'You check the result'))], '', "func TestSomma(t *testing.T) {\n    if Somma(2, 3) != 5 {\n        t.Errorf(\"errore\")\n    }\n}"), [
             dMatch(pMatch(), [['net/http', L('Server web', 'Web server')], ['encoding/json', L('Conversione JSON', 'JSON conversion')], ['_test.go', L('File di test', 'Test file')], ['t.Errorf', L('Segnala un errore', 'Reports a failure')], ['go test ./...', L('Lancia i test', 'Runs the tests')]], L('Web e test in Go.', 'Web and tests in Go.')),
             dFlash(pFlash(), [[L('La libreria standard basta per un server', 'The standard library is enough for a server'), true], [L('I test di Go stanno in file .spec.go', 'Go tests live in .spec.go files'), false], [L('I test a tabella elencano più casi', 'Table tests list several cases'), true], [L('I tag json sono commenti ignorati', 'json tags are ignored comments'), false]], L('Go pratico.', 'Practical Go.')),
+        ]),
+        lesson('control-flow', L('if, for e switch', 'if, for and switch'), [
+            P('Go ha **un solo ciclo**, `for`, che fa anche da `while` e da ciclo infinito (`for { }`). Da Go 1.22 `for i := range 3` conta da 0 a 2. `if` e `switch` possono iniziare con una breve dichiarazione, e le condizioni non vanno tra parentesi tonde.', 'Go has **a single loop**, `for`, which also acts as `while` and as an endless loop (`for { }`). Since Go 1.22 `for i := range 3` counts from 0 to 2. `if` and `switch` can start with a short declaration, and conditions take no round brackets.'),
+            C('for i := 0; i < 3; i++ {
+    fmt.Println("giro", i)
+}
+for i := range 3 {                 // 0, 1, 2
+    fmt.Println(i)
+}
+n := 10
+for n > 0 {                        // il "while" di Go
+    n -= 3
+}
+if eta := 20; eta >= 18 {
+    fmt.Println("adulto")
+}
+switch giorno := "sab"; giorno {
+case "sab", "dom":
+    fmt.Println("weekend")
+default:
+    fmt.Println("lavoro")
+}', 'go'),
+            P('Nello `switch` i casi non «cadono» nel successivo: niente `break` alla fine di ogni caso. Se vuoi davvero passare al caso dopo, scrivi `fallthrough`.', 'In a `switch` cases do not “fall through” to the next one: no `break` at the end of each case. If you really want to move on to the next case, write `fallthrough`.'),
+        ], [
+            Q('cf1', L('Come si scrive un “while” in Go?', 'How do you write a “while” in Go?'), ['while n > 0 { }', 'for n > 0 { }', 'loop n > 0 { }', 'do { } while n > 0'], 1, L('`for` con la sola condizione.', '`for` with just the condition.')),
+            Q('cf2', L('Quali numeri produce `for i := range 3`?', 'Which numbers does `for i := range 3` produce?'), ['1, 2, 3', '0, 1, 2, 3', '0, 1, 2', '3'], 2, L('Si parte da 0 e ci si ferma prima di 3.', 'It starts at 0 and stops before 3.')),
+            Q('cf3', L('Uno `switch` di Go passa al caso successivo dopo averne eseguito uno?', 'Does a Go `switch` move on to the next case after running one?'), [L('Sì, sempre', 'Yes, always'), L('Solo se manca default', 'Only if default is missing'), L('Solo con le stringhe', 'Only with strings'), L('No, a meno di scrivere fallthrough', 'No, unless you write fallthrough')], 3, L('Il contrario di C e Java.', 'The opposite of C and Java.')),
+        ], task('go', L('Con un ciclo `for` stampa i numeri da 1 a 5 con `fmt.Println`.', 'With a `for` loop print the numbers from 1 to 5 with `fmt.Println`.'), "package main\n\nimport \"fmt\"\n\nfunc main() {\n    \n}", [re('for\s+(\w+)\s*:=\s*1\s*;\s*\1\s*(<=\s*5|<\s*6)\s*;\s*\1\+\+\s*\{', L('Il ciclo va da 1 a 5', 'The loop goes from 1 to 5')), re('fmt\.Println\s*\(\s*\w+\s*\)', L('Stampi il numero', 'You print the number'))], '', "for i := 1; i <= 5; i++ {\n        fmt.Println(i)\n    }"), [
+            dBlanks(pFill(), 'for i := ___ 4 {
+    if i%2 == 0 {
+        ___
+    }
+    fmt.Println(i)
+}
+___ {
+    break
+}', ['range', 'continue', 'for'], ['in', 'next', 'while'], L('Range, salta il giro, ciclo infinito.', 'Range, skip the round, endless loop.')),
+            dFlash(pFlash(), [[L('Go ha anche il ciclo `while`', 'Go also has a `while` loop'), false], [L('`for { }` è un ciclo infinito', '`for { }` is an endless loop'), true], [L('Nello `switch` di Go non serve `break`', 'Go’s `switch` needs no `break`'), true], [L('Le parentesi tonde attorno alla condizione di `if` sono obbligatorie', 'Round brackets around an `if` condition are required'), false]], L('Un ciclo solo, condizioni senza parentesi.', 'One loop, conditions without brackets.')),
+        ]),
+        lesson('slices-maps', L('Slice e mappe', 'Slices and maps'), [
+            P('Una **slice** è una sequenza che può crescere: `append` aggiunge in fondo (e il risultato va riassegnato), `s[a:b]` ne prende un pezzo, `len` dice quanti elementi ha. Una **mappa** associa chiavi e valori. I pacchetti `slices` e `maps` offrono ordinamenti e ricerche pronti.', 'A **slice** is a sequence that can grow: `append` adds at the end (and the result must be reassigned), `s[a:b]` takes a piece, `len` tells how many items it has. A **map** ties keys to values. The `slices` and `maps` packages offer ready-made sorting and searching.'),
+            C('voti := []int{7, 9, 6}
+voti = append(voti, 8)
+fmt.Println(len(voti), voti[1:3])     // 4 [9 6]
+slices.Sort(voti)                     // [6 7 8 9]
+
+for i, v := range voti {
+    fmt.Println(i, v)
+}
+
+eta := map[string]int{"Ada": 36}
+eta["Bea"] = 28
+if e, ok := eta["Cleo"]; !ok {
+    fmt.Println("Cleo non c’è, e vale", e)   // e vale 0
+}
+delete(eta, "Ada")', 'go'),
+            P('Leggere una chiave assente non dà errore ma lo **zero value** del tipo (0, "", false): per sapere se la chiave c’era si usa la forma `v, ok := m[k]`. L’ordine in cui `range` visita una mappa non è garantito.', 'Reading a missing key gives no error but the type’s **zero value** (0, "", false): to know whether the key was there you use the `v, ok := m[k]` form. The order in which `range` visits a map is not guaranteed.'),
+        ], [
+            Q('sm1', L('Come aggiungi 5 alla slice `s`?', 'How do you add 5 to the slice `s`?'), ['s.push(5)', 'append(s, 5)', 's = append(s, 5)', 's += 5'], 2, L('`append` restituisce la nuova slice.', '`append` returns the new slice.')),
+            Q('sm2', L('Che cosa dà `m["x"]` su una `map[string]int` senza la chiave "x"?', 'What does `m["x"]` give on a `map[string]int` without the key "x"?'), ['nil', '0', L('Un panic', 'A panic'), '-1'], 1, L('Lo zero value di `int`.', 'The zero value of `int`.')),
+            Q('sm3', L('Che cosa contiene `ok` in `v, ok := m[k]`?', 'What does `ok` hold in `v, ok := m[k]`?'), [L('Se la chiave esiste', 'Whether the key exists'), L('Il numero di chiavi', 'The number of keys'), L('Un errore', 'An error'), L('La chiave stessa', 'The key itself')], 0, L('Un booleano.', 'A boolean.')),
+        ], task('go', L('Crea la slice `nomi` con `"Ada"` e `"Bea"`, aggiungi `"Cleo"` con `append` e stampa `len(nomi)`.', 'Create the slice `nomi` with `"Ada"` and `"Bea"`, add `"Cleo"` with `append` and print `len(nomi)`.'), "package main\n\nimport \"fmt\"\n\nfunc main() {\n    \n}", [re('nomi\s*:=\s*\[\]string\s*\{\s*"Ada"\s*,\s*"Bea"\s*\}', L('Crei la slice', 'You create the slice')), re('nomi\s*=\s*append\s*\(\s*nomi\s*,\s*"Cleo"\s*\)', L('Aggiungi Cleo', 'You add Cleo')), re('fmt\.Println\s*\(\s*len\s*\(\s*nomi\s*\)\s*\)', L('Stampi la lunghezza', 'You print the length'))], '', "nomi := []string{\"Ada\", \"Bea\"}\n    nomi = append(nomi, \"Cleo\")\n    fmt.Println(len(nomi))"), [
+            dBug(pBug(), ['voti := []int{6, 7}', 'append(voti, 8)', 'fmt.Println(voti)'], 1, 'voti = append(voti, 8)', L('`append` restituisce la nuova slice: va riassegnata, altrimenti il compilatore segnala un valore non usato.', '`append` returns the new slice: it must be reassigned, otherwise the compiler reports an unused value.')),
+            dMatch(pMatch(), [['[]int{}', L('Slice di interi', 'Slice of ints')], ['append', L('Aggiunge in fondo', 'Appends')], ['map[string]int', L('Da testo a intero', 'Text to int')], ['delete', L('Toglie una chiave', 'Removes a key')], ['len', L('Quanti elementi', 'How many items')]], L('Le collezioni di Go.', 'Go’s collections.')),
+        ]),
+        lesson('pointers', L('Puntatori', 'Pointers'), [
+            P('In Go gli argomenti si passano **per copia**: una funzione che riceve una struct ne modifica solo la copia. Un **puntatore** (`*T`) contiene l’indirizzo di un valore: `&x` lo prende, `*p` legge o scrive il valore puntato.', 'In Go arguments are passed **by copy**: a function receiving a struct changes only its copy. A **pointer** (`*T`) holds the address of a value: `&x` takes it, `*p` reads or writes the value it points to.'),
+            C('type Contatore struct{ Valore int }
+
+func incrementaCopia(c Contatore) { c.Valore++ }
+func incrementa(c *Contatore)     { c.Valore++ }
+
+func main() {
+    c := Contatore{}
+    incrementaCopia(c)
+    fmt.Println(c.Valore)      // 0: è cambiata solo la copia
+    incrementa(&c)
+    fmt.Println(c.Valore)      // 1
+
+    x := 10
+    p := &x                    // p punta a x
+    *p = 20                    // cambia x attraverso p
+    fmt.Println(x, p == nil)   // 20 false
+}', 'go'),
+            P('Un puntatore non inizializzato vale `nil`: leggerlo provoca un *panic*. In Go non esiste l’aritmetica dei puntatori, quindi sono semplici e sicuri. Con le struct Go è comodo: `c.Valore` funziona anche se `c` è un puntatore.', 'An uninitialised pointer is `nil`: reading through it causes a *panic*. Go has no pointer arithmetic, so pointers are simple and safe. With structs Go is handy: `c.Valore` works even when `c` is a pointer.'),
+        ], [
+            Q('pt1', L('Che cosa fa `&x`?', 'What does `&x` do?'), [L('Prende l’indirizzo di x', 'Takes the address of x'), L('Copia x', 'Copies x'), L('Confronta x con zero', 'Compares x with zero'), L('Cancella x', 'Deletes x')], 0, L('Il risultato è di tipo `*int` se x è un int.', 'The result is of type `*int` if x is an int.')),
+            Q('pt2', L('Perché `incrementaCopia(c)` non cambia `c`?', 'Why does `incrementaCopia(c)` not change `c`?'), [L('Perché Valore è privato', 'Because Valore is private'), L('Perché la funzione riceve una copia della struct', 'Because the function receives a copy of the struct'), L('Perché manca return', 'Because return is missing'), L('Perché Go non permette di modificare le struct', 'Because Go does not allow changing structs')], 1, L('Serve un puntatore per cambiare l’originale.', 'A pointer is needed to change the original.')),
+            Q('pt3', L('Che cosa succede leggendo `*p` se `p` è `nil`?', 'What happens reading `*p` if `p` is `nil`?'), [L('Restituisce 0', 'It returns 0'), L('Restituisce nil', 'It returns nil'), L('Il programma va in panic', 'The program panics'), L('Niente, viene ignorato', 'Nothing, it is ignored')], 2, L('Controlla sempre i puntatori che potrebbero essere nil.', 'Always check pointers that might be nil.')),
+        ], task('go', L('Scrivi `func azzera(n *int)` che mette a 0 il valore puntato da `n`.', 'Write `func azzera(n *int)` that sets the value pointed to by `n` to 0.'), '', [re('func\s+azzera\s*\(\s*n\s+\*int\s*\)\s*\{', L('La funzione riceve un puntatore', 'The function takes a pointer')), re('\*n\s*=\s*0', L('Azzeri il valore puntato', 'You zero the pointed value'))], '', "func azzera(n *int) {\n    *n = 0\n}"), [
+            dBlanks(pFill(), 'x := 5
+p := ___x
+___p = 8
+fmt.Println(x) // 8
+var q *int
+fmt.Println(q == ___)', ['&', '*', 'nil'], ['@', '$', 'null'], L('Indirizzo, valore puntato, puntatore vuoto.', 'Address, pointed value, empty pointer.')),
+            dFlash(pFlash(), [[L('In Go esiste l’aritmetica dei puntatori', 'Go has pointer arithmetic'), false], [L('`&x` dà l’indirizzo di x', '`&x` gives the address of x'), true], [L('Gli argomenti di una funzione sono copie', 'Function arguments are copies'), true], [L('Un puntatore non inizializzato vale `nil`', 'An uninitialised pointer is `nil`'), true]], L('Copie di serie, puntatori per modificare.', 'Copies by default, pointers to modify.')),
+        ]),
+        lesson('modules', L('Moduli e pacchetti', 'Modules and packages'), [
+            P('Un **modulo** è un progetto con il file `go.mod`, che ne dichiara il percorso, la versione di Go e le dipendenze; `go.sum` conserva le impronte dei pacchetti scaricati. Ogni cartella è un **pacchetto**, che si importa con il percorso del modulo più la cartella.', 'A **module** is a project with a `go.mod` file, which declares its path, the Go version and the dependencies; `go.sum` keeps the checksums of downloaded packages. Each folder is a **package**, imported with the module path plus the folder.'),
+            C('go mod init github.com/ada/meteo
+go get github.com/google/uuid@latest
+go mod tidy
+go run .', 'bash'),
+            C('// temperatura/converti.go
+package temperatura
+
+// InFahrenheit è esportata: inizia con la maiuscola.
+func InFahrenheit(c float64) float64 {
+    return c*9/5 + 32
+}
+
+// main.go
+package main
+
+import (
+    "fmt"
+
+    "github.com/ada/meteo/temperatura"
+)
+
+func main() {
+    fmt.Println(temperatura.InFahrenheit(20)) // 68
+}', 'go'),
+            P('`go mod tidy` aggiunge le dipendenze mancanti e toglie quelle inutili. Solo i nomi con la maiuscola sono visibili da un altro pacchetto.', '`go mod tidy` adds missing dependencies and removes unused ones. Only capitalised names are visible from another package.'),
+        ], [
+            Q('md1', L('Quale comando crea il file `go.mod`?', 'Which command creates the `go.mod` file?'), ['go new', 'go mod init', 'go init mod', 'go create'], 1, L('Seguito dal percorso del modulo.', 'Followed by the module path.')),
+            Q('md2', L('Che cosa fa `go mod tidy`?', 'What does `go mod tidy` do?'), [L('Formatta il codice', 'Formats the code'), L('Esegue i test', 'Runs the tests'), L('Cancella la cartella vendor', 'Deletes the vendor folder'), L('Aggiunge le dipendenze mancanti e toglie quelle inutili', 'Adds missing dependencies and removes unused ones')], 3, L('Tiene in ordine `go.mod` e `go.sum`.', 'It keeps `go.mod` and `go.sum` tidy.')),
+            Q('md3', L('Come chiami da `main` la funzione `InFahrenheit` del pacchetto `temperatura`?', 'How do you call the `InFahrenheit` function of the `temperatura` package from `main`?'), ['InFahrenheit(20)', 'temperatura::InFahrenheit(20)', 'temperatura.InFahrenheit(20)', 'import.temperatura.InFahrenheit(20)'], 2, L('Nome del pacchetto, punto, nome esportato.', 'Package name, dot, exported name.')),
+        ], task('go', L('Importa il pacchetto `github.com/ada/meteo/temperatura` e stampa `temperatura.InFahrenheit(30)` con `fmt.Println`.', 'Import the package `github.com/ada/meteo/temperatura` and print `temperatura.InFahrenheit(30)` with `fmt.Println`.'), "package main\n\nimport \"fmt\"\n\nfunc main() {\n    \n}", [re('import\s*\([^)]*"github\.com/ada/meteo/temperatura"[^)]*\)|import\s+"github\.com/ada/meteo/temperatura"', L('Importi il pacchetto', 'You import the package')), re('fmt\.Println\s*\(\s*temperatura\.InFahrenheit\s*\(\s*30\s*\)\s*\)', L('Chiami la funzione', 'You call the function'))], '', "package main\n\nimport (\n    \"fmt\"\n\n    \"github.com/ada/meteo/temperatura\"\n)\n\nfunc main() {\n    fmt.Println(temperatura.InFahrenheit(30))\n}"), [
+            dOrder(pSort(), ['go mod init github.com/ada/app', 'go get github.com/google/uuid', 'go mod tidy', 'go build'], L('Crea il modulo, aggiungi, riordina, compila.', 'Create the module, add, tidy, build.')),
+            dMatch(pMatch(), [['go.mod', L('Percorso e dipendenze', 'Path and dependencies')], ['go.sum', L('Impronte dei pacchetti scaricati', 'Checksums of downloaded packages')], ['go get', L('Aggiunge una dipendenza', 'Adds a dependency')], ['go mod tidy', L('Riordina le dipendenze', 'Tidies the dependencies')], ['package', L('Una cartella di codice', 'A folder of code')]], L('Organizzare un progetto Go.', 'Organising a Go project.')),
         ]),
     ],
 ];

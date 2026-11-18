@@ -1,10 +1,10 @@
 <?php
-/** Machine learning with scikit-learn: supervised learning, train/test split, regression, classification, metrics and overfitting. */
+/** Machine learning with scikit-learn: supervised learning, train/test split, regression, classification, metrics and overfitting, k-NN, confusion matrix and threshold, data exploration and baselines. */
 
 return [
     'id' => 'ml-base', 'family' => 'ml', 'after' => 'ai-base',
     'title' => L('Machine learning', 'Machine Learning'), 'short' => L('ML base', 'ML Basics'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Il primo modello vero con Python e scikit-learn: dati di addestramento e di test, regressione, classificazione, metriche e overfitting.', 'Your first real model with Python and scikit-learn: training and test data, regression, classification, metrics and overfitting.'),
+    'desc' => L('Il primo modello vero con Python e scikit-learn: dati di addestramento e di test, regressione, classificazione, metriche e overfitting, k-NN, matrice di confusione e soglia, esplorazione dei dati e baseline.', 'Your first real model with Python and scikit-learn: training and test data, regression, classification, metrics and overfitting, k-NN, confusion matrix and threshold, data exploration and baselines.'),
     'lessons' => [
         lesson('supervised', L('Apprendimento supervisionato', 'Supervised learning'), [
             P('Nell’apprendimento **supervisionato** ogni esempio ha le **caratteristiche** (`X`, gli input) e l’**etichetta** (`y`, la risposta giusta). Il modello impara la relazione tra `X` e `y`. Se `y` è un numero (un prezzo) è **regressione**; se è una categoria (spam/non spam) è **classificazione**.', 'In **supervised** learning each example has **features** (`X`, the inputs) and a **label** (`y`, the right answer). The model learns the relation between `X` and `y`. If `y` is a number (a price) it is **regression**; if it is a category (spam/not spam) it is **classification**.'),

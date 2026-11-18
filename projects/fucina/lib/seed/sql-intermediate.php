@@ -1,10 +1,10 @@
 <?php
-/** SQL intermediate: aggregates, GROUP BY, joins, subqueries and relations. */
+/** SQL intermediate: aggregates, GROUP BY, joins, subqueries, keys, set operators, multiple joins and table design. */
 
 return [
     'id' => 'sql-intermediate', 'family' => 'sql', 'after' => 'sql-base',
     'title' => L('SQL intermedio', 'Intermediate SQL'), 'short' => L('SQL intermedio', 'SQL Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Contare e raggruppare, unire tabelle con le JOIN, sottoquery, chiavi esterne e indici.', 'Counting and grouping, joining tables, subqueries, foreign keys and indexes.'),
+    'desc' => L('Contare e raggruppare, unire tabelle con le JOIN, sottoquery, chiavi esterne e indici, `UNION` ed `EXCEPT`, self join e progettazione delle tabelle.', 'Counting and grouping, joining tables, subqueries, foreign keys and indexes, `UNION` and `EXCEPT`, self joins and table design.'),
     'lessons' => [
         lesson('aggregates', L('Funzioni di aggregazione', 'Aggregate functions'), [
             P('Le **funzioni di aggregazione** riassumono tante righe in un valore: `COUNT` conta, `SUM` somma, `AVG` fa la media, `MIN` e `MAX` trovano gli estremi.', '**Aggregate functions** sum up many rows into one value: `COUNT` counts, `SUM` adds, `AVG` averages, `MIN` and `MAX` find the extremes.'),

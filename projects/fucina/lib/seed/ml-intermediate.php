@@ -1,10 +1,10 @@
 <?php
-/** Intermediate ML: feature preparation, pipelines, ensembles, cross-validation and tuning, clustering. */
+/** Intermediate ML: feature preparation, pipelines, ensembles, cross-validation and tuning, clustering, imbalanced classes, PCA, model interpretation. */
 
 return [
     'id' => 'ml-intermediate', 'family' => 'ml', 'after' => 'ml-base',
     'title' => L('Machine learning intermedio', 'Intermediate Machine Learning'), 'short' => L('ML intermedio', 'ML Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Modelli più robusti: preparare le caratteristiche, pipeline, random forest e gradient boosting, cross-validation, ricerca degli iperparametri e clustering.', 'Sturdier models: preparing features, pipelines, random forests and gradient boosting, cross-validation, hyperparameter search and clustering.'),
+    'desc' => L('Modelli più robusti: preparare le caratteristiche, pipeline, random forest e gradient boosting, cross-validation, iperparametri, clustering, classi sbilanciate, PCA e interpretazione dei modelli.', 'Sturdier models: preparing features, pipelines, random forests and gradient boosting, cross-validation, hyperparameters, clustering, imbalanced classes, PCA and model interpretation.'),
     'lessons' => [
         lesson('features', L('Preparare le caratteristiche', 'Preparing features'), [
             P('I modelli vogliono numeri puliti. Tre lavori tipici: riempire i **valori mancanti** (`SimpleImputer`), portare i numeri sulla stessa scala (`StandardScaler`) e trasformare le categorie in colonne 0/1 (**one-hot**, `OneHotEncoder`).', 'Models want clean numbers. Three typical jobs: filling **missing values** (`SimpleImputer`), bringing numbers to the same scale (`StandardScaler`) and turning categories into 0/1 columns (**one-hot**, `OneHotEncoder`).'),

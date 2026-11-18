@@ -1,10 +1,10 @@
 <?php
-/** Python intermediate: comprehensions, files, errors, classes and modules. */
+/** Python intermediate: comprehensions, files, errors, classes and modules, inheritance, lambdas, standard library and command-line scripts. */
 
 return [
     'id' => 'python-intermediate', 'family' => 'python', 'after' => 'python-base',
     'title' => L('Python intermedio', 'Intermediate Python'), 'short' => L('Python intermedio', 'Python Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Comprehension, file, eccezioni, classi, moduli e ambienti virtuali: Python per progetti veri.', 'Comprehensions, files, exceptions, classes, modules and virtual environments: Python for real projects.'),
+    'desc' => L('Comprehension, file, eccezioni, classi ed ereditarietà, moduli e ambienti virtuali, lambda, libreria standard e script da terminale: Python per progetti veri.', 'Comprehensions, files, exceptions, classes and inheritance, modules and virtual environments, lambdas, the standard library and command-line scripts: Python for real projects.'),
     'lessons' => [
         lesson('comprehensions', L('Comprehension', 'Comprehensions'), [
             P('Una **list comprehension** costruisce una lista in una riga: `[espressione for x in sequenza if condizione]`. Esistono anche per dizionari e insiemi.', 'A **list comprehension** builds a list in one line: `[expression for x in sequence if condition]`. They also exist for dicts and sets.'),
@@ -120,6 +120,133 @@ print(r.status_code, sqrt(16))', 'python'),
 print(sqrt(81))'), [
             dOrder(pSort(), ['python -m venv .venv', 'source .venv/bin/activate', 'pip install requests', 'pip freeze > requirements.txt'], L('Crea, attiva, installa, annota.', 'Create, activate, install, record.')),
             dMatch(pMatch(), [['import', L('Carica un modulo', 'Loads a module')], ['pip', L('Installa pacchetti', 'Installs packages')], ['venv', L('Ambiente separato', 'Separate environment')], ['requirements.txt', L('Elenco delle dipendenze', 'List of dependencies')]], L('Gli attrezzi di un progetto Python.', 'The tools of a Python project.')),
+        ]),
+        lesson('inheritance', L('Ereditarietà e metodi speciali', 'Inheritance and special methods'), [
+            P('Con `class Cane(Animale):` una classe **eredita** attributi e metodi da un’altra e può **ridefinirli**. `super()` dà accesso alla classe genitore, ad esempio per riusarne il costruttore. `isinstance` controlla se un oggetto è di un certo tipo, genitori compresi.', 'With `class Cane(Animale):` a class **inherits** attributes and methods from another and can **redefine** them. `super()` gives access to the parent class, for example to reuse its constructor. `isinstance` checks whether an object is of a given type, parents included.'),
+            C('class Animale:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def verso(self):
+        return "..."
+
+    def __str__(self):
+        return f"{self.nome} dice {self.verso()}"
+
+class Cane(Animale):
+    def __init__(self, nome, razza):
+        super().__init__(nome)
+        self.razza = razza
+
+    def verso(self):
+        return "Bau"
+
+print(Cane("Fido", "beagle"))                      # Fido dice Bau
+print(isinstance(Cane("Rex", "lupo"), Animale))    # True', 'python'),
+            P('I metodi con il doppio trattino, come `__str__`, `__eq__` e `__len__`, sono **metodi speciali**: Python li chiama da solo quando usi `print`, `==` o `len` sull’oggetto.', 'Methods with double underscores, such as `__str__`, `__eq__` and `__len__`, are **special methods**: Python calls them by itself when you use `print`, `==` or `len` on the object.'),
+        ], [
+            Q('n1', L('Come eredita `Cane` da `Animale`?', 'How does `Cane` inherit from `Animale`?'), ['class Cane extends Animale:', 'class Cane(Animale):', 'class Cane < Animale:', 'class Cane: Animale'], 1, L('Il genitore va tra le tonde.', 'The parent goes in brackets.')),
+            Q('n2', L('Quale metodo usa `print(oggetto)` per il testo da mostrare?', 'Which method does `print(obj)` use for the text to show?'), ['__init__', '__print__', '__str__', '__text__'], 2, L('Se manca, Python ripiega su `__repr__`.', 'If missing, Python falls back to `__repr__`.')),
+            Q('n3', L('A che cosa serve `super().__init__(nome)`?', 'What is `super().__init__(nome)` for?'), [L('A creare un secondo oggetto', 'To create a second object'), L('A rendere privato l’attributo nome', 'To make the nome attribute private'), L('A copiare la classe genitore', 'To copy the parent class'), L('A eseguire il costruttore della classe genitore', 'To run the parent class’s constructor')], 3, L('Così non riscrivi ciò che il genitore già fa.', 'So you do not rewrite what the parent already does.')),
+        ], task('python', L('Crea `class Studente(Persona)` con un metodo `__str__` che restituisce `f"Studente {self.nome}"`.', 'Create `class Studente(Persona)` with a `__str__` method returning `f"Studente {self.nome}"`.'), 'class Persona:
+    def __init__(self, nome):
+        self.nome = nome
+', [re('class\s+Studente\s*\(\s*Persona\s*\)\s*:', L('Studente eredita da Persona', 'Studente inherits from Persona')), re('def\s+__str__\s*\(\s*self\s*\)\s*(->\s*str\s*)?:', L('C’è __str__', 'There is __str__')), re('return\s+f["\']Studente \{self\.nome\}["\']', L('Restituisce il testo giusto', 'It returns the right text'))], '', 'class Studente(Persona):
+    def __str__(self):
+        return f"Studente {self.nome}"'), [
+            dMatch(pMatch(), [['__init__', L('Prepara l’oggetto', 'Sets up the object')], ['__str__', L('Testo per print', 'Text for print')], ['__eq__', L('Confronto con ==', 'Comparison with ==')], ['__len__', L('Risposta a len()', 'Answer to len()')], ['super()', L('La classe genitore', 'The parent class')]], L('Metodi speciali ed ereditarietà.', 'Special methods and inheritance.')),
+            dBug(pBug(), ['class Gatto(Animale):', '    def __init__(self, nome, colore):', '        self.colore = colore', '        super.__init__(nome)'], 3, '        super().__init__(nome)', L('`super` va chiamato con le parentesi: `super()`.', '`super` must be called with brackets: `super()`.')),
+        ]),
+        lesson('lambda-sorting', L('Lambda e ordinamenti', 'Lambdas and sorting'), [
+            P('Una **lambda** è una piccola funzione anonima di una sola espressione: `lambda s: s[1]`. Si usa soprattutto con il parametro `key`, che dice a `sorted`, `min` e `max` **in base a che cosa** confrontare gli elementi.', 'A **lambda** is a small anonymous function of a single expression: `lambda s: s[1]`. It is mostly used with the `key` parameter, which tells `sorted`, `min` and `max` **by what** to compare items.'),
+            C('studenti = [("Ada", 9), ("Bea", 7), ("Cleo", 8)]
+
+per_voto = sorted(studenti, key=lambda s: s[1], reverse=True)
+print(per_voto[0])                      # (\'Ada\', 9)
+
+nomi = ["bea", "Ada", "cleo"]
+print(sorted(nomi, key=str.lower))      # [\'Ada\', \'bea\', \'cleo\']
+
+migliore = max(studenti, key=lambda s: s[1])
+quadrati = list(map(lambda n: n * n, [1, 2, 3]))   # [1, 4, 9]
+promossi = list(filter(lambda s: s[1] >= 8, studenti))', 'python'),
+            P('In Python le funzioni sono valori: puoi passare `str.lower` o `len` come `key` senza chiamarle. `map` e `filter` restituiscono iteratori; spesso una comprehension è più leggibile.', 'In Python functions are values: you can pass `str.lower` or `len` as `key` without calling them. `map` and `filter` return iterators; a comprehension is often more readable.'),
+        ], [
+            Q('w1', L('Che cosa fa `key=lambda s: s[1]` in `sorted`?', 'What does `key=lambda s: s[1]` do in `sorted`?'), [L('Ordina in base al secondo elemento di ogni tupla', 'Sorts by the second item of each tuple'), L('Tiene solo il secondo elemento', 'Keeps only the second item'), L('Ordina dal più grande al più piccolo', 'Sorts from largest to smallest'), L('Salta il primo elemento della lista', 'Skips the first item of the list')], 0, L('Per l’ordine inverso serve `reverse=True`.', 'Reverse order needs `reverse=True`.')),
+            Q('w2', L('Quante espressioni può contenere una lambda?', 'How many expressions can a lambda contain?'), [L('Quante vuoi', 'As many as you like'), L('Una sola', 'Just one'), L('Due', 'Two'), L('Nessuna', 'None')], 1, L('Per più righe scrivi una funzione con `def`.', 'For several lines write a function with `def`.')),
+            Q('w3', L('Che cosa dà `max(["kiwi", "banana", "fico"], key=len)`?', 'What does `max(["kiwi", "banana", "fico"], key=len)` give?'), ['"kiwi"', '"fico"', '"banana"', '6'], 2, L('Restituisce l’elemento, non la lunghezza.', 'It returns the item, not the length.')),
+        ], task('python', L('Ordina `prodotti` (coppie nome, prezzo) dal più economico con `sorted` e una `lambda`, salvando in `economici`.', 'Sort `prodotti` (name, price pairs) from cheapest with `sorted` and a `lambda`, saving into `economici`.'), 'prodotti = [("tazza", 8.5), ("penna", 1.2), ("zaino", 30.0)]
+', [re('economici\s*=\s*sorted\s*\(\s*prodotti\s*,\s*key\s*=\s*lambda\s+(\w+)\s*:\s*\1\s*\[\s*1\s*\]\s*\)', L('Ordini per prezzo', 'You sort by price'))], '', 'economici = sorted(prodotti, key=lambda p: p[1])'), [
+            dBlanks(pFill(), 'parole = ["sole", "a", "mare"]
+ordinate = sorted(parole, ___=len)
+lunga = max(parole, key=___ p: len(p))
+corte = list(___(lambda p: len(p) < 3, parole))', ['key', 'lambda', 'filter'], ['by', 'def', 'sum'], L('Criterio, funzione anonima, filtro.', 'Criterion, anonymous function, filter.')),
+            dFlash(pFlash(), [[L('`sorted` accetta `reverse=True`', '`sorted` accepts `reverse=True`'), true], [L('Una lambda può contenere un ciclo su più righe', 'A lambda can hold a multi-line loop'), false], [L('Una funzione si può passare come argomento', 'A function can be passed as an argument'), true], [L('`map` restituisce sempre una lista', '`map` always returns a list'), false]], L('Funzioni come valori.', 'Functions as values.')),
+        ]),
+        lesson('stdlib', L('Libreria standard: pathlib, datetime, collections', 'Standard library: pathlib, datetime, collections'), [
+            P('Python arriva «con le batterie incluse». `pathlib.Path` tratta i percorsi come oggetti: `/` li unisce, `glob` cerca i file, `read_text` legge. `datetime` e `timedelta` fanno i conti con le date. `collections` offre `Counter`, che conta, e `defaultdict`, che crea da solo il valore mancante.', 'Python comes “with batteries included”. `pathlib.Path` treats paths as objects: `/` joins them, `glob` finds files, `read_text` reads. `datetime` and `timedelta` do date arithmetic. `collections` offers `Counter`, which counts, and `defaultdict`, which creates missing values by itself.'),
+            C('from pathlib import Path
+from datetime import date, datetime, timedelta
+from collections import Counter, defaultdict
+
+cartella = Path("dati")
+for file in cartella.glob("*.csv"):
+    print(file.name, file.stat().st_size)
+testo = (cartella / "note.txt").read_text(encoding="utf-8")
+
+scadenza = date.today() + timedelta(days=30)
+print(scadenza.strftime("%d/%m/%Y"))
+quando = datetime.fromisoformat("2026-11-17T09:30")
+
+parole = "il gatto e il cane e il topo".split()
+print(Counter(parole).most_common(1))    # [(\'il\', 3)]
+per_iniziale = defaultdict(list)
+for p in parole:
+    per_iniziale[p[0]].append(p)', 'python'),
+            P('Prima di installare una libreria esterna, controlla la libreria standard: spesso quello che cerchi c’è già, documentato e mantenuto con Python stesso.', 'Before installing an external library, check the standard library: what you need is often already there, documented and maintained with Python itself.'),
+        ], [
+            Q('z1', L('Che cosa fa `Path("dati") / "note.txt"`?', 'What does `Path("dati") / "note.txt"` do?'), [L('Divide due numeri', 'Divides two numbers'), L('Unisce i percorsi in dati/note.txt', 'Joins the paths into dati/note.txt'), L('Cancella il file note.txt', 'Deletes the file note.txt'), L('Apre il file in scrittura', 'Opens the file for writing')], 1, L('Funziona allo stesso modo su Windows, macOS e Linux.', 'It works the same on Windows, macOS and Linux.')),
+            Q('z2', L('Come aggiungi 7 giorni a una data?', 'How do you add 7 days to a date?'), ['data + 7', 'data.add(7)', 'data + timedelta(days=7)', 'data.days += 7'], 2, L('`timedelta` rappresenta una durata.', '`timedelta` represents a duration.')),
+            Q('z3', L('Che cosa fa `Counter(["a", "b", "a"])`?', 'What does `Counter(["a", "b", "a"])` do?'), [L('Ordina la lista', 'Sorts the list'), L('Toglie i doppioni', 'Removes duplicates'), L('Conta solo gli elementi diversi', 'Counts only the distinct items'), L('Conta le occorrenze: a 2, b 1', 'Counts occurrences: a 2, b 1')], 3, L('`most_common` dà i più frequenti.', '`most_common` gives the most frequent.')),
+        ], task('python', L('Con `Counter` conta i `colori` e stampa il più frequente con `most_common(1)`.', 'With `Counter` count the `colori` and print the most frequent with `most_common(1)`.'), 'colori = ["rosso", "blu", "rosso", "verde"]
+', [re('from\s+collections\s+import\s+([\w\s,]*\b)?Counter|import\s+collections', L('Importi Counter', 'You import Counter')), re('Counter\s*\(\s*colori\s*\)', L('Conti i colori', 'You count the colours')), re('most_common\s*\(\s*1\s*\)', L('Prendi il più frequente', 'You take the most frequent'))], '', 'from collections import Counter
+conteggio = Counter(colori)
+print(conteggio.most_common(1))'), [
+            dMatch(pMatch(), [['Path', L('Percorsi di file', 'File paths')], ['timedelta', L('Durata da sommare', 'Duration to add')], ['Counter', L('Conta le occorrenze', 'Counts occurrences')], ['defaultdict', L('Valore predefinito automatico', 'Automatic default value')], ['strftime', L('Data in testo', 'Date to text')]], L('Attrezzi della libreria standard.', 'Standard library tools.')),
+            dOrder(pSort(), ['from pathlib import Path', 'cartella = Path("foto")', 'for f in cartella.glob("*.jpg"):', '    print(f.name)'], L('Importa, scegli la cartella, cerca, stampa.', 'Import, pick the folder, search, print.')),
+        ]),
+        lesson('cli', L('Script da riga di comando', 'Command-line scripts'), [
+            P('`argparse` legge gli argomenti scritti dopo il nome dello script e crea da solo l’aiuto `--help`. `logging` è meglio di `print` per i messaggi di servizio: ha **livelli** (`DEBUG`, `INFO`, `WARNING`, `ERROR`) e si può zittire o mandare su file senza toccare il codice.', '`argparse` reads the arguments written after the script name and builds the `--help` text by itself. `logging` beats `print` for service messages: it has **levels** (`DEBUG`, `INFO`, `WARNING`, `ERROR`) and can be silenced or sent to a file without touching the code.'),
+            C('import argparse
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+log = logging.getLogger(__name__)
+
+def main():
+    parser = argparse.ArgumentParser(description="Conta le righe di un file")
+    parser.add_argument("file")
+    parser.add_argument("--vuote", action="store_true", help="conta anche le righe vuote")
+    args = parser.parse_args()
+
+    with open(args.file, encoding="utf-8") as f:
+        righe = [r for r in f if args.vuote or r.strip()]
+    log.info("Trovate %d righe", len(righe))
+
+if __name__ == "__main__":
+    main()', 'python'),
+            C('python conta.py note.txt --vuote
+python conta.py --help', 'bash'),
+        ], [
+            Q('q1', L('Che cosa crea in automatico `argparse`?', 'What does `argparse` create automatically?'), [L('Un’interfaccia grafica', 'A graphical interface'), L('Il messaggio di aiuto --help', 'The --help message'), L('Un file di configurazione', 'A configuration file'), L('Un ambiente virtuale', 'A virtual environment')], 1, L('Con la descrizione di ogni argomento.', 'With the description of every argument.')),
+            Q('q2', L('Che cosa fa `action="store_true"`?', 'What does `action="store_true"` do?'), [L('Rende obbligatorio l’argomento', 'Makes the argument required'), L('Salva l’argomento in un file', 'Saves the argument to a file'), L('L’opzione vale True se è presente, altrimenti False', 'The option is True if present, otherwise False'), L('Converte l’argomento in numero', 'Converts the argument to a number')], 2, L('È un interruttore senza valore.', 'It is a switch with no value.')),
+            Q('q3', L('Perché usare `logging` invece di `print` per i messaggi di servizio?', 'Why use `logging` instead of `print` for service messages?'), [L('Ha livelli e si configura senza cambiare il codice', 'It has levels and is configured without changing code'), L('È l’unico modo di scrivere sul terminale', 'It is the only way to write to the terminal'), L('Rende il programma più veloce', 'It makes the program faster'), L('`print` non funziona negli script', '`print` does not work in scripts')], 0, L('Per il risultato vero del programma `print` va benissimo.', 'For the program’s real output `print` is fine.')),
+        ], task('python', L('Aggiungi al `parser` l’argomento obbligatorio `nome` e l’opzione `--volte` di tipo `int` con valore predefinito `1`.', 'Add to `parser` the required argument `nome` and the `--volte` option of type `int` with default `1`.'), 'import argparse
+parser = argparse.ArgumentParser()
+', [re('parser\.add_argument\s*\(\s*["\']nome["\']', L('C’è l’argomento nome', 'There is the nome argument')), re('parser\.add_argument\s*\(\s*["\']--volte["\'](?=[^)]*type\s*=\s*int)(?=[^)]*default\s*=\s*1\b)', L('C’è l’opzione --volte', 'There is the --volte option'))], '', 'parser.add_argument("nome")
+parser.add_argument("--volte", type=int, default=1)'), [
+            dMatch(pMatch(), [['DEBUG', L('Dettagli per chi sviluppa', 'Details for developers')], ['INFO', L('Tutto procede', 'All is going well')], ['WARNING', L('Qualcosa di strano', 'Something odd')], ['ERROR', L('Qualcosa è fallito', 'Something failed')]], L('I livelli del logging.', 'Logging levels.')),
+            dOrder(pSort(), ['import argparse', 'parser = argparse.ArgumentParser()', 'parser.add_argument("file")', 'args = parser.parse_args()', 'print(args.file)'], L('Importa, prepara, dichiara, leggi, usa.', 'Import, set up, declare, parse, use.')),
         ]),
     ],
 ];

@@ -1,10 +1,10 @@
 <?php
-/** Vala basics: the first program, types, control flow, arrays and methods, classes and GObject. */
+/** Vala basics: the first program, types, control flow, arrays and methods, classes and GObject, strings, enums and structs, delegates. */
 
 return [
     'id' => 'vala-base', 'family' => 'vala', 'after' => null,
     'title' => L('Vala base', 'Vala Basics'), 'short' => L('Vala base', 'Vala Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Il linguaggio delle app GNOME: sintassi simile a C#, compilato in C. Tipi, cicli, metodi e classi.', 'The language of GNOME apps: C#-like syntax, compiled to C. Types, loops, methods and classes.'),
+    'desc' => L('Il linguaggio delle app GNOME: sintassi simile a C#, compilato in C. Tipi, cicli, metodi, classi, stringhe, enum e struct, delegate.', 'The language of GNOME apps: C#-like syntax, compiled to C. Types, loops, methods, classes, strings, enums and structs, delegates.'),
     'lessons' => [
         lesson('hello', L('Il primo programma', 'The first program'), [
             P('**Vala** ha una sintassi simile a C# ma viene tradotto in C e compilato: programmi veloci e senza macchina virtuale. Il punto di partenza è `main`; `print` scrive (senza andare a capo da solo).', '**Vala** has a C#-like syntax but is translated to C and compiled: fast programs with no virtual machine. The starting point is `main`; `print` writes (without adding a newline by itself).'),
@@ -134,6 +134,113 @@ c.versa (50);', 'vala'),
 }'), [
             dOrder(pSort(), ['var b = new Gtk.Button.with_label ("Salva");', 'b.clicked.connect (() => {', '    print ("Salvato\n");', '});'], L('Crea il bottone, collegati al segnale, reagisci.', 'Create the button, connect to the signal, react.')),
             dMatch(pMatch(), [['Object', L('La base dei GObject', 'The base of GObjects')], ['signal', L('Avviso agli ascoltatori', 'Notice to listeners')], ['connect', L('Ascolta un segnale', 'Listens to a signal')], ['{ get; set; }', L('Proprietà', 'Property')], ['construct', L('Assegnata alla creazione', 'Set at construction')]], L('GObject in Vala.', 'GObject in Vala.')),
+        ]),
+        lesson('strings', L('Stringhe', 'Strings'), [
+            P('Le stringhe di Vala hanno molti metodi pronti: `strip ()` toglie gli spazi ai lati, `up ()` e `down ()` cambiano le maiuscole, `replace ()`, `split ()`, `has_prefix ()` e `contains ()` cercano e trasformano. Ogni metodo restituisce una stringa nuova: l’originale non cambia.', 'Vala strings have many ready-made methods: `strip ()` removes spaces at the sides, `up ()` and `down ()` change case, `replace ()`, `split ()`, `has_prefix ()` and `contains ()` search and transform. Each method returns a new string: the original does not change.'),
+            C('void main () {
+    string nome = "  Ada Lovelace  ";
+    string pulito = nome.strip ();
+    print ("%s\n", pulito.up ());              // ADA LOVELACE
+    print ("%d\n", pulito.length);             // 12 (byte)
+    print ("%s\n", pulito.replace ("Ada", "Augusta"));
+
+    string[] parti = "uno,due,tre".split (",");
+    print ("%s\n", string.joinv (" - ", parti));
+
+    if (pulito.has_prefix ("Ada")) print ("Inizia con Ada\n");
+    int anni = int.parse ("36");
+    print ("%s\n", (anni + 1).to_string ());
+}', 'vala'),
+            P('Le stringhe sono in UTF-8: `length` conta i **byte**, e una lettera accentata ne occupa due; per i caratteri c’è `char_count ()`. `int.parse` trasforma un testo in numero, `to_string ()` fa il contrario.', 'Strings are UTF-8: `length` counts **bytes**, and an accented letter takes two; for characters there is `char_count ()`. `int.parse` turns text into a number, `to_string ()` does the opposite.'),
+        ], [
+            Q('st1', L('Quale metodo toglie gli spazi all’inizio e alla fine?', 'Which method removes spaces at the start and end?'), ['trim ()', 'strip ()', 'clean ()', 'cut ()'], 1, L('`chug ()` e `chomp ()` li tolgono da un lato solo.', '`chug ()` and `chomp ()` remove them from one side only.')),
+            Q('st2', L('Quanto vale `"è".length`?', 'What is `"è".length`?'), ['1', '0', '2', '-1'], 2, L('In UTF-8 la «è» occupa due byte; `char_count ()` darebbe 1.', 'In UTF-8 “è” takes two bytes; `char_count ()` would give 1.')),
+            Q('st3', L('Come trasformi `"42"` in un intero?', 'How do you turn `"42"` into an integer?'), ['Integer.valueOf ("42")', 'parseInt ("42")', '"42" as int', 'int.parse ("42")'], 3, L('Gli altri vengono da Java, JavaScript e C#.', 'The others come from Java, JavaScript and C#.')),
+        ], task('vala', L('Stampa `titolo` in maiuscolo con `print ("%s\n", titolo.up ());`.', 'Print `titolo` in capitals with `print ("%s\n", titolo.up ());`.'), 'string titolo = "vala";
+', [re('print\s*\(\s*"%s(\\\\n)?"\s*,\s*titolo\.up\s*\(\s*\)\s*\)\s*;', L('Stampi in maiuscolo', 'You print it in capitals'))], '', 'print ("%s\n", titolo.up ());'), [
+            dMatch(pMatch(), [['strip ()', L('Toglie gli spazi ai lati', 'Removes spaces at the sides')], ['up ()', L('Tutto maiuscolo', 'All capitals')], ['split (",")', L('Divide in un array', 'Splits into an array')], ['has_prefix', L('Inizia con…', 'Starts with…')], ['int.parse', L('Da testo a numero', 'From text to number')]], L('Gli attrezzi delle stringhe.', 'String tools.')),
+            dFlash(pFlash(), [[L('`length` conta i byte', '`length` counts bytes'), true], [L('`replace` modifica la stringa originale', '`replace` changes the original string'), false], [L('`to_string ()` trasforma un numero in testo', '`to_string ()` turns a number into text'), true], [L('Le stringhe di Vala sono in UTF-8', 'Vala strings are UTF-8'), true]], L('Ogni metodo restituisce una stringa nuova.', 'Every method returns a new string.')),
+        ]),
+        lesson('enums-structs', L('Enum, struct e namespace', 'Enums, structs and namespaces'), [
+            P('Un **enum** elenca valori con nome e in Vala può avere anche metodi. Una **struct** è un tipo per **valore**: assegnarla la copia, al contrario delle classi, che sono per riferimento. I **namespace** raggruppano tipi e funzioni sotto un nome.', 'An **enum** lists named values and in Vala it can also have methods. A **struct** is a **value** type: assigning it copies it, unlike classes, which are by reference. **Namespaces** group types and functions under one name.'),
+            C('namespace Fucina {
+    public enum Livello {
+        BASE,
+        INTERMEDIO,
+        AVANZATO;
+
+        public string etichetta () {
+            switch (this) {
+                case Livello.BASE: return "Base";
+                case Livello.INTERMEDIO: return "Intermedio";
+                default: return "Avanzato";
+            }
+        }
+    }
+
+    public struct Punto {
+        public double x;
+        public double y;
+    }
+}
+
+void main () {
+    var l = Fucina.Livello.INTERMEDIO;
+    print ("%s\n", l.etichetta ());
+
+    Fucina.Punto a = { 1, 2 };
+    var b = a;          // copia: è un tipo per valore
+    b.x = 10;
+    print ("%g %g\n", a.x, b.x);   // 1 10
+}', 'vala'),
+            P('Con `using Fucina;` in cima al file si usano i nomi senza prefisso, come fai con `using Gtk;`. Le struct sono adatte a dati piccoli come punti, colori e dimensioni; per oggetti con identità, segnali e proprietà si usa una classe.', 'With `using Fucina;` at the top of the file you use the names without a prefix, as you do with `using Gtk;`. Structs suit small data such as points, colours and sizes; for objects with identity, signals and properties you use a class.'),
+        ], [
+            Q('es1', L('Che cosa succede ad `a` se modifichi `b`, una copia della struct?', 'What happens to `a` if you change `b`, a copy of the struct?'), [L('Cambia anche a', 'a changes too'), L('Niente: b è una copia indipendente', 'Nothing: b is an independent copy'), L('Errore di compilazione', 'Compile error'), L('a diventa null', 'a becomes null')], 1, L('Le struct sono tipi per valore.', 'Structs are value types.')),
+            Q('es2', L('Un enum di Vala può avere metodi?', 'Can a Vala enum have methods?'), [L('No, mai', 'No, never'), L('Solo statici', 'Only static ones'), L('Sì', 'Yes'), L('Solo se eredita da Object', 'Only if it inherits from Object')], 2, L('Dopo l’ultimo valore si mette `;` e poi i metodi.', 'After the last value you put `;` and then the methods.')),
+            Q('es3', L('A che cosa serve `using Gtk;` in cima al file?', 'What is `using Gtk;` at the top of the file for?'), [L('A usare i nomi di Gtk senza il prefisso `Gtk.`', 'Using Gtk names without the `Gtk.` prefix'), L('A installare GTK', 'Installing GTK'), L('A compilare con GTK', 'Compiling with GTK'), L('A creare un namespace Gtk', 'Creating a Gtk namespace')], 0, L('Per compilare serve comunque `--pkg gtk4`.', 'To compile you still need `--pkg gtk4`.')),
+        ], task('vala', L('Dichiara `enum Semaforo` con i valori `ROSSO`, `GIALLO` e `VERDE`.', 'Declare `enum Semaforo` with the values `ROSSO`, `GIALLO` and `VERDE`.'), '', [re('enum\s+Semaforo\s*\{', L('L’enum esiste', 'The enum exists')), re('ROSSO\s*,\s*GIALLO\s*,\s*VERDE', L('Ha i tre colori', 'It has the three colours'))], '', 'enum Semaforo {
+    ROSSO,
+    GIALLO,
+    VERDE
+}'), [
+            dMatch(pMatch(), [['enum', L('Valori con nome', 'Named values')], ['struct', L('Tipo per valore', 'Value type')], ['class', L('Tipo per riferimento', 'Reference type')], ['namespace', L('Raggruppa i nomi', 'Groups names')], ['using', L('Evita il prefisso', 'Avoids the prefix')]], L('Tipi e nomi in Vala.', 'Types and names in Vala.')),
+            dBlanks(pFill(), "___ Colore { ROSSO, BLU }\n___ Pixel {\n    public int x;\n    public int y;\n}\n___ Fucina;", ['enum', 'struct', 'using'], ['class', 'record', 'import'], L('Enum, struct, namespace in uso.', 'Enum, struct, namespace in use.')),
+        ]),
+        lesson('delegates', L('Delegate e lambda', 'Delegates and lambdas'), [
+            P('Un **delegate** è il tipo di una funzione: dice quali parametri riceve e che cosa restituisce. Una variabile di quel tipo può contenere una funzione con nome o una **lambda** come `(a, b) => a + b`. È lo stesso meccanismo che usi con `connect` sui segnali.', 'A **delegate** is the type of a function: it says which parameters it takes and what it returns. A variable of that type can hold a named function or a **lambda** such as `(a, b) => a + b`. It is the same mechanism you use with `connect` on signals.'),
+            C('delegate int Operazione (int a, int b);
+
+int somma (int a, int b) {
+    return a + b;
+}
+
+int applica (Operazione op, int x, int y) {
+    return op (x, y);
+}
+
+void main () {
+    print ("%d\n", applica (somma, 2, 3));                 // 5
+    print ("%d\n", applica ((a, b) => a * b, 4, 5));       // 20
+
+    int extra = 10;
+    Operazione piu_extra = (a, b) => a + b + extra;        // cattura extra
+    print ("%d\n", piu_extra (1, 2));                      // 13
+
+    var nomi = new GenericArray<string> ();
+    nomi.add ("Bea");
+    nomi.add ("Ada");
+    nomi.sort ((a, b) => strcmp (a, b));
+}', 'vala'),
+            P('Le lambda possono usare le variabili intorno a sé: si dice che le **catturano**. Se il corpo è un blocco si scrive `(a, b) => { … return …; }`. Molte funzioni di GLib, come `sort`, accettano una lambda per decidere come confrontare gli elementi.', 'Lambdas can use the variables around them: they are said to **capture** them. If the body is a block you write `(a, b) => { … return …; }`. Many GLib functions, such as `sort`, accept a lambda to decide how to compare items.'),
+        ], [
+            Q('dl1', L('Che cosa descrive un delegate?', 'What does a delegate describe?'), [L('Il tipo di una funzione: parametri e risultato', 'The type of a function: parameters and result'), L('Una classe astratta', 'An abstract class'), L('Un segnale di GTK', 'A GTK signal'), L('Un thread', 'A thread')], 0, L('Poi ci metti una funzione o una lambda compatibile.', 'Then you put a matching function or lambda in it.')),
+            Q('dl2', L('Come scrivi in Vala una lambda che somma due numeri?', 'How do you write a lambda adding two numbers in Vala?'), ['lambda a, b: a + b', 'fn(a, b) { a + b }', 'a, b -> a + b', '(a, b) => a + b'], 3, L('Come in C#.', 'As in C#.')),
+            Q('dl3', L('Una lambda può usare una variabile locale definita fuori da essa?', 'Can a lambda use a local variable defined outside it?'), [L('No, mai', 'No, never'), L('Sì, la cattura', 'Yes, it captures it'), L('Solo se è `const`', 'Only if it is `const`'), L('Solo nei segnali', 'Only in signals')], 1, L('È una closure.', 'It is a closure.')),
+        ], task('vala', L('Dichiara `delegate bool Filtro (int n);` e una variabile `Filtro pari = (n) => n % 2 == 0;`.', 'Declare `delegate bool Filtro (int n);` and a variable `Filtro pari = (n) => n % 2 == 0;`.'), '', [re('delegate\s+bool\s+Filtro\s*\(\s*int\s+n\s*\)\s*;', L('Il delegate esiste', 'The delegate exists')), re('Filtro\s+pari\s*=\s*\(?\s*n\s*\)?\s*=>\s*n\s*%\s*2\s*==\s*0', L('La lambda controlla i pari', 'The lambda checks for even numbers'))], '', 'delegate bool Filtro (int n);
+
+Filtro pari = (n) => n % 2 == 0;'), [
+            dBug(pBug(), ['delegate int Calcolo (int x);', 'Calcolo triplo = (x) => x * 3;', 'int r = triplo ("5");'], 2, 'int r = triplo (5);', L('Il delegate vuole un `int`, non una stringa.', 'The delegate wants an `int`, not a string.')),
+            dFlash(pFlash(), [[L('Un delegate è il tipo di una funzione', 'A delegate is the type of a function'), true], [L('Le lambda non possono avere un corpo a blocco', 'Lambdas cannot have a block body'), false], [L('`connect` sui segnali accetta una lambda', '`connect` on signals accepts a lambda'), true], [L('Una funzione con nome si può passare come delegate', 'A named function can be passed as a delegate'), true]], L('Il corpo può essere un’espressione o un blocco.', 'The body can be an expression or a block.')),
         ]),
     ],
 ];

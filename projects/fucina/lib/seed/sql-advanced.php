@@ -1,10 +1,10 @@
 <?php
-/** SQL advanced: CTEs, window functions, transactions, views and query plans. */
+/** SQL advanced: CTEs, window functions and frames, transactions, concurrency and locks, views, query plans and triggers. */
 
 return [
     'id' => 'sql-advanced', 'family' => 'sql', 'after' => 'sql-intermediate',
     'title' => L('SQL avanzato', 'Advanced SQL'), 'short' => L('SQL avanzato', 'SQL Advanced'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('CTE e ricorsione, funzioni finestra, transazioni, viste e piani di esecuzione per query veloci.', 'CTEs and recursion, window functions, transactions, views and execution plans for fast queries.'),
+    'desc' => L('CTE e ricorsione, funzioni finestra e cornici, transazioni, concorrenza e lock, viste, piani di esecuzione e trigger.', 'CTEs and recursion, window functions and frames, transactions, concurrency and locks, views, execution plans and triggers.'),
     'lessons' => [
         lesson('cte', L('CTE con WITH', 'CTEs with WITH'), [
             P('Una **CTE** (Common Table Expression) dà un nome a una sottoquery con `WITH`, così la query principale resta leggibile. Con `WITH RECURSIVE` si percorrono strutture ad albero, come categorie e sottocategorie.', 'A **CTE** (Common Table Expression) names a subquery with `WITH`, so the main query stays readable. With `WITH RECURSIVE` you walk tree structures, like categories and subcategories.'),

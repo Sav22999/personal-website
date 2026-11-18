@@ -4,7 +4,7 @@
 return [
     'id' => 'bootstrap', 'family' => 'bootstrap', 'after' => 'css-base', 'categories' => ['frontend', 'design'],
     'title' => L('Bootstrap', 'Bootstrap'), 'short' => L('Bootstrap', 'Bootstrap'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Uno dei framework CSS più diffusi, nella versione stabile 5.3: griglia a 12 colonne e breakpoint, classi di utilità, componenti come navbar, card, modali e form, temi e personalizzazione.', 'One of the most widespread CSS frameworks, in its stable 5.3 release: 12-column grid and breakpoints, utility classes, components such as navbars, cards, modals and forms, themes and customisation.'),
+    'desc' => L('Uno dei framework CSS più diffusi, nella versione stabile 5.3: griglia a 12 colonne e breakpoint, classi di utilità, componenti come navbar, card, modali, accordion, offcanvas e form, il JavaScript di Bootstrap, helper di accessibilità, temi e personalizzazione.', 'One of the most widespread CSS frameworks, in its stable 5.3 release: 12-column grid and breakpoints, utility classes, components such as navbars, cards, modals, accordions, offcanvas panels and forms, Bootstrap’s JavaScript, accessibility helpers, themes and customisation.'),
     'lessons' => [
         lesson('grid', L('La griglia', 'The grid'), [
             P('**Bootstrap** è un framework CSS (con un po’ di JavaScript) che offre una griglia, classi di utilità e componenti pronti. La **griglia** usa `.container` (larghezza massima centrata), `.row` (una riga flex) e `.col` (colonne). Ogni riga ha **12 colonne**: `.col-4` occupa un terzo, `.col-6` metà.', '**Bootstrap** is a CSS framework (with some JavaScript) offering a grid, utility classes and ready-made components. The **grid** uses `.container` (centred max width), `.row` (a flex row) and `.col` (columns). Every row has **12 columns**: `.col-4` takes a third, `.col-6` half.'),
@@ -91,6 +91,116 @@ $font-family-base: "Inter", system-ui, sans-serif;
         ], task('html', L('Crea un campo con etichetta `Nome` (`for="nome"`) e un `<input id="nome">` con la classe `form-control`.', 'Create a field with the label `Nome` (`for="nome"`) and an `<input id="nome">` with the `form-control` class.'), '', [has('label[for="nome"]', L('C’è l’etichetta collegata', 'The linked label is there'), 'Nome'), has('input#nome.form-control', L('Il campo ha la classe giusta', 'The field has the right class'))], '', "<label for=\"nome\" class=\"form-label\">Nome</label>\n<input id=\"nome\" class=\"form-control\">"), [
             dMatch(pMatch(), [['.form-control', L('Campo di testo', 'Text field')], ['.form-select', L('Menu a tendina', 'Select menu')], ['.is-invalid', L('Campo non valido', 'Invalid field')], ['data-bs-toggle', L('Cosa aprire', 'What to open')], ['data-bs-target', L('Quale elemento', 'Which element')]], L('Form e componenti.', 'Forms and components.')),
             dFlash(pFlash(), [[L('I modali funzionano con bootstrap.bundle.js', 'Modals work with bootstrap.bundle.js'), true], [L('L’etichetta non serve se c’è il placeholder', 'The label is not needed if there is a placeholder'), false], [L('.invalid-feedback mostra il messaggio d’errore', '.invalid-feedback shows the error message'), true], [L('Ogni modale richiede JavaScript scritto a mano', 'Every modal needs hand-written JavaScript'), false]], L('Form e interazione.', 'Forms and interaction.')),
+        ]),
+        lesson('navbar', L('La navbar', 'The navbar'), [
+            P('La **navbar** è la barra di navigazione responsiva. `.navbar-expand-lg` la tiene distesa da `lg` in su; sotto, i link si raccolgono dietro un pulsante (`.navbar-toggler`) che apre e chiude il blocco `.collapse.navbar-collapse`. I link stanno in `.navbar-nav` come `.nav-link`.', 'The **navbar** is the responsive navigation bar. `.navbar-expand-lg` keeps it spread out from `lg` up; below that, the links gather behind a button (`.navbar-toggler`) that opens and closes the `.collapse.navbar-collapse` block. The links sit in `.navbar-nav` as `.nav-link`.'),
+            C('<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container">
+    <a class="navbar-brand" href="#">Fucina</a>
+    <button class="navbar-toggler" type="button"
+            data-bs-toggle="collapse" data-bs-target="#menu"
+            aria-controls="menu" aria-expanded="false" aria-label="Apri il menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="menu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Corsi</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Giochi</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>', 'html'),
+            P('Il pulsante ha solo un’icona, quindi gli serve un `aria-label`; `aria-current="page"` dice allo screen reader qual è la pagina attuale. `ms-auto` spinge i link a destra.', 'The button only has an icon, so it needs an `aria-label`; `aria-current="page"` tells the screen reader which page is the current one. `ms-auto` pushes the links to the right.'),
+        ], [
+            Q('n1', L('Che cosa fa `.navbar-expand-lg`?', 'What does `.navbar-expand-lg` do?'), [L('Allarga la barra a tutto schermo', 'It widens the bar to full screen'), L('Mostra il menu disteso da `lg` in su e raccolto sotto', 'It shows the menu spread out from `lg` up and collapsed below'), L('Ingrandisce il logo', 'It enlarges the logo'), L('Nasconde la barra sui computer', 'It hides the bar on computers')], 1, L('Come le colonne: da quel breakpoint in su.', 'Like columns: from that breakpoint up.')),
+            Q('n2', L('Perché il `.navbar-toggler` ha un `aria-label`?', 'Why does the `.navbar-toggler` have an `aria-label`?'), [L('Per cambiare il colore dell’icona', 'To change the icon colour'), L('Perché Bootstrap non funziona senza', 'Because Bootstrap does not work without it'), L('Per il SEO della pagina', 'For the page’s SEO'), L('Perché ha solo un’icona e serve un nome da leggere', 'Because it only has an icon and needs a name to read')], 3, L('Senza, lo screen reader annuncia solo «pulsante».', 'Without it, the screen reader only announces “button”.')),
+            Q('n3', L('Quale attributo segna il link della pagina attuale?', 'Which attribute marks the link of the current page?'), ['aria-current="page"', 'data-bs-active', 'selected', 'href="#current"'], 0, L('Insieme alla classe `active`, che è solo visiva.', 'Together with the `active` class, which is only visual.')),
+        ], task('html', L('Completa il pulsante: `class="navbar-toggler"`, `data-bs-toggle="collapse"`, `data-bs-target="#menu"` e un `aria-label`.', 'Complete the button: `class="navbar-toggler"`, `data-bs-toggle="collapse"`, `data-bs-target="#menu"` and an `aria-label`.'), "<nav class=\"navbar navbar-expand-lg\">\n  <a class=\"navbar-brand\" href=\"#\">Fucina</a>\n  <button type=\"button\">\n    <span class=\"navbar-toggler-icon\"></span>\n  </button>\n  <div class=\"collapse navbar-collapse\" id=\"menu\">…</div>\n</nav>", [has('button.navbar-toggler[data-bs-toggle="collapse"]', L('Il pulsante apre un collapse', 'The button opens a collapse')), has('button.navbar-toggler[data-bs-target="#menu"]', L('Punta a `#menu`', 'It points to `#menu`')), has('button.navbar-toggler[aria-label]:not([aria-label=""])', L('Ha un nome accessibile', 'It has an accessible name'))], '', "<button class=\"navbar-toggler\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#menu\" aria-controls=\"menu\" aria-expanded=\"false\" aria-label=\"Apri il menu\">\n  <span class=\"navbar-toggler-icon\"></span>\n</button>"), [
+            dMatch(pMatch(), [['.navbar-brand', L('Logo o nome del sito', 'Logo or site name')], ['.navbar-toggler', L('Pulsante del menu su telefono', 'Menu button on phones')], ['.navbar-collapse', L('Blocco che si apre e si chiude', 'Block that opens and closes')], ['.nav-link', L('Un link del menu', 'A menu link')], ['ms-auto', L('Spinge a destra', 'Pushes to the right')]], L('I pezzi di una navbar.', 'The pieces of a navbar.')),
+            dBug(pBug(), ['<button class="navbar-toggler" type="button"', '  data-bs-toggle="collapse" data-bs-target="menu">', '  <span class="navbar-toggler-icon"></span>', '</button>'], 1, '  data-bs-toggle="collapse" data-bs-target="#menu">', L('`data-bs-target` vuole un selettore: l’id con il cancelletto.', '`data-bs-target` needs a selector: the id with its hash.')),
+        ]),
+        lesson('collapse-offcanvas', L('Collapse, accordion e offcanvas', 'Collapse, accordion and offcanvas'), [
+            P('`.collapse` nasconde un blocco che un pulsante con `data-bs-toggle="collapse"` apre e chiude. Un **accordion** è una pila di collapse: con `data-bs-parent` aprirne uno chiude gli altri. L’**offcanvas** è un pannello che scorre dal bordo dello schermo, comodo per menu e filtri.', '`.collapse` hides a block that a button with `data-bs-toggle="collapse"` opens and closes. An **accordion** is a stack of collapses: with `data-bs-parent` opening one closes the others. The **offcanvas** is a panel that slides in from the edge of the screen, handy for menus and filters.'),
+            C('<div class="accordion" id="faq">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button"
+              data-bs-toggle="collapse" data-bs-target="#d1"
+              aria-expanded="false" aria-controls="d1">Quanto costa?</button>
+    </h2>
+    <div id="d1" class="accordion-collapse collapse" data-bs-parent="#faq">
+      <div class="accordion-body">È gratis.</div>
+    </div>
+  </div>
+</div>
+
+<button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#filtri">Filtri</button>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="filtri" aria-labelledby="titolo-filtri">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="titolo-filtri">Filtri</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Chiudi"></button>
+  </div>
+  <div class="offcanvas-body">…</div>
+</div>', 'html'),
+            P('`.show` apre un collapse già all’inizio. `.offcanvas-start` lo fa entrare da sinistra (in una pagina da destra a sinistra, da destra), `-end` dal lato opposto, `-top` e `-bottom` dall’alto e dal basso. `data-bs-dismiss` chiude il componente in cui si trova.', '`.show` opens a collapse from the start. `.offcanvas-start` brings it in from the left (from the right on a right-to-left page), `-end` from the other side, `-top` and `-bottom` from above and below. `data-bs-dismiss` closes the component it sits in.'),
+        ], [
+            Q('o1', L('Che cosa fa `data-bs-parent` in un accordion?', 'What does `data-bs-parent` do in an accordion?'), [L('Colora la voce aperta', 'It colours the open item'), L('Ordina le voci', 'It sorts the items'), L('Quando se ne apre una, chiude le altre', 'When one opens, it closes the others'), L('Blocca l’apertura', 'It blocks opening')], 2, L('Senza, le voci si aprono indipendenti.', 'Without it, items open independently.')),
+            Q('o2', L('Che cos’è un offcanvas?', 'What is an offcanvas?'), [L('Un pannello che scorre dal bordo dello schermo', 'A panel that slides in from the screen edge'), L('Un’immagine fuori dalla pagina', 'An image outside the page'), L('Una tabella nascosta', 'A hidden table'), L('Un tipo di griglia', 'A kind of grid')], 0, L('Ottimo per menu e filtri su telefono.', 'Great for menus and filters on phones.')),
+            Q('o3', L('Quale classe apre un collapse già al caricamento?', 'Which class opens a collapse when the page loads?'), ['.open', '.active', '.visible', '.show'], 3, L('È la stessa classe che Bootstrap aggiunge quando lo apri.', 'It is the same class Bootstrap adds when you open it.')),
+        ], task('html', L('Crea un pulsante con `data-bs-toggle="collapse"` e `data-bs-target="#dettagli"`, e un `div` con `id="dettagli"` e la classe `collapse`.', 'Create a button with `data-bs-toggle="collapse"` and `data-bs-target="#dettagli"`, and a `div` with `id="dettagli"` and the `collapse` class.'), '', [has('button[data-bs-toggle="collapse"][data-bs-target="#dettagli"]', L('Il pulsante comanda il collapse', 'The button controls the collapse')), has('div#dettagli.collapse', L('Il blocco si nasconde', 'The block hides'))], '', "<button class=\"btn btn-secondary\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#dettagli\" aria-expanded=\"false\" aria-controls=\"dettagli\">Dettagli</button>\n<div class=\"collapse\" id=\"dettagli\">Tutte le informazioni.</div>"), [
+            dMatch(pMatch(), [['.collapse', L('Blocco nascosto che si apre', 'Hidden block that opens')], ['.accordion', L('Pila di voci apribili', 'Stack of openable items')], ['data-bs-parent', L('Una voce aperta alla volta', 'One open item at a time')], ['.offcanvas-start', L('Pannello da sinistra', 'Panel from the left')], ['data-bs-dismiss', L('Chiude il componente', 'Closes the component')]], L('Contenuti che si aprono quando servono.', 'Content that opens when needed.')),
+            dFlash(pFlash(), [[L('Un accordion è fatto di più collapse', 'An accordion is made of several collapses'), true], [L('`.offcanvas-end` entra sempre da sinistra', '`.offcanvas-end` always enters from the left'), false], [L('`.show` apre il collapse all’inizio', '`.show` opens the collapse at the start'), true], [L('L’offcanvas funziona senza il JavaScript di Bootstrap', 'The offcanvas works without Bootstrap’s JavaScript'), false]], L('Per i componenti interattivi serve sempre `bootstrap.bundle.js`.', 'Interactive components always need `bootstrap.bundle.js`.')),
+        ]),
+        lesson('js-api', L('Il JavaScript di Bootstrap', 'Bootstrap’s JavaScript'), [
+            P('Gli attributi `data-bs-*` bastano per i casi semplici. Per comandare un componente dal tuo codice usi l’oggetto `bootstrap`: `bootstrap.Modal.getOrCreateInstance(elemento)` restituisce il modale, che poi apri con `.show()` e chiudi con `.hide()`.', 'The `data-bs-*` attributes are enough for simple cases. To control a component from your own code you use the `bootstrap` object: `bootstrap.Modal.getOrCreateInstance(element)` gives back the modal, which you then open with `.show()` and close with `.hide()`.'),
+            C('// Tooltip e popover vanno attivati a mano
+document.querySelectorAll(\'[data-bs-toggle="tooltip"]\')
+  .forEach(el => new bootstrap.Tooltip(el));
+
+// Aprire un modale dal codice
+const conferma = bootstrap.Modal.getOrCreateInstance("#conferma");
+conferma.show();
+
+// Reagire agli eventi
+document.querySelector("#conferma")
+  .addEventListener("hidden.bs.modal", () => console.log("Chiuso"));', 'js'),
+            P('Tooltip e popover non partono da soli, per non pesare sulle pagine che non li usano: vanno creati con `new bootstrap.Tooltip(…)`. Ogni componente emette eventi come `show.bs.modal` (sta per aprirsi) e `hidden.bs.modal` (si è chiuso del tutto).', 'Tooltips and popovers do not start by themselves, so as not to weigh down pages that do not use them: you create them with `new bootstrap.Tooltip(…)`. Every component fires events like `show.bs.modal` (about to open) and `hidden.bs.modal` (fully closed).'),
+        ], [
+            Q('j1', L('Quale componente va attivato a mano con JavaScript?', 'Which component must be turned on by hand with JavaScript?'), [L('Il collapse', 'The collapse'), L('Il tooltip', 'The tooltip'), L('Il modale con `data-bs-toggle`', 'The modal with `data-bs-toggle`'), L('L’accordion', 'The accordion')], 1, L('Anche i popover: sono facoltativi per ragioni di prestazioni.', 'Popovers too: they are opt-in for performance reasons.')),
+            Q('j2', L('Che cosa fa `bootstrap.Modal.getOrCreateInstance(el)`?', 'What does `bootstrap.Modal.getOrCreateInstance(el)` do?'), [L('Crea un nuovo elemento HTML', 'It creates a new HTML element'), L('Scarica Bootstrap da internet', 'It downloads Bootstrap from the internet'), L('Restituisce il modale esistente o ne crea uno', 'It gives back the existing modal or creates one'), L('Chiude tutti i modali', 'It closes every modal')], 2, L('Così non crei due istanze per lo stesso elemento.', 'That way you never create two instances for the same element.')),
+            Q('j3', L('Quale evento arriva quando un modale si è chiuso del tutto?', 'Which event arrives when a modal has fully closed?'), ['show.bs.modal', 'shown.bs.modal', 'hide.bs.modal', 'hidden.bs.modal'], 3, L('`show` e `hide` arrivano all’inizio dell’azione, `shown` e `hidden` alla fine.', '`show` and `hide` arrive at the start of the action, `shown` and `hidden` at the end.')),
+        ], task('js', L('Attiva tutti i tooltip: seleziona gli elementi `[data-bs-toggle="tooltip"]` e crea per ognuno un `new bootstrap.Tooltip`.', 'Turn on every tooltip: select the `[data-bs-toggle="tooltip"]` elements and create a `new bootstrap.Tooltip` for each one.'), '// attiva i tooltip
+', [re('querySelectorAll\(\s*[\'"`]\[data-bs-toggle=[\'"]?tooltip[\'"]?\][\'"`]\s*\)', L('Selezioni i tooltip', 'You select the tooltips')), re('new\s+bootstrap\.Tooltip\s*\(', L('Crei ogni tooltip', 'You create each tooltip'))], '', "document.querySelectorAll('[data-bs-toggle=\"tooltip\"]')\n  .forEach(el => new bootstrap.Tooltip(el));"), [
+            dOrder(pSort(), ['const el = document.querySelector("#conferma");', 'const modale = bootstrap.Modal.getOrCreateInstance(el);', 'modale.show();'], L('Trova l’elemento, prendi il modale, aprilo.', 'Find the element, get the modal, open it.')),
+            dMatch(pMatch(), [['new bootstrap.Tooltip(el)', L('Attiva un tooltip', 'Turns on a tooltip')], ['getOrCreateInstance()', L('Prende o crea il componente', 'Gets or creates the component')], ['.show()', L('Apre', 'Opens')], ['show.bs.modal', L('Sta per aprirsi', 'About to open')], ['hidden.bs.modal', L('Si è chiuso', 'Has closed')]], L('Quando gli attributi non bastano, c’è il codice.', 'When attributes are not enough, there is code.')),
+        ]),
+        lesson('helpers', L('Helper e accessibilità', 'Helpers and accessibility'), [
+            P('Bootstrap ha piccole classi «helper» per problemi frequenti. `.visually-hidden` nasconde un testo alla vista ma lo lascia agli screen reader; `.visually-hidden-focusable` lo mostra quando riceve il focus, perfetto per il link «Vai al contenuto». `.stretched-link` rende cliccabile tutta la card che contiene il link.', 'Bootstrap has small “helper” classes for common problems. `.visually-hidden` hides text from view but keeps it for screen readers; `.visually-hidden-focusable` shows it when it gets focus, perfect for the “Skip to content” link. `.stretched-link` makes the whole card containing the link clickable.'),
+            C('<a class="visually-hidden-focusable" href="#contenuto">Vai al contenuto</a>
+
+<button class="btn btn-outline-danger">
+  <svg aria-hidden="true">…</svg>
+  <span class="visually-hidden">Elimina</span>
+</button>
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Corso CSS</h5>
+    <a href="corso.html" class="stretched-link">Apri</a>
+  </div>
+</div>
+
+<div class="ratio ratio-16x9">
+  <iframe src="video.html" title="Il video del corso"></iframe>
+</div>', 'html'),
+            P('`.ratio .ratio-16x9` tiene le proporzioni di video e iframe; `.text-truncate` taglia un testo lungo con i puntini; `.vstack` e `.hstack` impilano gli elementi in colonna o in riga con `gap-*`.', '`.ratio .ratio-16x9` keeps the proportions of videos and iframes; `.text-truncate` cuts long text with an ellipsis; `.vstack` and `.hstack` stack items in a column or a row with `gap-*`.'),
+        ], [
+            Q('h1', L('Che cosa fa `.visually-hidden`?', 'What does `.visually-hidden` do?'), [L('Cancella il testo dalla pagina', 'It deletes the text from the page'), L('Nasconde il testo alla vista ma non agli screen reader', 'It hides the text from view but not from screen readers'), L('Nasconde il testo a tutti', 'It hides the text from everyone'), L('Mette il testo in trasparenza', 'It makes the text see-through')], 1, L('`display: none` invece lo toglierebbe anche agli screen reader.', '`display: none` would remove it from screen readers too.')),
+            Q('h2', L('A che cosa serve `.stretched-link`?', 'What is `.stretched-link` for?'), [L('Allunga il testo del link', 'It stretches the link text'), L('Apre il link in una nuova scheda', 'It opens the link in a new tab'), L('Sottolinea il link', 'It underlines the link'), L('Rende cliccabile tutto il contenitore', 'It makes the whole container clickable')], 3, L('Il contenitore deve essere posizionato, come lo è `.card`.', 'The container must be positioned, as `.card` is.')),
+            Q('h3', L('Quale classe tiene un iframe in proporzione 16:9?', 'Which class keeps an iframe at 16:9?'), ['.ratio .ratio-16x9', '.embed-16-9', '.video-wide', '.aspect-16'], 0, L('Il figlio riempie la scatola con le proporzioni giuste.', 'The child fills the box at the right proportions.')),
+        ], task('html', L('Al pulsante con sola icona aggiungi uno `span` con la classe `visually-hidden` e il testo `Elimina`.', 'Add to the icon-only button a `span` with the `visually-hidden` class and the text `Elimina`.'), "<button class=\"btn btn-outline-danger\">\n  <svg aria-hidden=\"true\" width=\"16\" height=\"16\"></svg>\n</button>", [has('button span.visually-hidden', L('C’è il testo nascosto', 'The hidden text is there'), 'Elimina'), has('button svg[aria-hidden="true"]', L('L’icona resta nascosta ai lettori', 'The icon stays hidden from readers'))], '', "<button class=\"btn btn-outline-danger\">\n  <svg aria-hidden=\"true\" width=\"16\" height=\"16\"></svg>\n  <span class=\"visually-hidden\">Elimina</span>\n</button>"), [
+            dMatch(pMatch(), [['.visually-hidden', L('Solo per gli screen reader', 'Only for screen readers')], ['.visually-hidden-focusable', L('Si vede con il focus', 'Shows on focus')], ['.stretched-link', L('Tutta la card cliccabile', 'The whole card clickable')], ['.ratio-16x9', L('Proporzioni del video', 'Video proportions')], ['.text-truncate', L('Testo tagliato con i puntini', 'Text cut with an ellipsis')]], L('Piccole classi, grandi comodità.', 'Small classes, big conveniences.')),
+            dFlash(pFlash(), [[L('Un pulsante con sola icona ha bisogno di un testo per gli screen reader', 'An icon-only button needs text for screen readers'), true], [L('`.visually-hidden` equivale a `display: none`', '`.visually-hidden` is the same as `display: none`'), false], [L('Il link «Vai al contenuto» aiuta chi usa la tastiera', 'The “Skip to content” link helps keyboard users'), true], [L('`.stretched-link` funziona solo nelle tabelle', '`.stretched-link` only works in tables'), false]], L('Bootstrap aiuta, ma il testo giusto lo scegli tu.', 'Bootstrap helps, but you choose the right text.')),
         ]),
     ],
 ];

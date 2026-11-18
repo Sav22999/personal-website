@@ -1,10 +1,10 @@
 <?php
-/** UI design patterns: navigation, input and forms, feedback and status, data display. */
+/** UI design patterns: navigation, input and forms, feedback and status, data display, search, overlays, sign-in and passkeys. */
 
 return [
     'id' => 'ui-patterns', 'family' => 'ui', 'after' => 'ui-base', 'categories' => ['design', 'frontend'],
     'title' => L('Pattern di interfaccia', 'UI Design Patterns'), 'short' => L('Pattern UI', 'UI Patterns'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Le soluzioni ricorrenti delle interfacce: pattern di navigazione, di inserimento dati, di feedback e di visualizzazione dei dati, e quando usare ciascuno.', 'The recurring solutions of interfaces: navigation, data input, feedback and data display patterns, and when to use each.'),
+    'desc' => L('Le soluzioni ricorrenti delle interfacce: navigazione, inserimento dati, feedback, dati, ricerca e filtri, dialog e popover, accesso e passkey, e quando usare ciascuno.', 'The recurring solutions of interfaces: navigation, data input, feedback, data display, search and filters, dialogs and popovers, sign-in and passkeys, and when to use each.'),
     'lessons' => [
         lesson('navigation', L('Pattern di navigazione', 'Navigation patterns'), [
             P('Un **pattern** è una soluzione collaudata a un problema ricorrente: gli utenti lo riconoscono senza doverlo imparare. Per la navigazione: **barra in alto** con poche voci (siti), **barra laterale** (app con molte sezioni), **tab** per viste dello stesso contenuto, **breadcrumb** per mostrare dove sei in una gerarchia profonda, **paginazione** o **scroll infinito** per liste lunghe.', 'A **pattern** is a proven solution to a recurring problem: users recognise it without having to learn it. For navigation: a **top bar** with few items (websites), a **sidebar** (apps with many sections), **tabs** for views of the same content, **breadcrumbs** to show where you are in a deep hierarchy, **pagination** or **infinite scroll** for long lists.'),

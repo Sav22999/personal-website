@@ -1,10 +1,10 @@
 <?php
-/** React basics: components and JSX, props, state with useState, events and lists. */
+/** React basics: components and JSX, props, state with useState, events and lists, immutable updates, lifting state up and refs. */
 
 return [
     'id' => 'react-base', 'family' => 'react', 'after' => 'js-base',
     'title' => L('React base', 'React Basics'), 'short' => L('React base', 'React Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('La libreria più usata per le interfacce: componenti e JSX, props, stato con `useState`, eventi, liste e rendering condizionale.', 'The most used library for interfaces: components and JSX, props, state with `useState`, events, lists and conditional rendering.'),
+    'desc' => L('La libreria più usata per le interfacce: componenti e JSX, props, stato con `useState` e aggiornamenti immutabili, eventi, liste, stato condiviso e ref.', 'The most used library for interfaces: components and JSX, props, state with `useState` and immutable updates, events, lists, shared state and refs.'),
     'lessons' => [
         lesson('components', L('Componenti e JSX', 'Components and JSX'), [
             P('In React un’interfaccia è fatta di **componenti**: funzioni JavaScript che restituiscono **JSX**, una sintassi che somiglia all’HTML. Il nome di un componente inizia con la maiuscola; si usa come un tag: `<Saluto />`.', 'In React an interface is made of **components**: JavaScript functions returning **JSX**, a syntax that looks like HTML. A component’s name starts with a capital letter; you use it like a tag: `<Saluto />`.'),
@@ -69,7 +69,7 @@ function Contatore() {
             Q('s2', L('Che cosa succede quando lo stato cambia?', 'What happens when state changes?'), [L('React ridisegna il componente', 'React redraws the component'), L('La pagina si ricarica', 'The page reloads'), L('Niente', 'Nothing'), L('Si perde lo stato', 'State is lost')], 0, L('È il cuore di React.', 'It is the heart of React.')),
             Q('s3', L('Qual è il modo giusto di passare un gestore di clic?', 'What is the right way to pass a click handler?'), ['onClick={salva}', 'onClick={salva()}', 'onclick="salva()"', 'click={salva}'], 0, L('Con le parentesi la chiameresti subito.', 'With parentheses you would call it at once.')),
         ], task('jsx', L('Crea `Interruttore` con uno stato `acceso` (iniziale `false`) e un `<button>` che a ogni clic lo inverte con `setAcceso(!acceso)`.', 'Create `Interruttore` with a state `acceso` (initially `false`) and a `<button>` that toggles it on each click with `setAcceso(!acceso)`.'), "import { useState } from \"react\";\n\nfunction Interruttore() {\n  \n}", [re('const\s*\[\s*acceso\s*,\s*setAcceso\s*\]\s*=\s*useState\s*\(\s*false\s*\)', L('Lo stato', 'The state')), re('onClick\s*=\s*\{\s*\(\s*\)\s*=>\s*setAcceso\s*\(\s*!\s*acceso\s*\)\s*\}', L('Il clic lo inverte', 'The click toggles it'))], '', "function Interruttore() {\n  const [acceso, setAcceso] = useState(false);\n  return <button onClick={() => setAcceso(!acceso)}>{acceso ? \"ON\" : \"OFF\"}</button>;\n}"), [
-            dBug(pBug(), ['function Like() {', '  const [n, setN] = useState(0);', '  return <button onClick={setN(n + 1)}>❤ {n}</button>;', '}'], 2, '  return <button onClick={() => setN(n + 1)}>❤ {n}</button>;', L('Serve una funzione, non una chiamata immediata.', 'It needs a function, not an immediate call.')),
+            dBug(pBug(), ['function Like() {', '  const [n, setN] = useState(0);', '  return <button onClick={setN(n + 1)}>Mi piace {n}</button>;', '}'], 2, '  return <button onClick={() => setN(n + 1)}>Mi piace {n}</button>;', L('Serve una funzione, non una chiamata immediata.', 'It needs a function, not an immediate call.')),
             dOrder(pSort(), ['import { useState } from "react";', 'function Contatore() {', '  const [conta, setConta] = useState(0);', '  return <button onClick={() => setConta(conta + 1)}>{conta}</button>;', '}'], L('Importa, definisci, crea lo stato, restituisci.', 'Import, define, create state, return.')),
         ]),
         lesson('lists', L('Liste e condizioni', 'Lists and conditions'), [
@@ -118,6 +118,102 @@ function Contatore() {
         ], task('jsx', L('Scrivi un `<input>` controllato con `value={nome}` e `onChange` che chiama `setNome(e.target.value)`.', 'Write a controlled `<input>` with `value={nome}` and `onChange` calling `setNome(e.target.value)`.'), '', [re('<input[^>]*value\s*=\s*\{\s*nome\s*\}', L('Il valore viene dallo stato', 'The value comes from state')), re('onChange\s*=\s*\{\s*\(?\s*e\s*\)?\s*=>\s*setNome\(\s*e\.target\.value\s*\)\s*\}', L('`onChange` aggiorna lo stato', '`onChange` updates state'))], '', '<input value={nome} onChange={e => setNome(e.target.value)} />'), [
             dBug(pBug(), ['function Bottone() {', '  function saluta() { alert("Ciao"); }', '  return <button onClick={saluta()}>Ciao</button>;', '}'], 2, '  return <button onClick={saluta}>Ciao</button>;', L('Passa la funzione, non chiamarla.', 'Pass the function, do not call it.')),
             dFlash(pFlash(), [[L('onChange aggiorna lo stato a ogni tasto', 'onChange updates state on every key'), true], [L('Gli eventi JSX si scrivono tutti minuscoli', 'JSX events are all lowercase'), false], [L('preventDefault evita il ricaricamento', 'preventDefault avoids the reload'), true], [L('onClick={f()} esegue f solo al clic', 'onClick={f()} runs f only on click'), false]], L('Eventi e form.', 'Events and forms.')),
+        ]),
+        lesson('state-updates', L('Aggiornare oggetti e liste nello stato', 'Updating objects and lists in state'), [
+            P('Lo stato va trattato come **immutabile**: non si modifica un oggetto o un array che sta nello stato, se ne crea uno nuovo. React confronta il valore vecchio con il nuovo: se è lo stesso oggetto, solo modificato, non si accorge del cambiamento.', 'State must be treated as **immutable**: you do not change an object or array held in state, you create a new one. React compares the old value with the new one: if it is the same object, just modified, it does not notice the change.'),
+            C('const [utente, setUtente] = useState({ nome: "Ada", punti: 0 });
+const [voci, setVoci] = useState(["pane"]);
+
+// oggetti: copia con lo spread e cambia ciò che serve
+setUtente({ ...utente, punti: utente.punti + 1 });
+
+// array: crea sempre un array nuovo
+setVoci([...voci, "latte"]);                  // aggiungere
+setVoci(voci.filter(v => v !== "pane"));      // togliere
+setVoci(voci.map(v => (v === "latte" ? "latte di soia" : v))); // cambiare
+
+// quando il nuovo valore dipende dal precedente
+setConta(c => c + 1);', 'jsx'),
+            P('Evita `push`, `splice` o `utente.punti++` sullo stato. Quando il nuovo valore dipende da quello vecchio, passa una **funzione di aggiornamento** (`c => c + 1`): React le applica in ordine, anche se chiami `set` più volte di fila.', 'Avoid `push`, `splice` or `utente.punti++` on state. When the new value depends on the old one, pass an **updater function** (`c => c + 1`): React applies them in order, even if you call `set` several times in a row.'),
+        ], [
+            Q('su1', L('Come aggiungi `"latte"` all’array di stato `voci`?', 'How do you add `"latte"` to the `voci` state array?'), ['voci.push("latte")', 'setVoci([...voci, "latte"])', 'voci[voci.length] = "latte"', 'setVoci(voci.push("latte"))'], 1, L('Un array nuovo, con l’elemento in più.', 'A new array, with the extra item.')),
+            Q('su2', L('Partendo da 0, dopo tre `setConta(conta + 1)` nello stesso clic quanto vale `conta`?', 'Starting from 0, after three `setConta(conta + 1)` in the same click what is `conta`?'), ['3', '0', '1', '2'], 2, L('Tutte e tre leggono lo stesso `conta`, cioè 0. Con `c => c + 1` arriveresti a 3.', 'All three read the same `conta`, which is 0. With `c => c + 1` you would reach 3.')),
+            Q('su3', L('Perché non modificare direttamente un oggetto nello stato?', 'Why not change an object in state directly?'), [L('È più lento da scrivere', 'It is slower to write'), L('Gli oggetti non possono cambiare', 'Objects cannot change'), L('Dà sempre un errore', 'It always errors'), L('React potrebbe non accorgersi del cambiamento', 'React may not notice the change')], 3, L('React confronta i riferimenti, non il contenuto.', 'React compares references, not content.')),
+        ], task('jsx', L('Scrivi `rinomina(nome)` che aggiorna lo stato `utente` con `setUtente({ ...utente, nome })`.', 'Write `rinomina(nome)` that updates the `utente` state with `setUtente({ ...utente, nome })`.'), 'const [utente, setUtente] = useState({ nome: "Ada", punti: 0 });
+', [re('function\s+rinomina\s*\(\s*nome\s*\)|rinomina\s*=\s*\(?\s*nome\s*\)?\s*=>', L('La funzione riceve `nome`', 'The function receives `nome`')), re('setUtente\s*\(\s*(\{\s*\.\.\.\s*utente\s*,\s*nome(\s*:\s*nome)?\s*\}|\(?\s*\w+\s*\)?\s*=>\s*\(\s*\{\s*\.\.\.\s*\w+\s*,\s*nome(\s*:\s*nome)?\s*\}\s*\))', L('Crei un oggetto nuovo con lo spread', 'You create a new object with spread'))], '', 'const [utente, setUtente] = useState({ nome: "Ada", punti: 0 });
+function rinomina(nome) {
+  setUtente({ ...utente, nome });
+}'), [
+            dBug(pBug(), ['const [voci, setVoci] = useState([]);', 'function aggiungi(v) {', '  voci.push(v);', '}'], 2, '  setVoci([...voci, v]);', L('`push` cambia l’array senza avvisare React: serve un array nuovo con `setVoci`.', '`push` changes the array without telling React: you need a new array with `setVoci`.')),
+            dMatch(pMatch(), [['[...voci, x]', L('Aggiunge in fondo', 'Adds to the end')], ['voci.filter(…)', L('Toglie elementi', 'Removes items')], ['voci.map(…)', L('Cambia elementi', 'Changes items')], ['{ ...o, k: v }', L('Cambia una proprietà', 'Changes a property')], ['c => c + 1', L('Aggiorna dal valore precedente', 'Updates from the previous value')]], L('Sempre valori nuovi, mai modifiche sul posto.', 'Always new values, never in-place changes.')),
+        ]),
+        lesson('lift-state', L('Sollevare lo stato', 'Lifting state up'), [
+            P('Quando due componenti devono mostrare lo **stesso dato**, lo stato non può stare in uno dei due: lo sposti nel loro **genitore comune**. Il genitore passa giù il valore con le props e, insieme, una funzione per cambiarlo.', 'When two components must show the **same data**, the state cannot live in one of them: you move it to their **common parent**. The parent passes the value down with props, together with a function to change it.'),
+            C('function Filtro({ testo, onCambia }) {
+  return <input value={testo} onChange={e => onCambia(e.target.value)} />;
+}
+
+function Elenco({ voci, testo }) {
+  const visibili = voci.filter(v => v.toLowerCase().includes(testo.toLowerCase()));
+  return <ul>{visibili.map(v => <li key={v}>{v}</li>)}</ul>;
+}
+
+export default function Rubrica() {
+  const [testo, setTesto] = useState("");
+  const voci = ["Ada", "Bea", "Carlo"];
+  return (
+    <>
+      <Filtro testo={testo} onCambia={setTesto} />
+      <Elenco voci={voci} testo={testo} />
+    </>
+  );
+}', 'jsx'),
+            P('Così c’è **una sola fonte di verità**: `Rubrica` possiede il testo, `Filtro` lo cambia tramite `onCambia`, `Elenco` lo legge. Non copiare le props nello stato del figlio e non mettere nello stato ciò che puoi calcolare, come `visibili`.', 'That way there is **a single source of truth**: `Rubrica` owns the text, `Filtro` changes it through `onCambia`, `Elenco` reads it. Do not copy props into the child’s state and do not put in state what you can compute, like `visibili`.'),
+        ], [
+            Q('ls1', L('Dove va lo stato condiviso da due componenti fratelli?', 'Where does state shared by two sibling components go?'), [L('In entrambi, copiato', 'In both, copied'), L('In una variabile globale', 'In a global variable'), L('Nel genitore comune', 'In the common parent'), L('Nel primo dei due', 'In the first of the two')], 2, L('Poi scende ai figli con le props.', 'Then it goes down to the children with props.')),
+            Q('ls2', L('Come fa un figlio a cambiare lo stato del genitore?', 'How does a child change the parent’s state?'), [L('Modificando le sue props', 'By changing its props'), L('Chiamando una funzione ricevuta come prop', 'By calling a function received as a prop'), L('Con `document.querySelector`', 'With `document.querySelector`'), L('Non può in nessun modo', 'It cannot in any way')], 1, L('Per esempio `onCambia(nuovoValore)`.', 'For example `onCambia(newValue)`.')),
+            Q('ls3', L('Perché `visibili` non sta nello stato?', 'Why is `visibili` not in state?'), [L('Si può calcolare dai dati che ci sono già', 'It can be computed from the data already there'), L('Gli array non possono stare nello stato', 'Arrays cannot be in state'), L('È troppo grande', 'It is too big'), L('React lo vieta', 'React forbids it')], 0, L('Meno stato, meno valori da tenere allineati.', 'Less state, fewer values to keep in sync.')),
+        ], task('jsx', L('In `Pagina` crea lo stato `tema` e passa a `<Interruttore>` le props `tema={tema}` e `onCambia={setTema}`.', 'In `Pagina` create the `tema` state and pass `<Interruttore>` the props `tema={tema}` and `onCambia={setTema}`.'), 'function Pagina() {
+  return <Interruttore />;
+}', [re('const\s*\[\s*tema\s*,\s*setTema\s*\]\s*=\s*useState\s*\(', L('Lo stato è nel genitore', 'The state is in the parent')), re('<Interruttore[^>]*tema\s*=\s*\{\s*tema\s*\}', L('Passi il valore', 'You pass the value')), re('<Interruttore[^>]*onCambia\s*=\s*\{\s*setTema\s*\}', L('Passi la funzione', 'You pass the function'))], '', 'function Pagina() {
+  const [tema, setTema] = useState("chiaro");
+  return <Interruttore tema={tema} onCambia={setTema} />;
+}'), [
+            dFlash(pFlash(), [[L('Lo stato condiviso va nel genitore comune', 'Shared state goes in the common parent'), true], [L('Un figlio può riassegnare le sue props', 'A child can reassign its props'), false], [L('Un dato calcolabile non va messo nello stato', 'Computable data should not go in state'), true], [L('Due copie dello stesso stato restano sempre allineate', 'Two copies of the same state always stay in sync'), false]], L('Una sola fonte di verità.', 'A single source of truth.')),
+            dBlanks(pFill(), "function Padre() {\n  const [n, setN] = ___(0);\n  return <Bottone valore={n} ___={setN} />;\n}\nfunction Bottone({ valore, onCambia }) {\n  return <button onClick={() => ___(valore + 1)}>{valore}</button>;\n}", ['useState', 'onCambia', 'onCambia'], ['useEffect', 'setN', 'valore'], L('Il padre possiede lo stato, il figlio chiama la funzione ricevuta.', 'The parent owns the state, the child calls the function it received.')),
+        ]),
+        lesson('refs', L('useRef e il DOM', 'useRef and the DOM'), [
+            P('`useRef` crea una scatola che **sopravvive ai rendering** ma che, quando cambia, **non** fa ridisegnare il componente. Serve a due cose: tenere un riferimento a un elemento del DOM e ricordare valori che non si vedono a schermo, come l’id di un timer.', '`useRef` creates a box that **survives renders** but that, when it changes, does **not** make the component redraw. It is for two things: holding a reference to a DOM element and remembering values not shown on screen, like a timer id.'),
+            C('function Ricerca() {
+  const campo = useRef(null);
+  return (
+    <>
+      <input ref={campo} />
+      <button onClick={() => campo.current.focus()}>Cerca</button>
+    </>
+  );
+}
+
+function Cronometro() {
+  const [secondi, setSecondi] = useState(0);
+  const timer = useRef(null);
+  const avvia = () => { timer.current = setInterval(() => setSecondi(s => s + 1), 1000); };
+  const ferma = () => clearInterval(timer.current);
+  return <p>{secondi}s <button onClick={avvia}>Via</button> <button onClick={ferma}>Stop</button></p>;
+}', 'jsx'),
+            P('Il valore sta in `.current`. Non leggere né scrivere `ref.current` durante il rendering: usalo nei gestori di eventi e negli effetti. Da React 19 `ref` si passa ai tuoi componenti come una prop qualsiasi, senza `forwardRef`.', 'The value lives in `.current`. Do not read or write `ref.current` during rendering: use it in event handlers and effects. Since React 19 `ref` is passed to your components like any other prop, without `forwardRef`.'),
+        ], [
+            Q('rf1', L('Dove sta il valore di un ref?', 'Where does a ref’s value live?'), ['ref.value', 'ref.current', 'ref()', 'ref.state'], 1, L('Sempre in `.current`.', 'Always in `.current`.')),
+            Q('rf2', L('Che cosa succede quando cambi `ref.current`?', 'What happens when you change `ref.current`?'), [L('Il componente si ridisegna', 'The component redraws'), L('La pagina si ricarica', 'The page reloads'), L('React lancia un errore', 'React throws an error'), L('Niente: il componente non si ridisegna', 'Nothing: the component does not redraw')], 3, L('Per ciò che si vede a schermo serve lo stato.', 'For what shows on screen you need state.')),
+            Q('rf3', L('Per quale di questi un ref è adatto?', 'Which of these is a ref suited for?'), [L('Mettere il focus su un input', 'Focusing an input'), L('Mostrare un contatore a schermo', 'Showing a counter on screen'), L('Sostituire tutte le props', 'Replacing all props'), L('Salvare dati sul server', 'Saving data on the server')], 0, L('Un accesso diretto all’elemento del DOM.', 'Direct access to the DOM element.')),
+        ], task('jsx', L('Crea `const campo = useRef(null)` e collegalo all’input con `ref={campo}`.', 'Create `const campo = useRef(null)` and attach it to the input with `ref={campo}`.'), 'function Modulo() {
+  return <input />;
+}', [re('const\s+campo\s*=\s*useRef\s*\(\s*(null)?\s*\)', L('Crei il ref', 'You create the ref')), re('<input[^>]*ref\s*=\s*\{\s*campo\s*\}', L('Lo colleghi all’input', 'You attach it to the input'))], '', 'function Modulo() {
+  const campo = useRef(null);
+  return <input ref={campo} />;
+}'), [
+            dMatch(pMatch(), [['useRef', L('Valore che non ridisegna', 'Value that does not redraw')], ['ref={x}', L('Collega un elemento', 'Attaches an element')], ['x.current', L('Il valore del ref', 'The ref’s value')], ['useState', L('Valore che ridisegna', 'Value that redraws')]], L('Ref e stato: due memorie diverse.', 'Ref and state: two different memories.')),
+            dBug(pBug(), ['function Campo() {', '  const c = useRef(null);', '  return <input ref={c} onFocus={() => c.select()} />;', '}'], 2, '  return <input ref={c} onFocus={() => c.current.select()} />;', L('L’elemento sta in `c.current`, non in `c`.', 'The element is in `c.current`, not in `c`.')),
         ]),
     ],
 ];

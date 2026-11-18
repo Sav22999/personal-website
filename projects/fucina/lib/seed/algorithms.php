@@ -1,10 +1,11 @@
 <?php
-/** Algorithms and data structures: Big O complexity, arrays, hash maps, stacks and queues, searching and sorting, recursion, trees and graphs. */
+/** Algorithms and data structures: Big O complexity, arrays, hash maps, stacks and queues, searching and sorting, recursion, trees and graphs,
+ *  dynamic programming and greedy, binary search trees, heaps, two pointers and sliding windows, Dijkstra. */
 
 return [
     'id' => 'algorithms', 'family' => 'algorithms', 'after' => 'python-base',
     'title' => L('Algoritmi e strutture dati', 'Algorithms and Data Structures'), 'short' => L('Algoritmi', 'Algorithms'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Pensare in modo efficiente: complessità O grande, array e mappe, pile e code, ricerca e ordinamento, ricorsione, alberi e grafi. Esempi in Python.', 'Thinking efficiently: Big O complexity, arrays and maps, stacks and queues, searching and sorting, recursion, trees and graphs. Examples in Python.'),
+    'desc' => L('Pensare in modo efficiente: complessità O grande, array e mappe, pile e code, ricerca e ordinamento, ricorsione, alberi, heap e grafi, programmazione dinamica, due puntatori e cammini minimi. Esempi in Python.', 'Thinking efficiently: Big O complexity, arrays and maps, stacks and queues, searching and sorting, recursion, trees, heaps and graphs, dynamic programming, two pointers and shortest paths. Examples in Python.'),
     'lessons' => [
         lesson('bigo', L('Complessità: la notazione O', 'Complexity: Big O notation'), [
             P('La **notazione O grande** descrive come cresce il tempo (o la memoria) di un algoritmo quando cresce l’input `n`. Non conta i secondi esatti, ma l’andamento: raddoppiando i dati, il tempo resta uguale, raddoppia o esplode?', '**Big O notation** describes how an algorithm’s time (or memory) grows as the input `n` grows. It does not count exact seconds, but the trend: doubling the data, does time stay the same, double or explode?'),
@@ -59,7 +60,7 @@ pila = []; pila.append(1); pila.pop()              # LIFO', 'python'),
         else:
             alto = medio - 1
     return -1', 'python'),
-            P('Gli algoritmi di ordinamento semplici (bubble sort, insertion sort) sono O(n²); quelli efficienti (merge sort, quicksort, il Timsort di Python) sono O(n log n). Nella pratica usa l’ordinamento della libreria (`sorted`, `list.sort`): è veloce e collaudato.', 'Simple sorting algorithms (bubble sort, insertion sort) are O(n²); efficient ones (merge sort, quicksort, Python’s Timsort) are O(n log n). In practice use the library sort (`sorted`, `list.sort`): it is fast and battle-tested.'),
+            P('Gli algoritmi di ordinamento semplici (bubble sort, insertion sort) sono O(n²); quelli efficienti (merge sort, heapsort, quicksort in media, l’ordinamento di Python, il Timsort che dalla versione 3.11 usa la strategia di fusione Powersort) sono O(n log n). Nella pratica usa l’ordinamento della libreria (`sorted`, `list.sort`): è veloce e collaudato.', 'Simple sorting algorithms (bubble sort, insertion sort) are O(n²); efficient ones (merge sort, heapsort, quicksort on average, Python’s sort, the Timsort that since version 3.11 uses the Powersort merge strategy) are O(n log n). In practice use the library sort (`sorted`, `list.sort`): it is fast and battle-tested.'),
         ], [
             Q('b1', L('Che cosa serve per la ricerca binaria?', 'What does binary search need?'), [L('Dati ordinati', 'Sorted data'), L('Dati casuali', 'Random data'), L('Un database', 'A database'), L('Niente', 'Nothing')], 0, L('Altrimenti non si può scartare metà.', 'Otherwise you cannot discard half.')),
             Q('b2', L('Quanti passi circa per un milione di elementi con la ricerca binaria?', 'About how many steps for a million items with binary search?'), ['20', '1000', '1.000.000', '2'], 0, L('2²⁰ ≈ un milione.', '2²⁰ ≈ one million.')),
@@ -112,6 +113,128 @@ function fib(n) {
         ], task('js', L('In `fib`, prima di calcolare, restituisci `memo.get(n)` se `memo.has(n)`.', 'In `fib`, before computing, return `memo.get(n)` if `memo.has(n)`.'), '', [re('if\s*\(\s*memo\.has\(\s*n\s*\)\s*\)\s*\{?\s*return\s+memo\.get\(\s*n\s*\)', L('Usi la cache', 'You use the cache'))], '', 'if (memo.has(n)) return memo.get(n);'), [
             dOrder(pSort(), ['function fib(n) {', '  if (n < 2) return n;', '  if (memo.has(n)) return memo.get(n);', '  const r = fib(n - 1) + fib(n - 2);', '  memo.set(n, r);', '  return r;', '}'], L('Caso base, cache, calcolo, salvataggio.', 'Base case, cache, compute, save.')),
             dFlash(pFlash(), [[L('La programmazione dinamica riusa i sottoproblemi', 'Dynamic programming reuses subproblems'), true], [L('Il greedy trova sempre l’ottimo', 'Greedy always finds the optimum'), false], [L('Fibonacci ingenuo è esponenziale', 'Naive Fibonacci is exponential'), true], [L('La memoizzazione rende il codice più lento', 'Memoisation makes code slower'), false]], L('Strategie di soluzione.', 'Solving strategies.')),
+        ]),
+        lesson('bst', L('Alberi binari di ricerca', 'Binary search trees'), [
+            P('In un **albero binario di ricerca** (BST) ogni nodo ha al massimo due figli: i valori **più piccoli a sinistra**, quelli più grandi a destra. Cercare e inserire costa O(log n) se l’albero è **bilanciato**, ma O(n) se degenera in una lista (per esempio inserendo dati già ordinati). Gli alberi bilanciati (AVL, rosso-neri) restano in O(log n), e i database usano i B-tree per gli indici.', 'In a **binary search tree** (BST) each node has at most two children: **smaller values on the left**, larger ones on the right. Searching and inserting cost O(log n) if the tree is **balanced**, but O(n) if it degenerates into a list (for example when inserting already sorted data). Balanced trees (AVL, red-black) stay at O(log n), and databases use B-trees for indexes.'),
+            C('class Nodo:
+    def __init__(self, valore):
+        self.valore, self.sinistra, self.destra = valore, None, None
+
+def inserisci(radice, valore):
+    if radice is None:
+        return Nodo(valore)
+    if valore < radice.valore:
+        radice.sinistra = inserisci(radice.sinistra, valore)
+    else:
+        radice.destra = inserisci(radice.destra, valore)
+    return radice
+
+def in_ordine(nodo):                  # sinistra, nodo, destra
+    if nodo:
+        yield from in_ordine(nodo.sinistra)
+        yield nodo.valore
+        yield from in_ordine(nodo.destra)
+
+radice = None
+for v in [50, 30, 70, 20, 40]:
+    radice = inserisci(radice, v)
+print(list(in_ordine(radice)))        # [20, 30, 40, 50, 70]', 'python'),
+            P('Le visite: **in ordine** (in un BST dà i valori ordinati), **anticipata** (prima il nodo: per copiare un albero), **posticipata** (prima i figli: per calcolare la dimensione delle cartelle) e **per livelli** (la BFS, con una coda).', 'The traversals: **in-order** (in a BST it yields the values sorted), **pre-order** (node first: to copy a tree), **post-order** (children first: to compute folder sizes) and **level-order** (BFS, with a queue).'),
+        ], [
+            Q('bt1', L('In un BST, dove stanno i valori più piccoli di un nodo?', 'In a BST, where are the values smaller than a node?'), [L('Nel sottoalbero di destra', 'In the right subtree'), L('Nel sottoalbero di sinistra', 'In the left subtree'), L('Sempre nella radice', 'Always in the root'), L('Sparsi nelle foglie a caso', 'Scattered randomly in the leaves')], 1, L('Sinistra minori, destra maggiori.', 'Smaller left, larger right.')),
+            Q('bt2', L('Che cosa dà la visita in ordine di un BST?', 'What does an in-order traversal of a BST yield?'), [L('I valori in ordine casuale', 'The values in random order'), L('Solo le foglie', 'Only the leaves'), L('I valori in ordine crescente', 'The values in ascending order'), L('Solo la radice e i suoi figli', 'Only the root and its children')], 2, L('Sinistra, nodo, destra.', 'Left, node, right.')),
+            Q('bt3', L('Inserisci 1, 2, 3, 4, 5 in quest’ordine in un BST semplice. Quanto costa poi una ricerca?', 'You insert 1, 2, 3, 4, 5 in this order into a plain BST. What does a search then cost?'), ['O(1)', 'O(log n)', 'O(n log n)', 'O(n)'], 3, L('L’albero è diventato una lista che scende a destra.', 'The tree has become a list going down to the right.')),
+        ], task('python', L('Scrivi la funzione ricorsiva `cerca(nodo, valore)`: `False` se il nodo è `None`, `True` se il valore è quello del nodo, altrimenti cerca a sinistra o a destra.', 'Write the recursive function `cerca(nodo, valore)`: `False` if the node is `None`, `True` if the value is the node’s, otherwise search left or right.'), '', [re('def\s+cerca\s*\(\s*nodo\s*,\s*valore\s*\)', L('La funzione', 'The function')), re('if\s+(nodo\s+is\s+None|not\s+nodo)\s*:\s*\n\s+return\s+False', L('Il caso base', 'The base case')), re('cerca\s*\(\s*nodo\.sinistra\s*,\s*valore\s*\)', L('Cerchi a sinistra', 'You search left')), re('cerca\s*\(\s*nodo\.destra\s*,\s*valore\s*\)', L('Cerchi a destra', 'You search right'))], '', "def cerca(nodo, valore):\n    if nodo is None:\n        return False\n    if valore == nodo.valore:\n        return True\n    if valore < nodo.valore:\n        return cerca(nodo.sinistra, valore)\n    return cerca(nodo.destra, valore)"), [
+            dMatch(pMatch(), [[L('Radice', 'Root'), L('Il nodo in cima', 'The top node')], [L('Foglia', 'Leaf'), L('Un nodo senza figli', 'A node with no children')], ['BST', L('Minori a sinistra, maggiori a destra', 'Smaller left, larger right')], [L('In ordine', 'In-order'), L('Valori ordinati', 'Sorted values')], [L('Albero bilanciato', 'Balanced tree'), L('Resta in O(log n)', 'Stays at O(log n)')]], L('Il vocabolario degli alberi.', 'Tree vocabulary.')),
+            dFlash(pFlash(), [[L('Cercare in un BST costa sempre O(log n)', 'Searching a BST always costs O(log n)'), false], [L('La visita in ordine di un BST dà i valori ordinati', 'An in-order traversal of a BST yields sorted values'), true], [L('Gli indici dei database usano spesso i B-tree', 'Database indexes often use B-trees'), true], [L('La visita anticipata visita i figli prima del nodo', 'Pre-order visits the children before the node'), false]], L('Rami ordinati.', 'Tidy branches.')),
+        ]),
+        lesson('heaps', L('Heap e code con priorità', 'Heaps and priority queues'), [
+            P('Un **heap** (coda con priorità) tiene sempre in cima l’elemento più piccolo (min-heap): leggerlo costa O(1), estrarlo o inserirne uno nuovo O(log n). In Python c’è il modulo `heapq`, che lavora su una normale lista. Serve per i compiti in ordine di urgenza, per i “primi k”, per unire liste ordinate e per l’algoritmo di Dijkstra.', 'A **heap** (priority queue) always keeps the smallest element on top (min-heap): reading it costs O(1), extracting it or inserting a new one O(log n). Python has the `heapq` module, which works on an ordinary list. It is used for tasks in order of urgency, for the “top k”, for merging sorted lists and for Dijkstra’s algorithm.'),
+            C('import heapq
+
+compiti = []
+heapq.heappush(compiti, (2, "rispondere alle email"))
+heapq.heappush(compiti, (1, "correggere il bug in produzione"))
+heapq.heappush(compiti, (3, "aggiornare la documentazione"))
+print(heapq.heappop(compiti))     # (1, \'correggere il bug in produzione\')
+
+voti = [7, 3, 9, 1, 8, 6]
+print(heapq.nlargest(3, voti))    # [9, 8, 7]
+print(heapq.nsmallest(2, voti))   # [1, 3]', 'python'),
+            P('Ordinare un milione di elementi per prenderne i primi 3 costa O(n log n); con un heap di dimensione k costa O(n log k). `heapq` è un min-heap: per avere prima il massimo si inseriscono i numeri **cambiati di segno**. Le tuple si confrontano campo per campo, quindi la priorità va per prima.', 'Sorting a million items to take the top 3 costs O(n log n); with a heap of size k it costs O(n log k). `heapq` is a min-heap: to get the maximum first you insert the numbers **with their sign flipped**. Tuples are compared field by field, so the priority goes first.'),
+        ], [
+            Q('hp1', L('Che cosa restituisce `heappop` da un min-heap?', 'What does `heappop` return from a min-heap?'), [L('L’elemento più grande', 'The largest element'), L('L’ultimo elemento inserito', 'The last element inserted'), L('L’elemento più piccolo', 'The smallest element'), L('Un elemento a caso', 'A random element')], 2, L('Il minimo sta sempre in cima.', 'The minimum is always on top.')),
+            Q('hp2', L('Quanto costa inserire un elemento in un heap?', 'What does inserting an element into a heap cost?'), ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)'], 1, L('Risale l’albero fino al suo posto.', 'It climbs the tree to its place.')),
+            Q('hp3', L('`heapq` è un min-heap. Come ottieni prima il massimo?', '`heapq` is a min-heap. How do you get the maximum first?'), [L('Con la funzione `heapq.reverse`', 'With the `heapq.reverse` function'), L('Ordinando la lista dopo ogni inserimento', 'Sorting the list after every insertion'), L('Non si può fare in Python', 'It cannot be done in Python'), L('Inserendo i numeri cambiati di segno', 'Inserting the numbers with their sign flipped')], 3, L('Il più grande diventa il più piccolo.', 'The largest becomes the smallest.')),
+        ], task('python', L('Importa `heapq` e salva in `migliori` i 5 valori più alti della lista `punteggi`, usando `nlargest`.', 'Import `heapq` and store in `migliori` the 5 highest values of the `punteggi` list, using `nlargest`.'), "punteggi = [88, 42, 97, 65, 73, 91, 55, 80]\n", [re('import\s+heapq|from\s+heapq\s+import', L('Importi heapq', 'You import heapq')), re('migliori\s*=\s*(heapq\.)?nlargest\s*\(\s*5\s*,\s*punteggi\s*\)', L('I 5 più alti', 'The top 5'))], '', "import heapq\nmigliori = heapq.nlargest(5, punteggi)"), [
+            dMatch(pMatch(), [['heappush', L('Inserisce in O(log n)', 'Inserts in O(log n)')], ['heappop', L('Estrae il minimo', 'Extracts the minimum')], ['nlargest', L('I k più grandi', 'The k largest')], ['Min-heap', L('Il minimo in cima', 'The minimum on top')], [L('Coda con priorità', 'Priority queue'), L('Prima il più urgente', 'Most urgent first')]], L('Prima le cose importanti.', 'Important things first.')),
+            dBlanks(pFill(), "import heapq\ncoda = []\nheapq.___(coda, (2, \"email\"))\nprimo = heapq.___(coda)", ['heappush', 'heappop'], ['append', 'pop', 'sort'], L('Si inserisce con heappush e si estrae con heappop.', 'You insert with heappush and extract with heappop.')),
+        ]),
+        lesson('two-pointers', L('Due puntatori e finestra scorrevole', 'Two pointers and sliding window'), [
+            P('Due tecniche frequenti trasformano O(n²) in O(n). Con i **due puntatori**, su una lista ordinata, un indice parte dall’inizio e uno dalla fine e si avvicinano: così trovi una coppia con una certa somma. Con la **finestra scorrevole** guardi k elementi consecutivi e, a ogni passo, aggiungi quello che entra e togli quello che esce, invece di ricalcolare tutto.', 'Two common techniques turn O(n²) into O(n). With **two pointers**, on a sorted list, one index starts at the beginning and one at the end and they move towards each other: that way you find a pair with a given sum. With the **sliding window** you look at k consecutive items and, at each step, add the one coming in and remove the one going out, instead of recomputing everything.'),
+            C('def coppia_con_somma(ordinata, obiettivo):   # due puntatori: O(n)
+    i, j = 0, len(ordinata) - 1
+    while i < j:
+        s = ordinata[i] + ordinata[j]
+        if s == obiettivo:
+            return ordinata[i], ordinata[j]
+        if s < obiettivo:
+            i += 1
+        else:
+            j -= 1
+    return None
+
+def somma_massima(valori, k):                 # finestra scorrevole: O(n)
+    finestra = sum(valori[:k])
+    migliore = finestra
+    for i in range(k, len(valori)):
+        finestra += valori[i] - valori[i - k]
+        migliore = max(migliore, finestra)
+    return migliore
+
+print(coppia_con_somma([1, 3, 4, 6, 9], 10))  # (1, 9)
+print(somma_massima([2, 1, 5, 1, 3, 2], 3))   # 9', 'python'),
+            P('Quando un problema parla di “sottoliste consecutive”, “coppia in una lista ordinata” o “sottostringa più lunga senza ripetizioni”, pensa a queste tecniche: una sola passata sui dati invece di due cicli annidati.', 'When a problem talks about “consecutive sublists”, “a pair in a sorted list” or “the longest substring without repeats”, think of these techniques: a single pass over the data instead of two nested loops.'),
+        ], [
+            Q('tp1', L('Perché la ricerca della coppia con due puntatori vuole una lista ordinata?', 'Why does the two-pointer pair search need a sorted list?'), [L('Perché Python non sa scorrere liste disordinate', 'Because Python cannot loop over unsorted lists'), L('Per poter usare la ricerca binaria dentro il ciclo', 'To be able to use binary search inside the loop'), L('Per sapere quale puntatore spostare in base alla somma', 'To know which pointer to move based on the sum'), L('Per avere meno elementi da controllare', 'To have fewer elements to check')], 2, L('Somma troppo piccola: avanza a sinistra; troppo grande: arretra a destra.', 'Sum too small: move left forward; too large: move right back.')),
+            Q('tp2', L('Quanto costa la finestra scorrevole su n elementi?', 'What does the sliding window cost over n items?'), ['O(n·k)', 'O(n²)', 'O(log n)', 'O(n)'], 3, L('Ogni elemento entra ed esce una volta.', 'Each item enters and leaves once.')),
+            Q('tp3', L('Nella finestra scorrevole, che cosa fai a ogni passo?', 'In the sliding window, what do you do at each step?'), [L('Ricalcoli la somma di tutta la finestra', 'Recompute the sum of the whole window'), L('Aggiungi l’elemento che entra e togli quello che esce', 'Add the item coming in and remove the one going out'), L('Riordini tutta la lista', 'Re-sort the whole list'), L('Raddoppi la larghezza della finestra', 'Double the window’s width')], 1, L('Da O(k) a O(1) per passo.', 'From O(k) to O(1) per step.')),
+        ], task('python', L('Completa il ciclo: aggiorna `finestra` aggiungendo `valori[i]` e togliendo `valori[i - k]`, poi `migliore = max(migliore, finestra)`.', 'Complete the loop: update `finestra` adding `valori[i]` and removing `valori[i - k]`, then `migliore = max(migliore, finestra)`.'), "def somma_massima(valori, k):\n    finestra = sum(valori[:k])\n    migliore = finestra\n    for i in range(k, len(valori)):\n        # aggiorna la finestra e il migliore\n    return migliore", [re('finestra\s*(\+=\s*valori\s*\[\s*i\s*\]\s*-\s*valori\s*\[\s*i\s*-\s*k\s*\]|=\s*finestra\s*\+\s*valori\s*\[\s*i\s*\]\s*-\s*valori\s*\[\s*i\s*-\s*k\s*\])', L('Fai scorrere la finestra', 'You slide the window')), re('migliore\s*=\s*max\s*\(\s*(migliore\s*,\s*finestra|finestra\s*,\s*migliore)\s*\)', L('Tieni il migliore', 'You keep the best'))], '', "        finestra += valori[i] - valori[i - k]\n        migliore = max(migliore, finestra)"), [
+            dMatch(pMatch(), [[L('Due puntatori', 'Two pointers'), L('Dagli estremi verso il centro', 'From the ends towards the middle')], [L('Finestra scorrevole', 'Sliding window'), L('Elementi consecutivi', 'Consecutive items')], [L('Lista ordinata', 'Sorted list'), L('Serve ai due puntatori', 'Needed by two pointers')], ['O(n)', L('Una sola passata', 'A single pass')], ['valori[i - k]', L('L’elemento che esce', 'The item going out')]], L('Una passata basta.', 'One pass is enough.')),
+            dBug(pBug(), ['while i < j:', '    s = ordinata[i] + ordinata[j]', '    if s < obiettivo:', '        i -= 1', '    else:', '        j -= 1'], 3, '        i += 1', L('Se la somma è piccola il puntatore sinistro deve avanzare.', 'If the sum is small the left pointer must move forward.')),
+        ]),
+        lesson('dijkstra', L('Cammini minimi: Dijkstra', 'Shortest paths: Dijkstra'), [
+            P('In un grafo **pesato** (distanze, tempi, costi) la BFS non basta: il percorso con meno tappe non è sempre il più corto. L’algoritmo di **Dijkstra** trova i cammini minimi da un nodo quando i pesi non sono negativi: estrae ogni volta da un heap il nodo più vicino non ancora sistemato e aggiorna i suoi vicini. Con un heap costa O((V + E) log V).', 'In a **weighted** graph (distances, times, costs) BFS is not enough: the path with fewest stops is not always the shortest. **Dijkstra’s** algorithm finds the shortest paths from a node when weights are not negative: each time it extracts from a heap the nearest node not yet settled and updates its neighbours. With a heap it costs O((V + E) log V).'),
+            C('import heapq
+
+def dijkstra(grafo, inizio):
+    distanze = {inizio: 0}
+    coda = [(0, inizio)]
+    while coda:
+        d, nodo = heapq.heappop(coda)
+        if d > distanze[nodo]:
+            continue                      # voce vecchia, già migliorata
+        for vicino, peso in grafo[nodo].items():
+            nuova = d + peso
+            if nuova < distanze.get(vicino, float("inf")):
+                distanze[vicino] = nuova
+                heapq.heappush(coda, (nuova, vicino))
+    return distanze
+
+minuti = {
+    "Udine":     {"Pordenone": 50, "Venezia": 130},
+    "Pordenone": {"Venezia": 70},
+    "Venezia":   {},
+}
+print(dijkstra(minuti, "Udine"))   # {\'Udine\': 0, \'Pordenone\': 50, \'Venezia\': 120}', 'python'),
+            P('Qui la strada diretta per Venezia (130) perde contro quella che passa da Pordenone (50 + 70). Con pesi negativi Dijkstra sbaglia: serve Bellman-Ford. Mappe e navigatori usano varianti come **A***, che aggiungono una stima della distanza mancante per esplorare meno nodi.', 'Here the direct road to Venice (130) loses to the one through Pordenone (50 + 70). With negative weights Dijkstra goes wrong: you need Bellman-Ford. Maps and satnavs use variants such as **A***, which add an estimate of the remaining distance to explore fewer nodes.'),
+        ], [
+            Q('dj1', L('Perché la BFS non basta su una mappa con i chilometri?', 'Why is BFS not enough on a map with kilometres?'), [L('Perché il percorso con meno tappe non è sempre il più corto', 'Because the path with fewest stops is not always the shortest'), L('Perché la BFS funziona solo sugli alberi', 'Because BFS only works on trees'), L('Perché la BFS non usa una coda', 'Because BFS does not use a queue'), L('Perché le mappe hanno troppi nodi', 'Because maps have too many nodes')], 0, L('La BFS conta i passi, non i pesi.', 'BFS counts steps, not weights.')),
+            Q('dj2', L('Quale struttura usa Dijkstra per scegliere il nodo più vicino?', 'Which structure does Dijkstra use to pick the nearest node?'), [L('Una pila', 'A stack'), L('Un set', 'A set'), L('Una coda con priorità (heap)', 'A priority queue (heap)'), L('Una lista riordinata a mano a ogni passo', 'A list re-sorted by hand at every step')], 2, L('Estrarre il minimo costa O(log n).', 'Extracting the minimum costs O(log n).')),
+            Q('dj3', L('Quando Dijkstra dà risultati sbagliati?', 'When does Dijkstra give wrong results?'), [L('Con grafi molto grandi', 'With very large graphs'), L('Con nodi chiamati con delle lettere', 'With nodes named with letters'), L('Con grafi senza cicli', 'With graphs without cycles'), L('Con archi di peso negativo', 'With negative-weight edges')], 3, L('Allora serve Bellman-Ford.', 'Then you need Bellman-Ford.')),
+        ], task('python', L('Completa l’aggiornamento: se `nuova < distanze.get(vicino, float("inf"))`, salva `distanze[vicino] = nuova` e inserisci `(nuova, vicino)` nell’heap `coda`.', 'Complete the update: if `nuova < distanze.get(vicino, float("inf"))`, store `distanze[vicino] = nuova` and push `(nuova, vicino)` onto the `coda` heap.'), "for vicino, peso in grafo[nodo].items():\n    nuova = d + peso\n    # aggiorna se è migliore\n", [re('if\s+nuova\s*<\s*distanze\.get\s*\(\s*vicino\s*,\s*(float\s*\(\s*["\']inf["\']\s*\)|math\.inf)\s*\)\s*:', L('Confronti le distanze', 'You compare the distances')), re('distanze\s*\[\s*vicino\s*\]\s*=\s*nuova', L('Salvi la nuova distanza', 'You store the new distance')), re('heapq\.heappush\s*\(\s*coda\s*,\s*\(\s*nuova\s*,\s*vicino\s*\)\s*\)', L('Lo rimetti nell’heap', 'You push it onto the heap'))], '', "for vicino, peso in grafo[nodo].items():\n    nuova = d + peso\n    if nuova < distanze.get(vicino, float(\"inf\")):\n        distanze[vicino] = nuova\n        heapq.heappush(coda, (nuova, vicino))"), [
+            dMatch(pMatch(), [[L('Peso', 'Weight'), L('Il costo di un arco', 'The cost of an edge')], ['Dijkstra', L('Cammini minimi, pesi non negativi', 'Shortest paths, non-negative weights')], ['Heap', L('Il nodo più vicino', 'The nearest node')], ['Bellman-Ford', L('Ammette pesi negativi', 'Allows negative weights')], ['A*', L('Usa una stima della distanza mancante', 'Uses an estimate of the remaining distance')]], L('Arrivare prima.', 'Getting there first.')),
+            dOrder(pSort(), [L('Distanza 0 alla partenza, infinito agli altri', 'Distance 0 at the start, infinity elsewhere'), L('Estrai dall’heap il nodo più vicino', 'Extract the nearest node from the heap'), L('Aggiorna le distanze dei suoi vicini', 'Update its neighbours’ distances'), L('Rimetti nell’heap i vicini migliorati', 'Push the improved neighbours onto the heap'), L('Ripeti finché l’heap è vuoto', 'Repeat until the heap is empty')], L('Il ciclo di Dijkstra.', 'Dijkstra’s loop.')),
         ]),
     ],
 ];

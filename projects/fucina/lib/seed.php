@@ -140,7 +140,7 @@ const SEED_TASK_HINTS = [
 ];
 
 /** Courses of the first installation, in display order. */
-const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'savcomponents-base', 'savcomponents-intermediate', 'tailwind', 'bootstrap',
+const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-base', 'css-intermediate', 'css-advanced', 'css-animations', 'scss', 'sass', 'savcomponents-base', 'savcomponents-intermediate', 'savcomponents-advanced', 'tailwind', 'bootstrap',
     'js-base', 'js-intermediate', 'js-advanced', 'ts', 'angular-base', 'angular-intermediate', 'vue-base', 'vue-intermediate', 'react-base', 'react-intermediate', 'nextjs', 'node-base',
     'php-base', 'php-intermediate', 'php-advanced', 'python-base', 'python-intermediate', 'python-advanced', 'python-pandas', 'java-base', 'java-intermediate', 'java-advanced',
     'sql-base', 'sql-intermediate', 'sql-advanced', 'mysql', 'mariadb', 'postgresql', 'sqlite', 'mssql', 'mongodb', 'r-base', 'r-intermediate',
@@ -214,19 +214,19 @@ function seed_apply_fixes(string $id, array $c): array
 }
 
 /**
- * Version 26: the course review (facts brought up to date, wrong answers and code fixed) reaches the installations made
- * before it. lib/seed/corrections-v26.json, built by tools/build-corrections.php, holds a hash of every old text and its
- * new value: a course field, lesson field, question or drill is replaced only while it is still exactly as the old
+ * Version 27: the course review (facts brought up to date, wrong answers and code fixed) reaches the installations made
+ * before it. lib/seed/corrections-v27.json, built by tools/build-corrections.php, holds the hashes of the old texts (one
+ * per earlier catalogue that differed) and the new value: a course field, lesson field, question or drill is replaced only while it is still exactly as the old
  * catalogue installed it, so what was edited in the admin portal stays.
  */
-function install_seed_corrections_v26(PDO $pdo, string $p): void
+function install_seed_corrections_v27(PDO $pdo, string $p): void
 {
-    $file = __DIR__ . '/seed/corrections-v26.json';
+    $file = __DIR__ . '/seed/corrections-v27.json';
     $fix = is_file($file) ? json_decode((string)file_get_contents($file), true) : null;
     if (!is_array($fix)) return;
     $j = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     // A saved value is "as installed" when, decoded and encoded again like the catalogue does, it has the old hash
-    $same = fn(?string $saved, string $hash) => sha1($j($saved === null ? null : json_decode($saved, true))) === $hash;
+    $same = fn(?string $saved, array $hashes) => in_array(sha1($j($saved === null ? null : json_decode($saved, true))), $hashes, true);
 
     $getCourse = $pdo->prepare("SELECT data FROM `{$p}courses` WHERE id = ?");
     $setCourse = $pdo->prepare("UPDATE `{$p}courses` SET data = ? WHERE id = ?");
@@ -236,7 +236,7 @@ function install_seed_corrections_v26(PDO $pdo, string $p): void
         if (!is_array($data)) continue;
         $changed = false;
         foreach ($fields as $k => [$hash, $value]) {
-            if (array_key_exists($k, $data) && sha1($j($data[$k])) === $hash) {
+            if (array_key_exists($k, $data) && in_array(sha1($j($data[$k])), $hash, true)) {
                 $data[$k] = $value;
                 $changed = true;
             }
@@ -266,7 +266,7 @@ function install_seed_corrections_v26(PDO $pdo, string $p): void
         $row = $getQuestion->fetch(PDO::FETCH_ASSOC);
         if (!$row) continue;
         $saved = ['q' => json_decode((string)$row['q'], true), 'options' => json_decode((string)$row['options'], true), 'answer' => (int)$row['answer'], 'why' => json_decode((string)$row['why'], true)];
-        if (sha1($j($saved)) !== $hash) continue;
+        if (!in_array(sha1($j($saved)), $hash, true)) continue;
         $setQuestion->execute([$j($value['q']), $j($value['options']), (int)$value['answer'], $j($value['why']), $row['id']]);
     }
 
@@ -277,7 +277,7 @@ function install_seed_corrections_v26(PDO $pdo, string $p): void
         if (!isset($ids[$lesson])) continue;
         $getDrill->execute([$ids[$lesson], (int)substr($key, strrpos($key, '/') + 1)]);
         $row = $getDrill->fetch(PDO::FETCH_ASSOC);
-        if (!$row || sha1($j(['kind' => $row['kind'], 'data' => json_decode((string)$row['data'], true)])) !== $hash) continue;
+        if (!$row || !in_array(sha1($j(['kind' => $row['kind'], 'data' => json_decode((string)$row['data'], true)])), $hash, true)) continue;
         $setDrill->execute([$value['kind'], $j($value['data']), $row['id']]);
     }
 }
@@ -335,7 +335,7 @@ const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' 
     'github-copilot' => 1, 'ms-copilot' => 1, 'perplexity' => 1, 'ai-editors' => 2, 'huggingface' => 2, 'genmedia' => 1, 'grok' => 1, 'meta-ai' => 1, 'qwen' => 1, 'apple-intelligence' => 1,
     'git' => 1, 'bash' => 1, 'docker' => 2, 'kubernetes' => 3, 'cloud-base' => 1, 'go-base' => 1, 'csharp-base' => 1, 'c-base' => 2, 'cpp-base' => 2, 'testing' => 2, 'design-patterns' => 2, 'regex' => 1,
     'api-design' => 2, 'redis' => 2, 'algorithms' => 2, 'web-security' => 2, 'security-basics' => 1, 'a11y' => 1, 'excel' => 1, 'powerbi' => 1,
-    'llm-base' => 1, 'crawler' => 1, 'bootstrap' => 1, 'savcomponents-base' => 1, 'savcomponents-intermediate' => 2, 'ux-base' => 1, 'ux-intermediate' => 2, 'ux-advanced' => 3, 'ux-mobile' => 2, 'ux-desktop' => 2, 'ux-vr' => 3,
+    'llm-base' => 1, 'crawler' => 1, 'bootstrap' => 1, 'savcomponents-base' => 1, 'savcomponents-intermediate' => 2, 'savcomponents-advanced' => 3, 'ux-base' => 1, 'ux-intermediate' => 2, 'ux-advanced' => 3, 'ux-mobile' => 2, 'ux-desktop' => 2, 'ux-vr' => 3,
     'ui-base' => 1, 'ui-intermediate' => 2, 'ui-mobile' => 2, 'ui-patterns' => 2, 'material' => 2, 'ios-design' => 2, 'fluent' => 2];
 
 /**

@@ -1,10 +1,10 @@
 <?php
-/** UX basics: what user experience is, users and needs, the design process, usability heuristics. */
+/** UX basics: what user experience is, users and needs, the design process, usability heuristics, microcopy, affordances and mental models, accessibility. */
 
 return [
     'id' => 'ux-base', 'family' => 'ux', 'after' => null, 'categories' => ['design'],
     'title' => L('UX: le basi', 'UX Basics'), 'short' => L('UX base', 'UX Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Che cos’è la user experience: conoscere gli utenti e i loro bisogni, il processo di design, le euristiche di usabilità e i primi test.', 'What user experience is: knowing users and their needs, the design process, usability heuristics and first tests.'),
+    'desc' => L('Che cos’è la user experience: conoscere gli utenti e i loro bisogni, il processo di design, le euristiche di usabilità e i primi test, il microcopy, affordance e modelli mentali, l’accessibilità fin dall’inizio.', 'What user experience is: knowing users and their needs, the design process, usability heuristics and first tests, microcopy, affordances and mental models, accessibility from the start.'),
     'lessons' => [
         lesson('what', L('Che cos’è la UX', 'What UX is'), [
             P('La **user experience** (UX) è tutto ciò che una persona vive usando un prodotto: se riesce a fare quello che voleva, quanto fatica, che cosa prova. Non è solo l’aspetto grafico (quella è la **UI**, l’interfaccia): una app bellissima in cui non si trova il tasto “paga” ha una pessima UX.', '**User experience** (UX) is everything a person goes through when using a product: whether they manage to do what they wanted, how much effort it takes, how they feel. It is not just the visuals (that is the **UI**, the interface): a beautiful app where you cannot find the “pay” button has terrible UX.'),

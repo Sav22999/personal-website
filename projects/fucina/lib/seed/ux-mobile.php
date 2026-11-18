@@ -1,10 +1,10 @@
 <?php
-/** UX on mobile: context of use, thumb zone and touch targets, navigation patterns, gestures, forms and notifications. */
+/** UX on mobile: context of use, thumb zone and touch targets, navigation patterns, gestures, forms and notifications, perceived speed, accessibility, watches, cars and voice. */
 
 return [
     'id' => 'ux-mobile', 'family' => 'ux', 'after' => 'ux-base', 'categories' => ['design', 'mobile'],
     'title' => L('UX su mobile', 'UX on Mobile'), 'short' => L('UX mobile', 'Mobile UX'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Progettare per il telefono: contesto d’uso, zona del pollice e target touch, navigazione mobile, gesti, moduli, permessi e notifiche.', 'Designing for the phone: context of use, thumb zone and touch targets, mobile navigation, gestures, forms, permissions and notifications.'),
+    'desc' => L('Progettare per il telefono: contesto d’uso, zona del pollice e target touch, navigazione e gesti, moduli, permessi e notifiche, velocità percepita, accessibilità mobile, smartwatch, auto e voce.', 'Designing for the phone: context of use, thumb zone and touch targets, navigation and gestures, forms, permissions and notifications, perceived speed, mobile accessibility, watches, cars and voice.'),
     'lessons' => [
         lesson('context', L('Contesto e mobile first', 'Context and mobile first'), [
             P('Sul telefono si usa il prodotto **in movimento**, a sessioni brevi, spesso con una mano sola, con luce del sole, rete lenta e mille distrazioni. Per questo la UX mobile punta su **compiti rapidi**, contenuti essenziali e stati di caricamento chiari.', 'On the phone the product is used **on the move**, in short sessions, often one-handed, in sunlight, on slow networks and with a thousand distractions. That is why mobile UX focuses on **quick tasks**, essential content and clear loading states.'),

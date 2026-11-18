@@ -1,10 +1,10 @@
 <?php
-/** Next.js: the App Router and file-based routes, server and client components, data fetching and caching, route handlers and deployment. */
+/** Next.js: the App Router and file-based routes, server and client components, data fetching and caching, route handlers and deployment, loading and error files, Cache Components, proxy. */
 
 return [
     'id' => 'nextjs', 'family' => 'next', 'after' => 'react-intermediate',
     'title' => L('Next.js', 'Next.js'), 'short' => L('Next.js', 'Next.js'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Il framework React per siti e app completi: rotte da cartelle, componenti server e client, dati e cache, route handler, server action e pubblicazione.', 'The React framework for complete sites and apps: folder-based routes, server and client components, data and caching, route handlers, server actions and deployment.'),
+    'desc' => L('Il framework React per siti e app completi: rotte da cartelle, componenti server e client, dati e cache (anche con `"use cache"`), route handler, server action, errori, proxy e pubblicazione.', 'The React framework for complete sites and apps: folder-based routes, server and client components, data and caching (including `"use cache"`), route handlers, server actions, errors, proxy and deployment.'),
     'lessons' => [
         lesson('routing', L('Rotte dalle cartelle', 'Routes from folders'), [
             P('Con l’**App Router** di Next.js le rotte sono cartelle dentro `app/`: ogni cartella con un file `page.tsx` diventa una pagina. `layout.tsx` avvolge le pagine figlie (intestazione, menu), e le cartelle tra parentesi quadre sono **segmenti dinamici**.', 'With Next.js’s **App Router** routes are folders inside `app/`: every folder with a `page.tsx` file becomes a page. `layout.tsx` wraps child pages (header, menu), and folders in square brackets are **dynamic segments**.'),
@@ -66,6 +66,7 @@ export default async function Notizie() {
   return <ul>{notizie.map((n: any) => <li key={n.id}>{n.titolo}</li>)}</ul>;
 }', 'tsx'),
             P('Le **server action** sono funzioni marcate con `"use server"` che girano sul server e si possono chiamare da un modulo: gestiscono salvataggi senza scrivere un’API a parte. Dopo una modifica, `revalidatePath` aggiorna le pagine che mostrano quei dati.', '**Server actions** are functions marked with `"use server"` that run on the server and can be called from a form: they handle saves without writing a separate API. After a change, `revalidatePath` refreshes the pages showing that data.'),
+            Tip('Con le **Cache Components** di Next.js 16 (`cacheComponents: true`) la cache si dichiara con `"use cache"` e `cacheLife` invece di opzioni come `revalidate`: le vedrai in una lezione più avanti.', 'With Next.js 16 **Cache Components** (`cacheComponents: true`) caching is declared with `"use cache"` and `cacheLife` instead of options like `revalidate`: you will see them in a later lesson.'),
         ], [
             Q('d1', L('Che cosa fa `export const revalidate = 3600`?', 'What does `export const revalidate = 3600` do?'), [L('Rigenera la pagina al massimo una volta all’ora', 'Regenerates the page at most once an hour'), L('Cancella la cache ogni secondo', 'Clears the cache every second'), L('Rende la pagina privata', 'Makes the page private'), L('Niente', 'Nothing')], 0, L('3600 secondi.', '3600 seconds.')),
             Q('d2', L('Che cos’è una server action?', 'What is a server action?'), [L('Una funzione "use server" chiamabile da un modulo', 'A "use server" function callable from a form'), L('Un componente client', 'A client component'), L('Un file CSS', 'A CSS file'), L('Un test', 'A test')], 0, L('Niente API a parte.', 'No separate API.')),
@@ -113,6 +114,116 @@ export default function Pagina() {
         ], task('ts', L('Esporta `metadata` con `title: "Chi siamo"`.', 'Export `metadata` with `title: "Chi siamo"`.'), '', [re('export\s+const\s+metadata\s*=\s*\{[^}]*title\s*:\s*["\']Chi siamo["\']', L('I metadati sono esportati', 'The metadata is exported'))], '', 'export const metadata = { title: "Chi siamo" };'), [
             dMatch(pMatch(), [['"use server"', L('Funzione sul server', 'Function on the server')], ['FormData', L('I dati del form', 'The form data')], ['revalidatePath', L('Aggiorna la cache', 'Refreshes the cache')], ['metadata', L('Titolo e descrizione', 'Title and description')], ['generateMetadata', L('Metadati dinamici', 'Dynamic metadata')]], L('Azioni e SEO.', 'Actions and SEO.')),
             dFlash(pFlash(), [[L('Una Server Action può ricevere un form', 'A Server Action can receive a form'), true], [L('Le Server Action girano nel browser', 'Server Actions run in the browser'), false], [L('Le pagine rese sul server aiutano la SEO', 'Server-rendered pages help SEO'), true], [L('metadata va scritto in index.html', 'metadata goes in index.html'), false]], L('Next.js sul server.', 'Next.js on the server.')),
+        ]),
+        lesson('loading-errors', L('Caricamento, errori e pagina non trovata', 'Loading, errors and not found'), [
+            P('Alcuni nomi di file hanno un ruolo speciale. `loading.tsx` compare subito mentre la pagina carica i dati (Next.js lo avvolge in un `<Suspense>`), `error.tsx` sostituisce il segmento quando qualcosa si rompe, `not-found.tsx` appare quando chiami `notFound()`.', 'Some file names have a special role. `loading.tsx` shows at once while the page loads its data (Next.js wraps it in a `<Suspense>`), `error.tsx` replaces the segment when something breaks, `not-found.tsx` appears when you call `notFound()`.'),
+            C('app/corsi/[id]/
+├── page.tsx        → la pagina
+├── loading.tsx     → mentre aspetta
+├── error.tsx       → se qualcosa si rompe
+└── not-found.tsx   → se il corso non esiste', 'text'),
+            C('// app/corsi/[id]/page.tsx
+import { notFound } from "next/navigation";
+
+export default async function Corso({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const corso = await db.corso.findUnique({ where: { id } });
+  if (!corso) notFound();
+  return <h1>{corso.titolo}</h1>;
+}
+
+// app/corsi/[id]/error.tsx
+"use client";
+export default function Errore({ retry }: { error: unknown; retry: () => void }) {
+  return <button onClick={() => retry()}>Riprova</button>;
+}', 'tsx'),
+            P('`error.tsx` deve essere un componente client, perché è un error boundary di React. `retry()` riprova a caricare e disegnare il segmento. Per gli errori nel layout radice c’è `global-error.tsx`. In produzione i messaggi degli errori del server non arrivano al browser, per non svelare dettagli interni.', '`error.tsx` must be a client component, because it is a React error boundary. `retry()` tries to load and draw the segment again. For errors in the root layout there is `global-error.tsx`. In production server error messages do not reach the browser, so internal details are not revealed.'),
+        ], [
+            Q('le1', L('Quale file compare mentre la pagina carica i dati?', 'Which file shows while the page loads its data?'), ['error.tsx', 'loading.tsx', 'layout.tsx', 'route.ts'], 1, L('Diventa il `fallback` di un `<Suspense>`.', 'It becomes the `fallback` of a `<Suspense>`.')),
+            Q('le2', L('Perché `error.tsx` inizia con `"use client"`?', 'Why does `error.tsx` start with `"use client"`?'), [L('Per leggere il database', 'To read the database'), L('Per migliorare la SEO', 'To improve SEO'), L('Gli error boundary sono componenti client', 'Error boundaries are client components'), L('Non serve, è facoltativo', 'It is not needed, it is optional')], 2, L('Senza la direttiva Next.js segnala un errore.', 'Without the directive Next.js reports an error.')),
+            Q('le3', L('Che cosa succede chiamando `notFound()`?', 'What happens when you call `notFound()`?'), [L('La pagina si ricarica', 'The page reloads'), L('Il server si ferma', 'The server stops'), L('Si torna alla home', 'You go back home'), L('Viene mostrato `not-found.tsx`', '`not-found.tsx` is shown')], 3, L('Con lo stato HTTP 404.', 'With the HTTP 404 status.')),
+        ], task('tsx', L('Nella pagina, se `corso` non esiste chiama `notFound()` prima di usarlo.', 'In the page, if `corso` does not exist call `notFound()` before using it.'), 'import { notFound } from "next/navigation";
+
+const corso = await db.corso.findUnique({ where: { id } });
+return <h1>{corso.titolo}</h1>;', [re('if\s*\(\s*!\s*corso\s*\)\s*\{?\s*(return\s+)?notFound\s*\(\s*\)', L('Gestisci il corso mancante', 'You handle the missing course'))], '', 'const corso = await db.corso.findUnique({ where: { id } });
+if (!corso) notFound();
+return <h1>{corso.titolo}</h1>;'), [
+            dMatch(pMatch(), [['loading.tsx', L('Mentre si caricano i dati', 'While data loads')], ['error.tsx', L('Se qualcosa si rompe', 'If something breaks')], ['not-found.tsx', L('Risorsa inesistente', 'Missing resource')], ['global-error.tsx', L('Errori nel layout radice', 'Errors in the root layout')], ['retry()', L('Riprova a caricare il segmento', 'Retries loading the segment')]], L('File speciali per i momenti difficili.', 'Special files for hard moments.')),
+            dBug(pBug(), ['"use server";', 'export default function Errore({ retry }: { retry: () => void }) {', '  return <button onClick={() => retry()}>Riprova</button>;', '}'], 0, '"use client";', L('Un error boundary è un componente client.', 'An error boundary is a client component.')),
+        ]),
+        lesson('use-cache', L('Cache Components e "use cache"', 'Cache Components and "use cache"'), [
+            P('Next.js 16 ha introdotto un modello di cache esplicito, le **Cache Components**, che si attiva con `cacheComponents: true` in `next.config.ts`. Di base i dati vengono letti a ogni richiesta; quello che vuoi tenere in cache lo segni con la direttiva `"use cache"`, su una funzione, un componente o un intero file.', 'Next.js 16 introduced an explicit caching model, **Cache Components**, turned on with `cacheComponents: true` in `next.config.ts`. By default data is read on every request; what you want to keep in cache you mark with the `"use cache"` directive, on a function, a component or a whole file.'),
+            C('// next.config.ts
+const nextConfig = { cacheComponents: true };
+export default nextConfig;
+
+// lib/corsi.ts
+import { cacheLife, cacheTag } from "next/cache";
+
+export async function elencoCorsi() {
+  "use cache";
+  cacheLife("hours");   // si rinnova dopo qualche ora
+  cacheTag("corsi");    // etichetta per invalidarla
+  return db.corso.findMany();
+}
+
+// app/admin/actions.ts
+"use server";
+import { updateTag } from "next/cache";
+
+export async function aggiungiCorso(dati: FormData) {
+  await db.corso.create({ data: { titolo: String(dati.get("titolo")) } });
+  updateTag("corsi");   // la prossima lettura è fresca
+}', 'ts'),
+            P('`cacheLife` sceglie per quanto tenere il risultato (profili come `"minutes"`, `"hours"`, `"days"`, `"max"`), `cacheTag` gli dà un’etichetta e `updateTag` o `revalidateTag` lo invalidano dopo una modifica. Una funzione con `"use cache"` deve essere `async` e non può leggere `cookies()` o `headers()`: leggili fuori e passa i valori come argomenti. Con le Cache Components opzioni come `export const revalidate` non si usano più.', '`cacheLife` chooses how long to keep the result (profiles like `"minutes"`, `"hours"`, `"days"`, `"max"`), `cacheTag` gives it a label and `updateTag` or `revalidateTag` invalidate it after a change. A function with `"use cache"` must be `async` and cannot read `cookies()` or `headers()`: read them outside and pass the values as arguments. With Cache Components options like `export const revalidate` are no longer used.'),
+        ], [
+            Q('uc1', L('Come si attivano le Cache Components?', 'How do you turn on Cache Components?'), [L('Con `"use client"` in cima a ogni file', 'With `"use client"` at the top of every file'), L('Con `cacheComponents: true` in `next.config`', 'With `cacheComponents: true` in `next.config`'), L('Con `export const cache = true`', 'With `export const cache = true`'), L('Installando un pacchetto a parte', 'By installing a separate package')], 1, L('Poi si usa `"use cache"` dove serve.', 'Then you use `"use cache"` where needed.')),
+            Q('uc2', L('Che cosa fa `cacheTag("corsi")`?', 'What does `cacheTag("corsi")` do?'), [L('Etichetta il risultato per poterlo invalidare', 'Labels the result so it can be invalidated'), L('Cancella la cache', 'Clears the cache'), L('Crea una rotta', 'Creates a route'), L('Rende la funzione client', 'Makes the function client-side')], 0, L('`updateTag("corsi")` la invalida dopo una modifica.', '`updateTag("corsi")` invalidates it after a change.')),
+            Q('uc3', L('Perché non leggere `cookies()` dentro una funzione con `"use cache"`?', 'Why not read `cookies()` inside a function with `"use cache"`?'), [L('È solo più lento', 'It is just slower'), L('I cookie non esistono sul server', 'Cookies do not exist on the server'), L('`cookies()` è stato rimosso', '`cookies()` has been removed'), L('Cambiano a ogni richiesta: Next.js lo vieta e dà errore', 'They change on every request: Next.js forbids it and errors')], 3, L('Leggili fuori e passa il valore come argomento.', 'Read them outside and pass the value as an argument.')),
+        ], task('tsx', L('Metti in cache `ultimiArticoli` con `"use cache"` come prima riga e `cacheLife("days")`.', 'Cache `ultimiArticoli` with `"use cache"` as the first line and `cacheLife("days")`.'), 'import { cacheLife } from "next/cache";
+
+export async function ultimiArticoli() {
+  return db.articolo.findMany({ take: 10 });
+}', [re('async\s+function\s+ultimiArticoli\s*\(\s*\)\s*\{\s*["\']use cache["\']', L('La funzione è in cache', 'The function is cached')), re('cacheLife\s*\(\s*["\']days["\']\s*\)', L('Dura qualche giorno', 'It lasts a few days'))], '', 'export async function ultimiArticoli() {
+  "use cache";
+  cacheLife("days");
+  return db.articolo.findMany({ take: 10 });
+}'), [
+            dMatch(pMatch(), [['"use cache"', L('Segna che cosa tenere in cache', 'Marks what to keep in cache')], ['cacheLife("hours")', L('Per quanto tenerlo', 'How long to keep it')], ['cacheTag("x")', L('Etichetta per invalidare', 'Label for invalidating')], ['updateTag("x")', L('Invalida dopo una modifica', 'Invalidates after a change')], ['cacheComponents', L('Attiva il modello', 'Turns on the model')]], L('La cache, dichiarata dove serve.', 'Caching, declared where needed.')),
+            dFlash(pFlash(), [[L('Con le Cache Components i dati si leggono a ogni richiesta, salvo `"use cache"`', 'With Cache Components data is read on every request, unless `"use cache"`'), true], [L('Una funzione con `"use cache"` può essere sincrona', 'A function with `"use cache"` can be synchronous'), false], [L('`cookies()` si può leggere dentro `"use cache"`', '`cookies()` can be read inside `"use cache"`'), false], [L('`updateTag` si usa dopo aver modificato i dati', '`updateTag` is used after changing the data'), true]], L('Esplicito è meglio di implicito.', 'Explicit beats implicit.')),
+        ]),
+        lesson('proxy', L('Proxy, cookie e accesso', 'Proxy, cookies and access'), [
+            P('Il file `proxy.ts`, nella radice del progetto, esegue codice **prima** che una richiesta arrivi alla pagina: può reindirizzare, riscrivere l’indirizzo o aggiungere intestazioni. Da Next.js 16 sostituisce il vecchio `middleware.ts`, che è deprecato.', 'The `proxy.ts` file, at the project root, runs code **before** a request reaches the page: it can redirect, rewrite the address or add headers. Since Next.js 16 it replaces the old `middleware.ts`, which is deprecated.'),
+            C('// proxy.ts
+import { NextResponse, type NextRequest } from "next/server";
+
+export function proxy(request: NextRequest) {
+  const sessione = request.cookies.get("sessione");
+  if (!sessione) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+  return NextResponse.next();
+}
+
+export const config = { matcher: ["/area-riservata/:path*"] };', 'ts'),
+            C('// in un componente server
+import { cookies } from "next/headers";
+
+const lingua = (await cookies()).get("lingua")?.value ?? "it";', 'tsx'),
+            P('`matcher` limita il proxy ai percorsi che ti interessano. Usalo per controlli veloci e ottimistici (c’è il cookie?); la verifica vera di chi è l’utente va ripetuta vicino ai dati: nelle pagine, nelle Server Action e nei route handler. Nei componenti server `cookies()` e `headers()` sono asincroni: servono `await`.', '`matcher` limits the proxy to the paths you care about. Use it for quick, optimistic checks (is the cookie there?); the real check of who the user is must be repeated close to the data: in pages, Server Actions and route handlers. In server components `cookies()` and `headers()` are async: they need `await`.'),
+        ], [
+            Q('px1', L('Quando gira `proxy.ts`?', 'When does `proxy.ts` run?'), [L('Dopo che la pagina è stata mandata', 'After the page has been sent'), L('Solo nel browser', 'Only in the browser'), L('Prima che la richiesta arrivi alla pagina', 'Before the request reaches the page'), L('Solo durante `next build`', 'Only during `next build`')], 2, L('Può reindirizzare prima di disegnare qualsiasi cosa.', 'It can redirect before drawing anything.')),
+            Q('px2', L('Che cosa sostituisce `proxy.ts` da Next.js 16?', 'What does `proxy.ts` replace since Next.js 16?'), ['middleware.ts', 'layout.tsx', 'next.config.ts', 'route.ts'], 0, L('Il vecchio nome è deprecato.', 'The old name is deprecated.')),
+            Q('px3', L('Basta il proxy per proteggere i dati?', 'Is the proxy enough to protect data?'), [L('Sì, sempre', 'Yes, always'), L('No: il controllo va ripetuto vicino ai dati', 'No: the check must be repeated close to the data'), L('Solo in sviluppo', 'Only in development'), L('Solo con HTTPS', 'Only with HTTPS')], 1, L('Pagine, Server Action e API devono verificare da sole.', 'Pages, Server Actions and APIs must check by themselves.')),
+        ], task('ts', L('In `proxy.ts` esporta `config` con `matcher: ["/admin/:path*"]`.', 'In `proxy.ts` export `config` with `matcher: ["/admin/:path*"]`.'), 'export function proxy(request: NextRequest) {
+  return NextResponse.next();
+}', [re('export\s+const\s+config\s*=\s*\{\s*matcher\s*:\s*(\[\s*)?["\']/admin/:path\*["\']', L('Il proxy copre l’area admin', 'The proxy covers the admin area'))], '', 'export function proxy(request: NextRequest) {
+  return NextResponse.next();
+}
+
+export const config = { matcher: ["/admin/:path*"] };'), [
+            dMatch(pMatch(), [['proxy.ts', L('Gira prima della pagina', 'Runs before the page')], ['matcher', L('Percorsi coperti', 'Paths covered')], ['NextResponse.redirect', L('Manda altrove', 'Sends elsewhere')], ['NextResponse.next', L('Lascia passare', 'Lets it through')], ['cookies()', L('Legge i cookie sul server', 'Reads cookies on the server')]], L('Il portiere davanti alle pagine.', 'The doorkeeper in front of the pages.')),
+            dBug(pBug(), ['import { cookies } from "next/headers";', 'export default async function Pagina() {', '  const tema = cookies().get("tema")?.value;', '  return <p>{tema}</p>;', '}'], 2, '  const tema = (await cookies()).get("tema")?.value;', L('`cookies()` è asincrona: serve `await`.', '`cookies()` is async: it needs `await`.')),
         ]),
     ],
 ];

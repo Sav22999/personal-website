@@ -1,10 +1,10 @@
 <?php
-/** Advanced UX: psychology and UX laws, metrics and experiments, ethics and dark patterns, service design and strategy. */
+/** Advanced UX: psychology and UX laws, metrics and experiments, ethics and dark patterns, service design and strategy, inclusive design, AI products, influencing decisions. */
 
 return [
     'id' => 'ux-advanced', 'family' => 'ux', 'after' => 'ux-intermediate', 'categories' => ['design'],
     'title' => L('UX: livello avanzato', 'UX Advanced'), 'short' => L('UX avanzato', 'UX Advanced'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Psicologia e leggi della UX, metriche e A/B test, etica e dark pattern, service design e strategia: la UX che guida le decisioni di prodotto.', 'Psychology and the laws of UX, metrics and A/B tests, ethics and dark patterns, service design and strategy: UX that drives product decisions.'),
+    'desc' => L('Psicologia e leggi della UX, metriche e A/B test, etica e dark pattern, service design e strategia, design inclusivo, prodotti con l’IA e come portare la ricerca nelle decisioni.', 'Psychology and the laws of UX, metrics and A/B tests, ethics and dark patterns, service design and strategy, inclusive design, AI products and how to bring research into decisions.'),
     'lessons' => [
         lesson('laws', L('Psicologia e leggi della UX', 'Psychology and the laws of UX'), [
             P('Alcune leggi della psicologia aiutano a prevedere il comportamento. **Legge di Hick**: più opzioni ci sono, più tempo serve per scegliere, quindi raggruppa e riduci. **Legge di Fitts**: un bersaglio grande e vicino si raggiunge prima, quindi i pulsanti principali vanno grandi e a portata. **Legge di Jakob**: gli utenti passano la maggior parte del tempo su altri siti e si aspettano che il tuo funzioni allo stesso modo.', 'Some laws from psychology help predict behaviour. **Hick’s law**: the more options, the longer it takes to choose, so group and reduce. **Fitts’s law**: a large, nearby target is reached faster, so main buttons should be big and within reach. **Jakob’s law**: users spend most of their time on other sites and expect yours to work the same way.'),

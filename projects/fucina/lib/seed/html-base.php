@@ -1,10 +1,10 @@
 <?php
-/** HTML base: from the first tag to a simple form. */
+/** HTML base: from the first tag to a simple form, containers and checking the code (two more levels in extra-levels.php). */
 
 return [
     'id' => 'html-base', 'family' => 'html',
     'title' => L('HTML base', 'HTML Basics'), 'short' => L('HTML base', 'HTML Basics'), 'level' => L('Base', 'Basic'),
-    'desc' => L('Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle e moduli.', 'The language every web page is made of: tags, text, links, images, lists, tables and forms.'),
+    'desc' => L('Il linguaggio con cui è fatta ogni pagina web: tag, testi, link, immagini, liste, tabelle, moduli, contenitori e come controllare il codice.', 'The language every web page is made of: tags, text, links, images, lists, tables, forms, containers and how to check your code.'),
     'lessons' => [
         lesson('structure', L('La struttura di una pagina', 'The structure of a page'), [
             P('HTML descrive il **contenuto** di una pagina usando i `tag`: parole tra parentesi angolari. Quasi tutti si aprono e si chiudono, e quello che sta in mezzo è il contenuto dell’elemento.', 'HTML describes the **content** of a page using `tags`: words between angle brackets. Most of them open and close, and what sits in between is the content of the element.'),

@@ -1,10 +1,10 @@
 <?php
-/** AI fundamentals: what AI, ML, deep learning and generative AI are, data, training and inference, LLMs and their limits. */
+/** AI fundamentals: what AI, ML, deep learning and generative AI are, data, training and inference, LLMs and their limits, uses, kinds of learning, multimodal AI, a short history. */
 
 return [
     'id' => 'ai-base', 'family' => 'ai', 'after' => null,
     'title' => L('Fondamenti di AI', 'AI Fundamentals'), 'short' => L('AI base', 'AI Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Che cos’è davvero l’intelligenza artificiale: machine learning, deep learning, AI generativa, dati, addestramento, modelli linguistici e loro limiti.', 'What artificial intelligence really is: machine learning, deep learning, generative AI, data, training, language models and their limits.'),
+    'desc' => L('Che cos’è davvero l’intelligenza artificiale: machine learning, deep learning, AI generativa, dati, addestramento, modelli linguistici e loro limiti, tipi di apprendimento, AI multimodale e un po’ di storia.', 'What artificial intelligence really is: machine learning, deep learning, generative AI, data, training, language models and their limits, kinds of learning, multimodal AI and a bit of history.'),
     'lessons' => [
         lesson('what', L('Che cos’è l’AI', 'What AI is'), [
             P('**Intelligenza artificiale** è il nome largo per i sistemi che svolgono compiti che di solito richiedono intelligenza umana: riconoscere immagini, capire testi, tradurre, giocare, decidere. Dentro ci sono cerchi sempre più piccoli.', '**Artificial intelligence** is the broad name for systems that perform tasks that usually need human intelligence: recognising images, understanding text, translating, playing, deciding. Inside it sit ever smaller circles.'),

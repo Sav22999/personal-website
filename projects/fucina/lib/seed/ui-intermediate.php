@@ -1,10 +1,10 @@
 <?php
-/** Intermediate UI: components and states, design tokens and design systems, icons and imagery, motion and micro-interactions. */
+/** Intermediate UI: components and states, design tokens and design systems, icons and imagery, motion and micro-interactions, handoff, data visualisation, variable fonts and fluid type. */
 
 return [
     'id' => 'ui-intermediate', 'family' => 'ui', 'after' => 'ui-base', 'categories' => ['design', 'frontend'],
     'title' => L('UI: livello intermedio', 'UI Intermediate'), 'short' => L('UI intermedio', 'UI Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Componenti e stati, design token e design system, icone e immagini, movimento e micro-interazioni: dalle schermate a un sistema coerente.', 'Components and states, design tokens and design systems, icons and imagery, motion and micro-interactions: from screens to a consistent system.'),
+    'desc' => L('Componenti e stati, design token e design system, icone e immagini, movimento e micro-interazioni, handoff, grafici e tipografia avanzata: dalle schermate a un sistema coerente.', 'Components and states, design tokens and design systems, icons and imagery, motion and micro-interactions, handoff, charts and advanced typography: from screens to a consistent system.'),
     'lessons' => [
         lesson('states', L('Componenti e stati', 'Components and states'), [
             P('Un’interfaccia è fatta di **componenti** riutilizzabili: pulsanti, campi, card, menu. Ogni componente ha più **stati** da progettare: **normale**, **hover**, **focus** (da tastiera), **attivo** (premuto), **disattivato**, **caricamento**, **errore**, **selezionato**. Dimenticarne uno significa lasciare lo sviluppatore a inventarlo.', 'An interface is made of reusable **components**: buttons, fields, cards, menus. Each component has several **states** to design: **default**, **hover**, **focus** (keyboard), **active** (pressed), **disabled**, **loading**, **error**, **selected**. Forgetting one means leaving the developer to invent it.'),

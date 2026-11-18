@@ -409,8 +409,9 @@ function install_schema(PDO $pdo, string $prefix): void
     if ($old > 0 && $old < 17) install_seed_flash_v17($pdo, $prefix);
     // Version 20: rewritten distractors and less rigid exercise checks, unless the admin has changed them
     if ($old > 0 && $old < 20) install_seed_fixes_v20($pdo, $prefix);
-    // Version 26: the course review corrects the texts still as first installed, unless the admin has changed them
-    if ($old > 0 && $old < 26) install_seed_corrections_v26($pdo, $prefix);
+    // Version 27: the course review corrects the texts still as first installed, unless the admin has changed them.
+    // (Version 26 was published once without its corrections file: 27 runs them for it too.)
+    if ($old > 0 && $old < 27) install_seed_corrections_v27($pdo, $prefix);
     // Last: if something above fails, the next request tries again
     $st = $pdo->prepare("INSERT INTO `{$prefix}meta` (k, v) VALUES ('schema_version', ?) ON DUPLICATE KEY UPDATE v = VALUES(v)");
     $st->execute([(string)SCHEMA_VERSION]);

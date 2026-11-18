@@ -1,5 +1,5 @@
 <?php
-/** CSS base: selectors, colours, box model, layout basics and the cascade. */
+/** CSS base: selectors, colours, box model, layout basics and the cascade; backgrounds, units, linking CSS and flexible sizes are in extra-levels.php. */
 
 $page = '<h1 class="titolo">Fucina</h1>
 <p>Il primo paragrafo.</p>
@@ -10,7 +10,7 @@ $page = '<h1 class="titolo">Fucina</h1>
 return [
     'id' => 'css-base', 'family' => 'css', 'after' => 'html-base',
     'title' => L('CSS base', 'CSS Basics'), 'short' => L('CSS base', 'CSS Basics'), 'level' => L('Base', 'Basic'),
-    'desc' => L('Dai forma alle pagine: selettori, colori, testi, box model, posizionamento e cascata.', 'Give pages their shape: selectors, colours, text, box model, positioning and the cascade.'),
+    'desc' => L('Dai forma alle pagine: selettori, colori, testi, box model, posizionamento, cascata, sfondi, unità di misura e dimensioni flessibili.', 'Give pages their shape: selectors, colours, text, box model, positioning, the cascade, backgrounds, units and flexible sizes.'),
     'lessons' => [
         lesson('selectors', L('Regole e selettori', 'Rules and selectors'), [
             P('Il CSS descrive l’**aspetto** della pagina con delle regole. Una regola ha un selettore, che sceglie gli elementi, e delle dichiarazioni `proprietà: valore`.', 'CSS describes the **look** of the page with rules. A rule has a selector, which picks the elements, and `property: value` declarations.'),
@@ -106,6 +106,6 @@ p.nota { color: green; }   /* 0,1,1 → vince ancora */
             Q('k3', L('Quale proprietà si eredita?', 'Which property is inherited?'), ['margin', 'border', 'color', 'padding'], 2, L('Il colore del testo passa dai genitori ai figli.', 'The text colour passes from parents to children.')),
         ], task('css', L('Rendi blu (`blue`) il testo di `p.nota` senza toccare la regola esistente e senza `!important`.', 'Make the text of `p.nota` blue (`blue`) without touching the existing rule and without `!important`.'), '.nota { color: red; }
 
-', [css('p.nota', 'color', 'rgb(0, 0, 255)', L('La nota è blu', 'The note is blue')), re('^(?![\s\S]*!important)', L('Niente `!important`', 'No `!important`'))], $page)),
+', [css('p.nota', 'color', 'rgb(0, 0, 255)', L('La nota è blu', 'The note is blue')), re('(?<![\s\S])(?![\s\S]*!important)', L('Niente `!important`', 'No `!important`'))], $page)),
     ],
 ];

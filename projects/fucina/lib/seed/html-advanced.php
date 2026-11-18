@@ -1,10 +1,10 @@
 <?php
-/** HTML avanzato: semantics, rich forms, media, accessibility and metadata. */
+/** HTML avanzato: semantics, rich forms, media, accessibility and metadata; data attributes, SEO, popovers and dialogs, loading resources and responsive images are in extra-levels.php. */
 
 return [
     'id' => 'html-advanced', 'family' => 'html', 'after' => 'html-intermediate',
     'title' => L('HTML avanzato', 'Advanced HTML'), 'short' => L('HTML avanzato', 'Advanced HTML'), 'level' => L('Avanzato', 'Advanced'),
-    'desc' => L('Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali e metadati.', 'Semantic, accessible pages: structure, rich forms, media and metadata.'),
+    'desc' => L('Pagine semantiche e accessibili: struttura, moduli ricchi, contenuti multimediali, metadati e SEO, popover e finestre di dialogo, caricamento delle risorse e immagini responsive.', 'Semantic, accessible pages: structure, rich forms, media, metadata and SEO, popovers and dialogs, resource loading and responsive images.'),
     'lessons' => [
         lesson('semantic', L('HTML semantico', 'Semantic HTML'), [
             P('I tag semantici dicono **che cosa è** un blocco, non come appare. Motori di ricerca e screen reader li usano per capire la pagina.', 'Semantic tags say **what a block is**, not how it looks. Search engines and screen readers use them to understand the page.'),

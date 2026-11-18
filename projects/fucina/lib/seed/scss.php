@@ -4,7 +4,7 @@
 return [
     'id' => 'scss', 'family' => 'scss', 'after' => 'css-intermediate',
     'title' => L('SCSS', 'SCSS'), 'short' => L('SCSS', 'SCSS'), 'level' => L('Preprocessori', 'Preprocessors'),
-    'desc' => L('CSS con i superpoteri: variabili, annidamento, mixin, moduli e cicli.', 'CSS with superpowers: variables, nesting, mixins, modules and loops.'),
+    'desc' => L('CSS con i superpoteri: variabili, annidamento, mixin e `@content`, funzioni, moduli e `@forward`, condizioni e cicli.', 'CSS with superpowers: variables, nesting, mixins and `@content`, functions, modules and `@forward`, conditions and loops.'),
     'lessons' => [
         lesson('intro', L('Variabili e compilazione', 'Variables and compilation'), [
             P('SCSS è una sintassi di **Sass**, un preprocessore: scrivi in `.scss` e un compilatore produce il normale `.css` che il browser legge. Ogni file CSS valido è anche SCSS valido.', 'SCSS is a syntax of **Sass**, a preprocessor: you write `.scss` and a compiler produces the normal `.css` the browser reads. Every valid CSS file is also valid SCSS.'),

@@ -1,10 +1,10 @@
 <?php
-/** MariaDB: the open fork of MySQL and what it adds: RETURNING, sequences, system-versioned tables, engines and Galera. */
+/** MariaDB: the open fork of MySQL and what it adds: RETURNING, sequences, system-versioned tables, engines and Galera, vector search, its own types. */
 
 return [
     'id' => 'mariadb', 'family' => 'mariadb', 'after' => 'mysql',
     'title' => L('MariaDB', 'MariaDB'), 'short' => L('MariaDB', 'MariaDB'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Il fork libero di MySQL: compatibilità, `RETURNING`, sequenze, tabelle con la storia dei dati, motori e cluster Galera.', 'The open fork of MySQL: compatibility, `RETURNING`, sequences, tables that keep data history, engines and Galera clusters.'),
+    'desc' => L('Il fork libero di MySQL: compatibilità, `RETURNING`, sequenze, tabelle con la storia dei dati, motori e cluster Galera, ricerca vettoriale, tipi propri e versioni.', 'The open fork of MySQL: compatibility, `RETURNING`, sequences, tables that keep data history, engines and Galera clusters, vector search, its own types and versions.'),
     'lessons' => [
         lesson('fork', L('Un fork di MySQL', 'A fork of MySQL'), [
             P('MariaDB nasce nel 2009 dagli sviluppatori originali di MySQL, mentre Oracle acquisiva Sun, e con essa MySQL. Resta **compatibile** in gran parte: stesso protocollo, stesso client, stessa sintassi di base, e molte distribuzioni Linux la installano al posto di MySQL.', 'MariaDB was born in 2009 from MySQL’s original developers, while Oracle was acquiring Sun, and MySQL with it. It stays largely **compatible**: same protocol, same client, same basic syntax, and many Linux distributions install it in place of MySQL.'),

@@ -1,10 +1,10 @@
 <?php
-/** Deep learning basics with PyTorch: neurons and layers, tensors, the training loop, CNNs for images, overfitting tricks. */
+/** Deep learning basics with PyTorch: neurons and layers, tensors, the training loop, CNNs, overfitting tricks, Datasets and DataLoaders, transfer learning and saving, RNNs and LSTMs. */
 
 return [
     'id' => 'dl-base', 'family' => 'dl', 'after' => 'ml-base',
     'title' => L('Deep learning', 'Deep Learning'), 'short' => L('DL base', 'DL Basics'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Le reti neurali con PyTorch: neuroni e strati, tensori, il ciclo di addestramento, reti convoluzionali per le immagini, dropout e GPU.', 'Neural networks with PyTorch: neurons and layers, tensors, the training loop, convolutional networks for images, dropout and GPUs.'),
+    'desc' => L('Le reti neurali con PyTorch: neuroni e strati, tensori, il ciclo di addestramento, reti convoluzionali, dropout e GPU, Dataset e DataLoader, transfer learning e salvataggio, RNN e LSTM.', 'Neural networks with PyTorch: neurons and layers, tensors, the training loop, convolutional networks, dropout and GPUs, Datasets and DataLoaders, transfer learning and saving, RNNs and LSTMs.'),
     'lessons' => [
         lesson('neurons', L('Neuroni e strati', 'Neurons and layers'), [
             P('Un **neurone** artificiale fa una somma pesata dei suoi input, aggiunge un **bias** e passa il risultato in una **funzione di attivazione** non lineare, come **ReLU** (che azzera i negativi). Tanti neuroni affiancati formano uno **strato**; più strati in fila formano una rete **profonda**.', 'An artificial **neuron** takes a weighted sum of its inputs, adds a **bias** and passes the result through a non-linear **activation function**, such as **ReLU** (which zeroes negatives). Many neurons side by side form a **layer**; several layers in a row form a **deep** network.'),
@@ -109,6 +109,74 @@ with torch.no_grad():   # niente gradienti: più veloce
         ], task('python', L('Prima di prevedere su `X_val`, metti `rete` in modalità valutazione e usa `with torch.no_grad():`.', 'Before predicting on `X_val`, put `rete` in evaluation mode and use `with torch.no_grad():`.'), "", [re('rete\.eval\s*\(\s*\)', L('Modalità valutazione', 'Evaluation mode')), re('with\s+torch\.no_grad\s*\(\s*\)\s*:\s*\n\s+\w+\s*=\s*rete\s*\(\s*X_val\s*\)', L('Prevedi senza gradienti', 'You predict without gradients'))], '', "rete.eval()\nwith torch.no_grad():\n    previsti = rete(X_val)"), [
             dMatch(pMatch(), [['Dropout', L('Spegne neuroni a caso', 'Randomly drops neurons')], ['Data augmentation', L('Varia gli esempi', 'Varies the examples')], ['Early stopping', L('Si ferma al momento giusto', 'Stops at the right time')], ['eval()', L('Modalità valutazione', 'Evaluation mode')], ['no_grad()', L('Niente gradienti', 'No gradients')]], L('Contro l’overfitting.', 'Against overfitting.')),
             dBug(pBug(), ['rete.train()', 'with torch.no_grad():', '    previsti = rete(X_test)', 'print(accuratezza(previsti, y_test))'], 0, 'rete.eval()', L('Per valutare serve `eval()`, non `train()`.', 'Evaluating needs `eval()`, not `train()`.')),
+        ]),
+        lesson('data', L('Dataset e DataLoader', 'Datasets and DataLoaders'), [
+            P('In PyTorch i dati passano per due classi. Un **Dataset** sa quanti esempi ci sono (`__len__`) e restituisce l’esempio numero *i* (`__getitem__`). Un **DataLoader** li raggruppa in **batch**, li mescola a ogni epoca e può caricarli in parallelo.', 'In PyTorch data flows through two classes. A **Dataset** knows how many examples there are (`__len__`) and returns example number *i* (`__getitem__`). A **DataLoader** groups them into **batches**, shuffles them every epoch and can load them in parallel.'),
+            C('import torch
+from torch.utils.data import Dataset, DataLoader
+
+class Clienti(Dataset):
+    def __init__(self, X, y):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y, dtype=torch.long)
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, i):
+        return self.X[i], self.y[i]
+
+caricatore = DataLoader(Clienti(X, y), batch_size=32, shuffle=True)', 'python'),
+            P('Mescola (`shuffle=True`) i dati di addestramento, non quelli di validazione. Il **batch** è un compromesso: più grande sfrutta meglio la GPU ma occupa più memoria. Per immagini e testi il Dataset può leggere i file dal disco uno alla volta, così non serve tenerli tutti in memoria.', 'Shuffle (`shuffle=True`) the training data, not the validation data. The **batch** is a trade-off: bigger uses the GPU better but takes more memory. For images and text the Dataset can read files from disk one at a time, so you need not hold them all in memory.'),
+        ], [
+            Q('d1', L('Che cosa deve restituire `__getitem__`?', 'What must `__getitem__` return?'), [L('Il numero totale di esempi', 'The total number of examples'), L('Un batch già pronto di 32 esempi', 'A ready batch of 32 examples'), L('L’esempio numero i, di solito input ed etichetta', 'Example number i, usually input and label'), L('I pesi della rete', 'The network’s weights')], 2, L('`__len__` dà il totale.', '`__len__` gives the total.')),
+            Q('d2', L('Che cosa fa `shuffle=True` nel DataLoader?', 'What does `shuffle=True` do in the DataLoader?'), [L('Mescola l’ordine degli esempi a ogni epoca', 'It shuffles the order of examples every epoch'), L('Cambia le etichette a caso', 'It changes labels at random'), L('Divide i dati in train e test', 'It splits data into train and test'), L('Raddoppia il numero di esempi', 'It doubles the number of examples')], 0, L('Così la rete non impara l’ordine.', 'So the network does not learn the order.')),
+            Q('d3', L('Che cosa comporta un batch più grande?', 'What does a bigger batch mean?'), [L('Meno memoria usata sulla GPU', 'Less GPU memory used'), L('Più memoria usata ma GPU sfruttata meglio', 'More memory used but the GPU used better'), L('Nessuna differenza in nessun caso', 'No difference in any case'), L('Un modello con più strati', 'A model with more layers')], 1, L('Un compromesso.', 'A trade-off.')),
+        ], task('python', L('Crea `caricatore` con `DataLoader` sul dataset `dati`, con `batch_size=64` e `shuffle=True`.', 'Create `caricatore` with `DataLoader` over the dataset `dati`, with `batch_size=64` and `shuffle=True`.'), "from torch.utils.data import DataLoader", [re('caricatore\s*=\s*DataLoader\s*\(\s*dati', L('Il DataLoader', 'The DataLoader')), re('batch_size\s*=\s*64', L('Batch da 64', 'Batches of 64')), re('shuffle\s*=\s*True', L('Dati mescolati', 'Shuffled data'))], '', "caricatore = DataLoader(dati, batch_size=64, shuffle=True)"), [
+            dBlanks(pFill(), "class Dati(Dataset):\n    def ___(self):\n        return len(self.y)\n    def ___(self, i):\n        return self.X[i], self.y[i]", ['__len__', '__getitem__'], ['__init__', '__call__', 'forward'], L('I due metodi di ogni Dataset.', 'The two methods of every Dataset.')),
+            dMatch(pMatch(), [['Dataset', L('Dà un esempio alla volta', 'Gives one example at a time')], ['DataLoader', L('Raggruppa in batch', 'Groups into batches')], ['batch_size', L('Esempi per batch', 'Examples per batch')], ['shuffle', L('Mescola a ogni epoca', 'Shuffles every epoch')]], L('Come arrivano i dati alla rete.', 'How data reaches the network.')),
+        ]),
+        lesson('transfer', L('Transfer learning e salvataggio', 'Transfer learning and saving'), [
+            P('Il **transfer learning** in pratica: prendi una rete già addestrata su milioni di immagini, **congeli** i suoi pesi e sostituisci solo l’ultimo strato con uno nuovo per le tue classi. Con poche centinaia di foto ottieni spesso ottimi risultati.', '**Transfer learning** in practice: take a network already trained on millions of images, **freeze** its weights and replace only the last layer with a new one for your classes. With a few hundred photos you often get great results.'),
+            C('import torch
+from torch import nn
+from torchvision import models
+
+rete = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+for p in rete.parameters():
+    p.requires_grad = False                        # congela la rete
+rete.fc = nn.Linear(rete.fc.in_features, 3)        # nuovo strato: 3 classi, addestrabile
+
+ottimizzatore = torch.optim.Adam(rete.fc.parameters(), lr=1e-3)
+# … addestramento …
+torch.save(rete.state_dict(), "rete.pt")           # salva solo i pesi', 'python'),
+            P('Per salvare si usa lo **`state_dict`**, il dizionario con tutti i pesi. Per ricaricarlo ricrei la stessa architettura e chiami `rete.load_state_dict(torch.load("rete.pt"))`. Ricorda poi `rete.eval()` prima di usarla per le previsioni.', 'To save you use the **`state_dict`**, the dictionary with all the weights. To reload it you recreate the same architecture and call `rete.load_state_dict(torch.load("rete.pt"))`. Then remember `rete.eval()` before using it for predictions.'),
+        ], [
+            Q('f1', L('Che cosa fa `p.requires_grad = False` su tutti i parametri?', 'What does `p.requires_grad = False` on all parameters do?'), [L('Cancella i pesi della rete', 'It deletes the network’s weights'), L('Sposta la rete sulla GPU', 'It moves the network to the GPU'), L('Mette la rete in modalità valutazione', 'It puts the network in evaluation mode'), L('Congela i pesi: non vengono aggiornati', 'It freezes the weights: they are not updated')], 3, L('Niente gradienti, niente aggiornamenti.', 'No gradients, no updates.')),
+            Q('f2', L('Perché si sostituisce l’ultimo strato?', 'Why replace the last layer?'), [L('Per avere tante uscite quante sono le tue classi', 'To have as many outputs as your classes'), L('Per rendere la rete più veloce', 'To make the network faster'), L('Perché l’ultimo strato è sempre rotto', 'Because the last layer is always broken'), L('Per ridurre la dimensione delle immagini', 'To shrink the images')], 0, L('Le classi originali erano altre.', 'The original classes were different.')),
+            Q('f3', L('Che cosa contiene lo `state_dict`?', 'What does the `state_dict` contain?'), [L('Il codice Python della rete', 'The network’s Python code'), L('I pesi della rete, strato per strato', 'The network’s weights, layer by layer'), L('Le immagini di addestramento', 'The training images'), L('La storia delle loss', 'The history of the losses')], 1, L('L’architettura la ricrei tu.', 'You recreate the architecture.')),
+        ], task('python', L('Sostituisci `rete.fc` con `nn.Linear(rete.fc.in_features, 5)` e salva i pesi con `torch.save(rete.state_dict(), "rete.pt")`.', 'Replace `rete.fc` with `nn.Linear(rete.fc.in_features, 5)` and save the weights with `torch.save(rete.state_dict(), "rete.pt")`.'), "import torch\nfrom torch import nn\nfrom torchvision import models\nrete = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)", [re('rete\.fc\s*=\s*nn\.Linear\s*\(\s*rete\.fc\.in_features\s*,\s*5\s*\)', L('Nuovo strato per 5 classi', 'New layer for 5 classes')), re('torch\.save\s*\(\s*rete\.state_dict\s*\(\s*\)\s*,\s*["\']rete\.pt["\']\s*\)', L('Salvi i pesi', 'You save the weights'))], '', "rete.fc = nn.Linear(rete.fc.in_features, 5)\ntorch.save(rete.state_dict(), \"rete.pt\")"), [
+            dOrder(pSort(), ['rete = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)', 'for p in rete.parameters(): p.requires_grad = False', 'rete.fc = nn.Linear(rete.fc.in_features, 3)', 'ottimizzatore = torch.optim.Adam(rete.fc.parameters(), lr=1e-3)', 'torch.save(rete.state_dict(), "rete.pt")'], L('Carica, congela, sostituisci, addestra, salva.', 'Load, freeze, replace, train, save.')),
+            dBug(pBug(), ['rete = models.resnet18()', 'rete.fc = nn.Linear(rete.fc.in_features, 3)', 'rete.load_state_dict("rete.pt")', 'rete.eval()'], 2, 'rete.load_state_dict(torch.load("rete.pt"))', L('Prima si legge il file con `torch.load`.', 'First read the file with `torch.load`.')),
+        ]),
+        lesson('sequences', L('Sequenze: RNN e LSTM', 'Sequences: RNNs and LSTMs'), [
+            P('Testi, audio e serie temporali sono **sequenze**: conta l’ordine. Una **rete ricorrente** (RNN) le legge un elemento alla volta e porta avanti uno **stato nascosto**, una specie di memoria di ciò che ha visto. La **LSTM** è una RNN con “porte” che decidono cosa ricordare e cosa dimenticare.', 'Text, audio and time series are **sequences**: order matters. A **recurrent network** (RNN) reads them one element at a time and carries a **hidden state**, a kind of memory of what it has seen. The **LSTM** is an RNN with “gates” deciding what to remember and what to forget.'),
+            C('import torch
+from torch import nn
+
+lstm = nn.LSTM(input_size=100, hidden_size=64, batch_first=True)
+x = torch.randn(8, 20, 100)       # 8 frasi, 20 token, 100 numeri per token
+uscite, (h, c) = lstm(x)
+print(uscite.shape)               # torch.Size([8, 20, 64]): un’uscita per token
+print(h.shape)                    # torch.Size([1, 8, 64]): lo stato finale', 'python'),
+            P('Limiti: leggono un passo dopo l’altro, quindi non si parallelizzano bene sulle GPU, e su sequenze lunghe faticano a ricordare ciò che stava all’inizio. Il meccanismo di **attention** e il **transformer** hanno risolto entrambi i problemi, ed è per questo che oggi dominano il linguaggio.', 'Limits: they read one step after another, so they do not parallelise well on GPUs, and on long sequences they struggle to remember what came at the start. The **attention** mechanism and the **transformer** solved both problems, which is why they dominate language today.'),
+        ], [
+            Q('q1', L('Che cos’è lo stato nascosto di una RNN?', 'What is an RNN’s hidden state?'), [L('Un parametro segreto non addestrabile', 'A secret, untrainable parameter'), L('Il file in cui si salva la rete', 'The file the network is saved to'), L('L’etichetta della sequenza', 'The sequence’s label'), L('Una memoria di ciò che ha letto finora', 'A memory of what it has read so far')], 3, L('Passa da un passo al successivo.', 'It passes from one step to the next.')),
+            Q('q2', L('Che cosa aggiungono le porte di una LSTM?', 'What do an LSTM’s gates add?'), [L('Decidono cosa ricordare e cosa dimenticare', 'They decide what to remember and what to forget'), L('Permettono di leggere immagini a colori', 'They allow reading colour images'), L('Rendono la rete non addestrabile', 'They make the network untrainable'), L('Eliminano la necessità dei dati', 'They remove the need for data')], 0, L('Memoria più lunga e stabile.', 'Longer, steadier memory.')),
+            Q('q3', L('Perché i transformer hanno superato le RNN nel linguaggio?', 'Why did transformers overtake RNNs in language?'), [L('Usano meno parametri in ogni caso', 'They always use fewer parameters'), L('Si parallelizzano meglio e collegano parti lontane del testo', 'They parallelise better and link distant parts of the text'), L('Non hanno bisogno di addestramento', 'They need no training'), L('Funzionano solo su CPU', 'They only run on CPUs')], 1, L('L’attention guarda tutto il contesto insieme.', 'Attention looks at the whole context at once.')),
+        ], task('python', L('Crea `lstm = nn.LSTM(input_size=50, hidden_size=32, batch_first=True)` e applicala al tensore `x` salvando `uscite, (h, c)`.', 'Create `lstm = nn.LSTM(input_size=50, hidden_size=32, batch_first=True)` and apply it to the tensor `x`, storing `uscite, (h, c)`.'), "import torch\nfrom torch import nn\nx = torch.randn(4, 10, 50)", [re('lstm\s*=\s*nn\.LSTM\s*\(\s*input_size\s*=\s*50\s*,\s*hidden_size\s*=\s*32\s*,\s*batch_first\s*=\s*True\s*\)', L('La LSTM', 'The LSTM')), re('uscite\s*,\s*\(\s*h\s*,\s*c\s*\)\s*=\s*lstm\s*\(\s*x\s*\)', L('La applichi', 'You apply it'))], '', "lstm = nn.LSTM(input_size=50, hidden_size=32, batch_first=True)\nuscite, (h, c) = lstm(x)"), [
+            dMatch(pMatch(), [['RNN', L('Legge un passo alla volta', 'Reads one step at a time')], ['LSTM', L('RNN con porte', 'RNN with gates')], [L('Stato nascosto', 'Hidden state'), L('Memoria della sequenza', 'Memory of the sequence')], ['batch_first', L('Prima dimensione = esempi', 'First dimension = examples')]], L('Reti con memoria.', 'Networks with memory.')),
+            dFlash(pFlash(), [[L('Nelle sequenze l’ordine degli elementi conta', 'In sequences the order of elements matters'), true], [L('Le RNN leggono tutta la sequenza in un solo passo', 'RNNs read the whole sequence in one step'), false], [L('Le RNN faticano con le dipendenze molto lunghe', 'RNNs struggle with very long dependencies'), true], [L('Il transformer è un tipo di LSTM', 'The transformer is a kind of LSTM'), false]], L('Dalla memoria all’attenzione.', 'From memory to attention.')),
         ]),
     ],
 ];

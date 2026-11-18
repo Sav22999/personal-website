@@ -1,10 +1,10 @@
 <?php
-/** Vue intermediate: composables, watchers, Vue Router, Pinia and data from the server. */
+/** Vue intermediate: composables, watchers, Vue Router, Pinia and data from the server, provide/inject, transitions and Teleport, TypeScript. */
 
 return [
     'id' => 'vue-intermediate', 'family' => 'vue', 'after' => 'vue-base',
     'title' => L('Vue intermedio', 'Intermediate Vue'), 'short' => L('Vue intermedio', 'Vue Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
-    'desc' => L('Composable, watcher, rotte con Vue Router, stato condiviso con Pinia e dati dal server.', 'Composables, watchers, routes with Vue Router, shared state with Pinia and data from the server.'),
+    'desc' => L('Composable, watcher, rotte con Vue Router, stato condiviso con Pinia e provide/inject, dati dal server, animazioni e TypeScript.', 'Composables, watchers, routes with Vue Router, shared state with Pinia and provide/inject, data from the server, animations and TypeScript.'),
     'lessons' => [
         lesson('composables', L('I composable', 'Composables'), [
             P('Un **composable** è una funzione che inizia per `use` e raccoglie logica riutilizzabile con `ref` e `computed`. Più componenti la chiamano e ognuno riceve il suo stato.', 'A **composable** is a function starting with `use` that packs reusable logic with `ref` and `computed`. Several components call it and each gets its own state.'),
@@ -134,6 +134,96 @@ if (!r.ok) throw new Error("Errore " + r.status);
 note.value = await r.json();'), [
             dBug(pBug(), ['const r = await fetch("/api/corsi");', 'corsi.value = r.json();', 'carica.value = false;'], 1, 'corsi.value = await r.json();', L('`r.json()` restituisce una promessa: serve `await`.', '`r.json()` returns a promise: it needs `await`.')),
             dOrder(pSort(), ['try {', '  const r = await fetch(url);', '  if (!r.ok) throw new Error(r.status);', '  dati.value = await r.json();', '} catch (e) {', '  errore.value = e.message;', '}'], L('Chiedi, controlla, leggi, gestisci l’errore.', 'Ask, check, read, handle the error.')),
+        ]),
+        lesson('provide-inject', L('provide e inject', 'provide and inject'), [
+            P('Se un dato deve arrivare a un componente molto in basso, passarlo con le props a ogni livello è scomodo. Con `provide` un antenato **offre** un valore, e qualsiasi discendente lo **riceve** con `inject`, senza passaggi intermedi.', 'If some data must reach a component far down, passing it with props at every level is awkward. With `provide` an ancestor **offers** a value, and any descendant **receives** it with `inject`, with no steps in between.'),
+            C('<!-- App.vue -->
+<script setup>
+import { ref, provide } from "vue";
+const lingua = ref("it");
+provide("lingua", lingua);
+</script>
+
+<!-- Pulsante.vue, molti livelli più in basso -->
+<script setup>
+import { inject } from "vue";
+const lingua = inject("lingua", "it"); // "it" se nessuno lo fornisce
+</script>
+<template>
+  <button>{{ lingua === "it" ? "Salva" : "Save" }}</button>
+</template>', 'vue'),
+            P('Se fornisci un `ref`, chi lo riceve vede i cambiamenti. Il secondo argomento di `inject` è il valore di riserva. È ideale per tema, lingua o configurazione di una libreria; per lo stato condiviso in tutta l’app Pinia resta più chiaro.', 'If you provide a `ref`, whoever receives it sees the changes. The second argument of `inject` is the fallback value. It is ideal for theme, language or a library’s configuration; for state shared across the whole app Pinia stays clearer.'),
+        ], [
+            Q('pi1', L('Che cosa risolve `provide`/`inject`?', 'What does `provide`/`inject` solve?'), [L('Caricare dati dal server', 'Loading data from the server'), L('Gestire le rotte', 'Handling routes'), L('Passare dati a componenti lontani senza props intermedie', 'Passing data to far-away components without props in between'), L('Animare gli elementi', 'Animating elements')], 2, L('Niente catene di props.', 'No chains of props.')),
+            Q('pi2', L('Che cosa succede se il valore fornito è un `ref`?', 'What happens if the provided value is a `ref`?'), [L('Il discendente vede i cambiamenti', 'The descendant sees the changes'), L('Il discendente riceve una copia ferma', 'The descendant gets a frozen copy'), L('Vue dà errore', 'Vue errors'), L('Il ref viene cancellato', 'The ref is deleted')], 0, L('La reattività arriva fino in fondo.', 'Reactivity reaches all the way down.')),
+            Q('pi3', L('Che cosa indica il secondo argomento di `inject`?', 'What does the second argument of `inject` mean?'), [L('La chiave da cercare', 'The key to look for'), L('Il valore di riserva se nessuno lo fornisce', 'The fallback value if nobody provides it'), L('Il componente padre', 'The parent component'), L('Il tipo del valore', 'The value’s type')], 1, L('Così il componente funziona anche da solo.', 'So the component works on its own too.')),
+        ], task('vue', L('Nel padre fornisci `tema` con `provide("tema", tema)`.', 'In the parent provide `tema` with `provide("tema", tema)`.'), '<script setup>
+import { ref, provide } from "vue";
+const tema = ref("scuro");
+</script>', [re('provide\s*\(\s*["\']tema["\']\s*,\s*tema\s*\)', L('Il tema è fornito', 'The theme is provided'))], '', '<script setup>
+import { ref, provide } from "vue";
+const tema = ref("scuro");
+provide("tema", tema);
+</script>'), [
+            dBlanks(pFill(), "// antenato\n___(\"utente\", utente);\n// discendente\nconst utente = ___(\"utente\");", ['provide', 'inject'], ['emit', 'defineProps', 'watch'], L('Uno offre, l’altro riceve.', 'One offers, the other receives.')),
+            dFlash(pFlash(), [[L('`inject` può avere un valore di riserva', '`inject` can have a fallback value'), true], [L('`provide` funziona solo tra padre e figlio diretto', '`provide` only works between parent and direct child'), false], [L('Fornire un `ref` mantiene la reattività', 'Providing a `ref` keeps reactivity'), true], [L('`provide` sostituisce sempre Pinia', '`provide` always replaces Pinia'), false]], L('Arriva a tutti i discendenti, a qualsiasi profondità.', 'It reaches every descendant, at any depth.')),
+        ]),
+        lesson('transitions', L('Transition e Teleport', 'Transition and Teleport'), [
+            P('`<Transition>` anima un elemento quando compare o sparisce con `v-if` o `v-show`. Vue aggiunge in automatico delle classi nei vari momenti e tu scrivi il CSS: con `name="dissolvi"` le classi si chiamano `dissolvi-enter-from`, `dissolvi-leave-to` e così via.', '`<Transition>` animates an element when it appears or disappears with `v-if` or `v-show`. Vue adds classes automatically at each moment and you write the CSS: with `name="dissolvi"` the classes are called `dissolvi-enter-from`, `dissolvi-leave-to` and so on.'),
+            C('<template>
+  <button @click="aperto = !aperto">Info</button>
+  <Transition name="dissolvi">
+    <p v-if="aperto">Ciao!</p>
+  </Transition>
+
+  <Teleport to="body">
+    <div v-if="modale" class="modale">Sei sicuro?</div>
+  </Teleport>
+</template>
+
+<style>
+.dissolvi-enter-active, .dissolvi-leave-active { transition: opacity 0.3s; }
+.dissolvi-enter-from, .dissolvi-leave-to { opacity: 0; }
+</style>', 'vue'),
+            P('`<Teleport to="body">` disegna il contenuto in un altro punto della pagina, pur restando parte del componente: perfetto per finestre modali e notifiche, che così non vengono tagliate da un contenitore con `overflow: hidden`. Per animare le liste c’è `<TransitionGroup>`.', '`<Teleport to="body">` draws the content elsewhere on the page while staying part of the component: perfect for modals and notifications, which then are not clipped by a container with `overflow: hidden`. To animate lists there is `<TransitionGroup>`.'),
+        ], [
+            Q('tr1', L('Quando anima `<Transition>`?', 'When does `<Transition>` animate?'), [L('A ogni clic', 'On every click'), L('Solo al caricamento della pagina', 'Only on page load'), L('Mai senza JavaScript aggiuntivo', 'Never without extra JavaScript'), L('Quando l’elemento compare o sparisce', 'When the element appears or disappears')], 3, L('Con `v-if`, `v-show` o un componente dinamico.', 'With `v-if`, `v-show` or a dynamic component.')),
+            Q('tr2', L('Con `name="dissolvi"`, quale classe vale all’inizio dell’entrata?', 'With `name="dissolvi"`, which class applies at the start of the enter?'), ['dissolvi-enter-from', 'dissolvi-start', 'enter-dissolvi', 'v-dissolvi-in'], 0, L('Poi `-enter-active` durante e `-enter-to` alla fine.', 'Then `-enter-active` during and `-enter-to` at the end.')),
+            Q('tr3', L('A che cosa serve `<Teleport to="body">`?', 'What is `<Teleport to="body">` for?'), [L('A cambiare pagina', 'Changing page'), L('A disegnare il contenuto in un altro punto del DOM', 'Drawing the content elsewhere in the DOM'), L('A caricare un componente dal server', 'Loading a component from the server'), L('A copiare il componente', 'Copying the component')], 1, L('Dati ed eventi restano quelli del componente.', 'Data and events stay those of the component.')),
+        ], task('vue', L('Avvolgi il `<p v-if="visibile">` in un `<Transition name="scivola">`.', 'Wrap the `<p v-if="visibile">` in a `<Transition name="scivola">`.'), '<p v-if="visibile">Salvato!</p>', [re('<Transition\s+name\s*=\s*"scivola"\s*>\s*<p[^>]*v-if\s*=\s*"visibile"[^>]*>[\s\S]*</p>\s*</Transition>', L('Il paragrafo è animato', 'The paragraph is animated'))], '', '<Transition name="scivola">
+  <p v-if="visibile">Salvato!</p>
+</Transition>'), [
+            dMatch(pMatch(), [['<Transition>', L('Anima entrata e uscita', 'Animates enter and leave')], ['<TransitionGroup>', L('Anima le liste', 'Animates lists')], ['<Teleport>', L('Sposta il contenuto nel DOM', 'Moves the content in the DOM')], ['-enter-from', L('Stato iniziale dell’entrata', 'Initial state of the enter')], ['-leave-to', L('Stato finale dell’uscita', 'Final state of the leave')]], L('Movimento e posizione.', 'Movement and position.')),
+            dFlash(pFlash(), [[L('`<Transition>` funziona con `v-if` e `v-show`', '`<Transition>` works with `v-if` and `v-show`'), true], [L('Con `<Teleport>` il componente perde i suoi dati', 'With `<Teleport>` the component loses its data'), false], [L('Le classi della transizione dipendono da `name`', 'The transition classes depend on `name`'), true], [L('`<Transition>` scrive da solo il CSS dell’animazione', '`<Transition>` writes the animation CSS by itself'), false]], L('Vue mette le classi, il CSS lo scrivi tu.', 'Vue sets the classes, you write the CSS.')),
+        ]),
+        lesson('typescript', L('Vue con TypeScript', 'Vue with TypeScript'), [
+            P('Con `<script setup lang="ts">` puoi tipizzare tutto il componente. Le props si dichiarano con un tipo generico, `defineProps<{ … }>()`, e gli eventi con `defineEmits<{ … }>()`. Da Vue 3.5 puoi destrutturare le props, che restano reattive, e dare i valori di default direttamente.', 'With `<script setup lang="ts">` you can type the whole component. Props are declared with a generic type, `defineProps<{ … }>()`, and events with `defineEmits<{ … }>()`. Since Vue 3.5 you can destructure props, which stay reactive, and give default values directly.'),
+            C('<script setup lang="ts">
+import { ref, computed } from "vue";
+
+const { titolo, livelli = 5 } = defineProps<{
+  titolo: string;
+  livelli?: number;
+}>();
+
+const emit = defineEmits<{
+  scelto: [id: number];
+}>();
+
+const conta = ref<number>(0);
+const descrizione = computed(() => `${titolo} · ${livelli} livelli`);
+</script>', 'vue'),
+            P('L’editor controlla che il padre passi le props giuste e che `emit("scelto", 7)` abbia l’argomento corretto. Per controllare i tipi di un progetto Vue da riga di comando si usa `vue-tsc --noEmit`, perché `tsc` da solo non legge i file `.vue`.', 'The editor checks that the parent passes the right props and that `emit("scelto", 7)` has the correct argument. To check the types of a Vue project from the command line you use `vue-tsc --noEmit`, because `tsc` alone cannot read `.vue` files.'),
+        ], [
+            Q('vt1', L('Come si attiva TypeScript in un componente?', 'How do you turn on TypeScript in a component?'), ['<script type="ts">', '<ts-script>', '<script setup lang="ts">', '<script setup typescript>'], 2, L('L’attributo `lang` sceglie il linguaggio.', 'The `lang` attribute picks the language.')),
+            Q('vt2', L('Come dai un default a `livelli` con Vue 3.5?', 'How do you give `livelli` a default with Vue 3.5?'), [L('Con la destrutturazione: `const { livelli = 5 } = defineProps<…>()`', 'With destructuring: `const { livelli = 5 } = defineProps<…>()`'), L('Con `default:` nel template', 'With `default:` in the template'), L('Non si può', 'You cannot'), L('Con la direttiva `v-default`', 'With the `v-default` directive')], 0, L('Prima si usava `withDefaults`, che funziona ancora.', 'Before, you used `withDefaults`, which still works.')),
+            Q('vt3', L('Perché si usa `vue-tsc` invece di `tsc`?', 'Why use `vue-tsc` instead of `tsc`?'), [L('È sempre più veloce', 'It is always faster'), L('`tsc` non sa leggere i file `.vue`', '`tsc` cannot read `.vue` files'), L('`tsc` non esiste più', '`tsc` no longer exists'), L('Serve solo in produzione', 'It is only for production')], 1, L('`vue-tsc` capisce i componenti a file singolo.', '`vue-tsc` understands single-file components.')),
+        ], task('vue', L('In uno script `lang="ts"` dichiara le props con `defineProps<{ nome: string }>()`.', 'In a `lang="ts"` script declare the props with `defineProps<{ nome: string }>()`.'), '<script setup>
+</script>', [re('<script\s+(setup\s+lang\s*=\s*"ts"|lang\s*=\s*"ts"\s+setup)\s*>', L('Lo script è in TypeScript', 'The script is in TypeScript')), re('defineProps\s*<\s*\{\s*nome\s*:\s*string\s*;?\s*\}\s*>\s*\(\s*\)', L('Le props sono tipizzate', 'The props are typed'))], '', '<script setup lang="ts">
+const props = defineProps<{ nome: string }>();
+</script>'), [
+            dBlanks(pFill(), "<script setup lang=\"___\">\nconst props = defineProps<{ titolo: ___ }>();\nconst emit = ___<{ chiudi: [] }>();\n</script>", ['ts', 'string', 'defineEmits'], ['js', 'String', 'useEmits'], L('Linguaggio, tipo delle props, eventi tipizzati.', 'Language, props type, typed events.')),
+            dFlash(pFlash(), [[L('`defineProps<{…}>()` usa un tipo generico', '`defineProps<{…}>()` uses a generic type'), true], [L('`tsc` controlla da solo i file `.vue`', '`tsc` checks `.vue` files by itself'), false], [L('Da Vue 3.5 le props destrutturate restano reattive', 'Since Vue 3.5 destructured props stay reactive'), true], [L('TypeScript in Vue richiede di riscrivere tutto in classi', 'TypeScript in Vue requires rewriting everything as classes'), false]], L('Stessa sintassi, con i tipi.', 'Same syntax, with types.')),
         ]),
     ],
 ];

@@ -1,10 +1,10 @@
 <?php
-/** SQL basics: tables, SELECT, WHERE, ORDER BY and changing data. */
+/** SQL basics: tables, SELECT, WHERE, ORDER BY, changing data, NULL and CASE, functions and ALTER TABLE. */
 
 return [
     'id' => 'sql-base', 'family' => 'sql', 'after' => null,
     'title' => L('SQL base', 'SQL Basics'), 'short' => L('SQL base', 'SQL Basics'), 'level' => L('Base', 'Basics'),
-    'desc' => L('Parlare con i database: tabelle, `SELECT`, filtri, ordinamento, inserimenti e modifiche.', 'Talking to databases: tables, `SELECT`, filters, sorting, inserts and updates.'),
+    'desc' => L('Parlare con i database: tabelle, `SELECT`, filtri, ordinamento, inserimenti e modifiche, `NULL` e `CASE`, funzioni e `ALTER TABLE`.', 'Talking to databases: tables, `SELECT`, filters, sorting, inserts and updates, `NULL` and `CASE`, functions and `ALTER TABLE`.'),
     'lessons' => [
         lesson('tables', L('Tabelle e SELECT', 'Tables and SELECT'), [
             P('Un database relazionale tiene i dati in **tabelle**: righe (i record) e colonne (i campi). `SELECT` legge: dopo la parola si scrivono le colonne, dopo `FROM` la tabella.', 'A relational database keeps data in **tables**: rows (records) and columns (fields). `SELECT` reads: after the word you list the columns, after `FROM` the table.'),

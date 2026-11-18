@@ -77,7 +77,7 @@
         return logo ? h('span.fam.has-logo', {title: familyName(c.family)}, h('i.logo', {style: {webkitMaskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)', maskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)'}})) : h('span.fam', familyShort(c.family));
     };
     /** Courses just added, shown as new until the given day (included): a "New" chip on their cards and a spot on the home page. */
-    const NEW_COURSES = {'savcomponents-base': '2026-12-17', 'savcomponents-intermediate': '2026-12-17'};
+    const NEW_COURSES = {'savcomponents-base': '2026-12-17', 'savcomponents-intermediate': '2026-12-17', 'savcomponents-advanced': '2026-12-18'};
     const isNew = c => !!NEW_COURSES[c.id] && new Date().toLocaleDateString('sv') <= NEW_COURSES[c.id]; // 'sv' writes the local day as YYYY-MM-DD
     const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI'], ['devops', 'DevOps'], ['security', 'Security'], ['productivity', 'Productivity'], ['design', 'Design']];
 
@@ -172,9 +172,49 @@
     };
     /** Courses whose HTML samples are shown rendered under the code, in the theory of a level. */
     const PREVIEW_FAMILIES = ['html', 'css', 'a11y', 'search', 'savcomponents', 'bootstrap', 'tailwind'];
+    /**
+     * The height a preview needs: the lowest edge of what is laid out in the page, plus the height of what is fixed to the
+     * window (a bottom bar would otherwise cover the content). Nothing in it depends on the size of the frame, so the frame
+     * can grow to it without growing again. Written in plain ES5: it also runs inside the preview pages, as text.
+     */
+    function previewHeight(doc) {
+        var w = doc.defaultView, body = doc.body, fixed = [], bottom = 0, extra = 0, i, k;
+        if (!body) return 0;
+        var all = body.querySelectorAll('*');
+        for (i = 0; i < all.length; i++) {
+            var el = all[i], inside = false;
+            for (k = 0; k < fixed.length; k++) if (fixed[k].contains(el)) inside = true;
+            if (inside) continue;
+            var cs = w.getComputedStyle(el);
+            if (cs.display === 'none' || cs.display === 'contents' && !el.getClientRects().length) continue;
+            var r = el.getBoundingClientRect();
+            // Fixed to the window, or placed against it: it takes its own room below the content
+            if (cs.position === 'fixed' || cs.position === 'absolute' && (!el.offsetParent || el.offsetParent === body)) {
+                fixed.push(el);
+                extra += r.height;
+                continue;
+            }
+            bottom = Math.max(bottom, r.bottom + (parseFloat(cs.marginBottom) || 0));
+        }
+        // Text written straight in the body
+        for (i = 0; i < body.childNodes.length; i++) {
+            if (body.childNodes[i].nodeType !== 3 || !body.childNodes[i].textContent.trim()) continue;
+            var range = doc.createRange();
+            range.selectNodeContents(body.childNodes[i]);
+            bottom = Math.max(bottom, range.getBoundingClientRect().bottom);
+        }
+        return Math.ceil(bottom + w.scrollY + (parseFloat(w.getComputedStyle(body).marginBottom) || 0) + extra);
+    }
+
     const PREVIEW_HELPER = '<script>(function () {'
-        + 'function size() { parent.postMessage({fucina: "size", h: Math.ceil(document.body.getBoundingClientRect().height) + 24}, "*"); }'
-        + 'addEventListener("load", function () { size(); setTimeout(size, 400); if (window.ResizeObserver) new ResizeObserver(size).observe(document.body); });'
+        + 'var previewHeight = ' + previewHeight.toString() + ';'
+        + 'function size() { var h = previewHeight(document); if (h > 0) parent.postMessage({fucina: "size", h: h}, "*"); }'
+        // A preview shows, it does not go anywhere: links (also inside components) and forms do nothing
+        + 'document.addEventListener("click", function (e) { var p = e.composedPath ? e.composedPath() : [e.target]; for (var i = 0; i < p.length; i++) { if (p[i].hasAttribute && p[i].hasAttribute("href")) { e.preventDefault(); return; } } }, true);'
+        + 'document.addEventListener("submit", function (e) { e.preventDefault(); }, true);'
+        // Components draw themselves after the load, and icons arrive later still: measure again for a few seconds, then on every change
+        + 'addEventListener("load", function () { size(); var n = 0, id = setInterval(function () { size(); if (++n > 12) clearInterval(id); }, 500);'
+        + ' if (window.ResizeObserver) new ResizeObserver(size).observe(document.body); });'
         + 'addEventListener("message", function (e) { var d = e.data; if (!d || d.fucina !== "checks") return;'
         + ' parent.postMessage({fucina: "checks", id: d.id, results: d.checks.map(function (ch) { try { var el = document.querySelector(ch.sel); if (!el) return false;'
         + ' if (ch.prop) return getComputedStyle(el).getPropertyValue(ch.prop).trim() === ch.value; return !ch.text || el.textContent.indexOf(ch.text) >= 0; } catch (x) { return false; } })}, "*"); });'
@@ -184,7 +224,16 @@
     const previewPage = (family, body) => previewScripted(family) ? '<!doctype html><meta charset="utf-8">' + PREVIEW_HELPER + PREVIEW_LIBS[family] + body : body;
 
     function previewFrame(family, cls) {
-        return h('iframe.preview' + (cls ? '.' + cls : ''), {sandbox: previewScripted(family) ? 'allow-scripts' : 'allow-same-origin', title: t('Preview')});
+        const frame = h('iframe.preview' + (cls ? '.' + cls : ''), {sandbox: previewScripted(family) ? 'allow-scripts' : 'allow-same-origin', title: t('Preview')});
+        // Without scripts inside, the app itself keeps links from opening pages in the preview (with scripts, the helper does it)
+        if (!previewScripted(family)) frame.addEventListener('load', () => {
+            try {
+                frame.contentDocument.addEventListener('click', e => {
+                    if (e.target.closest && e.target.closest('[href]')) e.preventDefault();
+                }, true);
+            } catch (e) { /* nothing to hold back */ }
+        });
+        return frame;
     }
 
     /** The checks with a selector, answered by the helper inside a frame with scripts (false when it does not answer). */
@@ -208,19 +257,28 @@
 
     /** A sample of the theory, rendered: only when it shows something (not a page head, not "…" alone). */
     function samplePreview(code, family) {
-        const visible = code.replace(/<head[\s\S]*?<\/head>|<!--[\s\S]*?-->|<!doctype[^>]*>|<\/?(html|head|body)\b[^>]*>|<(title|script|style)\b[\s\S]*?<\/\3>|<(meta|link|base)\b[^>]*>/gi, '').replace(/[\s…]+/g, '');
+        const visible = code.replace(/<head[\s\S]*?<\/head>|<!--[\s\S]*?-->|<!doctype[^>]*>|<\/?(html|head|body)\b[^>]*>|<(title|script|style)\b[\s\S]*?<\/\2>|<(meta|link|base)\b[^>]*>/gi, '').replace(/[\s…]+/g, '');
         if (!visible) return null;
         const frame = previewFrame(family, 'sample');
-        const fit = px => frame.style.height = Math.max(60, Math.min(520, px)) + 'px';
+        // It starts low and grows to its content: the page height cannot be read smaller than the frame itself
+        const fit = px => frame.style.height = Math.max(40, Math.min(560, px)) + 'px';
         if (previewScripted(family)) {
             const on = e => {
                 if (!frame.isConnected && frame.dataset.shown) return removeEventListener('message', on);
-                if (e.source === frame.contentWindow && e.data && e.data.fucina === 'size') fit(e.data.h);
+                if (e.source === frame.contentWindow && e.data && e.data.fucina === 'size' && e.data.h > 0) fit(e.data.h);
             };
             addEventListener('message', on);
         } else frame.addEventListener('load', () => {
             try {
-                fit(Math.ceil(frame.contentDocument.body.getBoundingClientRect().height) + 24);
+                const doc = frame.contentDocument;
+                const measure = () => {
+                    const px = previewHeight(doc);
+                    if (px > 0) fit(px);
+                };
+                measure();
+                // Images and fonts arrive later and change the height
+                if (window.ResizeObserver && doc.body) new ResizeObserver(measure).observe(doc.body);
+                doc.querySelectorAll('img').forEach(img => img.addEventListener('load', measure));
             } catch (e) { /* the frame cannot be read: it keeps its height */ }
         });
         frame.srcdoc = previewPage(family, code);
