@@ -1,6 +1,132 @@
 <?php
 /** Flutter basics: Dart, widgets, layout, stateful widgets, navigation, Dart functions and classes, input, packages and assets. */
 
+/** The widget tree of the first app next to what it draws on screen. Only widget names, so one language. */
+if (!function_exists('fig_flutterbase_tree')) {
+    function fig_flutterbase_tree(string $hi): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<g stroke="#8A87B0" stroke-width="2" fill="none">
+<path d="M205 56 V86"/><path d="M205 126 V141 H115 V156 M205 141 H295 V156"/><path d="M115 196 V226"/><path d="M295 196 V226"/>
+<path d="M392 150 H426"/><path d="M418 143 L428 150 L418 157"/>
+</g>
+<rect x="130" y="16" width="150" height="40" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="205" y="41" text-anchor="middle" font-weight="700">MaterialApp</text>
+<rect x="130" y="86" width="150" height="40" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="205" y="111" text-anchor="middle" font-weight="700">Scaffold</text>
+<rect x="40" y="156" width="150" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="115" y="181" text-anchor="middle" font-weight="700">AppBar</text>
+<rect x="220" y="156" width="150" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="295" y="181" text-anchor="middle" font-weight="700">Center</text>
+<rect x="40" y="226" width="150" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="115" y="251" text-anchor="middle">Text("Fucina")</text>
+<rect x="220" y="226" width="150" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="295" y="251" text-anchor="middle">Text("{$hi}")</text>
+<text x="409" y="136" text-anchor="middle" font-size="13" fill="#5F5C8A">build</text>
+<rect x="440" y="14" width="170" height="272" rx="22" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<rect x="452" y="34" width="146" height="42" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="466" y="61" font-weight="700">Fucina</text>
+<rect x="452" y="84" width="146" height="184" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="525" y="182" text-anchor="middle" font-size="17" font-weight="700" fill="#0B7F5C">{$hi}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A Column holding a Text, a SizedBox and a Row with an Icon and an Expanded, with the two main axes. */
+if (!function_exists('fig_flutterbase_axes')) {
+    function fig_flutterbase_axes(string $colAxis, string $rowAxis, string $rest, string $gap, string $title): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<g stroke-width="2" fill="none">
+<path d="M70 30 V206" stroke="#7048E8"/><path d="M63 198 L70 210 L77 198" stroke="#7048E8"/>
+<path d="M120 236 H516" stroke="#2F8CF0"/><path d="M508 229 L520 236 L508 243" stroke="#2F8CF0"/>
+</g>
+<text transform="translate(52 118) rotate(-90)" text-anchor="middle" font-size="14" font-weight="700" fill="#5A35C9">{$colAxis}</text>
+<text x="320" y="262" text-anchor="middle" font-size="14" font-weight="700" fill="#1B66BC">{$rowAxis}</text>
+<rect x="100" y="24" width="440" height="190" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="114" y="46" font-size="13" font-weight="700" fill="#5A35C9">Column</text>
+<rect x="120" y="56" width="180" height="36" rx="8" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<text x="210" y="80" text-anchor="middle">Text("{$title}")</text>
+<rect x="120" y="98" width="180" height="14" rx="4" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="312" y="110" font-size="13" fill="#5F5C8A">{$gap}</text>
+<text x="520" y="126" text-anchor="end" font-size="13" font-weight="700" fill="#1B66BC">Row</text>
+<rect x="120" y="132" width="400" height="70" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="132" y="141" width="52" height="52" rx="8" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<path d="M158 151 l5.3 10.8 11.9 1.7 -8.6 8.4 2 11.8 -10.6 -5.6 -10.6 5.6 2 -11.8 -8.6 -8.4 11.9 -1.7z" fill="#E8590C"/>
+<rect x="194" y="141" width="314" height="52" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="351" y="172" text-anchor="middle" font-size="14" fill="#0B7F5C"><tspan font-weight="700">Expanded</tspan> {$rest}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The setState loop: a tap, setState, build again, the new screen. The four steps light up in turn. */
+if (!function_exists('fig_flutterbase_setstate')) {
+    function fig_flutterbase_setstate(string $tap, string $again, string $screen, string $next): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.hl{opacity:0;animation:hl 6s infinite}.h2{animation-delay:1.5s}.h3{animation-delay:3s}.h4{animation-delay:4.5s}@keyframes hl{0%,22%{opacity:1}26%,100%{opacity:0}}@media (prefers-reduced-motion:reduce){.hl{animation:none}}</style>
+<g stroke="#8A87B0" stroke-width="2" fill="none">
+<path d="M152 66 H174"/><path d="M167 59 L177 66 L167 73"/>
+<path d="M314 66 H336"/><path d="M329 59 L339 66 L329 73"/>
+<path d="M476 66 H498"/><path d="M491 59 L501 66 L491 73"/>
+<path d="M565 100 V160 H85 V108"/><path d="M78 116 L85 104 L92 116"/>
+</g>
+<rect x="20" y="32" width="130" height="68" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="180" y="32" width="130" height="68" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="340" y="32" width="130" height="68" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="500" y="32" width="130" height="68" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g fill="none" stroke="#1E1C52" stroke-width="3">
+<rect class="hl" x="16" y="28" width="138" height="76" rx="14"/>
+<rect class="hl h2" x="176" y="28" width="138" height="76" rx="14"/>
+<rect class="hl h3" x="336" y="28" width="138" height="76" rx="14"/>
+<rect class="hl h4" x="496" y="28" width="138" height="76" rx="14"/>
+</g>
+<g text-anchor="middle">
+<text x="85" y="61" font-weight="700">1. {$tap}</text><text x="85" y="84" font-size="14" fill="#B84508">onPressed</text>
+<text x="245" y="61" font-weight="700">2. setState</text><text x="245" y="84" font-size="14" fill="#5A35C9">n++</text>
+<text x="405" y="61" font-weight="700">3. build()</text><text x="405" y="84" font-size="14" fill="#1B66BC">{$again}</text>
+<text x="565" y="61" font-weight="700">4. {$screen}</text><text x="565" y="84" font-size="14" fill="#0B7F5C">Clic: 1</text>
+<text x="325" y="184" font-size="14" fill="#5F5C8A">{$next}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** The Navigator as a stack of pages: push lays a page on top, pop takes it away. The top page slides in and out. */
+if (!function_exists('fig_flutterbase_stack')) {
+    function fig_flutterbase_stack(string $list, string $push, string $pop, string $stack): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.top{animation:slide 7s ease-in-out infinite}@keyframes slide{0%,8%{transform:translateX(330px);opacity:0}30%,70%{transform:none;opacity:1}92%,100%{transform:translateX(330px);opacity:0}}@media (prefers-reduced-motion:reduce){.top{animation:none}}</style>
+<rect x="40" y="50" width="210" height="130" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="40" y="50" width="210" height="34" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="56" y="73" font-weight="700">{$list}</text>
+<g stroke="#8A87B0" stroke-width="2"><path d="M56 104 H90"/><path d="M56 126 H90"/><path d="M56 148 H90"/></g>
+<g class="top">
+<rect x="100" y="98" width="210" height="130" rx="12" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="100" y="98" width="210" height="34" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="116" y="121" font-weight="700">CorsoPage</text>
+<g stroke="#2F8CF0" stroke-width="2"><path d="M116 154 H270"/><path d="M116 176 H250"/><path d="M116 198 H280"/></g>
+</g>
+<text x="175" y="252" text-anchor="middle" font-size="14" fill="#5F5C8A">{$stack}</text>
+<g stroke-width="2" fill="none">
+<path d="M590 92 H330" stroke="#0B7F5C"/><path d="M340 85 L328 92 L340 99" stroke="#0B7F5C"/>
+<path d="M330 168 H590" stroke="#F03E82"/><path d="M580 161 L592 168 L580 175" stroke="#F03E82"/>
+</g>
+<text x="460" y="80" text-anchor="middle" font-size="14" font-weight="700" fill="#0B7F5C">{$push}</text>
+<text x="460" y="194" text-anchor="middle" font-size="14" font-weight="700" fill="#C2185B">{$pop}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'flutter-base', 'family' => 'flutter', 'after' => null,
     'title' => L('Flutter base', 'Flutter Basics'), 'short' => L('Flutter base', 'Flutter Basics'), 'level' => L('Base', 'Basics'),
@@ -8,15 +134,26 @@ return [
     'lessons' => [
         lesson('dart', L('Un assaggio di Dart', 'A taste of Dart'), [
             P('Flutter si scrive in **Dart**. Le variabili si dichiarano con il tipo o con `var`/`final`; `final` non cambia più. Le stringhe accettano valori con `$nome` o `${espressione}`.', 'Flutter is written in **Dart**. Variables are declared with a type or with `var`/`final`; `final` never changes again. Strings take values with `$nome` or `${expression}`.'),
-            C('void main() {
+            C(L('void main() {
   final String nome = "Ada";
   var anni = 36;
   int? telefono;            // può essere null
   print("Ciao $nome, tra un anno ne avrai ${anni + 1}");
   final voti = [7, 8, 9];
   print(voti.where((v) => v > 7).toList());
-}', 'dart'),
+}', 'void main() {
+  final String nome = "Ada";
+  var anni = 36;
+  int? telefono;            // may be null
+  print("Hi $nome, in a year you will be ${anni + 1}");
+  final voti = [7, 8, 9];
+  print(voti.where((v) => v > 7).toList());
+}'), 'dart', L('<pre>Ciao Ada, tra un anno ne avrai 37
+[8, 9]</pre>', '<pre>Hi Ada, in a year you will be 37
+[8, 9]</pre>')),
             P('Dart è **null-safe**: una variabile può contenere `null` solo se il tipo ha il punto di domanda (`int?`).', 'Dart is **null-safe**: a variable can hold `null` only if its type has a question mark (`int?`).'),
+            P('Perché tre modi? `var` e `final` lasciano a Dart il compito di dedurre il tipo, ma il tipo poi resta fisso: dopo `var anni = 36;` non puoi assegnare una stringa ad `anni`. Usa `final` per tutto ciò che non cambia (in Flutter è quasi tutto) e `var` solo per ciò che cambia davvero.', 'Why three ways? `var` and `final` let Dart infer the type, but the type then stays fixed: after `var anni = 36;` you cannot assign a string to `anni`. Use `final` for everything that does not change (in Flutter that is nearly everything) and `var` only for what really changes.'),
+            Tip('Per usare un `int?` controlla prima che non sia null, con `if (telefono != null) …`, oppure dai un valore di riserva: `telefono ?? 0`.', 'To use an `int?` first check it is not null, with `if (telefono != null) …`, or give a fallback value: `telefono ?? 0`.'),
         ], [
             Q('d1', L('Come inserisci una variabile in una stringa Dart?', 'How do you put a variable in a Dart string?'), ['"Ciao $nome"', '"Ciao {nome}"', '"Ciao " . nome', 'f"Ciao {nome}"'], 0, L('Con `$nome`; per le espressioni serve `${…}`.', 'With `$nome`; expressions need `${…}`.')),
             Q('d2', L('Che cosa significa `int?`', 'What does `int?` mean?'), [L('Un intero che può essere null', 'An int that may be null'), L('Un intero casuale', 'A random int'), L('Un errore', 'An error'), L('Un intero positivo', 'A positive int')], 0, L('Null safety.', 'Null safety.')),
@@ -29,7 +166,7 @@ print("Vivo a $citta");'), [
         ]),
         lesson('widgets', L('Tutto è un widget', 'Everything is a widget'), [
             P('In Flutter l’interfaccia è un **albero di widget**: testi, bottoni, colonne, margini. Un `StatelessWidget` non cambia: il suo metodo `build` restituisce i widget da mostrare.', 'In Flutter the interface is a **tree of widgets**: texts, buttons, columns, margins. A `StatelessWidget` does not change: its `build` method returns the widgets to show.'),
-            C('void main() => runApp(const App());
+            C(L('void main() => runApp(const App());
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -43,8 +180,24 @@ class App extends StatelessWidget {
       ),
     );
   }
-}', 'dart'),
+}', 'void main() => runApp(const App());
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text("Fucina")),
+        body: const Center(child: Text("Hello!")),
+      ),
+    );
+  }
+}'), 'dart', L('<style>body{margin:0;font-family:system-ui,sans-serif;color:#1d1b20}.bar{background:#DCEBFF;padding:16px;font-size:20px}.page{height:120px;display:flex;align-items:center;justify-content:center}</style><div class="bar">Fucina</div><div class="page">Ciao!</div>', '<style>body{margin:0;font-family:system-ui,sans-serif;color:#1d1b20}.bar{background:#DCEBFF;padding:16px;font-size:20px}.page{height:120px;display:flex;align-items:center;justify-content:center}</style><div class="bar">Fucina</div><div class="page">Hello!</div>')),
             P('`MaterialApp` dà lo stile Material, `Scaffold` la struttura della pagina (barra, corpo, bottone flottante). `const` crea il widget una volta sola, già in compilazione: Flutter lo riusa senza ricostruirlo.', '`MaterialApp` gives the Material style, `Scaffold` the page structure (bar, body, floating button). `const` builds the widget once, at compile time: Flutter reuses it without rebuilding it.'),
+            Fig(L(fig_flutterbase_tree('Ciao!'), fig_flutterbase_tree('Hello!')), L('A sinistra l’albero: MaterialApp contiene Scaffold, che ha due figli, AppBar con il testo Fucina e Center con il testo Ciao!. A destra un telefono con la barra blu «Fucina» in alto e «Ciao!» al centro del corpo verde.', 'On the left the tree: MaterialApp holds Scaffold, which has two children, AppBar with the text Fucina and Center with the text Hello!. On the right a phone with the blue “Fucina” bar at the top and “Hello!” in the middle of the green body.'), L('Ogni ramo dell’albero diventa un pezzo dello schermo.', 'Each branch of the tree becomes a piece of the screen.')),
+            P('Ogni widget ha dei figli (`child` o `children`): annidandoli costruisci l’albero, dall’app in cima fino ai testi in fondo. Un widget non è un pezzo di schermo ma una **descrizione leggera** di come deve apparire: crearne di nuovi costa poco, ed è proprio quello che Flutter fa ogni volta che qualcosa cambia.', 'Every widget has children (`child` or `children`): by nesting them you build the tree, from the app at the top down to the texts at the bottom. A widget is not a piece of screen but a **lightweight description** of how it should look: new ones are cheap to create, which is exactly what Flutter does every time something changes.'),
         ], [
             Q('w1', L('Quale metodo descrive l’interfaccia di un widget?', 'Which method describes a widget’s interface?'), ['build', 'render', 'draw', 'paint'], 0, L('Restituisce un `Widget`.', 'It returns a `Widget`.')),
             Q('w2', L('Che cosa dà `Scaffold`?', 'What does `Scaffold` give?'), [L('La struttura di una pagina', 'The structure of a page'), L('Un database', 'A database'), L('Un font', 'A font'), L('Un’animazione', 'An animation')], 0, L('Barra, corpo, bottoni.', 'Bar, body, buttons.')),
@@ -59,7 +212,7 @@ class App extends StatelessWidget {
         ]),
         lesson('layout', L('Layout', 'Layout'), [
             P('`Column` mette i figli uno sotto l’altro, `Row` uno accanto all’altro. `Padding` aggiunge spazio, `SizedBox` crea uno spazio fisso, `Expanded` fa occupare lo spazio rimasto.', '`Column` stacks children vertically, `Row` side by side. `Padding` adds space, `SizedBox` creates a fixed gap, `Expanded` takes the remaining space.'),
-            C('Padding(
+            C(L('Padding(
   padding: const EdgeInsets.all(16),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,8 +225,23 @@ class App extends StatelessWidget {
       ]),
     ],
   ),
-)', 'dart'),
+)', 'Padding(
+  padding: const EdgeInsets.all(16),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text("Title", style: TextStyle(fontSize: 24)),
+      const SizedBox(height: 8),
+      Row(children: [
+        const Icon(Icons.star),
+        Expanded(child: Text(descrizione)),
+      ]),
+    ],
+  ),
+)'), 'dart', L('<style>body{margin:0;font-family:system-ui,sans-serif;color:#1d1b20}.t{font-size:24px;margin:16px 16px 8px}.r{display:flex;gap:6px;margin:0 16px 16px;align-items:flex-start}</style><div class="t">Titolo</div><div class="r"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2l3 6.9 7.5.6-5.7 5 1.7 7.4L12 18l-6.5 3.9 1.7-7.4-5.7-5 7.5-.6z" fill="#49454f"/></svg><span>Una descrizione lunga che, grazie a Expanded, va a capo invece di uscire dal bordo dello schermo.</span></div>', '<style>body{margin:0;font-family:system-ui,sans-serif;color:#1d1b20}.t{font-size:24px;margin:16px 16px 8px}.r{display:flex;gap:6px;margin:0 16px 16px;align-items:flex-start}</style><div class="t">Title</div><div class="r"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 2l3 6.9 7.5.6-5.7 5 1.7 7.4L12 18l-6.5 3.9 1.7-7.4-5.7-5 7.5-.6z" fill="#49454f"/></svg><span>A long description that, thanks to Expanded, wraps instead of running off the edge of the screen.</span></div>')),
             P('Come in Flexbox, c’è un asse principale (`mainAxisAlignment`) e uno trasversale (`crossAxisAlignment`).', 'As in Flexbox, there is a main axis (`mainAxisAlignment`) and a cross axis (`crossAxisAlignment`).'),
+            Fig(L(fig_flutterbase_axes('asse principale della Column', 'asse principale della Row', 'occupa lo spazio rimasto', 'SizedBox: spazio fisso', 'Titolo'), fig_flutterbase_axes('Column main axis', 'Row main axis', 'takes the remaining space', 'SizedBox: fixed gap', 'Title')), L('Una Column viola contiene, dall’alto, un Text, un piccolo SizedBox tratteggiato e una Row azzurra. Nella Row ci sono un’icona a stella di misura fissa e un Expanded verde che riempie il resto. Una freccia verticale indica l’asse principale della Column, una orizzontale quello della Row.', 'A purple Column holds, from the top, a Text, a small dashed SizedBox and a blue Row. The Row contains a fixed-size star icon and a green Expanded that fills the rest. A vertical arrow marks the Column’s main axis, a horizontal one the Row’s.'), L('La Column impila in verticale, la Row in orizzontale; Expanded si prende ciò che avanza.', 'The Column stacks vertically, the Row horizontally; Expanded takes what is left.')),
+            P('La regola d’oro di Flutter: **i vincoli scendono, le misure salgono**. Il genitore dice al figlio quanto spazio può usare, il figlio sceglie la sua misura dentro quel limite. Per questo un `Text` lungo dentro una `Row` sfora con la striscia gialla e nera dell’overflow: la riga non gli pone un limite di larghezza. Avvolto in `Expanded` riceve come limite lo spazio rimasto, e va a capo.', 'Flutter’s golden rule: **constraints go down, sizes go up**. The parent tells the child how much space it may use, the child picks its size within that limit. That is why a long `Text` inside a `Row` overflows with the yellow-and-black stripe: the row puts no limit on its width. Wrapped in `Expanded` it gets the remaining space as its limit, and wraps.'),
         ], [
             Q('l1', L('Quale widget mette i figli in verticale?', 'Which widget stacks children vertically?'), ['Column', 'Row', 'Stack', 'Wrap'], 0, L('`Row` li mette in orizzontale.', '`Row` puts them horizontally.')),
             Q('l2', L('Che cosa fa `Expanded`?', 'What does `Expanded` do?'), [L('Occupa lo spazio rimasto', 'Takes the remaining space'), L('Ingrandisce il testo', 'Enlarges text'), L('Apre un menu', 'Opens a menu'), L('Niente', 'Nothing')], 0, L('Dentro `Row` o `Column`.', 'Inside `Row` or `Column`.')),
@@ -84,6 +252,7 @@ class App extends StatelessWidget {
         ]),
         lesson('state', L('Stato e setState', 'State and setState'), [
             P('Un `StatefulWidget` può cambiare nel tempo. Lo stato vive in una classe `State`; quando cambi un valore lo fai dentro `setState`, così Flutter ridisegna il widget.', 'A `StatefulWidget` can change over time. Its state lives in a `State` class; when you change a value you do it inside `setState`, so Flutter redraws the widget.'),
+            Fig(L(fig_flutterbase_setstate('tocco', 'rieseguito', 'schermo', 'il tocco successivo ricomincia il giro'), fig_flutterbase_setstate('tap', 'runs again', 'screen', 'the next tap starts the loop again')), L('Quattro passi in fila collegati da frecce: 1, il tocco chiama onPressed; 2, setState esegue n++; 3, build viene rieseguito; 4, lo schermo mostra Clic: 1. Una freccia riporta dall’ultimo passo al primo.', 'Four steps in a row joined by arrows: 1, the tap calls onPressed; 2, setState runs n++; 3, build runs again; 4, the screen shows Clic: 1. An arrow leads from the last step back to the first.'), L('setState cambia il dato e chiede a Flutter di rieseguire build.', 'setState changes the data and asks Flutter to run build again.')),
             C('class Contatore extends StatefulWidget {
   const Contatore({super.key});
   @override
@@ -102,6 +271,7 @@ class _ContatoreState extends State<Contatore> {
   }
 }', 'dart'),
             P('Il trattino basso davanti al nome (`_ContatoreState`) rende la classe privata al file (alla sua libreria, per la precisione).', 'The underscore in front of the name (`_ContatoreState`) makes the class private to the file (to its library, to be precise).'),
+            P('Widget e stato sono due oggetti separati apposta: il `StatefulWidget` è leggero e viene ricreato a ogni ricostruzione del genitore, mentre lo `State` resta vivo finché il widget è sullo schermo, e con lui il valore di `n`. L’errore tipico è cambiare la variabile fuori da `setState`: il valore cambia davvero, ma Flutter non lo sa e lo schermo resta indietro.', 'The widget and its state are two separate objects on purpose: the `StatefulWidget` is light and is recreated whenever its parent rebuilds, while the `State` stays alive as long as the widget is on screen, and the value of `n` with it. The classic mistake is changing the variable outside `setState`: the value really changes, but Flutter does not know and the screen falls behind.'),
         ], [
             Q('s1', L('Perché si usa `setState`?', 'Why use `setState`?'), [L('Per ridisegnare il widget', 'To redraw the widget'), L('Per salvare su disco', 'To save to disk'), L('Per chiudere l’app', 'To close the app'), L('Per cambiare tema', 'To change theme')], 0, L('Senza, lo schermo non si aggiorna.', 'Without it the screen does not update.')),
             Q('s2', L('Dove vive lo stato di un StatefulWidget?', 'Where does a StatefulWidget’s state live?'), [L('Nella classe State', 'In the State class'), L('Nel widget stesso', 'In the widget itself'), L('Nel main', 'In main'), L('In un file JSON', 'In a JSON file')], 0, L('Creata da `createState`.', 'Created by `createState`.')),
@@ -126,6 +296,8 @@ class _ContatoreState extends State<Contatore> {
     ),
   ),
 )', 'dart'),
+            P('Il `Navigator` tiene le pagine in una **pila**: `push` ne appoggia una in cima, `pop` toglie quella in cima e riappare quella sotto, con il suo stato intatto. Il tasto indietro di Android e lo scorrimento dal bordo su iOS chiamano `pop` per te. Per riportare un risultato passa un valore, `Navigator.pop(context, scelta)`, e leggilo dove hai aperto la pagina con `await Navigator.push(…)`.', 'The `Navigator` keeps pages in a **stack**: `push` lays one on top, `pop` removes the top one and the page below reappears, with its state intact. The Android back button and the edge swipe on iOS call `pop` for you. To send a result back, pass a value, `Navigator.pop(context, choice)`, and read it where you opened the page with `await Navigator.push(…)`.'),
+            Fig(L(fig_flutterbase_stack('Corsi', 'push: aggiunge in cima', 'pop: toglie la cima', 'la pila delle pagine'), fig_flutterbase_stack('Courses', 'push: adds on top', 'pop: removes the top', 'the stack of pages')), L('Due pagine sovrapposte: sotto la lista dei corsi, sopra CorsoPage. Una freccia verde verso la pila indica push, che aggiunge una pagina in cima; una freccia rosa verso l’esterno indica pop, che la toglie.', 'Two overlapping pages: the course list below, CorsoPage on top. A green arrow towards the stack marks push, which adds a page on top; a pink arrow pointing away marks pop, which removes it.'), L('Si vede sempre solo la pagina in cima alla pila.', 'Only the page at the top of the stack is visible.')),
             P('Per app più grandi si usano router con indirizzi, come il pacchetto `go_router`.', 'Larger apps use routers with addresses, such as the `go_router` package.'),
         ], [
             Q('n1', L('Perché `ListView.builder` per liste lunghe?', 'Why `ListView.builder` for long lists?'), [L('Crea solo le righe visibili', 'It builds only visible rows'), L('È più colorato', 'It is more colourful'), L('Ordina da solo', 'It sorts by itself'), L('Non serve', 'It is not needed')], 0, L('Risparmia memoria.', 'It saves memory.')),
@@ -140,7 +312,7 @@ class _ContatoreState extends State<Contatore> {
         ]),
         lesson('dart-functions', L('Funzioni e classi in Dart', 'Functions and classes in Dart'), [
             P('In Dart le funzioni hanno parametri posizionali e **parametri con nome**, scritti tra graffe: si passano indicando il nome e possono essere `required` o avere un valore predefinito. Una funzione di una sola espressione si scrive con la freccia `=>`.', 'In Dart functions have positional parameters and **named parameters**, written in braces: you pass them by name and they can be `required` or have a default value. A single-expression function is written with the arrow `=>`.'),
-            C('int somma(int a, int b) => a + b;
+            C(L('int somma(int a, int b) => a + b;
 
 String saluta({required String nome, String saluto = "Ciao"}) {
   return "$saluto, $nome!";
@@ -159,7 +331,30 @@ void main() {
   print(saluta(nome: "Ada"));
   final c = Corso("Flutter", livello: 2);
   print(c.etichetta);
-}', 'dart'),
+}', 'int somma(int a, int b) => a + b;
+
+String saluta({required String nome, String saluto = "Hello"}) {
+  return "$saluto, $nome!";
+}
+
+class Corso {
+  final String titolo;
+  final int livello;
+  const Corso(this.titolo, {this.livello = 1});
+
+  String get etichetta => "$titolo (level $livello)";
+}
+
+void main() {
+  print(somma(2, 3));
+  print(saluta(nome: "Ada"));
+  final c = Corso("Flutter", livello: 2);
+  print(c.etichetta);
+}'), 'dart', L('<pre>5
+Ciao, Ada!
+Flutter (livello 2)</pre>', '<pre>5
+Hello, Ada!
+Flutter (level 2)</pre>')),
             P('`this.titolo` nel costruttore assegna il campo in un colpo solo; `get` crea una proprietà calcolata. I widget sono classi fatte proprio così: per questo scrivi `Text("Ciao", style: …)` con parametri con nome.', '`this.titolo` in the constructor sets the field in one go; `get` creates a computed property. Widgets are classes built exactly like this: that is why you write `Text("Ciao", style: …)` with named parameters.'),
         ], [
             Q('f1', L('Come dichiari un parametro con nome obbligatorio?', 'How do you declare a required named parameter?'), ['[String nome]', '(named String nome)', '{required String nome}', '{String! nome}'], 2, L('Le graffe lo rendono con nome, `required` obbligatorio. Le quadre servono per i posizionali facoltativi.', 'Braces make it named, `required` makes it mandatory. Square brackets are for optional positional ones.')),
@@ -175,7 +370,7 @@ void main() {
         ]),
         lesson('input', L('Bottoni e campi di testo', 'Buttons and text fields'), [
             P('Material 3 offre più bottoni: `FilledButton` per l’azione principale, `OutlinedButton` e `TextButton` per quelle secondarie, `IconButton` per un’icona sola. Se `onPressed` è `null`, il bottone appare disattivato.', 'Material 3 offers several buttons: `FilledButton` for the main action, `OutlinedButton` and `TextButton` for secondary ones, `IconButton` for a lone icon. If `onPressed` is `null`, the button shows as disabled.'),
-            C('class _RicercaState extends State<Ricerca> {
+            C(L('class _RicercaState extends State<Ricerca> {
   final _controller = TextEditingController();
   String _testo = "";
 
@@ -199,7 +394,31 @@ void main() {
       ),
     ]);
   }
-}', 'dart'),
+}', 'class _RicercaState extends State<Ricerca> {
+  final _controller = TextEditingController();
+  String _testo = "";
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      TextField(
+        controller: _controller,
+        decoration: const InputDecoration(labelText: "Search"),
+        onChanged: (v) => setState(() => _testo = v),
+      ),
+      FilledButton(
+        onPressed: _testo.isEmpty ? null : () => cerca(_testo),
+        child: const Text("Go"),
+      ),
+    ]);
+  }
+}'), 'dart', L('<style>body{margin:0;font-family:system-ui,sans-serif;color:#1d1b20}.f{margin:12px 16px 4px;border-bottom:2px solid #6750a4;padding:6px 0 8px}.f small{display:block;color:#6750a4;font-size:12px}.b{margin:12px 16px 16px;display:inline-block;padding:10px 24px;border-radius:20px;background:#e6e1e5;color:#9e9a9f}</style><div class="f"><small>Cerca</small>&nbsp;</div><span class="b">Vai</span>', '<style>body{margin:0;font-family:system-ui,sans-serif;color:#1d1b20}.f{margin:12px 16px 4px;border-bottom:2px solid #6750a4;padding:6px 0 8px}.f small{display:block;color:#6750a4;font-size:12px}.b{margin:12px 16px 16px;display:inline-block;padding:10px 24px;border-radius:20px;background:#e6e1e5;color:#9e9a9f}</style><div class="f"><small>Search</small>&nbsp;</div><span class="b">Go</span>')),
             P('`onChanged` riceve il testo a ogni tasto. Il controller va liberato in `dispose`, che Flutter chiama quando il widget sparisce; il suo gemello `initState` è il posto per preparare le cose una volta sola, all’inizio.', '`onChanged` receives the text at every keystroke. The controller must be released in `dispose`, which Flutter calls when the widget goes away; its twin `initState` is the place to set things up once, at the start.'),
         ], [
             Q('i1', L('Come mostri un bottone disattivato?', 'How do you show a disabled button?'), [L('Con `enabled: false` dentro il `Text`', 'With `enabled: false` inside the `Text`'), L('Togliendo il `child` del bottone', 'By removing the button’s `child`'), L('Passando `null` a `onPressed`', 'By passing `null` to `onPressed`'), L('Con `visible: false` sul bottone', 'With `visible: false` on the button')], 2, L('Flutter lo disegna spento e ignora i tocchi.', 'Flutter draws it greyed out and ignores taps.')),

@@ -1,6 +1,129 @@
 <?php
 /** UX on desktop: large screens and layouts, pointer and keyboard, power users and shortcuts, windows and multitasking, data tables, learning complex software, web and native apps. */
 
+/** Figures of this course, each with its words in one language ('it' or 'en'). */
+if (!function_exists('fig_uxdesk_listdetail')) {
+    /** A desktop window in three panes: navigation, list and detail, with the text column kept narrow. */
+    function fig_uxdesk_listdetail(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Navigazione', 'Elenco', 'Dettaglio', 'Posta in arrivo', 'Inviati', 'Bozze', 'Archivio', 'max 60-80 caratteri per riga']
+            : ['Navigation', 'List', 'Detail', 'Inbox', 'Sent', 'Drafts', 'Archive', 'max 60-80 characters per line'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 310" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<rect x="10" y="30" width="620" height="270" rx="12" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<path d="M10 42 a12 12 0 0 1 12 -12 h596 a12 12 0 0 1 12 12 v14 h-620 z" fill="#F1F0F8"/>
+<g fill="#8A87B0"><circle cx="28" cy="43" r="5"/><circle cx="44" cy="43" r="5"/><circle cx="60" cy="43" r="5"/></g>
+<rect x="11" y="56" width="139" height="243" fill="#F1F0F8"/>
+<g font-size="14" font-weight="700" text-anchor="middle"><text x="80" y="20" fill="#5F3DC4">{$t[0]}</text><text x="245" y="20" fill="#1B66BC">{$t[1]}</text><text x="485" y="20" fill="#0B7F5C">{$t[2]}</text></g>
+<rect x="22" y="70" width="118" height="28" rx="8" fill="#ECE6FF"/>
+<g><text x="32" y="89" font-weight="700" fill="#5F3DC4">{$t[3]}</text><text x="32" y="122">{$t[4]}</text><text x="32" y="150">{$t[5]}</text><text x="32" y="178">{$t[6]}</text></g>
+<line x1="340" y1="56" x2="340" y2="299" stroke="#E4E2F0" stroke-width="2"/>
+<rect x="160" y="66" width="170" height="52" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g fill="#E4E2F0"><rect x="172" y="78" width="90" height="10" rx="5"/><rect x="172" y="96" width="140" height="8" rx="4"/>
+<rect x="172" y="136" width="90" height="10" rx="5"/><rect x="172" y="154" width="130" height="8" rx="4"/>
+<rect x="172" y="186" width="90" height="10" rx="5"/><rect x="172" y="204" width="140" height="8" rx="4"/>
+<rect x="172" y="236" width="90" height="10" rx="5"/><rect x="172" y="254" width="120" height="8" rx="4"/></g>
+<rect x="172" y="78" width="90" height="10" rx="5" fill="#2F8CF0"/>
+<rect x="364" y="70" width="180" height="16" rx="8" fill="#1E1C52"/>
+<g fill="#E4E2F0"><rect x="364" y="104" width="230" height="8" rx="4"/><rect x="364" y="120" width="220" height="8" rx="4"/><rect x="364" y="136" width="230" height="8" rx="4"/><rect x="364" y="152" width="160" height="8" rx="4"/>
+<rect x="364" y="176" width="230" height="8" rx="4"/><rect x="364" y="192" width="210" height="8" rx="4"/><rect x="364" y="208" width="120" height="8" rx="4"/></g>
+<g stroke="#0B7F5C" stroke-width="2"><line x1="364" y1="236" x2="594" y2="236"/><line x1="364" y1="230" x2="364" y2="242"/><line x1="594" y1="230" x2="594" y2="242"/></g>
+<text x="479" y="258" text-anchor="middle" fill="#0B7F5C" font-weight="700">{$t[7]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxdesk_palette')) {
+    /** A command palette opened with Ctrl/Cmd+K: a search field and matching commands with their shortcuts. */
+    function fig_uxdesk_palette(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['espo', 'Esporta come PDF', 'Esporta come immagine', 'Esposizione: regola', 'Cerca un comando per nome', '↑↓ per scegliere, Invio per eseguire']
+            : ['expo', 'Export as PDF', 'Export as image', 'Exposure: adjust', 'Find a command by name', '↑↓ to choose, Enter to run'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="10" y="10" width="620" height="280" rx="12" fill="#F1F0F8"/>
+<g fill="#E4E2F0"><rect x="30" y="30" width="120" height="240" rx="8"/><rect x="170" y="30" width="440" height="20" rx="6"/><rect x="170" y="62" width="300" height="12" rx="6"/></g>
+<rect x="130" y="56" width="380" height="206" rx="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<circle cx="157" cy="84" r="7" fill="none" stroke="#5A5880" stroke-width="2"/><path d="M162 89 l6 6" stroke="#5A5880" stroke-width="2" stroke-linecap="round"/>
+<text x="178" y="90" font-size="16">{$t[0]}</text><rect x="214" y="74" width="2" height="20" fill="#2F8CF0"/>
+<rect x="430" y="72" width="66" height="24" rx="6" fill="#F1F0F8"/><text x="463" y="89" text-anchor="middle" font-size="13" fill="#5A5880">Ctrl K</text>
+<line x1="130" y1="108" x2="510" y2="108" stroke="#E4E2F0" stroke-width="2"/>
+<rect x="140" y="116" width="360" height="34" rx="8" fill="#DCEBFF"/>
+<text x="156" y="138" font-weight="700" fill="#1B66BC">{$t[1]}</text><text x="488" y="138" text-anchor="end" font-size="13" fill="#1B66BC">Ctrl Shift E</text>
+<text x="156" y="176">{$t[2]}</text>
+<text x="156" y="210">{$t[3]}</text>
+<text x="320" y="246" text-anchor="middle" font-size="13" fill="#5A5880">{$t[5]}</text>
+<text x="320" y="282" text-anchor="middle" font-size="13" fill="#5F3DC4" font-weight="700">{$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxdesk_table')) {
+    /** The anatomy of a data table: sticky header, sorted column, right-aligned numbers, selection and a bulk action bar. */
+    function fig_uxdesk_table(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['3 selezionati', 'Archivia', 'Elimina', 'Cliente', 'Data', 'Importo', 'Rossi srl', 'Bianchi spa', 'Verdi &amp; C.', 'Neri snc', 'intestazione fissa', 'ordinata per data', 'numeri allineati a destra', 'azioni di massa', '12 mar', '9 mar', '7 mar', '2 mar', '1.250,00', '980,50', '12.400,00', '75,00']
+            : ['3 selected', 'Archive', 'Delete', 'Customer', 'Date', 'Amount', 'Smith Ltd', 'Brown plc', 'Green &amp; Co', 'Black Ltd', 'sticky header', 'sorted by date', 'numbers aligned right', 'bulk actions', '12 Mar', '9 Mar', '7 Mar', '2 Mar', '1,250.00', '980.50', '12,400.00', '75.00'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="20" y="20" width="420" height="40" rx="10" fill="#1E1C52"/>
+<text x="40" y="45" font-weight="700" fill="#FFFFFF">{$t[0]}</text>
+<rect x="210" y="28" width="96" height="24" rx="6" fill="#FFFFFF"/><text x="258" y="45" text-anchor="middle" font-size="13">{$t[1]}</text>
+<rect x="316" y="28" width="96" height="24" rx="6" fill="#FFE3EE"/><text x="364" y="45" text-anchor="middle" font-size="13" fill="#C2255C">{$t[2]}</text>
+<rect x="20" y="70" width="420" height="36" rx="8" fill="#F1F0F8"/>
+<g font-weight="700"><text x="74" y="93">{$t[3]}</text><text x="250" y="93" fill="#1B66BC">{$t[4]} ↓</text><text x="424" y="93" text-anchor="end">{$t[5]}</text></g>
+<g fill="none" stroke="#8A87B0" stroke-width="2"><rect x="38" y="81" width="16" height="16" rx="4"/></g>
+<g font-size="14">
+<rect x="20" y="110" width="420" height="40" fill="#DCEBFF"/><rect x="20" y="152" width="420" height="40" fill="#DCEBFF"/>
+<rect x="20" y="236" width="420" height="40" fill="#DCEBFF"/>
+<g fill="#2F8CF0"><rect x="38" y="122" width="16" height="16" rx="4"/><rect x="38" y="164" width="16" height="16" rx="4"/><rect x="38" y="248" width="16" height="16" rx="4"/></g>
+<g stroke="#FFFFFF" stroke-width="2" fill="none"><path d="M42 130 l3 3 l6 -6"/><path d="M42 172 l3 3 l6 -6"/><path d="M42 256 l3 3 l6 -6"/></g>
+<rect x="38" y="206" width="16" height="16" rx="4" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<text x="74" y="135">{$t[6]}</text><text x="74" y="177">{$t[7]}</text><text x="74" y="219">{$t[8]}</text><text x="74" y="261">{$t[9]}</text>
+<g fill="#5A5880"><text x="250" y="135">{$t[14]}</text><text x="250" y="177">{$t[15]}</text><text x="250" y="219">{$t[16]}</text><text x="250" y="261">{$t[17]}</text></g>
+<g text-anchor="end" font-variant-numeric="tabular-nums"><text x="424" y="135">{$t[18]}</text><text x="424" y="177">{$t[19]}</text><text x="424" y="219">{$t[20]}</text><text x="424" y="261">{$t[21]}</text></g>
+</g>
+<g stroke="#E8590C" stroke-width="2"><line x1="444" y1="40" x2="470" y2="40"/><line x1="444" y1="88" x2="470" y2="88"/><line x1="444" y1="198" x2="470" y2="198"/></g>
+<line x1="250" y1="102" x2="320" y2="102" stroke="#E8590C" stroke-width="2"/>
+<g font-size="13" font-weight="700" fill="#B84508"><text x="476" y="45">{$t[13]}</text><text x="476" y="84">{$t[10]}</text><text x="476" y="194">{$t[12]}</text><text x="250" y="300">↑ {$t[11]}</text></g>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxdesk_disclosure')) {
+    /** Progressive disclosure: a short export panel, and the same panel with “More options” opened. */
+    function fig_uxdesk_disclosure(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Esporta', 'Formato', 'Qualità', 'Altre opzioni', 'Meno opzioni', 'Profilo colore', 'Metadati', 'Margini di stampa', 'Esporta', 'All’inizio: l’essenziale', 'Su richiesta: il resto']
+            : ['Export', 'Format', 'Quality', 'More options', 'Fewer options', 'Colour profile', 'Metadata', 'Print margins', 'Export', 'At first: the essentials', 'On request: the rest'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-size="15" font-weight="700" text-anchor="middle"><text x="160" y="24">{$t[9]}</text><text x="480" y="24">{$t[10]}</text></g>
+<rect x="40" y="40" width="240" height="210" rx="12" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<text x="60" y="70" font-size="16" font-weight="700">{$t[0]}</text>
+<text x="60" y="102">{$t[1]}</text><rect x="150" y="86" width="110" height="24" rx="6" fill="#F1F0F8"/><text x="160" y="103" font-size="13">PDF ▾</text>
+<text x="60" y="138">{$t[2]}</text><rect x="150" y="128" width="110" height="6" rx="3" fill="#E4E2F0"/><rect x="150" y="128" width="80" height="6" rx="3" fill="#2F8CF0"/><circle cx="230" cy="131" r="7" fill="#2F8CF0"/>
+<text x="60" y="176" fill="#1B66BC" font-weight="700">▸ {$t[3]}</text>
+<rect x="150" y="204" width="110" height="32" rx="8" fill="#E8590C"/><text x="205" y="225" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$t[8]}</text>
+<path d="M296 150 h28" stroke="#8A87B0" stroke-width="2"/><path d="M324 144 l8 6 l-8 6 z" fill="#8A87B0"/>
+<rect x="360" y="40" width="240" height="290" rx="12" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<text x="380" y="70" font-size="16" font-weight="700">{$t[0]}</text>
+<text x="380" y="102">{$t[1]}</text><rect x="470" y="86" width="110" height="24" rx="6" fill="#F1F0F8"/><text x="480" y="103" font-size="13">PDF ▾</text>
+<text x="380" y="138">{$t[2]}</text><rect x="470" y="128" width="110" height="6" rx="3" fill="#E4E2F0"/><rect x="470" y="128" width="80" height="6" rx="3" fill="#2F8CF0"/><circle cx="550" cy="131" r="7" fill="#2F8CF0"/>
+<text x="380" y="176" fill="#1B66BC" font-weight="700">▾ {$t[4]}</text>
+<rect x="372" y="188" width="216" height="92" rx="8" fill="#F1F0F8"/>
+<g font-size="13"><text x="386" y="212">{$t[5]}</text><text x="386" y="238">{$t[6]}</text><text x="386" y="264">{$t[7]}</text></g>
+<g fill="#8A87B0"><rect x="540" y="202" width="36" height="14" rx="7"/><rect x="540" y="228" width="36" height="14" rx="7"/><rect x="540" y="254" width="36" height="14" rx="7"/></g>
+<rect x="470" y="288" width="110" height="32" rx="8" fill="#E8590C"/><text x="525" y="309" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$t[8]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ux-desktop', 'family' => 'ux', 'after' => 'ux-base', 'categories' => ['design', 'desktop'],
     'title' => L('UX su desktop', 'UX on Desktop'), 'short' => L('UX desktop', 'Desktop UX'), 'level' => L('Intermedio', 'Intermediate'),
@@ -8,11 +131,14 @@ return [
     'lessons' => [
         lesson('layout', L('Schermi grandi, layout e densità', 'Large screens, layout and density'), [
             P('Sul desktop si lavora seduti, a lungo, spesso su compiti complessi: scrivere, analizzare dati, gestire molti elementi. Lo spazio permette **più informazioni in vista** e layout a più colonne: barra laterale di navigazione, area principale, pannello di dettaglio (lo schema **lista-dettaglio** di email e file manager).', 'On desktop people work seated, for long stretches, often on complex tasks: writing, analysing data, managing many items. The space allows **more information in view** and multi-column layouts: side navigation bar, main area, detail panel (the **list-detail** pattern of email clients and file managers).'),
+            Fig(L(fig_uxdesk_listdetail('it'), fig_uxdesk_listdetail('en')),
+                L('La finestra di un programma di posta in tre colonne: a sinistra la navigazione con posta in arrivo, inviati, bozze e archivio; al centro l’elenco dei messaggi con uno selezionato; a destra il dettaglio del messaggio, con le righe di testo limitate a 60-80 caratteri.', 'An email client window in three columns: on the left the navigation with inbox, sent, drafts and archive; in the middle the list of messages with one selected; on the right the message detail, with lines of text limited to 60-80 characters.'),
+                L('Lo spazio in più serve a vedere più cose insieme, non a fare righe infinite.', 'Extra space is for seeing more things at once, not for endless lines.')),
             P('Più spazio non vuol dire riempirlo: i testi lunghi si leggono male oltre **60-80 caratteri per riga**, quindi si limita la larghezza delle colonne di testo. La **densità** si adatta all’uso: un’app per professionisti può essere compatta (tabelle fitte), una per il pubblico più ariosa; alcune app offrono entrambe le modalità.', 'More space does not mean filling it: long text reads poorly beyond **60-80 characters per line**, so the width of text columns is limited. **Density** adapts to use: a professional app can be compact (dense tables), a consumer one more airy; some apps offer both modes.'),
             C('.articolo {
   max-width: 70ch;   /* circa 70 caratteri per riga */
   margin-inline: auto;
-}', 'css'),
+}', 'css', L('<div class="articolo" style="background:#F1F0F8;padding:8px;font:16px/1.5 system-ui"><p>Su uno schermo largo questa colonna non supera i 70 caratteri circa per riga: l’occhio torna a capo senza perdersi e il testo resta comodo da leggere anche quando la finestra è molto più larga.</p></div>', '<div class="articolo" style="background:#F1F0F8;padding:8px;font:16px/1.5 system-ui"><p>On a wide screen this column never goes beyond about 70 characters per line: the eye finds the start of the next line without getting lost, and the text stays comfortable to read even when the window is much wider.</p></div>')),
         ], [
             Q('l1', L('Che cos’è lo schema lista-dettaglio?', 'What is the list-detail pattern?'), [L('Una lista e accanto il dettaglio dell’elemento scelto', 'A list with the chosen item’s detail beside it'), L('Una lista della spesa', 'A shopping list'), L('Un menu a tendina', 'A dropdown menu'), L('Una sola colonna centrata', 'A single centred column')], 0, L('Come le app di posta.', 'Like email apps.')),
             Q('l2', L('Quanti caratteri per riga si leggono meglio?', 'How many characters per line read best?'), [L('Circa 60-80', 'About 60-80'), L('Circa 200', 'About 200'), L('Meno di 10', 'Fewer than 10'), L('Tutta la larghezza dello schermo', 'The full screen width')], 0, L('Righe troppo lunghe stancano.', 'Lines too long tire the eye.')),
@@ -35,6 +161,9 @@ return [
         lesson('keyboard', L('Tastiera, scorciatoie e utenti esperti', 'Keyboard, shortcuts and power users'), [
             P('Sul desktop molti lavorano con la **tastiera**: tutto deve essere raggiungibile con `Tab` in un ordine logico, con il **focus sempre visibile**, `Invio` e `Spazio` per attivare, `Esc` per chiudere finestre e menu. È anche un requisito di accessibilità.', 'On desktop many people work with the **keyboard**: everything must be reachable with `Tab` in a logical order, with **always-visible focus**, `Enter` and `Space` to activate, `Esc` to close dialogs and menus. It is also an accessibility requirement.'),
             P('Gli **utenti esperti** vogliono velocità: **scorciatoie** coerenti con le convenzioni (`Ctrl/Cmd+S` salva, `Ctrl/Cmd+Z` annulla, `Ctrl/Cmd+K` apre la ricerca o la **command palette**), mostrate accanto alle voci di menu perché si imparino, **azioni multiple** su più elementi selezionati e preferenze personalizzabili. Il principio: semplice per chi inizia, veloce per chi è esperto.', '**Power users** want speed: **shortcuts** consistent with conventions (`Ctrl/Cmd+S` saves, `Ctrl/Cmd+Z` undoes, `Ctrl/Cmd+K` opens search or the **command palette**), shown next to menu items so they get learned, **bulk actions** on several selected items and customisable preferences. The principle: simple for beginners, fast for experts.'),
+            Fig(L(fig_uxdesk_palette('it'), fig_uxdesk_palette('en')),
+                L('Una palette dei comandi aperta sopra un’applicazione con Ctrl K: nel campo di ricerca è scritto «espo» e sotto compaiono i comandi che corrispondono, il primo evidenziato con la sua scorciatoia da tastiera accanto.', 'A command palette opened over an application with Ctrl K: the search field reads “expo” and the matching commands appear below, the first highlighted with its keyboard shortcut next to it.'),
+                L('Si cerca un comando per nome e intanto se ne impara la scorciatoia.', 'You find a command by name and learn its shortcut along the way.')),
             Tip('Non rubare le scorciatoie di sistema o del browser (come `Ctrl+W` o `Ctrl+T`): l’utente si aspetta che facciano quello che fanno sempre.', 'Do not steal system or browser shortcuts (like `Ctrl+W` or `Ctrl+T`): users expect them to do what they always do.'),
         ], [
             Q('k1', L('Quale tasto chiude di solito una finestra di dialogo?', 'Which key usually closes a dialog?'), ['Esc', 'Tab', 'Shift', 'F5'], 0, L('Una convenzione universale.', 'A universal convention.')),
@@ -57,6 +186,9 @@ return [
         ]),
         lesson('data', L('Tabelle, azioni in blocco e annulla', 'Tables, bulk actions and undo'), [
             P('Le app desktop gestiscono spesso **molti dati**. Una buona tabella ha intestazioni fisse, ordinamento per colonna, filtri, colonne ridimensionabili e numeri allineati a destra. La **selezione multipla** (con Maiusc e Ctrl/Cmd) permette azioni in blocco: archivia 30 email insieme.', 'Desktop apps often handle **lots of data**. A good table has sticky headers, sorting by column, filters, resizable columns and right-aligned numbers. **Multiple selection** (with Shift and Ctrl/Cmd) allows bulk actions: archive 30 emails at once.'),
+            Fig(L(fig_uxdesk_table('it'), fig_uxdesk_table('en')),
+                L('Una tabella di fatture con quattro righe, tre selezionate con la casella spuntata. In alto una barra scura dice «3 selezionati» con i pulsanti Archivia ed Elimina. L’intestazione resta fissa, la colonna Data ha una freccia che indica l’ordinamento e gli importi sono allineati a destra.', 'A table of invoices with four rows, three selected with their boxes ticked. At the top a dark bar says “3 selected” with Archive and Delete buttons. The header stays fixed, the Date column has an arrow showing the sort order and the amounts are aligned right.'),
+                L('Con i numeri allineati a destra le cifre si confrontano a colpo d’occhio.', 'With numbers aligned right, the digits can be compared at a glance.')),
             P('Per le azioni distruttive preferisci **Annulla** (un avviso con “Annulla” per qualche secondo) a una finestra “Sei sicuro?”: la conferma si clicca per abitudine, l’annulla salva davvero dall’errore. Ctrl/Cmd+Z dovrebbe funzionare ovunque abbia senso.', 'For destructive actions prefer **Undo** (a notice with “Undo” for a few seconds) to an “Are you sure?” dialog: confirmation gets clicked out of habit, undo really saves you from the mistake. Ctrl/Cmd+Z should work wherever it makes sense.'),
         ], [
             Q('dt1', L('Come si allineano i numeri in una tabella?', 'How are numbers aligned in a table?'), [L('A destra', 'Right'), L('A sinistra', 'Left'), L('Al centro', 'Centre'), L('A caso', 'Randomly')], 0, L('Così le cifre si confrontano.', 'So digits line up.')),
@@ -68,6 +200,9 @@ return [
         ]),
         lesson('learning', L('Software complessi: imparare un po’ alla volta', 'Complex software: learning step by step'), [
             P('Le app desktop professionali (editor, gestionali, strumenti di grafica) hanno centinaia di funzioni. La **divulgazione progressiva** mostra prima l’essenziale e rivela il resto quando serve: impostazioni avanzate dietro «Altre opzioni», pannelli che compaiono solo quando si seleziona qualcosa, menu con le voci più usate in alto.', 'Professional desktop apps (editors, management tools, graphics software) have hundreds of features. **Progressive disclosure** shows the essentials first and reveals the rest when needed: advanced settings behind “More options”, panels that appear only when something is selected, menus with the most used items at the top.'),
+            Fig(L(fig_uxdesk_disclosure('it'), fig_uxdesk_disclosure('en')),
+                L('Due versioni di un pannello «Esporta». La prima mostra solo formato, qualità, il link «Altre opzioni» e il pulsante. La seconda, con il link aperto, aggiunge profilo colore, metadati e margini di stampa in un riquadro grigio.', 'Two versions of an “Export” panel. The first shows only format, quality, the “More options” link and the button. The second, with the link opened, adds colour profile, metadata and print margins in a grey box.'),
+                L('Chi ne ha bisogno trova tutto, chi non ne ha bisogno non viene distratto.', 'Those who need it find everything, those who do not are not distracted.')),
             P('Per insegnare senza bloccare: **suggerimenti contestuali** che compaiono la prima volta che si usa una funzione, **modelli** e progetti di esempio per non partire dal foglio bianco, una **command palette** che fa trovare un comando cercandolo per nome, una guida cercabile dentro l’app. Evita i tour obbligatori di dieci passaggi: si saltano e si dimenticano.', 'To teach without blocking: **contextual tips** that appear the first time a feature is used, **templates** and sample projects so nobody starts from a blank page, a **command palette** to find a command by searching its name, a searchable help inside the app. Avoid mandatory ten-step tours: people skip them and forget them.'),
         ], [
             Q('o1', L('Che cos’è la divulgazione progressiva?', 'What is progressive disclosure?'), [L('Mostrare tutte le funzioni subito', 'Showing every feature at once'), L('Mostrare l’essenziale e rivelare il resto quando serve', 'Showing the essentials and revealing the rest when needed'), L('Nascondere per sempre le funzioni avanzate', 'Hiding advanced features forever'), L('Un tutorial obbligatorio all’avvio', 'A mandatory tutorial at launch')], 1, L('Semplice per chi inizia, completo per chi è esperto.', 'Simple for beginners, complete for experts.')),

@@ -107,8 +107,24 @@ function clean_body($blocks): array
     foreach (is_array($blocks) ? $blocks : [] as $b) {
         $type = $b['t'] ?? '';
         if ($type === 'code') {
-            $code = trim((string)($b['code'] ?? ''), "\n");
-            if ($code !== '') $out[] = ['t' => 'code', 'code' => $code, 'lang' => slug_of($b['lang'] ?? 'html', 10) ?: 'html'];
+            // Code and demo page: one text for every language, or one per language when they show words
+            $text = fn($v) => is_array($v) ? array_map(fn($x) => trim($x, "\n"), lang_field($v, false)) : trim(mb_substr((string)$v, 0, 20000), "\n");
+            $filled = fn($v) => is_array($v) ? (bool)array_filter($v, fn($x) => trim($x) !== '') : trim($v) !== '';
+            $code = $text($b['code'] ?? '');
+            if (!$filled($code)) continue;
+            $block = ['t' => 'code', 'code' => $code, 'lang' => slug_of($b['lang'] ?? 'html', 10) ?: 'html'];
+            $demo = $text($b['demo'] ?? '');
+            if ($filled($demo)) $block['demo'] = $demo;
+            $out[] = $block;
+        } elseif ($type === 'fig') {
+            // A drawing shown as an image (data: URL), so nothing in it can run; it only has to be an SVG of a sane size
+            $svg = is_array($b['svg'] ?? null) ? lang_field($b['svg'], false, 100000) : trim((string)($b['svg'] ?? ''));
+            $parts = is_array($svg) ? array_filter($svg, 'strlen') : [$svg];
+            if (!$parts || array_filter($parts, fn($x) => !preg_match('~^\s*(<\?xml[^>]*>\s*)?<svg\b~i', $x) || strlen($x) > 60000)) continue;
+            $block = ['t' => 'fig', 'svg' => $svg, 'alt' => lang_field($b['alt'] ?? null, false)];
+            $caption = lang_field($b['caption'] ?? null, false);
+            if (array_filter($caption, 'strlen')) $block['caption'] = $caption;
+            $out[] = $block;
         } elseif ($type === 'p' || $type === 'tip') {
             $text = lang_field($b['text'] ?? null, false);
             if (array_filter($text, 'strlen')) $out[] = ['t' => $type, 'text' => $text];

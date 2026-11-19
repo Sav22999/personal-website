@@ -1,9 +1,9 @@
 <?php
 /**
- * Builds lib/seed/corrections-v27.json: the texts the catalogue corrected since earlier copies of lib/, so that the
- * installations made before can receive them too (install_seed_corrections_v27 in lib/seed.php).
+ * Builds lib/seed/corrections-v29.json: the texts the catalogue corrected since earlier copies of lib/, so that the
+ * installations made before can receive them too (install_seed_corrections_v29 in lib/seed.php).
  *
- *   php tools/build-corrections.php /path/to/old/lib [/path/to/another/old/lib ...]
+ *   php tools/build-corrections.php [/path/to/old/lib ...]
  *
  * For every course field, lesson field (title, body, exercise), question and drill that changed, it stores the hashes of
  * its old values (one per earlier catalogue that had it different) and the new value: the migration replaces only what is
@@ -19,8 +19,12 @@ if (($argv[1] ?? '') === '--dump') {
     exit;
 }
 $olds = array_slice($argv, 1);
-if (!$olds || array_filter($olds, fn($d) => !is_file($d . '/seed.php'))) {
-    fwrite(STDERR, "Usage: php tools/build-corrections.php /path/to/old/lib [/path/to/another/old/lib ...]\n");
+$file = __DIR__ . '/../lib/seed/corrections-v29.json';
+// The corrections already built are kept: their old texts stay recognised, and so do the texts they brought, in case they
+// were published before this new round. So only the catalogues published since the last build need to be passed.
+$previous = is_file($file) ? (json_decode((string)file_get_contents($file), true) ?: []) : [];
+if (!$olds && !$previous || array_filter($olds, fn($d) => !is_file($d . '/seed.php'))) {
+    fwrite(STDERR, "Usage: php tools/build-corrections.php /path/to/old/lib [...] (the old libs can be left out when lib/seed/corrections-v29.json exists)\n");
     exit(1);
 }
 
@@ -40,8 +44,7 @@ $out = ['courses' => [], 'lessons' => [], 'questions' => [], 'drills' => []];
 // Adds an old value that differs from the new one: [hashes of the old values, new value]
 $add = function (?array &$slot, $oldValue, $newValue) use ($hash): void {
     if ($oldValue === $newValue) return;
-    $slot[1] = $newValue;
-    $slot[0] = array_values(array_unique([...($slot[0] ?? []), $hash($oldValue)]));
+    $slot = [array_values(array_unique([...($slot[0] ?? []), $hash($oldValue)])), $newValue];
 };
 foreach ($olds as $dir) {
     $old = $read(realpath($dir));
@@ -64,7 +67,24 @@ foreach ($olds as $dir) {
     }
 }
 
-$file = __DIR__ . '/../lib/seed/corrections-v27.json';
+// What the previous build recognised, and what it brought, stays recognised as an old text of the same item
+$keep = function (?array &$slot, array $before, $newValue) use ($hash): void {
+    $hashes = [...$before[0], $hash($before[1])];
+    $hashes = array_values(array_diff(array_unique([...($slot[0] ?? []), ...$hashes]), [$hash($newValue)]));
+    if (!$hashes) return;
+    $slot = [$hashes, $newValue];
+};
+foreach ($previous['courses'] ?? [] as $id => $fields) {
+    foreach ($fields as $k => $before) if (isset($new['courses'][$id][$k])) $keep($out['courses'][$id][$k], $before, $new['courses'][$id][$k]);
+}
+foreach ($previous['lessons'] ?? [] as $key => $fields) {
+    foreach ($fields as $k => $before) if (isset($new['lessons'][$key]) && array_key_exists($k, $new['lessons'][$key])) $keep($out['lessons'][$key][$k], $before, $new['lessons'][$key][$k]);
+}
+foreach (['questions', 'drills'] as $kind) {
+    foreach ($previous[$kind] ?? [] as $key => $before) if (isset($new[$kind][$key])) $keep($out[$kind][$key], $before, $new[$kind][$key]);
+}
+$out = array_map(fn($part) => array_filter($part, fn($v) => $v !== null && $v !== []), $out);
+
 file_put_contents($file, json_encode($out, FLAGS) . "\n");
 printf("%d course fields, %d lessons, %d questions, %d drills corrected -> %s\n",
     array_sum(array_map('count', $out['courses'])), count($out['lessons']), count($out['questions']), count($out['drills']), realpath($file));

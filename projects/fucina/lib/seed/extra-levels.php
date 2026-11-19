@@ -7,14 +7,348 @@ $page = '<h1 class="titolo">Fucina</h1>
 <div id="box">Una scatola</div>
 <a href="#">Un link</a>';
 
+/** css-base: the parts of a box-shadow. $t: horizontal offset, vertical offset, blur, colour. */
+if (!function_exists('fig_xl_shadow')) {
+    function fig_xl_shadow(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect x="74" y="66" width="190" height="120" rx="12" fill="#1E1C52" opacity=".35" filter="url(#blur)"/>
+<rect x="50" y="40" width="190" height="120" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<text x="145" y="106" text-anchor="middle" font-family="ui-monospace, Menlo, monospace">.card</text>
+<path d="M240 30h22M240 24v12M264 24v12" stroke="#E8590C" stroke-width="2" fill="none"/><text x="252" y="18" text-anchor="middle" font-weight="700" fill="#B84508">x</text>
+<path d="M30 160v24M24 160h12M24 186h12" stroke="#2F8CF0" stroke-width="2" fill="none"/><text x="16" y="178" text-anchor="middle" font-weight="700" fill="#1B66BC">y</text>
+<g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15">
+<text x="320" y="44" fill="#55527A">box-shadow:</text>
+<rect x="320" y="62" width="62" height="30" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="351" y="82" text-anchor="middle">24px</text>
+<rect x="320" y="104" width="62" height="30" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="351" y="124" text-anchor="middle">26px</text>
+<rect x="320" y="146" width="62" height="30" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="351" y="166" text-anchor="middle">16px</text>
+<rect x="320" y="188" width="146" height="30" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="393" y="208" text-anchor="middle">rgb(0 0 0/.35)</text>
+</g>
+<g font-weight="700"><text x="396" y="82" fill="#B84508">{$t[0]}</text><text x="396" y="124" fill="#1B66BC">{$t[1]}</text><text x="396" y="166" fill="#5B37D0">{$t[2]}</text><text x="480" y="208">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** css-base: what %, vw, rem and em are measured against. $t: screen, container, 50% note, 50vw note, rem note, em note. */
+if (!function_exists('fig_xl_units')) {
+    function fig_xl_units(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="12" y="12" width="616" height="276" rx="14" fill="#F7F6FC" stroke="#8A87B0" stroke-width="2"/>
+<text x="28" y="38" font-weight="700" fill="#55527A">{$t[0]}</text>
+<rect x="28" y="54" width="344" height="216" rx="12" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="44" y="78" font-weight="700" fill="#1B66BC">{$t[1]}</text>
+<rect x="44" y="96" width="156" height="36" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<text x="56" y="119" font-family="ui-monospace, Menlo, monospace">width: 50%</text>
+<text x="44" y="152" fill="#55527A" font-size="13">{$t[2]}</text>
+<rect x="44" y="176" width="308" height="36" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="56" y="199" font-family="ui-monospace, Menlo, monospace">width: 50vw</text>
+<text x="44" y="232" fill="#55527A" font-size="13">{$t[3]}</text>
+<path d="M44 250h308M44 244v12M352 244v12" stroke="#7048E8" stroke-width="2" fill="none"/>
+<text x="392" y="78" font-weight="700" fill="#0B7F5C">rem</text><text x="432" y="78" fill="#55527A" font-size="13">{$t[4]}</text>
+<rect x="392" y="96" width="16" height="16" rx="3" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="440" y="92" width="24" height="24" rx="4" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="500" y="88" width="32" height="32" rx="5" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" text-anchor="middle"><text x="400" y="142">1rem</text><text x="452" y="142">1.5rem</text><text x="516" y="142">2rem</text>
+<text x="400" y="160" fill="#55527A">16px</text><text x="452" y="160" fill="#55527A">24px</text><text x="516" y="160" fill="#55527A">32px</text></g>
+<text x="392" y="200" font-weight="700" fill="#B84508">em</text><text x="424" y="200" fill="#55527A" font-size="13">{$t[5]}</text>
+<text x="392" y="226" font-family="ui-monospace, Menlo, monospace" font-size="13">font-size: 20px</text>
+<text x="392" y="248" font-family="ui-monospace, Menlo, monospace" font-size="13">1.5em = 30px</text>
+</svg>
+SVG;
+    }
+}
+
+/** css-base: a max-width box in a screen that narrows and widens again; the box only shrinks when the screen is narrower than it. $t: screen. */
+if (!function_exists('fig_xl_maxwidth')) {
+    function fig_xl_maxwidth(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.scr,.bx{transform-origin:320px 0;animation:9s linear infinite}.scr{animation-name:scr}.bx{animation-name:bx}
+@keyframes scr{0%,12%{transform:scaleX(1)}42%{transform:scaleX(.607)}56%,70%{transform:scaleX(.45)}78.6%{transform:scaleX(.607)}100%{transform:scaleX(1)}}
+@keyframes bx{0%,12%,42%{transform:scaleX(1)}56%,70%{transform:scaleX(.707)}78.6%,100%{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.scr,.bx{animation:none}}</style>
+<rect class="scr" x="40" y="20" width="560" height="170" rx="10" fill="#F7F6FC" stroke="#8A87B0" stroke-width="2" vector-effect="non-scaling-stroke"/>
+<text x="320" y="46" text-anchor="middle" font-weight="700" fill="#55527A">{$t[0]}</text>
+<rect class="bx" x="170" y="70" width="300" height="96" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2" vector-effect="non-scaling-stroke"/>
+<text x="320" y="113" text-anchor="middle" font-family="ui-monospace, Menlo, monospace">max-width:</text>
+<text x="320" y="135" text-anchor="middle" font-family="ui-monospace, Menlo, monospace">300px</text>
+<text x="320" y="216" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#55527A">margin: 0 auto</text>
+</svg>
+SVG;
+    }
+}
+
+/** html-base: tags as boxes, properly nested on one side and crossed on the other. $t: right, wrong, notes. */
+if (!function_exists('fig_xl_nesting')) {
+    function fig_xl_nesting(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="160" y="32" text-anchor="middle" font-weight="700" fill="#0B7F5C">✓ {$t[0]}</text>
+<text x="480" y="32" text-anchor="middle" font-weight="700" fill="#C2255C">✗ {$t[1]}</text>
+<rect x="30" y="50" width="260" height="120" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="44" y="74" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1B66BC">&lt;p&gt;</text>
+<rect x="90" y="88" width="170" height="60" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="104" y="112" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#0B7F5C">&lt;strong&gt;</text>
+<rect x="350" y="50" width="200" height="120" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="364" y="74" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1B66BC">&lt;p&gt;</text>
+<rect x="420" y="88" width="190" height="60" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="7 5" fill-opacity=".85"/>
+<text x="500" y="112" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#C2255C">&lt;strong&gt;</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" text-anchor="middle">
+<text x="160" y="196">&lt;p&gt;&lt;strong&gt;…&lt;/strong&gt;&lt;/p&gt;</text>
+<text x="480" y="196">&lt;p&gt;&lt;strong&gt;…&lt;/p&gt;&lt;/strong&gt;</text></g>
+<g font-size="13" fill="#55527A" text-anchor="middle"><text x="160" y="224">{$t[2]}</text><text x="480" y="224">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** html-advanced: how a shared link turns into a preview card, with the tag behind each part. $t: labels. */
+if (!function_exists('fig_xl_ogcard')) {
+    function fig_xl_ogcard(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="30" y="16" width="300" height="258" rx="16" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="46" y="32" width="268" height="226" rx="12" fill="#FFFFFF" stroke="#D9D7E8" stroke-width="2"/>
+<rect x="46" y="32" width="268" height="120" rx="12" fill="#FFE8D6"/>
+<path d="M46 140h268v12H46z" fill="#FFE8D6"/>
+<path d="M130 126l40-44 30 32 18-18 40 30z" fill="#E8590C" opacity=".55"/><circle cx="110" cy="70" r="14" fill="#E8590C" opacity=".55"/>
+<text x="62" y="180" font-weight="700" font-size="16">{$t[0]}</text>
+<text x="62" y="218" font-size="13" fill="#55527A">{$t[1]}</text>
+<text x="62" y="252" font-size="13" fill="#55527A">{$t[4]}</text>
+<g stroke="#7048E8" stroke-width="2" fill="none"><path d="M330 92H380"/><path d="M330 175H380"/><path d="M330 214H380"/><path d="M330 253H380"/></g>
+<g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13">
+<rect x="380" y="76" width="246" height="32" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="392" y="97">og:image</text>
+<rect x="380" y="159" width="246" height="32" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="392" y="180">og:title / title</text>
+<rect x="380" y="198" width="246" height="32" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="392" y="219">description</text>
+<rect x="380" y="237" width="246" height="32" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="392" y="258">canonical</text>
+</g>
+<text x="380" y="40" font-weight="700" fill="#5B37D0">{$t[2]}</text>
+<text x="380" y="60" font-size="13" fill="#55527A">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** html-advanced: a popover leaves the page usable, a modal dialog makes it inert. $t: labels. */
+if (!function_exists('fig_xl_popover')) {
+    function fig_xl_popover(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="#8A87B0" opacity=".25"/><path d="M0 0v10" stroke="#8A87B0" stroke-width="3" opacity=".5"/></pattern></defs>
+<text x="165" y="26" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-weight="700" font-size="15">popover</text>
+<text x="475" y="26" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-weight="700" font-size="15">dialog (modal)</text>
+<rect x="20" y="40" width="290" height="180" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<g fill="#D9D7E8"><rect x="40" y="60" width="200" height="12" rx="6"/><rect x="40" y="84" width="240" height="12" rx="6"/><rect x="40" y="176" width="220" height="12" rx="6"/><rect x="40" y="198" width="160" height="12" rx="6"/></g>
+<rect x="40" y="112" width="80" height="30" rx="8" fill="#2F8CF0"/><text x="80" y="132" text-anchor="middle" fill="#FFFFFF" font-weight="700">{$t[0]}</text>
+<path d="M140 127l10-8v16z" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="148" y="104" width="146" height="48" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="152" y="118" width="6" height="20" fill="#FFF3EA"/>
+<text x="221" y="132" text-anchor="middle" font-size="13">{$t[1]}</text>
+<rect x="330" y="40" width="290" height="180" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<g fill="#D9D7E8"><rect x="350" y="60" width="200" height="12" rx="6"/><rect x="350" y="84" width="240" height="12" rx="6"/><rect x="350" y="176" width="220" height="12" rx="6"/><rect x="350" y="198" width="160" height="12" rx="6"/></g>
+<rect x="331" y="41" width="288" height="178" rx="11" fill="url(#hatch)"/>
+<rect x="390" y="88" width="170" height="86" rx="12" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<text x="475" y="116" text-anchor="middle" font-size="13">{$t[2]}</text>
+<rect x="414" y="132" width="64" height="28" rx="8" fill="#F1F0F8" stroke="#7048E8" stroke-width="2"/><text x="446" y="151" text-anchor="middle" font-size="12">{$t[3]}</text>
+<rect x="486" y="132" width="64" height="28" rx="8" fill="#F03E82"/><text x="518" y="151" text-anchor="middle" font-size="12" fill="#FFFFFF" font-weight="700">{$t[4]}</text>
+<g font-size="13" fill="#55527A" text-anchor="middle"><text x="165" y="246">{$t[5]}</text><text x="165" y="266">{$t[6]}</text><text x="475" y="246">{$t[7]}</text><text x="475" y="266">{$t[8]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** html-advanced: when the HTML reading stops for a script, with no attribute, with defer and with async. A cursor marks time passing. $t: labels. */
+if (!function_exists('fig_xl_scripts')) {
+    function fig_xl_scripts(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<style>.now{animation:now 8s linear infinite}@keyframes now{from{transform:translateX(0)}to{transform:translateX(440px)}}@media (prefers-reduced-motion:reduce){.now{animation:none;opacity:0}}</style>
+<g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" font-weight="700"><text x="20" y="56">&lt;script&gt;</text><text x="20" y="128">defer</text><text x="20" y="200">async</text></g>
+<g font-size="12" fill="#55527A"><text x="20" y="74">{$t[0]}</text><text x="20" y="146">{$t[1]}</text><text x="20" y="218">{$t[2]}</text></g>
+<g fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2">
+<rect x="150" y="40" width="80" height="24" rx="6"/><rect x="320" y="40" width="250" height="24" rx="6"/>
+<rect x="150" y="112" width="370" height="24" rx="6"/>
+<rect x="150" y="184" width="150" height="24" rx="6"/><rect x="340" y="184" width="200" height="24" rx="6"/></g>
+<path d="M232 52H276" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4"/>
+<g fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"><rect x="200" y="68" width="76" height="16" rx="5"/><rect x="200" y="140" width="76" height="16" rx="5"/><rect x="200" y="212" width="76" height="16" rx="5"/></g>
+<g fill="#FFE8D6" stroke="#E8590C" stroke-width="2"><rect x="278" y="40" width="40" height="24" rx="6"/><rect x="522" y="112" width="40" height="24" rx="6"/><rect x="300" y="184" width="40" height="24" rx="6"/></g>
+<g font-size="11" text-anchor="middle"><text x="238" y="80">↓ js</text><text x="238" y="152">↓ js</text><text x="238" y="224">↓ js</text>
+<text x="298" y="56">▶</text><text x="542" y="128">▶</text><text x="320" y="200">▶</text></g>
+<path d="M150 246H600" stroke="#8A87B0" stroke-width="2"/><path d="M606 246l-10-5v10z" fill="#8A87B0"/><text x="600" y="236" text-anchor="end" fill="#55527A">{$t[3]}</text>
+<rect class="now" x="148" y="30" width="3" height="206" rx="1.5" fill="#F03E82"/>
+<g font-size="13"><rect x="150" y="264" width="22" height="14" rx="4" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="180" y="276">{$t[4]}</text>
+<rect x="330" y="264" width="22" height="14" rx="4" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="360" y="276">{$t[5]}</text>
+<rect x="470" y="264" width="22" height="14" rx="4" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="500" y="276">▶ {$t[6]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** html-advanced: the browser's sums with srcset and sizes on a phone and on a wide screen. $t: labels. */
+if (!function_exists('fig_xl_srcset')) {
+    function fig_xl_srcset(array $t): string
+    {
+        $chips = function (int $y, int $pick) {
+            $o = '';
+            foreach ([400, 800, 1600] as $i => $w) {
+                $x = 400 + $i * 78;
+                $on = $w === $pick;
+                $o .= "<rect x=\"$x\" y=\"$y\" width=\"70\" height=\"34\" rx=\"8\" fill=\"" . ($on ? '#D5F6EA' : '#FFFFFF') . "\" stroke=\"" . ($on ? '#0B7F5C' : '#8A87B0') . "\" stroke-width=\"" . ($on ? 3 : 2) . "\"/>"
+                    . "<text x=\"" . ($x + 35) . "\" y=\"" . ($y + 22) . "\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"13\"" . ($on ? ' font-weight="700"' : '') . ">" . ($on ? '✓ ' : '') . "{$w}w</text>";
+            }
+            return $o;
+        };
+        $a = $chips(52, 800); $b = $chips(172, 800);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="20" y="30" width="44" height="78" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="14" y="150" width="96" height="62" rx="6" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><path d="M50 212v12M38 226h24" stroke="#8A87B0" stroke-width="2"/>
+<g font-weight="700"><text x="80" y="58">{$t[0]}</text><text x="124" y="178">{$t[1]}</text></g>
+<g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13">
+<text x="80" y="80">100vw × 400px × 2</text><text x="80" y="100">= 800px</text>
+<text x="124" y="200">50vw × 1200px × 1</text><text x="124" y="220">= 600px</text></g>
+<path d="M250 86H390M290 206H390" stroke="#2F8CF0" stroke-width="2"/><path d="M396 86l-10-5v10zM396 206l-10-5v10z" fill="#2F8CF0"/>
+$a
+$b
+<g font-size="13" fill="#55527A"><text x="400" y="110">{$t[2]}</text><text x="400" y="230">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** css-advanced: ::before and ::after are boxes inside the element, around its content. $t: content text, notes. */
+if (!function_exists('fig_xl_pseudo')) {
+    function fig_xl_pseudo(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="40" y="40" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1B66BC">&lt;p class="nuovo"&gt;</text>
+<rect x="40" y="52" width="560" height="70" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="56" y="66" width="70" height="42" rx="8" fill="#FFF3EA" stroke="#E8590C" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="91" y="94" text-anchor="middle" font-size="17" fill="#B84508">★</text>
+<rect x="136" y="66" width="330" height="42" rx="8" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="301" y="93" text-anchor="middle">{$t[0]}</text>
+<rect x="476" y="66" width="108" height="42" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="530" y="93" text-anchor="middle" font-size="13" fill="#5B37D0">content: ""</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" text-anchor="middle"><text x="91" y="146" fill="#B84508">::before</text><text x="301" y="146">{$t[1]}</text><text x="530" y="146" fill="#5B37D0">::after</text></g>
+<text x="320" y="180" text-anchor="middle" font-size="13" fill="#55527A">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** css-advanced: the same card in a narrow and in a wide container; the container query switches the layout. Labels are code. */
+if (!function_exists('fig_xl_container')) {
+    function fig_xl_container(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" fill="#1E1C52">
+<rect x="20" y="30" width="180" height="200" rx="12" fill="#F7F6FC" stroke="#8A87B0" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="110" y="22" text-anchor="middle" fill="#55527A">260px</text>
+<rect x="34" y="44" width="152" height="172" rx="10" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<rect x="44" y="54" width="132" height="70" rx="6" fill="#FFE8D6"/><path d="M60 118l28-30 18 18 12-12 26 24z" fill="#E8590C" opacity=".5"/>
+<rect x="44" y="136" width="90" height="12" rx="6" fill="#1E1C52"/>
+<g fill="#D9D7E8"><rect x="44" y="158" width="128" height="9" rx="4.5"/><rect x="44" y="174" width="110" height="9" rx="4.5"/><rect x="44" y="190" width="120" height="9" rx="4.5"/></g>
+<rect x="230" y="30" width="390" height="200" rx="12" fill="#F7F6FC" stroke="#8A87B0" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="425" y="22" text-anchor="middle" fill="#55527A">460px</text>
+<rect x="244" y="44" width="362" height="172" rx="10" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<rect x="254" y="54" width="150" height="152" rx="6" fill="#FFE8D6"/><path d="M270 196l40-50 26 30 18-18 40 38z" fill="#E8590C" opacity=".5"/>
+<rect x="418" y="64" width="150" height="20" rx="10" fill="#1E1C52"/>
+<g fill="#D9D7E8"><rect x="418" y="100" width="170" height="9" rx="4.5"/><rect x="418" y="116" width="150" height="9" rx="4.5"/><rect x="418" y="132" width="164" height="9" rx="4.5"/></g>
+<text x="418" y="190" fill="#5B37D0" font-weight="700">@container</text><text x="418" y="206" fill="#5B37D0">(min-width: 400px)</text>
+</svg>
+SVG;
+    }
+}
+
+/** css-advanced: cascade layers stacked by order; the later layer wins whatever the specificity. $t: labels. */
+if (!function_exists('fig_xl_layers')) {
+    function fig_xl_layers(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="40" y="20" width="420" height="50" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<rect x="60" y="82" width="420" height="50" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="3"/>
+<rect x="80" y="144" width="420" height="50" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="100" y="206" width="420" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<g font-weight="700"><text x="56" y="50">{$t[0]}</text><text x="76" y="112" font-family="ui-monospace, Menlo, monospace">@layer componenti</text><text x="96" y="174" font-family="ui-monospace, Menlo, monospace">@layer base</text><text x="116" y="236" font-family="ui-monospace, Menlo, monospace">@layer reset</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="300" y="112">.menu a  (0,1,1)</text><text x="340" y="236">#pagina a  (1,0,1)</text></g>
+<path d="M574 246V40" stroke="#7048E8" stroke-width="3"/><path d="M574 30l-7 12h14z" fill="#7048E8"/>
+<text x="606" y="150" transform="rotate(-90 606 150)" text-anchor="middle" fill="#5B37D0" font-weight="700">{$t[1]}</text>
+<text x="490" y="112" font-weight="700" fill="#0B7F5C">✓ {$t[2]}</text>
+<text x="40" y="276" font-size="13" fill="#55527A">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** css-advanced: the named areas of grid-template-areas drawn as the page they make. Labels are code. */
+if (!function_exists('fig_xl_areas')) {
+    function fig_xl_areas(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#1E1C52">
+<g font-size="15"><text x="20" y="70">"testa testa"</text><text x="20" y="140">"menu  corpo"</text><text x="20" y="210">"piede piede"</text></g>
+<g stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4"><path d="M150 65H222M150 135H222M150 205H222"/></g>
+<rect x="240" y="30" width="380" height="60" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="240" y="104" width="120" height="66" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="374" y="104" width="246" height="66" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="240" y="184" width="380" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<g text-anchor="middle"><text x="430" y="56" font-weight="700">testa</text><text x="430" y="76" font-size="12" fill="#55527A">header</text>
+<text x="300" y="134" font-weight="700">menu</text><text x="300" y="154" font-size="12" fill="#55527A">nav</text>
+<text x="497" y="134" font-weight="700">corpo</text><text x="497" y="154" font-size="12" fill="#55527A">main</text>
+<text x="430" y="207" font-weight="700">piede</text><text x="430" y="225" font-size="12" fill="#55527A">footer</text></g>
+<g font-size="12" fill="#55527A" text-anchor="middle"><text x="300" y="20">200px</text><text x="497" y="20">1fr</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** css-advanced: six hues at the same hsl lightness look uneven; at the same oklch lightness they look even. Labels are code. */
+if (!function_exists('fig_xl_oklch')) {
+    function fig_xl_oklch(): string
+    {
+        $row = function (int $y, array $c) {
+            $o = '';
+            foreach ($c as $i => $hex) $o .= '<rect x="' . (230 + $i * 66) . "\" y=\"$y\" width=\"58\" height=\"58\" rx=\"10\" fill=\"$hex\"/>";
+            return $o;
+        };
+        $a = $row(40, ['#FF8000', '#80FF00', '#00FF80', '#007FFF', '#7F00FF', '#FF0080']);
+        $b = $row(150, ['#E47D6D', '#BE9A2A', '#5CB572', '#00B3CB', '#7F99EF', '#CB7FC5']);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#1E1C52">
+<text x="20" y="66" font-weight="700">hsl(h 100% 50%)</text><text x="20" y="88" font-size="13" fill="#55527A">L 50% … ≠</text>
+$a
+<text x="20" y="176" font-weight="700">oklch(70% .13 h)</text><text x="20" y="198" font-size="13" fill="#55527A">L 70% … =</text>
+$b
+<g font-size="12" fill="#55527A" text-anchor="middle"><text x="259" y="116">30</text><text x="325" y="116">90</text><text x="391" y="116">150</text><text x="457" y="116">210</text><text x="523" y="116">270</text><text x="589" y="116">330</text>
+<text x="259" y="226">30</text><text x="325" y="226">90</text><text x="391" y="226">150</text><text x="457" y="226">210</text><text x="523" y="226">270</text><text x="589" y="226">330</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'html-base' => [
         lesson('entities', L('Caratteri speciali e commenti', 'Special characters and comments'), [
             P('Alcuni caratteri hanno un significato per l’HTML: per mostrare `<` si scrive un’**entità**, come `&lt;`. Le entità iniziano con `&` e finiscono con `;`.', 'Some characters mean something to HTML: to show `<` you write an **entity**, like `&lt;`. Entities start with `&` and end with `;`.'),
-            C('<p>2 &lt; 3 &amp; 3 &gt; 2</p>
+            C(L('<p>2 &lt; 3 &amp; 3 &gt; 2</p>
 <p>Fucina &copy; 2026</p>
-<!-- Questo non si vede nella pagina -->', 'html'),
+<!-- Questo non si vede nella pagina -->', '<p>2 &lt; 3 &amp; 3 &gt; 2</p>
+<p>Fucina &copy; 2026</p>
+<!-- This is not shown on the page -->'), 'html'),
             P('I commenti `<!-- … -->` sono note per chi legge il codice: il browser li ignora, ma chiunque può leggerli aprendo il sorgente.', 'Comments `<!-- … -->` are notes for those reading the code: the browser ignores them, but anyone can read them in the source.'),
+            P('Perché servono? Se scrivi `<b` in un testo, il browser crede che stia iniziando un tag e il resto della frase sparisce. Le entità più usate sono poche: `&lt;` e `&gt;` per le parentesi angolari, `&amp;` per la e commerciale, `&nbsp;` per uno spazio che non va mai a capo (come in «10&nbsp;km»). Con `<meta charset="utf-8">` lettere accentate, € e © si possono scrivere direttamente: le entità restano indispensabili solo per i caratteri speciali dell’HTML.', 'Why do you need them? If you write `<b` in a text, the browser thinks a tag is starting and the rest of the sentence disappears. The common entities are few: `&lt;` and `&gt;` for the angle brackets, `&amp;` for the ampersand, `&nbsp;` for a space that never breaks a line (as in “10&nbsp;km”). With `<meta charset="utf-8">` accented letters, € and © can be typed directly: entities stay essential only for HTML’s own special characters.'),
         ], [
             Q('e1', L('Come si mostra il simbolo `<` nel testo?', 'How do you show the `<` symbol in text?'), ['&lt;', '&gt;', '<<', '\\<'], 0, L('`lt` sta per «less than».', '`lt` stands for “less than”.')),
             Q('e2', L('Come inizia un commento HTML?', 'How does an HTML comment start?'), ['//', '/*', '<!--', '#'], 2, L('Si apre con `<!--` e si chiude con `-->`.', 'It opens with `<!--` and closes with `-->`.')),
@@ -26,14 +360,22 @@ return [
         ]),
         lesson('page-project', L('Progetto: la tua prima pagina', 'Project: your first page'), [
             P('Ora metti tutto insieme: una pagina con titolo, testo, immagine, lista e link. Ogni pezzo lo conosci già: la bravura sta nell’**ordine**.', 'Now put it all together: a page with a heading, text, an image, a list and a link. You already know every piece: the skill is in the **order**.'),
-            C('<h1>Ciao, sono Sav</h1>
+            C(L('<h1>Ciao, sono Sav</h1>
 <img src="me.jpg" alt="La mia foto">
 <p>Imparo a costruire siti.</p>
 <ul>
   <li>HTML</li>
   <li>CSS</li>
 </ul>
-<a href="contatti.html">Scrivimi</a>', 'html'),
+<a href="contatti.html">Scrivimi</a>', '<h1>Hi, I am Sav</h1>
+<img src="me.jpg" alt="My photo">
+<p>I am learning to build websites.</p>
+<ul>
+  <li>HTML</li>
+  <li>CSS</li>
+</ul>
+<a href="contact.html">Write to me</a>'), 'html'),
+            P('L’ordine del codice è l’ordine in cui la pagina viene letta, da un lettore di schermo o da un motore di ricerca: prima il titolo che dice di che cosa si parla, poi il resto. Un solo `<h1>`, un `alt` che descrive la foto, un link con un testo che si capisce anche da solo («Scrivimi», non «clicca qui»). Senza CSS la pagina sembra semplice, ma se si legge bene così, ogni stile che aggiungerai poggerà su basi solide.', 'The order of the code is the order in which the page is read, by a screen reader or a search engine: first the heading that says what it is about, then the rest. A single `<h1>`, an `alt` that describes the photo, a link with text that makes sense on its own (“Write to me”, not “click here”). Without CSS the page looks plain, but if it reads well like this, every style you add will rest on solid ground.'),
             Tip('Scrivi prima il contenuto, poi pensa allo stile: una pagina ben strutturata è già mezza fatta.', 'Write the content first, then think about style: a well-structured page is already half done.'),
         ], [
             Q('p1', L('Quanti `<h1>` conviene avere in una pagina?', 'How many `<h1>` should a page have?'), [L('Uno', 'One'), L('Almeno tre', 'At least three'), L('Uno per paragrafo', 'One per paragraph'), L('Nessuno', 'None')], 0, L('`h1` è il titolo della pagina: gli altri scendono di livello.', '`h1` is the title of the page: the others go down a level.')),
@@ -45,10 +387,13 @@ return [
         ]),
         lesson('containers', L('Contenitori: div e span', 'Containers: div and span'), [
             P('`<div>` e `<span>` sono contenitori **neutri**: non dicono che cosa contengono, servono solo a raggruppare, di solito per dare uno stile con una `class`. `<div>` è un blocco e va a capo; `<span>` sta dentro una riga di testo.', '`<div>` and `<span>` are **neutral** containers: they say nothing about what they hold, they only group things, usually to style them with a `class`. `<div>` is a block and starts on a new line; `<span>` sits inside a line of text.'),
-            C('<div class="scheda">
+            C(L('<div class="scheda">
   <h2>Pane</h2>
   <p>Prezzo: <span class="prezzo">2 €</span> al chilo</p>
-</div>', 'html'),
+</div>', '<div class="scheda">
+  <h2>Bread</h2>
+  <p>Price: <span class="prezzo">€2</span> per kilo</p>
+</div>'), 'html'),
             P('Prima di usarli chiediti se esiste un tag con un significato: un titolo, un paragrafo, una lista, un `<strong>`. Nel corso avanzato incontrerai i tag semantici, come `<header>` e `<nav>`, che sostituiscono molti `div`.', 'Before using them, ask whether a tag with a meaning exists: a heading, a paragraph, a list, a `<strong>`. In the advanced course you will meet semantic tags, like `<header>` and `<nav>`, which replace many `div`s.'),
             Tip('Un `<div>` non va mai dentro un `<p>`: il browser chiuderebbe il paragrafo prima del `div`.', 'A `<div>` never goes inside a `<p>`: the browser would close the paragraph before the `div`.'),
         ], [
@@ -63,10 +408,15 @@ return [
         lesson('devtools', L('Ispezionare e validare', 'Inspecting and validating'), [
             P('Ogni browser mostra il codice di una pagina: tasto destro, «Visualizza sorgente pagina». Gli **strumenti per sviluppatori** (F12, oppure tasto destro e «Ispeziona») mostrano invece l’albero degli elementi dal vivo: passa sopra un elemento e la pagina lo evidenzia.', 'Every browser shows a page’s code: right click, “View page source”. The **developer tools** (F12, or right click and “Inspect”) show the live element tree instead: hover over an element and the page highlights it.'),
             P('Il browser perdona gli errori senza dirti nulla: chiude i tag dove crede e va avanti. Il **validatore del W3C** (validator.w3.org) invece li elenca uno per uno: tag non chiusi, annidamenti sbagliati, attributi mancanti.', 'The browser forgives mistakes without telling you: it closes tags where it guesses and carries on. The **W3C validator** (validator.w3.org) lists them one by one instead: unclosed tags, wrong nesting, missing attributes.'),
-            C('<p>Un <strong>testo</p></strong>   <!-- sbagliato -->
+            C(L('<p>Un <strong>testo</p></strong>   <!-- sbagliato -->
 <p>Un <strong>testo</strong></p>   <!-- giusto -->
-<img src="foto.jpg">               <!-- manca alt -->', 'html'),
+<img src="foto.jpg">               <!-- manca alt -->', '<p>A <strong>text</p></strong>   <!-- wrong -->
+<p>A <strong>text</strong></p>   <!-- right -->
+<img src="photo.jpg">            <!-- alt is missing -->'), 'html'),
             Tip('I tag si chiudono nell’ordine inverso a quello in cui li hai aperti, come scatole dentro scatole.', 'Tags close in the reverse order you opened them, like boxes inside boxes.'),
+            Fig(L(fig_xl_nesting(['giusto', 'sbagliato', 'una scatola tutta dentro l’altra', 'le scatole si incrociano']), fig_xl_nesting(['right', 'wrong', 'one box wholly inside the other', 'the boxes cross'])),
+                L('A sinistra, la scatola `strong` sta tutta dentro la scatola `p`: annidamento giusto. A destra, la scatola `strong` esce dal bordo di `p`: i tag si incrociano, annidamento sbagliato.', 'On the left, the `strong` box sits wholly inside the `p` box: correct nesting. On the right, the `strong` box sticks out past the edge of `p`: the tags cross, wrong nesting.'),
+                L('Chi si apre per ultimo si chiude per primo.', 'Last opened, first closed.')),
         ], [
             Q('v1', L('Che cosa fa il browser con un errore nell’HTML?', 'What does the browser do with an HTML mistake?'), [L('Mostra una pagina di errore', 'It shows an error page'), L('Prova a correggerlo senza dire nulla', 'It tries to fix it without saying anything'), L('Cancella la pagina', 'It deletes the page'), L('Chiede all’utente che cosa fare', 'It asks the user what to do')], 1, L('Per trovare gli errori serve il validatore.', 'To find mistakes you need the validator.')),
             Q('v2', L('Quale strumento mostra l’albero degli elementi dal vivo?', 'Which tool shows the live element tree?'), [L('Il validatore del W3C', 'The W3C validator'), L('La barra degli indirizzi', 'The address bar'), L('Gli strumenti per sviluppatori', 'The developer tools'), L('Il titolo della scheda', 'The tab title')], 2, L('Si aprono con F12 o con «Ispeziona».', 'They open with F12 or with “Inspect”.')),
@@ -80,12 +430,17 @@ return [
     'html-advanced' => [
         lesson('data-attrs', L('Attributi data e template', 'Data attributes and templates'), [
             P('Gli attributi `data-*` conservano informazioni personalizzate su un elemento: li leggeranno CSS e JavaScript. Il nome dopo `data-` lo scegli tu.', '`data-*` attributes keep custom information on an element, for CSS and JavaScript to read. You choose the name after `data-`.'),
-            C('<button data-prodotto="42" data-colore="rosso">Compra</button>
+            C(L('<button data-prodotto="42" data-colore="rosso">Compra</button>
 
 <template id="riga">
   <li class="voce"></li>
-</template>', 'html'),
+</template>', '<button data-prodotto="42" data-colore="rosso">Buy</button>
+
+<template id="riga">
+  <li class="voce"></li>
+</template>'), 'html'),
             P('`<template>` contiene HTML che il browser non mostra: è uno stampo da copiare al momento giusto.', '`<template>` holds HTML the browser does not show: it is a mould to copy at the right moment.'),
+            P('Perché non inventare un attributo qualsiasi, come `prodotto="42"`? Perché l’HTML non lo riconosce e il validatore lo segnala, mentre `data-` è riservato proprio a questo. In JavaScript li trovi in `elemento.dataset`: `data-prodotto` diventa `dataset.prodotto`, e un nome con il trattino come `data-ultimo-prezzo` diventa `dataset.ultimoPrezzo`. Nel CSS li selezioni come gli altri attributi, per esempio `[data-colore="rosso"]`. Non metterci dati privati: chiunque li legge nel sorgente.', 'Why not invent any attribute, like `prodotto="42"`? Because HTML does not recognise it and the validator flags it, while `data-` is reserved for exactly this. In JavaScript you find them in `element.dataset`: `data-prodotto` becomes `dataset.prodotto`, and a hyphenated name like `data-ultimo-prezzo` becomes `dataset.ultimoPrezzo`. In CSS you select them like any other attribute, for example `[data-colore="rosso"]`. Do not put private data in them: anyone can read them in the source.'),
         ], [
             Q('d1', L('Quale attributo è valido?', 'Which attribute is valid?'), ['data-id', 'id-data', 'my:data', 'data_'], 0, L('Inizia sempre con `data-`.', 'It always starts with `data-`.')),
             Q('d2', L('Il contenuto di `<template>` si vede subito?', 'Is the content of `<template>` shown at once?'), [L('Sì', 'Yes'), L('No', 'No'), L('Solo su telefono', 'Only on phones'), L('Solo in grassetto', 'Only in bold')], 1, L('Resta nascosto finché uno script non lo copia.', 'It stays hidden until a script copies it.')),
@@ -102,6 +457,10 @@ return [
 <meta property="og:image" content="https://esempio.it/og.png">
 <link rel="canonical" href="https://esempio.it/">', 'html'),
             P('`canonical` indica l’indirizzo ufficiale di una pagina raggiungibile da più URL, così i motori non la considerano un doppione.', '`canonical` gives the official address of a page reachable from several URLs, so engines do not treat it as a duplicate.'),
+            Fig(L(fig_xl_ogcard(['Fucina: impara il web giocando', 'Corsi a livelli di HTML e CSS.', 'Un link condiviso', 'ogni parte viene da un tag', 'esempio.it']), fig_xl_ogcard(['Fucina: learn the web by playing', 'Levelled HTML and CSS courses.', 'A shared link', 'each part comes from a tag', 'example.com'])),
+                L('L’anteprima di un link condiviso in una chat: in alto l’immagine, presa da `og:image`; sotto il titolo, da `og:title` o `title`; poi la descrizione, da `description`; in fondo il dominio, dall’indirizzo `canonical`.', 'The preview of a link shared in a chat: the image at the top, taken from `og:image`; the title below, from `og:title` or `title`; then the description, from `description`; the domain at the bottom, from the `canonical` address.'),
+                L('Senza questi tag l’anteprima esce vuota, o con un pezzo di pagina a caso.', 'Without these tags the preview comes out empty, or with a random piece of the page.')),
+            P('Un buon `title` sta sotto i 60 caratteri, mette prima le parole importanti ed è diverso in ogni pagina: è la riga cliccabile nei risultati. La `description` (circa 150 caratteri) non cambia la posizione, ma convince a cliccare. L’immagine `og:image` va indicata con l’indirizzo completo, e una misura di 1200×630 pixel funziona sulla maggior parte delle reti sociali.', 'A good `title` stays under 60 characters, puts the important words first and is different on every page: it is the clickable line in the results. The `description` (about 150 characters) does not change the ranking, but it persuades people to click. The `og:image` must be given as a full address, and a size of 1200×630 pixels works on most social networks.'),
         ], [
             Q('o1', L('Che cosa decide `og:image`?', 'What does `og:image` decide?'), [L('L’immagine quando condividi', 'The image when you share'), L('Il logo del browser', 'The browser logo'), L('La favicon', 'The favicon'), L('Lo sfondo', 'The background')], 0, L('`og` sta per Open Graph.', '`og` stands for Open Graph.')),
             Q('o2', L('A che cosa serve `rel="canonical"`?', 'What is `rel="canonical"` for?'), [L('Indica l’indirizzo ufficiale', 'It gives the official address'), L('Blocca i motori', 'It blocks engines'), L('Apre una scheda', 'It opens a tab'), L('Carica il CSS', 'It loads CSS')], 0, L('Evita che più URL contino come pagine doppie.', 'It stops several URLs counting as duplicate pages.')),
@@ -112,7 +471,7 @@ return [
         ]),
         lesson('popover-dialog', L('Popover e finestre di dialogo', 'Popovers and dialogs'), [
             P('L’attributo `popover` trasforma un elemento in un livello che si apre sopra la pagina. Un pulsante con `popovertarget` lo apre e lo chiude; si chiude anche con Esc o toccando fuori. Niente JavaScript.', 'The `popover` attribute turns an element into a layer that opens above the page. A button with `popovertarget` opens and closes it; it also closes with Esc or by tapping outside. No JavaScript.'),
-            C('<button popovertarget="aiuto">Aiuto</button>
+            C(L('<button popovertarget="aiuto">Aiuto</button>
 <div id="aiuto" popover>
   <p>Premi Invio per salvare.</p>
 </div>
@@ -121,8 +480,20 @@ return [
 <dialog id="conferma">
   <p>Vuoi davvero eliminare il file?</p>
   <button commandfor="conferma" command="close">Annulla</button>
-</dialog>', 'html'),
+</dialog>', '<button popovertarget="aiuto">Help</button>
+<div id="aiuto" popover>
+  <p>Press Enter to save.</p>
+</div>
+
+<button commandfor="conferma" command="show-modal">Delete</button>
+<dialog id="conferma">
+  <p>Do you really want to delete the file?</p>
+  <button commandfor="conferma" command="close">Cancel</button>
+</dialog>'), 'html'),
             P('Un `<dialog>` aperto come **modale** rende inattivo il resto della pagina e tiene il focus al suo interno finché non si chiude. Gli attributi `commandfor` (l’`id` del bersaglio) e `command` (`show-modal`, `close`, `toggle-popover`…) lo comandano senza script; nei browser più vecchi serve `showModal()` in JavaScript.', 'A `<dialog>` opened as a **modal** makes the rest of the page inert and keeps focus inside it until it closes. The `commandfor` (the target’s `id`) and `command` (`show-modal`, `close`, `toggle-popover`…) attributes control it with no script; older browsers need `showModal()` in JavaScript.'),
+            Fig(L(fig_xl_popover(['Aiuto', 'Premi Invio…', 'Eliminare il file?', 'Annulla', 'Elimina', 'la pagina resta usabile;', 'Esc o un tocco fuori chiude', 'il resto della pagina è inerte,', 'il focus resta nella finestra']), fig_xl_popover(['Help', 'Press Enter…', 'Delete the file?', 'Cancel', 'Delete', 'the page stays usable;', 'Esc or a tap outside closes it', 'the rest of the page is inert,', 'focus stays in the window'])),
+                L('Due pagine. A sinistra un pulsante Aiuto con accanto un fumetto popover, e la pagina attorno resta normale. A destra la pagina è coperta da un tratteggio grigio e al centro c’è una finestra modale con i pulsanti Annulla ed Elimina.', 'Two pages. On the left a Help button with a popover bubble beside it, and the page around it stays normal. On the right the page is covered by grey hatching and in the middle there is a modal window with Cancel and Delete buttons.'),
+                L('Il popover si appoggia sulla pagina, il dialogo modale la ferma.', 'A popover rests on the page, a modal dialog stops it.')),
             Tip('Per una conferma che deve fermare l’utente usa un dialogo modale; per un suggerimento o un piccolo menu basta un popover.', 'For a confirmation that must stop the user use a modal dialog; for a hint or a small menu a popover is enough.'),
         ], [
             Q('p1', L('Quale attributo collega un pulsante al suo popover?', 'Which attribute links a button to its popover?'), ['target', 'aria-controls', 'popovertarget', 'for'], 2, L('Il valore è l’`id` dell’elemento con `popover`.', 'Its value is the `id` of the element with `popover`.')),
@@ -134,7 +505,7 @@ return [
         ]),
         lesson('loading', L('Caricare script e risorse', 'Loading scripts and resources'), [
             P('Un `<script src>` semplice nel `head` ferma la lettura della pagina finché non è scaricato ed eseguito. Con `defer` si scarica in parallelo e parte dopo che l’HTML è stato letto, nell’ordine in cui è scritto. Con `async` parte appena arriva, in ordine sparso: va bene per script indipendenti, come le statistiche. `type="module"` è già differito di suo.', 'A plain `<script src>` in the `head` stops the page being read until it is downloaded and run. With `defer` it downloads in parallel and runs once the HTML has been read, in the order written. With `async` it runs as soon as it arrives, in any order: fine for independent scripts, like analytics. `type="module"` is already deferred on its own.'),
-            C('<head>
+            C(L('<head>
   <link rel="preconnect" href="https://cdn.esempio.it">
   <link rel="preload" href="font.woff2" as="font" type="font/woff2" crossorigin>
   <script src="app.js" defer></script>
@@ -143,7 +514,19 @@ return [
 </head>
 <body>
   <img src="hero.jpg" alt="La forgia" fetchpriority="high">
-</body>', 'html'),
+</body>', '<head>
+  <link rel="preconnect" href="https://cdn.example.com">
+  <link rel="preload" href="font.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="app.js" defer></script>
+  <script src="analytics.js" async></script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <img src="hero.jpg" alt="The forge" fetchpriority="high">
+</body>'), 'html'),
+            Fig(L(fig_xl_scripts(['blocca la lettura', 'parte alla fine', 'parte appena arriva', 'tempo', 'lettura dell’HTML', 'download', 'esecuzione']), fig_xl_scripts(['blocks the reading', 'runs at the end', 'runs when it arrives', 'time', 'reading the HTML', 'download', 'running'])),
+                L('Tre linee del tempo. Con un `<script>` semplice la lettura dell’HTML si ferma mentre lo script si scarica e si esegue, poi riprende. Con `defer` la lettura continua senza pause mentre lo script si scarica, e lo script parte alla fine. Con `async` lo script si scarica in parallelo e, appena arriva, interrompe la lettura per eseguirsi.', 'Three timelines. With a plain `<script>` the HTML reading stops while the script downloads and runs, then resumes. With `defer` the reading carries on without pauses while the script downloads, and the script runs at the end. With `async` the script downloads in parallel and, as soon as it arrives, interrupts the reading to run.'),
+                L('`defer` non ferma mai la lettura: è la scelta giusta per quasi tutti gli script.', '`defer` never stops the reading: it is the right choice for almost every script.')),
             P('`preload` chiede subito un file importante che il browser scoprirebbe tardi, come un font. `preconnect` apre in anticipo la connessione verso un altro server. `fetchpriority="high"` indica l’immagine che conta di più, spesso quella grande in cima.', '`preload` requests early an important file the browser would discover late, like a font. `preconnect` opens the connection to another server in advance. `fetchpriority="high"` marks the image that matters most, often the big one at the top.'),
         ], [
             Q('s1', L('Quando parte uno script con `defer`?', 'When does a script with `defer` run?'), [L('Subito, fermando la pagina', 'At once, stopping the page'), L('Solo quando l’utente clicca', 'Only when the user clicks'), L('Dopo la lettura dell’HTML, in ordine', 'After the HTML is read, in order'), L('Mai, se la pagina è lunga', 'Never, if the page is long')], 2, L('Si scarica intanto, ma aspetta l’HTML.', 'It downloads meanwhile, but waits for the HTML.')),
@@ -155,15 +538,25 @@ return [
         ]),
         lesson('srcset-sizes', L('Immagini responsive: srcset e sizes', 'Responsive images: srcset and sizes'), [
             P('Con `srcset` e i descrittori `w` elenchi la stessa immagine in più larghezze; con `sizes` dici quanto sarà larga sulla pagina. Il browser fa i conti, densità dello schermo compresa, e scarica il file più piccolo che resta nitido.', 'With `srcset` and `w` descriptors you list the same image in several widths; with `sizes` you say how wide it will be on the page. The browser does the maths, screen density included, and downloads the smallest file that stays sharp.'),
-            C('<img
+            C(L('<img
   src="forgia-800.jpg"
   srcset="forgia-400.jpg 400w,
           forgia-800.jpg 800w,
           forgia-1600.jpg 1600w"
   sizes="(min-width: 900px) 50vw, 100vw"
   alt="La forgia accesa"
-  width="1600" height="1067">', 'html'),
+  width="1600" height="1067">', '<img
+  src="forgia-800.jpg"
+  srcset="forgia-400.jpg 400w,
+          forgia-800.jpg 800w,
+          forgia-1600.jpg 1600w"
+  sizes="(min-width: 900px) 50vw, 100vw"
+  alt="The lit forge"
+  width="1600" height="1067">'), 'html'),
             P('Qui l’immagine occupa metà finestra sugli schermi larghi e tutta la finestra negli altri casi. Su un telefono largo 400px con densità 2 servono 800 pixel: il browser sceglie `forgia-800.jpg`. `<picture>` serve invece quando cambi l’immagine stessa (inquadratura o formato), non solo la sua dimensione.', 'Here the image takes half the window on wide screens and the whole window otherwise. On a 400px-wide phone with density 2 it needs 800 pixels: the browser picks `forgia-800.jpg`. `<picture>` is for when you change the image itself (crop or format), not only its size.'),
+            Fig(L(fig_xl_srcset(['telefono', 'schermo largo 1200px', 'il più piccolo da almeno 800px', '600px servono: basta 800w']), fig_xl_srcset(['phone', 'screen 1200px wide', 'the smallest of at least 800px', '600px needed: 800w is enough'])),
+                L('Due calcoli. Su un telefono largo 400px con densità 2 e `sizes` 100vw servono 800 pixel: tra 400w, 800w e 1600w il browser sceglie 800w. Su uno schermo largo 1200px con densità 1 e `sizes` 50vw servono 600 pixel: anche qui basta 800w.', 'Two sums. On a 400px-wide phone with density 2 and `sizes` 100vw it needs 800 pixels: from 400w, 800w and 1600w the browser picks 800w. On a 1200px-wide screen with density 1 and `sizes` 50vw it needs 600 pixels: 800w is enough here too.'),
+                L('Larghezza sulla pagina × densità = pixel necessari; vince il file più piccolo che basta.', 'Width on the page × density = pixels needed; the smallest file that is enough wins.')),
         ], [
             Q('z1', L('Che cosa dice `800w` in `srcset`?', 'What does `800w` say in `srcset`?'), [L('Che l’immagine si mostra a 800px', 'That the image is shown at 800px'), L('Che il file è largo 800 pixel', 'That the file is 800 pixels wide'), L('Che il file pesa 800 KB', 'That the file weighs 800 KB'), L('Che va bene per schermi da 800px in su', 'That it suits screens from 800px up')], 1, L('`w` descrive il file; la larghezza mostrata la dice `sizes`.', '`w` describes the file; the displayed width is given by `sizes`.')),
             Q('z2', L('Che cosa indica l’attributo `sizes`?', 'What does the `sizes` attribute state?'), [L('Il peso di ogni file', 'The weight of each file'), L('I formati disponibili', 'The available formats'), L('Quanto sarà larga l’immagine sulla pagina', 'How wide the image will be on the page'), L('Quante immagini ci sono', 'How many images there are')], 2, L('Il browser lo sa prima ancora di applicare il CSS.', 'The browser knows it even before applying the CSS.')),
@@ -179,8 +572,12 @@ return [
             C('.card {
   background: linear-gradient(135deg, #FF5B2E, #FFC53D);
   box-shadow: 0 4px 12px rgb(0 0 0 / .25);
-}', 'css'),
+}', 'css', L('<div class="card" style="padding:24px;margin:12px;border-radius:12px;font-weight:700">Una card con sfumatura e ombra</div>', '<div class="card" style="padding:24px;margin:12px;border-radius:12px;font-weight:700">A card with a gradient and a shadow</div>')),
             P('I valori di `box-shadow` sono: spostamento orizzontale, verticale, sfocatura e colore.', 'The values of `box-shadow` are: horizontal offset, vertical offset, blur and colour.'),
+            Fig(L(fig_xl_shadow(['spostamento orizzontale', 'spostamento verticale', 'sfocatura', 'colore']), fig_xl_shadow(['horizontal offset', 'vertical offset', 'blur', 'colour'])),
+                L('Una card bianca con un’ombra sfocata spostata a destra e in basso; accanto, i quattro valori di `box-shadow` con il loro significato: spostamento orizzontale, verticale, sfocatura e colore.', 'A white card with a blurred shadow moved right and down; next to it, the four values of `box-shadow` with their meaning: horizontal offset, vertical offset, blur and colour.'),
+                L('Valori positivi spostano l’ombra a destra e in basso; più sfocatura, ombra più morbida.', 'Positive values move the shadow right and down; more blur, a softer shadow.')),
+            P('Nella sfumatura, `135deg` è la direzione: da in alto a sinistra verso in basso a destra. Un’ombra leggera e poco spostata fa sembrare la card sollevata di poco; un colore semitrasparente come `rgb(0 0 0 / .25)` funziona su qualsiasi sfondo, il nero pieno invece sembra sporco. Le ombre non occupano spazio: non spostano gli elementi vicini.', 'In the gradient, `135deg` is the direction: from the top left towards the bottom right. A light, slightly offset shadow makes the card look lifted a little; a semi-transparent colour like `rgb(0 0 0 / .25)` works on any background, while solid black looks dirty. Shadows take up no space: they do not push nearby elements.'),
         ], [
             Q('g1', L('Quale funzione crea una sfumatura?', 'Which function creates a gradient?'), ['linear-gradient()', 'fade()', 'blend()', 'mix()'], 0, L('Esiste anche `radial-gradient()`.', 'There is also `radial-gradient()`.')),
             Q('g2', L('Che cosa fa il terzo valore di `box-shadow: 0 4px 12px`?', 'What does the third value of `box-shadow: 0 4px 12px` do?'), [L('La sfocatura', 'The blur'), L('Il colore', 'The colour'), L('Il raggio', 'The radius'), L('L’opacità', 'The opacity')], 0, L('Più è alto, più l’ombra è morbida.', 'The higher it is, the softer the shadow.')),
@@ -196,6 +593,10 @@ return [
   padding: 1.5rem;  /* 24px con base 16px */
   height: 100vh;    /* tutta l’altezza dello schermo */
 }', 'css'),
+            Fig(L(fig_xl_units(['schermo: 100vw', 'contenitore', 'metà del contenitore', 'metà dello schermo', 'dalla radice', 'dal testo dell’elemento']), fig_xl_units(['screen: 100vw', 'container', 'half the container', 'half the screen', 'from the root', 'from the element’s text'])),
+                L('Uno schermo con dentro un contenitore più stretto. Una barra `width: 50%` è larga metà del contenitore, una barra `width: 50vw` metà dello schermo. Accanto, tre quadrati da 1rem, 1.5rem e 2rem (16, 24 e 32 pixel) e un esempio di em: con `font-size: 20px`, `1.5em` vale 30px.', 'A screen with a narrower container inside it. A `width: 50%` bar is half the container wide, a `width: 50vw` bar half the screen. Next to it, three squares of 1rem, 1.5rem and 2rem (16, 24 and 32 pixels) and an em example: with `font-size: 20px`, `1.5em` is 30px.'),
+                L('Stesso numero, riferimento diverso: chiediti sempre «per cento di che cosa?».', 'Same number, different reference: always ask “per cent of what?”.')),
+            P('Scegli l’unità in base a che cosa deve seguire la misura. Una colonna che occupa metà del suo spazio: `%`. Un margine o un testo che crescono quando chi legge ingrandisce i caratteri: `rem`. Il padding di un bottone che cresce col suo testo: `em`. L’errore tipico è `em` annidato: un `1.2em` dentro un altro `1.2em` diventa 1.44 volte, e il testo cresce a ogni livello.', 'Pick the unit by what the size should follow. A column that takes half its space: `%`. A margin or text that grows when the reader enlarges the font: `rem`. The padding of a button that grows with its text: `em`. The classic mistake is nested `em`: a `1.2em` inside another `1.2em` becomes 1.44 times, and the text grows at every level.'),
             Tip('Per i testi preferisci `rem`: rispetta le impostazioni di chi legge.', 'For text prefer `rem`: it respects the reader’s settings.'),
         ], [
             Q('u1', L('`50%` di che cosa?', '`50%` of what?'), [L('Del contenitore', 'Of the container'), L('Dello schermo, sempre', 'Of the screen, always'), L('Del testo', 'Of the text'), L('Del file', 'Of the file')], 0, L('Le percentuali guardano al genitore.', 'Percentages look at the parent.')),
@@ -207,7 +608,7 @@ return [
         ]),
         lesson('attach', L('Collegare il CSS alla pagina', 'Linking CSS to the page'), [
             P('Il CSS arriva alla pagina in tre modi. Un **file esterno** collegato nel `head` con `<link rel="stylesheet">`: è il migliore, perché un solo file serve tutte le pagine e il browser lo tiene in memoria. Un blocco `<style>` nel `head`, che vale solo per quella pagina. L’attributo `style` su un singolo elemento, lo stile in linea.', 'CSS reaches the page in three ways. An **external file** linked in the `head` with `<link rel="stylesheet">`: it is the best, because one file serves every page and the browser keeps it cached. A `<style>` block in the `head`, which applies to that page only. The `style` attribute on a single element, the inline style.'),
-            C('<head>
+            C(L('<head>
   <link rel="stylesheet" href="stile.css">
   <style>
     p { color: navy; } /* vale solo qui */
@@ -215,7 +616,15 @@ return [
 </head>
 <body>
   <p style="color: red;">Rosso: vince lo stile in linea</p>
-</body>', 'html'),
+</body>', '<head>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    p { color: navy; } /* only applies here */
+  </style>
+</head>
+<body>
+  <p style="color: red;">Red: the inline style wins</p>
+</body>'), 'html'),
             P('Lo stile in linea batte quasi tutto, ma è scomodo da cambiare: usalo il meno possibile. I commenti del CSS si scrivono tra `/*` e `*/`; la doppia barra `//` nel CSS non è un commento.', 'Inline style beats almost everything, but it is awkward to change: use it as little as possible. CSS comments go between `/*` and `*/`; a double slash `//` is not a comment in CSS.'),
         ], [
             Q('a1', L('Qual è il modo migliore per dare lo stile a un sito intero?', 'What is the best way to style a whole site?'), [L('L’attributo `style` su ogni elemento', 'The `style` attribute on every element'), L('Un blocco `<style>` in ogni pagina', 'A `<style>` block in every page'), L('Un file esterno collegato con `<link>`', 'An external file linked with `<link>`'), L('Un’immagine con i colori', 'An image with the colours')], 2, L('Un file, tutte le pagine, una sola modifica.', 'One file, every page, a single change.')),
@@ -234,7 +643,16 @@ return [
 }
 .hero { min-height: 300px; }
 .video { width: 100%; aspect-ratio: 16 / 9; }
-img { max-width: 100%; height: auto; }', 'css'),
+img { max-width: 100%; height: auto; }', 'css', L('<div class="pagina" style="background:#f1f0f8">
+  <div class="hero" style="background:#ffe8d6;padding:12px">.hero: alta almeno 300px</div>
+  <div class="video" style="background:#dcebff;padding:12px">.video: sempre 16:9</div>
+</div>', '<div class="pagina" style="background:#f1f0f8">
+  <div class="hero" style="background:#ffe8d6;padding:12px">.hero: at least 300px tall</div>
+  <div class="video" style="background:#dcebff;padding:12px">.video: always 16:9</div>
+</div>')),
+            Fig(L(fig_xl_maxwidth(['schermo']), fig_xl_maxwidth(['screen'])),
+                L('Uno schermo che si stringe e poi si allarga. Dentro, una scatola centrata con `max-width: 300px`: finché lo schermo è largo resta di 300px, quando lo schermo diventa più stretto si stringe con lui.', 'A screen that narrows and then widens again. Inside it, a centred box with `max-width: 300px`: while the screen is wide it stays 300px, when the screen gets narrower it shrinks with it.'),
+                L('`max-width` è un tetto: la scatola si stringe, ma non supera mai il limite.', '`max-width` is a ceiling: the box shrinks, but never goes past the limit.')),
             P('`aspect-ratio` mantiene le proporzioni: dai la larghezza e l’altezza segue. Evita un `height` fisso sulle scatole con del testo: se il testo cresce, esce dalla scatola.', '`aspect-ratio` keeps the proportions: give the width and the height follows. Avoid a fixed `height` on boxes with text: if the text grows, it spills out of the box.'),
         ], [
             Q('z1', L('Che cosa fa `max-width: 960px`?', 'What does `max-width: 960px` do?'), [L('La scatola è sempre larga 960px', 'The box is always 960px wide'), L('Al massimo 960px, e si stringe se c’è meno spazio', 'At most 960px, and it shrinks if there is less room'), L('Almeno 960px, anche sui telefoni', 'At least 960px, even on phones'), L('La scatola è alta 960px', 'The box is 960px tall')], 1, L('È un tetto, non una misura fissa.', 'It is a ceiling, not a fixed size.')),
@@ -253,8 +671,14 @@ img { max-width: 100%; height: auto; }', 'css'),
   color: gold;
 }
 li:nth-child(odd) { background: #eee; }
-p:first-child { font-weight: 700; }', 'css'),
+p:first-child { font-weight: 700; }', 'css', L('<p class="nuovo">Nuovo corso in arrivo</p>
+<ul><li>Una</li><li>Due</li><li>Tre</li><li>Quattro</li></ul>', '<p class="nuovo">New course coming</p>
+<ul><li>One</li><li>Two</li><li>Three</li><li>Four</li></ul>')),
             P('Le pseudo-classi strutturali come `:nth-child()` scelgono gli elementi in base alla posizione: `odd`, `even` o una formula.', 'Structural pseudo-classes like `:nth-child()` pick elements by position: `odd`, `even` or a formula.'),
+            Fig(L(fig_xl_pseudo(['Nuovo corso in arrivo', 'il contenuto', 'Due scatole in più, dentro l’elemento, senza toccare l’HTML']), fig_xl_pseudo(['New course coming', 'the content', 'Two extra boxes, inside the element, without touching the HTML'])),
+                L('Un paragrafo con classe `nuovo` disegnato come una scatola. Dentro, prima del testo, la scatola tratteggiata di `::before` con una stella; poi il contenuto vero; infine la scatola tratteggiata di `::after`, con `content` vuoto.', 'A paragraph with the `nuovo` class drawn as a box. Inside it, before the text, the dashed `::before` box holding a star; then the real content; last the dashed `::after` box, with empty `content`.'),
+                L('`::before` e `::after` sono figli dell’elemento: stanno dentro, non fuori.', '`::before` and `::after` are children of the element: they sit inside, not outside.')),
+            P('A che cosa servono? Icone e decorazioni che non sono contenuto: una stella, una freccia, la virgoletta di una citazione, un fumetto. Senza `content`, anche vuoto (`content: ""`), il pseudo-elemento non esiste. Il testo messo in `content` di solito non si seleziona e i lettori di schermo possono leggerlo o ignorarlo: le informazioni importanti vanno nell’HTML. Nota la differenza: un `:` per le pseudo-classi (stati e posizioni), due `::` per i pseudo-elementi.', 'What are they for? Icons and decorations that are not content: a star, an arrow, a quote mark, a speech bubble. Without `content`, even empty (`content: ""`), the pseudo-element does not exist. Text put in `content` usually cannot be selected and screen readers may read it or skip it: important information belongs in the HTML. Note the difference: one `:` for pseudo-classes (states and positions), two `::` for pseudo-elements.'),
         ], [
             Q('p1', L('Che cosa serve sempre a `::before`?', 'What does `::before` always need?'), ['content', 'display', 'width', 'color'], 0, L('Senza `content` non viene creato nulla.', 'Without `content` nothing is created.')),
             Q('p2', L('Quali elementi sceglie `li:nth-child(even)`?', 'Which elements does `li:nth-child(even)` pick?'), [L('I pari', 'The even ones'), L('I dispari', 'The odd ones'), L('Il primo', 'The first'), L('Tutti', 'All of them')], 0, L('`even` è pari, `odd` dispari.', '`even` is even, `odd` is odd.')),
@@ -272,8 +696,12 @@ p:first-child { font-weight: 700; }', 'css'),
 .card:has(img) { padding: 0; }
 @container (min-width: 400px) {
   .titolo { font-size: 2rem; }
-}', 'css'),
+}', 'css', L('<div class="card" style="border:2px solid #e8590c;padding:12px;border-radius:12px"><h2 class="titolo">Titolo della card</h2><p>Allarga o stringi la finestra: il titolo cresce quando la card supera i 400px.</p></div>', '<div class="card" style="border:2px solid #e8590c;padding:12px;border-radius:12px"><h2 class="titolo">Card title</h2><p>Widen or narrow the window: the title grows when the card is wider than 400px.</p></div>')),
             P('`:has()` è il «selettore genitore» atteso per anni: sceglie un elemento in base a ciò che contiene.', '`:has()` is the long-awaited “parent selector”: it picks an element by what it contains.'),
+            Fig(fig_xl_container(),
+                L('La stessa card in due contenitori. In quello largo 260px l’immagine sta sopra e il testo sotto; in quello largo 460px la regola `@container (min-width: 400px)` mette l’immagine a sinistra, il testo a destra e il titolo più grande.', 'The same card in two containers. In the 260px one the image sits on top and the text below; in the 460px one the `@container (min-width: 400px)` rule puts the image on the left, the text on the right and the title bigger.'),
+                L('Una media query guarda lo schermo, una container query guarda il posto che il componente ha davvero.', 'A media query looks at the screen, a container query at the room the component really has.')),
+            P('Le tre novità risolvono problemi vecchi. L’annidamento con `&` evita di ripetere `.card` in ogni regola, come facevano i preprocessori. `:has()` permette finalmente di dare stile a un genitore in base ai figli: una card con immagine, un modulo con un campo sbagliato (`form:has(:invalid)`). Le container query rendono un componente davvero riusabile: la stessa card si adatta in una colonna stretta o in una pagina larga. Ricorda `container-type` sul genitore: senza, `@container` non ha nulla da misurare.', 'The three newcomers solve old problems. Nesting with `&` saves repeating `.card` in every rule, as preprocessors used to do. `:has()` finally lets you style a parent based on its children: a card with an image, a form with a wrong field (`form:has(:invalid)`). Container queries make a component truly reusable: the same card adapts in a narrow column or on a wide page. Remember `container-type` on the parent: without it, `@container` has nothing to measure.'),
         ], [
             Q('m1', L('Che cosa sceglie `.card:has(img)`?', 'What does `.card:has(img)` pick?'), [L('Le card con un’immagine', 'Cards with an image'), L('Le immagini', 'The images'), L('Tutte le card', 'All cards'), L('Nulla', 'Nothing')], 0, L('Si guarda dentro, ma viene scelto il genitore.', 'It looks inside, but the parent is picked.')),
             Q('m2', L('A che cosa guarda `@container`?', 'What does `@container` look at?'), [L('Al contenitore', 'The container'), L('Allo schermo', 'The screen'), L('Al font', 'The font'), L('Al server', 'The server')], 0, L('Un componente si adatta allo spazio che ha davvero.', 'A component adapts to the space it really has.')),
@@ -294,8 +722,13 @@ p:first-child { font-weight: 700; }', 'css'),
 }
 
 :is(h1, h2, h3) { line-height: 1.2; }
-:where(ul, ol) { padding-left: 1.5rem; } /* specificità zero */', 'css'),
+:where(ul, ol) { padding-left: 1.5rem; } /* specificità zero */', 'css', L('<div id="pagina"><nav class="menu" style="background:#1e1c52;padding:8px"><a href="#">Link bianco: vince il livello componenti</a></nav>
+<h2>Titolo con interlinea 1.2</h2><ul><li>Rientro da :where()</li></ul></div>', '<div id="pagina"><nav class="menu" style="background:#1e1c52;padding:8px"><a href="#">White link: the components layer wins</a></nav>
+<h2>Heading with line height 1.2</h2><ul><li>Indent from :where()</li></ul></div>')),
             P('`:is()` raggruppa più selettori e prende la specificità del più forte; `:where()` fa lo stesso ma con specificità zero: perfetto per gli stili di base, facili da sovrascrivere. Con i livelli metti in fila reset, librerie e componenti senza guerre di specificità.', '`:is()` groups several selectors and takes the specificity of the strongest; `:where()` does the same with zero specificity: perfect for default styles that are easy to override. With layers you line up resets, libraries and components with no specificity wars.'),
+            Fig(L(fig_xl_layers(['fuori da ogni livello', 'ordine dei livelli: vince chi viene dopo', 'vince', 'Il livello decide prima della specificità: l’id in reset perde contro la classe in componenti.']), fig_xl_layers(['outside any layer', 'layer order: the later one wins', 'wins', 'The layer decides before specificity: the id in reset loses to the class in components.'])),
+                L('Quattro strati impilati: in basso `@layer reset` con `#pagina a`, specificità 1,0,1; sopra `@layer base`; sopra ancora `@layer componenti` con `.menu a`, specificità 0,1,1, che vince; in cima gli stili fuori da ogni livello, che battono tutti.', 'Four stacked layers: at the bottom `@layer reset` with `#pagina a`, specificity 1,0,1; above it `@layer base`; above that `@layer componenti` with `.menu a`, specificity 0,1,1, which wins; on top the styles outside any layer, which beat them all.'),
+                L('Prima conta il livello, poi la specificità, poi l’ordine.', 'First the layer counts, then specificity, then order.')),
         ], [
             Q('y1', L('Tra due livelli, quale regola vince?', 'Between two layers, which rule wins?'), [L('Quella con il selettore più specifico', 'The one with the more specific selector'), L('Quella del livello che viene dopo nell’ordine', 'The one in the layer that comes later in the order'), L('Quella scritta per prima nel file', 'The one written first in the file'), L('Nessuna: si annullano a vicenda', 'Neither: they cancel each other out')], 1, L('L’ordine dei livelli conta prima della specificità.', 'Layer order counts before specificity.')),
             Q('y2', L('Qual è la specificità di `:where(.nota)`?', 'What is the specificity of `:where(.nota)`?'), ['0,1,0', '0,0,1', '1,0,0', '0,0,0'], 3, L('`:where()` azzera sempre la specificità.', '`:where()` always sets specificity to zero.')),
@@ -306,6 +739,9 @@ p:first-child { font-weight: 700; }', 'css'),
         ]),
         lesson('grid-areas', L('Aree della griglia e subgrid', 'Grid areas and subgrid'), [
             P('`grid-template-areas` disegna l’impaginazione con dei nomi: ogni stringa è una riga, ogni parola una cella. Gli elementi vanno nella loro area con `grid-area`. Un punto `.` lascia una cella vuota, e ogni riga deve avere lo stesso numero di celle.', '`grid-template-areas` draws the layout with names: each string is a row, each word a cell. Items go into their area with `grid-area`. A dot `.` leaves a cell empty, and every row must have the same number of cells.'),
+            Fig(fig_xl_areas(),
+                L('A sinistra le tre stringhe di `grid-template-areas`: "testa testa", "menu corpo", "piede piede". A destra la pagina che disegnano: testa su tutta la larghezza, poi menu in una colonna di 200px e corpo nel resto, infine piede su tutta la larghezza.', 'On the left the three strings of `grid-template-areas`: "testa testa", "menu corpo", "piede piede". On the right the page they draw: testa across the full width, then menu in a 200px column and corpo in the rest, last piede across the full width.'),
+                L('Un nome ripetuto in una riga allarga l’area su più colonne.', 'A name repeated in a row stretches the area across several columns.')),
             C('.pagina {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -324,7 +760,17 @@ footer { grid-area: piede; }
   display: grid;
   grid-row: span 3;
   grid-template-rows: subgrid;
-}', 'css'),
+}', 'css', L('<div class="pagina">
+  <header style="background:#ece6ff;padding:8px">testa</header>
+  <nav style="background:#dcebff;padding:8px">menu</nav>
+  <main style="background:#fff3ea;padding:8px">corpo: il contenuto</main>
+  <footer style="background:#f1f0f8;padding:8px">piede</footer>
+</div>', '<div class="pagina">
+  <header style="background:#ece6ff;padding:8px">testa (header)</header>
+  <nav style="background:#dcebff;padding:8px">menu</nav>
+  <main style="background:#fff3ea;padding:8px">corpo: the content</main>
+  <footer style="background:#f1f0f8;padding:8px">piede (footer)</footer>
+</div>')),
             P('In una media query basta riscrivere le aree e cambia tutta la pagina. `subgrid` fa usare a una griglia figlia le righe o le colonne del genitore: così titoli e bottoni di card affiancate restano allineati anche con testi di lunghezza diversa.', 'In a media query you only rewrite the areas and the whole page changes. `subgrid` makes a child grid use its parent’s rows or columns: that way titles and buttons of side-by-side cards stay aligned even with texts of different lengths.'),
         ], [
             Q('g1', L('Che cosa rappresenta ogni stringa di `grid-template-areas`?', 'What does each string of `grid-template-areas` represent?'), [L('Una colonna', 'A column'), L('Una riga', 'A row'), L('Un singolo elemento', 'A single item'), L('Un livello di profondità', 'A depth layer')], 1, L('Le parole della stringa sono le celle di quella riga.', 'The words in the string are the cells of that row.')),
@@ -340,6 +786,9 @@ footer { grid-area: piede; }
         ]),
         lesson('colors-modern', L('Colori moderni', 'Modern colours'), [
             P('`oklch()` descrive un colore con luminosità percepita, croma (intensità) e tinta. Se cambi solo la luminosità ottieni toni più chiari o più scuri che all’occhio sembrano davvero equidistanti, cosa che `hsl()` non garantisce. `color-mix()` mescola due colori nello spazio che scegli.', '`oklch()` describes a colour by perceived lightness, chroma (intensity) and hue. Changing only the lightness gives lighter or darker shades that really look evenly spaced to the eye, which `hsl()` does not guarantee. `color-mix()` mixes two colours in the space you choose.'),
+            Fig(fig_xl_oklch(),
+                L('Due file di sei colori con tinte diverse. Nella prima, tutti `hsl()` con luminosità 50%: il giallo-verde sembra chiarissimo, il blu e il viola molto più scuri. Nella seconda, tutti `oklch()` con luminosità 70%: i sei colori sembrano chiari allo stesso modo.', 'Two rows of six colours with different hues. In the first, all `hsl()` at 50% lightness: the yellow-green looks very light, the blue and violet much darker. In the second, all `oklch()` at 70% lightness: the six colours look equally light.'),
+                L('Stesso numero di luminosità, effetto diverso: `oklch` misura quello che vede l’occhio.', 'The same lightness number, a different effect: `oklch` measures what the eye sees.')),
             C(':root {
   color-scheme: light dark;
   --brand: oklch(65% 0.2 40);
@@ -348,7 +797,11 @@ footer { grid-area: piede; }
   --testo: light-dark(#1b1b4b, #f1f1f5);
 }
 body { background: var(--sfondo); color: var(--testo); }
-.btn:hover { background: oklch(from var(--brand) calc(l - 0.1) c h); }', 'css'),
+.btn:hover { background: oklch(from var(--brand) calc(l - 0.1) c h); }', 'css', L('<p>Lo sfondo e il testo seguono il tema chiaro o scuro del sistema.</p>
+<button class="btn" style="background:var(--brand);color:white;border:0;padding:8px 16px;border-radius:8px">Passa sopra: più scuro</button>
+<span style="background:var(--brand-chiaro);padding:8px 16px;border-radius:8px">Mescolato con il bianco</span>', '<p>The background and text follow the system light or dark theme.</p>
+<button class="btn" style="background:var(--brand);color:white;border:0;padding:8px 16px;border-radius:8px">Hover: darker</button>
+<span style="background:var(--brand-chiaro);padding:8px 16px;border-radius:8px">Mixed with white</span>')),
             P('`light-dark()` usa il primo valore con il tema chiaro e il secondo con quello scuro, purché `color-scheme` li permetta entrambi. Con la sintassi relativa (`from`) ricavi un colore da un altro: qui lo stesso arancione, un po’ più scuro.', '`light-dark()` uses the first value with the light theme and the second with the dark one, as long as `color-scheme` allows both. With the relative syntax (`from`) you derive one colour from another: here the same orange, a little darker.'),
         ], [
             Q('k1', L('Che cosa indica il primo valore di `oklch(65% 0.2 40)`?', 'What does the first value of `oklch(65% 0.2 40)` stand for?'), [L('La tinta', 'The hue'), L('La saturazione', 'The saturation'), L('La luminosità percepita', 'The perceived lightness'), L('La trasparenza', 'The transparency')], 2, L('Poi vengono croma e tinta.', 'Chroma and hue come next.')),

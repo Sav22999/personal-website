@@ -1,6 +1,94 @@
 <?php
 /** Go basics: packages and types, functions and errors, structs and interfaces, goroutines and channels, HTTP and tests, control flow, slices and maps, pointers, modules. */
 
+/** Two goroutines send their results into one channel; main receives them one at a time. Messages travel along it. */
+if (!function_exists('fig_gobase_chan')) {
+    function fig_gobase_chan(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<style>.m1{animation:send1 5s ease-in-out infinite}.m2{animation:send2 5s ease-in-out infinite}
+@keyframes send1{0%{transform:translate(196px,64px);opacity:1}30%{transform:translate(262px,126px)}75%{transform:translate(452px,126px);opacity:1}85%,100%{transform:translate(452px,126px);opacity:0}}
+@keyframes send2{0%,20%{transform:translate(196px,188px);opacity:1}50%{transform:translate(262px,126px)}92%{transform:translate(452px,126px);opacity:1}100%{transform:translate(452px,126px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.m1,.m2{animation:none}}</style>
+<g font-family="ui-monospace, monospace" font-size="13">
+<rect x="16" y="40" width="176" height="48" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="104" y="69" text-anchor="middle">go scarica(go.dev)</text>
+<rect x="16" y="164" width="176" height="48" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="104" y="185" text-anchor="middle">go scarica(</text><text x="104" y="202" text-anchor="middle">example.com)</text>
+<rect x="250" y="106" width="210" height="40" rx="20" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="355" y="98" text-anchor="middle" font-weight="700" fill="#B84508">chan string</text>
+<rect x="470" y="96" width="154" height="60" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="547" y="122" text-anchor="middle" font-weight="700">main</text><text x="547" y="142" text-anchor="middle">&lt;-risultati</text>
+</g>
+<path d="M194 64 C230 64 236 118 248 122" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/>
+<path d="M194 188 C230 188 236 134 248 130" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/>
+<circle class="m1" r="8" fill="#2F8CF0" transform="translate(320 126)"/>
+<circle class="m2" r="8" fill="#7048E8" transform="translate(390 126)"/>
+<text x="104" y="30" text-anchor="middle" font-size="13" fill="#1B66BC">{$t[0]}</text>
+<text x="355" y="172" text-anchor="middle" font-size="13" fill="#B84508">{$t[1]}</text>
+<text x="547" y="180" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[2]}</text>
+<text x="320" y="240" text-anchor="middle" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A slice is a small header (pointer, length, capacity) over an array; a sub-slice shares the same array. */
+if (!function_exists('fig_gobase_slice')) {
+    function fig_gobase_slice(array $t): string
+    {
+        $cells = '';
+        foreach (['6', '7', '8', '9', '', ''] as $i => $v) {
+            $x = 200 + $i * 64;
+            $used = $v !== '';
+            $cells .= "<text x=\"" . ($x + 30) . "\" y=\"108\" text-anchor=\"middle\" font-size=\"12\" fill=\"#5B5880\">$i</text><rect x=\"$x\" y=\"116\" width=\"60\" height=\"44\" rx=\"8\" fill=\"" . ($used ? '#DCEBFF' : '#F1F0F8') . "\" stroke=\"" . ($used ? '#2F8CF0' : '#C9C7DE') . "\" stroke-width=\"2\"" . ($used ? '' : ' stroke-dasharray="5 4"') . "/><text x=\"" . ($x + 30) . "\" y=\"144\" text-anchor=\"middle\" font-weight=\"700\">$v</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="sl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="20" width="160" height="70" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="28" y="42" font-weight="700">voti</text><text x="28" y="62" font-size="13">len 4</text><text x="28" y="80" font-size="13">cap 6</text>
+<circle cx="150" cy="55" r="5" fill="#1E1C52"/>
+<path d="M150 55 C190 55 210 70 226 110" fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#sl)"/>
+$cells
+<rect x="262" y="112" width="128" height="52" rx="10" fill="none" stroke="#E8590C" stroke-width="3"/>
+<rect x="16" y="186" width="160" height="70" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="28" y="208" font-weight="700">voti[1:3]</text><text x="28" y="228" font-size="13">len 2</text><text x="28" y="246" font-size="13">cap 5</text>
+<circle cx="150" cy="221" r="5" fill="#1E1C52"/>
+<path d="M150 221 C220 221 280 200 290 168" fill="none" stroke="#E8590C" stroke-width="2" marker-end="url(#sl)"/>
+<text x="420" y="200" font-family="system-ui, sans-serif" font-size="13" fill="#5B5880">{$t[0]}</text>
+<text x="420" y="218" font-family="system-ui, sans-serif" font-size="13" fill="#5B5880">{$t[1]}</text>
+<text x="456" y="98" font-family="system-ui, sans-serif" font-size="12" fill="#8A87B0">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Passing a struct by value makes a copy; passing a pointer lets the function change the original. */
+if (!function_exists('fig_gobase_ptr')) {
+    function fig_gobase_ptr(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="pt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="210" y="16" width="220" height="80" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="226" y="38" font-weight="700">main</text>
+<rect x="250" y="48" width="140" height="36" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="320" y="71" text-anchor="middle">c.Valore = 1</text>
+<rect x="16" y="140" width="260" height="76" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<text x="30" y="162" font-weight="700" font-size="13">incrementaCopia(c)</text>
+<rect x="56" y="172" width="180" height="34" rx="8" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/><text x="146" y="194" text-anchor="middle" font-size="13">copia.Valore = 1</text>
+<rect x="364" y="140" width="260" height="76" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<text x="378" y="162" font-weight="700" font-size="13">incrementa(&amp;c)</text>
+<rect x="404" y="172" width="180" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="440" y="194" font-size="13">c *Contatore</text><circle cx="562" cy="189" r="5" fill="#1E1C52"/>
+<path d="M248 72 C170 80 146 110 146 166" fill="none" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#pt)"/>
+<path d="M562 184 C562 100 470 66 396 66" fill="none" stroke="#7048E8" stroke-width="2" marker-end="url(#pt)"/>
+<g font-family="system-ui, sans-serif" font-size="13">
+<text x="146" y="236" text-anchor="middle" fill="#B8255F">{$t[0]}</text>
+<text x="494" y="236" text-anchor="middle" fill="#5B33C9">{$t[1]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'go-base', 'family' => 'go', 'after' => null,
     'title' => L('Go base', 'Go Basics'), 'short' => L('Go base', 'Go Basics'), 'level' => L('Base', 'Basics'),
@@ -8,7 +96,7 @@ return [
     'lessons' => [
         lesson('basics', L('Pacchetti, variabili e tipi', 'Packages, variables and types'), [
             P('**Go** è un linguaggio compilato creato da Google: semplice, veloce, con un solo modo idiomatico di fare le cose. Docker e Kubernetes sono scritti in Go. Ogni file appartiene a un **pacchetto**; il programma parte dalla funzione `main` del pacchetto `main`.', '**Go** is a compiled language created at Google: simple, fast, with one idiomatic way of doing things. Docker and Kubernetes are written in Go. Every file belongs to a **package**; the program starts from the `main` function of the `main` package.'),
-            C('package main
+            C(L('package main
 
 import "fmt"
 
@@ -17,7 +105,16 @@ func main() {
     abitanti := 98000          // tipo dedotto: int
     const iva = 0.22
     fmt.Printf("%s ha %d abitanti\n", citta, abitanti)
-}', 'go'),
+}', 'package main
+
+import "fmt"
+
+func main() {
+    var citta string = "Udine"
+    abitanti := 98000          // tipo dedotto: int
+    const iva = 0.22
+    fmt.Printf("%s has %d inhabitants\n", citta, abitanti)
+}'), 'go', L('<pre>Udine ha 98000 abitanti</pre>', '<pre>Udine has 98000 inhabitants</pre>')),
             P('`:=` dichiara e assegna in un colpo solo, dentro le funzioni. Le variabili non usate e gli import inutili sono **errori di compilazione**: Go ti obbliga a tenere il codice pulito. `go run main.go` esegue, `go build` crea l’eseguibile, `gofmt` formatta.', '`:=` declares and assigns in one go, inside functions. Unused variables and imports are **compile errors**: Go forces you to keep code tidy. `go run main.go` runs, `go build` creates the executable, `gofmt` formats.'),
         ], [
             Q('b1', L('Da quale funzione parte un programma Go?', 'Which function does a Go program start from?'), ['main', 'start', 'init', 'run'], 0, L('Nel pacchetto main.', 'In the main package.')),
@@ -69,8 +166,9 @@ func stampaArea(f Forma) {
     fmt.Printf("%.2f\n", f.Area())
 }
 
-stampaArea(Rettangolo{Base: 3, Altezza: 4})   // 12.00', 'go'),
+stampaArea(Rettangolo{Base: 3, Altezza: 4})   // 12.00', 'go', '<pre>12.00</pre>'),
             P('I nomi con la **maiuscola** sono esportati (visibili da altri pacchetti), quelli in minuscolo restano privati. Un metodo con ricevitore puntatore (`func (r *Rettangolo)`) può modificare la struct.', 'Names starting with a **capital** are exported (visible from other packages), lowercase ones stay private. A method with a pointer receiver (`func (r *Rettangolo)`) can modify the struct.'),
+            P('Perché le interfacce implicite? Perché chi scrive `Rettangolo` non deve conoscere `Forma`: l’interfaccia la definisce chi la usa, ed è normale dichiararla vicino alla funzione che ne ha bisogno. In Go si preferiscono interfacce piccole, spesso di un solo metodo, come `fmt.Stringer` (`String() string`) o `io.Reader`. Per il ricevitore, una regola semplice: se un metodo deve modificare la struct, o la struct è grande, usa il puntatore, e allora usalo per tutti i metodi di quel tipo.', 'Why implicit interfaces? Because whoever writes `Rettangolo` does not need to know about `Forma`: the interface is defined by whoever uses it, and it is normal to declare it next to the function that needs it. Go prefers small interfaces, often of a single method, such as `fmt.Stringer` (`String() string`) or `io.Reader`. For the receiver, a simple rule: if a method must change the struct, or the struct is large, use a pointer, and then use it for every method of that type.'),
         ], [
             Q('s1', L('Come si dichiara che un tipo implementa un’interfaccia?', 'How do you declare a type implements an interface?'), [L('Non serve: basta avere i metodi', 'No need: having the methods is enough'), L('Con implements', 'With implements'), L('Con extends', 'With extends'), L('Con un commento', 'With a comment')], 0, L('Implementazione implicita.', 'Implicit implementation.')),
             Q('s2', L('Un campo che inizia con la maiuscola è…', 'A field starting with a capital is…'), [L('Esportato, visibile da altri pacchetti', 'Exported, visible from other packages'), L('Una costante', 'A constant'), L('Privato', 'Private'), L('Un errore', 'An error')], 0, L('Minuscolo = privato.', 'Lowercase = private.')),
@@ -102,6 +200,9 @@ func main() {
     }
 }', 'go'),
             P('`ch <- v` invia, `<-ch` riceve (e aspetta). Per aspettare un gruppo di goroutine si usa `sync.WaitGroup` (da Go 1.25 con il comodo `wg.Go(f)`). Il motto di Go: “non comunicare condividendo memoria; condividi memoria comunicando”.', '`ch <- v` sends, `<-ch` receives (and waits). To wait for a group of goroutines you use `sync.WaitGroup` (since Go 1.25 with the handy `wg.Go(f)`). Go’s motto: “do not communicate by sharing memory; share memory by communicating”.'),
+            Fig(L(fig_gobase_chan(['goroutine', 'il canale', 'riceve uno alla volta', 'Chi invia aspetta chi riceve: il canale sincronizza e trasporta.']), fig_gobase_chan(['goroutines', 'the channel', 'receives one at a time', 'The sender waits for the receiver: the channel synchronises and carries.'])),
+                L('A sinistra due goroutine, go scarica(go.dev) e go scarica(example.com). Entrambe mandano un messaggio in un canale chan string, disegnato come un tubo, che porta a main, dove <-risultati li riceve uno alla volta.', 'On the left two goroutines, go scarica(go.dev) and go scarica(example.com). Both send a message into a chan string channel, drawn as a pipe, leading to main, where <-risultati receives them one at a time.'),
+                L('Più goroutine, un canale, un solo punto che raccoglie.', 'Several goroutines, one channel, a single point that collects.')),
         ], [
             Q('g1', L('Come si avvia una goroutine?', 'How do you start a goroutine?'), ['go funzione()', 'async funzione()', 'thread funzione()', 'run funzione()'], 0, L('Leggerissime.', 'Very lightweight.')),
             Q('g2', L('Che cosa fa `<-ch`?', 'What does `<-ch` do?'), [L('Riceve dal canale, aspettando', 'Receives from the channel, waiting'), L('Chiude il canale', 'Closes the channel'), L('Invia al canale', 'Sends to the channel'), L('Cancella il canale', 'Deletes the channel')], 0, L('`ch <- v` invia.', '`ch <- v` sends.')),
@@ -137,7 +238,7 @@ func main() {
         ]),
         lesson('control-flow', L('if, for e switch', 'if, for and switch'), [
             P('Go ha **un solo ciclo**, `for`, che fa anche da `while` e da ciclo infinito (`for { }`). Da Go 1.22 `for i := range 3` conta da 0 a 2. `if` e `switch` possono iniziare con una breve dichiarazione, e le condizioni non vanno tra parentesi tonde.', 'Go has **a single loop**, `for`, which also acts as `while` and as an endless loop (`for { }`). Since Go 1.22 `for i := range 3` counts from 0 to 2. `if` and `switch` can start with a short declaration, and conditions take no round brackets.'),
-            C('for i := 0; i < 3; i++ {
+            C(L('for i := 0; i < 3; i++ {
     fmt.Println("giro", i)
 }
 for i := range 3 {                 // 0, 1, 2
@@ -155,7 +256,39 @@ case "sab", "dom":
     fmt.Println("weekend")
 default:
     fmt.Println("lavoro")
-}', 'go'),
+}', 'for i := 0; i < 3; i++ {
+    fmt.Println("round", i)
+}
+for i := range 3 {                 // 0, 1, 2
+    fmt.Println(i)
+}
+n := 10
+for n > 0 {                        // il "while" di Go
+    n -= 3
+}
+if eta := 20; eta >= 18 {
+    fmt.Println("adult")
+}
+switch giorno := "sab"; giorno {
+case "sab", "dom":
+    fmt.Println("weekend")
+default:
+    fmt.Println("work")
+}'), 'go', L('<pre>giro 0
+giro 1
+giro 2
+0
+1
+2
+adulto
+weekend</pre>', '<pre>round 0
+round 1
+round 2
+0
+1
+2
+adult
+weekend</pre>')),
             P('Nello `switch` i casi non «cadono» nel successivo: niente `break` alla fine di ogni caso. Se vuoi davvero passare al caso dopo, scrivi `fallthrough`.', 'In a `switch` cases do not “fall through” to the next one: no `break` at the end of each case. If you really want to move on to the next case, write `fallthrough`.'),
         ], [
             Q('cf1', L('Come si scrive un “while” in Go?', 'How do you write a “while” in Go?'), ['while n > 0 { }', 'for n > 0 { }', 'loop n > 0 { }', 'do { } while n > 0'], 1, L('`for` con la sola condizione.', '`for` with just the condition.')),
@@ -191,6 +324,9 @@ if e, ok := eta["Cleo"]; !ok {
 }
 delete(eta, "Ada")', 'go'),
             P('Leggere una chiave assente non dà errore ma lo **zero value** del tipo (0, "", false): per sapere se la chiave c’era si usa la forma `v, ok := m[k]`. L’ordine in cui `range` visita una mappa non è garantito.', 'Reading a missing key gives no error but the type’s **zero value** (0, "", false): to know whether the key was there you use the `v, ok := m[k]` form. The order in which `range` visits a map is not guaranteed.'),
+            Fig(L(fig_gobase_slice(['due slice, un solo array:', 'cambiare voti[1] cambia anche l’altra', 'capacità libera']), fig_gobase_slice(['two slices, one array:', 'changing voti[1] changes the other too', 'spare capacity'])),
+                L('La slice voti ha lunghezza 4 e capacità 6 e punta a un array con 6, 7, 8, 9 e due caselle libere. La slice voti[1:3] ha lunghezza 2 e capacità 5 e punta alle caselle 1 e 2 dello stesso array, evidenziate in arancione.', 'The slice voti has length 4 and capacity 6 and points to an array holding 6, 7, 8, 9 and two free cells. The slice voti[1:3] has length 2 and capacity 5 and points to cells 1 and 2 of the same array, highlighted in orange.'),
+                L('Una slice è una finestra su un array: più finestre possono guardare lo stesso.', 'A slice is a window on an array: several windows can look at the same one.')),
         ], [
             Q('sm1', L('Come aggiungi 5 alla slice `s`?', 'How do you add 5 to the slice `s`?'), ['s.push(5)', 'append(s, 5)', 's = append(s, 5)', 's += 5'], 2, L('`append` restituisce la nuova slice.', '`append` returns the new slice.')),
             Q('sm2', L('Che cosa dà `m["x"]` su una `map[string]int` senza la chiave "x"?', 'What does `m["x"]` give on a `map[string]int` without the key "x"?'), ['nil', '0', L('Un panic', 'A panic'), '-1'], 1, L('Lo zero value di `int`.', 'The zero value of `int`.')),
@@ -217,8 +353,13 @@ func main() {
     p := &x                    // p punta a x
     *p = 20                    // cambia x attraverso p
     fmt.Println(x, p == nil)   // 20 false
-}', 'go'),
+}', 'go', '<pre>0
+1
+20 false</pre>'),
             P('Un puntatore non inizializzato vale `nil`: leggerlo provoca un *panic*. In Go non esiste l’aritmetica dei puntatori, quindi sono semplici e sicuri. Con le struct Go è comodo: `c.Valore` funziona anche se `c` è un puntatore.', 'An uninitialised pointer is `nil`: reading through it causes a *panic*. Go has no pointer arithmetic, so pointers are simple and safe. With structs Go is handy: `c.Valore` works even when `c` is a pointer.'),
+            Fig(L(fig_gobase_ptr(['copia: main non vede la modifica', 'indirizzo: cambia l’originale']), fig_gobase_ptr(['copy: main does not see the change', 'address: changes the original'])),
+                L('In alto main con c.Valore = 1. In basso a sinistra incrementaCopia(c) riceve una copia tratteggiata della struct; in basso a destra incrementa(&c) riceve un puntatore, con una freccia che torna alla c di main.', 'At the top main with c.Valore = 1. At the bottom left incrementaCopia(c) receives a dashed copy of the struct; at the bottom right incrementa(&c) receives a pointer, with an arrow leading back to main’s c.'),
+                L('Con `&c` la funzione lavora sull’originale, non su una copia.', 'With `&c` the function works on the original, not on a copy.')),
         ], [
             Q('pt1', L('Che cosa fa `&x`?', 'What does `&x` do?'), [L('Prende l’indirizzo di x', 'Takes the address of x'), L('Copia x', 'Copies x'), L('Confronta x con zero', 'Compares x with zero'), L('Cancella x', 'Deletes x')], 0, L('Il risultato è di tipo `*int` se x è un int.', 'The result is of type `*int` if x is an int.')),
             Q('pt2', L('Perché `incrementaCopia(c)` non cambia `c`?', 'Why does `incrementaCopia(c)` not change `c`?'), [L('Perché Valore è privato', 'Because Valore is private'), L('Perché la funzione riceve una copia della struct', 'Because the function receives a copy of the struct'), L('Perché manca return', 'Because return is missing'), L('Perché Go non permette di modificare le struct', 'Because Go does not allow changing structs')], 1, L('Serve un puntatore per cambiare l’originale.', 'A pointer is needed to change the original.')),
@@ -259,6 +400,7 @@ func main() {
     fmt.Println(temperatura.InFahrenheit(20)) // 68
 }', 'go'),
             P('`go mod tidy` aggiunge le dipendenze mancanti e toglie quelle inutili. Solo i nomi con la maiuscola sono visibili da un altro pacchetto.', '`go mod tidy` adds missing dependencies and removes unused ones. Only capitalised names are visible from another package.'),
+            P('Le versioni seguono il **versionamento semantico**: `v1.4.2` significa versione maggiore 1, minore 4, correzione 2, e dentro la stessa versione maggiore un aggiornamento non dovrebbe rompere il tuo codice. Sia `go.mod` sia `go.sum` vanno su git: `go.sum` garantisce che chiunque scarichi esattamente gli stessi file. Una cartella chiamata `internal/` è speciale: i suoi pacchetti si possono importare solo dall’interno del modulo.', 'Versions follow **semantic versioning**: `v1.4.2` means major version 1, minor 4, patch 2, and within the same major version an update should not break your code. Both `go.mod` and `go.sum` go into git: `go.sum` guarantees that everyone downloads exactly the same files. A folder named `internal/` is special: its packages can be imported only from inside the module.'),
         ], [
             Q('md1', L('Quale comando crea il file `go.mod`?', 'Which command creates the `go.mod` file?'), ['go new', 'go mod init', 'go init mod', 'go create'], 1, L('Seguito dal percorso del modulo.', 'Followed by the module path.')),
             Q('md2', L('Che cosa fa `go mod tidy`?', 'What does `go mod tidy` do?'), [L('Formatta il codice', 'Formats the code'), L('Esegue i test', 'Runs the tests'), L('Cancella la cartella vendor', 'Deletes the vendor folder'), L('Aggiunge le dipendenze mancanti e toglie quelle inutili', 'Adds missing dependencies and removes unused ones')], 3, L('Tiene in ordine `go.mod` e `go.sum`.', 'It keeps `go.mod` and `go.sum` tidy.')),

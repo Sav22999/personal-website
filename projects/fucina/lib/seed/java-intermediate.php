@@ -1,6 +1,123 @@
 <?php
 /** Java intermediate: classes and objects, inheritance, interfaces, collections and exceptions, enums, equality and sorting, files with java.nio, packages and build tools. */
 
+/** Polymorphism: the variable has the parent type, the object decides which method runs. */
+if (!function_exists('fig_javaint_poly')) {
+    function fig_javaint_poly(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L10 5L0 10z" fill="#FFFFFF" stroke="#7048E8" stroke-width="1.5"/></marker>
+<marker id="ai2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="70" y="20" width="200" height="64" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="170" y="46" text-anchor="middle" font-weight="700">Animale</text><text x="170" y="70" text-anchor="middle" font-size="13">abstract verso()</text>
+<rect x="16" y="150" width="150" height="64" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="91" y="176" text-anchor="middle" font-weight="700">Cane</text><text x="91" y="200" text-anchor="middle" font-size="13">verso() "Bau"</text>
+<rect x="182" y="150" width="150" height="64" rx="12" fill="#FFE8D6" stroke="#E8590C" stroke-width="3"/>
+<text x="257" y="176" text-anchor="middle" font-weight="700">Gatto</text><text x="257" y="200" text-anchor="middle" font-size="13">verso() "Miao"</text>
+<line x1="91" y1="146" x2="140" y2="90" stroke="#7048E8" stroke-width="2" marker-end="url(#ai)"/>
+<line x1="257" y1="146" x2="200" y2="90" stroke="#7048E8" stroke-width="2" marker-end="url(#ai)"/>
+<text x="170" y="124" text-anchor="middle" font-size="13" fill="#5B33C9">extends</text>
+<rect x="370" y="40" width="254" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="384" y="65" font-size="13">Animale a = new Gatto();</text>
+<line x1="497" y1="84" x2="497" y2="108" stroke="#1E1C52" stroke-width="2" marker-end="url(#ai2)"/>
+<rect x="370" y="112" width="254" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="384" y="137" font-size="13">a.verso()</text>
+<line x1="497" y1="156" x2="497" y2="180" stroke="#1E1C52" stroke-width="2" marker-end="url(#ai2)"/>
+<rect x="420" y="184" width="154" height="40" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<text x="497" y="209" text-anchor="middle" font-weight="700">"Miao"</text>
+<text x="497" y="248" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#5B5880">{$t[0]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** List, Set and Map side by side. */
+if (!function_exists('fig_javaint_coll')) {
+    function fig_javaint_coll(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<g font-weight="700" text-anchor="middle" font-size="15"><text x="110" y="30" fill="#1B66BC">List</text><text x="320" y="30" fill="#0B7F5C">Set</text><text x="530" y="30" fill="#B84508">Map</text></g>
+<g font-size="12" fill="#5B5880" text-anchor="middle"><text x="50" y="66">0</text><text x="110" y="66">1</text><text x="170" y="66">2</text></g>
+<rect x="22" y="74" width="56" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="50" y="99" text-anchor="middle">Ada</text>
+<rect x="82" y="74" width="56" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="110" y="99" text-anchor="middle">Bea</text>
+<rect x="142" y="74" width="56" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="170" y="99" text-anchor="middle">Ada</text>
+<ellipse cx="320" cy="100" rx="90" ry="50" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="290" y="92" text-anchor="middle">java</text><text x="350" y="118" text-anchor="middle">oop</text>
+<rect x="440" y="60" width="70" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="475" y="82" text-anchor="middle">"Ada"</text>
+<text x="530" y="82" text-anchor="middle">→</text>
+<rect x="550" y="60" width="60" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="580" y="82" text-anchor="middle">9</text>
+<rect x="440" y="106" width="70" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="475" y="128" text-anchor="middle">"Bea"</text>
+<text x="530" y="128" text-anchor="middle">→</text>
+<rect x="550" y="106" width="60" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="580" y="128" text-anchor="middle">8</text>
+<g font-family="system-ui, sans-serif" font-size="13" fill="#5B5880" text-anchor="middle"><text x="110" y="186">{$t[0]}</text><text x="320" y="186">{$t[1]}</text><text x="530" y="186">{$t[2]}</text></g>
+<g font-size="12" fill="#5B5880" text-anchor="middle"><text x="110" y="206">ArrayList</text><text x="320" y="206">HashSet</text><text x="530" y="206">HashMap</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The exception family tree: checked exceptions under Exception, unchecked ones under RuntimeException. */
+if (!function_exists('fig_javaint_exc')) {
+    function fig_javaint_exc(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="ui-monospace, monospace" font-size="13" fill="#1E1C52">
+<g stroke="#8A87B0" stroke-width="2" fill="none">
+<path d="M320 54 V70 H110 V86"/><path d="M320 70 H430 V86"/>
+<path d="M430 120 V136 H300 V152"/><path d="M430 136 H520 V152"/>
+<path d="M520 186 V200 H400 V214"/><path d="M400 200 V256"/>
+</g>
+<rect x="250" y="20" width="140" height="34" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="320" y="42" text-anchor="middle" font-weight="700">Throwable</text>
+<rect x="50" y="86" width="120" height="34" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="110" y="108" text-anchor="middle">Error</text>
+<rect x="370" y="86" width="120" height="34" rx="8" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="430" y="108" text-anchor="middle" font-weight="700">Exception</text>
+<rect x="225" y="152" width="150" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="300" y="174" text-anchor="middle">IOException</text>
+<rect x="440" y="152" width="160" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="520" y="174" text-anchor="middle" font-weight="700">RuntimeException</text>
+<rect x="296" y="214" width="208" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2" stroke-dasharray="6 4"/><text x="400" y="236" text-anchor="middle">IllegalArgumentException</text>
+<rect x="296" y="256" width="208" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2" stroke-dasharray="6 4"/><text x="400" y="278" text-anchor="middle">NullPointerException</text>
+<g font-family="system-ui, sans-serif" font-size="13">
+<text x="110" y="140" text-anchor="middle" fill="#5B5880">{$t[0]}</text>
+<text x="300" y="206" text-anchor="middle" fill="#B84508">{$t[1]}</text>
+<text x="514" y="240" fill="#1B66BC">{$t[2]}</text>
+<text x="514" y="258" fill="#1B66BC">{$t[3]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** A HashSet: hashCode picks the bucket, equals compares inside it. */
+if (!function_exists('fig_javaint_hash')) {
+    function fig_javaint_hash(array $t): string
+    {
+        $b = '';
+        for ($i = 0; $i < 5; $i++) {
+            $y = 30 + $i * 40;
+            $hot = $i === 2;
+            $b .= "<text x=\"296\" y=\"" . ($y + 23) . "\" text-anchor=\"end\" font-size=\"12\" fill=\"#5B5880\">$i</text><rect x=\"304\" y=\"$y\" width=\"60\" height=\"34\" rx=\"6\" fill=\"" . ($hot ? '#FFF3EA' : '#F1F0F8') . "\" stroke=\"" . ($hot ? '#E8590C' : '#C9C7DE') . "\" stroke-width=\"2\"/>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, monospace" font-size="13" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="88" width="170" height="54" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="101" y="110" text-anchor="middle" font-weight="700">Libro</text><text x="101" y="130" text-anchor="middle">isbn "978-1"</text>
+$b
+<path d="M190 115 C240 115 250 127 298 127" fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="244" y="100" text-anchor="middle" font-size="12">hashCode()</text>
+<rect x="400" y="110" width="96" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="448" y="132" text-anchor="middle">"978-7"</text>
+<rect x="510" y="110" width="96" height="34" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="3"/><text x="558" y="132" text-anchor="middle" font-weight="700">"978-1"</text>
+<line x1="366" y1="127" x2="396" y2="127" stroke="#E8590C" stroke-width="2"/>
+<text x="448" y="168" text-anchor="middle" font-size="12" fill="#B8255F">equals → false</text>
+<text x="558" y="168" text-anchor="middle" font-size="12" fill="#0B7F5C">equals → true</text>
+<g font-family="system-ui, sans-serif" font-size="13" fill="#5B5880">
+<text x="16" y="220">1. {$t[0]}</text><text x="16" y="240">2. {$t[1]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'java-intermediate', 'family' => 'java', 'after' => 'java-base',
     'title' => L('Java intermedio', 'Intermediate Java'), 'short' => L('Java intermedio', 'Java Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -26,6 +143,7 @@ return [
 Conto c = new Conto("Ada");
 c.versa(50);', 'java'),
             P('Il **costruttore** ha il nome della classe e nessun tipo di ritorno. `this` indica l’oggetto attuale.', 'The **constructor** has the class name and no return type. `this` is the current object.'),
+            P('Perché tanta fatica con `private`? Perché così `versa` può controllare l’importo, e nessuno da fuori può scrivere `c.saldo = -1000`. Un campo con il getter ma senza setter è di sola lettura per chi usa la classe; `final` dice che `titolare` si assegna una volta, nel costruttore, e poi non cambia. Ogni `new` crea un oggetto indipendente; una variabile che non punta a nessun oggetto vale `null`, e chiamarci sopra un metodo lancia `NullPointerException`.', 'Why all the trouble with `private`? Because that way `versa` can check the amount, and nobody outside can write `c.saldo = -1000`. A field with a getter but no setter is read-only for whoever uses the class; `final` says that `titolare` is assigned once, in the constructor, and never changes. Every `new` creates an independent object; a variable that points to no object is `null`, and calling a method on it throws `NullPointerException`.'),
         ], [
             Q('o1', L('Con quale parola crei un oggetto?', 'Which word creates an object?'), ['new', 'create', 'make', 'object'], 0, L('`new Conto("Ada")`.', '`new Conto("Ada")`.')),
             Q('o2', L('Perché i campi sono `private`?', 'Why are fields `private`?'), [L('Per controllare come cambiano', 'To control how they change'), L('Per velocità', 'For speed'), L('Per obbligo del compilatore', 'Because the compiler requires it'), L('Per nasconderli al debugger', 'To hide them from the debugger')], 0, L('Solo i metodi decidono.', 'Only methods decide.')),
@@ -56,6 +174,10 @@ class Gatto extends Animale {
 List<Animale> zoo = List.of(new Cane(), new Gatto());
 for (Animale a : zoo) System.out.println(a.verso());', 'java'),
             P('Una classe `abstract` non si istanzia e obbliga i figli a scrivere i metodi astratti. `super` chiama la versione del padre.', 'An `abstract` class cannot be instantiated and forces children to write the abstract methods. `super` calls the parent’s version.'),
+            P('La regola del polimorfismo: il **tipo della variabile** decide quali metodi puoi chiamare, l’**oggetto vero** decide quale versione gira. Nel ciclo `a` è sempre un `Animale`, ma una volta risponde il cane e una volta il gatto. Così puoi aggiungere una nuova classe `Mucca` senza toccare il ciclo. `@Override` non è obbligatorio, ma fa controllare al compilatore che tu stia davvero sovrascrivendo: un errore di battitura in `vreso()` diventa subito un errore.', 'The rule of polymorphism: the **variable’s type** decides which methods you can call, the **real object** decides which version runs. In the loop `a` is always an `Animale`, but once the dog answers and once the cat. So you can add a new `Mucca` class without touching the loop. `@Override` is not mandatory, but it makes the compiler check that you really are overriding: a typo in `vreso()` becomes an error at once.'),
+            Fig(L(fig_javaint_poly(['Decide l’oggetto, non il tipo della variabile.']), fig_javaint_poly(['The object decides, not the variable’s type.'])),
+                L('A sinistra la classe astratta Animale con le figlie Cane, che restituisce "Bau", e Gatto, che restituisce "Miao". A destra: Animale a = new Gatto(); poi a.verso() restituisce "Miao".', 'On the left the abstract class Animale with its children Cane, returning "Bau", and Gatto, returning "Miao". On the right: Animale a = new Gatto(); then a.verso() returns "Miao".'),
+                L('La variabile è un `Animale`, ma risponde il `Gatto`.', 'The variable is an `Animale`, but the `Gatto` answers.')),
         ], [
             Q('i1', L('Quale parola fa ereditare una classe?', 'Which word makes a class inherit?'), ['extends', 'implements', 'inherits', 'super'], 0, L('Una sola classe padre.', 'A single parent class.')),
             Q('i2', L('A che cosa serve `@Override`?', 'What is `@Override` for?'), [L('Segnala che sovrascrivi un metodo', 'It marks that you override a method'), L('Rende il metodo statico', 'Makes the method static'), L('Cancella il metodo', 'Deletes the method'), L('Rende pubblico', 'Makes it public')], 0, L('Il compilatore controlla che il padre lo abbia.', 'The compiler checks the parent has it.')),
@@ -80,6 +202,7 @@ record Prodotto(String nome, double prezzo) implements Pagabile {
 var p = new Prodotto("Libro", 10);
 System.out.println(p.nome() + " " + p.totale());', 'java'),
             P('Il record crea da solo costruttore, metodi di lettura (`nome()`), `equals`, `hashCode` e `toString`.', 'The record creates the constructor, accessors (`nome()`), `equals`, `hashCode` and `toString` by itself.'),
+            P('Interfaccia o classe astratta? Un’interfaccia descrive una capacità che classi molto diverse possono condividere (un prodotto e un abbonamento sono entrambi `Pagabile`) e una classe può averne molte; una classe astratta condivide anche codice e campi, ma se ne estende una sola. Un’interfaccia può avere metodi `default` con un corpo. I campi di un record sono `final`: per «cambiare» un prodotto ne crei uno nuovo, e per controllare i valori scrivi un **costruttore compatto**: `Prodotto { if (prezzo < 0) throw new IllegalArgumentException(); }`.', 'Interface or abstract class? An interface describes an ability that very different classes can share (a product and a subscription are both `Pagabile`) and a class can have many; an abstract class also shares code and fields, but you extend only one. An interface can have `default` methods with a body. A record’s fields are `final`: to “change” a product you create a new one, and to check the values you write a **compact constructor**: `Prodotto { if (prezzo < 0) throw new IllegalArgumentException(); }`.'),
         ], [
             Q('r1', L('Quante interfacce può implementare una classe?', 'How many interfaces can a class implement?'), [L('Quante vuole', 'As many as it likes'), L('Una', 'One'), L('Due', 'Two'), L('Nessuna', 'None')], 0, L('Separate da virgole.', 'Separated by commas.')),
             Q('r2', L('Come leggi il campo `nome` di un record?', 'How do you read the `nome` field of a record?'), ['p.nome()', 'p.getNome()', 'p.nome', 'p["nome"]'], 0, L('Il metodo ha il nome del campo.', 'The method has the field’s name.')),
@@ -97,8 +220,14 @@ System.out.println(voti.get("Ada"));
 System.out.println(voti.getOrDefault("Cleo", 0));
 
 Set<String> tag = new HashSet<>(List.of("java", "java", "oop"));
-System.out.println(tag.size()); // 2', 'java'),
+System.out.println(tag.size()); // 2', 'java', '<pre>9
+0
+2</pre>'),
             P('`getOrDefault` evita il `null` quando la chiave manca. Un `Set` scarta da solo i doppioni.', '`getOrDefault` avoids `null` when the key is missing. A `Set` drops duplicates by itself.'),
+            Fig(L(fig_javaint_coll(['in ordine, con doppioni', 'niente doppioni', 'chiave → valore']), fig_javaint_coll(['in order, with duplicates', 'no duplicates', 'key → value'])),
+                L('Tre esempi affiancati. List: Ada, Bea, Ada agli indici 0, 1 e 2. Set: java e oop in un cerchio, senza ripetizioni. Map: "Ada" porta a 9 e "Bea" porta a 8. Sotto, le implementazioni ArrayList, HashSet e HashMap.', 'Three examples side by side. List: Ada, Bea, Ada at indexes 0, 1 and 2. Set: java and oop in a circle, without repeats. Map: "Ada" leads to 9 and "Bea" leads to 8. Below, the implementations ArrayList, HashSet and HashMap.'),
+                L('Scegli la collezione in base alla domanda che farai ai dati.', 'Pick the collection by the question you will ask the data.')),
+            P('`HashSet` e `HashMap` non garantiscono nessun ordine: se ti serve l’ordine di inserimento usa `LinkedHashMap`, se ti servono le chiavi ordinate `TreeMap`. Una mappa si scorre con `for (var e : voti.entrySet())`, leggendo `e.getKey()` ed `e.getValue()`. Attenzione: togliere elementi da una lista mentre la scorri con un for-each lancia `ConcurrentModificationException`; usa `lista.removeIf(x -> …)`.', '`HashSet` and `HashMap` guarantee no order: if you need insertion order use `LinkedHashMap`, if you need sorted keys `TreeMap`. A map is walked with `for (var e : voti.entrySet())`, reading `e.getKey()` and `e.getValue()`. Careful: removing items from a list while walking it with a for-each throws `ConcurrentModificationException`; use `lista.removeIf(x -> …)`.'),
         ], [
             Q('k1', L('Quale collezione non ha doppioni?', 'Which collection has no duplicates?'), ['Set', 'List', 'ArrayList', 'Array'], 0, L('Un insieme.', 'A set.')),
             Q('k2', L('Come metti una coppia in una `Map`?', 'How do you put a pair into a `Map`?'), ['put(k, v)', 'add(k, v)', 'set(k, v)', 'push(k, v)'], 0, L('E `get(k)` per leggere.', 'And `get(k)` to read.')),
@@ -120,6 +249,10 @@ static void preleva(double importo) {
     if (importo <= 0) throw new IllegalArgumentException("Importo non valido");
 }', 'java'),
             P('Il **try-with-resources** chiude da solo file e connessioni alla fine del blocco.', '**try-with-resources** closes files and connections by itself at the end of the block.'),
+            P('Le eccezioni **controllate** rappresentano problemi che non dipendono dal tuo codice, come un file che manca o una rete che cade: il compilatore ti obbliga a pensarci. Quelle **non controllate**, figlie di `RuntimeException`, segnalano di solito un errore di programmazione, come un argomento sbagliato o un `null`: non serve dichiararle, ma vanno evitate. Più `catch` si scrivono dal più specifico al più generico, e un `catch` vuoto nasconde il problema invece di risolverlo.', '**Checked** exceptions stand for problems that do not depend on your code, such as a missing file or a dropped network: the compiler forces you to think about them. **Unchecked** ones, children of `RuntimeException`, usually signal a programming mistake, such as a wrong argument or a `null`: you do not need to declare them, but you should avoid them. Several `catch` blocks go from the most specific to the most general, and an empty `catch` hides the problem instead of solving it.'),
+            Fig(L(fig_javaint_exc(['errori gravi della JVM', 'controllata', 'non controllate:', 'nessun throws']), fig_javaint_exc(['serious JVM errors', 'checked', 'unchecked:', 'no throws needed'])),
+                L('Albero delle eccezioni: Throwable in cima, sotto Error ed Exception. Sotto Exception ci sono IOException, controllata, e RuntimeException; sotto RuntimeException ci sono IllegalArgumentException e NullPointerException, non controllate.', 'Exception tree: Throwable at the top, Error and Exception below it. Under Exception sit IOException, checked, and RuntimeException; under RuntimeException sit IllegalArgumentException and NullPointerException, unchecked.'),
+                L('Tutto ciò che discende da `RuntimeException` non va dichiarato con `throws`.', 'Anything descending from `RuntimeException` need not be declared with `throws`.')),
         ], [
             Q('e1', L('Con quale parola lanci un’eccezione?', 'Which word throws an exception?'), ['throw', 'raise', 'error', 'catch'], 0, L('`throws` invece la dichiara.', '`throws` declares it instead.')),
             Q('e2', L('Che cosa fa il try-with-resources?', 'What does try-with-resources do?'), [L('Chiude le risorse da solo', 'Closes resources by itself'), L('Riprova all’infinito', 'Retries forever'), L('Ignora gli errori', 'Ignores errors'), L('Crea risorse', 'Creates resources')], 0, L('Le risorse vanno tra le tonde dopo `try`.', 'Resources go in brackets after `try`.')),
@@ -190,6 +323,9 @@ List<Libro> libri = new ArrayList<>(catalogo);
 Collections.sort(libri);                                       // per anno
 libri.sort(Comparator.comparing((Libro l) -> l.titolo).reversed());', 'java'),
             P('`compareTo` restituisce un numero negativo se l’oggetto viene prima, zero se sono pari, positivo se viene dopo. I **record** scrivono da soli `equals`, `hashCode` e `toString`.', '`compareTo` returns a negative number if the object comes first, zero if they are level, positive if it comes after. **Records** write `equals`, `hashCode` and `toString` by themselves.'),
+            Fig(L(fig_javaint_hash(['hashCode sceglie il cassetto', 'equals confronta solo dentro quel cassetto']), fig_javaint_hash(['hashCode picks the bucket', 'equals compares only inside that bucket'])),
+                L('Un Libro con isbn 978-1 passa per hashCode() e finisce nel cassetto 2 di cinque. Nel cassetto ci sono già due libri: con 978-7 equals dà false, con 978-1 dà true.', 'A Libro with isbn 978-1 goes through hashCode() and lands in bucket 2 of five. The bucket already holds two books: with 978-7 equals gives false, with 978-1 it gives true.'),
+                L('Due oggetti uguali devono avere lo stesso hashCode, altrimenti finiscono in cassetti diversi.', 'Two equal objects must have the same hashCode, or they end up in different buckets.')),
         ], [
             Q('eq1', L('Se ridefinisci `equals`, che cos’altro devi ridefinire?', 'If you redefine `equals`, what else must you redefine?'), ['toString', 'compareTo', 'hashCode', 'clone'], 2, L('Oggetti uguali devono avere lo stesso hashCode.', 'Equal objects must have the same hashCode.')),
             Q('eq2', L('Che cosa restituisce `compareTo` quando l’oggetto viene prima dell’altro?', 'What does `compareTo` return when the object comes before the other?'), [L('Un numero negativo', 'A negative number'), 'true', L('Zero', 'Zero'), L('Un numero positivo', 'A positive number')], 0, L('Zero vuol dire pari.', 'Zero means level.')),
@@ -222,6 +358,7 @@ try {
     System.err.println("Errore: " + e.getMessage());
 }', 'java'),
             P('`Files.lines` legge un file grande riga per riga come stream, senza caricarlo tutto: tiene però aperto il file, quindi va chiuso con un try-with-resources.', '`Files.lines` reads a big file line by line as a stream, without loading it all: it keeps the file open, though, so it must be closed with try-with-resources.'),
+            Tip('`Path.of("dati", "note.txt")` usa il separatore giusto per il sistema (`/` o `\`). Un percorso relativo parte dalla cartella da cui lanci il programma, non da quella del file `.java`: se un file «non si trova», stampa `note.toAbsolutePath()`.', '`Path.of("dati", "note.txt")` uses the right separator for the system (`/` or `\`). A relative path starts from the folder you launch the program from, not from the `.java` file’s folder: if a file “cannot be found”, print `note.toAbsolutePath()`.'),
         ], [
             Q('fi1', L('Quale classe offre `readString` e `writeString`?', 'Which class offers `readString` and `writeString`?'), ['File', 'Path', 'Files', 'Scanner'], 2, L('`Path` descrive il percorso, `Files` lavora sui file.', '`Path` describes the path, `Files` works on files.')),
             Q('fi2', L('Come aggiungi testo in fondo con `writeString`?', 'How do you append text with `writeString`?'), [L('Con StandardOpenOption.APPEND', 'With StandardOpenOption.APPEND'), L('Con un secondo writeString senza opzioni', 'With a second writeString without options'), L('Con Files.append()', 'With Files.append()'), L('Non si può', 'You cannot')], 0, L('Senza opzioni il file viene riscritto.', 'Without options the file is rewritten.')),

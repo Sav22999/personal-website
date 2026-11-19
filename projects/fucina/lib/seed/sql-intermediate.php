@@ -1,6 +1,171 @@
 <?php
 /** SQL intermediate: aggregates, GROUP BY, joins, subqueries, keys, set operators, multiple joins and table design. */
 
+/** The rows a query returns, as a small table for a demo page. A null value shows as a grey NULL; $label is the query, in monospace above. */
+if (!function_exists('fucina_data_table')) {
+    function fucina_data_table(array $head, array $rows, string $label = ''): string
+    {
+        $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES);
+        $cell = fn($v) => $v === null ? '<td class="n">NULL</td>' : (is_int($v) || is_float($v) ? '<td class="r">' . $e($v) . '</td>' : '<td>' . $e($v) . '</td>');
+        $html = '<style>body{margin:8px;font:14px system-ui,sans-serif;color:#1E1C52}table{border-collapse:collapse;margin:0 0 10px}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:left}th{background:#F1F0F8}td.r{text-align:right;font-variant-numeric:tabular-nums}td.n{color:#8A87B0;font-style:italic}code{display:block;margin:0 0 4px;font:12px ui-monospace,monospace;color:#5A5880}</style>';
+        if ($label !== '') $html .= '<code>' . $e($label) . '</code>';
+        $html .= '<table><tr>' . implode('', array_map(fn($h) => '<th>' . $e($h) . '</th>', $head)) . '</tr>';
+        foreach ($rows as $r) $html .= '<tr>' . implode('', array_map($cell, $r)) . '</tr>';
+        return $html . '</table>';
+    }
+}
+
+/** GROUP BY gathers the rows with the same city into one row each, with its count. */
+if (!function_exists('fig_sqlint_group')) {
+    function fig_sqlint_group(): string
+    {
+        $col = ['Roma' => ['#2F8CF0', '#DCEBFF'], 'Udine' => ['#0B7F5C', '#D5F6EA'], 'Trieste' => ['#E8590C', '#FFE8D6']];
+        $gy = ['Roma' => 112, 'Udine' => 168, 'Trieste' => 224];
+        $rows = [['Anna', 'Roma'], ['Luca', 'Udine'], ['Sara', 'Roma'], ['Marco', 'Trieste'], ['Elena', 'Udine'], ['Paolo', 'Roma']];
+        $g = '';
+        foreach ($rows as $i => [$n, $c]) {
+            $y = 88 + $i * 34;
+            [$s, $f] = $col[$c];
+            $g .= '<path d="M232 ' . $y . ' C 320 ' . $y . ', 330 ' . $gy[$c] . ', 418 ' . $gy[$c] . '" fill="none" stroke="' . $s . '" stroke-width="2"/>';
+            $g .= '<rect x="20" y="' . ($y - 15) . '" width="212" height="30" rx="8" fill="' . $f . '" stroke="' . $s . '" stroke-width="2"/><text x="34" y="' . ($y + 5) . '">' . $n . '</text><text x="124" y="' . ($y + 5) . '">' . $c . '</text>';
+        }
+        $count = ['Roma' => 3, 'Udine' => 2, 'Trieste' => 1];
+        foreach ($count as $c => $k) {
+            [$s, $f] = $col[$c];
+            $y = $gy[$c];
+            $g .= '<rect x="418" y="' . ($y - 18) . '" width="200" height="36" rx="10" fill="' . $f . '" stroke="' . $s . '" stroke-width="2"/><text x="434" y="' . ($y + 5) . '">' . $c . '</text><text x="600" y="' . ($y + 5) . '" text-anchor="end" font-weight="700">' . $k . '</text>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="250" y="14" width="150" height="32" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="325" y="35" text-anchor="middle" font-family="ui-monospace, monospace" font-size="14" font-weight="700" fill="#4B2BBF">GROUP BY citta</text>
+<g font-weight="700"><text x="34" y="62">nome</text><text x="124" y="62">citta</text><text x="434" y="80">citta</text><text x="600" y="80" text-anchor="end">COUNT(*)</text></g>
+{$g}
+</svg>
+SVG;
+    }
+}
+
+/** INNER and LEFT JOIN on the same two tables: the user without orders is lost by one and kept, with NULL, by the other. */
+if (!function_exists('fig_sqlint_join')) {
+    function fig_sqlint_join(string $note1, string $note2, string $note3): string
+    {
+        $row = fn(int $x, int $w, int $y, array $cells, string $fill = '#FFFFFF') => '<rect x="' . $x . '" y="' . $y . '" width="' . $w . '" height="28" rx="6" fill="' . $fill . '"/>' . implode('', array_map(fn($c) => '<text x="' . $c[0] . '" y="' . ($y + 19) . '"' . ($c[2] ?? '') . '>' . $c[1] . '</text>', $cells));
+        $g = '';
+        // utenti
+        $g .= '<rect x="20" y="64" width="150" height="124" rx="10" fill="none" stroke="#8A87B0" stroke-width="2"/>';
+        foreach ([[1, 'Anna'], [2, 'Luca'], [3, 'Sara']] as $i => [$id, $n]) $g .= $row(24, 142, 96 + $i * 30, [[36, $id], [72, $n]], $n === 'Luca' ? '#FFE8D6' : '#FFFFFF');
+        // ordini
+        $g .= '<rect x="236" y="64" width="160" height="124" rx="10" fill="none" stroke="#8A87B0" stroke-width="2"/>';
+        foreach ([[1, 50], [1, 20], [3, 35]] as $i => [$u, $t]) $g .= $row(240, 152, 96 + $i * 30, [[252, $u], [380, $t, ' text-anchor="end"']]);
+        // match lines: Anna -> rows 0 and 1, Sara -> row 2
+        foreach ([[110, 110], [110, 140], [170, 170]] as [$a, $b]) $g .= '<path d="M170 ' . $a . ' C 200 ' . $a . ', 206 ' . $b . ', 236 ' . $b . '" fill="none" stroke="#2F8CF0" stroke-width="2"/>';
+        // results
+        $g .= '<rect x="440" y="48" width="180" height="120" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>';
+        foreach ([['Anna', 50], ['Anna', 20], ['Sara', 35]] as $i => [$n, $t]) $g .= $row(444, 172, 78 + $i * 29, [[456, $n], [604, $t, ' text-anchor="end"']], '#FFFFFF');
+        $g .= '<rect x="440" y="208" width="180" height="148" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>';
+        foreach ([['Anna', 50], ['Anna', 20], ['Luca', 'NULL'], ['Sara', 35]] as $i => [$n, $t]) $g .= $row(444, 172, 238 + $i * 29, [[456, $n], [604, $t, ' text-anchor="end"' . ($t === 'NULL' ? ' font-style="italic" fill="#8A87B0"' : '')]], $n === 'Luca' ? '#FFE8D6' : '#FFFFFF');
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 370" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-weight="700" font-size="15"><text x="20" y="54">utenti</text><text x="236" y="54">ordini</text></g>
+<g font-weight="700"><text x="36" y="86">id</text><text x="72" y="86">nome</text><text x="252" y="86">utente_id</text><text x="380" y="86" text-anchor="end">totale</text></g>
+<g font-family="ui-monospace, monospace" font-weight="700" font-size="14"><text x="440" y="38" fill="#1B66BC">INNER JOIN</text><text x="440" y="198" fill="#B84508">LEFT JOIN</text></g>
+{$g}
+<g font-weight="700"><text x="456" y="68">nome</text><text x="604" y="68" text-anchor="end">totale</text><text x="456" y="228">nome</text><text x="604" y="228" text-anchor="end">totale</text></g>
+<text x="20" y="232" font-weight="700" fill="#B84508">{$note1}</text>
+<text x="20" y="254">{$note2}</text>
+<text x="20" y="276">{$note3}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A foreign key points at an existing primary key; an order for a user who does not exist is refused. */
+if (!function_exists('fig_sqlint_fk')) {
+    function fig_sqlint_fk(string $fk, string $pk, string $refused): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-weight="700" font-size="15"><text x="20" y="28">ordini</text><text x="420" y="28">utenti</text></g>
+<text x="185" y="52" text-anchor="middle" font-weight="700" fill="#1B66BC">{$fk}</text>
+<text x="445" y="52" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$pk}</text>
+<rect x="130" y="62" width="110" height="128" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="420" y="62" width="50" height="128" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="20" y="62" width="300" height="128" rx="10" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<rect x="420" y="62" width="200" height="128" rx="10" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<g font-weight="700"><text x="36" y="84">id</text><text x="142" y="84">utente_id</text><text x="304" y="84" text-anchor="end">totale</text><text x="445" y="84" text-anchor="middle">id</text><text x="486" y="84">nome</text></g>
+<text x="36" y="118">10</text><text x="185" y="118" text-anchor="middle">1</text><text x="304" y="118" text-anchor="end">50</text>
+<text x="36" y="148">11</text><text x="185" y="148" text-anchor="middle">3</text><text x="304" y="148" text-anchor="end">35</text>
+<text x="36" y="178">12</text><text x="185" y="178" text-anchor="middle">1</text><text x="304" y="178" text-anchor="end">20</text>
+<text x="445" y="118" text-anchor="middle">1</text><text x="486" y="118">Anna</text>
+<text x="445" y="148" text-anchor="middle">2</text><text x="486" y="148">Luca</text>
+<text x="445" y="178" text-anchor="middle">3</text><text x="486" y="178">Sara</text>
+<g fill="none" stroke="#2F8CF0" stroke-width="2"><path d="M320 113 H412"/><path d="M320 143 C 370 143, 362 173, 412 173"/><path d="M320 173 C 370 173, 362 113, 412 113"/></g><g fill="#2F8CF0"><circle cx="320" cy="113" r="4"/><circle cx="320" cy="143" r="4"/><circle cx="320" cy="173" r="4"/></g>
+<g fill="#2F8CF0"><path d="M412 108 L420 113 L412 118 Z"/><path d="M412 168 L420 173 L412 178 Z"/></g>
+<rect x="20" y="206" width="300" height="32" rx="8" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="36" y="227">13</text><text x="185" y="227" text-anchor="middle" font-weight="700">9</text><text x="304" y="227" text-anchor="end">40</text>
+<path d="M320 222 H360" fill="none" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M366 212 l20 20 M386 212 l-20 20" stroke="#F03E82" stroke-width="3" stroke-linecap="round"/>
+<text x="20" y="266" font-weight="700" fill="#C2185B">{$refused}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The three set operators as overlapping circles: what each one keeps of A and B. */
+if (!function_exists('fig_sqlint_sets')) {
+    function fig_sqlint_sets(): string
+    {
+        $c = fn($x, $fill) => '<circle cx="' . $x . '" cy="120" r="56" fill="' . $fill . '"/>';
+        $o = fn($x) => '<circle cx="' . $x . '" cy="120" r="56" fill="none" stroke="#8A87B0" stroke-width="2"/>';
+        $ab = fn($cx) => '<text x="' . ($cx - 52) . '" y="125" text-anchor="middle" font-weight="700">A</text><text x="' . ($cx + 52) . '" y="125" text-anchor="middle" font-weight="700">B</text>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="16" fill="#1E1C52">'
+            . '<defs><clipPath id="sqlint-a2"><circle cx="294" cy="120" r="56"/></clipPath><pattern id="sqlint-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#FFE8D6"/><line x1="0" y1="0" x2="0" y2="8" stroke="#E8590C" stroke-width="2"/></pattern></defs>'
+            // UNION
+            . $c(80, 'url(#sqlint-hatch)') . $c(136, 'url(#sqlint-hatch)') . $o(80) . $o(136) . $ab(108)
+            // INTERSECT
+            . '<circle cx="350" cy="120" r="56" fill="url(#sqlint-hatch)" clip-path="url(#sqlint-a2)"/>' . $o(294) . $o(350) . $ab(322)
+            // EXCEPT
+            . $c(506, 'url(#sqlint-hatch)') . $c(562, '#FFFFFF') . $o(506) . $o(562) . $ab(534)
+            . '<g font-family="ui-monospace, monospace" font-weight="700" font-size="15" text-anchor="middle"><text x="108" y="210">A UNION B</text><text x="322" y="210">A INTERSECT B</text><text x="534" y="210">A EXCEPT B</text></g>'
+            . '</svg>';
+    }
+}
+
+/** A many-to-many relationship: students and courses joined by a junction table. */
+if (!function_exists('fig_sqlint_er')) {
+    function fig_sqlint_er(string $bridge): string
+    {
+        $box = function (int $x, int $w, string $name, array $cols, string $s, string $f) {
+            $h = 40 + count($cols) * 30;
+            $o = '<rect x="' . $x . '" y="60" width="' . $w . '" height="' . $h . '" rx="12" fill="#FFFFFF" stroke="' . $s . '" stroke-width="2"/>'
+                . '<path d="M' . $x . ' 96 V72 a12 12 0 0 1 12 -12 H' . ($x + $w - 12) . ' a12 12 0 0 1 12 12 V96 Z" fill="' . $f . '" stroke="' . $s . '" stroke-width="2"/>'
+                . '<text x="' . ($x + $w / 2) . '" y="84" text-anchor="middle" font-weight="700">' . $name . '</text>';
+            foreach ($cols as $i => [$c, $tag]) {
+                $y = 120 + $i * 30;
+                $o .= '<text x="' . ($x + 12) . '" y="' . $y . '">' . $c . '</text>';
+                if ($tag) $o .= '<text x="' . ($x + $w - 10) . '" y="' . $y . '" text-anchor="end" font-size="13" font-weight="700" fill="' . $s . '">' . $tag . '</text>';
+            }
+            return $o;
+        };
+        $g = $box(20, 160, 'studenti', [['id', 'PK'], ['nome', '']], '#2F8CF0', '#DCEBFF')
+            . $box(236, 172, 'iscrizioni', [['studente_id', 'PK FK'], ['corso_id', 'PK FK'], ['iscritto_il', '']], '#7048E8', '#ECE6FF')
+            . $box(464, 156, 'corsi', [['id', 'PK'], ['titolo', '']], '#0B7F5C', '#D5F6EA');
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<text x="322" y="40" text-anchor="middle" font-weight="700" fill="#4B2BBF">{$bridge}</text>
+<path d="M180 115 C 210 115, 206 115, 236 115" fill="none" stroke="#1E1C52" stroke-width="2"/>
+<path d="M408 145 C 436 145, 436 115, 464 115" fill="none" stroke="#1E1C52" stroke-width="2"/>
+<path d="M236 115 L224 107 M236 115 L224 123" stroke="#1E1C52" stroke-width="2"/>
+<path d="M408 145 L420 137 M408 145 L420 153" stroke="#1E1C52" stroke-width="2"/>
+<g font-weight="700" font-size="14"><text x="190" y="108">1</text><text x="218" y="140">N</text><text x="452" y="108">1</text><text x="414" y="170">N</text></g>
+{$g}
+<text x="20" y="244" font-size="13" fill="#5A5880">PK = primary key · FK = foreign key</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'sql-intermediate', 'family' => 'sql', 'after' => 'sql-base',
     'title' => L('SQL intermedio', 'Intermediate SQL'), 'short' => L('SQL intermedio', 'SQL Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -10,8 +175,9 @@ return [
             P('Le **funzioni di aggregazione** riassumono tante righe in un valore: `COUNT` conta, `SUM` somma, `AVG` fa la media, `MIN` e `MAX` trovano gli estremi.', '**Aggregate functions** sum up many rows into one value: `COUNT` counts, `SUM` adds, `AVG` averages, `MIN` and `MAX` find the extremes.'),
             C('SELECT COUNT(*) AS iscritti FROM utenti;
 SELECT AVG(voto) AS media, MAX(voto) AS migliore FROM esami;
-SELECT SUM(totale) FROM ordini WHERE stato = \'pagato\';', 'sql'),
+SELECT SUM(totale) FROM ordini WHERE stato = \'pagato\';', 'sql', fucina_data_table(['media', 'migliore'], [[7.4, 10]], 'SELECT AVG(voto) AS media, MAX(voto) AS migliore FROM esami;')),
             P('`AS` dà un nome leggibile alla colonna del risultato. `COUNT(colonna)` conta solo i valori non `NULL`.', '`AS` gives the result column a readable name. `COUNT(column)` counts only non-`NULL` values.'),
+            P('Un’aggregazione **schiaccia** tutte le righe in una sola: per questo, senza `GROUP BY`, il risultato ha una riga sola. Anche `SUM`, `AVG`, `MIN` e `MAX` ignorano i `NULL`: la media di 6, 8 e `NULL` è 7, non 4,67. Se vuoi contare i valori diversi, usa `COUNT(DISTINCT citta)`.', 'An aggregate **squashes** all the rows into one: that is why, without `GROUP BY`, the result has a single row. `SUM`, `AVG`, `MIN` and `MAX` ignore `NULL`s too: the average of 6, 8 and `NULL` is 7, not 4.67. To count the different values, use `COUNT(DISTINCT citta)`.'),
         ], [
             Q('a1', L('Quale funzione fa la media?', 'Which function averages?'), ['AVG', 'MEAN', 'SUM', 'MID'], 0, L('Da “average”.', 'From “average”.')),
             Q('a2', L('`COUNT(email)` conta le righe con email `NULL`?', 'Does `COUNT(email)` count rows with a `NULL` email?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo se vuota', 'Only if empty'), L('Dipende dall’ordine', 'It depends on order')], 0, L('`COUNT(*)` conta tutte le righe.', '`COUNT(*)` counts every row.')),
@@ -22,13 +188,17 @@ SELECT SUM(totale) FROM ordini WHERE stato = \'pagato\';', 'sql'),
         ]),
         lesson('group-by', L('GROUP BY e HAVING', 'GROUP BY and HAVING'), [
             P('`GROUP BY` divide le righe in gruppi e calcola un’aggregazione per ciascuno. `HAVING` filtra i **gruppi**, come `WHERE` filtra le righe.', '`GROUP BY` splits rows into groups and computes an aggregate for each. `HAVING` filters **groups**, as `WHERE` filters rows.'),
+            Fig(fig_sqlint_group(),
+                L('Sei righe di utenti, ognuna con la sua città, sono collegate da linee a tre righe di risultato: Roma con conteggio 3, Udine con 2, Trieste con 1.', 'Six user rows, each with its city, are linked by lines to three result rows: Roma with a count of 3, Udine with 2, Trieste with 1.'),
+                L('Ogni gruppo diventa una riga sola: le colonne non raggruppate si possono solo aggregare.', 'Each group becomes a single row: the columns that are not grouped can only be aggregated.')),
             C('SELECT citta, COUNT(*) AS utenti
 FROM utenti
 WHERE attivo = 1
 GROUP BY citta
 HAVING COUNT(*) >= 10
-ORDER BY utenti DESC;', 'sql'),
+ORDER BY utenti DESC;', 'sql', fucina_data_table(['citta', 'utenti'], [['Roma', 42], ['Milano', 31], ['Udine', 12]])),
             P('Nel `SELECT`, oltre alle aggregazioni, metti solo le colonne del `GROUP BY`. Alcuni database accettano anche colonne che dipendono dalla chiave primaria raggruppata, ma la regola semplice funziona ovunque.', 'In the `SELECT`, besides aggregates, put only the `GROUP BY` columns. Some databases also accept columns that depend on a grouped primary key, but the simple rule works everywhere.'),
+            P('L’ordine conta: `WHERE` scarta le righe **prima** di formare i gruppi, `HAVING` scarta i gruppi **dopo** averli calcolati. Per questo `WHERE COUNT(*) > 10` dà errore: in quel momento i gruppi non esistono ancora. Regola pratica: filtra in `WHERE` tutto quello che puoi, è più veloce.', 'Order matters: `WHERE` drops rows **before** the groups are formed, `HAVING` drops groups **after** they are computed. That is why `WHERE COUNT(*) > 10` is an error: at that point the groups do not exist yet. Rule of thumb: filter in `WHERE` everything you can, it is faster.'),
         ], [
             Q('g1', L('Che differenza c’è tra `WHERE` e `HAVING`?', 'What is the difference between `WHERE` and `HAVING`?'), [L('WHERE filtra righe, HAVING gruppi', 'WHERE filters rows, HAVING groups'), L('Nessuna', 'None'), L('HAVING è più veloce', 'HAVING is faster'), L('WHERE va dopo', 'WHERE goes after')], 0, L('`HAVING` vede le aggregazioni.', '`HAVING` sees the aggregates.')),
             Q('g2', L('Quale colonna può stare nel SELECT con `GROUP BY citta`?', 'Which column may be in SELECT with `GROUP BY citta`?'), ['citta', 'nome', 'email', 'id'], 0, L('Oltre alle aggregazioni.', 'Besides aggregates.')),
@@ -48,8 +218,12 @@ INNER JOIN ordini o ON o.utente_id = u.id;
 SELECT u.nome, COUNT(o.id) AS ordini
 FROM utenti u
 LEFT JOIN ordini o ON o.utente_id = u.id
-GROUP BY u.id, u.nome;', 'sql'),
+GROUP BY u.id, u.nome;', 'sql', fucina_data_table(['nome', 'ordini'], [['Anna', 2], ['Luca', 0], ['Sara', 1]], 'SELECT u.nome, COUNT(o.id) AS ordini … LEFT JOIN …')),
             P('Le lettere `u` e `o` sono **alias** delle tabelle: accorciano la query e chiariscono da dove viene ogni colonna.', 'The letters `u` and `o` are table **aliases**: they shorten the query and make clear where each column comes from.'),
+            P('Che cosa succede a chi non ha corrispondenza? Con `INNER JOIN` sparisce dal risultato; con `LEFT JOIN` resta, e le colonne della seconda tabella valgono `NULL`. Per questo nella seconda query `COUNT(o.id)` dà 0 a chi non ha ordini, mentre `COUNT(*)` gli darebbe 1: conta la riga, anche se è vuota.', 'What happens to a row with no match? With `INNER JOIN` it vanishes from the result; with `LEFT JOIN` it stays, and the second table’s columns are `NULL`. That is why in the second query `COUNT(o.id)` gives 0 to users with no orders, while `COUNT(*)` would give them 1: it counts the row, even an empty one.'),
+            Fig(L(fig_sqlint_join('Luca non ha ordini:', 'INNER JOIN lo perde,', 'LEFT JOIN lo tiene con NULL.'), fig_sqlint_join('Luca has no orders:', 'INNER JOIN loses him,', 'LEFT JOIN keeps him with NULL.')),
+                L('A sinistra le tabelle utenti (Anna, Luca, Sara) e ordini, con linee che collegano Anna a due ordini e Sara a uno. A destra i due risultati: INNER JOIN ha tre righe senza Luca, LEFT JOIN quattro righe, con Luca e totale NULL.', 'On the left the utenti table (Anna, Luca, Sara) and the ordini table, with lines linking Anna to two orders and Sara to one. On the right the two results: INNER JOIN has three rows without Luca, LEFT JOIN four rows, with Luca and a NULL total.'),
+                L('Anna compare due volte: una riga per ogni ordine che combacia.', 'Anna appears twice: one row for every matching order.')),
         ], [
             Q('j1', L('Quale JOIN tiene anche gli utenti senza ordini?', 'Which JOIN keeps users with no orders?'), ['LEFT JOIN', 'INNER JOIN', 'CROSS JOIN', 'SELF JOIN'], 0, L('Le colonne mancanti diventano `NULL`.', 'Missing columns become `NULL`.')),
             Q('j2', L('Dove si scrive la condizione di unione?', 'Where do you write the join condition?'), [L('Dopo `ON`', 'After `ON`'), L('Dopo `WHERE`', 'After `WHERE`'), L('Dopo `AS`', 'After `AS`'), L('Dopo `SET`', 'After `SET`')], 0, L('`ON tabella.col = altra.col`.', '`ON table.col = other.col`.')),
@@ -91,6 +265,9 @@ WHERE voto > (SELECT AVG(voto) FROM studenti);'), [
 );
 
 CREATE INDEX ix_ordini_utente ON ordini (utente_id);', 'sql'),
+            Fig(L(fig_sqlint_fk('chiave esterna', 'chiave primaria', 'rifiutato: l’utente 9 non esiste'), fig_sqlint_fk('foreign key', 'primary key', 'refused: user 9 does not exist')),
+                L('La colonna utente_id della tabella ordini ha frecce verso la colonna id della tabella utenti: gli ordini 10 e 12 puntano ad Anna, l’ordine 11 a Sara. Un nuovo ordine tratteggiato con utente_id 9 non trova nessuna riga ed è barrato.', 'The utente_id column of the ordini table has arrows to the id column of the utenti table: orders 10 and 12 point to Anna, order 11 to Sara. A new dashed order with utente_id 9 finds no row and is crossed out.'),
+                L('La chiave esterna garantisce che ogni ordine appartenga a un utente vero.', 'The foreign key makes sure every order belongs to a real user.')),
             P('`ON DELETE CASCADE` cancella gli ordini quando sparisce l’utente. Gli indici velocizzano le letture ma rallentano un po’ le scritture: mettili sulle colonne che usi in `WHERE` e `JOIN`.', '`ON DELETE CASCADE` deletes orders when the user disappears. Indexes speed up reads but slow writes a little: put them on columns used in `WHERE` and `JOIN`.'),
         ], [
             Q('k1', L('Che cosa impedisce una chiave esterna?', 'What does a foreign key prevent?'), [L('Riferimenti a righe inesistenti', 'References to missing rows'), L('I doppioni', 'Duplicates'), L('I numeri negativi', 'Negative numbers'), L('Le query lente', 'Slow queries')], 0, L('Mantiene i dati coerenti.', 'It keeps data consistent.')),
@@ -110,6 +287,9 @@ SELECT email FROM clienti
 EXCEPT
 SELECT email FROM disiscritti
 ORDER BY email;', 'sql'),
+            Fig(fig_sqlint_sets(),
+                L('Tre coppie di cerchi sovrapposti A e B. In UNION sono colorati entrambi i cerchi, in INTERSECT solo la parte comune, in EXCEPT solo la parte di A fuori da B.', 'Three pairs of overlapping circles A and B. In UNION both circles are shaded, in INTERSECT only the shared part, in EXCEPT only the part of A outside B.'),
+                L('La parte tratteggiata è quello che finisce nel risultato.', 'The hatched part is what ends up in the result.')),
             P('Le due query devono avere lo **stesso numero di colonne**, con tipi compatibili; i nomi delle colonne vengono dalla prima. L’`ORDER BY` va una sola volta, in fondo. `INTERSECT` ed `EXCEPT` esistono in PostgreSQL, SQL Server, SQLite e da MySQL 8.0.31; Oracle chiama `EXCEPT` anche `MINUS`.', 'Both queries must have the **same number of columns**, with compatible types; column names come from the first one. `ORDER BY` goes only once, at the end. `INTERSECT` and `EXCEPT` exist in PostgreSQL, SQL Server, SQLite and since MySQL 8.0.31; Oracle also calls `EXCEPT` `MINUS`.'),
         ], [
             Q('u1', L('Che differenza c’è tra `UNION` e `UNION ALL`?', 'What is the difference between `UNION` and `UNION ALL`?'), [L('`UNION ALL` toglie i doppioni, `UNION` li tiene', '`UNION ALL` removes duplicates, `UNION` keeps them'), L('`UNION` toglie i doppioni, `UNION ALL` li tiene', '`UNION` removes duplicates, `UNION ALL` keeps them'), L('`UNION ALL` unisce anche le colonne diverse', '`UNION ALL` also merges different columns'), L('Nessuna, cambia solo il nome', 'None, only the name changes')], 1, L('Togliere i doppioni costa: se non servono, usa `UNION ALL`.', 'Removing duplicates costs time: if you do not need it, use `UNION ALL`.')),
@@ -134,7 +314,7 @@ LEFT JOIN dipendenti capo ON capo.id = d.capo_id;
 -- clienti senza ordini (anti-join)
 SELECT c.nome FROM clienti c
 LEFT JOIN ordini o ON o.cliente_id = c.id
-WHERE o.id IS NULL;', 'sql'),
+WHERE o.id IS NULL;', 'sql', fucina_data_table(['nome', 'responsabile'], [['Giulia', null], ['Marco', 'Giulia'], ['Sara', 'Giulia'], ['Luca', 'Marco']], 'SELECT d.nome, capo.nome AS responsabile … LEFT JOIN dipendenti capo …')),
             P('`LEFT JOIN … WHERE destra.id IS NULL` trova le righe **senza** corrispondenza. `FULL OUTER JOIN` tiene le righe di entrambe le tabelle (MySQL non lo ha); `CROSS JOIN` combina ogni riga con ogni altra: con due tabelle da 1.000 righe dà un milione di righe.', '`LEFT JOIN … WHERE right.id IS NULL` finds the rows **without** a match. `FULL OUTER JOIN` keeps the rows of both tables (MySQL lacks it); `CROSS JOIN` combines every row with every other: with two 1,000-row tables it gives a million rows.'),
         ], [
             Q('m1', L('A che cosa serve una self join?', 'What is a self join for?'), [L('A copiare una tabella in un’altra', 'Copying a table into another'), L('A unire una tabella a sé stessa, per esempio per le gerarchie', 'Joining a table to itself, for example for hierarchies'), L('A unire una tabella senza alcuna condizione', 'Joining a table with no condition at all'), L('A cancellare le righe doppie di una tabella', 'Deleting a table’s duplicate rows')], 1, L('Due alias della stessa tabella.', 'Two aliases of the same table.')),
@@ -154,6 +334,9 @@ CREATE TABLE iscrizioni (
     iscritto_il DATE,
     PRIMARY KEY (studente_id, corso_id)
 );', 'sql'),
+            Fig(L(fig_sqlint_er('tabella ponte'), fig_sqlint_er('junction table')),
+                L('Tre riquadri: studenti (id, nome), iscrizioni (studente_id, corso_id, iscritto_il) e corsi (id, titolo). Una linea va da studenti a iscrizioni e una da corsi a iscrizioni, con 1 dal lato di studenti e corsi e N dal lato di iscrizioni.', 'Three boxes: studenti (id, nome), iscrizioni (studente_id, corso_id, iscritto_il) and corsi (id, titolo). One line runs from studenti to iscrizioni and one from corsi to iscrizioni, with 1 on the studenti and corsi side and N on the iscrizioni side.'),
+                L('Un molti-a-molti si scioglie in due uno-a-molti, attraverso la tabella ponte.', 'A many-to-many is split into two one-to-many relationships, through the junction table.')),
             P('Le relazioni sono di tre tipi: **uno-a-molti** (un cliente, tanti ordini: chiave esterna nella tabella «molti»), **molti-a-molti** (studenti e corsi: serve una **tabella ponte** con le due chiavi), **uno-a-uno** (raro, per esempio dati opzionali a parte). Regole pratiche: niente liste in una cella (`"sql,php"`), niente colonne numerate (`telefono1`, `telefono2`).', 'Relationships come in three kinds: **one-to-many** (one customer, many orders: foreign key in the “many” table), **many-to-many** (students and courses: you need a **junction table** with both keys), **one-to-one** (rare, for example optional data kept apart). Practical rules: no lists in a cell (`"sql,php"`), no numbered columns (`telefono1`, `telefono2`).'),
         ], [
             Q('d1', L('Come si rappresenta una relazione molti-a-molti?', 'How do you represent a many-to-many relationship?'), [L('Con una colonna che elenca gli id separati da virgole', 'With a column listing the ids separated by commas'), L('Con una chiave esterna in entrambe le tabelle', 'With a foreign key in both tables'), L('Con una tabella ponte che contiene le due chiavi', 'With a junction table holding both keys'), L('Con una sola tabella che contiene tutto', 'With a single table holding everything')], 2, L('Per esempio `iscrizioni (studente_id, corso_id)`.', 'For example `iscrizioni (studente_id, corso_id)`.')),

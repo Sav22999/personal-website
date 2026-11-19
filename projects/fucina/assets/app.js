@@ -2,9 +2,10 @@
 (function () {
     'use strict';
 
-    const VERSION = '1.26.0';
+    const VERSION = '1.27.0';
     /** What changed, newest first: add an entry at every release, and keep VERSION equal to the first one. */
     const RELEASES = [
+        {v: '1.27.0', date: '2026-11-18', it: ['Tutti i corsi rivisti e aggiornati: 380 nuovi livelli, da 632 a 1.012, e informazioni corrette dove erano superate o sbagliate', '5 nuovi corsi: SavComponents avanzato, C intermedio, C++ intermedio, Go intermedio e C# intermedio', 'Nella teoria gli esempi HTML si vedono anche disegnati, e nelle anteprime di SavComponents, Bootstrap e Tailwind i componenti appaiono davvero', 'I corsi mostrano il logo della loro tecnologia, quando è libero', 'Negli esercizi i controlli superati e mancati si distinguono a colpo d’occhio', 'Corretto un errore che, finito un corso, faceva salire XP e Scintille senza fine e bloccava gli esami ripetuti: i conti degli account coinvolti sono stati sistemati'], en: ['Every course reviewed and updated: 380 new levels, from 632 to 1,012, and facts corrected where they were outdated or wrong', '5 new courses: SavComponents advanced, intermediate C, intermediate C++, intermediate Go and intermediate C#', 'In the theory, HTML samples are also shown rendered, and in the SavComponents, Bootstrap and Tailwind previews the components really appear', 'Courses show the logo of their technology, when it is free to use', 'In exercises, passed and missed checks stand out at a glance', 'Fixed a bug that, after finishing a course, kept raising XP and Sparks without end and stalled repeated exams: the accounts involved have been put right']},
         {v: '1.26.0', date: '2026-11-17', it: ['2 nuovi corsi su SavComponents, la libreria di componenti web senza framework: base (installazione, pulsanti, card, avvisi e form) e intermedio (temi e stili, token, dialoghi, navigazione, eventi, grafici e integrazione)', 'I corsi appena arrivati hanno l’etichetta «Nuovo» e una sezione tutta loro nella home'], en: ['2 new courses on SavComponents, the framework-free web component library: basics (installation, buttons, cards, alerts and forms) and intermediate (themes and styles, tokens, dialogs, navigation, events, charts and integration)', 'Just-added courses carry a “New” label and get their own section on the home page']},
         {v: '1.25.1', date: '2026-11-16', it: ['Nell’app Android le notifiche arrivano anche ad app chiusa'], en: ['In the Android app notifications arrive even when the app is closed']},
         {v: '1.25.0', date: '2026-11-14', it: ['50 nuovi livelli: ogni corso ne ha almeno cinque, dagli assistenti AI al design, da Git a Excel', 'I corsi iniziati e non finiti sono in cima, nella home e nella pagina dei corsi, dal più recente'], en: ['50 new levels: every course has at least five, from AI assistants to design, from Git to Excel', 'Courses started and not finished are at the top, on the home page and the courses page, most recent first']},
@@ -77,7 +78,7 @@
         return logo ? h('span.fam.has-logo', {title: familyName(c.family)}, h('i.logo', {style: {webkitMaskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)', maskImage: 'url(assets/icons/brands/' + logo + '.svg?v=1)'}})) : h('span.fam', familyShort(c.family));
     };
     /** Courses just added, shown as new until the given day (included): a "New" chip on their cards and a spot on the home page. */
-    const NEW_COURSES = {'savcomponents-base': '2026-12-17', 'savcomponents-intermediate': '2026-12-17', 'savcomponents-advanced': '2026-12-18'};
+    const NEW_COURSES = {'savcomponents-base': '2026-12-17', 'savcomponents-intermediate': '2026-12-17', 'savcomponents-advanced': '2026-12-18', 'c-intermediate': '2026-12-18', 'cpp-intermediate': '2026-12-18', 'go-intermediate': '2026-12-18', 'csharp-intermediate': '2026-12-18'};
     const isNew = c => !!NEW_COURSES[c.id] && new Date().toLocaleDateString('sv') <= NEW_COURSES[c.id]; // 'sv' writes the local day as YYYY-MM-DD
     const CATEGORIES = [['frontend', 'Frontend'], ['backend', 'Backend'], ['mobile', 'Mobile'], ['data', 'Data'], ['systems', 'Systems'], ['desktop', 'Desktop'], ['ai', 'AI'], ['devops', 'DevOps'], ['security', 'Security'], ['productivity', 'Productivity'], ['design', 'Design']];
 
@@ -206,31 +207,99 @@
         return Math.ceil(bottom + w.scrollY + (parseFloat(w.getComputedStyle(body).marginBottom) || 0) + extra);
     }
 
+    /**
+     * Images and videos of a preview whose file does not exist (the samples name files like foto.jpg) get a drawn
+     * placeholder with the file name, through srcset and poster: src stays as written. keep: an exercise, whose checks read
+     * the attributes, so existing srcset/poster are never touched and the placeholders come off while checks run
+     * (previewMediaUndo). Plain ES5: it also runs inside the preview pages, as text.
+     */
+    function previewMedia(doc, keep) {
+        function esc(t) {
+            return String(t).slice(0, 38).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; });
+        }
+        function fileName(u) {
+            u = String(u || '').split(',')[0].trim().split(' ')[0].split(/[?#]/)[0];
+            return u.slice(u.lastIndexOf('/') + 1) || u;
+        }
+        function box(label, w, h, video) {
+            w = Math.max(80, Math.min(640, w || 240));
+            h = Math.max(50, Math.min(480, h || 150));
+            var cx = w / 2, cy = h / 2 - 8;
+            var icon = video ? '<circle cx="' + cx + '" cy="' + cy + '" r="18" fill="#8A87B0"/><path d="M' + (cx - 6) + ' ' + (cy - 10) + 'l16 10-16 10z" fill="#F1F0F8"/>'
+                : '<path d="M' + (cx - 20) + ' ' + (cy + 12) + 'l12-15 9 10 7-7 12 12z" fill="#8A87B0"/><circle cx="' + (cx + 10) + '" cy="' + (cy - 10) + '" r="5" fill="#8A87B0"/>';
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">'
+                + '<rect x="1" y="1" width="' + (w - 2) + '" height="' + (h - 2) + '" rx="8" fill="#F1F0F8" stroke="#C9C6E0" stroke-width="2" stroke-dasharray="6 4"/>' + icon
+                + '<text x="' + cx + '" y="' + (cy + 34) + '" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#5F5C87">' + esc(label) + '</text></svg>';
+            return 'data:image/svg+xml,' + encodeURIComponent(svg);
+        }
+        var i, imgs = doc.querySelectorAll('img:not([data-fucina-ph])');
+        for (i = 0; i < imgs.length; i++) {
+            var img = imgs[i];
+            if (!img.complete || img.naturalWidth > 0 || !(img.getAttribute('src') || img.getAttribute('srcset'))) continue;
+            if (keep && img.hasAttribute('srcset')) continue;
+            var pic = img.parentNode && img.parentNode.tagName === 'PICTURE' ? img.parentNode.querySelectorAll('source') : [];
+            if (keep && pic.length) continue;
+            for (var k = 0; k < pic.length; k++) pic[k].removeAttribute('srcset');
+            img.setAttribute('data-fucina-ph', 'srcset');
+            img.setAttribute('srcset', box(img.getAttribute('alt') || fileName(img.getAttribute('src') || img.getAttribute('srcset')),
+                parseInt(img.getAttribute('width'), 10), parseInt(img.getAttribute('height'), 10), false));
+        }
+        var vids = doc.querySelectorAll('video:not([data-fucina-ph])');
+        for (i = 0; i < vids.length; i++) {
+            var v = vids[i];
+            if (v.readyState > 0 || !(v.error || v.networkState === 3) || keep && v.hasAttribute('poster')) continue;
+            var src = v.getAttribute('src') || (v.querySelector('source[src]') ? v.querySelector('source[src]').getAttribute('src') : '');
+            v.setAttribute('data-fucina-ph', 'poster');
+            v.setAttribute('poster', box(fileName(src) || 'video', parseInt(v.getAttribute('width'), 10) || 320, parseInt(v.getAttribute('height'), 10) || 180, true));
+        }
+    }
+
+    function previewMediaUndo(doc) {
+        var els = doc.querySelectorAll('[data-fucina-ph]');
+        for (var i = 0; i < els.length; i++) {
+            els[i].removeAttribute(els[i].getAttribute('data-fucina-ph'));
+            els[i].removeAttribute('data-fucina-ph');
+        }
+    }
+
     const PREVIEW_HELPER = '<script>(function () {'
         + 'var previewHeight = ' + previewHeight.toString() + ';'
+        + 'var previewMedia = ' + previewMedia.toString() + '; var previewMediaUndo = ' + previewMediaUndo.toString() + ';'
+        + 'var keep = !!window.FUCINA_KEEP, later = 0;'
+        + 'function media() { clearTimeout(later); later = setTimeout(function () { previewMedia(document, keep); }, 30); }'
+        + 'document.addEventListener("error", media, true);'
         + 'function size() { var h = previewHeight(document); if (h > 0) parent.postMessage({fucina: "size", h: h}, "*"); }'
         // A preview shows, it does not go anywhere: links (also inside components) and forms do nothing
         + 'document.addEventListener("click", function (e) { var p = e.composedPath ? e.composedPath() : [e.target]; for (var i = 0; i < p.length; i++) { if (p[i].hasAttribute && p[i].hasAttribute("href")) { e.preventDefault(); return; } } }, true);'
         + 'document.addEventListener("submit", function (e) { e.preventDefault(); }, true);'
         // Components draw themselves after the load, and icons arrive later still: measure again for a few seconds, then on every change
-        + 'addEventListener("load", function () { size(); var n = 0, id = setInterval(function () { size(); if (++n > 12) clearInterval(id); }, 500);'
+        + 'addEventListener("load", function () { previewMedia(document, keep); size(); var n = 0, id = setInterval(function () { size(); if (++n > 12) clearInterval(id); }, 500);'
         + ' if (window.ResizeObserver) new ResizeObserver(size).observe(document.body); });'
-        + 'addEventListener("message", function (e) { var d = e.data; if (!d || d.fucina !== "checks") return;'
+        + 'addEventListener("message", function (e) { var d = e.data; if (!d || d.fucina !== "checks") return; previewMediaUndo(document);'
         + ' parent.postMessage({fucina: "checks", id: d.id, results: d.checks.map(function (ch) { try { var el = document.querySelector(ch.sel); if (!el) return false;'
-        + ' if (ch.prop) return getComputedStyle(el).getPropertyValue(ch.prop).trim() === ch.value; return !ch.text || el.textContent.indexOf(ch.text) >= 0; } catch (x) { return false; } })}, "*"); });'
+        + ' if (ch.prop) return getComputedStyle(el).getPropertyValue(ch.prop).trim() === ch.value; return !ch.text || el.textContent.indexOf(ch.text) >= 0; } catch (x) { return false; } })}, "*"); previewMedia(document, keep); });'
         + '})();<\/script>';
     const previewScripted = family => !!PREVIEW_LIBS[family];
     /** The page of a preview: the code as it is, or, for a course with a library, the library and the helper first. */
-    const previewPage = (family, body) => previewScripted(family) ? '<!doctype html><meta charset="utf-8">' + PREVIEW_HELPER + PREVIEW_LIBS[family] + body : body;
+    const previewPage = (family, body, exercise) => previewScripted(family)
+        ? '<!doctype html><meta charset="utf-8">' + (exercise ? '<script>window.FUCINA_KEEP = true<\/script>' : '') + PREVIEW_HELPER + PREVIEW_LIBS[family] + body : body;
 
-    function previewFrame(family, cls) {
+    function previewFrame(family, cls, exercise) {
         const frame = h('iframe.preview' + (cls ? '.' + cls : ''), {sandbox: previewScripted(family) ? 'allow-scripts' : 'allow-same-origin', title: t('Preview')});
-        // Without scripts inside, the app itself keeps links from opening pages in the preview (with scripts, the helper does it)
+        // Without scripts inside, the app itself keeps links from opening pages in the preview and draws the missing media
+        // (with scripts, the helper does it)
         if (!previewScripted(family)) frame.addEventListener('load', () => {
             try {
-                frame.contentDocument.addEventListener('click', e => {
+                const doc = frame.contentDocument;
+                doc.addEventListener('click', e => {
                     if (e.target.closest && e.target.closest('[href]')) e.preventDefault();
                 }, true);
+                let later = 0;
+                doc.addEventListener('error', () => {
+                    clearTimeout(later);
+                    later = setTimeout(() => previewMedia(doc, !!exercise), 30);
+                }, true);
+                previewMedia(doc, !!exercise);
             } catch (e) { /* nothing to hold back */ }
         });
         return frame;
@@ -284,6 +353,19 @@
         frame.srcdoc = previewPage(family, code);
         frame.dataset.shown = '1';
         return h('div.sample-preview', h('span.pane-label', icon('eye'), t('Preview')), frame);
+    }
+
+    /** What a code sample shows rendered under it: its demo page (with the sample's rules, for CSS), or the sample itself for HTML in the web courses. */
+    function sampleOf(b, family) {
+        if (b.demo) return samplePreview((b.lang === 'css' ? `<style>${b.code}</style>\n` : '') + b.demo, family);
+        return b.lang === 'html' && PREVIEW_FAMILIES.includes(family) ? samplePreview(b.code, family) : null;
+    }
+
+    /** A figure of the theory: an SVG drawing shown as an image, so nothing in it can run; its animations stop for those who reduce motion. */
+    function figure(b) {
+        if (!b.svg) return null;
+        return h('figure.fig', h('img', {src: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(b.svg), alt: b.alt || '', loading: 'lazy', decoding: 'async'}),
+            b.caption ? h('figcaption', rich(b.caption)) : null);
     }
 
     const certUrl = code => `certificate.php?c=${code}&lang=${I18N.lang}`;
@@ -793,7 +875,7 @@
         };
 
         function theory() {
-            return h('article.theory', lesson.body.map(b => b.t === 'code' ? [codeBlock(b.code, b.lang), b.lang === 'html' && PREVIEW_FAMILIES.includes(c.family) ? samplePreview(b.code, c.family) : null] : b.t === 'tip' ? h('aside.tip', mascot('happy', 'still'), h('p', rich(b.text))) : h('p', rich(b.text))),
+            return h('article.theory', lesson.body.map(b => b.t === 'code' ? [codeBlock(b.code, b.lang), sampleOf(b, c.family)] : b.t === 'fig' ? figure(b) : b.t === 'tip' ? h('aside.tip', mascot('happy', 'still'), h('p', rich(b.text))) : h('p', rich(b.text))),
                 h('div.step-actions', btn(lesson.drills.length ? t('Let’s play') : t('Go to the questions'), {icon: 'right', onclick: next})));
         }
 
@@ -840,11 +922,11 @@
             const task = lesson.task;
             const ta = h('textarea.editor', {spellcheck: false, autocapitalize: 'off', autocomplete: 'off', value: task.start, 'aria-label': t('Your code')});
             const live = task.lang === 'html' || task.lang === 'css';
-            const frame = live ? previewFrame(c.family) : null;
+            const frame = live ? previewFrame(c.family, null, true) : null;
             const scripted = live && previewScripted(c.family);
             const list = h('ul.checks', task.checks.map(ch => h('li', h('span.mark', icon('check')), h('span', rich(ch.label)))));
             const hintBox = h('div');
-            const page = () => task.lang === 'css' ? (scripted ? previewPage(c.family, `<style>${ta.value}</style>${task.html}`) : `<!doctype html><style>${ta.value}</style>${task.html}`) : previewPage(c.family, ta.value);
+            const page = () => task.lang === 'css' ? (scripted ? previewPage(c.family, `<style>${ta.value}</style>${task.html}`, true) : `<!doctype html><style>${ta.value}</style>${task.html}`) : previewPage(c.family, ta.value, true);
             let timer = null;
 
             ta.addEventListener('keydown', e => {
@@ -873,7 +955,10 @@
                     results = task.checks.map(ch => ch.re ? runCheck(ch, ta.value, null) : !!answers[k++]);
                 } else {
                     const doc = frame ? frame.contentDocument : null;
+                    // The drawn placeholders of missing media are not the learner's: off while the checks read the page
+                    if (doc) previewMediaUndo(doc);
                     results = task.checks.map(ch => runCheck(ch, ta.value, doc));
+                    if (doc) previewMedia(doc, true);
                 }
                 [...list.children].forEach((li, i) => {
                     li.className = results[i] ? 'ok' : 'ko';

@@ -2,6 +2,123 @@
 /** REST and GraphQL APIs: resources and HTTP methods, status codes and errors, versioning, pagination and auth, GraphQL, OpenAPI
  *  and webhooks, HTTP caching and ETags, idempotency and retries, OAuth 2 and JWT, API security (OWASP API Top 10). */
 
+/** A sequence diagram: actors on top with dashed lifelines, messages as arrows from top to bottom.
+ *  $xs are the lifeline positions; a message is [from, to, label, kind] with kind '' (request), 'back' (dashed reply),
+ *  'ok' (green reply), 'lost' (red, cut halfway), 'note' (a box beside the lifeline of from) or 'gap' (a pause across the diagram). */
+if (!function_exists('fig_api_seq')) {
+    function fig_api_seq(array $actors, array $xs, array $msgs, int $step = 36): string
+    {
+        $h = 70 + count($msgs) * $step + 14;
+        $out = '';
+        foreach ($actors as $i => $a) {
+            $x = $xs[$i];
+            $out .= "<line x1=\"$x\" y1=\"50\" x2=\"$x\" y2=\"" . ($h - 8) . "\" stroke=\"#8A87B0\" stroke-width=\"2\" stroke-dasharray=\"5 5\"/>"
+                  . "<rect x=\"" . ($x - 66) . "\" y=\"12\" width=\"132\" height=\"38\" rx=\"10\" fill=\"#ECE6FF\" stroke=\"#7048E8\" stroke-width=\"2\"/><text x=\"$x\" y=\"36\" text-anchor=\"middle\" font-weight=\"700\">$a</text>";
+        }
+        foreach ($msgs as $k => [$f, $t, $label, $kind]) {
+            $y = 70 + $k * $step + 22; $x1 = $xs[$f]; $x2 = $xs[$t];
+            if ($kind === 'gap') {
+                $out .= "<line x1=\"16\" y1=\"" . ($y - 4) . "\" x2=\"624\" y2=\"" . ($y - 4) . "\" stroke=\"#D9D7E8\" stroke-width=\"2\"/><rect x=\"250\" y=\"" . ($y - 16) . "\" width=\"140\" height=\"24\" rx=\"12\" fill=\"#FFFFFF\" stroke=\"#D9D7E8\" stroke-width=\"2\"/><text x=\"320\" y=\"" . $y . "\" text-anchor=\"middle\" font-size=\"13\" font-style=\"italic\">$label</text>";
+                continue;
+            }
+            if ($kind === 'note' || $kind === 'noteL') {
+                $w = 12 + (int) ceil(mb_strlen(strip_tags($label)) * 6.9);
+                $nx = $kind === 'note' ? $x1 + 10 : $x1 - 10 - $w;
+                $out .= "<rect x=\"$nx\" y=\"" . ($y - 20) . "\" width=\"$w\" height=\"28\" rx=\"8\" fill=\"#FFF3EA\" stroke=\"#E8590C\" stroke-width=\"2\"/><text x=\"" . ($nx + 8) . "\" y=\"" . ($y - 1) . "\" font-size=\"13\">$label</text>";
+                continue;
+            }
+            [$col, $dash, $mk] = match ($kind) { 'back' => ['#1E1C52', ' stroke-dasharray="6 4"', 'a'], 'ok' => ['#0B7F5C', ' stroke-dasharray="6 4"', 'g'], 'lost' => ['#F03E82', ' stroke-dasharray="6 4"', ''], default => ['#1E1C52', '', 'a'] };
+            $mid = ($x1 + $x2) / 2; $dir = $x2 > $x1 ? 1 : -1;
+            $end = $kind === 'lost' ? $mid : $x2 - $dir * 4;
+            $marker = $mk ? " marker-end=\"url(#$mk)\"" : '';
+            $out .= "<path d=\"M" . ($x1 + $dir * 2) . ",$y H$end\" stroke=\"$col\" stroke-width=\"2\" fill=\"none\"$dash$marker/>";
+            if ($kind === 'lost') $out .= "<path d=\"M" . ($mid - 8) . "," . ($y - 8) . " L" . ($mid + 8) . "," . ($y + 8) . " M" . ($mid + 8) . "," . ($y - 8) . " L" . ($mid - 8) . "," . ($y + 8) . "\" stroke=\"#F03E82\" stroke-width=\"3\"/>";
+            $tc = $kind === 'ok' ? '#0B7F5C' : ($kind === 'lost' ? '#B0205A' : '#1E1C52');
+            $lx = $kind === 'lost' ? ($x1 + $mid) / 2 : $mid;
+            $lw = 10 + (int) ceil(mb_strlen(html_entity_decode(strip_tags($label))) * 6.6);
+            $out .= "<rect x=\"" . ($lx - $lw / 2) . "\" y=\"" . ($y - 21) . "\" width=\"$lw\" height=\"18\" rx=\"4\" fill=\"#FFFFFF\" opacity=\"0.9\"/>";
+            $out .= "<text x=\"$lx\" y=\"" . ($y - 7) . "\" text-anchor=\"middle\" font-size=\"13\" fill=\"$tc\">$label</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 $h" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker>
+<marker id="g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0B7F5C"/></marker></defs>
+{$out}
+</svg>
+SVG;
+    }
+}
+
+/** The anatomy of an HTTP request and its response, with each part labelled. */
+if (!function_exists('fig_api_http')) {
+    function fig_api_http(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 330" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1E1C52">
+<rect x="12" y="12" width="420" height="146" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="12" y="172" width="420" height="146" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="30" y="40"><tspan font-weight="700" fill="#1B66BC">GET /ordini/42</tspan> HTTP/1.1</text>
+<text x="30" y="72">Host: api.esempio.it</text>
+<text x="30" y="94">Authorization: Bearer eyJ…</text>
+<text x="30" y="116">Accept: application/json</text>
+<rect x="24" y="128" width="380" height="22" rx="6" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="30" y="200">HTTP/1.1 <tspan font-weight="700" fill="#0B7F5C">200 OK</tspan></text>
+<text x="30" y="232">Content-Type: application/json</text>
+<text x="30" y="254">Cache-Control: private</text>
+<rect x="24" y="268" width="380" height="38" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/>
+<text x="36" y="292">{ "id": 42, "stato": "pagato" }</text>
+<g font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<path d="M442,35 H456" stroke="#2F8CF0" stroke-width="2"/><text x="462" y="40" font-weight="700">{$t[0]}</text>
+<path d="M442,93 H456" stroke="#2F8CF0" stroke-width="2"/><text x="462" y="98" font-weight="700">{$t[1]}</text>
+<path d="M442,141 H456" stroke="#2F8CF0" stroke-width="2"/><text x="462" y="146">{$t[2]}</text>
+<path d="M442,195 H456" stroke="#0B7F5C" stroke-width="2"/><text x="462" y="200" font-weight="700">{$t[3]}</text>
+<path d="M442,243 H456" stroke="#0B7F5C" stroke-width="2"/><text x="462" y="248" font-weight="700">{$t[1]}</text>
+<path d="M442,287 H456" stroke="#0B7F5C" stroke-width="2"/><text x="462" y="292" font-weight="700">{$t[4]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** REST against GraphQL for the same page: two requests that bring extra fields, or one query that asks for exactly the fields needed. */
+if (!function_exists('fig_api_graphql')) {
+    function fig_api_graphql(array $t): string
+    {
+        $chips = function (int $x, int $y, array $f): string {
+            $o = ''; $cx = $x;
+            foreach ($f as [$name, $used]) {
+                $w = 16 + strlen($name) * 8;
+                $o .= $used
+                    ? "<rect x=\"$cx\" y=\"$y\" width=\"$w\" height=\"26\" rx=\"13\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"" . ($cx + $w / 2) . "\" y=\"" . ($y + 18) . "\" text-anchor=\"middle\" font-weight=\"700\">$name</text>"
+                    : "<rect x=\"$cx\" y=\"$y\" width=\"$w\" height=\"26\" rx=\"13\" fill=\"#FFFFFF\" stroke=\"#8A87B0\" stroke-width=\"2\" stroke-dasharray=\"4 3\"/><text x=\"" . ($cx + $w / 2) . "\" y=\"" . ($y + 18) . "\" text-anchor=\"middle\" fill=\"#6E6B96\">$name</text>";
+                $cx += $w + 6;
+            }
+            return $o;
+        };
+        $c1 = $chips(24, 96, [['id', 0], ['nome', 1], ['email', 0], ['indirizzo', 0]]);
+        $c2 = $chips(24, 190, [['id', 0], ['totale', 1], ['data', 1], ['righe', 0]]);
+        $c3 = $chips(344, 120, [['nome', 1], ['totale', 1], ['data', 1]]);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#1E1C52">
+<rect x="8" y="8" width="306" height="274" rx="12" fill="#F1F0F8"/><rect x="326" y="8" width="306" height="274" rx="12" fill="#F1F0F8"/>
+<g font-family="system-ui, sans-serif" font-size="15" font-weight="700"><text x="24" y="36">REST</text><text x="342" y="36">GraphQL</text></g>
+<g font-family="system-ui, sans-serif" font-size="13"><text x="298" y="36" text-anchor="end">{$t[0]}</text><text x="616" y="36" text-anchor="end">{$t[1]}</text></g>
+<rect x="24" y="52" width="200" height="30" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="36" y="72" font-weight="700">GET /clienti/7</text>
+{$c1}
+<rect x="24" y="146" width="230" height="30" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="36" y="166" font-weight="700">GET /clienti/7/ordini</text>
+{$c2}
+<rect x="342" y="52" width="160" height="30" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="354" y="72" font-weight="700">POST /graphql</text>
+<text x="344" y="106" font-family="system-ui, sans-serif">{$t[2]}</text>
+{$c3}
+<g font-family="system-ui, sans-serif" font-size="13">
+<rect x="24" y="242" width="22" height="16" rx="8" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 3"/><text x="54" y="255">{$t[3]}</text>
+<rect x="344" y="242" width="22" height="16" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="374" y="255">{$t[4]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'api-design', 'family' => 'api', 'after' => null,
     'title' => L('API REST e GraphQL', 'REST and GraphQL APIs'), 'short' => L('API', 'APIs'), 'level' => L('Intermedio', 'Intermediate'),
@@ -17,6 +134,10 @@ PATCH  /ordini/42         modifica alcuni campi
 DELETE /ordini/42         cancella l’ordine
 GET    /clienti/7/ordini  gli ordini del cliente 7', 'http'),
             P('`GET` non deve mai modificare dati: si può ripetere e mettere in cache. `PUT` e `DELETE` sono **idempotenti** (ripeterli dà lo stesso risultato), `POST` no: due `POST` creano due ordini.', '`GET` must never change data: it can be repeated and cached. `PUT` and `DELETE` are **idempotent** (repeating them gives the same result), `POST` is not: two `POST`s create two orders.'),
+            P('Ogni chiamata è una **richiesta** con metodo, percorso, intestazioni e, se serve, un corpo JSON; torna indietro una **risposta** con un codice di stato, le sue intestazioni e il corpo. Il server non ricorda nulla tra una richiesta e l’altra (REST è **senza stato**): chi sei e cosa vuoi viaggiano ogni volta nella richiesta, di solito con un token nell’intestazione `Authorization`.', 'Every call is a **request** with a method, a path, headers and, when needed, a JSON body; back comes a **response** with a status code, its headers and the body. The server remembers nothing between one request and the next (REST is **stateless**): who you are and what you want travel every time in the request, usually with a token in the `Authorization` header.'),
+            Fig(L(fig_api_http(['metodo e percorso', 'intestazioni', 'nessun corpo', 'codice di stato', 'corpo JSON']), fig_api_http(['method and path', 'headers', 'no body', 'status code', 'JSON body'])),
+                L('Sopra la richiesta: la riga GET /ordini/42 con metodo e percorso evidenziati, poi le intestazioni Host, Authorization e Accept, e nessun corpo. Sotto la risposta: HTTP/1.1 200 OK con il codice evidenziato, le intestazioni Content-Type e Cache-Control e il corpo JSON con id 42 e stato pagato.', 'Above, the request: the GET /ordini/42 line with method and path highlighted, then the Host, Authorization and Accept headers, and no body. Below, the response: HTTP/1.1 200 OK with the code highlighted, the Content-Type and Cache-Control headers and the JSON body with id 42 and stato pagato.'),
+                L('Richiesta e risposta hanno la stessa forma: una prima riga, le intestazioni, il corpo.', 'Request and response share the same shape: a first line, the headers, the body.')),
         ], [
             Q('r1', L('Qual è un buon percorso REST per gli utenti?', 'What is a good REST path for users?'), ['/utenti', '/getUtenti', '/creaUtente', '/utente_lista_tutti'], 0, L('Nomi, non verbi.', 'Nouns, not verbs.')),
             Q('r2', L('Quale metodo crea una nuova risorsa?', 'Which method creates a new resource?'), ['POST', 'GET', 'DELETE', 'HEAD'], 0, L('Con i dati nel corpo.', 'With data in the body.')),
@@ -43,6 +164,7 @@ GET    /clienti/7/ordini  gli ordini del cliente 7', 'http'),
   "dettagli": [{ "campo": "email", "problema": "formato non valido" }]
 }', 'json'),
             P('Gli errori devono avere sempre lo **stesso formato** JSON, con un codice leggibile dalla macchina e un messaggio per le persone; lo standard **Problem Details** (RFC 9457, tipo `application/problem+json`) ne propone uno pronto. Non mostrare mai stack trace o dettagli interni.', 'Errors must always have the **same** JSON **format**, with a machine-readable code and a message for people; the **Problem Details** standard (RFC 9457, type `application/problem+json`) offers a ready-made one. Never expose stack traces or internal details.'),
+            P('Errori comuni: rispondere `200` con dentro `{"errore": …}`, così i client e i sistemi di monitoraggio credono che tutto sia andato bene; confondere `401` (non so chi sei: accedi) con `403` (so chi sei, ma non puoi). Una regola utile per chi chiama: con un `4xx` deve correggere la richiesta, con un `5xx` può riprovare più tardi.', 'Common mistakes: answering `200` with `{"error": …}` inside, so clients and monitoring systems believe all went well; mixing up `401` (I do not know who you are: sign in) with `403` (I know who you are, but you may not). A useful rule for callers: with a `4xx` they must fix the request, with a `5xx` they may retry later.'),
         ], [
             Q('s1', L('Quale codice per una risorsa appena creata?', 'Which code for a newly created resource?'), ['201', '200', '204', '302'], 0, L('Created.', 'Created.')),
             Q('s2', L('Che differenza c’è tra 401 e 403?', 'What is the difference between 401 and 403?'), [L('401 non autenticato, 403 autenticato ma senza permesso', '401 not authenticated, 403 authenticated but not allowed'), L('Nessuna', 'None'), L('403 è un errore del server', '403 is a server error'), L('401 significa successo', '401 means success')], 0, L('Chi sei vs cosa puoi fare.', 'Who you are vs what you may do.')),
@@ -69,6 +191,9 @@ Authorization: Bearer eyJhbGciOi…
         ]),
         lesson('graphql', L('GraphQL', 'GraphQL'), [
             P('**GraphQL** è un’alternativa a REST: c’è un solo endpoint e il client scrive una **query** che dice esattamente quali campi vuole, anche da risorse collegate. Niente dati in più, niente richieste multiple per comporre una pagina.', '**GraphQL** is an alternative to REST: there is a single endpoint and the client writes a **query** saying exactly which fields it wants, even from related resources. No extra data, no multiple requests to build a page.'),
+            Fig(L(fig_api_graphql(['2 richieste', '1 richiesta', 'solo i campi chiesti:', 'campi scaricati ma non usati', 'campi usati dalla pagina']), fig_api_graphql(['2 requests', '1 request', 'only the fields asked for:', 'fields downloaded but not used', 'fields used by the page'])),
+                L('A sinistra, con REST, due richieste: GET /clienti/7 restituisce id, nome, email e indirizzo, GET /clienti/7/ordini restituisce id, totale, data e righe, ma la pagina usa solo nome, totale e data. A destra, con GraphQL, una sola POST /graphql restituisce esattamente nome, totale e data.', 'On the left, with REST, two requests: GET /clienti/7 returns id, nome, email and indirizzo, GET /clienti/7/ordini returns id, totale, data and righe, but the page uses only nome, totale and data. On the right, with GraphQL, a single POST /graphql returns exactly nome, totale and data.'),
+                L('GraphQL toglie le richieste in più e i campi inutili, ma sposta il lavoro sul server.', 'GraphQL removes the extra requests and the useless fields, but moves the work to the server.')),
             C('# schema
 type Cliente { id: ID!  nome: String!  ordini(ultimi: Int): [Ordine!]! }
 type Ordine  { id: ID!  totale: Float!  data: String! }
@@ -115,6 +240,9 @@ query {
         ]),
         lesson('caching', L('Cache HTTP ed ETag', 'HTTP caching and ETags'), [
             P('HTTP ha una cache incorporata. `Cache-Control: max-age=300` permette a browser e CDN di riusare una risposta per 300 secondi; `private` la lascia solo al browser dell’utente; `no-store` vieta di salvarla (dati personali). Un **ETag** è l’impronta di una versione: il client lo rimanda con `If-None-Match` e, se nulla è cambiato, il server risponde `304 Not Modified` senza corpo.', 'HTTP has a built-in cache. `Cache-Control: max-age=300` lets browsers and CDNs reuse a response for 300 seconds; `private` leaves it to the user’s browser only; `no-store` forbids storing it (personal data). An **ETag** is the fingerprint of a version: the client sends it back with `If-None-Match` and, if nothing changed, the server answers `304 Not Modified` with no body.'),
+            Fig(L(fig_api_seq(['Client', 'Server'], [140, 500], [[0, 1, 'GET /prodotti/7', ''], [1, 0, '200 OK · ETag: "v7" · corpo JSON', 'back'], [0, 0, 'cinque minuti dopo', 'gap'], [0, 1, 'GET /prodotti/7 · If-None-Match: "v7"', ''], [1, 0, '304 Not Modified · nessun corpo', 'ok']]), fig_api_seq(['Client', 'Server'], [140, 500], [[0, 1, 'GET /prodotti/7', ''], [1, 0, '200 OK · ETag: "v7" · JSON body', 'back'], [0, 0, 'five minutes later', 'gap'], [0, 1, 'GET /prodotti/7 · If-None-Match: "v7"', ''], [1, 0, '304 Not Modified · no body', 'ok']])),
+                L('Un diagramma di sequenza tra client e server. Il client chiede GET /prodotti/7 e riceve 200 OK con ETag "v7" e il corpo JSON. Cinque minuti dopo richiede la stessa risorsa con If-None-Match "v7" e il server risponde 304 Not Modified, senza corpo.', 'A sequence diagram between client and server. The client asks GET /prodotti/7 and receives 200 OK with ETag "v7" and the JSON body. Five minutes later it asks for the same resource with If-None-Match "v7" and the server answers 304 Not Modified, with no body.'),
+                L('La seconda volta viaggia solo una conferma: il client riusa la copia che ha già.', 'The second time only a confirmation travels: the client reuses the copy it already has.')),
             C('GET /corsi/42
 200 OK
 Cache-Control: public, max-age=300
@@ -138,6 +266,9 @@ If-Match: "v7"
         ]),
         lesson('idempotency', L('Idempotenza, tentativi e operazioni lunghe', 'Idempotency, retries and long operations'), [
             P('Le reti sbagliano: un client che non riceve risposta riprova. Con GET, PUT e DELETE non è un problema; con un POST (un pagamento, un ordine) il secondo tentativo potrebbe addebitare due volte. La soluzione è una **chiave di idempotenza**: il client genera un identificativo unico per ogni operazione e lo manda in `Idempotency-Key`; il server ricorda il risultato e, se la chiave ritorna, restituisce la stessa risposta senza rifare nulla.', 'Networks fail: a client that gets no answer tries again. With GET, PUT and DELETE that is not a problem; with a POST (a payment, an order) the second attempt might charge twice. The solution is an **idempotency key**: the client generates a unique identifier for each operation and sends it in `Idempotency-Key`; the server remembers the result and, if the key comes back, returns the same response without redoing anything.'),
+            Fig(L(fig_api_seq(['Client', 'Server'], [80, 440], [[0, 1, 'POST /pagamenti · Idempotency-Key: k-81f', ''], [1, 1, 'addebita 20 € · salva k-81f', 'noteL'], [1, 0, '201 Created · persa', 'lost'], [0, 0, 'timeout: riprova', 'note'], [0, 1, 'POST /pagamenti · Idempotency-Key: k-81f', ''], [1, 1, 'chiave già vista: nessun addebito', 'noteL'], [1, 0, '201 Created · la stessa risposta', 'ok']]), fig_api_seq(['Client', 'Server'], [80, 440], [[0, 1, 'POST /pagamenti · Idempotency-Key: k-81f', ''], [1, 1, 'charges €20 · stores k-81f', 'noteL'], [1, 0, '201 Created · lost', 'lost'], [0, 0, 'timeout: retry', 'note'], [0, 1, 'POST /pagamenti · Idempotency-Key: k-81f', ''], [1, 1, 'key already seen: no charge', 'noteL'], [1, 0, '201 Created · the same response', 'ok']])),
+                L('Un diagramma di sequenza. Il client manda POST /pagamenti con la chiave k-81f; il server addebita 20 euro e salva la chiave, ma la risposta 201 si perde. Il client va in timeout e riprova con la stessa chiave; il server la riconosce, non addebita di nuovo e restituisce la stessa risposta 201.', 'A sequence diagram. The client sends POST /pagamenti with the key k-81f; the server charges 20 euros and stores the key, but the 201 response is lost. The client times out and retries with the same key; the server recognises it, does not charge again and returns the same 201 response.'),
+                L('Due tentativi, un solo addebito: la chiave rende sicuro riprovare.', 'Two attempts, one charge: the key makes retrying safe.')),
             C('POST /pagamenti
 Idempotency-Key: 5f1c8e2a-7b3d-4c9e-9a11-2d6f0b7e4c21
 Content-Type: application/json
@@ -162,6 +293,9 @@ GET /esportazioni/exp_91
         ]),
         lesson('auth', L('OAuth 2, token e JWT', 'OAuth 2, tokens and JWT'), [
             P('Una **chiave API** identifica un’applicazione ed è semplice, ma dura a lungo e chi la possiede la usa: va tenuta segreta sul server. **OAuth 2.0** rilascia **access token** di breve durata con degli **scope**, cioè ciò che il token permette. Il flusso **authorization code con PKCE** serve alle app in cui un utente accede (web, mobile, single page); **client credentials** ai servizi che parlano tra loro. I vecchi flussi implicit e password sono sconsigliati dalle buone pratiche di sicurezza (RFC 9700).', 'An **API key** identifies an application and is simple, but it lasts long and whoever holds it can use it: it must be kept secret on the server. **OAuth 2.0** issues short-lived **access tokens** with **scopes**, that is what the token allows. The **authorization code with PKCE** flow is for apps where a user signs in (web, mobile, single page); **client credentials** for services talking to each other. The old implicit and password flows are discouraged by security best practice (RFC 9700).'),
+            Fig(L(fig_api_seq(['Utente', 'App', 'Server auth', 'API'], [76, 236, 404, 566], [[0, 1, 'Accedi', ''], [1, 2, 'redirect + code_challenge', ''], [0, 2, 'login e consenso agli scope', ''], [2, 1, 'code (con un redirect)', 'back'], [1, 2, 'code + code_verifier', ''], [2, 1, 'access token + refresh', 'ok'], [1, 3, 'Authorization: Bearer …', ''], [3, 1, '200 · i dati permessi', 'back']], 34), fig_api_seq(['User', 'App', 'Auth server', 'API'], [76, 236, 404, 566], [[0, 1, 'Sign in', ''], [1, 2, 'redirect + code_challenge', ''], [0, 2, 'login and consent to scopes', ''], [2, 1, 'code (via a redirect)', 'back'], [1, 2, 'code + code_verifier', ''], [2, 1, 'access token + refresh', 'ok'], [1, 3, 'Authorization: Bearer …', ''], [3, 1, '200 · the allowed data', 'back']], 34)),
+                L('Un diagramma di sequenza con utente, app, server di autorizzazione e API. L’utente chiede di accedere; l’app lo rimanda al server di autorizzazione con il code_challenge; l’utente fa il login e dà il consenso; il server restituisce un code all’app; l’app lo scambia insieme al code_verifier con un access token e un refresh token; infine chiama l’API con Authorization: Bearer e riceve i dati.', 'A sequence diagram with user, app, authorisation server and API. The user asks to sign in; the app sends them to the authorisation server with the code_challenge; the user logs in and consents; the server returns a code to the app; the app exchanges it, together with the code_verifier, for an access token and a refresh token; finally it calls the API with Authorization: Bearer and gets the data.'),
+                L('La password resta tra l’utente e il server di autorizzazione: l’app vede solo il token.', 'The password stays between the user and the authorisation server: the app only sees the token.')),
             C('POST /oauth/token
 Authorization: Basic Y2xpZW50LWlkOmNsaWVudC1zZWdyZXRv
 Content-Type: application/x-www-form-urlencoded

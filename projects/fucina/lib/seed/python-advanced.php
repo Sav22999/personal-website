@@ -1,6 +1,134 @@
 <?php
 /** Python advanced: generators, decorators, type hints, async, testing, pattern matching, threads and processes, packaging and profiling. */
 
+/** A generator as a conversation: each next() runs the code up to the following yield, then it pauses. */
+if (!function_exists('fig_pyadv_gen')) {
+    function fig_pyadv_gen(array $t): string
+    {
+        $rows = '';
+        foreach ([0, 1, 1] as $i => $v) {
+            $y = 70 + $i * 66;
+            $rows .= "<line x1=\"156\" y1=\"$y\" x2=\"480\" y2=\"$y\" stroke=\"#2F8CF0\" stroke-width=\"2\" marker-end=\"url(#ag)\"/>"
+                . "<text x=\"318\" y=\"" . ($y - 8) . "\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" fill=\"#1B66BC\">next()</text>"
+                . "<line x1=\"484\" y1=\"" . ($y + 24) . "\" x2=\"160\" y2=\"" . ($y + 24) . "\" stroke=\"#0B7F5C\" stroke-width=\"2\" marker-end=\"url(#ag)\"/>"
+                . "<text x=\"318\" y=\"" . ($y + 42) . "\" text-anchor=\"middle\" font-family=\"ui-monospace, monospace\" fill=\"#0B7F5C\">yield $v</text>"
+                . "<rect x=\"498\" y=\"" . ($y + 30) . "\" width=\"92\" height=\"20\" rx=\"8\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"1.5\" stroke-dasharray=\"4 3\"/>"
+                . "<text x=\"544\" y=\"" . ($y + 45) . "\" text-anchor=\"middle\" font-size=\"12\" fill=\"#5B5880\">{$t[2]}</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="70" y="14" width="160" height="32" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="150" y="35" text-anchor="middle" font-weight="700">{$t[0]}</text>
+<rect x="410" y="14" width="160" height="32" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="490" y="35" text-anchor="middle" font-weight="700" font-family="ui-monospace, monospace">fibonacci()</text>
+<line x1="150" y1="48" x2="150" y2="262" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 5"/>
+<line x1="490" y1="48" x2="490" y2="262" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 5"/>
+$rows
+</svg>
+SVG;
+    }
+}
+
+/** A decorator: the original function sits inside the wrapper, which works before and after it. */
+if (!function_exists('fig_pyadv_deco')) {
+    function fig_pyadv_deco(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="320" y="24" text-anchor="middle" font-family="ui-monospace, monospace" font-size="14"><tspan fill="#B84508" font-weight="700">@cronometro</tspan>  ≡  calcola = cronometro(calcola)</text>
+<rect x="170" y="40" width="300" height="200" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="186" y="64" font-family="ui-monospace, monospace" font-weight="700" fill="#B84508">involucro</text>
+<text x="186" y="94">1. {$t[0]}</text>
+<rect x="196" y="110" width="248" height="62" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="320" y="136" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700">calcola(n)</text>
+<text x="320" y="158" text-anchor="middle" font-size="13">2. {$t[1]}</text>
+<text x="186" y="200">3. {$t[2]}</text>
+<text x="186" y="224" font-size="13" fill="#5B5880">return risultato</text>
+<line x1="40" y1="100" x2="164" y2="100" stroke="#1E1C52" stroke-width="2" marker-end="url(#ad)"/>
+<text x="100" y="90" text-anchor="middle" font-family="ui-monospace, monospace">calcola(10)</text>
+<line x1="474" y1="210" x2="600" y2="210" stroke="#1E1C52" stroke-width="2" marker-end="url(#ad)"/>
+<text x="540" y="200" text-anchor="middle" font-family="ui-monospace, monospace">45</text>
+</svg>
+SVG;
+    }
+}
+
+/** Three one-second waits in a row and together with gather; the playhead shows the time going by. */
+if (!function_exists('fig_pyadv_async')) {
+    function fig_pyadv_async(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<style>.now{animation:play 6s linear infinite}@keyframes play{from{transform:translateX(0)}to{transform:translateX(450px)}}@media (prefers-reduced-motion:reduce){.now{animation:none;opacity:0}}</style>
+<text x="16" y="62" font-weight="700">{$t[0]}</text>
+<g font-family="ui-monospace, monospace" font-weight="700" text-anchor="middle">
+<rect x="150" y="44" width="148" height="28" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="224" y="63">A</text>
+<rect x="300" y="44" width="148" height="28" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="374" y="63">B</text>
+<rect x="450" y="44" width="148" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="524" y="63">C</text>
+<rect x="150" y="112" width="148" height="28" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="224" y="131">A</text>
+<rect x="150" y="146" width="148" height="28" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="224" y="165">B</text>
+<rect x="150" y="180" width="148" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="224" y="199">C</text>
+</g>
+<text x="16" y="164" font-weight="700">{$t[1]}</text>
+<text x="606" y="63" font-size="13" fill="#5B5880">3 s</text>
+<text x="310" y="164" font-size="13" fill="#0B7F5C" font-weight="700">1 s</text>
+<line x1="150" y1="226" x2="600" y2="226" stroke="#8A87B0" stroke-width="2"/>
+<g font-size="13" fill="#5B5880" text-anchor="middle"><text x="150" y="246">0</text><text x="300" y="246">1</text><text x="450" y="246">2</text><text x="600" y="246">3</text></g>
+<text x="16" y="246" font-size="13" fill="#5B5880">{$t[2]}</text>
+<line class="now" x1="150" y1="34" x2="150" y2="220" stroke="#F03E82" stroke-width="2" stroke-dasharray="4 4"/>
+</svg>
+SVG;
+    }
+}
+
+/** Threads under the GIL take turns on one core; processes work at the same time on two cores. */
+if (!function_exists('fig_pyadv_gil')) {
+    function fig_pyadv_gil(array $t): string
+    {
+        $seg = '';
+        for ($i = 0; $i < 8; $i++) {
+            $x = 190 + $i * 53;
+            $one = $i % 2 === 0;
+            $seg .= '<rect x="' . $x . '" y="40" width="51" height="30" rx="6" fill="' . ($one ? '#DCEBFF' : '#FFE8D6') . '" stroke="' . ($one ? '#2F8CF0' : '#E8590C') . '" stroke-width="2"/><text x="' . ($x + 25) . '" y="60" text-anchor="middle">' . ($one ? 'T1' : 'T2') . '</text>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<text x="16" y="52" font-weight="700">{$t[0]}</text><text x="16" y="70" font-size="13" fill="#5B5880">{$t[2]}</text>
+<g font-family="ui-monospace, monospace" font-weight="700">$seg</g>
+<text x="16" y="124" font-weight="700">{$t[1]}</text>
+<text x="16" y="142" font-size="13" fill="#5B5880">{$t[2]}</text><text x="16" y="182" font-size="13" fill="#5B5880">{$t[3]}</text>
+<g font-family="ui-monospace, monospace" font-weight="700" text-anchor="middle">
+<rect x="190" y="118" width="210" height="30" rx="6" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="295" y="138">P1</text>
+<rect x="190" y="158" width="210" height="30" rx="6" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="295" y="178">P2</text>
+</g>
+<line x1="404" y1="110" x2="404" y2="196" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="190" y1="210" x2="620" y2="210" stroke="#8A87B0" stroke-width="2"/>
+<text x="620" y="204" text-anchor="end" font-size="13" fill="#5B5880">{$t[4]} →</text>
+</svg>
+SVG;
+    }
+}
+
+/** How long `in` takes as the collection grows: a list grows in a straight line, a set stays flat. */
+if (!function_exists('fig_pyadv_lookup')) {
+    function fig_pyadv_lookup(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 256" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<line x1="80" y1="210" x2="600" y2="210" stroke="#8A87B0" stroke-width="2"/>
+<line x1="80" y1="210" x2="80" y2="24" stroke="#8A87B0" stroke-width="2"/>
+<text x="600" y="248" text-anchor="end" font-size="13" fill="#5B5880">{$t[0]} →</text>
+<text x="24" y="40" font-size="13" fill="#5B5880">{$t[1]}</text>
+<g font-size="12" fill="#5B5880" text-anchor="middle"><text x="80" y="228">0</text><text x="340" y="228">500 000</text><text x="580" y="228">1 000 000</text></g>
+<line x1="80" y1="206" x2="580" y2="40" stroke="#E8590C" stroke-width="3"/>
+<line x1="80" y1="200" x2="580" y2="198" stroke="#0B7F5C" stroke-width="3" stroke-dasharray="10 5"/>
+<text x="200" y="124" font-family="ui-monospace, monospace" fill="#B84508" font-weight="700">x in list</text>
+<text x="470" y="186" font-family="ui-monospace, monospace" fill="#0B7F5C" font-weight="700">x in set</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'python-advanced', 'family' => 'python', 'after' => 'python-intermediate',
     'title' => L('Python avanzato', 'Advanced Python'), 'short' => L('Python avanzato', 'Python Advanced'), 'level' => L('Avanzato', 'Advanced'),
@@ -17,8 +145,12 @@ return [
 from itertools import islice
 print(list(islice(fibonacci(), 10)))
 
-somma = sum(x * x for x in range(1_000_000))', 'python'),
+somma = sum(x * x for x in range(1_000_000))', 'python', '<pre>[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]</pre>'),
             P('Le **generator expression** sono comprehension con le tonde: `(x * x for x in dati)` non crea nessuna lista.', '**Generator expressions** are comprehensions with round brackets: `(x * x for x in data)` builds no list at all.'),
+            P('Dietro ogni `for` c’è il protocollo degli **iteratori**: Python chiede `iter(oggetto)` e poi chiama `next()` finché non arriva `StopIteration`. Un generatore fa tutto questo da solo: a ogni `next()` il suo codice riparte dal punto in cui si era fermato e arriva al `yield` successivo. Attenzione, si consuma una volta sola: un secondo `for` sullo stesso generatore non trova più niente.', 'Behind every `for` there is the **iterator** protocol: Python asks for `iter(object)` and then calls `next()` until `StopIteration` arrives. A generator does all of this by itself: on every `next()` its code resumes from where it stopped and runs to the following `yield`. Careful, it is used up once: a second `for` over the same generator finds nothing left.'),
+            Fig(L(fig_pyadv_gen(['chi chiede', '', 'in pausa']), fig_pyadv_gen(['the caller', '', 'paused'])),
+                L('Due linee verticali: a sinistra chi chiede i valori, a destra il generatore fibonacci(). Tre volte una freccia next() va a destra e una freccia yield torna a sinistra con 0, 1 e 1; dopo ogni yield il generatore resta in pausa.', 'Two vertical lines: on the left the caller asking for values, on the right the fibonacci() generator. Three times a next() arrow goes right and a yield arrow comes back left with 0, 1 and 1; after each yield the generator stays paused.'),
+                L('Il generatore lavora solo quando gli chiedi il valore successivo.', 'The generator works only when you ask for the next value.')),
         ], [
             Q('g1', L('Che cosa rende generatore una funzione?', 'What makes a function a generator?'), ['yield', 'return', 'async', 'lambda'], 0, L('Basta un `yield` nel corpo.', 'One `yield` in the body is enough.')),
             Q('g2', L('Che differenza c’è tra `[x for x in d]` e `(x for x in d)`?', 'What is the difference between `[x for x in d]` and `(x for x in d)`?'), [L('La seconda non crea una lista', 'The second builds no list'), L('Nessuna', 'None'), L('La prima è più lenta sempre', 'The first is always slower'), L('La seconda dà errore', 'The second fails')], 0, L('Produce i valori quando servono.', 'It produces values on demand.')),
@@ -46,6 +178,10 @@ def cronometro(funzione):
 def calcola(n):
     return sum(range(n))', 'python'),
             P('`*args` e `**kwargs` raccolgono qualsiasi argomento. `functools.wraps` conserva il nome e la documentazione della funzione originale. `@functools.cache` è un decoratore già pronto che ricorda i risultati.', '`*args` and `**kwargs` collect any arguments. `functools.wraps` keeps the name and docs of the original function. `@functools.cache` is a ready-made decorator that remembers results.'),
+            P('La `@` è solo una scorciatoia: `@cronometro` sopra `def calcola` equivale a scrivere `calcola = cronometro(calcola)` subito dopo. Da quel momento il nome `calcola` indica l’involucro, che fa il suo lavoro prima e dopo e in mezzo chiama la funzione originale. Senza `functools.wraps`, `calcola.__name__` diventerebbe `"involucro"`, confondendo messaggi d’errore e strumenti di debug.', 'The `@` is just a shortcut: `@cronometro` above `def calcola` is the same as writing `calcola = cronometro(calcola)` right after it. From then on the name `calcola` means the wrapper, which does its job before and after and calls the original function in the middle. Without `functools.wraps`, `calcola.__name__` would become `"involucro"`, confusing error messages and debugging tools.'),
+            Fig(L(fig_pyadv_deco(['fa partire il cronometro', 'la funzione originale', 'stampa il tempo trascorso']), fig_pyadv_deco(['starts the timer', 'the original function', 'prints the elapsed time'])),
+                L('Un riquadro arancione, involucro, contiene un riquadro azzurro, calcola(n). La chiamata calcola(10) entra nell’involucro, che fa partire il cronometro, chiama la funzione originale, stampa il tempo e restituisce 45. In alto: @cronometro equivale a calcola = cronometro(calcola).', 'An orange box, involucro, holds a blue box, calcola(n). The call calcola(10) enters the wrapper, which starts the timer, calls the original function, prints the time and returns 45. At the top: @cronometro is the same as calcola = cronometro(calcola).'),
+                L('Chi chiama `calcola` in realtà parla con l’involucro.', 'Whoever calls `calcola` is really talking to the wrapper.')),
         ], [
             Q('d1', L('Che cosa riceve un decoratore?', 'What does a decorator receive?'), [L('Una funzione', 'A function'), L('Una stringa', 'A string'), L('Un numero', 'A number'), L('Una classe CSS', 'A CSS class')], 0, L('E restituisce una funzione nuova.', 'And returns a new function.')),
             Q('d2', L('A che cosa serve `**kwargs`?', 'What is `**kwargs` for?'), [L('Raccoglie gli argomenti con nome', 'Collects keyword arguments'), L('Eleva al quadrato', 'Squares numbers'), L('Commenta', 'Comments'), L('Importa', 'Imports')], 0, L('`*args` raccoglie quelli posizionali.', '`*args` collects positional ones.')),
@@ -72,6 +208,7 @@ def addebita(cosa: Pagabile, sconto: float | None = None) -> float:
 
 voti: dict[str, list[int]] = {"Ada": [8, 9]}', 'python'),
             P('Un **Protocol** descrive una forma: qualsiasi classe con un metodo `totale()` va bene, anche se non eredita nulla. È il “duck typing” controllato.', 'A **Protocol** describes a shape: any class with a `totale()` method fits, even without inheriting anything. It is checked “duck typing”.'),
+            P('Python non controlla le annotazioni mentre il programma gira: `addebita("ciao")` parte lo stesso e fallisce solo più avanti. Il controllo lo fa **mypy** (o pyright), che lanci come un test: `mypy src/`. Puoi aggiungere i tipi un po’ alla volta, partendo dalle funzioni più usate. Con `str | None` il controllore ti obbliga a gestire il caso `None` prima di usare il valore, e così sparisce una delle cause d’errore più comuni.', 'Python does not check annotations while the program runs: `addebita("ciao")` starts anyway and fails only later. The checking is done by **mypy** (or pyright), which you run like a test: `mypy src/`. You can add types a little at a time, starting from the most used functions. With `str | None` the checker forces you to handle the `None` case before using the value, removing one of the most common causes of errors.'),
         ], [
             Q('t1', L('Come scrivi “una stringa oppure None”?', 'How do you write “a string or None”?'), ['str | None', 'str or None', 'str & None', 'Maybe[str]'], 0, L('La barra unisce i tipi.', 'The bar unites types.')),
             Q('t2', L('Python blocca il programma se i tipi non tornano?', 'Does Python stop the program if types are wrong?'), [L('No, lo segnalano strumenti come mypy', 'No, tools like mypy report it'), L('Sì, sempre', 'Yes, always'), L('Solo con le classi', 'Only with classes'), L('Solo in produzione', 'Only in production')], 0, L('I tipi sono indicazioni.', 'Types are hints.')),
@@ -84,7 +221,7 @@ voti: dict[str, list[int]] = {"Ada": [8, 9]}', 'python'),
         ]),
         lesson('async', L('async e await', 'async and await'), [
             P('Il codice **asincrono** fa più cose mentre aspetta: richieste di rete, file, database. Una funzione `async def` si mette in pausa con `await`; `asyncio.gather` ne esegue molte insieme.', '**Asynchronous** code does several things while waiting: network requests, files, databases. An `async def` function pauses with `await`; `asyncio.gather` runs many together.'),
-            C('import asyncio
+            C(L('import asyncio
 
 async def scarica(nome, secondi):
     await asyncio.sleep(secondi)
@@ -96,8 +233,24 @@ async def main():
     )
     print(risultati)
 
-asyncio.run(main())', 'python'),
+asyncio.run(main())', 'import asyncio
+
+async def scarica(nome, secondi):
+    await asyncio.sleep(secondi)
+    return f"{nome} ready"
+
+async def main():
+    risultati = await asyncio.gather(
+        scarica("A", 1), scarica("B", 1), scarica("C", 1),
+    )
+    print(risultati)
+
+asyncio.run(main())'), 'python', L('<pre>[\'A pronto\', \'B pronto\', \'C pronto\']</pre>', '<pre>[\'A ready\', \'B ready\', \'C ready\']</pre>')),
             P('Le tre attese da un secondo finiscono insieme in circa un secondo, non tre. L’asincrono aiuta con le attese, non con i calcoli pesanti.', 'The three one-second waits finish together in about one second, not three. Async helps with waiting, not with heavy computation.'),
+            Fig(L(fig_pyadv_async(['In sequenza', 'Con gather', 'secondi']), fig_pyadv_async(['In sequence', 'With gather', 'seconds'])),
+                L('Una linea del tempo da 0 a 3 secondi. In sequenza, le attese A, B e C stanno una dopo l’altra e finiscono a 3 secondi. Con gather, A, B e C stanno una sopra l’altra tra 0 e 1 secondo e finiscono tutte a 1 secondo.', 'A timeline from 0 to 3 seconds. In sequence, the waits A, B and C sit one after the other and end at 3 seconds. With gather, A, B and C sit one above the other between 0 and 1 second and all end at 1 second.'),
+                L('Mentre una coroutine aspetta, le altre vanno avanti.', 'While one coroutine waits, the others move on.')),
+            P('Tutto gira in un solo thread: un **ciclo di eventi** passa da una coroutine all’altra ogni volta che una arriva a un `await`. Per questo dentro una funzione `async` non devi mai usare `time.sleep` o librerie che bloccano, come `requests`: fermerebbero tutte le altre. Usa `asyncio.sleep` e librerie asincrone come `httpx`. Altro errore classico: chiamare `scarica("A", 1)` senza `await` non fa partire niente, restituisce solo un oggetto coroutine.', 'Everything runs in a single thread: an **event loop** switches from one coroutine to another every time one reaches an `await`. That is why inside an `async` function you must never use `time.sleep` or blocking libraries such as `requests`: they would stop all the others. Use `asyncio.sleep` and async libraries such as `httpx`. Another classic mistake: calling `scarica("A", 1)` without `await` starts nothing, it only returns a coroutine object.'),
         ], [
             Q('a1', L('Dove si può usare `await`?', 'Where can you use `await`?'), [L('Dentro una funzione `async`', 'Inside an `async` function'), L('Ovunque', 'Anywhere'), L('Solo nei cicli', 'Only in loops'), L('Solo nelle classi', 'Only in classes')], 0, L('Fuori serve `asyncio.run`.', 'Outside you need `asyncio.run`.')),
             Q('a2', L('Che cosa fa `asyncio.gather`?', 'What does `asyncio.gather` do?'), [L('Esegue più coroutine insieme', 'Runs several coroutines together'), L('Raccoglie la spazzatura', 'Collects garbage'), L('Ordina una lista', 'Sorts a list'), L('Chiude il programma', 'Ends the program')], 0, L('E restituisce tutti i risultati.', 'And returns all the results.')),
@@ -128,6 +281,19 @@ def test_divisione_per_zero():
     with pytest.raises(ZeroDivisionError):
         1 / 0', 'python'),
             P('Si lanciano con `pytest` dal terminale. Le **fixture** preparano dati riutilizzabili tra i test.', 'You run them with `pytest` from the terminal. **Fixtures** prepare data reused across tests.'),
+            C('import pytest
+
+@pytest.fixture
+def carrello():
+    return Carrello(prodotti=["libro", "penna"])
+
+def test_quanti(carrello):          # pytest passa la fixture per nome
+    assert len(carrello.prodotti) == 2
+
+@pytest.mark.parametrize("a, b, atteso", [(2, 3, 5), (0, 0, 0), (-1, 1, 0)])
+def test_somma(a, b, atteso):
+    assert somma(a, b) == atteso', 'python'),
+            P('Una fixture è una funzione segnata con `@pytest.fixture`: basta mettere il suo nome tra i parametri di un test e pytest la chiama per te, ogni volta da capo, così i test non si influenzano a vicenda. `parametrize` fa girare lo stesso test con più dati. Nel context manager, il codice dopo `yield` gira all’uscita dal `with`; se vuoi che giri anche in caso di errore, mettilo in un `try`/`finally`.', 'A fixture is a function marked with `@pytest.fixture`: just put its name among a test’s parameters and pytest calls it for you, fresh every time, so tests do not affect one another. `parametrize` runs the same test with several sets of data. In the context manager, the code after `yield` runs when the `with` block ends; if you want it to run on errors too, put it in a `try`/`finally`.'),
         ], [
             Q('p1', L('Come trova pytest i test?', 'How does pytest find tests?'), [L('Funzioni che iniziano per `test_`', 'Functions starting with `test_`'), L('Commenti speciali', 'Special comments'), L('File .test', '.test files'), L('Da un elenco a mano', 'From a manual list')], 0, L('Anche i file `test_*.py`.', 'And `test_*.py` files.')),
             Q('p2', L('Come controlli che venga lanciata un’eccezione?', 'How do you check an exception is raised?'), ['with pytest.raises(Errore):', 'assert Errore', 'try: test', 'expect(Errore)'], 0, L('Il test fallisce se l’errore non arriva.', 'The test fails if the error does not come.')),
@@ -206,6 +372,9 @@ if __name__ == "__main__":
     with ProcessPoolExecutor() as pool:                  # calcolo sulla CPU
         print(list(pool.map(primi_fino_a, [50_000, 60_000])))', 'python'),
             P('`concurrent.futures` offre la stessa interfaccia per thread e processi: `map` distribuisce il lavoro e il blocco `with` aspetta che tutto finisca. Con i processi serve `if __name__ == "__main__":`, perché ogni processo nuovo rilegge il modulo.', '`concurrent.futures` offers the same interface for threads and processes: `map` hands out the work and the `with` block waits for everything to finish. Processes need `if __name__ == "__main__":`, because each new process re-reads the module.'),
+            Fig(L(fig_pyadv_gil(['Thread con il GIL', 'Processi', 'core 1', 'core 2', 'tempo']), fig_pyadv_gil(['Threads with the GIL', 'Processes', 'core 1', 'core 2', 'time'])),
+                L('In alto, due thread T1 e T2 si alternano a turno su un solo core, in otto pezzi uno dopo l’altro. In basso, due processi P1 e P2 lavorano insieme su due core e finiscono a metà del tempo.', 'At the top, two threads T1 and T2 take turns on a single core, in eight pieces one after the other. At the bottom, two processes P1 and P2 work together on two cores and finish in half the time.'),
+                L('Per i calcoli con il GIL i thread si danno il turno; i processi lavorano davvero in parallelo.', 'For computation under the GIL threads take turns; processes truly work in parallel.')),
         ], [
             Q('pp1', L('Quale strumento conviene per scaricare 100 pagine web?', 'Which tool suits downloading 100 web pages?'), ['ProcessPoolExecutor', 'ThreadPoolExecutor', L('Un ciclo for normale', 'A plain for loop'), 'time.sleep'], 1, L('Il lavoro è quasi tutto attesa di rete.', 'The work is almost all network waiting.')),
             Q('pp2', L('Che cosa fa il GIL nella build classica di CPython?', 'What does the GIL do in classic CPython?'), [L('Lascia eseguire codice Python a un thread alla volta', 'Lets one thread at a time run Python code'), L('Blocca gli errori di rete', 'Blocks network errors'), L('Raccoglie la memoria non usata', 'Collects unused memory'), L('Divide il programma in processi', 'Splits the program into processes')], 0, L('Per questo i calcoli non accelerano con i thread.', 'That is why computation does not speed up with threads.')),
@@ -278,6 +447,10 @@ insieme = set(numeri)
 print(999_999 in numeri)    # scorre fino in fondo
 print(999_999 in insieme)   # quasi istantaneo', 'python'),
             Tip('Dal terminale: `python -m cProfile -s cumtime script.py` profila un intero script senza toccarne il codice.', 'From the terminal: `python -m cProfile -s cumtime script.py` profiles a whole script without touching its code.'),
+            P('Perché `lento` è lento? Le stringhe sono immutabili: ogni `+=` crea una stringa nuova e ricopia tutto il testo accumulato fino a quel momento, quindi il lavoro cresce con il quadrato di `n`. `join` invece calcola una volta la lunghezza finale e copia ogni pezzo una volta sola. Lo stesso vale per la ricerca: `in` su una lista controlla gli elementi uno per uno, su un `set` salta dritto al posto giusto grazie all’hash.', 'Why is `lento` slow? Strings are immutable: every `+=` creates a new string and copies all the text gathered so far, so the work grows with the square of `n`. `join` instead works out the final length once and copies each piece only once. The same goes for searching: `in` on a list checks the items one by one, on a `set` it jumps straight to the right place thanks to the hash.'),
+            Fig(L(fig_pyadv_lookup(['elementi', 'tempo']), fig_pyadv_lookup(['items', 'time'])),
+                L('Grafico con il numero di elementi sull’asse orizzontale, fino a un milione, e il tempo su quello verticale. La linea di x in list sale in diagonale, la linea tratteggiata di x in set resta piatta in basso.', 'Chart with the number of items on the horizontal axis, up to one million, and time on the vertical one. The line for x in list rises diagonally, the dashed line for x in set stays flat at the bottom.'),
+                L('Cercare in una lista costa di più a ogni elemento in più; in un set no.', 'Searching a list costs more with every extra item; in a set it does not.')),
         ], [
             Q('f1', L('Quale modulo confronta la velocità di piccoli pezzi di codice?', 'Which module compares the speed of small snippets?'), ['cProfile', 'timeit', 'pdb', 'logging'], 1, L('Ripete il codice molte volte e misura.', 'It repeats the code many times and measures.')),
             Q('f2', L('Perché `x in un_set` è più veloce di `x in una_lista`?', 'Why is `x in a_set` faster than `x in a_list`?'), [L('Il set è sempre più piccolo', 'The set is always smaller'), L('La lista è scritta in Python puro', 'The list is written in pure Python'), L('Non è più veloce', 'It is not faster'), L('Il set usa una tabella hash e non scorre gli elementi', 'The set uses a hash table and does not scan the items')], 3, L('Il tempo resta quasi costante anche con milioni di elementi.', 'The time stays almost constant even with millions of items.')),

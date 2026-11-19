@@ -2,6 +2,87 @@
 /** Regular expressions: literals and classes, quantifiers and anchors, groups and alternatives, using them in code, lookarounds,
  *  flags, Unicode and backreferences, regex in command-line tools and engine differences. */
 
+/** A row of characters in equal cells, so that matches can be highlighted exactly: $marks maps a cell index to [fill, stroke, dashed]. */
+if (!function_exists('fig_rx_cells')) {
+    function fig_rx_cells(string $text, int $x0, int $y, int $w, array $marks = []): string
+    {
+        $out = '';
+        foreach (mb_str_split($text) as $i => $ch) {
+            $x = $x0 + $i * $w; [$f, $st, $dash] = $marks[$i] ?? ['#FFFFFF', '#D9D7E8', false];
+            $d = $dash ? ' stroke-dasharray="4 3"' : '';
+            $out .= "<rect x=\"$x\" y=\"$y\" width=\"" . ($w - 2) . "\" height=\"34\" rx=\"5\" fill=\"$f\" stroke=\"$st\" stroke-width=\"2\"$d/>";
+            $out .= '<text x="' . ($x + ($w - 2) / 2) . '" y="' . ($y + 23) . '" text-anchor="middle">' . htmlspecialchars($ch, ENT_XML1) . '</text>';
+        }
+        return $out;
+    }
+}
+
+/** Greedy and lazy: the same text matched by <.+> (one long match) and by <.+?> (four short ones). */
+if (!function_exists('fig_rx_greedy')) {
+    function fig_rx_greedy(string $greedy, string $lazy, string $one, string $four): string
+    {
+        $text = '<b>ciao</b> <b>mondo</b>';
+        $all = array_fill(0, 24, ['#FFE8D6', '#E8590C', false]);
+        $lz = [];
+        foreach ([[0, 2], [7, 10], [12, 14], [20, 23]] as $k => [$a, $b]) for ($i = $a; $i <= $b; $i++) $lz[$i] = $k % 2 ? ['#ECE6FF', '#7048E8', false] : ['#DCEBFF', '#2F8CF0', false];
+        $r1 = fig_rx_cells($text, 40, 62, 24, $all);
+        $r2 = fig_rx_cells($text, 40, 170, 24, $lz);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="ui-monospace, Menlo, monospace" font-size="16" fill="#1E1C52">
+<text x="40" y="44" font-weight="700">&lt;.+&gt;</text><text x="130" y="44" font-family="system-ui, sans-serif" font-size="14">{$greedy}</text>
+{$r1}
+<path d="M40,104 V112 H614 V104" fill="none" stroke="#E8590C" stroke-width="2"/><text x="327" y="130" text-anchor="middle" font-size="13" fill="#B84508" font-weight="700">{$one}</text>
+<text x="40" y="156" font-weight="700">&lt;.+?&gt;</text><text x="130" y="156" font-family="system-ui, sans-serif" font-size="14">{$lazy}</text>
+{$r2}
+<text x="327" y="224" text-anchor="middle" font-size="13" fill="#1B66BC" font-weight="700">{$four}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Capturing groups: each bracket of (\d{2})/(\d{2})/(\d{4}) captures a piece of the date, and $3-$2-$1 puts them back in another order. */
+if (!function_exists('fig_rx_groups')) {
+    function fig_rx_groups(): string
+    {
+        $c1 = ['#FFE8D6', '#E8590C', false]; $c2 = ['#DCEBFF', '#2F8CF0', false]; $c3 = ['#D5F6EA', '#0B7F5C', false];
+        $row = fig_rx_cells('10/11/2026', 140, 70, 36, [0 => $c1, 1 => $c1, 3 => $c2, 4 => $c2, 6 => $c3, 7 => $c3, 8 => $c3, 9 => $c3]);
+        $out = fig_rx_cells('2026-11-10', 140, 206, 36, [0 => $c3, 1 => $c3, 2 => $c3, 3 => $c3, 5 => $c2, 6 => $c2, 8 => $c1, 9 => $c1]);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="ui-monospace, Menlo, monospace" font-size="16" fill="#1E1C52">
+<g font-size="14" font-weight="700" text-anchor="middle"><text x="175" y="56" fill="#B84508">(\d{2})</text><text x="229" y="56">/</text><text x="283" y="56" fill="#1B66BC">(\d{2})</text><text x="337" y="56">/</text><text x="427" y="56" fill="#0B7F5C">(\d{4})</text></g>
+{$row}
+<g fill="none" stroke-width="2"><path d="M142,110 V118 H210 V110" stroke="#E8590C"/><path d="M250,110 V118 H318 V110" stroke="#2F8CF0"/><path d="M358,110 V118 H498 V110" stroke="#0B7F5C"/></g>
+<g font-size="15" font-weight="700" text-anchor="middle"><text x="176" y="138" fill="#B84508">\$1</text><text x="284" y="138" fill="#1B66BC">\$2</text><text x="428" y="138" fill="#0B7F5C">\$3</text></g>
+<path d="M320,150 V194" stroke="#1E1C52" stroke-width="2"/><path d="M314,188 L320,196 L326,188" fill="none" stroke="#1E1C52" stroke-width="2"/>
+<text x="334" y="178" font-size="14" font-weight="700">"\$3-\$2-\$1"</text>
+{$out}
+</svg>
+SVG;
+    }
+}
+
+/** A lookbehind: (?<=€)\d+ checks the euro sign before the number but leaves it out of the match. */
+if (!function_exists('fig_rx_look')) {
+    function fig_rx_look(string $text, string $checked, string $taken): string
+    {
+        $chars = mb_str_split($text); $e = array_search('€', $chars);
+        $marks = [$e => ['#ECE6FF', '#7048E8', true], $e + 1 => ['#FFE8D6', '#E8590C', false], $e + 2 => ['#FFE8D6', '#E8590C', false]];
+        $x0 = (int) round((640 - count($chars) * 36) / 2);
+        $row = fig_rx_cells($text, $x0, 70, 36, $marks);
+        $ex = $x0 + $e * 36 + 17; $mx = $x0 + ($e + 1) * 36 + 35;
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="ui-monospace, Menlo, monospace" font-size="16" fill="#1E1C52">
+<text x="320" y="44" text-anchor="middle" font-weight="700"><tspan fill="#5A35C9">(?&lt;=€)</tspan><tspan fill="#B84508">\d+</tspan></text>
+{$row}
+<g font-family="system-ui, sans-serif" font-size="14" font-weight="700">
+<path d="M{$ex},108 V140" stroke="#7048E8" stroke-width="2" stroke-dasharray="4 3"/><text x="{$ex}" y="160" text-anchor="end" fill="#5A35C9">{$checked}</text>
+<path d="M{$mx},108 V170" stroke="#E8590C" stroke-width="2"/><text x="{$mx}" y="190" text-anchor="middle" fill="#B84508">{$taken}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'regex', 'family' => 'regex', 'after' => null,
     'title' => L('Espressioni regolari', 'Regular Expressions'), 'short' => L('Regex', 'Regex'), 'level' => L('Base', 'Basics'),
@@ -14,8 +95,21 @@ return [
 \\w       lettera, cifra o _   \\W  il contrario
 \\s       spazio, tab, a capo  \\S  il contrario
 [aeiou]  una vocale           [^0-9]  tutto tranne le cifre
-[A-Za-z] una lettera latina   \\.   un punto vero (escape)', 'text'),
+[A-Za-z] una lettera latina   \\.   un punto vero (escape)', 'text', L('<style>td{padding:4px 10px}code{font-weight:700}mark{margin:0 1px}</style>
+<table>
+<tr><td><code>\d</code></td><td>Il volo AZ <mark>1</mark><mark>2</mark><mark>3</mark><mark>4</mark> parte alle <mark>7</mark>.<mark>3</mark><mark>0</mark>!</td></tr>
+<tr><td><code>[aeiou]</code></td><td>Il v<mark>o</mark>l<mark>o</mark> AZ 1234 p<mark>a</mark>rt<mark>e</mark> <mark>a</mark>ll<mark>e</mark> 7.30!</td></tr>
+<tr><td><code>\s</code></td><td>Il<mark>&nbsp;</mark>volo<mark>&nbsp;</mark>AZ<mark>&nbsp;</mark>1234<mark>&nbsp;</mark>parte<mark>&nbsp;</mark>alle<mark>&nbsp;</mark>7.30!</td></tr>
+<tr><td><code>\.</code></td><td>Il volo AZ 1234 parte alle 7<mark>.</mark>30!</td></tr>
+</table>', '<style>td{padding:4px 10px}code{font-weight:700}mark{margin:0 1px}</style>
+<table>
+<tr><td><code>\d</code></td><td>Flight AZ <mark>1</mark><mark>2</mark><mark>3</mark><mark>4</mark> leaves at <mark>7</mark>.<mark>3</mark><mark>0</mark>!</td></tr>
+<tr><td><code>[aeiou]</code></td><td>Fl<mark>i</mark>ght AZ 1234 l<mark>e</mark><mark>a</mark>v<mark>e</mark>s <mark>a</mark>t 7.30!</td></tr>
+<tr><td><code>\s</code></td><td>Flight<mark>&nbsp;</mark>AZ<mark>&nbsp;</mark>1234<mark>&nbsp;</mark>leaves<mark>&nbsp;</mark>at<mark>&nbsp;</mark>7.30!</td></tr>
+<tr><td><code>\.</code></td><td>Flight AZ 1234 leaves at 7<mark>.</mark>30!</td></tr>
+</table>')),
             P('Per cercare un carattere speciale come testo (`.`, `?`, `+`, `(`, `[`, `\\`) va **preceduto da una barra rovesciata**: `\\.` trova un punto vero, mentre `.` trova qualsiasi carattere.', 'To search for a special character as text (`.`, `?`, `+`, `(`, `[`, `\\`) it must be **preceded by a backslash**: `\\.` finds a real dot, while `.` finds any character.'),
+            P('Una classe trova sempre **un solo** carattere: `[aeiou]` è una vocale, non una parola. Dentro le parentesi quadre quasi tutti i caratteri speciali perdono il loro potere (`[.]` è un punto vero), mentre `^` all’inizio nega la classe. Gli intervalli seguono i codici dei caratteri: `[A-Z]` non comprende lettere accentate come «È». Errore tipico: dimenticare che `.` prende tutto, così `3.14` trova anche «3514».', 'A class always matches **one single** character: `[aeiou]` is one vowel, not a word. Inside square brackets almost every special character loses its power (`[.]` is a real dot), while `^` at the start negates the class. Ranges follow character codes: `[A-Z]` does not include accented letters such as “È”. A typical mistake: forgetting that `.` matches anything, so `3.14` also finds “3514”.'),
         ], [
             Q('c1', L('Che cosa trova `\\d`?', 'What does `\\d` match?'), [L('Una cifra', 'A digit'), L('Una lettera', 'A letter'), L('Uno spazio', 'A space'), L('Un punto', 'A dot')], 0, L('d = digit.', 'd = digit.')),
             Q('c2', L('Che cosa trova `[^0-9]`?', 'What does `[^0-9]` match?'), [L('Qualsiasi carattere tranne le cifre', 'Any character except digits'), L('Solo le cifre', 'Only digits'), L('L’inizio della riga', 'Start of line'), L('Niente', 'Nothing')], 0, L('^ dentro le quadre nega.', '^ inside brackets negates.')),
@@ -30,8 +124,23 @@ return [
 \\d{2}/\\d{2}/\\d{4}  10/11/2026
 ^\\s*$              una riga vuota (o solo spazi)
 \\bgatto\\b         “gatto” ma non “gattone”
-<.+?>              un tag HTML, il più corto possibile', 'text'),
+<.+?>              un tag HTML, il più corto possibile', 'text', L('<style>td{padding:4px 10px}code{font-weight:700}</style>
+<table>
+<tr><td><code>colou?r</code></td><td>Si scrive <mark>color</mark> o <mark>colour</mark>?</td></tr>
+<tr><td><code>\d{2}/\d{2}/\d{4}</code></td><td>Scadenza: <mark>10/11/2026</mark></td></tr>
+<tr><td><code>\bgatto\b</code></td><td>Il <mark>gatto</mark> e il gattone</td></tr>
+<tr><td><code>&lt;.+?&gt;</code></td><td><mark>&lt;b&gt;</mark>ciao<mark>&lt;/b&gt;</mark></td></tr>
+</table>', '<style>td{padding:4px 10px}code{font-weight:700}</style>
+<table>
+<tr><td><code>colou?r</code></td><td>Is it <mark>color</mark> or <mark>colour</mark>?</td></tr>
+<tr><td><code>\d{2}/\d{2}/\d{4}</code></td><td>Due date: <mark>10/11/2026</mark></td></tr>
+<tr><td><code>\bgatto\b</code></td><td>The <mark>gatto</mark> (cat) is not a gattone</td></tr>
+<tr><td><code>&lt;.+?&gt;</code></td><td><mark>&lt;b&gt;</mark>hello<mark>&lt;/b&gt;</mark></td></tr>
+</table>')),
             P('Di base i quantificatori sono **avidi**: prendono più testo possibile. Aggiungendo `?` (`+?`, `*?`) diventano **pigri** e prendono il meno possibile. Per validare un campo intero usa sempre `^` e `$`, altrimenti basta che il modello compaia da qualche parte.', 'By default quantifiers are **greedy**: they take as much text as possible. Adding `?` (`+?`, `*?`) makes them **lazy**, taking as little as possible. To validate a whole field always use `^` and `$`, otherwise it is enough for the pattern to appear somewhere.'),
+            Fig(L(fig_rx_greedy('avido: prende più testo possibile', 'pigro: si ferma al primo > utile', '1 corrispondenza', '4 corrispondenze'), fig_rx_greedy('greedy: takes as much text as possible', 'lazy: stops at the first useful >', '1 match', '4 matches')),
+                L('Lo stesso testo, <b>ciao</b> <b>mondo</b>, in due righe di caselle. Con <.+> una sola corrispondenza copre tutta la riga, dal primo < all’ultimo >. Con <.+?> le corrispondenze sono quattro: i singoli tag <b>, </b>, <b> e </b>.', 'The same text, <b>ciao</b> <b>mondo</b>, in two rows of cells. With <.+> a single match covers the whole row, from the first < to the last >. With <.+?> there are four matches: the single tags <b>, </b>, <b> and </b>.'),
+                L('Un solo `?` cambia da una corrispondenza enorme a quattro piccole.', 'A single `?` turns one huge match into four small ones.')),
         ], [
             Q('q1', L('Che cosa significa `+`?', 'What does `+` mean?'), [L('Una o più volte', 'One or more times'), L('Zero o più volte', 'Zero or more times'), L('Esattamente una volta', 'Exactly once'), L('Una somma', 'A sum')], 0, L('`*` permette anche zero.', '`*` also allows zero.')),
             Q('q2', L('Perché usare `^` e `$` nella validazione?', 'Why use `^` and `$` in validation?'), [L('Per controllare tutto il campo, non una parte', 'To check the whole field, not a part'), L('Per renderla più veloce', 'To make it faster'), L('Non servono', 'They are not needed'), L('Per i colori', 'For colours')], 0, L('Altrimenti “abc12345xyz” passerebbe per un CAP.', 'Otherwise “abc12345xyz” would pass as a postcode.')),
@@ -47,6 +156,10 @@ return [
 \\.(jpg|jpeg|png|gif)$             estensioni di immagine
 (?:https?://)?www\\.               gruppo che non cattura', 'text'),
             P('Nelle sostituzioni i gruppi si richiamano con `$1`, `$2` (in JavaScript) o `\\1` (in Python): per esempio trasformare `10/11/2026` in `2026-11-10`. `(?:…)` raggruppa senza catturare, utile quando ti serve solo l’alternativa. I gruppi con nome in Python si scrivono `(?P<anno>…)`.', 'In replacements groups are referenced with `$1`, `$2` (in JavaScript) or `\\1` (in Python): for example turning `10/11/2026` into `2026-11-10`. `(?:…)` groups without capturing, handy when you only need the alternative. In Python named groups are written `(?P<anno>…)`.'),
+            Fig(fig_rx_groups(),
+                L('Il modello (\\d{2})/(\\d{2})/(\\d{4}) sopra la data 10/11/2026: il primo gruppo cattura 10, il secondo 11, il terzo 2026, indicati come $1, $2 e $3. Con la sostituzione "$3-$2-$1" la data diventa 2026-11-10, con i pezzi negli stessi colori.', 'The pattern (\\d{2})/(\\d{2})/(\\d{4}) above the date 10/11/2026: the first group captures 10, the second 11, the third 2026, marked $1, $2 and $3. With the replacement "$3-$2-$1" the date becomes 2026-11-10, with the pieces in the same colours.'),
+                L('I gruppi si contano dalla parentesi aperta, da sinistra a destra.', 'Groups are counted by their opening bracket, from left to right.')),
+            Tip('L’alternativa `|` ha la precedenza più bassa di tutte: `^gatto|cane$` vuol dire «`^gatto` oppure `cane$`», quindi accetta anche «gattone». Per validare una parola tra più scelte racchiudila in un gruppo: `^(gatto|cane)$`.', 'The alternative `|` has the lowest precedence of all: `^gatto|cane$` means “`^gatto` or `cane$`”, so it also accepts “gattone”. To validate one word among several choices wrap it in a group: `^(gatto|cane)$`.'),
         ], [
             Q('g1', L('Che cosa fa `|` in una regex?', 'What does `|` do in a regex?'), [L('Indica un’alternativa', 'Means an alternative'), L('Una pipe di Bash', 'A Bash pipe'), L('Fine della riga', 'End of line'), L('Un carattere qualsiasi', 'Any character')], 0, L('`jpg|png`.', '`jpg|png`.')),
             Q('g2', L('Come si richiama il primo gruppo in una sostituzione JavaScript?', 'How do you reference the first group in a JavaScript replacement?'), ['$1', '\\0', '%1', '#1'], 0, L('In Python `\\1`.', 'In Python `\\1`.')),
@@ -78,6 +191,9 @@ re.sub(r"\\s+", " ", "troppi    spazi   qui")            # "troppi spazi qui"', 
         ]),
         lesson('lookaround', L('Lookaround, gruppi con nome e prestazioni', 'Lookarounds, named groups and performance'), [
             P('Un **lookahead** `(?=…)` controlla che dopo ci sia qualcosa **senza consumarlo**; `(?!…)` che non ci sia. Il **lookbehind** `(?<=…)` guarda indietro. Servono per regole come “almeno una cifra” in una password (anche se le linee guida moderne, come quelle del NIST, preferiscono la lunghezza alle regole di composizione).', 'A **lookahead** `(?=…)` checks that something follows **without consuming it**; `(?!…)` that it does not. The **lookbehind** `(?<=…)` looks back. They help with rules like “at least one digit” in a password (even though modern guidance, such as NIST’s, prefers length to composition rules).'),
+            Fig(L(fig_rx_look('Prezzo: €25', 'controllato, non preso', 'la corrispondenza: 25'), fig_rx_look('Price: €25', 'checked, not taken', 'the match: 25')),
+                L('Il modello (?<=€)\\d+ sopra il testo in caselle. La casella del simbolo € è tratteggiata: il lookbehind la controlla ma non la prende. Le caselle con 2 e 5 sono evidenziate: sono la corrispondenza, 25.', 'The pattern (?<=€)\\d+ above the text in cells. The cell with the € sign is dashed: the lookbehind checks it but does not take it. The cells with 2 and 5 are highlighted: they are the match, 25.'),
+                L('Il lookaround guarda intorno senza consumare: il simbolo € resta fuori dal risultato.', 'A lookaround looks around without consuming: the € sign stays out of the result.')),
             C('^(?=.*\d)(?=.*[A-Z]).{8,}$         password: 8+ caratteri, una cifra, una maiuscola
 (?<=€)\d+                          numeri preceduti da €
 (?<anno>\d{4})-(?<mese>\d{2})       gruppi con nome: anno e mese', 'regex'),

@@ -1,6 +1,64 @@
 <?php
 /** DeepSeek: the company and its open models, the app and DeepThink, privacy and data location, the OpenAI-compatible API. */
 
+/** Mixture of Experts: a router sends each token to only two of eight experts; the active pair changes from token to token. Labels in one language. */
+if (!function_exists('fig_deepseek_moe')) {
+    function fig_deepseek_moe(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Token', 'gatto', 'corre', 'Router', 'sceglie', 'Esperti', 'per ogni token', 'lavorano solo', '2 esperti su 8']
+            : ['Token', 'cat', 'runs', 'Router', 'chooses', 'Experts', 'for each token', 'only 2 of the 8', 'experts do the work'];
+        $rows = '';
+        foreach (range(1, 8) as $i) { $y = 22 + ($i - 1) * 30; $rows .= '<rect x="330" y="' . $y . '" width="96" height="24" rx="8"/>'; }
+        $names = '';
+        foreach (range(1, 8) as $i) { $names .= '<text x="378" y="' . (39 + ($i - 1) * 30) . '">E' . $i . '</text>'; }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.ga{animation:fa 8s infinite}.gb{animation:fb 8s infinite}@keyframes fa{0%,44%{opacity:1}50%,94%{opacity:0}100%{opacity:1}}@keyframes fb{0%,44%{opacity:0}50%,94%{opacity:1}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.ga,.gb{animation:none}}</style>
+<rect x="16" y="108" width="110" height="64" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="71" y="132" text-anchor="middle" font-size="13">{$t[0]}</text>
+<text class="ga" x="71" y="156" text-anchor="middle" font-weight="700" font-size="17" fill="#1B66BC">{$t[1]}</text>
+<text class="gb" opacity="0" x="71" y="156" text-anchor="middle" font-weight="700" font-size="17" fill="#1B66BC">{$t[2]}</text>
+<path d="M126 140H156" stroke="#8A87B0" stroke-width="2"/>
+<rect x="156" y="108" width="110" height="64" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="211" y="136" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[3]}</text><text x="211" y="156" text-anchor="middle" font-size="13">{$t[4]}</text>
+<g stroke="#E8590C" stroke-width="3" fill="none" stroke-linecap="round">
+<g class="ga"><path d="M266 140C300 140 300 64 330 64"/><path d="M266 140C300 140 300 214 330 214"/></g>
+<g class="gb" opacity="0"><path d="M266 140C300 140 300 124 330 124"/><path d="M266 140C300 140 300 244 330 244"/></g>
+</g>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2">{$rows}</g>
+<g fill="#FFE8D6" stroke="#E8590C" stroke-width="3"><g class="ga"><rect x="330" y="52" width="96" height="24" rx="8"/><rect x="330" y="202" width="96" height="24" rx="8"/></g><g class="gb" opacity="0"><rect x="330" y="112" width="96" height="24" rx="8"/><rect x="330" y="232" width="96" height="24" rx="8"/></g></g>
+<g text-anchor="middle" font-weight="700" font-size="14">{$names}</g>
+<text x="536" y="104" text-anchor="middle" font-weight="700">{$t[5]}</text>
+<text x="536" y="134" text-anchor="middle" font-size="14">{$t[6]}</text><text x="536" y="154" text-anchor="middle" font-size="14">{$t[7]}</text><text x="536" y="174" text-anchor="middle" font-size="14">{$t[8]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** An OpenAI-compatible API: the same client code reaches different providers by changing the address, the key and the model name. Labels in one language. */
+if (!function_exists('fig_deepseek_compat')) {
+    function fig_deepseek_compat(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Il tuo codice', 'stesso SDK openai,', 'stesse chiamate', 'cambiano solo', 'base_url, chiave, modello', 'altri fornitori compatibili', 'o un server locale']
+            : ['Your code', 'same openai SDK,', 'same calls', 'only these change:', 'base_url, key, model', 'other compatible providers', 'or a local server'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="16" y="70" width="190" height="120" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="111" y="104" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<text x="111" y="130" text-anchor="middle" font-size="13">{$t[1]}</text><text x="111" y="148" text-anchor="middle" font-size="13">{$t[2]}</text>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M206 120C290 120 300 50 390 50"/><path d="M206 130H390"/><path d="M206 140C290 140 300 210 390 210"/></g>
+<text x="111" y="216" text-anchor="middle" font-size="13">{$t[3]}</text><text x="111" y="236" text-anchor="middle" font-size="13" font-weight="700">{$t[4]}</text>
+<g stroke-width="2"><rect x="394" y="22" width="232" height="56" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="394" y="102" width="232" height="56" rx="12" fill="#ECE6FF" stroke="#7048E8"/><rect x="394" y="182" width="232" height="56" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-dasharray="6 4"/></g>
+<g font-weight="700" font-size="14"><text x="410" y="55" fill="#0B7F5C">api.deepseek.com</text><text x="410" y="135" fill="#5A36C9">api.openai.com/v1</text></g>
+<text x="410" y="205" font-size="13">{$t[5]}</text><text x="410" y="225" font-size="13">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'deepseek', 'family' => 'assistants', 'after' => null,
     'title' => L('DeepSeek', 'DeepSeek'), 'short' => L('DeepSeek', 'DeepSeek'), 'level' => L('Base', 'Basics'),
@@ -9,6 +67,9 @@ return [
         lesson('intro', L('DeepSeek e i suoi modelli', 'DeepSeek and its models'), [
             P('**DeepSeek** è un’azienda cinese di ricerca sull’AI. A inizio 2025 il suo modello di ragionamento **DeepSeek-R1** ha fatto notizia in tutto il mondo: prestazioni vicine ai migliori modelli dell’epoca, pesi pubblicati con licenza **MIT** e costi di addestramento dichiarati molto più bassi del solito.', '**DeepSeek** is a Chinese AI research company. In early 2025 its reasoning model **DeepSeek-R1** made headlines worldwide: performance close to the best models of the time, weights published under the **MIT** licence and reported training costs far lower than usual.'),
             P('Le prime famiglie famose sono state **V3** (modello generalista) e **R1** (ragionamento). Dalla versione V3.1 le due cose si sono unite in un unico modello **ibrido**, che può rispondere subito o ragionare prima; nel 2026 è arrivata la generazione **V4**, in una versione più grande (Pro) e una più veloce (Flash). Usano un’architettura **Mixture of Experts**: il modello è enorme, ma per ogni token si attiva solo una parte degli “esperti”, il che rende l’inferenza più efficiente.', 'The first famous families were **V3** (general-purpose) and **R1** (reasoning). From version V3.1 the two merged into a single **hybrid** model that can answer straight away or reason first; in 2026 the **V4** generation arrived, in a larger version (Pro) and a faster one (Flash). They use a **Mixture of Experts** architecture: the model is huge, but only some of the “experts” activate for each token, making inference more efficient.'),
+            Fig(L(fig_deepseek_moe('it'), fig_deepseek_moe('en')),
+                L('Un token entra in un router, che lo manda solo a due degli otto esperti messi in colonna: gli esperti attivi sono evidenziati in arancione. Nell’animazione il token cambia e il router sceglie un’altra coppia.', 'A token goes into a router, which sends it to only two of the eight experts stacked in a column: the active experts are highlighted in orange. In the animation the token changes and the router picks another pair.'),
+                L('Il modello è grande, ma per ogni token lavora solo una piccola parte.', 'The model is big, but only a small part of it works on each token.')),
         ], [
             Q('i1', L('Di quale paese è DeepSeek?', 'Which country is DeepSeek from?'), [L('Cina', 'China'), L('Francia', 'France'), L('Stati Uniti', 'United States'), L('Svizzera', 'Switzerland')], 0, L('Laboratorio di ricerca cinese.', 'Chinese research lab.')),
             Q('i2', L('Che cos’è DeepSeek-R1?', 'What is DeepSeek-R1?'), [L('Un modello di ragionamento a pesi aperti', 'An open-weight reasoning model'), L('Un telefono', 'A phone'), L('Un motore di ricerca', 'A search engine'), L('Un linguaggio di programmazione', 'A programming language')], 0, L('Con licenza MIT.', 'Under the MIT licence.')),
@@ -41,6 +102,9 @@ return [
         ]),
         lesson('api', L('L’API di DeepSeek', 'The DeepSeek API'), [
             P('L’API di DeepSeek è **compatibile con quella di OpenAI**: si usa lo stesso SDK `openai`, cambiando l’indirizzo (`base_url`) e la chiave. I vecchi nomi `deepseek-chat` e `deepseek-reasoner` sono stati ritirati: oggi si sceglie un modello della generazione attuale (per esempio `deepseek-v4-pro`) e si attiva il **ragionamento** con il parametro `thinking`.', 'DeepSeek’s API is **OpenAI-compatible**: you use the same `openai` SDK, changing the address (`base_url`) and the key. The old names `deepseek-chat` and `deepseek-reasoner` have been retired: today you pick a model of the current generation (for example `deepseek-v4-pro`) and turn on **reasoning** with the `thinking` parameter.'),
+            Fig(L(fig_deepseek_compat('it'), fig_deepseek_compat('en')),
+                L('A sinistra il riquadro del tuo codice, che usa lo stesso SDK openai; tre frecce portano a tre server diversi: api.deepseek.com, api.openai.com e altri fornitori compatibili o un server locale. Sotto le frecce: cambiano solo base_url, chiave e modello.', 'On the left, the box of your code, using the same openai SDK; three arrows lead to three different servers: api.deepseek.com, api.openai.com and other compatible providers or a local server. Under the arrows: only base_url, key and model change.'),
+                L('Compatibile vuol dire che le chiamate restano uguali; i dati però vanno dove punta base_url.', 'Compatible means the calls stay the same; the data, though, goes wherever base_url points.')),
             C('import os
 from openai import OpenAI
 

@@ -2,6 +2,121 @@
 /** The terminal and Bash: navigating and files, pipes and redirection, permissions and processes, scripts, text tools,
  *  environment variables and PATH, exit codes and conditions, functions and case, SSH, transfers and archives. */
 
+/** The folder tree from the root to the current folder, with the absolute path highlighted and the shortcuts ~ . .. */
+if (!function_exists('fig_bash_tree')) {
+    function fig_bash_tree(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1E1C52">
+<g fill="none" stroke-width="2">
+<path d="M36,52 V272 M36,96 H64 M36,138 H64 M36,272 H64" stroke="#8A87B0"/>
+<path d="M36,52 V138 H64" stroke="#E8590C" stroke-width="3"/>
+<path d="M90,152 V182 H118 M144,196 V226 H172 M198,238 V256 H226" stroke="#E8590C" stroke-width="3"/>
+</g>
+<g stroke-width="2">
+<rect x="16" y="26" width="40" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C"/><text x="36" y="45" text-anchor="middle" font-weight="700">/</text>
+<rect x="64" y="82" width="56" height="28" rx="8" fill="#F1F0F8" stroke="#8A87B0"/><text x="92" y="101" text-anchor="middle">etc</text>
+<rect x="64" y="124" width="64" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C"/><text x="96" y="143" text-anchor="middle" font-weight="700">home</text>
+<rect x="118" y="168" width="56" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C"/><text x="146" y="187" text-anchor="middle" font-weight="700">ada</text>
+<rect x="172" y="212" width="96" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C"/><text x="220" y="231" text-anchor="middle" font-weight="700">progetti</text>
+<rect x="226" y="244" width="84" height="28" rx="8" fill="#E8590C" stroke="#E8590C"/><text x="268" y="263" text-anchor="middle" font-weight="700" fill="#FFFFFF">fucina</text>
+<rect x="64" y="258" width="56" height="28" rx="8" fill="#F1F0F8" stroke="#8A87B0"/><text x="92" y="277" text-anchor="middle">var</text>
+</g>
+<g font-weight="700"><text x="184" y="187" fill="#7048E8">~</text><text x="278" y="231" fill="#2F8CF0">..</text><text x="320" y="263" fill="#0B7F5C">.</text></g>
+<rect x="356" y="24" width="268" height="92" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="372" y="52" font-weight="700">$ pwd</text>
+<text x="372" y="80" font-size="13">/home/ada/progetti/fucina</text>
+<text x="372" y="102" font-size="13" fill="#B84508">/ → home → ada → …</text>
+<g font-size="14">
+<text x="372" y="162"><tspan font-weight="700" fill="#7048E8">~ </tspan> = /home/ada</text>
+<text x="372" y="200"><tspan font-weight="700" fill="#2F8CF0">..</tspan> = /home/ada/progetti</text>
+<text x="372" y="238"><tspan font-weight="700" fill="#0B7F5C">. </tspan> = /home/ada/progetti/fucina</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** A pipeline: each command's output becomes the next one's input, the lines get fewer at every step and travel along the pipes. */
+if (!function_exists('fig_bash_pipe')) {
+    function fig_bash_pipe(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1E1C52">
+<style>.pk{opacity:0;animation:flow 3s linear infinite}.pk2{animation-delay:1.5s}@keyframes flow{0%{transform:translateX(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(34px);opacity:0}}@media (prefers-reduced-motion:reduce){.pk{animation:none}}</style>
+<g stroke-width="2">
+<rect x="16" y="20" width="180" height="44" rx="10" fill="#FFF3EA" stroke="#E8590C"/><text x="106" y="47" text-anchor="middle" font-weight="700">cat accessi.log</text>
+<rect x="246" y="20" width="170" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><text x="331" y="47" text-anchor="middle" font-weight="700">grep "404"</text>
+<rect x="466" y="20" width="158" height="44" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><text x="545" y="47" text-anchor="middle" font-weight="700">wc -l</text>
+</g>
+<g stroke="#1E1C52" stroke-width="3"><line x1="196" y1="42" x2="246" y2="42"/><line x1="416" y1="42" x2="466" y2="42"/></g>
+<g font-weight="700" font-size="17" text-anchor="middle"><text x="221" y="34">|</text><text x="441" y="34">|</text></g>
+<g fill="#1E1C52"><rect class="pk" x="202" y="38" width="10" height="8" rx="2"/><rect class="pk pk2" x="202" y="38" width="10" height="8" rx="2"/>
+<rect class="pk" x="422" y="38" width="10" height="8" rx="2"/></g>
+<g stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4"><line x1="106" y1="64" x2="106" y2="84"/><line x1="331" y1="64" x2="331" y2="84"/><line x1="545" y1="64" x2="545" y2="84"/></g>
+<g stroke-width="2"><rect x="16" y="84" width="180" height="150" rx="10" fill="#FFFFFF" stroke="#E8590C"/>
+<rect x="246" y="84" width="170" height="150" rx="10" fill="#FFFFFF" stroke="#2F8CF0"/>
+<rect x="466" y="84" width="158" height="150" rx="10" fill="#FFFFFF" stroke="#0B7F5C"/></g>
+<g font-size="13">
+<text x="32" y="112">GET /     200</text>
+<rect x="26" y="125" width="160" height="22" rx="6" fill="#FFE3EE"/><text x="32" y="141">GET /prova 404</text>
+<text x="32" y="166">GET /blog 200</text>
+<rect x="26" y="179" width="160" height="22" rx="6" fill="#FFE3EE"/><text x="32" y="195">GET /vecchia 404</text>
+<text x="32" y="220">GET /info 301</text>
+<rect x="256" y="98" width="150" height="22" rx="6" fill="#FFE3EE"/><text x="262" y="114">GET /prova 404</text>
+<rect x="256" y="128" width="150" height="22" rx="6" fill="#FFE3EE"/><text x="262" y="144">GET /vecchia 404</text>
+</g>
+<text x="545" y="172" text-anchor="middle" font-size="40" font-weight="700" fill="#0B7F5C">2</text>
+</svg>
+SVG;
+    }
+}
+
+/** The permission string -rwxr-xr-- split into owner, group and others, with the numbers that make chmod 754. */
+if (!function_exists('fig_bash_perm')) {
+    function fig_bash_perm(array $t): string
+    {
+        $cells = '';
+        foreach (str_split('-rwxr-xr--') as $i => $ch) {
+            [$f, $s] = $i === 0 ? ['#F1F0F8', '#8A87B0'] : ($i < 4 ? ['#FFE8D6', '#E8590C'] : ($i < 7 ? ['#DCEBFF', '#2F8CF0'] : ['#D5F6EA', '#0B7F5C']));
+            $x = 80 + $i * 48;
+            $cells .= "<rect x=\"$x\" y=\"52\" width=\"44\" height=\"52\" rx=\"8\" fill=\"$f\" stroke=\"$s\" stroke-width=\"2\"/><text x=\"" . ($x + 22) . "\" y=\"86\" text-anchor=\"middle\" font-size=\"24\" font-weight=\"700\" font-family=\"ui-monospace, Menlo, monospace\">$ch</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="320" y="32" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14">r = 4 · w = 2 · x = 1</text>
+{$cells}
+<g fill="none" stroke-width="2"><path d="M130,114 V122 H266 V114" stroke="#E8590C"/><path d="M274,114 V122 H410 V114" stroke="#2F8CF0"/><path d="M418,114 V122 H554 V114" stroke="#0B7F5C"/><path d="M102,114 V150" stroke="#8A87B0"/></g>
+<g font-weight="700" text-anchor="middle"><text x="198" y="146" fill="#B84508">{$t[0]}</text><text x="342" y="146" fill="#1B66BC">{$t[1]}</text><text x="486" y="146" fill="#0B7F5C">{$t[2]}</text></g>
+<text x="102" y="170" text-anchor="middle" font-size="13">{$t[3]}</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" text-anchor="middle"><text x="198" y="180">4+2+1 = 7</text><text x="342" y="180">4+0+1 = 5</text><text x="486" y="180">4+0+0 = 4</text></g>
+<rect x="240" y="206" width="160" height="44" rx="12" fill="#1E1C52"/>
+<text x="320" y="234" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="17" font-weight="700" fill="#FFFFFF">chmod 754</text>
+</svg>
+SVG;
+    }
+}
+
+/** How the shell finds a command: it looks in the PATH folders in order and runs the first match. */
+if (!function_exists('fig_bash_path')) {
+    function fig_bash_path(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.look{animation:look 6s ease-in-out infinite}@keyframes look{0%,20%{transform:translateX(-420px)}33%,53%{transform:translateX(-210px)}66%,100%{transform:translateX(0)}}@media (prefers-reduced-motion:reduce){.look{animation:none}}</style>
+<g font-family="ui-monospace, Menlo, monospace"><text x="16" y="34" font-size="15" font-weight="700">$ python3</text>
+<text x="16" y="66" font-size="14">PATH=<tspan fill="#B84508">/home/ada/bin</tspan>:<tspan fill="#1B66BC">/usr/local/bin</tspan>:<tspan fill="#0B7F5C">/usr/bin</tspan></text></g>
+<g stroke-width="2"><rect x="16" y="96" width="188" height="100" rx="12" fill="#F1F0F8" stroke="#8A87B0"/><rect x="226" y="96" width="188" height="100" rx="12" fill="#F1F0F8" stroke="#8A87B0"/><rect x="436" y="96" width="188" height="100" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<rect class="look" x="432" y="92" width="196" height="108" rx="14" fill="none" stroke="#E8590C" stroke-width="3"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700" text-anchor="middle"><text x="110" y="132">/home/ada/bin</text><text x="320" y="132">/usr/local/bin</text><text x="530" y="132">/usr/bin</text></g>
+<g text-anchor="middle"><text x="110" y="170">1 · {$t[0]}</text><text x="320" y="170">2 · {$t[0]}</text><text x="530" y="170" font-weight="700" fill="#0B7F5C">3 · {$t[1]}</text></g>
+<g stroke="#1E1C52" stroke-width="2"><path d="M206,146 H222 M216,140 L222,146 L216,152" fill="none"/><path d="M416,146 H432 M426,140 L432,146 L426,152" fill="none"/></g>
+<text x="320" y="220" text-anchor="middle" font-size="13">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'bash', 'family' => 'bash', 'after' => null,
     'title' => L('Terminale Linux e Bash', 'Linux Terminal and Bash'), 'short' => L('Bash', 'Bash'), 'level' => L('Base', 'Basics'),
@@ -19,6 +134,10 @@ cp nota.txt copia.txt  # copia
 mv copia.txt archivio/ # sposta o rinomina
 rm vecchio.log         # cancella (niente cestino!)', 'bash'),
             P('`rm` cancella **definitivamente**: niente cestino. Con `rm -r` cancella cartelle intere, quindi controlla due volte il percorso. Il tasto **Tab** completa nomi di file e comandi.', '`rm` deletes **permanently**: no recycle bin. With `rm -r` it deletes whole folders, so double-check the path. The **Tab** key completes file and command names.'),
+            P('Un **percorso** dice dove si trova un file. Quello **assoluto** parte dalla radice `/` (`/home/ada/progetti`) e funziona da qualsiasi cartella; quello **relativo** parte dalla cartella corrente (`progetti/fucina`). Tre scorciatoie: `~` è la tua home, `.` la cartella corrente, `..` quella sopra. Se un comando risponde «No such file or directory», controlla prima con `pwd` dove ti trovi.', 'A **path** says where a file is. An **absolute** path starts from the root `/` (`/home/ada/progetti`) and works from any folder; a **relative** one starts from the current folder (`progetti/fucina`). Three shortcuts: `~` is your home, `.` the current folder, `..` the one above. If a command answers “No such file or directory”, first check with `pwd` where you are.'),
+            Fig(fig_bash_tree(),
+                L('Un albero di cartelle: dalla radice / partono etc, home e var; dentro home c’è ada, dentro ada progetti, dentro progetti fucina. Il percorso da / a fucina è evidenziato. A destra: pwd stampa /home/ada/progetti/fucina; ~ vale /home/ada, .. vale /home/ada/progetti, . vale /home/ada/progetti/fucina.', 'A folder tree: from the root / come etc, home and var; inside home is ada, inside ada progetti, inside progetti fucina. The path from / to fucina is highlighted. On the right: pwd prints /home/ada/progetti/fucina; ~ means /home/ada, .. means /home/ada/progetti, . means /home/ada/progetti/fucina.'),
+                L('Il percorso assoluto segue l’albero dalla radice fino alla cartella corrente.', 'The absolute path follows the tree from the root down to the current folder.')),
         ], [
             Q('n1', L('Quale comando mostra la cartella corrente?', 'Which command shows the current folder?'), ['pwd', 'ls', 'cd', 'where'], 0, L('print working directory.', 'print working directory.')),
             Q('n2', L('Che cosa fa `cd ..`?', 'What does `cd ..` do?'), [L('Sale di un livello', 'Goes up one level'), L('Torna alla home', 'Goes home'), L('Cancella la cartella', 'Deletes the folder'), L('Elenca i file', 'Lists files')], 0, L('`..` è la cartella genitore.', '`..` is the parent folder.')),
@@ -29,12 +148,16 @@ rm vecchio.log         # cancella (niente cestino!)', 'bash'),
         ]),
         lesson('pipes', L('Pipe e redirezioni', 'Pipes and redirection'), [
             P('La forza del terminale è combinare piccoli comandi. La **pipe** `|` passa l’uscita di un comando all’ingresso del successivo. `>` scrive l’uscita in un file (sovrascrivendo), `>>` la aggiunge in fondo.', 'The terminal’s strength is combining small commands. The **pipe** `|` passes one command’s output to the next one’s input. `>` writes output to a file (overwriting), `>>` appends it.'),
+            Fig(fig_bash_pipe(),
+                L('Tre comandi collegati da pipe: cat accessi.log, grep "404" e wc -l. Sotto ciascuno la sua uscita: cat stampa cinque righe di log, grep tiene solo le due con 404, wc -l stampa il numero 2.', 'Three commands joined by pipes: cat accessi.log, grep "404" and wc -l. Under each one its output: cat prints five log lines, grep keeps only the two with 404, wc -l prints the number 2.'),
+                L('Ogni comando riceve l’uscita del precedente e la passa, trasformata, al successivo.', 'Each command receives the previous one’s output and passes it on, transformed, to the next.')),
             C('cat accessi.log | grep "404" | wc -l          # quante pagine non trovate?
 grep -i "errore" app.log > errori.txt          # salva le righe con "errore"
 echo "Backup completato" >> registro.txt       # aggiunge una riga
 sort nomi.txt | uniq -c | sort -nr | head -5   # i 5 nomi più frequenti
 find . -name "*.php" | xargs grep -l "TODO"     # file PHP con TODO', 'bash'),
             P('Comandi da conoscere: `grep` cerca testo, `wc -l` conta righe, `sort` ordina, `uniq` toglie doppioni consecutivi, `head`/`tail` mostrano inizio e fine (`tail -f` segue un log in tempo reale), `find` cerca file.', 'Commands to know: `grep` searches text, `wc -l` counts lines, `sort` sorts, `uniq` removes consecutive duplicates, `head`/`tail` show start and end (`tail -f` follows a log live), `find` searches files.'),
+            P('Ogni comando ha tre canali: l’**ingresso** standard, l’**uscita** standard e l’**errore** standard (il canale 2). La pipe e `>` portano solo l’uscita, per questo i messaggi d’errore compaiono ancora a schermo: con `2>` li mandi in un file (`comando 2> errori.txt`), con `2>&1` li unisci all’uscita. È l’idea di Unix: tanti piccoli attrezzi, ognuno fa una cosa sola e bene, collegati in catena.', 'Every command has three channels: standard **input**, standard **output** and standard **error** (channel 2). The pipe and `>` carry only the output, which is why error messages still appear on screen: with `2>` you send them to a file (`command 2> errors.txt`), with `2>&1` you join them to the output. It is the Unix idea: many small tools, each doing one thing well, chained together.'),
         ], [
             Q('p1', L('Che cosa fa la pipe `|`?', 'What does the pipe `|` do?'), [L('Passa l’uscita al comando successivo', 'Passes output to the next command'), L('Divide due file', 'Splits two files'), L('Commenta la riga', 'Comments the line'), L('Esegue in parallelo', 'Runs in parallel')], 0, L('Piccoli comandi, grandi risultati.', 'Small commands, big results.')),
             Q('p2', L('Che differenza c’è tra `>` e `>>`?', 'What is the difference between `>` and `>>`?'), [L('> sovrascrive, >> aggiunge', '> overwrites, >> appends'), L('Nessuna', 'None'), L('>> cancella il file', '>> deletes the file'), L('> legge un file', '> reads a file')], 0, L('Attenzione a non sovrascrivere.', 'Careful not to overwrite.')),
@@ -45,6 +168,10 @@ find . -name "*.php" | xargs grep -l "TODO"     # file PHP con TODO', 'bash'),
         ]),
         lesson('permissions', L('Permessi e processi', 'Permissions and processes'), [
             P('Ogni file ha permessi di **lettura** (r), **scrittura** (w) ed **esecuzione** (x) per il proprietario, il gruppo e gli altri: `ls -l` li mostra, come `-rwxr-xr--`. `chmod` li cambia; `sudo` esegue un comando come amministratore.', 'Every file has **read** (r), **write** (w) and **execute** (x) permissions for the owner, the group and others: `ls -l` shows them, like `-rwxr-xr--`. `chmod` changes them; `sudo` runs a command as administrator.'),
+            P('Leggi la stringa a gruppi di tre, dopo il primo carattere (`-` per un file, `d` per una cartella): `rwx` per il proprietario, `r-x` per il gruppo, `r--` per gli altri. Nella forma numerica ogni lettera vale un numero, r=4, w=2, x=1, da sommare per gruppo: `chmod 754` dà proprio `rwxr-xr--`, e `600` vuol dire `rw-------`.', 'Read the string in groups of three, after the first character (`-` for a file, `d` for a folder): `rwx` for the owner, `r-x` for the group, `r--` for others. In numeric form each letter is worth a number, r=4, w=2, x=1, added up per group: `chmod 754` gives exactly `rwxr-xr--`, and `600` means `rw-------`.'),
+            Fig(L(fig_bash_perm(['proprietario', 'gruppo', 'altri', 'tipo']), fig_bash_perm(['owner', 'group', 'others', 'type'])),
+                L('La stringa -rwxr-xr-- in dieci caselle. La prima indica il tipo; poi rwx del proprietario, che vale 4+2+1 = 7; r-x del gruppo, 4+0+1 = 5; r-- degli altri, 4+0+0 = 4. In basso: chmod 754.', 'The string -rwxr-xr-- in ten cells. The first shows the type; then rwx for the owner, worth 4+2+1 = 7; r-x for the group, 4+0+1 = 5; r-- for others, 4+0+0 = 4. At the bottom: chmod 754.'),
+                L('Tre gruppi, tre cifre: ogni cifra è la somma delle lettere attive.', 'Three groups, three digits: each digit is the sum of the letters switched on.')),
             C('chmod +x deploy.sh        # rende eseguibile
 chmod 600 chiave.pem      # solo il proprietario legge e scrive
 ps aux | grep node        # processi in esecuzione
@@ -79,6 +206,7 @@ for f in "$cartella"/*.log; do
 done
 echo "Fatto il $data"', 'bash'),
             P('Metti sempre le variabili tra **virgolette** (`"$f"`): così i nomi con spazi non rompono lo script. `set -euo pipefail` ferma lo script al primo errore invece di continuare alla cieca.', 'Always put variables in **quotes** (`"$f"`): that way names with spaces do not break the script. `set -euo pipefail` stops the script at the first error instead of carrying on blindly.'),
+            Tip('Per lanciare uno script rendilo eseguibile una volta con `chmod +x backup.sh`, poi avvialo con `./backup.sh logs`: il `./` dice alla shell di cercarlo nella cartella corrente, che non è nel PATH. In alternativa, `bash backup.sh logs`. `$(comando)` mette l’uscita di un comando in una variabile, come `data` qui sopra.', 'To run a script make it executable once with `chmod +x backup.sh`, then start it with `./backup.sh logs`: the `./` tells the shell to look in the current folder, which is not in the PATH. Alternatively, `bash backup.sh logs`. `$(command)` puts a command’s output into a variable, like `data` above.'),
         ], [
             Q('s1', L('Con che riga inizia uno script Bash?', 'What line does a Bash script start with?'), ['#!/usr/bin/env bash', '// bash', '<?bash', '#include bash'], 0, L('La shebang.', 'The shebang.')),
             Q('s2', L('Come si legge il primo argomento?', 'How do you read the first argument?'), ['$1', '$0', 'arg[1]', '%1'], 0, L('`$0` è il nome dello script.', '`$0` is the script name.')),
@@ -105,6 +233,9 @@ cut -d, -f3 ordini.csv | sort | uniq -c | sort -rn | head', 'bash'),
         ]),
         lesson('env', L('Variabili d’ambiente, PATH e alias', 'Environment variables, PATH and aliases'), [
             P('Una variabile della shell si crea con `nome=valore` e si legge con `$nome`. Con `export` diventa una **variabile d’ambiente**, visibile anche ai programmi che lanci. La più importante è **`PATH`**: l’elenco di cartelle, separate da `:`, dove la shell cerca i comandi che scrivi.', 'A shell variable is created with `name=value` and read with `$name`. With `export` it becomes an **environment variable**, visible to the programs you launch too. The most important is **`PATH`**: the list of folders, separated by `:`, where the shell looks for the commands you type.'),
+            Fig(L(fig_bash_path(['non c’è', 'trovato!', 'La shell esegue il primo python3 che trova, nell’ordine del PATH.']), fig_bash_path(['not here', 'found!', 'The shell runs the first python3 it finds, in PATH order.'])),
+                L('Il comando python3 e la variabile PATH con tre cartelle. Tre riquadri in fila: /home/ada/bin, non c’è; /usr/local/bin, non c’è; /usr/bin, trovato.', 'The python3 command and the PATH variable with three folders. Three boxes in a row: /home/ada/bin, not here; /usr/local/bin, not here; /usr/bin, found.'),
+                L('Per questo mettere `$HOME/bin` all’inizio del PATH fa vincere i tuoi comandi.', 'That is why putting `$HOME/bin` at the start of PATH makes your own commands win.')),
             C('echo "$HOME"                         # la tua cartella home
 echo "$PATH"                         # dove si cercano i comandi
 export EDITOR=nano                   # visibile ai programmi lanciati

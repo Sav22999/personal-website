@@ -1,6 +1,67 @@
 <?php
 /** GitHub Copilot: completions in the editor, chat, agent mode and the coding agent, instructions and good practice, review, Copilot CLI, MCP and custom agents. */
 
+/** Where a suggestion comes from: the comment, the names and the open files feed the model, which proposes grey text at the cursor. Labels in one language. */
+if (!function_exists('fig_copilot_ghost')) {
+    function fig_copilot_ghost(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['// Restituisce il prezzo con IVA al 22%', 'Contesto letto', 'il commento', 'i nomi', 'i file aperti', 'Tab accetta', 'Esc rifiuta', 'suggerimento in grigio']
+            : ['// Returns the price with 22% VAT', 'Context it reads', 'the comment', 'the names', 'the open files', 'Tab accepts', 'Esc rejects', 'grey suggestion'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="16" y="16" width="160" height="180" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="32" y="44" font-weight="700" fill="#5A36C9">{$t[1]}</text>
+<g font-size="14"><circle cx="38" cy="76" r="5" fill="#7048E8"/><text x="52" y="81">{$t[2]}</text><circle cx="38" cy="112" r="5" fill="#7048E8"/><text x="52" y="117">{$t[3]}</text><circle cx="38" cy="148" r="5" fill="#7048E8"/><text x="52" y="153">{$t[4]}</text></g>
+<path d="M176 106H206" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<rect x="210" y="16" width="414" height="180" rx="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<path d="M210 30a14 14 0 0 1 14-14h386a14 14 0 0 1 14 14v10H210z" fill="#F1F0F8"/>
+<g fill="#8A87B0"><circle cx="230" cy="29" r="4"/><circle cx="244" cy="29" r="4"/><circle cx="258" cy="29" r="4"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13">
+<text x="228" y="72" fill="#0B7F5C">{$t[0]}</text>
+<text x="228" y="98">function prezzoConIva(prezzo) {</text>
+<rect x="244" y="108" width="2" height="18" fill="#2F8CF0"/>
+<text x="250" y="122" fill="#8A87B0" font-style="italic">return Math.round(prezzo * 1.22</text>
+<text x="250" y="142" fill="#8A87B0" font-style="italic">  * 100) / 100;</text>
+<text x="228" y="166">}</text>
+</g>
+<text x="540" y="186" text-anchor="middle" font-size="13">{$t[7]}</text>
+<g stroke-width="2"><rect x="210" y="216" width="200" height="40" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="424" y="216" width="200" height="40" rx="12" fill="#FFE3EE" stroke="#F03E82"/></g>
+<g font-weight="700" text-anchor="middle"><text x="310" y="241" fill="#0B7F5C">{$t[5]}</text><text x="524" y="241" fill="#C2255C">{$t[6]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Two ways of delegating: agent mode loops in your editor until the tests pass; the coding agent works in the cloud and ends with a pull request. Labels in one language. */
+if (!function_exists('fig_copilot_agents')) {
+    function fig_copilot_agents(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Modalità agente, nel tuo editor', 'Piano', 'Modifica file', 'Esegue i test', 'Rivedi il diff', 'test rossi: corregge', 'Agente di programmazione, nel cloud', 'Issue', 'Branch', 'Codice e test', 'Pull request', 'revisione umana']
+            : ['Agent mode, in your editor', 'Plan', 'Edit files', 'Run the tests', 'Review the diff', 'tests failing: fix', 'Coding agent, in the cloud', 'Issue', 'Branch', 'Code and tests', 'Pull request', 'human review'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.loop{animation:go 4s linear infinite}@keyframes go{to{stroke-dashoffset:-48}}@media (prefers-reduced-motion:reduce){.loop{animation:none}}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<text x="16" y="26" font-weight="700" fill="#5A36C9">{$t[0]}</text>
+<g stroke-width="2"><rect x="16" y="40" width="120" height="50" rx="12" fill="#ECE6FF" stroke="#7048E8"/><rect x="172" y="40" width="130" height="50" rx="12" fill="#ECE6FF" stroke="#7048E8"/><rect x="338" y="40" width="130" height="50" rx="12" fill="#ECE6FF" stroke="#7048E8"/><rect x="504" y="40" width="120" height="50" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g font-weight="700" text-anchor="middle" font-size="14"><text x="76" y="70">{$t[1]}</text><text x="237" y="70">{$t[2]}</text><text x="403" y="70">{$t[3]}</text><text x="564" y="70" fill="#0B7F5C">{$t[4]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"><path d="M136 65H168"/><path d="M302 65H334"/><path d="M468 65H500"/></g>
+<path class="loop" d="M403 90V112Q403 124 391 124H249Q237 124 237 112V96" stroke="#7048E8" stroke-width="2" fill="none" stroke-dasharray="8 4" marker-end="url(#a)"/>
+<text x="320" y="144" text-anchor="middle" font-size="13">{$t[5]}</text>
+<path d="M16 166H624" stroke="#F1F0F8" stroke-width="2"/>
+<text x="16" y="196" font-weight="700" fill="#1B66BC">{$t[6]}</text>
+<g stroke-width="2"><rect x="16" y="210" width="100" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="142" y="210" width="100" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="268" y="210" width="130" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="424" y="210" width="200" height="50" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g font-weight="700" text-anchor="middle" font-size="14"><text x="66" y="240">{$t[7]}</text><text x="192" y="240">{$t[8]}</text><text x="333" y="240">{$t[9]}</text><text x="524" y="232" fill="#0B7F5C">{$t[10]}</text></g>
+<text x="524" y="250" text-anchor="middle" font-size="13">{$t[11]}</text>
+<g stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"><path d="M116 235H138"/><path d="M242 235H264"/><path d="M398 235H420"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'github-copilot', 'family' => 'assistants', 'after' => null,
     'title' => L('GitHub Copilot', 'GitHub Copilot'), 'short' => L('GitHub Copilot', 'GitHub Copilot'), 'level' => L('Base', 'Basics'),
@@ -8,6 +69,9 @@ return [
     'lessons' => [
         lesson('completions', L('Suggerimenti nell’editor', 'Suggestions in the editor'), [
             P('**GitHub Copilot** lavora dentro l’editor (VS Code, Visual Studio, JetBrains e altri) e propone il codice mentre scrivi: una riga o una funzione intera, in grigio. **Tab** accetta, **Esc** rifiuta. Funziona meglio se il contesto è chiaro: nomi parlanti, un commento che descrive cosa vuoi, file correlati aperti.', '**GitHub Copilot** works inside the editor (VS Code, Visual Studio, JetBrains and others) and suggests code as you type: a line or a whole function, in grey. **Tab** accepts, **Esc** rejects. It works best when context is clear: telling names, a comment describing what you want, related files open.'),
+            Fig(L(fig_copilot_ghost('it'), fig_copilot_ghost('en')),
+                L('A sinistra un riquadro elenca il contesto letto: il commento, i nomi, i file aperti. Una freccia porta a un editor generico dove, sotto il commento e l’intestazione della funzione, accanto al cursore compare in grigio corsivo la riga proposta. Sotto, due pulsanti: Tab accetta, Esc rifiuta.', 'On the left, a box lists the context it reads: the comment, the names, the open files. An arrow leads to a generic editor where, under the comment and the function header, the proposed line appears in grey italics next to the cursor. Below, two buttons: Tab accepts, Esc rejects.'),
+                L('Il suggerimento nasce dal contesto: un commento chiaro vale più di mille Tab.', 'The suggestion grows out of the context: a clear comment is worth a thousand Tabs.')),
             C('// Restituisce il prezzo con IVA al 22%, arrotondato a 2 decimali
 function prezzoConIva(prezzo) {
   // Copilot propone: return Math.round(prezzo * 1.22 * 100) / 100;
@@ -41,6 +105,9 @@ function prezzoConIva(prezzo) {
         lesson('agent', L('Modalità agente e agente di programmazione', 'Agent mode and the coding agent'), [
             P('In **modalità agente** Copilot non si limita a suggerire: pianifica, modifica più file, esegue comandi e test nel terminale e corregge finché il compito è fatto, chiedendo conferma per le azioni. Tu rivedi il diff e decidi cosa tenere.', 'In **agent mode** Copilot does not just suggest: it plans, edits several files, runs commands and tests in the terminal and iterates until the task is done, asking confirmation for actions. You review the diff and decide what to keep.'),
             P('L’**agente di programmazione** di GitHub lavora invece in autonomia nel cloud: gli assegni una issue, lui crea un branch, scrive il codice e apre una **pull request** da rivedere. Le modifiche passano comunque dalla revisione umana e dai test automatici prima del merge.', 'GitHub’s **coding agent** instead works autonomously in the cloud: you assign it an issue, it creates a branch, writes the code and opens a **pull request** to review. Changes still go through human review and automated tests before merging.'),
+            Fig(L(fig_copilot_agents('it'), fig_copilot_agents('en')),
+                L('Due righe. Sopra, la modalità agente nell’editor: piano, modifica file, esegue i test, con una freccia tratteggiata che torna indietro finché i test sono rossi, e alla fine rivedi il diff. Sotto, l’agente di programmazione nel cloud: issue, branch, codice e test, pull request con revisione umana.', 'Two rows. Above, agent mode in the editor: plan, edit files, run the tests, with a dashed arrow going back while the tests fail, and finally you review the diff. Below, the coding agent in the cloud: issue, branch, code and tests, a pull request with human review.'),
+                L('In entrambi i casi l’ultima parola è una revisione umana.', 'Either way, the last word is a human review.')),
             Tip('Issue chiare producono PR migliori: descrivi il comportamento atteso, i file coinvolti e come verificare.', 'Clear issues produce better PRs: describe the expected behaviour, the files involved and how to verify.'),
         ], [
             Q('a1', L('Che cosa fa la modalità agente?', 'What does agent mode do?'), [L('Modifica più file ed esegue comandi fino a finire il compito', 'Edits several files and runs commands until the task is done'), L('Solo completamenti di una riga', 'Only one-line completions'), L('Traduce il codice', 'Translates code'), L('Niente di diverso', 'Nothing different')], 0, L('Chiedendo conferma.', 'Asking confirmation.')),
@@ -69,6 +136,7 @@ function prezzoConIva(prezzo) {
         lesson('review', L('Code review, test e sicurezza', 'Code review, tests and security'), [
             P('Copilot può **rivedere** una pull request e lasciare commenti, scrivere la **descrizione** della PR e proporre **test** per una funzione (in chat: `/tests`). È un secondo paio d’occhi, non un sostituto della revisione di una persona.', 'Copilot can **review** a pull request and leave comments, write the PR **description** and propose **tests** for a function (in chat: `/tests`). It is a second pair of eyes, not a replacement for a human review.'),
             P('Il codice suggerito può contenere **bug o falle**: query costruite concatenando stringhe, segreti scritti nel codice, librerie inventate o vecchie. Prima di accettare: leggi, fai girare i test, controlla che le dipendenze esistano davvero.', 'Suggested code can contain **bugs or flaws**: queries built by concatenating strings, secrets written into the code, made-up or outdated libraries. Before accepting: read it, run the tests, check that dependencies really exist.'),
+            P('Un rischio meno noto sono i pacchetti **inventati**: il modello propone una libreria che non esiste, e qualcuno può registrare proprio quel nome con codice malevolo. Prima di `npm install` o `pip install` apri la pagina del pacchetto e guarda autore, download e data dell’ultima versione. Quando chiedi una revisione, sii preciso («cerca input non validati ed errori non gestiti»): poi decidi tu quali commenti hanno senso, perché anche il revisore automatico può sbagliare.', 'A lesser-known risk is **made-up packages**: the model suggests a library that does not exist, and someone can register exactly that name with malicious code. Before `npm install` or `pip install`, open the package page and look at the author, the downloads and the date of the latest version. When you ask for a review, be specific (“look for unvalidated input and unhandled errors”), then decide yourself which comments make sense: the automatic reviewer can be wrong too.'),
         ], [
             Q('rv1', L('Che cosa può fare Copilot su una pull request?', 'What can Copilot do on a pull request?'), [L('Rivederla e scriverne la descrizione', 'Review it and write its description'), L('Approvarla al posto del team, sempre', 'Always approve it on the team’s behalf'), L('Cancellarla', 'Delete it'), L('Pubblicarla su npm', 'Publish it to npm')], 0, L('Aiuta, non decide.', 'It helps, it does not decide.')),
             Q('rv2', L('Quale comando chiede dei test in chat?', 'Which command asks for tests in chat?'), ['/tests', '/fix', '/explain', '/doc'], 0, L('Poi li fai girare.', 'Then you run them.')),

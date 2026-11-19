@@ -1,6 +1,112 @@
 <?php
 /** R basics: vectors, data frames, functions, simple statistics and plots, types and factors, lists, packages. */
 
+/** What a command prints, as a small monospace page. */
+if (!function_exists('fucina_data_pre')) {
+    function fucina_data_pre(string $text): string
+    {
+        return '<pre style="margin:8px;font:13px/1.45 ui-monospace,monospace;color:#1E1C52;white-space:pre-wrap">' . htmlspecialchars($text) . '</pre>';
+    }
+}
+
+/** A vectorised operation: each element of the vector is multiplied, all at once; positions start from 1. */
+if (!function_exists('fig_rbase_vector')) {
+    function fig_rbase_vector(string $index): string
+    {
+        $g = '';
+        foreach ([7, 8, 6, 9] as $i => $v) {
+            $x = 200 + $i * 90;
+            $g .= '<text x="' . ($x + 35) . '" y="44" text-anchor="middle" font-size="13" fill="#5A5880">[' . ($i + 1) . ']</text>'
+                . '<rect x="' . $x . '" y="54" width="70" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="' . ($x + 35) . '" y="82" text-anchor="middle" font-weight="700">' . $v . '</text>'
+                . '<path d="M' . ($x + 35) . ' 100 V140" stroke="#E8590C" stroke-width="2"/><path d="M' . ($x + 29) . ' 138 L' . ($x + 35) . ' 148 L' . ($x + 41) . ' 138 Z" fill="#E8590C"/>'
+                . '<text x="' . ($x + 42) . '" y="126" font-family="ui-monospace, monospace" font-size="13" fill="#B84508">× 10</text>'
+                . '<rect x="' . $x . '" y="150" width="70" height="44" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="' . ($x + 35) . '" y="178" text-anchor="middle" font-weight="700">' . ($v * 10) . '</text>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="16" fill="#1E1C52">
+<text x="186" y="44" text-anchor="end" font-size="13" fill="#5A5880">{$index}</text>
+<text x="186" y="82" text-anchor="end" font-family="ui-monospace, monospace" font-weight="700">voti</text>
+<text x="186" y="178" text-anchor="end" font-family="ui-monospace, monospace" font-weight="700">voti * 10</text>
+{$g}
+</svg>
+SVG;
+    }
+}
+
+/** Filtering a data frame: the condition makes a TRUE/FALSE vector, and the TRUE rows are kept. */
+if (!function_exists('fig_rbase_filter')) {
+    function fig_rbase_filter(): string
+    {
+        $g = '';
+        foreach ([['Ada', 8, true], ['Bea', 6, false], ['Cleo', 9, true]] as $i => [$n, $v, $ok]) {
+            $y = 92 + $i * 36;
+            $g .= '<rect x="20" y="' . ($y - 22) . '" width="180" height="30" rx="7" fill="' . ($ok ? '#D5F6EA' : '#FFFFFF') . '" stroke="' . ($ok ? '#0B7F5C' : '#C9C7DE') . '" stroke-width="2"/><text x="34" y="' . $y . '">' . $n . '</text><text x="184" y="' . $y . '" text-anchor="end">' . $v . '</text>'
+                . '<rect x="234" y="' . ($y - 22) . '" width="90" height="30" rx="7" fill="' . ($ok ? '#D5F6EA' : '#F1F0F8') . '" stroke="' . ($ok ? '#0B7F5C' : '#8A87B0') . '" stroke-width="2"/><text x="279" y="' . $y . '" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700" fill="' . ($ok ? '#0B7F5C' : '#5A5880') . '">' . ($ok ? 'TRUE' : 'FALSE') . '</text>';
+        }
+        foreach ([['Ada', 8], ['Cleo', 9]] as $i => [$n, $v]) {
+            $y = 110 + $i * 36;
+            $g .= '<rect x="440" y="' . ($y - 22) . '" width="180" height="30" rx="7" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="454" y="' . $y . '">' . $n . '</text><text x="604" y="' . $y . '" text-anchor="end">' . $v . '</text>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-family="ui-monospace, monospace" font-size="13" font-weight="700"><text x="20" y="30">studenti</text><text x="234" y="30">voto &gt;= 8</text><text x="440" y="48">studenti[studenti\$voto &gt;= 8, ]</text></g>
+<g font-weight="700" font-size="13" fill="#5A5880"><text x="34" y="58">nome</text><text x="184" y="58" text-anchor="end">voto</text><text x="454" y="76">nome</text><text x="604" y="76" text-anchor="end">voto</text></g>
+{$g}
+<path d="M340 128 H422" stroke="#0B7F5C" stroke-width="2"/><path d="M420 122 L430 128 L420 134 Z" fill="#0B7F5C"/>
+</svg>
+SVG;
+    }
+}
+
+/** A box plot read through summary(): minimum, quartiles, median, mean and maximum of six ages. */
+if (!function_exists('fig_rbase_box')) {
+    function fig_rbase_box(): string
+    {
+        $x = fn(float $v) => (int)round(60 + ($v - 20) * 20);
+        $dots = '';
+        foreach ([23, 27, 31, 38, 45] as $v) $dots .= '<circle cx="' . $x($v) . '" cy="200" r="6" fill="#2F8CF0"/>';
+        $dots .= '<circle cx="' . $x(31) . '" cy="186" r="6" fill="#2F8CF0"/>';
+        $lab = '';
+        foreach ([['Min.', 23, 52], ['1st Qu.', 28, 74], ['Median', 31, 52], ['3rd Qu.', 36.25, 74], ['Max.', 45, 52]] as [$t, $v, $y]) {
+            $lab .= '<text x="' . $x($v) . '" y="' . $y . '" text-anchor="middle" font-size="13"><tspan font-weight="700">' . $t . '</tspan> ' . $v . '</text><line x1="' . $x($v) . '" y1="' . ($y + 6) . '" x2="' . $x($v) . '" y2="98" stroke="#C9C7DE" stroke-width="1.5" stroke-dasharray="3 3"/>';
+        }
+        $m = $x(32.5);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+{$lab}
+<line x1="{$x(23)}" y1="130" x2="{$x(28)}" y2="130" stroke="#1E1C52" stroke-width="2"/><line x1="{$x(36.25)}" y1="130" x2="{$x(45)}" y2="130" stroke="#1E1C52" stroke-width="2"/>
+<line x1="{$x(23)}" y1="114" x2="{$x(23)}" y2="146" stroke="#1E1C52" stroke-width="2"/><line x1="{$x(45)}" y1="114" x2="{$x(45)}" y2="146" stroke="#1E1C52" stroke-width="2"/>
+<rect x="{$x(28)}" y="102" width="165" height="56" rx="6" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<line x1="{$x(31)}" y1="102" x2="{$x(31)}" y2="158" stroke="#B84508" stroke-width="3"/>
+<path d="M{$m} 122 l8 8 l-8 8 l-8 -8 Z" fill="#7048E8"/>
+<text x="{$m}" y="176" text-anchor="middle" font-size="13" fill="#4B2BBF"><tspan font-weight="700">Mean</tspan> 32.5</text>
+{$dots}
+<text x="20" y="224" font-family="ui-monospace, monospace" font-size="12" fill="#5A5880">eta: 23 27 31 31 38 45</text>
+</svg>
+SVG;
+    }
+}
+
+/** A list as a train of carriages: [ ] gives a shorter train, [[ ]] or $ gives what is inside a carriage. */
+if (!function_exists('fig_rbase_list')) {
+    function fig_rbase_list(string $list, string $vector): string
+    {
+        $car = fn(int $x, int $y, int $w, string $name, string $val, string $s = '#7048E8', string $f = '#ECE6FF') => '<rect x="' . $x . '" y="' . $y . '" width="' . $w . '" height="56" rx="10" fill="' . $f . '" stroke="' . $s . '" stroke-width="2"/><text x="' . ($x + 10) . '" y="' . ($y + 20) . '" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="#4B2BBF">' . $name . '</text><text x="' . ($x + $w / 2) . '" y="' . ($y + 44) . '" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">' . $val . '</text>'
+            . '<circle cx="' . ($x + 18) . '" cy="' . ($y + 62) . '" r="6" fill="#FFFFFF" stroke="' . $s . '" stroke-width="2"/><circle cx="' . ($x + $w - 18) . '" cy="' . ($y + 62) . '" r="6" fill="#FFFFFF" stroke="' . $s . '" stroke-width="2"/>';
+        $g = $car(150, 30, 130, 'nome', '"Ada"') . $car(290, 30, 130, 'voti', '8 9 7', '#E8590C', '#FFE8D6') . $car(430, 30, 130, 'iscritta', 'TRUE');
+        $g .= '<path d="M280 58 H290 M420 58 H430" stroke="#7048E8" stroke-width="3"/>';
+        $g .= $car(290, 130, 130, 'voti', '8 9 7', '#E8590C', '#FFE8D6');
+        $g .= '<rect x="290" y="230" width="130" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="355" y="256" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">8 9 7</text>';
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-family="ui-monospace, monospace" font-size="13" font-weight="700" text-anchor="end"><text x="136" y="64">studente</text><text x="276" y="164">studente["voti"]</text><text x="276" y="256">studente[["voti"]]</text></g>
+{$g}
+<g font-size="13" font-weight="700"><text x="572" y="64" fill="#4B2BBF">{$list}</text><text x="434" y="164" fill="#4B2BBF">{$list}</text><text x="434" y="256" fill="#0B7F5C">{$vector}</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'r-base', 'family' => 'r', 'after' => null,
     'title' => L('R base', 'R Basics'), 'short' => L('R base', 'R Basics'), 'level' => L('Base', 'Basics'),
@@ -13,8 +119,15 @@ voti * 10        # 70 80 60 90
 length(voti)     # 4
 voti[1]          # 7: gli indici partono da 1
 nomi <- c("Ada", "Bea")
-print(paste("Ciao", nomi))', 'r'),
+print(paste("Ciao", nomi))', 'r', fucina_data_pre('[1] 70 80 60 90
+[1] 4
+[1] 7
+[1] "Ciao Ada" "Ciao Bea"')),
+            Fig(L(fig_rbase_vector('posizione'), fig_rbase_vector('position')),
+                L('Il vettore voti con i valori 7, 8, 6, 9 nelle posizioni da 1 a 4. Da ogni casella scende una freccia «× 10» verso il vettore risultato: 70, 80, 60, 90.', 'The voti vector with the values 7, 8, 6, 9 in positions 1 to 4. From each cell a “× 10” arrow goes down to the result vector: 70, 80, 60, 90.'),
+                L('Un’operazione sola, applicata a ogni elemento: niente ciclo da scrivere.', 'A single operation, applied to every element: no loop to write.')),
             P('Attenzione: in R gli indici partono da **1**, non da 0. `paste` unisce testi.', 'Careful: in R indexes start at **1**, not 0. `paste` joins texts.'),
+            P('Anche un numero da solo, come `5`, è un vettore lungo 1: per questo in R quasi tutto lavora su vettori. Tra due vettori le operazioni vanno elemento per elemento: `c(1, 2, 3) + c(10, 20, 30)` dà `11 22 33`. Se uno è più corto, R lo **ricicla** ripetendolo: comodo con un numero solo, ma con lunghezze che non combaciano ti avvisa con un warning, e spesso è un errore.', 'Even a single number, such as `5`, is a vector of length 1: that is why almost everything in R works on vectors. Between two vectors operations go element by element: `c(1, 2, 3) + c(10, 20, 30)` gives `11 22 33`. If one is shorter, R **recycles** it by repeating it: handy with a single number, but with lengths that do not fit it warns you, and it is often a mistake.'),
         ], [
             Q('v1', L('Come si assegna un valore in R?', 'How do you assign a value in R?'), ['x <- 5', 'x := 5', 'let x = 5', 'x == 5'], 0, L('Funziona anche `=`, ma si preferisce la freccia.', '`=` works too, but the arrow is preferred.')),
             Q('v2', L('Da quale numero partono gli indici?', 'Which number do indexes start from?'), ['1', '0', '-1', L('Dipende', 'It depends')], 0, L('`voti[1]` è il primo.', '`voti[1]` is the first.')),
@@ -33,8 +146,15 @@ print(mean(altezze))'), [
 studenti$voto
 studenti[studenti$voto >= 8, ]
 nrow(studenti)
-dati <- read.csv("vendite.csv")', 'r'),
+dati <- read.csv("vendite.csv")', 'r', fucina_data_pre('> studenti[studenti$voto >= 8, ]
+  nome voto
+1  Ada    8
+3 Cleo    9')),
             P('In `tabella[righe, colonne]` lasciare vuota una parte significa “tutte”. `read.csv` carica un file CSV in un data frame.', 'In `table[rows, columns]` leaving a part empty means “all”. `read.csv` loads a CSV file into a data frame.'),
+            P('Come funziona il filtro? `studenti$voto >= 8` confronta ogni voto e restituisce un vettore di `TRUE` e `FALSE`, uno per riga; messo prima della virgola, tiene solo le righe `TRUE`. L’errore più comune è dimenticare la virgola: `studenti[studenti$voto >= 8]` cerca di scegliere **colonne** e dà un errore o un risultato strano.', 'How does the filter work? `studenti$voto >= 8` compares every mark and returns a vector of `TRUE` and `FALSE`, one per row; placed before the comma, it keeps only the `TRUE` rows. The most common mistake is forgetting the comma: `studenti[studenti$voto >= 8]` tries to pick **columns** and gives an error or an odd result.'),
+            Fig(fig_rbase_filter(),
+                L('A sinistra il data frame studenti con Ada 8, Bea 6, Cleo 9. Accanto, la condizione voto >= 8 produce TRUE, FALSE, TRUE. A destra il risultato del filtro contiene solo Ada e Cleo.', 'On the left the studenti data frame with Ada 8, Bea 6, Cleo 9. Next to it, the condition voto >= 8 gives TRUE, FALSE, TRUE. On the right the filtered result holds only Ada and Cleo.'),
+                L('Il vettore di `TRUE` e `FALSE` fa da setaccio per le righe.', 'The vector of `TRUE` and `FALSE` works as a sieve for the rows.')),
         ], [
             Q('d1', L('Come leggi la colonna `voto`?', 'How do you read the `voto` column?'), ['studenti$voto', 'studenti.voto', 'studenti->voto', 'studenti[voto]'], 0, L('Il dollaro sceglie la colonna.', 'The dollar picks the column.')),
             Q('d2', L('Che cosa fa `df[df$eta > 18, ]`?', 'What does `df[df$eta > 18, ]` do?'), [L('Tiene le righe con età sopra 18', 'Keeps rows with age over 18'), L('Cancella la colonna età', 'Deletes the age column'), L('Conta le righe', 'Counts rows'), L('Dà un errore', 'Gives an error')], 0, L('Dopo la virgola, tutte le colonne.', 'After the comma, all columns.')),
@@ -51,8 +171,11 @@ dati <- read.csv("vendite.csv")', 'r'),
 giudizio(7)
 
 quadrati <- sapply(1:5, function(x) x^2)
-for (n in c("Ada", "Bea")) print(n)', 'r'),
+for (n in c("Ada", "Bea")) print(n)', 'r', fucina_data_pre('[1] "promosso"
+[1] "Ada"
+[1] "Bea"')),
             P('L’ultima espressione di una funzione è il suo risultato: non serve scrivere `return`. `1:5` crea la sequenza da 1 a 5.', 'A function’s last expression is its result: no need to write `return`. `1:5` creates the sequence from 1 to 5.'),
+            P('Gli argomenti possono avere un valore predefinito, `function(voto, soglia = 6)`, e si possono passare per nome in qualsiasi ordine: `giudizio(soglia = 5, voto = 7)`. Un limite da conoscere: `if` guarda un valore solo, quindi `giudizio(c(7, 4))` dà errore. Per un vettore intero c’è la versione vettoriale, `ifelse(voti >= 6, "promosso", "bocciato")`, che risponde per ogni elemento.', 'Arguments can have a default value, `function(voto, soglia = 6)`, and can be passed by name in any order: `giudizio(soglia = 5, voto = 7)`. A limit worth knowing: `if` looks at a single value, so `giudizio(c(7, 4))` is an error. For a whole vector there is the vectorised version, `ifelse(voti >= 6, "promosso", "bocciato")`, which answers for each element.'),
         ], [
             Q('f1', L('Che cosa restituisce una funzione senza `return`?', 'What does a function return without `return`?'), [L('L’ultima espressione', 'The last expression'), 'NULL', L('Un errore', 'An error'), '0'], 0, L('È lo stile tipico di R.', 'It is typical R style.')),
             Q('f2', L('Che cosa crea `1:4`?', 'What does `1:4` create?'), ['1 2 3 4', '1 4', '4', '0 1 2 3'], 0, L('Una sequenza di interi.', 'A sequence of integers.')),
@@ -69,8 +192,14 @@ median(eta)
 sd(eta)
 summary(eta)
 table(c("rosso", "blu", "rosso"))
-mean(c(5, NA, 7), na.rm = TRUE)', 'r'),
+mean(c(5, NA, 7), na.rm = TRUE)', 'r', fucina_data_pre('> summary(eta)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+  23.00   28.00   31.00   32.50   36.25   45.00')),
             P('`NA` è un valore mancante: molte funzioni restituiscono `NA` se ne trovano uno, a meno di `na.rm = TRUE`.', '`NA` is a missing value: many functions return `NA` if they find one, unless you pass `na.rm = TRUE`.'),
+            P('Media e mediana raccontano cose diverse: la **media** risente dei valori estremi, la **mediana** (il valore centrale) no. Qui la media è 32,5 e la mediana 31, perché il 45 tira la media verso l’alto; con stipendi o prezzi la differenza può essere enorme. La deviazione standard dice quanto i valori sono sparsi attorno alla media: più è grande, più sono lontani tra loro.', 'Mean and median tell different stories: the **mean** is pulled by extreme values, the **median** (the middle value) is not. Here the mean is 32.5 and the median 31, because the 45 drags the mean up; with salaries or prices the gap can be huge. The standard deviation says how spread out the values are around the mean: the bigger it is, the further apart they are.'),
+            Fig(fig_rbase_box(),
+                L('Un box plot orizzontale delle età 23, 27, 31, 31, 38, 45. I baffi vanno dal minimo 23 al massimo 45; la scatola va dal primo quartile 28 al terzo 36,25, con la mediana 31 come linea spessa; un rombo segna la media 32,5. Sotto, i sei valori come punti.', 'A horizontal box plot of the ages 23, 27, 31, 31, 38, 45. The whiskers run from the minimum 23 to the maximum 45; the box runs from the first quartile 28 to the third 36.25, with the median 31 as a thick line; a diamond marks the mean 32.5. Below, the six values as dots.'),
+                L('`summary()` e `boxplot()` mostrano gli stessi cinque numeri, più la media.', '`summary()` and `boxplot()` show the same five numbers, plus the mean.')),
         ], [
             Q('s1', L('Quale funzione dà il valore centrale?', 'Which function gives the middle value?'), ['median', 'mean', 'mid', 'center'], 0, L('`mean` è la media.', '`mean` is the average.')),
             Q('s2', L('Che cosa fa `na.rm = TRUE`?', 'What does `na.rm = TRUE` do?'), [L('Ignora i valori mancanti', 'Ignores missing values'), L('Cancella il vettore', 'Deletes the vector'), L('Arrotonda', 'Rounds'), L('Ordina', 'Sorts')], 0, L('Altrimenti il risultato è `NA`.', 'Otherwise the result is `NA`.')),
@@ -87,8 +216,9 @@ voti <- c(5, 6, 6.5, 8, 9)
 plot(ore, voti, main = "Studio e voti",
      xlab = "Ore di studio", ylab = "Voto", col = "tomato", pch = 19)
 
-hist(rnorm(200), col = "skyblue", main = "Distribuzione")', 'r'),
+hist(rnorm(200), col = "skyblue", main = "Distribuzione")', 'r', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 250" width="360" style="font-family:system-ui,sans-serif;display:block;margin:8px"><text x="190" y="22" text-anchor="middle" font-size="14" font-weight="700">Studio e voti</text><rect x="50" y="34" width="290" height="170" fill="none" stroke="#333"/><g fill="#FF6347"><circle cx="70" cy="184" r="5"/><circle cx="132" cy="150" r="5"/><circle cx="195" cy="133" r="5"/><circle cx="257" cy="82" r="5"/><circle cx="320" cy="48" r="5"/></g><g font-size="11" text-anchor="middle"><text x="70" y="218">1</text><text x="132" y="218">2</text><text x="195" y="218">3</text><text x="257" y="218">4</text><text x="320" y="218">5</text></g><g font-size="11" text-anchor="end"><text x="44" y="188">5</text><text x="44" y="120">7</text><text x="44" y="52">9</text></g><text x="195" y="240" text-anchor="middle" font-size="12">Ore di studio</text><text x="16" y="120" text-anchor="middle" font-size="12" transform="rotate(-90 16 120)">Voto</text></svg>'),
             P('`rnorm(200)` genera 200 numeri casuali con distribuzione normale: utile per provare.', '`rnorm(200)` generates 200 random normally distributed numbers: handy for trying things out.'),
+            P('In R base un grafico si costruisce a strati: `plot` disegna la base, poi funzioni come `abline`, `lines`, `points`, `text` e `legend` aggiungono elementi sopra il grafico già aperto. Per esempio `abline(lm(voti ~ ore))` traccia la retta che meglio segue i punti. Per salvare l’immagine su file apri prima un dispositivo, `png("grafico.png")`, disegna, e chiudilo con `dev.off()`.', 'In base R a plot is built in layers: `plot` draws the base, then functions such as `abline`, `lines`, `points`, `text` and `legend` add elements on top of the plot already open. For example `abline(lm(voti ~ ore))` draws the line that best follows the points. To save the image to a file first open a device, `png("plot.png")`, draw, and close it with `dev.off()`.'),
         ], [
             Q('p1', L('Quale funzione fa un istogramma?', 'Which function makes a histogram?'), ['hist', 'plot', 'barplot', 'histogram'], 0, L('`barplot` fa barre di valori già contati.', '`barplot` draws bars of counted values.')),
             Q('p2', L('Quale argomento dà il titolo?', 'Which argument sets the title?'), ['main', 'title', 'label', 'head'], 0, L('`xlab` e `ylab` per gli assi.', '`xlab` and `ylab` for the axes.')),
@@ -133,6 +263,9 @@ studente["voti"]       # una lista con un solo elemento
 str(studente)
 
 risultati <- lapply(list(a = 1:3, b = 4:6), mean)', 'r'),
+            Fig(L(fig_rbase_list('lista', 'vettore'), fig_rbase_list('list', 'vector')),
+                L('La lista studente disegnata come un treno di tre vagoni: nome con "Ada", voti con 8 9 7, iscritta con TRUE. Sotto, studente["voti"] è un treno più corto con il solo vagone voti, ancora una lista; studente[["voti"]] è il contenuto del vagone, il vettore 8 9 7.', 'The studente list drawn as a train of three carriages: nome with "Ada", voti with 8 9 7, iscritta with TRUE. Below, studente["voti"] is a shorter train with only the voti carriage, still a list; studente[["voti"]] is what the carriage holds, the vector 8 9 7.'),
+                L('`[ ]` stacca dei vagoni, `[[ ]]` e `$` aprono un vagone.', '`[ ]` uncouples carriages, `[[ ]]` and `$` open one carriage.')),
             P('Per prendere un **elemento** si usa `$` o le doppie parentesi `[[ ]]`; le parentesi singole `[ ]` restituiscono invece una **lista più piccola**. Molte funzioni (per esempio `lm` o la lettura di un JSON) restituiscono liste. `lapply` applica una funzione a ogni elemento e restituisce una lista.', 'To take an **element** you use `$` or double brackets `[[ ]]`; single brackets `[ ]` instead return a **smaller list**. Many functions (for example `lm` or reading a JSON file) return lists. `lapply` applies a function to each element and returns a list.'),
         ], [
             Q('l1', L('Che differenza c’è tra un vettore e una lista?', 'What is the difference between a vector and a list?'), [L('La lista può contenere elementi di tipi diversi', 'A list can hold elements of different types'), L('Il vettore può contenere altre liste', 'A vector can hold other lists'), L('La lista contiene solo testi', 'A list holds only texts'), L('Nessuna, sono sinonimi', 'None, they are synonyms')], 0, L('Il vettore ha un solo tipo.', 'A vector has one type only.')),

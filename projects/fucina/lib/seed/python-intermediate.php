@@ -1,6 +1,112 @@
 <?php
 /** Python intermediate: comprehensions, files, errors, classes and modules, inheritance, lambdas, standard library and command-line scripts. */
 
+/** The three parts of a comprehension and the order they run in, with the values going through. */
+if (!function_exists('fig_pyint_comp')) {
+    function fig_pyint_comp(array $t): string
+    {
+        $nums = '';
+        foreach (range(1, 6) as $i => $n) {
+            $x = 30 + $i * 46;
+            $even = $n % 2 === 0;
+            $nums .= '<rect x="' . $x . '" y="150" width="38" height="38" rx="8" fill="' . ($even ? '#DCEBFF' : '#F1F0F8') . '" stroke="' . ($even ? '#2F8CF0' : '#C9C7DE') . '" stroke-width="2"' . ($even ? '' : ' stroke-dasharray="4 4"') . '/>'
+                . '<text x="' . ($x + 19) . '" y="175" text-anchor="middle" fill="' . ($even ? '#1E1C52' : '#8A87B0') . '">' . $n . '</text>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="ui-monospace, monospace" font-size="16" fill="#1E1C52">
+<defs><marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="22" y="56" font-size="22">[</text>
+<rect x="40" y="30" width="120" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="100" y="56" text-anchor="middle">n * 10</text>
+<rect x="172" y="30" width="200" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="272" y="56" text-anchor="middle">for n in numeri</text>
+<rect x="384" y="30" width="200" height="40" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="484" y="56" text-anchor="middle">if n % 2 == 0</text>
+<text x="594" y="56" font-size="22">]</text>
+<g font-family="system-ui, sans-serif" font-size="13" text-anchor="middle">
+<text x="100" y="92" fill="#0B7F5C">3. {$t[0]}</text><text x="272" y="92" fill="#1B66BC">1. {$t[1]}</text><text x="484" y="92" fill="#B84508">2. {$t[2]}</text>
+<text x="154" y="216" fill="#5B5880">numeri</text><text x="420" y="134" fill="#B84508">{$t[3]}</text><text x="540" y="216" fill="#0B7F5C">{$t[4]}</text>
+</g>
+$nums
+<line x1="312" y1="169" x2="384" y2="169" stroke="#1E1C52" stroke-width="2" marker-end="url(#ac)"/>
+<text x="348" y="160" text-anchor="middle" font-size="13" fill="#B84508">2 4 6</text>
+<rect x="392" y="150" width="56" height="38" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="420" y="175" text-anchor="middle">×10</text>
+<line x1="452" y1="169" x2="474" y2="169" stroke="#1E1C52" stroke-width="2" marker-end="url(#ac)"/>
+<rect x="480" y="150" width="140" height="38" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><text x="550" y="175" text-anchor="middle">[20, 40, 60]</text>
+</svg>
+SVG;
+    }
+}
+
+/** try, except, else and finally: two paths, one shared ending. */
+if (!function_exists('fig_pyint_try')) {
+    function fig_pyint_try(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-family="ui-monospace, monospace" font-size="15" font-weight="700" text-anchor="middle">
+<rect x="20" y="88" width="130" height="54" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="85" y="120">try</text>
+<rect x="300" y="24" width="130" height="54" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="365" y="56">else</text>
+<rect x="300" y="152" width="130" height="54" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/><text x="365" y="184">except</text>
+<rect x="490" y="88" width="130" height="54" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="555" y="120">finally</text>
+</g>
+<path d="M152 104 C220 90 240 51 294 51" fill="none" stroke="#0B7F5C" stroke-width="2" marker-end="url(#at)"/>
+<path d="M152 126 C220 140 240 179 294 179" fill="none" stroke="#F03E82" stroke-width="2" marker-end="url(#at)"/>
+<path d="M432 51 C460 51 470 100 484 106" fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#at)"/>
+<path d="M432 179 C460 179 470 130 484 124" fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#at)"/>
+<text x="200" y="62" text-anchor="middle" fill="#0B7F5C">{$t[0]}</text>
+<text x="200" y="180" text-anchor="middle" fill="#B8255F">{$t[1]}</text>
+<text x="555" y="164" text-anchor="middle" fill="#5B33C9">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A method call: the object before the dot becomes self. */
+if (!function_exists('fig_pyint_self')) {
+    function fig_pyint_self(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="ui-monospace, monospace" font-size="18" fill="#1E1C52">
+<defs><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="180" y="20" width="90" height="38" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="225" y="46" text-anchor="middle">conto</text>
+<text x="276" y="46">.versa(</text>
+<rect x="360" y="20" width="44" height="38" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="382" y="46" text-anchor="middle">10</text>
+<text x="408" y="46">)</text>
+<text x="96" y="160">def versa(</text>
+<rect x="210" y="134" width="70" height="38" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="245" y="160" text-anchor="middle">self</text>
+<text x="284" y="160">,</text>
+<rect x="302" y="134" width="110" height="38" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="357" y="160" text-anchor="middle">importo</text>
+<text x="416" y="160">):</text>
+<line x1="228" y1="62" x2="243" y2="128" stroke="#7048E8" stroke-width="2" marker-end="url(#as)"/>
+<line x1="380" y1="62" x2="362" y2="128" stroke="#0B7F5C" stroke-width="2" marker-end="url(#as)"/>
+<text x="222" y="100" text-anchor="end" font-family="system-ui, sans-serif" font-size="14" fill="#5B33C9">{$t[0]}</text>
+<text x="320" y="200" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#5B5880">{$t[1]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Two projects, each with its own virtual environment and versions, and the system Python left clean. */
+if (!function_exists('fig_pyint_venv')) {
+    function fig_pyint_venv(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="16" y="20" width="290" height="140" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="34" y="46" font-weight="700" fill="#1B66BC">{$t[0]} A</text>
+<rect x="34" y="60" width="254" height="84" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2" stroke-dasharray="6 4"/>
+<g font-family="ui-monospace, monospace" font-size="14"><text x="50" y="84" font-weight="700">.venv/</text><text x="50" y="106">requests 2.31</text><text x="50" y="128">flask 3.1</text></g>
+<rect x="334" y="20" width="290" height="140" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="352" y="46" font-weight="700" fill="#0B7F5C">{$t[0]} B</text>
+<rect x="352" y="60" width="254" height="84" rx="10" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="6 4"/>
+<g font-family="ui-monospace, monospace" font-size="14"><text x="368" y="84" font-weight="700">.venv/</text><text x="368" y="106">requests 2.32</text><text x="368" y="128">pandas 3.0</text></g>
+<rect x="16" y="184" width="608" height="48" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="34" y="214" font-weight="700">{$t[1]}</text>
+<text x="606" y="214" text-anchor="end" font-size="14" fill="#5B5880">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'python-intermediate', 'family' => 'python', 'after' => 'python-base',
     'title' => L('Python intermedio', 'Intermediate Python'), 'short' => L('Python intermedio', 'Python Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -8,12 +114,16 @@ return [
     'lessons' => [
         lesson('comprehensions', L('Comprehension', 'Comprehensions'), [
             P('Una **list comprehension** costruisce una lista in una riga: `[espressione for x in sequenza if condizione]`. Esistono anche per dizionari e insiemi.', 'A **list comprehension** builds a list in one line: `[expression for x in sequence if condition]`. They also exist for dicts and sets.'),
+            Fig(L(fig_pyint_comp(['espressione', 'sorgente', 'filtro', 'solo i pari', 'risultato']), fig_pyint_comp(['expression', 'source', 'filter', 'evens only', 'result'])),
+                L('La comprehension [n * 10 for n in numeri if n % 2 == 0] divisa in tre riquadri: espressione, sorgente e filtro, numerati 3, 1 e 2 secondo l’ordine in cui agiscono. Sotto, i numeri da 1 a 6: i dispari sono grigi e scartati, 2, 4 e 6 passano, vengono moltiplicati per 10 e danno [20, 40, 60].', 'The comprehension [n * 10 for n in numeri if n % 2 == 0] split into three boxes: expression, source and filter, numbered 3, 1 and 2 by the order they act in. Below, the numbers 1 to 6: the odd ones are grey and dropped, 2, 4 and 6 pass, are multiplied by 10 and give [20, 40, 60].'),
+                L('Si legge da sinistra, ma gira così: prendi, filtra, trasforma.', 'You read it from the left, but it runs like this: take, filter, transform.')),
             C('numeri = [1, 2, 3, 4, 5, 6]
 pari = [n for n in numeri if n % 2 == 0]
 quadrati = {n: n * n for n in numeri}
 nomi = ["ada", "bea"]
 maiuscoli = [n.capitalize() for n in nomi]', 'python'),
             P('Sono più brevi e spesso più veloci di un ciclo con `append`, ma se diventano lunghe meglio tornare al `for`.', 'They are shorter and often faster than a loop with `append`, but if they get long go back to a `for`.'),
+            P('Con le tonde invece delle quadre ottieni un’**espressione generatrice**: `sum(n * n for n in numeri)` calcola la somma senza costruire una lista in memoria, utile con molti dati. Un errore frequente è usare una comprehension solo per i suoi effetti, come `[print(n) for n in numeri]`: crea una lista di `None` che nessuno usa. Se non ti serve la lista, scrivi un `for`.', 'With round brackets instead of square ones you get a **generator expression**: `sum(n * n for n in numeri)` computes the sum without building a list in memory, useful with lots of data. A common mistake is using a comprehension only for its side effects, as in `[print(n) for n in numeri]`: it builds a list of `None` that nobody uses. If you do not need the list, write a `for`.'),
         ], [
             Q('c1', L('Che cosa dà `[n * 2 for n in [1, 2]]`?', 'What does `[n * 2 for n in [1, 2]]` give?'), ['[2, 4]', '[1, 2, 1, 2]', '[1, 4]', '4'], 0, L('Ogni elemento raddoppiato.', 'Each item doubled.')),
             Q('c2', L('Dove va il filtro in una comprehension?', 'Where does the filter go in a comprehension?'), [L('In fondo, con `if`', 'At the end, with `if`'), L('All’inizio', 'At the start'), L('Fuori dalle parentesi', 'Outside the brackets'), L('Non si può filtrare', 'You cannot filter')], 0, L('`[x for x in l if cond]`.', '`[x for x in l if cond]`.')),
@@ -36,6 +146,7 @@ import json
 with open("dati.json", encoding="utf-8") as f:
     dati = json.load(f)', 'python'),
             P('Indica sempre `encoding="utf-8"` per le lettere accentate: Python 3.15 usa UTF-8 di serie, ma le versioni precedenti, soprattutto su Windows, possono scegliere un’altra codifica. Il modulo `json` legge e scrive dati strutturati.', 'Always give `encoding="utf-8"` for accented letters: Python 3.15 uses UTF-8 by default, but earlier versions, especially on Windows, may pick another encoding. The `json` module reads and writes structured data.'),
+            P('Attenzione a `"w"`: se il file esiste già, il suo contenuto viene cancellato appena lo apri, prima ancora di scrivere. Scorrere il file con `for riga in f` legge una riga alla volta, anche con file enormi; ogni riga però finisce con `\n`, ed è per questo che si usa `strip()`. Per salvare dati in JSON c’è `json.dump(dati, f, ensure_ascii=False, indent=2)`, che lascia gli accenti leggibili e va a capo in modo ordinato.', 'Careful with `"w"`: if the file already exists, its content is wiped as soon as you open it, before you even write. Walking the file with `for riga in f` reads one line at a time, even with huge files; each line ends with `\n`, though, which is why `strip()` is used. To save data as JSON there is `json.dump(dati, f, ensure_ascii=False, indent=2)`, which keeps accents readable and breaks lines tidily.'),
         ], [
             Q('f1', L('Perché usare `with open(...)`?', 'Why use `with open(...)`?'), [L('Il file si chiude da solo', 'The file closes by itself'), L('È più veloce', 'It is faster'), L('Cripta il file', 'It encrypts the file'), L('Crea una copia', 'It makes a copy')], 0, L('Anche in caso di errore.', 'Even when an error occurs.')),
             Q('f2', L('Quale modalità aggiunge in fondo?', 'Which mode appends at the end?'), ['"a"', '"w"', '"r"', '"x"'], 0, L('`"w"` cancellerebbe il contenuto.', '`"w"` would wipe the content.')),
@@ -57,6 +168,10 @@ with open("dati.json", encoding="utf-8") as f:
         raise ValueError("L’età non può essere negativa")
     return eta', 'python'),
             P('Intercetta solo gli errori che sai gestire: un `except:` vuoto nasconde anche i bug veri.', 'Catch only the errors you can handle: a bare `except:` hides real bugs too.'),
+            P('Esiste anche un blocco `else`, che gira solo se nel `try` non è successo niente: tieni nel `try` solo la riga che può fallire, e il resto in `else`. Le eccezioni che incontrerai più spesso sono `ValueError` (valore sbagliato), `TypeError` (tipo sbagliato), `KeyError` e `IndexError` (chiave o indice assente), `FileNotFoundError` e `ZeroDivisionError`. Leggi il messaggio dal basso: l’ultima riga dice il tipo di errore, quelle sopra la strada che ha fatto.', 'There is also an `else` block, which runs only if nothing went wrong in the `try`: keep in the `try` only the line that can fail, and the rest in `else`. The exceptions you will meet most often are `ValueError` (wrong value), `TypeError` (wrong type), `KeyError` and `IndexError` (missing key or index), `FileNotFoundError` and `ZeroDivisionError`. Read the message from the bottom: the last line says the type of error, the ones above the path it took.'),
+            Fig(L(fig_pyint_try(['nessun errore', 'eccezione', 'gira sempre']), fig_pyint_try(['no error', 'exception', 'always runs'])),
+                L('Dal blocco try partono due frecce: se non ci sono errori si va a else, se c’è un’eccezione si va a except. Entrambe le strade finiscono in finally, che gira sempre.', 'Two arrows leave the try block: with no errors it goes to else, with an exception it goes to except. Both paths end in finally, which always runs.'),
+                L('`else` e `except` si escludono, `finally` arriva comunque.', '`else` and `except` exclude each other, `finally` comes anyway.')),
         ], [
             Q('e1', L('Quale eccezione dà `int("ciao")`?', 'Which exception does `int("ciao")` raise?'), ['ValueError', 'TypeError', 'KeyError', 'IndexError'], 0, L('Il valore non è convertibile.', 'The value cannot be converted.')),
             Q('e2', L('Quale blocco gira sempre?', 'Which block always runs?'), ['finally', 'else', 'except', 'try'], 0, L('Ottimo per chiudere risorse.', 'Great for releasing resources.')),
@@ -86,6 +201,11 @@ class Punto:
     x: int
     y: int', 'python'),
             P('Un metodo riceve sempre `self` come primo parametro; si chiama però senza: `conto.versa(10)`.', 'A method always receives `self` as its first parameter; you call it without it though: `conto.versa(10)`.'),
+            Fig(L(fig_pyint_self(['Python lo passa da solo', 'L’oggetto prima del punto diventa self, gli argomenti seguono in ordine.']), fig_pyint_self(['Python passes it for you', 'The object before the dot becomes self, the arguments follow in order.'])),
+                L('In alto la chiamata conto.versa(10), in basso la definizione def versa(self, importo). Una freccia porta conto in self, un’altra porta 10 in importo.', 'At the top the call conto.versa(10), at the bottom the definition def versa(self, importo). One arrow carries conto into self, another carries 10 into importo.'),
+                L('`conto.versa(10)` equivale a `Conto.versa(conto, 10)`.', '`conto.versa(10)` is the same as `Conto.versa(conto, 10)`.')),
+            P('Ogni oggetto ha i suoi attributi: versare su un conto non cambia il saldo di un altro. La `@dataclass` scrive anche `__repr__`, così `print(Punto(1, 2))` mostra `Punto(x=1, y=2)` invece di un indirizzo di memoria, e `__eq__`, così due punti con le stesse coordinate risultano uguali con `==`. Usala per gli oggetti che servono soprattutto a tenere dati.', 'Each object has its own attributes: depositing into one account does not change the balance of another. The `@dataclass` also writes `__repr__`, so `print(Punto(1, 2))` shows `Punto(x=1, y=2)` instead of a memory address, and `__eq__`, so two points with the same coordinates compare equal with `==`. Use it for objects that mainly hold data.'),
+            Tip('In una dataclass non scrivere `voti: list = []`: Python lo vieta, perché la stessa lista finirebbe condivisa da tutti gli oggetti. Si scrive `voti: list = field(default_factory=list)`.', 'In a dataclass do not write `voti: list = []`: Python forbids it, because the same list would end up shared by every object. You write `voti: list = field(default_factory=list)`.'),
         ], [
             Q('k1', L('Come si chiama il costruttore?', 'What is the constructor called?'), ['__init__', 'constructor', 'new', '__new_object__'], 0, L('Con due trattini bassi per lato.', 'With two underscores each side.')),
             Q('k2', L('Che cos’è `self`?', 'What is `self`?'), [L('L’oggetto stesso', 'The object itself'), L('La classe madre', 'The parent class'), L('Una parola vietata', 'A forbidden word'), L('Il modulo', 'The module')], 0, L('Come `this` in altri linguaggi.', 'Like `this` in other languages.')),
@@ -112,6 +232,11 @@ from math import sqrt
 r = requests.get("https://api.github.com")
 print(r.status_code, sqrt(16))', 'python'),
             P('`if __name__ == "__main__":` esegue codice solo quando il file è lanciato direttamente, non quando viene importato.', '`if __name__ == "__main__":` runs code only when the file is launched directly, not when it is imported.'),
+            P('Un ambiente virtuale è una cartella (qui `.venv`) con un Python e le librerie di un solo progetto: due progetti possono usare versioni diverse della stessa libreria senza disturbarsi. Si attiva in ogni nuovo terminale; `pip freeze > requirements.txt` salva l’elenco delle versioni e `pip install -r requirements.txt` le reinstalla su un altro computer. La cartella `.venv` non va su git: si ricrea.', 'A virtual environment is a folder (here `.venv`) with a Python and the libraries of a single project: two projects can use different versions of the same library without getting in each other’s way. You activate it in every new terminal; `pip freeze > requirements.txt` saves the list of versions and `pip install -r requirements.txt` reinstalls them on another computer. The `.venv` folder does not go into git: it is recreated.'),
+            Fig(L(fig_pyint_venv(['Progetto', 'Python di sistema', 'resta pulito: niente pip install qui']), fig_pyint_venv(['Project', 'System Python', 'stays clean: no pip install here'])),
+                L('Due riquadri affiancati, Progetto A e Progetto B, ciascuno con la sua cartella .venv: A ha requests 2.31 e flask 3.1, B ha requests 2.32 e pandas 3.0. Sotto, una fascia grigia per il Python di sistema, che resta pulito.', 'Two boxes side by side, Project A and Project B, each with its own .venv folder: A has requests 2.31 and flask 3.1, B has requests 2.32 and pandas 3.0. Below, a grey band for the system Python, which stays clean.'),
+                L('Ogni progetto ha le sue versioni, isolate dalle altre.', 'Each project has its own versions, isolated from the others.')),
+            Tip('Non chiamare un tuo file come un modulo della libreria standard, per esempio `random.py` o `json.py`: Python cerca prima nella cartella dello script e importerebbe il tuo file al posto dell’originale.', 'Do not name one of your files like a standard library module, such as `random.py` or `json.py`: Python looks in the script’s folder first and would import your file instead of the real one.'),
         ], [
             Q('m1', L('Con quale comando installi una libreria?', 'Which command installs a library?'), ['pip install', 'npm install', 'python get', 'import install'], 0, L('`pip` è il gestore dei pacchetti.', '`pip` is the package manager.')),
             Q('m2', L('A che cosa serve un ambiente virtuale?', 'What is a virtual environment for?'), [L('A tenere separate le librerie di ogni progetto', 'To keep each project’s libraries apart'), L('A rendere Python più veloce', 'To make Python faster'), L('A virtualizzare il computer', 'To virtualise the computer'), L('A cifrare il codice', 'To encrypt code')], 0, L('Ogni progetto, le sue versioni.', 'Each project, its own versions.')),
@@ -217,7 +342,7 @@ print(conteggio.most_common(1))'), [
         ]),
         lesson('cli', L('Script da riga di comando', 'Command-line scripts'), [
             P('`argparse` legge gli argomenti scritti dopo il nome dello script e crea da solo l’aiuto `--help`. `logging` è meglio di `print` per i messaggi di servizio: ha **livelli** (`DEBUG`, `INFO`, `WARNING`, `ERROR`) e si può zittire o mandare su file senza toccare il codice.', '`argparse` reads the arguments written after the script name and builds the `--help` text by itself. `logging` beats `print` for service messages: it has **levels** (`DEBUG`, `INFO`, `WARNING`, `ERROR`) and can be silenced or sent to a file without touching the code.'),
-            C('import argparse
+            C(L('import argparse
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -234,9 +359,49 @@ def main():
     log.info("Trovate %d righe", len(righe))
 
 if __name__ == "__main__":
-    main()', 'python'),
+    main()', 'import argparse
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+log = logging.getLogger(__name__)
+
+def main():
+    parser = argparse.ArgumentParser(description="Count the lines of a file")
+    parser.add_argument("file")
+    parser.add_argument("--vuote", action="store_true", help="count empty lines too")
+    args = parser.parse_args()
+
+    with open(args.file, encoding="utf-8") as f:
+        righe = [r for r in f if args.vuote or r.strip()]
+    log.info("Found %d lines", len(righe))
+
+if __name__ == "__main__":
+    main()'), 'python'),
             C('python conta.py note.txt --vuote
-python conta.py --help', 'bash'),
+python conta.py --help', 'bash', L('<pre>INFO Trovate 12 righe
+
+usage: conta.py [-h] [--vuote] file
+
+Conta le righe di un file
+
+positional arguments:
+  file
+
+options:
+  -h, --help  show this help message and exit
+  --vuote     conta anche le righe vuote</pre>', '<pre>INFO Found 12 lines
+
+usage: conta.py [-h] [--vuote] file
+
+Count the lines of a file
+
+positional arguments:
+  file
+
+options:
+  -h, --help  show this help message and exit
+  --vuote     count empty lines too</pre>')),
+            P('Gli argomenti senza trattini, come `file`, sono **posizionali** e obbligatori; quelli con `--` sono **opzioni** facoltative. `action="store_true"` crea un interruttore che vale `True` se lo scrivi e `False` se no, mentre `type=int` converte il testo in numero e segnala da solo un valore sbagliato. Con `logging` scegli il livello all’avvio: in sviluppo `DEBUG` mostra tutto, in produzione `WARNING` lascia solo i problemi.', 'Arguments without dashes, such as `file`, are **positional** and required; those with `--` are optional **options**. `action="store_true"` creates a switch that is `True` if you write it and `False` if you do not, while `type=int` converts the text into a number and reports a wrong value by itself. With `logging` you choose the level at start-up: in development `DEBUG` shows everything, in production `WARNING` leaves only the problems.'),
         ], [
             Q('q1', L('Che cosa crea in automatico `argparse`?', 'What does `argparse` create automatically?'), [L('Un’interfaccia grafica', 'A graphical interface'), L('Il messaggio di aiuto --help', 'The --help message'), L('Un file di configurazione', 'A configuration file'), L('Un ambiente virtuale', 'A virtual environment')], 1, L('Con la descrizione di ogni argomento.', 'With the description of every argument.')),
             Q('q2', L('Che cosa fa `action="store_true"`?', 'What does `action="store_true"` do?'), [L('Rende obbligatorio l’argomento', 'Makes the argument required'), L('Salva l’argomento in un file', 'Saves the argument to a file'), L('L’opzione vale True se è presente, altrimenti False', 'The option is True if present, otherwise False'), L('Converte l’argomento in numero', 'Converts the argument to a number')], 2, L('È un interruttore senza valore.', 'It is a switch with no value.')),

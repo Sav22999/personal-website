@@ -1,6 +1,73 @@
 <?php
 /** React basics: components and JSX, props, state with useState, events and lists, immutable updates, lifting state up and refs. */
 
+/** A tree of components: App at the top, its children below, props flowing down the branches. */
+if (!function_exists('fig_reactbase_tree')) {
+    function fig_reactbase_tree(): string
+    {
+        return <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="rbta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="260" y="14" width="120" height="44" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<g fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"><rect x="70" y="94" width="150" height="44" rx="12"/><rect x="400" y="94" width="170" height="44" rx="12"/></g>
+<g fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"><rect x="300" y="174" width="90" height="44" rx="12"/><rect x="420" y="174" width="90" height="44" rx="12"/><rect x="540" y="174" width="90" height="44" rx="12"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="320" y="41" font-weight="700">App</text><text x="145" y="121">Intestazione</text><text x="485" y="121">ListaCorsi</text><text x="345" y="201">Corso</text><text x="465" y="201">Corso</text><text x="585" y="201">Corso</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#rbta)"><path d="M290 58C260 80 180 74 160 90"/><path d="M350 58C380 80 470 74 480 90"/><path d="M440 138C410 160 360 154 350 170"/><path d="M470 138V170"/><path d="M520 138C550 160 580 154 585 170"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5A35C8"><text x="196" y="74">utente</text><text x="420" y="74">corsi</text><text x="478" y="160">titolo</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The render cycle: an event calls set, React runs the component again and updates only what changed on screen. */
+if (!function_exists('fig_reactbase_cycle')) {
+    function fig_reactbase_cycle(string $l): string
+    {
+        $t = $l === 'it' ? ['1 · evento', '2 · nuovo stato', '3 · nuovo render', '4 · schermo aggiornato', 'React richiama', 'cambia solo il testo', 'il pulsante mostra 1'] : ['1 · event', '2 · new state', '3 · new render', '4 · screen updated', 'React calls', 'only the text changes', 'the button shows 1'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.rbc{opacity:0;animation:rbc 6s infinite}.rbc2{animation-delay:1.5s}.rbc3{animation-delay:3s}.rbc4{animation-delay:4.5s}@keyframes rbc{0%{opacity:0}4%{opacity:1}22%{opacity:1}26%{opacity:0}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.rbc{animation:none}}</style>
+<defs><marker id="rbca" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g stroke-width="2"><rect x="40" y="24" width="220" height="80" rx="12" fill="#FFF3EA" stroke="#E8590C"/><rect x="380" y="24" width="220" height="80" rx="12" fill="#ECE6FF" stroke="#7048E8"/><rect x="380" y="156" width="220" height="80" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="40" y="156" width="220" height="80" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g fill="none" stroke="#F03E82" stroke-width="4"><rect class="rbc" x="34" y="18" width="232" height="92" rx="15"/><rect class="rbc rbc2" x="374" y="18" width="232" height="92" rx="15"/><rect class="rbc rbc3" x="374" y="150" width="232" height="92" rx="15"/><rect class="rbc rbc4" x="34" y="150" width="232" height="92" rx="15"/></g>
+<g font-size="13" font-weight="700" fill="#5B5880"><text x="56" y="48">{$t[0]}</text><text x="396" y="48">{$t[1]}</text><text x="396" y="180">{$t[2]}</text><text x="56" y="180">{$t[3]}</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="56" y="80">onClick</text><text x="396" y="80">setConta(c =&gt; c + 1)</text><text x="396" y="222">Contatore()</text></g>
+<g font-size="13"><text x="396" y="202">{$t[4]}</text><text x="56" y="204">{$t[6]}</text><text x="56" y="222" fill="#5B5880">{$t[5]}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#rbca)"><path d="M260 64H376"/><path d="M490 104V152"/><path d="M380 196H264"/><path d="M150 156V108"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** Lifting state up: before, the state is stuck in Filtro and Elenco cannot see it; after, Rubrica owns it and passes it to both. */
+if (!function_exists('fig_reactbase_lift')) {
+    function fig_reactbase_lift(string $l): string
+    {
+        $t = $l === 'it' ? ['prima', 'dopo', 'non lo vede', 'una sola fonte di verità'] : ['before', 'after', 'cannot see it', 'a single source of truth'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="rbla" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="16"><text x="20" y="30">{$t[0]}</text><text x="300" y="30">{$t[1]}</text></g>
+<path d="M282 16V236" stroke="#E4E2F0" stroke-width="2"/>
+<rect x="70" y="46" width="160" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="20" y="150" width="116" height="66" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="152" y="150" width="116" height="66" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="150" y="71" text-anchor="middle">Rubrica</text><text x="32" y="174">Filtro</text><text x="32" y="200" font-weight="700" fill="#B84508">testo</text><text x="164" y="174">Elenco</text><text x="164" y="200" fill="#B0245A">?</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none"><path d="M120 86V146"/><path d="M190 86V146"/></g>
+<path d="M136 183H150" stroke="#F03E82" stroke-width="2" stroke-dasharray="3 3"/>
+<text x="210" y="236" text-anchor="middle" font-size="12" font-weight="700" fill="#B0245A">✗ {$t[2]}</text>
+<rect x="370" y="44" width="200" height="56" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="470" y="66" text-anchor="middle">Rubrica</text><text x="470" y="88" text-anchor="middle" font-weight="700" fill="#B84508">[testo, setTesto]</text></g>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"><rect x="300" y="160" width="140" height="56" rx="10"/><rect x="490" y="160" width="140" height="56" rx="10"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" text-anchor="middle"><text x="370" y="193">Filtro</text><text x="560" y="193">Elenco</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#rbla)"><path d="M400 100V156"/><path d="M340 156V100" stroke="#B84508"/><path d="M540 100V156"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12"><text x="406" y="132">testo</text><text x="270" y="132" fill="#B84508">onCambia</text><text x="546" y="132">testo</text></g>
+<text x="465" y="240" text-anchor="middle" font-size="13" font-weight="700" fill="#0B7F5C">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'react-base', 'family' => 'react', 'after' => 'js-base',
     'title' => L('React base', 'React Basics'), 'short' => L('React base', 'React Basics'), 'level' => L('Base', 'Basics'),
@@ -22,6 +89,9 @@ export default function App() {
   return <Saluto />;
 }', 'jsx'),
             P('Dentro le graffe `{}` metti qualsiasi espressione JavaScript. Differenze dall’HTML: `className` al posto di `class`, ogni tag va chiuso (`<img />`) e un componente restituisce **un solo** elemento radice (o un frammento `<>…</>`).', 'Inside braces `{}` you put any JavaScript expression. Differences from HTML: `className` instead of `class`, every tag must be closed (`<img />`) and a component returns **one** root element (or a fragment `<>…</>`).'),
+            Fig(fig_reactbase_tree(),
+                L('Albero di componenti: App in cima ha due figli, Intestazione, che riceve la prop utente, e ListaCorsi, che riceve corsi. ListaCorsi ha tre figli Corso, ognuno con la prop titolo.', 'A component tree: App at the top has two children, Intestazione, which receives the utente prop, and ListaCorsi, which receives corsi. ListaCorsi has three Corso children, each with the titolo prop.'),
+                L('Un’app React è un albero di componenti: i dati scendono lungo i rami come props.', 'A React app is a tree of components: data flows down the branches as props.')),
         ], [
             Q('c1', L('Come si scrive l’attributo class in JSX?', 'How do you write the class attribute in JSX?'), ['className', 'class', 'cssClass', 'styleClass'], 0, L('`class` è una parola riservata di JavaScript.', '`class` is a reserved JavaScript word.')),
             Q('c2', L('Con che lettera inizia il nome di un componente?', 'What letter does a component name start with?'), [L('Maiuscola', 'Capital'), L('Minuscola', 'Lowercase'), L('Un trattino', 'A dash'), L('Un numero', 'A number')], 0, L('Le minuscole sono tag HTML.', 'Lowercase are HTML tags.')),
@@ -64,6 +134,10 @@ function Contatore() {
   );
 }', 'jsx'),
             P('Gli eventi si scrivono in camelCase (`onClick`, `onChange`, `onSubmit`) e ricevono una **funzione**, non una chiamata: `onClick={salva}`, non `onClick={salva()}`. Non modificare mai lo stato direttamente: usa sempre la funzione `set…`.', 'Events are written in camelCase (`onClick`, `onChange`, `onSubmit`) and take a **function**, not a call: `onClick={salva}`, not `onClick={salva()}`. Never change state directly: always use the `set…` function.'),
+            P('Ogni volta che chiami la funzione `set…`, React esegue di nuovo il componente con il valore nuovo e aggiorna sullo schermo solo quello che è cambiato. Attenzione: il valore cambia al **prossimo** render. Subito dopo `setConta(conta + 1)`, nella stessa funzione `conta` vale ancora il numero vecchio. Ogni copia del componente ha il suo stato: due `<Contatore />` contano ognuno per conto suo.', 'Every time you call the `set…` function, React runs the component again with the new value and updates on screen only what has changed. Careful: the value changes at the **next** render. Right after `setConta(conta + 1)`, in the same function `conta` still holds the old number. Every copy of the component has its own state: two `<Contatore />` each count on their own.'),
+            Fig(L(fig_reactbase_cycle('it'), fig_reactbase_cycle('en')),
+                L('Un ciclo di quattro riquadri: l’evento onClick chiama setConta(c => c + 1), che crea il nuovo stato; React richiama Contatore() per un nuovo render; lo schermo si aggiorna e il pulsante mostra 1, cambiando solo il testo. Un’evidenziazione percorre i passi in ordine.', 'A cycle of four boxes: the onClick event calls setConta(c => c + 1), which creates the new state; React calls Contatore() again for a new render; the screen updates and the button shows 1, changing only the text. A highlight walks the steps in order.'),
+                L('Evento, nuovo stato, nuovo render, schermo aggiornato: e si ricomincia.', 'Event, new state, new render, updated screen: and round again.')),
         ], [
             Q('s1', L('Che cosa restituisce `useState(0)`?', 'What does `useState(0)` return?'), [L('Il valore e una funzione per cambiarlo', 'The value and a function to change it'), L('Solo il numero 0', 'Only the number 0'), L('Un componente', 'A component'), L('Una promessa', 'A promise')], 0, L('Una coppia: [valore, setValore].', 'A pair: [value, setValue].')),
             Q('s2', L('Che cosa succede quando lo stato cambia?', 'What happens when state changes?'), [L('React ridisegna il componente', 'React redraws the component'), L('La pagina si ricarica', 'The page reloads'), L('Niente', 'Nothing'), L('Si perde lo stato', 'State is lost')], 0, L('È il cuore di React.', 'It is the heart of React.')),
@@ -111,6 +185,7 @@ function Contatore() {
   );
 }', 'jsx'),
             P('Gli eventi in JSX si scrivono in **camelCase** (`onClick`, `onChange`, `onSubmit`) e ricevono una **funzione**, non una chiamata: `onClick={salva}`, non `onClick={salva()}`.', 'Events in JSX are written in **camelCase** (`onClick`, `onChange`, `onSubmit`) and receive a **function**, not a call: `onClick={salva}`, not `onClick={salva()}`.'),
+            P('Con un campo **non controllato** il valore resta nel DOM e lo leggi solo all’invio; con uno controllato React sa sempre cosa c’è scritto, quindi puoi validare a ogni tasto o disattivare il pulsante. Le caselle di spunta usano `checked` invece di `value`, e anche `<select>` e `<textarea>` prendono `value`. Un errore tipico è mettere `value` senza `onChange`: il campo diventa di sola lettura.', 'With an **uncontrolled** field the value stays in the DOM and you read it only on submit; with a controlled one React always knows what is written, so you can validate at every key or disable the button. Checkboxes use `checked` instead of `value`, and `<select>` and `<textarea>` take `value` too. A typical mistake is setting `value` without `onChange`: the field becomes read-only.'),
         ], [
             Q('fo1', L('Che cos’è un campo controllato?', 'What is a controlled field?'), [L('Un campo il cui valore viene dallo stato', 'A field whose value comes from state'), L('Un campo disabilitato', 'A disabled field'), L('Un campo con validazione HTML', 'A field with HTML validation'), L('Un campo nascosto', 'A hidden field')], 0, L('`value` più `onChange`.', '`value` plus `onChange`.')),
             Q('fo2', L('Perché `e.preventDefault()` nel submit?', 'Why `e.preventDefault()` in submit?'), [L('Per non ricaricare la pagina', 'So the page does not reload'), L('Per svuotare il form', 'To empty the form'), L('Per inviare due volte', 'To send twice'), L('Per bloccare React', 'To block React')], 0, L('Il comportamento normale del form ricarica.', 'The form’s default behaviour reloads.')),
@@ -149,6 +224,9 @@ function rinomina(nome) {
         ]),
         lesson('lift-state', L('Sollevare lo stato', 'Lifting state up'), [
             P('Quando due componenti devono mostrare lo **stesso dato**, lo stato non può stare in uno dei due: lo sposti nel loro **genitore comune**. Il genitore passa giù il valore con le props e, insieme, una funzione per cambiarlo.', 'When two components must show the **same data**, the state cannot live in one of them: you move it to their **common parent**. The parent passes the value down with props, together with a function to change it.'),
+            Fig(L(fig_reactbase_lift('it'), fig_reactbase_lift('en')),
+                L('Prima: lo stato testo sta dentro Filtro e il fratello Elenco non lo vede. Dopo: lo stato [testo, setTesto] sta nel padre Rubrica, che passa testo a Filtro e a Elenco, mentre Filtro risale con onCambia.', 'Before: the testo state lives inside Filtro and its sibling Elenco cannot see it. After: the [testo, setTesto] state lives in the parent Rubrica, which passes testo to Filtro and Elenco, while Filtro sends changes up with onCambia.'),
+                L('Lo stato sale al primo genitore comune, poi scende a chi ne ha bisogno.', 'The state moves up to the closest common parent, then flows down to whoever needs it.')),
             C('function Filtro({ testo, onCambia }) {
   return <input value={testo} onChange={e => onCambia(e.target.value)} />;
 }

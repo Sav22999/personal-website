@@ -1,6 +1,112 @@
 <?php
 /** Java basics: the main method, types, conditions and loops, arrays and methods, strings, numbers and input, the Arrays class, compact programs (Java 25). */
 
+/** From source to bytecode to the JVM of every operating system. */
+if (!function_exists('fig_javabase_jvm')) {
+    function fig_javabase_jvm(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="aj" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="86" width="140" height="64" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="86" y="114" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700">Ciao.java</text>
+<text x="86" y="136" text-anchor="middle" font-size="13" fill="#5B5880">{$t[0]}</text>
+<line x1="160" y1="118" x2="222" y2="118" stroke="#1E1C52" stroke-width="2" marker-end="url(#aj)"/>
+<text x="191" y="108" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">javac</text>
+<rect x="228" y="86" width="140" height="64" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="298" y="114" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700">Ciao.class</text>
+<text x="298" y="136" text-anchor="middle" font-size="13" fill="#5B5880">{$t[1]}</text>
+<g font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">
+<rect x="450" y="24" width="174" height="50" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="537" y="54">JVM · Windows</text>
+<rect x="450" y="93" width="174" height="50" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="537" y="123">JVM · macOS</text>
+<rect x="450" y="162" width="174" height="50" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="537" y="192">JVM · Linux</text>
+</g>
+<g fill="none" stroke="#1E1C52" stroke-width="2">
+<path d="M372 110 C410 100 410 50 444 49" marker-end="url(#aj)"/><path d="M372 118 L444 118" marker-end="url(#aj)"/><path d="M372 126 C410 136 410 186 444 187" marker-end="url(#aj)"/>
+</g>
+<text x="404" y="112" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">java</text>
+<text x="320" y="232" text-anchor="middle" fill="#5B5880">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A primitive holds its value; a reference points to an object. Two equal texts can be two objects. */
+if (!function_exists('fig_javabase_refs')) {
+    function fig_javabase_refs(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="110" y="26" text-anchor="middle" font-weight="700" fill="#5B33C9">{$t[0]}</text>
+<text x="450" y="26" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[1]}</text>
+<g font-family="ui-monospace, monospace" font-size="14">
+<text x="30" y="68">int anni</text><rect x="130" y="46" width="70" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="165" y="68" text-anchor="middle" font-weight="700">36</text>
+<text x="30" y="118">String a</text><rect x="130" y="96" width="70" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><circle cx="165" cy="113" r="5" fill="#1E1C52"/>
+<text x="30" y="168">String b</text><rect x="130" y="146" width="70" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><circle cx="165" cy="163" r="5" fill="#1E1C52"/>
+<rect x="380" y="86" width="140" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="450" y="111" text-anchor="middle">"Ada"</text>
+<rect x="380" y="146" width="140" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="450" y="171" text-anchor="middle">"Ada"</text>
+<text x="530" y="111" font-size="12" fill="#5B5880">#1</text><text x="530" y="171" font-size="12" fill="#5B5880">#2</text>
+</g>
+<line x1="170" y1="113" x2="374" y2="106" stroke="#1E1C52" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="170" y1="163" x2="374" y2="166" stroke="#1E1C52" stroke-width="2" marker-end="url(#ar)"/>
+<g font-family="ui-monospace, monospace" font-size="15">
+<rect x="60" y="206" width="230" height="38" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/><text x="175" y="231" text-anchor="middle">a == b  →  false</text>
+<rect x="350" y="206" width="230" height="38" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="465" y="231" text-anchor="middle">a.equals(b)  →  true</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** A call stack: each call puts a frame on top of main and takes it off when it returns. */
+if (!function_exists('fig_javabase_stack')) {
+    function fig_javabase_stack(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="160" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700">1. saluta("Ada")</text>
+<text x="480" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700">2. quadrato(4)</text>
+<rect x="60" y="100" width="200" height="50" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="76" y="122" font-weight="700">saluta</text><text x="76" y="142" font-size="13">nome = "Ada"</text>
+<rect x="60" y="156" width="200" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="76" y="186" font-weight="700">main</text>
+<rect x="380" y="100" width="200" height="50" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="396" y="122" font-weight="700">quadrato</text><text x="396" y="142" font-size="13">n = 4</text>
+<rect x="380" y="156" width="200" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="396" y="186" font-weight="700">main</text>
+<path d="M584 125 C604 125 604 181 588 181" fill="none" stroke="#0B7F5C" stroke-width="2" marker-end="url(#as)"/>
+<text x="610" y="158" font-weight="700" fill="#0B7F5C">16</text>
+<line x1="40" y1="212" x2="280" y2="212" stroke="#8A87B0" stroke-width="2"/><line x1="360" y1="212" x2="600" y2="212" stroke="#8A87B0" stroke-width="2"/>
+<text x="160" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#5B5880">{$t[0]}</text>
+<text x="480" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#5B5880">{$t[0]}</text>
+<text x="320" y="238" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#5B5880">{$t[1]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A 3 × 4 matrix: the first index picks the row, the second the column. */
+if (!function_exists('fig_javabase_grid')) {
+    function fig_javabase_grid(): string
+    {
+        $cells = '';
+        for ($r = 0; $r < 3; $r++) for ($c = 0; $c < 4; $c++) {
+            $x = 100 + $c * 60;
+            $y = 50 + $r * 50;
+            $hot = $r === 1 && $c === 2;
+            $cells .= "<rect x=\"$x\" y=\"$y\" width=\"56\" height=\"46\" rx=\"8\" fill=\"" . ($hot ? '#FFE8D6' : '#F1F0F8') . "\" stroke=\"" . ($hot ? '#E8590C' : '#C9C7DE') . "\" stroke-width=\"2\"/><text x=\"" . ($x + 28) . "\" y=\"" . ($y + 29) . "\" text-anchor=\"middle\"" . ($hot ? ' font-weight="700"' : ' fill="#8A87B0"') . ">" . ($hot ? 5 : 0) . "</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="ui-monospace, monospace" font-size="15" fill="#1E1C52">
+<g fill="#1B66BC" text-anchor="middle" font-size="13"><text x="128" y="38">0</text><text x="188" y="38">1</text><text x="248" y="38">2</text><text x="308" y="38">3</text></g>
+<g fill="#B84508" text-anchor="end" font-size="13"><text x="88" y="78">0</text><text x="88" y="128">1</text><text x="88" y="178">2</text></g>
+$cells
+<text x="390" y="104" fill="#B84508" font-weight="700">griglia[1][2] = 5</text>
+<text x="390" y="140" font-size="14">griglia.length    → 3</text>
+<text x="390" y="166" font-size="14">griglia[0].length → 4</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'java-base', 'family' => 'java', 'after' => null,
     'title' => L('Java base', 'Java Basics'), 'short' => L('Java base', 'Java Basics'), 'level' => L('Base', 'Basics'),
@@ -8,12 +114,20 @@ return [
     'lessons' => [
         lesson('main', L('Il primo programma', 'The first program'), [
             P('Ogni programma Java parte dal metodo `main` dentro una **classe**. `System.out.println` scrive una riga. Ogni istruzione finisce con il punto e virgola.', 'Every Java program starts from the `main` method inside a **class**. `System.out.println` writes a line. Every statement ends with a semicolon.'),
-            C('public class Ciao {
+            Fig(L(fig_javabase_jvm(['codice sorgente', 'bytecode', 'La stessa .class gira ovunque ci sia una JVM.']), fig_javabase_jvm(['source code', 'bytecode', 'The same .class runs wherever there is a JVM.'])),
+                L('Ciao.java, il codice sorgente, passa per javac e diventa Ciao.class, il bytecode. Con il comando java lo stesso file viene eseguito da tre JVM: su Windows, su macOS e su Linux.', 'Ciao.java, the source code, goes through javac and becomes Ciao.class, the bytecode. With the java command the same file is run by three JVMs: on Windows, on macOS and on Linux.'),
+                L('Si compila una volta, si esegue su qualsiasi sistema.', 'Compile once, run on any system.')),
+            C(L('public class Ciao {
     public static void main(String[] args) {
         System.out.println("Ciao, Java!");
     }
-}', 'java'),
+}', 'public class Ciao {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java!");
+    }
+}'), 'java', L('<pre>Ciao, Java!</pre>', '<pre>Hello, Java!</pre>')),
             P('Il file deve chiamarsi come la classe pubblica: `Ciao.java`. `javac Ciao.java` lo compila e `java Ciao` lo esegue; per un programma di un solo file basta `java Ciao.java`, che fa tutto in un colpo.', 'The file must be named like the public class: `Ciao.java`. `javac Ciao.java` compiles it and `java Ciao` runs it; for a single-file program `java Ciao.java` does both in one go.'),
+            P('`javac` non produce un programma per Windows o per Mac, ma **bytecode**: istruzioni per la **Java Virtual Machine**, che esiste per ogni sistema. Le parole intorno a `main` hanno tutte un ruolo: `public` lo rende visibile, `static` permette di chiamarlo senza creare oggetti, `void` dice che non restituisce nulla, `String[] args` riceve le parole scritte dopo il nome del programma. Java distingue maiuscole e minuscole: `system.out` non funziona.', '`javac` does not produce a program for Windows or Mac but **bytecode**: instructions for the **Java Virtual Machine**, which exists for every system. The words around `main` all have a role: `public` makes it visible, `static` lets it be called without creating objects, `void` says it returns nothing, `String[] args` receives the words written after the program name. Java is case-sensitive: `system.out` does not work.'),
         ], [
             Q('m1', L('Da quale metodo parte un programma?', 'Which method does a program start from?'), ['main', 'start', 'run', 'init'], 0, L('`public static void main(String[] args)`.', '`public static void main(String[] args)`.')),
             Q('m2', L('Come scrivi una riga sullo schermo?', 'How do you write a line to the screen?'), ['System.out.println()', 'print()', 'echo', 'console.log()'], 0, L('`println` va a capo.', '`println` adds a newline.')),
@@ -36,6 +150,11 @@ var citta = "Londra"; // String
 final int MAX = 10;   // costante
 System.out.println(nome + " ha " + anni + " anni");', 'java'),
             P('`final` impedisce di cambiare il valore. Le stringhe si confrontano con `equals`, non con `==`.', '`final` prevents changing the value. Strings are compared with `equals`, not `==`.'),
+            P('Perché `equals`? I tipi in minuscolo (`int`, `double`, `boolean`) sono **primitivi**: la variabile contiene direttamente il valore. `String` e tutte le classi sono **riferimenti**: la variabile contiene l’indirizzo di un oggetto. `==` confronta gli indirizzi, cioè chiede «è lo stesso oggetto?», mentre `equals` confronta il contenuto. Con le stringhe scritte tra virgolette Java a volte riusa lo stesso oggetto e `==` sembra funzionare: è proprio questo che rende l’errore insidioso.', 'Why `equals`? Lower-case types (`int`, `double`, `boolean`) are **primitives**: the variable holds the value directly. `String` and every class are **references**: the variable holds the address of an object. `==` compares addresses, that is it asks “is it the same object?”, while `equals` compares the content. With strings written between quotes Java sometimes reuses the same object and `==` seems to work: that is exactly what makes the mistake sneaky.'),
+            Fig(L(fig_javabase_refs(['Variabili', 'Oggetti']), fig_javabase_refs(['Variables', 'Objects'])),
+                L('A sinistra tre variabili: int anni contiene 36, String a e String b contengono un riferimento. Le frecce portano a due oggetti diversi, #1 e #2, entrambi con il testo "Ada". Sotto: a == b dà false, a.equals(b) dà true.', 'On the left three variables: int anni holds 36, String a and String b hold a reference. The arrows lead to two different objects, #1 and #2, both with the text "Ada". Below: a == b gives false, a.equals(b) gives true.'),
+                L('`==` chiede se è lo stesso oggetto, `equals` se il contenuto è uguale.', '`==` asks whether it is the same object, `equals` whether the content is equal.')),
+            Tip('Per i soldi non usare `double`: `0.1 + 0.2` fa `0.30000000000000004`. Usa `BigDecimal`, oppure conta in centesimi con un `long`.', 'Do not use `double` for money: `0.1 + 0.2` gives `0.30000000000000004`. Use `BigDecimal`, or count in cents with a `long`.'),
         ], [
             Q('t1', L('Quale tipo per un prezzo con decimali?', 'Which type for a price with decimals?'), ['double', 'int', 'boolean', 'char'], 0, L('`int` tiene solo interi.', '`int` holds only whole numbers.')),
             Q('t2', L('Come confronti due stringhe?', 'How do you compare two strings?'), ['a.equals(b)', 'a == b', 'a === b', 'compare(a, b)'], 0, L('`==` confronta i riferimenti.', '`==` compares references.')),
@@ -47,7 +166,7 @@ String corso = "Java";'), [
         ]),
         lesson('control', L('Condizioni e cicli', 'Conditions and loops'), [
             P('`if`/`else` sceglie, `switch` confronta un valore con molti casi, `for` e `while` ripetono. I blocchi stanno tra graffe.', '`if`/`else` chooses, `switch` compares one value with many cases, `for` and `while` repeat. Blocks sit between braces.'),
-            C('for (int i = 1; i <= 3; i++) {
+            C(L('for (int i = 1; i <= 3; i++) {
     System.out.println("Giro " + i);
 }
 
@@ -55,8 +174,21 @@ String giudizio = switch (voto) {
     case 10, 9 -> "Ottimo";
     case 8, 7, 6 -> "Promosso";
     default -> "Da ripassare";
-};', 'java'),
+};', 'for (int i = 1; i <= 3; i++) {
+    System.out.println("Round " + i);
+}
+
+String giudizio = switch (voto) {
+    case 10, 9 -> "Excellent";
+    case 8, 7, 6 -> "Passed";
+    default -> "Revise";
+};'), 'java', L('<pre>Giro 1
+Giro 2
+Giro 3</pre>', '<pre>Round 1
+Round 2
+Round 3</pre>')),
             P('Lo `switch` con la freccia `->` restituisce un valore e non ha bisogno di `break`.', 'The arrow `->` switch returns a value and needs no `break`.'),
+            P('Il `for` ha tre parti separate da punto e virgola: da dove parti (`int i = 1`), fino a quando continui (`i <= 3`) e che cosa cambia a ogni giro (`i++`). `while` controlla la condizione prima di ogni giro, `do { … } while (…)` dopo, quindi gira almeno una volta. Le condizioni si combinano con `&&` (e), `||` (o) e `!` (non). Nel vecchio `switch` con i due punti, invece, senza `break` l’esecuzione «cade» nel caso successivo: un errore classico che la freccia elimina.', 'The `for` has three parts separated by semicolons: where you start (`int i = 1`), how long you keep going (`i <= 3`) and what changes each round (`i++`). `while` checks the condition before every round, `do { … } while (…)` after, so it runs at least once. Conditions combine with `&&` (and), `||` (or) and `!` (not). In the old colon `switch`, instead, without `break` execution “falls through” into the next case: a classic mistake that the arrow removes.'),
         ], [
             Q('c1', L('Quante volte gira `for (int i = 0; i < 3; i++)`?', 'How many times does `for (int i = 0; i < 3; i++)` run?'), ['3', '2', '4', '0'], 0, L('i = 0, 1, 2.', 'i = 0, 1, 2.')),
             Q('c2', L('Lo `switch` con `->` ha bisogno di `break`?', 'Does the `->` switch need `break`?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo nell’ultimo caso', 'Only in the last case'), L('Solo con le stringhe', 'Only with strings')], 0, L('Ogni caso è separato.', 'Each case is separate.')),
@@ -79,6 +211,7 @@ for (String n : nomi) {
     System.out.println(n);
 }', 'java'),
             P('Tra le parentesi angolari va il tipo degli elementi: `List<String>`. Gli indici partono da 0.', 'The type of the items goes between angle brackets: `List<String>`. Indexes start from 0.'),
+            P('Leggere `voti[3]` in un array di tre elementi lancia `ArrayIndexOutOfBoundsException`: l’ultimo indice è sempre `length - 1`. Una lista ha `size()` invece di `length`, e metodi come `get(i)`, `remove(i)` e `contains(x)`. Tra le parentesi angolari ci vanno solo classi, non primitivi: per una lista di interi si scrive `List<Integer>`, e Java converte da solo tra `int` e `Integer`. `List.of("a", "b")` crea invece una lista che non si può modificare.', 'Reading `voti[3]` in a three-item array throws `ArrayIndexOutOfBoundsException`: the last index is always `length - 1`. A list has `size()` instead of `length`, and methods such as `get(i)`, `remove(i)` and `contains(x)`. Only classes go between the angle brackets, not primitives: for a list of integers you write `List<Integer>`, and Java converts between `int` and `Integer` by itself. `List.of("a", "b")`, instead, creates a list that cannot be changed.'),
         ], [
             Q('a1', L('Come aggiungi a un `ArrayList`?', 'How do you add to an `ArrayList`?'), ['add()', 'push()', 'append()', 'insert()'], 0, L('E `get(i)` per leggere.', 'And `get(i)` to read.')),
             Q('a2', L('Come leggi la lunghezza di un array?', 'How do you read an array’s length?'), ['voti.length', 'voti.size()', 'len(voti)', 'voti.count'], 0, L('Per le liste è `size()`.', 'For lists it is `size()`.')),
@@ -90,7 +223,7 @@ corsi.add("Java");'), [
         ]),
         lesson('methods', L('Metodi', 'Methods'), [
             P('Un **metodo** è un blocco di codice con nome, parametri tipizzati e un tipo di ritorno (`void` se non restituisce nulla). I metodi `static` si chiamano dalla classe, senza creare oggetti.', 'A **method** is a named block of code with typed parameters and a return type (`void` if it returns nothing). `static` methods are called on the class, without creating objects.'),
-            C('public class Calcoli {
+            C(L('public class Calcoli {
     static int quadrato(int n) {
         return n * n;
     }
@@ -103,8 +236,27 @@ corsi.add("Java");'), [
         saluta("Ada");
         System.out.println(quadrato(4));
     }
-}', 'java'),
+}', 'public class Calcoli {
+    static int quadrato(int n) {
+        return n * n;
+    }
+
+    static void saluta(String nome) {
+        System.out.println("Hello " + nome);
+    }
+
+    public static void main(String[] args) {
+        saluta("Ada");
+        System.out.println(quadrato(4));
+    }
+}'), 'java', L('<pre>Ciao Ada
+16</pre>', '<pre>Hello Ada
+16</pre>')),
             P('Due metodi possono avere lo stesso nome con parametri diversi: è l’**overloading**.', 'Two methods can share a name with different parameters: it is **overloading**.'),
+            P('Ogni chiamata mette un nuovo blocco sulla **pila delle chiamate**, con i suoi parametri e le sue variabili; `return` lo toglie e consegna il risultato a chi ha chiamato. Java passa gli argomenti **per valore**: il metodo riceve una copia, quindi cambiare `n` dentro `quadrato` non cambia la variabile di chi l’ha chiamato. Il tipo del `return` deve corrispondere a quello dichiarato, e un metodo non `void` deve restituire qualcosa su ogni strada.', 'Every call puts a new block on the **call stack**, with its parameters and variables; `return` removes it and hands the result to the caller. Java passes arguments **by value**: the method gets a copy, so changing `n` inside `quadrato` does not change the caller’s variable. The type in `return` must match the declared one, and a non-`void` method must return something on every path.'),
+            Fig(L(fig_javabase_stack(['pila delle chiamate', 'Ogni chiamata si appoggia sopra main; return la toglie e consegna il risultato.']), fig_javabase_stack(['call stack', 'Each call sits on top of main; return removes it and hands back the result.'])),
+                L('Due istantanee della pila. Nella prima, sopra main c’è saluta con nome = "Ada". Nella seconda, sopra main c’è quadrato con n = 4, e una freccia verde riporta 16 a main.', 'Two snapshots of the stack. In the first, saluta with nome = "Ada" sits on top of main. In the second, quadrato with n = 4 sits on top of main, and a green arrow brings 16 back to main.'),
+                L('Il metodo in cima è quello che sta lavorando adesso.', 'The method on top is the one working right now.')),
         ], [
             Q('f1', L('Che tipo di ritorno ha un metodo che non restituisce nulla?', 'What return type does a method returning nothing have?'), ['void', 'null', 'empty', 'none'], 0, L('Niente `return` di un valore.', 'No `return` of a value.')),
             Q('f2', L('Che cos’è l’overloading?', 'What is overloading?'), [L('Stesso nome, parametri diversi', 'Same name, different parameters'), L('Un errore di memoria', 'A memory error'), L('Un metodo troppo lungo', 'A method that is too long'), L('Un ciclo infinito', 'An endless loop')], 0, L('Il compilatore sceglie quello giusto.', 'The compiler picks the right one.')),
@@ -190,8 +342,14 @@ int[][] griglia = new int[3][4];             // 3 righe, 4 colonne
 griglia[1][2] = 5;
 for (int[] riga : griglia) {
     System.out.println(Arrays.toString(riga));
-}', 'java'),
+}', 'java', '<pre>[5, 7, 8, 9]
+[0, 0, 0, 0]
+[0, 0, 5, 0]
+[0, 0, 0, 0]</pre>'),
             P('Stampare un array con `println` mostra solo un codice strano come `[I@1b6d3586`: usa `Arrays.toString`. In un nuovo array di numeri ogni elemento vale `0`, in uno di oggetti vale `null`.', 'Printing an array with `println` shows only an odd code such as `[I@1b6d3586`: use `Arrays.toString`. In a new array of numbers every item is `0`, in one of objects it is `null`.'),
+            Fig(fig_javabase_grid(),
+                L('Una griglia di 3 righe e 4 colonne piena di zeri, con gli indici delle colonne da 0 a 3 in alto e quelli delle righe da 0 a 2 a sinistra. La cella alla riga 1, colonna 2 vale 5 ed è evidenziata. A fianco: griglia.length vale 3, griglia[0].length vale 4.', 'A grid of 3 rows and 4 columns full of zeros, with column indexes 0 to 3 at the top and row indexes 0 to 2 on the left. The cell at row 1, column 2 holds 5 and is highlighted. Beside it: griglia.length is 3, griglia[0].length is 4.'),
+                L('Prima la riga, poi la colonna.', 'Row first, then column.')),
         ], [
             Q('ar1', L('Che cosa stampa `Arrays.toString(new int[]{3, 1})`?', 'What does `Arrays.toString(new int[]{3, 1})` print?'), ['[3, 1]', '[1, 3]', '{3, 1}', '31'], 0, L('`toString` non ordina: mostra gli elementi così come sono.', '`toString` does not sort: it shows the items as they are.')),
             Q('ar2', L('In `new int[3][4]`, quante colonne ha ogni riga?', 'In `new int[3][4]`, how many columns does each row have?'), ['3', '12', '4', '7'], 2, L('Il primo numero conta le righe, il secondo le colonne.', 'The first number counts rows, the second columns.')),

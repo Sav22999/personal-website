@@ -1,6 +1,100 @@
 <?php
 /** TypeScript: JavaScript with types, from basics to discriminated unions, computed types and today's tooling. */
 
+/** From TypeScript to running code: tsc checks the types and flags errors, then the types are erased and plain JavaScript runs. */
+if (!function_exists('fig_ts_compile')) {
+    function fig_ts_compile(string $l): string
+    {
+        $t = $l === 'it' ? ['controlla i tipi', 'tipi cancellati', 'esegue solo JS', 'errore prima di eseguire'] : ['checks the types', 'types erased', 'runs plain JS', 'error before running'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tsca" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="30" width="124" height="104" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="176" y="30" width="124" height="104" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="340" y="30" width="124" height="104" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="504" y="30" width="124" height="104" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, monospace"><text x="74" y="58">app.ts</text><text x="238" y="58">tsc</text><text x="402" y="58">app.js</text></g>
+<text x="566" y="58" text-anchor="middle" font-weight="700" font-size="14">browser · Node</text>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12"><text x="74" y="92">let n: number</text><text x="74" y="110">= 3;</text><text x="402" y="92">let n</text><text x="402" y="110">= 3;</text></g>
+<g text-anchor="middle" font-size="13" fill="#5B5880"><text x="238" y="100">{$t[0]}</text><text x="402" y="156">{$t[1]}</text><text x="566" y="100">{$t[2]}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#tsca)"><path d="M136 82H172"/><path d="M300 82H336"/><path d="M464 82H500"/><path d="M238 134V164"/></g>
+<rect x="138" y="168" width="200" height="40" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="238" y="186" text-anchor="middle" font-size="12" font-weight="700" fill="#B0245A">✗ {$t[3]}</text>
+<text x="238" y="202" text-anchor="middle" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#B0245A">n = "tanti"</text>
+</svg>
+SVG;
+    }
+}
+
+/** Narrowing: a typeof check splits a union, and in each branch the type is precise. */
+if (!function_exists('fig_ts_narrow')) {
+    function fig_ts_narrow(string $l): string
+    {
+        $t = $l === 'it' ? ['vero', 'altrimenti', 'qui x è', 'il controllo restringe il tipo'] : ['true', 'otherwise', 'here x is', 'the check narrows the type'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tsna" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="84" width="170" height="56" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="97" y="117" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12">x: string | string[]</text>
+<rect x="214" y="84" width="196" height="56" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="312" y="117" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">typeof x === "string"</text>
+<rect x="450" y="20" width="178" height="74" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="450" y="132" width="178" height="74" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-size="13" fill="#5B5880"><text x="464" y="44">{$t[2]}</text><text x="464" y="156">{$t[2]}</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-weight="700"><text x="464" y="68" fill="#1B66BC">string</text><text x="464" y="180" fill="#0B7F5C">string[]</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5B5880"><text x="464" y="86">x.toUpperCase()</text><text x="464" y="198">x.join(", ")</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#tsna)"><path d="M182 112H210"/><path d="M410 102C430 102 430 58 446 58"/><path d="M410 122C430 122 430 168 446 168"/></g>
+<g font-size="13" font-weight="700"><text x="398" y="60" text-anchor="end" fill="#1B66BC">{$t[0]}</text><text x="398" y="176" text-anchor="end" fill="#0B7F5C">{$t[1]}</text></g>
+<text x="12" y="210" font-size="13" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A generic type parameter filled in at each call: the same function gives number for numbers and string for strings. */
+if (!function_exists('fig_ts_generic')) {
+    function fig_ts_generic(string $l): string
+    {
+        $t = $l === 'it' ? ['chiamata', 'T dedotto', 'risultato'] : ['call', 'T inferred', 'result'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tsga" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="120" y="14" width="400" height="44" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="320" y="42" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="15">function primo&lt;<tspan fill="#7048E8" font-weight="700">T</tspan>&gt;(lista: <tspan fill="#7048E8" font-weight="700">T</tspan>[]): <tspan fill="#7048E8" font-weight="700">T</tspan></text>
+<g text-anchor="middle" font-size="13" font-weight="700" fill="#5B5880"><text x="110" y="88">{$t[0]}</text><text x="330" y="88">{$t[1]}</text><text x="540" y="88">{$t[2]}</text></g>
+<g stroke-width="2"><rect x="20" y="100" width="180" height="44" rx="10" fill="#FFFFFF" stroke="#8A87B0"/><rect x="20" y="164" width="180" height="44" rx="10" fill="#FFFFFF" stroke="#8A87B0"/>
+<rect x="250" y="100" width="160" height="44" rx="10" fill="#ECE6FF" stroke="#7048E8"/><rect x="250" y="164" width="160" height="44" rx="10" fill="#ECE6FF" stroke="#7048E8"/>
+<rect x="460" y="100" width="160" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="460" y="164" width="160" height="44" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="110" y="127">primo([1, 2])</text><text x="110" y="191">primo(["x"])</text><text x="330" y="127">T = number</text><text x="330" y="191">T = string</text><text x="540" y="127" font-weight="700">number</text><text x="540" y="191" font-weight="700">string</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#tsga)"><path d="M200 122H246"/><path d="M200 186H246"/><path d="M410 122H456"/><path d="M410 186H456"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** Computing types: typeof takes the type of a value, keyof turns its keys into a union. */
+if (!function_exists('fig_ts_keyof')) {
+    function fig_ts_keyof(string $l): string
+    {
+        $t = $l === 'it' ? ['valore', 'tipo', 'unione delle chiavi'] : ['value', 'type', 'union of the keys'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tska" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g text-anchor="middle" font-size="13" font-weight="700" fill="#5B5880"><text x="100" y="40">{$t[0]}</text><text x="320" y="40">{$t[1]}</text><text x="540" y="40">{$t[2]}</text></g>
+<rect x="12" y="52" width="176" height="96" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="232" y="52" width="176" height="96" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="452" y="72" width="176" height="56" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="24" y="76" font-weight="700">tema</text><text x="24" y="102"><tspan fill="#1B66BC" font-weight="700">chiaro</tspan>: "#ffffff"</text><text x="24" y="124"><tspan fill="#1B66BC" font-weight="700">scuro</tspan>: "#111111"</text>
+<text x="244" y="76" font-weight="700">typeof tema</text><text x="244" y="102"><tspan fill="#1B66BC" font-weight="700">chiaro</tspan>: "#ffffff"</text><text x="244" y="124"><tspan fill="#1B66BC" font-weight="700">scuro</tspan>: "#111111"</text>
+<text x="540" y="105" text-anchor="middle" font-weight="700" fill="#1B66BC">"chiaro" | "scuro"</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#tska)"><path d="M188 100H228"/><path d="M408 100H448"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700" fill="#5A35C8"><text x="208" y="180">typeof</text><text x="428" y="180">keyof</text></g>
+<g stroke="#8A87B0" stroke-width="1.5" stroke-dasharray="3 3"><path d="M208 108V164"/><path d="M428 108V164"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ts', 'family' => 'ts', 'after' => 'js-intermediate',
     'title' => L('TypeScript', 'TypeScript'), 'short' => L('TypeScript', 'TypeScript'), 'level' => L('Intermedio', 'Intermediate'),
@@ -16,6 +110,9 @@ let voti: number[] = [7, 8];
 punti = "tanti"; // Errore: non è un number
 let vite = 3;    // tipo dedotto: number', 'ts'),
             P('Spesso il tipo non serve scriverlo: TypeScript lo **deduce** dal valore. `any` spegne i controlli: evitalo.', 'Often you need not write the type: TypeScript **infers** it from the value. `any` switches checks off: avoid it.'),
+            Fig(L(fig_ts_compile('it'), fig_ts_compile('en')),
+                L('Quattro riquadri in fila: app.ts con let n: number = 3, il compilatore tsc che controlla i tipi, app.js con let n = 3 senza tipi, il browser o Node che esegue JavaScript. Sotto tsc un riquadro rosa segnala l’errore n = "tanti" prima dell’esecuzione.', 'Four boxes in a row: app.ts with let n: number = 3, the tsc compiler checking the types, app.js with let n = 3 and no types, the browser or Node running JavaScript. Below tsc a pink box flags the error n = "tanti" before running.'),
+                L('I tipi esistono solo prima dell’esecuzione: servono a trovare gli errori, poi spariscono.', 'Types exist only before running: they help find mistakes, then they disappear.')),
         ], [
             Q('t1', L('Quando TypeScript trova gli errori?', 'When does TypeScript find errors?'), [L('Prima di eseguire', 'Before running'), L('Solo in produzione', 'Only in production'), L('Mai', 'Never'), L('Dopo il deploy', 'After deploying')], 0, L('È il suo grande vantaggio.', 'That is its big advantage.')),
             Q('t2', L('Il browser esegue TypeScript?', 'Does the browser run TypeScript?'), [L('No, viene compilato', 'No, it is compiled'), L('Sì, sempre', 'Yes, always'), L('Solo Chrome', 'Only Chrome'), L('Solo in `<head>`', 'Only in `<head>`')], 0, L('Il risultato è JavaScript normale. Anche Node, quando avvia un `.ts`, toglie solo i tipi.', 'The result is plain JavaScript. Node too, when it starts a `.ts`, only strips the types.')),
@@ -35,6 +132,7 @@ function saluta(nome: string, titolo?: string): string {
 }
 const log = (testo: string): void => console.log(testo);', 'ts'),
             P('Il tipo del risultato si può dedurre, ma scriverlo è una buona abitudine: è un piccolo contratto.', 'The result type can be inferred, but writing it is a good habit: it is a small contract.'),
+            P('Il vantaggio si vede a ogni chiamata: `somma(2, "3")` o `somma(2)` vengono segnalati subito, prima che arrivino agli utenti. I parametri facoltativi vanno sempre **dopo** quelli obbligatori. Anche una funzione passata come argomento ha un tipo: `(n: number) => string` descrive una funzione che riceve un numero e restituisce una stringa, utile per le callback.', 'The benefit shows at every call: `somma(2, "3")` or `somma(2)` are flagged at once, before they reach users. Optional parameters always go **after** the required ones. A function passed as an argument has a type too: `(n: number) => string` describes a function that takes a number and gives back a string, handy for callbacks.'),
         ], [
             Q('f1', L('Dove si scrive il tipo del risultato?', 'Where does the result type go?'), [L('Dopo le parentesi', 'After the brackets'), L('Prima del nome', 'Before the name'), L('Dentro le graffe', 'Inside the braces'), L('Nel `return`', 'In the `return`')], 0, L('`function f(): number`.', '`function f(): number`.')),
             Q('f2', L('Che cosa significa `titolo?: string`?', 'What does `titolo?: string` mean?'), [L('È facoltativo', 'It is optional'), L('È un dubbio', 'It is a doubt'), L('È privato', 'It is private'), L('È un errore', 'It is an error')], 0, L('Può essere `undefined`.', 'It may be `undefined`.')),
@@ -57,6 +155,7 @@ interface Admin extends Utente {
   ruolo: string;
 }', 'ts'),
             P('Se manca una proprietà obbligatoria o ne scrivi una sbagliata, l’errore appare subito, e l’editor completa i nomi per te.', 'If a required property is missing or you write a wrong one, the error appears at once, and the editor completes the names for you.'),
+            P('`interface` o `type`? Per descrivere oggetti vanno bene entrambi; l’`interface` si estende con `extends`, mentre `type` serve anche per unioni e altri tipi composti. TypeScript guarda la **forma**, non il nome: qualsiasi oggetto con `id` e `nome` del tipo giusto va bene come `Utente`, senza dichiararlo. Si chiama tipizzazione strutturale.', '`interface` or `type`? Both work to describe objects; an `interface` is extended with `extends`, while `type` also works for unions and other combined types. TypeScript looks at the **shape**, not the name: any object with an `id` and a `nome` of the right type is fine as a `Utente`, with no need to declare it. This is called structural typing.'),
         ], [
             Q('i1', L('Che cosa descrive un’interfaccia?', 'What does an interface describe?'), [L('La forma di un oggetto', 'The shape of an object'), L('Una pagina', 'A page'), L('Un colore', 'A colour'), L('Un ciclo', 'A loop')], 0, L('Quali chiavi ha e di che tipo.', 'Which keys it has and of what type.')),
             Q('i2', L('Che cosa fa `readonly`?', 'What does `readonly` do?'), [L('Impedisce di riassegnare', 'Prevents reassigning'), L('Nasconde', 'Hides'), L('Cancella', 'Deletes'), L('Copia', 'Copies')], 0, L('Il controllo avviene in compilazione.', 'The check happens at compile time.')),
@@ -77,7 +176,11 @@ function lunghezza(x: string | string[]): number {
   return x.length;    // qui x è string[]
 }
 let nome: string | null = null;', 'ts'),
+            Fig(L(fig_ts_narrow('it'), fig_ts_narrow('en')),
+                L('Il valore x di tipo string | string[] passa per il controllo typeof x === "string". Se è vero, nel ramo x è string e si può usare toUpperCase; altrimenti x è string[] e si può usare join.', 'The value x of type string | string[] goes through the check typeof x === "string". If it is true, in that branch x is string and toUpperCase can be used; otherwise x is string[] and join can be used.'),
+                L('Dopo il controllo TypeScript sa quale dei due tipi hai in mano.', 'After the check TypeScript knows which of the two types you are holding.')),
             P('Con `strictNullChecks` un valore che può essere `null` va controllato prima dell’uso: sparisce il classico errore «cannot read property of null».', 'With `strictNullChecks` a value that may be `null` must be checked before use: the classic “cannot read property of null” error disappears.'),
+            Tip('Un’unione di valori come `Stato` è meglio di un semplice `string`: un errore di battitura come `"fato"` viene segnalato e l’editor ti propone le scelte possibili.', 'A union of values like `Stato` is better than a plain `string`: a typo like `"fato"` is flagged and the editor suggests the possible choices.'),
         ], [
             Q('u1', L('Che cosa significa `string | number`?', 'What does `string | number` mean?'), [L('Uno dei due', 'Either one'), L('Entrambi insieme', 'Both together'), L('Nessuno', 'Neither'), L('Un array', 'An array')], 0, L('La barra è «oppure».', 'The bar is “or”.')),
             Q('u2', L('Che cosa accetta `"a" | "b"`?', 'What does `"a" | "b"` accept?'), [L('Solo quei due testi', 'Only those two texts'), L('Ogni stringa', 'Any string'), L('Numeri', 'Numbers'), L('Niente', 'Nothing')], 0, L('Perfetto per stati e opzioni.', 'Perfect for states and options.')),
@@ -88,6 +191,10 @@ let nome: string | null = null;', 'ts'),
         ]),
         lesson('generics', L('Generici', 'Generics'), [
             P('Un **generico** è un tipo che fa da parametro: la stessa funzione lavora con tipi diversi senza perdere la precisione. Di solito si chiama `T`.', 'A **generic** is a type acting as a parameter: the same function works with different types without losing precision. It is usually called `T`.'),
+            P('Perché non usare `any`? Con `any` la funzione accetta tutto ma restituisce `any`, e il controllo si perde. `T` invece **lega** ingresso e uscita: se passi una lista di numeri, TypeScript sa che otterrai un numero. Di solito non scrivi `T`: viene dedotto dagli argomenti. Con `<T extends { id: number }>` accetti solo tipi che abbiano almeno un `id`.', 'Why not use `any`? With `any` the function accepts everything but gives back `any`, and the checking is lost. `T` instead **links** input and output: if you pass a list of numbers, TypeScript knows you will get a number. You usually do not write `T`: it is inferred from the arguments. With `<T extends { id: number }>` you accept only types that have at least an `id`.'),
+            Fig(L(fig_ts_generic('it'), fig_ts_generic('en')),
+                L('In alto la firma function primo<T>(lista: T[]): T. Sotto due chiamate: primo([1, 2]) fa dedurre T = number e restituisce number; primo(["x"]) fa dedurre T = string e restituisce string.', 'At the top the signature function primo<T>(lista: T[]): T. Below two calls: primo([1, 2]) makes T = number and gives back number; primo(["x"]) makes T = string and gives back string.'),
+                L('`T` è un segnaposto: ogni chiamata lo riempie con un tipo vero.', '`T` is a placeholder: every call fills it with a real type.')),
             C('function primo<T>(lista: T[]): T | undefined {
   return lista[0];
 }
@@ -163,6 +270,9 @@ function area(f: Forma): number {
         ]),
         lesson('type-ops', L('keyof, typeof e satisfies', 'keyof, typeof and satisfies'), [
             P('TypeScript può **calcolare** tipi da altri tipi. `keyof T` dà l’unione dei nomi delle chiavi, `typeof valore` ricava il tipo da una variabile, `T["chiave"]` legge il tipo di una proprietà.', 'TypeScript can **compute** types from other types. `keyof T` gives the union of the key names, `typeof value` derives the type from a variable, `T["key"]` reads the type of a property.'),
+            Fig(L(fig_ts_keyof('it'), fig_ts_keyof('en')),
+                L('Tre riquadri: il valore tema con chiaro e scuro; con typeof diventa un tipo con le stesse chiavi; con keyof diventa l’unione "chiaro" | "scuro".', 'Three boxes: the value tema with chiaro and scuro; with typeof it becomes a type with the same keys; with keyof it becomes the union "chiaro" | "scuro".'),
+                L('`typeof` passa dal valore al tipo, `keyof` dal tipo ai nomi delle sue chiavi.', '`typeof` goes from the value to the type, `keyof` from the type to the names of its keys.')),
             C('const tema = {
   chiaro: "#ffffff",
   scuro: "#111111",

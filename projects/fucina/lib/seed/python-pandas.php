@@ -1,6 +1,178 @@
 <?php
 /** Data analysis with pandas: DataFrames, loading and exploring, selecting and filtering, cleaning, grouping and joining, charts, time series, new columns, pivots and big data. */
 
+/** The anatomy of a DataFrame: index, column names, one row, one column as a Series. */
+if (!function_exists('fig_pd_df')) {
+    function fig_pd_df(array $t): string
+    {
+        $rows = [['0', '2026-01-03', 'Nord', '120.0'], ['1', '2026-01-05', 'Sud', '80.5'], ['2', '2026-01-09', 'Nord', '230.0'], ['3', '2026-01-12', 'Centro', '45.0']];
+        $cells = '';
+        foreach ($rows as $r => $row) {
+            $y = 72 + $r * 32;
+            $fill = $r === 2 ? '#FFF3EA' : '#FFFFFF';
+            $cells .= "<rect x=\"190\" y=\"$y\" width=\"310\" height=\"32\" fill=\"$fill\"/>"
+                . "<text x=\"170\" y=\"" . ($y + 21) . "\" text-anchor=\"middle\" fill=\"#5B5880\">{$row[0]}</text>"
+                . "<text x=\"200\" y=\"" . ($y + 21) . "\">{$row[1]}</text><text x=\"318\" y=\"" . ($y + 21) . "\">{$row[2]}</text>"
+                . "<text x=\"492\" y=\"" . ($y + 21) . "\" text-anchor=\"end\">{$row[3]}</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="150" y="40" width="40" height="160" fill="#F1F0F8"/>
+<rect x="190" y="40" width="310" height="32" fill="#ECE6FF"/>
+<g font-family="ui-monospace, monospace" font-size="14">
+<text x="200" y="61" font-weight="700">data</text><text x="318" y="61" font-weight="700">regione</text><text x="492" y="61" text-anchor="end" font-weight="700">importo</text>
+$cells
+</g>
+<rect x="150" y="40" width="350" height="160" rx="6" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<line x1="190" y1="40" x2="190" y2="200" stroke="#8A87B0" stroke-width="2"/>
+<line x1="150" y1="72" x2="500" y2="72" stroke="#8A87B0" stroke-width="2"/>
+<rect x="414" y="36" width="90" height="168" rx="8" fill="none" stroke="#2F8CF0" stroke-width="3"/>
+<rect x="146" y="136" width="358" height="32" rx="6" fill="none" stroke="#E8590C" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="16" y="124" font-weight="700" fill="#5B5880">{$t[0]}</text>
+<line x1="80" y1="130" x2="144" y2="130" stroke="#1E1C52" stroke-width="2" marker-end="url(#ad)"/>
+<text x="300" y="22" text-anchor="middle" font-weight="700" fill="#5B33C9">{$t[1]}</text>
+<text x="530" y="60" font-weight="700" fill="#1B66BC" font-family="ui-monospace, monospace">Series</text>
+<line x1="528" y1="66" x2="510" y2="80" stroke="#2F8CF0" stroke-width="2"/>
+<text x="530" y="158" font-weight="700" fill="#B84508">{$t[2]}</text>
+<text x="325" y="230" text-anchor="middle" font-family="ui-monospace, monospace">shape = (4, 3)</text>
+</svg>
+SVG;
+    }
+}
+
+/** A boolean mask: the comparison gives True or False per row, and only True rows are kept. */
+if (!function_exists('fig_pd_mask')) {
+    function fig_pd_mask(array $t): string
+    {
+        $vals = [['0', '120.0', true], ['1', '80.5', false], ['2', '230.0', true], ['3', '45.0', false]];
+        $cells = '';
+        foreach ($vals as $r => [$i, $v, $ok]) {
+            $y = 64 + $r * 34;
+            $cells .= "<text x=\"34\" y=\"" . ($y + 22) . "\" fill=\"#5B5880\">$i</text>"
+                . "<rect x=\"56\" y=\"$y\" width=\"100\" height=\"30\" rx=\"6\" fill=\"#FFFFFF\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"146\" y=\"" . ($y + 21) . "\" text-anchor=\"end\">$v</text>"
+                . "<rect x=\"250\" y=\"$y\" width=\"100\" height=\"30\" rx=\"6\" fill=\"" . ($ok ? '#D5F6EA' : '#FFE3EE') . "\" stroke=\"" . ($ok ? '#0B7F5C' : '#F03E82') . "\" stroke-width=\"2\"/><text x=\"300\" y=\"" . ($y + 21) . "\" text-anchor=\"middle\" fill=\"" . ($ok ? '#0B7F5C' : '#B8255F') . "\">" . ($ok ? 'True' : 'False') . "</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="106" y="44" text-anchor="middle" font-weight="700">importo</text>
+<text x="300" y="44" text-anchor="middle" font-weight="700">&gt; 100</text>
+<text x="530" y="44" text-anchor="middle" font-weight="700">vendite[{$t[0]}]</text>
+$cells
+<line x1="164" y1="130" x2="240" y2="130" stroke="#1E1C52" stroke-width="2" marker-end="url(#am)"/>
+<line x1="360" y1="130" x2="436" y2="130" stroke="#1E1C52" stroke-width="2" marker-end="url(#am)"/>
+<text x="434" y="108" fill="#5B5880">0</text>
+<rect x="456" y="86" width="150" height="34" rx="6" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="596" y="109" text-anchor="end">120.0</text>
+<text x="434" y="152" fill="#5B5880">2</text>
+<rect x="456" y="130" width="150" height="34" rx="6" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="596" y="153" text-anchor="end">230.0</text>
+<text x="320" y="224" text-anchor="middle" font-family="system-ui, sans-serif" fill="#5B5880">{$t[1]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** groupby as split, apply, combine. */
+if (!function_exists('fig_pd_group')) {
+    function fig_pd_group(array $t): string
+    {
+        $c = ['Nord' => ['#DCEBFF', '#2F8CF0'], 'Sud' => ['#FFE8D6', '#E8590C'], 'Centro' => ['#D5F6EA', '#0B7F5C']];
+        $rows = '';
+        foreach ([['Nord', 120], ['Sud', 80], ['Nord', 230], ['Centro', 45], ['Sud', 60]] as $i => [$r, $v]) {
+            $y = 58 + $i * 32;
+            $rows .= "<rect x=\"16\" y=\"$y\" width=\"180\" height=\"28\" rx=\"6\" fill=\"{$c[$r][0]}\" stroke=\"{$c[$r][1]}\" stroke-width=\"2\"/><text x=\"26\" y=\"" . ($y + 19) . "\">$r</text><text x=\"186\" y=\"" . ($y + 19) . "\" text-anchor=\"end\">$v</text>";
+        }
+        $groups = '';
+        $sums = '';
+        foreach ([['Nord', '120 230', 350], ['Sud', '80 60', 140], ['Centro', '45', 45]] as $i => [$r, $vs, $s]) {
+            $y = 52 + $i * 56;
+            $groups .= "<rect x=\"244\" y=\"$y\" width=\"170\" height=\"44\" rx=\"10\" fill=\"{$c[$r][0]}\" stroke=\"{$c[$r][1]}\" stroke-width=\"2\"/><text x=\"254\" y=\"" . ($y + 27) . "\" font-weight=\"700\">$r</text><text x=\"404\" y=\"" . ($y + 27) . "\" text-anchor=\"end\">$vs</text>";
+            $sums .= "<rect x=\"476\" y=\"" . ($y + 8) . "\" width=\"148\" height=\"28\" rx=\"6\" fill=\"{$c[$r][0]}\" stroke=\"{$c[$r][1]}\" stroke-width=\"2\"/><text x=\"486\" y=\"" . ($y + 27) . "\">$r</text><text x=\"614\" y=\"" . ($y + 27) . "\" text-anchor=\"end\" font-weight=\"700\">$s</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-family="system-ui, sans-serif" font-weight="700" text-anchor="middle" font-size="15">
+<text x="106" y="34">vendite</text><text x="329" y="34">1. {$t[0]}</text><text x="550" y="34">3. {$t[2]}</text>
+</g>
+$rows
+$groups
+$sums
+<line x1="200" y1="130" x2="236" y2="130" stroke="#1E1C52" stroke-width="2" marker-end="url(#ag)"/>
+<line x1="418" y1="130" x2="468" y2="130" stroke="#1E1C52" stroke-width="2" marker-end="url(#ag)"/>
+<text x="443" y="120" text-anchor="middle" font-size="13">sum</text>
+<text x="443" y="150" text-anchor="middle" font-size="12" font-family="system-ui, sans-serif" fill="#5B5880">2. {$t[1]}</text>
+<text x="320" y="238" text-anchor="middle" font-family="system-ui, sans-serif" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Four weeks of daily sales as bars, with the 7-day rolling mean drawn over them. */
+if (!function_exists('fig_pd_rolling')) {
+    function fig_pd_rolling(): string
+    {
+        $v = [];
+        for ($i = 0; $i < 28; $i++) $v[] = 40 + 18 * sin($i / 2.2) + (($i * 37) % 23) + $i * 1.4;
+        $bars = '';
+        $pts = [];
+        foreach ($v as $i => $x) {
+            $bx = 60 + $i * 19;
+            $h = $x * 1.55;
+            $bars .= '<rect x="' . $bx . '" y="' . round(210 - $h, 1) . '" width="14" height="' . round($h, 1) . '" rx="3" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="1"/>';
+            if ($i >= 6) $pts[] = ($bx + 7) . ',' . round(210 - array_sum(array_slice($v, $i - 6, 7)) / 7 * 1.55, 1);
+        }
+        $line = implode(' ', $pts);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<line x1="50" y1="210" x2="600" y2="210" stroke="#8A87B0" stroke-width="2"/>
+$bars
+<polyline points="$line" fill="none" stroke="#E8590C" stroke-width="3" stroke-linejoin="round"/>
+<rect x="60" y="20" width="16" height="12" rx="3" fill="#DCEBFF" stroke="#2F8CF0"/><text x="84" y="31">vendite</text>
+<line x1="190" y1="26" x2="214" y2="26" stroke="#E8590C" stroke-width="3"/><text x="222" y="31">media7 = rolling(7).mean()</text>
+<g font-size="12" fill="#5B5880"><text x="60" y="230">1</text><text x="181" y="230">7</text><text x="313" y="230">14</text><text x="446" y="230">21</text><text x="573" y="230">28</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** pivot_table turns a long table into a wide one; melt goes back. */
+if (!function_exists('fig_pd_pivot')) {
+    function fig_pd_pivot(): string
+    {
+        $long = '';
+        foreach ([['Nord', 2025, 300], ['Nord', 2026, 350], ['Sud', 2025, 120], ['Sud', 2026, 140], ['Centro', 2025, 90], ['Centro', 2026, 100]] as $i => [$r, $a, $v]) {
+            $y = 66 + $i * 26;
+            $fill = $a === 2025 ? '#DCEBFF' : '#FFE8D6';
+            $long .= "<rect x=\"16\" y=\"$y\" width=\"230\" height=\"26\" fill=\"#FFFFFF\"/><text x=\"26\" y=\"" . ($y + 18) . "\">$r</text><rect x=\"110\" y=\"" . ($y + 3) . "\" width=\"52\" height=\"20\" rx=\"5\" fill=\"$fill\"/><text x=\"136\" y=\"" . ($y + 18) . "\" text-anchor=\"middle\">$a</text><text x=\"236\" y=\"" . ($y + 18) . "\" text-anchor=\"end\">$v</text>";
+        }
+        $wide = '';
+        foreach ([['Nord', 300, 350], ['Sud', 120, 140], ['Centro', 90, 100]] as $i => [$r, $a, $b]) {
+            $y = 92 + $i * 30;
+            $wide .= "<text x=\"404\" y=\"" . ($y + 20) . "\">$r</text><text x=\"538\" y=\"" . ($y + 20) . "\" text-anchor=\"end\">$a</text><text x=\"610\" y=\"" . ($y + 20) . "\" text-anchor=\"end\">$b</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="40" width="230" height="26" fill="#ECE6FF"/>
+<text x="26" y="58" font-weight="700">regione</text><text x="136" y="58" text-anchor="middle" font-weight="700">anno</text><text x="236" y="58" text-anchor="end" font-weight="700">importo</text>
+$long
+<rect x="16" y="40" width="230" height="182" rx="6" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<rect x="394" y="62" width="230" height="30" fill="#ECE6FF"/>
+<text x="404" y="82" font-weight="700">regione</text>
+<rect x="484" y="66" width="60" height="22" rx="5" fill="#DCEBFF"/><text x="538" y="82" text-anchor="end" font-weight="700">2025</text>
+<rect x="556" y="66" width="60" height="22" rx="5" fill="#FFE8D6"/><text x="610" y="82" text-anchor="end" font-weight="700">2026</text>
+$wide
+<rect x="394" y="62" width="230" height="120" rx="6" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<line x1="258" y1="100" x2="384" y2="100" stroke="#1E1C52" stroke-width="2" marker-end="url(#ap)"/>
+<text x="320" y="90" text-anchor="middle" font-size="13" fill="#5B33C9">pivot_table</text>
+<line x1="384" y1="160" x2="258" y2="160" stroke="#1E1C52" stroke-width="2" marker-end="url(#ap)"/>
+<text x="320" y="182" text-anchor="middle" font-size="13" fill="#0B7F5C">melt</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'python-pandas', 'family' => 'python', 'after' => 'python-base', 'categories' => ['data'],
     'title' => L('Analisi dati con pandas', 'Data Analysis with pandas'), 'short' => L('pandas', 'pandas'), 'level' => L('Intermedio', 'Intermediate'),
@@ -8,14 +180,24 @@ return [
     'lessons' => [
         lesson('dataframe', L('DataFrame ed esplorazione', 'DataFrames and exploration'), [
             P('**pandas** è la libreria Python per le tabelle di dati. Un **DataFrame** è una tabella con righe e colonne con nome; ogni colonna è una **Series**. Si carica spesso da CSV, Excel o database.', '**pandas** is the Python library for data tables. A **DataFrame** is a table with named rows and columns; each column is a **Series**. It is often loaded from CSV, Excel or databases.'),
+            Fig(L(fig_pd_df(['indice', 'nomi delle colonne', 'una riga']), fig_pd_df(['index', 'column names', 'a row'])),
+                L('Una tabella di quattro righe e tre colonne: data, regione e importo. A sinistra la colonna grigia dell’indice con 0, 1, 2 e 3; in alto i nomi delle colonne; la colonna importo è contornata in blu ed etichettata Series; la riga 2 è tratteggiata in arancione. Sotto: shape = (4, 3).', 'A table of four rows and three columns: data, regione and importo. On the left the grey index column with 0, 1, 2 and 3; at the top the column names; the importo column is outlined in blue and labelled Series; row 2 is dashed in orange. Below: shape = (4, 3).'),
+                L('L’indice dà un’etichetta a ogni riga; ogni colonna è una Series.', 'The index labels every row; every column is a Series.')),
             C('import pandas as pd
 
 vendite = pd.read_csv("vendite.csv", parse_dates=["data"])
 print(vendite.shape)        # (righe, colonne)
 print(vendite.head())       # prime 5 righe
 vendite.info()              # tipi e valori mancanti
-print(vendite.describe())   # statistiche delle colonne numeriche', 'python'),
+print(vendite.describe())   # statistiche delle colonne numeriche', 'python', '<style>table{border-collapse:collapse;font:14px system-ui}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:right}th{background:#F1F0F8}</style>
+<pre>(4, 3)</pre>
+<table><tr><th></th><th>data</th><th>regione</th><th>importo</th></tr>
+<tr><th>0</th><td>2026-01-03</td><td>Nord</td><td>120.0</td></tr>
+<tr><th>1</th><td>2026-01-05</td><td>Sud</td><td>80.5</td></tr>
+<tr><th>2</th><td>2026-01-09</td><td>Nord</td><td>230.0</td></tr>
+<tr><th>3</th><td>2026-01-12</td><td>Centro</td><td>45.0</td></tr></table>'),
             P('`head`, `info` e `describe` sono i primi tre comandi da lanciare su un dataset nuovo: ti dicono forma, tipi, valori mancanti e ordini di grandezza.', '`head`, `info` and `describe` are the first three commands to run on a new dataset: they tell you shape, types, missing values and orders of magnitude.'),
+            P('L’**indice** è l’etichetta delle righe: se non dici altro vale 0, 1, 2… ma può essere anche una data o un codice cliente. Ogni colonna ha un solo tipo (`df.dtypes` li elenca): `int64`, `float64`, `datetime64`, `str` per il testo. Se una colonna di numeri risulta di tipo testo, quasi sempre c’è un valore sporco dentro. Nota che `shape` è un attributo e si scrive senza parentesi, mentre `head()` è un metodo.', 'The **index** is the label of the rows: unless you say otherwise it is 0, 1, 2… but it can also be a date or a customer code. Each column has a single type (`df.dtypes` lists them): `int64`, `float64`, `datetime64`, `str` for text. If a column of numbers turns out to be text, there is almost always a dirty value in it. Note that `shape` is an attribute and is written without brackets, while `head()` is a method.'),
         ], [
             Q('d1', L('Che cos’è un DataFrame?', 'What is a DataFrame?'), [L('Una tabella con righe e colonne con nome', 'A table with named rows and columns'), L('Un grafico', 'A chart'), L('Un database remoto', 'A remote database'), L('Un tipo di file', 'A file type')], 0, L('Ogni colonna è una Series.', 'Each column is a Series.')),
             Q('d2', L('Che cosa mostra `df.info()`?', 'What does `df.info()` show?'), [L('Tipi delle colonne e valori mancanti', 'Column types and missing values'), L('Il grafico dei dati', 'The data chart'), L('Solo la prima riga', 'Only the first row'), L('La media', 'The mean')], 0, L('`describe` dà le statistiche.', '`describe` gives the statistics.')),
@@ -26,6 +208,9 @@ print(vendite.describe())   # statistiche delle colonne numeriche', 'python'),
         ]),
         lesson('select', L('Selezionare e filtrare', 'Selecting and filtering'), [
             P('Una colonna si prende con `df["colonna"]`, più colonne con una lista `df[["a", "b"]]`. Per filtrare le righe si usa una **maschera booleana**; più condizioni si combinano con `&` (e) e `|` (o), ognuna tra parentesi.', 'A column is taken with `df["column"]`, several with a list `df[["a", "b"]]`. To filter rows you use a **boolean mask**; several conditions combine with `&` (and) and `|` (or), each in parentheses.'),
+            Fig(L(fig_pd_mask(['maschera', 'Il confronto dà una colonna di True e False; restano solo le righe True.']), fig_pd_mask(['mask', 'The comparison gives a column of True and False; only the True rows stay.'])),
+                L('A sinistra la colonna importo con 120.0, 80.5, 230.0 e 45.0. Al centro il risultato di > 100: True, False, True, False. A destra restano le righe 0 e 2, con 120.0 e 230.0.', 'On the left the importo column with 120.0, 80.5, 230.0 and 45.0. In the middle the result of > 100: True, False, True, False. On the right rows 0 and 2 remain, with 120.0 and 230.0.'),
+                L('Una maschera booleana sceglie le righe da tenere.', 'A boolean mask picks the rows to keep.')),
             C('grandi = vendite[vendite["importo"] > 100]
 nord = vendite[(vendite["regione"] == "Nord") & (vendite["importo"] > 100)]
 alcune = vendite[vendite["citta"].isin(["Udine", "Trieste"])]
@@ -33,6 +218,7 @@ alcune = vendite[vendite["citta"].isin(["Udine", "Trieste"])]
 vendite.loc[vendite["importo"] > 100, ["cliente", "importo"]]   # righe e colonne per etichetta
 vendite.sort_values("importo", ascending=False).head(5)', 'python'),
             P('`loc` seleziona per etichette (righe e colonne insieme), `iloc` per posizione. Con pandas non si usano `and`/`or` di Python sulle colonne: danno errore.', '`loc` selects by labels (rows and columns together), `iloc` by position. In pandas you do not use Python’s `and`/`or` on columns: they raise an error.'),
+            P('`vendite["importo"] > 100` non è un solo `True` o `False`: è una Series lunga quanto la tabella, un valore per riga. Mettendola tra le quadre, pandas tiene le righe dove c’è `True`. Puoi anche salvarla in una variabile, `grandi = vendite["importo"] > 100`, e riusarla o negarla con `~grandi`. Le parentesi intorno a ogni condizione servono perché `&` e `|` hanno la precedenza sui confronti.', '`vendite["importo"] > 100` is not a single `True` or `False`: it is a Series as long as the table, one value per row. Putting it inside the square brackets, pandas keeps the rows where it finds `True`. You can also store it in a variable, `grandi = vendite["importo"] > 100`, and reuse it or negate it with `~grandi`. The brackets around each condition are needed because `&` and `|` take precedence over comparisons.'),
         ], [
             Q('s1', L('Come combini due condizioni con “e”?', 'How do you combine two conditions with “and”?'), [L('Con & e ogni condizione tra parentesi', 'With & and each condition in parentheses'), L('Con and', 'With and'), L('Con +', 'With +'), L('Con ,', 'With ,')], 0, L('`and` dà errore sulle Series.', '`and` errors on Series.')),
             Q('s2', L('Che cosa fa `isin([...])`?', 'What does `isin([...])` do?'), [L('Controlla se il valore è in un elenco', 'Checks whether the value is in a list'), L('Ordina', 'Sorts'), L('Conta', 'Counts'), L('Cancella', 'Deletes')], 0, L('Come IN in SQL.', 'Like IN in SQL.')),
@@ -51,6 +237,7 @@ df["citta"] = df["citta"].str.strip().str.title()   # " udine " → "Udine"
 df["importo"] = pd.to_numeric(df["importo"], errors="coerce")
 df = df.rename(columns={"tel": "telefono"})', 'python'),
             P('`errors="coerce"` trasforma in `NaN` i valori che non sono numeri, così puoi trovarli. Le operazioni restituiscono un nuovo DataFrame: ricordati di riassegnarlo.', '`errors="coerce"` turns non-numeric values into `NaN`, so you can find them. Operations return a new DataFrame: remember to reassign it.'),
+            P('Prima di correggere, guarda: `df["citta"].value_counts()` mostra subito se «Udine», « udine» e «UDINE» sono finite come tre città diverse. Riempire o cancellare dipende dal significato: un’età mancante si può stimare con la mediana (che, a differenza della media, non si lascia trascinare dai valori estremi), un’email mancante no. Dopo `to_numeric`, controlla quante righe sono diventate `NaN`: potrebbero essere molte più di quante pensi.', 'Before fixing, look: `df["citta"].value_counts()` shows straight away whether “Udine”, “ udine” and “UDINE” ended up as three different cities. Filling or dropping depends on the meaning: a missing age can be estimated with the median (which, unlike the mean, is not dragged around by extreme values), a missing email cannot. After `to_numeric`, check how many rows turned into `NaN`: there could be many more than you think.'),
         ], [
             Q('c1', L('Come conti i valori mancanti per colonna?', 'How do you count missing values per column?'), ['df.isna().sum()', 'df.count()', 'df.missing()', 'df.null()'], 0, L('True conta come 1.', 'True counts as 1.')),
             Q('c2', L('Che cosa fa `fillna(df["eta"].median())`?', 'What does `fillna(df["eta"].median())` do?'), [L('Riempie i mancanti con la mediana', 'Fills missing with the median'), L('Cancella le righe', 'Deletes rows'), L('Ordina per età', 'Sorts by age'), L('Calcola la media', 'Computes the mean')], 0, L('Un’imputazione semplice.', 'A simple imputation.')),
@@ -61,14 +248,23 @@ df = df.rename(columns={"tel": "telefono"})', 'python'),
         ]),
         lesson('group', L('Raggruppare, unire, disegnare', 'Grouping, joining, plotting'), [
             P('**`groupby`** divide i dati in gruppi e calcola qualcosa per ciascuno, come `GROUP BY` in SQL. **`merge`** unisce due tabelle su una colonna comune, come una `JOIN`. Con `.plot()` ottieni un grafico veloce (con matplotlib installato).', '**`groupby`** splits data into groups and computes something for each, like `GROUP BY` in SQL. **`merge`** joins two tables on a common column, like a `JOIN`. With `.plot()` you get a quick chart (with matplotlib installed).'),
+            Fig(L(fig_pd_group(['dividi', 'applica', 'combina', 'Una riga per gruppo nel risultato, con la somma di ciascuno.']), fig_pd_group(['split', 'apply', 'combine', 'One row per group in the result, with the sum of each.'])),
+                L('A sinistra cinque righe di vendite: Nord 120, Sud 80, Nord 230, Centro 45, Sud 60. Al centro sono divise in tre gruppi: Nord con 120 e 230, Sud con 80 e 60, Centro con 45. A destra, dopo sum, il risultato: Nord 350, Sud 140, Centro 45.', 'On the left five sales rows: Nord 120, Sud 80, Nord 230, Centro 45, Sud 60. In the middle they are split into three groups: Nord with 120 and 230, Sud with 80 and 60, Centro with 45. On the right, after sum, the result: Nord 350, Sud 140, Centro 45.'),
+                L('`groupby` divide, applica una funzione a ogni gruppo e ricompone.', '`groupby` splits, applies a function to each group and puts it back together.')),
             C('per_regione = vendite.groupby("regione")["importo"].agg(["sum", "mean", "count"])
 print(per_regione.sort_values("sum", ascending=False))
 
 completo = vendite.merge(clienti, on="cliente_id", how="left")
 
 mensili = vendite.groupby(vendite["data"].dt.to_period("M"))["importo"].sum()
-mensili.plot(kind="bar", title="Vendite mensili")', 'python'),
+mensili.plot(kind="bar", title="Vendite mensili")', 'python', '<style>table{border-collapse:collapse;font:14px system-ui}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:right}th{background:#F1F0F8}</style>
+<table><tr><th></th><th>sum</th><th>mean</th><th>count</th></tr>
+<tr><th>regione</th><td></td><td></td><td></td></tr>
+<tr><th>Nord</th><td>350.0</td><td>175.0</td><td>2</td></tr>
+<tr><th>Sud</th><td>140.0</td><td>70.0</td><td>2</td></tr>
+<tr><th>Centro</th><td>45.0</td><td>45.0</td><td>1</td></tr></table>'),
             P('`how="left"` tiene tutte le righe della tabella di sinistra anche senza corrispondenza, come una `LEFT JOIN`. `.dt` dà accesso alle parti delle date (anno, mese, giorno della settimana).', '`how="left"` keeps all left-table rows even without a match, like a `LEFT JOIN`. `.dt` gives access to date parts (year, month, weekday).'),
+            P('Il risultato di un `groupby` ha i gruppi come **indice**: se ti servono come colonna normale, per esportare o unire, aggiungi `.reset_index()` (oppure `as_index=False`). Con `merge` attenzione ai doppioni: se un `cliente_id` compare due volte nella tabella dei clienti, ogni vendita di quel cliente si sdoppia e i totali risultano gonfiati. `validate="many_to_one"` fa fallire subito l’unione in quel caso.', 'The result of a `groupby` has the groups as its **index**: if you need them as an ordinary column, to export or join, add `.reset_index()` (or `as_index=False`). With `merge` watch out for duplicates: if a `cliente_id` appears twice in the customer table, every sale of that customer is doubled and the totals come out inflated. `validate="many_to_one"` makes the join fail straight away in that case.'),
         ], [
             Q('g1', L('A che cosa corrisponde `groupby` in SQL?', 'What does `groupby` correspond to in SQL?'), ['GROUP BY', 'ORDER BY', 'WHERE', 'JOIN'], 0, L('Con funzioni di aggregazione.', 'With aggregate functions.')),
             Q('g2', L('Che cosa fa `merge(..., how="left")`?', 'What does `merge(..., how="left")` do?'), [L('Tiene tutte le righe di sinistra', 'Keeps all left rows'), L('Tiene solo le corrispondenze', 'Keeps only matches'), L('Cancella la tabella destra', 'Deletes the right table'), L('Ordina', 'Sorts')], 0, L('Come una LEFT JOIN.', 'Like a LEFT JOIN.')),
@@ -79,6 +275,9 @@ mensili.plot(kind="bar", title="Vendite mensili")', 'python'),
         ]),
         lesson('time', L('Date, serie temporali ed esportazione', 'Dates, time series and export'), [
             P('Le date lette da un CSV sono testo: `pd.to_datetime()` le converte. Con la colonna data come indice, `resample("ME")` raggruppa per mese (ME = fine mese; il vecchio alias `"M"` non è più accettato da pandas 3.0) e `rolling(7).mean()` calcola una media mobile su 7 righe.', 'Dates read from a CSV are text: `pd.to_datetime()` converts them. With the date column as index, `resample("ME")` groups by month (ME = month end; the old `"M"` alias is no longer accepted since pandas 3.0) and `rolling(7).mean()` computes a 7-row moving average.'),
+            Fig(fig_pd_rolling(),
+                L('Grafico a barre di 28 giorni di vendite, che salgono e scendono molto da un giorno all’altro. Sopra, una linea arancione media7 parte dal settimo giorno ed è molto più regolare.', 'Bar chart of 28 days of sales, going up and down a lot from one day to the next. Over it, an orange media7 line starts on the seventh day and is much smoother.'),
+                L('La media mobile spiana gli sbalzi e mostra la tendenza.', 'The rolling mean smooths the jumps and shows the trend.')),
             C('df["data"] = pd.to_datetime(df["data"])
 df = df.set_index("data")
 mensile = df["vendite"].resample("ME").sum()
@@ -122,6 +321,9 @@ df["anno"] = df["data"].___.year', ['*', 'where', 'dt'], ['x', 'if', 'date'], L(
         ]),
         lesson('pivot', L('Tabelle pivot e forma dei dati', 'Pivot tables and data shape'), [
             P('Una **pivot** porta i valori di una colonna in intestazione: una riga per regione, una colonna per anno, le somme nelle celle, come in Excel. `melt` fa il contrario: da tabella larga a lunga, il formato preferito da molte librerie di grafici. `concat` impila tabelle con le stesse colonne.', 'A **pivot** moves a column’s values into the header: one row per region, one column per year, sums in the cells, just like Excel. `melt` does the opposite: from wide to long, the format many charting libraries prefer. `concat` stacks tables with the same columns.'),
+            Fig(fig_pd_pivot(),
+                L('A sinistra una tabella lunga con le colonne regione, anno e importo e sei righe, due per regione. Una freccia pivot_table porta a destra a una tabella larga con una riga per regione e le colonne 2025 e 2026; una freccia melt torna indietro.', 'On the left a long table with the columns regione, anno and importo and six rows, two per region. A pivot_table arrow leads right to a wide table with one row per region and the columns 2025 and 2026; a melt arrow goes back.'),
+                L('Stessi dati, due forme: lunga per i grafici, larga per leggere.', 'Same data, two shapes: long for charts, wide for reading.')),
             C('pivot = vendite.pivot_table(
     index="regione", columns="anno", values="importo",
     aggfunc="sum", fill_value=0,
@@ -130,7 +332,12 @@ df["anno"] = df["data"].___.year', ['*', 'where', 'dt'], ['x', 'if', 'date'], L(
 lungo = pivot.reset_index().melt(id_vars="regione", var_name="anno", value_name="importo")
 
 pd.crosstab(vendite["regione"], vendite["canale"])      # conteggi incrociati
-tutto = pd.concat([gennaio, febbraio], ignore_index=True)', 'python'),
+tutto = pd.concat([gennaio, febbraio], ignore_index=True)', 'python', '<style>table{border-collapse:collapse;font:14px system-ui}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:right}th{background:#F1F0F8}</style>
+<table><tr><th>anno</th><th>2025</th><th>2026</th></tr>
+<tr><th>regione</th><td></td><td></td></tr>
+<tr><th>Centro</th><td>90</td><td>100</td></tr>
+<tr><th>Nord</th><td>300</td><td>350</td></tr>
+<tr><th>Sud</th><td>120</td><td>140</td></tr></table>'),
             P('In `pivot_table` l’aggregazione predefinita è la **media**: per i totali scrivi `aggfunc="sum"`. `fill_value` riempie le combinazioni che non esistono.', 'In `pivot_table` the default aggregation is the **mean**: for totals write `aggfunc="sum"`. `fill_value` fills the combinations that do not exist.'),
         ], [
             Q('pv1', L('Che cosa produce `pivot_table(index="regione", columns="anno", values="importo", aggfunc="sum")`?', 'What does `pivot_table(index="regione", columns="anno", values="importo", aggfunc="sum")` produce?'), [L('Una riga per regione, una colonna per anno, somme nelle celle', 'One row per region, one column per year, sums in the cells'), L('Una riga per anno con la media delle regioni', 'One row per year with the regions’ mean'), L('Le vendite ordinate per regione e anno', 'Sales sorted by region and year'), L('La tabella senza le regioni vuote', 'The table without empty regions')], 0, L('Come una tabella pivot di Excel.', 'Like an Excel pivot table.')),

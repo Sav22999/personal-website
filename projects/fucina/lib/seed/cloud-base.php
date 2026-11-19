@@ -2,6 +2,115 @@
 /** Cloud basics: IaaS, PaaS, SaaS and serverless, the main services, regions and availability, costs and shared responsibility,
  *  infrastructure as code, networks (VPC, firewall, CDN, DNS), identities and permissions (IAM), scaling and backups. */
 
+/** Who manages each layer in IaaS, PaaS, serverless and SaaS: you or the provider. */
+if (!function_exists('fig_cloud_models')) {
+    function fig_cloud_models(array $rows, string $you, string $prov): string
+    {
+        $mine = [4, 2, 2, 1]; // how many layers from the top you manage, per model
+        $cells = '';
+        foreach (['IaaS', 'PaaS', 'Serverless', 'SaaS'] as $c => $m) {
+            $x = 206 + $c * 106; $cx = $x + 50;
+            $cells .= "<text x=\"$cx\" y=\"38\" text-anchor=\"middle\" font-weight=\"700\">$m</text>";
+            foreach ($rows as $r => $label) {
+                $y = 52 + $r * 38; $ty = $y + 21; $own = $r < $mine[$c];
+                $cells .= $own
+                    ? "<rect x=\"$x\" y=\"$y\" width=\"100\" height=\"32\" rx=\"8\" fill=\"#FFE8D6\" stroke=\"#E8590C\" stroke-width=\"2\"/><text x=\"$cx\" y=\"$ty\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#B84508\">$you</text>"
+                    : "<rect x=\"$x\" y=\"$y\" width=\"100\" height=\"32\" rx=\"8\" fill=\"url(#h)\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"$ty\" text-anchor=\"middle\" font-size=\"13\" fill=\"#4A4870\">$prov</text>";
+            }
+        }
+        $labels = '';
+        foreach ($rows as $r => $label) $labels .= '<text x="190" y="' . (73 + $r * 38) . '" text-anchor="end">' . $label . '</text>';
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><pattern id="h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#F1F0F8"/><line x1="0" y1="0" x2="0" y2="8" stroke="#E2E0EE" stroke-width="4"/></pattern></defs>
+{$labels}
+{$cells}
+</svg>
+SVG;
+    }
+}
+
+/** A region with three availability zones behind a load balancer; now and then zone B goes down and the other two carry on. */
+if (!function_exists('fig_cloud_zones')) {
+    function fig_cloud_zones(array $t): string
+    {
+        $zones = '';
+        foreach (['A', 'B', 'C'] as $i => $z) {
+            $x = 36 + $i * 196; $cx = $x + 88;
+            $zones .= "<path d=\"M320,92 C320,108 $cx,104 $cx,120\" fill=\"none\" stroke=\"#1E1C52\" stroke-width=\"2\"/>"
+                    . "<rect x=\"$x\" y=\"120\" width=\"176\" height=\"126\" rx=\"12\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"146\" text-anchor=\"middle\" font-weight=\"700\">{$t[1]} $z</text>"
+                    . "<rect x=\"" . ($x + 16) . "\" y=\"160\" width=\"66\" height=\"34\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($x + 49) . "\" y=\"182\" text-anchor=\"middle\" font-size=\"13\">app</text>"
+                    . "<rect x=\"" . ($x + 94) . "\" y=\"160\" width=\"66\" height=\"34\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($x + 127) . "\" y=\"182\" text-anchor=\"middle\" font-size=\"13\">app</text>"
+                    . "<text x=\"$cx\" y=\"226\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 276" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.down{opacity:0;animation:down 8s infinite}@keyframes down{0%,35%{opacity:0}42%,80%{opacity:1}88%,100%{opacity:0}}@media (prefers-reduced-motion:reduce){.down{animation:none}}</style>
+<rect x="16" y="14" width="608" height="250" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="34" y="42" font-weight="700">{$t[0]}</text>
+<rect x="230" y="56" width="180" height="36" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="320" y="79" text-anchor="middle" font-weight="700">load balancer</text>
+{$zones}
+<g class="down"><rect x="232" y="120" width="176" height="126" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="320" y="176" text-anchor="middle" font-weight="700" fill="#B0205A">{$t[1]} B</text><text x="320" y="200" text-anchor="middle" font-weight="700" fill="#B0205A">{$t[3]}</text>
+<path d="M306,98 L334,114 M334,98 L306,114" stroke="#F03E82" stroke-width="3"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** A VPC: only the load balancer in the public subnet faces the internet; app servers and database sit in private subnets. */
+if (!function_exists('fig_cloud_vpc')) {
+    function fig_cloud_vpc(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="8" y="120" width="76" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="46" y="150" text-anchor="middle" font-weight="700">Internet</text>
+<rect x="110" y="14" width="520" height="276" rx="14" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<text x="126" y="40" font-weight="700" fill="#5A35C9">VPC <tspan font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="400">10.0.0.0/16</tspan></text>
+<rect x="124" y="56" width="132" height="176" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="292" y="56" width="146" height="176" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="474" y="56" width="148" height="176" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-size="13" font-weight="700" text-anchor="middle"><text x="190" y="78" fill="#0B7F5C">{$t[0]}</text><text x="365" y="78" fill="#1B66BC">{$t[1]}</text><text x="548" y="78" fill="#1B66BC">{$t[1]}</text></g>
+<rect x="136" y="116" width="108" height="56" rx="10" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><text x="190" y="140" text-anchor="middle" font-size="13" font-weight="700">load</text><text x="190" y="158" text-anchor="middle" font-size="13" font-weight="700">balancer</text>
+<g stroke-width="2"><rect x="306" y="92" width="118" height="38" rx="8" fill="#FFFFFF" stroke="#2F8CF0"/><rect x="306" y="138" width="118" height="38" rx="8" fill="#FFFFFF" stroke="#2F8CF0"/><rect x="306" y="184" width="118" height="38" rx="8" fill="#FFFFFF" stroke="#2F8CF0"/></g>
+<g font-size="13" text-anchor="middle"><text x="365" y="116">app</text><text x="365" y="162">app</text><text x="365" y="208">app</text></g>
+<path d="M504,122 v52 a44,12 0 0 0 88,0 v-52" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><ellipse cx="548" cy="122" rx="44" ry="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="548" y="164" text-anchor="middle" font-size="13" font-weight="700">database</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)"><path d="M86,145 H128"/><path d="M246,144 H298"/><path d="M426,157 H496"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700" text-anchor="middle"><text x="97" y="134">443</text><text x="274" y="134">8080</text><text x="456" y="147">5432</text></g>
+<path d="M46,172 V254 H548 V242" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/><path d="M534,242 H562" stroke="#F03E82" stroke-width="3"/>
+<text x="300" y="276" text-anchor="middle" font-size="13" font-weight="700" fill="#B0205A">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Vertical scaling (a bigger machine) beside horizontal scaling (more equal machines behind a load balancer, one added by autoscaling). */
+if (!function_exists('fig_cloud_scale')) {
+    function fig_cloud_scale(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.add{animation:add 6s ease-in-out infinite}@keyframes add{0%,30%{opacity:0;transform:translateY(-16px)}45%,85%{opacity:1;transform:translateY(0)}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.add{animation:none}}</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="8" y="8" width="250" height="254" rx="12" fill="#F1F0F8"/><rect x="270" y="8" width="362" height="254" rx="12" fill="#F1F0F8"/>
+<text x="24" y="36" font-weight="700">{$t[0]}</text><text x="286" y="36" font-weight="700">{$t[1]}</text>
+<rect x="30" y="160" width="64" height="56" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="62" y="193" text-anchor="middle" font-size="13" font-weight="700">2 CPU</text>
+<rect x="140" y="80" width="100" height="136" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="190" y="153" text-anchor="middle" font-weight="700">8 CPU</text>
+<path d="M98,186 C112,186 118,150 132,150" fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="133" y="244" text-anchor="middle" font-size="13">{$t[2]}</text>
+<rect x="376" y="52" width="150" height="36" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="451" y="75" text-anchor="middle" font-size="14" font-weight="700">load balancer</text>
+<g fill="none" stroke="#1E1C52" stroke-width="2"><path d="M451,88 V112 H322 V150 M451,112 H406 V150 M451,112 H490 V150"/><path class="add" d="M451,112 H574 V150"/></g>
+<g stroke-width="2"><rect x="292" y="150" width="60" height="66" rx="8" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="376" y="150" width="60" height="66" rx="8" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="460" y="150" width="60" height="66" rx="8" fill="#DCEBFF" stroke="#2F8CF0"/></g>
+<g class="add"><rect x="544" y="150" width="60" height="66" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="5 3"/><text x="574" y="188" text-anchor="middle" font-size="17" font-weight="700" fill="#0B7F5C">+1</text></g>
+<g font-size="13" text-anchor="middle"><text x="322" y="188">app</text><text x="406" y="188">app</text><text x="490" y="188">app</text></g>
+<text x="451" y="244" text-anchor="middle" font-size="13">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'cloud-base', 'family' => 'cloud', 'after' => null,
     'title' => L('Basi di cloud', 'Cloud Basics'), 'short' => L('Cloud', 'Cloud'), 'level' => L('Base', 'Basics'),
@@ -14,6 +123,10 @@ PaaS        piattaforma: carichi l’app, il resto è gestito  (App Service, App
 Serverless  funzioni che girano a richiesta                 (Lambda, Azure Functions, Cloud Run functions)
 SaaS        software pronto da usare                       (Gmail, Microsoft 365, Salesforce)', 'text'),
             P('Più sali verso SaaS, meno manutenzione e meno controllo. Il **serverless** non vuol dire senza server: vuol dire che non li vedi, paghi solo quando il codice gira e scala da solo.', 'The higher you go toward SaaS, the less maintenance and the less control. **Serverless** does not mean no servers: it means you do not see them, you pay only when code runs and it scales by itself.'),
+            Fig(L(fig_cloud_models(['Dati e accessi', 'Applicazione', 'Runtime', 'Sistema operativo', 'Virtualizzazione', 'Server e rete'], 'tu', 'fornitore'), fig_cloud_models(['Data and access', 'Application', 'Runtime', 'Operating system', 'Virtualisation', 'Servers and network'], 'you', 'provider')),
+                L('Una tabella con sei strati, dai dati in alto ai server in basso, e quattro colonne. In IaaS gestisci tu dati, applicazione, runtime e sistema operativo; in PaaS e serverless solo dati e applicazione; in SaaS solo i dati e gli accessi. Il resto lo gestisce il fornitore.', 'A table with six layers, from data at the top to servers at the bottom, and four columns. In IaaS you manage data, application, runtime and operating system; in PaaS and serverless only data and application; in SaaS only data and access. The provider manages the rest.'),
+                L('Da sinistra a destra la parte tua si accorcia: i tuoi dati però restano sempre tuoi.', 'From left to right your part gets shorter: your data, though, always stays yours.')),
+            P('Come scegliere: un sito vetrina o la posta aziendale sono **SaaS**; un’app web fatta da te va bene su un **PaaS**; un compito che scatta ogni tanto (ridimensionare una foto caricata) è perfetto **serverless**; se ti serve controllare il sistema operativo o installare software particolare, prendi una macchina **IaaS**. Spesso un progetto li mescola.', 'How to choose: a brochure site or company email are **SaaS**; a web app you built fits a **PaaS**; a task that fires now and then (resizing an uploaded photo) is perfect **serverless**; if you need to control the operating system or install special software, take an **IaaS** machine. A project often mixes them.'),
         ], [
             Q('m1', L('In quale modello gestisci il sistema operativo?', 'In which model do you manage the operating system?'), ['IaaS', 'SaaS', 'PaaS', 'Serverless'], 0, L('Macchine virtuali.', 'Virtual machines.')),
             Q('m2', L('Che cosa significa serverless?', 'What does serverless mean?'), [L('I server ci sono ma non li gestisci, paghi quando il codice gira', 'Servers exist but you do not manage them, you pay when code runs'), L('Non ci sono server', 'There are no servers'), L('Funziona offline', 'It works offline'), L('È gratis', 'It is free')], 0, L('E scala da solo.', 'And it scales by itself.')),
@@ -31,6 +144,7 @@ database SQL       RDS          Azure SQL          Cloud SQL
 container          ECS / EKS    AKS                GKE / Cloud Run
 funzioni           Lambda       Functions          Cloud Run functions', 'text'),
             P('L’**object storage** (S3 e simili) salva file di ogni dimensione in “bucket”, accessibili via URL: ideale per immagini, backup, siti statici. I **database gestiti** fanno da soli backup, aggiornamenti e repliche.', '**Object storage** (S3 and similar) stores files of any size in “buckets”, accessible via URL: ideal for images, backups, static sites. **Managed databases** handle backups, updates and replicas by themselves.'),
+            P('Una tipica app web ne usa uno per categoria: calcolo (una VM o un container) per il codice, object storage per le immagini caricate, un database gestito per i dati. I dischi delle VM (block storage) sono un’altra cosa: legati a una macchina, non a un URL. Quando puoi, preferisci i servizi **gestiti**: quello che non gestisci tu, non devi aggiornarlo tu alle tre di notte.', 'A typical web app uses one per category: compute (a VM or a container) for the code, object storage for uploaded images, a managed database for the data. VM disks (block storage) are something else: tied to a machine, not to a URL. When you can, prefer **managed** services: what you do not manage, you do not have to patch at three in the morning.'),
         ], [
             Q('s1', L('Qual è il servizio di object storage di AWS?', 'What is AWS’s object storage service?'), ['S3', 'EC2', 'Lambda', 'RDS'], 0, L('Bucket di file.', 'Buckets of files.')),
             Q('s2', L('Che vantaggio dà un database gestito?', 'What does a managed database give you?'), [L('Backup e aggiornamenti automatici', 'Automatic backups and updates'), L('Nessun costo', 'No cost'), L('Nessun dato', 'No data'), L('Solo velocità', 'Only speed')], 0, L('Meno manutenzione.', 'Less maintenance.')),
@@ -41,7 +155,11 @@ funzioni           Lambda       Functions          Cloud Run functions', 'text')
         ]),
         lesson('regions', L('Regioni e disponibilità', 'Regions and availability'), [
             P('I fornitori hanno data center in tutto il mondo, raggruppati in **regioni** (per esempio Milano, Francoforte, Irlanda). Ogni regione ha più **zone di disponibilità**: data center separati, con alimentazione e rete indipendenti.', 'Providers have data centres worldwide, grouped into **regions** (for example Milan, Frankfurt, Ireland). Each region has several **availability zones**: separate data centres with independent power and network.'),
+            Fig(L(fig_cloud_zones(['Regione Milano', 'Zona', 'data center separato', 'fuori servizio']), fig_cloud_zones(['Milan region', 'Zone', 'separate data centre', 'down'])),
+                L('Una regione con un load balancer collegato a tre zone di disponibilità, A, B e C, ognuna con due server dell’app. A tratti la zona B va fuori servizio e il load balancer continua con le zone A e C.', 'A region with a load balancer linked to three availability zones, A, B and C, each with two app servers. Now and then zone B goes down and the load balancer carries on with zones A and C.'),
+                L('Una zona può cadere: con l’app su tre zone, gli utenti non se ne accorgono.', 'A zone can fail: with the app on three zones, users do not notice.')),
             P('Scegliere la regione conta per la **latenza** (vicino agli utenti), per le **leggi** (dati dei cittadini europei in UE, GDPR) e per i prezzi. Distribuire l’app su più zone la rende **resistente ai guasti**: se un data center ha un problema, le altre zone continuano.', 'Choosing the region matters for **latency** (close to users), for **law** (EU citizens’ data in the EU, GDPR) and for prices. Spreading the app across several zones makes it **fault-tolerant**: if one data centre has a problem, the other zones carry on.'),
+            Tip('Non tutti i servizi esistono in tutte le regioni e i prezzi cambiano da una all’altra: controlla prima di scegliere. Usare più zone della stessa regione è normale e costa poco; usare più regioni serve contro i disastri più grandi, ma costa di più e complica la copia dei dati.', 'Not every service exists in every region and prices change from one to another: check before choosing. Using several zones of the same region is normal and cheap; using several regions protects against bigger disasters, but costs more and makes copying data harder.'),
         ], [
             Q('r1', L('Che cos’è una zona di disponibilità?', 'What is an availability zone?'), [L('Un data center separato dentro una regione', 'A separate data centre within a region'), L('Un paese', 'A country'), L('Un tipo di database', 'A database type'), L('Una password', 'A password')], 0, L('Alimentazione e rete indipendenti.', 'Independent power and network.')),
             Q('r2', L('Perché scegliere una regione europea per dati di cittadini UE?', 'Why choose a European region for EU citizens’ data?'), [L('Per il GDPR e la latenza', 'For the GDPR and latency'), L('Per il colore della console', 'For the console colour'), L('Non conta', 'It does not matter'), L('Perché costa sempre di più', 'Because it always costs more')], 0, L('Legge e vicinanza.', 'Law and proximity.')),
@@ -82,6 +200,9 @@ funzioni           Lambda       Functions          Cloud Run functions', 'text')
         ]),
         lesson('networking', L('Reti, firewall, CDN e DNS', 'Networks, firewalls, CDN and DNS'), [
             P('Nel cloud le tue risorse vivono in una rete privata: **VPC** su AWS e Google Cloud, **VNet** su Azure. La dividi in **subnet**: pubbliche (raggiungibili da internet, per esempio il load balancer) e private (server dell’app e database). I **security group** o le regole firewall decidono quale traffico entra: si apre solo il necessario.', 'In the cloud your resources live in a private network: **VPC** on AWS and Google Cloud, **VNet** on Azure. You split it into **subnets**: public ones (reachable from the internet, for example the load balancer) and private ones (app servers and database). **Security groups** or firewall rules decide which traffic gets in: you open only what is needed.'),
+            Fig(L(fig_cloud_vpc(['subnet pubblica', 'subnet privata', 'da internet il database non si raggiunge']), fig_cloud_vpc(['public subnet', 'private subnet', 'the database cannot be reached from the internet'])),
+                L('Una VPC con tre subnet. Da Internet si entra sulla porta 443 nel load balancer della subnet pubblica; il load balancer passa sulla 8080 ai tre server dell’app in una subnet privata, che usano la 5432 per il database in un’altra subnet privata. Una linea tratteggiata da Internet al database si ferma prima di arrivarci.', 'A VPC with three subnets. From the Internet you enter on port 443 into the load balancer in the public subnet; the load balancer forwards on 8080 to the three app servers in a private subnet, which use 5432 for the database in another private subnet. A dashed line from the Internet to the database stops before reaching it.'),
+                L('Ogni livello accetta traffico solo da quello prima, e solo sulla sua porta.', 'Each tier accepts traffic only from the one before it, and only on its own port.')),
             C('Internet
    │ 443 (HTTPS)
 [Load balancer]          subnet pubblica
@@ -119,6 +240,9 @@ funzioni           Lambda       Functions          Cloud Run functions', 'text')
         ]),
         lesson('scaling', L('Scalabilità, disponibilità e backup', 'Scaling, availability and backups'), [
             P('Scalare in **verticale** vuol dire passare a una macchina più grande: semplice, ma ha un limite e spesso richiede un riavvio. Scalare in **orizzontale** vuol dire aggiungere macchine uguali dietro un **load balancer**: serve un’app **senza stato**, con sessioni e file in servizi condivisi (Redis, object storage, database). L’autoscaling aggiunge e toglie macchine in base al carico.', 'Scaling **vertically** means moving to a bigger machine: simple, but it has a limit and often needs a restart. Scaling **horizontally** means adding identical machines behind a **load balancer**: it needs a **stateless** app, with sessions and files in shared services (Redis, object storage, database). Autoscaling adds and removes machines based on load.'),
+            Fig(L(fig_cloud_scale(['In verticale', 'In orizzontale', 'una macchina più grande: ha un limite', 'più macchine uguali: l’autoscaling ne aggiunge']), fig_cloud_scale(['Vertically', 'Horizontally', 'a bigger machine: it has a limit', 'more equal machines: autoscaling adds some'])),
+                L('A sinistra un server da 2 CPU diventa un server da 8 CPU. A destra un load balancer distribuisce il traffico su tre server uguali e l’autoscaling ne aggiunge un quarto.', 'On the left a 2-CPU server becomes an 8-CPU server. On the right a load balancer spreads traffic over three equal servers and autoscaling adds a fourth.'),
+                L('In orizzontale non c’è un tetto, ma l’app non deve tenere dati in memoria locale.', 'Horizontally there is no ceiling, but the app must not keep data in local memory.')),
             C('verticale    1 server: da 2 a 8 CPU      semplice, ma ha un limite
 orizzontale  da 2 a 6 server uguali      servono load balancer e app senza stato
 RPO          quanti dati puoi perdere    “al massimo 15 minuti”

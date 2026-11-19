@@ -1,21 +1,161 @@
 <?php
 /** PHP basics: the server side of the web, from variables and arrays to forms, sessions, types, files and dates. */
 
+/** A request for a PHP page: the server runs the code and sends back only HTML. A dot travels there and back. */
+if (!function_exists('fig_phpbase_request')) {
+    function fig_phpbase_request(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.dot{animation:trip 5s ease-in-out infinite}@keyframes trip{0%{transform:translate(206px,96px)}40%{transform:translate(414px,96px)}55%{transform:translate(414px,176px)}95%,100%{transform:translate(206px,176px)}}@media (prefers-reduced-motion:reduce){.dot{animation:none}}</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="50" width="180" height="160" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="106" y="78" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<rect x="36" y="92" width="140" height="100" rx="8" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="106" y="124" text-anchor="middle" font-size="14">Ciao Sav</text>
+<rect x="54" y="140" width="104" height="8" rx="4" fill="#DCEBFF"/><rect x="54" y="158" width="76" height="8" rx="4" fill="#DCEBFF"/>
+<rect x="424" y="30" width="200" height="200" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="524" y="58" text-anchor="middle" font-weight="700" fill="#B84508">{$t[1]}</text>
+<rect x="446" y="72" width="156" height="36" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<text x="524" y="95" text-anchor="middle" font-family="ui-monospace, monospace" font-size="14">index.php</text>
+<line x1="524" y1="110" x2="524" y2="146" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="534" y="133" font-size="13">{$t[4]}</text>
+<rect x="446" y="150" width="156" height="36" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="524" y="173" text-anchor="middle" font-family="ui-monospace, monospace" font-size="14">HTML</text>
+<line x1="200" y1="96" x2="418" y2="96" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="309" y="84" text-anchor="middle" font-size="14">{$t[2]}</text>
+<line x1="420" y1="176" x2="202" y2="176" stroke="#0B7F5C" stroke-width="2" marker-end="url(#ah)"/>
+<text x="309" y="200" text-anchor="middle" font-size="14" fill="#0B7F5C">{$t[3]}</text>
+<circle class="dot" r="7" fill="#E8590C" transform="translate(206 96)"/>
+<text x="320" y="248" text-anchor="middle" font-size="14" fill="#5B5880">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A list with automatic indexes next to an array with keys chosen by you. */
+if (!function_exists('fig_phpbase_arrays')) {
+    function fig_phpbase_arrays(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="160" y="34" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<g font-family="ui-monospace, monospace" font-size="14" text-anchor="middle">
+<text x="70" y="78" fill="#5B5880">0</text><text x="160" y="78" fill="#5B5880">1</text><text x="250" y="78" fill="#5B5880">2</text>
+<rect x="30" y="88" width="80" height="44" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="70" y="115">"HTML"</text>
+<rect x="120" y="88" width="80" height="44" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="160" y="115">"CSS"</text>
+<rect x="210" y="88" width="80" height="44" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="250" y="115">"PHP"</text>
+<text x="160" y="166" fill="#1B66BC">\$corsi[2]</text>
+</g>
+<text x="160" y="200" text-anchor="middle" font-size="13" fill="#5B5880">{$t[2]}</text>
+<line x1="320" y1="20" x2="320" y2="210" stroke="#D9D7EA" stroke-width="2"/>
+<text x="480" y="34" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[1]}</text>
+<g font-family="ui-monospace, monospace" font-size="14">
+<rect x="360" y="56" width="110" height="40" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="415" y="81" text-anchor="middle">"nome"</text>
+<text x="482" y="81" fill="#5B5880">=&gt;</text>
+<rect x="512" y="56" width="100" height="40" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="562" y="81" text-anchor="middle">"Sav"</text>
+<rect x="360" y="108" width="110" height="40" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="415" y="133" text-anchor="middle">"punti"</text>
+<text x="482" y="133" fill="#5B5880">=&gt;</text>
+<rect x="512" y="108" width="100" height="40" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="562" y="133" text-anchor="middle">10</text>
+<text x="480" y="180" text-anchor="middle" fill="#0B7F5C">\$utente["nome"]</text>
+</g>
+<text x="480" y="210" text-anchor="middle" font-size="13" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The trip of a form field: typed, sent by POST, escaped, shown as harmless text. */
+if (!function_exists('fig_phpbase_form')) {
+    function fig_phpbase_form(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g text-anchor="middle">
+<text x="80" y="34" font-weight="700" font-size="15">{$t[0]}</text>
+<text x="240" y="34" font-weight="700" font-size="15">{$t[1]}</text>
+<text x="400" y="34" font-weight="700" font-size="15">{$t[2]}</text>
+<text x="560" y="34" font-weight="700" font-size="15">{$t[3]}</text>
+</g>
+<rect x="12" y="50" width="136" height="120" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="24" y="80" width="112" height="32" rx="6" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="80" y="101" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">&lt;b&gt;Ada&lt;/b&gt;</text>
+<text x="80" y="140" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">name="nome"</text>
+<rect x="172" y="50" width="136" height="120" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="240" y="98" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">\$_POST["nome"]</text>
+<text x="240" y="126" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">"&lt;b&gt;Ada&lt;/b&gt;"</text>
+<rect x="332" y="50" width="136" height="120" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="400" y="80" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">htmlspecialchars</text>
+<text x="400" y="112" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">&amp;lt;b&amp;gt;Ada</text>
+<text x="400" y="132" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">&amp;lt;/b&amp;gt;</text>
+<rect x="492" y="50" width="136" height="120" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="560" y="98" text-anchor="middle" font-size="15">Ciao &lt;b&gt;Ada&lt;/b&gt;</text>
+<text x="560" y="126" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[4]}</text>
+<line x1="150" y1="110" x2="168" y2="110" stroke="#1E1C52" stroke-width="2" marker-end="url(#af)"/>
+<line x1="310" y1="110" x2="328" y2="110" stroke="#1E1C52" stroke-width="2" marker-end="url(#af)"/>
+<line x1="470" y1="110" x2="488" y2="110" stroke="#1E1C52" stroke-width="2" marker-end="url(#af)"/>
+<text x="320" y="204" text-anchor="middle" font-size="14" fill="#5B5880">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** How a session works: the browser keeps only an ID in a cookie, the data stays on the server. */
+if (!function_exists('fig_phpbase_session')) {
+    function fig_phpbase_session(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="40" width="190" height="170" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="111" y="68" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<rect x="34" y="96" width="154" height="60" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="111" y="120" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">PHPSESSID</text>
+<text x="111" y="142" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">= a1b2c3</text>
+<text x="111" y="186" text-anchor="middle" font-size="13" fill="#5B5880">{$t[4]}</text>
+<rect x="420" y="40" width="204" height="170" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="522" y="68" text-anchor="middle" font-weight="700" fill="#B84508">{$t[1]}</text>
+<rect x="438" y="84" width="168" height="86" rx="10" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<text x="522" y="108" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">sess_a1b2c3</text>
+<text x="522" y="134" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">"utente" =&gt; "Sav"</text>
+<text x="522" y="156" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">"punti" =&gt; 10</text>
+<text x="522" y="194" text-anchor="middle" font-size="13" fill="#5B5880">{$t[5]}</text>
+<line x1="416" y1="104" x2="212" y2="104" stroke="#E8590C" stroke-width="2" marker-end="url(#as)"/>
+<text x="314" y="94" text-anchor="middle" font-size="13">{$t[2]}</text>
+<line x1="210" y1="150" x2="414" y2="150" stroke="#2F8CF0" stroke-width="2" marker-end="url(#as)"/>
+<text x="314" y="172" text-anchor="middle" font-size="13">{$t[3]}</text>
+<text x="320" y="238" text-anchor="middle" font-size="14" fill="#5B5880">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'php-base', 'family' => 'php', 'after' => 'html-base',
-    'title' => L('PHP base', 'PHP Basics'), 'short' => L('PHP base', 'PHP Basics'), 'level' => L('Base', 'Basic'),
+    'title' => L('PHP base', 'PHP Basics'), 'short' => L('PHP base', 'PHP Basics'), 'level' => L('Base', 'Basics'),
     'desc' => L('Il lato server del web: variabili, condizioni, array, funzioni, moduli e sicurezza di base, sessioni, tipi, file e date.', 'The server side of the web: variables, conditions, arrays, functions, forms and basic security, sessions, types, files and dates.'),
     'lessons' => [
         lesson('hello', L('Ciao dal server', 'Hello from the server'), [
             P('**PHP** gira sul server e produce la pagina prima che arrivi al browser. Il codice sta tra `<?php` e `?>`. Le variabili iniziano con `$` e ogni istruzione finisce con `;`.', '**PHP** runs on the server and produces the page before it reaches the browser. Code lives between `<?php` and `?>`. Variables start with `$` and every statement ends with `;`.'),
-            C('<?php
+            Fig(L(fig_phpbase_request(['Browser', 'Server', '1. richiesta /index.php', '2. risposta: solo HTML', 'esegue il PHP', 'Il browser riceve il risultato, mai il codice PHP.']), fig_phpbase_request(['Browser', 'Server', '1. request /index.php', '2. response: HTML only', 'runs the PHP', 'The browser gets the result, never the PHP code.'])),
+                L('A sinistra il browser, a destra il server. Una freccia porta la richiesta di index.php al server, che esegue il PHP e produce HTML; una seconda freccia riporta al browser solo l’HTML.', 'The browser on the left, the server on the right. One arrow carries the request for index.php to the server, which runs the PHP and produces HTML; a second arrow brings only the HTML back to the browser.'),
+                L('Il PHP resta sul server: al browser arriva solo il suo risultato.', 'PHP stays on the server: only its result reaches the browser.')),
+            C(L('<?php
 $nome = "Sav";
 $punti = 10;
 echo "Ciao $nome, hai $punti punti";
 echo \'Virgolette singole: $nome\';
 ?>
-<p><?= $nome ?></p>', 'php'),
+<p><?= $nome ?></p>', '<?php
+$nome = "Sav";
+$punti = 10;
+echo "Hello $nome, you have $punti points";
+echo \'Single quotes: $nome\';
+?>
+<p><?= $nome ?></p>'), 'php', L('Ciao Sav, hai 10 puntiVirgolette singole: $nome<p>Sav</p>', 'Hello Sav, you have 10 pointsSingle quotes: $nome<p>Sav</p>')),
             P('Tra virgolette doppie le variabili vengono sostituite, tra singole no. `<?=` è la scorciatoia per stampare un valore nell’HTML.', 'Between double quotes variables are replaced, between single quotes they are not. `<?=` is the shortcut for printing a value in HTML.'),
+            P('Per questo, se apri «Visualizza sorgente» nel browser, vedi solo HTML: il codice PHP non lascia mai il server, ed è lì che puoi tenere password e query al database. Per provare i tuoi file ti serve quindi un server: in locale basta `php -S localhost:8000` nella cartella del progetto. Nota anche che `echo` non va a capo da solo: se vuoi una nuova riga nella pagina devi stampare un `<br>` o un tag di blocco.', 'That is why, if you open “View source” in the browser, you only see HTML: PHP code never leaves the server, and that is where you can keep passwords and database queries. To try your files you therefore need a server: locally, `php -S localhost:8000` in the project folder is enough. Notice too that `echo` does not start a new line by itself: if you want a new line in the page you must print a `<br>` or a block tag.'),
         ], [
             Q('h1', L('Dove gira PHP?', 'Where does PHP run?'), [L('Sul server', 'On the server'), L('Nel browser', 'In the browser'), L('Nel CSS', 'In CSS'), L('Sul telefono', 'On the phone')], 0, L('Il browser riceve solo il risultato.', 'The browser only gets the result.')),
             Q('h2', L('Con che cosa inizia una variabile?', 'What does a variable start with?'), ['$', '@', '#', '&'], 0, L('Sempre, sia quando la crei sia quando la usi.', 'Always, both creating and using it.')),
@@ -28,7 +168,7 @@ echo \'Virgolette singole: $nome\';
         ]),
         lesson('logic', L('Condizioni e cicli', 'Conditions and loops'), [
             P('`if`, `else`, `for` e `while` funzionano come in JavaScript. Le stringhe si uniscono con il punto. Per confrontare usa `===`.', '`if`, `else`, `for` and `while` work as in JavaScript. Strings join with a dot. To compare use `===`.'),
-            C('<?php
+            C(L('<?php
 $voto = 8;
 if ($voto >= 6) {
     echo "Promosso";
@@ -41,8 +181,23 @@ for ($i = 1; $i <= 3; $i++) {
 $esito = match (true) {
     $voto >= 9 => "Ottimo",
     default => "Bene",
-};', 'php'),
+};', '<?php
+$voto = 8;
+if ($voto >= 6) {
+    echo "Passed";
+} else {
+    echo "Try again";
+}
+for ($i = 1; $i <= 3; $i++) {
+    echo "Round " . $i . "<br>";
+}
+$esito = match (true) {
+    $voto >= 9 => "Excellent",
+    default => "Good",
+};'), 'php', L('PromossoGiro 1<br>Giro 2<br>Giro 3<br>', 'PassedRound 1<br>Round 2<br>Round 3<br>')),
             P('`match` è un confronto compatto che restituisce un valore. Il punto `.` unisce i testi: `+` farebbe una somma.', '`match` is a compact comparison that gives back a value. The dot `.` joins text: `+` would add numbers.'),
+            P('A differenza di `switch`, `match` confronta con `===`, non ha bisogno di `break` e dà errore se nessun caso corrisponde e manca `default`: niente casi dimenticati in silenzio. Per più rami in fila c’è `elseif`. E `while` ripete finché la condizione è vera: ricordati di cambiare qualcosa dentro il ciclo, altrimenti non finisce mai.', 'Unlike `switch`, `match` compares with `===`, needs no `break` and throws an error if no case matches and there is no `default`: no forgotten cases slipping by in silence. For several branches in a row there is `elseif`. And `while` repeats as long as the condition is true: remember to change something inside the loop, or it never ends.'),
+            Tip('L’errore classico è `if ($voto = 6)`: un solo `=` assegna 6 a `$voto` e la condizione è sempre vera. Per confrontare servono `==` o, meglio, `===`.', 'The classic mistake is `if ($voto = 6)`: a single `=` assigns 6 to `$voto` and the condition is always true. To compare you need `==` or, better, `===`.'),
         ], [
             Q('l1', L('Come si uniscono due stringhe?', 'How do you join two strings?'), [L('Con il punto', 'With a dot'), L('Con `+`', 'With `+`'), L('Con `&`', 'With `&`'), L('Con `,`', 'With `,`')], 0, L('`"a" . "b"` dà `"ab"`.', '`"a" . "b"` gives `"ab"`.')),
             Q('l2', L('Quale confronto controlla anche il tipo?', 'Which comparison also checks the type?'), ['===', '==', '=', '<>'], 0, L('Come in JavaScript.', 'As in JavaScript.')),
@@ -54,6 +209,9 @@ $esito = match (true) {
         ]),
         lesson('arrays', L('Array', 'Arrays'), [
             P('Gli array PHP fanno due lavori: liste e coppie chiave-valore. `foreach` li scorre. `count` dice quanti elementi ci sono.', 'PHP arrays do two jobs: lists and key-value pairs. `foreach` walks them. `count` says how many items there are.'),
+            Fig(L(fig_phpbase_arrays(['Lista', 'Chiave => valore', 'indici automatici, da 0', 'chiavi scelte da te']), fig_phpbase_arrays(['List', 'Key => value', 'automatic indexes, from 0', 'keys chosen by you'])),
+                L('A sinistra tre caselle con gli indici 0, 1 e 2 e i valori HTML, CSS e PHP. A destra due righe: la chiave nome punta a Sav, la chiave punti punta a 10.', 'On the left three boxes with indexes 0, 1 and 2 and the values HTML, CSS and PHP. On the right two rows: the key nome points to Sav, the key punti points to 10.'),
+                L('Lo stesso tipo `array`: con indici numerici o con chiavi di testo.', 'The same `array` type: with numeric indexes or with text keys.')),
             C('<?php
 $corsi = ["HTML", "CSS"];
 $corsi[] = "PHP";
@@ -65,8 +223,9 @@ foreach ($utente as $chiave => $valore) {
     echo "$chiave: $valore<br>";
 }
 echo count($corsi); // 3
-in_array("CSS", $corsi); // true', 'php'),
+in_array("CSS", $corsi); // true', 'php', 'Savnome: Sav<br>punti: 10<br>3'),
             P('`$lista[] = x` aggiunge in fondo. `=>` lega una chiave al suo valore.', '`$lista[] = x` adds to the end. `=>` ties a key to its value.'),
+            P('Gli indici partono da **0**: il terzo corso è `$corsi[2]`. Leggere una chiave che non esiste dà un avviso e restituisce `null`, quindi quando non sei sicuro usa `$utente["email"] ?? ""` o controlla prima con `isset`. Un’altra cosa utile: quando assegni un array a un’altra variabile PHP ne fa una **copia**, così modificare la copia non tocca l’originale.', 'Indexes start at **0**: the third course is `$corsi[2]`. Reading a key that does not exist gives a warning and returns `null`, so when you are not sure use `$utente["email"] ?? ""` or check first with `isset`. Another useful fact: when you assign an array to another variable PHP makes a **copy**, so changing the copy does not touch the original.'),
         ], [
             Q('a1', L('Come si aggiunge in fondo a un array?', 'How do you add to the end of an array?'), ['$a[] = 1;', '$a.push(1);', 'add($a, 1);', '$a += 1;'], 0, L('Le parentesi vuote significano «in coda».', 'Empty brackets mean “at the end”.')),
             Q('a2', L('Quale ciclo è fatto per gli array?', 'Which loop is made for arrays?'), ['foreach', 'forall', 'each_of', 'loop'], 0, L('Niente contatore.', 'No counter.')),
@@ -90,6 +249,8 @@ str_replace("a", "o", "casa"); // "coso"
 explode(",", "a,b");     // ["a", "b"]
 trim("  ciao  ");        // "ciao"', 'php'),
             P('Le variabili esterne non si vedono dentro una funzione: si passano come parametri.', 'Outer variables are not visible inside a function: pass them as parameters.'),
+            P('È una protezione, non un difetto: una funzione che dipende solo dai suoi parametri si capisce e si prova da sola. Per lo stesso motivo preferisci `return` a `echo`: chi chiama decide che cosa farne, se stamparlo, salvarlo o passarlo a un’altra funzione. Un parametro con un valore predefinito, come `$b = 1`, si può omettere nella chiamata.', 'It is a protection, not a flaw: a function that depends only on its parameters can be understood and tested on its own. For the same reason prefer `return` to `echo`: the caller decides what to do with the result, whether to print it, store it or pass it to another function. A parameter with a default value, such as `$b = 1`, can be left out of the call.'),
+            Tip('Senza `declare(strict_types=1);` in cima al file, PHP converte in silenzio `somma("2", "3")` in numeri. Con la dichiarazione, un tipo sbagliato diventa subito un errore chiaro.', 'Without `declare(strict_types=1);` at the top of the file, PHP silently turns `somma("2", "3")` into numbers. With the declaration, a wrong type becomes a clear error straight away.'),
         ], [
             Q('f1', L('Una funzione vede `$x` definita fuori?', 'Does a function see `$x` defined outside?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo se è un numero', 'Only if a number'), L('Solo in `if`', 'Only in `if`')], 0, L('Si passa come parametro.', 'Pass it as a parameter.')),
             Q('f2', L('Che cosa fa `explode`?', 'What does `explode` do?'), [L('Divide un testo in array', 'Splits text into an array'), L('Cancella un file', 'Deletes a file'), L('Unisce', 'Joins'), L('Ordina', 'Sorts')], 0, L('`implode` fa il contrario.', '`implode` does the opposite.')),
@@ -101,6 +262,10 @@ trim("  ciao  ");        // "ciao"', 'php'),
         ]),
         lesson('forms', L('Moduli e sicurezza', 'Forms and security'), [
             P('I dati di un modulo arrivano in `$_POST` o `$_GET`. **Non fidarti mai** di ciò che arriva: controllalo e, prima di stamparlo, proteggilo con `htmlspecialchars`.', 'Form data arrives in `$_POST` or `$_GET`. **Never trust** what arrives: check it and, before printing it, protect it with `htmlspecialchars`.'),
+            P('La chiave dell’array è l’attributo `name` del campo: `<input name="nome">` arriva come `$_POST["nome"]`. Con `method="get"` i dati viaggiano nell’indirizzo (va bene per ricerche e filtri, che si possono condividere), con `method="post"` nel corpo della richiesta (per accessi e per tutto ciò che modifica dati).', 'The array key is the field’s `name` attribute: `<input name="nome">` arrives as `$_POST["nome"]`. With `method="get"` the data travels in the address (fine for searches and filters, which can be shared), with `method="post"` in the body of the request (for logins and anything that changes data).'),
+            Fig(L(fig_phpbase_form(['Modulo', 'Server', 'Escape', 'Pagina', 'mostrato come testo', 'Ciò che arriva dall’utente diventa testo innocuo prima di finire nella pagina.']), fig_phpbase_form(['Form', 'Server', 'Escape', 'Page', 'shown as text', 'What comes from the user becomes harmless text before it reaches the page.'])),
+                L('Quattro riquadri collegati da frecce: un campo con il testo <b>Ada</b>, lo stesso testo in $_POST["nome"], htmlspecialchars che lo trasforma in &lt;b&gt;Ada&lt;/b&gt;, e la pagina che lo mostra come testo e non come grassetto.', 'Four boxes linked by arrows: a field with the text <b>Ada</b>, the same text in $_POST["nome"], htmlspecialchars turning it into &lt;b&gt;Ada&lt;/b&gt;, and the page showing it as text rather than bold.'),
+                L('`htmlspecialchars` trasforma i tag in testo: il browser li mostra, non li esegue.', '`htmlspecialchars` turns tags into text: the browser shows them, it does not run them.')),
             C('<?php
 $nome = trim($_POST["nome"] ?? "");
 if ($nome === "") {
@@ -135,6 +300,11 @@ setcookie("tema", "scuro", [
 header("Location: home.php");
 exit;', 'php'),
             P('`session_start` e `header` vanno chiamati prima di stampare qualsiasi cosa. Dopo un `header("Location: …")` scrivi sempre `exit`.', '`session_start` and `header` must be called before printing anything. After a `header("Location: …")` always write `exit`.'),
+            P('Come fa il server a ricordarti? `session_start` crea un identificativo casuale e lo manda al browser in un cookie; a ogni richiesta successiva il browser lo rimanda e PHP ritrova i dati giusti. I dati della sessione restano sul server, mentre un cookie l’utente lo può leggere e modificare: non metterci mai niente di cui il server deve fidarsi, come un ruolo o un prezzo.', 'How does the server remember you? `session_start` creates a random identifier and sends it to the browser in a cookie; on every following request the browser sends it back and PHP finds the right data. Session data stays on the server, while a cookie can be read and changed by the user: never put anything the server must trust in it, such as a role or a price.'),
+            Fig(L(fig_phpbase_session(['Browser', 'Server', 'risposta: Set-Cookie', 'ogni richiesta: Cookie', 'solo l’identificativo', 'i dati restano qui', 'Il cookie è la chiave, la sessione è il cassetto sul server.']), fig_phpbase_session(['Browser', 'Server', 'response: Set-Cookie', 'every request: Cookie', 'only the identifier', 'the data stays here', 'The cookie is the key, the session is the drawer on the server.'])),
+                L('Il browser conserva un cookie PHPSESSID con il valore a1b2c3. Il server conserva un file sess_a1b2c3 con utente Sav e punti 10. Una freccia dal server porta Set-Cookie al browser, una freccia dal browser riporta il cookie a ogni richiesta.', 'The browser keeps a PHPSESSID cookie with the value a1b2c3. The server keeps a file sess_a1b2c3 with utente Sav and punti 10. One arrow from the server carries Set-Cookie to the browser, one arrow from the browser sends the cookie back on every request.'),
+                L('Nel browser viaggia solo l’identificativo della sessione.', 'Only the session identifier travels in the browser.')),
+            Tip('`require` si ferma con un errore se il file manca, `include` dà solo un avviso e prosegue. Per i file di funzioni usa `require_once`, che non lo carica due volte.', '`require` stops with an error if the file is missing, `include` only warns and carries on. For files of functions use `require_once`, which does not load them twice.'),
         ], [
             Q('i1', L('Che cosa ricorda una sessione?', 'What does a session remember?'), [L('Dati dell’utente sul server', 'User data on the server'), L('I colori', 'Colours'), L('Il codice', 'The code'), L('Il dominio', 'The domain')], 0, L('Nel browser resta solo un codice.', 'Only a code stays in the browser.')),
             Q('i2', L('Quando va chiamato `session_start`?', 'When must `session_start` be called?'), [L('Prima di ogni output', 'Before any output'), L('Alla fine', 'At the end'), L('Mai', 'Never'), L('Dentro l’HTML', 'Inside HTML')], 0, L('Deve inviare un’intestazione.', 'It has to send a header.')),

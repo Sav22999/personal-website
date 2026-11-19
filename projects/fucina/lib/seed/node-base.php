@@ -1,6 +1,102 @@
 <?php
 /** Node.js: the runtime and npm, modules and the file system, async I/O, an HTTP API with Express, environment and errors, databases, events, streams and TypeScript. */
 
+/** Blocking against non-blocking I/O: with readFileSync the thread waits for the disk, with await readFile it serves other requests meanwhile. */
+if (!function_exists('fig_node_async')) {
+    function fig_node_async(string $l): string
+    {
+        $t = $l === 'it' ? ['readFileSync: blocca tutto', 'await readFile: intanto serve gli altri', 'thread', 'disco', 'attesa del disco', 'tempo'] : ['readFileSync: blocks everything', 'await readFile: serves the others meanwhile', 'thread', 'disk', 'waiting for the disk', 'time'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ndaa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="14"><text x="20" y="26">{$t[0]}</text><text x="20" y="114">{$t[1]}</text></g>
+<g font-size="12" fill="#5B5880"><text x="20" y="57">{$t[2]}</text><text x="20" y="145">{$t[2]}</text><text x="20" y="183">{$t[3]}</text></g>
+<g stroke-width="2"><rect x="80" y="38" width="60" height="28" rx="7" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="140" y="38" width="200" height="28" rx="7" fill="#F1F0F8" stroke="#8A87B0" stroke-dasharray="5 4"/><rect x="340" y="38" width="40" height="28" rx="7" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="380" y="38" width="80" height="28" rx="7" fill="#FFF3EA" stroke="#E8590C"/><rect x="460" y="38" width="80" height="28" rx="7" fill="#D5F6EA" stroke="#0B7F5C"/>
+<rect x="80" y="126" width="60" height="28" rx="7" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="140" y="126" width="80" height="28" rx="7" fill="#FFF3EA" stroke="#E8590C"/><rect x="220" y="126" width="80" height="28" rx="7" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="340" y="126" width="40" height="28" rx="7" fill="#DCEBFF" stroke="#2F8CF0"/>
+<rect x="140" y="164" width="200" height="28" rx="7" fill="#F1F0F8" stroke="#8A87B0"/></g>
+<g text-anchor="middle" font-weight="700" font-size="13"><text x="110" y="57">A</text><text x="360" y="57">A</text><text x="420" y="57">B</text><text x="500" y="57">C</text><text x="110" y="145">A</text><text x="180" y="145">B</text><text x="260" y="145">C</text><text x="360" y="145">A</text></g>
+<g text-anchor="middle" font-size="12" fill="#5B5880"><text x="240" y="57">{$t[4]}</text><text x="240" y="183">A · {$t[4]}</text></g>
+<path d="M80 226H624" stroke="#8A87B0" stroke-width="2" marker-end="url(#ndaa)"/>
+<text x="620" y="244" text-anchor="end" font-size="13" fill="#5B5880">{$t[5]} →</text>
+<g stroke="#0B7F5C" stroke-width="2" stroke-dasharray="3 3"><path d="M380 120V210"/><path d="M540 32V210"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** An Express request walking the middleware in order; a middleware can answer early, the route sends the response. */
+if (!function_exists('fig_node_mw')) {
+    function fig_node_mw(string $l): string
+    {
+        $t = $l === 'it' ? ['client', 'controllo', 'richiesta', 'risposta', 'può fermarsi qui'] : ['client', 'check', 'request', 'response', 'can stop here'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ndma" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="62" width="96" height="62" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="150" y="62" width="130" height="62" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="310" y="62" width="120" height="62" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="460" y="62" width="168" height="62" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g text-anchor="middle"><text x="60" y="98" font-weight="700">{$t[0]}</text><text x="370" y="90" font-weight="700" font-size="14">{$t[1]}</text></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="215" y="98">express.json()</text><text x="370" y="110" font-size="12">if (!testo)</text><text x="544" y="98">app.post(…)</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ndma)"><path d="M108 93H146"/><path d="M280 93H306"/><path d="M430 93H456"/><path d="M544 124V166H60V128"/></g>
+<path d="M370 124V146H84V128" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#ndma)"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#5A35C8" text-anchor="middle"><text x="293" y="56">next()</text><text x="443" y="56">next()</text></g>
+<text x="128" y="56" text-anchor="middle" font-size="12" fill="#5B5880">{$t[2]}</text>
+<text x="300" y="188" text-anchor="middle" font-size="13"><tspan font-weight="700">{$t[3]}</tspan> · <tspan font-family="ui-monospace, Menlo, monospace" font-size="12">res.status(201).json(nota)</tspan></text>
+<text x="230" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#B0245A">400 · {$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** An EventEmitter: emit calls every listener of that event at once and in order; once is removed after the first time. */
+if (!function_exists('fig_node_emitter')) {
+    function fig_node_emitter(string $l): string
+    {
+        $t = $l === 'it' ? ['subito e in ordine', 'solo la prima volta', 'nessuno ascolta «error»? il processo si ferma'] : ['at once and in order', 'only the first time', 'nobody listens to “error”? the process stops'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ndea" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="50" width="210" height="80" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="28" y="78" font-family="ui-monospace, Menlo, monospace" font-weight="700">ordini</text>
+<text x="28" y="106" font-family="ui-monospace, Menlo, monospace" font-size="13">emit("nuovo", ordine)</text>
+<rect x="330" y="20" width="298" height="54" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="330" y="96" width="298" height="54" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="7 4"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="346" y="44"><tspan font-weight="700">1</tspan> · on("nuovo")</text><text x="346" y="120"><tspan font-weight="700">2</tspan> · once("nuovo")</text></g>
+<g font-size="12" fill="#5B5880"><text x="346" y="63">→ email</text><text x="346" y="139">{$t[1]}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ndea)"><path d="M222 80C270 80 280 47 326 47"/><path d="M222 100C270 100 280 123 326 123"/></g>
+<text x="276" y="160" text-anchor="middle" font-size="12" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<rect x="12" y="172" width="616" height="36" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="28" y="195" font-size="13"><tspan font-family="ui-monospace, Menlo, monospace" font-weight="700">on("error")</tspan> · {$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A stream pipeline: chunks travel from the file through gzip into the compressed file, a few at a time, with constant memory. */
+if (!function_exists('fig_node_stream')) {
+    function fig_node_stream(string $l): string
+    {
+        $t = $l === 'it' ? ['leggibile', 'trasformazione', 'scrivibile', 'memoria usata: pochi pezzi alla volta, anche per un file di 10 GB'] : ['readable', 'transform', 'writable', 'memory used: a few chunks at a time, even for a 10 GB file'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.nds{animation:nds 2.4s linear infinite}@keyframes nds{from{transform:translateX(0)}to{transform:translateX(30px)}}@media (prefers-reduced-motion:reduce){.nds{animation:none}}</style>
+<g font-size="12" font-weight="700" fill="#5B5880" text-anchor="middle"><text x="96" y="40">{$t[0]}</text><text x="320" y="40">{$t[1]}</text><text x="544" y="40">{$t[2]}</text></g>
+<rect x="12" y="50" width="168" height="80" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="246" y="50" width="148" height="80" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="460" y="50" width="168" height="80" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="96" y="86">accessi.log</text><text x="320" y="86">createGzip()</text><text x="544" y="86">accessi.log.gz</text></g>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"><rect x="180" y="80" width="66" height="20"/><rect x="394" y="80" width="66" height="20"/></g>
+<g class="nds"><g fill="#2F8CF0"><rect x="180" y="84" width="12" height="12" rx="2"/><rect x="210" y="84" width="12" height="12" rx="2"/></g><g fill="#7048E8"><rect x="394" y="84" width="9" height="12" rx="2"/><rect x="424" y="84" width="9" height="12" rx="2"/></g></g>
+<g fill="#2F8CF0" opacity="0.5"><rect x="30" y="100" width="12" height="12" rx="2"/><rect x="46" y="100" width="12" height="12" rx="2"/><rect x="62" y="100" width="12" height="12" rx="2"/><rect x="78" y="100" width="12" height="12" rx="2"/><rect x="94" y="100" width="12" height="12" rx="2"/><rect x="110" y="100" width="12" height="12" rx="2"/><rect x="126" y="100" width="12" height="12" rx="2"/><rect x="142" y="100" width="12" height="12" rx="2"/></g>
+<g fill="#7048E8" opacity="0.5"><rect x="490" y="100" width="9" height="12" rx="2"/><rect x="503" y="100" width="9" height="12" rx="2"/><rect x="516" y="100" width="9" height="12" rx="2"/></g>
+<text x="320" y="166" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">pipeline(read, gzip, write)</text>
+<text x="320" y="198" text-anchor="middle" font-size="13" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'node-base', 'family' => 'node', 'after' => 'js-intermediate',
     'title' => L('Node.js', 'Node.js'), 'short' => L('Node.js', 'Node.js'), 'level' => L('Intermedio', 'Intermediate'),
@@ -14,6 +110,7 @@ npm install -D vitest       # dipendenza solo per lo sviluppo
 npm run dev                 # esegue lo script "dev"
 node server.js              # esegue un file', 'bash'),
             P('`package-lock.json` fissa le versioni esatte installate: va nel repository. `node_modules` invece no (si ricrea con `npm install`). In `package.json` puoi scegliere i moduli moderni con `"type": "module"`.', '`package-lock.json` pins the exact installed versions: it goes in the repository. `node_modules` does not (it is recreated with `npm install`). In `package.json` you can choose modern modules with `"type": "module"`.'),
+            P('Le **dependencies** servono all’app quando gira (Express), le **devDependencies** (`-D`) solo a chi sviluppa (i test, il compilatore). Una versione come `"^5.1.0"` accetta gli aggiornamenti minori e le correzioni, ma non la `6`, che potrebbe cambiare le regole. I comandi del progetto vanno nella sezione `scripts`, così tutti li lanciano allo stesso modo: `npm run dev`, `npm test`.', '**dependencies** are needed by the app when it runs (Express), **devDependencies** (`-D`) only by whoever develops it (tests, the compiler). A version like `"^5.1.0"` accepts minor updates and fixes, but not `6`, which might change the rules. The project commands go in the `scripts` section, so everyone runs them the same way: `npm run dev`, `npm test`.'),
         ], [
             Q('n1', L('Dove sono elencate le dipendenze di un progetto?', 'Where are a project’s dependencies listed?'), ['package.json', 'node_modules', 'index.js', '.env'], 0, L('E installate in node_modules.', 'And installed in node_modules.')),
             Q('n2', L('Va messa nel repository la cartella node_modules?', 'Does the node_modules folder go into the repository?'), [L('No, si ricrea con npm install', 'No, it is recreated with npm install'), L('Sì, sempre', 'Yes, always'), L('Solo in produzione', 'Only in production'), L('Solo il lunedì', 'Only on Mondays')], 0, L('Il lock file invece sì.', 'The lock file does.')),
@@ -36,6 +133,10 @@ try {
   console.error("Impossibile aggiornare le note:", err.message);
 }', 'js'),
             P('Evita le versioni “Sync” (`readFileSync`) in un server: bloccano tutto finché non finiscono. `path.join` costruisce percorsi corretti su ogni sistema operativo.', 'Avoid the “Sync” versions (`readFileSync`) in a server: they block everything until done. `path.join` builds correct paths on every operating system.'),
+            Fig(L(fig_node_async('it'), fig_node_async('en')),
+                L('Due linee del tempo con le richieste A, B e C. In alto, con readFileSync, il thread resta fermo ad aspettare il disco per A, e B e C partono solo dopo. In basso, con await readFile, mentre il disco lavora per A il thread serve B e C, poi completa A: tutto finisce prima.', 'Two timelines with requests A, B and C. At the top, with readFileSync, the thread sits waiting for the disk for A, and B and C start only afterwards. At the bottom, with await readFile, while the disk works for A the thread serves B and C, then completes A: everything finishes sooner.'),
+                L('Mentre il disco lavora, Node non sta fermo: serve le altre richieste.', 'While the disk works, Node does not sit idle: it serves the other requests.')),
+            P('Un solo thread esegue il tuo JavaScript: se lo blocchi con un calcolo lungo o una funzione `Sync`, ogni altro utente aspetta. Gli errori di file system arrivano come eccezioni, con un `code` che li descrive (`ENOENT` significa che il file non esiste): gestiscili con `try…catch`. Per leggere più file insieme, avvia le letture e attendile con `Promise.all`.', 'A single thread runs your JavaScript: if you block it with a long calculation or a `Sync` function, every other user waits. File system errors arrive as exceptions, with a `code` describing them (`ENOENT` means the file does not exist): handle them with `try…catch`. To read several files together, start the reads and wait for them with `Promise.all`.'),
         ], [
             Q('a1', L('Perché evitare `readFileSync` in un server?', 'Why avoid `readFileSync` in a server?'), [L('Blocca tutte le altre richieste', 'It blocks all other requests'), L('Non esiste', 'It does not exist'), L('Legge solo immagini', 'It only reads images'), L('È più sicuro', 'It is safer')], 0, L('Node è a thread singolo per il tuo codice.', 'Node is single-threaded for your code.')),
             Q('a2', L('Come si importano i moduli integrati in modo moderno?', 'How are built-in modules imported the modern way?'), [L('Con il prefisso node:', 'With the node: prefix'), L('Con require soltanto', 'With require only'), L('Da npm', 'From npm'), L('Non si importano', 'They are not imported')], 0, L('Per esempio `node:fs/promises`.', 'For example `node:fs/promises`.')),
@@ -66,6 +167,10 @@ app.get("/api/note/:id", (req, res) => {
 
 app.listen(3000, () => console.log("Pronto su http://localhost:3000"));', 'js'),
             P('`req.params` contiene i segmenti come `:id`, `req.query` i parametri dopo `?`, `req.body` il corpo. Usa i codici giusti: **201** creato, **400** richiesta sbagliata, **404** non trovato.', '`req.params` holds segments like `:id`, `req.query` the parameters after `?`, `req.body` the body. Use the right codes: **201** created, **400** bad request, **404** not found.'),
+            Fig(L(fig_node_mw('it'), fig_node_mw('en')),
+                L('Una richiesta parte dal client e attraversa in ordine express.json(), un controllo if (!testo) e il gestore app.post(…), passando con next(). Il gestore manda la risposta res.status(201).json(nota) al client; il controllo può fermarsi prima e rispondere 400, con una freccia tratteggiata.', 'A request leaves the client and goes in order through express.json(), an if (!testo) check and the app.post(…) handler, moving on with next(). The handler sends the response res.status(201).json(nota) back to the client; the check can stop earlier and answer 400, with a dashed arrow.'),
+                L('Ogni middleware lavora sulla richiesta e la passa avanti, oppure risponde subito.', 'Every middleware works on the request and passes it on, or answers straight away.')),
+            P('L’ordine conta: un middleware vale solo per le rotte scritte **dopo** di lui, per questo `express.json()` sta in cima. Ogni richiesta riceve **una sola** risposta: dopo `res.json()` non puoi mandarne un’altra, ed è per questo che nell’esempio c’è `return` davanti al 400. Un `app.use` finale senza percorso fa da pagina 404 per tutto quello che nessuna rotta ha preso.', 'Order matters: a middleware applies only to routes written **after** it, which is why `express.json()` sits at the top. Every request gets **a single** response: after `res.json()` you cannot send another, which is why the example has `return` before the 400. A final `app.use` with no path acts as the 404 page for everything no route has caught.'),
         ], [
             Q('e1', L('Dove trovi il valore di `:id` nella rotta?', 'Where do you find the value of `:id` in the route?'), ['req.params.id', 'req.query.id', 'req.body.id', 'req.id'], 0, L('`req.query` è per `?id=…`.', '`req.query` is for `?id=…`.')),
             Q('e2', L('Che cosa fa `app.use(express.json())`?', 'What does `app.use(express.json())` do?'), [L('Legge il corpo JSON delle richieste', 'Parses requests’ JSON body'), L('Risponde sempre in JSON', 'Always answers in JSON'), L('Avvia il server', 'Starts the server'), L('Crea una rotta', 'Creates a route')], 0, L('Senza, req.body è vuoto.', 'Without it, req.body is empty.')),
@@ -134,6 +239,9 @@ ordini.once("nuovo", () => console.log("Primo ordine della giornata!"));
 ordini.on("error", err => console.error("Problema:", err.message));
 ordini.crea("Tazza");', 'js'),
             P('Gli ascoltatori vengono chiamati **subito e in ordine**, in modo sincrono, quando chiami `emit`. `once` ascolta una volta sola, `off` toglie un ascoltatore. Un evento `"error"` senza ascoltatori fa cadere il processo: se un oggetto può emettere errori, ascoltali sempre.', 'Listeners are called **at once and in order**, synchronously, when you call `emit`. `once` listens only once, `off` removes a listener. An `"error"` event with no listeners crashes the process: if an object can emit errors, always listen to them.'),
+            Fig(L(fig_node_emitter('it'), fig_node_emitter('en')),
+                L('L’oggetto ordini chiama emit("nuovo", ordine): due frecce raggiungono subito e in ordine i listener 1, on("nuovo"), che manda un’email, e 2, once("nuovo"), tratteggiato perché vale solo la prima volta. Sotto, una nota: se nessuno ascolta «error», il processo si ferma.', 'The ordini object calls emit("nuovo", ordine): two arrows reach at once and in order listener 1, on("nuovo"), which sends an email, and listener 2, once("nuovo"), dashed because it applies only the first time. Below, a note: if nobody listens to “error”, the process stops.'),
+                L('Un `emit`, tanti ascoltatori: chi emette non sa chi ascolta.', 'One `emit`, many listeners: whoever emits does not know who listens.')),
         ], [
             Q('ev1', L('Con che cosa si lancia un evento?', 'What fires an event?'), ['on()', 'emit()', 'listen()', 'send()'], 1, L('`on` invece ascolta.', '`on` listens instead.')),
             Q('ev2', L('Che cosa fa `once`?', 'What does `once` do?'), [L('Lancia l’evento una volta', 'Fires the event once'), L('Blocca l’evento', 'Blocks the event'), L('Ripete l’evento ogni secondo', 'Repeats the event every second'), L('Ascolta l’evento una volta sola', 'Listens to the event only once')], 3, L('Dopo la prima volta l’ascoltatore si toglie da solo.', 'After the first time the listener removes itself.')),
@@ -168,6 +276,9 @@ for await (const riga of righe) {
   if (riga.includes("ERROR")) errori++;
 }', 'js'),
             P('Ci sono stream **leggibili** (un file, una richiesta HTTP), **scrivibili** (un file, una risposta) e di **trasformazione** (compressione, cifratura). Preferisci `pipeline` a `.pipe()`: se un passaggio fallisce, chiude tutti gli stream e ti restituisce l’errore.', 'There are **readable** streams (a file, an HTTP request), **writable** ones (a file, a response) and **transform** ones (compression, encryption). Prefer `pipeline` over `.pipe()`: if a step fails, it closes every stream and gives you the error.'),
+            Fig(L(fig_node_stream('it'), fig_node_stream('en')),
+                L('Tre riquadri collegati da tubi: il file leggibile accessi.log, la trasformazione createGzip() e il file scrivibile accessi.log.gz. Piccoli pezzi azzurri escono dal file, diventano più piccoli dopo gzip ed entrano nel file compresso. Sotto: pipeline(read, gzip, write) e una nota sulla memoria costante.', 'Three boxes joined by pipes: the readable file accessi.log, the createGzip() transform and the writable file accessi.log.gz. Small blue chunks leave the file, get smaller after gzip and enter the compressed file. Below: pipeline(read, gzip, write) and a note on constant memory.'),
+                L('I dati scorrono a pezzi: in memoria ce ne sono sempre solo pochi.', 'Data flows in chunks: only a few are in memory at any time.')),
         ], [
             Q('st1', L('Perché usare uno stream per un file di 5 GB?', 'Why use a stream for a 5 GB file?'), [L('È l’unico modo di aprire un file', 'It is the only way to open a file'), L('Rende il file più piccolo', 'It makes the file smaller'), L('Evita di usare il disco', 'It avoids using the disk'), L('Lavora a pezzi con poca memoria', 'It works in pieces with little memory')], 3, L('La memoria usata resta piccola qualunque sia il file.', 'Memory use stays small whatever the file.')),
             Q('st2', L('Che vantaggio ha `pipeline` su `.pipe()`?', 'What advantage does `pipeline` have over `.pipe()`?'), [L('Gestisce errori e chiusura di tutti gli stream', 'It handles errors and closing for every stream'), L('È più corta da scrivere', 'It is shorter to write'), L('Funziona solo con i file', 'It only works with files'), L('Nessun vantaggio', 'No advantage')], 0, L('Niente stream lasciati aperti dopo un errore.', 'No streams left open after an error.')),

@@ -1,6 +1,69 @@
 <?php
 /** Anthropic Claude: the models, Claude's features (projects, artifacts, connectors, Claude Code), privacy, the Claude API, prompting, memory, research and Skills. */
 
+/** A project holding instructions, files and memory, read by each of its chats; a chat creates an artifact beside it. Labels in one language. */
+if (!function_exists('fig_claude_project')) {
+    function fig_claude_project(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Progetto «Tesi»', 'Istruzioni', 'File', 'Memoria', 'letti in ogni chat del progetto', 'Artefatto', 'crea e aggiorna']
+            : ['Project “Thesis”', 'Instructions', 'Files', 'Memory', 'read in every chat of the project', 'Artifact', 'creates and updates'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="12" y="12" width="410" height="276" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="30" y="38" font-weight="700" font-size="16" fill="#5A36C9">{$t[0]}</text>
+<g fill="#FFFFFF" stroke="#7048E8" stroke-width="2"><rect x="28" y="52" width="120" height="96" rx="10"/><rect x="157" y="52" width="120" height="96" rx="10"/><rect x="286" y="52" width="120" height="96" rx="10"/></g>
+<g stroke="#8A87B0" stroke-width="2" stroke-linecap="round"><path d="M62 74H114M62 86H114M62 98H100M62 110H110"/><path d="M314 76h6M330 76h46M314 94h6M330 94h40M314 112h6M330 112h44"/></g>
+<g fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"><path d="M190 60h28l10 10v40h-38z"/><path d="M206 68h28l10 10v40h-38z"/></g>
+<g font-weight="700" text-anchor="middle" font-size="14"><text x="88" y="136">{$t[1]}</text><text x="217" y="136">{$t[2]}</text><text x="346" y="136">{$t[3]}</text></g>
+<path d="M217 152V184" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<g fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"><path d="M28 196h112a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10H52l-14 12v-12h-0a10 10 0 0 1-10-10v-28a10 10 0 0 1 10-10z"/><path d="M162 196h112a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10H186l-14 12v-12h-0a10 10 0 0 1-10-10v-28a10 10 0 0 1 10-10z"/><path d="M296 196h102a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10H320l-14 12v-12h-0a10 10 0 0 1-10-10v-28a10 10 0 0 1 10-10z"/></g>
+<g text-anchor="middle" font-weight="700" fill="#1B66BC"><text x="89" y="225">Chat 1</text><text x="223" y="225">Chat 2</text><text x="352" y="225">Chat 3</text></g>
+<text x="217" y="280" font-size="13" text-anchor="middle">{$t[4]}</text>
+<rect x="462" y="40" width="166" height="220" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="545" y="68" text-anchor="middle" font-weight="700" fill="#B84508">{$t[5]}</text>
+<rect x="482" y="84" width="126" height="156" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<g stroke="#8A87B0" stroke-width="2" stroke-linecap="round"><path d="M496 102H580M496 116H594M496 130H566"/></g>
+<g fill="#E8590C"><rect x="500" y="196" width="16" height="30" rx="3"/><rect x="524" y="178" width="16" height="48" rx="3"/><rect x="548" y="160" width="16" height="66" rx="3"/><rect x="572" y="186" width="16" height="40" rx="3"/></g>
+<path d="M408 220C432 220 440 200 458 190" stroke="#E8590C" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<text x="545" y="284" font-size="13" text-anchor="middle">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** How Skills load: only names and descriptions stay in context; a matching request loads the whole folder. Labels in one language. */
+if (!function_exists('fig_claude_skills')) {
+    function fig_claude_skills(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Sempre nel contesto', 'solo nome e descrizione', '«Scrivi il verbale di oggi»', 'Caricata solo quando serve', 'istruzioni complete', 'modello del documento', 'script da eseguire', 'stile-brand', 'report-mensile', 'modello.docx', 'scripts/controlla.py']
+            : ['Always in context', 'name and description only', '“Write today’s minutes”', 'Loaded only when needed', 'full instructions', 'document template', 'script to run', 'brand-style', 'monthly-report', 'template.docx', 'scripts/check.py'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="12" y="12" width="290" height="276" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="30" y="40" font-weight="700">{$t[0]}</text><text x="30" y="60" font-size="13">{$t[1]}</text>
+<g stroke-width="2"><rect x="30" y="76" width="254" height="38" rx="10" fill="#ECE6FF" stroke="#7048E8"/><rect x="30" y="124" width="254" height="38" rx="10" fill="#FFFFFF" stroke="#8A87B0"/><rect x="30" y="172" width="254" height="38" rx="10" fill="#FFFFFF" stroke="#8A87B0"/></g>
+<g font-size="14"><text x="46" y="100" font-weight="700" fill="#5A36C9">verbale-riunione</text><text x="46" y="148">{$t[7]}</text><text x="46" y="196">{$t[8]}</text></g>
+<rect x="30" y="226" width="254" height="44" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="157" y="253" text-anchor="middle" font-size="14" fill="#1B66BC">{$t[2]}</text>
+<path d="M140 226V118" stroke="#2F8CF0" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#a)"/>
+<path d="M284 95C320 95 320 120 352 120" stroke="#7048E8" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<rect x="356" y="12" width="272" height="276" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="374" y="40" font-weight="700" fill="#5A36C9">{$t[3]}</text>
+<path d="M374 62h40l8 8h60v24h-108z" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<text x="394" y="88" font-size="14" font-weight="700">verbale-riunione/</text>
+<g fill="#FFFFFF" stroke="#7048E8" stroke-width="2"><rect x="394" y="110" width="216" height="46" rx="10"/><rect x="394" y="166" width="216" height="46" rx="10"/><rect x="394" y="222" width="216" height="46" rx="10"/></g>
+<g font-size="14" font-weight="700"><text x="408" y="130">SKILL.md</text><text x="408" y="186">{$t[9]}</text><text x="408" y="242">{$t[10]}</text></g>
+<g font-size="13"><text x="408" y="148">{$t[4]}</text><text x="408" y="204">{$t[5]}</text><text x="408" y="260">{$t[6]}</text></g>
+<path d="M384 94V246M384 133H394M384 189H394M384 245H394" stroke="#8A87B0" stroke-width="2" fill="none"/>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'claude', 'family' => 'assistants', 'after' => null,
     'title' => L('Anthropic Claude', 'Anthropic Claude'), 'short' => L('Claude', 'Claude'), 'level' => L('Base', 'Basics'),
@@ -19,6 +82,9 @@ return [
         ]),
         lesson('features', L('Progetti, artefatti e connettori', 'Projects, artifacts and connectors'), [
             P('I **progetti** raccolgono chat, documenti di riferimento e istruzioni per uno stesso lavoro: Claude li tiene presenti in ogni conversazione del progetto. Gli **artefatti** sono contenuti a parte (documenti, codice, pagine web interattive, grafici) che Claude crea e aggiorna accanto alla chat.', '**Projects** collect chats, reference documents and instructions for the same piece of work: Claude keeps them in mind in every conversation in the project. **Artifacts** are standalone pieces of content (documents, code, interactive web pages, charts) that Claude creates and updates next to the chat.'),
+            Fig(L(fig_claude_project('it'), fig_claude_project('en')),
+                L('Un grande riquadro viola, il progetto «Tesi», contiene tre schede (istruzioni, file, memoria) e sotto tre chat; una freccia indica che le schede vengono lette in ogni chat. A destra, un riquadro arancione con un documento e un grafico è l’artefatto che una chat crea e aggiorna.', 'A large purple box, the project “Thesis”, holds three cards (instructions, files, memory) and three chats below them; an arrow shows the cards are read in every chat. On the right, an orange box with a document and a chart is the artifact a chat creates and updates.'),
+                L('Il progetto tiene insieme il contesto; l’artefatto vive accanto alla chat.', 'The project keeps the context together; the artifact lives beside the chat.')),
             P('Claude analizza **file e immagini** caricati, può **cercare sul web** e, con i **connettori**, accedere a strumenti come calendario, email o documenti aziendali. Molti connettori usano il **Model Context Protocol** (MCP), lo standard aperto creato da Anthropic per collegare l’AI a strumenti e dati.', 'Claude analyses uploaded **files and images**, can **search the web** and, through **connectors**, access tools such as calendar, email or company documents. Many connectors use the **Model Context Protocol** (MCP), the open standard Anthropic created to connect AI to tools and data.'),
         ], [
             Q('f1', L('Che cos’è un artefatto?', 'What is an artifact?'), [L('Un contenuto a parte che Claude crea accanto alla chat', 'Standalone content Claude creates next to the chat'), L('Un errore', 'An error'), L('Un tipo di abbonamento', 'A subscription type'), L('Una password', 'A password')], 0, L('Documenti, codice, pagine interattive.', 'Documents, code, interactive pages.')),
@@ -87,6 +153,9 @@ Formato: 5 punti, poi le decisioni prese.
         lesson('memory-skills', L('Memoria, ricerca e Skills', 'Memory, research and Skills'), [
             P('Con la **memoria** Claude ricorda tra una chat e l’altra fatti utili su di te e sul tuo lavoro; nei progetti la memoria resta separata per ogni progetto. Puoi vedere e correggere ciò che ricorda, spegnerla nelle impostazioni, e le chat in **incognito** non la usano. La modalità **ricerca** fa molte ricerche sul web (e, se collegati, nei tuoi strumenti) e consegna un rapporto con le citazioni.', 'With **memory** Claude remembers useful facts about you and your work from one chat to the next; in projects memory stays separate for each project. You can view and correct what it remembers, turn it off in the settings, and **incognito** chats do not use it. **Research** mode runs many searches on the web (and, if connected, in your tools) and delivers a report with citations.'),
             P('Le **Skills** sono cartelle con un file `SKILL.md` (istruzioni e una descrizione) ed eventualmente script e modelli di documento. Claude legge solo la descrizione finché la skill non serve, poi carica il resto: così impara un compito ricorrente (il formato dei tuoi report, lo stile del marchio) senza riempire ogni conversazione. Le stesse skill funzionano nelle app, in Claude Code e via API.', '**Skills** are folders with a `SKILL.md` file (instructions and a description) and optionally scripts and document templates. Claude reads only the description until the skill is needed, then loads the rest: that way it learns a recurring task (your report format, the brand style) without filling every conversation. The same skills work in the apps, in Claude Code and via the API.'),
+            Fig(L(fig_claude_skills('it'), fig_claude_skills('en')),
+                L('A sinistra, il contesto della chat contiene solo i nomi di tre skill; la richiesta «Scrivi il verbale di oggi» punta a verbale-riunione. Una freccia porta a destra, dove la cartella della skill si apre: SKILL.md con le istruzioni complete, un modello di documento e uno script.', 'On the left, the chat’s context holds only the names of three skills; the request “Write today’s minutes” points to verbale-riunione. An arrow leads to the right, where the skill’s folder opens: SKILL.md with the full instructions, a document template and a script.'),
+                L('Le descrizioni costano poco; il resto si carica solo per la skill giusta.', 'Descriptions cost little; the rest loads only for the right skill.')),
             C('---
 name: verbale-riunione
 description: Scrive il verbale di una riunione nel formato del nostro ufficio. Usala quando l’utente incolla appunti o una trascrizione.

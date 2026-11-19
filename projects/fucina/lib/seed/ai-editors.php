@@ -1,6 +1,85 @@
 <?php
 /** Coding with AI editors and agents: the landscape, context and rules files, agentic workflows, reviewing and safety, parallel and cloud agents, MCP and skills. */
 
+/** The context window as a bar that fills up: rules file, files you point to, errors, then the chat history. Labels in one language. */
+if (!function_exists('fig_aied_context')) {
+    function fig_aied_context(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Che cosa vede il modello', 'File di regole', 'sempre', 'File indicati', 'con @ o #', 'Errori e log', 'incollati', 'Cronologia', 'tentativi compresi', 'spazio libero', 'Finestra di contesto', 'piena di tentativi falliti? apri una nuova sessione']
+            : ['What the model sees', 'Rules file', 'always', 'Files you point to', 'with @ or #', 'Errors and logs', 'pasted in', 'History', 'failed attempts too', 'free space', 'Context window', 'full of failed attempts? start a new session'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 228" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="16" y="28" font-weight="700">{$t[0]}</text>
+<g stroke-width="2"><rect x="16" y="44" width="140" height="52" rx="10" fill="#ECE6FF" stroke="#7048E8"/><rect x="170" y="44" width="140" height="52" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="324" y="44" width="140" height="52" rx="10" fill="#FFE3EE" stroke="#F03E82"/><rect x="478" y="44" width="146" height="52" rx="10" fill="#FFF3EA" stroke="#E8590C"/></g>
+<g font-weight="700" font-size="14"><text x="30" y="66" fill="#5A36C9">{$t[1]}</text><text x="184" y="66" fill="#1B66BC">{$t[3]}</text><text x="338" y="66" fill="#C2255C">{$t[5]}</text><text x="492" y="66" fill="#B84508">{$t[7]}</text></g>
+<g font-size="13"><text x="30" y="85">{$t[2]}</text><text x="184" y="85">{$t[4]}</text><text x="338" y="85">{$t[6]}</text><text x="492" y="85">{$t[8]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none"><path d="M86 96V112L53 140"/><path d="M240 96V112L163 140"/><path d="M394 96V112L278 140"/><path d="M551 96V112L418 140"/></g>
+<text x="16" y="210" font-size="13" font-weight="700">{$t[10]}</text>
+<rect x="16" y="144" width="608" height="44" rx="10" fill="#F1F0F8" stroke="#1E1C52" stroke-width="2"/>
+<rect x="18" y="146" width="70" height="40" rx="8" fill="#7048E8"/><rect x="88" y="146" width="150" height="40" fill="#2F8CF0"/><rect x="238" y="146" width="80" height="40" fill="#F03E82"/><rect x="318" y="146" width="200" height="40" fill="#E8590C"/>
+<path d="M518 146V186" stroke="#1E1C52" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="570" y="171" text-anchor="middle" font-size="13">{$t[9]}</text>
+<text x="624" y="210" text-anchor="end" font-size="13">{$t[11]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The agentic workflow as a cycle of five numbered steps; the ring's dashes turn slowly. Labels in one language. */
+if (!function_exists('fig_aied_cycle')) {
+    function fig_aied_cycle(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Piano', 'chiedilo e correggilo', 'Un passo', 'piccolo e chiaro', 'Test', 'finché sono verdi', 'Diff', 'rileggi tutto', 'Commit', 'poi il passo dopo', 'un passo', 'alla volta']
+            : ['Plan', 'ask for it, correct it', 'One step', 'small and clear', 'Tests', 'until they pass', 'Diff', 'read it all', 'Commit', 'then the next step', 'one step', 'at a time'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 310" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.ring{animation:turn 6s linear infinite}@keyframes turn{to{stroke-dashoffset:-56}}@media (prefers-reduced-motion:reduce){.ring{animation:none}}</style>
+<circle class="ring" cx="320" cy="158" r="112" fill="none" stroke="#7048E8" stroke-width="2" stroke-dasharray="10 4"/>
+<text x="320" y="154" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[10]}</text><text x="320" y="174" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[11]}</text>
+<g stroke-width="2">
+<rect x="245" y="20" width="150" height="52" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/>
+<rect x="400" y="96" width="150" height="52" rx="12" fill="#ECE6FF" stroke="#7048E8"/>
+<rect x="352" y="232" width="150" height="52" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/>
+<rect x="138" y="232" width="150" height="52" rx="12" fill="#FFF3EA" stroke="#E8590C"/>
+<rect x="90" y="96" width="150" height="52" rx="12" fill="#FFE3EE" stroke="#F03E82"/>
+</g>
+<g font-weight="700"><text x="259" y="42" fill="#1B66BC">1  {$t[0]}</text><text x="414" y="118" fill="#5A36C9">2  {$t[2]}</text><text x="366" y="254" fill="#0B7F5C">3  {$t[4]}</text><text x="152" y="254" fill="#B84508">4  {$t[6]}</text><text x="104" y="118" fill="#C2255C">5  {$t[8]}</text></g>
+<g font-size="13"><text x="259" y="62">{$t[1]}</text><text x="414" y="138">{$t[3]}</text><text x="366" y="274">{$t[5]}</text><text x="152" y="274">{$t[7]}</text><text x="104" y="138">{$t[9]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Parallel agents with git worktrees: one repository, three folders on three branches, each with its own agent. Labels in one language. */
+if (!function_exists('fig_aied_worktree')) {
+    function fig_aied_worktree(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Un solo repository', 'storia e branch in comune', 'Tu', 'Agente 1', 'Agente 2', 'branch', 'cartelle separate: nessuno pesta i piedi agli altri']
+            : ['One repository', 'shared history and branches', 'You', 'Agent 1', 'Agent 2', 'branch', 'separate folders: nobody treads on anyone’s toes'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="16" y="100" width="180" height="80" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="106" y="134" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[0]}</text><text x="106" y="156" text-anchor="middle" font-size="13">{$t[1]}</text>
+<g stroke="#7048E8" stroke-width="2" fill="none"><path d="M196 125C230 125 230 50 262 50"/><path d="M196 140H262"/><path d="M196 155C230 155 230 230 262 230"/></g>
+<g stroke-width="2">
+<path d="M262 30h46l8 8h180a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H272a10 10 0 0 1-10-10z" fill="#DCEBFF" stroke="#2F8CF0"/>
+<path d="M262 120h46l8 8h180a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H272a10 10 0 0 1-10-10z" fill="#FFF3EA" stroke="#E8590C"/>
+<path d="M262 210h46l8 8h180a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H272a10 10 0 0 1-10-10z" fill="#D5F6EA" stroke="#0B7F5C"/>
+</g>
+<g font-weight="700" font-size="14"><text x="276" y="62">shop/</text><text x="276" y="152">../shop-fix-iva/</text><text x="276" y="242">../shop-docs/</text></g>
+<g font-size="13"><text x="414" y="62">{$t[5]} main</text><text x="414" y="152">{$t[5]} fix-iva</text><text x="414" y="242">{$t[5]} docs</text></g>
+<g stroke="#8A87B0" stroke-width="2"><path d="M506 57H530"/><path d="M506 147H530"/><path d="M506 237H530"/></g>
+<g stroke-width="2"><rect x="530" y="38" width="94" height="38" rx="19" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="530" y="128" width="94" height="38" rx="19" fill="#FFE8D6" stroke="#E8590C"/><rect x="530" y="218" width="94" height="38" rx="19" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g font-weight="700" font-size="14" text-anchor="middle"><text x="577" y="62" fill="#1B66BC">{$t[2]}</text><text x="577" y="152" fill="#B84508">{$t[3]}</text><text x="577" y="242" fill="#0B7F5C">{$t[4]}</text></g>
+<text x="320" y="292" text-anchor="middle" font-size="13">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ai-editors', 'family' => 'assistants', 'after' => null,
     'title' => L('Programmare con editor e agenti AI', 'Coding with AI Editors and Agents'), 'short' => L('Editor AI', 'AI Editors'), 'level' => L('Intermedio', 'Intermediate'),
@@ -19,6 +98,9 @@ return [
         ]),
         lesson('context', L('Contesto e file di regole', 'Context and rules files'), [
             P('La qualità delle risposte dipende dal **contesto**: quali file vede il modello, che cosa sa del progetto. Indica i file rilevanti (con `@` o `#` a seconda dello strumento), incolla errori e log, e descrivi il risultato atteso.', 'Answer quality depends on **context**: which files the model sees, what it knows about the project. Point to the relevant files (with `@` or `#` depending on the tool), paste errors and logs, and describe the expected result.'),
+            Fig(L(fig_aied_context('it'), fig_aied_context('en')),
+                L('Quattro riquadri (file di regole, file indicati, errori e log, cronologia) scendono in una barra orizzontale, la finestra di contesto, riempita da segmenti colorati; a destra resta poco spazio libero. Sotto: se è piena di tentativi falliti, apri una nuova sessione.', 'Four boxes (rules file, files you point to, errors and logs, history) drop into a horizontal bar, the context window, filled with coloured segments; little free space is left on the right. Below: if it is full of failed attempts, start a new session.'),
+                L('Il contesto è limitato: riempilo con ciò che serve, non con i tentativi andati male.', 'Context is limited: fill it with what matters, not with attempts that went wrong.')),
             P('I **file di regole** danno istruzioni stabili per tutto il progetto: comandi di build e test, stile, cartelle da non toccare. Ogni strumento ha il suo (`CLAUDE.md`, `.cursor/rules`, `.github/copilot-instructions.md`); **`AGENTS.md`** è una convenzione aperta letta da molti agenti diversi.', '**Rules files** give stable instructions for the whole project: build and test commands, style, folders not to touch. Each tool has its own (`CLAUDE.md`, `.cursor/rules`, `.github/copilot-instructions.md`); **`AGENTS.md`** is an open convention read by many different agents.'),
             C('# AGENTS.md
 ## Comandi
@@ -37,6 +119,9 @@ return [
         ]),
         lesson('workflow', L('Flussi agentici', 'Agentic workflows'), [
             P('Un flusso che funziona: **1)** chiedi prima un **piano** e correggilo, **2)** fai implementare un passo alla volta, **3)** fai **eseguire i test** e correggere finché passano, **4)** rivedi il **diff**, **5)** commit. Compiti piccoli e ben definiti riescono molto meglio di richieste enormi.', 'A workflow that works: **1)** ask for a **plan** first and correct it, **2)** have it implement one step at a time, **3)** have it **run the tests** and fix until they pass, **4)** review the **diff**, **5)** commit. Small, well-defined tasks succeed far better than huge requests.'),
+            Fig(L(fig_aied_cycle('it'), fig_aied_cycle('en')),
+                L('Cinque riquadri numerati disposti su un cerchio: 1 piano, 2 un passo, 3 test finché sono verdi, 4 rileggi il diff, 5 commit e poi il passo dopo. Al centro: un passo alla volta.', 'Five numbered boxes arranged on a circle: 1 plan, 2 one step, 3 tests until they pass, 4 read the diff, 5 commit and then the next step. In the middle: one step at a time.'),
+                L('Il ciclo è corto apposta: ogni giro finisce con un commit che sai spiegare.', 'The cycle is short on purpose: every lap ends with a commit you can explain.')),
             P('Altre tecniche utili: scrivere prima i **test** e chiedere all’agente di farli passare; dare **esempi** di codice esistente da imitare; ricominciare una sessione pulita quando il contesto si è riempito di tentativi falliti.', 'Other useful techniques: write the **tests** first and ask the agent to make them pass; give **examples** of existing code to imitate; start a fresh session when the context has filled up with failed attempts.'),
         ], [
             Q('w1', L('Che cosa chiedere prima di far scrivere codice?', 'What should you ask for before having code written?'), [L('Un piano da correggere', 'A plan to correct'), L('Il prezzo', 'The price'), L('Niente', 'Nothing'), L('Una poesia', 'A poem')], 0, L('Correggere un piano costa poco.', 'Correcting a plan is cheap.')),
@@ -75,6 +160,9 @@ return [
         ]),
         lesson('parallel', L('Agenti in parallelo e nel cloud', 'Parallel and cloud agents'), [
             P('Molti strumenti permettono di far lavorare **più agenti insieme** su compiti diversi. Per non pestarsi i piedi, ogni agente deve avere la sua copia del progetto: di solito un **git worktree**, cioè una seconda cartella collegata allo stesso repository ma su un altro branch. Così un agente corregge un bug mentre un altro scrive la documentazione.', 'Many tools let **several agents work at once** on different tasks. So they do not get in each other’s way, each agent needs its own copy of the project: usually a **git worktree**, a second folder linked to the same repository but on another branch. That way one agent fixes a bug while another writes the documentation.'),
+            Fig(L(fig_aied_worktree('it'), fig_aied_worktree('en')),
+                L('A sinistra un solo repository, collegato a tre cartelle: shop sul branch main dove lavori tu, ../shop-fix-iva sul branch fix-iva con l’agente 1, ../shop-docs sul branch docs con l’agente 2.', 'On the left, a single repository linked to three folders: shop on the main branch where you work, ../shop-fix-iva on the fix-iva branch with agent 1, ../shop-docs on the docs branch with agent 2.'),
+                L('Un worktree per agente: stessa storia, file separati.', 'One worktree per agent: same history, separate files.')),
             C('git worktree add ../shop-fix-iva -b fix-iva
 cd ../shop-fix-iva
 # qui lavora il secondo agente; a fine lavoro:

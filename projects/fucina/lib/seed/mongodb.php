@@ -1,6 +1,103 @@
 <?php
 /** MongoDB: documents and collections, find with operators, updates, aggregation, indexes and modelling, arrays, schema validation and transactions. */
 
+/** What a mongosh command prints, as a small monospace page. */
+if (!function_exists('fucina_data_pre')) {
+    function fucina_data_pre(string $text): string
+    {
+        return '<pre style="margin:8px;font:13px/1.45 ui-monospace,monospace;color:#1E1C52;white-space:pre-wrap">' . htmlspecialchars($text) . '</pre>';
+    }
+}
+
+/** The same products as rows of a table (fixed columns, NULLs, a second table for tags) and as documents. */
+if (!function_exists('fig_mongo_docs')) {
+    function fig_mongo_docs(string $sqlTitle, string $docTitle): string
+    {
+        $n = '<tspan fill="#8A87B0" font-style="italic">NULL</tspan>';
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g font-weight="700" font-size="14"><text x="20" y="28">{$sqlTitle}</text><text x="330" y="28">{$docTitle}</text></g>
+<rect x="20" y="40" width="290" height="132" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="20" y="40" width="290" height="30" rx="10" fill="#DCEBFF"/>
+<g font-weight="700"><text x="32" y="60">nome</text><text x="130" y="60">prezzo</text><text x="200" y="60">h</text><text x="254" y="60">l</text></g>
+<g stroke="#C9C7DE" stroke-width="1"><line x1="20" y1="104" x2="310" y2="104"/><line x1="20" y1="138" x2="310" y2="138"/></g>
+<text x="32" y="92">Tazza</text><text x="130" y="92">8.5</text><text x="200" y="92">{$n}</text><text x="254" y="92">{$n}</text>
+<text x="32" y="126">Lampada</text><text x="130" y="126">35</text><text x="200" y="126">40</text><text x="254" y="126">15</text>
+<text x="32" y="160">Quaderno</text><text x="130" y="160">3</text><text x="200" y="160">{$n}</text><text x="254" y="160">{$n}</text>
+<rect x="20" y="190" width="200" height="98" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="20" y="190" width="200" height="30" rx="10" fill="#DCEBFF"/>
+<g font-weight="700"><text x="32" y="210">prodotto</text><text x="124" y="210">tag</text></g>
+<text x="32" y="244">Tazza</text><text x="124" y="244">cucina</text><text x="32" y="274">Tazza</text><text x="124" y="274">regalo</text>
+<g font-family="ui-monospace, monospace" font-size="12">
+<rect x="330" y="40" width="290" height="66" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="344" y="62">{ nome: "Tazza", prezzo: 8.5,</text><text x="356" y="80">tag: ["cucina", "regalo"] }</text>
+<rect x="330" y="118" width="290" height="84" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="344" y="140">{ nome: "Lampada", prezzo: 35,</text><text x="356" y="158">dimensioni: {</text><text x="368" y="176">h: 40, l: 15 } }</text>
+<rect x="330" y="214" width="290" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="344" y="239">{ nome: "Quaderno", prezzo: 3 }</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** An aggregation pipeline: each stage receives the documents of the one before and hands on fewer, or different, ones. */
+if (!function_exists('fig_mongo_pipeline')) {
+    function fig_mongo_pipeline(string $docs): string
+    {
+        $stage = ['ordini', '$match', '$group', '$sort', '$limit'];
+        $g = '';
+        foreach ($stage as $i => $t) {
+            $x = 64 + $i * 128;
+            $g .= '<rect x="' . ($x - 52) . '" y="24" width="104" height="36" rx="10" fill="' . ($i ? '#ECE6FF' : '#F1F0F8') . '" stroke="' . ($i ? '#7048E8' : '#8A87B0') . '" stroke-width="2"/><text x="' . $x . '" y="47" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700" font-size="14">' . $t . '</text>';
+            if ($i < 4) $g .= '<path d="M' . ($x + 54) . ' 42 H' . ($x + 70) . '" stroke="#7048E8" stroke-width="2"/><path d="M' . ($x + 68) . ' 37 L' . ($x + 76) . ' 42 L' . ($x + 68) . ' 47 Z" fill="#7048E8"/>';
+        }
+        // ordini: 8 orders, paid (filled) or not (dashed)
+        $orders = [['a', 1], ['b', 1], ['c', 0], ['a', 1], ['d', 1], ['c', 1], ['b', 0], ['a', 0]];
+        foreach ($orders as $i => [$c, $paid]) {
+            $x = 26 + ($i % 2) * 40; $y = 80 + intdiv($i, 2) * 34;
+            $g .= '<rect x="' . $x . '" y="' . $y . '" width="34" height="26" rx="6" fill="' . ($paid ? '#D5F6EA' : '#FFFFFF') . '" stroke="' . ($paid ? '#0B7F5C' : '#8A87B0') . '" stroke-width="2"' . ($paid ? '' : ' stroke-dasharray="4 3"') . '/><text x="' . ($x + 17) . '" y="' . ($y + 18) . '" text-anchor="middle" font-family="ui-monospace, monospace">' . $c . '</text>';
+        }
+        $paidOnly = array_values(array_filter($orders, fn($o) => $o[1]));
+        foreach ($paidOnly as $i => [$c]) {
+            $x = 154 + ($i % 2) * 40; $y = 80 + intdiv($i, 2) * 34;
+            $g .= '<rect x="' . $x . '" y="' . $y . '" width="34" height="26" rx="6" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="' . ($x + 17) . '" y="' . ($y + 18) . '" text-anchor="middle" font-family="ui-monospace, monospace">' . $c . '</text>';
+        }
+        $chip = fn(int $cx, int $y, string $t, bool $dim = false) => '<rect x="' . ($cx - 48) . '" y="' . $y . '" width="96" height="26" rx="8" fill="' . ($dim ? '#FFFFFF' : '#ECE6FF') . '" stroke="' . ($dim ? '#C9C7DE' : '#7048E8') . '" stroke-width="2"/><text x="' . $cx . '" y="' . ($y + 18) . '" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13"' . ($dim ? ' fill="#8A87B0"' : '') . '>' . $t . '</text>';
+        foreach (['ada 120', 'bo 80', 'cy 210', 'di 45'] as $i => $t) $g .= $chip(320, 80 + $i * 34, $t);
+        foreach (['cy 210', 'ada 120', 'bo 80', 'di 45'] as $i => $t) $g .= $chip(448, 80 + $i * 34, $t);
+        foreach (['cy 210', 'ada 120', 'bo 80'] as $i => $t) $g .= $chip(576, 80 + $i * 34, $t);
+        foreach ([8, 5, 4, 4, 3] as $i => $k) $g .= '<text x="' . (64 + $i * 128) . '" y="236" text-anchor="middle" font-size="13" fill="#5A5880"><tspan font-weight="700" fill="#1E1C52">' . $k . '</tspan> ' . $docs . '</text>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">' . $g . '</svg>';
+    }
+}
+
+/** Embedding versus referencing: one document with its comments inside, or an order pointing to a customer in another collection. */
+if (!function_exists('fig_mongo_model')) {
+    function fig_mongo_model(string $embed, string $ref, string $oneRead, string $twoReads): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g font-weight="700" font-size="14"><text x="20" y="28">{$embed}</text><text x="330" y="28">{$ref}</text></g>
+<g font-family="ui-monospace, monospace" font-size="12">
+<rect x="20" y="40" width="290" height="180" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="36" y="64">post { _id: 1, titolo: "Post",</text><text x="48" y="84">commenti: [</text>
+<rect x="48" y="94" width="250" height="44" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><text x="58" y="120" font-size="11">{ autore: "Bo", testo: "Bello!" }</text>
+<rect x="48" y="146" width="250" height="44" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><text x="58" y="172" font-size="11">{ autore: "Cy", testo: "Utile" }</text>
+<text x="48" y="210">] }</text>
+<rect x="330" y="40" width="290" height="70" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="346" y="66">ordini { _id: 7,</text><text x="358" y="88">clienteId: <tspan font-weight="700" fill="#B84508">ObjectId("c42")</tspan> }</text>
+<rect x="330" y="150" width="290" height="70" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="346" y="176">clienti { <tspan font-weight="700" fill="#B84508">_id: ObjectId("c42")</tspan>,</text><text x="358" y="198">nome: "Ada", indirizzo: … }</text>
+</g>
+<path d="M500 110 V142" stroke="#E8590C" stroke-width="2"/><path d="M494 140 L500 150 L506 140 Z" fill="#E8590C"/>
+<text x="20" y="252" font-weight="700" fill="#0B7F5C">{$oneRead}</text>
+<text x="330" y="252" font-weight="700" fill="#B84508">{$twoReads}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'mongodb', 'family' => 'mongodb', 'after' => null,
     'title' => L('MongoDB', 'MongoDB'), 'short' => L('MongoDB', 'MongoDB'), 'level' => L('Base', 'Basics'),
@@ -15,7 +112,14 @@ db.prodotti.insertMany([
   { nome: "Lampada", prezzo: 35, dimensioni: { h: 40, l: 15 } },
   { nome: "Quaderno", prezzo: 3 }
 ])
-db.prodotti.find()', 'js'),
+db.prodotti.find()', 'js', fucina_data_pre('[
+  { _id: ObjectId("6740…a1"), nome: "Tazza", prezzo: 8.5, tag: ["cucina", "regalo"] },
+  { _id: ObjectId("6740…a2"), nome: "Lampada", prezzo: 35, dimensioni: { h: 40, l: 15 } },
+  { _id: ObjectId("6740…a3"), nome: "Quaderno", prezzo: 3 }
+]')),
+            Fig(L(fig_mongo_docs('SQL: tabelle e righe', 'MongoDB: documenti'), fig_mongo_docs('SQL: tables and rows', 'MongoDB: documents')),
+                L('A sinistra gli stessi tre prodotti in una tabella con colonne fisse: Tazza e Quaderno hanno NULL nelle colonne h e l, e i tag di Tazza stanno in una seconda tabella. A destra tre documenti: Tazza con l’array tag, Lampada con l’oggetto dimensioni, Quaderno con solo nome e prezzo.', 'On the left the same three products in a table with fixed columns: Tazza and Quaderno have NULL in the h and l columns, and Tazza’s tags sit in a second table. On the right three documents: Tazza with the tag array, Lampada with the dimensioni object, Quaderno with only name and price.'),
+                L('Ogni documento porta solo i campi che gli servono, array e oggetti compresi.', 'Each document carries only the fields it needs, arrays and objects included.')),
             P('Ogni documento riceve un campo **`_id`** unico (di solito un `ObjectId`) se non lo dai tu. Database e collezioni si creano da soli al primo inserimento.', 'Every document gets a unique **`_id`** field (usually an `ObjectId`) if you do not provide one. Databases and collections are created on the first insert.'),
             Tip('SQL → MongoDB: tabella = collezione, riga = documento, colonna = campo, JOIN = documento annidato o `$lookup`.', 'SQL → MongoDB: table = collection, row = document, column = field, JOIN = nested document or `$lookup`.'),
         ], [
@@ -32,7 +136,11 @@ db.prodotti.find()', 'js'),
 db.prodotti.find({ tag: "regalo", prezzo: { $gte: 5, $lte: 20 } })
 db.prodotti.find({ $or: [{ prezzo: { $lt: 5 } }, { tag: "saldi" }] })
 db.prodotti.find({ "dimensioni.h": { $gt: 30 } }, { nome: 1, _id: 0 })
-db.prodotti.find().sort({ prezzo: -1 }).limit(5)', 'js'),
+db.prodotti.find().sort({ prezzo: -1 }).limit(5)', 'js', fucina_data_pre('// db.prodotti.find({ prezzo: { $lt: 10 } })
+[
+  { _id: ObjectId("6740…a1"), nome: "Tazza", prezzo: 8.5, tag: ["cucina", "regalo"] },
+  { _id: ObjectId("6740…a3"), nome: "Quaderno", prezzo: 3 }
+]')),
             P('Nei campi annidati si usa la **notazione col punto** tra virgolette (`"dimensioni.h"`). Cercare un valore in un campo array trova i documenti che lo contengono. Nella proiezione `1` include un campo, `0` lo esclude; `sort` con `-1` ordina dal più grande.', 'For nested fields you use **dot notation** in quotes (`"dimensioni.h"`). Searching for a value in an array field finds the documents that contain it. In the projection `1` includes a field, `0` excludes it; `sort` with `-1` sorts from largest.'),
         ], [
             Q('f1', L('Quale operatore significa “maggiore di”?', 'Which operator means “greater than”?'), ['$gt', '$lt', '$in', '$ne'], 0, L('greater than.', 'greater than.')),
@@ -49,8 +157,10 @@ db.prodotti.updateMany({ tag: "saldi" }, { $inc: { prezzo: -2 } })
 db.prodotti.updateOne({ nome: "Tazza" }, { $push: { tag: "novità" } })
 db.contatori.updateOne({ _id: "visite" }, { $inc: { n: 1 } }, { upsert: true })
 
-db.sessioni.deleteMany({ scadenza: { $lt: new Date() } })', 'js'),
+db.sessioni.deleteMany({ scadenza: { $lt: new Date() } })', 'js', fucina_data_pre('// updateOne({ nome: "Tazza" }, { $set: { prezzo: 9 } })
+{ acknowledged: true, matchedCount: 1, modifiedCount: 1, upsertedCount: 0 }')),
             P('Con **`upsert: true`** il documento viene creato se il filtro non trova niente. `deleteOne` e `deleteMany` cancellano: come in SQL, prova prima lo stesso filtro con `find`.', 'With **`upsert: true`** the document is created if the filter finds nothing. `deleteOne` and `deleteMany` delete: as in SQL, try the same filter with `find` first.'),
+            P('Attenzione alla differenza: `updateOne` modifica solo il **primo** documento trovato, anche se il filtro ne trova cento; `updateMany` li modifica tutti. La risposta dice quanti documenti hanno combaciato (`matchedCount`) e quanti sono cambiati davvero (`modifiedCount`): se imposti un valore che c’era già, il primo è 1 e il secondo 0.', 'Mind the difference: `updateOne` changes only the **first** document found, even if the filter finds a hundred; `updateMany` changes them all. The reply says how many documents matched (`matchedCount`) and how many really changed (`modifiedCount`): if you set a value that was already there, the first is 1 and the second 0.'),
         ], [
             Q('u1', L('Quale operatore aumenta un numero?', 'Which operator increases a number?'), ['$inc', '$set', '$push', '$add'], 0, L('Con un valore negativo diminuisce.', 'With a negative value it decreases.')),
             Q('u2', L('Che cosa fa `upsert: true`?', 'What does `upsert: true` do?'), [L('Crea il documento se non esiste', 'Creates the document if it does not exist'), L('Aggiorna tutti i documenti', 'Updates every document'), L('Annulla l’aggiornamento', 'Undoes the update'), L('Cancella i doppioni', 'Deletes duplicates')], 0, L('Update + insert.', 'Update + insert.')),
@@ -66,8 +176,16 @@ db.sessioni.deleteMany({ scadenza: { $lt: new Date() } })', 'js'),
   { $group: { _id: "$cliente", totale: { $sum: "$importo" }, ordini: { $sum: 1 } } },
   { $sort: { totale: -1 } },
   { $limit: 3 }
-])', 'js'),
+])', 'js', fucina_data_pre('[
+  { _id: "cy", totale: 210, ordini: 1 },
+  { _id: "ada", totale: 120, ordini: 2 },
+  { _id: "bo", totale: 80, ordini: 1 }
+]')),
+            Fig(L(fig_mongo_pipeline('documenti'), fig_mongo_pipeline('documents')),
+                L('Cinque fasi in fila: ordini, $match, $group, $sort, $limit. Sotto ordini ci sono otto ordini, alcuni pagati e altri tratteggiati; $match ne lascia passare cinque pagati; $group li riduce a quattro totali per cliente (ada 120, bo 80, cy 210, di 45); $sort li mette in ordine decrescente; $limit tiene i primi tre.', 'Five stages in a row: ordini, $match, $group, $sort, $limit. Under ordini there are eight orders, some paid and others dashed; $match lets five paid ones through; $group turns them into four totals per customer (ada 120, bo 80, cy 210, di 45); $sort puts them in descending order; $limit keeps the first three.'),
+                L('Ogni fase lavora solo su quello che le passa la fase prima.', 'Each stage works only on what the stage before hands it.')),
             P('Dentro `$group`, `_id` è il campo per cui raggruppi e `"$nomecampo"` (con il dollaro, tra virgolette) legge il valore del campo. Metti `$match` il prima possibile: meno documenti scorrono nella pipeline.', 'Inside `$group`, `_id` is the field you group by and `"$fieldname"` (with the dollar, in quotes) reads the field’s value. Put `$match` as early as possible: fewer documents flow through the pipeline.'),
+            P('Pensala come una catena di montaggio: l’uscita di una fase è l’ingresso della successiva, e dopo `$group` i documenti non sono più ordini ma un riassunto per cliente, con i soli campi che hai calcolato. Per questo l’ordine conta: un `$sort` prima di `$group` andrebbe perso, e un `$limit` messo all’inizio taglierebbe gli ordini invece dei clienti.', 'Think of it as an assembly line: the output of one stage is the input of the next, and after `$group` the documents are no longer orders but a summary per customer, with only the fields you computed. That is why order matters: a `$sort` before `$group` would be lost, and a `$limit` placed at the start would cut orders instead of customers.'),
         ], [
             Q('a1', L('Quale fase corrisponde al `GROUP BY` di SQL?', 'Which stage matches SQL’s `GROUP BY`?'), ['$group', '$match', '$project', '$sort'], 0, L('Con accumulatori come `$sum`.', 'With accumulators such as `$sum`.')),
             Q('a2', L('Che cosa significa `"$importo"` dentro `$sum`?', 'What does `"$importo"` mean inside `$sum`?'), [L('Il valore del campo importo', 'The value of the importo field'), L('Il testo “$importo”', 'The text “$importo”'), L('Una variabile globale', 'A global variable'), L('Un errore', 'An error')], 0, L('Il dollaro legge il campo.', 'The dollar reads the field.')),
@@ -86,6 +204,9 @@ db.ordini.find({ cliente: "ada" }).explain("executionStats")
 { _id: 1, titolo: "Post", commenti: [{ autore: "Bo", testo: "Bello!" }] }
 // Riferire: dati grandi o condivisi in un’altra collezione
 { _id: 7, titolo: "Ordine", clienteId: ObjectId("…") }', 'js'),
+            Fig(L(fig_mongo_model('Incorporare', 'Riferire', 'Una lettura porta tutto.', 'Due letture, oppure $lookup.'), fig_mongo_model('Embed', 'Reference', 'One read brings everything.', 'Two reads, or $lookup.')),
+                L('A sinistra un documento post che contiene al suo interno l’array dei commenti, ognuno un piccolo documento. A destra un documento della collezione ordini con un campo clienteId che punta, con una freccia, al documento del cliente nella collezione clienti.', 'On the left a post document holding the array of comments inside it, each one a small document. On the right a document of the ordini collection with a clienteId field that points, with an arrow, to the customer’s document in the clienti collection.'),
+                L('I commenti vivono e muoiono con il post; il cliente esiste anche senza quell’ordine.', 'Comments live and die with the post; the customer exists without that order too.')),
             P('La regola d’oro della modellazione: **i dati che si leggono insieme si salvano insieme**. Si incorpora (documenti annidati) quando il legame è stretto e limitato; si usano riferimenti quando i dati crescono senza limite o sono condivisi. Un documento non può superare 16 MB.', 'The golden rule of modelling: **data read together is stored together**. You embed (nested documents) when the link is tight and bounded; you use references when data grows without limit or is shared. A document cannot exceed 16 MB.'),
         ], [
             Q('i1', L('Che cosa indica `COLLSCAN` in un explain?', 'What does `COLLSCAN` mean in an explain?'), [L('Legge tutta la collezione', 'It reads the whole collection'), L('Usa un indice', 'It uses an index'), L('La query è vuota', 'The query is empty'), L('C’è un errore di sintassi', 'There is a syntax error')], 0, L('`IXSCAN` vuol dire indice.', '`IXSCAN` means index.')),

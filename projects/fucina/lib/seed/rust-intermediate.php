@@ -1,6 +1,109 @@
 <?php
 /** Rust intermediate: structs and impl, enums and match, Option and Result, collections, traits, custom errors, trait objects and closures. */
 
+/** How a Forma value sits in memory: a tag saying the variant, then room for the largest variant's data. */
+if (!function_exists('fig_rustint_enum')) {
+    function fig_rustint_enum(string $note): string
+    {
+        $row = function (int $y, string $name, string $tag, array $slots) {
+            $t = $y + 26;
+            $s = "<text x=\"166\" y=\"$t\" text-anchor=\"end\" font-weight=\"700\">$name</text><rect x=\"180\" y=\"$y\" width=\"70\" height=\"40\" rx=\"8\" fill=\"#ECE6FF\" stroke=\"#7048E8\" stroke-width=\"2\"/><text x=\"215\" y=\"$t\" text-anchor=\"middle\" font-size=\"14\">tag $tag</text>";
+            foreach ($slots as $i => $v) {
+                $x = 260 + $i * 170;
+                $s .= $v === ''
+                    ? "<rect x=\"$x\" y=\"$y\" width=\"160\" height=\"40\" rx=\"8\" fill=\"#FFFFFF\" stroke=\"#8A87B0\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>"
+                    : "<rect x=\"$x\" y=\"$y\" width=\"160\" height=\"40\" rx=\"8\" fill=\"#FFF3EA\" stroke=\"#E8590C\" stroke-width=\"2\"/><text x=\"" . ($x + 80) . "\" y=\"$t\" text-anchor=\"middle\" font-size=\"14\">$v</text>";
+            }
+            return $s . "\n";
+        };
+        $rows = $row(20, 'Cerchio', '0', ['r: f64', '']) . $row(76, 'Rettangolo', '1', ['base: f64', 'altezza: f64']) . $row(132, 'Punto', '2', ['', '']);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+{$rows}<text x="320" y="200" text-anchor="middle" font-size="14" fill="#5F5C8A">{$note}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Option and Result side by side, then what ? does with each outcome of a Result. */
+if (!function_exists('fig_rustint_optres')) {
+    function fig_rustint_optres(string $ok, string $err): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 255" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="12" y="12" width="296" height="104" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="160" y="38" text-anchor="middle" font-weight="700">Option&lt;T&gt;</text>
+<rect x="30" y="56" width="120" height="42" rx="21" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="90" y="82" text-anchor="middle">Some(4)</text>
+<rect x="170" y="56" width="120" height="42" rx="21" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/><text x="230" y="82" text-anchor="middle" fill="#5F5C8A">None</text>
+<rect x="332" y="12" width="296" height="104" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="480" y="38" text-anchor="middle" font-weight="700">Result&lt;T, E&gt;</text>
+<rect x="350" y="56" width="120" height="42" rx="21" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="410" y="82" text-anchor="middle">Ok(36)</text>
+<rect x="490" y="56" width="120" height="42" rx="21" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/><text x="550" y="82" text-anchor="middle">Err(e)</text>
+<rect x="20" y="172" width="150" height="44" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="95" y="199" text-anchor="middle" font-weight="700">parse()?</text>
+<g stroke-width="2" fill="none"><path d="M170 186 C200 186 200 160 224 160" stroke="#0B7F5C"/><path d="M216 154 L226 160 L216 166" stroke="#0B7F5C"/><path d="M170 202 C200 202 200 228 224 228" stroke="#F03E82"/><path d="M216 222 L226 228 L216 234" stroke="#F03E82"/></g>
+<rect x="230" y="140" width="398" height="40" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="246" y="165" font-size="14"><tspan font-weight="700">Ok(v)</tspan> → {$ok}</text>
+<rect x="230" y="208" width="398" height="40" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="246" y="233" font-size="14"><tspan font-weight="700">Err(e)</tspan> → {$err}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A Vec grows: full at cap 3, push(6) moves the items to a new buffer of capacity 6 and frees the old one. */
+if (!function_exists('fig_rustint_vec')) {
+    function fig_rustint_vec(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="20" y="34" font-weight="700">{$t[0]}</text>
+<g font-size="13" text-anchor="middle"><rect x="20" y="48" width="62" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="51" y="73">ptr</text><rect x="86" y="48" width="62" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="117" y="73">len 3</text><rect x="152" y="48" width="62" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="183" y="73">cap 3</text></g>
+<g stroke="#2F8CF0" stroke-width="2" fill="none"><path d="M51 88 C51 116 270 116 298 84"/><path d="M286 88 L300 82 L297 96"/></g>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"><rect x="300" y="48" width="44" height="40" rx="6"/><rect x="348" y="48" width="44" height="40" rx="6"/><rect x="396" y="48" width="44" height="40" rx="6"/></g>
+<g text-anchor="middle" font-weight="700" fill="#5F5C8A"><text x="322" y="73">7</text><text x="370" y="73">8</text><text x="418" y="73">9</text></g>
+<text x="452" y="73" font-size="13" fill="#5F5C8A">{$t[1]}</text>
+<g stroke="#E8590C" stroke-width="2" fill="none" stroke-dasharray="4 3"><path d="M370 92 V150"/></g><path d="M363 142 L370 154 L377 142" stroke="#E8590C" stroke-width="2" fill="none"/>
+<text x="382" y="128" font-size="13" font-weight="700" fill="#B84508">{$t[2]}</text>
+<text x="20" y="150" font-weight="700">{$t[3]}</text>
+<g font-size="13" text-anchor="middle"><rect x="20" y="164" width="62" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="51" y="189">ptr</text><rect x="86" y="164" width="62" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="117" y="189">len 4</text><rect x="152" y="164" width="62" height="40" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="183" y="189">cap 6</text></g>
+<g stroke="#2F8CF0" stroke-width="2" fill="none"><path d="M51 204 C51 236 260 236 296 202"/><path d="M285 207 L299 200 L294 214"/></g>
+<g fill="#FFF3EA" stroke="#E8590C" stroke-width="2"><rect x="300" y="164" width="44" height="40" rx="6"/><rect x="348" y="164" width="44" height="40" rx="6"/><rect x="396" y="164" width="44" height="40" rx="6"/><rect x="444" y="164" width="44" height="40" rx="6"/></g>
+<g fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 3"><rect x="492" y="164" width="44" height="40" rx="6"/><rect x="540" y="164" width="44" height="40" rx="6"/></g>
+<g text-anchor="middle" font-weight="700"><text x="322" y="189">7</text><text x="370" y="189">8</text><text x="418" y="189">9</text><text x="466" y="189" fill="#B84508">6</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Box<dyn Forma> is a fat pointer: one half points at the data, the other at the type's table of methods. */
+if (!function_exists('fig_rustint_dyn')) {
+    function fig_rustint_dyn(string $data): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="20" y="20" font-size="13" font-weight="700" fill="#5F5C8A">forme: Vec&lt;Box&lt;dyn Forma&gt;&gt;</text>
+<g font-size="14" text-anchor="middle">
+<rect x="20" y="42" width="90" height="44" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="65" y="69">{$data}</text>
+<rect x="114" y="42" width="90" height="44" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="159" y="69">vtable</text>
+<rect x="20" y="158" width="90" height="44" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="65" y="185">{$data}</text>
+<rect x="114" y="158" width="90" height="44" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="159" y="185">vtable</text>
+</g>
+<rect x="290" y="16" width="170" height="40" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="375" y="41" text-anchor="middle" font-size="14">Cerchio { r: 1.0 }</text>
+<rect x="290" y="132" width="170" height="40" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="375" y="157" text-anchor="middle" font-size="14">Quadrato { lato: 2.0 }</text>
+<rect x="476" y="70" width="152" height="50" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="552" y="90" text-anchor="middle" font-size="13" font-weight="700">vtable Cerchio</text><text x="552" y="110" text-anchor="middle" font-size="13">area → Cerchio::area</text>
+<rect x="476" y="186" width="152" height="50" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="552" y="206" text-anchor="middle" font-size="13" font-weight="700">vtable Quadrato</text><text x="552" y="226" text-anchor="middle" font-size="13">area → Quadrato::area</text>
+<g stroke-width="2" fill="none">
+<path d="M65 42 C65 36 200 36 286 36" stroke="#2F8CF0"/><path d="M276 30 L288 36 L276 42" stroke="#2F8CF0"/>
+<path d="M204 72 C300 76 400 95 472 95" stroke="#7048E8"/><path d="M462 89 L474 95 L462 101" stroke="#7048E8"/>
+<path d="M65 158 C65 136 200 152 286 152" stroke="#2F8CF0"/><path d="M276 146 L288 152 L276 158" stroke="#2F8CF0"/>
+<path d="M204 188 C300 192 400 211 472 211" stroke="#7048E8"/><path d="M462 205 L474 211 L462 217" stroke="#7048E8"/>
+</g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'rust-intermediate', 'family' => 'rust', 'after' => 'rust-base',
     'title' => L('Rust intermedio', 'Intermediate Rust'), 'short' => L('Rust intermedio', 'Rust Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -25,8 +128,9 @@ impl Conto {
 
 let mut c = Conto::new("Ada");
 c.versa(50.0);
-println!("{:?}", c);', 'rust'),
+println!("{:?}", c);', 'rust', '<pre>Conto { titolare: "Ada", saldo: 50.0 }</pre>'),
             P('`#[derive(Debug)]` fa scrivere a Rust il codice per stampare la struct con `{:?}`.', '`#[derive(Debug)]` makes Rust write the code to print the struct with `{:?}`.'),
+            P('Il primo parametro dice che cosa fa il metodo con l’istanza: `&self` la legge, `&mut self` la modifica (e la variabile deve essere `let mut`, come `c`), `self` la consuma, e dopo la chiamata non si può più usare. Rust non ha ereditarietà tra struct: il comportamento comune si condivide con i trait, che vedrai fra poco. Dentro `impl`, `Self` è un modo breve per dire `Conto`.', 'The first parameter says what the method does with the instance: `&self` reads it, `&mut self` changes it (and the variable must be `let mut`, like `c`), `self` consumes it, and after the call it can no longer be used. Rust has no inheritance between structs: shared behaviour goes into traits, which you will see shortly. Inside `impl`, `Self` is a short way of saying `Conto`.'),
         ], [
             Q('s1', L('Dove si scrivono i metodi di una struct?', 'Where do you write a struct’s methods?'), [L('In un blocco `impl`', 'In an `impl` block'), L('Dentro la struct', 'Inside the struct'), L('In main', 'In main'), L('In un trait sempre', 'Always in a trait')], 0, L('`impl NomeStruct { … }`.', '`impl StructName { … }`.')),
             Q('s2', L('Che cosa serve a un metodo che modifica l’istanza?', 'What does a method changing the instance need?'), ['&mut self', '&self', 'self only', 'mut'], 0, L('E l’istanza deve essere `mut`.', 'And the instance must be `mut`.')),
@@ -55,6 +159,8 @@ fn area(f: &Forma) -> f64 {
     }
 }', 'rust'),
             P('`_` nel `match` cattura tutti i casi rimanenti. `if let` è comodo quando ti interessa una sola variante.', '`_` in `match` catches all remaining cases. `if let` is handy when you care about just one variant.'),
+            P('Un enum con dati evita le combinazioni che non dovrebbero esistere: un `Cerchio` ha il raggio, un `Rettangolo` base e altezza, e non c’è modo di creare un cerchio con l’altezza. Il `match` è un’espressione: ogni ramo restituisce un valore dello stesso tipo, e i nomi tra parentesi (`r`, `base`) estraggono i dati della variante. Se aggiungi una variante, ogni `match` che non la gestisce smette di compilare.', 'An enum with data rules out combinations that should not exist: a `Cerchio` has a radius, a `Rettangolo` a base and a height, and there is no way to build a circle with a height. `match` is an expression: every arm returns a value of the same type, and the names in brackets (`r`, `base`) extract the variant’s data. If you add a variant, every `match` that does not handle it stops compiling.'),
+            Fig(L(fig_rustint_enum('ogni Forma occupa lo spazio della variante più grande, più il tag'), fig_rustint_enum('every Forma takes the space of its largest variant, plus the tag')), L('Tre righe della stessa lunghezza. Cerchio: tag 0, r, e uno spazio vuoto. Rettangolo: tag 1, base e altezza. Punto: tag 2 e due spazi vuoti.', 'Three rows of the same length. Cerchio: tag 0, r, and an empty slot. Rettangolo: tag 1, base and altezza. Punto: tag 2 and two empty slots.'), L('Il tag dice quale variante c’è: è ciò che `match` legge.', 'The tag says which variant is there: it is what `match` reads.')),
         ], [
             Q('e1', L('Che cosa succede se `match` non copre una variante?', 'What happens if `match` misses a variant?'), [L('Errore di compilazione', 'Compile error'), L('Niente', 'Nothing'), L('Crash a runtime', 'Runtime crash'), L('Avviso ignorabile', 'Ignorable warning')], 0, L('Il match deve essere esaustivo.', 'The match must be exhaustive.')),
             Q('e2', L('Che cosa cattura `_`?', 'What does `_` catch?'), [L('Tutti gli altri casi', 'All other cases'), L('Nessun caso', 'No case'), L('Solo zero', 'Only zero'), L('Gli errori', 'Errors')], 0, L('Il caso jolly.', 'The wildcard.')),
@@ -70,7 +176,7 @@ fn area(f: &Forma) -> f64 {
         ]),
         lesson('option-result', L('Option e Result', 'Option and Result'), [
             P('Rust non ha `null`: un valore che può mancare è un `Option<T>` (`Some(valore)` o `None`). Un’operazione che può fallire restituisce un `Result<T, E>` (`Ok` o `Err`). L’operatore `?` passa l’errore a chi ha chiamato.', 'Rust has no `null`: a value that may be missing is an `Option<T>` (`Some(value)` or `None`). An operation that may fail returns a `Result<T, E>` (`Ok` or `Err`). The `?` operator passes the error up to the caller.'),
-            C('fn primo_pari(v: &[i32]) -> Option<i32> {
+            C(L('fn primo_pari(v: &[i32]) -> Option<i32> {
     v.iter().copied().find(|n| n % 2 == 0)
 }
 
@@ -83,8 +189,22 @@ let x = primo_pari(&[1, 3, 4]).unwrap_or(0);
 match leggi_eta("36") {
     Ok(e) => println!("{e} anni"),
     Err(err) => println!("Errore: {err}"),
-}', 'rust'),
+}', 'fn primo_pari(v: &[i32]) -> Option<i32> {
+    v.iter().copied().find(|n| n % 2 == 0)
+}
+
+fn leggi_eta(testo: &str) -> Result<u8, std::num::ParseIntError> {
+    let eta: u8 = testo.trim().parse()?;
+    Ok(eta)
+}
+
+let x = primo_pari(&[1, 3, 4]).unwrap_or(0);
+match leggi_eta("36") {
+    Ok(e) => println!("{e} years"),
+    Err(err) => println!("Error: {err}"),
+}'), 'rust', L('<pre>36 anni</pre>', '<pre>36 years</pre>')),
             P('`unwrap()` estrae il valore ma fa crashare il programma se c’è `None` o `Err`: meglio `match`, `unwrap_or` o `?`.', '`unwrap()` extracts the value but crashes the program on `None` or `Err`: better `match`, `unwrap_or` or `?`.'),
+            Fig(L(fig_rustint_optres('la funzione continua con v', 'esce subito: return Err(e) a chi ha chiamato'), fig_rustint_optres('the function carries on with v', 'leaves at once: return Err(e) to the caller')), L('In alto due riquadri: Option, che vale Some(4) oppure None, e Result, che vale Ok(36) oppure Err(e). Sotto, parse() con il punto di domanda ha due uscite: con Ok(v) la funzione continua con v, con Err(e) esce subito restituendo l’errore a chi l’ha chiamata.', 'At the top two panels: Option, which is Some(4) or None, and Result, which is Ok(36) or Err(e). Below, parse() with the question mark has two exits: with Ok(v) the function carries on with v, with Err(e) it leaves at once, returning the error to its caller.'), L('`?` funziona solo in una funzione che restituisce anch’essa un `Result` (o un `Option`).', '`?` only works in a function that itself returns a `Result` (or an `Option`).')),
         ], [
             Q('r1', L('Che cosa rappresenta `Option`?', 'What does `Option` represent?'), [L('Un valore che può mancare', 'A value that may be missing'), L('Una scelta dell’utente', 'A user choice'), L('Un errore', 'An error'), L('Un menu', 'A menu')], 0, L('`Some` o `None`.', '`Some` or `None`.')),
             Q('r2', L('Che cosa fa `?` su un `Result`?', 'What does `?` do on a `Result`?'), [L('Restituisce subito l’errore a chi chiama', 'Returns the error to the caller at once'), L('Ignora l’errore', 'Ignores the error'), L('Stampa', 'Prints'), L('Riprova', 'Retries')], 0, L('Se è `Ok` estrae il valore.', 'If `Ok` it extracts the value.')),
@@ -108,6 +228,8 @@ let mut eta: HashMap<&str, u32> = HashMap::new();
 eta.insert("Ada", 36);
 *eta.entry("Bea").or_insert(0) += 1;', 'rust'),
             P('Le **closure** si scrivono tra barre verticali: `|v| *v >= 6`. `entry(...).or_insert(...)` inserisce un valore solo se la chiave manca.', '**Closures** are written between vertical bars: `|v| *v >= 6`. `entry(...).or_insert(...)` inserts a value only if the key is missing.'),
+            P('Quando un `Vec` è pieno, `push` chiede un blocco di memoria più grande, ci copia gli elementi e libera il vecchio. Per questo un riferimento a un elemento non può restare valido mentre aggiungi: `let primo = &voti[0]; voti.push(1);` non compila se poi usi `primo`, perché `primo` punterebbe a memoria liberata. Se sai quanti elementi arriveranno, `Vec::with_capacity(n)` evita le copie. E per un indice incerto usa `voti.get(10)`, che restituisce `None` invece di andare in panic.', 'When a `Vec` is full, `push` asks for a bigger block of memory, copies the items into it and frees the old one. That is why a reference to an item cannot stay valid while you add: `let primo = &voti[0]; voti.push(1);` does not compile if you use `primo` afterwards, because `primo` would point at freed memory. If you know how many items are coming, `Vec::with_capacity(n)` avoids the copies. And for an uncertain index use `voti.get(10)`, which returns `None` instead of panicking.'),
+            Fig(L(fig_rustint_vec(['prima di push(6)', 'poi liberato', 'copiati', 'dopo push(6)']), fig_rustint_vec(['before push(6)', 'then freed', 'copied', 'after push(6)'])), L('Prima: il Vec ha ptr, len 3 e cap 3 e punta a un blocco pieno con 7, 8, 9. Dopo push(6): ptr, len 4 e cap 6, e punta a un blocco nuovo con 7, 8, 9, 6 e due posti liberi; il blocco vecchio, tratteggiato, viene liberato.', 'Before: the Vec has ptr, len 3 and cap 3 and points to a full block with 7, 8, 9. After push(6): ptr, len 4 and cap 6, and it points to a new block with 7, 8, 9, 6 and two free slots; the old block, dashed, is freed.'), L('Lo spostamento in un blocco nuovo è il motivo per cui il compilatore protegge i riferimenti.', 'The move to a new block is why the compiler guards references.')),
         ], [
             Q('c1', L('Come crei un Vec con valori?', 'How do you create a Vec with values?'), ['vec![1, 2, 3]', 'Vec(1, 2, 3)', '[1, 2, 3].vec', 'new Vec(1, 2, 3)'], 0, L('È una macro.', 'It is a macro.')),
             Q('c2', L('Che cosa fa `collect()`?', 'What does `collect()` do?'), [L('Raccoglie l’iteratore in una collezione', 'Gathers the iterator into a collection'), L('Pulisce la memoria', 'Cleans memory'), L('Conta', 'Counts'), L('Ordina', 'Sorts')], 0, L('Il tipo di destinazione va indicato.', 'The target type must be given.')),
@@ -134,6 +256,7 @@ fn mostra(x: &impl Descrivi) {
     println!("{}", x.descrizione());
 }', 'rust'),
             P('Un trait può avere metodi già pronti (come `breve`). `#[derive(Debug, Clone, PartialEq)]` implementa da solo i trait più comuni.', 'A trait can have ready-made methods (like `breve`). `#[derive(Debug, Clone, PartialEq)]` implements the most common traits automatically.'),
+            P('I trait sono il modo in cui Rust condivide comportamento senza ereditarietà: `Corso` non eredita nulla, dichiara soltanto di saper fare `Descrivi`. Puoi implementare i tuoi trait per tipi esistenti e i trait della libreria standard per i tuoi tipi: implementando `Display`, per esempio, una struct si stampa con `{}`. Il compilatore crea una versione di `mostra` per ogni tipo usato, quindi i generics non costano nulla mentre il programma gira.', 'Traits are how Rust shares behaviour without inheritance: `Corso` inherits nothing, it only declares that it can do `Descrivi`. You can implement your own traits for existing types and the standard library’s traits for your types: by implementing `Display`, for example, a struct prints with `{}`. The compiler creates one version of `mostra` per type used, so generics cost nothing while the program runs.'),
         ], [
             Q('t1', L('Come implementi un trait per un tipo?', 'How do you implement a trait for a type?'), ['impl Trait for Tipo', 'Tipo: Trait', 'Tipo implements Trait', 'trait Tipo'], 0, L('Con un blocco `impl … for …`.', 'With an `impl … for …` block.')),
             Q('t2', L('Che cosa significa `<T: Display>`?', 'What does `<T: Display>` mean?'), [L('T deve implementare Display', 'T must implement Display'), L('T è una stringa', 'T is a string'), L('T si stampa sempre', 'T always prints'), L('Niente', 'Nothing')], 0, L('È un vincolo sul tipo.', 'It is a bound on the type.')),
@@ -216,6 +339,7 @@ let totale: f64 = forme.iter().map(|f| f.area()).sum();
 
 fn stampa_area(f: &dyn Forma) { println!("{:.2}", f.area()); }', 'rust'),
             P('`impl Trait` e i generics sono più veloci ma vogliono un solo tipo concreto per volta; `dyn Trait` è flessibile e costa una piccola indirezione. Non tutti i trait possono diventare `dyn`: per esempio non quelli con metodi generici.', '`impl Trait` and generics are faster but need one concrete type at a time; `dyn Trait` is flexible and costs a small indirection. Not every trait can become `dyn`: for example not those with generic methods.'),
+            Fig(L(fig_rustint_dyn('dati'), fig_rustint_dyn('data')), L('Due Box<dyn Forma> nel Vec forme, ognuno fatto di due metà. La prima metà punta ai dati, Cerchio con r 1.0 oppure Quadrato con lato 2.0; la seconda alla vtable del tipo, dove area porta a Cerchio::area o a Quadrato::area.', 'Two Box<dyn Forma> in the forme Vec, each made of two halves. The first half points at the data, Cerchio with r 1.0 or Quadrato with lato 2.0; the second at the type’s vtable, where area leads to Cerchio::area or Quadrato::area.'), L('Il «puntatore grasso»: chiamare `area()` vuol dire seguire la vtable, la piccola indirezione del dispatch dinamico.', 'The “fat pointer”: calling `area()` means following the vtable, the small indirection of dynamic dispatch.')),
         ], [
             Q('to1', L('Come metti un Cerchio e un Quadrato nello stesso Vec?', 'How do you put a Cerchio and a Quadrato in the same Vec?'), ['Vec<Forma>', 'Vec<impl Forma>', 'Vec<Box<dyn Forma>>', 'Vec<T: Forma>'], 2, L('Il Box dà a ogni elemento la stessa dimensione.', 'The Box gives every element the same size.')),
             Q('to2', L('Quando si sceglie il metodo da chiamare con `dyn Trait`?', 'When is the method to call chosen with `dyn Trait`?'), [L('Mentre il programma gira', 'While the program runs'), L('Durante la compilazione', 'During compilation'), L('Quando si scrive il Cargo.toml', 'When writing Cargo.toml'), L('Mai: dyn non chiama metodi', 'Never: dyn calls no methods')], 0, L('Attraverso una tabella di metodi, la vtable.', 'Through a table of methods, the vtable.')),

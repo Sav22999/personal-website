@@ -1,6 +1,60 @@
 <?php
 /** Microsoft Copilot: Copilot and Microsoft 365 Copilot, Word and Outlook, Excel and PowerPoint, Teams, data protection, prompts, Copilot Chat, agents and Pages. */
 
+/** What Copilot Chat can draw on without and with the Microsoft 365 Copilot licence. Labels in one language. */
+if (!function_exists('fig_mscopilot_licence')) {
+    function fig_mscopilot_licence(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Copilot Chat', 'senza licenza completa', 'Web', 'File che carichi', 'Con licenza', 'Microsoft 365 Copilot', 'Email', 'Documenti', 'Riunioni e chat', 'solo quelli a cui hai accesso', 'stessa protezione dei dati aziendali']
+            : ['Copilot Chat', 'without the full licence', 'Web', 'Files you upload', 'With the', 'Microsoft 365 Copilot licence', 'Emails', 'Documents', 'Meetings and chats', 'only those you have access to', 'same enterprise data protection'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="12" y="12" width="250" height="220" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="137" y="42" text-anchor="middle" font-weight="700">{$t[0]}</text><text x="137" y="62" text-anchor="middle" font-size="13">{$t[1]}</text>
+<g stroke-width="2"><rect x="32" y="82" width="210" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="32" y="138" width="210" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/></g>
+<g font-weight="700" font-size="14" fill="#1B66BC"><text x="48" y="109">{$t[2]}</text><text x="48" y="165">{$t[3]}</text></g>
+<rect x="290" y="12" width="338" height="220" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="459" y="38" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[4]} {$t[5]}</text>
+<g stroke-width="2"><rect x="302" y="82" width="128" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="302" y="138" width="128" height="44" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/>
+<rect x="438" y="58" width="176" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="438" y="106" width="176" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="438" y="154" width="176" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g font-weight="700" font-size="14"><text x="314" y="109" fill="#1B66BC" font-size="13">{$t[2]}</text><text x="314" y="165" fill="#1B66BC" font-size="13">{$t[3]}</text><text x="450" y="83" fill="#0B7F5C">+ {$t[6]}</text><text x="450" y="131" fill="#0B7F5C">+ {$t[7]}</text><text x="450" y="179" fill="#0B7F5C">+ {$t[8]}</text></g>
+<text x="614" y="216" text-anchor="end" font-size="13">{$t[9]}</text>
+<rect x="12" y="244" width="616" height="28" rx="14" fill="#D5F6EA"/>
+<text x="320" y="263" text-anchor="middle" font-size="13" fill="#0B7F5C" font-weight="700">{$t[10]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Copilot searches only what you can open: an overshared file becomes findable too. Labels in one language. */
+if (!function_exists('fig_mscopilot_perms')) {
+    function fig_mscopilot_perms(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['La tua domanda', 'Copilot', 'cerca solo ciò', 'che puoi aprire', 'Il tuo report', 'condiviso con te', 'Budget del team', 'il tuo gruppo', 'Stipendi', 'solo HR: escluso', 'Stipendi (copia)', 'condivisa con tutti: trovata!']
+            : ['Your question', 'Copilot', 'searches only what', 'you can open', 'Your report', 'shared with you', 'Team budget', 'your group', 'Salaries', 'HR only: left out', 'Salaries (copy)', 'shared with everyone: found!'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="16" y="120" width="130" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="81" y="155" text-anchor="middle" font-weight="700" font-size="14" fill="#1B66BC">{$t[0]}</text>
+<path d="M146 150H176" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<rect x="180" y="100" width="150" height="100" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="255" y="134" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[1]}</text><text x="255" y="158" text-anchor="middle" font-size="13">{$t[2]}</text><text x="255" y="176" text-anchor="middle" font-size="13">{$t[3]}</text>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M330 130C360 130 360 46 386 46"/><path d="M330 145C360 145 360 114 386 114"/><path d="M330 170C360 170 360 250 386 250"/></g>
+<path d="M330 158C350 158 356 182 372 182" stroke="#8A87B0" stroke-width="2" fill="none" stroke-dasharray="3 4"/>
+<path d="M366 176l12 12M378 176l-12 12" stroke="#C2255C" stroke-width="2"/>
+<g stroke-width="2"><rect x="390" y="20" width="234" height="52" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="390" y="88" width="234" height="52" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="390" y="156" width="234" height="52" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-dasharray="6 4"/><rect x="390" y="224" width="234" height="52" rx="10" fill="#FFE3EE" stroke="#F03E82"/></g>
+<g font-weight="700" font-size="14"><text x="440" y="42">{$t[4]}</text><text x="440" y="110">{$t[6]}</text><text x="440" y="178">{$t[8]}</text><text x="440" y="246" fill="#C2255C">{$t[10]}</text></g>
+<g font-size="13"><text x="440" y="62">{$t[5]}</text><text x="440" y="130">{$t[7]}</text><text x="440" y="198">{$t[9]}</text><text x="440" y="266">{$t[11]}</text></g>
+<g stroke-width="2" fill="none"><path d="M406 46l6 6 10-12" stroke="#0B7F5C"/><path d="M406 114l6 6 10-12" stroke="#0B7F5C"/><path d="M406 250l6 6 10-12" stroke="#C2255C"/></g>
+<rect x="404" y="181" width="20" height="16" rx="3" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/><path d="M408 181v-4a6 6 0 0 1 12 0v4" fill="none" stroke="#8A87B0" stroke-width="2"/>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ms-copilot', 'family' => 'assistants', 'after' => null, 'categories' => ['ai', 'productivity'],
     'title' => L('Microsoft Copilot', 'Microsoft Copilot'), 'short' => L('MS Copilot', 'MS Copilot'), 'level' => L('Base', 'Basics'),
@@ -55,6 +109,9 @@ PowerPoint: "Crea 8 slide da /Relazione annuale.docx per il consiglio di amminis
         lesson('teams', L('Teams e protezione dei dati', 'Teams and data protection'), [
             P('In **Teams** Copilot riassume le riunioni, elenca decisioni e attività, e risponde a domande come “che cosa ha detto Anna sul budget?”, anche se sei arrivato in ritardo. Durante la riunione può funzionare anche senza salvare la trascrizione, ma in quel caso le sue risposte non restano disponibili dopo: per avere il riepilogo a riunione finita serve che la **trascrizione** sia attiva (le regole le decide l’amministratore). Nelle chat riassume le conversazioni lunghe.', 'In **Teams** Copilot summarises meetings, lists decisions and tasks, and answers questions like “what did Anna say about the budget?”, even if you joined late. During the meeting it can also work without saving the transcript, but then its answers are not available afterwards: to get the recap once the meeting is over, **transcription** must be on (the administrator sets the rules). In chats it summarises long conversations.'),
             P('Per i clienti aziendali Microsoft dichiara una **protezione dei dati aziendali**: richieste e risposte restano entro i confini del servizio e non vengono usate per addestrare i modelli di base. Copilot rispetta permessi ed etichette di riservatezza: se un file è condiviso con troppe persone, Copilot lo può trovare. Per questo la pulizia dei permessi è importante prima di attivarlo.', 'For business customers Microsoft states **enterprise data protection**: prompts and responses stay within the service boundary and are not used to train the foundation models. Copilot respects permissions and sensitivity labels: if a file is shared with too many people, Copilot can find it. That is why cleaning up permissions matters before turning it on.'),
+            Fig(L(fig_mscopilot_perms('it'), fig_mscopilot_perms('en')),
+                L('La tua domanda arriva a Copilot, che cerca solo ciò che puoi aprire. Il tuo report e il budget del team sono trovati; il file degli stipendi riservato a HR è escluso; una copia degli stipendi condivisa con tutti viene trovata, evidenziata in rosa.', 'Your question reaches Copilot, which searches only what you can open. Your report and the team budget are found; the salaries file restricted to HR is left out; a copy of the salaries shared with everyone is found, highlighted in pink.'),
+                L('Copilot rispetta i permessi, quindi un file condiviso troppo diventa visibile a tutti.', 'Copilot respects permissions, so an overshared file becomes visible to everyone.')),
         ], [
             Q('t1', L('Che cosa serve per avere il riepilogo di Copilot anche dopo la riunione Teams?', 'What is needed to have Copilot’s recap after the Teams meeting too?'), [L('La trascrizione della riunione attiva', 'Meeting transcription turned on'), L('Niente', 'Nothing'), L('Un video su YouTube', 'A YouTube video'), L('Un file Excel', 'An Excel file')], 0, L('Senza trascrizione, Copilot aiuta solo durante la riunione.', 'Without transcription, Copilot helps only during the meeting.')),
             Q('t2', L('Perché sistemare i permessi dei file prima di attivare Copilot?', 'Why fix file permissions before enabling Copilot?'), [L('Copilot trova ciò a cui l’utente ha accesso, anche per errore', 'Copilot finds what the user can access, even by mistake'), L('Per velocizzarlo', 'To speed it up'), L('Non serve', 'It is not needed'), L('Per cambiare lingua', 'To change language')], 0, L('File condivisi troppo diventano visibili.', 'Over-shared files become findable.')),
@@ -70,6 +127,7 @@ Contesto: per il direttore, che non ha seguito le riunioni.
 Fonti: /Verbale_marzo.docx e le email con oggetto “Alfa”.
 Aspettative: una pagina, tono formale, rischi in evidenza.', 'text'),
             P('Rileggi sempre: Copilot vede solo ciò a cui **tu** hai accesso, ma può riassumere male o perdere un dettaglio. Per le decisioni importanti torna al documento originale.', 'Always reread: Copilot only sees what **you** have access to, but it can summarise badly or miss a detail. For important decisions go back to the original document.'),
+            Tip('La prima risposta è una bozza: continua nella stessa chat con richieste brevi («accorcia», «aggiungi le scadenze», «togli il gergo tecnico»). Per indicare un documento preciso digita `/` e sceglilo dall’elenco: è il modo più sicuro per dire a Copilot da dove prendere le informazioni.', 'The first answer is a draft: carry on in the same chat with short requests (“shorten it”, “add the deadlines”, “drop the jargon”). To point to a specific document, type `/` and pick it from the list: it is the surest way to tell Copilot where to take the information from.'),
         ], [
             Q('mp1', L('Quali sono i quattro elementi del prompt?', 'What are the four prompt elements?'), [L('Obiettivo, contesto, fonti, aspettative', 'Goal, context, sources, expectations'), L('Saluto, testo, firma, data', 'Greeting, text, signature, date'), L('Titolo, corpo, allegato, invio', 'Title, body, attachment, send'), L('Domanda e basta', 'Just the question')], 0, L('Più indicazioni, risultati migliori.', 'More guidance, better results.')),
             Q('mp2', L('Perché indicare le fonti?', 'Why name the sources?'), [L('Così lavora sui tuoi documenti', 'So it works on your documents'), L('Per pagare meno', 'To pay less'), L('Per cambiare lingua', 'To change language'), L('Non serve', 'It is not needed')], 0, L('Meno invenzioni.', 'Less invention.')),
@@ -80,6 +138,9 @@ Aspettative: una pagina, tono formale, rischi in evidenza.', 'text'),
         ]),
         lesson('agents', L('Copilot Chat, agenti e Pagine', 'Copilot Chat, agents and Pages'), [
             P('**Microsoft 365 Copilot Chat** è la chat di Copilot per gli account di lavoro e scuola, con la stessa protezione dei dati aziendali. Senza la licenza completa risponde soprattutto con informazioni dal web e dai file che carichi; con la licenza **Microsoft 365 Copilot** può usare anche email, documenti e riunioni a cui hai accesso. Che cosa è incluso lo decide il piano della tua organizzazione.', '**Microsoft 365 Copilot Chat** is Copilot’s chat for work and school accounts, with the same enterprise data protection. Without the full licence it answers mainly with information from the web and the files you upload; with the **Microsoft 365 Copilot** licence it can also use the emails, documents and meetings you have access to. What is included depends on your organisation’s plan.'),
+            Fig(L(fig_mscopilot_licence('it'), fig_mscopilot_licence('en')),
+                L('Due riquadri. A sinistra Copilot Chat senza licenza completa usa il web e i file che carichi. A destra, con la licenza Microsoft 365 Copilot, agli stessi due si aggiungono email, documenti, riunioni e chat, solo quelli a cui hai accesso. Sotto una fascia verde: stessa protezione dei dati aziendali.', 'Two boxes. On the left, Copilot Chat without the full licence uses the web and the files you upload. On the right, with the Microsoft 365 Copilot licence, emails, documents, meetings and chats are added to those two, only the ones you have access to. Below, a green band: same enterprise data protection.'),
+                L('La licenza non cambia la chat, cambia ciò che può leggere.', 'The licence does not change the chat, it changes what it can read.')),
             P('Gli **agenti** sono assistenti specializzati: **Researcher** fa ricerche in più passaggi tra web e dati di lavoro e scrive un rapporto con le fonti; **Analyst** ragiona sui dati (per esempio un foglio Excel) e mostra i calcoli che ha fatto. Le aziende possono creare agenti propri, con istruzioni e fonti scelte. Le **Pagine** di Copilot trasformano una risposta in un documento modificabile da condividere e completare con i colleghi.', '**Agents** are specialised assistants: **Researcher** runs multi-step research across the web and work data and writes a report with sources; **Analyst** reasons over data (an Excel sheet, for example) and shows the calculations it made. Companies can build their own agents, with chosen instructions and sources. Copilot **Pages** turn an answer into an editable document to share and complete with colleagues.'),
             Tip('Prima di inoltrare un rapporto di un agente, apri le fonti principali: un rapporto ben scritto può contenere un dato sbagliato.', 'Before forwarding an agent’s report, open the main sources: a well-written report can still contain a wrong figure.'),
         ], [

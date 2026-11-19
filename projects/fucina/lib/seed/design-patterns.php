@@ -2,6 +2,158 @@
 /** Design patterns and clean code: principles (SOLID, DRY), creational, structural and behavioural patterns, dependency injection
  *  and refactoring, composition (Composite, Proxy), state machines, middleware chains, repositories and hexagonal architecture. */
 
+/** Adapter and Decorator side by side: the adapter translates an interface, the decorator wraps an object with the same interface. */
+if (!function_exists('fig_dp_wrap')) {
+    function fig_dp_wrap(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker>
+<marker id="tri" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#FFFFFF" stroke="#1E1C52" stroke-width="1.5"/></marker></defs>
+<rect x="8" y="8" width="306" height="284" rx="12" fill="#F1F0F8"/><rect x="326" y="8" width="306" height="284" rx="12" fill="#F1F0F8"/>
+<text x="24" y="36" font-weight="700">Adapter</text><text x="342" y="36" font-weight="700">Decorator</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13">
+<rect x="24" y="52" width="118" height="40" rx="8" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/><text x="83" y="77" text-anchor="middle" font-family="system-ui, sans-serif">{$t[0]}</text>
+<rect x="170" y="48" width="130" height="48" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="235" y="67" text-anchor="middle" font-size="13">«interface»</text><text x="235" y="86" text-anchor="middle" font-weight="700">Pagamenti</text>
+<rect x="60" y="140" width="210" height="48" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="165" y="169" text-anchor="middle" font-weight="700">PagamentiStripeAdapter</text>
+<rect x="90" y="236" width="150" height="40" rx="8" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/><text x="165" y="261" text-anchor="middle">StripeClient</text>
+</g>
+<g stroke="#1E1C52" stroke-width="2" fill="none"><path d="M144,72 H162" marker-end="url(#ah)"/><path d="M200,138 V100" marker-end="url(#tri)" stroke-dasharray="5 4"/><path d="M165,190 V228" marker-end="url(#ah)"/></g>
+<text x="212" y="124" font-size="13">implements</text>
+<text x="176" y="216" font-size="13">{$t[1]}</text>
+<rect x="346" y="64" width="266" height="170" rx="12" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<text x="362" y="90" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">ArchivioConCache</text>
+<rect x="362" y="104" width="120" height="40" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/><text x="422" y="129" text-anchor="middle" font-size="13">cache</text>
+<rect x="400" y="160" width="196" height="58" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="498" y="185" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">Archivio</text><text x="498" y="205" text-anchor="middle" font-size="13">{$t[2]}</text>
+<text x="479" y="262" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">leggi(chiave)</text>
+<text x="479" y="282" text-anchor="middle" font-size="13">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Observer: an event notifies every subscribed listener when it is emitted; the notifications travel along the lines. */
+if (!function_exists('fig_dp_observer')) {
+    function fig_dp_observer(array $t): string
+    {
+        $subs = '';
+        foreach ([$t[0], $t[1], $t[2]] as $i => $name) {
+            $y = 30 + $i * 76; $cy = $y + 26;
+            $subs .= "<path id=\"l$i\" d=\"M262,128 C330,128 340,$cy 412,$cy\" fill=\"none\" stroke=\"#8A87B0\" stroke-width=\"2\"/>"
+                   . "<rect x=\"412\" y=\"$y\" width=\"210\" height=\"52\" rx=\"10\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"517\" y=\"" . ($cy + 5) . "\" text-anchor=\"middle\" font-weight=\"700\">$name</text>"
+                   . "<circle r=\"6\" fill=\"#E8590C\" class=\"dot\"><animateMotion dur=\"3s\" repeatCount=\"indefinite\" path=\"M262,128 C330,128 340,$cy 412,$cy\"/></circle>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.dot{opacity:0}@media (prefers-reduced-motion:no-preference){.dot{opacity:1}}</style>
+{$subs}
+<rect x="24" y="92" width="238" height="72" rx="12" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<text x="143" y="122" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-weight="700">ordineCreato</text>
+<text x="143" y="146" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">emetti({ id: 42 })</text>
+<text x="143" y="200" text-anchor="middle" font-size="13">{$t[3]}</text>
+<text x="517" y="250" text-anchor="middle" font-size="13">{$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Composite: a folder holds files and folders, and its size is the sum of its children's sizes. */
+if (!function_exists('fig_dp_composite')) {
+    function fig_dp_composite(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1E1C52">
+<g fill="none" stroke="#8A87B0" stroke-width="2"><path d="M320,76 C320,110 180,100 180,130"/><path d="M320,76 C320,110 460,100 460,130"/><path d="M460,180 V204"/></g>
+<rect x="210" y="22" width="220" height="54" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="46" text-anchor="middle" font-weight="700">Cartella progetto</text><text x="320" y="66" text-anchor="middle" font-size="13">dimensione() = 1500</text>
+<rect x="90" y="130" width="180" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="180" y="152" text-anchor="middle" font-weight="700">File</text><text x="180" y="170" text-anchor="middle" font-size="13">1200</text>
+<rect x="370" y="130" width="180" height="50" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="460" y="152" text-anchor="middle" font-weight="700">Cartella</text><text x="460" y="170" text-anchor="middle" font-size="13">300</text>
+<rect x="370" y="204" width="180" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="460" y="226" text-anchor="middle" font-weight="700">File</text><text x="460" y="244" text-anchor="middle" font-size="13">300</text>
+<text x="40" y="236" font-size="15" font-weight="700" fill="#5A35C9">1200 + 300 = 1500</text>
+</svg>
+SVG;
+    }
+}
+
+/** The order state machine: the allowed transitions as arrows, and an illegal one crossed out. */
+if (!function_exists('fig_dp_state')) {
+    function fig_dp_state(): string
+    {
+        $st = '';
+        foreach (['carrello', 'pagato', 'spedito', 'consegnato'] as $i => $n) {
+            $x = 16 + $i * 158; $cx = $x + 65;
+            $fill = $i === 3 ? '#D5F6EA' : '#DCEBFF'; $str = $i === 3 ? '#0B7F5C' : '#2F8CF0';
+            $st .= "<rect x=\"$x\" y=\"84\" width=\"130\" height=\"48\" rx=\"24\" fill=\"$fill\" stroke=\"$str\" stroke-width=\"2\"/><text x=\"$cx\" y=\"113\" text-anchor=\"middle\" font-weight=\"700\">$n</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+{$st}
+<rect x="210" y="200" width="130" height="48" rx="24" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/><text x="275" y="229" text-anchor="middle" font-weight="700">annullato</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)"><path d="M148,108 H166"/><path d="M306,108 H324"/><path d="M464,108 H482"/>
+<path d="M81,134 C81,190 150,224 202,224"/><path d="M239,134 C239,160 260,170 268,192"/></g>
+<path d="M561,82 C561,20 81,20 81,76" fill="none" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 5"/>
+<path d="M310,25 L330,45 M330,25 L310,45" stroke="#F03E82" stroke-width="3"/>
+<text x="320" y="66" text-anchor="middle" font-size="13" fill="#B0205A">passaA("carrello") → Error</text>
+</svg>
+SVG;
+    }
+}
+
+/** A middleware chain: the request goes through log and authentication to the handler; without a user, authentication answers 401 and the chain stops. */
+if (!function_exists('fig_dp_chain')) {
+    function fig_dp_chain(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.req{animation:go 6s linear infinite}@keyframes go{0%{transform:translateX(0);opacity:0}5%{opacity:1}80%{transform:translateX(440px);opacity:1}90%,100%{transform:translateX(440px);opacity:0}}@media (prefers-reduced-motion:reduce){.req{animation:none;opacity:0}}</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker>
+<marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#F03E82"/></marker></defs>
+<text x="16" y="36" font-family="ui-monospace, Menlo, monospace" font-size="13">GET /profilo</text>
+<g stroke-width="2"><rect x="96" y="60" width="110" height="64" rx="12" fill="#F1F0F8" stroke="#8A87B0"/><rect x="276" y="60" width="150" height="64" rx="12" fill="#FFF3EA" stroke="#E8590C"/><rect x="496" y="60" width="128" height="64" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-weight="700"><text x="151" y="98">log</text><text x="351" y="98">autenticazione</text><text x="560" y="98">profilo</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)"><path d="M30,92 H88"/><path d="M208,92 H268"/><path d="M428,92 H488"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" text-anchor="middle"><text x="241" y="82">avanti()</text><text x="461" y="82">avanti()</text></g>
+<rect class="req" x="34" y="86" width="14" height="12" rx="3" fill="#E8590C"/>
+<path d="M351,126 V186 H44 V108" fill="none" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ap)"/>
+<text x="204" y="178" text-anchor="middle" font-size="13" font-weight="700" fill="#B0205A">{$t[0]}</text>
+<text x="560" y="150" text-anchor="middle" font-size="13" font-weight="700" fill="#0B7F5C">200 · {$t[1]}</text>
+<text x="320" y="230" text-anchor="middle" font-size="13">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Hexagonal architecture: the core with its use case and port, the adapters around it, all dependencies pointing inwards. */
+if (!function_exists('fig_dp_hex')) {
+    function fig_dp_hex(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<polygon points="320,30 450,95 450,225 320,290 190,225 190,95" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="320" y="78" text-anchor="middle" font-weight="700" fill="#B84508">{$t[0]}</text>
+<rect x="236" y="104" width="168" height="40" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/><text x="320" y="129" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">ConfermaOrdine</text>
+<rect x="226" y="172" width="188" height="48" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="192" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">OrdiniRepository</text><text x="320" y="210" text-anchor="middle" font-size="13">{$t[1]}</text>
+<path d="M320,146 V164" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<g stroke-width="2" font-size="13" text-anchor="middle">
+<rect x="478" y="150" width="150" height="54" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><text x="553" y="173" font-family="ui-monospace, Menlo, monospace" font-weight="700" stroke="none">OrdiniPostgres</text><text x="553" y="192" stroke="none">Postgres</text>
+<rect x="478" y="236" width="150" height="54" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><text x="553" y="259" font-family="ui-monospace, Menlo, monospace" font-weight="700" stroke="none">OrdiniInMemoria</text><text x="553" y="278" stroke="none">{$t[2]}</text>
+<rect x="12" y="104" width="150" height="54" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><text x="87" y="127" font-weight="700" stroke="none">{$t[3]}</text><text x="87" y="146" stroke="none">HTTP</text>
+</g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)"><path d="M476,177 H422"/><path d="M476,256 C440,256 430,220 410,222"/><path d="M164,131 H228"/></g>
+<text x="553" y="130" text-anchor="middle" font-size="13" font-weight="700" fill="#1B66BC">{$t[4]}</text>
+<text x="320" y="312" text-anchor="middle" font-size="13">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'design-patterns', 'family' => 'patterns', 'after' => null,
     'title' => L('Design pattern e codice pulito', 'Design Patterns and Clean Code'), 'short' => L('Design pattern', 'Design Patterns'), 'level' => L('Intermedio', 'Intermediate'),
@@ -48,6 +200,9 @@ const richiesta = new RichiestaHttp("https://api.esempio.it")  // Builder
         ]),
         lesson('structural', L('Pattern strutturali', 'Structural patterns'), [
             P('I pattern **strutturali** riguardano come si compongono gli oggetti. Un **Adapter** fa parlare due interfacce incompatibili (per esempio una libreria esterna con il tuo codice). Un **Decorator** aggiunge comportamento a un oggetto avvolgendolo, senza cambiarne la classe. Una **Facade** offre un’interfaccia semplice a un sistema complicato.', '**Structural** patterns are about how objects are composed. An **Adapter** makes two incompatible interfaces talk (for example an external library with your code). A **Decorator** adds behaviour to an object by wrapping it, without changing its class. A **Facade** offers a simple interface to a complicated system.'),
+            Fig(L(fig_dp_wrap(['il tuo codice', 'traduce verso', 'interno: quello vero', 'passa prima dalla cache']), fig_dp_wrap(['your code', 'translates to', 'inner: the real one', 'goes through the cache first'])),
+                L('A sinistra l’Adapter: il tuo codice usa l’interfaccia Pagamenti, che PagamentiStripeAdapter implementa traducendo le chiamate verso StripeClient. A destra il Decorator: ArchivioConCache contiene una cache e avvolge l’Archivio vero; una chiamata a leggi passa prima dalla cache.', 'On the left the Adapter: your code uses the Pagamenti interface, which PagamentiStripeAdapter implements by translating the calls to StripeClient. On the right the Decorator: ArchivioConCache holds a cache and wraps the real Archivio; a call to leggi goes through the cache first.'),
+                L('L’Adapter cambia l’interfaccia, il Decorator la mantiene e aggiunge comportamento.', 'The Adapter changes the interface, the Decorator keeps it and adds behaviour.')),
             C('interface Archivio { leggi(chiave: string): Promise<string | null>; }
 
 class ArchivioConCache implements Archivio {           // Decorator
@@ -74,6 +229,9 @@ class PagamentiStripeAdapter implements Pagamenti {    // Adapter
         ]),
         lesson('behavioral', L('Pattern comportamentali', 'Behavioural patterns'), [
             P('I pattern **comportamentali** riguardano come gli oggetti collaborano. **Strategy** incapsula algoritmi intercambiabili dietro la stessa interfaccia (calcolare la spedizione in modi diversi). **Observer** permette a più oggetti di essere avvisati quando qualcosa cambia (gli eventi). **Command** trasforma un’azione in un oggetto, utile per code di lavori e “annulla”.', '**Behavioural** patterns are about how objects collaborate. **Strategy** encapsulates interchangeable algorithms behind the same interface (computing shipping in different ways). **Observer** lets several objects be notified when something changes (events). **Command** turns an action into an object, handy for job queues and “undo”.'),
+            Fig(L(fig_dp_observer(['Email al cliente', 'Magazzino', 'Statistiche', 'chi emette non conosce gli ascoltatori', 'ascoltatori iscritti con iscrivi()']), fig_dp_observer(['Customer email', 'Warehouse', 'Analytics', 'the emitter does not know the listeners', 'listeners subscribed with iscrivi()'])),
+                L('L’evento ordineCreato, a sinistra, chiama emetti con id 42; tre linee portano l’avviso a tre ascoltatori: email al cliente, magazzino e statistiche.', 'The ordineCreato event, on the left, calls emetti with id 42; three lines carry the notice to three listeners: customer email, warehouse and analytics.'),
+                L('Aggiungere un ascoltatore non tocca il codice di chi emette l’evento.', 'Adding a listener does not touch the code that emits the event.')),
             C('type Spedizione = (pesoKg: number) => number;               // Strategy
 const standard: Spedizione = p => 4.9 + p * 0.5;
 const espressa: Spedizione = p => 9.9 + p * 0.8;
@@ -118,6 +276,9 @@ const ordini = new Ordini(new DbFinto());   // nei test', 'js'),
         ]),
         lesson('composition', L('Composizione, Composite e Proxy', 'Composition, Composite and Proxy'), [
             P('L’ereditarietà lega le classi strettamente: un cambio nel genitore rompe i figli e le gerarchie profonde diventano goffe. Il principio **composizione invece di ereditarietà** costruisce gli oggetti unendo parti piccole che fanno una cosa sola. Il **Composite** tratta un gruppo di oggetti come se fosse uno solo (una cartella con file e sottocartelle, un menu con sottomenu). Il **Proxy** sta al posto di un altro oggetto, con la stessa interfaccia, e ne **controlla l’accesso**: permessi, caricamento pigro, cache, chiamate remote.', 'Inheritance ties classes tightly: a change in the parent breaks the children and deep hierarchies become awkward. The **composition over inheritance** principle builds objects by joining small parts that each do one thing. The **Composite** treats a group of objects as if it were a single one (a folder with files and subfolders, a menu with submenus). The **Proxy** stands in for another object, with the same interface, and **controls access** to it: permissions, lazy loading, caching, remote calls.'),
+            Fig(fig_dp_composite(),
+                L('Un albero: la Cartella progetto contiene un File da 1200 e una Cartella da 300, che contiene un File da 300. La dimensione della cartella principale è 1200 + 300 = 1500.', 'A tree: the Cartella progetto holds a 1200 File and a 300 Cartella, which holds a 300 File. The size of the top folder is 1200 + 300 = 1500.'),
+                L('Chi chiama `dimensione()` non sa se ha davanti un file o una cartella intera.', 'Whoever calls `dimensione()` does not know whether it has a file or a whole folder.')),
             C('interface Elemento { dimensione(): number; }
 
 class File implements Elemento {
@@ -156,6 +317,9 @@ class DocumentiProtetti implements Documenti {          // Proxy
         ]),
         lesson('state', L('State e macchine a stati', 'State and state machines'), [
             P('Quando un oggetto si comporta in modo diverso a seconda del suo **stato** (un ordine: nel carrello, pagato, spedito, consegnato), catene di `if` e `switch` si spargono ovunque. Il pattern **State**, o una **macchina a stati**, elenca in modo esplicito gli stati e le **transizioni** ammesse: un passaggio illegale, come da consegnato a carrello, diventa impossibile.', 'When an object behaves differently depending on its **state** (an order: in the cart, paid, shipped, delivered), chains of `if` and `switch` spread everywhere. The **State** pattern, or a **state machine**, lists explicitly the states and the allowed **transitions**: an illegal move, such as from delivered back to cart, becomes impossible.'),
+            Fig(fig_dp_state(),
+                L('Quattro stati in fila collegati da frecce: carrello, pagato, spedito, consegnato. Da carrello e da pagato una freccia porta ad annullato. Una freccia tratteggiata da consegnato a carrello è barrata: passaA("carrello") dà un errore.', 'Four states in a row linked by arrows: carrello, pagato, spedito, consegnato. From carrello and from pagato an arrow leads to annullato. A dashed arrow from consegnato back to carrello is crossed out: passaA("carrello") throws an error.'),
+                L('Ogni freccia è una riga della tabella `transizioni`; quello che non è disegnato non si può fare.', 'Each arrow is a line of the `transizioni` table; what is not drawn cannot be done.')),
             C('type Stato = "carrello" | "pagato" | "spedito" | "consegnato" | "annullato";
 
 const transizioni: Record<Stato, Stato[]> = {
@@ -186,6 +350,9 @@ class Ordine {
         ]),
         lesson('chain', L('Catena di responsabilità e middleware', 'Chain of responsibility and middleware'), [
             P('Nella **catena di responsabilità** una richiesta attraversa una serie di gestori: ognuno può risponderle, modificarla o passarla al successivo. È il **middleware** dei framework web (Express, Laravel, ASP.NET): log, autenticazione, limiti di richieste, ognuno è un pezzetto piccolo e riusabile.', 'In the **chain of responsibility** a request passes through a series of handlers: each one can answer it, change it or pass it to the next. It is the **middleware** of web frameworks (Express, Laravel, ASP.NET): logging, authentication, rate limits, each one a small, reusable piece.'),
+            Fig(L(fig_dp_chain(['senza utente: 401 Accedi prima', 'Profilo', 'ogni anello chiama avanti() o risponde e ferma la catena']), fig_dp_chain(['no user: 401 Accedi prima', 'Profilo', 'each link calls avanti() or answers and stops the chain'])),
+                L('La richiesta GET /profilo attraversa tre riquadri collegati da avanti(): log, autenticazione e profilo, che risponde 200. Una freccia tratteggiata torna indietro da autenticazione: senza utente risponde 401 e la richiesta non arriva a profilo.', 'The GET /profilo request goes through three boxes linked by avanti(): log, autenticazione and profilo, which answers 200. A dashed arrow comes back from autenticazione: with no user it answers 401 and the request never reaches profilo.'),
+                L('L’ordine degli anelli decide chi vede la richiesta e chi può fermarla.', 'The order of the links decides who sees the request and who can stop it.')),
             C('type Richiesta = { utente?: string; percorso: string };
 type Risposta = { stato: number; corpo: string };
 type Middleware = (req: Richiesta, avanti: () => Risposta) => Risposta;
@@ -219,6 +386,9 @@ profilo({ percorso: "/profilo" });   // { stato: 401, corpo: "Accedi prima" }', 
         ]),
         lesson('layers', L('Repository e architettura esagonale', 'Repositories and hexagonal architecture'), [
             P('Tieni le **regole di business** separate dai dettagli: database, framework, servizi esterni. Un **Repository** offre un’interfaccia simile a una collezione (`trova`, `salva`) e nasconde l’SQL. Nell’**architettura esagonale** (porte e adattatori) il nucleo definisce le interfacce di cui ha bisogno (le **porte**) e gli **adattatori** le realizzano per Postgres, per Stripe o per i test.', 'Keep **business rules** separate from the details: database, framework, external services. A **Repository** offers a collection-like interface (`trova`, `salva`) and hides the SQL. In the **hexagonal architecture** (ports and adapters) the core defines the interfaces it needs (the **ports**) and the **adapters** implement them for Postgres, for Stripe or for tests.'),
+            Fig(L(fig_dp_hex(['nucleo', 'porta', 'per i test', 'Controller', 'adattatori', 'le frecce delle dipendenze puntano tutte verso il nucleo']), fig_dp_hex(['core', 'port', 'for tests', 'Controller', 'adapters', 'the dependency arrows all point towards the core'])),
+                L('Un esagono è il nucleo: dentro il caso d’uso ConfermaOrdine usa la porta OrdiniRepository. Fuori, gli adattatori OrdiniPostgres e OrdiniInMemoria, per i test, realizzano la porta; a sinistra un controller HTTP chiama il caso d’uso. Tutte le frecce puntano verso l’esagono.', 'A hexagon is the core: inside, the ConfermaOrdine use case uses the OrdiniRepository port. Outside, the OrdiniPostgres adapter and OrdiniInMemoria, for tests, implement the port; on the left an HTTP controller calls the use case. All the arrows point towards the hexagon.'),
+                L('Il nucleo non importa niente da fuori: sono gli adattatori a dipendere da lui.', 'The core imports nothing from outside: it is the adapters that depend on it.')),
             C('// il nucleo: nessun import di database o framework
 type Ordine = { id: number; stato: string };
 

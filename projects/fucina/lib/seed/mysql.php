@@ -1,6 +1,130 @@
 <?php
 /** MySQL: the server, utf8mb4, upserts, JSON columns, users and privileges, EXPLAIN ANALYZE, backups and replication, versions. */
 
+/** The rows a query returns, as a small table for a demo page. A null value shows as a grey NULL; $label is the query, in monospace above. */
+if (!function_exists('fucina_data_table')) {
+    function fucina_data_table(array $head, array $rows, string $label = ''): string
+    {
+        $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES);
+        $cell = fn($v) => $v === null ? '<td class="n">NULL</td>' : (is_int($v) || is_float($v) ? '<td class="r">' . $e($v) . '</td>' : '<td>' . $e($v) . '</td>');
+        $html = '<style>body{margin:8px;font:14px system-ui,sans-serif;color:#1E1C52}table{border-collapse:collapse;margin:0 0 10px}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:left}th{background:#F1F0F8}td.r{text-align:right;font-variant-numeric:tabular-nums}td.n{color:#8A87B0;font-style:italic}code{display:block;margin:0 0 4px;font:12px ui-monospace,monospace;color:#5A5880}</style>';
+        if ($label !== '') $html .= '<code>' . $e($label) . '</code>';
+        $html .= '<table><tr>' . implode('', array_map(fn($h) => '<th>' . $e($h) . '</th>', $head)) . '</tr>';
+        foreach ($rows as $r) $html .= '<tr>' . implode('', array_map($cell, $r)) . '</tr>';
+        return $html . '</table>';
+    }
+}
+
+/** One server, many databases, many tables; clients connect to the server. */
+if (!function_exists('fig_mysql_server')) {
+    function fig_mysql_server(string $client, string $server, string $port): string
+    {
+        $t = fn(int $x, int $y, string $n) => '<rect x="' . $x . '" y="' . $y . '" width="130" height="30" rx="8" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="' . ($x + 14) . '" y="' . ($y + 20) . '">' . $n . '</text>';
+        $g = '';
+        foreach (['mysql (CLI)', 'phpMyAdmin', 'PHP / Python'] as $i => $c) {
+            $y = 80 + $i * 64;
+            $g .= '<rect x="20" y="' . $y . '" width="140" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="90" y="' . ($y + 25) . '" text-anchor="middle">' . $c . '</text>';
+            $g .= '<path d="M160 ' . ($y + 20) . ' C 190 ' . ($y + 20) . ', 196 164, 222 164" fill="none" stroke="#8A87B0" stroke-width="2"/>';
+        }
+        $g .= $t(266, 112, 'prodotti') . $t(266, 150, 'ordini') . $t(266, 188, 'clienti') . $t(458, 112, 'articoli') . $t(458, 150, 'commenti');
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<text x="90" y="60" text-anchor="middle" font-weight="700">{$client}</text>
+<rect x="230" y="20" width="390" height="244" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="248" y="46" font-weight="700" fill="#B84508">{$server}</text>
+<rect x="250" y="62" width="162" height="184" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="442" y="62" width="162" height="184" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-weight="700"><text x="266" y="90">negozio</text><text x="458" y="90">blog</text></g>
+<g fill="#1E1C52"><path d="M222 158 L232 164 L222 170 Z"/></g>
+<text x="196" y="270" text-anchor="middle" font-size="13" fill="#5A5880">{$port}</text>
+{$g}
+</svg>
+SVG;
+    }
+}
+
+/** ON DUPLICATE KEY UPDATE as a decision: insert the row, or update the one already there. */
+if (!function_exists('fig_mysql_upsert')) {
+    function fig_mysql_upsert(string $q1, string $q2, string $yes, string $no, string $newRow): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="16" y="98" width="150" height="44" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="91" y="125" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700" fill="#4B2BBF">INSERT (7, 10)</text>
+<path d="M166 120 H184" stroke="#1E1C52" stroke-width="2"/><path d="M182 114 L192 120 L182 126 Z" fill="#1E1C52"/>
+<path d="M300 56 L408 120 L300 184 L192 120 Z" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="300" y="116" text-anchor="middle" font-weight="700">{$q1}</text><text x="300" y="134" text-anchor="middle" font-weight="700">{$q2}</text>
+<path d="M408 120 C 430 120, 430 64, 452 64" fill="none" stroke="#0B7F5C" stroke-width="2"/><path d="M448 58 L458 64 L448 70 Z" fill="#0B7F5C"/>
+<path d="M408 120 C 430 120, 430 176, 452 176" fill="none" stroke="#2F8CF0" stroke-width="2"/><path d="M448 170 L458 176 L448 182 Z" fill="#2F8CF0"/>
+<text x="428" y="62" text-anchor="end" font-weight="700" fill="#0B7F5C">{$yes}</text><text x="428" y="192" text-anchor="end" font-weight="700" fill="#1B66BC">{$no}</text>
+<rect x="460" y="36" width="164" height="56" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="542" y="59" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="700">UPDATE</text><text x="542" y="79" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">punti = punti + 10</text>
+<rect x="460" y="148" width="164" height="56" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="542" y="171" text-anchor="middle" font-weight="700">{$newRow}</text><text x="542" y="191" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">(7, 10)</text>
+</svg>
+SVG;
+    }
+}
+
+/** InnoDB: a secondary index holds the key and the primary key; the rows live in the clustered index, ordered by id. */
+if (!function_exists('fig_mysql_clustered')) {
+    function fig_mysql_clustered(string $sec, string $clu, string $step1, string $step2): string
+    {
+        $g = '';
+        foreach ([[17, 3], [42, 8], [42, 12], [58, 5]] as $i => [$c, $id]) {
+            $y = 96 + $i * 36;
+            $hot = $c === 42;
+            $g .= '<rect x="32" y="' . ($y - 21) . '" width="196" height="30" rx="8" fill="' . ($hot ? '#FFE8D6' : '#FFFFFF') . '" stroke="' . ($hot ? '#E8590C' : '#C9C7DE') . '" stroke-width="2"/><text x="48" y="' . $y . '">' . $c . '</text><text x="212" y="' . $y . '" text-anchor="end" fill="#0B7F5C" font-weight="700">' . $id . '</text>';
+        }
+        foreach ([[3, 17, 'nuovo'], [5, 58, 'spedito'], [8, 42, 'pagato'], [12, 42, 'pagato']] as $i => [$id, $c, $st]) {
+            $y = 96 + $i * 36;
+            $hot = $c === 42;
+            $g .= '<rect x="352" y="' . ($y - 21) . '" width="256" height="30" rx="8" fill="' . ($hot ? '#FFE8D6' : '#FFFFFF') . '" stroke="' . ($hot ? '#E8590C' : '#C9C7DE') . '" stroke-width="2"/><text x="368" y="' . $y . '" fill="#0B7F5C" font-weight="700">' . $id . '</text><text x="420" y="' . $y . '">' . $c . '</text><text x="510" y="' . $y . '">' . $st . '</text>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<text x="20" y="26" font-weight="700">{$sec}</text><text x="340" y="26" font-weight="700">{$clu}</text>
+<rect x="20" y="38" width="220" height="190" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="340" y="38" width="280" height="190" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-weight="700" font-size="13"><text x="48" y="62">cliente_id</text><text x="212" y="62" text-anchor="end">id</text><text x="368" y="62">id</text><text x="420" y="62">cliente_id</text><text x="510" y="62">stato</text></g>
+{$g}
+<g fill="none" stroke="#E8590C" stroke-width="2"><path d="M228 126 C 290 126, 290 162, 344 162"/><path d="M228 162 C 290 162, 290 198, 344 198"/></g>
+<g fill="#E8590C"><path d="M342 156 L352 162 L342 168 Z"/><path d="M342 192 L352 198 L342 204 Z"/></g>
+<text x="20" y="260" font-weight="700" fill="#B84508">{$step1}</text>
+<text x="20" y="284" font-weight="700" fill="#0B7F5C">{$step2}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Replication: the app writes to the source, the binary log carries the changes to the replicas, reads go to the replicas. */
+if (!function_exists('fig_mysql_replica')) {
+    function fig_mysql_replica(string $writes, string $reads, string $binlog): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<style>.pk{animation:pk1 4s linear infinite}.pk2{animation:pk2 4s linear infinite 2s}@keyframes pk1{0%{transform:translate(0,0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translate(112px,-62px);opacity:0}}@keyframes pk2{0%{transform:translate(0,0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translate(112px,62px);opacity:0}}@media (prefers-reduced-motion:reduce){.pk,.pk2{animation:none}}</style>
+<rect x="20" y="110" width="100" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="70" y="140" text-anchor="middle" font-weight="700">app</text>
+<path d="M120 135 H200" stroke="#E8590C" stroke-width="2"/><path d="M198 129 L208 135 L198 141 Z" fill="#E8590C"/>
+<text x="162" y="126" text-anchor="middle" font-size="13" font-weight="700" fill="#B84508">{$writes}</text>
+<rect x="210" y="86" width="150" height="98" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="285" y="112" text-anchor="middle" font-weight="700" fill="#B84508">source</text>
+<rect x="226" y="126" width="118" height="42" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<g stroke="#E8590C" stroke-width="2"><line x1="236" y1="139" x2="334" y2="139"/><line x1="236" y1="147" x2="334" y2="147"/><line x1="236" y1="155" x2="300" y2="155"/></g>
+<text x="285" y="204" text-anchor="middle" font-size="13" fill="#5A5880">{$binlog}</text>
+<path d="M360 116 L474 52" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/><path d="M360 154 L474 218" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<rect class="pk" x="356" y="108" width="14" height="14" rx="3" fill="#E8590C"/>
+<rect class="pk2" x="356" y="148" width="14" height="14" rx="3" fill="#E8590C"/>
+<rect x="476" y="22" width="148" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="550" y="57" text-anchor="middle" font-weight="700" fill="#1B66BC">replica 1</text>
+<rect x="476" y="188" width="148" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="550" y="223" text-anchor="middle" font-weight="700" fill="#1B66BC">replica 2</text>
+<path d="M70 110 V36 H468" fill="none" stroke="#2F8CF0" stroke-width="2"/><path d="M466 30 L476 36 L466 42 Z" fill="#2F8CF0"/>
+<path d="M70 160 V238 H468" fill="none" stroke="#2F8CF0" stroke-width="2"/><path d="M466 232 L476 238 L466 244 Z" fill="#2F8CF0"/>
+<text x="160" y="28" font-size="13" font-weight="700" fill="#1B66BC">{$reads}</text><text x="160" y="258" font-size="13" font-weight="700" fill="#1B66BC">{$reads}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'mysql', 'family' => 'mysql', 'after' => 'sql-base',
     'title' => L('MySQL', 'MySQL'), 'short' => L('MySQL', 'MySQL'), 'level' => L('Intermedio', 'Intermediate'),
@@ -15,6 +139,9 @@ CREATE DATABASE negozio CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE negozio;
 SHOW TABLES;
 DESCRIBE prodotti;', 'sql'),
+            Fig(L(fig_mysql_server('client', 'server MySQL (mysqld)', 'porta 3306'), fig_mysql_server('clients', 'MySQL server (mysqld)', 'port 3306')),
+                L('Tre client (il comando mysql, phpMyAdmin, PHP o Python) si collegano a un unico server MySQL. Dentro il server ci sono due database: negozio, con le tabelle prodotti, ordini e clienti, e blog, con articoli e commenti.', 'Three clients (the mysql command, phpMyAdmin, PHP or Python) connect to a single MySQL server. Inside the server there are two databases: negozio, with the tables prodotti, ordini and clienti, and blog, with articoli and commenti.'),
+                L('Server → database → tabelle: `USE` sceglie il database su cui lavorare.', 'Server → databases → tables: `USE` picks the database to work on.')),
             P('Un server contiene più database, ognuno con le sue tabelle. Il motore di archiviazione predefinito è **InnoDB**: supporta transazioni e chiavi esterne. Il vecchio MyISAM non le supporta.', 'A server holds several databases, each with its own tables. The default storage engine is **InnoDB**: it supports transactions and foreign keys. The old MyISAM does not.'),
             Tip('`DESCRIBE tabella` mostra colonne, tipi e chiavi: il primo comando da lanciare su un database che non conosci.', '`DESCRIBE table` shows columns, types and keys: the first command to run on a database you do not know.'),
         ], [
@@ -49,6 +176,9 @@ DESCRIBE prodotti;', 'sql'),
 ON DUPLICATE KEY UPDATE punti = punti + 10;
 
 INSERT IGNORE INTO iscrizioni (utente_id, corso) VALUES (7, \'sql\');', 'sql'),
+            Fig(L(fig_mysql_upsert('la chiave 7', 'esiste già?', 'sì', 'no', 'nuova riga'), fig_mysql_upsert('does key 7', 'exist already?', 'yes', 'no', 'new row')),
+                L('Un diagramma di flusso: INSERT (7, 10) arriva a una domanda, la chiave 7 esiste già? Se sì si esegue UPDATE punti = punti + 10, se no si inserisce la nuova riga (7, 10).', 'A flowchart: INSERT (7, 10) reaches a question, does key 7 exist already? If yes it runs UPDATE punti = punti + 10, if no it inserts the new row (7, 10).'),
+                L('Una sola istruzione, due esiti: decide la chiave primaria o un indice `UNIQUE`.', 'One statement, two outcomes: the primary key or a `UNIQUE` index decides.')),
             P('Dentro `UPDATE` puoi leggere i valori nuovi con un alias di riga: `VALUES (7, 10) AS n ON DUPLICATE KEY UPDATE punti = punti + n.punti` (la vecchia funzione `VALUES()` è deprecata). `INSERT IGNORE` salta le righe che sarebbero doppie, con un semplice avviso al posto dell’errore. `REPLACE` invece cancella la vecchia riga e ne inserisce una nuova: attenzione, perché cambia l’`AUTO_INCREMENT` e fa scattare le cancellazioni a cascata.', 'Inside `UPDATE` you can read the new values with a row alias: `VALUES (7, 10) AS n ON DUPLICATE KEY UPDATE punti = punti + n.punti` (the old `VALUES()` function is deprecated). `INSERT IGNORE` skips rows that would be duplicates, with a mere warning instead of an error. `REPLACE` instead deletes the old row and inserts a new one: careful, because it changes the `AUTO_INCREMENT` and triggers cascading deletes.'),
         ], [
             Q('u1', L('Quando scatta `ON DUPLICATE KEY UPDATE`?', 'When does `ON DUPLICATE KEY UPDATE` fire?'), [L('Sempre', 'Always'), L('Quando una chiave unica sarebbe ripetuta', 'When a unique key would repeat'), L('Quando la tabella è vuota', 'When the table is empty'), L('Solo nelle transazioni', 'Only in transactions')], 1, L('Serve una chiave primaria o `UNIQUE`.', 'It needs a primary or `UNIQUE` key.')),
@@ -65,7 +195,7 @@ INSERT IGNORE INTO iscrizioni (utente_id, corso) VALUES (7, \'sql\');', 'sql'),
 INSERT INTO profili VALUES (1, \'{"nome": "Ada", "tag": ["sql", "php"]}\');
 
 SELECT dati->>\'$.nome\' AS nome FROM profili
-WHERE JSON_CONTAINS(dati->\'$.tag\', \'"sql"\');', 'sql'),
+WHERE JSON_CONTAINS(dati->\'$.tag\', \'"sql"\');', 'sql', fucina_data_table(['nome'], [['Ada']], 'SELECT dati->>\'$.nome\' AS nome …')),
             P('Il JSON è comodo per dati che cambiano forma, ma i campi su cui filtri spesso meritano una colonna vera, con il suo indice. Si può anche indicizzare un campo JSON con una **colonna generata**.', 'JSON is handy for data that changes shape, but fields you often filter on deserve a real column, with its own index. You can also index a JSON field through a **generated column**.'),
         ], [
             Q('j1', L('Che cosa restituisce `dati->>\'$.nome\'`?', 'What does `dati->>\'$.nome\'` return?'), [L('Il nome come testo semplice', 'The name as plain text'), L('Il nome tra virgolette JSON', 'The name in JSON quotes'), L('Tutto il documento', 'The whole document'), L('Un errore', 'An error')], 0, L('`->` lo darebbe tra virgolette.', '`->` would give it in quotes.')),
@@ -86,6 +216,8 @@ UPDATE conti SET saldo = saldo - 50 WHERE id = 1;
 UPDATE conti SET saldo = saldo + 50 WHERE id = 2;
 COMMIT;', 'sql'),
             P('Una **transazione** raggruppa più istruzioni: o vanno a buon fine tutte (`COMMIT`) o nessuna (`ROLLBACK`). Funziona con le tabelle InnoDB.', 'A **transaction** groups several statements: either they all succeed (`COMMIT`) or none does (`ROLLBACK`). It works with InnoDB tables.'),
+            P('Un account MySQL è fatto di due parti, **utente e host**: `\'app\'@\'localhost\'` può collegarsi solo dalla stessa macchina, `\'app\'@\'%\'` da ovunque, e per MySQL sono due account diversi. Per gruppi di utenti con gli stessi permessi, da MySQL 8.0 esistono i **ruoli** (`CREATE ROLE`, poi `GRANT ruolo TO utente`). E tieni la password fuori dal codice, in una variabile d’ambiente.', 'A MySQL account has two parts, **user and host**: `\'app\'@\'localhost\'` can connect only from the same machine, `\'app\'@\'%\'` from anywhere, and to MySQL they are two different accounts. For groups of users with the same privileges, MySQL 8.0 has **roles** (`CREATE ROLE`, then `GRANT role TO user`). And keep the password out of the code, in an environment variable.'),
+            Tip('MySQL lavora in **autocommit**: ogni istruzione fuori da una transazione viene confermata subito. `START TRANSACTION` sospende l’autocommit fino al `COMMIT` o al `ROLLBACK`.', 'MySQL works in **autocommit** mode: every statement outside a transaction is committed straight away. `START TRANSACTION` suspends autocommit until the `COMMIT` or the `ROLLBACK`.'),
         ], [
             Q('p1', L('Che cosa significa `negozio.*` in un `GRANT`?', 'What does `negozio.*` mean in a `GRANT`?'), [L('Tutte le tabelle di `negozio`', 'Every table of `negozio`'), L('Tutti i database', 'Every database'), L('Tutte le colonne di una tabella', 'Every column of a table'), L('Tutti gli utenti', 'Every user')], 0, L('database.tabella, con `*` come jolly.', 'database.table, with `*` as wildcard.')),
             Q('p2', L('Che cosa fa `ROLLBACK`?', 'What does `ROLLBACK` do?'), [L('Annulla la transazione', 'Undoes the transaction'), L('Conferma la transazione', 'Confirms the transaction'), L('Riavvia il server', 'Restarts the server'), L('Cancella l’utente', 'Deletes the user')], 0, L('Come se non fosse successo niente.', 'As if nothing had happened.')),
@@ -103,6 +235,9 @@ CREATE INDEX ix_ordini_cliente_stato ON ordini (cliente_id, stato);
 
 -- provare a «spegnere» un indice prima di cancellarlo
 ALTER TABLE ordini ALTER INDEX ix_vecchio INVISIBLE;', 'sql'),
+            Fig(L(fig_mysql_clustered('Indice secondario (cliente_id)', 'Tabella = indice clustered (id)', '1. Cerca 42 nell’indice secondario: trova gli id 8 e 12.', '2. Con quegli id legge le righe intere nella tabella.'), fig_mysql_clustered('Secondary index (cliente_id)', 'Table = clustered index (id)', '1. Find 42 in the secondary index: it gives ids 8 and 12.', '2. With those ids it reads the whole rows in the table.')),
+                L('A sinistra l’indice secondario, ordinato per cliente_id, dove ogni voce porta con sé l’id della riga. A destra la tabella, ordinata per id. Due frecce vanno dalle voci con cliente_id 42 alle righe con id 8 e 12.', 'On the left the secondary index, sorted by cliente_id, where each entry carries the row’s id. On the right the table, sorted by id. Two arrows go from the entries with cliente_id 42 to the rows with id 8 and 12.'),
+                L('Due ricerche: per questo una chiave primaria corta rende più leggeri tutti gli altri indici.', 'Two lookups: that is why a short primary key makes every other index lighter.')),
             P('Nel piano tradizionale guarda la colonna `type`: `ALL` vuol dire scansione completa, `ref` o `range` che usa un indice; `key` dice quale. Un indice **invisibile** resta aggiornato ma l’ottimizzatore lo ignora: utile per capire se puoi cancellarlo senza rischi.', 'In the traditional plan look at the `type` column: `ALL` means a full scan, `ref` or `range` that an index is used; `key` says which one. An **invisible** index stays up to date but the optimiser ignores it: useful to find out whether you can drop it safely.'),
         ], [
             Q('e1', L('Che cosa fa in più `EXPLAIN ANALYZE` rispetto a `EXPLAIN`?', 'What does `EXPLAIN ANALYZE` do beyond `EXPLAIN`?'), [L('Crea gli indici che mancano', 'Creates the missing indexes'), L('Esegue la query e mostra tempi e righe reali', 'Runs the query and shows real times and rows'), L('Analizza la sintassi senza eseguire nulla', 'Checks the syntax without running anything'), L('Aggiorna le statistiche di tutte le tabelle', 'Updates the statistics of every table')], 1, L('Attenzione: la query viene eseguita davvero.', 'Careful: the query is really executed.')),
@@ -120,6 +255,9 @@ mysqldump -u root -p --single-transaction --routines negozio > negozio.sql
 # ripristino
 mysql -u root -p negozio < negozio.sql', 'bash'),
             P('Il **log binario** registra ogni modifica: serve per tornare a un istante preciso dopo il backup (*point-in-time recovery*) e per la **replica**, in cui uno o più server *replica* copiano le modifiche del server *source*. Le repliche alleggeriscono le letture e sono pronte a sostituire il source se si guasta.', 'The **binary log** records every change: it is used to return to a precise moment after the backup (*point-in-time recovery*) and for **replication**, where one or more *replica* servers copy the changes of the *source* server. Replicas take read load off and are ready to replace the source if it fails.'),
+            Fig(L(fig_mysql_replica('scritture', 'letture', 'log binario'), fig_mysql_replica('writes', 'reads', 'binary log')),
+                L('L’app scrive sul server source, che registra ogni modifica nel log binario. Due linee tratteggiate portano le modifiche a replica 1 e replica 2; le letture dell’app vanno direttamente alle repliche.', 'The app writes to the source server, which records every change in the binary log. Two dashed lines carry the changes to replica 1 and replica 2; the app’s reads go straight to the replicas.'),
+                L('Le modifiche viaggiano dal source alle repliche con un piccolo ritardo.', 'Changes travel from the source to the replicas with a small delay.')),
             Tip('Un backup che non hai mai provato a ripristinare non è un backup: fai una prova di ripristino ogni tanto.', 'A backup you have never tried to restore is not a backup: do a test restore now and then.'),
         ], [
             Q('b1', L('Che cosa produce `mysqldump`?', 'What does `mysqldump` produce?'), [L('Una copia binaria dei file del server', 'A binary copy of the server’s files'), L('Un file di istruzioni SQL che ricreano i dati', 'A file of SQL statements that recreate the data'), L('Un foglio Excel con tutte le tabelle', 'An Excel sheet with every table'), L('Un nuovo server già configurato', 'A new, already configured server')], 1, L('Si ripristina passandolo al client `mysql`.', 'You restore it by feeding it to the `mysql` client.')),
@@ -142,7 +280,7 @@ SELECT mese, incasso, LAG(incasso) OVER (ORDER BY mese) AS mese_prima
 FROM mensili;
 
 -- dalla 9.0: il tipo VECTOR per gli embedding
-CREATE TABLE documenti (id INT PRIMARY KEY, embedding VECTOR(384));', 'sql'),
+CREATE TABLE documenti (id INT PRIMARY KEY, embedding VECTOR(384));', 'sql', fucina_data_table(['mese', 'incasso', 'mese_prima'], [['2026-08', 12400.0, null], ['2026-09', 13150.5, 12400.0], ['2026-10', 11980.0, 13150.5]], 'SELECT mese, incasso, LAG(incasso) OVER (ORDER BY mese) AS mese_prima …')),
             P('Le novità più utili arrivate negli anni: CTE, funzioni finestra e ruoli (8.0), autenticazione `caching_sha2_password` come predefinita (il vecchio `mysql_native_password` è stato tolto nella 9), il tipo `VECTOR` (9.0). Prima di aggiornare, leggi le note di rilascio e prova l’applicazione su una copia.', 'The most useful additions over the years: CTEs, window functions and roles (8.0), `caching_sha2_password` authentication as the default (the old `mysql_native_password` was removed in 9), the `VECTOR` type (9.0). Before upgrading, read the release notes and test the application on a copy.'),
         ], [
             Q('n1', L('Quale tipo di versione conviene di solito in produzione?', 'Which kind of version usually suits production?'), [L('L’ultima Innovation appena uscita', 'The latest Innovation just released'), L('Una versione di sviluppo', 'A development build'), L('Una LTS, con anni di correzioni', 'An LTS, with years of fixes'), L('La versione più vecchia disponibile', 'The oldest version available')], 2, L('Le Innovation hanno supporto breve.', 'Innovation releases have short support.')),

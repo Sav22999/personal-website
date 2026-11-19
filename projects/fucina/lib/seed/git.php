@@ -2,6 +2,189 @@
 /** Git and GitHub: repositories and commits, branches and merges, remotes and pull requests, fixing mistakes, history,
  *  setup and authentication, reading history, reset and reflog, forks and syncing, GitHub Actions. */
 
+/** The three areas of Git, with a file that travels from the working directory to the staging area and into a commit. */
+if (!function_exists('fig_git_areas')) {
+    function fig_git_areas(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.trip{animation:trip 9s ease-in-out infinite}@keyframes trip{0%,15%{transform:translate(0,0);opacity:1}30%,48%{transform:translate(224px,0);opacity:1}63%,80%{transform:translate(448px,0);opacity:1}90%{transform:translate(448px,0);opacity:0}91%{transform:translate(0,0);opacity:0}100%{transform:translate(0,0);opacity:1}}@media (prefers-reduced-motion:reduce){.trip{animation:none}}</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="16" width="176" height="140" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="240" y="16" width="176" height="140" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="464" y="16" width="160" height="140" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="104" y="42" text-anchor="middle" font-weight="700" fill="#B84508">{$t[0]}</text>
+<text x="328" y="42" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[1]}</text>
+<text x="544" y="42" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[2]}</text>
+<text x="104" y="62" text-anchor="middle" font-size="13">{$t[3]}</text>
+<text x="328" y="62" text-anchor="middle" font-size="13">{$t[4]}</text>
+<text x="544" y="62" text-anchor="middle" font-size="13">{$t[5]}</text>
+<rect x="48" y="116" width="112" height="28" rx="8" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<text x="104" y="135" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">style.css</text>
+<g stroke="#0B7F5C" stroke-width="2" fill="#FFFFFF"><line x1="500" y1="128" x2="588" y2="128"/><circle cx="500" cy="128" r="10"/><circle cx="544" cy="128" r="10"/><circle cx="588" cy="128" r="10" fill="#0B7F5C"/></g>
+<g class="trip"><rect x="48" y="78" width="112" height="28" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<text x="104" y="97" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">index.html</text></g>
+<g fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"><path d="M104,156 V186 Q104,196 114,196 H318 Q328,196 328,186 V164"/><path d="M328,156 V186 Q328,196 338,196 H534 Q544,196 544,186 V164"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700" text-anchor="middle">
+<rect x="176" y="183" width="84" height="26" rx="8" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><text x="218" y="201">git add</text>
+<rect x="388" y="183" width="104" height="26" rx="8" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><text x="440" y="201">git commit</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** A feature branch that leaves main and comes back with a merge commit; the branch commits appear and the merge line is drawn. */
+if (!function_exists('fig_git_branch')) {
+    function fig_git_branch(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.f1{animation:pop 8s infinite}.f2{animation:pop2 8s infinite}.mg{stroke-dasharray:100;animation:draw 8s infinite}.mc{animation:pop3 8s infinite}@keyframes pop{0%,10%{opacity:0}20%,100%{opacity:1}}@keyframes pop2{0%,25%{opacity:0}35%,100%{opacity:1}}@keyframes draw{0%,45%{stroke-dashoffset:100}65%,100%{stroke-dashoffset:0}}@keyframes pop3{0%,62%{opacity:0}72%,100%{opacity:1}}@media (prefers-reduced-motion:reduce){.f1,.f2,.mg,.mc{animation:none}}</style>
+<g fill="none" stroke-width="3">
+<path d="M60,80 H520" stroke="#2F8CF0"/>
+<path d="M160,80 C210,80 210,160 260,160 H400" stroke="#E8590C"/>
+<path class="mg" pathLength="100" d="M400,160 C460,160 470,80 520,80" stroke="#E8590C"/>
+</g>
+<g stroke-width="2" font-size="13" font-weight="700" text-anchor="middle" font-family="ui-monospace, Menlo, monospace">
+<circle cx="60" cy="80" r="16" fill="#DCEBFF" stroke="#2F8CF0"/><text x="60" y="85" stroke="none">a1</text>
+<circle cx="160" cy="80" r="16" fill="#DCEBFF" stroke="#2F8CF0"/><text x="160" y="85" stroke="none">b2</text>
+<circle cx="340" cy="80" r="16" fill="#DCEBFF" stroke="#2F8CF0"/><text x="340" y="85" stroke="none">c3</text>
+<g class="f1"><circle cx="260" cy="160" r="16" fill="#FFE8D6" stroke="#E8590C"/><text x="260" y="165" stroke="none">f1</text></g>
+<g class="f2"><circle cx="400" cy="160" r="16" fill="#FFE8D6" stroke="#E8590C"/><text x="400" y="165" stroke="none">f2</text></g>
+<g class="mc"><circle cx="520" cy="80" r="21" fill="#FFFFFF" stroke="#2F8CF0"/><circle cx="520" cy="80" r="15" fill="#2F8CF0" stroke="#2F8CF0"/><text x="520" y="85" stroke="none" fill="#FFFFFF">M</text></g>
+</g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">
+<rect x="556" y="66" width="64" height="28" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="588" y="85" text-anchor="middle" fill="#1B66BC">main</text>
+<rect x="276" y="186" width="140" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="346" y="205" text-anchor="middle" fill="#B84508">ricerca-corsi</text>
+<text x="40" y="36" font-size="13" font-weight="400">git switch -c ricerca-corsi</text>
+<path d="M150,44 L160,60" stroke="#8A87B0" stroke-width="2"/>
+<text x="600" y="36" font-size="13" font-weight="400" text-anchor="end">git merge ricerca-corsi</text>
+<path d="M530,44 L522,56" stroke="#8A87B0" stroke-width="2"/>
+</g>
+</svg>
+SVG;
+    }
+}
+
+/** Merge and rebase side by side: the same work joined with a merge commit, or replayed on top of main as A′ and B′. */
+if (!function_exists('fig_git_rebase')) {
+    function fig_git_rebase(string $merge, string $rebase): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.slide1{animation:s1 7s ease-in-out infinite}.slide2{animation:s2 7s ease-in-out infinite}@keyframes s1{0%,20%{transform:translate(-90px,70px)}55%,100%{transform:translate(0,0)}}@keyframes s2{0%,20%{transform:translate(-90px,70px)}55%,100%{transform:translate(0,0)}}@media (prefers-reduced-motion:reduce){.slide1,.slide2{animation:none}}</style>
+<rect x="8" y="8" width="304" height="234" rx="12" fill="#F1F0F8"/>
+<rect x="328" y="8" width="304" height="234" rx="12" fill="#F1F0F8"/>
+<g font-family="ui-monospace, Menlo, monospace" font-weight="700" font-size="15"><text x="24" y="36">git merge</text><text x="344" y="36">git rebase main</text></g>
+<text x="160" y="222" text-anchor="middle" font-size="13">{$merge}</text>
+<text x="480" y="222" text-anchor="middle" font-size="13">{$rebase}</text>
+<g fill="none" stroke-width="3">
+<path d="M40,90 H280" stroke="#2F8CF0"/><path d="M100,90 C130,90 130,160 160,160 H220 C250,160 255,90 280,90" stroke="#E8590C"/>
+<path d="M360,90 H600" stroke="#2F8CF0"/><path d="M420,90 C440,90 440,160 460,160 H510" stroke="#8A87B0" stroke-dasharray="6 5"/>
+</g>
+<g stroke-width="2" font-size="13" font-weight="700" text-anchor="middle">
+<circle cx="40" cy="90" r="15" fill="#DCEBFF" stroke="#2F8CF0"/><circle cx="100" cy="90" r="15" fill="#DCEBFF" stroke="#2F8CF0"/><circle cx="200" cy="90" r="15" fill="#DCEBFF" stroke="#2F8CF0"/>
+<circle cx="160" cy="160" r="15" fill="#FFE8D6" stroke="#E8590C"/><text x="160" y="165" stroke="none">A</text>
+<circle cx="220" cy="160" r="15" fill="#FFE8D6" stroke="#E8590C"/><text x="220" y="165" stroke="none">B</text>
+<circle cx="280" cy="90" r="18" fill="#2F8CF0" stroke="#2F8CF0"/><text x="280" y="95" stroke="none" fill="#FFFFFF">M</text>
+<circle cx="360" cy="90" r="15" fill="#DCEBFF" stroke="#2F8CF0"/><circle cx="420" cy="90" r="15" fill="#DCEBFF" stroke="#2F8CF0"/><circle cx="480" cy="90" r="15" fill="#DCEBFF" stroke="#2F8CF0"/>
+<circle cx="460" cy="160" r="15" fill="#FFFFFF" stroke="#8A87B0" stroke-dasharray="4 3"/><text x="460" y="165" stroke="none" fill="#6E6B96">A</text>
+<circle cx="510" cy="160" r="15" fill="#FFFFFF" stroke="#8A87B0" stroke-dasharray="4 3"/><text x="510" y="165" stroke="none" fill="#6E6B96">B</text>
+<g class="slide1"><circle cx="540" cy="90" r="15" fill="#FFE8D6" stroke="#E8590C"/><text x="540" y="95" stroke="none">A′</text></g>
+<g class="slide2"><circle cx="600" cy="90" r="15" fill="#FFE8D6" stroke="#E8590C"/><text x="600" y="95" stroke="none">B′</text></g>
+</g>
+<path d="M495,90 H525" stroke="#2F8CF0" stroke-width="3"/><path d="M555,90 H585" stroke="#E8590C" stroke-width="3"/>
+</svg>
+SVG;
+    }
+}
+
+/** Your computer and GitHub: push, pull and clone between them, and a pull request inside GitHub. */
+if (!function_exists('fig_git_remote')) {
+    function fig_git_remote(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker>
+<marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7048E8"/></marker></defs>
+<rect x="16" y="16" width="208" height="228" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="416" y="16" width="208" height="228" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="120" y="44" text-anchor="middle" font-weight="700">{$t[0]}</text>
+<text x="520" y="44" text-anchor="middle" font-weight="700" fill="#5A35C9">GitHub · origin</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700" text-anchor="middle">
+<rect x="56" y="70" width="128" height="28" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="120" y="89">main</text>
+<rect x="44" y="118" width="152" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="120" y="137">pagina-contatti</text>
+<rect x="456" y="70" width="128" height="28" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="520" y="89">main</text>
+<rect x="444" y="170" width="152" height="28" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="520" y="189">pagina-contatti</text>
+</g>
+<path d="M444,184 C420,184 420,84 452,84" fill="none" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ap)"/>
+<text x="520" y="126" text-anchor="middle" font-weight="700" fill="#5A35C9">pull request</text>
+<text x="520" y="146" text-anchor="middle" font-size="13">{$t[1]}</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)">
+<path d="M232,108 H406"/><path d="M408,150 H234"/><path d="M408,212 H234" stroke-dasharray="6 4"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700" text-anchor="middle">
+<text x="320" y="100">git push</text><text x="320" y="142">git pull</text><text x="320" y="204">git clone</text></g>
+<text x="320" y="268" text-anchor="middle" font-size="13">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** What the three modes of git reset do to the last commit, the staging area and the working directory. */
+if (!function_exists('fig_git_reset')) {
+    function fig_git_reset(array $t): string
+    {
+        $cell = function (int $x, int $y, string $kind, string $text): string {
+            [$fill, $stroke, $dash, $col] = match ($kind) {
+                'keep' => ['#D5F6EA', '#0B7F5C', '', '#0B7F5C'],
+                'lost' => ['#FFE3EE', '#F03E82', ' stroke-dasharray="6 4"', '#B0205A'],
+                default => ['#F1F0F8', '#8A87B0', '', '#4A4870'],
+            };
+            $cx = $x + 78; $ty = $y + 30;
+            return "<rect x=\"$x\" y=\"$y\" width=\"156\" height=\"48\" rx=\"10\" fill=\"$fill\" stroke=\"$stroke\" stroke-width=\"2\"$dash/><text x=\"$cx\" y=\"$ty\" text-anchor=\"middle\" font-weight=\"700\" fill=\"$col\">$text</text>";
+        };
+        $rows = '';
+        foreach ([['--soft', 'gone', 'keep', 'keep'], ['--mixed', 'gone', 'gone2', 'keep2'], ['--hard', 'gone', 'gone2', 'lost']] as $r => $row) {
+            $y = 72 + $r * 58;
+            $rows .= '<text x="20" y="' . ($y + 30) . '" font-family="ui-monospace, Menlo, monospace" font-weight="700">' . $row[0] . '</text>';
+            $rows .= $cell(136, $y, 'gone', $t[3]);
+            $rows .= $row[2] === 'keep' ? $cell(302, $y, 'keep', $t[4]) : $cell(302, $y, 'gone', $t[5]);
+            $rows .= match ($row[3]) { 'keep' => $cell(468, $y, 'keep', $t[6]), 'keep2' => $cell(468, $y, 'keep', $t[4]), default => $cell(468, $y, 'lost', $t[7]) };
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="20" y="40" font-family="ui-monospace, Menlo, monospace" font-size="13">git reset HEAD~1</text>
+<g font-weight="700" text-anchor="middle"><text x="214" y="40">{$t[0]}</text><text x="380" y="40">{$t[1]}</text><text x="546" y="40">{$t[2]}</text></g>
+<line x1="16" y1="56" x2="624" y2="56" stroke="#8A87B0" stroke-width="2"/>
+{$rows}
+</svg>
+SVG;
+    }
+}
+
+/** A fork: the original repository (upstream), your copy on GitHub (origin) and your computer, with the commands between them. */
+if (!function_exists('fig_git_fork')) {
+    function fig_git_fork(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="24" y="20" width="210" height="72" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="406" y="20" width="210" height="72" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="215" y="208" width="210" height="72" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-weight="700" text-anchor="middle"><text x="129" y="50" fill="#5A35C9">upstream</text><text x="511" y="50" fill="#1B66BC">origin</text></g>
+<g font-size="13" text-anchor="middle"><text x="129" y="74">{$t[0]}</text><text x="511" y="74">{$t[1]}</text></g>
+<text x="320" y="250" text-anchor="middle" font-weight="700" fill="#B84508">{$t[2]}</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)">
+<path d="M240,42 H398"/><path d="M400,72 H242" stroke-dasharray="6 4"/>
+<path d="M150,98 L262,202"/><path d="M490,98 L378,202" marker-start="url(#ah)"/></g>
+<g font-size="14" font-weight="700" text-anchor="middle"><text x="320" y="34">fork</text><text x="320" y="112">pull request</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700"><text x="196" y="170" text-anchor="end">git fetch upstream</text><text x="448" y="170">clone · push</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'git', 'family' => 'git', 'after' => null,
     'title' => L('Git e GitHub', 'Git and GitHub'), 'short' => L('Git', 'Git'), 'level' => L('Base', 'Basics'),
@@ -9,6 +192,9 @@ return [
     'lessons' => [
         lesson('commits', L('Repository e commit', 'Repositories and commits'), [
             P('**Git** registra la storia di un progetto in **commit**: istantanee con un messaggio, un autore e una data. I file passano per tre zone: la **cartella di lavoro** (dove modifichi), l’**area di stage** (cosa entrerà nel prossimo commit) e il **repository** (la storia).', '**Git** records a project’s history in **commits**: snapshots with a message, an author and a date. Files move through three areas: the **working directory** (where you edit), the **staging area** (what goes into the next commit) and the **repository** (the history).'),
+            Fig(L(fig_git_areas(['Cartella di lavoro', 'Area di stage', 'Repository', 'dove modifichi', 'il prossimo commit', 'la storia']), fig_git_areas(['Working directory', 'Staging area', 'Repository', 'where you edit', 'the next commit', 'the history'])),
+                L('Tre riquadri affiancati: cartella di lavoro, area di stage e repository. Una freccia con `git add` porta dal primo al secondo, una con `git commit` dal secondo al terzo, dove i commit sono cerchi in fila.', 'Three boxes side by side: working directory, staging area and repository. An arrow labelled `git add` leads from the first to the second, one labelled `git commit` from the second to the third, where the commits are circles in a row.'),
+                L('Un file modificato passa dallo stage prima di entrare nella storia.', 'A changed file goes through the stage before entering the history.')),
             C('git init                       # crea un repository
 git status                     # cosa è cambiato
 git add index.html style.css   # mette in stage
@@ -26,12 +212,16 @@ git diff                       # differenze non ancora in stage', 'bash'),
         ]),
         lesson('branches', L('Branch e merge', 'Branches and merges'), [
             P('Un **branch** è una linea di sviluppo separata: lavori su una funzione senza toccare il ramo principale (`main`). Quando hai finito, fai il **merge** per riportare le modifiche.', 'A **branch** is a separate line of development: you work on a feature without touching the main branch (`main`). When done, you **merge** to bring the changes back.'),
+            Fig(fig_git_branch(),
+                L('Un grafico di commit: la linea blu di main con i commit a1, b2, c3; dal commit b2 parte la linea arancione ricerca-corsi con f1 e f2, che rientra in main nel commit di merge M.', 'A commit graph: the blue main line with commits a1, b2, c3; from commit b2 the orange ricerca-corsi line starts with f1 and f2, and rejoins main in the merge commit M.'),
+                L('Il branch nasce da un commit, cresce da solo e torna in `main` con un commit di merge.', 'The branch starts from a commit, grows on its own and returns to `main` with a merge commit.')),
             C('git switch -c ricerca-corsi      # crea e passa al branch
 # … modifiche e commit …
 git switch main
 git merge ricerca-corsi
 git branch -d ricerca-corsi       # cancella il branch unito', 'bash'),
             P('Se due branch hanno cambiato le stesse righe, Git segnala un **conflitto**: nei file compaiono i segni `<<<<<<<`, `=======` e `>>>>>>>`. Scegli il contenuto giusto, togli i segni, poi `git add` e `git commit`.', 'If two branches changed the same lines, Git reports a **conflict**: the files show `<<<<<<<`, `=======` and `>>>>>>>` markers. Pick the right content, remove the markers, then `git add` and `git commit`.'),
+            Tip('Un branch costa pochissimo: è solo un’etichetta che punta a un commit e avanza a ogni nuovo commit. Creane uno per ogni funzione o correzione, con un nome che dica il lavoro (`fix-login`, `ricerca-corsi`), e tienilo corto: più vive a lungo lontano da `main`, più conflitti troverai al merge.', 'A branch costs almost nothing: it is just a label that points to a commit and moves forward with each new commit. Create one for every feature or fix, with a name that says the work (`fix-login`, `ricerca-corsi`), and keep it short-lived: the longer it lives away from `main`, the more conflicts you will meet at merge time.'),
         ], [
             Q('b1', L('Che cosa fa `git switch -c nome`?', 'What does `git switch -c name` do?'), [L('Crea un branch e ci passa', 'Creates a branch and switches to it'), L('Cancella un branch', 'Deletes a branch'), L('Fa il merge', 'Merges'), L('Clona un repository', 'Clones a repository')], 0, L('-c = create.', '-c = create.')),
             Q('b2', L('Quando nasce un conflitto?', 'When does a conflict arise?'), [L('Quando due branch cambiano le stesse righe', 'When two branches change the same lines'), L('A ogni merge', 'On every merge'), L('Quando il disco è pieno', 'When the disk is full'), L('Mai', 'Never')], 0, L('Git non sa quale versione scegliere.', 'Git cannot pick a version.')),
@@ -48,6 +238,9 @@ git switch -c pagina-contatti
 git push -u origin pagina-contatti   # pubblica il branch
 git pull                             # aggiorna con le modifiche degli altri', 'bash'),
             P('Su GitHub si apre una **pull request** (PR): la proposta di unire il tuo branch in `main`. I colleghi leggono il codice, commentano, i test automatici girano; quando tutto va bene si fa il merge. Così il codice si rivede prima di entrare.', 'On GitHub you open a **pull request** (PR): the proposal to merge your branch into `main`. Colleagues read the code, comment, automated tests run; when all is well it is merged. That way code is reviewed before it lands.'),
+            Fig(L(fig_git_remote(['Il tuo computer', 'revisione e test', 'linea tratteggiata: solo la prima volta']), fig_git_remote(['Your computer', 'review and tests', 'dashed line: the first time only'])),
+                L('A sinistra il tuo computer, a destra GitHub con il remote origin, entrambi con i branch main e pagina-contatti. Le frecce in mezzo: git push verso GitHub, git pull e git clone verso il computer. Dentro GitHub una freccia «pull request» va da pagina-contatti a main.', 'On the left your computer, on the right GitHub with the origin remote, both with the main and pagina-contatti branches. The arrows in between: git push towards GitHub, git pull and git clone towards the computer. Inside GitHub a “pull request” arrow goes from pagina-contatti to main.'),
+                L('`push` e `pull` copiano commit tra le due copie; il merge in `main` passa dalla pull request.', '`push` and `pull` copy commits between the two copies; the merge into `main` goes through the pull request.')),
         ], [
             Q('r1', L('Che cosa fa `git push`?', 'What does `git push` do?'), [L('Invia i commit al remote', 'Sends commits to the remote'), L('Scarica i commit', 'Downloads commits'), L('Crea un branch', 'Creates a branch'), L('Annulla un commit', 'Undoes a commit')], 0, L('`pull` fa il contrario.', '`pull` does the opposite.')),
             Q('r2', L('Che cos’è una pull request?', 'What is a pull request?'), [L('La proposta di unire un branch, con revisione', 'A proposal to merge a branch, with review'), L('Un download', 'A download'), L('Un errore di GitHub', 'A GitHub error'), L('Un tipo di commit', 'A type of commit')], 0, L('Si rivede prima del merge.', 'It is reviewed before merging.')),
@@ -65,6 +258,7 @@ git revert a1b2c3d                 # nuovo commit che annulla un commit pubblica
 git stash                          # mette da parte le modifiche
 git stash pop                      # le riprende', 'bash'),
             P('Per un commit **già pubblicato** usa `git revert`: crea un nuovo commit che annulla l’altro senza riscrivere la storia condivisa. Evita `git push --force` sui branch usati da altri.', 'For a commit **already pushed** use `git revert`: it creates a new commit undoing the other without rewriting shared history. Avoid `git push --force` on branches others use.'),
+            Tip('La regola pratica: finché un commit è solo sul tuo computer puoi riscriverlo (`--amend`, `restore`); una volta pubblicato, rimedia con un commit nuovo (`revert`). E quando non ricordi il comando, leggi `git status`: suggerisce proprio come annullare ciò che vedi.', 'The rule of thumb: while a commit is only on your computer you may rewrite it (`--amend`, `restore`); once pushed, fix it with a new commit (`revert`). And when you cannot remember the command, read `git status`: it suggests exactly how to undo what you see.'),
         ], [
             Q('u1', L('Come annulli un commit già pubblicato?', 'How do you undo an already pushed commit?'), ['git revert', 'git commit --amend', 'git restore', 'git init'], 0, L('Non riscrive la storia condivisa.', 'It does not rewrite shared history.')),
             Q('u2', L('Che cosa fa `git stash`?', 'What does `git stash` do?'), [L('Mette da parte le modifiche', 'Sets changes aside'), L('Cancella il repository', 'Deletes the repository'), L('Pubblica le modifiche', 'Publishes changes'), L('Crea un branch', 'Creates a branch')], 0, L('Le riprendi con `stash pop`.', 'Bring them back with `stash pop`.')),
@@ -75,6 +269,9 @@ git stash pop                      # le riprende', 'bash'),
         ]),
         lesson('history', L('Rebase, tag e storia pulita', 'Rebase, tags and a clean history'), [
             P('`git rebase main` riapplica i commit del tuo branch **sopra** l’ultima versione di `main`: la storia diventa una linea dritta, senza commit di merge. Usalo sui tuoi branch **locali**, mai su commit già condivisi.', '`git rebase main` replays your branch’s commits **on top of** the latest `main`: history becomes a straight line, with no merge commits. Use it on your **local** branches, never on commits already shared.'),
+            Fig(L(fig_git_rebase('biforcazione + commit di merge M', 'una linea sola, commit riscritti A′ e B′'), fig_git_rebase('a fork + merge commit M', 'one straight line, commits rewritten as A′ and B′')),
+                L('Due grafici affiancati. A sinistra, con git merge, i commit A e B restano su un ramo e rientrano in main con il commit di merge M. A destra, con git rebase main, A e B tratteggiati restano al vecchio posto e le loro copie A′ e B′ sono in fila in cima a main.', 'Two graphs side by side. On the left, with git merge, commits A and B stay on a branch and rejoin main with merge commit M. On the right, with git rebase main, dashed A and B stay in the old place and their copies A′ and B′ sit in line on top of main.'),
+                L('Il rebase non sposta i commit: ne crea copie nuove, con hash diversi. Per questo non va usato su commit condivisi.', 'Rebase does not move commits: it creates new copies, with different hashes. That is why it must not be used on shared commits.')),
             C('git switch mia-funzione
 git fetch origin
 git rebase origin/main          # porta il branch in cima a main
@@ -129,6 +326,9 @@ git log -S "calcolaIva" --oneline          # commit che aggiungono o tolgono que
         ]),
         lesson('reset-reflog', L('Reset, reflog e cherry-pick', 'Reset, reflog and cherry-pick'), [
             P('`git reset` sposta il branch su un commit precedente. Con `--soft` i cambiamenti dei commit tolti restano **in stage**; con il modo normale (`--mixed`) restano nei file ma **fuori dallo stage**; con `--hard` vengono **buttati**, insieme alle modifiche non salvate. Usalo solo su commit **non ancora condivisi**.', '`git reset` moves the branch to an earlier commit. With `--soft` the changes of the removed commits stay **staged**; with the default mode (`--mixed`) they stay in the files but **unstaged**; with `--hard` they are **thrown away**, together with unsaved changes. Use it only on commits **not yet shared**.'),
+            Fig(L(fig_git_reset(['Ultimo commit', 'Area di stage', 'Cartella di lavoro', 'annullato', 'modifiche qui', 'svuotata', 'intatta', 'modifiche perse']), fig_git_reset(['Last commit', 'Staging area', 'Working directory', 'undone', 'changes here', 'emptied', 'untouched', 'changes lost'])),
+                L('Una tabella con tre righe, --soft, --mixed e --hard, e tre colonne: ultimo commit, area di stage, cartella di lavoro. Il commit è annullato in tutte e tre. Con --soft le modifiche sono nello stage; con --mixed lo stage è svuotato e le modifiche sono nella cartella di lavoro; con --hard anche la cartella perde le modifiche.', 'A table with three rows, --soft, --mixed and --hard, and three columns: last commit, staging area, working directory. The commit is undone in all three. With --soft the changes are in the stage; with --mixed the stage is emptied and the changes are in the working directory; with --hard the directory loses the changes too.'),
+                L('Più si scende, più `reset` butta via: solo `--hard` tocca i tuoi file.', 'The further down, the more `reset` throws away: only `--hard` touches your files.')),
             C('git reset --soft HEAD~1      # annulla l’ultimo commit, modifiche in stage
 git reset HEAD~1             # annulla il commit, modifiche nei file
 git reset --hard HEAD~1      # annulla tutto: attenzione!
@@ -158,6 +358,9 @@ git fetch upstream
 git rebase upstream/main
 git push --force-with-lease              # riscrive solo il TUO branch, con prudenza', 'bash'),
             P('Su un progetto dove non puoi scrivere fai un **fork**: la tua copia su GitHub. Lavori lì e apri la pull request verso l’originale, che di solito si aggiunge come remote `upstream`. Se devi riscrivere un tuo branch già pubblicato (dopo un rebase), usa `--force-with-lease`: si rifiuta se qualcun altro ha pubblicato nel frattempo.', 'On a project you cannot write to you make a **fork**: your own copy on GitHub. You work there and open the pull request towards the original, which is usually added as the `upstream` remote. If you must rewrite one of your branches already pushed (after a rebase), use `--force-with-lease`: it refuses if someone else has pushed in the meantime.'),
+            Fig(L(fig_git_fork(['repository originale', 'il tuo fork su GitHub', 'Il tuo computer']), fig_git_fork(['original repository', 'your fork on GitHub', 'Your computer'])),
+                L('Tre riquadri: in alto a sinistra upstream, il repository originale; in alto a destra origin, il tuo fork; in basso il tuo computer. Fork va da upstream a origin, la pull request da origin a upstream, clone e push collegano origin e il computer, git fetch upstream scende dall’originale al computer.', 'Three boxes: top left upstream, the original repository; top right origin, your fork; at the bottom your computer. Fork goes from upstream to origin, the pull request from origin to upstream, clone and push link origin and the computer, git fetch upstream comes down from the original to the computer.'),
+                L('Scrivi solo sul tuo fork; all’originale arrivi con una pull request.', 'You write only to your fork; you reach the original through a pull request.')),
         ], [
             Q('sy1', L('Che differenza c’è tra `fetch` e `pull`?', 'What is the difference between `fetch` and `pull`?'), [L('fetch pubblica i commit, pull li scarica', 'fetch publishes commits, pull downloads them'), L('Nessuna, sono due nomi dello stesso comando', 'None, they are two names for one command'), L('fetch scarica senza toccare i tuoi file, pull scarica e integra', 'fetch downloads without touching your files, pull downloads and integrates'), L('fetch funziona solo con i fork, pull solo con origin', 'fetch only works with forks, pull only with origin')], 2, L('pull = fetch + merge o rebase.', 'pull = fetch + merge or rebase.')),
             Q('sy2', L('In un fork, che cosa indica di solito il remote `upstream`?', 'In a fork, what does the `upstream` remote usually point to?'), [L('La tua copia del progetto su GitHub', 'Your own copy of the project on GitHub'), L('Il repository originale da cui hai fatto il fork', 'The original repository you forked from'), L('Il branch principale del tuo computer', 'The main branch on your computer'), L('Un server di backup automatico di GitHub', 'An automatic GitHub backup server')], 1, L('`origin` è il tuo fork.', '`origin` is your fork.')),

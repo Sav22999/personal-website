@@ -1,6 +1,63 @@
 <?php
 /** xAI Grok: the assistant and its link to X, features, privacy settings, the xAI API, real-time verification, images and responsible use. */
 
+/** Choosing a mode: fast answers, reasoning and in-depth search placed by how long they take and how deep they go. Labels in one language. */
+if (!function_exists('fig_grok_modes')) {
+    function fig_grok_modes(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['profondità', 'tempo di attesa', 'Veloce', 'domande semplici', 'Ragionamento', 'matematica, codice, logica', 'Ricerca approfondita', 'tante fonti, un rapporto', 'secondi', 'minuti']
+            : ['depth', 'waiting time', 'Fast', 'simple questions', 'Reasoning', 'maths, code, logic', 'In-depth search', 'many sources, a report', 'seconds', 'minutes'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<path d="M60 240V20" stroke="#1E1C52" stroke-width="2" marker-end="url(#a)"/><path d="M60 240H624" stroke="#1E1C52" stroke-width="2" marker-end="url(#a)"/>
+<text x="20" y="130" font-size="13" transform="rotate(-90 20 130)" text-anchor="middle">{$t[0]}</text>
+<text x="340" y="272" font-size="13" text-anchor="middle">{$t[1]}</text>
+<text x="70" y="258" font-size="13">{$t[8]}</text><text x="610" y="258" font-size="13" text-anchor="end">{$t[9]}</text>
+<path d="M110 196C240 150 360 90 520 54" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 5" fill="none"/>
+<circle cx="110" cy="196" r="9" fill="#2F8CF0"/><circle cx="300" cy="128" r="9" fill="#7048E8"/><circle cx="520" cy="54" r="9" fill="#E8590C"/>
+<g stroke-width="2"><rect x="128" y="174" width="180" height="48" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="318" y="106" width="200" height="48" rx="10" fill="#ECE6FF" stroke="#7048E8"/><rect x="330" y="24" width="174" height="56" rx="10" fill="#FFF3EA" stroke="#E8590C"/></g>
+<g font-weight="700" font-size="14"><text x="142" y="194" fill="#1B66BC">{$t[2]}</text><text x="332" y="126" fill="#5A36C9">{$t[4]}</text><text x="344" y="46" fill="#B84508">{$t[6]}</text></g>
+<g font-size="13"><text x="142" y="212">{$t[3]}</text><text x="332" y="144">{$t[5]}</text><text x="344" y="66">{$t[7]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Real-time posts through three checks: who reports it, independent sources, the date; three yeses confirm, one no means wait. Labels in one language. */
+if (!function_exists('fig_grok_verify')) {
+    function fig_grok_verify(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Post in tempo reale', 'voce', 'foto vecchia', 'Chi lo dice?', 'testate, enti ufficiali', 'Fonti indipendenti?', 'più di una, non copiate', 'Che data?', 'è di oggi o è vecchia?', 'Confermata', 'tre sì', 'Aspetta', 'basta un no']
+            : ['Real-time posts', 'rumour', 'old photo', 'Who says so?', 'news outlets, official bodies', 'Independent sources?', 'more than one, not copied', 'What date?', 'today’s or old?', 'Confirmed', 'three yeses', 'Wait', 'one no is enough'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<text x="76" y="26" text-anchor="middle" font-weight="700" font-size="14">{$t[0]}</text>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"><rect x="16" y="44" width="110" height="44" rx="8"/><rect x="30" y="98" width="110" height="44" rx="8"/><rect x="16" y="152" width="110" height="44" rx="8"/><rect x="30" y="206" width="110" height="44" rx="8"/></g>
+<g stroke="#8A87B0" stroke-width="2" stroke-linecap="round"><path d="M28 60H110M28 72H84M28 168H112M28 180H90"/></g>
+<rect x="42" y="110" width="60" height="20" rx="10" fill="#FFE3EE"/><text x="72" y="125" text-anchor="middle" font-size="13" fill="#C2255C" font-weight="700">{$t[1]}</text>
+<rect x="42" y="218" width="88" height="20" rx="10" fill="#FFE3EE"/><text x="86" y="233" text-anchor="middle" font-size="13" fill="#C2255C" font-weight="700">{$t[2]}</text>
+<path d="M140 147H166" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<g stroke-width="2" fill="#DCEBFF" stroke="#2F8CF0"><rect x="170" y="44" width="240" height="60" rx="12"/><rect x="170" y="117" width="240" height="60" rx="12"/><rect x="170" y="190" width="240" height="60" rx="12"/></g>
+<g fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"><circle cx="196" cy="74" r="10"/><circle cx="196" cy="147" r="10"/><circle cx="196" cy="220" r="10"/></g>
+<g font-weight="700" font-size="13" fill="#1B66BC" text-anchor="middle"><text x="196" y="78">1</text><text x="196" y="151">2</text><text x="196" y="224">3</text></g>
+<g font-weight="700" font-size="14" fill="#1B66BC"><text x="216" y="70">{$t[3]}</text><text x="216" y="143">{$t[5]}</text><text x="216" y="216">{$t[7]}</text></g>
+<g font-size="13"><text x="216" y="90">{$t[4]}</text><text x="216" y="163">{$t[6]}</text><text x="216" y="236">{$t[8]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M410 140C430 140 430 92 448 92"/><path d="M410 154C430 154 430 200 448 200"/></g>
+<rect x="452" y="60" width="176" height="64" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<path d="M468 92l7 7 12-14" stroke="#0B7F5C" stroke-width="2.5" fill="none"/>
+<text x="498" y="88" font-weight="700" fill="#0B7F5C">{$t[9]}</text><text x="498" y="108" font-size="13">{$t[10]}</text>
+<rect x="452" y="168" width="176" height="64" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<circle cx="476" cy="200" r="11" fill="none" stroke="#1E1C52" stroke-width="2"/><path d="M476 193v7h5" stroke="#1E1C52" stroke-width="2" fill="none"/>
+<text x="498" y="196" font-weight="700">{$t[11]}</text><text x="498" y="216" font-size="13">{$t[12]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'grok', 'family' => 'assistants', 'after' => null,
     'title' => L('xAI Grok', 'xAI Grok'), 'short' => L('Grok', 'Grok'), 'level' => L('Base', 'Basics'),
@@ -20,6 +77,10 @@ return [
         lesson('features', L('Funzioni', 'Features'), [
             P('Grok offre modalità con **ragionamento** per i problemi difficili, **ricerca** approfondita sul web e su X, generazione e modifica di **immagini**, conversazioni vocali e analisi di file e foto. Alcune funzioni richiedono un abbonamento.', 'Grok offers **reasoning** modes for hard problems, in-depth **search** across the web and X, **image** generation and editing, voice conversations and file and photo analysis. Some features require a subscription.'),
             P('Rispetto ad altri assistenti, xAI ha scelto uno stile di risposta più informale e meno filtrato. Questo rende ancora più importante il giudizio critico: tono sicuro non significa accuratezza.', 'Compared with other assistants, xAI chose a more informal, less filtered answer style. That makes critical judgement even more important: a confident tone does not mean accuracy.'),
+            Fig(L(fig_grok_modes('it'), fig_grok_modes('en')),
+                L('Un grafico con il tempo di attesa in orizzontale, da secondi a minuti, e la profondità in verticale. Tre punti salgono lungo una curva: veloce per le domande semplici, ragionamento per matematica, codice e logica, ricerca approfondita per tante fonti e un rapporto.', 'A chart with waiting time across, from seconds to minutes, and depth going up. Three points climb along a curve: fast for simple questions, reasoning for maths, code and logic, in-depth search for many sources and a report.'),
+                L('Più profondità costa più attesa: scegli la modalità in base alla domanda.', 'More depth costs more waiting: pick the mode to suit the question.')),
+            P('Come scegliere? Per una definizione, una traduzione o un’idea veloce basta la modalità rapida. Per un problema con passaggi da seguire (un calcolo, un bug, un ragionamento logico) attiva il **ragionamento**: è più lento ma sbaglia meno. Per un confronto o una ricostruzione dei fatti usa la **ricerca approfondita** e apri le fonti che cita: è lì che vedi se un’informazione viene da una testata o da un post anonimo.', 'How to choose? For a definition, a translation or a quick idea, the fast mode is enough. For a problem with steps to follow (a calculation, a bug, a logic puzzle) turn on **reasoning**: it is slower but makes fewer mistakes. For a comparison or a reconstruction of events use **in-depth search** and open the sources it cites: that is where you see whether a piece of information comes from a news outlet or an anonymous post.'),
         ], [
             Q('f1', L('Quale modalità usare per un problema di logica difficile?', 'Which mode for a hard logic problem?'), [L('Il ragionamento', 'Reasoning'), L('Solo immagini', 'Images only'), L('Voce', 'Voice'), L('Nessuna', 'None')], 0, L('Pensa più a lungo.', 'It thinks longer.')),
             Q('f2', L('Un tono sicuro garantisce una risposta corretta?', 'Does a confident tone guarantee a correct answer?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo in inglese', 'Only in English'), L('Solo con le immagini', 'Only with images')], 0, L('Vale per ogni assistente.', 'It applies to every assistant.')),
@@ -51,6 +112,7 @@ r = client.chat.completions.create(
 )
 print(r.choices[0].message.content)', 'python'),
             P('I nomi dei modelli cambiano con le nuove versioni: controlla l’elenco nella documentazione. Come sempre, chiave in una variabile d’ambiente e costi a consumo.', 'Model names change with new versions: check the list in the documentation. As always, key in an environment variable and pay-as-you-go costs.'),
+            P('La richiesta ha la stessa forma degli altri fornitori compatibili: un elenco di `messages` con ruoli `system` e `user`, e la risposta in `choices[0].message.content`. Per cambiare fornitore bastano indirizzo, chiave e nome del modello, ma le funzioni particolari (come la ricerca sui post di X) sono strumenti propri di xAI: controlla la documentazione prima di contarci. E ricorda che ciò che invii arriva ai server di xAI.', 'The request has the same shape as with other compatible providers: a list of `messages` with `system` and `user` roles, and the answer in `choices[0].message.content`. Switching provider takes only the address, the key and the model name, but special features (such as searching X posts) are xAI’s own tools: check the documentation before relying on them. And remember that what you send reaches xAI’s servers.'),
         ], [
             Q('a1', L('A quale indirizzo punta il client per xAI?', 'Which address does the client point to for xAI?'), ['https://api.x.ai/v1', 'https://api.openai.com', 'https://x.com/api', 'localhost'], 0, L('Con l’SDK di OpenAI.', 'With the OpenAI SDK.')),
             Q('a2', L('Dove si tiene la chiave XAI_API_KEY?', 'Where is XAI_API_KEY kept?'), [L('In una variabile d’ambiente', 'In an environment variable'), L('Nel codice', 'In the code'), L('In un post su X', 'In an X post'), L('Nel README', 'In the README')], 0, L('Mai nel codice.', 'Never in code.')),
@@ -62,6 +124,9 @@ print(r.choices[0].message.content)', 'python'),
         lesson('verify', L('Notizie in tempo reale e verifica', 'Real-time news and verification'), [
             P('Grok può leggere i post pubblici di **X** e cercare sul web: è utile per sapere di cosa si parla **adesso**. Ma i post in tempo reale contengono voci, errori e falsi; nelle prime ore di una notizia le informazioni cambiano spesso.', 'Grok can read public **X** posts and search the web: it is useful to know what people are talking about **right now**. But real-time posts contain rumours, mistakes and fakes; in the first hours of a story information changes often.'),
             P('Per una notizia importante controlla: **chi** la riporta (testate, enti ufficiali), se ci sono **più fonti indipendenti**, e la **data**. Immagini e video possono essere vecchi o generati: una ricerca inversa dell’immagine aiuta.', 'For an important story check: **who** reports it (news outlets, official bodies), whether there are **several independent sources**, and the **date**. Images and videos can be old or generated: a reverse image search helps.'),
+            Fig(L(fig_grok_verify('it'), fig_grok_verify('en')),
+                L('A sinistra una pila di post, due con l’etichetta «voce» e «foto vecchia». Una freccia porta a tre domande numerate: chi lo dice, ci sono fonti indipendenti, che data ha. Con tre sì la notizia è confermata; se anche una sola risposta è no, si aspetta.', 'On the left, a pile of posts, two labelled “rumour” and “old photo”. An arrow leads to three numbered questions: who says so, are there independent sources, what date is it. With three yeses the story is confirmed; if even one answer is no, you wait.'),
+                L('Tre domande prima di condividere: basta un no per aspettare.', 'Three questions before sharing: one no is enough to wait.')),
         ], [
             Q('gv1', L('Perché i post in tempo reale vanno verificati?', 'Why must real-time posts be checked?'), [L('Contengono voci ed errori', 'They contain rumours and mistakes'), L('Sono sempre falsi', 'They are always false'), L('Sono troppo lunghi', 'They are too long'), L('Non si possono leggere', 'They cannot be read')], 0, L('Le prime ore sono confuse.', 'The first hours are confused.')),
             Q('gv2', L('Che cosa rende più credibile una notizia?', 'What makes a story more credible?'), [L('Più fonti indipendenti', 'Several independent sources'), L('Molti like', 'Many likes'), L('Un titolo forte', 'A strong headline'), L('Un video virale', 'A viral video')], 0, L('Conferme indipendenti.', 'Independent confirmation.')),

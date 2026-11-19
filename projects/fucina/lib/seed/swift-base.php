@@ -1,6 +1,72 @@
 <?php
 /** Swift basics: constants and variables, optionals, control flow, collections, functions, strings, tuples and conversions. */
 
+/** An optional as a box: full (if let opens it) or empty (?? gives a fallback, ! crashes). */
+if (!function_exists('fig_swiftbase_optional')) {
+    function fig_swiftbase_optional(string $full, string $empty, string $guest): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="20" y="24" width="150" height="80" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="32" y="44" font-size="13" font-weight="700" fill="#5F5C8A">String?</text>
+<rect x="50" y="54" width="90" height="38" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="95" y="79" text-anchor="middle" font-weight="700">"Ada"</text>
+<text x="95" y="124" text-anchor="middle" font-size="13" fill="#5F5C8A">{$full}</text>
+<rect x="20" y="144" width="150" height="80" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="32" y="164" font-size="13" font-weight="700" fill="#5F5C8A">String?</text>
+<rect x="50" y="174" width="90" height="38" rx="8" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="95" y="199" text-anchor="middle" fill="#5F5C8A">nil</text>
+<text x="95" y="244" text-anchor="middle" font-size="13" fill="#5F5C8A">{$empty}</text>
+<g stroke-width="2" fill="none">
+<path d="M176 64 H296" stroke="#0B7F5C"/><path d="M288 57 L298 64 L288 71" stroke="#0B7F5C"/>
+<path d="M176 168 H296" stroke="#E8590C"/><path d="M288 161 L298 168 L288 175" stroke="#E8590C"/>
+<path d="M176 214 H476" stroke="#F03E82"/><path d="M468 207 L478 214 L468 221" stroke="#F03E82"/>
+</g>
+<text x="236" y="54" text-anchor="middle" font-size="14" font-weight="700" fill="#0B7F5C">if let s</text>
+<text x="236" y="158" text-anchor="middle" font-size="14" font-weight="700" fill="#B84508">?? "{$guest}"</text>
+<rect x="304" y="44" width="170" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="389" y="69" text-anchor="middle">s: String = "Ada"</text>
+<rect x="304" y="148" width="170" height="40" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="389" y="173" text-anchor="middle">"{$guest}"</text>
+<text x="330" y="207" text-anchor="middle" font-size="14" font-weight="700" fill="#C2185B">soprannome!</text>
+<rect x="484" y="194" width="130" height="40" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="549" y="219" text-anchor="middle" font-weight="700" fill="#C2185B">crash</text>
+</svg>
+SVG;
+    }
+}
+
+/** An Array by index, a Dictionary by key, a Set with no order and no duplicates. */
+if (!function_exists('fig_swiftbase_collections')) {
+    function fig_swiftbase_collections(string $dict, string $byIndex, string $byKey, string $noOrder): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="12" y="12" width="196" height="226" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="110" y="40" text-anchor="middle" font-weight="700">Array</text>
+<text x="110" y="60" text-anchor="middle" font-size="13" fill="#B84508">[Int]</text>
+<g fill="#FFFFFF" stroke="#E8590C" stroke-width="2"><rect x="38" y="96" width="48" height="48" rx="8"/><rect x="86" y="96" width="48" height="48" rx="8"/><rect x="134" y="96" width="48" height="48" rx="8"/></g>
+<g text-anchor="middle" font-weight="700"><text x="62" y="126">7</text><text x="110" y="126">8</text><text x="158" y="126">9</text></g>
+<g text-anchor="middle" font-size="13" fill="#B84508"><text x="62" y="166">0</text><text x="110" y="166">1</text><text x="158" y="166">2</text></g>
+<text x="110" y="216" text-anchor="middle" font-size="13">{$byIndex}</text>
+<rect x="222" y="12" width="196" height="226" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="320" y="40" text-anchor="middle" font-weight="700">{$dict}</text>
+<text x="320" y="60" text-anchor="middle" font-size="13" fill="#1B66BC">[String: Int]</text>
+<g fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"><rect x="240" y="84" width="72" height="36" rx="8"/><rect x="240" y="132" width="72" height="36" rx="8"/><rect x="346" y="84" width="54" height="36" rx="8"/><rect x="346" y="132" width="54" height="36" rx="8"/></g>
+<g stroke="#2F8CF0" stroke-width="2" fill="none"><path d="M316 102 H340"/><path d="M334 97 L342 102 L334 107"/><path d="M316 150 H340"/><path d="M334 145 L342 150 L334 155"/></g>
+<g text-anchor="middle"><text x="276" y="107">"Ada"</text><text x="276" y="155">"Bea"</text><text x="373" y="107" font-weight="700">36</text><text x="373" y="155" font-weight="700">28</text></g>
+<text x="320" y="216" text-anchor="middle" font-size="13">{$byKey}</text>
+<rect x="432" y="12" width="196" height="226" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="530" y="40" text-anchor="middle" font-weight="700">Set</text>
+<text x="530" y="60" text-anchor="middle" font-size="13" fill="#0B7F5C">Set&lt;Int&gt;</text>
+<ellipse cx="530" cy="128" rx="78" ry="46" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/>
+<g text-anchor="middle" font-weight="700"><text x="494" y="122">9</text><text x="536" y="150">7</text><text x="566" y="116">8</text></g>
+<text x="530" y="216" text-anchor="middle" font-size="13">{$noOrder}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'swift-base', 'family' => 'swift', 'after' => null,
     'title' => L('Swift base', 'Swift Basics'), 'short' => L('Swift base', 'Swift Basics'), 'level' => L('Base', 'Basics'),
@@ -8,12 +74,17 @@ return [
     'lessons' => [
         lesson('values', L('Costanti e variabili', 'Constants and variables'), [
             P('In Swift `let` crea una **costante** (non cambia), `var` una **variabile**. Il tipo si deduce dal valore, ma si può scrivere: `let nome: String = "Ada"`. I valori entrano nel testo con `\(valore)`.', 'In Swift `let` creates a **constant** (it does not change), `var` a **variable**. The type is inferred from the value, but you can write it: `let nome: String = "Ada"`. Values enter text with `\(value)`.'),
-            C('let nome = "Ada"
+            C(L('let nome = "Ada"
 var anni = 36
 anni += 1
 let altezza: Double = 1.68
-print("\(nome) ha \(anni) anni")', 'swift'),
+print("\(nome) ha \(anni) anni")', 'let nome = "Ada"
+var anni = 36
+anni += 1
+let altezza: Double = 1.68
+print("\(nome) is \(anni) years old")'), 'swift', L('<pre>Ada ha 37 anni</pre>', '<pre>Ada is 37 years old</pre>')),
             P('Preferisci `let`: il compilatore ti avvisa se una `var` non viene mai cambiata.', 'Prefer `let`: the compiler warns you if a `var` is never changed.'),
+            P('Perché insistere su `let`? Un valore che non cambia è un valore su cui puoi contare: leggendo il codice sai che `nome` è lo stesso dalla prima all’ultima riga. Anche il tipo, una volta dedotto, resta fisso: dopo `var anni = 36` scrivere `anni = "tanti"` è un errore di compilazione. Il tipo va scritto a mano quando la deduzione darebbe altro, come `Double` per `1.68` voluto esplicito, o quando dichiari senza valore iniziale.', 'Why insist on `let`? A value that does not change is a value you can rely on: reading the code you know `nome` is the same from the first line to the last. The type too, once inferred, stays fixed: after `var anni = 36`, writing `anni = "many"` is a compile error. You write the type by hand when inference would give something else, or when you declare without an initial value.'),
         ], [
             Q('v1', L('Quale parola crea una costante?', 'Which word creates a constant?'), ['let', 'var', 'const', 'final'], 0, L('`var` è per ciò che cambia.', '`var` is for what changes.')),
             Q('v2', L('Come inserisci `x` in una stringa?', 'How do you put `x` into a string?'), ['"\\(x)"', '"${x}"', '"{x}"', '"#x"'], 0, L('Barra rovesciata e parentesi.', 'Backslash and brackets.')),
@@ -25,7 +96,7 @@ var livello = 1'), [
         ]),
         lesson('optionals', L('Optional', 'Optionals'), [
             P('Un **optional** (`String?`) può contenere un valore oppure `nil`. Prima di usarlo va “scartato”: `if let` o `guard let` lo aprono in sicurezza, `??` dà un valore di riserva.', 'An **optional** (`String?`) can hold a value or `nil`. Before using it you “unwrap” it: `if let` or `guard let` open it safely, `??` gives a fallback.'),
-            C('var soprannome: String? = nil
+            C(L('var soprannome: String? = nil
 
 if let s = soprannome {
     print("Ciao \(s)")
@@ -38,8 +109,23 @@ let mostrato = soprannome ?? "Ospite"
 func saluta(_ nome: String?) {
     guard let nome else { return }
     print("Ciao \(nome)")
-}', 'swift'),
+}', 'var soprannome: String? = nil
+
+if let s = soprannome {
+    print("Hi \(s)")
+} else {
+    print("No nickname")
+}
+
+let mostrato = soprannome ?? "Guest"
+
+func saluta(_ nome: String?) {
+    guard let nome else { return }
+    print("Hi \(nome)")
+}'), 'swift', L('<pre>Nessun soprannome</pre>', '<pre>No nickname</pre>')),
             P('Il punto esclamativo (`soprannome!`) forza l’apertura e fa crashare l’app se il valore è `nil`: usalo solo se sei certo.', 'The exclamation mark (`soprannome!`) forces unwrapping and crashes the app if the value is `nil`: use it only when certain.'),
+            Fig(L(fig_swiftbase_optional('contiene un valore', 'vuoto', 'Ospite'), fig_swiftbase_optional('holds a value', 'empty', 'Guest')), L('Due scatole di tipo String?: una contiene "Ada", l’altra è vuota e vale nil. Dalla prima, if let s ricava s: String = "Ada". Dalla seconda, ?? dà il valore di riserva; forzarla con il punto esclamativo porta a un crash.', 'Two boxes of type String?: one holds "Ada", the other is empty and is nil. From the first, if let s gets s: String = "Ada". From the second, ?? gives the fallback value; forcing it with the exclamation mark leads to a crash.'), L('Un optional è una scatola: prima di usare il valore devi aprirla.', 'An optional is a box: you have to open it before using the value.')),
+            P('Perché tanta cerimonia? In molti linguaggi qualunque variabile può essere vuota, e l’errore salta fuori solo quando l’app è già nelle mani di qualcuno. In Swift il `?` è scritto nel tipo, quindi il compilatore ti obbliga a decidere cosa fare quando il valore manca. Per scendere in più optional di fila c’è il **chaining**: `utente?.indirizzo?.citta` dà `nil` appena un pezzo manca, senza crash.', 'Why so much ceremony? In many languages any variable can be empty, and the error only shows up once the app is already in someone’s hands. In Swift the `?` is written in the type, so the compiler makes you decide what to do when the value is missing. To go down several optionals in a row there is **chaining**: `utente?.indirizzo?.citta` gives `nil` as soon as one piece is missing, with no crash.'),
         ], [
             Q('o1', L('Che cosa può contenere `Int?`', 'What can `Int?` hold?'), [L('Un intero o nil', 'An int or nil'), L('Solo interi', 'Only ints'), L('Solo nil', 'Only nil'), L('Testo', 'Text')], 0, L('È un optional.', 'It is an optional.')),
             Q('o2', L('Che cosa fa `a ?? b`?', 'What does `a ?? b` do?'), [L('Usa b se a è nil', 'Uses b if a is nil'), L('Somma', 'Adds'), L('Confronta', 'Compares'), L('Dà errore', 'Fails')], 0, L('Valore di riserva.', 'Fallback value.')),
@@ -63,6 +149,19 @@ case 6..<9: print("Promosso")
 default: print("Da ripassare")
 }', 'swift'),
             P('`1...3` include il 3, `1..<3` no. `while` ripete finché la condizione è vera.', '`1...3` includes 3, `1..<3` does not. `while` repeats while the condition is true.'),
+            Fig('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="40" y="55" font-size="17" font-weight="700" fill="#B84508">1...3</text>
+<path d="M280 50 H440" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/>
+<g fill="#E8590C"><circle cx="280" cy="50" r="10"/><circle cx="360" cy="50" r="10"/><circle cx="440" cy="50" r="10"/></g>
+<text x="40" y="115" font-size="17" font-weight="700" fill="#1B66BC">1..&lt;3</text>
+<path d="M280 110 H430" stroke="#2F8CF0" stroke-width="6" stroke-linecap="round"/>
+<g fill="#2F8CF0"><circle cx="280" cy="110" r="10"/><circle cx="360" cy="110" r="10"/></g>
+<circle cx="440" cy="110" r="9" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="3"/>
+<path d="M200 150 H600" stroke="#8A87B0" stroke-width="2"/>
+<g stroke="#8A87B0" stroke-width="2"><path d="M200 144 V156"/><path d="M280 144 V156"/><path d="M360 144 V156"/><path d="M440 144 V156"/><path d="M520 144 V156"/><path d="M600 144 V156"/></g>
+<g text-anchor="middle" font-size="14"><text x="200" y="174">0</text><text x="280" y="174">1</text><text x="360" y="174">2</text><text x="440" y="174">3</text><text x="520" y="174">4</text><text x="600" y="174">5</text></g>
+</svg>', L('Due righe sopra una linea dei numeri da 0 a 5. 1...3 copre 1, 2 e 3 con tre pallini pieni. 1..<3 copre 1 e 2, e al 3 ha un pallino vuoto: il 3 è escluso.', 'Two rows above a number line from 0 to 5. 1...3 covers 1, 2 and 3 with three filled dots. 1..<3 covers 1 and 2, and has a hollow dot at 3: 3 is left out.'), L('Tre punti includono l’ultimo numero, il minore lo esclude.', 'Three dots include the last number, the less-than sign leaves it out.')),
+            P('`1..<n` è la forma che userai di più, perché gli indici partono da 0: `for i in 0..<voti.count` visita ogni posizione senza uscire dall’array. Lo `switch` di Swift è più ricco di quello di C: un caso può essere un intervallo, un elenco (`case "a", "e":`) o avere una condizione con `where`. Dentro un ciclo, `continue` salta al giro successivo e `break` esce del tutto.', '`1..<n` is the form you will use most, because indices start at 0: `for i in 0..<voti.count` visits every position without going past the end of the array. Swift’s `switch` is richer than C’s: a case can be a range, a list (`case "a", "e":`) or carry a condition with `where`. Inside a loop, `continue` jumps to the next round and `break` leaves it altogether.'),
         ], [
             Q('c1', L('Quali numeri dà `1..<4`?', 'Which numbers does `1..<4` give?'), ['1, 2, 3', '1, 2, 3, 4', '0, 1, 2, 3', '4'], 0, L('Intervallo semiaperto.', 'Half-open range.')),
             Q('c2', L('Lo `switch` di Swift deve…', 'Swift’s `switch` must…'), [L('Coprire tutti i casi', 'Cover every case'), L('Avere `break`', 'Have `break`'), L('Usare solo numeri', 'Use only numbers'), L('Stare in una funzione', 'Be in a function')], 0, L('Altrimenti serve `default`.', 'Otherwise you need `default`.')),
@@ -87,6 +186,8 @@ for (nome, anni) in eta {
 
 let alti = voti.filter { $0 > 7 }', 'swift'),
             P('Leggere un dizionario dà un optional: la chiave potrebbe mancare. `$0` è il primo argomento in una closure breve.', 'Reading a dictionary gives an optional: the key might be missing. `$0` is the first argument in a short closure.'),
+            Fig(L(fig_swiftbase_collections('Dizionario', 'in ordine, per indice', 'per chiave', 'senza ordine né doppioni'), fig_swiftbase_collections('Dictionary', 'ordered, by index', 'by key', 'no order, no duplicates')), L('Tre riquadri. Array: le caselle 7, 8, 9 con gli indici 0, 1, 2. Dizionario: le chiavi "Ada" e "Bea" con frecce verso 36 e 28. Set: i numeri 9, 7, 8 sparsi in un ovale.', 'Three panels. Array: the cells 7, 8, 9 with indices 0, 1, 2. Dictionary: the keys "Ada" and "Bea" with arrows to 36 and 28. Set: the numbers 9, 7, 8 scattered in an oval.'), L('Scegli la collezione da come cercherai i dati.', 'Pick the collection by how you will look the data up.')),
+            P('In Swift le collezioni sono **tipi per valore**: `var copia = voti` crea una copia indipendente, e cambiarla non tocca l’originale. Attenzione agli indici: `voti[5]` su un array di tre elementi non dà `nil` ma ferma l’app, quindi controlla prima con `isEmpty`, `count` o usa `first` e `last`, che restituiscono un optional.', 'In Swift collections are **value types**: `var copia = voti` makes an independent copy, and changing it does not touch the original. Mind the indices: `voti[5]` on a three-item array does not give `nil` but stops the app, so check first with `isEmpty` or `count`, or use `first` and `last`, which return an optional.'),
         ], [
             Q('a1', L('Come aggiungi in fondo a un array?', 'How do you add to the end of an array?'), ['append', 'push', 'add', 'insertLast'], 0, L('Solo se è una `var`.', 'Only if it is a `var`.')),
             Q('a2', L('Che cosa dà `eta["Cleo"]` se la chiave manca?', 'What does `eta["Cleo"]` give if the key is missing?'), ['nil', '0', L('Un crash', 'A crash'), '""'], 0, L('Il risultato è un optional.', 'The result is an optional.')),
@@ -110,6 +211,7 @@ saluta("Ada")
 
 let raddoppia = { (n: Int) in n * 2 }', 'swift'),
             P('Se il corpo è una sola espressione, `return` si può omettere. Una **closure** è una funzione senza nome tra graffe.', 'If the body is a single expression, `return` can be omitted. A **closure** is a nameless function between braces.'),
+            P('Le etichette servono a far leggere la chiamata come una frase: `saluta("Ada", da: "Bea")` si capisce senza aprire la funzione. Dentro, il parametro si chiama `mittente`: l’etichetta è per chi chiama, il nome per chi scrive il corpo. Le closure sono ovunque nelle API di Swift: quando sono l’ultimo argomento si scrivono fuori dalle tonde, come in `voti.sorted { $0 > $1 }`.', 'Labels make the call read like a sentence: `saluta("Ada", da: "Bea")` is clear without opening the function. Inside, the parameter is called `mittente`: the label is for the caller, the name for whoever writes the body. Closures are everywhere in Swift’s APIs: when they are the last argument they go outside the brackets, as in `voti.sorted { $0 > $1 }`.'),
         ], [
             Q('f1', L('Che cosa fa `_` davanti a un parametro?', 'What does `_` in front of a parameter do?'), [L('Toglie l’etichetta nella chiamata', 'Removes the label at the call'), L('Lo rende privato', 'Makes it private'), L('Lo ignora', 'Ignores it'), L('Lo rende optional', 'Makes it optional')], 0, L('Si chiama `saluta("Ada")`.', 'You call `saluta("Ada")`.')),
             Q('f2', L('Dove si scrive il tipo di ritorno?', 'Where do you write the return type?'), [L('Dopo `->`', 'After `->`'), L('Prima di `func`', 'Before `func`'), L('Dopo il nome', 'After the name'), L('Non si scrive', 'It is not written')], 0, L('`func f() -> Int`.', '`func f() -> Int`.')),

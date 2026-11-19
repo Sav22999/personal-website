@@ -1,6 +1,74 @@
 <?php
 /** Google Gemini: the app and models, Google integration and features, privacy settings, the Gemini API, Gems at work, images, video and Gemini Live. */
 
+/** Multimodal input: five kinds of content go into the same model, which answers about all of them together. Labels in one language. */
+if (!function_exists('fig_gemini_multimodal')) {
+    function fig_gemini_multimodal(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Testo', 'Immagine', 'Audio', 'Video', 'Codice', 'Un solo modello', 'capisce tutto insieme', 'Risposta', '«Che cosa dice il grafico', 'nel video, minuto 2?»']
+            : ['Text', 'Image', 'Audio', 'Video', 'Code', 'One model', 'understands it all together', 'Answer', '“What does the chart', 'at minute 2 of the video say?”'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<g stroke-width="2">
+<rect x="16" y="14" width="150" height="44" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/>
+<rect x="16" y="70" width="150" height="44" rx="12" fill="#FFF3EA" stroke="#E8590C"/>
+<rect x="16" y="126" width="150" height="44" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/>
+<rect x="16" y="182" width="150" height="44" rx="12" fill="#FFE3EE" stroke="#F03E82"/>
+<rect x="16" y="238" width="150" height="44" rx="12" fill="#F1F0F8" stroke="#8A87B0"/>
+</g>
+<g stroke-width="2" fill="none" stroke-linecap="round">
+<path d="M32 30h20M32 36h26M32 42h16" stroke="#2F8CF0"/>
+<rect x="30" y="82" width="28" height="20" rx="3" stroke="#E8590C"/><path d="M32 100l8-8 6 5 4-3 7 6" stroke="#E8590C"/>
+<path d="M32 148v-4M38 152v-12M44 156v-20M50 150v-8M56 147v-2" stroke="#0B7F5C"/>
+<rect x="30" y="194" width="28" height="20" rx="3" stroke="#F03E82"/><path d="M40 199v10l8-5z" fill="#F03E82" stroke="#F03E82" stroke-linejoin="round"/>
+<path d="M36 254l-6 6 6 6M52 254l6 6-6 6" stroke="#8A87B0"/>
+</g>
+<g font-weight="700"><text x="72" y="41" fill="#1B66BC">{$t[0]}</text><text x="72" y="97" fill="#B84508">{$t[1]}</text><text x="72" y="153" fill="#0B7F5C">{$t[2]}</text><text x="72" y="209" fill="#C2255C">{$t[3]}</text><text x="72" y="265">{$t[4]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M166 36C210 36 210 120 238 128"/><path d="M166 92C200 92 210 132 238 138"/><path d="M166 148H238"/><path d="M166 204C200 204 210 164 238 158"/><path d="M166 260C210 260 210 176 238 168"/><path d="M438 148H468"/></g>
+<rect x="242" y="88" width="196" height="120" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="340" y="140" text-anchor="middle" font-weight="700" font-size="17" fill="#5A36C9">{$t[5]}</text>
+<text x="340" y="164" text-anchor="middle" font-size="13">{$t[6]}</text>
+<rect x="472" y="118" width="156" height="60" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="550" y="153" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[7]}</text>
+<text x="340" y="30" text-anchor="middle" font-size="13">{$t[8]}</text><text x="340" y="48" text-anchor="middle" font-size="13">{$t[9]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Checking SynthID: Google's generated images carry an invisible mark; finding it says something, not finding it proves nothing. Labels in one language. */
+if (!function_exists('fig_gemini_synthid')) {
+    function fig_gemini_synthid(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Immagine da verificare', 'filigrana invisibile?', 'SynthID', 'trovato', 'Trovato', 'creata o modificata', 'con l’AI di Google', 'Non trovato', 'origine sconosciuta:', 'non prova che sia vera', 'non trovato']
+            : ['Image to check', 'invisible watermark?', 'SynthID', 'found', 'Found', 'made or edited', 'with Google’s AI', 'Not found', 'origin unknown:', 'not proof it is real', 'not found'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker>
+<pattern id="d" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="1.4" fill="#7048E8" opacity="0.45"/></pattern></defs>
+<rect x="16" y="50" width="170" height="150" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<path d="M18 180l50-60 34 36 26-22 56 46v8a12 12 0 0 1-12 12H30a12 12 0 0 1-12-12z" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<circle cx="140" cy="88" r="16" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<rect x="16" y="50" width="170" height="150" rx="12" fill="url(#d)"/>
+<text x="101" y="34" text-anchor="middle" font-weight="700">{$t[0]}</text>
+<text x="101" y="224" text-anchor="middle" font-size="13">{$t[1]}</text>
+<path d="M186 125H226" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<path d="M290 75L350 125L290 175L230 125z" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="290" y="130" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[2]}</text>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M320 100C360 70 380 66 410 66"/><path d="M320 150C360 180 380 186 410 186"/></g>
+<text x="370" y="60" text-anchor="middle" font-size="13">{$t[3]}</text><text x="370" y="204" text-anchor="middle" font-size="13">{$t[10]}</text>
+<rect x="414" y="22" width="214" height="88" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="430" y="48" font-weight="700" fill="#0B7F5C">{$t[4]}</text><text x="430" y="72" font-size="13">{$t[5]}</text><text x="430" y="92" font-size="13">{$t[6]}</text>
+<rect x="414" y="142" width="214" height="88" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="430" y="168" font-weight="700">{$t[7]}</text><text x="430" y="192" font-size="13">{$t[8]}</text><text x="430" y="212" font-size="13">{$t[9]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'gemini', 'family' => 'assistants', 'after' => null,
     'title' => L('Google Gemini', 'Google Gemini'), 'short' => L('Gemini', 'Gemini'), 'level' => L('Base', 'Basics'),
@@ -8,6 +76,9 @@ return [
     'lessons' => [
         lesson('intro', L('Gemini e i suoi modelli', 'Gemini and its models'), [
             P('**Gemini** è sia l’assistente di **Google** (app web, Android, iOS) sia la famiglia di modelli che lo fa funzionare. I modelli Gemini sono **multimodali** dalla nascita: capiscono testo, immagini, audio, video e codice.', '**Gemini** is both **Google**’s assistant (web, Android and iOS apps) and the model family powering it. Gemini models are **multimodal** from the ground up: they understand text, images, audio, video and code.'),
+            Fig(L(fig_gemini_multimodal('it'), fig_gemini_multimodal('en')),
+                L('Cinque riquadri a sinistra (testo, immagine, audio, video, codice) mandano frecce nello stesso riquadro viola, un solo modello, da cui esce la risposta. In alto un esempio di domanda che mescola video e grafico.', 'Five boxes on the left (text, image, audio, video, code) send arrows into the same purple box, one model, which produces the answer. Above it, an example question that mixes a video and a chart.'),
+                L('Multimodale vuol dire che un unico modello ragiona su contenuti di tipo diverso nella stessa richiesta.', 'Multimodal means one model reasons over different kinds of content in the same request.')),
             P('Le varianti principali: **Pro** (la più capace, per ragionamento e compiti complessi) e **Flash** (veloce ed economica), più versioni ancora più leggere. Esiste anche **Gemma**, una famiglia di modelli aperti più piccoli che si possono scaricare e usare in locale.', 'The main variants: **Pro** (the most capable, for reasoning and complex tasks) and **Flash** (fast and inexpensive), plus even lighter versions. There is also **Gemma**, a family of smaller open models you can download and run locally.'),
         ], [
             Q('i1', L('Che cosa significa che Gemini è multimodale?', 'What does it mean that Gemini is multimodal?'), [L('Capisce testo, immagini, audio e video', 'It understands text, images, audio and video'), L('Funziona solo su Android', 'It only works on Android'), L('Ha molti abbonamenti', 'It has many subscriptions'), L('Parla solo inglese', 'It only speaks English')], 0, L('Più tipi di dati insieme.', 'Several data types together.')),
@@ -51,6 +122,7 @@ risposta = client.models.generate_content(
 )
 print(risposta.text)', 'python'),
             P('Grazie alla multimodalità puoi passare in `contents` anche immagini, audio, video o PDF insieme al testo. I nomi dei modelli cambiano con le nuove versioni: controlla in AI Studio quelli disponibili.', 'Thanks to multimodality you can also pass images, audio, video or PDFs in `contents` together with text. Model names change with new versions: check the available ones in AI Studio.'),
+            Tip('Il livello gratuito di AI Studio ha limiti di richieste e, secondo i termini di Google, i dati inviati possono servire a migliorare i prodotti; con la fatturazione attiva non succede. Prova pure gratis con testi di esempio, ma per dati di clienti o documenti interni usa un progetto a pagamento o Vertex AI, e non scrivere mai la chiave nel codice che pubblichi.', 'The AI Studio free tier has request limits and, under Google’s terms, the data you send may be used to improve its products; with billing turned on it is not. Feel free to experiment for free with sample text, but for customer data or internal documents use a paid project or Vertex AI, and never write the key into code you publish.'),
         ], [
             Q('a1', L('Dove crei una chiave API di Gemini?', 'Where do you create a Gemini API key?'), ['Google AI Studio', 'Gmail', 'YouTube', 'Google Maps'], 0, L('Per le aziende c’è anche Vertex AI.', 'For companies there is also Vertex AI.')),
             Q('a2', L('Quale metodo genera una risposta?', 'Which method generates an answer?'), ['generate_content', 'create_message', 'complete', 'ask'], 0, L('`client.models.generate_content`.', '`client.models.generate_content`.')),
@@ -74,6 +146,9 @@ print(risposta.text)', 'python'),
         lesson('media-live', L('Immagini, video e Gemini Live', 'Images, video and Gemini Live'), [
             P('Nell’app Gemini puoi **creare e modificare immagini** descrivendo ciò che vuoi: cambiare lo sfondo di una foto, unire due immagini, tenere lo stesso personaggio in più scene. I modelli di immagini di Google sono noti anche con il soprannome **Nano Banana**. Con **Veo** si generano brevi video da un testo o da una foto; le quantità disponibili dipendono dal piano.', 'In the Gemini app you can **create and edit images** by describing what you want: change a photo’s background, combine two images, keep the same character across scenes. Google’s image models are also known by the nickname **Nano Banana**. With **Veo** you generate short videos from text or a photo; the amount available depends on your plan.'),
             P('Le immagini e i video creati con l’AI di Google contengono **SynthID**, una filigrana invisibile; puoi anche chiedere a Gemini se un’immagine è stata generata o modificata con gli strumenti di Google. Se SynthID non c’è, però, l’immagine non è per forza autentica: potrebbe venire da un altro strumento.', 'Images and videos made with Google’s AI carry **SynthID**, an invisible watermark; you can also ask Gemini whether an image was generated or edited with Google’s tools. If SynthID is missing, though, the image is not necessarily authentic: it may come from another tool.'),
+            Fig(L(fig_gemini_synthid('it'), fig_gemini_synthid('en')),
+                L('Un’immagine con una trama di puntini appena visibile, la filigrana, entra in un rombo «SynthID». Se la filigrana è trovata, il riquadro verde dice che è stata creata o modificata con l’AI di Google; se non è trovata, il riquadro grigio tratteggiato dice che l’origine è sconosciuta e che questo non prova che sia vera.', 'An image with a faint dot pattern, the watermark, goes into a “SynthID” diamond. If the watermark is found, the green box says it was made or edited with Google’s AI; if not, the dashed grey box says the origin is unknown and that this does not prove it is real.'),
+                L('Il controllo dà una risposta utile solo in un verso: la filigrana assente non dimostra nulla.', 'The check is only conclusive one way: a missing watermark proves nothing.')),
             P('**Gemini Live** è la conversazione a voce in tempo reale: puoi interromperlo, cambiare argomento e **condividere la fotocamera o lo schermo** per chiedere che cosa sta vedendo («che pianta è questa?», «come compilo questo modulo?»). Anche qui valgono le regole sulla privacy: non inquadrare documenti o dati che non vuoi condividere.', '**Gemini Live** is real-time voice conversation: you can interrupt it, change topic and **share your camera or screen** to ask about what it sees (“what plant is this?”, “how do I fill in this form?”). The privacy rules apply here too: do not show documents or data you do not want to share.'),
         ], [
             Q('gm1', L('Che cosa puoi fare con Gemini Live?', 'What can you do with Gemini Live?'), [L('Stampare le conversazioni in PDF', 'Print conversations as PDFs'), L('Parlare a voce e condividere fotocamera o schermo', 'Talk by voice and share your camera or screen'), L('Scaricare modelli aperti sul telefono', 'Download open models to the phone'), L('Leggere le email senza permesso', 'Read emails without permission')], 1, L('Conversazione in tempo reale.', 'Real-time conversation.')),

@@ -1,6 +1,51 @@
 <?php
 /** Alibaba Qwen: the open model family, Qwen Chat, running it locally, the OpenAI-compatible API, comparing with DeepSeek. */
 
+/** The range of open Qwen sizes, from a phone to a server, with the closed Max models only in the cloud. Labels in one language. */
+if (!function_exists('fig_qwen_sizes')) {
+    function fig_qwen_sizes(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['telefono', 'portatile', 'PC con GPU', 'server con più GPU', 'solo cloud, chiuso', 'B = miliardi di parametri (taglie indicative)', 'pesi aperti']
+            : ['phone', 'laptop', 'PC with a GPU', 'multi-GPU server', 'cloud only, closed', 'B = billions of parameters (indicative sizes)', 'open weights'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="16" y="26" font-size="13" font-weight="700" fill="#0B7F5C">{$t[6]}</text>
+<g fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"><rect x="110" y="38" width="40" height="32" rx="8"/><rect x="110" y="80" width="110" height="32" rx="8"/><rect x="110" y="122" width="210" height="32" rx="8"/><rect x="110" y="164" width="380" height="32" rx="8"/></g>
+<rect x="110" y="206" width="510" height="32" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<g font-weight="700" text-anchor="end"><text x="98" y="60">0.6B</text><text x="98" y="102">8B</text><text x="98" y="144">32B</text><text x="98" y="186">235B</text><text x="98" y="228">Max</text></g>
+<g font-size="14"><text x="162" y="60">{$t[0]}</text><text x="232" y="102">{$t[1]}</text><text x="332" y="144">{$t[2]}</text><text x="502" y="186">{$t[3]}</text><text x="126" y="228">{$t[4]}</text></g>
+<text x="16" y="262" font-size="13">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Tool calling as a conversation between your program and the model: the model asks for a call, your program runs it and sends back the result. Labels in one language. */
+if (!function_exists('fig_qwen_tools')) {
+    function fig_qwen_tools(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Il tuo programma', 'Il modello', '1  domanda + elenco strumenti', '«Che tempo fa a Trieste?»', '2  chiede una chiamata', '3  esegue meteo() e manda il risultato', '4  risponde', '«A Trieste 18 °C e sole»']
+            : ['Your program', 'The model', '1  question + list of tools', '“What’s the weather in Trieste?”', '2  asks for a call', '3  runs meteo() and sends the result', '4  answers', '“18 °C and sunny in Trieste”'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 350" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="12" width="170" height="44" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><rect x="454" y="12" width="170" height="44" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<g font-weight="700" text-anchor="middle"><text x="101" y="39" fill="#1B66BC">{$t[0]}</text><text x="539" y="39" fill="#5A36C9">{$t[1]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4"><path d="M101 56V342"/><path d="M539 56V342"/></g>
+<g stroke="#1E1C52" stroke-width="2" marker-end="url(#a)"><path d="M101 98H535"/><path d="M539 160H105"/><path d="M101 240H535"/><path d="M539 316H105"/></g>
+<g font-size="14" font-weight="700" text-anchor="middle"><text x="320" y="86">{$t[2]}</text><text x="320" y="148">{$t[4]}</text><text x="320" y="228">{$t[5]}</text><text x="320" y="304">{$t[6]}</text></g>
+<g font-size="13" text-anchor="middle"><text x="320" y="118">{$t[3]}</text><text x="320" y="336">{$t[7]}</text></g>
+<rect x="196" y="168" width="248" height="26" rx="8" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="320" y="186" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace" fill="#B84508">meteo({"citta": "Trieste"})</text>
+<rect x="250" y="248" width="140" height="26" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="320" y="266" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace" fill="#0B7F5C">{"temp": 18}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'qwen', 'family' => 'assistants', 'after' => null,
     'title' => L('Alibaba Qwen', 'Alibaba Qwen'), 'short' => L('Qwen', 'Qwen'), 'level' => L('Base', 'Basics'),
@@ -8,6 +53,9 @@ return [
     'lessons' => [
         lesson('models', L('La famiglia Qwen', 'The Qwen family'), [
             P('**Qwen** è la famiglia di modelli linguistici di **Alibaba Cloud**. Molti modelli sono pubblicati **open-weight**, spesso con licenza **Apache 2.0**, in tante dimensioni: da modelli minuscoli che girano su un telefono a modelli enormi per il cloud. I modelli di punta della serie **Max**, invece, sono di solito chiusi e si usano solo via app o API. Le generazioni si susseguono in fretta (Qwen3, Qwen3.5 e oltre).', '**Qwen** is **Alibaba Cloud**’s family of language models. Many models are published **open-weight**, often under the **Apache 2.0** licence, in many sizes: from tiny models that run on a phone to huge cloud models. The flagship **Max** models, however, are usually closed and only available through the app or API. Generations follow each other quickly (Qwen3, Qwen3.5 and beyond).'),
+            Fig(L(fig_qwen_sizes('it'), fig_qwen_sizes('en')),
+                L('Barre orizzontali sempre più lunghe: 0.6B per il telefono, 8B per il portatile, 32B per un PC con GPU, 235B per un server con più GPU, tutte verdi con pesi aperti; l’ultima, Max, è grigia e tratteggiata: solo cloud, chiusa.', 'Ever longer horizontal bars: 0.6B for a phone, 8B for a laptop, 32B for a PC with a GPU, 235B for a multi-GPU server, all green with open weights; the last one, Max, is grey and dashed: cloud only, closed.'),
+                L('Più parametri significano più capacità, ma anche più memoria per farli girare.', 'More parameters mean more capability, but also more memory to run them.')),
             P('Ci sono varianti specializzate: per il **codice** (Qwen-Coder), per la **visione** (Qwen-VL, che legge immagini e documenti), per l’**audio** e per il **ragionamento**. I modelli Qwen sono molto usati come base per versioni adattate su Hugging Face e sono forti in molte lingue, compreso il cinese.', 'There are specialised variants: for **code** (Qwen-Coder), for **vision** (Qwen-VL, which reads images and documents), for **audio** and for **reasoning**. Qwen models are widely used as a base for fine-tuned versions on Hugging Face and are strong in many languages, including Chinese.'),
         ], [
             Q('m1', L('Quale azienda sviluppa Qwen?', 'Which company develops Qwen?'), ['Alibaba Cloud', 'Meta', 'Mistral AI', 'xAI'], 0, L('Gruppo cinese Alibaba.', 'Chinese group Alibaba.')),
@@ -45,6 +93,7 @@ r = client.chat.completions.create(
 )
 print(r.choices[0].message.content)', 'python'),
             P('Molti fornitori cloud e piattaforme di inferenza ospitano anche i modelli Qwen aperti: puoi scegliere quello nella giurisdizione che ti serve. Controlla sempre i nomi dei modelli disponibili e i prezzi nella documentazione.', 'Many cloud providers and inference platforms also host the open Qwen models: you can choose the one in the jurisdiction you need. Always check available model names and prices in the documentation.'),
+            P('Attenzione alla **regione**: in Model Studio la chiave appartiene alla regione in cui l’hai creata (per esempio quella internazionale o quella di Pechino) e funziona solo con il `base_url` di quella regione. Se li mescoli ottieni un errore di autenticazione, anche con una chiave valida. La regione decide anche dove vengono elaborati i dati: sceglila prima di creare la chiave.', 'Watch out for the **region**: in Model Studio a key belongs to the region where you created it (for example the international one or the Beijing one) and works only with that region’s `base_url`. Mix them up and you get an authentication error, even with a valid key. The region also decides where the data is processed: choose it before creating the key.'),
         ], [
             Q('a1', L('L’API di Qwen è compatibile con quale SDK?', 'Which SDK is the Qwen API compatible with?'), ['OpenAI', 'Gmail', 'Excel', L('Nessuno', 'None')], 0, L('Cambia il base_url.', 'Change the base_url.')),
             Q('a2', L('Su quale piattaforma si usa l’API ufficiale?', 'Which platform hosts the official API?'), ['Alibaba Cloud Model Studio', 'GitHub', 'YouTube', 'Hugging Face Spaces'], 0, L('Con endpoint internazionale.', 'With an international endpoint.')),
@@ -76,6 +125,10 @@ print(r.choices[0].message.content)', 'python'),
     "required": ["citta"]
   }
 }', 'json'),
+            Fig(L(fig_qwen_tools('it'), fig_qwen_tools('en')),
+                L('Due linee verticali, il tuo programma a sinistra e il modello a destra, con quattro frecce che si alternano: 1 il programma manda la domanda sul meteo di Trieste con l’elenco degli strumenti; 2 il modello chiede la chiamata meteo con citta Trieste; 3 il programma esegue la funzione e rimanda il risultato, temperatura 18; 4 il modello risponde con una frase.', 'Two vertical lines, your program on the left and the model on the right, with four alternating arrows: 1 the program sends the question about the weather in Trieste with the list of tools; 2 the model asks for the meteo call with citta Trieste; 3 the program runs the function and sends back the result, temperature 18; 4 the model answers with a sentence.'),
+                L('Il modello scrive la chiamata, ma a eseguirla è sempre il tuo programma.', 'The model writes the call, but your program is always the one that runs it.')),
+            Tip('Prima di eseguire una chiamata controlla gli argomenti: un nome di città è innocuo, un comando che cancella file no. Gestisci anche il caso in cui la funzione fallisce: rimanda al modello un messaggio d’errore chiaro, così può riprovare o spiegarlo all’utente.', 'Before running a call, check its arguments: a city name is harmless, a command that deletes files is not. Also handle the case where the function fails: send the model a clear error message, so it can try again or explain it to the user.'),
         ], [
             Q('qc1', L('A che cosa servono i modelli Qwen Coder?', 'What are Qwen Coder models for?'), [L('Scrivere e spiegare codice', 'Writing and explaining code'), L('Generare musica', 'Generating music'), L('Tradurre solo il cinese', 'Translating Chinese only'), L('Montare video', 'Editing video')], 0, L('Completano, spiegano, testano.', 'They complete, explain, test.')),
             Q('qc2', L('Nel tool calling, chi esegue la funzione?', 'In tool calling, who runs the function?'), [L('Il tuo programma', 'Your program'), L('Il modello', 'The model'), L('Il server di Qwen, sempre', 'Qwen’s server, always'), L('Nessuno', 'Nobody')], 0, L('Il modello chiede soltanto.', 'The model only asks.')),

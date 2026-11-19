@@ -1,6 +1,76 @@
 <?php
 /** Angular basics: components, templates, bindings, events, control flow, signals, services, dynamic classes, pipes and effects. */
 
+/** The four bindings between class and template: interpolation and property towards the page, events back, ngModel both ways. */
+if (!function_exists('fig_ngbase_bind')) {
+    function fig_ngbase_bind(string $l): string
+    {
+        $t = $l === 'it' ? ['classe', 'template', 'testo', 'proprietà', 'evento', 'nei due sensi'] : ['class', 'template', 'text', 'property', 'event', 'both ways'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ngba" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="20" width="150" height="214" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="478" y="20" width="150" height="214" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g text-anchor="middle" font-weight="700" font-size="16"><text x="87" y="48">{$t[0]}</text><text x="553" y="48">{$t[1]}</text></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="87" y="110">n = 0</text><text x="87" y="134">piu()</text><text x="87" y="158">email = ""</text><text x="553" y="100">&lt;p&gt;</text><text x="553" y="124">&lt;button&gt;</text><text x="553" y="148">&lt;input&gt;</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none"><path d="M168 76H472" marker-end="url(#ngba)"/><path d="M168 124H472" marker-end="url(#ngba)"/><path d="M472 172H168" marker-end="url(#ngba)"/><path d="M168 220H472" marker-end="url(#ngba)" marker-start="url(#ngba)"/></g>
+<g text-anchor="middle"><text x="320" y="68"><tspan font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#0B7F5C">{{ n }}</tspan> · <tspan font-size="13" fill="#5B5880">{$t[2]}</tspan></text>
+<text x="320" y="116"><tspan font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#1B66BC">[disabled]</tspan> · <tspan font-size="13" fill="#5B5880">{$t[3]}</tspan></text>
+<text x="320" y="164"><tspan font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#B84508">(click)</tspan> · <tspan font-size="13" fill="#5B5880">{$t[4]}</tspan></text>
+<text x="320" y="212"><tspan font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#5A35C8">[(ngModel)]</tspan> · <tspan font-size="13" fill="#5B5880">{$t[5]}</tspan></text></g>
+</svg>
+SVG;
+    }
+}
+
+/** A signal feeding a computed and the template; a click updates the signal and the change travels on, step by step. */
+if (!function_exists('fig_ngbase_signal')) {
+    function fig_ngbase_signal(string $l): string
+    {
+        $t = $l === 'it' ? ['1 · cambia', '2 · si ricalcola', '3 · si aggiorna', 'solo questi due testi'] : ['1 · changes', '2 · recomputed', '3 · updated', 'only these two texts'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.ngs{opacity:0;animation:ngs 4.5s infinite}.ngs2{animation-delay:1.5s}.ngs3{animation-delay:3s}@keyframes ngs{0%{opacity:0}4%{opacity:1}30%{opacity:1}34%{opacity:0}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.ngs{animation:none}}</style>
+<defs><marker id="ngsa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g text-anchor="middle" font-size="13" font-weight="700" fill="#5B5880"><text x="120" y="52">{$t[0]}</text><text x="335" y="52">{$t[1]}</text><text x="550" y="52">{$t[2]}</text></g>
+<rect x="40" y="62" width="160" height="64" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="250" y="62" width="170" height="64" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="470" y="62" width="160" height="64" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g fill="none" stroke="#F03E82" stroke-width="4"><rect class="ngs" x="34" y="56" width="172" height="76" rx="15"/><rect class="ngs ngs2" x="244" y="56" width="182" height="76" rx="15"/><rect class="ngs ngs3" x="464" y="56" width="172" height="76" rx="15"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="120" y="89" font-weight="700">pezzi</text><text x="120" y="110">signal(0)</text><text x="335" y="89" font-weight="700">totale</text><text x="335" y="110">computed(…)</text><text x="550" y="89">{{ pezzi() }}</text><text x="550" y="110">{{ totale() }}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ngsa)"><path d="M200 94H246"/><path d="M420 94H466"/><path d="M120 168V130"/><path d="M200 70C300 0 540 0 612 58"/></g>
+<rect x="30" y="170" width="180" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="120" y="195" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">(click) update(n+1)</text>
+<text x="550" y="150" text-anchor="middle" font-size="13" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Dependency injection: one CorsiService instance, which receives HttpClient, is handed to two components. */
+if (!function_exists('fig_ngbase_di')) {
+    function fig_ngbase_di(string $l): string
+    {
+        $t = $l === 'it' ? ['una sola istanza', 'per tutta l’app', 'lo stesso servizio per entrambi'] : ['a single instance', 'for the whole app', 'the same service for both'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ngda" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="40" width="150" height="50" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="87" y="70" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14">HttpClient</text>
+<rect x="220" y="26" width="200" height="78" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="320" y="58" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-weight="700">CorsiService</text>
+<text x="320" y="84" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5B5880">providedIn: "root"</text>
+<text x="436" y="58" font-size="13" fill="#0B7F5C" font-weight="700">{$t[0]}</text><text x="436" y="76" font-size="13" fill="#0B7F5C" font-weight="700">{$t[1]}</text>
+<g fill="#ECE6FF" stroke="#7048E8" stroke-width="2"><rect x="40" y="166" width="250" height="56" rx="12"/><rect x="350" y="166" width="250" height="56" rx="12"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="165" y="199">ElencoComponent</text><text x="475" y="199">DettaglioComponent</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ngda)"><path d="M162 65H216"/><path d="M290 104C280 130 200 140 175 162"/><path d="M350 104C360 130 440 140 465 162"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5A35C8"><text x="160" y="138">inject()</text><text x="420" y="138">inject()</text></g>
+<text x="320" y="244" text-anchor="middle" font-size="13" fill="#5B5880">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'angular-base', 'family' => 'angular', 'after' => 'ts',
     'title' => L('Angular base', 'Angular Basics'), 'short' => L('Angular base', 'Angular Basics'), 'level' => L('Base', 'Basics'),
@@ -48,6 +118,10 @@ export class ContatoreComponent {
   piu() { this.n++; }
 }', 'ts'),
             P('Dati verso la vista con `[ ]`, eventi verso la classe con `( )`. Insieme, `[(ngModel)]` crea un collegamento nei due sensi per i campi dei moduli (importando `FormsModule`).', 'Data to the view with `[ ]`, events to the class with `( )`. Together, `[(ngModel)]` makes a two-way link for form fields (importing `FormsModule`).'),
+            Fig(L(fig_ngbase_bind('it'), fig_ngbase_bind('en')),
+                L('Due riquadri, la classe a sinistra e il template a destra, collegati da quattro frecce: {{ n }} per il testo e [disabled] per una proprietà vanno verso il template, (click) per un evento torna verso la classe, [(ngModel)] va nei due sensi.', 'Two boxes, the class on the left and the template on the right, joined by four arrows: {{ n }} for text and [disabled] for a property go towards the template, (click) for an event goes back to the class, [(ngModel)] goes both ways.'),
+                L('Le parentesi dicono la direzione: quadre verso la pagina, tonde verso la classe.', 'The brackets tell the direction: square towards the page, round towards the class.')),
+            P('Tra le virgolette di `[disabled]` c’è un’espressione TypeScript, valutata con i dati della classe. Senza quadre, `disabled="n >= 10"` sarebbe solo una stringa di testo, sempre presente: un errore molto comune. Tra le tonde scrivi la chiamata da fare, con le parentesi: `(click)="piu()"`. Quando `n` cambia, Angular aggiorna da solo il testo e il pulsante.', 'Between the quotes of `[disabled]` there is a TypeScript expression, evaluated with the data of the class. Without square brackets, `disabled="n >= 10"` would be just a text string, always present: a very common mistake. Between round brackets you write the call to make, with its brackets: `(click)="piu()"`. When `n` changes, Angular updates the text and the button by itself.'),
         ], [
             Q('b1', L('Come ascolti il clic?', 'How do you listen to a click?'), ['(click)="fai()"', '[click]="fai()"', 'onclick={fai}', '{{click}}'], 0, L('Tonde per gli eventi.', 'Round brackets for events.')),
             Q('b2', L('Che cosa fa `[disabled]="occupato"`?', 'What does `[disabled]="occupato"` do?'), [L('Collega la proprietà al valore di `occupato`', 'Binds the property to the value of `occupato`'), L('Ascolta un evento', 'Listens to an event'), L('Stampa un testo', 'Prints a text'), L('Crea una variabile', 'Creates a variable')], 0, L('Quadre per le proprietà.', 'Square brackets for properties.')),
@@ -68,6 +142,7 @@ export class ContatoreComponent {
   <p>Nessun corso.</p>
 }', 'html'),
             P('`track` dice ad Angular come riconoscere ogni elemento: così aggiorna solo le righe cambiate.', '`track` tells Angular how to recognise each item: so it only updates the rows that changed.'),
+            P('`track` è obbligatorio: di solito usi un identificativo unico come `c.id`. Senza un buon `track`, cambiando l’ordine della lista Angular ricreerebbe tutte le righe, perdendo per esempio il testo scritto in un campo. Dopo `@for` puoi aggiungere `@empty { … }`, mostrato quando la lista è vuota, e per molti casi c’è `@switch` con i suoi `@case`.', '`track` is required: you usually use a unique identifier such as `c.id`. Without a good `track`, when the order of the list changes Angular would recreate every row, losing for example the text typed into a field. After `@for` you can add `@empty { … }`, shown when the list is empty, and for many cases there is `@switch` with its `@case` blocks.'),
         ], [
             Q('f1', L('Che cosa è obbligatorio in `@for`?', 'What is required in `@for`?'), ['track', 'index', 'key', 'let'], 0, L('Serve a riconoscere gli elementi.', 'It identifies the items.')),
             Q('f2', L('Come mostri un blocco se la lista è vuota?', 'How do you show a block when the list is empty?'), ['@empty', '@none', '@else-for', '@nothing'], 0, L('`@for` ha un suo blocco `@empty`.', '`@for` has its own `@empty` block.')),
@@ -94,6 +169,10 @@ export class CarrelloComponent {
   aggiungi() { this.pezzi.update(n => n + 1); }
 }', 'ts'),
             P('Angular sa esattamente quali parti della pagina dipendono da un signal e aggiorna solo quelle.', 'Angular knows exactly which parts of the page depend on a signal and updates only those.'),
+            Fig(L(fig_ngbase_signal('it'), fig_ngbase_signal('en')),
+                L('Tre riquadri collegati: il signal pezzi, il computed totale e il template che mostra entrambi. Un click chiama update sul signal; la modifica passa a totale, che si ricalcola, e poi al template, che aggiorna solo quei due testi.', 'Three linked boxes: the signal pezzi, the computed totale and the template showing both. A click calls update on the signal; the change passes to totale, which is recomputed, and then to the template, which updates only those two texts.'),
+                L('Una modifica segue le dipendenze: signal, computed, template.', 'A change follows the dependencies: signal, computed, template.')),
+            P('Per questo un signal va sempre cambiato con `set` o `update`, mai modificando il suo contenuto di nascosto: con una lista scrivi `lista.update(l => [...l, nuovo])`, non `lista().push(nuovo)`, altrimenti Angular non si accorge del cambiamento. Un `computed` è di sola lettura e si ricalcola solo quando qualcuno lo legge e un suo signal è cambiato.', 'That is why a signal must always be changed with `set` or `update`, never by quietly modifying its content: with a list write `lista.update(l => [...l, nuovo])`, not `lista().push(nuovo)`, otherwise Angular does not notice the change. A `computed` is read-only and is recalculated only when someone reads it and one of its signals has changed.'),
         ], [
             Q('s1', L('Come leggi il valore del signal `conta`?', 'How do you read the value of the signal `conta`?'), ['conta()', 'conta.value', 'conta.get', '$conta'], 0, L('Un signal si legge chiamandolo.', 'A signal is read by calling it.')),
             Q('s2', L('Che cosa fa `computed`?', 'What does `computed` do?'), [L('Un valore derivato che si aggiorna da solo', 'A derived value that updates itself'), L('Un ciclo', 'A loop'), L('Una richiesta HTTP', 'An HTTP request'), L('Un componente', 'A component')], 0, L('Dipende da altri signal.', 'It depends on other signals.')),
@@ -119,6 +198,9 @@ export class ElencoComponent {
   dati = toSignal(this.corsi.elenco(), { initialValue: [] });
 }', 'ts'),
             P('`providedIn: "root"` crea un solo esemplare per tutta l’app. `HttpClient` restituisce un Observable; `toSignal` lo trasforma in un signal da usare nel template.', '`providedIn: "root"` creates a single instance for the whole app. `HttpClient` returns an Observable; `toSignal` turns it into a signal to use in the template.'),
+            Fig(L(fig_ngbase_di('it'), fig_ngbase_di('en')),
+                L('In alto CorsiService, con providedIn: "root", che riceve HttpClient da sinistra. Due frecce inject() portano lo stesso servizio a ElencoComponent e a DettaglioComponent.', 'At the top CorsiService, with providedIn: "root", receiving HttpClient from the left. Two inject() arrows bring the same service to ElencoComponent and DettaglioComponent.'),
+                L('Nessuno crea il servizio con `new`: Angular lo crea una volta e lo consegna a chi lo chiede.', 'Nobody creates the service with `new`: Angular creates it once and hands it to whoever asks.')),
             Tip('Da Angular 22 esiste anche `@Service()`, una scorciatoia di `@Injectable({ providedIn: "root" })` che la CLI usa di default.', 'Since Angular 22 there is also `@Service()`, a shorthand for `@Injectable({ providedIn: "root" })` that the CLI uses by default.'),
         ], [
             Q('v1', L('Quale decoratore segna un servizio?', 'Which decorator marks a service?'), ['@Injectable', '@Component', '@Provider', '@Input'], 0, L('Così Angular può iniettarlo. Da Angular 22 c’è anche la scorciatoia `@Service()`.', 'So Angular can inject it. Since Angular 22 there is also the `@Service()` shorthand.')),
@@ -170,7 +252,9 @@ export class OrdineComponent {
   cliente = "Ada";
   data = new Date();
   totale = 42.5;
-}', 'ts'),
+}', 'ts', '<p>ADA</p>
+<p>18/11/2026</p>
+<p>€42.50</p>'),
             C('@Pipe({ name: "iniziali" })
 export class InizialiPipe implements PipeTransform {
   transform(nome: string): string {

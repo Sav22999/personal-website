@@ -1,6 +1,122 @@
 <?php
 /** UX on mobile: context of use, thumb zone and touch targets, navigation patterns, gestures, forms and notifications, perceived speed, accessibility, watches, cars and voice. */
 
+/** Figures of this course, each with its words in one language ('it' or 'en'). */
+if (!function_exists('fig_uxmob_thumb')) {
+    /** The thumb zone of a phone held in the right hand, and a layout that follows it. */
+    function fig_uxmob_thumb(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Difficile', 'Con sforzo', 'Facile', 'Elimina account', 'Azioni rare e pericolose in alto', 'Azione principale e navigazione in basso', 'Paga ora']
+            : ['Hard', 'Stretch', 'Easy', 'Delete account', 'Rare and risky actions up high', 'Main action and navigation at the bottom', 'Pay now'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><clipPath id="scr"><rect x="52" y="34" width="176" height="336" rx="18"/></clipPath><clipPath id="scr2"><rect x="372" y="34" width="176" height="336" rx="18"/></clipPath></defs>
+<rect x="40" y="20" width="200" height="364" rx="30" fill="#1E1C52"/>
+<g clip-path="url(#scr)"><rect x="52" y="34" width="176" height="336" fill="#FFE3EE"/>
+<ellipse cx="200" cy="360" rx="190" ry="230" fill="#FFE8D6"/><ellipse cx="190" cy="350" rx="125" ry="150" fill="#D5F6EA"/></g>
+<g font-weight="700" text-anchor="middle"><text x="140" y="70" fill="#C2255C">{$t[0]}</text><text x="104" y="190" fill="#B84508">{$t[1]}</text><text x="160" y="300" fill="#0B7F5C">{$t[2]}</text></g>
+<rect x="360" y="20" width="200" height="364" rx="30" fill="#1E1C52"/>
+<rect x="372" y="34" width="176" height="336" rx="18" fill="#FFFFFF"/>
+<g clip-path="url(#scr2)">
+<text x="386" y="64" font-size="13" fill="#C2255C">{$t[3]}</text>
+<rect x="386" y="84" width="148" height="10" rx="5" fill="#E4E2F0"/><rect x="386" y="102" width="110" height="10" rx="5" fill="#E4E2F0"/><rect x="386" y="126" width="148" height="90" rx="10" fill="#F1F0F8"/>
+<rect x="386" y="268" width="148" height="40" rx="20" fill="#E8590C"/><text x="460" y="293" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$t[6]}</text>
+<rect x="372" y="322" width="176" height="48" fill="#F1F0F8"/>
+<g fill="#8A87B0"><circle cx="402" cy="346" r="8"/><circle cx="446" cy="346" r="8"/><circle cx="490" cy="346" r="8"/><circle cx="530" cy="346" r="8"/></g></g>
+<text x="460" y="16" text-anchor="middle" font-size="13" fill="#C2255C" font-weight="700">↑ {$t[4]}</text>
+<text x="460" y="398" text-anchor="middle" font-size="13" fill="#0B7F5C" font-weight="700">↓ {$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxmob_tabs')) {
+    /** A hamburger menu hiding the sections versus a bottom tab bar showing them. */
+    function fig_uxmob_tabs(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Menu hamburger', 'Tab bar in basso', 'voci nascoste: si usano meno', 'sempre visibili, sotto il pollice', 'Home', 'Cerca', 'Ordini', 'Profilo']
+            : ['Hamburger menu', 'Bottom tab bar', 'hidden items: used less', 'always visible, under the thumb', 'Home', 'Search', 'Orders', 'Profile'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g font-size="15" font-weight="700" text-anchor="middle"><text x="160" y="24">{$t[0]}</text><text x="480" y="24">{$t[1]}</text></g>
+<rect x="70" y="38" width="180" height="300" rx="24" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<g stroke="#1E1C52" stroke-width="3" stroke-linecap="round"><path d="M90 66 h22 M90 74 h22 M90 82 h22"/></g>
+<rect x="90" y="104" width="140" height="12" rx="6" fill="#E4E2F0"/><rect x="90" y="124" width="100" height="12" rx="6" fill="#E4E2F0"/>
+<rect x="90" y="150" width="140" height="80" rx="10" fill="#F1F0F8"/><rect x="90" y="244" width="140" height="12" rx="6" fill="#E4E2F0"/><rect x="90" y="264" width="120" height="12" rx="6" fill="#E4E2F0"/>
+<circle cx="101" cy="74" r="20" fill="none" stroke="#F03E82" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="160" y="362" text-anchor="middle" font-size="14" fill="#C2255C" font-weight="700">✗ {$t[2]}</text>
+<rect x="390" y="38" width="180" height="300" rx="24" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<rect x="410" y="64" width="90" height="14" rx="7" fill="#1E1C52"/>
+<rect x="410" y="104" width="140" height="12" rx="6" fill="#E4E2F0"/><rect x="410" y="124" width="100" height="12" rx="6" fill="#E4E2F0"/>
+<rect x="410" y="150" width="140" height="80" rx="10" fill="#F1F0F8"/><rect x="410" y="244" width="120" height="12" rx="6" fill="#E4E2F0"/>
+<path d="M391 278 h178 v36 a23 23 0 0 1 -23 23 h-132 a23 23 0 0 1 -23 -23 z" fill="#F1F0F8"/>
+<line x1="391" y1="278" x2="569" y2="278" stroke="#8A87B0" stroke-width="1.5"/>
+<rect x="400" y="284" width="38" height="20" rx="10" fill="#FFE8D6"/>
+<g fill="#E8590C"><circle cx="419" cy="294" r="6"/></g><g fill="#8A87B0"><circle cx="461" cy="294" r="6"/><circle cx="503" cy="294" r="6"/><circle cx="545" cy="294" r="6"/></g>
+<g font-size="11" text-anchor="middle"><text x="419" y="322" fill="#B84508" font-weight="700">{$t[4]}</text><text x="461" y="322">{$t[5]}</text><text x="503" y="322">{$t[6]}</text><text x="545" y="322">{$t[7]}</text></g>
+<text x="480" y="362" text-anchor="middle" font-size="14" fill="#0B7F5C" font-weight="700">✓ {$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxmob_skeleton')) {
+    /** The same loading screen with a spinner and with a skeleton: the skeleton shows the shape of the page at once. */
+    function fig_uxmob_skeleton(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Spinner', 'Skeleton', 'non si sa che cosa arriva', 'la forma della pagina, subito']
+            : ['Spinner', 'Skeleton', 'no idea what is coming', 'the shape of the page, at once'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<style>.spin{transform-origin:160px 180px;animation:spin 3s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sh{animation:sh 3s ease-in-out infinite}@keyframes sh{0%,100%{opacity:1}50%{opacity:.45}}@media (prefers-reduced-motion:reduce){.spin,.sh{animation:none}}</style>
+<g font-size="15" font-weight="700" text-anchor="middle"><text x="160" y="24">{$t[0]}</text><text x="480" y="24">{$t[1]}</text></g>
+<rect x="70" y="38" width="180" height="280" rx="24" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<circle cx="160" cy="180" r="22" fill="none" stroke="#E4E2F0" stroke-width="6"/>
+<path class="spin" d="M160 158 a22 22 0 0 1 22 22" fill="none" stroke="#2F8CF0" stroke-width="6" stroke-linecap="round"/>
+<rect x="390" y="38" width="180" height="280" rx="24" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<g class="sh" fill="#E4E2F0"><rect x="410" y="62" width="100" height="16" rx="8"/><rect x="410" y="94" width="140" height="80" rx="10"/><rect x="410" y="188" width="140" height="12" rx="6"/><rect x="410" y="208" width="110" height="12" rx="6"/>
+<circle cx="424" cy="252" r="14"/><rect x="446" y="244" width="104" height="10" rx="5"/><rect x="446" y="260" width="70" height="10" rx="5"/></g>
+<text x="160" y="346" text-anchor="middle" fill="#C2255C" font-weight="700">✗ {$t[2]}</text>
+<text x="480" y="346" text-anchor="middle" fill="#0B7F5C" font-weight="700">✓ {$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxmob_reader')) {
+    /** A product screen with the screen reader’s reading order numbered, and what it says on the icon-only button. */
+    function fig_uxmob_reader(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Indietro', 'Scarpe da corsa', '89 €', 'Aggiungi al carrello', '«Aggiungi ai preferiti, pulsante»', 'Ordine di lettura di VoiceOver e TalkBack']
+            : ['Back', 'Running shoes', '£89', 'Add to basket', '“Add to favourites, button”', 'VoiceOver and TalkBack reading order'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="60" y="16" width="220" height="330" rx="26" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<text x="84" y="56" fill="#1B66BC">‹ {$t[0]}</text>
+<rect x="80" y="74" width="180" height="110" rx="12" fill="#F1F0F8"/>
+<path d="M120 160 q30 -40 70 -20 l30 10 q10 4 6 10 h-106 z" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="84" y="216" font-size="16" font-weight="700">{$t[1]}</text>
+<text x="84" y="242">{$t[2]}</text>
+<path d="M236 252 l-11 -11 a6.5 6.5 0 0 1 11 -7 a6.5 6.5 0 0 1 11 7 z" fill="none" stroke="#F03E82" stroke-width="2" stroke-linejoin="round"/>
+<rect x="80" y="276" width="180" height="44" rx="22" fill="#E8590C"/><text x="170" y="303" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$t[3]}</text>
+<g font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+<circle cx="52" cy="50" r="12" fill="#7048E8"/><text x="52" y="55">1</text>
+<circle cx="52" cy="130" r="12" fill="#7048E8"/><text x="52" y="135">2</text>
+<circle cx="52" cy="210" r="12" fill="#7048E8"/><text x="52" y="215">3</text>
+<circle cx="52" cy="240" r="12" fill="#7048E8"/><text x="52" y="245">4</text>
+<circle cx="268" cy="214" r="12" fill="#7048E8"/><text x="268" y="219">5</text>
+<circle cx="52" cy="298" r="12" fill="#7048E8"/><text x="52" y="303">6</text></g>
+<path d="M282 214 L330 214" stroke="#7048E8" stroke-width="2"/>
+<rect x="330" y="186" width="290" height="56" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="475" y="220" text-anchor="middle" font-weight="700" fill="#5F3DC4">{$t[4]}</text>
+<text x="475" y="120" text-anchor="middle" font-size="15" font-weight="700">{$t[5]}</text>
+<text x="475" y="146" text-anchor="middle" font-size="22" fill="#7048E8">1 → 2 → 3 → 4 → 5 → 6</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ux-mobile', 'family' => 'ux', 'after' => 'ux-base', 'categories' => ['design', 'mobile'],
     'title' => L('UX su mobile', 'UX on Mobile'), 'short' => L('UX mobile', 'Mobile UX'), 'level' => L('Intermedio', 'Intermediate'),
@@ -20,12 +136,15 @@ return [
         ]),
         lesson('touch', L('Zona del pollice e target touch', 'Thumb zone and touch targets'), [
             P('La maggior parte delle persone tiene il telefono con una mano e usa il **pollice**: la parte bassa e centrale dello schermo è la più comoda, gli angoli in alto sono i più difficili. Per questo le azioni principali scendono in basso (barra di navigazione, pulsante principale) e quelle rare o pericolose stanno più in alto.', 'Most people hold the phone with one hand and use their **thumb**: the lower centre of the screen is the most comfortable, the top corners the hardest. That is why main actions move to the bottom (navigation bar, main button) and rare or dangerous ones sit higher up.'),
+            Fig(L(fig_uxmob_thumb('it'), fig_uxmob_thumb('en')),
+                L('A sinistra lo schermo di un telefono tenuto con la mano destra, diviso in zone: facile in basso al centro, con sforzo intorno, difficile negli angoli in alto. A destra una schermata che la rispetta: «Elimina account» in alto, il pulsante «Paga ora» e la barra di navigazione in basso.', 'On the left the screen of a phone held in the right hand, split into zones: easy at the lower centre, a stretch around it, hard in the top corners. On the right a screen that follows it: “Delete account” at the top, the “Pay now” button and the navigation bar at the bottom.'),
+                L('Quello che si usa spesso va dove il pollice arriva senza sforzo.', 'What is used often goes where the thumb reaches without effort.')),
             P('Un dito è impreciso: i **target touch** devono essere grandi almeno **44×44 punti** (Apple) o **48×48 dp** (Material), con spazio tra un target e l’altro. Il target può essere più grande dell’icona visibile. Il tocco non ha **hover**: niente informazioni che compaiono solo passando sopra con il mouse.', 'A finger is imprecise: **touch targets** must be at least **44×44 points** (Apple) or **48×48 dp** (Material), with space between targets. The target can be larger than the visible icon. Touch has no **hover**: no information that appears only when hovering with a mouse.'),
             C('.icona-chiudi {
   width: 24px;      /* icona visibile */
   height: 24px;
   padding: 12px;    /* area toccabile: 48 × 48 */
-}', 'css'),
+}', 'css', '<span class="icona-chiudi" style="display:inline-block;background:#FFE8D6;border-radius:50%;outline:2px dashed #E8590C"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M6 6l12 12M18 6L6 18" stroke="#1E1C52" stroke-width="2.5" stroke-linecap="round"/></svg></span> <code>24 + 12 + 12 = 48</code>'),
         ], [
             Q('t1', L('Quale zona dello schermo è più comoda per il pollice?', 'Which screen area is most comfortable for the thumb?'), [L('In basso al centro', 'Lower centre'), L('In alto a sinistra', 'Top left'), L('In alto a destra', 'Top right'), L('Tutte allo stesso modo', 'All equally')], 0, L('Lì vanno le azioni principali.', 'Main actions go there.')),
             Q('t2', L('Quanto deve essere grande almeno un target touch secondo Material?', 'How big must a touch target be at least per Material?'), ['48×48 dp', '16×16 dp', '24×24 dp', '100×100 dp'], 0, L('Apple indica 44×44 punti.', 'Apple says 44×44 points.')),
@@ -36,6 +155,9 @@ return [
         ]),
         lesson('navigation', L('Navigazione e gesti', 'Navigation and gestures'), [
             P('La **tab bar** in basso (3-5 voci) è lo schema più chiaro per le sezioni principali: sempre visibile, a portata di pollice. Il **menu hamburger** nasconde le voci e le fa usare meno: va bene per le cose secondarie. Per le azioni dentro una schermata si usano pulsanti, **bottom sheet** e menu contestuali.', 'The bottom **tab bar** (3-5 items) is the clearest pattern for main sections: always visible, within thumb reach. The **hamburger menu** hides items and makes them used less: fine for secondary things. For actions within a screen you use buttons, **bottom sheets** and contextual menus.'),
+            Fig(L(fig_uxmob_tabs('it'), fig_uxmob_tabs('en')),
+                L('Due telefoni. Il primo ha solo l’icona del menu hamburger in alto a sinistra: le sezioni sono nascoste. Il secondo ha una barra in basso con quattro schede sempre visibili, Home, Cerca, Ordini e Profilo, con la scheda attiva evidenziata.', 'Two phones. The first has only the hamburger menu icon at the top left: the sections are hidden. The second has a bar at the bottom with four always-visible tabs, Home, Search, Orders and Profile, with the active tab highlighted.'),
+                L('Ciò che non si vede si usa meno: le sezioni principali vanno in vista.', 'What is out of sight gets used less: main sections belong in view.')),
             P('I **gesti** (scorrere, trascinare, pizzicare, scorrere per eliminare) sono veloci ma **invisibili**: chi non li conosce non li scopre. Ogni gesto deve avere anche un’alternativa visibile (un pulsante, un menu), e non bisogna litigare con i gesti di sistema (scorrere dal bordo per tornare indietro, dal basso per la home).', '**Gestures** (scroll, drag, pinch, swipe to delete) are fast but **invisible**: those who do not know them will not discover them. Every gesture needs a visible alternative too (a button, a menu), and you must not fight system gestures (swipe from the edge to go back, from the bottom for home).'),
         ], [
             Q('n1', L('Quante voci ha di solito una tab bar?', 'How many items does a tab bar usually have?'), [L('Da 3 a 5', '3 to 5'), L('Da 8 a 12', '8 to 12'), L('Una sola', 'Just one'), L('Più di 20', 'More than 20')], 0, L('Poche e sempre visibili.', 'Few and always visible.')),
@@ -58,6 +180,9 @@ return [
         ]),
         lesson('performance', L('Velocità percepita e offline', 'Perceived speed and offline'), [
             P('Su mobile la rete è lenta e instabile. Conta la **velocità percepita**: mostrare subito uno **scheletro** della pagina (skeleton), caricare prima ciò che si vede, dare un riscontro immediato a ogni tocco. Uno spinner senza fine fa sembrare tutto rotto.', 'On mobile the network is slow and unstable. **Perceived speed** matters: show a page **skeleton** right away, load what is visible first, give immediate feedback to every tap. An endless spinner makes everything feel broken.'),
+            Fig(L(fig_uxmob_skeleton('it'), fig_uxmob_skeleton('en')),
+                L('Due telefoni in caricamento. Nel primo c’è solo uno spinner che gira al centro di uno schermo vuoto. Nel secondo uno skeleton: blocchi grigi che pulsano piano al posto del titolo, dell’immagine, del testo e di un commento, già nella forma della pagina.', 'Two phones loading. The first shows only a spinner turning in the middle of an empty screen. The second shows a skeleton: grey blocks gently pulsing where the heading, image, text and a comment will be, already in the shape of the page.'),
+                L('Lo skeleton fa sembrare l’attesa più breve perché mostra subito che cosa sta arrivando.', 'A skeleton makes the wait feel shorter because it shows at once what is coming.')),
             P('Pensa all’**offline**: salva le bozze sul dispositivo, metti in coda le azioni e inviale quando torna la rete, dì chiaramente cosa è disponibile senza connessione. L’**aggiornamento ottimistico** mostra subito il risultato (un like) e lo annulla solo se il server rifiuta.', 'Think about **offline**: save drafts on the device, queue actions and send them when the network returns, say clearly what is available without a connection. An **optimistic update** shows the result at once (a like) and undoes it only if the server refuses.'),
         ], [
             Q('pf1', L('Che cos’è uno skeleton?', 'What is a skeleton?'), [L('La sagoma della pagina mentre carica', 'The page outline while loading'), L('Un errore', 'An error'), L('Un font', 'A font'), L('Un’animazione di festa', 'A celebration animation')], 0, L('Sembra già quasi pronta.', 'It already looks almost ready.')),
@@ -69,6 +194,9 @@ return [
         ]),
         lesson('accessibility', L('Accessibilità su mobile', 'Mobile accessibility'), [
             P('Su telefono molte persone usano un **lettore di schermo**: **VoiceOver** su iOS e **TalkBack** su Android. Si scorre con un dito per ascoltare gli elementi uno alla volta e si tocca due volte per attivarli. Perché funzioni, ogni controllo ha bisogno di un’**etichetta** che dica che cosa fa («Aggiungi ai preferiti», non «pulsante 3»), di un **ruolo** (pulsante, interruttore) e di un **ordine di lettura** logico.', 'On phones many people use a **screen reader**: **VoiceOver** on iOS and **TalkBack** on Android. You swipe with one finger to hear elements one at a time and double-tap to activate them. For it to work, every control needs a **label** saying what it does (“Add to favourites”, not “button 3”), a **role** (button, switch) and a logical **reading order**.'),
+            Fig(L(fig_uxmob_reader('it'), fig_uxmob_reader('en')),
+                L('La schermata di un prodotto con sei elementi numerati nell’ordine in cui li legge lo screen reader: indietro, immagine, nome del prodotto, prezzo, pulsante dei preferiti, pulsante per aggiungere al carrello. Il pulsante con il solo cuore viene annunciato come «Aggiungi ai preferiti, pulsante».', 'A product screen with six elements numbered in the order the screen reader reads them: back, image, product name, price, favourites button, add to basket button. The heart-only button is announced as “Add to favourites, button”.'),
+                L('Etichetta e ruolo fanno capire anche un pulsante fatto solo di un’icona.', 'A label and a role make even an icon-only button understandable.')),
             P('Altre regole: il layout deve reggere il **testo ingrandito** (Dynamic Type, dimensione del carattere di Android) senza tagliare parole; i gesti complessi hanno un’alternativa semplice (le WCAG chiedono un’alternativa al **trascinamento** e ai gesti a più dita o a percorso); l’app funziona sia in **verticale** sia in **orizzontale**; i target sono grandi e distanziati. Poi prova davvero: attiva VoiceOver o TalkBack e completa un compito senza guardare lo schermo.', 'Other rules: the layout must cope with **enlarged text** (Dynamic Type, Android font size) without cutting words; complex gestures have a simple alternative (WCAG asks for an alternative to **dragging** and to multi-finger or path gestures); the app works in both **portrait** and **landscape**; targets are large and well spaced. Then really try it: turn on VoiceOver or TalkBack and complete a task without looking at the screen.'),
             C('<button aria-label="Aggiungi ai preferiti">
   <svg aria-hidden="true" viewBox="0 0 24 24">…</svg>

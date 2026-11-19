@@ -1,6 +1,141 @@
 <?php
 /** Flutter intermediate: forms, async data, state management, themes, local storage, go_router, JSON models, animations and widget tests. */
 
+/** The three states a FutureBuilder draws: waiting (a spinner that turns), then data or an error. */
+if (!function_exists('fig_flutterint_future')) {
+    function fig_flutterint_future(string $wait, string $data, string $err): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.spin{transform-box:fill-box;transform-origin:center;animation:spin 3s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.spin{animation:none}}</style>
+<g stroke="#8A87B0" stroke-width="2" fill="none">
+<path d="M192 120 H230"/><path d="M222 113 L232 120 L222 127"/>
+<path d="M407 108 L446 72"/><path d="M436 72 L448 70 L444 82"/>
+<path d="M407 132 L446 168"/><path d="M444 158 L448 170 L436 168"/>
+</g>
+<rect x="20" y="80" width="170" height="80" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="105" y="114" text-anchor="middle" font-weight="700">FutureBuilder</text>
+<text x="105" y="138" text-anchor="middle" font-size="13" fill="#5A35C9">future: caricaCorsi()</text>
+<rect x="235" y="80" width="170" height="80" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<circle cx="268" cy="120" r="14" fill="none" stroke="#DDDBEA" stroke-width="4"/>
+<circle class="spin" cx="268" cy="120" r="14" fill="none" stroke="#2F8CF0" stroke-width="4" stroke-dasharray="30 58" stroke-linecap="round"/>
+<text x="294" y="115" font-weight="700">{$wait}</text>
+<text x="294" y="137" font-size="13" fill="#5F5C8A">!snap.hasData</text>
+<rect x="450" y="20" width="170" height="80" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="535" y="54" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$data}</text>
+<text x="535" y="78" text-anchor="middle" font-size="13" fill="#0B7F5C">snap.hasData</text>
+<rect x="450" y="140" width="170" height="80" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="535" y="174" text-anchor="middle" font-weight="700" fill="#C2185B">{$err}</text>
+<text x="535" y="198" text-anchor="middle" font-size="13" fill="#C2185B">snap.hasError</text>
+</svg>
+SVG;
+    }
+}
+
+/** A ChangeNotifierProvider above two widgets: the button calls aggiungi() with read, notifyListeners() redraws the badge that watches. */
+if (!function_exists('fig_flutterint_provider')) {
+    function fig_flutterint_provider(string $redraws, string $noListen): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="170" y="12" width="300" height="80" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="32" text-anchor="middle" font-size="13" font-weight="700" fill="#5A35C9">ChangeNotifierProvider</text>
+<rect x="240" y="42" width="160" height="38" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="320" y="66" text-anchor="middle" font-weight="700">Carrello · 3</text>
+<g stroke-width="2" fill="none">
+<path d="M290 82 V140 H150 V200" stroke="#E8590C"/><path d="M143 192 L150 204 L157 192" stroke="#E8590C"/>
+<path d="M490 200 V140 H350 V88" stroke="#0B7F5C"/><path d="M343 96 L350 84 L357 96" stroke="#0B7F5C"/>
+</g>
+<text x="140" y="160" text-anchor="end" font-size="13" font-weight="700" fill="#B84508">notifyListeners()</text>
+<text x="140" y="178" text-anchor="end" font-size="13" fill="#B84508">{$redraws}</text>
+<text x="500" y="160" font-size="13" font-weight="700" fill="#0B7F5C">aggiungi("Corso")</text>
+<text x="500" y="178" font-size="13" fill="#0B7F5C">{$noListen}</text>
+<rect x="40" y="206" width="230" height="70" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="155" y="235" text-anchor="middle" font-weight="700">Badge</text>
+<text x="155" y="258" text-anchor="middle" font-size="13" fill="#1B66BC">context.watch&lt;Carrello&gt;()</text>
+<rect x="370" y="206" width="230" height="70" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="485" y="235" text-anchor="middle" font-weight="700">Button</text>
+<text x="485" y="258" text-anchor="middle" font-size="13" fill="#0B7F5C">context.read&lt;Carrello&gt;()</text>
+</svg>
+SVG;
+    }
+}
+
+/** One column on a phone, two on a tablet: the layout chosen from MediaQuery's width. */
+if (!function_exists('fig_flutterint_adaptive')) {
+    function fig_flutterint_adaptive(string $phone, string $tablet): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="50" y="16" width="130" height="214" rx="18" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<rect x="62" y="34" width="106" height="28" rx="8" fill="#FFE8D6"/>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2">
+<rect x="62" y="72" width="106" height="32" rx="8"/><rect x="62" y="112" width="106" height="32" rx="8"/><rect x="62" y="152" width="106" height="32" rx="8"/>
+</g>
+<rect x="230" y="40" width="380" height="190" rx="18" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<rect x="244" y="54" width="352" height="28" rx="8" fill="#FFE8D6"/>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2">
+<rect x="244" y="92" width="130" height="32" rx="8"/><rect x="244" y="132" width="130" height="32" rx="8"/><rect x="244" y="172" width="130" height="32" rx="8"/>
+</g>
+<rect x="384" y="92" width="212" height="122" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g stroke="#2F8CF0" stroke-width="2"><path d="M400 116 H560"/><path d="M400 140 H540"/><path d="M400 164 H570"/></g>
+<text x="115" y="256" text-anchor="middle" font-size="14">{$phone}</text>
+<text x="420" y="256" text-anchor="middle" font-size="14">{$tablet}</text>
+</svg>
+SVG;
+    }
+}
+
+/** linear against Curves.easeInOut: the two curves of value over time, and two dots running with each timing. */
+if (!function_exists('fig_flutterint_curves')) {
+    function fig_flutterint_curves(string $time, string $value): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.run{animation:run 3s linear infinite alternate}.ease{animation-timing-function:cubic-bezier(.42,0,.58,1)}@keyframes run{from{transform:none}to{transform:translateX(210px)}}@media (prefers-reduced-motion:reduce){.run{animation:none}}</style>
+<g stroke="#1E1C52" stroke-width="2" fill="none"><path d="M50 20 V220 H310"/></g>
+<text x="300" y="244" text-anchor="end" font-size="13" fill="#5F5C8A">{$time} →</text>
+<text transform="translate(36 120) rotate(-90)" text-anchor="middle" font-size="13" fill="#5F5C8A">{$value} →</text>
+<path d="M50 220 L300 30" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+<path d="M50 220 C155 220 195 30 300 30" stroke="#E8590C" stroke-width="3" fill="none"/>
+<path d="M64 40 H92" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 5"/><text x="100" y="45" font-size="14">linear</text>
+<path d="M64 64 H92" stroke="#E8590C" stroke-width="3"/><text x="100" y="69" font-size="14">easeInOut</text>
+<text x="370" y="70" font-size="14" fill="#5F5C8A">Curves.linear</text>
+<path d="M370 96 H600" stroke="#DDDBEA" stroke-width="6" stroke-linecap="round"/>
+<circle class="run" cx="380" cy="96" r="12" fill="#8A87B0"/>
+<text x="370" y="160" font-size="14" fill="#B84508">Curves.easeInOut</text>
+<path d="M370 186 H600" stroke="#FFE8D6" stroke-width="6" stroke-linecap="round"/>
+<circle class="run ease" cx="380" cy="186" r="12" fill="#E8590C"/>
+</svg>
+SVG;
+    }
+}
+
+/** The three levels of Flutter tests as a pyramid: many fast unit tests at the base, few realistic integration tests at the top. */
+if (!function_exists('fig_flutterint_tests')) {
+    function fig_flutterint_tests(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<polygon points="290,10 350,10 392,90 248,90" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="248,90 392,90 431,165 209,165" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="209,165 431,165 470,240 170,240" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2" stroke-linejoin="round"/>
+<g text-anchor="middle" font-weight="700">
+<text x="320" y="62">integration</text><text x="320" y="134">widget</text><text x="320" y="209">unit</text>
+</g>
+<g stroke="#8A87B0" stroke-width="2" fill="none"><path d="M150 236 V20"/><path d="M143 30 L150 18 L157 30"/></g>
+<g text-anchor="end" font-size="13" fill="#5F5C8A">
+<text x="138" y="34">{$t[0]}</text><text x="138" y="52">{$t[1]}</text>
+<text x="138" y="214">{$t[2]}</text><text x="138" y="232">{$t[3]}</text>
+</g>
+<g font-size="13">
+<text x="440" y="56" fill="#5A35C9">{$t[4]}</text><text x="470" y="133" fill="#1B66BC">{$t[5]}</text><text x="490" y="208" fill="#0B7F5C">{$t[6]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'flutter-intermediate', 'family' => 'flutter', 'after' => 'flutter-base',
     'title' => L('Flutter intermedio', 'Intermediate Flutter'), 'short' => L('Flutter intermedio', 'Flutter Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -8,7 +143,7 @@ return [
     'lessons' => [
         lesson('forms', L('Moduli e validazione', 'Forms and validation'), [
             P('Un `Form` raccoglie più `TextFormField`; ogni campo ha un `validator` che restituisce un messaggio d’errore o `null` se va bene. Una `GlobalKey<FormState>` permette di validare tutto insieme.', 'A `Form` gathers several `TextFormField`s; each field has a `validator` returning an error message, or `null` when fine. A `GlobalKey<FormState>` lets you validate everything at once.'),
-            C('final _chiave = GlobalKey<FormState>();
+            C(L('final _chiave = GlobalKey<FormState>();
 
 Form(
   key: _chiave,
@@ -24,8 +159,26 @@ Form(
       child: const Text("Invia"),
     ),
   ]),
-)', 'dart'),
+)', 'final _chiave = GlobalKey<FormState>();
+
+Form(
+  key: _chiave,
+  child: Column(children: [
+    TextFormField(
+      decoration: const InputDecoration(labelText: "Email"),
+      validator: (v) => (v == null || !v.contains("@")) ? "Invalid email" : null,
+    ),
+    ElevatedButton(
+      onPressed: () {
+        if (_chiave.currentState!.validate()) salva();
+      },
+      child: const Text("Send"),
+    ),
+  ]),
+)'), 'dart', L('<style>body{margin:0;padding:12px 16px;font-family:system-ui,sans-serif;color:#1d1b20}.f{border-bottom:2px solid #b3261e;padding:4px 0 6px}.f small{display:block;color:#b3261e;font-size:12px}.e{color:#b3261e;font-size:12px;margin:4px 0 14px}.b{display:inline-block;padding:9px 22px;border-radius:20px;background:#6750a4;color:#fff}</style><div class="f"><small>Email</small>ada.example.com</div><div class="e">Email non valida</div><span class="b">Invia</span>', '<style>body{margin:0;padding:12px 16px;font-family:system-ui,sans-serif;color:#1d1b20}.f{border-bottom:2px solid #b3261e;padding:4px 0 6px}.f small{display:block;color:#b3261e;font-size:12px}.e{color:#b3261e;font-size:12px;margin:4px 0 14px}.b{display:inline-block;padding:9px 22px;border-radius:20px;background:#6750a4;color:#fff}</style><div class="f"><small>Email</small>ada.example.com</div><div class="e">Invalid email</div><span class="b">Send</span>')),
             P('Un `TextEditingController` legge e cambia il testo di un campo da codice.', 'A `TextEditingController` reads and changes a field’s text from code.'),
+            P('Il `validator` viene chiamato da `validate()`, di solito al tocco del bottone: se anche un solo campo restituisce un messaggio, `validate()` dà `false` e il messaggio appare in rosso sotto il campo. Per mostrare l’errore già mentre l’utente scrive, aggiungi al `Form` `autovalidateMode: AutovalidateMode.onUserInteraction`.', 'The `validator` is called by `validate()`, usually when the button is tapped: if even one field returns a message, `validate()` gives `false` and the message appears in red under the field. To show the error while the user is still typing, add `autovalidateMode: AutovalidateMode.onUserInteraction` to the `Form`.'),
+            Tip('La validazione nell’app aiuta l’utente ma non protegge nulla: chiunque può chiamare il server senza passare dall’app, quindi lì i dati vanno controllati di nuovo.', 'Validation in the app helps the user but protects nothing: anyone can call the server without going through the app, so the data must be checked there again.'),
         ], [
             Q('f1', L('Che cosa restituisce un validator se il valore è giusto?', 'What does a validator return when the value is fine?'), ['null', 'true', '""', '0'], 0, L('Una stringa indica l’errore.', 'A string signals the error.')),
             Q('f2', L('Come validi tutto il modulo?', 'How do you validate the whole form?'), ['chiave.currentState!.validate()', 'form.check()', 'validateAll()', 'Form.ok'], 0, L('Tramite la GlobalKey.', 'Through the GlobalKey.')),
@@ -38,6 +191,7 @@ Form(
         ]),
         lesson('async', L('Future e dati dalla rete', 'Futures and network data'), [
             P('Le operazioni lente restituiscono un `Future`. Con `async`/`await` si scrivono come codice normale. `FutureBuilder` mostra un widget diverso mentre aspetta, in caso di errore o con i dati.', 'Slow operations return a `Future`. With `async`/`await` you write them like normal code. `FutureBuilder` shows a different widget while waiting, on error or with data.'),
+            Fig(L(fig_flutterint_future('in attesa', 'dati arrivati', 'errore'), fig_flutterint_future('waiting', 'data arrived', 'error')), L('FutureBuilder, con future caricaCorsi(), passa prima allo stato in attesa, con una rotella che gira. Da lì una freccia porta ai dati arrivati, quando snap.hasData è vero, e un’altra all’errore, quando snap.hasError è vero.', 'FutureBuilder, with the future caricaCorsi(), first goes to the waiting state, with a turning spinner. From there one arrow leads to data arrived, when snap.hasData is true, and another to the error, when snap.hasError is true.'), L('Il builder viene richiamato a ogni cambio di stato del Future: prevedi tutti e tre i casi.', 'The builder runs again at every change of the Future’s state: handle all three cases.')),
             C('Future<List<String>> caricaCorsi() async {
   final r = await http.get(Uri.parse("https://example.com/api/corsi"));
   if (r.statusCode != 200) throw Exception("Errore ${r.statusCode}");
@@ -81,6 +235,8 @@ FutureBuilder<List<String>>(
 final n = context.watch<Carrello>().totale;
 context.read<Carrello>().aggiungi("Corso");', 'dart'),
             P('`watch` ridisegna il widget quando lo stato cambia; `read` lo usa senza ascoltare, per esempio dentro un `onPressed`.', '`watch` redraws the widget when state changes; `read` uses it without listening, e.g. inside an `onPressed`.'),
+            Fig(L(fig_flutterint_provider('→ si ridisegna', 'senza ascoltare'), fig_flutterint_provider('→ redraws', 'without listening')), L('In alto ChangeNotifierProvider contiene l’oggetto Carrello. Sotto ci sono due widget: Button usa context.read e chiama aggiungi, con una freccia verde verso il Carrello; dal Carrello una freccia arancione, notifyListeners, scende a Badge, che usa context.watch e si ridisegna.', 'At the top ChangeNotifierProvider holds the Carrello object. Below are two widgets: Button uses context.read and calls aggiungi, with a green arrow up to Carrello; from Carrello an orange arrow, notifyListeners, goes down to Badge, which uses context.watch and redraws.'), L('Le azioni salgono allo stato, gli avvisi scendono a chi ascolta.', 'Actions go up to the state, notifications come down to whoever listens.')),
+            P('Il provider va messo **sopra** tutti i widget che usano lo stato: `context.watch` lo cerca risalendo l’albero e, se non lo trova, lancia un errore. Due sviste tipiche: dimenticare `notifyListeners()`, così i dati cambiano ma nessuno si ridisegna, e usare `watch` dentro un `onPressed`, dove serve `read`. Riverpod e Bloc sono alternative per app più grandi, ma l’idea resta: lo stato fuori dai widget, i widget che lo ascoltano.', 'The provider must sit **above** every widget that uses the state: `context.watch` looks for it going up the tree and throws an error if it does not find it. Two classic slips: forgetting `notifyListeners()`, so the data changes but nothing redraws, and using `watch` inside an `onPressed`, where you need `read`. Riverpod and Bloc are alternatives for larger apps, but the idea stays: state outside the widgets, widgets that listen to it.'),
         ], [
             Q('m1', L('Che cosa fa `notifyListeners()`?', 'What does `notifyListeners()` do?'), [L('Avvisa i widget che ascoltano', 'Tells the listening widgets'), L('Manda una notifica push', 'Sends a push notification'), L('Salva su disco', 'Saves to disk'), L('Chiude l’app', 'Closes the app')], 0, L('Così si ridisegnano.', 'So they redraw.')),
             Q('m2', L('Quando usare `read` invece di `watch`?', 'When use `read` instead of `watch`?'), [L('Dentro un callback come onPressed', 'Inside a callback like onPressed'), L('Sempre', 'Always'), L('Mai', 'Never'), L('Solo in main', 'Only in main')], 0, L('Non serve ridisegnare.', 'No redraw needed.')),
@@ -107,6 +263,8 @@ context.read<Carrello>().aggiungi("Corso");', 'dart'),
 
 final largo = MediaQuery.sizeOf(context).width > 700;', 'dart'),
             P('`MediaQuery` dice quanto è grande lo schermo: utile per mostrare una colonna sul telefono e due sul tablet.', '`MediaQuery` tells how big the screen is: handy for showing one column on a phone and two on a tablet.'),
+            Fig(L(fig_flutterint_adaptive('telefono: larghezza ≤ 700', 'tablet: larghezza > 700'), fig_flutterint_adaptive('phone: width ≤ 700', 'tablet: width > 700')), L('A sinistra un telefono con una sola colonna di righe. A destra un tablet in orizzontale con la lista a sinistra e il dettaglio azzurro a destra.', 'On the left a phone with a single column of rows. On the right a landscape tablet with the list on the left and the blue detail on the right.'), L('La stessa app sceglie il layout in base alla larghezza.', 'The same app picks its layout from the width.')),
+            P('Il tema rende davvero quando i widget leggono i colori da lì invece di scriverli a mano: `Theme.of(context).colorScheme.primary` è arancione nel tema chiaro e una variante adatta nel tema scuro, senza nessun `if`. Lo stesso vale per i testi con `Theme.of(context).textTheme.titleLarge`. Cambi il colore seme in un punto solo e tutta l’app si adegua.', 'The theme really pays off when widgets read their colours from it instead of hard-coding them: `Theme.of(context).colorScheme.primary` is orange in the light theme and a suitable variant in the dark one, without a single `if`. The same goes for text with `Theme.of(context).textTheme.titleLarge`. Change the seed colour in one place and the whole app follows.'),
         ], [
             Q('t1', L('Che cosa fa `ColorScheme.fromSeed`?', 'What does `ColorScheme.fromSeed` do?'), [L('Crea una palette da un colore', 'Makes a palette from one colour'), L('Sceglie un colore a caso', 'Picks a random colour'), L('Carica un’immagine', 'Loads an image'), L('Cambia il font', 'Changes the font')], 0, L('Colori coordinati in automatico.', 'Coordinated colours automatically.')),
             Q('t2', L('Quale `themeMode` segue il sistema?', 'Which `themeMode` follows the system?'), ['ThemeMode.system', 'ThemeMode.auto', 'ThemeMode.dark', 'ThemeMode.os'], 0, L('Chiaro o scuro come il telefono.', 'Light or dark like the phone.')),
@@ -217,6 +375,7 @@ final ritorno = jsonEncode(lista.first.toJson());', 'dart'),
     borderRadius: BorderRadius.circular(aperto ? 24 : 8),
   ),
 )', 'dart'),
+            Fig(L(fig_flutterint_curves('tempo', 'valore'), fig_flutterint_curves('time', 'value')), L('A sinistra un grafico del valore nel tempo: la retta tratteggiata grigia è linear, la curva a S arancione è easeInOut, che parte piano, accelera e rallenta alla fine. A destra due pallini percorrono la stessa distanza, uno a velocità costante e uno con easeInOut.', 'On the left a chart of value over time: the grey dashed straight line is linear, the orange S curve is easeInOut, which starts slowly, speeds up and slows down at the end. On the right two dots cover the same distance, one at a constant speed and one with easeInOut.'), L('Stessa durata, stesso arrivo: cambia solo il ritmo.', 'Same duration, same finish: only the pace changes.')),
             P('Per animazioni continue o da comandare a mano (ripetere, fermare, tornare indietro) si usa un `AnimationController` in uno `State` con `SingleTickerProviderStateMixin`, e lo si libera in `dispose`. `Hero` anima un elemento che passa da una pagina all’altra.', 'For continuous animations or ones you drive by hand (repeat, stop, reverse) you use an `AnimationController` in a `State` with `SingleTickerProviderStateMixin`, and release it in `dispose`. `Hero` animates an element moving from one page to another.'),
             C('class _PulsaState extends State<Pulsa> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
@@ -253,6 +412,7 @@ final ritorno = jsonEncode(lista.first.toJson());', 'dart'),
         ]),
         lesson('testing', L('Test dei widget', 'Widget tests'), [
             P('Flutter ha tre livelli di test: **unit test** per la logica, **widget test** per un pezzo d’interfaccia, **integration test** per l’app intera su un dispositivo. I widget test girano senza emulatore, in pochi secondi, con `flutter test`.', 'Flutter has three levels of tests: **unit tests** for logic, **widget tests** for a piece of interface, **integration tests** for the whole app on a device. Widget tests run without an emulator, in a few seconds, with `flutter test`.'),
+            Fig(L(fig_flutterint_tests(['più realistico', 'e più lento', 'più veloce', 'e più numeroso', 'l’app intera', 'un pezzo di UI', 'una funzione']), fig_flutterint_tests(['more realistic', 'and slower', 'faster', 'and more of them', 'the whole app', 'a piece of UI', 'one function'])), L('Una piramide a tre piani: alla base i test unit, che provano una funzione; al centro i widget test, un pezzo di interfaccia; in cima gli integration test, l’app intera. Una freccia verso l’alto indica che salendo i test sono più realistici e più lenti.', 'A three-level pyramid: unit tests at the base, testing one function; widget tests in the middle, a piece of interface; integration tests at the top, the whole app. An upward arrow shows that going up, tests are more realistic and slower.'), L('Tanti test veloci alla base, pochi test completi in cima.', 'Many fast tests at the base, a few complete ones at the top.')),
             C('import "package:flutter/material.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:fucina_app/contatore.dart";

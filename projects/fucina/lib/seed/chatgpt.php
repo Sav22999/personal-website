@@ -1,6 +1,66 @@
 <?php
 /** OpenAI ChatGPT: the assistant and its models, features, privacy controls, the OpenAI API, deep research, agent mode and connected apps. */
 
+/** What ChatGPT reads before each answer: four sources of context flowing into one window. Labels in one language. */
+if (!function_exists('fig_chatgpt_context')) {
+    function fig_chatgpt_context(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Istruzioni personalizzate', 'in ogni chat', 'Memoria', 'fatti tra una chat e l’altra', 'Progetto', 'i suoi file e le istruzioni', 'Questa chat', 'i tuoi messaggi', 'Contesto', 'letto prima', 'di ogni risposta', 'Risposta']
+            : ['Custom instructions', 'in every chat', 'Memory', 'facts carried across chats', 'Project', 'its files and instructions', 'This chat', 'your messages', 'Context', 'read before', 'every answer', 'Answer'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<g stroke-width="2">
+<rect x="16" y="20" width="250" height="56" rx="12" fill="#FFF3EA" stroke="#E8590C"/>
+<rect x="16" y="88" width="250" height="56" rx="12" fill="#ECE6FF" stroke="#7048E8"/>
+<rect x="16" y="156" width="250" height="56" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/>
+<rect x="16" y="224" width="250" height="56" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/>
+<rect x="330" y="60" width="160" height="180" rx="14" fill="#F1F0F8" stroke="#1E1C52"/>
+<rect x="526" y="120" width="100" height="60" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/>
+</g>
+<g font-weight="700"><text x="32" y="44" fill="#B84508">{$t[0]}</text><text x="32" y="112" fill="#5A36C9">{$t[2]}</text><text x="32" y="180" fill="#0B7F5C">{$t[4]}</text><text x="32" y="248" fill="#1B66BC">{$t[6]}</text></g>
+<g font-size="13"><text x="32" y="64">{$t[1]}</text><text x="32" y="132">{$t[3]}</text><text x="32" y="200">{$t[5]}</text><text x="32" y="268">{$t[7]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M266 48C300 48 300 110 326 120"/><path d="M266 116C296 116 300 140 326 142"/><path d="M266 184C296 184 300 160 326 158"/><path d="M266 252C300 252 300 190 326 180"/><path d="M490 150H522"/></g>
+<text x="410" y="138" text-anchor="middle" font-weight="700" font-size="17">{$t[8]}</text>
+<text x="410" y="166" text-anchor="middle" font-size="13">{$t[9]}</text><text x="410" y="184" text-anchor="middle" font-size="13">{$t[10]}</text>
+<text x="576" y="155" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[11]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Agent mode as a loop: plan, act, check, repeat; important actions stop at a gate where you confirm. The loop arrow's dashes move. */
+if (!function_exists('fig_chatgpt_agent')) {
+    function fig_chatgpt_agent(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Il tuo compito', 'Pianifica', 'Agisce', 'Controlla', 'Rapporto', 'non ancora finito: passo successivo', 'Acquisto o invio?', 'prima chiede a te', 'browser, strumenti']
+            : ['Your task', 'Plan', 'Act', 'Check', 'Report', 'not finished yet: next step', 'Purchase or sending?', 'it asks you first', 'browser, tools'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.loop{animation:go 4s linear infinite}@keyframes go{to{stroke-dashoffset:-48}}@media (prefers-reduced-motion:reduce){.loop{animation:none}}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="219" y="16" width="220" height="56" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="329" y="40" text-anchor="middle" font-weight="700" fill="#C2255C">{$t[6]}</text><text x="329" y="60" text-anchor="middle" font-size="13">{$t[7]}</text>
+<path d="M329 72V108" stroke="#F03E82" stroke-width="2" stroke-dasharray="4 4"/>
+<g stroke-width="2">
+<rect x="6" y="110" width="116" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/>
+<rect x="144" y="110" width="96" height="60" rx="12" fill="#ECE6FF" stroke="#7048E8"/>
+<rect x="264" y="110" width="130" height="60" rx="12" fill="#FFF3EA" stroke="#E8590C"/>
+<rect x="418" y="110" width="96" height="60" rx="12" fill="#ECE6FF" stroke="#7048E8"/>
+<rect x="538" y="110" width="96" height="60" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/>
+</g>
+<g font-weight="700" text-anchor="middle"><text x="64" y="145" font-size="14" fill="#1B66BC">{$t[0]}</text><text x="192" y="145" fill="#5A36C9">{$t[1]}</text><text x="329" y="138" fill="#B84508">{$t[2]}</text><text x="466" y="145" fill="#5A36C9">{$t[3]}</text><text x="586" y="145" fill="#0B7F5C">{$t[4]}</text></g>
+<text x="329" y="158" text-anchor="middle" font-size="13">{$t[8]}</text>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M122 140H140"/><path d="M240 140H260"/><path d="M394 140H414"/><path d="M514 140H534"/></g>
+<path class="loop" d="M466 170V220Q466 236 450 236H208Q192 236 192 220V176" stroke="#7048E8" stroke-width="2" fill="none" stroke-dasharray="8 4" marker-end="url(#a)"/>
+<text x="329" y="260" text-anchor="middle" font-size="13">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'chatgpt', 'family' => 'assistants', 'after' => null,
     'title' => L('OpenAI ChatGPT', 'OpenAI ChatGPT'), 'short' => L('ChatGPT', 'ChatGPT'), 'level' => L('Base', 'Basics'),
@@ -63,6 +123,9 @@ print(risposta.output_text)', 'python'),
         lesson('custom', L('Istruzioni personalizzate, memoria e progetti', 'Custom instructions, memory and projects'), [
             P('Le **istruzioni personalizzate** dicono a ChatGPT chi sei e come vuoi le risposte (tono, lunghezza, formato) e valgono per tutte le chat. La **memoria** ricorda fatti utili tra una conversazione e l’altra: puoi vederla, correggerla o spegnerla dalle impostazioni.', '**Custom instructions** tell ChatGPT who you are and how you want answers (tone, length, format) and apply to every chat. **Memory** remembers useful facts between conversations: you can view, correct or turn it off in the settings.'),
             P('I **progetti** raccolgono chat, file e istruzioni su un tema (una tesi, un cliente): il contesto resta insieme. I **GPT** personalizzati sono assistenti con istruzioni e file propri, da condividere.', '**Projects** gather chats, files and instructions on one topic (a thesis, a client): the context stays together. Custom **GPTs** are assistants with their own instructions and files, which can be shared.'),
+            Fig(L(fig_chatgpt_context('it'), fig_chatgpt_context('en')),
+                L('Quattro riquadri a sinistra (istruzioni personalizzate, memoria, progetto, la chat in corso) mandano frecce verso un riquadro centrale chiamato contesto, da cui parte una freccia verso la risposta.', 'Four boxes on the left (custom instructions, memory, project, the current chat) send arrows into a central box called context, which leads to the answer.'),
+                L('Prima di rispondere ChatGPT legge tutto ciò che è nel contesto: tienilo pulito e aggiornato.', 'Before answering, ChatGPT reads everything in its context: keep it tidy and up to date.')),
             Tip('Rileggi ogni tanto la memoria: togli ciò che non è più vero o che non vuoi sia ricordato.', 'Review the memory now and then: remove what is no longer true or what you do not want remembered.'),
         ], [
             Q('cu1', L('A che cosa servono le istruzioni personalizzate?', 'What are custom instructions for?'), [L('Dire come vuoi le risposte in ogni chat', 'Saying how you want answers in every chat'), L('Cambiare il modello', 'Changing the model'), L('Pagare meno', 'Paying less'), L('Cancellare la cronologia', 'Deleting history')], 0, L('Tono, formato, chi sei.', 'Tone, format, who you are.')),
@@ -75,6 +138,9 @@ print(risposta.output_text)', 'python'),
         lesson('agent', L('Ricerca approfondita, agente e app collegate', 'Deep research, agent and connected apps'), [
             P('La **ricerca approfondita** fa da sola molte ricerche sul web, legge le fonti e dopo qualche minuto consegna un **rapporto** strutturato con le citazioni: utile per confronti, rassegne e analisi di mercato. Le fonti vanno comunque aperte e controllate.', '**Deep research** runs many web searches on its own, reads the sources and after a few minutes delivers a structured **report** with citations: useful for comparisons, reviews and market analysis. The sources must still be opened and checked.'),
             P('In **modalità agente** ChatGPT svolge compiti in più passaggi usando un browser e altri strumenti: compilare una tabella da più siti, preparare una bozza di presentazione, cercare e confrontare offerte. Chiede conferma prima delle azioni importanti (un acquisto, l’invio di un messaggio) e puoi fermarlo in ogni momento.', 'In **agent mode** ChatGPT carries out multi-step tasks using a browser and other tools: filling a table from several sites, drafting a presentation, finding and comparing offers. It asks for confirmation before important actions (a purchase, sending a message) and you can stop it at any time.'),
+            Fig(L(fig_chatgpt_agent('it'), fig_chatgpt_agent('en')),
+                L('Una fila di riquadri: il tuo compito, pianifica, agisce, controlla, rapporto. Una freccia tratteggiata torna da «controlla» a «pianifica» finché il lavoro non è finito; sopra «agisce» un riquadro rosa avverte che per acquisti e invii l’agente chiede prima a te.', 'A row of boxes: your task, plan, act, check, report. A dashed arrow runs back from check to plan until the work is done; above act, a pink box warns that for purchases and sending the agent asks you first.'),
+                L('L’agente ripete pianifica, agisce e controlla; le azioni importanti passano da te.', 'The agent repeats plan, act and check; important actions go through you.')),
             P('Le **app collegate** (connettori) danno accesso a servizi come Google Drive, Gmail, calendari o strumenti aziendali, così ChatGPT può cercare nei tuoi documenti. Collega solo ciò che serve: più accessi significa più dati esposti, e un agente che legge pagine o email può incontrare **istruzioni nascoste** pensate per ingannarlo.', '**Connected apps** (connectors) give access to services such as Google Drive, Gmail, calendars or company tools, so ChatGPT can search your documents. Connect only what you need: more access means more exposed data, and an agent reading pages or emails may meet **hidden instructions** designed to trick it.'),
             Tip('Nomi, piani e limiti di queste funzioni cambiano spesso: controlla nell’app che cosa è disponibile per il tuo account.', 'Names, plans and limits of these features change often: check in the app what is available for your account.'),
         ], [

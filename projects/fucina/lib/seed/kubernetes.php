@@ -2,6 +2,160 @@
 /** Kubernetes: why an orchestrator, pods and deployments, services and ingress, configuration, secrets and scaling, debugging,
  *  persistent storage, Jobs/CronJobs/DaemonSets, namespaces and RBAC, Gateway API, Helm and Kustomize. */
 
+/** A cluster: the control plane that decides and the nodes that run the pods, each with its kubelet. */
+if (!function_exists('fig_k8s_cluster')) {
+    function fig_k8s_cluster(array $t): string
+    {
+        $nodes = '';
+        foreach ([1, 2, 3] as $i) {
+            $x = 16 + ($i - 1) * 208; $cx = $x + 96;
+            $pods = '';
+            foreach (range(0, $i === 2 ? 1 : 2) as $k) { $px = $x + 14 + $k * 58; $pods .= "<rect x=\"$px\" y=\"222\" width=\"50\" height=\"40\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"" . ($px + 25) . "\" y=\"247\" text-anchor=\"middle\" font-size=\"13\">pod</text>"; }
+            $nodes .= "<rect x=\"$x\" y=\"150\" width=\"192\" height=\"126\" rx=\"12\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"" . ($x + 14) . "\" y=\"174\" font-weight=\"700\">{$t[1]} $i</text>"
+                    . "<rect x=\"" . ($x + 100) . "\" y=\"160\" width=\"80\" height=\"26\" rx=\"8\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/><text x=\"" . ($x + 140) . "\" y=\"178\" text-anchor=\"middle\" font-size=\"13\" font-family=\"ui-monospace, Menlo, monospace\">kubelet</text>"
+                    . "<text x=\"" . ($x + 14) . "\" y=\"208\" font-size=\"13\">container runtime</text>" . $pods
+                    . "<path d=\"M$cx,112 V150\" stroke=\"#7048E8\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="16" y="14" width="608" height="98" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="32" y="40" font-weight="700" fill="#5A35C9">{$t[0]}</text>
+<text x="608" y="40" text-anchor="end" font-size="13">{$t[2]}</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" text-anchor="middle" stroke-width="2">
+<rect x="32" y="56" width="150" height="38" rx="8" fill="#FFFFFF" stroke="#7048E8"/><text x="107" y="80" font-weight="700">kube-apiserver</text>
+<rect x="196" y="56" width="80" height="38" rx="8" fill="#FFFFFF" stroke="#7048E8"/><text x="236" y="80">etcd</text>
+<rect x="290" y="56" width="116" height="38" rx="8" fill="#FFFFFF" stroke="#7048E8"/><text x="348" y="80">scheduler</text>
+<rect x="420" y="56" width="188" height="38" rx="8" fill="#FFFFFF" stroke="#7048E8"/><text x="514" y="80">controller-manager</text>
+</g>
+{$nodes}
+</svg>
+SVG;
+    }
+}
+
+/** A Deployment with three replicas during a rolling update: the pods move from web:1.4 to web:1.5 one at a time. */
+if (!function_exists('fig_k8s_rolling')) {
+    function fig_k8s_rolling(): string
+    {
+        $pods = '';
+        foreach ([0, 1, 2] as $i) {
+            $x = 40 + $i * 200; $cx = $x + 80; $n = $i + 1;
+            $pods .= "<path d=\"M320,74 C320,110 $cx,104 $cx,142\" fill=\"none\" stroke=\"#8A87B0\" stroke-width=\"2\"/>"
+                   . "<rect x=\"$x\" y=\"142\" width=\"160\" height=\"84\" rx=\"12\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"172\" text-anchor=\"middle\" font-weight=\"700\">pod</text><text x=\"$cx\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\" fill=\"#1B66BC\">web:1.4</text>"
+                   . "<g class=\"n$n\"><rect x=\"$x\" y=\"142\" width=\"160\" height=\"84\" rx=\"12\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"3\"/><text x=\"$cx\" y=\"172\" text-anchor=\"middle\" font-weight=\"700\">pod</text><text x=\"$cx\" y=\"204\" text-anchor=\"middle\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\" font-weight=\"700\" fill=\"#0B7F5C\">web:1.5</text></g>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.n1{opacity:1;animation:r1 9s infinite}.n2{opacity:0;animation:r2 9s infinite}.n3{opacity:0;animation:r3 9s infinite}@keyframes r1{0%,10%{opacity:0}18%,90%{opacity:1}100%{opacity:0}}@keyframes r2{0%,35%{opacity:0}43%,90%{opacity:1}100%{opacity:0}}@keyframes r3{0%,60%{opacity:0}68%,90%{opacity:1}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.n1,.n2,.n3{animation:none}}</style>
+<rect x="190" y="16" width="260" height="58" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="40" text-anchor="middle" font-weight="700">Deployment web</text>
+<text x="320" y="62" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">replicas: 3</text>
+{$pods}
+<text x="320" y="252" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">rolling update · web:1.4 → web:1.5</text>
+</svg>
+SVG;
+    }
+}
+
+/** Outside traffic through an Ingress to a Service, which sends it only to the pods whose labels match its selector. */
+if (!function_exists('fig_k8s_service')) {
+    function fig_k8s_service(): string
+    {
+        $pods = '';
+        foreach ([['app=web', 1], ['app=web', 1], ['app=web', 1], ['app=db', 0]] as $i => [$lab, $on]) {
+            $y = 24 + $i * 58; $cy = $y + 22;
+            $pods .= $on
+                ? "<path d=\"M444,135 C462,135 462,$cy 484,$cy\" fill=\"none\" stroke=\"#1E1C52\" stroke-width=\"2\" marker-end=\"url(#ah)\"/><rect x=\"490\" y=\"$y\" width=\"134\" height=\"44\" rx=\"10\" fill=\"#D5F6EA\" stroke=\"#0B7F5C\" stroke-width=\"2\"/>"
+                : "<rect x=\"490\" y=\"$y\" width=\"134\" height=\"44\" rx=\"10\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"2\" stroke-dasharray=\"6 4\"/>";
+            $pods .= "<text x=\"506\" y=\"" . ($cy + 5) . "\" font-weight=\"700\">pod</text><text x=\"610\" y=\"" . ($cy + 5) . "\" text-anchor=\"end\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"13\">$lab</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 262" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="110" width="88" height="50" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="56" y="140" text-anchor="middle" font-weight="700">Internet</text>
+<rect x="126" y="98" width="156" height="74" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="204" y="126" text-anchor="middle" font-weight="700">Ingress</text>
+<text x="204" y="150" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">www.esempio.it/</text>
+<rect x="298" y="98" width="146" height="74" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="371" y="126" text-anchor="middle" font-weight="700">Service web</text>
+<text x="371" y="150" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">selector app=web</text>
+<path d="M102,135 H118" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/><path d="M283,135 H292" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+{$pods}
+</svg>
+SVG;
+    }
+}
+
+/** Readiness and liveness compared: a failing readiness probe takes the pod out of the Service, a failing liveness probe restarts the container. */
+if (!function_exists('fig_k8s_probes')) {
+    function fig_k8s_probes(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#E8590C"/></marker></defs>
+<rect x="8" y="8" width="306" height="254" rx="12" fill="#F1F0F8"/><rect x="326" y="8" width="306" height="254" rx="12" fill="#F1F0F8"/>
+<text x="24" y="36" font-weight="700"><tspan font-family="ui-monospace, Menlo, monospace">readinessProbe</tspan> {$t[0]}</text>
+<text x="342" y="36" font-weight="700"><tspan font-family="ui-monospace, Menlo, monospace">livenessProbe</tspan> {$t[0]}</text>
+<rect x="96" y="54" width="130" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="161" y="79" text-anchor="middle" font-weight="700">Service</text>
+<path d="M130,96 L86,140" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<path d="M192,96 L232,136" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/><path d="M200,124 L222,112" stroke="#F03E82" stroke-width="3"/>
+<rect x="24" y="146" width="120" height="56" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="84" y="171" text-anchor="middle" font-weight="700">pod A</text><text x="84" y="191" text-anchor="middle" font-size="13">{$t[1]}</text>
+<rect x="178" y="146" width="120" height="56" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/><text x="238" y="171" text-anchor="middle" font-weight="700">pod B</text><text x="238" y="191" text-anchor="middle" font-size="13">{$t[2]}</text>
+<text x="161" y="230" text-anchor="middle" font-size="13">{$t[3]}</text>
+<text x="161" y="250" text-anchor="middle" font-size="13">{$t[4]}</text>
+<rect x="404" y="70" width="150" height="132" rx="12" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="479" y="96" text-anchor="middle" font-weight="700">pod</text>
+<rect x="430" y="112" width="98" height="40" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="479" y="137" text-anchor="middle" font-size="13">container</text>
+<path d="M440,162 A42,22 0 1 0 520,162" fill="none" stroke="#E8590C" stroke-width="2" marker-end="url(#ag)"/>
+<text x="479" y="230" text-anchor="middle" font-size="13" font-weight="700" fill="#B84508">{$t[5]}</text>
+<text x="479" y="250" text-anchor="middle" font-size="13">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The storage chain: the pod mounts a PVC, the PVC is bound to a PV that a StorageClass created on a cloud disk. */
+if (!function_exists('fig_k8s_storage')) {
+    function fig_k8s_storage(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="128" width="110" height="64" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="71" y="156" text-anchor="middle" font-weight="700">pod</text><text x="71" y="178" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">db-0</text>
+<rect x="164" y="128" width="140" height="64" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="234" y="156" text-anchor="middle" font-weight="700">PVC</text><text x="234" y="178" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">10Gi · RWO</text>
+<rect x="342" y="128" width="120" height="64" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="402" y="156" text-anchor="middle" font-weight="700">PV</text><text x="402" y="178" text-anchor="middle" font-size="13">{$t[0]}</text>
+<path d="M512,124 v64 a56,14 0 0 0 112,0 v-64" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><ellipse cx="568" cy="124" rx="56" ry="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="568" y="168" text-anchor="middle" font-size="13" font-weight="700">{$t[1]}</text>
+<rect x="302" y="22" width="200" height="50" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="402" y="52" text-anchor="middle" font-weight="700">StorageClass</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)"><path d="M128,160 H156"/><path d="M306,160 H334"/><path d="M464,160 H504"/><path d="M402,74 V120" stroke-dasharray="5 4"/></g>
+<g font-size="13" text-anchor="middle"><text x="142" y="214">{$t[2]}</text><text x="320" y="214">{$t[3]}</text><text x="484" y="214">{$t[4]}</text><text x="458" y="102" text-anchor="start">{$t[5]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The Gateway API roles: the platform team runs GatewayClass and Gateway, each app team writes its HTTPRoute towards its Service. */
+if (!function_exists('fig_k8s_gateway')) {
+    function fig_k8s_gateway(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="8" y="8" width="624" height="82" rx="12" fill="#ECE6FF"/>
+<rect x="8" y="104" width="624" height="188" rx="12" fill="#F1F0F8"/>
+<text x="24" y="32" font-size="13" font-weight="700" fill="#5A35C9">{$t[0]}</text>
+<text x="24" y="128" font-size="13" font-weight="700">{$t[1]}</text>
+<rect x="40" y="40" width="170" height="42" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><text x="125" y="66" text-anchor="middle" font-weight="700">GatewayClass</text>
+<rect x="260" y="36" width="220" height="48" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/><text x="370" y="57" text-anchor="middle" font-weight="700">Gateway</text><text x="370" y="76" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">:443 · TLS</text>
+<path d="M212,61 H252" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<rect x="120" y="140" width="190" height="52" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="215" y="162" text-anchor="middle" font-weight="700">HTTPRoute</text><text x="215" y="182" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">/ → web</text>
+<rect x="400" y="140" width="190" height="52" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="495" y="162" text-anchor="middle" font-weight="700">HTTPRoute</text><text x="495" y="182" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">/api → api</text>
+<rect x="140" y="226" width="150" height="46" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="215" y="255" text-anchor="middle" font-weight="700">Service web</text>
+<rect x="420" y="226" width="150" height="46" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="495" y="255" text-anchor="middle" font-weight="700">Service api</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ah)"><path d="M340,86 C340,110 215,110 215,134"/><path d="M400,86 C400,110 495,110 495,134"/><path d="M215,194 V220"/><path d="M495,194 V220"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'kubernetes', 'family' => 'kubernetes', 'after' => 'docker',
     'title' => L('Kubernetes', 'Kubernetes'), 'short' => L('Kubernetes', 'Kubernetes'), 'level' => L('Avanzato', 'Advanced'),
@@ -15,6 +169,9 @@ kubectl get pods                  # cosa gira
 kubectl describe pod web-7d9c…    # dettagli ed eventi
 kubectl logs web-7d9c…            # log', 'bash'),
             P('Un **cluster** ha un piano di controllo (che decide) e dei **nodi** (che eseguono i container). Per provare in locale esistono strumenti come kind, minikube o Docker Desktop; in produzione si usano servizi gestiti dei fornitori cloud.', 'A **cluster** has a control plane (which decides) and **nodes** (which run the containers). To try it locally there are tools like kind, minikube or Docker Desktop; in production you use cloud providers’ managed services.'),
+            Fig(L(fig_k8s_cluster(['Piano di controllo', 'Nodo', 'decide dove e quando']), fig_k8s_cluster(['Control plane', 'Node', 'decides where and when'])),
+                L('In alto il piano di controllo con kube-apiserver, etcd, scheduler e controller-manager. Sotto tre nodi, ognuno con il suo kubelet, un container runtime e alcuni pod; linee tratteggiate collegano il piano di controllo a ogni nodo.', 'At the top the control plane with kube-apiserver, etcd, scheduler and controller-manager. Below three nodes, each with its kubelet, a container runtime and some pods; dashed lines link the control plane to every node.'),
+                L('`kubectl` parla solo con l’API server; sui nodi il kubelet avvia i pod che lo scheduler gli assegna.', '`kubectl` talks only to the API server; on the nodes the kubelet starts the pods the scheduler assigns to it.')),
         ], [
             Q('w1', L('Che cosa descrivi nei file YAML di Kubernetes?', 'What do you describe in Kubernetes YAML files?'), [L('Lo stato desiderato', 'The desired state'), L('I comandi da eseguire uno per uno', 'Commands to run one by one'), L('Le password degli utenti', 'Users’ passwords'), L('Il colore dell’interfaccia', 'The UI colour')], 0, L('Il cluster lo raggiunge da solo.', 'The cluster reaches it by itself.')),
             Q('w2', L('Che cosa fa `kubectl apply -f app.yaml`?', 'What does `kubectl apply -f app.yaml` do?'), [L('Applica lo stato descritto nel file', 'Applies the state described in the file'), L('Cancella il cluster', 'Deletes the cluster'), L('Scarica Kubernetes', 'Downloads Kubernetes'), L('Mostra i log', 'Shows logs')], 0, L('Dichiarativo.', 'Declarative.')),
@@ -45,6 +202,9 @@ spec:
             requests: { cpu: "100m", memory: "128Mi" }
             limits: { memory: "256Mi" }', 'yaml'),
             P('Cambiando l’immagine (`web:1.5`) e riapplicando, il Deployment fa un **aggiornamento progressivo**: sostituisce i pod pochi alla volta, senza interruzioni. Se qualcosa va storto: `kubectl rollout undo deployment/web`. Le **etichette** (labels) collegano Deployment, pod e servizi.', 'Changing the image (`web:1.5`) and reapplying, the Deployment does a **rolling update**: it replaces pods a few at a time, without downtime. If something goes wrong: `kubectl rollout undo deployment/web`. **Labels** connect Deployments, pods and services.'),
+            Fig(fig_k8s_rolling(),
+                L('Un Deployment web con replicas: 3 e tre pod sotto di lui. Durante il rolling update i pod passano da web:1.4 a web:1.5 uno alla volta: qui il primo è già aggiornato, gli altri due no.', 'A Deployment web with replicas: 3 and three pods below it. During the rolling update the pods move from web:1.4 to web:1.5 one at a time: here the first is already updated, the other two are not.'),
+                L('Durante l’aggiornamento ci sono sempre pod pronti a rispondere.', 'During the update there are always pods ready to answer.')),
         ], [
             Q('d1', L('Che cos’è un pod?', 'What is a pod?'), [L('Uno o più container che girano insieme', 'One or more containers running together'), L('Una macchina fisica', 'A physical machine'), L('Un file di log', 'A log file'), L('Un utente', 'A user')], 0, L('L’unità più piccola.', 'The smallest unit.')),
             Q('d2', L('Che cosa fa `replicas: 3`?', 'What does `replicas: 3` do?'), [L('Tiene attivi 3 pod', 'Keeps 3 pods running'), L('Crea 3 cluster', 'Creates 3 clusters'), L('Riavvia 3 volte', 'Restarts 3 times'), L('Usa 3 immagini diverse', 'Uses 3 different images')], 0, L('Se uno cade, ne nasce un altro.', 'If one falls, another is born.')),
@@ -55,6 +215,9 @@ spec:
         ]),
         lesson('services', L('Service e Ingress', 'Services and Ingress'), [
             P('I pod nascono e muoiono e cambiano indirizzo. Un **Service** dà loro un nome e un indirizzo stabili e distribuisce il traffico tra le repliche, usando le etichette per trovarle. Un **Ingress** porta il traffico web dall’esterno ai servizi, in base a dominio e percorso, e gestisce HTTPS.', 'Pods are born, die and change address. A **Service** gives them a stable name and address and spreads traffic across replicas, using labels to find them. An **Ingress** brings outside web traffic to services, based on domain and path, and handles HTTPS.'),
+            Fig(fig_k8s_service(),
+                L('Il traffico da Internet entra nell’Ingress per www.esempio.it, passa al Service web con selector app=web e da lì a tre pod con l’etichetta app=web. Un quarto pod, con app=db, non riceve nulla.', 'Traffic from the Internet enters the Ingress for www.esempio.it, goes to the Service web with selector app=web and from there to three pods labelled app=web. A fourth pod, labelled app=db, gets nothing.'),
+                L('Il Service trova i pod con le etichette, non con gli indirizzi.', 'The Service finds pods by their labels, not by their addresses.')),
             C('apiVersion: v1
 kind: Service
 metadata:
@@ -112,6 +275,9 @@ kubectl set image deployment/web web=registro/web:1.3
 kubectl rollout status deployment/web
 kubectl rollout undo deployment/web', 'bash'),
             P('Le **sonde** dicono a Kubernetes come sta l’app: la **readiness** decide se il pod riceve traffico, la **liveness** riavvia il container bloccato. Un Deployment aggiorna i pod **a scaglioni** (rolling update) e con `rollout undo` torni alla versione precedente.', '**Probes** tell Kubernetes how the app is doing: **readiness** decides whether the pod gets traffic, **liveness** restarts a stuck container. A Deployment updates pods **in batches** (rolling update) and with `rollout undo` you go back to the previous version.'),
+            Fig(L(fig_k8s_probes(['fallisce', 'pronto', 'non pronto', 'pod B esce dal Service:', 'niente traffico, nessun riavvio', 'container riavviato', 'il pod resta, il processo riparte']), fig_k8s_probes(['fails', 'ready', 'not ready', 'pod B leaves the Service:', 'no traffic, no restart', 'container restarted', 'the pod stays, the process restarts'])),
+                L('Due riquadri. A sinistra, quando fallisce la readinessProbe, il Service manda traffico solo al pod A pronto, mentre il pod B non pronto non riceve nulla e non viene riavviato. A destra, quando fallisce la livenessProbe, il container dentro il pod viene riavviato.', 'Two panels. On the left, when the readinessProbe fails, the Service sends traffic only to the ready pod A, while the not-ready pod B gets nothing and is not restarted. On the right, when the livenessProbe fails, the container inside the pod is restarted.'),
+                L('Readiness decide il traffico, liveness decide il riavvio.', 'Readiness decides traffic, liveness decides restarts.')),
         ], [
             Q('kd1', L('Dove leggi gli eventi di un pod?', 'Where do you read a pod’s events?'), ['kubectl describe pod', 'kubectl get svc', 'kubectl apply', 'kubectl top'], 0, L('In fondo all’output.', 'At the bottom of the output.')),
             Q('kd2', L('Che cosa fa la readiness probe?', 'What does the readiness probe do?'), [L('Decide se il pod riceve traffico', 'Decides whether the pod gets traffic'), L('Riavvia il nodo', 'Restarts the node'), L('Scarica l’immagine', 'Pulls the image'), L('Cancella il pod', 'Deletes the pod')], 0, L('La liveness invece riavvia.', 'Liveness restarts instead.')),
@@ -122,6 +288,9 @@ kubectl rollout undo deployment/web', 'bash'),
         ]),
         lesson('storage', L('Volumi persistenti e StatefulSet', 'Persistent volumes and StatefulSets'), [
             P('I pod sono usa e getta: quello che scrivono nel container sparisce quando vengono ricreati. Per i dati da conservare l’app chiede spazio con un **PersistentVolumeClaim** (PVC); il cluster lo soddisfa con un **PersistentVolume**, spesso creato al momento da una **StorageClass** (per esempio un disco del fornitore cloud).', 'Pods are disposable: what they write in the container vanishes when they are recreated. For data to keep, the app requests space with a **PersistentVolumeClaim** (PVC); the cluster fulfils it with a **PersistentVolume**, often created on the fly by a **StorageClass** (for example a cloud provider disk).'),
+            Fig(L(fig_k8s_storage(['il disco vero', 'disco cloud', 'monta', 'legato a', 'su', 'lo crea al momento']), fig_k8s_storage(['the real disk', 'cloud disk', 'mounts', 'bound to', 'on', 'creates it on demand'])),
+                L('Una catena da sinistra a destra: il pod db-0 monta un PVC da 10Gi in ReadWriteOnce, il PVC è legato a un PV, il PV sta su un disco cloud. Sopra, una StorageClass crea il PV al momento.', 'A chain from left to right: the pod db-0 mounts a 10Gi ReadWriteOnce PVC, the PVC is bound to a PV, the PV sits on a cloud disk. Above, a StorageClass creates the PV on demand.'),
+                L('L’app chiede spazio (PVC) senza sapere da dove arriva (PV).', 'The app asks for space (PVC) without knowing where it comes from (PV).')),
             C('apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -223,6 +392,9 @@ kubectl auth can-i delete pods -n negozio --as ada@esempio.it   # no', 'bash'),
         ]),
         lesson('gateway', L('Gateway API', 'Gateway API'), [
             P('La **Gateway API** è l’evoluzione dell’Ingress, stabile dalla versione 1.0. Divide i ruoli: la **GatewayClass** indica il controller che la realizza, il **Gateway** è il punto d’ingresso con porte e certificati (gestito da chi cura la piattaforma), le **HTTPRoute** sono le regole di ogni app (gestite dai team delle app). Pesi, intestazioni e reindirizzamenti si scrivono nello standard, senza annotazioni diverse per ogni controller.', 'The **Gateway API** is the evolution of Ingress, stable since version 1.0. It splits roles: the **GatewayClass** names the controller that implements it, the **Gateway** is the entry point with ports and certificates (managed by whoever runs the platform), **HTTPRoutes** are each app’s rules (managed by the app teams). Weights, headers and redirects are written in the standard, without different annotations for each controller.'),
+            Fig(L(fig_k8s_gateway(['team della piattaforma', 'team delle app']), fig_k8s_gateway(['platform team', 'app teams'])),
+                L('Nella fascia in alto, curata dal team della piattaforma, la GatewayClass punta al Gateway con porta 443 e TLS. Nella fascia sotto, dei team delle app, due HTTPRoute: una manda / al Service web, l’altra /api al Service api.', 'In the top band, run by the platform team, the GatewayClass points to the Gateway with port 443 and TLS. In the band below, belonging to the app teams, two HTTPRoutes: one sends / to the Service web, the other /api to the Service api.'),
+                L('Ogni ruolo tocca solo la sua risorsa: il Gateway è condiviso, le rotte sono di ogni app.', 'Each role touches only its own resource: the Gateway is shared, the routes belong to each app.')),
             C('apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:

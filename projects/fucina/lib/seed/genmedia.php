@@ -1,6 +1,86 @@
 <?php
 /** Generative media: how image generation works, prompting for images, video and audio, rights, labels and deepfakes, editing, recognising generated content. */
 
+/** One small picture (sky, sun, mountains) drawn at x, y inside a 100 × 100 frame, for the genmedia figures. */
+if (!function_exists('fig_genmedia_scene')) {
+    function fig_genmedia_scene(int $x, int $y, float $op = 1.0): string
+    {
+        return '<g opacity="' . $op . '" transform="translate(' . $x . ' ' . $y . ')"><rect width="100" height="100" fill="#DCEBFF"/><circle cx="72" cy="28" r="13" fill="#E8590C"/><path d="M0 100V72L28 44L48 64L66 50L100 80V100Z" fill="#0B7F5C"/><path d="M28 44L36 52L22 56Z" fill="#FFFFFF"/></g>';
+    }
+}
+
+/** Diffusion: five frames from pure noise to a clear picture, all guided by the same text; a highlight walks from frame to frame. Labels in one language. */
+if (!function_exists('fig_genmedia_diffusion')) {
+    function fig_genmedia_diffusion(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['«un sole sopra le montagne»', 'il testo guida', 'rumore', 'passo 1', 'passo 2', 'passo 3', 'immagine', 'ogni passo']
+            : ['“a sun over the mountains”', 'the text guides', 'noise', 'step 1', 'step 2', 'step 3', 'picture', 'every step'];
+        $noise = '';
+        $seed = 7;
+        for ($i = 0; $i < 36; $i++) {
+            $seed = ($seed * 1103515245 + 12345) % 2147483648;
+            $nx = ($seed >> 4) % 6 * 4; $ny = ($seed >> 9) % 6 * 4; $g = ['#1E1C52', '#8A87B0', '#FFFFFF', '#F1F0F8', '#7048E8', '#E8590C'][($seed >> 14) % 6];
+            $noise .= '<rect x="' . $nx . '" y="' . $ny . '" width="4" height="4" fill="' . $g . '"/>';
+        }
+        $frames = '';
+        foreach ([1.0, 0.75, 0.5, 0.25, 0.0] as $k => $n) {
+            $x = 20 + $k * 122;
+            $frames .= fig_genmedia_scene($x, 110, round(1 - $n, 2));
+            if ($n > 0) $frames .= '<rect x="' . $x . '" y="110" width="100" height="100" fill="url(#n)" opacity="' . $n . '"/>';
+            $frames .= '<rect x="' . $x . '" y="110" width="100" height="100" rx="2" fill="none" stroke="#8A87B0" stroke-width="2"/>';
+            $frames .= '<text x="' . ($x + 50) . '" y="234" text-anchor="middle" font-size="13">' . $t[2 + $k] . '</text>';
+            if ($k < 4) $frames .= '<path d="M' . ($x + 103) . ' 160H' . ($x + 117) . '" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>';
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.hi{animation:walk 10s steps(1) infinite}@keyframes walk{0%{transform:translateX(0)}20%{transform:translateX(122px)}40%{transform:translateX(244px)}60%{transform:translateX(366px)}80%{transform:translateX(488px)}}@media (prefers-reduced-motion:reduce){.hi{animation:none;transform:translateX(488px)}}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker>
+<pattern id="n" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#8A87B0"/>{$noise}</pattern></defs>
+<rect x="150" y="16" width="340" height="40" rx="20" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="42" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[0]}</text>
+<path d="M320 56V70M70 70H558M70 70V100M192 70V100M314 70V100M436 70V100M558 70V100" stroke="#7048E8" stroke-width="2" fill="none" stroke-dasharray="4 4"/>
+<text x="502" y="32" font-size="13">{$t[1]}</text><text x="502" y="50" font-size="13">{$t[7]}</text>
+{$frames}
+<rect class="hi" x="16" y="106" width="108" height="108" rx="10" fill="none" stroke="#E8590C" stroke-width="3"/>
+</svg>
+SVG;
+    }
+}
+
+/** Three ways to refine a picture: inpainting a chosen area, outpainting past the edges, upscaling the resolution. Labels in one language. */
+if (!function_exists('fig_genmedia_edit')) {
+    function fig_genmedia_edit(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Inpainting', 'rigenera solo l’area scelta', 'Outpainting', 'allarga oltre i bordi', 'Upscaling', 'più risoluzione, per la stampa']
+            : ['Inpainting', 'regenerates the chosen area', 'Outpainting', 'extends past the edges', 'Upscaling', 'more resolution, for print'];
+        $a = fig_genmedia_scene(48, 50);
+        $b = fig_genmedia_scene(270, 50);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<g font-weight="700" text-anchor="middle"><text x="98" y="30">{$t[0]}</text><text x="320" y="30">{$t[2]}</text><text x="542" y="30">{$t[4]}</text></g>
+<g font-size="13" text-anchor="middle"><text x="98" y="212">{$t[1]}</text><text x="320" y="212">{$t[3]}</text><text x="542" y="212">{$t[5]}</text></g>
+{$a}
+<rect x="48" y="50" width="100" height="100" rx="6" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<rect x="58" y="54" width="44" height="40" rx="8" fill="#FFE3EE" fill-opacity="0.7" stroke="#F03E82" stroke-width="2" stroke-dasharray="5 4"/>
+<path d="M66 82l8-14 6 8 4-5 10 11z" fill="#F03E82"/>
+<path d="M210 40h220v130H210z" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M210 140L240 116L270 132V170H210z" fill="#0B7F5C" opacity="0.5"/><path d="M370 130L400 110L430 136V170H370z" fill="#0B7F5C" opacity="0.5"/>
+{$b}
+<rect x="270" y="50" width="100" height="100" rx="6" fill="none" stroke="#1E1C52" stroke-width="2"/>
+<g fill="#DCEBFF" stroke="#2F8CF0" stroke-width="1"><rect x="470" y="110" width="40" height="40"/></g>
+<g shape-rendering="crispEdges"><rect x="470" y="130" width="40" height="20" fill="#0B7F5C"/><rect x="480" y="120" width="10" height="10" fill="#0B7F5C"/><rect x="495" y="115" width="10" height="10" fill="#E8590C"/></g>
+<rect x="470" y="110" width="40" height="40" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<path d="M514 130H528" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<g transform="translate(532 60) scale(0.9)"><rect width="100" height="100" fill="#DCEBFF"/><circle cx="72" cy="28" r="13" fill="#E8590C"/><path d="M0 100V72L28 44L48 64L66 50L100 80V100Z" fill="#0B7F5C"/><path d="M28 44L36 52L22 56Z" fill="#FFFFFF"/></g>
+<rect x="532" y="60" width="90" height="90" fill="none" stroke="#8A87B0" stroke-width="2"/>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'genmedia', 'family' => 'ai', 'after' => null,
     'title' => L('AI per immagini, video e audio', 'AI for Images, Video and Audio'), 'short' => L('Media generativi', 'Generative Media'), 'level' => L('Base', 'Basics'),
@@ -8,6 +88,9 @@ return [
     'lessons' => [
         lesson('how', L('Come nascono le immagini', 'How images are made'), [
             P('La maggior parte dei generatori di immagini usa modelli di **diffusione**: partono da puro rumore e lo “ripuliscono” passo dopo passo, guidati dalla descrizione testuale, finché emerge un’immagine. Sono addestrati su enormi raccolte di immagini con didascalie.', 'Most image generators use **diffusion** models: they start from pure noise and “clean” it step by step, guided by the text description, until an image emerges. They are trained on huge collections of captioned images.'),
+            Fig(L(fig_genmedia_diffusion('it'), fig_genmedia_diffusion('en')),
+                L('Cinque riquadri in fila: il primo è solo rumore a quadretti, nei successivi il rumore cala e affiora un disegno con cielo, sole e montagne, nitido nell’ultimo. Sopra, il testo «un sole sopra le montagne» è collegato con linee tratteggiate a ogni riquadro.', 'Five frames in a row: the first is pure blocky noise, in the next ones the noise fades and a picture of sky, sun and mountains emerges, sharp in the last. Above, the text “a sun over the mountains” is joined by dashed lines to every frame.'),
+                L('La diffusione toglie rumore un passo alla volta, e a ogni passo il testo indica la direzione.', 'Diffusion removes noise one step at a time, and at every step the text points the way.')),
             P('Strumenti diffusi: Midjourney, la generazione di immagini dentro ChatGPT e Gemini, Adobe Firefly, e modelli aperti come Stable Diffusion e Flux che si possono usare anche in locale. Oltre a creare da zero, sanno **modificare** una foto (togliere oggetti, cambiare lo sfondo, allargare l’inquadratura).', 'Common tools: Midjourney, image generation inside ChatGPT and Gemini, Adobe Firefly, and open models like Stable Diffusion and Flux that can also run locally. Besides creating from scratch, they can **edit** a photo (remove objects, change the background, extend the frame).'),
         ], [
             Q('h1', L('Da che cosa parte un modello di diffusione?', 'What does a diffusion model start from?'), [L('Da rumore casuale', 'From random noise'), L('Da una foto vera sempre', 'Always from a real photo'), L('Da un disegno a mano', 'From a hand drawing'), L('Da un video', 'From a video')], 0, L('E lo ripulisce passo dopo passo.', 'And cleans it step by step.')),
@@ -23,6 +106,7 @@ return [
 illustrazione ad acquerello, luce calda del tramonto, colori tenui,
 inquadratura a figura intera, formato 16:9', 'text'),
             P('Poi si **itera**: cambia una cosa alla volta (“stessa scena, ma di notte”). Il testo dentro le immagini e le mani restano punti deboli frequenti: controllali. Per un marchio o un personaggio ricorrente, molti strumenti permettono di usare un’immagine di riferimento.', 'Then you **iterate**: change one thing at a time (“same scene, but at night”). Text inside images and hands remain frequent weak spots: check them. For a brand or recurring character, many tools let you use a reference image.'),
+            Tip('Descrivi ciò che vuoi, non ciò che non vuoi: scrivere «senza persone» a volte fa comparire proprio le persone, perché la parola entra comunque nella descrizione. Meglio «una piazza vuota all’alba». Molti strumenti hanno un campo apposito per gli elementi da escludere: usa quello.', 'Describe what you want, not what you do not want: writing “no people” sometimes makes people appear, because the word still enters the description. Better “an empty square at dawn”. Many tools have a dedicated field for things to leave out: use that.'),
         ], [
             Q('p1', L('Che cosa descrive la “composizione”?', 'What does “composition” describe?'), [L('Inquadratura e punto di vista', 'Framing and point of view'), L('Il prezzo', 'The price'), L('Il nome del file', 'The file name'), L('La lingua', 'The language')], 0, L('Primo piano, dall’alto…', 'Close-up, top-down…')),
             Q('p2', L('Come si migliora un’immagine generata?', 'How do you improve a generated image?'), [L('Cambiando una cosa alla volta', 'Changing one thing at a time'), L('Riscrivendo tutto ogni volta', 'Rewriting everything each time'), L('Non si può', 'You cannot'), L('Aumentando la luminosità dello schermo', 'Raising screen brightness')], 0, L('Iterare con metodo.', 'Iterate methodically.')),
@@ -56,6 +140,9 @@ inquadratura a figura intera, formato 16:9', 'text'),
         ]),
         lesson('editing', L('Modificare e rifinire', 'Editing and refining'), [
             P('Raramente la prima immagine è quella giusta. L’**inpainting** rigenera solo una zona scelta (un oggetto da togliere, una mano da correggere); l’**outpainting** allarga l’immagine oltre i bordi; l’**upscaling** aumenta la risoluzione per la stampa.', 'The first image is rarely the right one. **Inpainting** regenerates only a chosen area (an object to remove, a hand to fix); **outpainting** extends the image beyond its edges; **upscaling** raises the resolution for print.'),
+            Fig(L(fig_genmedia_edit('it'), fig_genmedia_edit('en')),
+                L('Tre esempi sulla stessa immagine di montagne. Inpainting: un’area tratteggiata in rosa viene rigenerata con un oggetto nuovo. Outpainting: intorno all’immagine una cornice tratteggiata più grande viene riempita continuando le montagne. Upscaling: una versione piccola e quadrettata diventa una versione grande e nitida.', 'Three examples on the same mountain picture. Inpainting: an area dashed in pink is regenerated with a new object. Outpainting: a larger dashed frame around the picture is filled by continuing the mountains. Upscaling: a small blocky version becomes a large sharp one.'),
+                L('Tre ritocchi diversi: dentro, fuori, più grande.', 'Three different touch-ups: inside, outside, bigger.')),
             P('Per una serie coerente (lo stesso personaggio in più scene) usa un’**immagine di riferimento** e descrizioni ripetute uguali. Cambia **una cosa alla volta** tra un tentativo e l’altro: così capisci quale parola ha fatto la differenza.', 'For a consistent series (the same character in several scenes) use a **reference image** and repeat the same descriptions. Change **one thing at a time** between attempts: that way you see which word made the difference.'),
         ], [
             Q('ed1', L('Che cosa fa l’inpainting?', 'What does inpainting do?'), [L('Rigenera solo una zona scelta', 'Regenerates only a chosen area'), L('Allarga l’immagine', 'Extends the image'), L('Aumenta la risoluzione', 'Raises the resolution'), L('Toglie i metadati', 'Removes metadata')], 0, L('Ritocchi mirati.', 'Targeted touch-ups.')),

@@ -1,6 +1,120 @@
 <?php
 /** Java advanced: generics, lambdas and streams, Optional, concurrency, testing, sealed types and patterns, collectors, CompletableFuture and the JVM. */
 
+/** A stream pipeline: filter drops "di", map turns names upper case, toList collects. */
+if (!function_exists('fig_javaadv_stream')) {
+    function fig_javaadv_stream(): string
+    {
+        $col = function (int $x, array $items, string $fill, string $stroke) {
+            $o = '';
+            foreach ($items as $i => $it) {
+                $y = 50 + $i * 40;
+                $gone = str_starts_with($it, '-');
+                $txt = ltrim($it, '-');
+                $o .= "<rect x=\"$x\" y=\"$y\" width=\"110\" height=\"32\" rx=\"8\" fill=\"" . ($gone ? '#F1F0F8' : $fill) . "\" stroke=\"" . ($gone ? '#C9C7DE' : $stroke) . "\" stroke-width=\"2\"" . ($gone ? ' stroke-dasharray="4 4"' : '') . "/><text x=\"" . ($x + 55) . "\" y=\"" . ($y + 21) . "\" text-anchor=\"middle\"" . ($gone ? ' fill="#8A87B0" text-decoration="line-through"' : '') . ">$txt</text>";
+            }
+            return $o;
+        };
+        $a = $col(20, ['"ada"', '"bea"', '"carlo"', '"di"'], '#DCEBFF', '#2F8CF0');
+        $b = $col(180, ['"ada"', '"bea"', '"carlo"', '-"di"'], '#DCEBFF', '#2F8CF0');
+        $c = $col(340, ['"ADA"', '"BEA"', '"CARLO"'], '#ECE6FF', '#7048E8');
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="ui-monospace, monospace" font-size="13" fill="#1E1C52">
+<defs><marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g text-anchor="middle" font-weight="700"><text x="75" y="32">nomi</text><text x="235" y="32" fill="#B84508">.filter(len &gt; 2)</text><text x="395" y="32" fill="#5B33C9">.map(toUpperCase)</text><text x="560" y="32" fill="#0B7F5C">.toList()</text></g>
+$a $b $c
+<line x1="134" y1="126" x2="174" y2="126" stroke="#1E1C52" stroke-width="2" marker-end="url(#as)"/>
+<line x1="294" y1="106" x2="334" y2="106" stroke="#1E1C52" stroke-width="2" marker-end="url(#as)"/>
+<line x1="454" y1="106" x2="494" y2="106" stroke="#1E1C52" stroke-width="2" marker-end="url(#as)"/>
+<rect x="500" y="70" width="124" height="72" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="562" y="96" text-anchor="middle">["ADA",</text><text x="562" y="114" text-anchor="middle">"BEA",</text><text x="562" y="132" text-anchor="middle">"CARLO"]</text>
+</svg>
+SVG;
+    }
+}
+
+/** Optional: map works only when a value is there, orElse supplies one when it is not. */
+if (!function_exists('fig_javaadv_opt')) {
+    function fig_javaadv_opt(): string
+    {
+        return <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="ui-monospace, monospace" font-size="13" fill="#1E1C52">
+<defs><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g text-anchor="middle" font-weight="700"><text x="198" y="30" fill="#5B33C9">.map(Utente::nome)</text><text x="428" y="30" fill="#B84508">.orElse("Ospite")</text></g>
+<rect x="16" y="48" width="150" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="91" y="73" text-anchor="middle">Optional[Ada…]</text>
+<rect x="232" y="48" width="150" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="307" y="73" text-anchor="middle">Optional["Ada"]</text>
+<rect x="476" y="48" width="148" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="550" y="73" text-anchor="middle" font-weight="700">"Ada"</text>
+<rect x="16" y="128" width="150" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/><text x="91" y="153" text-anchor="middle" fill="#5B5880">Optional.empty</text>
+<rect x="232" y="128" width="150" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/><text x="307" y="153" text-anchor="middle" fill="#5B5880">Optional.empty</text>
+<rect x="476" y="128" width="148" height="40" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="550" y="153" text-anchor="middle" font-weight="700">"Ospite"</text>
+<g stroke="#1E1C52" stroke-width="2"><line x1="170" y1="68" x2="226" y2="68" marker-end="url(#ao)"/><line x1="386" y1="68" x2="470" y2="68" marker-end="url(#ao)"/><line x1="170" y1="148" x2="226" y2="148" marker-end="url(#ao)"/><line x1="386" y1="148" x2="470" y2="148" marker-end="url(#ao)"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** A race: two threads read the same value and one increment gets lost. */
+if (!function_exists('fig_javaadv_race')) {
+    function fig_javaadv_race(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<text x="16" y="62" font-weight="700" font-family="ui-monospace, monospace" fill="#1B66BC">T1</text>
+<text x="16" y="122" font-weight="700" font-family="ui-monospace, monospace" fill="#B84508">T2</text>
+<line x1="50" y1="57" x2="430" y2="57" stroke="#C9C7DE" stroke-width="2"/><line x1="50" y1="117" x2="430" y2="117" stroke="#C9C7DE" stroke-width="2"/>
+<g text-anchor="middle">
+<rect x="56" y="40" width="96" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="104" y="62">{$t[0]}</text>
+<rect x="168" y="40" width="64" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="200" y="62">+1</text>
+<rect x="248" y="40" width="96" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="296" y="62">{$t[1]}</text>
+<rect x="100" y="100" width="96" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="148" y="122">{$t[0]}</text>
+<rect x="212" y="100" width="64" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="244" y="122">+1</text>
+<rect x="320" y="100" width="96" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="368" y="122">{$t[1]}</text>
+</g>
+<g font-family="ui-monospace, monospace" font-size="15" text-anchor="middle">
+<text x="104" y="180">5</text><text x="296" y="180">6</text><text x="368" y="180" fill="#B8255F" font-weight="700">6</text>
+</g>
+<text x="16" y="180" font-family="ui-monospace, monospace">contatore</text>
+<text x="240" y="208" text-anchor="middle" fill="#B8255F" font-weight="700">{$t[2]}</text>
+<line x1="450" y1="20" x2="450" y2="230" stroke="#D9D7EA" stroke-width="2"/>
+<text x="537" y="56" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700">AtomicInteger</text>
+<rect x="470" y="76" width="134" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="537" y="101" text-anchor="middle" font-family="ui-monospace, monospace">5 → 6 → 7</text>
+<text x="537" y="142" text-anchor="middle" fill="#0B7F5C">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The heap: objects reachable from the roots stay, the others are collected. */
+if (!function_exists('fig_javaadv_gc')) {
+    function fig_javaadv_gc(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="ui-monospace, monospace" font-size="13" fill="#1E1C52">
+<defs><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="80" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="14" fill="#5B33C9">{$t[0]}</text>
+<rect x="16" y="44" width="128" height="150" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="30" y="64" width="100" height="32" rx="8" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><text x="80" y="85" text-anchor="middle">carrello</text>
+<rect x="30" y="140" width="100" height="32" rx="8" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><text x="80" y="161" text-anchor="middle">utente</text>
+<text x="400" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="14" fill="#1B66BC">heap</text>
+<rect x="180" y="44" width="444" height="196" rx="14" fill="#F7FAFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="200" y="62" width="110" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="255" y="84" text-anchor="middle">Carrello</text>
+<rect x="350" y="62" width="110" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="405" y="84" text-anchor="middle">ArrayList</text>
+<rect x="500" y="62" width="110" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="555" y="84" text-anchor="middle">Prodotto</text>
+<rect x="200" y="138" width="110" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="255" y="160" text-anchor="middle">Utente</text>
+<rect x="380" y="138" width="110" height="34" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/><text x="435" y="160" text-anchor="middle" fill="#8A87B0">String</text>
+<rect x="500" y="138" width="110" height="34" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/><text x="555" y="160" text-anchor="middle" fill="#8A87B0">byte[]</text>
+<path d="M490 155 H500" stroke="#8A87B0" stroke-width="2"/>
+<g stroke="#1E1C52" stroke-width="2" fill="none">
+<path d="M134 80 H194" marker-end="url(#ag)"/><path d="M134 156 H194" marker-end="url(#ag)"/>
+<path d="M314 79 H344" marker-end="url(#ag)"/><path d="M464 79 H494" marker-end="url(#ag)"/>
+</g>
+<text x="300" y="208" font-family="system-ui, sans-serif" fill="#1B66BC">■ {$t[1]}</text>
+<text x="300" y="228" font-family="system-ui, sans-serif" fill="#5B5880">▢ {$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'java-advanced', 'family' => 'java', 'after' => 'java-intermediate',
     'title' => L('Java avanzato', 'Advanced Java'), 'short' => L('Java avanzato', 'Java Advanced'), 'level' => L('Avanzato', 'Advanced'),
@@ -22,6 +136,7 @@ static <T extends Comparable<T>> T massimo(T a, T b) {
     return a.compareTo(b) >= 0 ? a : b;
 }', 'java'),
             P('`T extends Comparable<T>` pone un **limite**: vanno bene solo i tipi confrontabili.', '`T extends Comparable<T>` sets a **bound**: only comparable types are allowed.'),
+            P('Senza generics una scatola dovrebbe contenere `Object`: ogni `prendi()` richiederebbe un cast, e un errore salterebbe fuori solo mentre il programma gira, come `ClassCastException`. Con `Scatola<String>` il compilatore rifiuta subito `s.metti(42)`. Il diamante `<>` evita di ripetere il tipo a destra. I generics esistono solo per il compilatore: a runtime il tipo viene cancellato, per questo non puoi scrivere `new T()`.', 'Without generics a box would have to hold `Object`: every `prendi()` would need a cast, and a mistake would only show up while the program runs, as a `ClassCastException`. With `Scatola<String>` the compiler rejects `s.metti(42)` straight away. The diamond `<>` saves repeating the type on the right. Generics exist only for the compiler: at runtime the type is erased, which is why you cannot write `new T()`.'),
         ], [
             Q('g1', L('A che cosa serve `<T>`?', 'What is `<T>` for?'), [L('Un tipo scelto da chi usa la classe', 'A type chosen by the class’s user'), L('Un tempo', 'A time'), L('Una costante', 'A constant'), L('Un tag HTML', 'An HTML tag')], 0, L('È un parametro di tipo.', 'It is a type parameter.')),
             Q('g2', L('Che vantaggio danno i generics?', 'What do generics give you?'), [L('Controlli di tipo senza cast', 'Type checks without casts'), L('Codice più lento', 'Slower code'), L('Meno memoria sempre', 'Always less memory'), L('Nessuno', 'None')], 0, L('Gli errori emergono in compilazione.', 'Errors show at compile time.')),
@@ -45,6 +160,10 @@ List<String> lunghi = nomi.stream()
 
 int somma = IntStream.rangeClosed(1, 10).sum();', 'java'),
             P('`String::toUpperCase` è un **riferimento a metodo**, una lambda ancora più corta. Uno stream non modifica la lista originale.', '`String::toUpperCase` is a **method reference**, an even shorter lambda. A stream does not change the original list.'),
+            Fig(fig_javaadv_stream(),
+                L('Quattro colonne. La lista nomi con ada, bea, carlo e di; dopo filter con lunghezza maggiore di 2 resta tutto tranne di, barrato; dopo map i nomi diventano ADA, BEA e CARLO; toList li raccoglie nella lista ["ADA", "BEA", "CARLO"].', 'Four columns. The list nomi with ada, bea, carlo and di; after filter with length greater than 2 everything stays except di, struck out; after map the names become ADA, BEA and CARLO; toList collects them into the list ["ADA", "BEA", "CARLO"].'),
+                L('Ogni passo riceve ciò che esce dal passo prima.', 'Each step receives what comes out of the step before.')),
+            P('Le operazioni come `filter`, `map` e `sorted` sono **intermedie**: da sole non fanno niente, preparano solo la catena. Il lavoro parte quando arriva un’operazione **finale** come `toList`, `count`, `sum` o `forEach`. Uno stream si usa una volta sola: per un secondo giro ne chiedi uno nuovo con `nomi.stream()`. Dentro una lambda puoi leggere le variabili esterne, ma non modificarle.', 'Operations such as `filter`, `map` and `sorted` are **intermediate**: on their own they do nothing, they just prepare the chain. The work starts when a **terminal** operation such as `toList`, `count`, `sum` or `forEach` arrives. A stream is used once: for a second pass you ask for a new one with `nomi.stream()`. Inside a lambda you can read outer variables, but not change them.'),
         ], [
             Q('s1', L('Che cosa fa `filter`?', 'What does `filter` do?'), [L('Tiene gli elementi che passano il test', 'Keeps the items that pass the test'), L('Trasforma ogni elemento', 'Transforms each item'), L('Ordina', 'Sorts'), L('Conta', 'Counts')], 0, L('`map` trasforma.', '`map` transforms.')),
             Q('s2', L('Che cos’è `String::length`?', 'What is `String::length`?'), [L('Un riferimento a metodo', 'A method reference'), L('Un errore', 'An error'), L('Un campo statico', 'A static field'), L('Un commento', 'A comment')], 0, L('Equivale a `s -> s.length()`.', 'It equals `s -> s.length()`.')),
@@ -70,6 +189,10 @@ String nome = trova("ada@example.com")
 
 trova("x@y.it").ifPresent(u -> System.out.println(u.nome()));', 'java'),
             P('Usa `Optional` come valore di ritorno, non come campo o parametro: lì è meglio decidere chiaramente.', 'Use `Optional` as a return value, not as a field or parameter: there it is better to decide clearly.'),
+            Fig(fig_javaadv_opt(),
+                L('Due strade. In alto Optional con un utente Ada passa per map(Utente::nome) e diventa Optional["Ada"], poi orElse dà "Ada". In basso Optional.empty resta vuoto dopo map, e orElse dà "Ospite".', 'Two paths. At the top an Optional with the user Ada goes through map(Utente::nome) and becomes Optional["Ada"], then orElse gives "Ada". At the bottom Optional.empty stays empty after map, and orElse gives "Ospite".'),
+                L('`map` lavora solo se il valore c’è; `orElse` interviene solo se manca.', '`map` works only if the value is there; `orElse` steps in only if it is missing.')),
+            P('Evita `get()` senza controlli: su un Optional vuoto lancia un’eccezione e riporta il problema da cui volevi scappare. Se l’assenza è un errore, scrivi `orElseThrow()`, che dice chiaramente che cosa ti aspetti. Nota che `orElse(valore)` calcola il valore sempre, anche quando non serve; se costa caro, ad esempio una query, usa `orElseGet(() -> …)`, che lo calcola solo se manca.', 'Avoid `get()` without checks: on an empty Optional it throws an exception and brings back the very problem you wanted to escape. If absence is an error, write `orElseThrow()`, which clearly says what you expect. Note that `orElse(value)` always computes the value, even when it is not needed; if that is costly, a query for example, use `orElseGet(() -> …)`, which computes it only when missing.'),
         ], [
             Q('p1', L('Che cosa dà `orElse("x")` su un Optional vuoto?', 'What does `orElse("x")` give on an empty Optional?'), ['"x"', 'null', L('Un errore', 'An error'), '""'], 0, L('Il valore di riserva.', 'The fallback value.')),
             Q('p2', L('Quale metodo esegue codice solo se c’è un valore?', 'Which method runs code only if a value is there?'), ['ifPresent', 'orElse', 'get', 'isEmpty'], 0, L('Riceve una lambda.', 'It takes a lambda.')),
@@ -91,6 +214,10 @@ trova("x@y.it").ifPresent(u -> System.out.println(u.nome()));', 'java'),
 AtomicInteger contatore = new AtomicInteger();
 contatore.incrementAndGet();', 'java'),
             P('Quando due thread toccano lo stesso dato servono strumenti sicuri come `AtomicInteger` o `ConcurrentHashMap`, altrimenti i risultati si mescolano.', 'When two threads touch the same data you need safe tools such as `AtomicInteger` or `ConcurrentHashMap`, otherwise results get mixed up.'),
+            P('Perché si mescolano? Anche `contatore++` sono tre passi: leggere il valore, aggiungere uno, riscriverlo. Se due thread leggono lo stesso 5 prima che l’altro abbia scritto, entrambi scrivono 6 e un incremento sparisce. `AtomicInteger.incrementAndGet()` fa i tre passi come un’operazione unica. I virtual thread sono ideali quando i compiti passano il tempo ad aspettare (rete, database); `f.get()` blocca finché il risultato non arriva.', 'Why do they get mixed up? Even `contatore++` is three steps: read the value, add one, write it back. If two threads read the same 5 before the other has written, both write 6 and one increment vanishes. `AtomicInteger.incrementAndGet()` does the three steps as a single operation. Virtual threads are ideal when tasks spend their time waiting (network, database); `f.get()` blocks until the result arrives.'),
+            Fig(L(fig_javaadv_race(['legge 5', 'scrive 6', 'un incremento perso', 'un’operazione sola']), fig_javaadv_race(['reads 5', 'writes 6', 'one increment lost', 'a single operation'])),
+                L('Due thread, T1 e T2, su due linee del tempo. Entrambi leggono 5, aggiungono 1 e scrivono 6, così il contatore passa da 5 a 6 invece che a 7. A destra, con AtomicInteger, il contatore va da 5 a 6 a 7.', 'Two threads, T1 and T2, on two timelines. Both read 5, add 1 and write 6, so the counter goes from 5 to 6 instead of 7. On the right, with AtomicInteger, the counter goes from 5 to 6 to 7.'),
+                L('Leggere e scrivere separati lasciano un varco; l’operazione atomica lo chiude.', 'Separate read and write leave a gap; the atomic operation closes it.')),
         ], [
             Q('c1', L('Che cosa gestisce un `ExecutorService`?', 'What does an `ExecutorService` manage?'), [L('Un gruppo di thread', 'A pool of threads'), L('Un database', 'A database'), L('Un file', 'A file'), L('La grafica', 'Graphics')], 0, L('Tu gli dai i compiti.', 'You give it the tasks.')),
             Q('c2', L('Perché `AtomicInteger` e non `int`?', 'Why `AtomicInteger` and not `int`?'), [L('È sicuro tra più thread', 'It is safe across threads'), L('È più grande', 'It is bigger'), L('È più veloce sempre', 'It is always faster'), L('Non c’è differenza', 'No difference')], 0, L('Le operazioni non si sovrappongono.', 'Operations do not overlap.')),
@@ -120,6 +247,7 @@ class CarrelloTest {
     }
 }', 'java'),
             P('In `assertEquals` va prima il valore **atteso**, poi quello ottenuto: così i messaggi di errore si leggono bene.', 'In `assertEquals` the **expected** value comes first, then the actual one: so error messages read well.'),
+            P('JUnit crea un oggetto nuovo della classe di test per ogni metodo, così i test non si passano dati tra loro; ciò che serve a tutti si prepara in un metodo con `@BeforeEach`. Dai ai test nomi che descrivono il comportamento, come `importoNegativo`, e prova i casi limite. Con `@ParameterizedTest` lo stesso test gira su più valori. Si lanciano con `mvn test` o `./gradlew test`, e nell’integrazione continua a ogni push.', 'JUnit creates a new instance of the test class for every method, so tests do not pass data to each other; whatever they all need is prepared in a method with `@BeforeEach`. Give tests names that describe the behaviour, such as `importoNegativo`, and test edge cases. With `@ParameterizedTest` the same test runs over several values. They run with `mvn test` or `./gradlew test`, and in continuous integration on every push.'),
         ], [
             Q('j1', L('Quale annotazione segna un test?', 'Which annotation marks a test?'), ['@Test', '@Check', '@Junit', '@Assert'], 0, L('Da `org.junit.jupiter.api`.', 'From `org.junit.jupiter.api`.')),
             Q('j2', L('Che cosa va per primo in `assertEquals`?', 'What comes first in `assertEquals`?'), [L('Il valore atteso', 'The expected value'), L('Il valore ottenuto', 'The actual value'), L('Il messaggio', 'The message'), L('Non conta', 'It does not matter')], 0, L('Atteso, poi ottenuto.', 'Expected, then actual.')),
@@ -250,6 +378,9 @@ System.out.println("Memoria usata: " + usataMb + " MB, massimo " + rt.maxMemory(
 
 Map<String, byte[]> cache = new HashMap<>();   // cresce senza limiti: perdita di memoria', 'java'),
             P('Anche con il GC esistono **perdite di memoria**: oggetti che restano raggiungibili senza servire, come una cache che cresce senza limiti. **Java Flight Recorder** (JFR) registra con pochissimo impatto che cosa fa l’applicazione, anche in produzione; JDK Mission Control lo mostra in grafici.', 'Even with a GC there are **memory leaks**: objects that stay reachable without being needed, such as a cache growing without limit. **Java Flight Recorder** (JFR) records what the application does with very little overhead, even in production; JDK Mission Control shows it as charts.'),
+            Fig(L(fig_javaadv_gc(['Radici (stack)', 'raggiungibili da una radice: restano', 'irraggiungibili: il GC li libera']), fig_javaadv_gc(['Roots (stack)', 'reachable from a root: they stay', 'unreachable: the GC frees them'])),
+                L('A sinistra le radici, le variabili carrello e utente. Nello heap, carrello punta a un oggetto Carrello, che punta a un ArrayList, che punta a un Prodotto; utente punta a un Utente. Un String e un byte[] tratteggiati non sono raggiunti da nessuna freccia.', 'On the left the roots, the variables carrello and utente. In the heap, carrello points to a Carrello object, which points to an ArrayList, which points to a Prodotto; utente points to an Utente. A dashed String and byte[] are reached by no arrow.'),
+                L('Il GC parte dalle radici e libera ciò che non riesce a raggiungere.', 'The GC starts from the roots and frees whatever it cannot reach.')),
         ], [
             Q('jv1', L('Che cosa fa il garbage collector?', 'What does the garbage collector do?'), [L('Comprime i file JAR', 'Compresses JAR files'), L('Libera gli oggetti che nessuno può più raggiungere', 'Frees objects nobody can reach any more'), L('Cancella le variabili locali a fine metodo', 'Deletes local variables at the end of a method'), L('Ottimizza le query al database', 'Optimises database queries')], 1, L('Non devi liberare la memoria a mano.', 'You do not free memory by hand.')),
             Q('jv2', L('Che cosa imposta `-Xmx1g`?', 'What does `-Xmx1g` set?'), [L('La memoria minima del sistema', 'The system’s minimum memory'), L('La dimensione del file di log', 'The size of the log file'), L('Il numero di thread', 'The number of threads'), L('Il massimo dello heap della JVM', 'The JVM’s maximum heap')], 3, L('`-Xms` imposta invece la dimensione iniziale.', '`-Xms` sets the initial size instead.')),

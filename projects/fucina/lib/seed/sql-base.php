@@ -1,6 +1,120 @@
 <?php
 /** SQL basics: tables, SELECT, WHERE, ORDER BY, changing data, NULL and CASE, functions and ALTER TABLE. */
 
+/** The rows a query returns, as a small table for a demo page. A null value shows as a grey NULL; $label is the query, in monospace above. */
+if (!function_exists('fucina_data_table')) {
+    function fucina_data_table(array $head, array $rows, string $label = ''): string
+    {
+        $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES);
+        $cell = fn($v) => $v === null ? '<td class="n">NULL</td>' : (is_int($v) || is_float($v) ? '<td class="r">' . $e($v) . '</td>' : '<td>' . $e($v) . '</td>');
+        $html = '<style>body{margin:8px;font:14px system-ui,sans-serif;color:#1E1C52}table{border-collapse:collapse;margin:0 0 10px}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:left}th{background:#F1F0F8}td.r{text-align:right;font-variant-numeric:tabular-nums}td.n{color:#8A87B0;font-style:italic}code{display:block;margin:0 0 4px;font:12px ui-monospace,monospace;color:#5A5880}</style>';
+        if ($label !== '') $html .= '<code>' . $e($label) . '</code>';
+        $html .= '<table><tr>' . implode('', array_map(fn($h) => '<th>' . $e($h) . '</th>', $head)) . '</tr>';
+        foreach ($rows as $r) $html .= '<tr>' . implode('', array_map($cell, $r)) . '</tr>';
+        return $html . '</table>';
+    }
+}
+
+/** A table and its parts: a row, a column, the primary key. */
+if (!function_exists('fig_sqlbase_table')) {
+    function fig_sqlbase_table(string $row, string $record, string $col, string $field, string $pk, string $unique): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<text x="40" y="38" font-weight="700" font-size="16">utenti</text>
+<rect x="40" y="128" width="440" height="34" fill="#FFE8D6"/>
+<rect x="40" y="52" width="60" height="182" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="210" y="52" width="170" height="182" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="40" y="52" width="440" height="182" rx="10" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<g stroke="#C9C7DE" stroke-width="1"><line x1="40" y1="90" x2="480" y2="90"/><line x1="40" y1="126" x2="480" y2="126"/><line x1="40" y1="162" x2="480" y2="162"/><line x1="40" y1="198" x2="480" y2="198"/></g>
+<rect x="36" y="126" width="448" height="36" rx="8" fill="none" stroke="#E8590C" stroke-width="2"/>
+<g font-weight="700"><text x="70" y="76" text-anchor="middle">id</text><text x="112" y="76">nome</text><text x="222" y="76">email</text><text x="392" y="76">citta</text></g>
+<text x="70" y="113" text-anchor="middle">1</text><text x="112" y="113">Anna</text><text x="222" y="113">anna@mail.it</text><text x="392" y="113">Udine</text>
+<text x="70" y="149" text-anchor="middle">2</text><text x="112" y="149">Luca</text><text x="222" y="149">luca@mail.it</text><text x="392" y="149">Roma</text>
+<text x="70" y="185" text-anchor="middle">3</text><text x="112" y="185">Sara</text><text x="222" y="185">sara@mail.it</text><text x="392" y="185">Trieste</text>
+<text x="70" y="221" text-anchor="middle">4</text><text x="112" y="221">Marco</text><text x="222" y="221">marco@mail.it</text><text x="392" y="221">Roma</text>
+<path d="M500 144 H490" stroke="#E8590C" stroke-width="2"/><path d="M490 139 L484 144 L490 149 Z" fill="#E8590C"/>
+<text x="506" y="140" font-weight="700" fill="#B84508">{$row}</text><text x="506" y="158" fill="#B84508">{$record}</text>
+<path d="M295 256 V244" stroke="#2F8CF0" stroke-width="2"/><path d="M290 244 L295 238 L300 244 Z" fill="#2F8CF0"/>
+<text x="295" y="274" text-anchor="middle" font-weight="700" fill="#1B66BC">{$col}</text><text x="295" y="292" text-anchor="middle" fill="#1B66BC">{$field}</text>
+<path d="M70 256 V244" stroke="#0B7F5C" stroke-width="2"/><path d="M65 244 L70 238 L75 244 Z" fill="#0B7F5C"/>
+<text x="40" y="274" font-weight="700" fill="#0B7F5C">{$pk}</text><text x="40" y="292" fill="#0B7F5C">{$unique}</text>
+</svg>
+SVG;
+    }
+}
+
+/** WHERE tests every row: the true ones stay, the others disappear. */
+if (!function_exists('fig_sqlbase_where')) {
+    function fig_sqlbase_where(string $kept, string $dropped, string $result): string
+    {
+        $tick = fn(int $y) => '<path d="M268 ' . ($y - 4) . ' l5 5 l10 -11" fill="none" stroke="#0B7F5C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+        $cross = fn(int $y) => '<path d="M269 ' . ($y - 10) . ' l10 10 M279 ' . ($y - 10) . ' l-10 10" stroke="#8A87B0" stroke-width="2.5" stroke-linecap="round"/>';
+        $rows = [['Anna', 'Udine', 34, true], ['Luca', 'Roma', 41, false], ['Sara', 'Udine', 16, false], ['Marco', 'Udine', 22, true], ['Elena', 'Trieste', 29, false]];
+        $g = '';
+        foreach ($rows as $i => [$n, $c, $a, $ok]) {
+            $y = 100 + $i * 32;
+            $tc = $ok ? '#1E1C52' : '#8A87B0';
+            if ($ok) $g .= '<rect x="20" y="' . ($y - 21) . '" width="236" height="30" rx="6" fill="#D5F6EA"/>';
+            $g .= '<text x="30" y="' . $y . '" fill="' . $tc . '">' . $n . '</text><text x="110" y="' . $y . '" fill="' . $tc . '">' . $c . '</text><text x="240" y="' . $y . '" text-anchor="end" fill="' . $tc . '">' . $a . '</text>';
+            if (!$ok) $g .= '<line x1="24" y1="' . ($y - 5) . '" x2="252" y2="' . ($y - 5) . '" stroke="#8A87B0" stroke-width="1.5"/>';
+            $g .= $ok ? $tick($y) : $cross($y);
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="150" y="10" width="340" height="34" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="32" text-anchor="middle" font-family="ui-monospace, monospace" font-size="14" fill="#4B2BBF">WHERE citta = 'Udine' AND eta &gt;= 18</text>
+<g font-weight="700"><text x="30" y="68">nome</text><text x="110" y="68">citta</text><text x="240" y="68" text-anchor="end">eta</text></g>
+<line x1="20" y1="76" x2="256" y2="76" stroke="#8A87B0" stroke-width="2"/>
+{$g}
+<path d="M310 160 H392" stroke="#7048E8" stroke-width="2"/><path d="M392 154 L402 160 L392 166 Z" fill="#7048E8"/>
+<text x="356" y="148" text-anchor="middle" font-size="13" fill="#4B2BBF">SELECT nome</text>
+<rect x="420" y="96" width="180" height="120" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="510" y="88" text-anchor="middle" font-weight="700">{$result}</text>
+<text x="440" y="124" font-weight="700">nome</text><line x1="432" y1="134" x2="588" y2="134" stroke="#8A87B0" stroke-width="2"/>
+<rect x="432" y="142" width="156" height="30" rx="6" fill="#D5F6EA"/><text x="440" y="162">Anna</text>
+<rect x="432" y="176" width="156" height="30" rx="6" fill="#D5F6EA"/><text x="440" y="196">Marco</text>
+<path d="M22 262 l5 5 l10 -11" fill="none" stroke="#0B7F5C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="46" y="268">{$kept}</text>
+<path d="M24 280 l10 10 M34 280 l-10 10" stroke="#8A87B0" stroke-width="2.5" stroke-linecap="round"/><text x="46" y="290">{$dropped}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The order you write the clauses in and the order the database runs them in. A dot walks along the second. */
+if (!function_exists('fig_sqlbase_order')) {
+    function fig_sqlbase_order(string $write, string $run): string
+    {
+        $box = function (int $i, int $y, string $w, bool $hot) {
+            $x = 34 + $i * 120;
+            return '<rect x="' . $x . '" y="' . $y . '" width="100" height="40" rx="10" fill="' . ($hot ? '#FFE8D6' : '#DCEBFF') . '" stroke="' . ($hot ? '#E8590C' : '#2F8CF0') . '" stroke-width="2"/><text x="' . ($x + 50) . '" y="' . ($y + 25) . '" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700" font-size="14">' . $w . '</text>';
+        };
+        $top = ['SELECT', 'FROM', 'WHERE', 'ORDER BY', 'LIMIT'];
+        $bottom = ['FROM', 'WHERE', 'SELECT', 'ORDER BY', 'LIMIT'];
+        $g = '';
+        foreach ($top as $i => $w) $g .= $box($i, 52, $w, $w === 'SELECT');
+        foreach ($bottom as $i => $w) $g .= $box($i, 196, $w, $w === 'SELECT');
+        $lines = '';
+        foreach ($top as $i => $w) {
+            $j = array_search($w, $bottom);
+            $lines .= '<line x1="' . (84 + $i * 120) . '" y1="92" x2="' . (84 + $j * 120) . '" y2="196" stroke="' . ($w === 'SELECT' ? '#E8590C' : '#8A87B0') . '" stroke-width="2" stroke-dasharray="' . ($w === 'SELECT' ? '0' : '5 4') . '"/>';
+        }
+        $arrows = '';
+        for ($i = 0; $i < 4; $i++) { $x = 134 + $i * 120; $arrows .= '<path d="M' . ($x + 4) . ' 210 L' . ($x + 16) . ' 216 L' . ($x + 4) . ' 222 Z" fill="#1E1C52"/>'; }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.dot{animation:walk 8s ease-in-out infinite}@keyframes walk{0%,8%{transform:translateX(0)}22%,30%{transform:translateX(120px)}44%,52%{transform:translateX(240px)}66%,74%{transform:translateX(360px)}88%,100%{transform:translateX(480px)}}@media (prefers-reduced-motion:reduce){.dot{animation:none}}</style>
+<text x="34" y="38" font-weight="700">{$write}</text>
+{$lines}
+{$g}
+{$arrows}
+<circle class="dot" cx="84" cy="252" r="7" fill="#E8590C"/>
+<text x="34" y="280" font-weight="700">{$run}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'sql-base', 'family' => 'sql', 'after' => null,
     'title' => L('SQL base', 'SQL Basics'), 'short' => L('SQL base', 'SQL Basics'), 'level' => L('Base', 'Basics'),
@@ -8,10 +122,14 @@ return [
     'lessons' => [
         lesson('tables', L('Tabelle e SELECT', 'Tables and SELECT'), [
             P('Un database relazionale tiene i dati in **tabelle**: righe (i record) e colonne (i campi). `SELECT` legge: dopo la parola si scrivono le colonne, dopo `FROM` la tabella.', 'A relational database keeps data in **tables**: rows (records) and columns (fields). `SELECT` reads: after the word you list the columns, after `FROM` the table.'),
+            Fig(L(fig_sqlbase_table('una riga', '= un record', 'una colonna', '= un campo', 'chiave primaria', 'unica per ogni riga'), fig_sqlbase_table('a row', '= a record', 'a column', '= a field', 'primary key', 'unique for each row')),
+                L('La tabella utenti con quattro righe e le colonne id, nome, email e citta. Una riga è evidenziata in arancione, la colonna email in blu e la colonna id, la chiave primaria, in verde.', 'The utenti table with four rows and the columns id, nome, email and citta. One row is highlighted in orange, the email column in blue and the id column, the primary key, in green.'),
+                L('Ogni riga è una cosa (un utente), ogni colonna una sua proprietà.', 'Each row is one thing (a user), each column one of its properties.')),
+            P('Ogni colonna ha un tipo e contiene sempre lo stesso genere di dato: in `email` solo email, in `eta` solo numeri. Il risultato di un `SELECT` è a sua volta una tabella, fatta solo delle colonne che hai chiesto: per questo le query si possono combinare tra loro, come vedrai più avanti.', 'Every column has a type and always holds the same kind of data: only emails in `email`, only numbers in `eta`. The result of a `SELECT` is itself a table, made only of the columns you asked for: that is why queries can be combined, as you will see later on.'),
             C('SELECT nome, email
 FROM utenti;
 
-SELECT * FROM corsi;', 'sql'),
+SELECT * FROM corsi;', 'sql', fucina_data_table(['nome', 'email'], [['Anna', 'anna@mail.it'], ['Luca', 'luca@mail.it'], ['Sara', 'sara@mail.it'], ['Marco', 'marco@mail.it']], 'SELECT nome, email FROM utenti;')),
             P('`*` significa tutte le colonne: comodo per esplorare, ma nel codice vero è meglio elencare solo quelle che servono. Le parole chiave si scrivono di solito in maiuscolo.', '`*` means every column: handy for exploring, but in real code it is better to list only the ones you need. Keywords are usually written in capitals.'),
         ], [
             Q('t1', L('Che cosa fa `SELECT`?', 'What does `SELECT` do?'), [L('Legge dati', 'Reads data'), L('Cancella dati', 'Deletes data'), L('Crea una tabella', 'Creates a table'), L('Cambia una password', 'Changes a password')], 0, L('È la domanda al database.', 'It is the question to the database.')),
@@ -29,7 +147,11 @@ WHERE citta = \'Udine\' AND eta >= 18;
 SELECT titolo FROM corsi WHERE titolo LIKE \'%HTML%\';
 SELECT * FROM ordini WHERE stato IN (\'nuovo\', \'pagato\');
 SELECT * FROM voti WHERE voto BETWEEN 6 AND 8;', 'sql'),
-            P('Il testo va tra apici singoli. Per cercare i valori mancanti si usa `IS NULL`, non `= NULL`.', 'Text goes between single quotes. To find missing values use `IS NULL`, not `= NULL`.'),
+            P('Il database prova la condizione su **ogni riga**, una alla volta: se è vera la riga resta nel risultato, altrimenti sparisce. Il testo va tra apici singoli. Per cercare i valori mancanti si usa `IS NULL`, non `= NULL`.', 'The database tests the condition on **every row**, one at a time: if it is true the row stays in the result, otherwise it disappears. Text goes between single quotes. To find missing values use `IS NULL`, not `= NULL`.'),
+            Fig(L(fig_sqlbase_where('condizione vera: la riga resta', 'condizione falsa: la riga sparisce', 'risultato'), fig_sqlbase_where('condition true: the row stays', 'condition false: the row disappears', 'result')),
+                L('Cinque utenti con città ed età passano sotto la condizione citta = Udine AND eta >= 18. Anna (Udine, 34) e Marco (Udine, 22) hanno un segno di spunta e finiscono nel risultato; Luca, Sara ed Elena sono barrati.', 'Five users with city and age go through the condition citta = Udine AND eta >= 18. Anna (Udine, 34) and Marco (Udine, 22) get a tick and end up in the result; Luca, Sara and Elena are crossed out.'),
+                L('Sara è di Udine ma ha 16 anni: con `AND` devono essere vere entrambe le condizioni.', 'Sara is from Udine but is 16: with `AND` both conditions must be true.')),
+            Tip('`AND` viene valutato prima di `OR`: `citta = \'Roma\' OR citta = \'Udine\' AND eta >= 18` controlla l’età solo per Udine. Quando mescoli i due, usa le parentesi.', '`AND` is evaluated before `OR`: `citta = \'Roma\' OR citta = \'Udine\' AND eta >= 18` checks the age only for Udine. When you mix the two, use brackets.'),
         ], [
             Q('w1', L('Che cosa trova `LIKE \'A%\'`?', 'What does `LIKE \'A%\'` find?'), [L('Testi che iniziano per A', 'Texts starting with A'), L('Testi che finiscono per A', 'Texts ending with A'), L('Solo «A»', 'Only “A”'), L('Testi senza A', 'Texts without A')], 0, L('`%` vale qualsiasi sequenza.', '`%` stands for any sequence.')),
             Q('w2', L('Come trovi i valori mancanti?', 'How do you find missing values?'), ['IS NULL', '= NULL', '== NULL', 'EMPTY'], 0, L('`NULL` non è uguale a nulla, nemmeno a sé stesso.', '`NULL` equals nothing, not even itself.')),
@@ -44,8 +166,12 @@ SELECT * FROM voti WHERE voto BETWEEN 6 AND 8;', 'sql'),
 ORDER BY punti DESC, nome ASC
 LIMIT 10;
 
-SELECT DISTINCT citta FROM utenti;', 'sql'),
+SELECT DISTINCT citta FROM utenti;', 'sql', fucina_data_table(['nome', 'punti'], [['Giulia', 980], ['Anna', 875], ['Marco', 875], ['Luca', 810], ['…', '…']], 'ORDER BY punti DESC, nome ASC LIMIT 10')),
             P('L’ordine delle clausole è fisso: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `LIMIT`. `LIMIT` funziona in MySQL, MariaDB, PostgreSQL e SQLite; SQL Server usa `TOP` o `OFFSET … FETCH`, e lo standard SQL prevede `FETCH FIRST 10 ROWS ONLY`.', 'The order of the clauses is fixed: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `LIMIT`. `LIMIT` works in MySQL, MariaDB, PostgreSQL and SQLite; SQL Server uses `TOP` or `OFFSET … FETCH`, and standard SQL has `FETCH FIRST 10 ROWS ONLY`.'),
+            P('Attenzione: senza `ORDER BY` l’ordine delle righe **non è garantito**, anche se sembra sempre lo stesso. E l’ordine in cui scrivi le clausole non è quello in cui il database le esegue: prima sceglie la tabella e filtra le righe, poi calcola le colonne, infine ordina e taglia.', 'Careful: without `ORDER BY` the order of the rows is **not guaranteed**, even if it always looks the same. And the order you write the clauses in is not the order the database runs them in: first it picks the table and filters the rows, then it works out the columns, finally it sorts and cuts.'),
+            Fig(L(fig_sqlbase_order('Come lo scrivi', 'Come lo esegue il database'), fig_sqlbase_order('How you write it', 'How the database runs it')),
+                L('Due file di cinque riquadri. In alto l’ordine di scrittura: SELECT, FROM, WHERE, ORDER BY, LIMIT. In basso l’ordine di esecuzione: FROM, WHERE, SELECT, ORDER BY, LIMIT. Una linea arancione mostra SELECT che scende dal primo al terzo posto.', 'Two rows of five boxes. On top the writing order: SELECT, FROM, WHERE, ORDER BY, LIMIT. Below the running order: FROM, WHERE, SELECT, ORDER BY, LIMIT. An orange line shows SELECT moving from first to third place.'),
+                L('Per questo, nella maggior parte dei database, un alias creato in `SELECT` si può usare in `ORDER BY` ma non in `WHERE`.', 'That is why, in most databases, an alias made in `SELECT` can be used in `ORDER BY` but not in `WHERE`.')),
         ], [
             Q('o1', L('Come ordini dal più grande al più piccolo?', 'How do you sort from largest to smallest?'), ['DESC', 'ASC', 'DOWN', 'REVERSE'], 0, L('`ASC` è il contrario.', '`ASC` is the opposite.')),
             Q('o2', L('Che cosa fa `DISTINCT`?', 'What does `DISTINCT` do?'), [L('Toglie i doppioni', 'Removes duplicates'), L('Ordina', 'Sorts'), L('Conta', 'Counts'), L('Cancella righe', 'Deletes rows')], 0, L('Ogni valore una volta sola.', 'Each value once.')),
@@ -61,7 +187,8 @@ SELECT DISTINCT citta FROM utenti;', 'sql'),
 UPDATE utenti SET citta = \'Trieste\' WHERE id = 7;
 
 DELETE FROM sessioni WHERE scadenza < CURRENT_TIMESTAMP;', 'sql'),
-            P('Prima di un `DELETE`, prova lo stesso `WHERE` con un `SELECT` per vedere quali righe toccheresti.', 'Before a `DELETE`, try the same `WHERE` with a `SELECT` to see which rows you would touch.'),
+            P('Un `INSERT` può aggiungere più righe in una volta sola, separando i gruppi di valori con la virgola. `UPDATE` può cambiare più colonne insieme e usare il valore vecchio per calcolare il nuovo: `SET punti = punti + 10, livello = 2`.', 'An `INSERT` can add several rows at once, separating the groups of values with commas. `UPDATE` can change several columns together and use the old value to work out the new one: `SET punti = punti + 10, livello = 2`.'),
+            P('Queste modifiche sono subito definitive: non esiste «annulla». Prima di un `DELETE` o di un `UPDATE`, prova lo stesso `WHERE` con un `SELECT` per vedere quali righe toccheresti.', 'These changes are final straight away: there is no “undo”. Before a `DELETE` or an `UPDATE`, try the same `WHERE` with a `SELECT` to see which rows you would touch.'),
         ], [
             Q('c1', L('Che cosa succede con `DELETE FROM utenti;` senza `WHERE`?', 'What happens with `DELETE FROM utenti;` and no `WHERE`?'), [L('Cancella tutte le righe', 'Deletes every row'), L('Niente', 'Nothing'), L('Un errore', 'An error'), L('Cancella la prima', 'Deletes the first')], 0, L('Attenzione massima.', 'Maximum care.')),
             Q('c2', L('Quale comando modifica righe esistenti?', 'Which command changes existing rows?'), ['UPDATE', 'INSERT', 'ALTER', 'CHANGE'], 0, L('`ALTER` cambia la struttura.', '`ALTER` changes the structure.')),
@@ -101,7 +228,7 @@ SELECT titolo, prezzo,
            WHEN prezzo < 20 THEN \'economico\'
            ELSE \'premium\'
        END AS fascia
-FROM corsi;', 'sql'),
+FROM corsi;', 'sql', L(fucina_data_table(['titolo', 'prezzo', 'fascia'], [['HTML base', 0, 'gratis'], ['CSS base', 15, 'economico'], ['SQL avanzato', 49, 'premium']], 'SELECT titolo, prezzo, CASE … END AS fascia FROM corsi;'), fucina_data_table(['titolo', 'prezzo', 'fascia'], [['HTML basics', 0, 'gratis'], ['CSS basics', 15, 'economico'], ['Advanced SQL', 49, 'premium']], 'SELECT titolo, prezzo, CASE … END AS fascia FROM corsi;'))),
             P('`CASE` è il «se… allora» di SQL: controlla i `WHEN` in ordine e restituisce il valore del primo vero; `ELSE` copre tutti gli altri casi (senza `ELSE` il risultato è `NULL`). Si usa in `SELECT`, in `ORDER BY` e anche dentro un `UPDATE`.', '`CASE` is SQL’s “if… then”: it checks the `WHEN`s in order and returns the value of the first true one; `ELSE` covers every other case (without `ELSE` the result is `NULL`). You use it in `SELECT`, in `ORDER BY` and even inside an `UPDATE`.'),
         ], [
             Q('n1', L('Che cosa restituisce `COALESCE(NULL, NULL, \'x\')`?', 'What does `COALESCE(NULL, NULL, \'x\')` return?'), ['NULL', '\'x\'', L('Un errore', 'An error'), L('Un testo vuoto', 'An empty text')], 1, L('Il primo valore che non è `NULL`.', 'The first value that is not `NULL`.')),
@@ -120,7 +247,7 @@ FROM clienti;
 
 SELECT nome, ROUND(prezzo * 1.22, 2) AS con_iva FROM prodotti;
 
-SELECT CURRENT_DATE;', 'sql'),
+SELECT CURRENT_DATE;', 'sql', fucina_data_table(['cognome', 'lettere', 'completo'], [['ROSSI', 4, 'Anna Rossi'], ['BIANCHI', 5, 'Marco Bianchi']], 'SELECT UPPER(cognome), LENGTH(nome), CONCAT(nome, \' \', cognome) FROM clienti;')),
             P('Unire testi è il punto in cui i dialetti divergono di più: lo standard usa `||` (PostgreSQL, SQLite, Oracle), mentre in MySQL `||` è un OR logico. `CONCAT(…)` invece esiste quasi ovunque. Anche le funzioni sulle date cambiano da un database all’altro: controlla sempre la documentazione del tuo.', 'Joining text is where dialects differ most: the standard uses `||` (PostgreSQL, SQLite, Oracle), while in MySQL `||` is a logical OR. `CONCAT(…)` instead exists almost everywhere. Date functions also change from one database to another: always check your own database’s documentation.'),
         ], [
             Q('f1', L('Che cosa fa `TRIM(\'  ciao  \')`?', 'What does `TRIM(\'  ciao  \')` do?'), [L('Mette tutto il testo in maiuscolo', 'Puts the whole text in capitals'), L('Toglie gli spazi all’inizio e alla fine', 'Removes the spaces at the start and end'), L('Conta le lettere del testo', 'Counts the letters of the text'), L('Taglia il testo a metà', 'Cuts the text in half')], 1, L('Restituisce `\'ciao\'`.', 'It returns `\'ciao\'`.')),

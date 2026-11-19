@@ -1,6 +1,101 @@
 <?php
 /** Next.js: the App Router and file-based routes, server and client components, data fetching and caching, route handlers and deployment, loading and error files, Cache Components, proxy. */
 
+/** The address /corsi/react drawn as nested files: the root layout stays around, the page of the [id] folder fills the middle. */
+if (!function_exists('fig_next_routes')) {
+    function fig_next_routes(string $l): string
+    {
+        $t = $l === 'it' ? ['intestazione e menu', 'resta tra una pagina e l’altra', 'cambia con l’indirizzo'] : ['header and menu', 'stays from one page to the next', 'changes with the address'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="12" y="12" width="616" height="246" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="12" y="12" width="616" height="40" rx="14" fill="#1E1C52"/><rect x="12" y="36" width="616" height="16" fill="#1E1C52"/>
+<g fill="#FFFFFF" opacity="0.5"><circle cx="34" cy="32" r="5"/><circle cx="52" cy="32" r="5"/><circle cx="70" cy="32" r="5"/></g>
+<rect x="96" y="20" width="300" height="24" rx="12" fill="#FFFFFF"/>
+<text x="110" y="37" font-family="ui-monospace, Menlo, monospace" font-size="13">fucina.app<tspan font-weight="700" fill="#B84508">/corsi/react</tspan></text>
+<rect x="28" y="66" width="584" height="178" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="44" y="90" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700" fill="#5A35C8">app/layout.tsx</text>
+<text x="200" y="90" font-size="13">{$t[0]} · <tspan fill="#5B5880">{$t[1]}</tspan></text>
+<rect x="44" y="104" width="552" height="124" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2" stroke-dasharray="7 4"/>
+<text x="60" y="128" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700" fill="#B84508">app/corsi/[id]/page.tsx</text>
+<text x="60" y="150" font-size="13" fill="#5B5880">{$t[2]}</text>
+<text x="60" y="196" font-family="ui-monospace, Menlo, monospace" font-size="16">&lt;h1&gt;Corso: react&lt;/h1&gt;</text>
+<rect x="400" y="178" width="180" height="32" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<text x="490" y="199" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">id = "react"</text>
+</svg>
+SVG;
+    }
+}
+
+/** Server and client components: the server sends ready HTML, only the interactive island also ships its JavaScript. */
+if (!function_exists('fig_next_islands')) {
+    function fig_next_islands(string $l): string
+    {
+        $t = $l === 'it' ? ['sul server', 'nel browser', 'legge il database', 'solo HTML', 'HTML + JS', 'isola interattiva'] : ['on the server', 'in the browser', 'reads the database', 'HTML only', 'HTML + JS', 'interactive island'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="nxia" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="15"><text x="20" y="30">{$t[0]}</text><text x="360" y="30">{$t[1]}</text></g>
+<rect x="20" y="42" width="260" height="200" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"><rect x="36" y="58" width="228" height="48" rx="10"/><rect x="36" y="118" width="228" height="48" rx="10"/></g>
+<rect x="36" y="178" width="228" height="48" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="50" y="80">Pagina</text><text x="50" y="140">ListaCorsi</text><text x="50" y="200">MiPiace</text></g>
+<g font-size="12" fill="#5B5880"><text x="50" y="97">server component</text><text x="50" y="157">{$t[2]}</text><text x="50" y="217" fill="#B84508">"use client"</text></g>
+<rect x="360" y="42" width="260" height="200" rx="14" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<g fill="#F1F0F8"><rect x="376" y="60" width="160" height="14" rx="4"/><rect x="376" y="84" width="228" height="10" rx="4"/><rect x="376" y="102" width="200" height="10" rx="4"/><rect x="376" y="120" width="216" height="10" rx="4"/><rect x="376" y="138" width="180" height="10" rx="4"/></g>
+<rect x="376" y="168" width="150" height="52" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="3"/>
+<text x="451" y="191" text-anchor="middle" font-size="13" font-weight="700" fill="#B84508">MiPiace</text>
+<text x="451" y="209" text-anchor="middle" font-size="11" fill="#B84508">{$t[5]}</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#nxia)"><path d="M264 110H356"/><path d="M264 202H372"/></g>
+<g font-size="12" font-weight="700" text-anchor="middle"><text x="318" y="102" fill="#0B7F5C">{$t[3]}</text><text x="318" y="194" fill="#B84508">{$t[4]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The special files as nested boundaries: layout outside, then error, then loading, then the page. */
+if (!function_exists('fig_next_bounds')) {
+    function fig_next_bounds(string $l): string
+    {
+        $t = $l === 'it' ? ['resta sempre', 'se qualcosa si rompe, al posto di tutto quello che c’è dentro', 'mentre la pagina aspetta i dati', 'il contenuto vero'] : ['always stays', 'if something breaks, instead of everything inside', 'while the page waits for its data', 'the real content'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="10" y="10" width="620" height="260" rx="16" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="40" y="58" width="560" height="196" rx="14" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<rect x="70" y="106" width="500" height="132" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2" stroke-dasharray="7 4"/>
+<rect x="100" y="154" width="440" height="68" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700"><text x="28" y="40" fill="#5A35C8">layout.tsx</text><text x="58" y="88" fill="#B0245A">error.tsx</text><text x="88" y="136" fill="#B84508">loading.tsx</text><text x="118" y="184" fill="#1B66BC">page.tsx</text></g>
+<g font-size="13" fill="#5B5880"><text x="150" y="40">{$t[0]}</text><text x="150" y="88">{$t[1]}</text><text x="190" y="136">{$t[2]}</text><text x="118" y="206">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The proxy on the way in: a request to a reserved path without the session cookie is redirected to /login, otherwise it goes on to the page. */
+if (!function_exists('fig_next_proxy')) {
+    function fig_next_proxy(string $l): string
+    {
+        $t = $l === 'it' ? ['richiesta', 'c’è il cookie «sessione»?', 'sì', 'no', 'la pagina', 'controlla di nuovo i dati'] : ['request', 'is the “sessione” cookie there?', 'yes', 'no', 'the page', 'checks the data again'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="nxpa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="84" width="150" height="62" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="87" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#5B5880">{$t[0]}</text>
+<text x="87" y="130" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12">/area-riservata</text>
+<rect x="200" y="72" width="200" height="86" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="300" y="104" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-weight="700">proxy.ts</text>
+<text x="300" y="132" text-anchor="middle" font-size="12">{$t[1]}</text>
+<rect x="450" y="20" width="178" height="62" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="450" y="150" width="178" height="62" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="539" y="46" text-anchor="middle" font-size="14" font-weight="700">{$t[4]}</text><text x="539" y="68" text-anchor="middle" font-size="12" fill="#5B5880">{$t[5]}</text>
+<text x="539" y="187" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">redirect /login</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#nxpa)"><path d="M162 115H196"/><path d="M400 96C420 70 425 52 446 52"/><path d="M400 134C420 160 425 180 446 180"/></g>
+<g font-size="12" font-weight="700" text-anchor="end"><text x="440" y="34" fill="#0B7F5C">{$t[2]} · next()</text><text x="440" y="214" fill="#B0245A">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'nextjs', 'family' => 'next', 'after' => 'react-intermediate',
     'title' => L('Next.js', 'Next.js'), 'short' => L('Next.js', 'Next.js'), 'level' => L('Avanzato', 'Advanced'),
@@ -20,6 +115,10 @@ return [
   return <h1>Corso: {id}</h1>;
 }', 'tsx'),
             P('Per i link interni si usa il componente `<Link href="/corsi">`, che naviga senza ricaricare la pagina e precarica le pagine visibili.', 'For internal links you use the `<Link href="/corsi">` component, which navigates without reloading the page and prefetches visible pages.'),
+            P('Il layout resta montato quando passi da una pagina all’altra: l’intestazione non si ridisegna e il suo stato (un menu aperto, un campo di ricerca) non si perde. Una cartella diventa una rotta solo se contiene `page.tsx`, quindi accanto puoi tenere componenti e file di supporto. Il valore del segmento dinamico arriva nella prop `params`, che è una promise: per questo si scrive `await params`.', 'The layout stays mounted when you move from one page to another: the header is not redrawn and its state (an open menu, a search field) is not lost. A folder becomes a route only if it contains `page.tsx`, so you can keep components and support files next to it. The value of the dynamic segment arrives in the `params` prop, which is a promise: that is why you write `await params`.'),
+            Fig(L(fig_next_routes('it'), fig_next_routes('en')),
+                L('Una finestra del browser con l’indirizzo /corsi/react. Dentro, un riquadro viola app/layout.tsx con intestazione e menu, che resta tra una pagina e l’altra; al suo interno un riquadro tratteggiato app/corsi/[id]/page.tsx, che cambia con l’indirizzo e mostra «Corso: react» con id = "react".', 'A browser window with the address /corsi/react. Inside, a purple app/layout.tsx box with header and menu, which stays from one page to the next; within it a dashed app/corsi/[id]/page.tsx box, which changes with the address and shows “Corso: react” with id = "react".'),
+                L('Il layout fa da cornice fissa, la pagina cambia con l’indirizzo.', 'The layout is a fixed frame, the page changes with the address.')),
         ], [
             Q('r1', L('Quale file trasforma una cartella in una pagina?', 'Which file turns a folder into a page?'), ['page.tsx', 'index.html', 'route.ts', 'main.tsx'], 0, L('`layout.tsx` la avvolge.', '`layout.tsx` wraps it.')),
             Q('r2', L('Che cosa indica la cartella `[id]`?', 'What does the `[id]` folder mean?'), [L('Un segmento dinamico', 'A dynamic segment'), L('Una cartella nascosta', 'A hidden folder'), L('Un errore', 'An error'), L('Un file di stile', 'A style file')], 0, L('Il valore arriva in `params`.', 'The value arrives in `params`.')),
@@ -47,6 +146,9 @@ export default function Preferito({ id }: { id: string }) {
   return <button onClick={() => setOn(!on)}>{on ? "★" : "☆"}</button>;
 }', 'tsx'),
             P('Quando servono stato, effetti o eventi del browser, scrivi `"use client"` in cima al file: diventa un **componente client**. Regola pratica: tieni client solo le “isole” interattive, il resto server.', 'When you need state, effects or browser events, write `"use client"` at the top of the file: it becomes a **client component**. Rule of thumb: keep only the interactive “islands” on the client, the rest on the server.'),
+            Fig(L(fig_next_islands('it'), fig_next_islands('en')),
+                L('A sinistra, sul server, tre componenti: Pagina e ListaCorsi, che legge il database, sono server component e mandano solo HTML; MiPiace, con "use client", manda HTML e JavaScript. A destra la pagina nel browser: testo statico e un solo riquadro interattivo, il pulsante MiPiace.', 'On the left, on the server, three components: Pagina and ListaCorsi, which reads the database, are server components and send HTML only; MiPiace, with "use client", sends HTML and JavaScript. On the right the page in the browser: static text and a single interactive box, the MiPiace button.'),
+                L('Quasi tutto arriva come HTML pronto: il JavaScript serve solo all’isola interattiva.', 'Almost everything arrives as ready HTML: JavaScript is needed only for the interactive island.')),
         ], [
             Q('s1', L('Come sono i componenti per impostazione predefinita nell’App Router?', 'What are components by default in the App Router?'), [L('Componenti server', 'Server components'), L('Componenti client', 'Client components'), L('Pagine statiche HTML', 'Static HTML pages'), L('Web worker', 'Web workers')], 0, L('Girano sul server.', 'They run on the server.')),
             Q('s2', L('Che cosa rende un componente client?', 'What makes a component a client one?'), [L('La direttiva "use client" in cima al file', 'The "use client" directive at the top of the file'), L('Il nome del file', 'The file name'), L('Un import di React', 'A React import'), L('La cartella client/', 'The client/ folder')], 0, L('Serve per stato ed eventi.', 'Needed for state and events.')),
@@ -117,6 +219,9 @@ export default function Pagina() {
         ]),
         lesson('loading-errors', L('Caricamento, errori e pagina non trovata', 'Loading, errors and not found'), [
             P('Alcuni nomi di file hanno un ruolo speciale. `loading.tsx` compare subito mentre la pagina carica i dati (Next.js lo avvolge in un `<Suspense>`), `error.tsx` sostituisce il segmento quando qualcosa si rompe, `not-found.tsx` appare quando chiami `notFound()`.', 'Some file names have a special role. `loading.tsx` shows at once while the page loads its data (Next.js wraps it in a `<Suspense>`), `error.tsx` replaces the segment when something breaks, `not-found.tsx` appears when you call `notFound()`.'),
+            Fig(L(fig_next_bounds('it'), fig_next_bounds('en')),
+                L('Quattro riquadri uno dentro l’altro: layout.tsx all’esterno, che resta sempre; error.tsx, che se qualcosa si rompe prende il posto di tutto quello che c’è dentro; loading.tsx, tratteggiato, mostrato mentre la pagina aspetta i dati; al centro page.tsx con il contenuto vero.', 'Four boxes one inside the other: layout.tsx outside, which always stays; error.tsx, which if something breaks takes the place of everything inside; loading.tsx, dashed, shown while the page waits for its data; in the middle page.tsx with the real content.'),
+                L('Ogni file speciale avvolge quelli più interni: un errore non fa sparire il layout.', 'Each special file wraps the inner ones: an error does not take the layout away.')),
             C('app/corsi/[id]/
 ├── page.tsx        → la pagina
 ├── loading.tsx     → mentre aspetta
@@ -194,6 +299,9 @@ export async function ultimiArticoli() {
         ]),
         lesson('proxy', L('Proxy, cookie e accesso', 'Proxy, cookies and access'), [
             P('Il file `proxy.ts`, nella radice del progetto, esegue codice **prima** che una richiesta arrivi alla pagina: può reindirizzare, riscrivere l’indirizzo o aggiungere intestazioni. Da Next.js 16 sostituisce il vecchio `middleware.ts`, che è deprecato.', 'The `proxy.ts` file, at the project root, runs code **before** a request reaches the page: it can redirect, rewrite the address or add headers. Since Next.js 16 it replaces the old `middleware.ts`, which is deprecated.'),
+            Fig(L(fig_next_proxy('it'), fig_next_proxy('en')),
+                L('Una richiesta a /area-riservata passa da proxy.ts, che controlla se c’è il cookie «sessione». Se sì, con next() arriva alla pagina, che controlla di nuovo i dati; se no, viene reindirizzata a /login.', 'A request to /area-riservata goes through proxy.ts, which checks whether the “sessione” cookie is there. If yes, with next() it reaches the page, which checks the data again; if not, it is redirected to /login.'),
+                L('Il proxy sta davanti a tutte le pagine: un controllo veloce, non l’ultimo.', 'The proxy stands in front of every page: a quick check, not the last one.')),
             C('// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
 

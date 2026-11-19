@@ -184,10 +184,28 @@
             const type = b.t;
             let body;
             if (type === 'code') {
-                const code = area({rows: 6, value: b.code || '', class: 'mono'});
+                // Code and demo page are one text, or one per language when they show words to the learner
+                const field = (label, value, rows, help) => {
+                    if (value && typeof value === 'object') {
+                        const m = multi(label, value, {rows});
+                        return {el: m, read: () => m.value()};
+                    }
+                    const a = area({rows, value: value || '', class: 'mono'});
+                    return {el: f(label, a, help), read: () => a.value};
+                };
+                const code = field(t('Code'), b.code, 6);
                 const lang = inp({value: b.lang || 'html'});
-                item.read = () => ({t: 'code', code: code.value, lang: lang.value});
-                body = [f(t('Language'), lang), f(t('Code'), code)];
+                const demo = field(t('Demo page'), b.demo, 3, t('Optional: HTML shown rendered under the code. For CSS, the code applies to it.'));
+                item.read = () => ({t: 'code', code: code.read(), lang: lang.value, demo: demo.read()});
+                body = [f(t('Language'), lang), code.el, demo.el];
+            } else if (type === 'fig') {
+                // The drawing is one SVG for every language, or one per language when it has words in it
+                const perLang = b.svg && typeof b.svg === 'object';
+                const svg = perLang ? multi(t('SVG drawing'), b.svg, {rows: 6}) : area({rows: 6, value: b.svg || '', class: 'mono'});
+                const alt = multi(t('Description for screen readers'), b.alt, {rows: 2});
+                const caption = multi(t('Caption'), b.caption);
+                item.read = () => ({t: 'fig', svg: perLang ? svg.value() : svg.value, alt: alt.value(), caption: caption.value()});
+                body = [perLang ? svg : f(t('SVG drawing'), svg), alt, caption];
             } else {
                 const text = multi(type === 'tip' ? t('Tip') : t('Paragraph'), b.text, {rows: 3});
                 item.read = () => ({t: type, text: text.value()});
@@ -204,13 +222,13 @@
                 items.splice(i - 1, 0, item);
                 list.insertBefore(item.el, items[i].el);
             });
-            item.el = h('div.block', h('div.block-bar', h('b', {code: t('Code'), tip: t('Tip'), p: t('Paragraph')}[type]), up, remove), body);
+            item.el = h('div.block', h('div.block-bar', h('b', {code: t('Code'), tip: t('Tip'), p: t('Paragraph'), fig: t('Figure')}[type]), up, remove), body);
             items.push(item);
             list.appendChild(item.el);
         }
 
         (blocks || []).forEach(add);
-        const el = h('div', list, h('div.adm-actions', btn(t('Paragraph'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'p'})}), btn(t('Code'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'code'})}), btn(t('Tip'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'tip'})})));
+        const el = h('div', list, h('div.adm-actions', btn(t('Paragraph'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'p'})}), btn(t('Code'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'code'})}), btn(t('Tip'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'tip'})}), btn(t('Figure'), {kind: 'tonal', icon: 'add', onclick: () => add({t: 'fig'})})));
         el.value = () => items.map(i => i.read());
         return el;
     }

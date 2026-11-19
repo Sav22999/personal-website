@@ -1,6 +1,133 @@
 <?php
 /** PostgreSQL: psql, rich types, RETURNING and upserts, JSONB, roles and EXPLAIN, PL/pgSQL, MVCC and VACUUM, full-text search, extensions. */
 
+/** The rows a query returns, as a small table for a demo page. A null value shows as a grey NULL; $label is the query, in monospace above. */
+if (!function_exists('fucina_data_table')) {
+    function fucina_data_table(array $head, array $rows, string $label = ''): string
+    {
+        $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES);
+        $cell = fn($v) => $v === null ? '<td class="n">NULL</td>' : (is_int($v) || is_float($v) ? '<td class="r">' . $e($v) . '</td>' : '<td>' . $e($v) . '</td>');
+        $html = '<style>body{margin:8px;font:14px system-ui,sans-serif;color:#1E1C52}table{border-collapse:collapse;margin:0 0 10px}th,td{border:1px solid #D9D7EA;padding:4px 10px;text-align:left}th{background:#F1F0F8}td.r{text-align:right;font-variant-numeric:tabular-nums}td.n{color:#8A87B0;font-style:italic}code{display:block;margin:0 0 4px;font:12px ui-monospace,monospace;color:#5A5880}</style>';
+        if ($label !== '') $html .= '<code>' . $e($label) . '</code>';
+        $html .= '<table><tr>' . implode('', array_map(fn($h) => '<th>' . $e($h) . '</th>', $head)) . '</tr>';
+        foreach ($rows as $r) $html .= '<tr>' . implode('', array_map($cell, $r)) . '</tr>';
+        return $html . '</table>';
+    }
+}
+
+/** A JSONB document as a tree, the path that -> and ->> follow, and what each operator gives back. */
+if (!function_exists('fig_pg_jsonb')) {
+    function fig_pg_jsonb(string $text): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-family="ui-monospace, monospace" font-size="13">
+<path d="M100 120 C 135 120, 135 58, 170 58" fill="none" stroke="#8A87B0" stroke-width="2"/>
+<path d="M100 120 C 135 120, 135 168, 170 168" fill="none" stroke="#E8590C" stroke-width="3"/>
+<path d="M330 168 H370" stroke="#E8590C" stroke-width="3"/>
+<rect x="20" y="102" width="80" height="36" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="60" y="125" text-anchor="middle" font-weight="700">dati</text>
+<rect x="170" y="40" width="160" height="36" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="250" y="63" text-anchor="middle">"tipo": "login"</text>
+<rect x="170" y="150" width="160" height="36" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="250" y="173" text-anchor="middle">"utente": {…}</text>
+<rect x="370" y="150" width="140" height="36" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="440" y="173" text-anchor="middle">"nome": "Ada"</text>
+<text x="128" y="204" font-weight="700" fill="#B84508">-&gt;'utente'</text>
+<text x="340" y="140" font-weight="700" fill="#B84508">-&gt;&gt;'nome'</text>
+<text x="20" y="250">dati-&gt;'utente'</text>
+<text x="20" y="284">dati-&gt;'utente'-&gt;&gt;'nome'</text>
+<path d="M232 245 H262" stroke="#1E1C52" stroke-width="2"/><path d="M260 239 L270 245 L260 251 Z" fill="#1E1C52"/>
+<path d="M232 279 H262" stroke="#1E1C52" stroke-width="2"/><path d="M260 273 L270 279 L260 285 Z" fill="#1E1C52"/>
+<rect x="278" y="228" width="160" height="30" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="358" y="248" text-anchor="middle">{"nome": "Ada"}</text>
+<rect x="278" y="264" width="160" height="30" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="358" y="284" text-anchor="middle">Ada</text>
+</g>
+<text x="452" y="248" font-weight="700" fill="#4B2BBF">JSON</text>
+<text x="452" y="284" font-weight="700" fill="#0B7F5C">{$text}</text>
+</svg>
+SVG;
+    }
+}
+
+/** How PostgreSQL nests things: server, databases, schemas, tables; a role gets rights on a schema. */
+if (!function_exists('fig_pg_schemas')) {
+    function fig_pg_schemas(string $server, string $role): string
+    {
+        $t = fn(int $x, int $y, string $n) => '<rect x="' . $x . '" y="' . $y . '" width="108" height="30" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><text x="' . ($x + 12) . '" y="' . ($y + 20) . '">' . $n . '</text>';
+        $g = $t(180, 126, 'ordini') . $t(180, 166, 'fatture') . $t(326, 126, 'clienti') . $t(326, 166, 'prodotti') . str_replace('width="108"', 'width="94"', $t(498, 126, 'articoli'));
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="132" y="14" width="492" height="242" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="148" y="38" font-weight="700" fill="#B84508">{$server}</text>
+<rect x="148" y="50" width="316" height="190" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="480" y="50" width="130" height="190" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-weight="700" fill="#1B66BC"><text x="162" y="74">database negozio</text><text x="494" y="74">database blog</text></g>
+<rect x="164" y="86" width="140" height="140" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="3"/>
+<rect x="310" y="86" width="140" height="140" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="490" y="86" width="110" height="140" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-size="13" font-weight="700" fill="#0B7F5C"><text x="180" y="110">schema vendite</text><text x="326" y="110">schema public</text><text x="500" y="110">schema public</text></g>
+{$g}
+<rect x="16" y="116" width="92" height="44" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="62" y="143" text-anchor="middle" font-weight="700" fill="#4B2BBF">{$role}</text>
+<path d="M108 138 H156" stroke="#7048E8" stroke-width="2"/><path d="M154 132 L164 138 L154 144 Z" fill="#7048E8"/>
+<text x="20" y="190" font-family="ui-monospace, monospace" font-size="12" fill="#4B2BBF">GRANT USAGE</text>
+<text x="148" y="250" font-family="ui-monospace, monospace" font-size="12" fill="#5A5880">vendite.ordini</text>
+</svg>
+SVG;
+    }
+}
+
+/** MVCC: an UPDATE writes a new version of the row; an older reader still sees the old one until VACUUM clears it. */
+if (!function_exists('fig_pg_mvcc')) {
+    function fig_pg_mvcc(string $old, string $new, string $sees, string $writes, string $note): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><pattern id="pg-dead" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#F1F0F8"/><line x1="0" y1="0" x2="0" y2="8" stroke="#C9C7DE" stroke-width="2"/></pattern></defs>
+<rect x="210" y="50" width="230" height="58" rx="12" fill="url(#pg-dead)" stroke="#8A87B0" stroke-width="2"/>
+<text x="226" y="40" font-size="13" font-weight="700" fill="#5A5880">{$old}</text>
+<text x="226" y="76" font-weight="700">id 7 · totale 50</text><text x="226" y="97" font-family="ui-monospace, monospace" font-size="12" fill="#5A5880">xmin 100 · xmax 105</text>
+<rect x="210" y="146" width="230" height="58" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="226" y="136" font-size="13" font-weight="700" fill="#0B7F5C">{$new}</text>
+<text x="226" y="172" font-weight="700">id 7 · totale 80</text><text x="226" y="193" font-family="ui-monospace, monospace" font-size="12" fill="#5A5880">xmin 105 · xmax –</text>
+<g font-family="ui-monospace, monospace" font-size="13" font-weight="700">
+<rect x="20" y="60" width="140" height="38" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="90" y="84" text-anchor="middle">T103 SELECT</text>
+<rect x="20" y="156" width="140" height="38" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="90" y="180" text-anchor="middle">T106 SELECT</text>
+<rect x="490" y="156" width="134" height="38" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="557" y="180" text-anchor="middle">T105 UPDATE</text>
+</g>
+<path d="M160 79 H200" stroke="#2F8CF0" stroke-width="2"/><path d="M198 73 L208 79 L198 85 Z" fill="#2F8CF0"/>
+<path d="M160 175 H200" stroke="#2F8CF0" stroke-width="2"/><path d="M198 169 L208 175 L198 181 Z" fill="#2F8CF0"/>
+<path d="M490 175 H450" stroke="#E8590C" stroke-width="2"/><path d="M452 169 L442 175 L452 181 Z" fill="#E8590C"/>
+<path d="M557 156 V79 H450" fill="none" stroke="#E8590C" stroke-width="2" stroke-dasharray="6 4"/><path d="M452 73 L442 79 L452 85 Z" fill="#E8590C"/>
+<g font-size="12" fill="#5A5880"><text x="164" y="70">{$sees}</text><text x="164" y="166">{$sees}</text><text x="452" y="166">{$writes}</text><text x="470" y="70" font-family="ui-monospace, monospace">xmax = 105</text></g>
+<text x="20" y="242" font-weight="700" fill="#5A5880">{$note}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Full-text search: the text becomes a tsvector, the question a tsquery, and @@ compares them. */
+if (!function_exists('fig_pg_fts')) {
+    function fig_pg_fts(string $text, string $query, string $stems, string $yes): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-size="13" font-weight="700" fill="#5A5880"><text x="20" y="34">{$text}</text><text x="20" y="144">{$query}</text></g>
+<rect x="20" y="44" width="150" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="95" y="69" text-anchor="middle">I gatti neri dormono</text>
+<rect x="20" y="154" width="150" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="95" y="179" text-anchor="middle">gatti neri</text>
+<g font-family="ui-monospace, monospace" font-size="12" fill="#4B2BBF" text-anchor="middle"><text x="250" y="56">to_tsvector</text><text x="250" y="166">websearch_to_tsquery</text></g>
+<path d="M170 64 H322" stroke="#7048E8" stroke-width="2"/><path d="M320 58 L330 64 L320 70 Z" fill="#7048E8"/>
+<path d="M170 174 H322" stroke="#7048E8" stroke-width="2"/><path d="M320 168 L330 174 L320 180 Z" fill="#7048E8"/>
+<g font-family="ui-monospace, monospace" font-size="12">
+<rect x="332" y="44" width="212" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="438" y="69" text-anchor="middle">'dorm':4 'gatt':2 'ner':3</text>
+<rect x="332" y="154" width="212" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="438" y="179" text-anchor="middle">'gatt' &amp; 'ner'</text>
+</g>
+<text x="332" y="106" font-size="12" fill="#5A5880">{$stems}</text>
+<path d="M544 64 C 572 64, 586 80, 590 96" fill="none" stroke="#0B7F5C" stroke-width="2"/><path d="M544 174 C 572 174, 586 156, 590 140" fill="none" stroke="#0B7F5C" stroke-width="2"/>
+<circle cx="592" cy="118" r="22" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="592" y="124" text-anchor="middle" font-family="ui-monospace, monospace" font-weight="700" fill="#0B7F5C">@@</text>
+<text x="592" y="226" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$yes}</text>
+<path d="M592 140 V206" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="4 4"/>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'postgresql', 'family' => 'postgresql', 'after' => 'sql-base',
     'title' => L('PostgreSQL', 'PostgreSQL'), 'short' => L('PostgreSQL', 'PostgreSQL'), 'level' => L('Intermedio', 'Intermediate'),
@@ -58,8 +185,9 @@ ON CONFLICT (email) DO UPDATE SET nome = EXCLUDED.nome
 RETURNING id;
 
 INSERT INTO tag (nome) VALUES (\'sql\')
-ON CONFLICT DO NOTHING;', 'sql'),
+ON CONFLICT DO NOTHING;', 'sql', fucina_data_table(['id'], [[42]], 'INSERT INTO utenti … ON CONFLICT (email) DO UPDATE … RETURNING id;')),
             P('Tra parentesi dopo `ON CONFLICT` si indica la colonna (o le colonne) con il vincolo unico che fa scattare il conflitto.', 'In brackets after `ON CONFLICT` you name the column (or columns) with the unique constraint that triggers the conflict.'),
+            P('Su quelle colonne deve esistere davvero un vincolo `UNIQUE` (o la chiave primaria), altrimenti PostgreSQL dà errore. Il vantaggio rispetto a «prima controllo con un `SELECT`, poi inserisco» è che tutto avviene in un passo solo: se due richieste arrivano insieme con la stessa email, nessuna delle due crea un doppione. Nel primo esempio, se Ada esiste già, il suo nome viene aggiornato e `RETURNING` restituisce comunque il suo `id`.', 'A `UNIQUE` constraint (or the primary key) must really exist on those columns, otherwise PostgreSQL raises an error. The advantage over “first check with a `SELECT`, then insert” is that it all happens in one step: if two requests arrive together with the same email, neither of them creates a duplicate. In the first example, if Ada already exists, her name is updated and `RETURNING` still gives back her `id`.'),
         ], [
             Q('o1', L('Che cosa rappresenta `EXCLUDED`?', 'What does `EXCLUDED` stand for?'), [L('La riga che si voleva inserire', 'The row you tried to insert'), L('La riga già presente', 'The row already there'), L('Le righe cancellate', 'The deleted rows'), L('Le colonne escluse dalla query', 'Columns left out of the query')], 0, L('Da lì prendi i valori nuovi.', 'That is where you take the new values.')),
             Q('o2', L('Che cosa fa `ON CONFLICT DO NOTHING`?', 'What does `ON CONFLICT DO NOTHING` do?'), [L('Salta i doppioni senza errore', 'Skips duplicates without error'), L('Svuota la tabella', 'Empties the table'), L('Annulla la transazione', 'Rolls back the transaction'), L('Inserisce comunque', 'Inserts anyway')], 0, L('Utile per importazioni ripetibili.', 'Handy for repeatable imports.')),
@@ -77,8 +205,12 @@ INSERT INTO eventi (dati) VALUES (\'{"tipo": "login", "utente": {"nome": "Ada"}}
 SELECT dati->\'utente\'->>\'nome\' FROM eventi;
 SELECT * FROM eventi WHERE dati @> \'{"tipo": "login"}\';
 
-CREATE INDEX eventi_dati ON eventi USING GIN (dati);', 'sql'),
+CREATE INDEX eventi_dati ON eventi USING GIN (dati);', 'sql', fucina_data_table(['?column?'], [['Ada']], 'SELECT dati->\'utente\'->>\'nome\' FROM eventi;')),
+            Fig(L(fig_pg_jsonb('testo'), fig_pg_jsonb('text')),
+                L('Il documento come albero: da dati partono due rami, "tipo": "login" e "utente", e da utente parte "nome": "Ada". Il percorso arancione segue ->\'utente\' e poi ->>\'nome\'. Sotto: dati->\'utente\' restituisce il JSON {"nome": "Ada"}, dati->\'utente\'->>\'nome\' il testo Ada.', 'The document as a tree: two branches leave dati, "tipo": "login" and "utente", and "nome": "Ada" hangs from utente. The orange path follows ->\'utente\' and then ->>\'nome\'. Below: dati->\'utente\' returns the JSON {"nome": "Ada"}, dati->\'utente\'->>\'nome\' the text Ada.'),
+                L('`->` scende di un livello e resta JSON; `->>` all’ultimo passo dà testo semplice.', '`->` goes down one level and stays JSON; `->>` at the last step gives plain text.')),
             P('Un indice **GIN** rende veloci le ricerche con `@>` su tutto il documento. Il tipo `JSON` semplice invece conserva il testo così com’è, spazi e ordine compresi.', 'A **GIN** index makes `@>` searches over the whole document fast. The plain `JSON` type instead keeps the text as it is, spacing and order included.'),
+            P('Un errore comune: confrontare `dati->\'tipo\' = \'login\'`. Con `->` il risultato è JSON e il confronto con un testo non funziona; usa `dati->>\'tipo\' = \'login\'` oppure `@>`, che sa anche sfruttare l’indice GIN. E se un campo serve in quasi tutte le query, dagli una colonna vera: `JSONB` è perfetto per la parte variabile dei dati, non per tutto.', 'A common mistake: comparing `dati->\'tipo\' = \'login\'`. With `->` the result is JSON and comparing it with text does not work; use `dati->>\'tipo\' = \'login\'` or `@>`, which can also use the GIN index. And if a field is needed in almost every query, give it a real column: `JSONB` is perfect for the variable part of the data, not for everything.'),
         ], [
             Q('b1', L('Che cosa fa `@>`?', 'What does `@>` do?'), [L('Controlla se il documento ne contiene un altro', 'Checks whether the document contains another'), L('Concatena testi', 'Concatenates text'), L('Confronta due date', 'Compares two dates'), L('Assegna un valore', 'Assigns a value')], 0, L('Il “contiene” di JSONB.', 'JSONB’s “contains”.')),
             Q('b2', L('Quale indice si usa per JSONB?', 'Which index is used for JSONB?'), ['GIN', 'BTREE', 'HASH', 'FULLTEXT'], 0, L('Indicizza chiavi e valori dentro il documento.', 'It indexes keys and values inside the document.')),
@@ -96,6 +228,9 @@ GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA vendite TO app;
 
 EXPLAIN ANALYZE
 SELECT * FROM vendite.ordini WHERE cliente_id = 42;', 'sql'),
+            Fig(L(fig_pg_schemas('server PostgreSQL (cluster)', 'ruolo app'), fig_pg_schemas('PostgreSQL server (cluster)', 'role app')),
+                L('Un server contiene due database, negozio e blog. Negozio contiene gli schemi vendite (tabelle ordini e fatture) e public (clienti e prodotti); blog contiene lo schema public con la tabella articoli. Il ruolo app, fuori dal server, ha una freccia GRANT USAGE verso lo schema vendite.', 'A server holds two databases, negozio and blog. Negozio holds the schemas vendite (tables ordini and fatture) and public (clienti and prodotti); blog holds the public schema with the articoli table. The app role, outside the server, has a GRANT USAGE arrow to the vendite schema.'),
+                L('Il nome completo di una tabella è `schema.tabella`: `vendite.ordini`.', 'A table’s full name is `schema.table`: `vendite.ordini`.')),
             P('Nel piano, `Seq Scan` vuol dire che legge tutta la tabella; `Index Scan` che usa un indice. Se una ricerca frequente fa `Seq Scan` su una tabella grande, serve un indice. Nota: `GRANT … ON ALL TABLES` vale per le tabelle che esistono già; per quelle future si usa `ALTER DEFAULT PRIVILEGES`.', 'In the plan, `Seq Scan` means it reads the whole table; `Index Scan` that it uses an index. If a frequent lookup does a `Seq Scan` on a big table, it needs an index. Note: `GRANT … ON ALL TABLES` covers the tables that already exist; for future ones you use `ALTER DEFAULT PRIVILEGES`.'),
         ], [
             Q('x1', L('Come si chiama lo schema predefinito?', 'What is the default schema called?'), ['public', 'main', 'dbo', 'default'], 0, L('`dbo` è di SQL Server.', '`dbo` belongs to SQL Server.')),
@@ -131,13 +266,16 @@ FOR EACH ROW EXECUTE FUNCTION aggiorna_modificato();', 'sql'),
         ]),
         lesson('mvcc', L('MVCC e VACUUM', 'MVCC and VACUUM'), [
             P('PostgreSQL usa l’**MVCC** (controllo della concorrenza a più versioni): un `UPDATE` non sovrascrive la riga, ne scrive una nuova versione e lascia la vecchia a chi la sta ancora leggendo. Così chi legge non blocca chi scrive, e viceversa.', 'PostgreSQL uses **MVCC** (multi-version concurrency control): an `UPDATE` does not overwrite the row, it writes a new version and leaves the old one to whoever is still reading it. So readers do not block writers, and vice versa.'),
+            Fig(L(fig_pg_mvcc('versione vecchia (morta dopo il COMMIT)', 'versione nuova', 'la vede', 'la scrive', 'VACUUM toglie la versione vecchia quando nessuna transazione la vede più.'), fig_pg_mvcc('old version (dead after COMMIT)', 'new version', 'sees it', 'writes it', 'VACUUM removes the old version once no transaction can see it.')),
+                L('Due versioni della stessa riga id 7: la vecchia con totale 50 (xmin 100, xmax 105), tratteggiata, e la nuova con totale 80 (xmin 105). La transazione T105 scrive la nuova e chiude la vecchia con xmax = 105. T103, partita prima, vede ancora la vecchia; T106, partita dopo, vede la nuova.', 'Two versions of the same row id 7: the old one with totale 50 (xmin 100, xmax 105), hatched, and the new one with totale 80 (xmin 105). Transaction T105 writes the new one and closes the old one with xmax = 105. T103, which started earlier, still sees the old one; T106, which started later, sees the new one.'),
+                L('`xmin` e `xmax` dicono quale transazione ha creato e chiuso ogni versione.', '`xmin` and `xmax` say which transaction created and closed each version.')),
             C('-- quante righe «morte» aspettano la pulizia?
 SELECT relname, n_live_tup, n_dead_tup, last_autovacuum
 FROM pg_stat_user_tables
 ORDER BY n_dead_tup DESC
 LIMIT 5;
 
-VACUUM (VERBOSE, ANALYZE) ordini;', 'sql'),
+VACUUM (VERBOSE, ANALYZE) ordini;', 'sql', fucina_data_table(['relname', 'n_live_tup', 'n_dead_tup', 'last_autovacuum'], [['ordini', 182400, 9310, '2026-11-18 09:12'], ['sessioni', 5200, 4100, '2026-11-18 10:01'], ['prodotti', 830, 12, null]], 'SELECT relname, n_live_tup, n_dead_tup, last_autovacuum FROM pg_stat_user_tables …')),
             P('Le versioni vecchie diventano righe **morte**: le toglie il **`VACUUM`**, che lo **autovacuum** lancia da solo in background; `ANALYZE` aggiorna le statistiche usate dal pianificatore. Non spegnere mai l’autovacuum. `VACUUM FULL` riscrive la tabella e restituisce spazio al disco, ma la blocca per tutto il tempo.', 'Old versions become **dead** rows: **`VACUUM`** removes them, and **autovacuum** runs it by itself in the background; `ANALYZE` refreshes the statistics the planner uses. Never turn autovacuum off. `VACUUM FULL` rewrites the table and gives space back to the disk, but locks it the whole time.'),
             Tip('Per i backup si usa `pg_dump` (un database) o `pg_dumpall` (tutto il server); con il formato `-Fc` si ripristina con `pg_restore`, anche una tabella sola.', 'For backups you use `pg_dump` (one database) or `pg_dumpall` (the whole server); with the `-Fc` format you restore with `pg_restore`, even a single table.'),
         ], [
@@ -159,7 +297,10 @@ SELECT titolo, ts_rank(ricerca, q) AS punteggio
 FROM articoli, websearch_to_tsquery(\'italian\', \'gatti neri\') AS q
 WHERE ricerca @@ q
 ORDER BY punteggio DESC
-LIMIT 10;', 'sql'),
+LIMIT 10;', 'sql', fucina_data_table(['titolo', 'punteggio'], [['Gatti neri e superstizioni', 0.0991], ['Il gatto nero di Poe', 0.0759], ['Adottare un gatto', 0.0304]], 'SELECT titolo, ts_rank(ricerca, q) AS punteggio … ORDER BY punteggio DESC')),
+            Fig(L(fig_pg_fts('Testo', 'Domanda', 'radici e posizioni; «I» è una parola vuota', 'vero'), fig_pg_fts('Text', 'Query', 'stems and positions; “I” is a stop word', 'true')),
+                L('In alto il testo «I gatti neri dormono» passa per to_tsvector e diventa dorm:4, gatt:2, ner:3. In basso la domanda «gatti neri» passa per websearch_to_tsquery e diventa gatt e ner. Le due strade arrivano all’operatore @@, che risponde vero.', 'On top the text “I gatti neri dormono” goes through to_tsvector and becomes dorm:4, gatt:2, ner:3. Below the query “gatti neri” goes through websearch_to_tsquery and becomes gatt and ner. The two paths reach the @@ operator, which answers true.'),
+                L('Si confrontano le radici, non le parole: «gatto» troverebbe lo stesso articolo.', 'Stems are compared, not words: “gatto” would find the same article.')),
             P('La configurazione `\'italian\'` sa che «gatti» e «gatto» hanno la stessa radice. `websearch_to_tsquery` accetta domande come in un motore di ricerca (`"frase esatta"`, `-parola` per escludere). Una **colonna generata** tiene il `tsvector` sempre aggiornato e un indice **GIN** rende la ricerca veloce; `ts_rank` ordina per pertinenza.', 'The `\'italian\'` configuration knows that “gatti” and “gatto” share a stem. `websearch_to_tsquery` accepts queries like a search engine (`"exact phrase"`, `-word` to exclude). A **generated column** keeps the `tsvector` always up to date and a **GIN** index makes the search fast; `ts_rank` sorts by relevance.'),
         ], [
             Q('s1', L('Quale operatore confronta un `tsvector` con un `tsquery`?', 'Which operator matches a `tsvector` against a `tsquery`?'), ['@>', '@@', 'LIKE', '~~'], 1, L('Si legge «corrisponde a».', 'Read it as “matches”.')),

@@ -1,6 +1,69 @@
 <?php
 /** Mistral AI: the company and its open models, Vibe (formerly Le Chat) and its coding mode, the Mistral API, local use. */
 
+/** Where the data goes: an open-weight model on your own computer versus the same request sent to a provider's API. Labels in one language. */
+if (!function_exists('fig_mistral_where')) {
+    function fig_mistral_where(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['In locale (pesi scaricati)', 'Tu', 'Il tuo computer', 'modello + pesi', 'i dati restano qui', 'Tramite API', 'Internet', 'Server del fornitore', 'riceve i tuoi dati']
+            : ['Locally (downloaded weights)', 'You', 'Your computer', 'model + weights', 'the data stays here', 'Through the API', 'Internet', 'Provider’s server', 'receives your data'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<text x="16" y="28" font-weight="700" fill="#0B7F5C">{$t[0]}</text>
+<rect x="16" y="40" width="608" height="96" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<circle cx="70" cy="78" r="13" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><path d="M48 116a22 18 0 0 1 44 0" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<path d="M104 88H186" stroke="#8A87B0" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+<rect x="192" y="54" width="230" height="68" rx="12" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/>
+<text x="307" y="82" text-anchor="middle" font-weight="700">{$t[2]}</text><text x="307" y="104" text-anchor="middle" font-size="13">{$t[3]}</text>
+<text x="524" y="94" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[4]}</text>
+<text x="16" y="174" font-weight="700" fill="#1B66BC">{$t[5]}</text>
+<rect x="16" y="186" width="608" height="96" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<circle cx="70" cy="224" r="13" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><path d="M48 262a22 18 0 0 1 44 0" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<path d="M104 234H196" stroke="#8A87B0" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+<path d="M212 250a20 20 0 0 1 6-38a28 28 0 0 1 52-6a22 22 0 0 1 34 18a16 16 0 0 1-4 26z" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="258" y="238" text-anchor="middle" font-size="13">{$t[6]}</text>
+<path d="M312 234H394" stroke="#8A87B0" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+<rect x="400" y="200" width="216" height="68" rx="12" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<g stroke="#2F8CF0" stroke-width="2"><path d="M416 222h22M416 234h22M416 246h22"/></g>
+<text x="526" y="230" text-anchor="middle" font-weight="700">{$t[7]}</text>
+<text x="526" y="252" text-anchor="middle" font-size="13">{$t[8]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Anatomy of a Vibe Work assignment and the plan it produces; the step that sends waits for your approval. Labels in one language. */
+if (!function_exists('fig_mistral_work')) {
+    function fig_mistral_work(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['L’incarico', 'Obiettivo', 'tabella delle offerte', 'Fonti', 'mail della settimana', 'Formato', 'foglio, una riga a offerta', 'Mai da solo', 'inviare, cancellare, pagare', 'Il piano di Vibe', '1  Cerca le offerte nella posta', '2  Compila la tabella', '3  Invia il riepilogo', 'aspetta il tuo sì', 'posta', 'documenti']
+            : ['The assignment', 'Goal', 'table of the offers', 'Sources', 'this week’s emails', 'Format', 'sheet, one row per offer', 'Never on its own', 'send, delete, pay', 'Vibe’s plan', '1  Find the offers in the mail', '2  Fill in the table', '3  Send the recap', 'waits for your yes', 'mail', 'documents'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="12" y="12" width="250" height="276" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="28" y="40" font-weight="700" font-size="16">{$t[0]}</text>
+<g stroke-width="2"><rect x="28" y="54" width="218" height="52" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="28" y="112" width="218" height="52" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="28" y="170" width="218" height="52" rx="10" fill="#FFF3EA" stroke="#E8590C"/><rect x="28" y="228" width="218" height="52" rx="10" fill="#FFE3EE" stroke="#F03E82"/></g>
+<g font-weight="700" font-size="14"><text x="42" y="76" fill="#1B66BC">{$t[1]}</text><text x="42" y="134" fill="#0B7F5C">{$t[3]}</text><text x="42" y="192" fill="#B84508">{$t[5]}</text><text x="42" y="250" fill="#C2255C">{$t[7]}</text></g>
+<g font-size="13"><text x="42" y="95">{$t[2]}</text><text x="42" y="153">{$t[4]}</text><text x="42" y="211">{$t[6]}</text><text x="42" y="269">{$t[8]}</text></g>
+<path d="M262 150H290" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<rect x="294" y="12" width="334" height="276" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="310" y="40" font-weight="700" font-size="16" fill="#5A36C9">{$t[9]}</text>
+<g fill="#FFFFFF" stroke="#7048E8" stroke-width="2"><rect x="310" y="56" width="302" height="50" rx="10"/><rect x="310" y="118" width="302" height="50" rx="10"/></g>
+<rect x="310" y="180" width="302" height="92" rx="10" fill="#FFFFFF" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/>
+<g font-size="14"><text x="324" y="86">{$t[10]}</text><text x="324" y="148">{$t[11]}</text><text x="324" y="208">{$t[12]}</text></g>
+<g font-size="13" text-anchor="middle"><rect x="540" y="70" width="60" height="22" rx="11" fill="#DCEBFF"/><text x="570" y="85" fill="#1B66BC">{$t[14]}</text><rect x="520" y="132" width="80" height="22" rx="11" fill="#D5F6EA"/><text x="560" y="147" fill="#0B7F5C">{$t[15]}</text></g>
+<rect x="324" y="222" width="190" height="34" rx="17" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<path d="M340 239l6 6 10-12" stroke="#C2255C" stroke-width="2" fill="none"/>
+<text x="366" y="244" font-size="14" font-weight="700" fill="#C2255C">{$t[13]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'mistral', 'family' => 'assistants', 'after' => null,
     'title' => L('Mistral: Vibe e modelli aperti', 'Mistral: Vibe and Open Models'), 'short' => L('Mistral', 'Mistral'), 'level' => L('Base', 'Basics'),
@@ -8,6 +71,7 @@ return [
     'lessons' => [
         lesson('intro', L('Mistral AI e i suoi modelli', 'Mistral AI and its models'), [
             P('**Mistral AI** è un’azienda francese fondata nel 2023, tra i protagonisti dell’AI europea. È nota per aver pubblicato modelli **open-weight** di alta qualità, molti con licenza permissiva **Apache 2.0**, accanto a modelli commerciali più grandi.', '**Mistral AI** is a French company founded in 2023, one of the leaders of European AI. It is known for releasing high-quality **open-weight** models, many under the permissive **Apache 2.0** licence, alongside larger commercial models.'),
+            P('**Open-weight** significa che si possono scaricare i **pesi**, cioè i numeri imparati durante l’addestramento: con quelli il modello gira dove vuoi tu. Non vuol dire per forza open source completo: i dati e il codice di addestramento spesso restano privati, e ciò che puoi fare lo decide la licenza. Perché conta? Puoi tenere i dati in casa, adattare il modello ai tuoi compiti e non dipendere da un solo fornitore.', '**Open-weight** means the **weights**, the numbers learnt during training, can be downloaded: with them the model runs wherever you choose. It does not necessarily mean fully open source: training data and code often stay private, and the licence decides what you may do. Why does it matter? You can keep data in-house, adapt the model to your tasks and avoid depending on a single provider.'),
             P('Le famiglie comprendono modelli generalisti di varie dimensioni, modelli per il **codice** (come Codestral e Devstral), modelli con **ragionamento** e modelli per leggere documenti e immagini. I modelli aperti si possono far girare in locale, per esempio con Ollama.', 'The families include general-purpose models of various sizes, models for **code** (such as Codestral and Devstral), **reasoning** models and models for reading documents and images. The open models can run locally, for example with Ollama.'),
         ], [
             Q('i1', L('Di quale paese è Mistral AI?', 'Which country is Mistral AI from?'), [L('Francia', 'France'), L('Stati Uniti', 'United States'), L('Cina', 'China'), L('Svizzera', 'Switzerland')], 0, L('Fondata nel 2023.', 'Founded in 2023.')),
@@ -69,6 +133,9 @@ print(risposta.choices[0].message.content)', 'python'),
             C('ollama pull mistral
 ollama run mistral "Spiegami cos’è una API in tre frasi"', 'bash'),
             P('Eseguire un modello in locale significa che i dati **non escono** dalla macchina, ma servono memoria e una buona scheda video per i modelli grandi. I modelli piccoli sono più veloci e più leggeri, quelli grandi più bravi nei compiti difficili.', 'Running a model locally means data **does not leave** the machine, but large models need memory and a good graphics card. Small models are faster and lighter, large ones are better at hard tasks.'),
+            Fig(L(fig_mistral_where('it'), fig_mistral_where('en')),
+                L('Due fasce. In quella verde, in locale, la persona dialoga con il proprio computer che contiene modello e pesi: i dati restano lì. In quella azzurra, tramite API, la richiesta passa da internet e arriva al server del fornitore.', 'Two bands. In the green one, local use, the person talks to their own computer, which holds the model and its weights: the data stays there. In the blue one, through the API, the request crosses the internet and reaches the provider’s server.'),
+                L('Stesso modello, due strade: conta dove viaggiano i tuoi dati.', 'Same model, two routes: what matters is where your data travels.')),
         ], [
             Q('op1', L('Che cosa significa “pesi aperti”?', 'What does “open weights” mean?'), [L('Il modello si può scaricare ed eseguire', 'The model can be downloaded and run'), L('Il modello è gratis solo online', 'The model is free only online'), L('Il codice di addestramento è segreto', 'The training code is secret'), L('Non ha licenza', 'It has no licence')], 0, L('Ma la licenza va letta.', 'But the licence must be read.')),
             Q('op2', L('Che cosa permette Apache 2.0?', 'What does Apache 2.0 allow?'), [L('Anche l’uso commerciale', 'Commercial use too'), L('Solo la ricerca', 'Research only'), L('Solo l’uso personale', 'Personal use only'), L('Nulla', 'Nothing')], 0, L('Con le sue condizioni di attribuzione.', 'With its attribution conditions.')),
@@ -80,6 +147,9 @@ ollama run mistral "Spiegami cos’è una API in tre frasi"', 'bash'),
         lesson('work', L('Delegare compiti con Vibe Work', 'Delegating tasks with Vibe Work'), [
             P('In **Vibe Work** non chiedi una risposta, ma un **risultato**: «prepara una tabella con le offerte ricevute questa settimana», «riordina gli appunti della riunione e scrivi la mail di riepilogo». Vibe pianifica i passaggi e usa le app che hai **collegato** (posta, calendario, documenti, strumenti aziendali) per portarli a termine.', 'In **Vibe Work** you do not ask for an answer but for a **result**: “prepare a table of the offers received this week”, “tidy the meeting notes and write the recap email”. Vibe plans the steps and uses the apps you have **connected** (mail, calendar, documents, company tools) to carry them out.'),
             P('Un buon incarico dice **obiettivo**, **fonti** da usare, **formato** del risultato e che cosa l’agente **non** deve fare da solo (inviare, cancellare, pagare). Collega solo le app che servono, controlla le azioni che ti propone prima di approvarle e rileggi il risultato: delegare non vuol dire smettere di verificare.', 'A good assignment states the **goal**, the **sources** to use, the **format** of the result and what the agent must **not** do on its own (send, delete, pay). Connect only the apps you need, check the actions it proposes before approving them and reread the result: delegating does not mean you stop checking.'),
+            Fig(L(fig_mistral_work('it'), fig_mistral_work('en')),
+                L('A sinistra la scheda dell’incarico con quattro righe: obiettivo, fonti, formato e ciò che non deve fare da solo. A destra il piano di Vibe in tre passi; il terzo, inviare il riepilogo, è tratteggiato in rosa e aspetta il tuo sì.', 'On the left, the assignment card with four rows: goal, sources, format and what it must never do on its own. On the right, Vibe’s three-step plan; the third, sending the recap, is dashed in pink and waits for your yes.'),
+                L('Un incarico chiaro produce un piano chiaro; i passi irreversibili restano a te.', 'A clear assignment produces a clear plan; irreversible steps stay with you.')),
             Tip('Un agente che legge email o pagine web può incontrare istruzioni scritte apposta per ingannarlo: le azioni importanti vanno sempre confermate da te.', 'An agent reading emails or web pages may meet instructions written to trick it: important actions should always be confirmed by you.'),
         ], [
             Q('w1', L('Che cosa chiedi a Vibe Work?', 'What do you ask Vibe Work for?'), [L('Un risultato da ottenere in più passaggi', 'A result to reach in several steps'), L('Solo una definizione breve', 'Only a short definition'), L('Un modello da scaricare', 'A model to download'), L('Una chiave API', 'An API key')], 0, L('Pianifica e usa le app collegate.', 'It plans and uses connected apps.')),

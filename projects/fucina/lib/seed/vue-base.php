@@ -1,6 +1,95 @@
 <?php
 /** Vue basics: the single-file component, reactivity, directives, events and lists, dynamic classes, slots and v-model on components. */
 
+/** The anatomy of a .vue file: script setup, template and scoped style, each with its job. */
+if (!function_exists('fig_vuebase_sfc')) {
+    function fig_vuebase_sfc(string $l): string
+    {
+        $t = $l === 'it' ? ['la logica: dati e funzioni', 'l’HTML, con i valori tra {{ }}', 'gli stili, solo per questo componente'] : ['the logic: data and functions', 'the HTML, with values in {{ }}', 'the styles, for this component only'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<path d="M20 44V30a10 10 0 0 1 10-10h120a10 10 0 0 1 10 10v14" fill="#1E1C52"/>
+<text x="90" y="38" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#FFFFFF">Saluto.vue</text>
+<rect x="20" y="44" width="600" height="204" rx="12" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<rect x="36" y="58" width="568" height="56" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="36" y="122" width="568" height="56" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="36" y="186" width="568" height="50" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700"><text x="52" y="91" fill="#5A35C8">&lt;script setup&gt;</text><text x="52" y="155" fill="#0B7F5C">&lt;template&gt;</text><text x="52" y="216" fill="#B84508">&lt;style scoped&gt;</text></g>
+<g font-size="14"><text x="250" y="91">{$t[0]}</text><text x="250" y="155">{$t[1]}</text><text x="250" y="216">{$t[2]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** v-if against v-show when the condition is false: the first removes the element from the DOM, the second keeps it hidden. */
+if (!function_exists('fig_vuebase_ifshow')) {
+    function fig_vuebase_ifshow(string $l): string
+    {
+        $t = $l === 'it' ? ['tolto dal DOM', 'nel DOM, ma nascosto', 'con la condizione falsa'] : ['removed from the DOM', 'in the DOM, but hidden', 'with the condition false'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="20" y="34" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#5A35C8">v-if="aperto"</text>
+<text x="340" y="34" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#1B66BC">v-show="aperto"</text>
+<text x="620" y="34" text-anchor="end" font-size="13" fill="#5B5880">{$t[2]}</text>
+<path d="M320 20V214" stroke="#E4E2F0" stroke-width="2"/>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"><rect x="20" y="50" width="280" height="140" rx="12"/><rect x="340" y="50" width="280" height="140" rx="12"/></g>
+<g fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"><rect x="36" y="82" width="248" height="38" rx="8"/><rect x="356" y="82" width="248" height="38" rx="8"/></g>
+<rect x="36" y="134" width="248" height="38" rx="8" fill="none" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="6 4"/>
+<rect x="356" y="134" width="248" height="38" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="36" y="72" fill="#5B5880">&lt;nav&gt;</text><text x="356" y="72" fill="#5B5880">&lt;nav&gt;</text><text x="50" y="106">&lt;h2&gt;</text><text x="370" y="106">&lt;h2&gt;</text>
+<text x="50" y="158" fill="#B4B2CC" text-decoration="line-through">&lt;div&gt;Menu&lt;/div&gt;</text><text x="370" y="158">&lt;div style="display:none"&gt;</text></g>
+<g font-size="14" font-weight="700"><text x="20" y="214" fill="#B0245A">{$t[0]}</text><text x="340" y="214" fill="#1B66BC">{$t[1]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Props go down from App.vue to the child, the child emits an event that the parent listens to with @. */
+if (!function_exists('fig_vuebase_props')) {
+    function fig_vuebase_props(string $l): string
+    {
+        $t = $l === 'it' ? ['padre', 'figlio', 'props: dati giù', 'evento su'] : ['parent', 'child', 'props: data down', 'event up'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="vbpa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="120" y="16" width="400" height="62" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="120" y="162" width="400" height="62" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-size="13" font-weight="700" fill="#5B5880"><text x="136" y="40">{$t[0]} · App.vue</text><text x="136" y="186">{$t[1]} · Corso.vue</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="136" y="64">&lt;Corso :titolo="c.titolo" @scelto="apri" /&gt;</text><text x="136" y="210">defineProps(…) · defineEmits(["scelto"])</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#vbpa)"><path d="M220 82V158"/><path d="M420 158V82"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-weight="700"><text x="232" y="116" fill="#0B7F5C">:titolo</text><text x="432" y="116" fill="#1B66BC">emit("scelto")</text></g>
+<g font-size="13" fill="#5B5880"><text x="232" y="136">{$t[2]}</text><text x="432" y="136">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Slots: the parent puts HTML between the component tags and each piece lands in the matching slot of the child. */
+if (!function_exists('fig_vuebase_slots')) {
+    function fig_vuebase_slots(string $l): string
+    {
+        $t = $l === 'it' ? ['nel padre', 'Corso di Vue', 'Otto lezioni…', 'il figlio Scheda.vue'] : ['in the parent', 'Vue course', 'Eight lessons…', 'the child Scheda.vue'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="vbsa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-size="13" font-weight="700" fill="#5B5880"><text x="20" y="30">{$t[0]}</text><text x="360" y="30">{$t[3]}</text></g>
+<rect x="20" y="42" width="250" height="190" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="34" y="66">&lt;Scheda&gt;</text><text x="34" y="220">&lt;/Scheda&gt;</text></g>
+<rect x="34" y="80" width="222" height="56" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<rect x="34" y="146" width="222" height="56" rx="10" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5A35C8"><text x="46" y="100">#titolo</text></g><text x="46" y="124" font-weight="700" font-size="16">{$t[1]}</text>
+<text x="46" y="166" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#B84508">default</text><text x="46" y="190" font-size="14">{$t[2]}</text>
+<rect x="360" y="42" width="260" height="190" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="374" y="66" font-family="ui-monospace, Menlo, monospace" font-size="13">&lt;article&gt;</text>
+<rect x="374" y="80" width="232" height="56" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4"/>
+<rect x="374" y="146" width="232" height="56" rx="10" fill="#FFF3EA" stroke="#E8590C" stroke-width="2" stroke-dasharray="6 4"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="388" y="113">&lt;slot name="titolo"&gt;</text><text x="388" y="179">&lt;slot /&gt;</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#vbsa)"><path d="M256 108H370"/><path d="M256 174H370"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'vue-base', 'family' => 'vue', 'after' => 'js-base',
     'title' => L('Vue base', 'Vue Basics'), 'short' => L('Vue base', 'Vue Basics'), 'level' => L('Base', 'Basics'),
@@ -20,6 +109,10 @@ const nome = "Ada";
 h1 { color: tomato; }
 </style>', 'vue'),
             P('Nel template le doppie graffe mostrano un valore. Tutto ciò che dichiari in `<script setup>` è subito usabile nel template.', 'In the template, double braces show a value. Everything declared in `<script setup>` can be used in the template right away.'),
+            Fig(L(fig_vuebase_sfc('it'), fig_vuebase_sfc('en')),
+                L('Un file Saluto.vue diviso in tre blocchi: script setup per la logica, cioè dati e funzioni; template per l’HTML con i valori tra doppie graffe; style scoped per gli stili che valgono solo in questo componente.', 'A Saluto.vue file split into three blocks: script setup for the logic, that is data and functions; template for the HTML with values in double braces; style scoped for the styles that apply only to this component.'),
+                L('Tre blocchi, un componente: tutto quello che lo riguarda sta in un file.', 'Three blocks, one component: everything about it lives in one file.')),
+            P('Perché tutto in un file? Un componente è un pezzo di interfaccia riusabile, e tenere insieme logica, struttura e aspetto rende facile capirlo e spostarlo. Con `scoped` Vue aggiunge agli elementi un attributo unico, così `h1 { color: tomato }` non colora i titoli degli altri componenti. Per usare un componente in un altro lo importi nello `<script setup>` e lo scrivi come un tag: `<Saluto />`.', 'Why everything in one file? A component is a reusable piece of interface, and keeping logic, structure and look together makes it easy to understand and move around. With `scoped` Vue adds a unique attribute to the elements, so `h1 { color: tomato }` does not colour the headings of other components. To use a component inside another you import it in `<script setup>` and write it as a tag: `<Saluto />`.'),
         ], [
             Q('s1', L('Quale blocco contiene la logica?', 'Which block holds the logic?'), ['<script setup>', '<template>', '<style>', '<logic>'], 0, L('Il template è l’HTML.', 'The template is the HTML.')),
             Q('s2', L('Che cosa fa `scoped` su `<style>`?', 'What does `scoped` do on `<style>`?'), [L('Lo stile vale solo in quel componente', 'Styles apply only in that component'), L('Lo stile vale ovunque', 'Styles apply everywhere'), L('Disattiva lo stile', 'Turns styles off'), L('Usa SCSS', 'Uses SCSS')], 0, L('Niente conflitti tra componenti.', 'No clashes between components.')),
@@ -49,6 +142,7 @@ function piu() { conta.value++; }
   <button @click="piu">{{ conta }} · {{ doppio }}</button>
 </template>', 'vue'),
             P('`computed` calcola un valore dagli altri e lo ricorda finché non cambiano.', '`computed` works out a value from the others and remembers it until they change.'),
+            P('Perché `.value`? Un `ref` è una scatola che Vue osserva: leggendo e scrivendo `.value` Vue sa chi usa il dato e chi aggiornare. Errore tipico: scrivere `let conta = 0`. È una variabile normale, cambia nello script ma la pagina non se ne accorge. Per un oggetto con molti campi c’è anche `reactive({ … })`, che si usa senza `.value`.', 'Why `.value`? A `ref` is a box that Vue watches: by reading and writing `.value` Vue knows who uses the data and whom to update. A typical mistake: writing `let conta = 0`. It is a plain variable: it changes in the script but the page does not notice. For an object with many fields there is also `reactive({ … })`, used without `.value`.'),
         ], [
             Q('r1', L('Come cambi un `ref` nello script?', 'How do you change a `ref` in the script?'), ['conta.value = 5', 'conta = 5', 'conta(5)', 'set(conta, 5)'], 0, L('Nello script serve `.value`.', 'In the script you need `.value`.')),
             Q('r2', L('Nel template si scrive `.value`?', 'Do you write `.value` in the template?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo per i numeri', 'Only for numbers'), L('Solo nei cicli', 'Only in loops')], 0, L('Vue lo toglie da solo.', 'Vue unwraps it for you.')),
@@ -67,6 +161,10 @@ const meta = computed(() => voti.value / 2);'), [
 <p v-else>Tutto a posto</p>
 <div v-show="aperto">Menu</div>', 'vue'),
             P('`v-if` crea e distrugge l’elemento; `v-show` lo tiene ma cambia `display`. Usa `v-show` per qualcosa che si apre e chiude spesso.', '`v-if` creates and destroys the element; `v-show` keeps it but changes `display`. Use `v-show` for something that opens and closes often.'),
+            Fig(L(fig_vuebase_ifshow('it'), fig_vuebase_ifshow('en')),
+                L('Due riquadri con la condizione falsa. A sinistra, con v-if, dentro nav resta solo h2 e il div Menu è tratteggiato e barrato: è stato tolto dal DOM. A destra, con v-show, il div c’è ancora, con style display:none: è nel DOM ma nascosto.', 'Two boxes with the condition false. On the left, with v-if, only h2 remains inside nav and the Menu div is dashed and crossed out: it has been removed from the DOM. On the right, with v-show, the div is still there, with style display:none: it is in the DOM but hidden.'),
+                L('`v-if` toglie l’elemento, `v-show` lo nasconde soltanto.', '`v-if` removes the element, `v-show` only hides it.')),
+            P('Due dettagli che fanno sbagliare: `v-else` deve stare sull’elemento subito dopo quello con `v-if`, senza niente in mezzo. E senza i due punti il valore è solo testo: `src="foto"` cerca un file chiamato «foto», mentre `:src="foto"` usa la variabile `foto`.', 'Two details that trip people up: `v-else` must go on the element right after the one with `v-if`, with nothing in between. And without the colon the value is just text: `src="foto"` looks for a file called “foto”, while `:src="foto"` uses the variable `foto`.'),
         ], [
             Q('d1', L('Qual è l’abbreviazione di `v-bind:src`?', 'What is the shorthand of `v-bind:src`?'), [':src', '@src', '#src', '*src'], 0, L('I due punti sono `v-bind`.', 'The colon is `v-bind`.')),
             Q('d2', L('Quale direttiva toglie l’elemento dalla pagina?', 'Which directive removes the element from the page?'), ['v-if', 'v-show', 'v-bind', 'v-model'], 0, L('`v-show` lo nasconde soltanto.', '`v-show` only hides it.')),
@@ -90,6 +188,7 @@ function invia() { alert("Iscritto: " + email.value); }
   </form>
 </template>', 'vue'),
             P('`v-model` collega un campo a un dato nei due sensi: scrivi nel campo e il dato cambia, cambi il dato e il campo si aggiorna.', '`v-model` links a field to data both ways: type in the field and the data changes, change the data and the field updates.'),
+            P('Altri modificatori utili: `@keyup.enter` reagisce solo al tasto Invio, `@click.stop` ferma la risalita dell’evento. Anche `v-model` ha i suoi: `v-model.trim` toglie gli spazi ai lati, `v-model.number` converte il testo in numero. Se ti serve l’oggetto evento, la funzione lo riceve come primo argomento, oppure lo passi nel template con `$event`.', 'Other useful modifiers: `@keyup.enter` reacts only to the Enter key, `@click.stop` stops the event from bubbling up. `v-model` has its own too: `v-model.trim` removes the spaces at the sides, `v-model.number` turns the text into a number. If you need the event object, the function receives it as its first argument, or you pass it in the template with `$event`.'),
         ], [
             Q('e1', L('Qual è l’abbreviazione di `v-on:click`?', 'What is the shorthand of `v-on:click`?'), ['@click', ':click', '#click', 'on-click'], 0, L('La chiocciola è `v-on`.', 'The at sign is `v-on`.')),
             Q('e2', L('Che cosa fa `.prevent`?', 'What does `.prevent` do?'), [L('Chiama `preventDefault()`', 'Calls `preventDefault()`'), L('Ferma Vue', 'Stops Vue'), L('Ritarda l’evento', 'Delays the event'), L('Duplica l’evento', 'Doubles the event')], 0, L('Il modulo non ricarica la pagina.', 'The form does not reload the page.')),
@@ -113,6 +212,10 @@ defineProps({ titolo: String, livelli: Number });
   <Corso v-for="c in corsi" :key="c.id" :titolo="c.titolo" :livelli="c.livelli" />
 </ul>', 'vue'),
             P('Le props scendono dal padre al figlio e il figlio non le modifica: se deve avvisare il padre, emette un evento con `defineEmits`.', 'Props go down from parent to child and the child does not change them: to tell the parent something, it emits an event with `defineEmits`.'),
+            Fig(L(fig_vuebase_props('it'), fig_vuebase_props('en')),
+                L('In alto il padre App.vue usa <Corso :titolo="c.titolo" @scelto="apri" />, in basso il figlio Corso.vue dichiara defineProps e defineEmits. La freccia :titolo scende con i dati, la freccia emit("scelto") sale con l’evento.', 'At the top the parent App.vue uses <Corso :titolo="c.titolo" @scelto="apri" />, at the bottom the child Corso.vue declares defineProps and defineEmits. The :titolo arrow goes down with the data, the emit("scelto") arrow goes up with the event.'),
+                L('Le props scendono, gli eventi salgono: il dato resta del padre.', 'Props go down, events go up: the data stays with the parent.')),
+            P('`:key` conta più di quanto sembri: con un identificativo stabile Vue riconosce ogni riga quando la lista cambia, invece di ridisegnarle tutte. Usa un `id`, non l’indice. Evita anche `v-if` e `v-for` sullo stesso elemento: per mostrare solo alcune voci filtra prima l’array con un `computed`.', '`:key` matters more than it seems: with a stable identifier Vue recognises each row when the list changes, instead of redrawing them all. Use an `id`, not the index. Also avoid `v-if` and `v-for` on the same element: to show only some items, filter the array first with a `computed`.'),
         ], [
             Q('l1', L('Perché serve `:key` in `v-for`?', 'Why does `v-for` need `:key`?'), [L('Per riconoscere ogni voce', 'To identify each item'), L('Per ordinarle', 'To sort them'), L('Per colorarle', 'To colour them'), L('Non serve', 'It is not needed')], 0, L('Vue aggiorna solo ciò che cambia.', 'Vue updates only what changes.')),
             Q('l2', L('Con che cosa un figlio dichiara le props?', 'How does a child declare props?'), ['defineProps', 'useProps', 'props()', 'getProps'], 0, L('Dentro `<script setup>`.', 'Inside `<script setup>`.')),
@@ -139,6 +242,7 @@ const larghezza = ref(120);
   <div :style="{ width: larghezza + \'px\', backgroundColor: \'tomato\' }"></div>
 </template>', 'vue'),
             P('Le classi scritte con `class` normale restano e si sommano a quelle dinamiche. `{ attivo }` è la forma breve di `{ attivo: attivo }`.', 'Classes written with plain `class` stay and add up with the dynamic ones. `{ attivo }` is short for `{ attivo: attivo }`.'),
+            Tip('Preferisci le classi agli stili in linea: l’aspetto resta nel CSS, dove è facile cambiarlo, e `:style` lo tieni per i valori calcolati, come una larghezza o una posizione. Se l’oggetto delle classi diventa lungo, spostalo in un `computed`.', 'Prefer classes to inline styles: the look stays in the CSS, where it is easy to change, and you keep `:style` for computed values, such as a width or a position. If the class object grows long, move it into a `computed`.'),
         ], [
             Q('cl1', L('Che cosa fa `:class="{ rosso: errore }"`?', 'What does `:class="{ rosso: errore }"` do?'), [L('Colora sempre di rosso', 'Always colours it red'), L('Crea una variabile `rosso`', 'Creates a `rosso` variable'), L('Aggiunge `rosso` quando `errore` è vero', 'Adds `rosso` when `errore` is true'), L('Cancella la classe `errore`', 'Removes the `errore` class')], 2, L('La chiave è la classe, il valore la condizione.', 'The key is the class, the value the condition.')),
             Q('cl2', L('Come scrivi `background-color` in un `:style`?', 'How do you write `background-color` in a `:style`?'), ['backgroundColor', 'background_color', 'BackgroundColor()', 'bg-color'], 0, L('Nomi in camelCase, come in JavaScript.', 'camelCase names, as in JavaScript.')),
@@ -163,6 +267,9 @@ const larghezza = ref(120);
   <p>Otto lezioni per iniziare.</p>
 </Scheda>', 'vue'),
             P('Gli **slot con nome** si riempiono con `<template #nome>`. Il testo dentro `<slot>` è il contenuto di riserva, mostrato se il padre non passa niente. Il contenuto dello slot usa i dati del padre.', '**Named slots** are filled with `<template #name>`. The text inside `<slot>` is fallback content, shown if the parent passes nothing. Slot content uses the parent’s data.'),
+            Fig(L(fig_vuebase_slots('it'), fig_vuebase_slots('en')),
+                L('A sinistra il padre scrive dentro <Scheda> due pezzi: con #titolo il titolo «Corso di Vue», e come contenuto normale il testo «Otto lezioni…». A destra il figlio Scheda.vue ha un article con due spazi tratteggiati, slot name="titolo" e slot; due frecce portano ogni pezzo nel suo spazio.', 'On the left the parent writes two pieces inside <Scheda>: with #titolo the heading “Vue course”, and as plain content the text “Eight lessons…”. On the right the child Scheda.vue has an article with two dashed spaces, slot name="titolo" and slot; two arrows bring each piece into its space.'),
+                L('Il padre decide il contenuto, il figlio decide dove va.', 'The parent decides the content, the child decides where it goes.')),
         ], [
             Q('sl1', L('Che cosa riceve un componente con uno slot?', 'What does a component receive through a slot?'), [L('Solo numeri', 'Only numbers'), L('Un file CSS', 'A CSS file'), L('Una rotta', 'A route'), L('HTML scritto dal padre', 'HTML written by the parent')], 3, L('Le props portano dati, gli slot contenuto.', 'Props carry data, slots carry content.')),
             Q('sl2', L('Come riempi lo slot `titolo`?', 'How do you fill the `titolo` slot?'), ['<template #titolo>', '<slot titolo>', ':titolo="…"', '<titolo-slot>'], 0, L('`#titolo` è la forma breve di `v-slot:titolo`.', '`#titolo` is short for `v-slot:titolo`.')),

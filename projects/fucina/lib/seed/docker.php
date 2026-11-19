@@ -2,6 +2,153 @@
 /** Docker: images and containers, the Dockerfile, volumes and ports, Docker Compose, light and secure images,
  *  debugging, networks, CMD/ENTRYPOINT/ARG/ENV, Compose healthchecks and profiles, registries and multi-platform builds. */
 
+/** Virtual machines and containers side by side: each VM carries a whole operating system, containers share the host's. */
+if (!function_exists('fig_docker_vm')) {
+    function fig_docker_vm(array $t): string
+    {
+        $cols = '';
+        foreach (['A', 'B', 'C'] as $i => $a) {
+            $x = 20 + $i * 96; $cx = $x + 44; $x2 = 336 + $i * 96; $cx2 = $x2 + 44;
+            $cols .= "<rect x=\"$x\" y=\"58\" width=\"88\" height=\"50\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx\" y=\"80\" text-anchor=\"middle\" font-weight=\"700\">App $a</text><text x=\"$cx\" y=\"99\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>"
+                   . "<rect x=\"$x\" y=\"114\" width=\"88\" height=\"54\" rx=\"8\" fill=\"#FFE3EE\" stroke=\"#F03E82\" stroke-width=\"2\"/><text x=\"$cx\" y=\"146\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\">{$t[3]}</text>"
+                   . "<rect x=\"$x2\" y=\"118\" width=\"88\" height=\"50\" rx=\"8\" fill=\"#DCEBFF\" stroke=\"#2F8CF0\" stroke-width=\"2\"/><text x=\"$cx2\" y=\"140\" text-anchor=\"middle\" font-weight=\"700\">App $a</text><text x=\"$cx2\" y=\"159\" text-anchor=\"middle\" font-size=\"13\">{$t[2]}</text>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<g font-weight="700" font-size="16" text-anchor="middle"><text x="160" y="34">{$t[0]}</text><text x="480" y="34">{$t[1]}</text></g>
+<line x1="320" y1="16" x2="320" y2="290" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 5"/>
+{$cols}
+<g stroke-width="2">
+<rect x="20" y="174" width="280" height="32" rx="8" fill="#ECE6FF" stroke="#7048E8"/><rect x="336" y="174" width="280" height="32" rx="8" fill="#D5F6EA" stroke="#0B7F5C"/>
+<rect x="20" y="212" width="280" height="32" rx="8" fill="#FFE8D6" stroke="#E8590C"/><rect x="336" y="212" width="280" height="32" rx="8" fill="#FFE8D6" stroke="#E8590C"/>
+<rect x="20" y="250" width="280" height="32" rx="8" fill="#F1F0F8" stroke="#8A87B0"/><rect x="336" y="250" width="280" height="32" rx="8" fill="#F1F0F8" stroke="#8A87B0"/>
+</g>
+<g text-anchor="middle" font-weight="700"><text x="160" y="195">Hypervisor</text><text x="476" y="195">Docker Engine</text>
+<text x="160" y="233">{$t[4]}</text><text x="476" y="233">{$t[4]}</text><text x="160" y="271">Hardware</text><text x="476" y="271">Hardware</text></g>
+<text x="476" y="80" text-anchor="middle" font-size="13">{$t[5]}</text>
+<text x="476" y="100" text-anchor="middle" font-size="13">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The layers of an image, one per Dockerfile instruction: after a code change the lower layers come from cache and only the top ones are rebuilt. */
+if (!function_exists('fig_docker_layers')) {
+    function fig_docker_layers(array $t): string
+    {
+        $rows = '';
+        foreach (['FROM node:22-slim', 'WORKDIR /app', 'COPY package*.json ./', 'RUN npm ci --omit=dev', 'COPY . .', 'CMD ["node", "server.js"]'] as $i => $ins) {
+            $y = 246 - $i * 40; $ty = $y + 22; $top = $i >= 4;
+            [$f, $st] = $top ? ['#FFE8D6', '#E8590C'] : ['#D5F6EA', '#0B7F5C'];
+            $cls = $top ? ' class="re"' : '';
+            $rows .= "<g$cls><rect x=\"16\" y=\"$y\" width=\"330\" height=\"34\" rx=\"8\" fill=\"$f\" stroke=\"$st\" stroke-width=\"2\"/><text x=\"32\" y=\"$ty\" font-family=\"ui-monospace, Menlo, monospace\" font-size=\"14\">$ins</text></g>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 296" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.re{animation:rebuild 5s ease-in-out infinite}@keyframes rebuild{0%,15%{opacity:0;transform:translateX(40px)}35%,100%{opacity:1;transform:translateX(0)}}@media (prefers-reduced-motion:reduce){.re{animation:none}}</style>
+{$rows}
+<g fill="none" stroke-width="2"><path d="M360,46 H372 V120 H360" stroke="#E8590C"/><path d="M360,126 H372 V280 H360" stroke="#0B7F5C"/></g>
+<text x="386" y="80" font-weight="700" fill="#B84508">{$t[0]}</text>
+<text x="386" y="102" font-size="13">{$t[1]}</text>
+<text x="386" y="218" font-weight="700" fill="#0B7F5C">{$t[2]}</text>
+<text x="386" y="240" font-size="13">{$t[3]}</text>
+<rect x="386" y="140" width="238" height="40" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="505" y="165" text-anchor="middle" font-size="13">{$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A container on its host: its writable layer disappears with it, the named volume stays; -p links a host port to the container. */
+if (!function_exists('fig_docker_volume')) {
+    function fig_docker_volume(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="16" width="608" height="248" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="34" y="44" font-weight="700">{$t[0]}</text>
+<rect x="170" y="60" width="240" height="186" rx="12" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="290" y="86" text-anchor="middle" font-weight="700" fill="#1B66BC">container db</text>
+<rect x="184" y="100" width="212" height="56" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="290" y="124" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">/var/lib/postgresql</text>
+<text x="290" y="144" text-anchor="middle" font-size="13" font-family="ui-monospace, Menlo, monospace">/data</text>
+<rect x="184" y="170" width="212" height="62" rx="8" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="290" y="196" text-anchor="middle" font-size="13" font-weight="700">{$t[1]}</text>
+<text x="290" y="216" text-anchor="middle" font-size="13">{$t[2]}</text>
+<path d="M452,96 v100 a68,16 0 0 0 136,0 v-100" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<ellipse cx="520" cy="96" rx="68" ry="16" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="520" y="140" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, monospace">dati-pg</text>
+<text x="520" y="162" text-anchor="middle" font-size="13">volume</text>
+<text x="520" y="184" text-anchor="middle" font-size="13" font-weight="700" fill="#0B7F5C">{$t[3]}</text>
+<path d="M412,128 H444" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="430" y="116" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">-v</text>
+<rect x="30" y="180" width="96" height="34" rx="8" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="78" y="202" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">:5432</text>
+<path d="M128,197 H162" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="78" y="236" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">-p 5432:5432</text>
+</svg>
+SVG;
+    }
+}
+
+/** A user-defined network: the browser reaches only the published API port, the API reaches the database by name, the database stays inside. */
+if (!function_exists('fig_docker_net')) {
+    function fig_docker_net(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="196" y="24" width="428" height="190" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="214" y="50" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#5A35C9">rete-app</text>
+<rect x="16" y="94" width="116" height="56" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="74" y="127" text-anchor="middle" font-weight="700">browser</text>
+<rect x="232" y="94" width="140" height="56" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="302" y="127" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, monospace">api</text>
+<rect x="460" y="94" width="140" height="56" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="530" y="127" text-anchor="middle" font-weight="700" font-family="ui-monospace, Menlo, monospace">db</text>
+<path d="M134,122 H224" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="164" y="112" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">:3000</text>
+<path d="M374,122 H452" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="414" y="112" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">db:5432</text>
+<text x="530" y="176" text-anchor="middle" font-size="13">{$t[0]}</text>
+<path d="M74,152 V240 H520 V222" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M506,222 H534" stroke="#F03E82" stroke-width="3"/>
+<text x="300" y="258" text-anchor="middle" font-size="13" fill="#B0205A" font-weight="700">{$t[1]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A multi-stage build: the big build stage is thrown away, only dist/ is copied into the small final image. */
+if (!function_exists('fig_docker_stages')) {
+    function fig_docker_stages(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="20" width="260" height="226" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="146" y="48" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">FROM node:22 AS build</text>
+<g stroke-width="2" font-size="14" text-anchor="middle">
+<rect x="36" y="64" width="220" height="32" rx="8" fill="#FFFFFF" stroke="#8A87B0"/><text x="146" y="85">{$t[0]}</text>
+<rect x="36" y="104" width="220" height="32" rx="8" fill="#FFFFFF" stroke="#8A87B0"/><text x="146" y="125" font-family="ui-monospace, Menlo, monospace">node_modules/</text>
+<rect x="36" y="144" width="220" height="32" rx="8" fill="#FFFFFF" stroke="#8A87B0"/><text x="146" y="165">{$t[1]}</text>
+<rect x="36" y="194" width="220" height="36" rx="8" fill="#FFE8D6" stroke="#E8590C"/><text x="146" y="217" font-weight="700" font-family="ui-monospace, Menlo, monospace">dist/</text>
+</g>
+<rect x="420" y="120" width="204" height="126" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="522" y="148" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">FROM nginx:alpine</text>
+<g stroke-width="2" font-size="14" text-anchor="middle">
+<rect x="440" y="158" width="164" height="30" rx="8" fill="#FFFFFF" stroke="#0B7F5C"/><text x="522" y="178">nginx</text>
+<rect x="440" y="196" width="164" height="36" rx="8" fill="#FFE8D6" stroke="#E8590C"/><text x="522" y="219" font-weight="700" font-family="ui-monospace, Menlo, monospace">dist/</text>
+</g>
+<path d="M258,212 H432" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<text x="348" y="184" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">COPY</text><text x="348" y="202" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">--from=build</text>
+<g font-size="13" text-anchor="middle"><text x="146" y="268">{$t[2]}</text><text x="522" y="268" font-weight="700" fill="#0B7F5C">{$t[3]}</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'docker', 'family' => 'docker', 'after' => 'bash',
     'title' => L('Docker', 'Docker'), 'short' => L('Docker', 'Docker'), 'level' => L('Intermedio', 'Intermediate'),
@@ -15,6 +162,9 @@ docker ps                             # container in esecuzione
 docker logs web                       # log del container
 docker stop web && docker rm web      # ferma e rimuove', 'bash'),
             P('Le immagini pubbliche stanno su registri come **Docker Hub**. Un container è più leggero di una macchina virtuale perché condivide il kernel del sistema ospite.', 'Public images live on registries such as **Docker Hub**. A container is lighter than a virtual machine because it shares the host system’s kernel.'),
+            Fig(L(fig_docker_vm(['Macchine virtuali', 'Container', 'e librerie', 'SO della VM', 'SO del computer', 'niente SO proprio:', 'usano il kernel sotto']), fig_docker_vm(['Virtual machines', 'Containers', 'and libraries', 'Guest OS', 'Host OS', 'no OS of their own:', 'they use the kernel below'])),
+                L('Due pile a confronto. A sinistra tre macchine virtuali: ognuna ha app, librerie e un sistema operativo completo, sopra hypervisor, sistema del computer e hardware. A destra tre container: solo app e librerie, sopra Docker Engine, sistema del computer e hardware.', 'Two stacks compared. On the left three virtual machines: each has app, libraries and a full operating system, on top of a hypervisor, the host OS and hardware. On the right three containers: only app and libraries, on top of Docker Engine, the host OS and hardware.'),
+                L('Ogni VM si porta dietro un sistema operativo intero; i container no, per questo partono in un attimo.', 'Each VM carries a whole operating system; containers do not, which is why they start in a moment.')),
         ], [
             Q('c1', L('Che differenza c’è tra immagine e container?', 'What is the difference between image and container?'), [L('Il container è un’immagine in esecuzione', 'The container is a running image'), L('Sono la stessa cosa', 'They are the same'), L('L’immagine gira, il container no', 'The image runs, the container does not'), L('Il container è un file di testo', 'The container is a text file')], 0, L('Come programma e processo.', 'Like program and process.')),
             Q('c2', L('Che cosa fa `-p 8080:80`?', 'What does `-p 8080:80` do?'), [L('Collega la porta 8080 del computer alla 80 del container', 'Maps host port 8080 to container port 80'), L('Limita la memoria', 'Limits memory'), L('Imposta la password', 'Sets the password'), L('Avvia 80 container', 'Starts 80 containers')], 0, L('Ospite:container.', 'Host:container.')),
@@ -36,6 +186,9 @@ CMD ["node", "server.js"]', 'dockerfile'),
             C('docker build -t mia-app:1.0 .
 docker run -d -p 3000:3000 mia-app:1.0', 'bash'),
             P('Ogni istruzione crea uno **strato** riusato dalla cache: copia prima i file delle dipendenze e installale, poi il resto del codice, così un cambio al codice non reinstalla tutto. Usa immagini base piccole, un file `.dockerignore` e un utente non root.', 'Each instruction creates a **layer** reused from cache: copy the dependency files first and install them, then the rest of the code, so a code change does not reinstall everything. Use small base images, a `.dockerignore` file and a non-root user.'),
+            Fig(L(fig_docker_layers(['ricostruiti', 'dopo il cambio', 'dalla cache', 'pronti in un attimo', 'Hai cambiato solo server.js']), fig_docker_layers(['rebuilt', 'after the change', 'from cache', 'ready in a moment', 'You changed only server.js'])),
+                L('Sei strati impilati, uno per istruzione del Dockerfile, da FROM in basso a CMD in alto. Dopo aver cambiato server.js i quattro strati in basso, fino a RUN npm ci, vengono dalla cache; COPY . . e CMD vengono ricostruiti.', 'Six stacked layers, one per Dockerfile instruction, from FROM at the bottom to CMD at the top. After changing server.js the four lower layers, up to RUN npm ci, come from cache; COPY . . and CMD are rebuilt.'),
+                L('Un cambio invalida il suo strato e tutti quelli sopra: per questo le dipendenze vanno copiate prima del codice.', 'A change invalidates its layer and all the ones above it: that is why dependencies are copied before the code.')),
         ], [
             Q('d1', L('Quale istruzione indica l’immagine di partenza?', 'Which instruction sets the base image?'), ['FROM', 'RUN', 'CMD', 'COPY'], 0, L('Di solito è la prima riga: prima può esserci solo `ARG`.', 'It is usually the first line: only `ARG` may come before it.')),
             Q('d2', L('Perché copiare prima package.json e poi il codice?', 'Why copy package.json first and then the code?'), [L('Per riusare la cache delle dipendenze', 'To reuse the dependency cache'), L('È obbligatorio', 'It is mandatory'), L('Per ordine alfabetico', 'For alphabetical order'), L('Non conta', 'It does not matter')], 0, L('Build molto più veloci.', 'Much faster builds.')),
@@ -46,6 +199,9 @@ docker run -d -p 3000:3000 mia-app:1.0', 'bash'),
         ]),
         lesson('volumes', L('Volumi, porte e variabili', 'Volumes, ports and variables'), [
             P('I file scritti dentro un container spariscono quando lo rimuovi. Per i dati da conservare (un database, i file caricati) si usano i **volumi**, che vivono fuori dal container. Le **variabili d’ambiente** (`-e`) passano la configurazione senza cambiare l’immagine.', 'Files written inside a container vanish when you remove it. For data to keep (a database, uploaded files) you use **volumes**, which live outside the container. **Environment variables** (`-e`) pass configuration without changing the image.'),
+            Fig(L(fig_docker_volume(['Computer (host)', 'strato scrivibile', 'sparisce con docker rm', 'resta']), fig_docker_volume(['Computer (host)', 'writable layer', 'gone with docker rm', 'stays'])),
+                L('Il computer contiene il container db. Dentro il container la cartella /var/lib/postgresql/data è collegata con -v al volume dati-pg, che sta fuori dal container e resta; lo strato scrivibile del container sparisce con docker rm. A sinistra la porta 5432 del computer porta al container, con -p 5432:5432.', 'The computer holds the db container. Inside the container the /var/lib/postgresql/data folder is linked with -v to the dati-pg volume, which sits outside the container and stays; the container’s writable layer is gone with docker rm. On the left the computer’s port 5432 leads into the container, with -p 5432:5432.'),
+                L('Quello che conta va nel volume, fuori dal container.', 'What matters goes into the volume, outside the container.')),
             C('docker volume create dati-pg
 docker run -d --name db \
   -e POSTGRES_PASSWORD=segreta \
@@ -94,6 +250,9 @@ docker compose down       # ferma e rimuove (i volumi restano)', 'bash'),
         ]),
         lesson('production', L('Immagini leggere e sicure', 'Light and secure images'), [
             P('Un **build multi-stage** usa un’immagine grande per compilare e copia solo il risultato in un’immagine piccola: meno peso, meno software inutile, meno falle. Il file **`.dockerignore`** evita di copiare `node_modules`, `.git` e segreti nel contesto di build.', 'A **multi-stage build** uses a large image to compile and copies only the result into a small image: less weight, less needless software, fewer flaws. The **`.dockerignore`** file avoids copying `node_modules`, `.git` and secrets into the build context.'),
+            Fig(L(fig_docker_stages(['codice sorgente', 'strumenti di build', 'fase di build: buttata via', 'immagine finale: pubblicata']), fig_docker_stages(['source code', 'build tools', 'build stage: thrown away', 'final image: shipped'])),
+                L('A sinistra la fase di build, tratteggiata, con codice sorgente, node_modules, strumenti di build e la cartella dist. Una freccia COPY --from=build porta solo dist nella fase finale, nginx:alpine, che contiene nginx e dist.', 'On the left the build stage, dashed, with source code, node_modules, build tools and the dist folder. A COPY --from=build arrow carries only dist into the final stage, nginx:alpine, which holds nginx and dist.'),
+                L('Nell’immagine che pubblichi resta solo il risultato.', 'Only the result stays in the image you ship.')),
             C('FROM node:22 AS build
 WORKDIR /app
 COPY package*.json ./
@@ -132,6 +291,9 @@ docker system prune                       # toglie ciò che non si usa più', 'b
         ]),
         lesson('networks', L('Reti tra container', 'Networks between containers'), [
             P('I container collegati alla stessa **rete definita da te** si trovano per **nome**, grazie al DNS interno di Docker: il container `api` raggiunge il database all’indirizzo `db`. La rete `bridge` predefinita invece non risolve i nomi. Docker Compose crea da solo una rete per ogni progetto.', 'Containers attached to the same **user-defined network** find each other by **name**, thanks to Docker’s internal DNS: the `api` container reaches the database at the address `db`. The default `bridge` network, instead, does not resolve names. Docker Compose creates a network for each project by itself.'),
+            Fig(L(fig_docker_net(['nessuna porta pubblicata', 'da fuori il database non si raggiunge']), fig_docker_net(['no published port', 'the database cannot be reached from outside'])),
+                L('Dentro la rete rete-app ci sono i container api e db. Il browser, fuori, raggiunge api sulla porta 3000; api raggiunge il database all’indirizzo db:5432. Una linea tratteggiata dal browser verso db si ferma al bordo della rete.', 'Inside the rete-app network are the api and db containers. The browser, outside, reaches api on port 3000; api reaches the database at db:5432. A dashed line from the browser towards db stops at the edge of the network.'),
+                L('Dentro la rete si usano i nomi; verso fuori si apre solo ciò che serve.', 'Inside the network you use names; towards the outside you open only what is needed.')),
             C('docker network create rete-app
 docker run -d --name db --network rete-app \
   -e POSTGRES_PASSWORD=segreta postgres:17           # nessuna porta pubblicata

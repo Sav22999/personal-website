@@ -1,6 +1,119 @@
 <?php
 /** Swift intermediate: structs and classes, protocols, enums, errors, async/await, SwiftUI, generics, @Observable, navigation and actors. */
 
+/** Value against reference: two independent Punto copies, two variables pointing at one Sessione. */
+if (!function_exists('fig_swiftint_valueref')) {
+    function fig_swiftint_valueref(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="12" y="12" width="296" height="236" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="160" y="42" text-anchor="middle" font-weight="700">{$t[0]}</text>
+<text x="42" y="102" text-anchor="middle" font-weight="700">a</text>
+<rect x="64" y="74" width="214" height="44" rx="10" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<text x="171" y="101" text-anchor="middle">Punto(x: 3, y: 4)</text>
+<text x="42" y="172" text-anchor="middle" font-weight="700">b</text>
+<rect x="64" y="144" width="214" height="44" rx="10" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/>
+<text x="171" y="171" text-anchor="middle">Punto(x: <tspan font-weight="700" fill="#B84508">4</tspan>, y: 4)</text>
+<text x="160" y="226" text-anchor="middle" font-size="13" fill="#B84508">{$t[1]}</text>
+<rect x="332" y="12" width="296" height="236" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="480" y="42" text-anchor="middle" font-weight="700">{$t[2]}</text>
+<rect x="352" y="76" width="60" height="40" rx="8" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="382" y="101" text-anchor="middle" font-weight="700">s1</text>
+<rect x="352" y="146" width="60" height="40" rx="8" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="382" y="171" text-anchor="middle" font-weight="700">s2</text>
+<g stroke="#2F8CF0" stroke-width="2" fill="none"><path d="M412 96 L470 122"/><path d="M459 123 L472 123 L465 112"/><path d="M412 166 L470 142"/><path d="M465 152 L472 141 L459 141"/></g>
+<rect x="474" y="100" width="140" height="64" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="544" y="126" text-anchor="middle" font-weight="700">Sessione</text>
+<text x="544" y="148" text-anchor="middle" font-size="13">utente: "Ada"</text>
+<text x="480" y="226" text-anchor="middle" font-size="13" fill="#1B66BC">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Two awaits one after the other against async let: the same two loads, run in a row or together. A time cursor sweeps across. */
+if (!function_exists('fig_swiftint_asynclet')) {
+    function fig_swiftint_asynclet(string $seq, string $par, string $sooner, string $time): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 245" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.cur{animation:cur 6s linear infinite}@keyframes cur{from{transform:none}to{transform:translateX(440px)}}@media (prefers-reduced-motion:reduce){.cur{animation:none}}</style>
+<text x="40" y="38" font-weight="700">{$seq}</text>
+<rect x="40" y="50" width="240" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="160" y="72" text-anchor="middle" font-size="14">caricaCorsi()</text>
+<rect x="280" y="50" width="200" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="380" y="72" text-anchor="middle" font-size="14">caricaProfilo()</text>
+<text x="40" y="126" font-weight="700">{$par}</text>
+<rect x="40" y="138" width="240" height="30" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="160" y="158" text-anchor="middle" font-size="14">caricaCorsi()</text>
+<rect x="40" y="174" width="200" height="30" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="140" y="194" text-anchor="middle" font-size="14">caricaProfilo()</text>
+<path d="M280 132 V210" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="292" y="192" font-size="13" font-weight="700" fill="#0B7F5C">{$sooner}</text>
+<path class="cur" d="M40 44 V210" stroke="#E8590C" stroke-width="2"/>
+<path d="M40 222 H596" stroke="#8A87B0" stroke-width="2"/><path d="M588 215 L600 222 L588 229" stroke="#8A87B0" stroke-width="2" fill="none"/>
+<text x="600" y="241" text-anchor="end" font-size="13" fill="#5F5C8A">{$time}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A SwiftUI view tree: @State n on ContatoreView, body with a VStack holding a Text and a Button; the button changes n. */
+if (!function_exists('fig_swiftint_viewtree')) {
+    function fig_swiftint_viewtree(string $button, string $note): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 285" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<g stroke="#8A87B0" stroke-width="2" fill="none"><path d="M440 38 H470"/><path d="M320 60 V100"/><path d="M320 140 V164 H195 V190 M320 164 H445 V190"/></g>
+<rect x="200" y="16" width="240" height="44" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="43" text-anchor="middle" font-weight="700">ContatoreView</text>
+<rect x="470" y="16" width="130" height="44" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="535" y="43" text-anchor="middle" font-weight="700" fill="#B84508">@State n</text>
+<text x="330" y="86" font-size="13" fill="#5F5C8A">body</text>
+<rect x="230" y="100" width="180" height="40" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="320" y="125" text-anchor="middle" font-weight="700">VStack</text>
+<rect x="90" y="190" width="210" height="44" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="195" y="217" text-anchor="middle">Text("Clic: \(n)")</text>
+<rect x="340" y="190" width="210" height="44" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="445" y="217" text-anchor="middle">Button("{$button}")</text>
+<g stroke="#E8590C" stroke-width="2" fill="none"><path d="M550 212 H610 V66"/><path d="M603 76 L610 64 L617 76"/></g>
+<text x="602" y="150" text-anchor="end" font-size="14" font-weight="700" fill="#B84508">n += 1</text>
+<text x="320" y="270" text-anchor="middle" font-size="14" fill="#5F5C8A">{$note}</text>
+</svg>
+SVG;
+    }
+}
+
+/** An actor lets in one task at a time: calls queue up outside, one runs inside. The queue creeps forward. */
+if (!function_exists('fig_swiftint_actor')) {
+    function fig_swiftint_actor(string $waiting, string $oneAtATime): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.q{animation:q 3s linear infinite}.in{opacity:0;animation:fin 3s linear infinite}.out{animation:fout 3s linear infinite}@keyframes q{from{transform:none}to{transform:translateX(70px)}}@keyframes fin{from{opacity:0}to{opacity:1}}@keyframes fout{from{opacity:1}to{opacity:0}}@media (prefers-reduced-motion:reduce){.q,.in,.out{animation:none}}</style>
+<g class="q" font-size="13" text-anchor="middle">
+<g class="in"><rect x="10" y="100" width="60" height="36" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="40" y="123">versa</text></g>
+<rect x="80" y="100" width="60" height="36" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="110" y="123">versa</text>
+<rect x="150" y="100" width="60" height="36" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="180" y="123">versa</text>
+<rect x="220" y="100" width="60" height="36" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="250" y="123">versa</text>
+<g class="out"><rect x="290" y="100" width="60" height="36" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="320" y="123">versa</text></g>
+</g>
+<text x="190" y="176" text-anchor="middle" font-size="13" fill="#1B66BC">{$waiting}</text>
+<path d="M400 96 V40 H620 V200 H400 V140" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="401" y="41" width="218" height="158" fill="#ECE6FF"/>
+<path d="M400 96 V40 H620 V200 H400 V140" fill="none" stroke="#7048E8" stroke-width="2"/>
+<text x="510" y="66" text-anchor="middle" font-weight="700">actor Banca</text>
+<rect x="440" y="78" width="140" height="34" rx="8" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="510" y="100" text-anchor="middle" font-size="14">saldo</text>
+<rect x="440" y="130" width="140" height="40" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="510" y="155" text-anchor="middle" font-size="14" font-weight="700">versa(10)</text>
+<text x="510" y="226" text-anchor="middle" font-size="13" fill="#5A35C9">{$oneAtATime}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'swift-intermediate', 'family' => 'swift', 'after' => 'swift-base',
     'title' => L('Swift intermedio', 'Intermediate Swift'), 'short' => L('Swift intermedio', 'Swift Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -24,6 +137,8 @@ final class Sessione {
     init(utente: String) { self.utente = utente }
 }', 'swift'),
             P('Una struct riceve gratis un costruttore con tutti i campi. Un metodo che la modifica va segnato `mutating`.', 'A struct gets a memberwise initializer for free. A method that changes it must be marked `mutating`.'),
+            Fig(L(fig_swiftint_valueref(['struct: tipo per valore', 'b = a fa una copia', 'class: tipo per riferimento', 's2 = s1 condivide l’oggetto']), fig_swiftint_valueref(['struct: value type', 'b = a makes a copy', 'class: reference type', 's2 = s1 shares the object'])), L('A sinistra due scatole separate, a con Punto x 3 e b con Punto x 4: spostare b non ha toccato a. A destra due variabili, s1 e s2, con due frecce verso un solo oggetto Sessione.', 'On the left two separate boxes, a with Punto x 3 and b with Punto x 4: moving b did not touch a. On the right two variables, s1 and s2, with two arrows to a single Sessione object.'), L('Una struct si copia, una classe si condivide.', 'A struct is copied, a class is shared.')),
+            P('Quando serve una classe? Quando l’oggetto ha un’**identità** che più parti dell’app devono condividere (una sessione, una connessione, un modello osservato da più viste), quando serve l’ereditarietà o quando lo richiede un’API di sistema. Nota la differenza con `let`: una struct in una costante è immutabile in tutti i suoi campi, mentre per una classe `let` blocca solo il riferimento, e le proprietà `var` restano modificabili.', 'When do you need a class? When the object has an **identity** that several parts of the app must share (a session, a connection, a model watched by several views), when you need inheritance, or when a system API requires it. Note the difference with `let`: a struct in a constant is immutable in all its fields, while for a class `let` only fixes the reference, and its `var` properties stay changeable.'),
         ], [
             Q('s1', L('Copiando una struct, l’originale cambia se modifichi la copia?', 'Copying a struct, does the original change if you modify the copy?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo i numeri', 'Only numbers'), L('Solo se è `let`', 'Only if it is `let`')], 0, L('È un tipo per valore.', 'It is a value type.')),
             Q('s2', L('Che cosa serve a un metodo che modifica una struct?', 'What does a method changing a struct need?'), ['mutating', 'override', 'static', 'final'], 0, L('Lo dichiara esplicitamente.', 'It states it explicitly.')),
@@ -52,6 +167,7 @@ extension Int {
 }
 print(5.alQuadrato)', 'swift'),
             P('`Identifiable`, `Equatable`, `Codable` sono protocolli di sistema molto usati: il terzo trasforma i dati in JSON e ritorno.', '`Identifiable`, `Equatable`, `Codable` are widely used system protocols: the third turns data into JSON and back.'),
+            P('La forza dei protocolli sta nel poter scrivere codice che non conosce il tipo concreto: una funzione che accetta un `Descrivibile` funziona con corsi, utenti o qualunque tipo futuro che adotti il protocollo. Con un’estensione del protocollo stesso (`extension Descrivibile { … }`) puoi anche dare un’**implementazione predefinita**, che ogni tipo riceve gratis e può sostituire con una sua.', 'The power of protocols lies in writing code that does not know the concrete type: a function that accepts a `Descrivibile` works with courses, users or any future type that adopts the protocol. With an extension of the protocol itself (`extension Descrivibile { … }`) you can also provide a **default implementation**, which every type gets for free and can replace with its own.'),
         ], [
             Q('p1', L('Che cosa descrive un protocollo?', 'What does a protocol describe?'), [L('Ciò che un tipo deve offrire', 'What a type must offer'), L('Un protocollo di rete', 'A network protocol'), L('Un file', 'A file'), L('Una schermata', 'A screen')], 0, L('Come un’interfaccia.', 'Like an interface.')),
             Q('p2', L('Che cosa fa un’estensione?', 'What does an extension do?'), [L('Aggiunge funzioni a un tipo esistente', 'Adds features to an existing type'), L('Allunga una stringa', 'Lengthens a string'), L('Crea una sottoclasse', 'Creates a subclass'), L('Installa librerie', 'Installs libraries')], 0, L('Anche ai tipi di sistema.', 'Even to system types.')),
@@ -66,7 +182,7 @@ struct Uccello: Volante {
         ]),
         lesson('enums', L('Enum e errori', 'Enums and errors'), [
             P('Gli **enum** di Swift possono avere **valori associati**: ogni caso porta dati suoi. Gli errori sono tipi che adottano `Error`; una funzione che può fallire è `throws` e si chiama con `try` dentro `do`/`catch`.', 'Swift **enums** can have **associated values**: each case carries its own data. Errors are types adopting `Error`; a function that may fail is `throws` and is called with `try` inside `do`/`catch`.'),
-            C('enum Stato {
+            C(L('enum Stato {
     case caricamento
     case pronto(dati: [String])
     case errore(String)
@@ -83,8 +199,26 @@ do {
     print(try entra("1234"))
 } catch ErroreLogin.passwordErrata {
     print("Password errata")
-}', 'swift'),
+}', 'enum Stato {
+    case caricamento
+    case pronto(dati: [String])
+    case errore(String)
+}
+
+enum ErroreLogin: Error { case passwordErrata, contoBloccato }
+
+func entra(_ pw: String) throws -> String {
+    guard pw == "segreta" else { throw ErroreLogin.passwordErrata }
+    return "Welcome"
+}
+
+do {
+    print(try entra("1234"))
+} catch ErroreLogin.passwordErrata {
+    print("Wrong password")
+}'), 'swift', L('<pre>Password errata</pre>', '<pre>Wrong password</pre>')),
             P('`try?` trasforma l’errore in `nil`: comodo quando non serve sapere perché è fallito.', '`try?` turns the error into `nil`: handy when you do not need to know why it failed.'),
+            P('Per leggere un enum si usa `switch`, che deve coprire ogni caso: se domani aggiungi `case offline`, il compilatore ti indica tutti i punti da aggiornare. Con i valori associati lo `switch` estrae anche i dati: `case .pronto(let dati): mostra(dati)`. Così uno stato impossibile, come «pronto ma senza dati», non si può nemmeno scrivere.', 'To read an enum you use `switch`, which must cover every case: if tomorrow you add `case offline`, the compiler points you to every place to update. With associated values the `switch` also extracts the data: `case .pronto(let dati): mostra(dati)`. That way an impossible state, such as “ready but with no data”, cannot even be written.'),
         ], [
             Q('e1', L('Che cosa sono i valori associati?', 'What are associated values?'), [L('Dati portati da un caso dell’enum', 'Data carried by an enum case'), L('Valori predefiniti', 'Default values'), L('Costanti globali', 'Global constants'), L('Errori', 'Errors')], 0, L('`case pronto(dati:)`.', '`case pronto(dati:)`.')),
             Q('e2', L('Come chiami una funzione `throws`?', 'How do you call a `throws` function?'), [L('Con `try`', 'With `try`'), L('Con `await`', 'With `await`'), L('Con `catch`', 'With `catch`'), L('Normalmente', 'Normally')], 0, L('Dentro `do` / `catch`.', 'Inside `do` / `catch`.')),
@@ -97,6 +231,7 @@ do {
         ]),
         lesson('concurrency', L('async e await', 'async and await'), [
             P('Una funzione `async` può sospendersi mentre aspetta (la rete, il disco) senza bloccare l’app. Si chiama con `await`. `async let` avvia più attese insieme.', 'An `async` function can suspend while waiting (network, disk) without blocking the app. You call it with `await`. `async let` starts several waits together.'),
+            Fig(L(fig_swiftint_asynclet('await, uno dopo l’altro', 'async let, insieme', 'finito prima', 'tempo →'), fig_swiftint_asynclet('await, one after the other', 'async let, together', 'done sooner', 'time →')), L('Due righe sullo stesso asse del tempo. Nella prima caricaCorsi e caricaProfilo sono una dopo l’altra. Nella seconda, con async let, partono insieme e una linea verde tratteggiata segna che si finisce prima.', 'Two rows on the same time axis. In the first, caricaCorsi and caricaProfilo run one after the other. In the second, with async let, they start together and a green dashed line marks that it finishes sooner.'), L('Con async let il tempo totale è quello dell’attesa più lunga, non la somma.', 'With async let the total time is the longest wait, not the sum.')),
             C('struct Corso: Codable { let titolo: String }
 
 func caricaCorsi() async throws -> [Corso] {
@@ -122,7 +257,7 @@ let (c, p) = try await (corsi, profilo)', 'swift'),
         ]),
         lesson('swiftui', L('SwiftUI', 'SwiftUI'), [
             P('**SwiftUI** descrive l’interfaccia come una struct che adotta `View`. `@State` tiene un valore che, quando cambia, ridisegna la vista. Gli stack (`VStack`, `HStack`) dispongono gli elementi.', '**SwiftUI** describes the interface as a struct adopting `View`. `@State` holds a value that redraws the view when it changes. Stacks (`VStack`, `HStack`) lay out the elements.'),
-            C('struct ContatoreView: View {
+            C(L('struct ContatoreView: View {
     @State private var n = 0
 
     var body: some View {
@@ -134,8 +269,22 @@ let (c, p) = try await (corsi, profilo)', 'swift'),
         }
         .padding()
     }
-}', 'swift'),
+}', 'struct ContatoreView: View {
+    @State private var n = 0
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("Clic: \(n)")
+                .font(.title)
+            Button("Plus one") { n += 1 }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding()
+    }
+}'), 'swift', L('<style>body{margin:0;padding:16px;font-family:system-ui,sans-serif;text-align:center;color:#000}.t{font-size:28px;margin-bottom:12px}.b{display:inline-block;background:#007AFF;color:#fff;padding:8px 16px;border-radius:999px;font-size:16px}</style><div class="t">Clic: 0</div><span class="b">Più uno</span>', '<style>body{margin:0;padding:16px;font-family:system-ui,sans-serif;text-align:center;color:#000}.t{font-size:28px;margin-bottom:12px}.b{display:inline-block;background:#007AFF;color:#fff;padding:8px 16px;border-radius:999px;font-size:16px}</style><div class="t">Clic: 0</div><span class="b">Plus one</span>')),
             P('I **modificatori** (`.font`, `.padding`) si concatenano e restituiscono una vista nuova. `List` e `NavigationStack` creano elenchi e navigazione.', '**Modifiers** (`.font`, `.padding`) chain and return a new view. `List` and `NavigationStack` create lists and navigation.'),
+            Fig(L(fig_swiftint_viewtree('Più uno', 'n cambia → SwiftUI ricalcola body'), fig_swiftint_viewtree('Plus one', 'n changes → SwiftUI recomputes body')), L('ContatoreView ha accanto lo stato @State n. Il suo body contiene un VStack con due figli, Text che mostra n e Button. Una freccia arancione dal Button torna a @State n con l’etichetta n += 1.', 'ContatoreView has the @State n state beside it. Its body holds a VStack with two children, a Text showing n and a Button. An orange arrow goes from the Button back to @State n, labelled n += 1.'), L('L’azione cambia lo stato, lo stato ridisegna le viste che lo leggono.', 'The action changes the state, the state redraws the views that read it.')),
+            P('Una vista SwiftUI non è un oggetto sullo schermo ma una **descrizione** economica: quando `n` cambia, SwiftUI richiama `body`, confronta il risultato con il precedente e aggiorna solo ciò che è diverso. Per questo `body` deve solo descrivere, senza effetti collaterali. Per passare a una vista figlia il permesso di cambiare un `@State` si usa un **binding**: `Toggle("Attivo", isOn: $attivo)`.', 'A SwiftUI view is not an object on the screen but a cheap **description**: when `n` changes, SwiftUI calls `body` again, compares the result with the previous one and updates only what differs. That is why `body` should only describe, with no side effects. To let a child view change a `@State` you pass a **binding**: `Toggle("On", isOn: $attivo)`.'),
         ], [
             Q('u1', L('Che cosa fa `@State`?', 'What does `@State` do?'), [L('Tiene un valore che ridisegna la vista', 'Holds a value that redraws the view'), L('Salva su disco', 'Saves to disk'), L('Crea un thread', 'Creates a thread'), L('Cambia colore', 'Changes colour')], 0, L('Lo stato locale di una vista.', 'A view’s local state.')),
             Q('u2', L('Quale contenitore impila in verticale?', 'Which container stacks vertically?'), ['VStack', 'HStack', 'ZStack', 'List'], 0, L('`HStack` in orizzontale, `ZStack` sovrapposti.', '`HStack` horizontal, `ZStack` overlapped.')),
@@ -225,7 +374,7 @@ final class Profilo {
         ]),
         lesson('navigation', L('Liste e navigazione', 'Lists and navigation'), [
             P('`List` mostra righe scorrevoli da una collezione di elementi `Identifiable`. `NavigationStack` aggiunge la barra del titolo e la navigazione: `NavigationLink(value:)` dice dove andare e `.navigationDestination(for:)` costruisce la pagina per quel tipo di valore.', '`List` shows scrolling rows from a collection of `Identifiable` items. `NavigationStack` adds the title bar and navigation: `NavigationLink(value:)` says where to go and `.navigationDestination(for:)` builds the page for that type of value.'),
-            C('struct Corso: Identifiable, Hashable {
+            C(L('struct Corso: Identifiable, Hashable {
     let id = UUID()
     let titolo: String
 }
@@ -243,7 +392,25 @@ struct CorsiView: View {
             }
         }
     }
-}', 'swift'),
+}', 'struct Corso: Identifiable, Hashable {
+    let id = UUID()
+    let titolo: String
+}
+
+struct CorsiView: View {
+    let corsi: [Corso]
+    var body: some View {
+        NavigationStack {
+            List(corsi) { corso in
+                NavigationLink(corso.titolo, value: corso)
+            }
+            .navigationTitle("Courses")
+            .navigationDestination(for: Corso.self) { corso in
+                Text(corso.titolo).font(.largeTitle)
+            }
+        }
+    }
+}'), 'swift', L('<style>body{margin:0;padding:12px 16px;font-family:system-ui,sans-serif;background:#F2F2F7;color:#000}h1{font-size:30px;margin:4px 0 12px}.l{background:#fff;border-radius:10px}.r{display:flex;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #E5E5EA}.r:last-child{border:0}.r span{color:#C4C4C7}</style><h1>Corsi</h1><div class="l"><div class="r">Swift<span>&gt;</span></div><div class="r">SwiftUI<span>&gt;</span></div><div class="r">Kotlin<span>&gt;</span></div></div>', '<style>body{margin:0;padding:12px 16px;font-family:system-ui,sans-serif;background:#F2F2F7;color:#000}h1{font-size:30px;margin:4px 0 12px}.l{background:#fff;border-radius:10px}.r{display:flex;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #E5E5EA}.r:last-child{border:0}.r span{color:#C4C4C7}</style><h1>Courses</h1><div class="l"><div class="r">Swift<span>&gt;</span></div><div class="r">SwiftUI<span>&gt;</span></div><div class="r">Kotlin<span>&gt;</span></div></div>')),
             P('Il valore del link deve essere `Hashable`. `.sheet` presenta una vista dal basso, `.toolbar` aggiunge bottoni alla barra. `NavigationView` è il nome vecchio, deprecato: nei progetti nuovi usa `NavigationStack` (o `NavigationSplitView` su iPad e Mac).', 'The link’s value must be `Hashable`. `.sheet` presents a view from the bottom, `.toolbar` adds buttons to the bar. `NavigationView` is the old, deprecated name: in new projects use `NavigationStack` (or `NavigationSplitView` on iPad and Mac).'),
         ], [
             Q('nv1', L('Che cosa devono essere gli elementi passati a `List(corsi)`?', 'What must the items passed to `List(corsi)` be?'), ['Codable', 'Identifiable', 'Comparable', 'Sendable'], 1, L('Ogni riga ha bisogno di un `id` stabile.', 'Each row needs a stable `id`.')),
@@ -277,6 +444,7 @@ await withTaskGroup(of: Void.self) { gruppo in
 }
 print(await banca.leggi())   // sempre 1000', 'swift'),
             P('Da fuori ogni chiamata a un actor vuole `await`, perché potrebbe dover aspettare il suo turno. I valori che passano da un dominio di concorrenza all’altro devono essere `Sendable`: struct ed enum con campi `Sendable` lo sono da sole, le classi con proprietà modificabili no. `@MainActor` è un actor speciale: il thread dell’interfaccia.', 'From outside every call to an actor needs `await`, because it may have to wait its turn. Values crossing from one concurrency domain to another must be `Sendable`: structs and enums with `Sendable` fields are so automatically, classes with mutable properties are not. `@MainActor` is a special actor: the interface thread.'),
+            Fig(L(fig_swiftint_actor('compiti in attesa (await)', 'dentro: uno alla volta'), fig_swiftint_actor('tasks waiting (await)', 'inside: one at a time')), L('Una fila di chiamate versa aspetta fuori da un riquadro viola, l’actor Banca. Dentro c’è il saldo e una sola chiamata versa(10) in esecuzione; la fila avanza verso l’ingresso.', 'A queue of versa calls waits outside a purple box, the Banca actor. Inside are the balance and a single versa(10) call running; the queue moves towards the entrance.'), L('Per questo il totale è sempre 1000: due versamenti non toccano mai il saldo insieme.', 'That is why the total is always 1000: two deposits never touch the balance at once.')),
         ], [
             Q('ac1', L('Che cosa garantisce un actor?', 'What does an actor guarantee?'), [L('Che il suo stato sia toccato da un compito alla volta', 'That its state is touched by one task at a time'), L('Che il codice giri sul thread principale', 'That the code runs on the main thread'), L('Che le sue funzioni non lancino errori', 'That its functions never throw'), L('Che i dati siano salvati su disco', 'That the data is saved to disk')], 0, L('Così le data race non sono possibili.', 'That way data races cannot happen.')),
             Q('ac2', L('Perché chiamare `banca.versa(10)` da fuori richiede `await`?', 'Why does calling `banca.versa(10)` from outside need `await`?'), [L('Perché `versa` lancia errori', 'Because `versa` throws'), L('Perché è una funzione statica', 'Because it is a static function'), L('Perché può dover aspettare il proprio turno', 'Because it may have to wait its turn'), L('Perché gli actor sono sempre lenti', 'Because actors are always slow')], 2, L('Il punto di attesa è esplicito.', 'The waiting point is explicit.')),

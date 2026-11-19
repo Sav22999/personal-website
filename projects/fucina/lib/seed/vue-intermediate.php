@@ -1,6 +1,100 @@
 <?php
 /** Vue intermediate: composables, watchers, Vue Router, Pinia and data from the server, provide/inject, transitions and Teleport, TypeScript. */
 
+/** The life of a component: setup, mounted, updated at every change (where watch fires), unmounted. */
+if (!function_exists('fig_vueint_life')) {
+    function fig_vueint_life(string $l): string
+    {
+        $t = $l === 'it' ? ['crea dati|e funzioni', 'è nel DOM: ora|puoi toccarlo', 'a ogni modifica|dei dati', 'tolto: pulisci|timer e ascolti', 'qui scatta watch'] : ['creates data|and functions', 'it is in the DOM:|now you can|touch it', 'at every|data change', 'removed: clear|timers and|listeners', 'watch fires here'];
+        $x = [24, 182, 340, 498];
+        for ($i = 0; $i < 4; $i++) {
+            $t[$i] = implode('', array_map(fn($k, $line) => '<tspan x="' . $x[$i] . '" dy="' . ($k ? 17 : 0) . '">' . $line . '</tspan>', array_keys(explode('|', $t[$i])), explode('|', $t[$i])));
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="vila" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g stroke-width="2"><rect x="12" y="30" width="138" height="104" rx="12" fill="#F1F0F8" stroke="#8A87B0"/><rect x="170" y="30" width="138" height="104" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="328" y="30" width="138" height="104" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="486" y="30" width="142" height="104" rx="12" fill="#FFE3EE" stroke="#F03E82"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700"><text x="24" y="56">setup</text><text x="182" y="56">onMounted</text><text x="340" y="56">onUpdated</text><text x="498" y="56">onUnmounted</text></g>
+<g font-size="13"><text x="24" y="84">{$t[0]}</text>
+<text x="182" y="84">{$t[1]}</text>
+<text x="340" y="84">{$t[2]}</text>
+<text x="498" y="84">{$t[3]}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#vila)"><path d="M150 82H166"/><path d="M308 82H324"/><path d="M466 82H482"/><path d="M370 134C370 168 424 168 424 138"/></g>
+<text x="397" y="190" text-anchor="middle" font-size="13" font-weight="700" fill="#1B66BC">↺ {$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A composable gives every component its own state; a Pinia store is one state shared by all. */
+if (!function_exists('fig_vueint_store')) {
+    function fig_vueint_store(string $l): string
+    {
+        $t = $l === 'it' ? ['composable: uno stato a testa', 'store: un solo stato condiviso', 'componente'] : ['composable: one state each', 'store: one shared state', 'component'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="visa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="15"><text x="20" y="30">{$t[0]}</text><text x="340" y="30">{$t[1]}</text></g>
+<path d="M322 16V226" stroke="#E4E2F0" stroke-width="2"/>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"><rect x="20" y="150" width="130" height="66" rx="12"/><rect x="170" y="150" width="130" height="66" rx="12"/><rect x="340" y="150" width="130" height="66" rx="12"/><rect x="490" y="150" width="130" height="66" rx="12"/></g>
+<g font-size="13" fill="#5B5880"><text x="32" y="172">{$t[2]} A</text><text x="182" y="172">{$t[2]} B</text><text x="352" y="172">{$t[2]} A</text><text x="502" y="172">{$t[2]} B</text></g>
+<g fill="#ECE6FF" stroke="#7048E8" stroke-width="2"><rect x="32" y="182" width="106" height="26" rx="7"/><rect x="182" y="182" width="106" height="26" rx="7"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="42" y="200">n = 3</text><text x="192" y="200">n = 0</text><text x="352" y="200">pezzi: 2</text><text x="502" y="200">pezzi: 2</text></g>
+<g fill="#FFFFFF" stroke="#7048E8" stroke-width="2" stroke-dasharray="5 4"><rect x="40" y="60" width="240" height="40" rx="10"/></g>
+<text x="160" y="85" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14">useContatore()</text>
+<rect x="400" y="52" width="160" height="56" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="480" y="76" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13">useCarrello</text>
+<text x="480" y="97" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">pezzi = 2</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#visa)"><path d="M120 100L90 146"/><path d="M200 100L230 146"/><path d="M450 108L410 146"/><path d="M510 108L550 146"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** provide and inject: App offers the theme and a deep descendant receives it, skipping the components in between. */
+if (!function_exists('fig_vueint_provide')) {
+    function fig_vueint_provide(string $l): string
+    {
+        $t = $l === 'it' ? ['non lo toccano', 'nessuna prop in mezzo'] : ['they do not touch it', 'no props in between'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="vipa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="40" y="16" width="280" height="46" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g fill="#F1F0F8" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="6 4"><rect x="70" y="80" width="250" height="40" rx="10"/><rect x="100" y="138" width="220" height="40" rx="10"/></g>
+<rect x="130" y="196" width="190" height="46" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g stroke="#8A87B0" stroke-width="2" fill="none"><path d="M56 62V100H70"/><path d="M86 120V158H100"/><path d="M116 178V219H130"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="56" y="45"><tspan font-weight="700">App</tspan> · provide("tema")</text><text x="86" y="105" fill="#8A87B0">Layout</text><text x="116" y="163" fill="#8A87B0">Barra</text><text x="146" y="225"><tspan font-weight="700">Pulsante</tspan> · inject</text></g>
+<text x="310" y="105" text-anchor="end" font-size="12" fill="#8A87B0">{$t[0]}</text>
+<path d="M324 39C470 39 470 219 328 219" stroke="#0B7F5C" stroke-width="3" fill="none" marker-end="url(#vipa)"/>
+<text x="452" y="124" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="#0B7F5C">"tema"</text>
+<text x="452" y="144" font-size="13" fill="#5B5880">{$t[1]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The classes of a Transition along time: enter-from, enter-active, enter-to, then the same for leave; a highlight walks them in order. */
+if (!function_exists('fig_vueint_trans')) {
+    function fig_vueint_trans(string $l): string
+    {
+        $t = $l === 'it' ? ['entrata', 'uscita', 'tempo'] : ['enter', 'leave', 'time'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.vit{opacity:0;animation:vit 6s infinite}.vit2{animation-delay:1s}.vit3{animation-delay:2s}.vit4{animation-delay:3s}.vit5{animation-delay:4s}.vit6{animation-delay:5s}@keyframes vit{0%{opacity:0}3%{opacity:1}15%{opacity:1}17%{opacity:0}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.vit{animation:none}}</style>
+<defs><marker id="vita" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="14"><text x="12" y="74">{$t[0]}</text><text x="12" y="166">{$t[1]}</text></g>
+<g fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"><rect x="100" y="44" width="170" height="52" rx="10"/><rect x="280" y="44" width="170" height="52" rx="10"/><rect x="460" y="44" width="170" height="52" rx="10"/><rect x="100" y="136" width="170" height="52" rx="10"/><rect x="280" y="136" width="170" height="52" rx="10"/><rect x="460" y="136" width="170" height="52" rx="10"/></g>
+<g fill="#7048E8"><rect x="112" y="56" width="28" height="28" rx="6" opacity="0.12"/><rect x="292" y="56" width="28" height="28" rx="6" opacity="0.5"/><rect x="472" y="56" width="28" height="28" rx="6"/><rect x="112" y="148" width="28" height="28" rx="6"/><rect x="292" y="148" width="28" height="28" rx="6" opacity="0.5"/><rect x="472" y="148" width="28" height="28" rx="6" opacity="0.12"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12"><text x="148" y="75">-enter-from</text><text x="328" y="75">-enter-active</text><text x="508" y="75">-enter-to</text><text x="148" y="167">-leave-from</text><text x="328" y="167">-leave-active</text><text x="508" y="167">-leave-to</text></g>
+<g fill="none" stroke="#F03E82" stroke-width="4"><rect class="vit" x="96" y="40" width="178" height="60" rx="12"/><rect class="vit vit2" x="276" y="40" width="178" height="60" rx="12"/><rect class="vit vit3" x="456" y="40" width="178" height="60" rx="12"/><rect class="vit vit4" x="96" y="132" width="178" height="60" rx="12"/><rect class="vit vit5" x="276" y="132" width="178" height="60" rx="12"/><rect class="vit vit6" x="456" y="132" width="178" height="60" rx="12"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5B5880" text-anchor="middle"><text x="185" y="30">opacity: 0</text><text x="365" y="30">transition 0.3s</text><text x="545" y="30">opacity: 1</text></g>
+<path d="M100 220H624" stroke="#8A87B0" stroke-width="2" marker-end="url(#vita)"/>
+<text x="620" y="242" text-anchor="end" font-size="13" fill="#5B5880">{$t[2]} →</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'vue-intermediate', 'family' => 'vue', 'after' => 'vue-base',
     'title' => L('Vue intermedio', 'Intermediate Vue'), 'short' => L('Vue intermedio', 'Vue Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -21,6 +115,7 @@ export function useContatore(inizio = 0) {
 // in un componente
 const { n, piu } = useContatore(10);', 'js'),
             P('È il modo di Vue di condividere comportamento senza copiare codice tra i componenti.', 'It is Vue’s way of sharing behaviour without copying code between components.'),
+            P('Per convenzione il nome inizia con `use` e la funzione restituisce un oggetto di `ref` e funzioni, che il componente destruttura. Ogni chiamata crea `ref` nuovi: due componenti che usano `useContatore` hanno due contatori indipendenti. Dentro un composable puoi usare anche `watch` e `onMounted`, come in un componente: per esempio `useMouse()` può iniziare ad ascoltare il mouse all’avvio e smettere alla fine.', 'By convention the name starts with `use` and the function gives back an object of `ref`s and functions, which the component destructures. Every call creates new `ref`s: two components using `useContatore` have two independent counters. Inside a composable you can also use `watch` and `onMounted`, as in a component: for example `useMouse()` can start listening to the mouse at start-up and stop at the end.'),
         ], [
             Q('c1', L('Con che cosa inizia di solito il nome di un composable?', 'What does a composable’s name usually start with?'), ['use', 'get', 'make', 'vue'], 0, L('Per convenzione: `useQualcosa`.', 'By convention: `useSomething`.')),
             Q('c2', L('Due componenti che chiamano lo stesso composable condividono lo stato?', 'Do two components calling the same composable share state?'), [L('No, ognuno ha il suo', 'No, each has its own'), L('Sì, sempre', 'Yes, always'), L('Solo i numeri', 'Only numbers'), L('Solo in produzione', 'Only in production')], 0, L('Ogni chiamata crea nuovi `ref`.', 'Each call creates new `ref`s.')),
@@ -46,6 +141,10 @@ watch(tema, (nuovo, vecchio) => {
 
 onMounted(() => console.log("Componente pronto"));', 'js'),
             P('`computed` calcola un valore; `watch` fa qualcosa (un effetto). Se ti serve un risultato da mostrare, usa `computed`.', '`computed` works out a value; `watch` does something (a side effect). If you need a result to show, use `computed`.'),
+            P('La funzione di `watch` riceve il valore nuovo e quello vecchio. Con `{ immediate: true }` parte anche subito, non solo al primo cambiamento; `watchEffect` invece segue da solo tutti i dati che legge. Quello che apri in `onMounted` (un timer, un ascolto su `window`) va chiuso in `onUnmounted`, altrimenti continua anche quando il componente è sparito.', 'The `watch` function receives the new value and the old one. With `{ immediate: true }` it also runs straight away, not only at the first change; `watchEffect` instead follows by itself all the data it reads. Whatever you open in `onMounted` (a timer, a listener on `window`) must be closed in `onUnmounted`, otherwise it carries on even when the component has gone.'),
+            Fig(L(fig_vueint_life('it'), fig_vueint_life('en')),
+                L('Quattro fasi in fila: setup crea dati e funzioni, onMounted quando il componente è nel DOM, onUpdated a ogni modifica dei dati, con una freccia circolare dove scatta watch, e onUnmounted quando viene tolto e si puliscono timer e ascolti.', 'Four phases in a row: setup creates data and functions, onMounted when the component is in the DOM, onUpdated at every data change, with a circular arrow where watch fires, and onUnmounted when it is removed and timers and listeners are cleared.'),
+                L('La vita di un componente: nasce, compare, cambia, sparisce.', 'The life of a component: it is born, appears, changes, disappears.')),
         ], [
             Q('w1', L('Che cosa riceve la funzione di `watch`?', 'What does the `watch` callback receive?'), [L('Valore nuovo e vecchio', 'New and old value'), L('Solo l’evento', 'Only the event'), L('Il DOM', 'The DOM'), L('Niente', 'Nothing')], 0, L('Nell’ordine: nuovo, vecchio.', 'In order: new, old.')),
             Q('w2', L('Quando parte `onMounted`?', 'When does `onMounted` run?'), [L('Quando il componente è nella pagina', 'When the component is on the page'), L('A ogni clic', 'On every click'), L('Prima del server', 'Before the server'), L('Mai', 'Never')], 0, L('Una volta, all’inizio.', 'Once, at the start.')),
@@ -71,6 +170,7 @@ onMounted(() => console.log("Componente pronto"));', 'js'),
 const route = useRoute();
 const id = computed(() => route.params.id);', 'js'),
             P('`useRoute()` legge l’indirizzo attuale e i parametri; `useRouter()` permette di spostarsi via codice con `router.push("/")`.', '`useRoute()` reads the current address and its parameters; `useRouter()` lets you move in code with `router.push("/")`.'),
+            P('Le rotte si elencano in un array passato a `createRouter`, ognuna con `path` e `component`; un segmento come `/corsi/:id` è un parametro, che leggi con `useRoute().params.id`. Il cambio di pagina avviene senza ricaricare: cambia solo quello che sta dentro `<RouterView />`. Con `router.beforeEach` puoi controllare ogni navigazione, per esempio per mandare al login chi non è entrato.', 'Routes are listed in an array passed to `createRouter`, each with a `path` and a `component`; a segment like `/corsi/:id` is a parameter, which you read with `useRoute().params.id`. Changing page happens without reloading: only what is inside `<RouterView />` changes. With `router.beforeEach` you can check every navigation, for example to send to the login page whoever has not signed in.'),
         ], [
             Q('r1', L('Quale componente mostra la pagina della rotta?', 'Which component shows the route’s page?'), ['<RouterView />', '<RouterLink />', '<App />', '<Page />'], 0, L('`RouterLink` crea i collegamenti.', '`RouterLink` makes the links.')),
             Q('r2', L('Come leggi il parametro `id`?', 'How do you read the `id` parameter?'), ['useRoute().params.id', 'router.id', 'this.id', 'params()'], 0, L('`useRoute` dà la rotta attuale.', '`useRoute` gives the current route.')),
@@ -94,6 +194,10 @@ const id = computed(() => route.params.id);', 'js'),
 const carrello = useCarrello();
 carrello.aggiungi({ nome: "Corso", prezzo: 10 });', 'js'),
             P('A differenza di un composable, lo store è **unico**: tutti i componenti vedono gli stessi `pezzi`.', 'Unlike a composable, the store is **single**: every component sees the same `pezzi`.'),
+            Fig(L(fig_vueint_store('it'), fig_vueint_store('en')),
+                L('A sinistra la funzione useContatore() chiamata da due componenti, che hanno ciascuno il proprio stato, n = 3 e n = 0. A destra lo store useCarrello con pezzi = 2, collegato a due componenti che mostrano entrambi pezzi: 2.', 'On the left the function useContatore() called by two components, each with its own state, n = 3 and n = 0. On the right the store useCarrello with pezzi = 2, linked to two components that both show pezzi: 2.'),
+                L('Composable: stessa logica, stati separati. Store: un solo stato per tutti.', 'Composable: same logic, separate states. Store: one state for everyone.')),
+            P('Uno store ha tre parti: lo **stato** (i dati), i **getter** (valori calcolati, come `computed`) e le **azioni** (funzioni che cambiano lo stato, anche asincrone). Occhio alla destrutturazione: `const { pezzi } = useCarrello()` perde la reattività. Per i dati usa `storeToRefs(store)`; le azioni invece si possono destrutturare senza problemi.', 'A store has three parts: the **state** (the data), the **getters** (computed values, like `computed`) and the **actions** (functions that change the state, async ones too). Watch out for destructuring: `const { pezzi } = useCarrello()` loses reactivity. For data use `storeToRefs(store)`; actions instead can be destructured without problems.'),
         ], [
             Q('p1', L('Con che cosa si crea uno store Pinia?', 'How do you create a Pinia store?'), ['defineStore', 'createStore', 'useStore', 'new Store'], 0, L('Riceve un nome e una funzione.', 'It takes a name and a function.')),
             Q('p2', L('Lo stato di uno store è condiviso?', 'Is a store’s state shared?'), [L('Sì, tra tutti i componenti', 'Yes, between all components'), L('No, ognuno ha il suo', 'No, each has its own'), L('Solo tra fratelli', 'Only between siblings'), L('Solo con le props', 'Only via props')], 0, L('È la differenza dai composable.', 'That is the difference from composables.')),
@@ -124,6 +228,7 @@ onMounted(async () => {
   }
 });', 'js'),
             P('`fetch` non dà errore con le risposte 404 o 500: va controllato `r.ok`.', '`fetch` does not throw on 404 or 500 responses: you must check `r.ok`.'),
+            P('Perché tre stati? Una richiesta può durare a lungo o fallire, e l’utente deve sempre capire cosa succede: una scritta di caricamento, un messaggio d’errore chiaro o i dati. Metti `caricamento.value = false` nel blocco `finally`, così si spegne in entrambi i casi. Se i dati dipendono da un parametro, come l’`id` della rotta, osservalo con `watch` e ricarica quando cambia.', 'Why three states? A request can take a long time or fail, and the user must always understand what is going on: a loading message, a clear error message or the data. Put `caricamento.value = false` in the `finally` block, so it is switched off in both cases. If the data depends on a parameter, such as the route `id`, watch it with `watch` and reload when it changes.'),
         ], [
             Q('f1', L('`fetch` lancia un errore con una risposta 404?', 'Does `fetch` throw on a 404 response?'), [L('No, va controllato `r.ok`', 'No, check `r.ok`'), L('Sì, sempre', 'Yes, always'), L('Solo in Vue', 'Only in Vue'), L('Solo con JSON', 'Only with JSON')], 0, L('Lancia solo se la rete non risponde.', 'It throws only when the network fails.')),
             Q('f2', L('Quali tre stati conviene gestire?', 'Which three states should you handle?'), [L('Caricamento, errore, dati', 'Loading, error, data'), L('Inizio, metà, fine', 'Start, middle, end'), L('Rosso, giallo, verde', 'Red, yellow, green'), L('Solo i dati', 'Only data')], 0, L('L’utente sa sempre cosa sta succedendo.', 'The user always knows what is happening.')),
@@ -137,6 +242,9 @@ note.value = await r.json();'), [
         ]),
         lesson('provide-inject', L('provide e inject', 'provide and inject'), [
             P('Se un dato deve arrivare a un componente molto in basso, passarlo con le props a ogni livello è scomodo. Con `provide` un antenato **offre** un valore, e qualsiasi discendente lo **riceve** con `inject`, senza passaggi intermedi.', 'If some data must reach a component far down, passing it with props at every level is awkward. With `provide` an ancestor **offers** a value, and any descendant **receives** it with `inject`, with no steps in between.'),
+            Fig(L(fig_vueint_provide('it'), fig_vueint_provide('en')),
+                L('Un albero di componenti: App con provide("tema") in cima, poi Layout e Barra tratteggiati, che non toccano il tema, e in fondo Pulsante con inject. Una freccia verde va direttamente da App a Pulsante portando "tema", senza prop in mezzo.', 'A component tree: App with provide("tema") at the top, then Layout and Barra, dashed, which do not touch the theme, and at the bottom Pulsante with inject. A green arrow goes straight from App to Pulsante carrying "tema", with no props in between.'),
+                L('Il valore salta i livelli intermedi e arriva dove serve.', 'The value skips the levels in between and lands where it is needed.')),
             C('<!-- App.vue -->
 <script setup>
 import { ref, provide } from "vue";
@@ -170,6 +278,9 @@ provide("tema", tema);
         ]),
         lesson('transitions', L('Transition e Teleport', 'Transition and Teleport'), [
             P('`<Transition>` anima un elemento quando compare o sparisce con `v-if` o `v-show`. Vue aggiunge in automatico delle classi nei vari momenti e tu scrivi il CSS: con `name="dissolvi"` le classi si chiamano `dissolvi-enter-from`, `dissolvi-leave-to` e così via.', '`<Transition>` animates an element when it appears or disappears with `v-if` or `v-show`. Vue adds classes automatically at each moment and you write the CSS: with `name="dissolvi"` the classes are called `dissolvi-enter-from`, `dissolvi-leave-to` and so on.'),
+            Fig(L(fig_vueint_trans('it'), fig_vueint_trans('en')),
+                L('Due righe di tre fasi lungo il tempo. Entrata: -enter-from con opacità 0, -enter-active con la transizione di 0,3 secondi, -enter-to con opacità 1. Uscita: -leave-from, -leave-active, -leave-to, con il quadrato che sbiadisce. Un riquadro evidenziato percorre le fasi in ordine.', 'Two rows of three phases along time. Enter: -enter-from with opacity 0, -enter-active with the 0.3 second transition, -enter-to with opacity 1. Leave: -leave-from, -leave-active, -leave-to, with the square fading out. A highlight walks the phases in order.'),
+                L('Tu scrivi il CSS di inizio e fine, Vue mette e toglie le classi al momento giusto.', 'You write the CSS for start and end, Vue adds and removes the classes at the right moment.')),
             C('<template>
   <button @click="aperto = !aperto">Info</button>
   <Transition name="dissolvi">

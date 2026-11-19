@@ -1,6 +1,146 @@
 <?php
 /** PHP advanced: namespaces and Composer, interfaces and traits, enums, generators, tests, security, attributes, property hooks, PHP 8.4/8.5 features, static analysis and performance. */
 
+/** PSR-4: each part of the namespace is a folder, the class name is the file. */
+if (!function_exists('fig_phpadv_psr4')) {
+    function fig_phpadv_psr4(): string
+    {
+        return <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="ui-monospace, monospace" font-size="15" fill="#1E1C52">
+<defs><marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="20" width="608" height="44" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="36" y="48">"autoload": {"psr-4": {"<tspan fill="#B84508" font-weight="700">App\\</tspan>": "<tspan fill="#B84508" font-weight="700">src/</tspan>"}}</text>
+<rect x="16" y="86" width="260" height="40" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<text x="32" y="112"><tspan fill="#B84508" font-weight="700">App\</tspan><tspan fill="#1B66BC">Corsi\</tspan><tspan fill="#0B7F5C" font-weight="700">Iscrizione</tspan></text>
+<line x1="282" y1="106" x2="350" y2="106" stroke="#1E1C52" stroke-width="2" marker-end="url(#an)"/>
+<rect x="356" y="86" width="268" height="40" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<text x="372" y="112"><tspan fill="#B84508" font-weight="700">src/</tspan><tspan fill="#1B66BC">Corsi/</tspan><tspan fill="#0B7F5C" font-weight="700">Iscrizione</tspan>.php</text>
+<rect x="16" y="140" width="260" height="40" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<text x="32" y="166"><tspan fill="#B84508" font-weight="700">App\</tspan><tspan fill="#1B66BC">Utenti\</tspan><tspan fill="#0B7F5C" font-weight="700">Utente</tspan></text>
+<line x1="282" y1="160" x2="350" y2="160" stroke="#1E1C52" stroke-width="2" marker-end="url(#an)"/>
+<rect x="356" y="140" width="268" height="40" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/>
+<text x="372" y="166"><tspan fill="#B84508" font-weight="700">src/</tspan><tspan fill="#1B66BC">Utenti/</tspan><tspan fill="#0B7F5C" font-weight="700">Utente</tspan>.php</text>
+</svg>
+SVG;
+    }
+}
+
+/** An interface as a contract: two unrelated classes keep it, and a function accepts either. */
+if (!function_exists('fig_phpadv_iface')) {
+    function fig_phpadv_iface(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#FFFFFF" stroke="#7048E8" stroke-width="1.5"/></marker>
+<marker id="ai2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="160" y="26" text-anchor="middle" font-size="13" fill="#5B33C9">{$t[0]}</text>
+<rect x="50" y="36" width="220" height="64" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="8 5"/>
+<g font-family="ui-monospace, monospace" font-size="14">
+<text x="160" y="62" text-anchor="middle" font-weight="700">interface Pagabile</text>
+<text x="160" y="86" text-anchor="middle">totale(): float</text>
+<rect x="16" y="170" width="140" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="86" y="200" text-anchor="middle">Ordine</text>
+<rect x="170" y="170" width="140" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="240" y="200" text-anchor="middle">Abbonamento</text>
+<text x="160" y="140" text-anchor="middle" font-size="13" fill="#5B33C9">implements</text>
+<rect x="380" y="100" width="244" height="50" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="502" y="130" text-anchor="middle">paga(Pagabile \$p)</text>
+</g>
+<path d="M86 166 L120 106" fill="none" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ai)"/>
+<path d="M240 166 L200 106" fill="none" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ai)"/>
+<path d="M274 68 C330 68 340 124 374 125" fill="none" stroke="#1E1C52" stroke-width="2" marker-end="url(#ai2)"/>
+<text x="502" y="176" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[1]}</text>
+<text x="320" y="248" text-anchor="middle" font-size="14" fill="#5B5880">{$t[2]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** file() loads every line at once; a generator holds one line at a time. The highlight walks down the file. */
+if (!function_exists('fig_phpadv_gen')) {
+    function fig_phpadv_gen(array $t): string
+    {
+        $bars = '';
+        for ($i = 0; $i < 8; $i++) {
+            $y = 64 + $i * 18;
+            $bars .= "<rect x=\"44\" y=\"$y\" width=\"" . (150 + ($i * 37) % 70) . "\" height=\"11\" rx=\"5\" fill=\"#E8590C\"/>";
+            $bars .= "<rect x=\"350\" y=\"$y\" width=\"" . (80 + ($i * 37) % 40) . "\" height=\"11\" rx=\"5\" fill=\"#C9C7DE\"/>";
+        }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.cur{animation:walk 6s steps(8) infinite}@keyframes walk{to{transform:translateY(144px)}}@media (prefers-reduced-motion:reduce){.cur{animation:none}}</style>
+<defs><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="150" y="30" text-anchor="middle" font-weight="700" font-family="ui-monospace, monospace">file()</text>
+<rect x="30" y="48" width="250" height="160" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="150" y="234" text-anchor="middle" font-size="13" fill="#B84508">{$t[0]}</text>
+<line x1="320" y1="16" x2="320" y2="240" stroke="#D9D7EA" stroke-width="2"/>
+<text x="480" y="30" text-anchor="middle" font-weight="700" font-family="ui-monospace, monospace">yield</text>
+<rect x="336" y="48" width="150" height="160" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+$bars
+<rect class="cur" x="342" y="60" width="138" height="19" rx="6" fill="none" stroke="#0B7F5C" stroke-width="2"/>
+<line x1="490" y1="128" x2="522" y2="128" stroke="#1E1C52" stroke-width="2" marker-end="url(#ag)"/>
+<rect x="528" y="108" width="96" height="40" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="540" y="122" width="72" height="11" rx="5" fill="#0B7F5C"/>
+<text x="576" y="168" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[2]}</text>
+<text x="480" y="234" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[1]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** CSRF: the form of your site carries the session's token, a form from another site does not and is refused. */
+if (!function_exists('fig_phpadv_csrf')) {
+    function fig_phpadv_csrf(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="ax" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="16" y="24" width="210" height="76" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="32" y="48" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<text x="32" y="74" font-family="ui-monospace, monospace" font-size="13">cookie + csrf=9f2c</text>
+<rect x="16" y="140" width="210" height="76" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="32" y="164" font-weight="700" fill="#B8255F">{$t[1]}</text>
+<text x="32" y="190" font-family="ui-monospace, monospace" font-size="13">cookie + ???</text>
+<rect x="300" y="60" width="150" height="120" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="375" y="86" text-anchor="middle" font-weight="700" fill="#B84508">Server</text>
+<text x="375" y="114" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">\$_SESSION</text>
+<text x="375" y="134" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">csrf=9f2c</text>
+<text x="375" y="160" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13">hash_equals</text>
+<line x1="230" y1="62" x2="294" y2="92" stroke="#1E1C52" stroke-width="2" marker-end="url(#ax)"/>
+<line x1="230" y1="178" x2="294" y2="150" stroke="#1E1C52" stroke-width="2" marker-end="url(#ax)"/>
+<rect x="510" y="40" width="114" height="44" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="567" y="67" text-anchor="middle" font-weight="700" fill="#0B7F5C">200 OK</text>
+<rect x="510" y="156" width="114" height="44" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="567" y="183" text-anchor="middle" font-weight="700" fill="#B8255F">403</text>
+<line x1="454" y1="96" x2="504" y2="68" stroke="#0B7F5C" stroke-width="2" marker-end="url(#ax)"/>
+<line x1="454" y1="146" x2="504" y2="174" stroke="#F03E82" stroke-width="2" marker-end="url(#ax)"/>
+<text x="567" y="104" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[2]}</text>
+<text x="567" y="220" text-anchor="middle" font-size="13" fill="#B8255F">{$t[3]}</text>
+<text x="320" y="256" text-anchor="middle" fill="#5B5880">{$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The time of a request without and with OPcache, as two bars. */
+if (!function_exists('fig_phpadv_opcache')) {
+    function fig_phpadv_opcache(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<text x="16" y="44" font-weight="700">{$t[0]}</text>
+<rect x="170" y="24" width="110" height="34" rx="8" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="225" y="46" text-anchor="middle">{$t[2]}</text>
+<rect x="284" y="24" width="160" height="34" rx="8" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="364" y="46" text-anchor="middle">{$t[3]}</text>
+<rect x="448" y="24" width="110" height="34" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="503" y="46" text-anchor="middle">{$t[4]}</text>
+<text x="16" y="114" font-weight="700">{$t[1]}</text>
+<rect x="170" y="94" width="110" height="34" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="225" y="116" text-anchor="middle">{$t[4]}</text>
+<rect x="170" y="146" width="230" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4"/><text x="285" y="168" text-anchor="middle" font-size="13">{$t[5]}</text>
+<path d="M225 144 v-12" stroke="#7048E8" stroke-width="2"/>
+<line x1="170" y1="200" x2="620" y2="200" stroke="#8A87B0" stroke-width="2"/>
+<text x="620" y="194" text-anchor="end" font-size="13" fill="#5B5880">{$t[6]} →</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'php-advanced', 'family' => 'php', 'after' => 'php-intermediate',
     'title' => L('PHP avanzato', 'Advanced PHP'), 'short' => L('PHP avanzato', 'PHP Advanced'), 'level' => L('Avanzato', 'Advanced'),
@@ -17,6 +157,10 @@ final class Iscrizione {
     public function __construct(public Utente $chi) {}
 }', 'php'),
             P('**Composer** scarica le librerie e crea l’**autoload**: con lo standard PSR-4 il namespace `App\` corrisponde alla cartella `src/`, e ogni classe si carica da sola quando serve. Basta un `require "vendor/autoload.php";`.', '**Composer** downloads libraries and creates the **autoloader**: with the PSR-4 standard the namespace `App\` matches the `src/` folder, and every class loads by itself when needed. One `require "vendor/autoload.php";` is enough.'),
+            Fig(fig_phpadv_psr4(),
+                L('In alto la regola di composer.json che lega App\ a src/. Sotto, due righe: App\Corsi\Iscrizione diventa src/Corsi/Iscrizione.php e App\Utenti\Utente diventa src/Utenti/Utente.php, con i pezzi corrispondenti dello stesso colore.', 'At the top the composer.json rule tying App\ to src/. Below, two rows: App\Corsi\Iscrizione becomes src/Corsi/Iscrizione.php and App\Utenti\Utente becomes src/Utenti/Utente.php, with matching parts in the same colour.'),
+                L('Ogni pezzo del namespace è una cartella, il nome della classe è il file.', 'Each part of the namespace is a folder, the class name is the file.')),
+            Tip('`namespace` deve essere la prima istruzione del file. Dentro un namespace, le classi globali di PHP vanno scritte con la barra iniziale (`new \DateTimeImmutable()`) oppure importate con `use`, altrimenti PHP le cerca nel namespace corrente.', '`namespace` must be the first statement in the file. Inside a namespace, PHP’s global classes need a leading backslash (`new \DateTimeImmutable()`) or a `use` import, otherwise PHP looks for them in the current namespace.'),
         ], [
             Q('n1', L('A che cosa serve un namespace?', 'What is a namespace for?'), [L('A evitare conflitti tra nomi', 'To avoid name clashes'), L('A rendere il codice più veloce', 'To make code faster'), L('A criptare le classi', 'To encrypt classes'), L('A creare tabelle', 'To create tables')], 0, L('È come un cognome per le classi.', 'It is like a surname for classes.')),
             Q('n2', L('Quale file carica tutte le classi installate con Composer?', 'Which file loads every class installed with Composer?'), ['vendor/autoload.php', 'composer.json', 'index.php', 'autoload.ini'], 0, L('Lo genera Composer.', 'Composer generates it.')),
@@ -45,6 +189,10 @@ final class Ordine implements Pagabile {
     public function totale(): float { return 42.0; }
 }', 'php'),
             P('Programmare verso le interfacce rende il codice sostituibile: una funzione che chiede `Pagabile` accetta qualsiasi classe che rispetta il contratto.', 'Coding against interfaces makes code swappable: a function that asks for `Pagabile` accepts any class that keeps the contract.'),
+            Fig(L(fig_phpadv_iface(['contratto', 'accetta qualsiasi Pagabile', 'Due classi diverse, un solo contratto: paga() non deve sapere quale riceve.']), fig_phpadv_iface(['contract', 'accepts any Pagabile', 'Two different classes, one contract: paga() does not need to know which one it gets.'])),
+                L('In alto l’interfaccia Pagabile con il metodo totale(). Le classi Ordine e Abbonamento la implementano, con frecce tratteggiate verso l’alto. Una freccia porta a paga(Pagabile $p), che le accetta entrambe.', 'At the top the interface Pagabile with the method totale(). The classes Ordine and Abbonamento implement it, with dashed arrows pointing up. One arrow leads to paga(Pagabile $p), which accepts both.'),
+                L('Chi chiede un’interfaccia accetta ogni classe che la implementa.', 'Asking for an interface accepts every class that implements it.')),
+            P('Come scegliere? Un’interfaccia quando classi diverse condividono una **capacità** ma non il codice; una classe astratta quando condividono anche una parte dell’implementazione; un trait quando vuoi solo copiare qualche metodo in più classi, senza creare un tipo. Una classe estende una sola classe ma può implementare quante interfacce vuole: `class Ordine implements Pagabile, JsonSerializable`.', 'How to choose? An interface when different classes share an **ability** but not the code; an abstract class when they also share part of the implementation; a trait when you only want to copy a few methods into several classes, without creating a type. A class extends only one class but can implement as many interfaces as it likes: `class Ordine implements Pagabile, JsonSerializable`.'),
         ], [
             Q('i1', L('Quale parola fa rispettare un’interfaccia?', 'Which keyword makes a class follow an interface?'), ['implements', 'extends', 'use', 'include'], 0, L('`extends` è per l’ereditarietà.', '`extends` is for inheritance.')),
             Q('i2', L('Si può fare `new` di una classe astratta?', 'Can you `new` an abstract class?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo in PHP 8', 'Only in PHP 8'), L('Solo se è vuota', 'Only if empty')], 0, L('Va estesa da una classe concreta.', 'A concrete class must extend it.')),
@@ -78,6 +226,8 @@ $etichetta = match ($lezione->stato) {
     Stato::Pubblicato => "Online",
 };', 'php'),
             P('`match` è un `switch` più rigoroso: confronta con `===`, restituisce un valore e dà errore se un caso manca.', '`match` is a stricter `switch`: it compares with `===`, returns a value and fails if a case is missing.'),
+            P('Un enum con valori (`: string` o `: int`) si salva bene nel database: `->value` dà `"draft"`, mentre `Stato::from("draft")` fa il viaggio inverso e `tryFrom` restituisce `null` invece di un errore se il valore non esiste. `Stato::cases()` elenca tutti i casi, comodo per un menu a tendina. Un enum può avere anche metodi, per esempio `etichetta()`, così la logica sta vicino ai valori.', 'An enum with values (`: string` or `: int`) stores well in the database: `->value` gives `"draft"`, while `Stato::from("draft")` makes the opposite trip and `tryFrom` returns `null` instead of an error if the value does not exist. `Stato::cases()` lists every case, handy for a drop-down menu. An enum can also have methods, such as `etichetta()`, so the logic sits next to the values.'),
+            Tip('`readonly` è perfetto per gli oggetti che rappresentano un valore, come un prezzo o un intervallo di date: se serve un valore diverso, crei un oggetto nuovo invece di cambiare quello che altri stanno già usando.', '`readonly` is perfect for objects that stand for a value, such as a price or a date range: if you need a different value, you create a new object instead of changing the one others are already using.'),
         ], [
             Q('e1', L('Che cosa succede se modifichi una proprietà `readonly` già assegnata?', 'What happens if you change a `readonly` property already set?'), [L('Un errore', 'An error'), L('Cambia valore', 'It changes'), L('Viene ignorato', 'It is ignored'), L('Diventa null', 'It becomes null')], 0, L('Si assegna una volta sola.', 'It is set only once.')),
             Q('e2', L('Come confronta `match`?', 'How does `match` compare?'), ['===', '==', '=', '<=>'], 0, L('Confronto stretto, tipo compreso.', 'Strict comparison, type included.')),
@@ -107,6 +257,10 @@ function righe(string $file): Generator {
 
 foreach (righe("log.txt") as $riga) echo $riga;', 'php'),
             P('Un **generatore** usa `yield` per dare un valore alla volta: legge un file enorme senza caricarlo tutto in memoria.', 'A **generator** uses `yield` to hand out one value at a time: it reads a huge file without loading it all into memory.'),
+            Fig(L(fig_phpadv_gen(['tutte le righe in memoria insieme', 'una riga alla volta', 'memoria']), fig_phpadv_gen(['every line in memory at once', 'one line at a time', 'memory'])),
+                L('A sinistra file() riempie la memoria con tutte le otto righe del file. A destra un riquadro verde scorre le righe del file una alla volta e solo quella riga passa in memoria.', 'On the left file() fills memory with all eight lines of the file. On the right a green frame walks down the file lines one at a time and only that line goes into memory.'),
+                L('Con `yield` la memoria usata resta la stessa, qualunque sia la dimensione del file.', 'With `yield` the memory used stays the same, whatever the size of the file.')),
+            P('Il codice di un generatore parte solo quando il `foreach` chiede il valore successivo, e si ferma a ogni `yield` finché non gliene chiedi un altro: per questo può anche produrre una sequenza infinita. Un generatore però si percorre una volta sola. Quanto alle closure, la forma lunga `function ($p) use ($iva) { … }` deve elencare in `use` le variabili esterne, e le copia nel momento in cui la crei.', 'A generator’s code starts only when the `foreach` asks for the next value, and it pauses at every `yield` until you ask for another one: that is why it can even produce an endless sequence. A generator can be walked only once, though. As for closures, the long form `function ($p) use ($iva) { … }` must list the outer variables in `use`, and copies them at the moment you create it.'),
         ], [
             Q('g1', L('Che cosa fa `yield`?', 'What does `yield` do?'), [L('Dà un valore e si ferma lì', 'Hands out a value and pauses'), L('Chiude la funzione', 'Ends the function'), L('Stampa', 'Prints'), L('Crea una classe', 'Creates a class')], 0, L('Riprende dal punto giusto al giro dopo.', 'It resumes from the same spot next time.')),
             Q('g2', L('Perché un generatore risparmia memoria?', 'Why does a generator save memory?'), [L('Produce un valore alla volta', 'It produces one value at a time'), L('Comprime i dati', 'It compresses data'), L('Usa il disco', 'It uses the disk'), L('Non lo fa', 'It does not')], 0, L('Non serve tenere tutto in un array.', 'There is no need to keep everything in an array.')),
@@ -135,6 +289,8 @@ final class CarrelloTest extends TestCase {
     }
 }', 'php'),
             P('Si lanciano con `vendor/bin/phpunit`. Quando cambi il codice, i test ti dicono subito se hai rotto qualcosa.', 'You run them with `vendor/bin/phpunit`. When you change the code, tests tell you at once if you broke something.'),
+            P('Un buon test segue tre passi, spesso chiamati **Arrange, Act, Assert**: prepari gli oggetti, esegui l’azione, controlli il risultato. Prova un solo comportamento per test e dagli un nome che lo racconti, come `testCarrelloVuotoCostaZero`: quando fallisce, il nome dice già che cosa si è rotto. Non dimenticare i casi limite: carrello vuoto, quantità negative, testo vuoto.', 'A good test follows three steps, often called **Arrange, Act, Assert**: you set up the objects, run the action, check the result. Test one behaviour per test and give it a name that tells it, such as `testCarrelloVuotoCostaZero`: when it fails, the name already says what broke. Do not forget edge cases: an empty cart, negative quantities, empty text.'),
+            Tip('`assertSame` confronta anche il tipo (`15` non è `15.0` né `"15"`), `assertEquals` no: preferisci `assertSame`, che scopre più errori.', '`assertSame` compares the type too (`15` is not `15.0` nor `"15"`), `assertEquals` does not: prefer `assertSame`, which catches more mistakes.'),
         ], [
             Q('t1', L('Quale asserzione controlla valore e tipo?', 'Which assertion checks value and type?'), ['assertSame', 'assertTrue', 'assertCount', 'assertEmpty'], 0, L('`assertSame` usa `===`.', '`assertSame` uses `===`.')),
             Q('t2', L('Da quale classe estende un test PHPUnit?', 'Which class does a PHPUnit test extend?'), ['TestCase', 'Test', 'Assert', 'PHPUnit'], 0, L('`PHPUnit\Framework\TestCase`.', '`PHPUnit\Framework\TestCase`.')),
@@ -164,6 +320,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST"
 
 echo htmlspecialchars($commento, ENT_QUOTES, "UTF-8");', 'php'),
             P('`hash_equals` confronta senza rivelare nulla con i tempi di risposta. Imposta anche intestazioni come `Content-Security-Policy` e cookie `HttpOnly` e `SameSite`.', '`hash_equals` compares without leaking anything through timing. Also set headers such as `Content-Security-Policy` and `HttpOnly`, `SameSite` cookies.'),
+            P('Perché serve il token? Il browser manda i cookie di un sito a ogni richiesta verso quel sito, anche quando il modulo sta su una pagina malevola: senza controlli, un altro sito potrebbe far partire a tuo nome un acquisto o una modifica. Il token CSRF sta solo nella sessione e nei moduli delle tue pagine, quindi un sito esterno non lo conosce e la sua richiesta viene respinta.', 'Why do you need the token? The browser sends a site’s cookies with every request to that site, even when the form sits on a malicious page: without checks, another site could start a purchase or a change in your name. The CSRF token lives only in the session and in the forms of your pages, so an outside site does not know it and its request is refused.'),
+            Fig(L(fig_phpadv_csrf(['Il tuo sito', 'Un sito malevolo', 'token uguale', 'token assente', 'I cookie arrivano in entrambi i casi: solo il token distingue le richieste vere.']), fig_phpadv_csrf(['Your site', 'A malicious site', 'token matches', 'token missing', 'Cookies arrive in both cases: only the token tells the real requests apart.'])),
+                L('Due moduli inviano una richiesta al server. Quello del tuo sito porta il cookie e il token csrf=9f2c, uguale a quello in sessione, e riceve 200 OK. Quello di un sito malevolo porta il cookie ma non il token e riceve 403.', 'Two forms send a request to the server. The one from your site carries the cookie and the token csrf=9f2c, equal to the one in the session, and gets 200 OK. The one from a malicious site carries the cookie but not the token and gets 403.'),
+                L('Il token CSRF prova che il modulo viene dalle tue pagine.', 'The CSRF token proves the form comes from your pages.')),
         ], [
             Q('s1', L('Contro che cosa protegge `htmlspecialchars`?', 'What does `htmlspecialchars` protect against?'), ['XSS', 'SQL injection', 'CSRF', L('Password deboli', 'Weak passwords')], 0, L('Trasforma `<` in `&lt;`.', 'It turns `<` into `&lt;`.')),
             Q('s2', L('A che cosa serve un token CSRF?', 'What is a CSRF token for?'), [L('A provare che il modulo arriva dal tuo sito', 'To prove the form comes from your site'), L('A cifrare la password', 'To encrypt the password'), L('A velocizzare la sessione', 'To speed up the session'), L('A contare le visite', 'To count visits')], 0, L('Un altro sito non conosce il token.', 'Another site does not know the token.')),
@@ -334,6 +494,9 @@ function nomi(): array {
         ]),
         lesson('performance', L('Prestazioni: OPcache, cache e misure', 'Performance: OPcache, caching and measuring'), [
             P('**OPcache** tiene in memoria il codice PHP già compilato, così non viene ricompilato a ogni richiesta: in produzione va sempre attivo. Il **JIT** (da PHP 8.0) compila in codice macchina e aiuta nei calcoli pesanti, poco nelle pagine che aspettano il database.', '**OPcache** keeps already compiled PHP code in memory, so it is not recompiled on every request: in production it must always be on. The **JIT** (since PHP 8.0) compiles to machine code and helps heavy computation, little with pages waiting on the database.'),
+            Fig(L(fig_phpadv_opcache(['Senza OPcache', 'Con OPcache', 'legge il file', 'compila', 'esegue', 'opcode già in memoria', 'tempo']), fig_phpadv_opcache(['Without OPcache', 'With OPcache', 'reads the file', 'compiles', 'runs', 'opcodes already in memory', 'time'])),
+                L('Due barre del tempo di una richiesta. Senza OPcache: legge il file, compila, esegue. Con OPcache: solo esegue, perché il codice compilato è già in memoria.', 'Two time bars for a request. Without OPcache: reads the file, compiles, runs. With OPcache: only runs, because the compiled code is already in memory.'),
+                L('OPcache salta lettura e compilazione a ogni richiesta.', 'OPcache skips reading and compiling on every request.')),
             C('; php.ini in produzione
 opcache.enable=1
 opcache.memory_consumption=256

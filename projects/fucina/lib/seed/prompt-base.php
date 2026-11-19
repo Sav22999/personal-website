@@ -1,6 +1,24 @@
 <?php
 /** Prompt engineering basics: clear requests, context, examples, output format, iterating, recipes for common tasks, checks and neutral questions. */
 
+if (!function_exists('fig_promptbase_anatomy')) {
+    function fig_promptbase_anatomy(string $p1, string $p1e, string $p2, string $p2e, string $p3, string $p3e, string $p4, string $p4e): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52"><rect x="20" y="14" width="600" height="272" rx="14" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/><rect x="40" y="34" width="560" height="50" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><rect x="40" y="34" width="150" height="50" rx="10" fill="#7048E8"/><text x="115" y="65" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$p1}</text><text x="206" y="65" font-size="14">{$p1e}</text><rect x="40" y="96" width="560" height="50" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><rect x="40" y="96" width="150" height="50" rx="10" fill="#2F8CF0"/><text x="115" y="127" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$p2}</text><text x="206" y="127" font-size="14">{$p2e}</text><rect x="40" y="158" width="560" height="50" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><rect x="40" y="158" width="150" height="50" rx="10" fill="#E8590C"/><text x="115" y="189" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$p3}</text><text x="206" y="189" font-size="14">{$p3e}</text><rect x="40" y="220" width="560" height="50" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><rect x="40" y="220" width="150" height="50" rx="10" fill="#0B7F5C"/><text x="115" y="251" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$p4}</text><text x="206" y="251" font-size="14">{$p4e}</text></svg>
+SVG;
+    }
+}
+
+if (!function_exists('fig_promptbase_loop')) {
+    function fig_promptbase_loop(string $a, string $ad, string $b, string $bd, string $c, string $cd, string $note): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52"><style>.it{transform-origin:320px 150px;animation:itspin 9s linear infinite}@keyframes itspin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.it{animation:none}}</style><circle cx="320" cy="150" r="95" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 6"/><rect x="230" y="25" width="180" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="320" y="50" text-anchor="middle" font-weight="700" fill="#1B66BC">{$a}</text><text x="320" y="71" text-anchor="middle" font-size="13">{$ad}</text><rect x="380" y="170" width="180" height="60" rx="12" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="470" y="195" text-anchor="middle" font-weight="700" fill="#B84508">{$b}</text><text x="470" y="216" text-anchor="middle" font-size="13">{$bd}</text><rect x="80" y="170" width="180" height="60" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="170" y="195" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$c}</text><text x="170" y="216" text-anchor="middle" font-size="13">{$cd}</text><g class="it"><circle cx="320" cy="245" r="8" fill="#7048E8"/></g><text x="320" y="290" text-anchor="middle" font-size="13" fill="#5E5B85">{$note}</text></svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'prompt-base', 'family' => 'prompt', 'after' => null,
     'title' => L('Prompt engineering base', 'Prompt Engineering Basics'), 'short' => L('Prompt base', 'Prompt Basics'), 'level' => L('Base', 'Basics'),
@@ -27,6 +45,9 @@ Contesto: i miei studenti (12 anni) confondono area e perimetro.
 Compito: spiega la differenza con un esempio sul giardino di casa.
 Formato: massimo 6 righe, niente formule complicate.', 'text'),
             P('Assegnare un **ruolo** (“sei un revisore legale”, “sei un tutor paziente”) orienta lessico e livello. Separa le parti del prompt con titoli o tag come `<documento>…</documento>` quando incolli testi lunghi.', 'Assigning a **role** (“you are a legal reviewer”, “you are a patient tutor”) steers vocabulary and level. Separate the parts of the prompt with headings or tags like `<document>…</document>` when you paste long text.'),
+            Fig(L(fig_promptbase_anatomy('Ruolo', 'chi deve essere il modello: «sei un insegnante di matematica»', 'Contesto', 'per chi, perché, che cosa è già stato fatto', 'Compito', 'che cosa fare, con un verbo d’azione', 'Formato', 'lunghezza, struttura, tono, lingua'), fig_promptbase_anatomy('Role', 'who the model should be: “you are a maths teacher”', 'Context', 'for whom, why, what has already been done', 'Task', 'what to do, with an action verb', 'Format', 'length, structure, tone, language')),
+                L('Un prompt disegnato come una pila di quattro blocchi colorati: ruolo, contesto, compito e formato, ciascuno con una breve spiegazione accanto.', 'A prompt drawn as a stack of four coloured blocks: role, context, task and format, each with a short explanation next to it.'),
+                L('Non servono sempre tutti e quattro, ma è una buona lista di controllo.', 'You do not always need all four, but it is a good checklist.')),
         ], [
             Q('x1', L('Perché spiegare il motivo di un vincolo?', 'Why explain the reason for a constraint?'), [L('Il modello lo applica in modo più sensato', 'The model applies it more sensibly'), L('Per allungare il prompt', 'To make the prompt longer'), L('È obbligatorio', 'It is mandatory'), L('Per confondere il modello', 'To confuse the model')], 0, L('Capisce lo scopo, non solo la regola.', 'It grasps the goal, not just the rule.')),
             Q('x2', L('A che cosa serve assegnare un ruolo?', 'What is assigning a role for?'), [L('Orientare stile e livello', 'Steering style and level'), L('Dare accesso a internet', 'Giving internet access'), L('Rendere il modello più veloce', 'Making the model faster'), L('Cambiare lingua', 'Changing language')], 0, L('Un tutor parla diverso da un avvocato.', 'A tutor speaks differently from a lawyer.')),
@@ -42,6 +63,7 @@ Recensione: “Spedizione velocissima, prodotto perfetto.” → positivo
 Recensione: “Arrivato rotto, nessuna risposta.” → negativo
 Recensione: “Buono, ma la batteria dura poco.” →', 'text'),
             P('Gli esempi devono essere **vari** e rappresentativi: se sono tutti uguali, il modello copierà dettagli che non volevi (stessa lunghezza, stesse parole).', 'Examples must be **varied** and representative: if they are all alike, the model copies details you did not want (same length, same words).'),
+            P('Perché funzionano così bene? Descrivere uno stile a parole è difficile, mostrarlo è immediato: dagli esempi il modello capisce insieme il formato della risposta, la lunghezza e il criterio di scelta. Nota che l’ultimo esempio è lasciato **aperto** (“→” senza risposta): così il modello completa proprio quella riga, nel formato visto sopra. Per compiti ambigui conviene includere anche un caso difficile, come una recensione mista, e mostrare come va trattato.', 'Why do they work so well? Describing a style in words is hard, showing it is immediate: from the examples the model grasps the answer format, the length and the decision rule all at once. Notice that the last example is left **open** (“→” with no answer): that way the model completes exactly that line, in the format seen above. For ambiguous tasks it pays to include a hard case too, such as a mixed review, and show how it should be handled.'),
         ], [
             Q('e1', L('Che cos’è un prompt few-shot?', 'What is a few-shot prompt?'), [L('Un prompt con alcuni esempi', 'A prompt with a few examples'), L('Un prompt molto breve', 'A very short prompt'), L('Un prompt senza istruzioni', 'A prompt with no instructions'), L('Un prompt in più lingue', 'A prompt in several languages')], 0, L('Zero, uno o pochi esempi.', 'Zero, one or a few examples.')),
             Q('e2', L('Perché gli esempi devono essere vari?', 'Why must examples be varied?'), [L('Per non far copiare dettagli indesiderati', 'So unwanted details are not copied'), L('Per allungare la risposta', 'To lengthen the answer'), L('Perché il modello si annoia', 'Because the model gets bored'), L('Non serve', 'It does not matter')], 0, L('Il modello imita tutto quello che vede.', 'The model imitates everything it sees.')),
@@ -65,6 +87,9 @@ Recensione: “Buono, ma la batteria dura poco.” →', 'text'),
         ]),
         lesson('iterate', L('Migliorare per tentativi', 'Improving by iteration'), [
             P('Il primo prompt raramente è quello buono. Si lavora a **cicli**: provi, guardi cosa non va, correggi una cosa alla volta. Nelle chat puoi anche dare **feedback** (“più breve”, “togli il gergo”, “il secondo punto è sbagliato perché…”).', 'The first prompt is rarely the good one. You work in **loops**: try, see what is off, fix one thing at a time. In chats you can also give **feedback** (“shorter”, “drop the jargon”, “the second point is wrong because…”).'),
+            Fig(L(fig_promptbase_loop('Prova', 'invia il prompt', 'Guarda', 'che cosa non va?', 'Correggi', 'una cosa sola', 'Cambiare una cosa alla volta ti dice che cosa ha funzionato.'), fig_promptbase_loop('Try', 'send the prompt', 'Check', 'what is off?', 'Fix', 'one thing only', 'Changing one thing at a time tells you what worked.')),
+                L('Un ciclo di tre riquadri collegati da un cerchio tratteggiato su cui gira un pallino: prova, guarda che cosa non va, correggi una cosa sola, e di nuovo prova.', 'A cycle of three boxes linked by a dashed circle with a dot going round: try, check what is off, fix one thing only, and try again.'),
+                L('Si migliora a giri: ogni giro una sola modifica.', 'You improve in rounds: one change per round.')),
             P('Per compiti grandi, **spezza** in passaggi: prima la scaletta, poi ogni sezione, poi la revisione. Salva i prompt che funzionano e riusali come modelli.', 'For big tasks, **split** into steps: first the outline, then each section, then the review. Save the prompts that work and reuse them as templates.'),
             Tip('Se una risposta è sbagliata, spesso conviene correggere il prompt e ricominciare invece di discutere per dieci messaggi.', 'If an answer is wrong, it is often better to fix the prompt and start over than to argue for ten messages.'),
         ], [

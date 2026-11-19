@@ -1,6 +1,120 @@
 <?php
 /** Intermediate UX: research methods, information architecture, user flows and journey maps, prototyping and testing, synthesis, surveys and analytics, ideation workshops. */
 
+/** Figures of this course, each with its words in one language ('it' or 'en'). */
+if (!function_exists('fig_uxint_methods')) {
+    /** Research methods on two axes: what people say or do, and why or how many. */
+    function fig_uxint_methods(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['QUALITATIVA: perché', 'QUANTITATIVA: quanto', 'Che cosa dicono', 'Che cosa fanno', 'Interviste', 'Questionari', 'Osservazione sul campo', 'Test moderati', 'Analytics', 'Test A/B', 'Heatmap']
+            : ['QUALITATIVE: why', 'QUANTITATIVE: how many', 'What people say', 'What people do', 'Interviews', 'Surveys', 'Field observation', 'Moderated tests', 'Analytics', 'A/B tests', 'Heatmaps'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="150" y="20" width="230" height="130" rx="12" fill="#ECE6FF"/>
+<rect x="390" y="20" width="230" height="130" rx="12" fill="#DCEBFF"/>
+<rect x="150" y="160" width="230" height="130" rx="12" fill="#ECE6FF"/>
+<rect x="390" y="160" width="230" height="130" rx="12" fill="#DCEBFF"/>
+<g font-weight="700" font-size="15" text-anchor="end"><text x="138" y="90">{$t[2]}</text><text x="138" y="230">{$t[3]}</text></g>
+<g font-weight="700" font-size="13" text-anchor="middle"><text x="265" y="312" fill="#5F3DC4">{$t[0]}</text><text x="505" y="312" fill="#1B66BC">{$t[1]}</text></g>
+<g font-size="14">
+<rect x="180" y="45" width="130" height="34" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><text x="245" y="67" text-anchor="middle">{$t[4]}</text>
+<rect x="440" y="62" width="130" height="34" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="505" y="84" text-anchor="middle">{$t[5]}</text>
+<rect x="250" y="130" width="160" height="34" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><text x="330" y="152" text-anchor="middle">{$t[7]}</text>
+<rect x="165" y="215" width="190" height="34" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><text x="260" y="237" text-anchor="middle">{$t[6]}</text>
+<rect x="400" y="182" width="110" height="34" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="455" y="204" text-anchor="middle">{$t[8]}</text>
+<rect x="460" y="238" width="120" height="34" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="520" y="260" text-anchor="middle">{$t[9]}</text>
+<rect x="518" y="182" width="96" height="34" rx="10" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2" stroke-dasharray="5 4"/><text x="566" y="204" text-anchor="middle">{$t[10]}</text>
+</g>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxint_journey')) {
+    /** A customer journey map: five phases, their touchpoints and the emotional curve with its lowest point. */
+    function fig_uxint_journey(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Scoprire', 'Valutare', 'Comprare', 'Usare', 'Chiedere aiuto', 'social', 'sito, recensioni', 'app, email', 'prodotto', 'assistenza', 'opportunità', 'emozioni', 'punti di contatto']
+            : ['Discover', 'Evaluate', 'Buy', 'Use', 'Get help', 'social', 'site, reviews', 'app, email', 'product', 'support', 'opportunity', 'emotions', 'touchpoints'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g fill="#F1F0F8"><rect x="124" y="16" width="94" height="36" rx="10"/><rect x="224" y="16" width="94" height="36" rx="10"/><rect x="324" y="16" width="94" height="36" rx="10"/><rect x="424" y="16" width="94" height="36" rx="10"/><rect x="524" y="16" width="108" height="36" rx="10"/></g>
+<g font-size="14" font-weight="700" text-anchor="middle"><text x="171" y="39">{$t[0]}</text><text x="271" y="39">{$t[1]}</text><text x="371" y="39">{$t[2]}</text><text x="471" y="39">{$t[3]}</text><text x="578" y="39">{$t[4]}</text></g>
+<text x="116" y="82" text-anchor="end" fill="#5A5880">{$t[12]}</text>
+<g text-anchor="middle" fill="#5A5880"><text x="171" y="82">{$t[5]}</text><text x="271" y="82">{$t[6]}</text><text x="371" y="82">{$t[7]}</text><text x="471" y="82">{$t[8]}</text><text x="578" y="82">{$t[9]}</text></g>
+<text x="116" y="196" text-anchor="end" fill="#5A5880">{$t[11]}</text>
+<line x1="124" y1="190" x2="630" y2="190" stroke="#E4E2F0" stroke-width="2" stroke-dasharray="6 5"/>
+<g font-size="22" font-weight="700" text-anchor="middle"><text x="22" y="138" fill="#0B7F5C">+</text><text x="22" y="262" fill="#C2255C">−</text></g>
+<path d="M171 150 C 210 130, 240 115, 271 120 S 335 170, 371 160 S 440 110, 471 125 S 540 260, 578 262" fill="none" stroke="#2F8CF0" stroke-width="3"/>
+<g fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"><circle cx="171" cy="150" r="7"/><circle cx="271" cy="120" r="7"/><circle cx="371" cy="160" r="7"/><circle cx="471" cy="125" r="7"/></g>
+<circle cx="578" cy="262" r="10" fill="#F03E82" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="418" y="268" width="130" height="30" rx="8" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="483" y="288" text-anchor="middle" font-size="14" font-weight="700" fill="#C2255C">{$t[10]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxint_fidelity')) {
+    /** The same screen at three fidelities: a paper sketch, a grey wireframe, a coloured high-fidelity mock-up. */
+    function fig_uxint_fidelity(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Schizzo', 'Wireframe', 'Alta fedeltà', 'struttura e flussi', 'dettagli, testi, interazioni', 'bassa fedeltà', 'alta fedeltà', 'Regali', 'Cerca']
+            : ['Sketch', 'Wireframe', 'High fidelity', 'structure and flows', 'details, copy, interactions', 'low fidelity', 'high fidelity', 'Gifts', 'Search'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 330" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="15" text-anchor="middle"><text x="110" y="24">{$t[0]}</text><text x="320" y="24">{$t[1]}</text><text x="530" y="24">{$t[2]}</text></g>
+<rect x="40" y="38" width="140" height="210" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<g fill="none" stroke="#8A87B0" stroke-width="2" stroke-linecap="round">
+<path d="M56 62 q30 -4 60 1 t50 -2"/><path d="M58 92 h40 M58 104 h70 M58 116 h55"/>
+<path d="M57 140 q2 30 1 40 q30 2 50 0 q1 -20 -1 -40 q-25 -2 -50 0 z"/><path d="M120 140 q2 20 0 40 q20 1 44 0 q2 -20 0 -40 z"/>
+<path d="M60 214 q40 -6 100 0 q2 12 -2 18 q-48 4 -96 0 q-4 -8 -2 -18 z"/></g>
+<rect x="250" y="38" width="140" height="210" rx="12" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<g fill="#E4E2F0"><rect x="264" y="54" width="112" height="16" rx="4"/><rect x="264" y="86" width="80" height="8" rx="4"/><rect x="264" y="100" width="100" height="8" rx="4"/><rect x="264" y="130" width="52" height="56" rx="6"/><rect x="324" y="130" width="52" height="56" rx="6"/></g>
+<rect x="264" y="208" width="112" height="26" rx="8" fill="#8A87B0"/>
+<rect x="460" y="38" width="140" height="210" rx="12" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<text x="474" y="68" font-size="17" font-weight="700">{$t[7]}</text>
+<rect x="474" y="82" width="112" height="24" rx="12" fill="#F1F0F8"/><text x="488" y="99" font-size="13" fill="#5A5880">{$t[8]}…</text>
+<rect x="474" y="122" width="52" height="64" rx="8" fill="#FFE8D6"/><rect x="534" y="122" width="52" height="64" rx="8" fill="#DCEBFF"/>
+<circle cx="500" cy="146" r="12" fill="#E8590C"/><rect x="548" y="136" width="24" height="22" rx="4" fill="#2F8CF0"/>
+<text x="476" y="200" font-size="13">€24</text><text x="536" y="200" font-size="13">€29</text>
+<rect x="474" y="208" width="112" height="26" rx="13" fill="#E8590C"/>
+<path d="M512 221 h36" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+<line x1="60" y1="272" x2="580" y2="272" stroke="#1E1C52" stroke-width="2" marker-end="url(#ah)"/>
+<g font-size="13" fill="#5A5880"><text x="40" y="292">{$t[5]}</text><text x="600" y="292" text-anchor="end">{$t[6]}</text></g>
+<g font-size="14" font-weight="700" text-anchor="middle"><text x="215" y="318" fill="#5A5880">{$t[3]}</text><text x="530" y="318" fill="#B84508">{$t[4]}</text></g>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxint_matrix')) {
+    /** The impact/effort matrix with its four quadrants. */
+    function fig_uxint_matrix(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['IMPATTO', 'SFORZO', 'alto', 'basso', 'Vittorie rapide', 'falle subito', 'Grandi progetti', 'pianificali', 'Riempitivi', 'se avanza tempo', 'Da evitare', 'costano e rendono poco']
+            : ['IMPACT', 'EFFORT', 'high', 'low', 'Quick wins', 'do them first', 'Big bets', 'plan them', 'Fill-ins', 'if there is time', 'Avoid', 'costly, little gain'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="110" y="20" width="250" height="130" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="370" y="20" width="250" height="130" rx="12" fill="#DCEBFF"/>
+<rect x="110" y="160" width="250" height="130" rx="12" fill="#F1F0F8"/>
+<rect x="370" y="160" width="250" height="130" rx="12" fill="#FFE3EE"/>
+<g text-anchor="middle"><text x="235" y="76" font-size="17" font-weight="700" fill="#0B7F5C">1 · {$t[4]}</text><text x="235" y="100" fill="#0B7F5C">{$t[5]}</text>
+<text x="495" y="76" font-size="17" font-weight="700" fill="#1B66BC">2 · {$t[6]}</text><text x="495" y="100" fill="#1B66BC">{$t[7]}</text>
+<text x="235" y="216" font-size="17" font-weight="700" fill="#5A5880">3 · {$t[8]}</text><text x="235" y="240" fill="#5A5880">{$t[9]}</text>
+<text x="495" y="216" font-size="17" font-weight="700" fill="#C2255C">✗ {$t[10]}</text><text x="495" y="240" fill="#C2255C">{$t[11]}</text></g>
+<text x="40" y="155" text-anchor="middle" font-weight="700" transform="rotate(-90 40 155)">{$t[0]}</text>
+<g font-size="13" fill="#5A5880" text-anchor="end"><text x="100" y="40">{$t[2]}</text><text x="100" y="286">{$t[3]}</text></g>
+<text x="365" y="314" text-anchor="middle" font-weight="700">{$t[1]}</text>
+<g font-size="13" fill="#5A5880"><text x="110" y="314">{$t[3]}</text><text x="620" y="314" text-anchor="end">{$t[2]}</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ux-intermediate', 'family' => 'ux', 'after' => 'ux-base', 'categories' => ['design'],
     'title' => L('UX: livello intermedio', 'UX Intermediate'), 'short' => L('UX intermedio', 'UX Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -8,6 +122,9 @@ return [
     'lessons' => [
         lesson('research', L('Metodi di ricerca', 'Research methods'), [
             P('La ricerca si divide in **qualitativa** (perché le persone fanno qualcosa: interviste, osservazione sul campo, test moderati) e **quantitativa** (quanto e quanti: questionari, analytics, A/B test). Le due si completano: i numeri dicono **dove** c’è un problema, le interviste dicono **perché**.', 'Research splits into **qualitative** (why people do something: interviews, field observation, moderated tests) and **quantitative** (how much and how many: surveys, analytics, A/B tests). The two complement each other: numbers tell you **where** there is a problem, interviews tell you **why**.'),
+            Fig(L(fig_uxint_methods('it'), fig_uxint_methods('en')),
+                L('Una griglia due per due. In orizzontale la ricerca qualitativa, che spiega il perché, e quella quantitativa, che misura quanto; in verticale che cosa le persone dicono e che cosa fanno. Le interviste stanno in alto a sinistra, i questionari in alto a destra, l’osservazione in basso a sinistra, analytics e test A/B in basso a destra, i test moderati e le heatmap a cavallo.', 'A two-by-two grid. Horizontally qualitative research, which explains why, and quantitative research, which measures how many; vertically what people say and what they do. Interviews sit top left, surveys top right, field observation bottom left, analytics and A/B tests bottom right, with moderated tests and heatmaps on the borders.'),
+                L('Per un quadro completo combina metodi di quadranti diversi.', 'For a full picture, combine methods from different quadrants.')),
             P('Nelle **interviste** si chiedono fatti passati, non opinioni sul futuro: “Raccontami l’ultima volta che hai prenotato un viaggio” vale più di “Useresti una app per i viaggi?”. Evita le **domande guidate** (“Non trovi comodo questo tasto?”) e lascia parlare: i silenzi fanno emergere dettagli.', 'In **interviews** you ask about past facts, not opinions about the future: “Tell me about the last time you booked a trip” is worth more than “Would you use a travel app?”. Avoid **leading questions** (“Don’t you find this button handy?”) and let people talk: silences bring out details.'),
             Tip('Ciò che le persone dicono e ciò che fanno spesso non coincide: quando puoi, osserva il comportamento reale.', 'What people say and what they do often differ: whenever you can, observe real behaviour.'),
         ], [
@@ -44,6 +161,9 @@ return [
                     ↓
              [Password dimenticata] → [Email] → (ritorno al carrello?)', 'text'),
             P('La **customer journey map** è più ampia: segue la persona attraverso tutte le fasi (scoprire, valutare, acquistare, usare, chiedere aiuto) e tutti i **touchpoint** (sito, negozio, email, assistenza), con azioni, pensieri ed **emozioni**. Il punto più basso della curva emotiva è spesso la migliore opportunità di miglioramento.', 'The **customer journey map** is broader: it follows the person through all phases (discover, evaluate, buy, use, ask for help) and all **touchpoints** (site, shop, email, support), with actions, thoughts and **emotions**. The lowest point of the emotional curve is often the best improvement opportunity.'),
+            Fig(L(fig_uxint_journey('it'), fig_uxint_journey('en')),
+                L('Una mappa del percorso con cinque fasi in colonna: scoprire, valutare, comprare, usare, chiedere aiuto, ciascuna con i suoi punti di contatto. Sotto, una curva delle emozioni sale e scende e tocca il punto più basso nella fase «chiedere aiuto», segnato come opportunità.', 'A journey map with five phases as columns: discover, evaluate, buy, use, get help, each with its touchpoints. Below, an emotional curve rises and falls and hits its lowest point in the “get help” phase, marked as an opportunity.'),
+                L('Il punto più basso della curva è dove intervenire per primo.', 'The lowest point of the curve is where to act first.')),
         ], [
             Q('f1', L('Che cosa descrive uno user flow?', 'What does a user flow describe?'), [L('I passi per completare un compito', 'The steps to complete a task'), L('Il flusso di dati nel server', 'Data flow on the server'), L('L’andamento delle vendite', 'The sales trend'), L('Le ore di lavoro del team', 'The team’s working hours')], 0, L('Schermate e scelte.', 'Screens and choices.')),
             Q('f2', L('Che cos’è un touchpoint?', 'What is a touchpoint?'), [L('Un punto di contatto tra persona e servizio', 'A point of contact between person and service'), L('Uno schermo touch', 'A touch screen'), L('Un tipo di icona', 'A kind of icon'), L('Un pulsante grande', 'A big button')], 0, L('Sito, negozio, email…', 'Site, shop, email…')),
@@ -54,6 +174,9 @@ return [
         ]),
         lesson('testing', L('Prototipi e test di usabilità', 'Prototypes and usability testing'), [
             P('La **fedeltà** di un prototipo va scelta in base alla domanda: **bassa** (carta, wireframe) per struttura e flussi, veloce da buttare; **alta** (Figma con grafica e interazioni) per dettagli, testi e micro-interazioni. Non serve il codice per scoprire che un menu non si capisce.', 'A prototype’s **fidelity** should match the question: **low** (paper, wireframes) for structure and flows, quick to throw away; **high** (Figma with visuals and interactions) for details, copy and micro-interactions. You do not need code to discover a menu is confusing.'),
+            Fig(L(fig_uxint_fidelity('it'), fig_uxint_fidelity('en')),
+                L('La stessa schermata di un negozio di regali tre volte: uno schizzo a mano con linee tremolanti, un wireframe con rettangoli grigi e una versione ad alta fedeltà con colori, prezzi e un pulsante arancione. Una freccia va dalla bassa all’alta fedeltà.', 'The same gift shop screen three times: a hand sketch with wobbly lines, a wireframe with grey rectangles and a high-fidelity version with colours, prices and an orange button. An arrow runs from low to high fidelity.'),
+                L('La bassa fedeltà risponde a domande di struttura, l’alta a domande di dettaglio.', 'Low fidelity answers questions about structure, high fidelity questions about detail.')),
             P('Un buon test ha **compiti realistici** con uno scopo, non istruzioni (“Hai un compleanno sabato: trova un regalo sotto 30 €”, non “clicca su Regali”). Si misurano **successo**, **tempo**, **errori** e soddisfazione, ad esempio con il questionario **SUS**. Test **moderati** (con un facilitatore) danno profondità, **non moderati** (da remoto, da soli) danno numeri.', 'A good test has **realistic tasks** with a goal, not instructions (“You have a birthday on Saturday: find a gift under €30”, not “click Gifts”). You measure **success**, **time**, **errors** and satisfaction, for example with the **SUS** questionnaire. **Moderated** tests (with a facilitator) give depth, **unmoderated** ones (remote, alone) give numbers.'),
         ], [
             Q('p1', L('Quando usare un prototipo a bassa fedeltà?', 'When to use a low-fidelity prototype?'), [L('Per testare struttura e flussi presto', 'To test structure and flows early'), L('Per scegliere la tonalità di un colore', 'To choose a colour shade'), L('Per misurare la velocità del server', 'To measure server speed'), L('Mai', 'Never')], 0, L('Veloce da fare e da buttare.', 'Quick to make and discard.')),
@@ -66,6 +189,9 @@ return [
         lesson('synthesis', L('Sintesi della ricerca e priorità', 'Research synthesis and priorities'), [
             P('Dopo interviste e test hai decine di note. La **mappa di affinità** le raggruppa per somiglianza: ogni gruppo diventa un **tema**, e da un tema nasce un **insight**: una frase che spiega un comportamento e il suo perché (“Chi studia la sera salta le lezioni lunghe perché ha poco tempo”).', 'After interviews and tests you have dozens of notes. An **affinity map** groups them by similarity: each group becomes a **theme**, and from a theme comes an **insight**: a sentence explaining a behaviour and its why (“People studying in the evening skip long lessons because they have little time”).'),
             P('Le idee che ne escono sono troppe: si mettono in **priorità**. La matrice **impatto/sforzo** mette prima le idee ad alto impatto e basso sforzo; il metodo **MoSCoW** divide in Must, Should, Could e Won’t (per ora).', 'The ideas that come out are too many: they get **prioritised**. The **impact/effort** matrix puts high-impact, low-effort ideas first; the **MoSCoW** method splits them into Must, Should, Could and Won’t (for now).'),
+            Fig(L(fig_uxint_matrix('it'), fig_uxint_matrix('en')),
+                L('Una griglia due per due: in verticale l’impatto, in orizzontale lo sforzo. In alto a sinistra le vittorie rapide, da fare subito; in alto a destra i grandi progetti, da pianificare; in basso a sinistra i riempitivi; in basso a destra le idee da evitare, che costano molto e rendono poco.', 'A two-by-two grid: impact vertically, effort horizontally. Top left the quick wins, to do first; top right the big bets, to plan; bottom left the fill-ins; bottom right the ideas to avoid, costly with little gain.'),
+                L('Si parte dall’angolo in alto a sinistra: molto impatto, poco sforzo.', 'Start from the top left corner: high impact, low effort.')),
         ], [
             Q('sy1', L('A che cosa serve una mappa di affinità?', 'What is an affinity map for?'), [L('Raggruppare le note in temi', 'Grouping notes into themes'), L('Disegnare il sito', 'Drawing the site'), L('Calcolare il budget', 'Calculating the budget'), L('Scegliere i colori', 'Choosing colours')], 0, L('Dal caos ai temi.', 'From chaos to themes.')),
             Q('sy2', L('Che cos’è un insight?', 'What is an insight?'), [L('Un comportamento con il suo perché', 'A behaviour with its why'), L('Una citazione qualsiasi', 'Any quote'), L('Un numero di visite', 'A visit count'), L('Una richiesta di funzione', 'A feature request')], 0, L('Spiega, non solo descrive.', 'It explains, not just describes.')),

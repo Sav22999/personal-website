@@ -1,6 +1,100 @@
 <?php
 /** Redis: keys with expiry, data structures, caching, pub/sub and streams, persistence, transactions and Lua, JSON and search, licences and Valkey. */
 
+/** The five classic Redis structures, each with the key that holds it. */
+if (!function_exists('fig_redis_structures')) {
+    function fig_redis_structures(string $str, string $list): string
+    {
+        $panel = fn(int $x, int $y, int $w, int $h, string $type, string $key, string $s, string $f, bool $below = false) => '<rect x="' . $x . '" y="' . $y . '" width="' . $w . '" height="' . $h . '" rx="12" fill="' . $f . '" stroke="' . $s . '" stroke-width="2"/><text x="' . ($x + 14) . '" y="' . ($y + 24) . '" font-weight="700">' . $type . '</text><text x="' . ($below ? $x + 14 : $x + $w - 14) . '" y="' . ($y + ($below ? 42 : 24)) . '"' . ($below ? '' : ' text-anchor="end"') . ' font-family="ui-monospace, monospace" font-size="12" fill="#5A5880">' . $key . '</text>';
+        $box = fn(int $x, int $y, int $w, string $t, string $s = '#8A87B0') => '<rect x="' . $x . '" y="' . $y . '" width="' . $w . '" height="28" rx="7" fill="#FFFFFF" stroke="' . $s . '" stroke-width="2"/><text x="' . ($x + $w / 2) . '" y="' . ($y + 19) . '" text-anchor="middle" font-size="13">' . $t . '</text>';
+        $g = $panel(20, 14, 190, 104, $str, 'utente:7:nome', '#8A87B0', '#F1F0F8') . $box(40, 60, 150, 'Ada');
+        $g .= $panel(226, 14, 394, 104, $list, 'notizie', '#2F8CF0', '#DCEBFF');
+        foreach (['Titolo 3', 'Titolo 2', 'Titolo 1'] as $i => $t) {
+            $g .= $box(300 + $i * 104, 60, 90, $t, '#2F8CF0');
+            if ($i < 2) $g .= '<path d="M' . (390 + $i * 104) . ' 74 H' . (404 + $i * 104) . '" stroke="#2F8CF0" stroke-width="2"/>';
+        }
+        $g .= '<text x="244" y="79" font-family="ui-monospace, monospace" font-size="12" font-weight="700" fill="#1B66BC">LPUSH</text><path d="M288 74 H296" stroke="#1B66BC" stroke-width="2"/><path d="M294 69 L301 74 L294 79 Z" fill="#1B66BC"/>';
+        $g .= $panel(20, 134, 196, 152, 'hash', 'utente:7', '#0B7F5C', '#D5F6EA', true);
+        foreach ([['nome', 'Ada'], ['citta', 'Trieste'], ['punti', '120']] as $i => [$k, $v]) {
+            $y = 206 + $i * 30;
+            $g .= '<rect x="34" y="' . ($y - 20) . '" width="168" height="28" rx="7" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><line x1="100" y1="' . ($y - 20) . '" x2="100" y2="' . ($y + 8) . '" stroke="#0B7F5C" stroke-width="2"/><text x="44" y="' . $y . '" font-family="ui-monospace, monospace" font-size="12" font-weight="700">' . $k . '</text><text x="110" y="' . $y . '" font-size="13">' . $v . '</text>';
+        }
+        $g .= $panel(232, 134, 180, 152, 'set', 'tag:post:5', '#7048E8', '#ECE6FF', true);
+        $g .= '<ellipse cx="322" cy="228" rx="74" ry="42" fill="#FFFFFF" stroke="#7048E8" stroke-width="2" stroke-dasharray="6 4"/><text x="300" y="220" text-anchor="middle" font-size="13">redis</text><text x="338" y="248" text-anchor="middle" font-size="13">database</text>';
+        $g .= $panel(428, 134, 192, 152, 'sorted set', 'classifica', '#E8590C', '#FFF3EA', true);
+        foreach ([['cy', 140], ['ada', 120], ['bo', 95]] as $i => [$k, $v]) {
+            $y = 206 + $i * 30;
+            $w = (int)round($v * 0.72);
+            $g .= '<rect x="482" y="' . ($y - 16) . '" width="' . $w . '" height="22" rx="6" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="442" y="' . $y . '" font-size="13" font-weight="700">' . $k . '</text><text x="' . (488) . '" y="' . $y . '" font-size="12">' . $v . '</text>';
+        }
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">' . $g . '</svg>';
+    }
+}
+
+/** Cache-aside as a sequence: the first request misses and fills the cache, the next one is a hit. */
+if (!function_exists('fig_redis_cache')) {
+    function fig_redis_cache(string $miss, string $slow, string $data, string $next, string $hit): string
+    {
+        $msg = function (int $x1, int $x2, int $y, string $t, string $c, bool $back = false, ?int $lx = null) {
+            $dir = $x2 > $x1 ? 1 : -1;
+            return '<path d="M' . $x1 . ' ' . $y . ' H' . ($x2 - $dir * 8) . '" stroke="' . $c . '" stroke-width="2"' . ($back ? ' stroke-dasharray="6 4"' : '') . '/><path d="M' . ($x2 - $dir * 8) . ' ' . ($y - 5) . ' L' . $x2 . ' ' . $y . ' L' . ($x2 - $dir * 8) . ' ' . ($y + 5) . ' Z" fill="' . $c . '"/><text x="' . ($lx ?? ($x1 + $x2) / 2) . '" y="' . ($y - 7) . '" text-anchor="middle" font-size="13"' . ($back ? '' : ' font-family="ui-monospace, monospace"') . '>' . $t . '</text>';
+        };
+        $g = $msg(90, 320, 86, 'GET prodotto:7', '#1E1C52') . $msg(320, 90, 116, $miss, '#8A87B0', true)
+            . $msg(90, 550, 150, $slow, '#1E1C52', false, 435) . $msg(550, 90, 180, $data, '#8A87B0', true, 435)
+            . $msg(90, 320, 214, 'SET prodotto:7 … EX 300', '#1E1C52')
+            . $msg(90, 320, 270, 'GET prodotto:7', '#0B7F5C') . $msg(320, 90, 298, $hit, '#0B7F5C', true);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 312" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g stroke="#C9C7DE" stroke-width="2" stroke-dasharray="3 4"><line x1="90" y1="50" x2="90" y2="306"/><line x1="320" y1="50" x2="320" y2="306"/><line x1="550" y1="50" x2="550" y2="306"/></g>
+<rect x="40" y="14" width="100" height="36" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><text x="90" y="37" text-anchor="middle" font-weight="700">app</text>
+<rect x="270" y="14" width="100" height="36" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/><text x="320" y="37" text-anchor="middle" font-weight="700" fill="#C2185B">Redis</text>
+<rect x="490" y="14" width="120" height="36" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="550" y="37" text-anchor="middle" font-weight="700" fill="#1B66BC">database</text>
+<line x1="20" y1="236" x2="620" y2="236" stroke="#8A87B0" stroke-width="2" stroke-dasharray="8 6"/>
+<rect x="400" y="226" width="200" height="20" fill="#FFFFFF"/><text x="500" y="241" text-anchor="middle" font-size="12" font-weight="700" fill="#5A5880">{$next}</text>
+{$g}
+</svg>
+SVG;
+    }
+}
+
+/** Pub/Sub delivers only to whoever is listening now; a stream keeps the messages so a consumer can read them later. */
+if (!function_exists('fig_redis_pubsub')) {
+    function fig_redis_pubsub(string $offline, string $later, string $lost, string $kept): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<rect x="20" y="14" width="290" height="210" rx="12" fill="#FFFFFF" stroke="#C9C7DE" stroke-width="2"/>
+<rect x="330" y="14" width="290" height="210" rx="12" fill="#FFFFFF" stroke="#C9C7DE" stroke-width="2"/>
+<g font-weight="700"><text x="34" y="40">Pub/Sub</text><text x="344" y="40">Stream</text></g>
+<g font-family="ui-monospace, monospace" font-size="12" font-weight="700">
+<rect x="34" y="104" width="90" height="34" rx="9" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="79" y="126" text-anchor="middle">PUBLISH</text>
+<rect x="164" y="56" width="130" height="32" rx="9" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="229" y="77" text-anchor="middle">client A</text>
+<rect x="164" y="104" width="130" height="32" rx="9" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="229" y="125" text-anchor="middle">client B</text>
+<rect x="164" y="152" width="130" height="32" rx="9" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/><text x="229" y="173" text-anchor="middle" fill="#8A87B0">client C</text>
+</g>
+<g stroke="#0B7F5C" stroke-width="2" fill="none"><path d="M124 121 C 144 121, 144 72, 158 72"/><path d="M124 121 H158"/></g>
+<g fill="#0B7F5C"><path d="M156 67 L164 72 L156 77 Z"/><path d="M156 116 L164 121 L156 126 Z"/></g>
+<path d="M124 121 C 140 121, 140 168, 150 168" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4"/>
+<path d="M140 160 l10 10 M150 160 l-10 10" stroke="#F03E82" stroke-width="2.5" stroke-linecap="round"/>
+<text x="229" y="204" text-anchor="middle" font-size="12" fill="#5A5880">{$offline}</text>
+<g font-family="ui-monospace, monospace" font-size="12" font-weight="700">
+<rect x="344" y="104" width="62" height="34" rx="9" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="375" y="126" text-anchor="middle">XADD</text>
+<rect x="420" y="98" width="186" height="46" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="430" y="106" width="50" height="30" rx="6" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="455" y="126" text-anchor="middle">1-0</text>
+<rect x="488" y="106" width="50" height="30" rx="6" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="513" y="126" text-anchor="middle">2-0</text>
+<rect x="546" y="106" width="50" height="30" rx="6" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="571" y="126" text-anchor="middle">3-0</text>
+<rect x="430" y="168" width="166" height="32" rx="9" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><text x="513" y="189" text-anchor="middle">XREAD … 0</text>
+</g>
+<path d="M406 121 H414" stroke="#E8590C" stroke-width="2"/>
+<path d="M455 136 V162" stroke="#0B7F5C" stroke-width="2"/><path d="M450 160 L455 168 L460 160 Z" fill="#0B7F5C"/>
+<text x="513" y="78" text-anchor="middle" font-size="12" fill="#5A5880">{$later}</text>
+<text x="20" y="250" font-size="13" font-weight="700" fill="#C2185B">{$lost}</text>
+<text x="330" y="250" font-size="13" font-weight="700" fill="#0B7F5C">{$kept}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'redis', 'family' => 'redis', 'after' => null,
     'title' => L('Redis', 'Redis'), 'short' => L('Redis', 'Redis'), 'level' => L('Intermedio', 'Intermediate'),
@@ -38,6 +132,9 @@ SISMEMBER tag:post:5 "redis"         # 1
 ZADD classifica 120 "ada" 95 "bo" 140 "cy"
 ZRANGE classifica 0 2 REV WITHSCORES  # i primi 3: cy, ada, bo
 ZINCRBY classifica 10 "bo"', 'redis'),
+            Fig(L(fig_redis_structures('stringa', 'lista'), fig_redis_structures('string', 'list')),
+                L('Cinque riquadri. Stringa: la chiave utente:7:nome vale Ada. Lista: notizie contiene Titolo 3, Titolo 2, Titolo 1, con LPUSH che aggiunge in testa. Hash: utente:7 ha i campi nome, citta e punti. Set: tag:post:5 contiene redis e database. Sorted set: classifica ordina cy 140, ada 120, bo 95 con barre proporzionali al punteggio.', 'Five panels. String: the key utente:7:nome holds Ada. List: notizie holds Titolo 3, Titolo 2, Titolo 1, with LPUSH adding at the head. Hash: utente:7 has the fields nome, citta and punti. Set: tag:post:5 holds redis and database. Sorted set: classifica orders cy 140, ada 120, bo 95 with bars sized by score.'),
+                L('Ogni chiave contiene una struttura sola: il tipo lo decide il primo comando che la crea.', 'Each key holds a single structure: its type is set by the first command that creates it.')),
             P('Scegliere la struttura giusta rende tutto semplice: una classifica con milioni di giocatori in un sorted set restituisce i primi 10 in un istante, cosa lenta e complicata in SQL. `ZRANGE … REV` legge dal punteggio più alto; nel codice vecchio trovi ancora `ZREVRANGE`, che fa lo stesso ma è deprecato.', 'Picking the right structure makes everything simple: a leaderboard with millions of players in a sorted set returns the top 10 instantly, something slow and complicated in SQL. `ZRANGE … REV` reads from the highest score; in older code you still find `ZREVRANGE`, which does the same but is deprecated.'),
         ], [
             Q('s1', L('Quale struttura è perfetta per una classifica?', 'Which structure is perfect for a leaderboard?'), ['Sorted set', 'Lista', 'Stringa', 'Hash'], 0, L('Ordinato per punteggio.', 'Ordered by score.')),
@@ -61,6 +158,9 @@ def prodotto(id):
     dati = db.leggi_prodotto(id)               # query lenta
     r.set(chiave, json.dumps(dati), ex=300)    # 5 minuti
     return dati', 'python'),
+            Fig(L(fig_redis_cache('(nil): miss', 'query lenta', 'dati', 'richiesta successiva', 'dati: hit, in un istante'), fig_redis_cache('(nil): miss', 'slow query', 'data', 'next request', 'data: hit, instantly')),
+                L('Un diagramma di sequenza tra app, Redis e database. La prima volta l’app chiede GET prodotto:7 a Redis e riceve nil, cioè un miss; allora interroga il database, riceve i dati e li salva in Redis con SET … EX 300. Alla richiesta successiva lo stesso GET trova i dati in Redis: un hit.', 'A sequence diagram between app, Redis and database. The first time the app asks Redis for GET prodotto:7 and gets nil, a miss; so it queries the database, gets the data and stores them in Redis with SET … EX 300. On the next request the same GET finds the data in Redis: a hit.'),
+                L('Per 300 secondi nessuno tocca più il database per quel prodotto.', 'For 300 seconds nobody touches the database for that product again.')),
             P('Redis fa anche da **coda di lavori** (con liste o con gli *stream*) e da **pub/sub**: un servizio pubblica messaggi su un canale e tutti gli iscritti li ricevono subito, utile per notifiche in tempo reale e chat.', 'Redis also works as a **job queue** (with lists or *streams*) and as **pub/sub**: a service publishes messages on a channel and all subscribers receive them at once, useful for real-time notifications and chats.'),
         ], [
             Q('c1', L('Che cosa fa il pattern cache-aside?', 'What does the cache-aside pattern do?'), [L('Cerca in cache, altrimenti calcola e salva', 'Looks in cache, otherwise computes and stores'), L('Salva tutto solo su disco', 'Stores everything on disk only'), L('Cancella il database', 'Deletes the database'), L('Non usa scadenze', 'Uses no expiry')], 0, L('Il più usato.', 'The most used.')),
@@ -97,6 +197,9 @@ XREAD COUNT 10 STREAMS ordini 0
 
 INCR limite:utente42
 EXPIRE limite:utente42 60     # finestra di 60 secondi', 'redis'),
+            Fig(L(fig_redis_pubsub('scollegato', 'messaggi conservati con ID', 'C era offline: il messaggio è perso.', 'Chi arriva dopo legge dall’inizio.'), fig_redis_pubsub('offline', 'messages kept with IDs', 'C was offline: the message is lost.', 'Whoever comes later reads from the start.')),
+                L('A sinistra un PUBLISH raggiunge i client A e B, collegati; il client C, scollegato e tratteggiato, non lo riceve. A destra XADD aggiunge messaggi a uno stream che li conserva con gli ID 1-0, 2-0 e 3-0, e un consumatore li legge dopo con XREAD partendo da 0.', 'On the left a PUBLISH reaches clients A and B, which are connected; client C, offline and dashed, does not get it. On the right XADD appends messages to a stream that keeps them with the IDs 1-0, 2-0 and 3-0, and a consumer reads them later with XREAD starting from 0.'),
+                L('Pub/Sub è una radio in diretta, uno stream un registro che si può rileggere.', 'Pub/Sub is a live radio, a stream a log you can read again.')),
             P('Un **limite di velocità** semplice: `INCR` su una chiave per utente e `EXPIRE` di 60 secondi alla prima richiesta; se il contatore supera la soglia, rifiuti. Con `EXPIRE chiave 60 NX` la scadenza si imposta solo se non c’è già. Redis è veloce e atomico, perfetto per questi contatori.', 'A simple **rate limit**: `INCR` on a key per user and `EXPIRE` of 60 seconds on the first request; if the counter goes over the threshold, you refuse. With `EXPIRE key 60 NX` the expiry is set only if there is none yet. Redis is fast and atomic, perfect for these counters.'),
         ], [
             Q('rr1', L('Che cosa succede a un messaggio Pub/Sub se nessuno ascolta?', 'What happens to a Pub/Sub message if nobody listens?'), [L('Va perso', 'It is lost'), L('Resta in coda', 'It stays queued'), L('Torna al mittente', 'It goes back to the sender'), L('Finisce in uno stream', 'It goes into a stream')], 0, L('Pub/Sub non conserva.', 'Pub/Sub does not store.')),
@@ -136,7 +239,10 @@ JSON.GET prodotto:1 $.nome
 FT.CREATE idx:prodotti ON JSON PREFIX 1 prodotto:
   SCHEMA $.nome AS nome TEXT $.prezzo AS prezzo NUMERIC
 
-FT.SEARCH idx:prodotti "@nome:tazza @prezzo:[0 10]"', 'redis'),
+FT.SEARCH idx:prodotti "@nome:tazza @prezzo:[0 10]"', 'redis', '<pre style="margin:8px;font:13px/1.45 ui-monospace,monospace;color:#1E1C52">1) (integer) 1
+2) "prodotto:1"
+3) 1) "$"
+   2) "{\"nome\":\"Tazza blu\",\"prezzo\":8.5}"</pre>'),
             P('`FT.CREATE` indicizza tutte le chiavi con un certo prefisso, anche quelle aggiunte dopo; `FT.SEARCH` cerca parole nei campi `TEXT` e intervalli nei campi `NUMERIC`. Lo stesso indice può avere campi `VECTOR` per la ricerca per significato, e Redis 8 ha anche i *vector set* (`VADD`, `VSIM`) dedicati agli embedding.', '`FT.CREATE` indexes every key with a given prefix, including keys added later; `FT.SEARCH` searches words in `TEXT` fields and ranges in `NUMERIC` fields. The same index can have `VECTOR` fields for search by meaning, and Redis 8 also has *vector sets* (`VADD`, `VSIM`) dedicated to embeddings.'),
         ], [
             Q('j1', L('Che cosa fa `JSON.GET prodotto:1 $.nome`?', 'What does `JSON.GET prodotto:1 $.nome` do?'), [L('Cancella il campo nome', 'Deletes the name field'), L('Crea un indice sul nome', 'Creates an index on the name'), L('Legge il campo nome del documento', 'Reads the document’s name field'), L('Rinomina la chiave', 'Renames the key')], 2, L('`$` è la radice del documento.', '`$` is the document root.')),

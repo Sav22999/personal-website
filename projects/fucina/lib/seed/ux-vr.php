@@ -1,6 +1,128 @@
 <?php
 /** UX in VR and XR: presence and comfort, motion sickness and locomotion, spatial interfaces, input and interaction, first run and testing, visionOS and Android XR, shared experiences and safety. */
 
+/** Figures of this course, each with its words in one language ('it' or 'en'). */
+if (!function_exists('fig_uxvr_continuum')) {
+    /** From the real world to a fully virtual one: AR, MR and VR along one line. */
+    function fig_uxvr_continuum(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Mondo reale', 'Realtà aumentata (AR)', 'Realtà mista (MR)', 'Realtà virtuale (VR)', 'aggiunge|oggetti', 'oggetti che|usano la stanza', 'sostituisce|tutto', 'XR: tutto lo spettro']
+            : ['Real world', 'Augmented reality (AR)', 'Mixed reality (MR)', 'Virtual reality (VR)', 'adds|objects', 'objects that|use the room', 'replaces|everything', 'XR: the whole spectrum'];
+        foreach ([4 => 245, 5 => 400, 6 => 555] as $i => $x) $t[$i] = str_replace('|', "</tspan><tspan x=\"$x\" dy=\"17\">", "<tspan>{$t[$i]}</tspan>");
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g stroke="#1E1C52" stroke-width="2">
+<rect x="20" y="40" width="140" height="100" rx="12" fill="#F1F0F8"/><rect x="175" y="40" width="140" height="100" rx="12" fill="#F1F0F8"/>
+<rect x="330" y="40" width="140" height="100" rx="12" fill="#F1F0F8"/><rect x="485" y="40" width="140" height="100" rx="12" fill="#ECE6FF"/></g>
+<g fill="#8A87B0"><rect x="40" y="110" width="100" height="10" rx="3"/><rect x="60" y="80" width="30" height="30" rx="4"/><rect x="195" y="110" width="100" height="10" rx="3"/><rect x="215" y="80" width="30" height="30" rx="4"/><rect x="350" y="110" width="100" height="10" rx="3"/><rect x="370" y="80" width="30" height="30" rx="4"/></g>
+<rect x="258" y="56" width="44" height="30" rx="6" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<circle cx="425" cy="99" r="11" fill="#E8590C"/><path d="M400 96 q12 -14 18 -2" fill="none" stroke="#E8590C" stroke-width="2" stroke-dasharray="3 3"/>
+<circle cx="555" cy="80" r="16" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><path d="M505 125 l30 -30 l20 20 l25 -25 l35 35 z" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-weight="700" text-anchor="middle" font-size="14"><text x="90" y="166">{$t[0]}</text><text x="245" y="166">{$t[1]}</text><text x="400" y="166">{$t[2]}</text><text x="555" y="166">{$t[3]}</text></g>
+<g text-anchor="middle" fill="#5A5880"><text x="245" y="186">{$t[4]}</text><text x="400" y="186">{$t[5]}</text><text x="555" y="186">{$t[6]}</text></g>
+<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#F1F0F8"/><stop offset="1" stop-color="#7048E8"/></linearGradient></defs>
+<rect x="175" y="230" width="450" height="14" rx="7" fill="url(#g)"/>
+<text x="400" y="268" text-anchor="middle" font-size="14" font-weight="700" fill="#5F3DC4">{$t[7]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxvr_teleport')) {
+    /** Teleportation seen from the side: an arc from the hand to a target circle on the floor; a dot travels along it. */
+    function fig_uxvr_teleport(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Teletrasporto', 'punti con l’arco…', '…e compari qui', 'Rotazione a scatti', 'scatti di 30-45°, mai fluida']
+            : ['Teleportation', 'point with the arc…', '…and appear here', 'Snap turning', '30-45° steps, no smooth rotation'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<style>.tp{animation:tp 4s linear infinite}@keyframes tp{0%{transform:translate(0,0)}16%{transform:translate(63px,-37px)}32%{transform:translate(124px,-37px)}48%{transform:translate(182px,2px)}64%,100%{transform:translate(238px,78px)}}@media (prefers-reduced-motion:reduce){.tp{animation:none}}</style>
+<text x="190" y="26" text-anchor="middle" font-size="15" font-weight="700">{$t[0]}</text>
+<line x1="20" y1="212" x2="400" y2="212" stroke="#8A87B0" stroke-width="2"/>
+<circle cx="70" cy="110" r="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<rect x="60" y="100" width="22" height="10" rx="4" fill="#1E1C52"/>
+<path d="M70 124 V176 M70 176 L56 210 M70 176 L84 210 M70 138 L92 132" stroke="#1E1C52" stroke-width="3" stroke-linecap="round" fill="none"/>
+<path d="M92 132 Q 220 20 330 210" fill="none" stroke="#2F8CF0" stroke-width="3" stroke-dasharray="7 6"/>
+<ellipse cx="330" cy="212" rx="40" ry="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<circle class="tp" cx="92" cy="132" r="6" fill="#2F8CF0"/>
+<text x="130" y="62" fill="#1B66BC">{$t[1]}</text>
+<text x="330" y="244" text-anchor="middle" fill="#0B7F5C" font-weight="700">{$t[2]}</text>
+<line x1="420" y1="30" x2="420" y2="250" stroke="#E4E2F0" stroke-width="2"/>
+<text x="530" y="26" text-anchor="middle" font-size="15" font-weight="700">{$t[3]}</text>
+<circle cx="530" cy="130" r="70" fill="none" stroke="#E4E2F0" stroke-width="2"/>
+<g stroke="#7048E8" stroke-width="3" stroke-linecap="round"><line x1="530" y1="130" x2="530" y2="68"/></g>
+<g stroke="#B9A8F5" stroke-width="2" stroke-linecap="round"><line x1="530" y1="130" x2="574" y2="86"/><line x1="530" y1="130" x2="592" y2="130"/></g>
+<circle cx="530" cy="130" r="16" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<g fill="#7048E8"><circle cx="530" cy="60" r="5"/><circle cx="580" cy="80" r="5"/><circle cx="600" cy="130" r="5"/></g>
+<text x="530" y="230" text-anchor="middle" font-size="13" fill="#5A5880">{$t[4]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxvr_zones')) {
+    /** Comfort zones for spatial panels: seen from the side (distance, slightly below eye level) and from above (field of view). */
+    function fig_uxvr_zones(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Di lato', 'Dall’alto', 'altezza degli occhi', 'un po’ più in basso', '1 m', '3 m', 'zona comoda', 'centro del campo visivo', 'periferia: niente testo']
+            : ['From the side', 'From above', 'eye level', 'slightly lower', '1 m', '3 m', 'comfortable zone', 'centre of the field of view', 'periphery: no text'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g font-size="15" font-weight="700" text-anchor="middle"><text x="160" y="24">{$t[0]}</text><text x="480" y="24">{$t[1]}</text></g>
+<line x1="20" y1="250" x2="300" y2="250" stroke="#8A87B0" stroke-width="2"/>
+<path d="M90 110 L240 70 L264 150 Z" fill="#D5F6EA"/>
+<line x1="46" y1="110" x2="300" y2="110" stroke="#8A87B0" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="296" y="102" text-anchor="end" fill="#5A5880">{$t[2]}</text>
+<circle cx="40" cy="110" r="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><rect x="40" y="102" width="16" height="12" rx="3" fill="#1E1C52"/>
+<path d="M40 124 V190 M40 190 L28 248 M40 190 L52 248" stroke="#1E1C52" stroke-width="3" stroke-linecap="round" fill="none"/>
+<rect x="196" y="108" width="12" height="58" rx="4" fill="#0B7F5C"/>
+<text x="120" y="194" fill="#0B7F5C" font-weight="700">{$t[3]}</text>
+<g stroke="#5A5880" stroke-width="2"><line x1="90" y1="270" x2="120" y2="270"/><line x1="90" y1="264" x2="90" y2="276"/><line x1="240" y1="264" x2="240" y2="276"/><line x1="120" y1="270" x2="240" y2="270" stroke-dasharray="4 4"/></g>
+<g fill="#5A5880"><text x="105" y="290" text-anchor="middle">{$t[4]}</text><text x="240" y="290" text-anchor="middle">{$t[5]}</text></g>
+<line x1="320" y1="34" x2="320" y2="290" stroke="#E4E2F0" stroke-width="2"/>
+<path d="M480 250 L340 110 A198 198 0 0 1 620 110 Z" fill="#FFE3EE"/>
+<path d="M480 250 L381 79 A198 198 0 0 1 579 79 Z" fill="#D5F6EA"/>
+<path d="M480 250 L414 136 A132 132 0 0 1 546 136 Z" fill="#FFFFFF" fill-opacity="0.65"/>
+<circle cx="480" cy="250" r="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><rect x="472" y="236" width="16" height="7" rx="3" fill="#1E1C52"/>
+<path d="M425 88 Q 480 70 535 88" fill="none" stroke="#0B7F5C" stroke-width="8" stroke-linecap="round"/>
+<text x="480" y="118" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[7]}</text>
+<text x="350" y="160" fill="#C2255C" font-weight="700">{$t[8]}</text>
+<text x="480" y="62" text-anchor="middle" fill="#0B7F5C">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxvr_reach')) {
+    /** Near objects are touched with the hand, far ones are pointed at with a ray and confirmed with a pinch. */
+    function fig_uxvr_reach(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Vicino: tocco diretto', 'Lontano: raggio', 'a portata di braccio', 'evidenziato quando lo punti', 'pizzico per confermare']
+            : ['Near: direct touch', 'Far: ray', 'within arm’s reach', 'highlighted when pointed at', 'pinch to confirm'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g font-size="15" font-weight="700" text-anchor="middle"><text x="140" y="26">{$t[0]}</text><text x="460" y="26">{$t[1]}</text></g>
+<circle cx="50" cy="110" r="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><rect x="50" y="102" width="16" height="12" rx="3" fill="#1E1C52"/>
+<path d="M50 124 V200 M50 200 L38 240 M50 200 L62 240 M50 140 L120 130" stroke="#1E1C52" stroke-width="3" stroke-linecap="round" fill="none"/>
+<rect x="124" y="100" width="70" height="50" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<circle cx="124" cy="130" r="6" fill="#2F8CF0"/>
+<path d="M40 70 A100 100 0 0 1 150 70" fill="none" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4"/>
+<text x="140" y="186" text-anchor="middle" fill="#5A5880">{$t[2]}</text>
+<line x1="290" y1="40" x2="290" y2="240" stroke="#E4E2F0" stroke-width="2"/>
+<circle cx="340" cy="110" r="14" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><rect x="340" y="102" width="16" height="12" rx="3" fill="#1E1C52"/>
+<path d="M340 124 V200 M340 200 L328 240 M340 200 L352 240 M340 140 L372 150" stroke="#1E1C52" stroke-width="3" stroke-linecap="round" fill="none"/>
+<line x1="374" y1="148" x2="548" y2="92" stroke="#E8590C" stroke-width="3"/>
+<rect x="550" y="62" width="70" height="50" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="3"/>
+<circle cx="550" cy="92" r="6" fill="#E8590C"/>
+<text x="620" y="136" text-anchor="end" fill="#B84508" font-size="13">{$t[3]}</text>
+<text x="420" y="196" fill="#5A5880" font-size="13">{$t[4]}</text>
+<g fill="none" stroke="#1E1C52" stroke-width="2"><path d="M376 150 q-6 18 6 26"/><path d="M380 148 q10 10 2 28"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ux-vr', 'family' => 'ux', 'after' => 'ux-intermediate', 'categories' => ['design'],
     'title' => L('UX in realtà virtuale', 'UX in VR'), 'short' => L('UX in VR', 'VR UX'), 'level' => L('Avanzato', 'Advanced'),
@@ -8,6 +130,9 @@ return [
     'lessons' => [
         lesson('presence', L('Presenza, VR, AR e realtà mista', 'Presence, VR, AR and mixed reality'), [
             P('La **realtà virtuale** (VR) sostituisce ciò che vedi con un mondo digitale; la **realtà aumentata** (AR) aggiunge oggetti digitali al mondo reale (anche dal telefono); la **realtà mista** (MR) li fa interagire con lo spazio vero, come su Meta Quest o Apple Vision Pro. Insieme si chiamano **XR**.', '**Virtual reality** (VR) replaces what you see with a digital world; **augmented reality** (AR) adds digital objects to the real world (even from a phone); **mixed reality** (MR) makes them interact with real space, as on Meta Quest or Apple Vision Pro. Together they are called **XR**.'),
+            Fig(L(fig_uxvr_continuum('it'), fig_uxvr_continuum('en')),
+                L('Quattro riquadri in fila, dalla stanza reale a un mondo del tutto digitale: il mondo reale; la realtà aumentata, che aggiunge un pannello digitale nella stanza; la realtà mista, in cui una palla digitale rimbalza sul tavolo vero; la realtà virtuale, che sostituisce tutto con un paesaggio. Sotto, una barra sfumata indica che l’XR copre tutto lo spettro.', 'Four panels in a row, from the real room to a fully digital world: the real world; augmented reality, which adds a digital panel to the room; mixed reality, where a digital ball bounces off the real table; virtual reality, which replaces everything with a landscape. Below, a shaded bar shows that XR covers the whole spectrum.'),
+                L('Più ci si sposta a destra, più il digitale prende il posto del reale.', 'The further right you go, the more the digital replaces the real.')),
             P('L’obiettivo della VR è la **presenza**: la sensazione di essere davvero lì. Si rompe facilmente: ritardo tra movimento della testa e immagine (**latenza**), frame rate basso, mani che non seguono, oggetti che si compenetrano. Per questo le prestazioni sono parte della UX: serve un frame rate stabile (72-90 fps o più).', 'The goal of VR is **presence**: the feeling of really being there. It breaks easily: delay between head movement and image (**latency**), low frame rate, hands that do not follow, objects passing through each other. That is why performance is part of UX: a stable frame rate (72-90 fps or more) is needed.'),
         ], [
             Q('p1', L('Che differenza c’è tra VR e AR?', 'What is the difference between VR and AR?'), [L('La VR sostituisce il mondo, l’AR lo arricchisce', 'VR replaces the world, AR enriches it'), L('Sono la stessa cosa', 'They are the same'), L('L’AR richiede sempre un visore', 'AR always requires a headset'), L('La VR funziona solo all’aperto', 'VR works only outdoors')], 0, L('Sostituire o aggiungere.', 'Replace or add.')),
@@ -20,6 +145,9 @@ return [
         lesson('comfort', L('Comfort, chinetosi e locomozione', 'Comfort, motion sickness and locomotion'), [
             P('La **chinetosi** (cybersickness) nasce quando gli occhi vedono movimento ma il corpo non lo sente: nausea, sudore, mal di testa. Le cause principali sono il movimento artificiale fluido, le accelerazioni, le rotazioni della telecamera non volute dall’utente. **Regola d’oro**: non muovere mai la telecamera al posto della testa dell’utente.', '**Motion sickness** (cybersickness) arises when the eyes see movement but the body does not feel it: nausea, sweating, headache. The main causes are smooth artificial movement, acceleration, camera rotations not chosen by the user. **Golden rule**: never move the camera in place of the user’s head.'),
             P('Per spostarsi si usano tecniche di **locomozione** comode: il **teletrasporto** (punti e scompari lì), la **rotazione a scatti** (snap turn) invece di quella fluida, la **vignettatura** che restringe la vista durante il movimento, il movimento reale in **room scale**. Offri sempre opzioni di comfort e la scelta tra seduto e in piedi.', 'To move around you use comfortable **locomotion** techniques: **teleportation** (point and vanish there), **snap turning** instead of smooth rotation, **vignetting** that narrows the view during movement, real movement in **room scale**. Always offer comfort options and the choice between seated and standing.'),
+            Fig(L(fig_uxvr_teleport('it'), fig_uxvr_teleport('en')),
+                L('A sinistra, vista di lato, una persona con il visore punta un arco tratteggiato verso un cerchio sul pavimento: un punto percorre l’arco e lì comparirà. A destra, vista dall’alto, la rotazione a scatti: la direzione dello sguardo salta a passi di 30-45 gradi invece di girare in modo fluido.', 'On the left, seen from the side, a person wearing a headset points a dashed arc at a circle on the floor: a dot travels along the arc, and that is where they will appear. On the right, seen from above, snap turning: the view direction jumps in 30-45 degree steps instead of turning smoothly.'),
+                L('Niente movimento continuo della visuale: niente conflitto tra occhi e orecchio interno.', 'No continuous movement of the view: no conflict between the eyes and the inner ear.')),
             Tip('Anche le sessioni contano: suggerisci pause, evita lampi e sfarfallii, e non chiedere di tenere le braccia alzate a lungo (il “braccio da gorilla” stanca in pochi minuti).', 'Sessions matter too: suggest breaks, avoid flashes and flicker, and do not ask users to hold their arms up for long (“gorilla arm” tires in minutes).'),
         ], [
             Q('c1', L('Da che cosa nasce la chinetosi in VR?', 'What causes motion sickness in VR?'), [L('Gli occhi vedono movimento, il corpo no', 'Eyes see motion, the body does not'), L('Dal volume troppo alto', 'From volume too high'), L('Dai colori troppo vivaci', 'From colours too bright'), L('Dal visore troppo leggero', 'From a headset too light')], 0, L('Un conflitto dei sensi.', 'A sensory conflict.')),
@@ -31,6 +159,9 @@ return [
         ]),
         lesson('spatial', L('Interfacce spaziali', 'Spatial interfaces'), [
             P('In XR l’interfaccia vive nello **spazio 3D**. I pannelli si mettono a una **distanza comoda** (circa 1-3 metri), poco sotto l’altezza degli occhi, dentro il **campo visivo** centrale: niente testi agli angoli, dove si leggono male e costringono a girare la testa. Il testo deve essere grande e ad alto contrasto, perché la risoluzione del visore è limitata.', 'In XR the interface lives in **3D space**. Panels go at a **comfortable distance** (about 1-3 metres), slightly below eye level, within the central **field of view**: no text in the corners, where it reads poorly and forces head turning. Text must be large and high-contrast, because headset resolution is limited.'),
+            Fig(L(fig_uxvr_zones('it'), fig_uxvr_zones('en')),
+                L('A sinistra, vista di lato: una persona in piedi e un pannello verde a circa 1-3 metri, un po’ sotto l’altezza degli occhi, dentro un cono di comodità. A destra, vista dall’alto: davanti alla persona un’area verde centrale dove sta il pannello curvo, ai lati un’area rosa periferica dove il testo non va messo.', 'On the left, seen from the side: a standing person and a green panel about 1-3 metres away, slightly below eye level, inside a comfort cone. On the right, seen from above: in front of the person a central green area holding the curved panel, on the sides a pink peripheral area where text should not go.'),
+                L('Pannelli davanti, un po’ in basso, alla giusta distanza: si legge senza girare la testa.', 'Panels in front, slightly low, at the right distance: you read without turning your head.')),
             P('Esistono interfacce **diegetiche** (parte del mondo: un orologio al polso dell’avatar, una mappa in mano) e **non diegetiche** (pannelli fluttuanti). Un HUD incollato alla vista come nei giochi su schermo è scomodo in VR: meglio elementi **ancorati al mondo** o al corpo. L’**audio spaziale** guida l’attenzione verso ciò che succede fuori dalla vista.', 'There are **diegetic** interfaces (part of the world: a watch on the avatar’s wrist, a map in hand) and **non-diegetic** ones (floating panels). A HUD glued to the view as in screen games is uncomfortable in VR: elements **anchored to the world** or the body work better. **Spatial audio** guides attention to what happens out of view.'),
         ], [
             Q('s1', L('Dove posizionare un pannello di testo in VR?', 'Where to place a text panel in VR?'), [L('A 1-3 metri, nel campo visivo centrale', 'At 1-3 metres, in the central field of view'), L('Incollato agli occhi', 'Glued to the eyes'), L('Dietro l’utente', 'Behind the user'), L('In un angolo in alto', 'In a top corner')], 0, L('Comodo da leggere.', 'Comfortable to read.')),
@@ -42,6 +173,9 @@ return [
         ]),
         lesson('input', L('Mani, controller, sguardo e voce', 'Hands, controllers, gaze and voice'), [
             P('In XR si interagisce in molti modi: **controller** (precisi, con pulsanti e vibrazione), **mani tracciate** (naturali ma senza feedback tattile), **sguardo** (gli occhi puntano, un gesto o un pizzico conferma, come su Vision Pro), **voce**. Gli oggetti vicini si **toccano direttamente**, quelli lontani si puntano con un **raggio**.', 'In XR there are many ways to interact: **controllers** (precise, with buttons and vibration), **tracked hands** (natural but without tactile feedback), **gaze** (eyes point, a gesture or pinch confirms, as on Vision Pro), **voice**. Nearby objects are **touched directly**, distant ones are pointed at with a **ray**.'),
+            Fig(L(fig_uxvr_reach('it'), fig_uxvr_reach('en')),
+                L('A sinistra una persona tocca con la mano un pannello vicino, a portata di braccio. A destra una persona punta un raggio arancione verso un pannello lontano, che si evidenzia, e conferma con un pizzico delle dita.', 'On the left a person touches a nearby panel with their hand, within arm’s reach. On the right a person points an orange ray at a distant panel, which lights up, and confirms with a pinch of the fingers.'),
+                L('Vicino si tocca, lontano si punta: e serve sempre un riscontro visivo.', 'Near you touch, far you point: and visual feedback is always needed.')),
             P('Senza tatto, il **feedback** deve arrivare da altri sensi: evidenziazione quando si punta, suono al tocco, vibrazione del controller, oggetti che reagiscono. Con lo sguardo attenzione al problema del **Re Mida**: tutto ciò che guardi non deve attivarsi, serve una conferma esplicita. E pensa all’**accessibilità**: chi non può alzarsi, usare due mani o muovere la testa deve avere alternative.', 'Without touch, **feedback** must come from other senses: highlighting when pointing, sound on touch, controller vibration, objects that react. With gaze beware the **Midas touch** problem: not everything you look at should activate, an explicit confirmation is needed. And think of **accessibility**: those who cannot stand, use two hands or move their head need alternatives.'),
         ], [
             Q('i1', L('Come si interagisce con un oggetto lontano?', 'How do you interact with a distant object?'), [L('Puntandolo con un raggio', 'Pointing at it with a ray'), L('Camminando per chilometri', 'Walking for kilometres'), L('Non si può', 'You cannot'), L('Solo a voce, sempre', 'Only by voice, always')], 0, L('Vicino si tocca, lontano si punta.', 'Near you touch, far you point.')),

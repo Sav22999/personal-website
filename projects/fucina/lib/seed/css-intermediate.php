@@ -7,6 +7,118 @@ $page = '<nav class="menu"><a href="#">Home</a><a href="#">Corsi</a></nav>
 <ul class="lista"><li>Uno</li><li>Due</li><li>Tre</li></ul>
 <button class="btn">Inizia</button>';
 
+/** Which elements four combinators pick in the same small tree. Labels are code, so one string. */
+if (!function_exists('fig_cssint_combinators')) {
+    function fig_cssint_combinators(): string
+    {
+        $panel = function (int $x, int $y, string $sel, array $on) {
+            $chip = function (int $cx, int $cy, int $w, string $t, bool $hit) {
+                $f = $hit ? '#FFE8D6' : '#FFFFFF'; $k = $hit ? '#E8590C' : '#8A87B0'; $sw = $hit ? 3 : 2;
+                return "<rect x=\"$cx\" y=\"$cy\" width=\"$w\" height=\"30\" rx=\"7\" fill=\"$f\" stroke=\"$k\" stroke-width=\"$sw\"/><text x=\"" . ($cx + $w / 2) . "\" y=\"" . ($cy + 20) . "\" text-anchor=\"middle\"" . ($hit ? ' font-weight="700"' : '') . ">$t</text>"
+                    . ($hit ? "<text x=\"" . ($cx + $w / 2) . "\" y=\"" . ($cy + 48) . "\" text-anchor=\"middle\" font-weight=\"700\" font-size=\"17\" fill=\"#B84508\">✓</text>" : '');
+            };
+            $o = "<rect x=\"$x\" y=\"$y\" width=\"302\" height=\"118\" rx=\"12\" fill=\"#F7F6FC\" stroke=\"#D9D7E8\" stroke-width=\"2\"/>"
+               . "<text x=\"" . ($x + 14) . "\" y=\"" . ($y + 24) . "\" font-weight=\"700\" font-size=\"15\" fill=\"#5B37D0\">$sel</text>"
+               . "<rect x=\"" . ($x + 12) . "\" y=\"" . ($y + 36) . "\" width=\"278\" height=\"52\" rx=\"9\" fill=\"none\" stroke=\"#2F8CF0\" stroke-width=\"2\" stroke-dasharray=\"5 4\"/>"
+               . "<text x=\"" . ($x + 284) . "\" y=\"" . ($y + 30) . "\" text-anchor=\"end\" font-size=\"12\" fill=\"#1B66BC\">section</text>";
+            $cy = $y + 47; $cx = $x + 22;
+            $o .= $chip($cx, $cy, 40, 'h1', false);
+            $o .= $chip($cx + 48, $cy, 40, 'p', $on[0]);
+            $o .= "<rect x=\"" . ($cx + 96) . "\" y=\"" . ($cy - 4) . "\" width=\"100\" height=\"38\" rx=\"8\" fill=\"#F1F0F8\" stroke=\"#8A87B0\" stroke-width=\"2\"/><text x=\"" . ($cx + 112) . "\" y=\"" . ($cy + 20) . "\" font-size=\"12\" fill=\"#55527A\">div</text>";
+            $o .= $chip($cx + 144, $cy, 44, 'p', $on[1]);
+            $o .= $chip($cx + 204, $cy, 40, 'p', $on[2]);
+            return $o;
+        };
+        $a = $panel(10, 10, 'section p', [true, true, true]);
+        $b = $panel(328, 10, 'section &gt; p', [true, false, true]);
+        $c = $panel(10, 140, 'h1 + p', [true, false, false]);
+        $d = $panel(328, 140, 'h1 ~ p', [true, false, true]);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 268" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#1E1C52">
+$a$b$c$d
+</svg>
+SVG;
+    }
+}
+
+/** The four ways of handling content bigger than its box. Labels are code, so one string. */
+if (!function_exists('fig_cssint_overflow')) {
+    function fig_cssint_overflow(): string
+    {
+        $bars = function (int $x, int $y, int $n) {
+            $o = '';
+            $w = [104, 90, 110, 84, 100, 96, 108, 80];
+            for ($i = 0; $i < $n; $i++) $o .= "<rect x=\"" . ($x + 12) . "\" y=\"" . ($y + 14 + $i * 18) . "\" width=\"{$w[$i]}\" height=\"9\" rx=\"4.5\" fill=\"#8A87B0\"/>";
+            return $o;
+        };
+        $v = $bars(14, 50, 8); $h = $bars(170, 50, 8); $a = $bars(326, 50, 8);
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 244" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#1E1C52">
+<defs><clipPath id="c1"><rect x="170" y="50" width="140" height="100" rx="10"/></clipPath><clipPath id="c2"><rect x="326" y="50" width="140" height="100" rx="10"/></clipPath></defs>
+<g text-anchor="middle" font-weight="700"><text x="84" y="34">visible</text><text x="240" y="34">hidden</text><text x="396" y="34">auto</text><text x="554" y="34">ellipsis</text></g>
+<rect x="14" y="50" width="140" height="100" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g opacity=".9">$v</g>
+<rect x="170" y="50" width="140" height="100" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g clip-path="url(#c1)">$h</g>
+<rect x="326" y="50" width="140" height="100" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g clip-path="url(#c2)">$a</g>
+<rect x="452" y="56" width="8" height="88" rx="4" fill="#FFFFFF" stroke="#8A87B0" stroke-width="1.5"/><rect x="453" y="58" width="6" height="40" rx="3" fill="#7048E8"/>
+<rect x="484" y="80" width="140" height="40" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="496" y="96" width="96" height="9" rx="4.5" fill="#8A87B0"/><text x="604" y="105" font-weight="700" font-size="16">…</text>
+<g text-anchor="middle" font-size="12" fill="#55527A"><text x="84" y="234">overflow: visible</text><text x="240" y="192">overflow: hidden</text><text x="396" y="192">overflow: auto</text><text x="554" y="150">white-space: nowrap</text><text x="554" y="168">overflow: hidden</text><text x="554" y="186">text-overflow: ellipsis</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The same card left to right and right to left: logical sides follow the text. Labels are code, so one string. */
+if (!function_exists('fig_cssint_logical')) {
+    function fig_cssint_logical(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" fill="#1E1C52">
+<g font-weight="700" font-size="15" text-anchor="middle"><text x="164" y="26">dir="ltr"</text><text x="476" y="26">dir="rtl"</text></g>
+<rect x="44" y="58" width="240" height="120" rx="10" fill="#FFF3EA" stroke="#D9D7E8" stroke-width="2"/>
+<rect x="44" y="58" width="8" height="120" rx="3" fill="#E8590C"/>
+<g fill="#8A87B0"><rect x="70" y="84" width="180" height="9" rx="4.5"/><rect x="70" y="106" width="196" height="9" rx="4.5"/><rect x="70" y="128" width="150" height="9" rx="4.5"/><rect x="70" y="150" width="120" height="9" rx="4.5"/></g>
+<rect x="356" y="58" width="240" height="120" rx="10" fill="#FFF3EA" stroke="#D9D7E8" stroke-width="2"/>
+<rect x="588" y="58" width="8" height="120" rx="3" fill="#E8590C"/>
+<g fill="#8A87B0"><rect x="390" y="84" width="180" height="9" rx="4.5"/><rect x="374" y="106" width="196" height="9" rx="4.5"/><rect x="420" y="128" width="150" height="9" rx="4.5"/><rect x="450" y="150" width="120" height="9" rx="4.5"/></g>
+<g stroke="#2F8CF0" stroke-width="2"><path d="M60 200H262"/><path d="M580 200H378"/><path d="M24 64V170"/><path d="M616 64V170"/></g>
+<g fill="#2F8CF0"><path d="M270 200l-10-5v10z"/><path d="M370 200l10-5v10z"/><path d="M24 178l-5-10h10z"/><path d="M616 178l-5-10h10z"/></g>
+<g fill="#1B66BC"><text x="60" y="222">start</text><text x="262" y="222" text-anchor="end">end</text><text x="580" y="222" text-anchor="end">start</text><text x="378" y="222">end</text>
+<text x="164" y="242" text-anchor="middle" font-weight="700">inline</text><text x="476" y="242" text-anchor="middle" font-weight="700">inline</text>
+<text x="18" y="52" font-weight="700">block</text><text x="622" y="52" text-anchor="end" font-weight="700">block</text></g>
+<text x="164" y="48" text-anchor="middle" fill="#B84508">border-inline-start</text><text x="476" y="48" text-anchor="middle" fill="#B84508">border-inline-start</text>
+</svg>
+SVG;
+    }
+}
+
+/** object-fit: the same wide picture in a square box with cover, contain and fill. Labels are code, so one string. */
+if (!function_exists('fig_cssint_fit')) {
+    function fig_cssint_fit(): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 220" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" fill="#1E1C52">
+<defs>
+<g id="pic"><rect width="160" height="100" fill="#FFE8D6"/><circle cx="122" cy="28" r="14" fill="#E8590C"/><path d="M0 100L52 46L86 80L108 60L160 100Z" fill="#0B7F5C"/></g>
+<clipPath id="k1"><rect x="40" y="60" width="140" height="140"/></clipPath>
+</defs>
+<g text-anchor="middle" font-weight="700"><text x="110" y="34">cover</text><text x="320" y="34">contain</text><text x="530" y="34">fill</text></g>
+<use href="#pic" transform="translate(0 60) scale(1.4)" opacity=".25"/>
+<g clip-path="url(#k1)"><use href="#pic" transform="translate(0 60) scale(1.4)"/></g>
+<rect x="40" y="60" width="140" height="140" fill="none" stroke="#2F8CF0" stroke-width="3"/>
+<rect x="250" y="60" width="140" height="140" fill="#F1F0F8"/>
+<use href="#pic" transform="translate(250 86.25) scale(.875)"/>
+<rect x="250" y="60" width="140" height="140" fill="none" stroke="#2F8CF0" stroke-width="3"/>
+<use href="#pic" transform="translate(460 60) scale(.875 1.4)"/>
+<rect x="460" y="60" width="140" height="140" fill="none" stroke="#2F8CF0" stroke-width="3"/>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'css-intermediate', 'family' => 'css', 'after' => 'css-base',
     'title' => L('CSS intermedio', 'Intermediate CSS'), 'short' => L('CSS intermedio', 'CSS Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -14,11 +126,25 @@ return [
     'lessons' => [
         lesson('combinators', L('Combinatori e attributi', 'Combinators and attributes'), [
             P('I combinatori legano due selettori: lo spazio significa «dentro», `>` «figlio diretto», `+` «subito dopo», `~` «fratelli successivi». Con le parentesi quadre scegli in base a un attributo.', 'Combinators link two selectors: a space means “inside”, `>` “direct child”, `+` “right after”, `~` “following siblings”. Square brackets pick by attribute.'),
+            Fig(fig_cssint_combinators(),
+                L('Quattro riquadri con lo stesso albero: dentro una `section` ci sono un `h1`, un `p`, un `div` con un altro `p` dentro e un ultimo `p`. `section p` sceglie tutti e tre i paragrafi; `section > p` solo i due figli diretti; `h1 + p` solo il paragrafo subito dopo l’`h1`; `h1 ~ p` i due paragrafi fratelli dopo l’`h1`, non quello dentro il `div`.', 'Four panels with the same tree: inside a `section` there are an `h1`, a `p`, a `div` with another `p` inside it and a last `p`. `section p` picks all three paragraphs; `section > p` only the two direct children; `h1 + p` only the paragraph right after the `h1`; `h1 ~ p` the two sibling paragraphs after the `h1`, not the one inside the `div`.'),
+                L('Gli elementi scelti hanno la spunta: lo stesso albero, quattro risultati diversi.', 'The picked elements have a tick: the same tree, four different results.')),
             C('ul > li { list-style: none; }
 h1 + p { font-size: 1.2rem; }
 a[href^="https"] { color: green; }
-input[type="email"] { border-color: blue; }', 'css'),
+input[type="email"] { border-color: blue; }', 'css', L('<ul><li>Una voce senza pallino</li><li>Un’altra voce</li></ul>
+<h1>Titolo</h1>
+<p>Il paragrafo subito dopo il titolo è più grande.</p>
+<p>Questo no.</p>
+<p><a href="https://esempio.it">Link https: verde</a> · <a href="pagina.html">link relativo</a></p>
+<input type="email" placeholder="La tua email">', '<ul><li>An item without a bullet</li><li>Another item</li></ul>
+<h1>Heading</h1>
+<p>The paragraph right after the heading is bigger.</p>
+<p>This one is not.</p>
+<p><a href="https://example.com">https link: green</a> · <a href="page.html">relative link</a></p>
+<input type="email" placeholder="Your email">')),
             P('`^=` significa «inizia con», `$=` «finisce con», `*=` «contiene».', '`^=` means “starts with”, `$=` “ends with”, `*=` “contains”.'),
+            P('Un selettore lungo si legge da destra: in `ul > li` il browser cerca i `li`, poi controlla che il genitore sia un `ul`. I combinatori evitano di riempire l’HTML di classi: «il primo paragrafo dopo un titolo» o «i link esterni» si scelgono dalla struttura. Non esagerare però: `nav ul li a span` si rompe appena cambi l’HTML e pesa nella specificità; oltre due o tre passaggi, una classe è più chiara.', 'A long selector is read from the right: in `ul > li` the browser looks for the `li` elements, then checks that the parent is a `ul`. Combinators save you filling the HTML with classes: “the first paragraph after a heading” or “external links” are picked from the structure. Do not overdo it, though: `nav ul li a span` breaks as soon as you change the HTML and weighs on specificity; beyond two or three steps, a class is clearer.'),
         ], [
             Q('c1', L('Che cosa sceglie `ul > li`?', 'What does `ul > li` pick?'), [L('I figli diretti', 'The direct children'), L('Tutti i discendenti', 'All descendants'), L('Il primo', 'The first one'), L('Nulla', 'Nothing')], 0, L('Il `>` si ferma al primo livello.', 'The `>` stops at the first level.')),
             Q('c2', L('Che cosa sceglie `h1 + p`?', 'What does `h1 + p` pick?'), [L('Il `p` subito dopo `h1`', 'The `p` right after `h1`'), L('Tutti i `p`', 'All `p`s'), L('`h1` e `p`', '`h1` and `p`'), L('I `p` dentro `h1`', 'The `p`s inside `h1`')], 0, L('`+` è il fratello adiacente.', '`+` is the adjacent sibling.')),
@@ -33,7 +159,12 @@ input[type="email"] { border-color: blue; }', 'css'),
 .btn:active { transform: translateY(2px); }
 .btn:focus-visible { outline: 3px solid gold; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-input:invalid { border-color: red; }', 'css'),
+input:invalid { border-color: red; }', 'css', L('<button class="btn">Passaci sopra e premi</button>
+<button class="btn" disabled>Disattivato</button>
+<p><input type="email" value="non è un’email"></p>', '<button class="btn">Hover and press me</button>
+<button class="btn" disabled>Disabled</button>
+<p><input type="email" value="not an email"></p>')),
+            P('Gli stati si sommano: un bottone può essere `:hover` e `:active` nello stesso momento, e a parità di specificità vince la regola scritta dopo. Per questo `:active` va scritto dopo `:hover`, altrimenti la pressione non si vede. `:focus` scatta anche quando clicchi col mouse, `:focus-visible` solo quando il browser pensa che serva vedere il focus, come con la tastiera: è il posto giusto per l’anello di focus.', 'States add up: a button can be `:hover` and `:active` at the same moment, and with equal specificity the rule written later wins. That is why `:active` goes after `:hover`, otherwise the press does not show. `:focus` fires even when you click with the mouse, `:focus-visible` only when the browser thinks the focus should be seen, as with the keyboard: it is the right place for the focus ring.'),
             Tip('Non togliere mai `outline` senza sostituirlo: chi usa la tastiera si perderebbe.', 'Never remove `outline` without replacing it: keyboard users would get lost.'),
         ], [
             Q('s1', L('Quale pseudo-classe vale mentre premi?', 'Which pseudo-class applies while pressing?'), [':active', ':press', ':hover', ':down'], 0, L('`:hover` è il passaggio del mouse.', '`:hover` is the mouse passing over.')),
@@ -54,7 +185,7 @@ p {
   font-family: "Forgia", sans-serif;
   line-height: 1.6;
   max-width: 65ch;
-}', 'css'),
+}', 'css', L('<p>Questo paragrafo non supera i 65 caratteri per riga e ha un’interlinea di 1.6: l’occhio va a capo senza perdersi. Se il font Forgia non arriva, il browser usa subito un sans-serif.</p>', '<p>This paragraph never goes past 65 characters per line and has a line height of 1.6: the eye moves to the next line without getting lost. If the Forgia font does not arrive, the browser uses a sans-serif at once.</p>')),
             P('`ch` è la larghezza del carattere zero: `65ch` è una riga comoda. `font-display: swap` mostra subito il testo mentre il font arriva.', '`ch` is the width of the zero character: `65ch` is a comfortable line. `font-display: swap` shows text at once while the font arrives.'),
         ], [
             Q('t1', L('Quale proprietà cambia lo spazio tra le righe?', 'Which property changes the space between lines?'), ['line-height', 'row-gap', 'letter-spacing', 'margin'], 0, L('Un valore tra 1.4 e 1.7 è comodo.', 'A value from 1.4 to 1.7 is comfortable.')),
@@ -80,8 +211,14 @@ p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}', 'css'),
+}', 'css', L('<div class="riquadro" style="border:2px solid #2f8cf0;padding:8px;max-width:320px">Primo paragrafo di un riquadro alto 120px.<br>Il testo continua.<br>E continua ancora.<br>Più righe di quante ne stiano.<br>Compare la barra di scorrimento.<br>Ultima riga.</div>
+<p class="testo" style="max-width:260px">Una riga molto lunga che non ci sta e viene troncata</p>', '<div class="riquadro" style="border:2px solid #2f8cf0;padding:8px;max-width:320px">First paragraph of a box 120px tall.<br>The text carries on.<br>And on again.<br>More lines than fit.<br>A scrollbar appears.<br>Last line.</div>
+<p class="testo" style="max-width:260px">A very long line that does not fit and gets cut short</p>')),
             P('Le ultime tre regole, insieme, troncano una riga con i puntini di sospensione.', 'The last three rules, together, cut a line with an ellipsis.'),
+            Fig(fig_cssint_overflow(),
+                L('Quattro scatole con troppo testo. Con `visible` le righe escono dal fondo; con `hidden` sono tagliate al bordo; con `auto` sono tagliate ma compare una barra di scorrimento; con le tre regole dell’ellissi una sola riga finisce con i puntini.', 'Four boxes with too much text. With `visible` the lines spill out of the bottom; with `hidden` they are cut at the edge; with `auto` they are cut but a scrollbar appears; with the three ellipsis rules a single line ends with dots.'),
+                L('`overflow` entra in gioco solo se la scatola ha un limite, come `height` o `max-height`.', '`overflow` only matters if the box has a limit, such as `height` or `max-height`.')),
+            P('`hidden` è comodo ma pericoloso: il testo tagliato è perso, e chi ingrandisce i caratteri non lo vedrà mai. Preferisci `auto`, che lascia scorrere. Quanto a `z-index`, conta solo tra elementi posizionati (o figli di flex e grid), e solo dentro lo stesso contesto: un `z-index: 9999` dentro un genitore con `z-index: 1` resta comunque sotto un vicino con `z-index: 2`.', '`hidden` is handy but risky: the cut text is lost, and someone who enlarges the font will never see it. Prefer `auto`, which lets it scroll. As for `z-index`, it only counts among positioned elements (or children of flex and grid), and only within the same context: a `z-index: 9999` inside a parent with `z-index: 1` still stays under a neighbour with `z-index: 2`.'),
         ], [
             Q('o1', L('Quale valore mette le barre solo se servono?', 'Which value adds scrollbars only if needed?'), ['auto', 'scroll', 'hidden', 'bars'], 0, L('`scroll` le mostra sempre.', '`scroll` always shows them.')),
             Q('o2', L('`z-index` funziona su un normale elemento `static`, fuori da flex e grid?', 'Does `z-index` work on a plain `static` element, outside flex and grid?'), [L('No', 'No'), L('Sì', 'Yes'), L('Solo sui link', 'Only on links'), L('Solo su `body`', 'Only on `body`')], 0, L('Serve un elemento posizionato, oppure un figlio di un contenitore flex o grid.', 'It needs a positioned element, or a child of a flex or grid container.')),
@@ -107,7 +244,9 @@ p {
   display: inline-block;
   padding: 8px 12px;
   text-decoration: none;
-}', 'css'),
+}', 'css', L('<button class="btn">Inizia</button>
+<nav class="menu"><a href="#">Home</a><a href="#">Corsi</a><a href="#">Giochi</a></nav>', '<button class="btn">Start</button>
+<nav class="menu"><a href="#">Home</a><a href="#">Courses</a><a href="#">Games</a></nav>')),
             Tip('Un bottone deve essere facile da toccare: almeno 44 pixel di altezza su telefono.', 'A button must be easy to tap: at least 44 pixels high on phones.'),
         ], [
             Q('b1', L('Che cosa toglie la sottolineatura?', 'What removes the underline?'), ['text-decoration: none', 'underline: 0', 'border: none', 'font-style: none'], 0, L('I link la hanno di serie.', 'Links have it by default.')),
@@ -127,8 +266,13 @@ p {
   margin-inline: auto;      /* centra il blocco */
   border-inline-start: 4px solid #FF5B2E;
   inline-size: min(100%, 40rem); /* la larghezza */
-}', 'css'),
+}', 'css', L('<div class="card" style="background:#fff3ea">Il bordo sta all’inizio della riga: a sinistra in italiano.</div>
+<div class="card" dir="rtl" style="background:#fff3ea">Con dir="rtl" lo stesso bordo passa a destra, senza nuove regole.</div>', '<div class="card" style="background:#fff3ea">The border sits at the start of the line: on the left in English.</div>
+<div class="card" dir="rtl" style="background:#fff3ea">With dir="rtl" the same border moves to the right, with no new rules.</div>')),
             P('`inline-size` è la larghezza, `block-size` l’altezza. Con `dir="rtl"` sulla pagina tutto si ribalta da solo, senza regole nuove.', '`inline-size` is the width, `block-size` the height. With `dir="rtl"` on the page everything flips by itself, with no new rules.'),
+            Fig(fig_cssint_logical(),
+                L('La stessa card due volte. Con `dir="ltr"` il bordo `border-inline-start` è a sinistra e le righe partono da sinistra; con `dir="rtl"` lo stesso bordo è a destra e le righe partono da destra. Le frecce mostrano l’asse inline in orizzontale, da start a end, e l’asse block in verticale.', 'The same card twice. With `dir="ltr"` the `border-inline-start` border is on the left and the lines start from the left; with `dir="rtl"` the same border is on the right and the lines start from the right. The arrows show the inline axis horizontally, from start to end, and the block axis vertically.'),
+                L('Una sola regola, due lingue: `start` è sempre dove inizia la riga.', 'One rule, two languages: `start` is always where the line begins.')),
         ], [
             Q('l1', L('In italiano, qual è la direzione `inline`?', 'In English, what is the `inline` direction?'), [L('Verticale', 'Vertical'), L('Orizzontale', 'Horizontal'), L('Diagonale', 'Diagonal'), L('Dipende dallo schermo', 'It depends on the screen')], 1, L('È la direzione in cui scorre una riga di testo.', 'It is the direction a line of text runs in.')),
             Q('l2', L('Che cosa fa `margin-inline: auto` su un blocco con una larghezza?', 'What does `margin-inline: auto` do on a block with a width?'), [L('Toglie tutti i margini', 'It removes all margins'), L('Lo centra in verticale', 'It centres it vertically'), L('Lo centra orizzontalmente', 'It centres it horizontally'), L('Niente, non è valido', 'Nothing, it is not valid')], 2, L('È il `margin: 0 auto` logico.', 'It is the logical `margin: 0 auto`.')),
@@ -150,7 +294,9 @@ p {
 :root { accent-color: #FF5B2E; }
 input:user-invalid { border-color: crimson; }
 input::placeholder { color: #767676; }
-input:focus-visible { outline: 3px solid gold; }', 'css'),
+input:focus-visible { outline: 3px solid gold; }', 'css', L('<p><label for="m">Email</label><br><input id="m" type="email" placeholder="nome@esempio.it"></p>
+<p><label><input type="checkbox" checked> Newsletter</label> <input type="range" aria-label="Volume"></p>', '<p><label for="m">Email</label><br><input id="m" type="email" placeholder="name@example.com"></p>
+<p><label><input type="checkbox" checked> Newsletter</label> <input type="range" aria-label="Volume"></p>')),
             P('I campi di serie non ereditano il carattere della pagina: `font: inherit` sistema tutto. Un segnaposto chiaro deve comunque avere abbastanza contrasto, e non sostituisce la `label`.', 'Fields do not inherit the page font by default: `font: inherit` fixes it. A light placeholder still needs enough contrast, and it does not replace the `label`.'),
         ], [
             Q('s1', L('Quale proprietà colora checkbox e radio?', 'Which property colours checkboxes and radios?'), ['color', 'fill', 'accent-color', 'tint'], 2, L('Una riga sola, anche su `:root`, perché si eredita.', 'A single line, even on `:root`, because it is inherited.')),
@@ -166,6 +312,9 @@ input:focus-visible { outline: 3px solid gold; }', 'css'),
         ]),
         lesson('images-filters', L('Immagini e filtri', 'Images and filters'), [
             P('`object-fit` decide come un’immagine riempie la sua scatola: `cover` la riempie tutta e taglia ciò che avanza, `contain` la mostra intera e lascia spazio vuoto. `object-position` sceglie quale parte resta visibile.', '`object-fit` decides how an image fills its box: `cover` fills it all and crops what is left over, `contain` shows it whole and leaves empty space. `object-position` picks which part stays visible.'),
+            Fig(fig_cssint_fit(),
+                L('La stessa foto larga in tre scatole quadrate. Con `cover` riempie tutta la scatola e i lati che avanzano, disegnati sbiaditi fuori dal bordo, vengono tagliati; con `contain` si vede intera, con fasce vuote sopra e sotto; con `fill` riempie la scatola ma si deforma.', 'The same wide photo in three square boxes. With `cover` it fills the whole box and the sides left over, drawn faded outside the edge, are cut off; with `contain` it shows whole, with empty bands above and below; with `fill` it fills the box but gets distorted.'),
+                L('`cover` taglia, `contain` lascia spazio, `fill` (il valore predefinito) deforma.', '`cover` crops, `contain` leaves space, `fill` (the default) distorts.')),
             C('.copertina {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -177,7 +326,11 @@ input:focus-visible { outline: 3px solid gold; }', 'css'),
 .vetro {
   background: rgb(255 255 255 / .6);
   backdrop-filter: blur(8px);
-}', 'css'),
+}', 'css', L('<div style="max-width:280px"><img class="copertina" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 160 100%27%3E%3Crect width=%27160%27 height=%27100%27 fill=%27%23FFE8D6%27/%3E%3Ccircle cx=%27122%27 cy=%2728%27 r=%2714%27 fill=%27%23E8590C%27/%3E%3Cpath d=%27M0 100L52 46L86 80L108 60L160 100Z%27 fill=%27%230B7F5C%27/%3E%3C/svg%3E" alt="Montagne al tramonto"></div>
+<p><img class="spento" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 160 100%27%3E%3Crect width=%27160%27 height=%27100%27 fill=%27%23FFE8D6%27/%3E%3Ccircle cx=%27122%27 cy=%2728%27 r=%2714%27 fill=%27%23E8590C%27/%3E%3Cpath d=%27M0 100L52 46L86 80L108 60L160 100Z%27 fill=%27%230B7F5C%27/%3E%3C/svg%3E" alt="Montagne in grigio" width="120"> passaci sopra</p>
+<div style="background:linear-gradient(90deg,#e8590c,#2f8cf0);padding:16px;max-width:280px"><div class="vetro" style="padding:12px">Vetro smerigliato</div></div>', '<div style="max-width:280px"><img class="copertina" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 160 100%27%3E%3Crect width=%27160%27 height=%27100%27 fill=%27%23FFE8D6%27/%3E%3Ccircle cx=%27122%27 cy=%2728%27 r=%2714%27 fill=%27%23E8590C%27/%3E%3Cpath d=%27M0 100L52 46L86 80L108 60L160 100Z%27 fill=%27%230B7F5C%27/%3E%3C/svg%3E" alt="Mountains at sunset"></div>
+<p><img class="spento" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 160 100%27%3E%3Crect width=%27160%27 height=%27100%27 fill=%27%23FFE8D6%27/%3E%3Ccircle cx=%27122%27 cy=%2728%27 r=%2714%27 fill=%27%23E8590C%27/%3E%3Cpath d=%27M0 100L52 46L86 80L108 60L160 100Z%27 fill=%27%230B7F5C%27/%3E%3C/svg%3E" alt="Mountains in grey" width="120"> hover over it</p>
+<div style="background:linear-gradient(90deg,#e8590c,#2f8cf0);padding:16px;max-width:280px"><div class="vetro" style="padding:12px">Frosted glass</div></div>')),
             P('`filter` applica effetti da fotoritocco all’elemento stesso: `blur()`, `brightness()`, `grayscale()`, `contrast()`. `backdrop-filter` li applica a ciò che sta **dietro** l’elemento, per l’effetto vetro smerigliato.', '`filter` applies photo-editing effects to the element itself: `blur()`, `brightness()`, `grayscale()`, `contrast()`. `backdrop-filter` applies them to what is **behind** the element, for the frosted-glass effect.'),
         ], [
             Q('o1', L('Quale valore di `object-fit` riempie la scatola tagliando l’immagine?', 'Which `object-fit` value fills the box by cropping the image?'), ['contain', 'fill', 'none', 'cover'], 3, L('`fill` invece la deforma per farla entrare.', '`fill` stretches it to fit instead.')),

@@ -21,10 +21,30 @@ function P(string $it, string $en): array
     return ['t' => 'p', 'text' => L($it, $en)];
 }
 
-/** A code sample. */
-function C(string $code, string $lang = 'html'): array
+/**
+ * A code sample. $demo, when given, is a small page shown rendered under the code: for CSS the sample's rules apply to it,
+ * for any other language it shows the result (the page of a markup sample, the output of a script…). Both may be L():
+ * what the learner sees in a preview speaks the language of the course.
+ */
+function C($code, string $lang = 'html', $demo = ''): array
 {
-    return ['t' => 'code', 'code' => trim($code, "\n"), 'lang' => $lang];
+    // Code and demo are the same in both languages, or L() when they show words to the learner (a page, a label…)
+    $clean = fn($v) => is_array($v) ? array_map(fn($x) => trim($x, "\n"), $v) : trim($v, "\n");
+    $b = ['t' => 'code', 'code' => $clean($code), 'lang' => $lang];
+    if (is_array($demo) ? array_filter($demo, fn($x) => trim($x) !== '') : trim($demo) !== '') $b['demo'] = $clean($demo);
+    return $b;
+}
+
+/**
+ * A figure: a diagram, chart or illustration drawn as SVG (it may move, with CSS animations that stop for those who
+ * reduce motion). $svg is the same in both languages, or L() when it has words in it. $alt describes it to those who
+ * cannot see it; $caption is shown under it.
+ */
+function Fig($svg, array $alt, ?array $caption = null): array
+{
+    $b = ['t' => 'fig', 'svg' => is_array($svg) ? $svg : trim($svg), 'alt' => $alt];
+    if ($caption) $b['caption'] = $caption;
+    return $b;
 }
 
 /** A highlighted tip. */
@@ -113,8 +133,8 @@ const SEED_TASK_HINTS = [
     'html-base/text' => "<h2>Le novità</h2>\n<p>Un testo <strong>importante</strong>.</p>",
     'html-base/links' => "<a href=\"https://example.com\">Scopri</a>\n<img src=\"logo.png\" alt=\"Logo\">",
     'html-base/lists' => "<ol>\n  <li>Uno</li>\n  <li>Due</li>\n  <li>Tre</li>\n</ol>",
-    'html-base/tables' => "<tr><th>Nome</th></tr>\n<tr><td>Sav</td></tr>",
-    'html-base/forms' => "<label for=\"m\">Email</label>\n<input id=\"m\" type=\"email\" required>\n<button>Invia</button>",
+    'html-base/tables' => "<table>\n  <tr><th>Nome</th></tr>\n  <tr><td>Sav</td></tr>\n</table>",
+    'html-base/forms' => "<form>\n  <label for=\"m\">Email</label>\n  <input id=\"m\" type=\"email\" required>\n  <button>Invia</button>\n</form>",
     'html-advanced/semantic' => "<header>…</header>\n<main><article>…</article></main>\n<footer>…</footer>",
     'html-advanced/rich-forms' => "<fieldset>\n  <legend>Piano</legend>\n  <label><input type=\"radio\" name=\"piano\"> A</label>\n  <label><input type=\"radio\" name=\"piano\"> B</label>\n</fieldset>",
     'html-advanced/media' => "<video src=\"v.mp4\" controls></video>\n<img src=\"a.jpg\" alt=\"Foto\" loading=\"lazy\">",
@@ -122,11 +142,11 @@ const SEED_TASK_HINTS = [
     'html-advanced/meta' => "<details>\n  <summary>Titolo</summary>\n  <p>Testo</p>\n</details>",
     'css-base/selectors' => ".nota { color: red; }\n#box { width: 200px; }",
     'css-base/colors' => ".titolo {\n  text-align: center;\n  color: #E8590C;\n}",
-    'css-base/box' => "padding: 20px;\nborder-radius: 12px;",
+    'css-base/box' => "#box {\n  background: #ffe8d6;\n  padding: 20px;\n  border-radius: 12px;\n}",
     'css-base/display' => "a { display: inline-block; padding: 10px; }\n.nota { display: none; }",
     'css-base/position' => "#box { position: relative; }\n.nota { position: absolute; top: 0; }",
     'css-base/cascade' => 'p.nota { color: blue; }',
-    'css-advanced/flex' => "display: flex;\ngap: 16px;\njustify-content: space-between;",
+    'css-advanced/flex' => ".lista {\n  display: flex;\n  gap: 16px;\n  justify-content: space-between;\n}",
     'css-advanced/grid' => ".lista {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 12px;\n}",
     'css-advanced/responsive' => "@media (min-width: 700px) {\n  .lista { display: flex; }\n}",
     'css-advanced/variables' => ":root { --brand: #E8590C; }\n.card { color: var(--brand); }",
@@ -149,7 +169,7 @@ const SEED_COURSES = ['html-base', 'html-intermediate', 'html-advanced', 'css-ba
     'ai-base', 'llm-base', 'prompt-base', 'ai-ethics', 'ai-math', 'ml-base', 'ml-intermediate', 'dl-base', 'prompt-advanced', 'llm-api',
     'dl-advanced', 'rag', 'ai-agents', 'mlops', 'local-llm', 'chatgpt', 'claude', 'gemini', 'mistral', 'lumo', 'deepseek',
     'github-copilot', 'ms-copilot', 'perplexity', 'ai-editors', 'huggingface', 'genmedia', 'grok', 'meta-ai', 'qwen', 'apple-intelligence',
-    'git', 'bash', 'docker', 'kubernetes', 'cloud-base', 'go-base', 'csharp-base', 'c-base', 'cpp-base', 'testing', 'design-patterns', 'regex',
+    'git', 'bash', 'docker', 'kubernetes', 'cloud-base', 'go-base', 'go-intermediate', 'csharp-base', 'csharp-intermediate', 'c-base', 'c-intermediate', 'cpp-base', 'cpp-intermediate', 'testing', 'design-patterns', 'regex',
     'api-design', 'redis', 'algorithms', 'web-security', 'security-basics', 'a11y', 'crawler', 'excel', 'powerbi',
     'ux-base', 'ux-intermediate', 'ux-advanced', 'ux-mobile', 'ux-desktop', 'ux-vr', 'ui-base', 'ui-intermediate', 'ui-mobile', 'ui-patterns', 'material', 'ios-design', 'fluent'];
 
@@ -214,14 +234,14 @@ function seed_apply_fixes(string $id, array $c): array
 }
 
 /**
- * Version 27: the course review (facts brought up to date, wrong answers and code fixed) reaches the installations made
- * before it. lib/seed/corrections-v27.json, built by tools/build-corrections.php, holds the hashes of the old texts (one
+ * Version 29: the course review (facts brought up to date, wrong answers and code fixed) reaches the installations made
+ * before it. lib/seed/corrections-v29.json, built by tools/build-corrections.php, holds the hashes of the old texts (one
  * per earlier catalogue that differed) and the new value: a course field, lesson field, question or drill is replaced only while it is still exactly as the old
  * catalogue installed it, so what was edited in the admin portal stays.
  */
-function install_seed_corrections_v27(PDO $pdo, string $p): void
+function install_seed_corrections_v29(PDO $pdo, string $p): void
 {
-    $file = __DIR__ . '/seed/corrections-v27.json';
+    $file = __DIR__ . '/seed/corrections-v29.json';
     $fix = is_file($file) ? json_decode((string)file_get_contents($file), true) : null;
     if (!is_array($fix)) return;
     $j = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -333,7 +353,7 @@ const SEED_TIERS = ['html-base' => 1, 'html-intermediate' => 1, 'html-advanced' 
     'dl-advanced' => 3, 'rag' => 3, 'ai-agents' => 3, 'mlops' => 3, 'local-llm' => 3, 'chatgpt' => 1, 'claude' => 1, 'gemini' => 1, 'mistral' => 1, 'lumo' => 1, 'deepseek' => 1,
     'react-base' => 2, 'react-intermediate' => 2, 'nextjs' => 3, 'node-base' => 2, 'python-pandas' => 2,
     'github-copilot' => 1, 'ms-copilot' => 1, 'perplexity' => 1, 'ai-editors' => 2, 'huggingface' => 2, 'genmedia' => 1, 'grok' => 1, 'meta-ai' => 1, 'qwen' => 1, 'apple-intelligence' => 1,
-    'git' => 1, 'bash' => 1, 'docker' => 2, 'kubernetes' => 3, 'cloud-base' => 1, 'go-base' => 1, 'csharp-base' => 1, 'c-base' => 2, 'cpp-base' => 2, 'testing' => 2, 'design-patterns' => 2, 'regex' => 1,
+    'git' => 1, 'bash' => 1, 'docker' => 2, 'kubernetes' => 3, 'cloud-base' => 1, 'go-base' => 1, 'go-intermediate' => 2, 'csharp-base' => 1, 'csharp-intermediate' => 2, 'c-base' => 2, 'c-intermediate' => 2, 'cpp-base' => 2, 'cpp-intermediate' => 2, 'testing' => 2, 'design-patterns' => 2, 'regex' => 1,
     'api-design' => 2, 'redis' => 2, 'algorithms' => 2, 'web-security' => 2, 'security-basics' => 1, 'a11y' => 1, 'excel' => 1, 'powerbi' => 1,
     'llm-base' => 1, 'crawler' => 1, 'bootstrap' => 1, 'savcomponents-base' => 1, 'savcomponents-intermediate' => 2, 'savcomponents-advanced' => 3, 'ux-base' => 1, 'ux-intermediate' => 2, 'ux-advanced' => 3, 'ux-mobile' => 2, 'ux-desktop' => 2, 'ux-vr' => 3,
     'ui-base' => 1, 'ui-intermediate' => 2, 'ui-mobile' => 2, 'ui-patterns' => 2, 'material' => 2, 'ios-design' => 2, 'fluent' => 2];

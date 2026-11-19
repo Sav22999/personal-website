@@ -1,6 +1,56 @@
 <?php
 /** Apple Intelligence: what it is and where it runs, Writing Tools and everyday features, privacy with Private Cloud Compute, the Foundation Models framework, requirements, visual intelligence and Live Translation. */
 
+/** Where a request is processed: on the device first, then Private Cloud Compute for harder requests, ChatGPT only if enabled and confirmed. Labels in one language. */
+if (!function_exists('fig_appleint_where')) {
+    function fig_appleint_where(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['La tua', 'Sul dispositivo', 'prima scelta', 'i dati non escono', 'Private Cloud Compute', 'richieste più complesse', 'usati solo per la richiesta,', 'non conservati', 'ChatGPT', 'solo se attivato', 'e dopo la tua conferma', 'più semplice', 'più complessa', 'richiesta']
+            : ['Your', 'On the device', 'first choice', 'data does not leave', 'Private Cloud Compute', 'more complex requests', 'used only for the request,', 'not stored', 'ChatGPT', 'only if turned on', 'and after you confirm', 'simpler', 'more complex', 'request'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="16" y="104" width="96" height="72" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="64" y="136" text-anchor="middle" font-weight="700" font-size="14" fill="#1B66BC">{$t[0]}</text><text x="64" y="154" text-anchor="middle" font-weight="700" font-size="14" fill="#1B66BC">{$t[13]}</text>
+<g stroke-width="2"><rect x="186" y="16" width="200" height="110" rx="14" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="186" y="154" width="200" height="110" rx="14" fill="#ECE6FF" stroke="#7048E8"/><rect x="430" y="154" width="194" height="110" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-dasharray="6 4"/></g>
+<rect x="340" y="30" width="28" height="46" rx="6" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/>
+<g font-weight="700"><text x="202" y="44" fill="#0B7F5C">{$t[1]}</text><text x="202" y="182" fill="#5A36C9" font-size="14">{$t[4]}</text><text x="446" y="182">{$t[8]}</text></g>
+<g font-size="13"><text x="202" y="64">{$t[2]}</text><text x="202" y="104" font-weight="700" fill="#0B7F5C">{$t[3]}</text><text x="202" y="202">{$t[5]}</text><text x="202" y="232">{$t[6]}</text><text x="202" y="250">{$t[7]}</text><text x="446" y="202">{$t[9]}</text><text x="446" y="222">{$t[10]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M112 130C150 130 150 71 182 71"/><path d="M112 150C150 150 150 209 182 209"/><path d="M386 209H426" stroke-dasharray="4 4"/></g>
+<g font-size="13" text-anchor="middle" stroke="#FFFFFF" stroke-width="4" paint-order="stroke"><text x="72" y="94">{$t[11]}</text><text x="72" y="196">{$t[12]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Foundation Models in an app: check the on-device model is available, use it if so, otherwise fall back. Labels in one language. */
+if (!function_exists('fig_appleint_fallback')) {
+    function fig_appleint_fallback(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['La tua app', 'Modello', 'disponibile?', 'sì', 'no', 'Modello sul dispositivo', 'offline, senza costi a token', 'Alternativa', 'nascondi la funzione', 'o usa un’altra strada', 'dispositivo compatibile, funzione attiva, modello pronto']
+            : ['Your app', 'Model', 'available?', 'yes', 'no', 'On-device model', 'offline, no per-token cost', 'Fallback', 'hide the feature', 'or take another route', 'compatible device, feature on, model ready'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="16" y="94" width="120" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="76" y="129" text-anchor="middle" font-weight="700" fill="#1B66BC">{$t[0]}</text>
+<path d="M136 124H170" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<path d="M250 54L326 124L250 194L174 124z" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="250" y="120" text-anchor="middle" font-weight="700" font-size="14" fill="#5A36C9">{$t[1]}</text><text x="250" y="138" text-anchor="middle" font-size="13">{$t[2]}</text>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M300 100C340 70 360 62 390 62"/><path d="M300 148C340 178 360 186 390 186"/></g>
+<g font-size="13" font-weight="700"><text x="340" y="62" fill="#0B7F5C">{$t[3]}</text><text x="340" y="198" fill="#C2255C">{$t[4]}</text></g>
+<rect x="394" y="26" width="230" height="72" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="410" y="54" font-weight="700" fill="#0B7F5C">{$t[5]}</text><text x="410" y="78" font-size="13">{$t[6]}</text>
+<rect x="394" y="150" width="230" height="82" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="410" y="176" font-weight="700" fill="#C2255C">{$t[7]}</text><text x="410" y="198" font-size="13">{$t[8]}</text><text x="410" y="216" font-size="13">{$t[9]}</text>
+<text x="16" y="250" font-size="13">{$t[10]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'apple-intelligence', 'family' => 'assistants', 'after' => null, 'categories' => ['ai', 'mobile'],
     'title' => L('Apple Intelligence', 'Apple Intelligence'), 'short' => L('Apple Intelligence', 'Apple Intelligence'), 'level' => L('Base', 'Basics'),
@@ -30,6 +80,9 @@ return [
         ]),
         lesson('privacy', L('Privacy', 'Privacy'), [
             P('L’approccio di Apple è elaborare il più possibile **sul dispositivo**. Quando serve il cloud, **Private Cloud Compute** usa server con chip Apple progettati perché i dati siano usati solo per la richiesta, non conservati né accessibili ad Apple; il software di questi server è pubblicato perché ricercatori indipendenti possano verificarlo.', 'Apple’s approach is to process as much as possible **on the device**. When the cloud is needed, **Private Cloud Compute** uses Apple-silicon servers designed so data is used only for the request, not stored or accessible to Apple; these servers’ software is published so independent researchers can verify it.'),
+            Fig(L(fig_appleint_where('it'), fig_appleint_where('en')),
+                L('La tua richiesta va, se è più semplice, al riquadro verde «sul dispositivo», dove i dati non escono; se è più complessa, al riquadro viola Private Cloud Compute, dove i dati sono usati solo per la richiesta e non conservati. Da qui una freccia tratteggiata porta a ChatGPT, solo se attivato e dopo la tua conferma.', 'Your request goes, if it is simpler, to the green “on the device” box, where the data does not leave; if it is more complex, to the purple Private Cloud Compute box, where the data is used only for the request and not stored. From there a dashed arrow leads to ChatGPT, only if turned on and after you confirm.'),
+                L('Prima il dispositivo, poi il cloud privato di Apple; un servizio esterno solo con il tuo sì.', 'Device first, then Apple’s private cloud; an outside service only with your yes.')),
             P('Se attivi l’integrazione con **ChatGPT**, il dispositivo chiede conferma prima di inviare una richiesta; senza account OpenAI collegato, Apple dichiara che le richieste non vengono conservate da OpenAI. Puoi disattivare l’integrazione nelle Impostazioni in qualsiasi momento.', 'If you enable the **ChatGPT** integration, the device asks for confirmation before sending a request; without a linked OpenAI account, Apple states requests are not stored by OpenAI. You can turn the integration off in Settings at any time.'),
         ], [
             Q('p1', L('Qual è il principio di Apple sulla privacy dell’AI?', 'What is Apple’s principle on AI privacy?'), [L('Elaborare il più possibile sul dispositivo', 'Process as much as possible on device'), L('Mandare tutto nel cloud', 'Send everything to the cloud'), L('Vendere i dati', 'Sell the data'), L('Nessuno', 'None')], 0, L('Il cloud solo quando serve.', 'Cloud only when needed.')),
@@ -47,6 +100,9 @@ let sessione = LanguageModelSession(instructions: "Rispondi in italiano, in una 
 let risposta = try await sessione.respond(to: "Suggerisci un titolo per una nota sulla spesa.")
 print(risposta.content)', 'swift'),
             P('Il modello sul dispositivo è piccolo: ottimo per compiti mirati, non per ragionamenti lunghi o conoscenza enciclopedica. Controlla sempre che sia disponibile sul dispositivo dell’utente e prevedi un comportamento alternativo quando non lo è.', 'The on-device model is small: great for focused tasks, not for long reasoning or encyclopaedic knowledge. Always check it is available on the user’s device and plan a fallback when it is not.'),
+            Fig(L(fig_appleint_fallback('it'), fig_appleint_fallback('en')),
+                L('La tua app arriva a un rombo «modello disponibile?». Se sì, usa il modello sul dispositivo, offline e senza costi a token; se no, passa a un’alternativa: nascondere la funzione o usare un’altra strada. Sotto: disponibile vuol dire dispositivo compatibile, funzione attiva, modello pronto.', 'Your app reaches a diamond “model available?”. If yes, it uses the on-device model, offline and with no per-token cost; if no, it switches to a fallback: hide the feature or take another route. Below: available means a compatible device, the feature on and the model ready.'),
+                L('Controlla sempre la disponibilità prima di chiamare il modello.', 'Always check availability before calling the model.')),
         ], [
             Q('d1', L('Quale framework dà accesso al modello sul dispositivo?', 'Which framework gives access to the on-device model?'), ['Foundation Models', 'UIKit', 'CoreData', 'MapKit'], 0, L('Da Swift.', 'From Swift.')),
             Q('d2', L('Qual è un vantaggio del modello sul dispositivo?', 'What is an advantage of the on-device model?'), [L('Funziona offline e senza costi per token', 'Works offline with no per-token costs'), L('È il modello più grande al mondo', 'It is the world’s largest model'), L('Conosce tutte le notizie di oggi', 'It knows all of today’s news'), L('Funziona su Android', 'It works on Android')], 0, L('E i dati restano lì.', 'And data stays there.')),

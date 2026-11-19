@@ -1,6 +1,122 @@
 <?php
 /** Advanced UX: psychology and UX laws, metrics and experiments, ethics and dark patterns, service design and strategy, inclusive design, AI products, influencing decisions. */
 
+/** Figures of this course, each with its words in one language ('it' or 'en'). */
+if (!function_exists('fig_uxadv_laws')) {
+    /** Hick’s law as a curve (time grows with the options, more and more slowly) and Fitts’s law as two targets. */
+    function fig_uxadv_laws(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Legge di Hick', 'Legge di Fitts', 'tempo per scegliere', 'numero di opzioni', 'vicino e grande: veloce', 'lontano e piccolo: lento']
+            : ['Hick’s law', 'Fitts’s law', 'time to choose', 'number of options', 'near and big: fast', 'far and small: slow'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<text x="170" y="26" text-anchor="middle" font-size="16" font-weight="700">{$t[0]}</text>
+<line x1="50" y1="232" x2="300" y2="232" stroke="#1E1C52" stroke-width="2"/>
+<line x1="50" y1="50" x2="50" y2="232" stroke="#1E1C52" stroke-width="2"/>
+<path d="M50,190 L77,167 L104,150 L131,137 L158,127 L185,118 L212,110 L239,103 L266,97 L293,92" fill="none" stroke="#7048E8" stroke-width="3" stroke-linejoin="round"/>
+<g fill="#7048E8"><circle cx="50" cy="190" r="5"/><circle cx="131" cy="137" r="5"/><circle cx="293" cy="92" r="5"/></g>
+<g text-anchor="middle" fill="#5A5880"><text x="50" y="250">1</text><text x="131" y="250">4</text><text x="293" y="250">10</text></g>
+<text x="175" y="274" text-anchor="middle" font-size="14" font-weight="700">{$t[3]}</text>
+<text x="30" y="141" text-anchor="middle" font-size="14" font-weight="700" transform="rotate(-90 30 141)">{$t[2]}</text>
+<line x1="330" y1="20" x2="330" y2="270" stroke="#E4E2F0" stroke-width="2"/>
+<text x="485" y="26" text-anchor="middle" font-size="16" font-weight="700">{$t[1]}</text>
+<path d="M366 136 l0 24 l6 -5 l4 9 l4 -2 l-4 -9 l8 0 z" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2" stroke-linejoin="round"/>
+<rect x="410" y="122" width="76" height="52" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="592" y="138" width="24" height="20" rx="5" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<path d="M386 148 H404" stroke="#0B7F5C" stroke-width="3"/>
+<path d="M380 184 Q 486 236 596 166" fill="none" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="448" y="80" text-anchor="middle" font-size="14" font-weight="700" fill="#0B7F5C">✓ {$t[4]}</text>
+<text x="500" y="250" text-anchor="middle" font-size="14" font-weight="700" fill="#C2255C">✗ {$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxadv_funnel')) {
+    /** The purchase funnel of the example as bars, with the share that goes on at each step. */
+    function fig_uxadv_funnel(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Visita prodotto', 'Aggiunta carrello', 'Inizio checkout', 'Pagamento', 'passa', '2 su 3 abbandonano al pagamento:', 'avevano già deciso di comprare', '10.000', '2.400', '1.900', '600']
+            : ['Product visit', 'Added to cart', 'Checkout started', 'Payment', 'go on', '2 in 3 give up at payment:', 'they had already decided to buy', '10,000', '2,400', '1,900', '600'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="14" fill="#1E1C52">
+<g text-anchor="end" font-weight="700"><text x="150" y="45">{$t[0]}</text><text x="150" y="115">{$t[1]}</text><text x="150" y="185">{$t[2]}</text><text x="150" y="255">{$t[3]}</text></g>
+<rect x="164" y="24" width="420" height="32" rx="8" fill="#2F8CF0"/>
+<rect x="164" y="94" width="101" height="32" rx="8" fill="#2F8CF0"/>
+<rect x="164" y="164" width="80" height="32" rx="8" fill="#2F8CF0"/>
+<rect x="164" y="234" width="25" height="32" rx="8" fill="#F03E82"/>
+<g font-weight="700"><text x="572" y="45" text-anchor="end" fill="#FFFFFF">{$t[7]}</text><text x="275" y="115">{$t[8]}</text><text x="254" y="185">{$t[9]}</text><text x="199" y="255">{$t[10]}</text></g>
+<g font-size="13" fill="#5A5880"><text x="176" y="78">↓ 24% {$t[4]}</text><text x="176" y="148">↓ 79% {$t[4]}</text></g>
+<text x="176" y="218" font-size="13" font-weight="700" fill="#C2255C">↓ 32% {$t[4]}</text>
+<rect x="300" y="180" width="320" height="64" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<text x="460" y="206" text-anchor="middle" font-weight="700" fill="#C2255C">{$t[5]}</text>
+<text x="460" y="228" text-anchor="middle" fill="#C2255C">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxadv_roach')) {
+    /** The roach motel: joining takes one step, leaving takes six; fair design keeps them equal. */
+    function fig_uxadv_roach(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Iscriversi', 'Disdire', 'Abbonati', 'Impostazioni', 'Account', 'Piano', 'Sicuro?', 'Sondaggio', 'Chiamaci', '1 passo', '6 passi', 'Design onesto: disdire è facile come iscriversi', 'Disdici']
+            : ['Joining', 'Cancelling', 'Subscribe', 'Settings', 'Account', 'Plan', 'Sure?', 'Survey', 'Call us', '1 step', '6 steps', 'Fair design: cancelling is as easy as joining', 'Cancel'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<text x="20" y="30" font-size="15" font-weight="700">{$t[0]}</text>
+<rect x="20" y="44" width="110" height="40" rx="10" fill="#E8590C"/><text x="75" y="69" text-anchor="middle" font-weight="700" fill="#FFFFFF">{$t[2]}</text>
+<text x="146" y="69" font-weight="700" fill="#0B7F5C">{$t[9]}</text>
+<text x="20" y="122" font-size="15" font-weight="700">{$t[1]}</text>
+<g fill="#F1F0F8" stroke="#8A87B0" stroke-width="2">
+<rect x="20" y="136" width="88" height="40" rx="10"/><rect x="122" y="136" width="88" height="40" rx="10"/><rect x="224" y="136" width="88" height="40" rx="10"/><rect x="326" y="136" width="88" height="40" rx="10"/><rect x="428" y="136" width="88" height="40" rx="10"/></g>
+<rect x="530" y="136" width="88" height="40" rx="10" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<g text-anchor="middle"><text x="64" y="161">{$t[3]}</text><text x="166" y="161">{$t[4]}</text><text x="268" y="161">{$t[5]}</text><text x="370" y="161">{$t[6]}</text><text x="472" y="161">{$t[7]}</text><text x="574" y="161" fill="#C2255C" font-weight="700">{$t[8]}</text></g>
+<g fill="#8A87B0"><path d="M111 151 l8 5 l-8 5 z"/><path d="M213 151 l8 5 l-8 5 z"/><path d="M315 151 l8 5 l-8 5 z"/><path d="M417 151 l8 5 l-8 5 z"/><path d="M519 151 l8 5 l-8 5 z"/></g>
+<text x="618" y="198" text-anchor="end" font-weight="700" fill="#C2255C">✗ {$t[10]}</text>
+<rect x="20" y="212" width="600" height="38" rx="10" fill="#D5F6EA"/>
+<text x="36" y="236" font-weight="700" fill="#0B7F5C">✓ {$t[11]}</text>
+<rect x="520" y="218" width="90" height="26" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><text x="565" y="236" text-anchor="middle" fill="#0B7F5C" font-weight="700">{$t[12]}</text>
+</svg>
+SVG;
+    }
+}
+if (!function_exists('fig_uxadv_blueprint')) {
+    /** A service blueprint of a food delivery: four layers, with the line of visibility between front and back stage. */
+    function fig_uxadv_blueprint(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Azioni utente', 'Front stage', 'Back stage', 'Supporto', 'Ordina nell’app', 'Segue la consegna', 'Riceve il cibo', 'Menu e carrello', 'Mappa del rider', 'Rider alla porta', 'Cucina prepara', 'Rider assegnato', 'Rider consegna', 'Pagamenti', 'Servizio mappe', 'Turni dei rider', 'linea di visibilità']
+            : ['User actions', 'Front stage', 'Back stage', 'Support', 'Orders in the app', 'Tracks delivery', 'Gets the food', 'Menu and cart', 'Rider on a map', 'Rider at the door', 'Kitchen cooks', 'Rider assigned', 'Rider delivers', 'Payments', 'Maps service', 'Rider shifts', 'line of visibility'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 330" font-family="system-ui, sans-serif" font-size="13" fill="#1E1C52">
+<g font-weight="700" font-size="14"><text x="16" y="52">{$t[0]}</text><text x="16" y="122">{$t[1]}</text><text x="16" y="216">{$t[2]}</text><text x="16" y="292">{$t[3]}</text></g>
+<g text-anchor="middle">
+<rect x="140" y="28" width="150" height="38" rx="10" fill="#FFE8D6"/><text x="215" y="52">{$t[4]}</text>
+<rect x="305" y="28" width="150" height="38" rx="10" fill="#FFE8D6"/><text x="380" y="52">{$t[5]}</text>
+<rect x="470" y="28" width="150" height="38" rx="10" fill="#FFE8D6"/><text x="545" y="52">{$t[6]}</text>
+<rect x="140" y="98" width="150" height="38" rx="10" fill="#DCEBFF"/><text x="215" y="122">{$t[7]}</text>
+<rect x="305" y="98" width="150" height="38" rx="10" fill="#DCEBFF"/><text x="380" y="122">{$t[8]}</text>
+<rect x="470" y="98" width="150" height="38" rx="10" fill="#DCEBFF"/><text x="545" y="122">{$t[9]}</text>
+<rect x="140" y="192" width="150" height="38" rx="10" fill="#ECE6FF"/><text x="215" y="216">{$t[10]}</text>
+<rect x="305" y="192" width="150" height="38" rx="10" fill="#ECE6FF"/><text x="380" y="216">{$t[11]}</text>
+<rect x="470" y="192" width="150" height="38" rx="10" fill="#ECE6FF"/><text x="545" y="216">{$t[12]}</text>
+<rect x="140" y="268" width="150" height="38" rx="10" fill="#F1F0F8"/><text x="215" y="292">{$t[13]}</text>
+<rect x="305" y="268" width="150" height="38" rx="10" fill="#F1F0F8"/><text x="380" y="292">{$t[14]}</text>
+<rect x="470" y="268" width="150" height="38" rx="10" fill="#F1F0F8"/><text x="545" y="292">{$t[15]}</text>
+</g>
+<g stroke="#8A87B0" stroke-width="2"><line x1="215" y1="66" x2="215" y2="98"/><line x1="380" y1="66" x2="380" y2="98"/><line x1="545" y1="66" x2="545" y2="98"/>
+<line x1="215" y1="136" x2="215" y2="192"/><line x1="380" y1="136" x2="380" y2="192"/><line x1="545" y1="136" x2="545" y2="192"/>
+<line x1="215" y1="230" x2="215" y2="268"/><line x1="380" y1="230" x2="380" y2="268"/><line x1="545" y1="230" x2="545" y2="268"/></g>
+<line x1="16" y1="164" x2="624" y2="164" stroke="#E8590C" stroke-width="2" stroke-dasharray="8 5"/>
+<rect x="16" y="152" width="124" height="24" rx="6" fill="#FFFFFF"/>
+<text x="18" y="169" font-weight="700" fill="#B84508">{$t[16]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'ux-advanced', 'family' => 'ux', 'after' => 'ux-intermediate', 'categories' => ['design'],
     'title' => L('UX: livello avanzato', 'UX Advanced'), 'short' => L('UX avanzato', 'UX Advanced'), 'level' => L('Avanzato', 'Advanced'),
@@ -8,6 +124,9 @@ return [
     'lessons' => [
         lesson('laws', L('Psicologia e leggi della UX', 'Psychology and the laws of UX'), [
             P('Alcune leggi della psicologia aiutano a prevedere il comportamento. **Legge di Hick**: più opzioni ci sono, più tempo serve per scegliere, quindi raggruppa e riduci. **Legge di Fitts**: un bersaglio grande e vicino si raggiunge prima, quindi i pulsanti principali vanno grandi e a portata. **Legge di Jakob**: gli utenti passano la maggior parte del tempo su altri siti e si aspettano che il tuo funzioni allo stesso modo.', 'Some laws from psychology help predict behaviour. **Hick’s law**: the more options, the longer it takes to choose, so group and reduce. **Fitts’s law**: a large, nearby target is reached faster, so main buttons should be big and within reach. **Jakob’s law**: users spend most of their time on other sites and expect yours to work the same way.'),
+            Fig(L(fig_uxadv_laws('it'), fig_uxadv_laws('en')),
+                L('A sinistra la legge di Hick: un grafico in cui il tempo per scegliere cresce con il numero di opzioni, sempre più lentamente. A destra la legge di Fitts: un cursore raggiunge in fretta un bersaglio grande e vicino, mentre uno piccolo e lontano richiede più tempo.', 'On the left Hick’s law: a chart where the time to choose grows with the number of options, more and more slowly. On the right Fitts’s law: a cursor quickly reaches a big, nearby target, while a small, distant one takes longer.'),
+                L('Meno opzioni e bersagli grandi e vicini: decisioni e gesti più rapidi.', 'Fewer options and big, close targets: faster decisions and movements.')),
             P('Il **carico cognitivo** è lo sforzo mentale richiesto: la memoria di lavoro tiene pochi elementi alla volta, per questo si spezzano le informazioni in blocchi (**chunking**, come un IBAN scritto a gruppi di quattro). L’**effetto von Restorff** rende memorabile ciò che spicca, l’**effetto della posizione seriale** fa ricordare meglio il primo e l’ultimo elemento di una lista.', '**Cognitive load** is the mental effort required: working memory holds only a few items at a time, so information is split into blocks (**chunking**, like an IBAN written in groups of four). The **von Restorff effect** makes what stands out memorable, the **serial position effect** makes the first and last items of a list easier to remember.'),
         ], [
             Q('l1', L('Che cosa dice la legge di Hick?', 'What does Hick’s law say?'), [L('Più opzioni, più tempo per scegliere', 'More options, more time to choose'), L('I bersagli grandi sono più lenti', 'Large targets are slower'), L('Gli utenti leggono tutto', 'Users read everything'), L('Il blu è il colore più cliccato', 'Blue is the most clicked colour')], 0, L('Riduci e raggruppa.', 'Reduce and group.')),
@@ -24,7 +143,10 @@ return [
 Visita prodotto   10.000  100%
 Aggiunta carrello  2.400   24%
 Inizio checkout    1.900   19%
-Pagamento            600    6%   ← il calo più grande: checkout → pagamento', 'text'),
+Pagamento            600    6%   ← 2 su 3 abbandonano tra checkout e pagamento', 'text'),
+            Fig(L(fig_uxadv_funnel('it'), fig_uxadv_funnel('en')),
+                L('Quattro barre orizzontali sempre più corte: 10.000 visite al prodotto, 2.400 aggiunte al carrello, 1.900 checkout iniziati, 600 pagamenti. Tra una barra e l’altra la percentuale che prosegue: 24%, 79% e 32%. L’ultimo passaggio è evidenziato: due persone su tre abbandonano al pagamento pur avendo già deciso di comprare.', 'Four horizontal bars getting shorter: 10,000 product visits, 2,400 added to cart, 1,900 checkouts started, 600 payments. Between bars, the share that goes on: 24%, 79% and 32%. The last step is highlighted: two people in three give up at payment although they had already decided to buy.'),
+                L('Guarda il tasso di ogni passaggio, non solo i numeri assoluti: perdere chi voleva già pagare è il segnale più grave.', 'Look at the rate of each step, not just the totals: losing people who already wanted to pay is the most serious signal.')),
         ], [
             Q('m1', L('Che cosa misura la R di HEART?', 'What does the R in HEART measure?'), [L('Quanti utenti tornano', 'How many users come back'), L('Le recensioni negative', 'Negative reviews'), L('La velocità di risposta', 'Response speed'), L('I ricavi pubblicitari', 'Ad revenue')], 0, L('Retention.', 'Retention.')),
             Q('m2', L('A che cosa serve un funnel?', 'What is a funnel for?'), [L('Trovare il passo dove si perdono più utenti', 'Finding the step where most users drop'), L('Filtrare il caffè', 'Filtering coffee'), L('Contare i pixel', 'Counting pixels'), L('Ordinare i prodotti', 'Sorting products')], 0, L('Il calo più forte.', 'The biggest drop.')),
@@ -36,6 +158,9 @@ Pagamento            600    6%   ← il calo più grande: checkout → pagamento
         lesson('ethics', L('Etica e dark pattern', 'Ethics and dark patterns'), [
             P('I **dark pattern** (o design ingannevole) sono interfacce costruite per far fare alle persone cose che non vogliono: il **roach motel** (abbonarsi in un clic, disdire con dieci passaggi), il **confirmshaming** (“No grazie, preferisco pagare di più”), le **caselle già spuntate**, i **costi nascosti** che compaiono all’ultimo passo, la **falsa urgenza** (“solo 2 rimasti!” sempre).', '**Dark patterns** (or deceptive design) are interfaces built to make people do things they do not want: the **roach motel** (subscribe in one click, cancel in ten steps), **confirmshaming** (“No thanks, I prefer paying more”), **pre-ticked boxes**, **hidden costs** appearing at the last step, **fake urgency** (“only 2 left!” always).'),
             P('Oltre a danneggiare la fiducia, molti sono **illegali** in Europa: il GDPR vuole consenso libero e caselle non spuntate, il **Digital Services Act** vieta le interfacce ingannevoli sulle piattaforme, e sempre più norme sui consumatori chiedono che recedere o disdire online sia semplice. Il buon design rende **facile quanto entrare** anche uscire.', 'Besides damaging trust, many are **illegal** in Europe: the GDPR requires freely given consent and unticked boxes, the **Digital Services Act** bans deceptive interfaces on platforms, and more and more consumer rules require that withdrawing or cancelling online be simple. Good design makes **leaving as easy as joining**.'),
+            Fig(L(fig_uxadv_roach('it'), fig_uxadv_roach('en')),
+                L('In alto, iscriversi richiede un solo pulsante «Abbonati». Sotto, disdire richiede sei schermate in fila: impostazioni, account, piano, una richiesta di conferma, un sondaggio e infine «Chiamaci». In fondo, una riga verde: nel design onesto disdire è facile come iscriversi, con un pulsante «Disdici».', 'At the top, joining takes a single “Subscribe” button. Below, cancelling takes six screens in a row: settings, account, plan, a confirmation request, a survey and finally “Call us”. At the bottom, a green row: in fair design cancelling is as easy as joining, with a “Cancel” button.'),
+                L('La trappola del «roach motel»: entrare in un passo, uscire in sei.', 'The roach motel trap: one step in, six steps out.')),
             Tip('Una domanda utile in ogni revisione: “L’utente sarebbe contento se sapesse esattamente perché abbiamo progettato così?”', 'A useful question in every review: “Would the user be happy if they knew exactly why we designed it this way?”'),
         ], [
             Q('e1', L('Che cos’è il confirmshaming?', 'What is confirmshaming?'), [L('Colpevolizzare chi rifiuta un’offerta', 'Guilt-tripping people who decline an offer'), L('Confermare un ordine due volte', 'Confirming an order twice'), L('Un messaggio di benvenuto', 'A welcome message'), L('Un tipo di captcha', 'A kind of captcha')], 0, L('“No grazie, odio risparmiare”.', '“No thanks, I hate saving”.')),
@@ -47,6 +172,9 @@ Pagamento            600    6%   ← il calo più grande: checkout → pagamento
         ]),
         lesson('service', L('Service design e strategia', 'Service design and strategy'), [
             P('Il **service design** guarda oltre lo schermo: un’esperienza nasce anche da persone, processi e sistemi che l’utente non vede. Il **service blueprint** la mostra su più livelli: **azioni dell’utente**, **front stage** (ciò che vede: app, commesso), **back stage** (personale e processi dietro le quinte), **processi di supporto** (sistemi, fornitori), separati dalla **linea di visibilità**.', '**Service design** looks beyond the screen: an experience also comes from people, processes and systems the user does not see. The **service blueprint** shows it in layers: **user actions**, **front stage** (what they see: app, clerk), **back stage** (staff and processes behind the scenes), **support processes** (systems, suppliers), separated by the **line of visibility**.'),
+            Fig(L(fig_uxadv_blueprint('it'), fig_uxadv_blueprint('en')),
+                L('Un service blueprint di una consegna di cibo, in quattro righe. Azioni dell’utente: ordina nell’app, segue la consegna, riceve il cibo. Front stage: menu e carrello, mappa del rider, rider alla porta. Sotto una linea tratteggiata detta linea di visibilità, il back stage: la cucina prepara, il rider viene assegnato, il rider consegna. In fondo i processi di supporto: pagamenti, servizio mappe, turni dei rider.', 'A service blueprint of a food delivery, in four rows. User actions: orders in the app, tracks the delivery, gets the food. Front stage: menu and cart, the rider on a map, the rider at the door. Below a dashed line called the line of visibility, the back stage: the kitchen cooks, a rider is assigned, the rider delivers. At the bottom the support processes: payments, maps service, rider shifts.'),
+                L('Sotto la linea di visibilità c’è il lavoro che l’utente non vede, ma che decide la sua esperienza.', 'Below the line of visibility is the work users never see, yet it shapes their experience.')),
             P('La **strategia UX** collega i bisogni degli utenti agli obiettivi dell’azienda: una **visione** di esperienza, principi di design condivisi, una roadmap basata sulle evidenze e la **ricerca continua** (parlare con gli utenti ogni settimana, non una volta l’anno). Con la **ResearchOps** e la **DesignOps** si organizzano strumenti, archivi di insight e processi perché il team cresca senza perdere qualità.', '**UX strategy** connects users’ needs to business goals: an experience **vision**, shared design principles, an evidence-based roadmap and **continuous research** (talking to users every week, not once a year). With **ResearchOps** and **DesignOps** you organise tools, insight repositories and processes so the team grows without losing quality.'),
         ], [
             Q('s1', L('Che cosa separa la linea di visibilità in un blueprint?', 'What does the line of visibility separate in a blueprint?'), [L('Ciò che l’utente vede da ciò che non vede', 'What the user sees from what they do not'), L('Il desktop dal mobile', 'Desktop from mobile'), L('I colori chiari da quelli scuri', 'Light colours from dark ones'), L('Il prezzo dal costo', 'Price from cost')], 0, L('Front stage e back stage.', 'Front stage and back stage.')),

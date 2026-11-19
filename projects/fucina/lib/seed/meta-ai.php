@@ -1,6 +1,62 @@
 <?php
 /** Meta AI and Llama: the assistant inside WhatsApp, Instagram and Facebook, the Llama open models (and the closed Muse Spark) and their licence, privacy, running Llama yourself. */
 
+/** Who reads what: a chat between two people is end-to-end encrypted, a message to Meta AI is processed by Meta, and in a group everyone sees it. Labels in one language. */
+if (!function_exists('fig_metaai_privacy')) {
+    function fig_metaai_privacy(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Tu', 'Un amico', 'cifrata end-to-end: Meta non legge', 'Meta AI', 'elaborato da Meta', 'nei gruppi lo vedono anche gli altri membri', 'Chat tra persone', 'Messaggio a Meta AI']
+            : ['You', 'A friend', 'end-to-end encrypted: Meta cannot read it', 'Meta AI', 'processed by Meta', 'in a group the other members see it too', 'Chat between people', 'Message to Meta AI'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<text x="16" y="26" font-weight="700" fill="#0B7F5C">{$t[6]}</text>
+<rect x="16" y="38" width="608" height="96" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"><rect x="40" y="52" width="40" height="66" rx="8"/><rect x="560" y="52" width="40" height="66" rx="8"/></g>
+<g font-weight="700" font-size="14" text-anchor="middle"><text x="118" y="91">{$t[0]}</text><text x="520" y="91">{$t[1]}</text></g>
+<path d="M150 86H486" stroke="#8A87B0" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+<rect x="306" y="72" width="26" height="22" rx="4" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><path d="M312 72v-6a7 7 0 0 1 14 0v6" fill="none" stroke="#0B7F5C" stroke-width="2"/>
+<text x="319" y="118" text-anchor="middle" font-size="13">{$t[2]}</text>
+<text x="16" y="172" font-weight="700" fill="#1B66BC">{$t[7]}</text>
+<rect x="16" y="184" width="608" height="96" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="40" y="198" width="40" height="66" rx="8" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/>
+<text x="118" y="237" text-anchor="middle" font-weight="700" font-size="14">{$t[0]}</text>
+<path d="M150 232H418" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<text x="284" y="222" text-anchor="middle" font-size="13">{$t[4]}</text>
+<rect x="424" y="200" width="184" height="64" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="438" y="218" width="30" height="26" rx="6" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><circle cx="447" cy="231" r="3" fill="#7048E8"/><circle cx="459" cy="231" r="3" fill="#7048E8"/>
+<text x="476" y="238" font-weight="700" fill="#5A36C9">{$t[3]}</text>
+<text x="284" y="256" text-anchor="middle" font-size="13">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Where a Meta model can run: a small Llama on a laptop, a large Llama on a GPU server, the closed model only inside Meta's services. Labels in one language. */
+if (!function_exists('fig_metaai_where')) {
+    function fig_metaai_where(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Llama piccolo', 'sul tuo portatile', 'Llama grande', 'server con GPU, tuo o di un cloud', 'Modello chiuso', 'solo nei servizi di Meta', 'pesi scaricabili', 'pesi non scaricabili']
+            : ['Small Llama', 'on your laptop', 'Large Llama', 'GPU server, yours or a cloud’s', 'Closed model', 'only inside Meta’s services', 'downloadable weights', 'weights not downloadable'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 250" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="12" y="12" width="400" height="20" rx="10" fill="#D5F6EA"/><text x="212" y="27" text-anchor="middle" font-size="13" font-weight="700" fill="#0B7F5C">{$t[6]}</text>
+<rect x="428" y="12" width="200" height="20" rx="10" fill="#F1F0F8"/><text x="528" y="27" text-anchor="middle" font-size="13" font-weight="700">{$t[7]}</text>
+<g stroke-width="2"><rect x="12" y="44" width="192" height="190" rx="14" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="220" y="44" width="192" height="190" rx="14" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="428" y="44" width="200" height="190" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-dasharray="6 4"/></g>
+<rect x="68" y="70" width="80" height="52" rx="6" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><path d="M56 128H160l-8 8H64z" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2" stroke-linejoin="round"/>
+<g fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"><rect x="276" y="64" width="80" height="22" rx="4"/><rect x="276" y="90" width="80" height="22" rx="4"/><rect x="276" y="116" width="80" height="22" rx="4"/></g>
+<g fill="#0B7F5C"><circle cx="290" cy="75" r="3"/><circle cx="290" cy="101" r="3"/><circle cx="290" cy="127" r="3"/></g>
+<path d="M496 118a18 18 0 0 1 4-34a26 26 0 0 1 48-6a20 20 0 0 1 30 18a14 14 0 0 1-4 22z" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<rect x="522" y="96" width="22" height="18" rx="3" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><path d="M527 96v-5a6 6 0 0 1 12 0v5" fill="none" stroke="#1E1C52" stroke-width="2"/>
+<g font-weight="700" text-anchor="middle"><text x="108" y="178" fill="#0B7F5C">{$t[0]}</text><text x="316" y="178" fill="#0B7F5C">{$t[2]}</text><text x="528" y="178">{$t[4]}</text></g>
+<g font-size="13" text-anchor="middle"><text x="108" y="202">{$t[1]}</text><text x="316" y="202">{$t[3]}</text><text x="528" y="202">{$t[5]}</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'meta-ai', 'family' => 'assistants', 'after' => null,
     'title' => L('Meta AI e Llama', 'Meta AI and Llama'), 'short' => L('Meta AI', 'Meta AI'), 'level' => L('Base', 'Basics'),
@@ -19,6 +75,9 @@ return [
         ]),
         lesson('llama', L('I modelli Llama', 'The Llama models'), [
             P('**Llama** è la famiglia di modelli che Meta pubblica come **open-weight**: chiunque può scaricarli e usarli in locale o sui propri server, in varie dimensioni. Llama ha contribuito molto alla diffusione dei modelli aperti e a un grande ecosistema di versioni adattate. Per anni Meta AI ha funzionato con Llama; dal 2026 l’assistente usa anche **Muse Spark**, un modello più potente ma **chiuso**, i cui pesi non sono scaricabili.', '**Llama** is the family of models Meta publishes as **open-weight**: anyone can download them and use them locally or on their own servers, in various sizes. Llama contributed a lot to the spread of open models and to a large ecosystem of fine-tuned versions. For years Meta AI ran on Llama; since 2026 the assistant also uses **Muse Spark**, a more powerful but **closed** model whose weights cannot be downloaded.'),
+            Fig(L(fig_metaai_where('it'), fig_metaai_where('en')),
+                L('Tre riquadri. I primi due, verdi, hanno pesi scaricabili: un Llama piccolo su un portatile e un Llama grande su un server con GPU, tuo o di un cloud. Il terzo, grigio e tratteggiato con una nuvola e un lucchetto, è il modello chiuso, disponibile solo nei servizi di Meta.', 'Three boxes. The first two, green, have downloadable weights: a small Llama on a laptop and a large Llama on a GPU server, yours or a cloud’s. The third, grey and dashed with a cloud and a padlock, is the closed model, available only inside Meta’s services.'),
+                L('Con i pesi aperti scegli tu dove gira il modello; con quello chiuso no.', 'With open weights you choose where the model runs; with the closed one you do not.')),
             C('ollama run llama3.2        # un Llama piccolo in locale
 # oppure da Hugging Face, dopo aver accettato la licenza:
 # meta-llama/Llama-3.1-8B-Instruct', 'bash'),
@@ -34,6 +93,9 @@ return [
         lesson('privacy', L('Privacy e opposizione', 'Privacy and objection'), [
             P('Meta ha annunciato che in Unione Europea usa i **contenuti pubblici** degli utenti adulti (post, commenti) e le **interazioni con Meta AI** per addestrare i suoi modelli. Il GDPR ti dà il **diritto di opporti**: Meta mette a disposizione un modulo nel Centro privacy per chiedere che i tuoi dati non vengano usati.', 'Meta announced that in the European Union it uses adult users’ **public content** (posts, comments) and **interactions with Meta AI** to train its models. The GDPR gives you the **right to object**: Meta provides a form in its Privacy Centre to ask that your data not be used.'),
             P('I messaggi privati su WhatsApp restano cifrati end-to-end, ma quello che scrivi **direttamente a Meta AI** viene elaborato da Meta. Quindi niente dati sanitari, documenti, password o informazioni di altre persone nelle chat con l’assistente.', 'Private WhatsApp messages remain end-to-end encrypted, but what you write **directly to Meta AI** is processed by Meta. So no health data, documents, passwords or other people’s information in chats with the assistant.'),
+            Fig(L(fig_metaai_privacy('it'), fig_metaai_privacy('en')),
+                L('Due fasce. In quella verde, la chat tra te e un amico è cifrata end-to-end, con un lucchetto sulla freccia: Meta non la legge. In quella azzurra, il tuo messaggio a Meta AI arriva a Meta e viene elaborato; nei gruppi lo vedono anche gli altri membri.', 'Two bands. In the green one, the chat between you and a friend is end-to-end encrypted, with a padlock on the arrow: Meta cannot read it. In the blue one, your message to Meta AI reaches Meta and is processed; in a group the other members see it too.'),
+                L('Stessa app, due destinazioni diverse: guarda a chi stai scrivendo.', 'Same app, two different destinations: look at who you are writing to.')),
         ], [
             Q('p1', L('Che diritto dà il GDPR sull’uso dei tuoi dati per l’addestramento?', 'What right does the GDPR give over using your data for training?'), [L('Il diritto di opporsi', 'The right to object'), L('Nessun diritto', 'No right'), L('Il diritto a un rimborso automatico', 'An automatic refund right'), L('Solo il diritto di pagare', 'Only the right to pay')], 0, L('Con il modulo nel Centro privacy.', 'Via the Privacy Centre form.')),
             Q('p2', L('I messaggi scritti a Meta AI sono cifrati end-to-end come le chat private?', 'Are messages written to Meta AI end-to-end encrypted like private chats?'), [L('No, Meta li elabora', 'No, Meta processes them'), L('Sì, nessuno li legge', 'Yes, nobody reads them'), L('Solo il lunedì', 'Only on Mondays'), L('Solo i vocali', 'Only voice notes')], 0, L('L’assistente deve leggerli per rispondere.', 'The assistant must read them to answer.')),

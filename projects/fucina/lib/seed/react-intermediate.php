@@ -1,6 +1,75 @@
 <?php
 /** Intermediate React: useEffect and data fetching, forms, lifting state and context, custom hooks and performance, useReducer and tests, React 19 actions, Suspense and use, React Router. */
 
+/** The timeline of an effect: render, the DOM updated, the effect runs; when a dependency changes the cleanup runs first, and again at unmount. */
+if (!function_exists('fig_reactint_effect')) {
+    function fig_reactint_effect(string $l): string
+    {
+        $t = $l === 'it' ? ['render', 'DOM aggiornato', 'effetto', 'cambia citta', 'pulizia', 'effetto', 'smontato', 'pulizia', 'tempo'] : ['render', 'DOM updated', 'effect', 'citta changes', 'cleanup', 'effect', 'unmounted', 'cleanup', 'time'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="riea" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<path d="M12 100H624" stroke="#8A87B0" stroke-width="2" marker-end="url(#riea)"/>
+<text x="620" y="190" text-anchor="end" font-size="13" fill="#5B5880">{$t[8]} →</text>
+<g stroke-width="2"><rect x="16" y="78" width="78" height="44" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><rect x="102" y="78" width="96" height="44" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><rect x="206" y="78" width="70" height="44" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/>
+<rect x="342" y="78" width="72" height="44" rx="10" fill="#FFE3EE" stroke="#F03E82"/><rect x="420" y="78" width="70" height="44" rx="10" fill="#D5F6EA" stroke="#0B7F5C"/><rect x="546" y="78" width="72" height="44" rx="10" fill="#FFE3EE" stroke="#F03E82"/></g>
+<g text-anchor="middle" font-size="13"><text x="55" y="105">{$t[0]}</text><text x="150" y="105" font-size="12">{$t[1]}</text><text x="241" y="105" font-weight="700">{$t[2]}</text><text x="378" y="105" font-weight="700">{$t[4]}</text><text x="455" y="105" font-weight="700">{$t[5]}</text><text x="582" y="105" font-weight="700">{$t[7]}</text></g>
+<g stroke="#E8590C" stroke-width="2" stroke-dasharray="4 3"><path d="M318 40V160"/><path d="M528 40V160"/></g>
+<g text-anchor="middle" font-size="13" font-weight="700" fill="#B84508"><text x="318" y="32">{$t[3]}</text><text x="528" y="32">{$t[6]}</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5B5880" text-anchor="middle"><text x="241" y="146">fetch()</text><text x="378" y="146">annullato</text><text x="455" y="146">fetch()</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Prop drilling against Context: on the left tema crosses every level as a prop, on the right Pulsante reads it straight from the context. */
+if (!function_exists('fig_reactint_context')) {
+    function fig_reactint_context(string $l): string
+    {
+        $t = $l === 'it' ? ['prop drilling', 'Context', 'passa e basta', 'nessuna prop'] : ['prop drilling', 'Context', 'only passes it on', 'no props'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="rica" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<g font-weight="700" font-size="16"><text x="20" y="28">{$t[0]}</text><text x="340" y="28">{$t[1]}</text></g>
+<path d="M322 14V246" stroke="#E4E2F0" stroke-width="2"/>
+<g stroke-width="2"><rect x="20" y="42" width="150" height="34" rx="10" fill="#ECE6FF" stroke="#7048E8"/><rect x="20" y="100" width="150" height="34" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><rect x="20" y="158" width="150" height="34" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><rect x="20" y="216" width="150" height="34" rx="10" fill="#DCEBFF" stroke="#2F8CF0"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="34" y="64">App</text><text x="34" y="122">Pagina</text><text x="34" y="180">Barra</text><text x="34" y="238">Pulsante</text></g>
+<g stroke="#E8590C" stroke-width="2" fill="none" marker-end="url(#rica)"><path d="M95 76V96"/><path d="M95 134V154"/><path d="M95 192V212"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#B84508"><text x="104" y="90">tema</text><text x="104" y="148">tema</text><text x="104" y="206">tema</text></g>
+<g font-size="12" fill="#5B5880"><text x="180" y="122">← {$t[2]}</text><text x="180" y="180">← {$t[2]}</text></g>
+<rect x="340" y="42" width="280" height="38" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="354" y="66" font-family="ui-monospace, Menlo, monospace" font-size="13">&lt;TemaContext value={tema}&gt;</text>
+<g fill="#F1F0F8" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="6 4"><rect x="360" y="100" width="150" height="34" rx="10"/><rect x="360" y="158" width="150" height="34" rx="10"/></g>
+<rect x="360" y="216" width="190" height="34" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="374" y="122" fill="#8A87B0">Pagina</text><text x="374" y="180" fill="#8A87B0">Barra</text><text x="374" y="238">useContext(…)</text></g>
+<path d="M600 80C620 150 600 215 554 233" stroke="#0B7F5C" stroke-width="3" fill="none" marker-end="url(#rica)"/>
+<text x="520" y="122" font-size="13" font-weight="700" fill="#0B7F5C">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** useReducer as a loop: the interface dispatches an action, the reducer works out the new state, React redraws. */
+if (!function_exists('fig_reactint_reducer')) {
+    function fig_reactint_reducer(string $l): string
+    {
+        $t = $l === 'it' ? ['interfaccia', 'funzione pura', 'nuovo stato', 'nuovo render'] : ['interface', 'pure function', 'new state', 'new render'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="rira" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="20" y="70" width="170" height="80" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="396" y="20" width="236" height="80" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="420" y="130" width="200" height="80" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-size="13" font-weight="700" fill="#5B5880"><text x="36" y="94">{$t[0]}</text><text x="412" y="44">reducer · {$t[1]}</text><text x="436" y="154">{$t[2]}</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="36" y="124">click «Libro»</text><text x="412" y="76">carrello(stato, azione)</text><text x="436" y="188">["Libro"]</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#rira)"><path d="M190 96C290 96 300 60 392 60"/><path d="M520 100V126"/><path d="M416 170C320 170 290 124 194 124"/></g>
+<text x="276" y="40" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#5A35C8">dispatch({ type: "aggiungi" })</text>
+<text x="300" y="184" text-anchor="middle" font-size="13" fill="#0B7F5C">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'react-intermediate', 'family' => 'react', 'after' => 'react-base',
     'title' => L('React intermedio', 'Intermediate React'), 'short' => L('React intermedio', 'React Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -25,6 +94,10 @@ return [
   return dati ? <p>{dati.gradi}°</p> : <p>Caricamento…</p>;
 }', 'jsx'),
             P('La funzione restituita dall’effetto è la **pulizia**: gira prima del prossimo effetto o quando il componente sparisce. Serve per annullare timer, iscrizioni e risposte arrivate tardi.', 'The function returned by the effect is the **cleanup**: it runs before the next effect or when the component disappears. It cancels timers, subscriptions and late-arriving responses.'),
+            Fig(L(fig_reactint_effect('it'), fig_reactint_effect('en')),
+                L('Linea del tempo: render, DOM aggiornato, poi l’effetto con fetch(). Quando cambia citta parte prima la pulizia, che imposta annullato, poi di nuovo l’effetto con fetch(). Quando il componente viene smontato parte un’ultima pulizia.', 'A timeline: render, DOM updated, then the effect with fetch(). When citta changes the cleanup runs first, setting annullato, then the effect again with fetch(). When the component is unmounted a final cleanup runs.'),
+                L('L’effetto viene dopo il disegno; la pulizia arriva prima del giro successivo e alla fine.', 'The effect comes after drawing; the cleanup comes before the next round and at the end.')),
+            P('Errore classico: chiamare un `set…` dentro un effetto senza dipendenze. Ogni render fa partire l’effetto, l’effetto cambia lo stato, lo stato causa un render: un ciclo infinito. Metti nelle dipendenze tutto quello che l’effetto legge, e chiediti se l’effetto serve davvero: un valore calcolato dalle props si calcola nel render. In sviluppo, con `StrictMode`, React monta i componenti due volte apposta, per farti scoprire le pulizie mancanti.', 'A classic mistake: calling a `set…` inside an effect with no dependencies. Every render starts the effect, the effect changes the state, the state causes a render: an endless loop. Put in the dependencies everything the effect reads, and ask yourself whether you really need the effect: a value worked out from props is computed during rendering. In development, with `StrictMode`, React mounts components twice on purpose, to help you find missing cleanups.'),
         ], [
             Q('e1', L('Quando gira un effetto con dipendenze `[]`?', 'When does an effect with `[]` dependencies run?'), [L('Una volta, al montaggio', 'Once, on mount'), L('A ogni rendering', 'On every render'), L('Mai', 'Never'), L('Ogni secondo', 'Every second')], 0, L('Nessuna dipendenza da osservare.', 'No dependency to watch.')),
             Q('e2', L('A che cosa serve la funzione restituita da useEffect?', 'What is the function returned by useEffect for?'), [L('Pulizia: annullare timer e iscrizioni', 'Cleanup: cancelling timers and subscriptions'), L('Restituire dati al genitore', 'Returning data to the parent'), L('Ridisegnare la pagina', 'Redrawing the page'), L('Niente', 'Nothing')], 0, L('Gira prima del prossimo effetto.', 'It runs before the next effect.')),
@@ -53,6 +126,7 @@ return [
   );
 }', 'jsx'),
             P('Nel gestore di `onSubmit` chiama `e.preventDefault()` per evitare che il browser ricarichi la pagina. Per moduli grandi esistono librerie come React Hook Form.', 'In the `onSubmit` handler call `e.preventDefault()` so the browser does not reload the page. For big forms there are libraries like React Hook Form.'),
+            P('Con più campi conviene un solo oggetto di stato e una funzione comune: `setDati({ ...dati, [e.target.name]: e.target.value })` aggiorna il campo giusto grazie all’attributo `name`. Gli errori di validazione spesso non vanno nello stato: si calcolano dai valori a ogni render (`const emailOk = dati.email.includes("@")`). Mostrali dopo che l’utente ha lasciato il campo, non mentre inizia a scrivere.', 'With several fields a single state object and a shared function work well: `setDati({ ...dati, [e.target.name]: e.target.value })` updates the right field thanks to the `name` attribute. Validation errors often do not belong in state: they are computed from the values at every render (`const emailOk = dati.email.includes("@")`). Show them after the user has left the field, not while they start typing.'),
         ], [
             Q('f1', L('Dove sta il valore di un input controllato?', 'Where does a controlled input’s value live?'), [L('Nello stato di React', 'In React state'), L('Solo nel DOM', 'Only in the DOM'), L('Nel server', 'On the server'), L('Nel CSS', 'In the CSS')], 0, L('`value` + `onChange`.', '`value` + `onChange`.')),
             Q('f2', L('Perché chiamare `e.preventDefault()` nell’invio?', 'Why call `e.preventDefault()` on submit?'), [L('Per non ricaricare la pagina', 'To avoid reloading the page'), L('Per svuotare il modulo', 'To clear the form'), L('Per validare', 'To validate'), L('Non serve', 'It is not needed')], 0, L('Il comportamento predefinito del form.', 'The form’s default behaviour.')),
@@ -63,6 +137,9 @@ return [
         ]),
         lesson('context', L('Stato condiviso e Context', 'Shared state and Context'), [
             P('Quando due componenti fratelli devono condividere un dato, si **solleva lo stato** al genitore comune e lo si passa giù con le props. Se le props devono attraversare molti livelli (*prop drilling*), si usa il **Context**.', 'When two sibling components must share data, you **lift state up** to their common parent and pass it down with props. If props must cross many levels (*prop drilling*), you use **Context**.'),
+            Fig(L(fig_reactint_context('it'), fig_reactint_context('en')),
+                L('A sinistra il prop drilling: tema scende come prop da App a Pagina, a Barra, a Pulsante, e i livelli in mezzo lo passano e basta. A destra con Context: TemaContext avvolge l’albero e Pulsante legge tema con useContext, mentre Pagina e Barra non ricevono nessuna prop.', 'On the left prop drilling: tema goes down as a prop from App to Pagina, to Barra, to Pulsante, and the levels in between only pass it on. On the right with Context: TemaContext wraps the tree and Pulsante reads tema with useContext, while Pagina and Barra receive no props.'),
+                L('Con Context chi ha bisogno del dato lo prende direttamente.', 'With Context whoever needs the data takes it directly.')),
             C('const TemaContext = createContext("chiaro");
 
 function App() {
@@ -113,6 +190,9 @@ const [tema, setTema] = useLocalStorage("tema", "chiaro");', 'jsx'),
         ]),
         lesson('reducer-tests', L('useReducer e test dei componenti', 'useReducer and component tests'), [
             P('Quando lo stato ha molte azioni collegate, **`useReducer`** le raccoglie in una funzione pura: `(stato, azione) => nuovoStato`. I componenti chiamano `dispatch({type: "aggiungi"})` invece di tanti `setX`.', 'When state has many related actions, **`useReducer`** gathers them in a pure function: `(state, action) => newState`. Components call `dispatch({type: "add"})` instead of many `setX` calls.'),
+            Fig(L(fig_reactint_reducer('it'), fig_reactint_reducer('en')),
+                L('Un ciclo: l’interfaccia, al click su «Libro», chiama dispatch({ type: "aggiungi" }); il reducer carrello(stato, azione), una funzione pura, calcola il nuovo stato ["Libro"]; il nuovo stato porta a un nuovo render dell’interfaccia.', 'A loop: the interface, on a click on “Libro”, calls dispatch({ type: "aggiungi" }); the reducer carrello(stato, azione), a pure function, works out the new state ["Libro"]; the new state leads to a new render of the interface.'),
+                L('Il componente dice cosa è successo, il reducer decide come cambia lo stato.', 'The component says what happened, the reducer decides how the state changes.')),
             C('function carrello(stato, azione) {
   switch (azione.type) {
     case "aggiungi": return [...stato, azione.prodotto];

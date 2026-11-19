@@ -1,6 +1,72 @@
 <?php
 /** Proton Lumo: a privacy-first assistant, how its privacy works, features, good use and limits, Projects, memory and images. */
 
+/** What happens to a Lumo chat: the server reads the question to answer, the saved history is encrypted with your key, ghost mode saves nothing. Labels in one language. */
+if (!function_exists('fig_lumo_privacy')) {
+    function fig_lumo_privacy(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Il tuo dispositivo', 'domanda e risposta', 'Server di Proton', 'il modello legge', 'la domanda per rispondere', 'Cronologia salvata', 'cifrata con la tua chiave:', 'illeggibile per Proton', 'Modalità fantasma', 'non salva nulla', 'connessione cifrata']
+            : ['Your device', 'question and answer', 'Proton server', 'the model reads', 'the question to answer', 'Saved history', 'encrypted with your key:', 'unreadable to Proton', 'Ghost mode', 'saves nothing', 'encrypted connection'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="12" y="40" width="160" height="150" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="72" y="58" width="40" height="66" rx="8" fill="#FFFFFF" stroke="#1E1C52" stroke-width="2"/><path d="M82 76h20M82 88h14M82 100h18" stroke="#2F8CF0" stroke-width="2"/>
+<text x="92" y="152" text-anchor="middle" font-weight="700" font-size="14" fill="#1B66BC">{$t[0]}</text><text x="92" y="172" text-anchor="middle" font-size="13">{$t[1]}</text>
+<path d="M176 115H226" stroke="#8A87B0" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+<text x="201" y="30" text-anchor="middle" font-size="13">{$t[10]}</text>
+<path d="M201 36V104" stroke="#8A87B0" stroke-width="1.5" stroke-dasharray="3 3"/>
+<rect x="190" y="104" width="22" height="18" rx="3" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><path d="M195 104v-5a6 6 0 0 1 12 0v5" fill="none" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="230" y="40" width="180" height="150" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="320" y="68" text-anchor="middle" font-weight="700" fill="#5A36C9">{$t[2]}</text>
+<rect x="290" y="82" width="60" height="44" rx="10" fill="#FFFFFF" stroke="#7048E8" stroke-width="2"/><circle cx="308" cy="104" r="5" fill="#7048E8"/><circle cx="332" cy="104" r="5" fill="#7048E8"/>
+<text x="320" y="152" text-anchor="middle" font-size="13">{$t[3]}</text><text x="320" y="170" text-anchor="middle" font-size="13">{$t[4]}</text>
+<path d="M410 115H452" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<rect x="456" y="40" width="172" height="150" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="542" y="68" text-anchor="middle" font-weight="700" fill="#0B7F5C">{$t[5]}</text>
+<g fill="#0B7F5C" opacity="0.55"><rect x="476" y="82" width="34" height="8" rx="4"/><rect x="516" y="82" width="20" height="8" rx="4"/><rect x="542" y="82" width="44" height="8" rx="4"/><rect x="476" y="98" width="52" height="8" rx="4"/><rect x="534" y="98" width="30" height="8" rx="4"/><rect x="476" y="114" width="24" height="8" rx="4"/><rect x="506" y="114" width="50" height="8" rx="4"/></g>
+<rect x="584" y="102" width="26" height="22" rx="4" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/><path d="M590 102v-6a7 7 0 0 1 14 0v6" fill="none" stroke="#0B7F5C" stroke-width="2"/>
+<text x="542" y="152" text-anchor="middle" font-size="13">{$t[6]}</text><text x="542" y="170" text-anchor="middle" font-size="13">{$t[7]}</text>
+<rect x="456" y="214" width="172" height="70" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="542" y="244" text-anchor="middle" font-weight="700">{$t[8]}</text><text x="542" y="266" text-anchor="middle" font-size="13">{$t[9]}</text>
+<path d="M410 150C430 150 430 249 452 249" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 4" fill="none" marker-end="url(#a)"/>
+</svg>
+SVG;
+    }
+}
+
+/** Optional web search: without it the model answers from what it learnt; with it, a private search engine finds pages and the answer cites them. Labels in one language. */
+if (!function_exists('fig_lumo_search')) {
+    function fig_lumo_search(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Ricerca spenta', 'Ricerca accesa', 'Domanda', 'Modello', 'Risposta', 'da ciò che ha imparato:', 'può essere superata', 'Motore di ricerca', 'rispettoso della privacy', 'Pagine', 'Risposta con fonti']
+            : ['Search off', 'Search on', 'Question', 'Model', 'Answer', 'from what it learnt:', 'may be out of date', 'Search engine', 'privacy-respecting', 'Pages', 'Answer with sources'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<rect x="16" y="20" width="56" height="28" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/><circle cx="32" cy="34" r="9" fill="#8A87B0"/>
+<text x="84" y="40" font-weight="700">{$t[0]}</text>
+<g stroke-width="2"><rect x="16" y="62" width="110" height="52" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="250" y="62" width="110" height="52" rx="12" fill="#ECE6FF" stroke="#7048E8"/><rect x="420" y="62" width="204" height="70" rx="12" fill="#F1F0F8" stroke="#8A87B0"/></g>
+<g font-weight="700" text-anchor="middle"><text x="71" y="93" fill="#1B66BC">{$t[2]}</text><text x="305" y="93" fill="#5A36C9">{$t[3]}</text><text x="522" y="86">{$t[4]}</text></g>
+<text x="522" y="106" text-anchor="middle" font-size="13">{$t[5]}</text><text x="522" y="123" text-anchor="middle" font-size="13">{$t[6]}</text>
+<g stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"><path d="M126 88H246"/><path d="M360 88H416"/></g>
+<rect x="16" y="160" width="56" height="28" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/><circle cx="56" cy="174" r="9" fill="#0B7F5C"/>
+<text x="84" y="180" font-weight="700" fill="#0B7F5C">{$t[1]}</text>
+<g stroke-width="2"><rect x="16" y="202" width="96" height="52" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="132" y="196" width="150" height="64" rx="12" fill="#FFF3EA" stroke="#E8590C"/><rect x="420" y="202" width="204" height="52" rx="12" fill="#D5F6EA" stroke="#0B7F5C"/></g>
+<g fill="#FFFFFF" stroke="#E8590C" stroke-width="2"><rect x="306" y="200" width="30" height="38" rx="4"/><rect x="316" y="208" width="30" height="38" rx="4"/></g>
+<rect x="364" y="210" width="40" height="36" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><circle cx="376" cy="228" r="4" fill="#7048E8"/><circle cx="392" cy="228" r="4" fill="#7048E8"/>
+<g font-weight="700" text-anchor="middle"><text x="64" y="233" fill="#1B66BC" font-size="14">{$t[2]}</text><text x="207" y="222" fill="#B84508" font-size="14">{$t[7]}</text><text x="522" y="227" fill="#0B7F5C" font-size="14">{$t[10]}</text></g>
+<text x="207" y="242" text-anchor="middle" font-size="13">{$t[8]}</text>
+<text x="326" y="272" text-anchor="middle" font-size="13">{$t[9]}</text>
+<g font-size="13" fill="#0B7F5C" text-anchor="middle"><rect x="490" y="234" width="26" height="16" rx="5" fill="#FFFFFF"/><text x="503" y="246">1</text><rect x="524" y="234" width="26" height="16" rx="5" fill="#FFFFFF"/><text x="537" y="246">2</text></g>
+<g stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"><path d="M112 228H128"/><path d="M282 228H302"/><path d="M346 228H360"/><path d="M404 228H416"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'lumo', 'family' => 'assistants', 'after' => null,
     'title' => L('Proton Lumo', 'Proton Lumo'), 'short' => L('Lumo', 'Lumo'), 'level' => L('Base', 'Basics'),
@@ -20,6 +86,9 @@ return [
         lesson('privacy', L('Come funziona la privacy', 'How the privacy works'), [
             P('Le chat salvate sono protette con la **cifratura ad accesso zero** di Proton: sono cifrate con una chiave legata al tuo account, così sul server restano illeggibili anche per Proton. Proton dichiara di **non conservare log** delle conversazioni e di non condividerle con terze parti.', 'Saved chats are protected with Proton’s **zero-access encryption**: they are encrypted with a key tied to your account, so on the server they stay unreadable even to Proton. Proton states it **keeps no logs** of conversations and does not share them with third parties.'),
             P('La **modalità fantasma** apre chat che spariscono quando le chiudi, senza lasciare cronologia. Ricorda però un limite tecnico: per rispondere, il modello deve elaborare il testo della domanda sul server. La privacy riguarda soprattutto cosa viene **conservato**, **usato** e **condiviso** dopo.', '**Ghost mode** opens chats that disappear when you close them, leaving no history. Remember a technical limit, though: to answer, the model must process the question’s text on the server. Privacy is mainly about what is **kept**, **used** and **shared** afterwards.'),
+            Fig(L(fig_lumo_privacy('it'), fig_lumo_privacy('en')),
+                L('Tre riquadri: il tuo dispositivo scambia domanda e risposta con il server di Proton su una connessione cifrata; sul server il modello legge la domanda per rispondere; la cronologia salvata è cifrata con la tua chiave e illeggibile per Proton. Una freccia tratteggiata porta alla modalità fantasma, che non salva nulla.', 'Three boxes: your device exchanges question and answer with Proton’s server over an encrypted connection; on the server the model reads the question to answer; the saved history is encrypted with your key and unreadable to Proton. A dashed arrow leads to ghost mode, which saves nothing.'),
+                L('Il modello deve leggere la domanda; la privacy riguarda ciò che succede dopo.', 'The model has to read the question; privacy is about what happens afterwards.')),
         ], [
             Q('p1', L('Che cosa significa cifratura ad accesso zero?', 'What does zero-access encryption mean?'), [L('Le chat salvate sono illeggibili anche per Proton', 'Saved chats are unreadable even to Proton'), L('Nessuno può accedere a Lumo', 'Nobody can access Lumo'), L('Non serve una password', 'No password is needed'), L('Lumo funziona offline', 'Lumo works offline')], 0, L('La chiave è legata al tuo account.', 'The key is tied to your account.')),
             Q('p2', L('Che cosa fa la modalità fantasma?', 'What does ghost mode do?'), [L('Le chat spariscono quando le chiudi', 'Chats vanish when you close them'), L('Nasconde l’app dal telefono', 'Hides the app from the phone'), L('Cambia la voce', 'Changes the voice'), L('Disattiva il modello', 'Turns off the model')], 0, L('Nessuna cronologia.', 'No history.')),
@@ -30,6 +99,9 @@ return [
         ]),
         lesson('features', L('Funzioni', 'Features'), [
             P('Lumo può **analizzare file** caricati (documenti, fogli di calcolo, immagini), lavorare con i file di **Proton Drive** e fare **ricerche sul web** per informazioni recenti. La ricerca web è **facoltativa**: la attivi tu quando serve, e le ricerche passano attraverso motori di ricerca attenti alla privacy.', 'Lumo can **analyse uploaded files** (documents, spreadsheets, images), work with **Proton Drive** files and **search the web** for recent information. Web search is **optional**: you turn it on when needed, and searches go through privacy-respecting search engines.'),
+            Fig(L(fig_lumo_search('it'), fig_lumo_search('en')),
+                L('Due righe. Con la ricerca spenta la domanda va al modello, che risponde con ciò che ha imparato e può essere superato. Con la ricerca accesa la domanda passa da un motore di ricerca rispettoso della privacy, poi dalle pagine trovate al modello, e la risposta ha le fonti numerate.', 'Two rows. With search off, the question goes to the model, which answers from what it learnt and may be out of date. With search on, the question goes through a privacy-respecting search engine, then the pages it finds go to the model, and the answer has numbered sources.'),
+                L('Accendi la ricerca per notizie, prezzi e date recenti.', 'Turn search on for recent news, prices and dates.')),
             P('Si possono dare **istruzioni personalizzate** e usarlo per riassumere, scrivere, tradurre, programmare e fare brainstorming, come gli altri assistenti. Il piano a pagamento offre limiti più alti e funzioni in più, come chat e progetti illimitati e l’accesso ai modelli più capaci.', 'You can set **custom instructions** and use it to summarise, write, translate, code and brainstorm, like other assistants. The paid plan offers higher limits and extra features, such as unlimited chats and Projects and access to the most capable models.'),
         ], [
             Q('f1', L('La ricerca web di Lumo è sempre attiva?', 'Is Lumo’s web search always on?'), [L('No, è facoltativa', 'No, it is optional'), L('Sì, sempre', 'Yes, always'), L('Non esiste', 'It does not exist'), L('Solo di notte', 'Only at night')], 0, L('La attivi quando serve.', 'You turn it on when needed.')),

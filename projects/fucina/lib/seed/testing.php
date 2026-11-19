@@ -1,6 +1,116 @@
 <?php
 /** Testing: why test and the pyramid, unit tests, mocks and doubles, integration and end-to-end, TDD and CI, coverage, async code and fake time, network mocks, UI tests. */
 
+/** The test pyramid: many unit tests at the base, some integration tests, a few end-to-end at the top; speed and realism pull in opposite directions. */
+if (!function_exists('fig_test_pyramid')) {
+    function fig_test_pyramid(string $l): string
+    {
+        $t = $l === 'it' ? ['unitari', 'integrazione', 'pochi', 'alcuni', 'tanti', 'più lenti|e realistici', 'più veloci|e precisi'] : ['unit', 'integration', 'few', 'some', 'many', 'slower and|more realistic', 'faster and|more precise'];
+        foreach ([5, 6] as $i) { [$a, $b] = explode('|', $t[$i]); $t[$i] = '<tspan x="516">' . $a . '</tspan><tspan x="516" dy="17">' . $b . '</tspan>'; }
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tpya" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<path d="M240 16L313 92H167Z" fill="#FFF3EA" stroke="#E8590C" stroke-width="2" stroke-linejoin="round"/>
+<path d="M167 98H313L381 162H99Z" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2" stroke-linejoin="round"/>
+<path d="M93 168H387L460 244H20Z" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2" stroke-linejoin="round"/>
+<g text-anchor="middle" font-weight="700"><text x="240" y="76" font-size="13" fill="#B84508">end-to-end</text><text x="240" y="136" fill="#1B66BC">{$t[1]}</text><text x="240" y="214" fill="#0B7F5C">{$t[0]}</text></g>
+<g font-size="13" fill="#5B5880" text-anchor="end"><text x="150" y="64">{$t[2]}</text><text x="86" y="136">{$t[3]}</text><text x="40" y="200">{$t[4]}</text></g>
+<path d="M500 230V28" stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#tpya)" marker-start="url(#tpya)"/>
+<g font-size="13" fill="#5B5880"><text y="44">{$t[5]}</text><text y="214">{$t[6]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Arrange, Act, Assert: three steps of a unit test, each with its line of code. */
+if (!function_exists('fig_test_aaa')) {
+    function fig_test_aaa(string $l): string
+    {
+        $t = $l === 'it' ? ['prepara i dati', 'esegui la funzione', 'verifica il risultato'] : ['prepare the data', 'run the function', 'check the result'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="taaa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="30" width="186" height="120" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="227" y="30" width="186" height="120" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="442" y="30" width="186" height="120" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-weight="700" font-size="16"><text x="28" y="60" fill="#5A35C8">1 · Arrange</text><text x="243" y="60" fill="#1B66BC">2 · Act</text><text x="458" y="60" fill="#0B7F5C">3 · Assert</text></g>
+<g font-size="13" fill="#5B5880"><text x="28" y="82">{$t[0]}</text><text x="243" y="82">{$t[1]}</text><text x="458" y="82">{$t[2]}</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12"><text x="28" y="120">righe = [ … ]</text><text x="243" y="120">totale(righe)</text><text x="458" y="120">expect(r).toBe(25)</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#taaa)"><path d="M198 90H223"/><path d="M413 90H438"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** A mock in place of the real email service: the code under test calls the fake, which answers at once and records the call for the test to check. */
+if (!function_exists('fig_test_mock')) {
+    function fig_test_mock(string $l): string
+    {
+        $t = $l === 'it' ? ['il test', 'codice da provare', 'server email vero', 'non chiamato', 'mock', 'risponde true e ricorda la chiamata', 'controlla con chi è stato chiamato'] : ['the test', 'code under test', 'real email server', 'not called', 'mock', 'answers true and records the call', 'checks who it was called with'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tmka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="82" width="140" height="66" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="196" y="82" width="170" height="66" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="420" y="16" width="208" height="62" rx="12" fill="#FFFFFF" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="6 4"/>
+<rect x="420" y="128" width="208" height="70" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<g font-size="13" font-weight="700"><text x="28" y="108">{$t[0]}</text><text x="212" y="108" fill="#1B66BC">{$t[1]}</text><text x="436" y="40" fill="#8A87B0">{$t[2]}</text><text x="436" y="152" fill="#5A35C8">{$t[4]} · <tspan font-family="ui-monospace, Menlo, monospace" font-weight="400">vi.fn()</tspan></text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12"><text x="28" y="132">it("…")</text><text x="212" y="132">registra(…)</text></g>
+<g font-size="12" fill="#5B5880"><text x="436" y="62">✗ {$t[3]}</text><text x="436" y="176">{$t[5]}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#tmka)"><path d="M152 115H192"/><path d="M366 126C392 126 396 160 416 160"/></g>
+<path d="M366 104C392 104 396 50 416 50" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="5 4" fill="none"/>
+<path d="M82 148V218H520V202" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#tmka)"/>
+<text x="96" y="210" font-size="12" font-weight="700" fill="#0B7F5C">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** The TDD cycle: red, green, refactor, going round; a highlight walks the three steps. */
+if (!function_exists('fig_test_tdd')) {
+    function fig_test_tdd(string $l): string
+    {
+        $t = $l === 'it' ? ['1 · rosso', 'scrivi un test che fallisce', '2 · verde', 'il codice minimo per farlo passare', '3 · refactor', 'migliora il codice, i test restano verdi'] : ['1 · red', 'write a test that fails', '2 · green', 'the least code to make it pass', '3 · refactor', 'improve the code, tests stay green'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.ttd{opacity:0;animation:ttd 6s infinite}.ttd2{animation-delay:2s}.ttd3{animation-delay:4s}@keyframes ttd{0%{opacity:0}4%{opacity:1}30%{opacity:1}34%{opacity:0}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.ttd{animation:none}}</style>
+<defs><marker id="ttda" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="20" y="24" width="240" height="70" rx="14" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<rect x="380" y="24" width="240" height="70" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="190" y="152" width="260" height="70" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g fill="none" stroke="#7048E8" stroke-width="4"><rect class="ttd" x="14" y="18" width="252" height="82" rx="17"/><rect class="ttd ttd2" x="374" y="18" width="252" height="82" rx="17"/><rect class="ttd ttd3" x="184" y="146" width="272" height="82" rx="17"/></g>
+<g font-weight="700"><text x="36" y="52" fill="#B0245A">{$t[0]}</text><text x="396" y="52" fill="#0B7F5C">{$t[2]}</text><text x="206" y="180" fill="#1B66BC">{$t[4]}</text></g>
+<g font-size="13"><text x="36" y="76">{$t[1]}</text><text x="396" y="76">{$t[3]}</text><text x="206" y="204">{$t[5]}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#ttda)"><path d="M260 59H376"/><path d="M500 94C500 140 470 170 454 180"/><path d="M186 186C140 176 140 130 140 98"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** MSW between the code and the network: the request is caught and answered with fake data, the real server is never reached. */
+if (!function_exists('fig_test_msw')) {
+    function fig_test_msw(string $l): string
+    {
+        $t = $l === 'it' ? ['il tuo codice', 'intercetta', 'server vero', 'non raggiunto', 'risposta finta', 'o un errore 500'] : ['your code', 'intercepts', 'real server', 'not reached', 'fake response', 'or a 500 error'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="tmsa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="12" y="60" width="170" height="84" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="256" y="60" width="170" height="84" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="490" y="60" width="138" height="84" rx="12" fill="#FFFFFF" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="6 4"/>
+<g font-size="13" font-weight="700"><text x="28" y="86" fill="#1B66BC">{$t[0]}</text><text x="272" y="86" fill="#B84508">MSW · {$t[1]}</text><text x="506" y="86" fill="#8A87B0">{$t[2]}</text></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="12"><text x="28" y="116">caricaCorsi()</text><text x="272" y="116">http.get(…)</text></g>
+<text x="506" y="116" font-size="12" fill="#8A87B0">✗ {$t[3]}</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#tmsa)"><path d="M182 84H252"/><path d="M256 122H186"/></g>
+<path d="M426 102H486" stroke="#C9C7DD" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="217" y="48" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="12">GET /corsi</text>
+<text x="217" y="166" text-anchor="middle" font-size="12" font-weight="700" fill="#0B7F5C">{$t[4]}</text>
+<text x="217" y="184" text-anchor="middle" font-size="12" fill="#5B5880">{$t[5]}</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'testing', 'family' => 'testing', 'after' => 'js-base',
     'title' => L('Testing del software', 'Software Testing'), 'short' => L('Testing', 'Testing'), 'level' => L('Intermedio', 'Intermediate'),
@@ -14,6 +124,9 @@ return [
        /      \\
       /--------\\    unitari: tanti, velocissimi, una funzione alla volta', 'text'),
             P('La **piramide dei test** suggerisce tanti test unitari alla base, alcuni di integrazione e pochi end-to-end in cima: i primi sono veloci e precisi nel dire cosa si è rotto, gli ultimi più realistici ma lenti e fragili.', 'The **test pyramid** suggests many unit tests at the base, some integration tests and a few end-to-end ones at the top: the former are fast and precise about what broke, the latter more realistic but slow and brittle.'),
+            Fig(L(fig_test_pyramid('it'), fig_test_pyramid('en')),
+                L('Una piramide in tre fasce: alla base, larga, i test unitari, tanti; al centro i test di integrazione, alcuni; in cima, stretta, gli end-to-end, pochi. Una freccia a destra indica che salendo i test diventano più lenti e realistici, scendendo più veloci e precisi.', 'A pyramid in three bands: at the wide base the unit tests, many; in the middle the integration tests, some; at the narrow top the end-to-end tests, few. An arrow on the right shows that going up tests become slower and more realistic, going down faster and more precise.'),
+                L('La base larga regge tutto: tanti test veloci, pochi test lenti.', 'The wide base holds everything up: many fast tests, few slow ones.')),
         ], [
             Q('w1', L('Quali test dovrebbero essere i più numerosi?', 'Which tests should be the most numerous?'), [L('Unitari', 'Unit'), L('End-to-end', 'End-to-end'), L('Manuali', 'Manual'), L('Nessuno', 'None')], 0, L('La base della piramide.', 'The pyramid’s base.')),
             Q('w2', L('Che vantaggio danno i test quando modifichi il codice?', 'What do tests give you when changing code?'), [L('Scopri subito se hai rotto qualcosa', 'You find out at once if you broke something'), L('Il codice diventa più lungo', 'Code gets longer'), L('Niente', 'Nothing'), L('Rallentano tutto', 'They slow everything')], 0, L('Modificare senza paura.', 'Change without fear.')),
@@ -40,6 +153,10 @@ describe("totale", () => {
   });
 });', 'js'),
             P('Testa anche i **casi limite**: lista vuota, valori negativi, zero, testi enormi, input sbagliati. Sono lì che si nascondono i bug. In Python lo stesso si fa con **pytest** (`def test_...(): assert ...`).', 'Also test **edge cases**: empty list, negative values, zero, huge text, wrong input. That is where bugs hide. In Python the same is done with **pytest** (`def test_...(): assert ...`).'),
+            Fig(L(fig_test_aaa('it'), fig_test_aaa('en')),
+                L('Tre riquadri in fila: 1, Arrange, prepara i dati con righe = [ … ]; 2, Act, esegue totale(righe); 3, Assert, verifica il risultato con expect(r).toBe(25).', 'Three boxes in a row: 1, Arrange, prepares the data with righe = [ … ]; 2, Act, runs totale(righe); 3, Assert, checks the result with expect(r).toBe(25).'),
+                L('Ogni test racconta una piccola storia: dati, azione, verifica.', 'Every test tells a small story: data, action, check.')),
+            Tip('Un test deve fallire quando il codice è sbagliato: prova a rompere apposta la funzione e guarda se diventa rosso. Un test che passa sempre non protegge niente.', 'A test must fail when the code is wrong: try breaking the function on purpose and see whether it turns red. A test that always passes protects nothing.'),
         ], [
             Q('u1', L('Che cosa significa Arrange, Act, Assert?', 'What does Arrange, Act, Assert mean?'), [L('Prepara, esegui, verifica', 'Prepare, run, verify'), L('Scrivi, cancella, ripeti', 'Write, delete, repeat'), L('Compila, avvia, chiudi', 'Compile, start, close'), L('Niente', 'Nothing')], 0, L('Lo schema di ogni test.', 'The pattern of every test.')),
             Q('u2', L('Quale di questi è un caso limite?', 'Which of these is an edge case?'), [L('Una lista vuota', 'An empty list'), L('Una lista di tre elementi normali', 'A list of three normal items'), L('Il nome del file', 'The file name'), L('Il colore del test', 'The test colour')], 0, L('Lì si nascondono i bug.', 'Bugs hide there.')),
@@ -50,6 +167,9 @@ describe("totale", () => {
         ]),
         lesson('mocks', L('Mock e test di integrazione', 'Mocks and integration tests'), [
             P('Se una funzione chiama un servizio esterno (un’API di pagamento, l’invio di email), nel test unitario la sostituisci con un **mock**: un finto oggetto che risponde come vuoi e registra come è stato chiamato. Così il test è veloce, ripetibile e non manda email vere.', 'If a function calls an external service (a payment API, sending email), in the unit test you replace it with a **mock**: a fake object that answers as you wish and records how it was called. That way the test is fast, repeatable and sends no real email.'),
+            Fig(L(fig_test_mock('it'), fig_test_mock('en')),
+                L('Il test chiama registra(…), il codice da provare. Questo non chiama il server email vero, tratteggiato e segnato come non chiamato, ma il mock vi.fn(), che risponde true e ricorda la chiamata. Una freccia verde dal test al mock indica che il test controlla con chi è stato chiamato.', 'The test calls registra(…), the code under test. This does not call the real email server, dashed and marked as not called, but the mock vi.fn(), which answers true and records the call. A green arrow from the test to the mock shows that the test checks who it was called with.'),
+                L('Il mock prende il posto del servizio vero e fa da testimone.', 'The mock takes the place of the real service and acts as a witness.')),
             C('import { vi, it, expect } from "vitest";
 import { registra } from "./utenti.js";
 
@@ -78,6 +198,9 @@ test("un utente può iscriversi alla newsletter", async ({ page }) => {
   await expect(page.getByText("Grazie per l’iscrizione")).toBeVisible();
 });', 'js'),
             P('Nel **TDD** (Test-Driven Development) scrivi prima il test che fallisce, poi il codice minimo per farlo passare, poi migliori il codice (rosso, verde, refactor). Con l’**integrazione continua** (CI, per esempio GitHub Actions) i test girano automaticamente a ogni push e pull request: niente merge se qualcosa è rosso.', 'In **TDD** (Test-Driven Development) you first write the failing test, then the minimal code to make it pass, then improve the code (red, green, refactor). With **continuous integration** (CI, for example GitHub Actions) tests run automatically on every push and pull request: no merge if anything is red.'),
+            Fig(L(fig_test_tdd('it'), fig_test_tdd('en')),
+                L('Un ciclo di tre riquadri: 1, rosso, scrivi un test che fallisce; 2, verde, il codice minimo per farlo passare; 3, refactor, migliora il codice mentre i test restano verdi; poi si torna al rosso. Un’evidenziazione passa da un passo all’altro.', 'A cycle of three boxes: 1, red, write a test that fails; 2, green, the least code to make it pass; 3, refactor, improve the code while the tests stay green; then back to red. A highlight moves from one step to the next.'),
+                L('Rosso, verde, refactor: piccoli passi, sempre con una rete sotto.', 'Red, green, refactor: small steps, always with a safety net.')),
         ], [
             Q('e1', L('Che cosa fa Playwright?', 'What does Playwright do?'), [L('Automatizza un browser per i test end-to-end', 'Automates a browser for end-to-end tests'), L('Gestisce database', 'Manages databases'), L('Compila C++', 'Compiles C++'), L('Disegna grafici', 'Draws charts')], 0, L('Simula l’utente.', 'It simulates the user.')),
             Q('e2', L('Qual è l’ordine del TDD?', 'What is the TDD order?'), [L('Rosso, verde, refactor', 'Red, green, refactor'), L('Verde, rosso, cancella', 'Green, red, delete'), L('Codice, poi test un anno dopo', 'Code, then tests a year later'), L('Refactor, rosso, verde', 'Refactor, red, green')], 0, L('Prima il test che fallisce.', 'Failing test first.')),
@@ -141,6 +264,9 @@ import { dividi } from "./mate.js";
         ]),
         lesson('network-mocks', L('Simulare la rete con MSW', 'Mocking the network with MSW'), [
             P('Invece di sostituire `fetch` a mano, puoi intercettare le richieste di rete con **MSW** (Mock Service Worker): descrivi come risponde ogni indirizzo, e il tuo codice fa richieste vere che ricevono risposte finte. Funziona nei test con Node e anche nel browser.', 'Instead of replacing `fetch` by hand, you can intercept network requests with **MSW** (Mock Service Worker): you describe how each address answers, and your code makes real requests that get fake responses. It works in Node tests and in the browser too.'),
+            Fig(L(fig_test_msw('it'), fig_test_msw('en')),
+                L('Il tuo codice, caricaCorsi(), fa una richiesta GET /corsi. MSW la intercetta con http.get(…) e restituisce una risposta finta o un errore 500; il server vero, tratteggiato, non viene raggiunto.', 'Your code, caricaCorsi(), makes a GET /corsi request. MSW intercepts it with http.get(…) and returns a fake response or a 500 error; the real server, dashed, is never reached.'),
+                L('La richiesta parte davvero, ma la risposta la decide il test.', 'The request really goes out, but the test decides the answer.')),
             C('import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { beforeAll, afterEach, afterAll, it, expect } from "vitest";

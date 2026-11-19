@@ -1,6 +1,64 @@
 <?php
 /** Perplexity: an answer engine with sources, research modes, Spaces, checking sources, the Perplexity API, a research method. */
 
+/** How an answer with sources is built: question, searches, pages read, then an answer whose sentences point back to numbered sources. The links back march. Labels in one language. */
+if (!function_exists('fig_pplx_answer')) {
+    function fig_pplx_answer(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['1  Domanda', '2  Cerca sul web', '3  Legge le pagine', '4  Scrive la risposta', 'più ricerche', 'Fonte', 'ogni frase rimanda alla sua fonte']
+            : ['1  Question', '2  Searches the web', '3  Reads the pages', '4  Writes the answer', 'several searches', 'Source', 'every sentence points to its source'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.back{animation:go 3s linear infinite}@keyframes go{to{stroke-dashoffset:-24}}@media (prefers-reduced-motion:reduce){.back{animation:none}}</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<g font-weight="700" font-size="14"><text x="16" y="26">{$t[0]}</text><text x="160" y="26">{$t[1]}</text><text x="316" y="26">{$t[2]}</text><text x="490" y="26">{$t[3]}</text></g>
+<rect x="16" y="110" width="120" height="70" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g stroke="#1B66BC" stroke-width="2" stroke-linecap="round"><path d="M32 134H118M32 148H104M32 162H90"/></g>
+<path d="M136 145H156" stroke="#8A87B0" stroke-width="2" marker-end="url(#a)"/>
+<rect x="160" y="96" width="130" height="98" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<circle cx="214" cy="134" r="16" fill="#FFFFFF" stroke="#E8590C" stroke-width="3"/><path d="M226 146l14 14" stroke="#E8590C" stroke-width="4" stroke-linecap="round"/>
+<text x="225" y="182" text-anchor="middle" font-size="13">{$t[4]}</text>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M290 130C304 130 300 70 314 70"/><path d="M290 145H314"/><path d="M290 160C304 160 300 220 314 220"/></g>
+<g stroke-width="2"><rect x="318" y="44" width="120" height="52" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><rect x="318" y="119" width="120" height="52" rx="10" fill="#F1F0F8" stroke="#8A87B0"/><rect x="318" y="194" width="120" height="52" rx="10" fill="#F1F0F8" stroke="#8A87B0"/></g>
+<g font-size="14"><text x="334" y="75">{$t[5]} <tspan font-weight="700">1</tspan></text><text x="334" y="150">{$t[5]} <tspan font-weight="700">2</tspan></text><text x="334" y="225">{$t[5]} <tspan font-weight="700">3</tspan></text></g>
+<rect x="490" y="44" width="136" height="202" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g stroke="#1E1C52" stroke-width="2" stroke-linecap="round"><path d="M504 74H574"/><path d="M504 92H560"/><path d="M504 142H584"/><path d="M504 160H572"/><path d="M504 210H570"/></g>
+<g fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"><rect x="584" y="64" width="22" height="20" rx="5"/><rect x="582" y="150" width="22" height="20" rx="5"/><rect x="580" y="200" width="22" height="20" rx="5"/></g>
+<g font-size="13" font-weight="700" fill="#0B7F5C" text-anchor="middle"><text x="595" y="79">1</text><text x="593" y="165">2</text><text x="591" y="215">3</text></g>
+<g class="back" stroke="#0B7F5C" stroke-width="2" fill="none" stroke-dasharray="6 6"><path d="M490 70H442"/><path d="M490 152C466 152 466 145 442 145"/><path d="M490 214C466 214 466 220 442 220"/></g>
+<text x="320" y="280" text-anchor="middle" font-size="13">{$t[6]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** A research method as a loop: precise question, read the sources, follow-up questions, then your own synthesis with agreements and disagreements. Labels in one language. */
+if (!function_exists('fig_pplx_method')) {
+    function fig_pplx_method(string $lg): string
+    {
+        $t = $lg === 'it'
+            ? ['Domanda precisa', 'luogo, periodo, confronto', 'Leggi le fonti', 'dicono davvero così?', 'Domanda successiva', 'nello stesso thread', 'La tua sintesi', 'Affermazione', 'Fonte', 'Cifra A', 'Data B', 'Cifra C', 'concordano', 'in disaccordo']
+            : ['Precise question', 'place, period, comparison', 'Read the sources', 'do they really say so?', 'Follow-up question', 'in the same thread', 'Your synthesis', 'Claim', 'Source', 'Figure A', 'Date B', 'Figure C', 'agree', 'disagree'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 290" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<g stroke-width="2"><rect x="34" y="20" width="200" height="60" rx="12" fill="#DCEBFF" stroke="#2F8CF0"/><rect x="34" y="115" width="200" height="60" rx="12" fill="#FFF3EA" stroke="#E8590C"/><rect x="34" y="210" width="200" height="60" rx="12" fill="#ECE6FF" stroke="#7048E8"/></g>
+<g font-weight="700"><text x="50" y="45" fill="#1B66BC">{$t[0]}</text><text x="50" y="140" fill="#B84508">{$t[2]}</text><text x="50" y="235" fill="#5A36C9">{$t[4]}</text></g>
+<g font-size="13"><text x="50" y="66">{$t[1]}</text><text x="50" y="161">{$t[3]}</text><text x="50" y="256">{$t[5]}</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M134 80V111"/><path d="M134 175V206"/><path d="M34 240C8 240 8 145 30 145"/><path d="M234 145H286"/></g>
+<rect x="290" y="40" width="334" height="210" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="306" y="68" font-weight="700" fill="#0B7F5C">{$t[6]}</text>
+<rect x="306" y="80" width="302" height="154" rx="8" fill="#FFFFFF" stroke="#0B7F5C" stroke-width="2"/>
+<path d="M306 112H608M306 152H608M306 192H608M440 80V234" stroke="#D5F6EA" stroke-width="2"/>
+<g font-size="13" font-weight="700"><text x="318" y="101">{$t[7]}</text><text x="452" y="101">{$t[8]}</text></g>
+<g font-size="13"><text x="318" y="137">{$t[9]}</text><text x="318" y="177">{$t[10]}</text><text x="318" y="217">{$t[11]}</text><text x="452" y="137">[1] [3]</text><text x="452" y="177">[2]</text><text x="452" y="217">[1] [4]</text></g>
+<g font-size="13" font-weight="700"><rect x="504" y="124" width="100" height="20" rx="10" fill="#D5F6EA"/><text x="556" y="138" text-anchor="middle" fill="#0B7F5C">{$t[12]}</text><rect x="504" y="204" width="100" height="20" rx="10" fill="#FFE3EE"/><text x="556" y="218" text-anchor="middle" fill="#C2255C">{$t[13]}</text></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'perplexity', 'family' => 'assistants', 'after' => null,
     'title' => L('Perplexity', 'Perplexity'), 'short' => L('Perplexity', 'Perplexity'), 'level' => L('Base', 'Basics'),
@@ -8,6 +66,9 @@ return [
     'lessons' => [
         lesson('answers', L('Risposte con le fonti', 'Answers with sources'), [
             P('**Perplexity** è un “motore di risposte”: invece di un elenco di link, cerca sul web, legge le pagine e scrive una risposta con le **citazioni numerate** alle fonti. È pensato per domande che richiedono informazioni aggiornate e verificabili.', '**Perplexity** is an “answer engine”: instead of a list of links, it searches the web, reads the pages and writes an answer with **numbered citations** to the sources. It is designed for questions needing up-to-date, verifiable information.'),
+            Fig(L(fig_pplx_answer('it'), fig_pplx_answer('en')),
+                L('Quattro tappe da sinistra a destra: la domanda, una lente che rappresenta più ricerche sul web, tre pagine trovate numerate 1, 2 e 3, e la risposta scritta. Ogni frase della risposta ha un numero, collegato da una linea tratteggiata alla fonte corrispondente.', 'Four steps from left to right: the question, a magnifying glass standing for several web searches, three pages found numbered 1, 2 and 3, and the written answer. Each sentence of the answer has a number, joined by a dashed line to the matching source.'),
+                L('I numeri sono il filo che riporta ogni frase alla pagina da cui viene.', 'The numbers are the thread that leads each sentence back to the page it comes from.')),
             P('Si possono fare **domande di seguito** per approfondire, mantenendo il contesto. Si usa dal web, da app per computer e telefono e dal suo browser, Comet. Le domande migliori sono specifiche: “confronta”, “quali sono le differenze”, con luogo e periodo.', 'You can ask **follow-up questions** to dig deeper, keeping the context. It is used from the web, desktop and phone apps and its own browser, Comet. The best questions are specific: “compare”, “what are the differences”, with place and time frame.'),
         ], [
             Q('a1', L('Che cosa distingue Perplexity da un motore di ricerca classico?', 'What sets Perplexity apart from a classic search engine?'), [L('Scrive una risposta con citazioni alle fonti', 'It writes an answer with source citations'), L('Mostra solo pubblicità', 'It only shows ads'), L('Non usa internet', 'It does not use the internet'), L('Funziona solo offline', 'It only works offline')], 0, L('Un motore di risposte.', 'An answer engine.')),
@@ -31,6 +92,7 @@ return [
         lesson('verify', L('Verificare le fonti', 'Verifying sources'), [
             P('Le citazioni rendono le risposte **verificabili**, non automaticamente vere: il modello può riassumere male una pagina, o citare una fonte poco affidabile. Apri le fonti per le affermazioni importanti e controlla che dicano davvero quello che la risposta afferma.', 'Citations make answers **verifiable**, not automatically true: the model can misread a page, or cite an unreliable source. Open the sources for important claims and check they really say what the answer states.'),
             P('Valuta le fonti: chi le ha scritte (ente pubblico, giornale, blog anonimo)? Quando? Sono originali o copiano altri siti? Per numeri e leggi preferisci le **fonti primarie** (gazzetta ufficiale, siti istituzionali, studi originali).', 'Assess sources: who wrote them (public body, newspaper, anonymous blog)? When? Are they original or copying other sites? For figures and laws prefer **primary sources** (official gazette, institutional sites, original studies).'),
+            Tip('Un controllo veloce: clicca il numero accanto alla frase, cerca nella pagina (Ctrl+F o Cmd+F) una parola chiave o la cifra citata e leggi il paragrafo intorno. Se non la trovi, o la pagina dice altro, quella frase non ha fonte. Errore tipico: fidarsi di una risposta perché ha tante citazioni, senza aprirne nessuna.', 'A quick check: click the number next to the sentence, search the page (Ctrl+F or Cmd+F) for a keyword or the quoted figure and read the surrounding paragraph. If you cannot find it, or the page says something else, that sentence has no source. A typical mistake: trusting an answer because it has many citations, without opening any.'),
         ], [
             Q('v1', L('Una risposta con citazioni è sicuramente vera?', 'Is an answer with citations surely true?'), [L('No, è verificabile ma va controllata', 'No, it is verifiable but must be checked'), L('Sì, sempre', 'Yes, always'), L('Solo se lunga', 'Only if long'), L('Solo in inglese', 'Only in English')], 0, L('La fonte può dire altro.', 'The source may say otherwise.')),
             Q('v2', L('Quali fonti preferire per una legge?', 'Which sources to prefer for a law?'), [L('Fonti primarie, come la gazzetta ufficiale', 'Primary sources, like the official gazette'), L('Un blog anonimo', 'An anonymous blog'), L('Un commento social', 'A social comment'), L('Nessuna', 'None')], 0, L('Il testo originale.', 'The original text.')),
@@ -61,6 +123,9 @@ print(r.output_text)', 'python'),
         lesson('workflow', L('Un metodo di ricerca', 'A research method'), [
             P('Una buona ricerca con Perplexity procede per passi: una **domanda precisa**, la lettura delle **fonti citate**, poi **domande di approfondimento** nella stessa conversazione. Puoi chiedere di confrontare fonti diverse o di limitarsi a fonti accademiche o ufficiali.', 'Good research with Perplexity goes step by step: a **precise question**, reading the **cited sources**, then **follow-up questions** in the same thread. You can ask it to compare different sources or to stick to academic or official ones.'),
             P('Alla fine, scrivi tu la sintesi: annota quali affermazioni vengono da quale fonte, e dove le fonti **non sono d’accordo**. Una risposta senza fonti solide va trattata come un’ipotesi.', 'At the end, write the synthesis yourself: note which claims come from which source, and where the sources **disagree**. An answer without solid sources should be treated as a hypothesis.'),
+            Fig(L(fig_pplx_method('it'), fig_pplx_method('en')),
+                L('A sinistra tre riquadri in colonna: domanda precisa, leggi le fonti, domanda successiva, con una freccia che torna a «leggi le fonti». A destra la tua sintesi: una tabella con affermazioni, fonti numerate e un’etichetta che indica se le fonti concordano o sono in disaccordo.', 'On the left, three stacked boxes: precise question, read the sources, follow-up question, with an arrow going back to “read the sources”. On the right, your synthesis: a table of claims, numbered sources and a label saying whether the sources agree or disagree.'),
+                L('Il ciclo si ripete finché le fonti bastano; la sintesi la scrivi tu.', 'The loop repeats until the sources are enough; you write the synthesis.')),
         ], [
             Q('wf1', L('Qual è il primo passo di una buona ricerca?', 'What is the first step of good research?'), [L('Una domanda precisa', 'A precise question'), L('Copiare la prima risposta', 'Copying the first answer'), L('Aprire dieci schede a caso', 'Opening ten tabs at random'), L('Chiedere un riassunto vuoto', 'Asking for an empty summary')], 0, L('Domanda vaga, risposta vaga.', 'Vague question, vague answer.')),
             Q('wf2', L('Che cosa fai quando le fonti non sono d’accordo?', 'What do you do when sources disagree?'), [L('Lo annoti e approfondisci', 'You note it and dig deeper'), L('Scegli la più corta', 'You pick the shortest'), L('Ignori la differenza', 'You ignore the difference'), L('Chiudi la ricerca', 'You stop researching')], 0, L('Il disaccordo è un’informazione.', 'Disagreement is information.')),

@@ -1,6 +1,122 @@
 <?php
 /** JavaScript intermediate: the DOM, events, array methods, modern syntax, JSON, dates and errors, Map and Set, sorting and copying, event delegation. */
 
+/** A small page as the DOM tree: document, html, head and body, down to the text nodes; the h1 a querySelector finds is highlighted. */
+if (!function_exists('fig_jsint_dom')) {
+    function fig_jsint_dom(string $l): string
+    {
+        $t = $l === 'it' ? ['elemento', 'testo', 'trovato da querySelector("h1")', 'Pane', 'Latte'] : ['element', 'text', 'found by querySelector("h1")', 'Bread', 'Milk'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<g stroke="#8A87B0" stroke-width="2" fill="none">
+<path d="M320 52V76"/><path d="M320 112C320 126 170 120 170 136"/><path d="M320 112C320 126 450 120 450 136"/><path d="M170 172V196"/><path d="M450 172C450 186 360 180 360 196"/><path d="M450 172C450 186 560 180 560 196"/><path d="M170 232V256"/><path d="M360 232V256"/><path d="M560 232C560 246 515 240 515 256"/><path d="M560 232C560 246 600 240 600 256"/></g>
+<rect x="260" y="16" width="120" height="36" rx="10" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<g fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"><rect x="280" y="76" width="80" height="36" rx="10"/><rect x="130" y="136" width="80" height="36" rx="10"/><rect x="410" y="136" width="80" height="36" rx="10"/><rect x="130" y="196" width="80" height="36" rx="10"/><rect x="520" y="196" width="80" height="36" rx="10"/><rect x="484" y="256" width="62" height="36" rx="10"/><rect x="569" y="256" width="62" height="36" rx="10"/></g>
+<rect x="320" y="196" width="80" height="36" rx="10" fill="#FFE8D6" stroke="#E8590C" stroke-width="3"/>
+<g fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="5 4"><rect x="125" y="256" width="90" height="36" rx="10"/><rect x="315" y="256" width="90" height="36" rx="10"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="15"><text x="320" y="39">document</text><text x="320" y="99">html</text><text x="170" y="159">head</text><text x="450" y="159">body</text><text x="170" y="219">title</text><text x="360" y="219" font-weight="700">h1</text><text x="560" y="219">ul</text><text x="515" y="279">li</text><text x="600" y="279">li</text></g>
+<g text-anchor="middle" font-size="14" fill="#0B7F5C"><text x="170" y="279">"Fucina"</text><text x="360" y="279">"Ciao!"</text></g>
+<g font-size="13" fill="#5B5880"><rect x="20" y="296" width="12" height="12" rx="3" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="38" y="307">{$t[0]}</text><rect x="130" y="296" width="12" height="12" rx="3" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2" stroke-dasharray="3 2"/><text x="148" y="307">{$t[1]}</text><rect x="220" y="296" width="12" height="12" rx="3" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/><text x="238" y="307">{$t[2]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** An event climbing from the clicked li to the document; the highlight moves up one level at a time. */
+if (!function_exists('fig_jsint_bubble')) {
+    function fig_jsint_bubble(string $l): string
+    {
+        $t = $l === 'it' ? ['Pane', 'Latte', 'Uova', 'click qui', 'un solo listener qui', 'l’evento risale'] : ['Bread', 'Milk', 'Eggs', 'click here', 'a single listener here', 'the event bubbles up'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.jib{opacity:0;animation:jib 6s infinite}.jib2{animation-delay:1.2s}.jib3{animation-delay:2.4s}.jib4{animation-delay:3.6s}@keyframes jib{0%{opacity:0}3%{opacity:1}20%{opacity:1}24%{opacity:0}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.jib{animation:none}}</style>
+<defs><marker id="jiba" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#F03E82"/></marker></defs>
+<rect x="10" y="10" width="620" height="300" rx="16" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="34" y="44" width="572" height="246" rx="14" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="58" y="78" width="420" height="192" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<g fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"><rect x="82" y="118" width="240" height="38" rx="9"/><rect x="82" y="214" width="240" height="38" rx="9"/></g>
+<rect x="82" y="166" width="240" height="38" rx="9" fill="#FFE8D6" stroke="#E8590C" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700"><text x="26" y="34">document</text><text x="50" y="68" fill="#5A35C8">body</text><text x="74" y="104" fill="#1B66BC">ul#lista</text></g>
+<g font-size="15"><text x="100" y="142">li · {$t[0]}</text><text x="100" y="190">li · {$t[1]}</text><text x="100" y="238">li · {$t[2]}</text></g>
+<path d="M290 178l0 24l6 -6l5 10l4 -2l-5 -10l8 0z" fill="#1E1C52" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="334" y="190" font-size="13" font-weight="700" fill="#B84508">← {$t[3]}</text>
+<text x="190" y="104" font-size="13" font-weight="700" fill="#1B66BC">← {$t[4]}</text>
+<path d="M548 260V36" stroke="#F03E82" stroke-width="3" fill="none" marker-end="url(#jiba)"/>
+<text x="538" y="150" font-size="14" font-weight="700" fill="#B0245A" text-anchor="middle" transform="rotate(-90 538 150)">{$t[5]}</text>
+<g fill="none" stroke="#F03E82" stroke-width="4">
+<rect class="jib" x="78" y="162" width="248" height="46" rx="11"/><rect class="jib jib2" x="54" y="74" width="428" height="200" rx="14"/><rect class="jib jib3" x="30" y="40" width="580" height="254" rx="16"/><rect class="jib jib4" x="6" y="6" width="628" height="308" rx="18"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** JSON as the bridge: stringify turns an object into text, setItem stores it, getItem and parse bring it back. */
+if (!function_exists('fig_jsint_json')) {
+    function fig_jsint_json(string $l): string
+    {
+        $t = $l === 'it' ? ['oggetto JavaScript', 'testo JSON'] : ['JavaScript object', 'JSON text'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="jija" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="20" y="62" width="150" height="76" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<rect x="240" y="62" width="160" height="76" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="470" y="62" width="150" height="76" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g font-size="13" font-weight="700" fill="#5B5880" text-anchor="middle"><text x="95" y="86">{$t[0]}</text><text x="320" y="86">{$t[1]}</text><text x="545" y="86">localStorage</text></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="95" y="116">{ punti: 10 }</text><text x="320" y="116">'{"punti":10}'</text><text x="545" y="116">"gioco"</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#jija)"><path d="M120 60C150 22 210 22 250 58"/><path d="M270 142C230 180 160 180 124 142"/><path d="M360 60C390 22 450 22 490 58"/><path d="M510 142C470 180 400 180 364 142"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700"><text x="185" y="20" fill="#5A35C8">JSON.stringify</text><text x="195" y="194" fill="#5A35C8">JSON.parse</text><text x="425" y="20" fill="#0B7F5C">setItem</text><text x="435" y="194" fill="#0B7F5C">getItem</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** Spread copies only the first level and shares the nested object; structuredClone copies every level. */
+if (!function_exists('fig_jsint_copy')) {
+    function fig_jsint_copy(string $l): string
+    {
+        $t = $l === 'it' ? ['copia superficiale', 'copia profonda', 'condiviso!', 'due oggetti separati'] : ['shallow copy', 'deep copy', 'shared!', 'two separate objects'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="jica" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="20" y="30" font-weight="700" font-size="16"><tspan font-family="ui-monospace, Menlo, monospace">{ ...a }</tspan> · {$t[0]}</text>
+<text x="340" y="30" font-weight="700" font-size="16"><tspan font-family="ui-monospace, Menlo, monospace">structuredClone</tspan> · {$t[1]}</text>
+<path d="M322 16V246" stroke="#E4E2F0" stroke-width="2"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5B5880"><text x="20" y="62">a</text><text x="20" y="162">copia = { ...a }</text><text x="340" y="62">a</text><text x="340" y="162">b = structuredClone(a)</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="#F1F0F8"><rect x="20" y="70" width="120" height="44" rx="10"/><rect x="20" y="170" width="120" height="44" rx="10"/><rect x="340" y="70" width="120" height="44" rx="10"/><rect x="340" y="170" width="120" height="44" rx="10"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="32" y="97">utente:</text><text x="32" y="197">utente:</text><text x="352" y="97">utente:</text><text x="352" y="197">utente:</text></g>
+<g fill="#1E1C52"><circle cx="122" cy="92" r="5"/><circle cx="122" cy="192" r="5"/><circle cx="442" cy="92" r="5"/><circle cx="442" cy="192" r="5"/></g>
+<rect x="170" y="118" width="140" height="48" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<g fill="#ECE6FF" stroke="#7048E8" stroke-width="2"><rect x="490" y="68" width="136" height="48" rx="12"/><rect x="490" y="168" width="136" height="48" rx="12"/></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="240" y="147">{ nome: "Ada" }</text><text x="558" y="97">{ nome: "Ada" }</text><text x="558" y="197">{ nome: "Ada" }</text></g>
+<text x="240" y="190" text-anchor="middle" font-size="14" font-weight="700" fill="#B0245A">{$t[2]}</text>
+<text x="558" y="240" text-anchor="middle" font-size="13" fill="#5B5880">{$t[3]}</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#jica)"><path d="M127 92C150 92 150 128 166 134"/><path d="M127 192C150 192 150 156 166 150"/><path d="M447 92H486"/><path d="M447 192H486"/></g>
+</svg>
+SVG;
+    }
+}
+
+/** map, filter and reduce as a pipeline: four numbers doubled, the small ones dropped, the rest summed. */
+if (!function_exists('fig_jsint_pipe')) {
+    function fig_jsint_pipe(): string
+    {
+        return <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 260" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="jipa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8A87B0"/></marker></defs>
+<g font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="20" y="45">[1, 2, 3, 4]</text><text x="20" y="107" fill="#1B66BC">.map(x =&gt; x * 2)</text><text x="20" y="169" fill="#B84508">.filter(x =&gt; x &gt; 4)</text><text x="20" y="231" fill="#0B7F5C">.reduce((a, x) =&gt; a + x, 0)</text></g>
+<g stroke="#8A87B0" stroke-width="2" fill="#F1F0F8"><rect x="380" y="20" width="50" height="40" rx="9"/><rect x="438" y="20" width="50" height="40" rx="9"/><rect x="496" y="20" width="50" height="40" rx="9"/><rect x="554" y="20" width="50" height="40" rx="9"/></g>
+<g stroke="#2F8CF0" stroke-width="2" fill="#DCEBFF"><rect x="380" y="82" width="50" height="40" rx="9"/><rect x="438" y="82" width="50" height="40" rx="9"/><rect x="496" y="82" width="50" height="40" rx="9"/><rect x="554" y="82" width="50" height="40" rx="9"/></g>
+<g stroke="#C9C7DD" stroke-width="2" fill="#FFFFFF" stroke-dasharray="5 4"><rect x="380" y="144" width="50" height="40" rx="9"/><rect x="438" y="144" width="50" height="40" rx="9"/></g>
+<g stroke="#E8590C" stroke-width="2" fill="#FFF3EA"><rect x="496" y="144" width="50" height="40" rx="9"/><rect x="554" y="144" width="50" height="40" rx="9"/></g>
+<rect x="496" y="206" width="108" height="40" rx="9" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g text-anchor="middle" font-weight="700" font-size="17"><text x="405" y="46">1</text><text x="463" y="46">2</text><text x="521" y="46">3</text><text x="579" y="46">4</text><text x="405" y="108">2</text><text x="463" y="108">4</text><text x="521" y="108">6</text><text x="579" y="108">8</text><text x="521" y="170">6</text><text x="579" y="170">8</text><text x="550" y="232">14</text></g>
+<g text-anchor="middle" font-size="17" fill="#B4B2CC"><text x="405" y="170" text-decoration="line-through">2</text><text x="463" y="170" text-decoration="line-through">4</text></g>
+<g stroke="#8A87B0" stroke-width="2" marker-end="url(#jipa)"><path d="M350 52V84"/><path d="M350 114V146"/><path d="M350 176V208"/></g>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'js-intermediate', 'family' => 'js', 'after' => 'js-base',
     'title' => L('JavaScript intermedio', 'Intermediate JavaScript'), 'short' => L('JS intermedio', 'JS Intermediate'), 'level' => L('Intermedio', 'Intermediate'),
@@ -16,6 +132,10 @@ const nuovo = document.createElement("p");
 nuovo.textContent = "Nuovo";
 document.body.append(nuovo);', 'js'),
             Tip('Usa `textContent` per i testi degli utenti: `innerHTML` può eseguire codice nascosto.', 'Use `textContent` for user text: `innerHTML` can run hidden code.'),
+            P('Ogni tag diventa un **nodo** dell’albero, figlio del tag che lo contiene, e anche i testi sono nodi. Se `querySelector` non trova niente restituisce `null`, e `null.textContent` dà errore: succede spesso quando lo script parte prima che l’HTML sia caricato, per questo si mette `defer` sul tag `<script>`. `querySelectorAll` restituisce una lista di tutti gli elementi trovati, da scorrere con `for…of`.', 'Every tag becomes a **node** of the tree, a child of the tag that contains it, and texts are nodes too. If `querySelector` finds nothing it gives back `null`, and `null.textContent` throws an error: this often happens when the script runs before the HTML has loaded, which is why you put `defer` on the `<script>` tag. `querySelectorAll` gives back a list of all the elements found, to walk with `for…of`.'),
+            Fig(L(fig_jsint_dom('it'), fig_jsint_dom('en')),
+                L('Albero del DOM: document in cima, sotto html, che ha due figli, head e body. head contiene title con il testo «Fucina», body contiene h1 con il testo «Ciao!» e una ul con due li. Il nodo h1 è evidenziato in arancione.', 'DOM tree: document at the top, then html, which has two children, head and body. head holds title with the text “Fucina”, body holds h1 with the text “Ciao!” and a ul with two li. The h1 node is highlighted in orange.'),
+                L('La pagina è un albero di nodi: un selettore CSS ne sceglie uno.', 'The page is a tree of nodes: a CSS selector picks one of them.')),
         ], [
             Q('d1', L('Che cosa trova `querySelector`?', 'What does `querySelector` find?'), [L('Il primo elemento adatto', 'The first matching element'), L('Tutti gli elementi', 'All elements'), L('Solo gli id', 'Only ids'), L('Un file', 'A file')], 0, L('`querySelectorAll` li trova tutti.', '`querySelectorAll` finds them all.')),
             Q('d2', L('Perché preferire `textContent`?', 'Why prefer `textContent`?'), [L('Non interpreta l’HTML', 'It does not read HTML'), L('È più colorato', 'It is more colourful'), L('È più lungo', 'It is longer'), L('Salva i dati', 'It saves data')], 0, L('Protegge da codice inserito dagli utenti.', 'It protects from code entered by users.')),
@@ -38,6 +158,7 @@ form.addEventListener("submit", e => {
   console.log(new FormData(form).get("email"));
 });', 'js'),
             P('La funzione riceve un oggetto evento: `e.target` è l’elemento coinvolto, `e.preventDefault()` ferma il comportamento normale, come il ricaricamento di un modulo.', 'The function gets an event object: `e.target` is the element involved, `e.preventDefault()` stops the normal behaviour, like a form reloading.'),
+            P('Gli eventi più usati sono `click`, `input` (a ogni tasto in un campo), `change`, `keydown` e `submit`. Errore classico: scrivere `addEventListener("click", salva())`. Con le parentesi la funzione parte subito, una volta sola, e al click non succede niente: passa la funzione senza chiamarla, `salva`, oppure una arrow function.', 'The most used events are `click`, `input` (at every key in a field), `change`, `keydown` and `submit`. A classic mistake: writing `addEventListener("click", salva())`. With the brackets the function runs straight away, only once, and nothing happens on click: pass the function without calling it, `salva`, or an arrow function.'),
         ], [
             Q('e1', L('Quale metodo ascolta un evento?', 'Which method listens to an event?'), ['addEventListener', 'onEvent', 'listen', 'watch'], 0, L('Riceve il nome dell’evento e una funzione.', 'It takes the event name and a function.')),
             Q('e2', L('Che cosa fa `e.preventDefault()`?', 'What does `e.preventDefault()` do?'), [L('Ferma l’azione normale', 'Stops the normal action'), L('Cancella la pagina', 'Deletes the page'), L('Annulla JavaScript', 'Cancels JavaScript'), L('Salva', 'Saves')], 0, L('Un modulo non ricarica più la pagina.', 'A form no longer reloads the page.')),
@@ -50,6 +171,7 @@ form.addEventListener("submit", e => {
         ]),
         lesson('array-methods', L('map, filter e reduce', 'map, filter and reduce'), [
             P('Gli array hanno metodi potenti. `map` trasforma ogni elemento, `filter` tiene quelli che superano una prova, `find` restituisce il primo adatto, `reduce` riduce tutto a un valore.', 'Arrays have powerful methods. `map` transforms each item, `filter` keeps those passing a test, `find` gives back the first match, `reduce` boils it all down to one value.'),
+            P('Tutti ricevono una funzione che viene chiamata per ogni elemento. `map` restituisce sempre un array lungo **uguale** all’originale; `filter` uno uguale o più corto, perché tiene solo gli elementi per cui la funzione dà `true`. `reduce` porta con sé un **accumulatore** (`a`): parte dal valore iniziale, qui `0`, e a ogni giro diventa quello che la funzione restituisce.', 'They all take a function that is called for every item. `map` always gives back an array of the **same** length as the original; `filter` one of the same length or shorter, because it keeps only the items for which the function gives `true`. `reduce` carries an **accumulator** (`a`): it starts from the initial value, here `0`, and at every round becomes what the function gives back.'),
             C('const n = [1, 2, 3, 4];
 n.map(x => x * 2);        // [2, 4, 6, 8]
 n.filter(x => x % 2 === 0); // [2, 4]
@@ -57,6 +179,9 @@ n.find(x => x > 2);       // 3
 n.reduce((a, x) => a + x, 0); // 10
 n.some(x => x > 3);       // true', 'js'),
             P('`map` e `filter` creano un nuovo array e non toccano l’originale. Si possono concatenare.', '`map` and `filter` create a new array and leave the original alone. They can be chained.'),
+            Fig(fig_jsint_pipe(),
+                L('Quattro righe di caselle: l’array 1, 2, 3, 4; dopo map(x => x * 2) diventa 2, 4, 6, 8; dopo filter(x => x > 4) restano 6 e 8, mentre 2 e 4 sono barrati; dopo reduce con la somma resta un solo valore, 14.', 'Four rows of cells: the array 1, 2, 3, 4; after map(x => x * 2) it becomes 2, 4, 6, 8; after filter(x => x > 4) only 6 and 8 remain, while 2 and 4 are crossed out; after reduce with a sum a single value is left, 14.'),
+                L('Una catena: `map` trasforma, `filter` scarta, `reduce` riassume in un valore.', 'A chain: `map` transforms, `filter` drops, `reduce` sums it up into one value.')),
         ], [
             Q('m1', L('Quale metodo trasforma ogni elemento?', 'Which method transforms each item?'), ['map', 'filter', 'find', 'some'], 0, L('L’array risultante ha la stessa lunghezza.', 'The resulting array has the same length.')),
             Q('m2', L('`filter` cambia l’array originale?', 'Does `filter` change the original array?'), [L('No', 'No'), L('Sì', 'Yes'), L('A volte', 'Sometimes'), L('Solo con `let`', 'Only with `let`')], 0, L('Ne crea uno nuovo.', 'It creates a new one.')),
@@ -78,6 +203,7 @@ const tutti = [...listaA, ...listaB];
 utente.indirizzo?.via;     // undefined, nessun errore
 const n = utente.vite ?? 3; // 3', 'js'),
             P('`??` scatta solo con `null` e `undefined`: a differenza di `||` non scarta `0` e `""`.', '`??` only fires on `null` and `undefined`: unlike `||` it does not discard `0` and `""`.'),
+            P('La destrutturazione è comoda soprattutto nei parametri: `function saluta({ nome, eta = 18 })` prende dall’oggetto solo quello che serve e dà un valore di default. Puoi anche rinominare: `const { nome: chi } = utente`. Lo spread invece copia solo il **primo livello**: gli oggetti annidati restano condivisi, come vedrai parlando di copie.', 'Destructuring is handy above all in parameters: `function saluta({ nome, eta = 18 })` takes from the object only what it needs and gives a default value. You can rename too: `const { nome: chi } = utente`. Spread, on the other hand, copies only the **first level**: nested objects stay shared, as you will see when we talk about copies.'),
         ], [
             Q('s1', L('Che cosa fa `{ ...a }`?', 'What does `{ ...a }` do?'), [L('Copia l’oggetto', 'Copies the object'), L('Lo cancella', 'Deletes it'), L('Lo ordina', 'Sorts it'), L('Dà errore', 'Errors')], 0, L('È una copia superficiale.', 'It is a shallow copy.')),
             Q('s2', L('Quanto vale `0 ?? 5`?', 'What is `0 ?? 5`?'), ['0', '5', 'null', 'false'], 0, L('`0` non è `null` né `undefined`.', '`0` is neither `null` nor `undefined`.')),
@@ -89,6 +215,9 @@ const n = utente.vite ?? 3; // 3', 'js'),
         ]),
         lesson('json-storage', L('JSON e localStorage', 'JSON and localStorage'), [
             P('**JSON** è il formato di testo con cui viaggiano i dati. `JSON.stringify` trasforma un valore in testo, `JSON.parse` fa il contrario. `localStorage` conserva testi nel browser, anche dopo la chiusura.', '**JSON** is the text format data travels in. `JSON.stringify` turns a value into text, `JSON.parse` does the opposite. `localStorage` keeps text in the browser, even after closing.'),
+            Fig(L(fig_jsint_json('it'), fig_jsint_json('en')),
+                L('Tre riquadri: l’oggetto { punti: 10 }, il testo JSON e la chiave «gioco» in localStorage. Le frecce vanno dall’oggetto al testo con JSON.stringify e dal testo a localStorage con setItem; al ritorno getItem e JSON.parse.', 'Three boxes: the object { punti: 10 }, the JSON text and the key “gioco” in localStorage. Arrows go from the object to the text with JSON.stringify and from the text to localStorage with setItem; on the way back getItem and JSON.parse.'),
+                L('`localStorage` conserva solo testo: JSON fa da ponte all’andata e al ritorno.', '`localStorage` keeps only text: JSON is the bridge both ways.')),
             C('const dati = { punti: 10 };
 const testo = JSON.stringify(dati); // \'{"punti":10}\'
 localStorage.setItem("gioco", testo);
@@ -96,6 +225,7 @@ localStorage.setItem("gioco", testo);
 const salvato = localStorage.getItem("gioco");
 const letto = salvato ? JSON.parse(salvato) : null;', 'js'),
             Tip('`localStorage` è visibile a tutti gli script della pagina: mai password o token.', '`localStorage` is visible to all the scripts on the page: never passwords or tokens.'),
+            P('JSON non conosce tutto: le funzioni e `undefined` spariscono, e una `Date` diventa una stringa da riconvertire. `JSON.parse` su un testo rovinato **lancia un errore**, quindi i dati salvati vanno letti dentro un `try…catch` (lo vedi nella prossima lezione). `getItem` restituisce `null` se la chiave non esiste, ed è per questo che il codice controlla `salvato` prima di leggerlo.', 'JSON does not know everything: functions and `undefined` disappear, and a `Date` becomes a string to convert back. `JSON.parse` on broken text **throws an error**, so saved data should be read inside a `try…catch` (you will see it in the next lesson). `getItem` gives back `null` if the key does not exist, which is why the code checks `salvato` before reading it.'),
         ], [
             Q('j1', L('Che cosa fa `JSON.parse`?', 'What does `JSON.parse` do?'), [L('Da testo a valore', 'Text to value'), L('Da valore a testo', 'Value to text'), L('Salva', 'Saves'), L('Scarica', 'Downloads')], 0, L('`stringify` fa il percorso inverso.', '`stringify` goes the other way.')),
             Q('j2', L('Che cosa salva `localStorage`?', 'What does `localStorage` save?'), [L('Solo testi', 'Text only'), L('Solo numeri', 'Numbers only'), L('File', 'Files'), L('Oggetti diretti', 'Objects directly')], 0, L('Per gli oggetti serve JSON.', 'Objects need JSON.')),
@@ -120,6 +250,7 @@ try {
   console.log("Dati non validi");
 }', 'js'),
             P('I tempi si indicano in millisecondi. Conserva l’id di `setInterval` per poterlo fermare.', 'Times are given in milliseconds. Keep the id of `setInterval` so you can stop it.'),
+            P('Due trappole delle date: i mesi partono da **zero** (`new Date(2026, 0, 15)` è il 15 gennaio) e `new Date()` usa il fuso orario del dispositivo. Un timer non blocca la pagina: il resto del codice continua e la funzione arriva dopo. Per segnalare un errore tuo usa `throw new Error("messaggio")`: lo raccoglierà il `catch` più vicino.', 'Two date traps: months start from **zero** (`new Date(2026, 0, 15)` is 15 January) and `new Date()` uses the time zone of the device. A timer does not block the page: the rest of the code carries on and the function arrives later. To signal an error of your own use `throw new Error("message")`: the nearest `catch` will pick it up.'),
         ], [
             Q('t1', L('In che unità lavora `setTimeout`?', 'What unit does `setTimeout` use?'), [L('Millisecondi', 'Milliseconds'), L('Secondi', 'Seconds'), L('Minuti', 'Minutes'), L('Frame', 'Frames')], 0, L('1000 è un secondo.', '1000 is one second.')),
             Q('t2', L('Come si ferma `setInterval`?', 'How do you stop `setInterval`?'), ['clearInterval(id)', 'stop(id)', 'break', 'return'], 0, L('Per questo si conserva l’id.', 'That is why you keep the id.')),
@@ -169,6 +300,9 @@ const corretto = nomi.with(1, "Ada");
 
 const profonda = structuredClone({ utente: { nome: "Ada" } });', 'js'),
             P('`toSorted`, `toReversed` e `with` restituiscono un **nuovo** array e lasciano intatto l’originale: perfetti quando non vuoi effetti a sorpresa. Lo spread copia solo il primo livello; per una copia completa di oggetti annidati c’è `structuredClone`.', '`toSorted`, `toReversed` and `with` give back a **new** array and leave the original untouched: perfect when you want no surprise side effects. Spread copies only the first level; for a full copy of nested objects there is `structuredClone`.'),
+            Fig(L(fig_jsint_copy('it'), fig_jsint_copy('en')),
+                L('A sinistra a e la sua copia fatta con lo spread hanno entrambe una proprietà utente che punta allo stesso oggetto { nome: "Ada" }, segnato come condiviso. A destra a e la copia fatta con structuredClone puntano a due oggetti { nome: "Ada" } separati.', 'On the left a and its spread copy both have a utente property pointing to the same object { nome: "Ada" }, marked as shared. On the right a and the copy made with structuredClone point to two separate { nome: "Ada" } objects.'),
+                L('Lo spread copia il primo livello; `structuredClone` copia anche gli oggetti annidati.', 'Spread copies the first level; `structuredClone` copies the nested objects too.')),
         ], [
             Q('so1', L('Quanto vale `[10, 9, 1].sort()`?', 'What is `[10, 9, 1].sort()`?'), ['[1, 9, 10]', '[10, 9, 1]', '[1, 10, 9]', '[9, 10, 1]'], 2, L('Senza funzione confronta i testi: `"10"` viene prima di `"9"`.', 'Without a function it compares text: `"10"` comes before `"9"`.')),
             Q('so2', L('Quale funzione ordina i numeri dal più piccolo al più grande?', 'Which function sorts numbers from smallest to largest?'), ['(a, b) => a - b', '(a, b) => b - a', '(a, b) => a + b', '(a, b) => a * b'], 0, L('Un risultato negativo mette `a` prima di `b`.', 'A negative result puts `a` before `b`.')),
@@ -181,6 +315,9 @@ const classifica = punti.toSorted((a, b) => b - a);'), [
         ]),
         lesson('delegation', L('Propagazione e delega degli eventi', 'Event bubbling and delegation'), [
             P('Un evento non resta sull’elemento cliccato: **risale** (bubbling) verso i genitori, fino al documento. Così puoi mettere un solo ascoltatore sul contenitore e capire con `e.target` quale figlio è stato toccato: è la **delega degli eventi**.', 'An event does not stay on the clicked element: it **bubbles up** to the parents, all the way to the document. So you can put a single listener on the container and find out with `e.target` which child was touched: that is **event delegation**.'),
+            Fig(L(fig_jsint_bubble('it'), fig_jsint_bubble('en')),
+                L('Riquadri annidati: document contiene body, che contiene ul#lista con tre li. Il secondo li è cliccato; una freccia rosa sale verso l’alto e l’evidenziazione passa dal li alla ul, poi a body, poi a document. Sulla ul è indicato l’unico listener.', 'Nested boxes: document holds body, which holds ul#lista with three li. The second li is clicked; a pink arrow points upwards and the highlight moves from the li to the ul, then to body, then to document. The single listener is marked on the ul.'),
+                L('Il click parte dal `li` e risale: il listener sulla `ul` lo sente per tutte le voci.', 'The click starts on the `li` and climbs: the listener on the `ul` hears it for every item.')),
             C('const lista = document.querySelector("#lista");
 lista.addEventListener("click", e => {
   const voce = e.target.closest("li");

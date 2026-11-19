@@ -1,6 +1,129 @@
 <?php
 /** JavaScript advanced: asynchronous code, fetch, modules, classes, closures and the event loop, prototypes and this, generators, cancelling requests. */
 
+/** The three states of a promise: pending, then fulfilled (then) or rejected (catch), and finally in both cases. */
+if (!function_exists('fig_jsadv_promise')) {
+    function fig_jsadv_promise(string $l): string
+    {
+        $t = $l === 'it' ? ['in attesa', 'risolta', 'rifiutata', 'una volta decisa, una promise non cambia più'] : ['pending', 'fulfilled', 'rejected', 'once settled, a promise never changes again'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="japa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="20" y="82" width="150" height="62" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2" stroke-dasharray="7 4"/>
+<rect x="260" y="20" width="180" height="62" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<rect x="260" y="144" width="180" height="62" rx="12" fill="#FFE3EE" stroke="#F03E82" stroke-width="2"/>
+<rect x="510" y="82" width="110" height="62" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<g text-anchor="middle" font-weight="700" font-size="16"><text x="95" y="119">{$t[0]}</text><text x="350" y="46" fill="#0B7F5C">{$t[1]}</text><text x="350" y="170" fill="#B0245A">{$t[2]}</text></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="350" y="70">.then(valore)</text><text x="350" y="194">.catch(errore)</text><text x="565" y="118">.finally()</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#japa)"><path d="M170 104C210 104 215 52 256 52"/><path d="M170 122C210 122 215 174 256 174"/><path d="M440 52C480 52 480 100 506 104"/><path d="M440 174C480 174 480 126 506 122"/></g>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5B5880" text-anchor="end"><text x="238" y="38">resolve</text><text x="238" y="200">reject</text></g>
+<text x="20" y="230" font-size="13" fill="#5B5880">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Two awaits one after the other take the sum of their times; Promise.all runs them together. */
+if (!function_exists('fig_jsadv_parallel')) {
+    function fig_jsadv_parallel(string $l): string
+    {
+        $t = $l === 'it' ? ['uno dopo l’altro', 'insieme', 'tempo'] : ['one after the other', 'together', 'time'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<text x="20" y="52" font-weight="700">{$t[0]}</text><text x="20" y="72" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5B5880">await a(); await b();</text>
+<text x="20" y="140" font-weight="700">{$t[1]}</text><text x="20" y="160" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5B5880">Promise.all([a(), b()])</text>
+<path d="M240 24V196" stroke="#E4E2F0" stroke-width="2"/>
+<rect x="250" y="40" width="160" height="36" rx="9" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="410" y="40" width="160" height="36" rx="9" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="250" y="110" width="160" height="30" rx="9" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="250" y="146" width="160" height="30" rx="9" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14"><text x="330" y="63">a()</text><text x="490" y="63">b()</text><text x="330" y="130">a()</text><text x="330" y="166">b()</text></g>
+<g font-weight="700" fill="#B84508"><text x="582" y="64">2 s</text><text x="422" y="150">1 s</text></g>
+<path d="M250 200H580" stroke="#8A87B0" stroke-width="2"/><g stroke="#8A87B0" stroke-width="2"><path d="M250 195V205"/><path d="M410 195V205"/><path d="M570 195V205"/></g>
+<g text-anchor="middle" font-size="13" fill="#5B5880"><text x="250" y="222">0</text><text x="410" y="222">1 s</text><text x="570" y="222">2 s</text></g>
+<text x="636" y="205" font-size="13" fill="#5B5880" text-anchor="end">{$t[2]} →</text>
+</svg>
+SVG;
+    }
+}
+
+/** A fetch as a round trip: the request goes to the server, the response comes back with status, headers and body. */
+if (!function_exists('fig_jsadv_fetch')) {
+    function fig_jsadv_fetch(string $l): string
+    {
+        $t = $l === 'it' ? ['browser', 'server', 'richiesta', 'risposta', 'metodo · indirizzo · header · corpo', 'stato · header · corpo'] : ['browser', 'server', 'request', 'response', 'method · address · headers · body', 'status · headers · body'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="jafa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="20" y="30" width="160" height="180" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="460" y="30" width="160" height="180" rx="14" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<g text-anchor="middle" font-weight="700" font-size="16"><text x="100" y="58">{$t[0]}</text><text x="540" y="58">{$t[1]}</text></g>
+<g text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="100" y="100">fetch(url)</text><text x="100" y="168">r.ok ?</text><text x="100" y="188">await r.json()</text><text x="540" y="110">/api/punti</text><text x="540" y="150">{"punti":10}</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#jafa)"><path d="M184 96H456"/><path d="M456 168H184"/></g>
+<g text-anchor="middle"><text x="320" y="86" font-weight="700">{$t[2]} · <tspan font-family="ui-monospace, Menlo, monospace" font-size="14">GET /api/punti</tspan></text><text x="320" y="118" font-size="13" fill="#5B5880">{$t[4]}</text>
+<text x="320" y="158" font-weight="700">{$t[3]} · <tspan font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#0B7F5C">200 OK</tspan></text><text x="320" y="190" font-size="13" fill="#5B5880">{$t[5]}</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The event loop: the stack runs the script, then the loop takes microtasks (promises) before tasks (timers); the console fills in order. */
+if (!function_exists('fig_jsadv_loop')) {
+    function fig_jsadv_loop(string $l): string
+    {
+        $t = $l === 'it' ? ['pila delle chiamate', 'script principale', 'microtask · prima', 'task · dopo', 'console'] : ['call stack', 'main script', 'microtasks · first', 'tasks · after', 'console'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.jae{animation:8s infinite}.jaeA{animation-name:jaeA}.jaeD{animation-name:jaeD}.jaeC{animation-name:jaeC}.jaeB{animation-name:jaeB}.jaeqC{animation-name:jaeqC}.jaeqB{animation-name:jaeqB}.jaer{transform-origin:320px 120px;animation:jaer 4s linear infinite}
+@keyframes jaeA{0%,6%{opacity:0}9%,96%{opacity:1}100%{opacity:0}}@keyframes jaeD{0%,26%{opacity:0}29%,96%{opacity:1}100%{opacity:0}}@keyframes jaeC{0%,51%{opacity:0}54%,96%{opacity:1}100%{opacity:0}}@keyframes jaeB{0%,76%{opacity:0}79%,96%{opacity:1}100%{opacity:0}}
+@keyframes jaeqC{0%,12%{opacity:0}15%,50%{opacity:1}53%,100%{opacity:0}}@keyframes jaeqB{0%,12%{opacity:0}15%,75%{opacity:1}78%,100%{opacity:0}}@keyframes jaer{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.jae,.jaer{animation:none}}</style>
+<defs><marker id="jaea" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<rect x="20" y="20" width="200" height="190" rx="14" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="120" y="46" text-anchor="middle" font-weight="700">{$t[0]}</text>
+<rect x="36" y="150" width="168" height="44" rx="9" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2"/>
+<text x="120" y="177" text-anchor="middle" font-size="14">{$t[1]}</text>
+<rect x="420" y="20" width="200" height="86" rx="14" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<rect x="420" y="124" width="200" height="86" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<g font-weight="700" font-size="14"><text x="436" y="44" fill="#1B66BC">{$t[2]}</text><text x="436" y="148" fill="#B84508">{$t[3]}</text></g>
+<g class="jae jaeqC"><rect x="436" y="56" width="168" height="36" rx="8" fill="#FFFFFF" stroke="#2F8CF0" stroke-width="2"/><text x="448" y="79" font-family="ui-monospace, Menlo, monospace" font-size="13">then → log("C")</text></g>
+<g class="jae jaeqB"><rect x="436" y="160" width="168" height="36" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/><text x="448" y="183" font-family="ui-monospace, Menlo, monospace" font-size="13">timer → log("B")</text></g>
+<g class="jaer" fill="none" stroke="#7048E8" stroke-width="3"><path d="M282 120A38 38 0 0 1 358 120"/><path d="M358 120A38 38 0 0 1 282 120"/><path d="M352 108L358 122L366 110" stroke-linejoin="round"/><path d="M288 132L282 118L274 130" stroke-linejoin="round"/></g>
+<text x="320" y="182" text-anchor="middle" font-size="14" font-weight="700" fill="#5A35C8">event loop</text>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#jaea)"><path d="M416 63C390 63 375 82 364 96"/><path d="M416 167C390 167 375 152 364 142"/><path d="M276 120H226"/></g>
+<rect x="20" y="236" width="600" height="64" rx="14" fill="#1E1C52"/>
+<text x="40" y="274" font-size="14" fill="#C9C7DD">{$t[4]}</text>
+<g font-family="ui-monospace, Menlo, monospace" font-size="20" font-weight="700" fill="#FFFFFF"><text class="jae jaeA" x="150" y="275">A</text><text class="jae jaeD" x="200" y="275">D</text><text class="jae jaeC" x="250" y="275" fill="#9CC8FF">C</text><text class="jae jaeB" x="300" y="275" fill="#FFB98A">B</text></g>
+</svg>
+SVG;
+    }
+}
+
+/** The prototype chain: a property is looked up on the object, then on each prototype in turn, until null. */
+if (!function_exists('fig_jsadv_proto')) {
+    function fig_jsadv_proto(string $l): string
+    {
+        $t = $l === 'it' ? ['proprio? no', 'trovato!', 'fine della catena', 'ada.saluta() cerca da sinistra a destra'] : ['own? no', 'found!', 'end of the chain', 'ada.saluta() looks from left to right'];
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<defs><marker id="jaoa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1E1C52"/></marker></defs>
+<text x="20" y="30" font-size="14" fill="#5B5880">{$t[3]}</text>
+<rect x="12" y="56" width="140" height="96" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="192" y="56" width="160" height="96" rx="12" fill="#ECE6FF" stroke="#7048E8" stroke-width="3"/>
+<rect x="392" y="56" width="180" height="96" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<rect x="590" y="84" width="44" height="40" rx="9" fill="#FFFFFF" stroke="#8A87B0" stroke-width="2" stroke-dasharray="4 3"/>
+<g font-family="ui-monospace, Menlo, monospace" font-size="13"><text x="26" y="82" font-weight="700" font-size="14">ada</text><text x="26" y="110">nome: "Ada"</text>
+<text x="206" y="82" font-weight="700" font-size="14">Eroe.prototype</text><text x="206" y="110" font-weight="700" fill="#5A35C8">saluta()</text>
+<text x="406" y="82" font-weight="700" font-size="14">Object.prototype</text><text x="406" y="110">toString()</text><text x="406" y="130">hasOwnProperty()</text>
+<text x="612" y="109" text-anchor="middle" fill="#5B5880">null</text></g>
+<g stroke="#1E1C52" stroke-width="2" fill="none" marker-end="url(#jaoa)"><path d="M152 104H188"/><path d="M352 104H388"/><path d="M572 104H586"/></g>
+<g text-anchor="middle" font-size="13" font-weight="700"><text x="82" y="176" fill="#B84508">1 · {$t[0]}</text><text x="272" y="176" fill="#5A35C8">2 · {$t[1]}</text><text x="560" y="176" fill="#5B5880">{$t[2]}</text></g>
+<text x="320" y="214" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#5B5880">Object.getPrototypeOf(ada) === Eroe.prototype</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'js-advanced', 'family' => 'js', 'after' => 'js-intermediate',
     'title' => L('JavaScript avanzato', 'Advanced JavaScript'), 'short' => L('JS avanzato', 'JS Advanced'), 'level' => L('Avanzato', 'Advanced'),
@@ -8,6 +131,10 @@ return [
     'lessons' => [
         lesson('promises', L('Promise', 'Promises'), [
             P('Una **Promise** rappresenta un risultato che arriverà: può riuscire o fallire. Con `then` dici che cosa fare col valore, con `catch` come gestire l’errore.', 'A **Promise** stands for a result yet to come: it can succeed or fail. With `then` you say what to do with the value, with `catch` how to handle the error.'),
+            P('Perché servono? Leggere dal server o aspettare un timer richiede tempo, e JavaScript non può fermare la pagina nell’attesa: la funzione restituisce subito una promise, cioè una ricevuta del risultato che arriverà. Una promise parte **in attesa** e si decide una volta sola: **risolta** con un valore o **rifiutata** con un errore.', 'Why do we need them? Reading from the server or waiting for a timer takes time, and JavaScript cannot freeze the page while it waits: the function gives back a promise straight away, a receipt for the result to come. A promise starts **pending** and is settled only once: **fulfilled** with a value or **rejected** with an error.'),
+            Fig(L(fig_jsadv_promise('it'), fig_jsadv_promise('en')),
+                L('Una promise in attesa ha due strade: con resolve diventa risolta e passa il valore a .then, con reject diventa rifiutata e passa l’errore a .catch. Entrambe le strade arrivano a .finally.', 'A pending promise has two paths: with resolve it becomes fulfilled and passes the value to .then, with reject it becomes rejected and passes the error to .catch. Both paths reach .finally.'),
+                L('Da «in attesa» a risolta o rifiutata, una volta sola.', 'From pending to fulfilled or rejected, only once.')),
             C('function attendi(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -19,6 +146,7 @@ attendi(500)
 
 Promise.all([a(), b()]).then(([x, y]) => usa(x, y));', 'js'),
             P('`Promise.all` aspetta più operazioni insieme e fallisce se ne fallisce una. Ogni `then` riceve quello restituito dal precedente.', '`Promise.all` waits for several operations together and fails if one fails. Each `then` gets what the previous one gave back.'),
+            Tip('Metti un solo `catch` in fondo alla catena: raccoglie l’errore di qualsiasi passo precedente. E dentro un `then` ricordati di fare `return`, altrimenti il passo successivo riceve `undefined`.', 'Put a single `catch` at the end of the chain: it collects the error from any step before it. And inside a `then` remember to `return`, otherwise the next step receives `undefined`.'),
         ], [
             Q('p1', L('Che cosa rappresenta una Promise?', 'What does a Promise stand for?'), [L('Un risultato futuro', 'A future result'), L('Un ciclo', 'A loop'), L('Un file', 'A file'), L('Un errore certo', 'A certain error')], 0, L('Prima è in attesa, poi riesce o fallisce.', 'First it is pending, then it succeeds or fails.')),
             Q('p2', L('Quale metodo gestisce i fallimenti?', 'Which method handles failures?'), ['catch', 'then', 'fail', 'error'], 0, L('Prende gli errori di tutta la catena.', 'It catches errors from the whole chain.')),
@@ -41,6 +169,10 @@ Promise.all([a(), b()]).then(([x, y]) => usa(x, y));', 'js'),
 }
 const [a, b] = await Promise.all([x(), y()]);', 'js'),
             P('Una funzione `async` restituisce sempre una Promise. Se due operazioni non dipendono l’una dall’altra, lanciale insieme con `Promise.all`: è più veloce.', 'An `async` function always gives back a Promise. If two operations do not depend on each other, start them together with `Promise.all`: it is faster.'),
+            P('`await` mette in pausa solo la funzione `async`, non la pagina: intanto i click e le animazioni continuano. Errore tipico: dimenticare `await`. Allora `carica(id)` non dà l’utente ma una promise, e `utente.nome` vale `undefined`. Con `try…catch` gestisci gli errori come nel codice sincrono, al posto di `catch` nella catena.', '`await` pauses only the `async` function, not the page: meanwhile clicks and animations carry on. A typical mistake: forgetting `await`. Then `carica(id)` gives not the user but a promise, and `utente.nome` is `undefined`. With `try…catch` you handle errors as in synchronous code, instead of `catch` in the chain.'),
+            Fig(L(fig_jsadv_parallel('it'), fig_jsadv_parallel('en')),
+                L('Linea del tempo. In alto due await in sequenza: a() dura un secondo, poi b() un altro secondo, totale 2 secondi. In basso Promise.all avvia a() e b() insieme e finisce dopo 1 secondo.', 'A timeline. At the top two awaits in sequence: a() takes one second, then b() another second, 2 seconds in total. At the bottom Promise.all starts a() and b() together and ends after 1 second.'),
+                L('Due attese indipendenti: in sequenza si sommano, con `Promise.all` si sovrappongono.', 'Two independent waits: in sequence they add up, with `Promise.all` they overlap.')),
         ], [
             Q('a1', L('Dove si può usare `await`?', 'Where can you use `await`?'), [L('In una funzione `async`', 'In an `async` function'), L('Ovunque nel CSS', 'Anywhere in CSS'), L('Solo in `if`', 'Only in `if`'), L('Solo nei cicli', 'Only in loops')], 0, L('O al livello principale di un modulo.', 'Or at the top level of a module.')),
             Q('a2', L('Che cosa restituisce una funzione `async`?', 'What does an `async` function give back?'), [L('Una Promise', 'A Promise'), L('Un numero', 'A number'), L('Niente', 'Nothing'), L('Un array', 'An array')], 0, L('Anche se scrivi `return 1`.', 'Even if you write `return 1`.')),
@@ -51,6 +183,9 @@ const [a, b] = await Promise.all([x(), y()]);', 'js'),
         ]),
         lesson('fetch', L('Fetch e API', 'Fetch and APIs'), [
             P('`fetch` parla con un server. Restituisce una risposta: controlla `ok`, poi leggi il corpo con `json()`. Per inviare dati usi `POST` con un corpo in JSON.', '`fetch` talks to a server. It gives back a response: check `ok`, then read the body with `json()`. To send data you use `POST` with a JSON body.'),
+            Fig(L(fig_jsadv_fetch('it'), fig_jsadv_fetch('en')),
+                L('Il browser chiama fetch(url): una freccia porta la richiesta GET /api/punti al server; una freccia di ritorno porta la risposta 200 OK con il corpo {"punti":10}, che il browser controlla con r.ok e legge con r.json().', 'The browser calls fetch(url): an arrow carries the request GET /api/punti to the server; a return arrow carries the response 200 OK with the body {"punti":10}, which the browser checks with r.ok and reads with r.json().'),
+                L('Ogni `fetch` è un andata e ritorno: richiesta e risposta.', 'Every `fetch` is a round trip: request and response.')),
             C('const r = await fetch("/api/punti");
 if (!r.ok) throw new Error(`Errore ${r.status}`);
 const dati = await r.json();
@@ -61,6 +196,7 @@ await fetch("/api/punti", {
   body: JSON.stringify({ punti: 10 }),
 });', 'js'),
             P('Attenzione: `fetch` non fallisce su un errore 404 o 500, solo su problemi di rete. Per questo va controllato `r.ok`.', 'Careful: `fetch` does not fail on a 404 or 500, only on network problems. That is why you check `r.ok`.'),
+            P('Il codice di **stato** racconta com’è andata: `2xx` tutto bene, `4xx` errore della richiesta (`404` non trovato, `401` non autorizzato), `5xx` errore del server. `r.json()` è a sua volta asincrono, perché il corpo può arrivare a pezzi, e si legge **una volta sola**. Per un `GET` basta l’indirizzo; per inviare dati servono `method`, gli `headers` e il `body`.', 'The **status** code tells how it went: `2xx` all good, `4xx` an error in the request (`404` not found, `401` unauthorised), `5xx` a server error. `r.json()` is asynchronous too, because the body can arrive in pieces, and it can be read **only once**. For a `GET` the address is enough; to send data you need `method`, the `headers` and the `body`.'),
         ], [
             Q('f1', L('`fetch` fallisce su un 404?', 'Does `fetch` fail on a 404?'), [L('No, va controllato `ok`', 'No, check `ok`'), L('Sì, sempre', 'Yes, always'), L('Solo in POST', 'Only on POST'), L('Solo su Safari', 'Only on Safari')], 0, L('Fallisce solo se la rete non risponde.', 'It only fails if the network does not answer.')),
             Q('f2', L('Come si legge il corpo JSON?', 'How do you read the JSON body?'), ['await r.json()', 'r.body', 'JSON(r)', 'r.text'], 0, L('Anche `json()` restituisce una Promise.', '`json()` also gives back a Promise.')),
@@ -81,6 +217,7 @@ export default class Gioco {}
 import Gioco, { MAX, somma } from "./punti.js";
 const pesante = await import("./grafici.js");', 'js'),
             P('Ogni modulo ha il suo ambito: le variabili non finiscono più nello spazio globale. `import()` come funzione carica un modulo solo quando serve.', 'Each module has its own scope: variables no longer end up in the global space. `import()` as a function loads a module only when needed.'),
+            P('Un modulo può avere tante esportazioni **con nome**, che si importano tra graffe con lo stesso nome, e una sola esportazione **default**, che si importa senza graffe e con il nome che vuoi. Nel browser il percorso deve essere completo, estensione compresa: `./punti.js`, non `./punti`. Gli script `type="module"` partono dopo che l’HTML è stato letto, come con `defer`.', 'A module can have many **named** exports, imported between braces with the same name, and a single **default** export, imported without braces and with any name you like. In the browser the path must be complete, extension included: `./punti.js`, not `./punti`. `type="module"` scripts run after the HTML has been read, as with `defer`.'),
         ], [
             Q('m1', L('Quante `export default` può avere un modulo?', 'How many `export default` can a module have?'), [L('Una', 'One'), L('Quante vuoi', 'As many as you like'), L('Due', 'Two'), L('Nessuna', 'None')], 0, L('Le esportazioni con nome invece sono libere.', 'Named exports are unlimited.')),
             Q('m2', L('Come si importa una esportazione con nome?', 'How do you import a named export?'), [L('Tra graffe', 'In braces'), L('Tra virgolette', 'In quotes'), L('Con `@`', 'With `@`'), L('Con `#`', 'With `#`')], 0, L('`import { somma } from "./a.js"`.', '`import { somma } from "./a.js"`.')),
@@ -107,6 +244,7 @@ class Mago extends Eroe {
 }
 const m = new Mago("Ada");', 'js'),
             P('`#` rende un campo privato: da fuori non si tocca. Nel costruttore di una sottoclasse `super()` va chiamato prima di usare `this`.', '`#` makes a field private: it cannot be touched from outside. In a subclass constructor `super()` must be called before using `this`.'),
+            P('Ogni `new Eroe("Ada")` crea un oggetto nuovo, un’**istanza**: dentro i metodi `this` è proprio quell’istanza. `Mago extends Eroe` riceve tutto quello che ha `Eroe` (il getter `vite`, il metodo `colpisci`) e aggiunge del suo. Le classi servono quando hai molti oggetti con gli stessi dati e comportamenti; i campi privati proteggono lo stato da modifiche sbagliate dall’esterno.', 'Every `new Eroe("Ada")` creates a new object, an **instance**: inside the methods `this` is that very instance. `Mago extends Eroe` receives everything `Eroe` has (the `vite` getter, the `colpisci` method) and adds its own. Classes are useful when you have many objects with the same data and behaviour; private fields protect the state from wrong changes from outside.'),
         ], [
             Q('c1', L('Con che cosa si crea un oggetto da una classe?', 'What creates an object from a class?'), ['new', 'make', 'create', 'class'], 0, L('`new Eroe("Ada")`.', '`new Eroe("Ada")`.')),
             Q('c2', L('Che cosa fa `super()`?', 'What does `super()` do?'), [L('Chiama il costruttore del genitore', 'Calls the parent constructor'), L('Rende forte', 'Makes strong'), L('Cancella', 'Deletes'), L('Copia', 'Copies')], 0, L('Va chiamato prima di `this`.', 'It must come before `this`.')),
@@ -131,6 +269,10 @@ Promise.resolve().then(() => console.log("C"));
 console.log("D");
 // A D C B', 'js'),
             P('Le Promise (microtask) passano prima dei timer: per questo `C` arriva prima di `B`, anche con attesa zero.', 'Promises (microtasks) go before timers: that is why `C` comes before `B`, even with a zero wait.'),
+            P('Nell’esempio `contatore` ha finito da tempo, ma la funzione restituita ricorda ancora `n`: è uno stato privato, che nessun altro può toccare. Il giro dell’event loop è sempre lo stesso: prima finisce tutto lo script sulla pila delle chiamate, poi si svuotano **tutti** i microtask (le promise), poi si prende **un** task (un timer, un click) e si ricomincia.', 'In the example `contatore` finished long ago, but the function it gave back still remembers `n`: it is private state that nobody else can touch. The round of the event loop is always the same: first the whole script on the call stack finishes, then **all** the microtasks (promises) are emptied, then **one** task (a timer, a click) is taken and it starts again.'),
+            Fig(L(fig_jsadv_loop('it'), fig_jsadv_loop('en')),
+                L('A sinistra la pila delle chiamate con lo script principale; a destra due code: i microtask, con il then che stampa C, e i task, con il timer che stampa B. Al centro l’event loop porta i lavori dalle code alla pila, prima i microtask. In basso la console mostra A, D, C, B.', 'On the left the call stack with the main script; on the right two queues: microtasks, with the then that prints C, and tasks, with the timer that prints B. In the middle the event loop brings jobs from the queues to the stack, microtasks first. At the bottom the console shows A, D, C, B.'),
+                L('Prima lo script (A, D), poi i microtask (C), poi i task (B).', 'First the script (A, D), then the microtasks (C), then the tasks (B).')),
         ], [
             Q('l1', L('Che cosa ricorda una closure?', 'What does a closure remember?'), [L('Le variabili esterne', 'The outer variables'), L('La password', 'The password'), L('La cronologia', 'The history'), L('Il DOM', 'The DOM')], 0, L('Così `n` sopravvive tra una chiamata e l’altra.', 'So `n` survives between calls.')),
             Q('l2', L('Sul thread principale, JavaScript esegue più codice insieme?', 'On the main thread, does JavaScript run several pieces of code at once?'), [L('No, uno alla volta', 'No, one at a time'), L('Sì, sempre', 'Yes, always'), L('Solo in CSS', 'Only in CSS'), L('Solo di notte', 'Only at night')], 0, L('Per questo un ciclo infinito blocca tutto. Per i calcoli pesanti esistono i Web Worker, su thread separati.', 'That is why an endless loop freezes everything. For heavy work there are Web Workers, on separate threads.')),
@@ -141,6 +283,9 @@ console.log("D");
         ]),
         lesson('prototypes', L('Prototipi e this', 'Prototypes and this'), [
             P('Ogni oggetto ha un **prototipo**: un altro oggetto a cui chiede le proprietà che non ha. Le classi sono una sintassi comoda sopra questo meccanismo: i metodi stanno una volta sola nel prototipo e tutte le istanze li condividono.', 'Every object has a **prototype**: another object it asks for the properties it lacks. Classes are a handy syntax on top of this mechanism: methods live once in the prototype and every instance shares them.'),
+            Fig(L(fig_jsadv_proto('it'), fig_jsadv_proto('en')),
+                L('Una catena di quattro riquadri collegati da frecce: l’oggetto ada con nome, Eroe.prototype con saluta(), Object.prototype con toString() e hasOwnProperty(), e infine null. ada.saluta() non è su ada, viene trovato al secondo passo.', 'A chain of four boxes joined by arrows: the object ada with nome, Eroe.prototype with saluta(), Object.prototype with toString() and hasOwnProperty(), and finally null. ada.saluta() is not on ada, it is found at the second step.'),
+                L('Una proprietà che manca si cerca nel prototipo, poi nel suo prototipo, fino a `null`.', 'A missing property is looked up in the prototype, then in its prototype, up to `null`.')),
             C('class Eroe {
   constructor(nome) { this.nome = nome; }
   saluta() { return `Sono ${this.nome}`; }

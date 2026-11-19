@@ -1,6 +1,98 @@
 <?php
 /** Rust advanced: lifetimes, smart pointers, threads and channels, async with Tokio, tests and crates, macros, unsafe and FFI, advanced traits. */
 
+/** Lifetimes as bars over time: a lives long, b short; the result of piu_lunga is valid only while both live. */
+if (!function_exists('fig_rustadv_lifetimes')) {
+    function fig_rustadv_lifetimes(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="40" y="30" width="560" height="34" rx="8" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="54" y="52" font-weight="700">a: &amp;'a str</text>
+<rect x="160" y="84" width="260" height="34" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/>
+<text x="174" y="106" font-weight="700">b: &amp;'a str</text>
+<rect x="220" y="138" width="200" height="34" rx="8" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="320" y="160" text-anchor="middle" font-size="14">{$t[0]}</text>
+<rect x="420" y="138" width="180" height="34" rx="8" fill="#FFE3EE" stroke="#F03E82" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="510" y="160" text-anchor="middle" font-size="14" fill="#C2185B">{$t[1]}</text>
+<path d="M420 22 V184" stroke="#7048E8" stroke-width="2" stroke-dasharray="4 4"/>
+<text x="428" y="108" font-size="13" fill="#5A35C9">{$t[2]}</text>
+<path d="M40 204 H596" stroke="#8A87B0" stroke-width="2"/><path d="M588 197 L600 204 L588 211" stroke="#8A87B0" stroke-width="2" fill="none"/>
+<text x="600" y="228" text-anchor="end" font-size="13" fill="#5F5C8A">{$t[3]}</text>
+</svg>
+SVG;
+    }
+}
+
+/** Rc: two owners on the stack point at one heap block holding the strong count and the value. */
+if (!function_exists('fig_rustadv_rc')) {
+    function fig_rustadv_rc(string $count): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="20" y="34" width="170" height="48" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="105" y="63" text-anchor="middle" font-weight="700">condiviso</text>
+<rect x="20" y="128" width="170" height="48" rx="10" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/><text x="105" y="157" text-anchor="middle" font-weight="700">altro</text>
+<g stroke="#2F8CF0" stroke-width="2" fill="none"><path d="M190 58 C260 58 280 92 330 96"/><path d="M319 89 L332 96 L320 103"/><path d="M190 152 C260 152 280 118 330 114"/><path d="M320 107 L332 114 L319 121"/></g>
+<rect x="334" y="60" width="290" height="90" rx="14" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<rect x="350" y="80" width="100" height="50" rx="8" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="400" y="111" text-anchor="middle" font-weight="700">strong 2</text>
+<rect x="460" y="80" width="148" height="50" rx="8" fill="#FFFFFF" stroke="#E8590C" stroke-width="2"/><text x="534" y="111" text-anchor="middle">"Fucina"</text>
+<text x="400" y="176" text-anchor="middle" font-size="13" fill="#5A35C9">{$count}</text>
+<text x="334" y="48" font-size="13" font-weight="700" fill="#5F5C8A">heap</text>
+</svg>
+SVG;
+    }
+}
+
+/** Three worker threads send messages into one channel that main reads. The messages slide along the channel. */
+if (!function_exists('fig_rustadv_channel')) {
+    function fig_rustadv_channel(string $worker, string $channel): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<style>.q{animation:q 2s linear infinite}.in{animation:fin 2s linear infinite}.out{animation:fout 2s linear infinite}@keyframes q{from{transform:none}to{transform:translateX(60px)}}@keyframes fin{from{opacity:0}to{opacity:1}}@keyframes fout{from{opacity:1}to{opacity:0}}@media (prefers-reduced-motion:reduce){.q,.in,.out{animation:none}}</style>
+<g font-size="14" text-anchor="middle">
+<rect x="20" y="16" width="150" height="48" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="95" y="38" font-weight="700">{$worker} 0</text><text x="95" y="56" font-size="13" fill="#5A35C9">tx.send(…)</text>
+<rect x="20" y="91" width="150" height="48" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="95" y="113" font-weight="700">{$worker} 1</text><text x="95" y="131" font-size="13" fill="#5A35C9">tx.send(…)</text>
+<rect x="20" y="166" width="150" height="48" rx="10" fill="#ECE6FF" stroke="#7048E8" stroke-width="2"/><text x="95" y="188" font-weight="700">{$worker} 2</text><text x="95" y="206" font-size="13" fill="#5A35C9">tx.send(…)</text>
+</g>
+<g stroke="#8A87B0" stroke-width="2" fill="none"><path d="M170 40 C210 40 214 115 248 115"/><path d="M170 115 H248"/><path d="M170 190 C210 190 214 115 248 115"/><path d="M452 115 H486"/><path d="M478 108 L488 115 L478 122"/></g>
+<rect x="250" y="100" width="200" height="30" rx="15" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="350" y="90" text-anchor="middle" font-size="13" fill="#5F5C8A">{$channel}</text>
+<g class="q"><rect class="in" x="262" y="108" width="26" height="14" rx="4" fill="#E8590C"/><rect x="322" y="108" width="26" height="14" rx="4" fill="#E8590C"/><rect class="out" x="382" y="108" width="26" height="14" rx="4" fill="#E8590C"/></g>
+<rect x="490" y="91" width="134" height="48" rx="10" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="557" y="113" text-anchor="middle" font-weight="700">main</text><text x="557" y="131" text-anchor="middle" font-size="13" fill="#0B7F5C">for m in rx</text>
+</svg>
+SVG;
+    }
+}
+
+/** How a future runs: it does nothing until polled; Pending registers a waker, wake() makes the runtime poll again, then Ready. */
+if (!function_exists('fig_rustadv_poll')) {
+    function fig_rustadv_poll(array $t): string
+    {
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" font-family="system-ui, sans-serif" font-size="15" fill="#1E1C52">
+<rect x="20" y="86" width="160" height="58" rx="12" fill="#F1F0F8" stroke="#8A87B0" stroke-width="2"/>
+<text x="100" y="110" text-anchor="middle" font-weight="700">scarica("A")</text><text x="100" y="131" text-anchor="middle" font-size="13" fill="#5F5C8A">{$t[0]}</text>
+<rect x="240" y="90" width="120" height="50" rx="12" fill="#DCEBFF" stroke="#2F8CF0" stroke-width="2"/>
+<text x="300" y="120" text-anchor="middle" font-weight="700">poll</text>
+<rect x="430" y="16" width="190" height="58" rx="12" fill="#FFF3EA" stroke="#E8590C" stroke-width="2"/>
+<text x="525" y="40" text-anchor="middle" font-weight="700">Pending</text><text x="525" y="61" text-anchor="middle" font-size="13" fill="#B84508">{$t[1]}</text>
+<rect x="430" y="156" width="190" height="58" rx="12" fill="#D5F6EA" stroke="#0B7F5C" stroke-width="2"/>
+<text x="525" y="180" text-anchor="middle" font-weight="700">Ready</text><text x="525" y="201" text-anchor="middle" font-size="13" fill="#0B7F5C">"{$t[2]}"</text>
+<g stroke-width="2" fill="none">
+<path d="M180 115 H234" stroke="#2F8CF0"/><path d="M226 108 L236 115 L226 122" stroke="#2F8CF0"/>
+<path d="M360 108 C395 108 400 62 424 58" stroke="#E8590C"/><path d="M414 52 L426 57 L416 65" stroke="#E8590C"/>
+<path d="M430 30 C360 16 300 28 300 84" stroke="#7048E8" stroke-dasharray="5 4"/><path d="M293 76 L300 88 L307 76" stroke="#7048E8"/>
+<path d="M360 128 C390 128 396 180 424 184" stroke="#0B7F5C"/><path d="M416 177 L426 185 L414 190" stroke="#0B7F5C"/>
+</g>
+<text x="207" y="104" text-anchor="middle" font-size="13" fill="#1B66BC">.await</text>
+<text x="290" y="50" text-anchor="end" font-size="13" font-weight="700" fill="#5A35C9">wake()</text>
+</svg>
+SVG;
+    }
+}
+
 return [
     'id' => 'rust-advanced', 'family' => 'rust', 'after' => 'rust-intermediate',
     'title' => L('Rust avanzato', 'Advanced Rust'), 'short' => L('Rust avanzato', 'Rust Advanced'), 'level' => L('Avanzato', 'Advanced'),
@@ -16,6 +108,8 @@ struct Estratto<\'a> {
     testo: &\'a str,
 }', 'rust'),
             P('La firma dice: il risultato vive al massimo quanto il più breve tra `a` e `b`. Nella maggior parte dei casi Rust deduce i lifetime da solo.', 'The signature says: the result lives at most as long as the shorter of `a` and `b`. In most cases Rust infers lifetimes by itself.'),
+            Fig(L(fig_rustadv_lifetimes(['risultato di piu_lunga', 'usarlo qui: errore', 'fine di b', 'esecuzione →']), fig_rustadv_lifetimes(['result of piu_lunga', 'using it here: error', 'end of b', 'execution →'])), L('Tre barre sullo stesso asse dell’esecuzione. a vive a lungo, b vive meno e finisce a una linea tratteggiata. Il risultato di piu_lunga è verde finché b vive; dopo la linea diventa rosa tratteggiato con la scritta «usarlo qui: errore».', 'Three bars on the same execution axis. a lives long, b lives less and ends at a dashed line. The result of piu_lunga is green while b lives; after the line it turns pink and dashed with the words “using it here: error”.'), L('`\'a` prende la durata più breve: il risultato potrebbe essere proprio `b`.', '`\'a` takes the shorter lifetime: the result might be `b` itself.')),
+            P('Lo scopo è uno solo: impedire i **riferimenti penzolanti**, cioè puntatori a memoria già liberata, che in C sono una fonte infinita di bug. Il lifetime non allunga la vita di nulla: descrive soltanto relazioni che il compilatore poi verifica. Rust li deduce nei casi semplici (un solo riferimento in ingresso, oppure un metodo con `&self`); serve scriverli quando, come qui, il risultato potrebbe venire da due parametri diversi. Una struct che contiene un riferimento, come `Estratto`, non può vivere più del testo a cui punta.', 'There is only one goal: preventing **dangling references**, pointers to memory already freed, which in C are an endless source of bugs. A lifetime does not extend anything’s life: it only describes relations the compiler then checks. Rust infers them in the simple cases (a single reference coming in, or a method with `&self`); you have to write them when, as here, the result could come from two different parameters. A struct holding a reference, like `Estratto`, cannot outlive the text it points to.'),
         ], [
             Q('l1', L('Che cosa indica un lifetime?', 'What does a lifetime indicate?'), [L('Per quanto un riferimento è valido', 'How long a reference is valid'), L('La durata del programma', 'How long the program runs'), L('Un timer', 'A timer'), L('La versione di Rust', 'The Rust version')], 0, L('Evita riferimenti a dati già distrutti.', 'It avoids references to dropped data.')),
             Q('l2', L('Bisogna sempre scrivere i lifetime?', 'Must you always write lifetimes?'), [L('No, spesso li deduce il compilatore', 'No, the compiler often infers them'), L('Sì, sempre', 'Yes, always'), L('Solo nei main', 'Only in main'), L('Mai', 'Never')], 0, L('Servono nei casi ambigui.', 'They are needed in ambiguous cases.')),
@@ -40,6 +134,8 @@ println!("{}", Rc::strong_count(&condiviso)); // 2
 let contatore = Arc::new(Mutex::new(0));
 *contatore.lock().unwrap() += 1;', 'rust'),
             P('`Rc::clone` non copia il dato: aumenta un contatore. Quando l’ultimo proprietario sparisce, il valore viene liberato.', '`Rc::clone` does not copy the data: it increments a counter. When the last owner goes away, the value is freed.'),
+            Fig(L(fig_rustadv_rc('contatore dei proprietari'), fig_rustadv_rc('owner count')), L('Due variabili sullo stack, condiviso e altro, puntano allo stesso blocco sullo heap. Il blocco contiene il contatore strong, che vale 2, e il valore "Fucina".', 'Two variables on the stack, condiviso and altro, point at the same block on the heap. The block holds the strong count, which is 2, and the value "Fucina".'), L('Due proprietari, un solo dato: il contatore decide quando liberarlo.', 'Two owners, one piece of data: the count decides when to free it.')),
+            P('Come scegliere: `Box` quando il proprietario è uno solo ma il valore deve stare sullo heap; `Rc` per condividere dentro un thread; `Arc` tra thread, dove il contatore è atomico e costa un po’ di più. `RefCell` sposta il controllo dei prestiti a runtime: due `borrow_mut()` insieme non danno un errore di compilazione ma un panic. E attenzione ai cicli: due `Rc` che si puntano a vicenda non arrivano mai a zero, quindi uno dei due collegamenti va fatto con `Weak`.', 'How to choose: `Box` when there is a single owner but the value must live on the heap; `Rc` to share within one thread; `Arc` across threads, where the count is atomic and costs a little more. `RefCell` moves the borrow check to runtime: two `borrow_mut()` at once give not a compile error but a panic. And beware of cycles: two `Rc` pointing at each other never reach zero, so one of the two links must be a `Weak`.'),
         ], [
             Q('p1', L('Quale smart pointer per più proprietari tra thread?', 'Which smart pointer for several owners across threads?'), ['Arc', 'Rc', 'Box', 'Cell'], 0, L('Atomic Reference Counted.', 'Atomic Reference Counted.')),
             Q('p2', L('Che cosa fa `Rc::clone`?', 'What does `Rc::clone` do?'), [L('Aumenta il conteggio dei proprietari', 'Increments the owner count'), L('Copia i dati', 'Copies the data'), L('Cancella il valore', 'Drops the value'), L('Crea un thread', 'Creates a thread')], 0, L('Il dato resta uno.', 'The data stays single.')),
@@ -68,6 +164,8 @@ for messaggio in rx {
     println!("{messaggio}");
 }', 'rust'),
             P('`move` sposta nel thread le variabili che usa. `mpsc` significa “più produttori, un consumatore”.', '`move` moves into the thread the variables it uses. `mpsc` means “multiple producers, single consumer”.'),
+            Fig(L(fig_rustadv_channel('lavoratore', 'mpsc::channel()'), fig_rustadv_channel('worker', 'mpsc::channel()')), L('Tre thread lavoratori, ognuno con tx.send, sono collegati a un unico canale. I messaggi scorrono nel canale verso main, che li legge con for m in rx.', 'Three worker threads, each with tx.send, are connected to a single channel. The messages slide along the channel to main, which reads them with for m in rx.'), L('Molti produttori, un solo consumatore: l’ordine di arrivo dipende da chi finisce prima.', 'Many producers, one consumer: the order of arrival depends on who finishes first.')),
+            P('Due dettagli del codice contano. `move` è obbligatorio perché il thread può vivere più a lungo della funzione che lo crea: un riferimento a una variabile locale potrebbe restare penzolante, quindi il compilatore pretende che il thread possieda ciò che usa. E `drop(tx)` serve perché il ciclo `for messaggio in rx` finisce solo quando tutti i trasmettitori sono stati chiusi: senza, il main aspetterebbe per sempre l’originale ancora aperto.', 'Two details of the code matter. `move` is required because the thread may live longer than the function that creates it: a reference to a local variable could be left dangling, so the compiler insists that the thread owns what it uses. And `drop(tx)` is needed because the `for messaggio in rx` loop ends only when every sender has been closed: without it, main would wait forever for the original one still open.'),
         ], [
             Q('t1', L('Che cosa fa `move` in una closure di thread?', 'What does `move` do in a thread closure?'), [L('Sposta le variabili nel thread', 'Moves variables into the thread'), L('Muove la finestra', 'Moves the window'), L('Copia il thread', 'Copies the thread'), L('Niente', 'Nothing')], 0, L('Il thread ne diventa proprietario.', 'The thread becomes their owner.')),
             Q('t2', L('Che cosa significa mpsc?', 'What does mpsc mean?'), [L('Più produttori, un consumatore', 'Multiple producers, single consumer'), L('Memoria protetta', 'Protected memory'), L('Un tipo di mutex', 'A kind of mutex'), L('Un protocollo di rete', 'A network protocol')], 0, L('Tanti `tx`, un `rx`.', 'Many `tx`, one `rx`.')),
@@ -82,7 +180,7 @@ h.join().unwrap();'), [
         ]),
         lesson('async', L('Async con Tokio', 'Async with Tokio'), [
             P('Il codice `async` di Rust ha bisogno di un **runtime** che lo esegua: il più usato è **Tokio**. `#[tokio::main]` prepara il runtime, `.await` aspetta un futuro, `tokio::join!` ne esegue più insieme.', 'Rust `async` code needs a **runtime** to run it: the most used is **Tokio**. `#[tokio::main]` sets up the runtime, `.await` waits for a future, `tokio::join!` runs several together.'),
-            C('use tokio::time::{sleep, Duration};
+            C(L('use tokio::time::{sleep, Duration};
 
 async fn scarica(nome: &str) -> String {
     sleep(Duration::from_millis(500)).await;
@@ -93,8 +191,21 @@ async fn scarica(nome: &str) -> String {
 async fn main() {
     let (a, b) = tokio::join!(scarica("A"), scarica("B"));
     println!("{a}, {b}");
-}', 'rust'),
+}', 'use tokio::time::{sleep, Duration};
+
+async fn scarica(nome: &str) -> String {
+    sleep(Duration::from_millis(500)).await;
+    format!("{nome} ready")
+}
+
+#[tokio::main]
+async fn main() {
+    let (a, b) = tokio::join!(scarica("A"), scarica("B"));
+    println!("{a}, {b}");
+}'), 'rust', L('<pre>A pronto, B pronto</pre>', '<pre>A ready, B ready</pre>')),
             P('Un futuro non fa nulla finché non viene atteso: è **pigro**. Per lavori di calcolo pesante meglio i thread.', 'A future does nothing until awaited: it is **lazy**. For heavy computation threads are better.'),
+            Fig(L(fig_rustadv_poll(['non fa nulla da sola', 'il timer non è scaduto', 'A pronto']), fig_rustadv_poll(['does nothing on its own', 'the timer has not fired', 'A ready'])), L('scarica("A") passa con .await a poll. Da poll una freccia va a Pending, quando il timer non è scaduto, e da lì una freccia tratteggiata wake() riporta a poll. Un’altra freccia da poll porta a Ready con il valore.', 'scarica("A") goes with .await to poll. From poll an arrow leads to Pending, when the timer has not fired, and from there a dashed wake() arrow leads back to poll. Another arrow from poll leads to Ready with the value.'), L('Il runtime interroga il futuro, lo mette da parte se è Pending e lo riprende quando il waker lo chiama.', 'The runtime polls the future, sets it aside while it is Pending and picks it up again when the waker calls.')),
+            P('Mentre un futuro è `Pending`, il runtime fa avanzare gli altri: per questo `join!` scarica A e B in circa mezzo secondo, non in uno. Ne segue la regola più importante: dentro codice `async` non chiamare mai funzioni che bloccano il thread, come `std::thread::sleep` o una lettura di file sincrona, perché fermano tutti i futuri che condividono quel thread. Usa le versioni di Tokio (`tokio::time::sleep`, `tokio::fs`) o sposta il lavoro con `tokio::task::spawn_blocking`.', 'While a future is `Pending`, the runtime moves the others forward: that is why `join!` downloads A and B in about half a second, not one. The most important rule follows: inside `async` code never call functions that block the thread, such as `std::thread::sleep` or a synchronous file read, because they stop every future sharing that thread. Use the Tokio versions (`tokio::time::sleep`, `tokio::fs`) or move the work with `tokio::task::spawn_blocking`.'),
         ], [
             Q('a1', L('Chi esegue il codice async in Rust?', 'Who runs async code in Rust?'), [L('Un runtime come Tokio', 'A runtime such as Tokio'), L('Il compilatore', 'The compiler'), L('Il sistema operativo da solo', 'The OS by itself'), L('Cargo', 'Cargo')], 0, L('Rust non include un runtime.', 'Rust ships no runtime.')),
             Q('a2', L('Dove si scrive `.await`?', 'Where do you write `.await`?'), [L('Dopo il futuro da attendere', 'After the future to wait for'), L('Prima di `fn`', 'Before `fn`'), L('Nel Cargo.toml', 'In Cargo.toml'), L('Mai', 'Never')], 0, L('È un suffisso.', 'It is a suffix.')),
@@ -127,8 +238,13 @@ mod tests {
     }
 }
 
-// terminale: cargo add serde --features derive', 'rust'),
+// terminale: cargo add serde --features derive', 'rust', '<pre>running 2 tests
+test tests::divisione_per_zero - should panic ... ok
+test tests::somma_due_numeri ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored</pre>'),
             P('`cargo clippy` suggerisce miglioramenti, `cargo fmt` formatta il codice come tutti i progetti Rust.', '`cargo clippy` suggests improvements, `cargo fmt` formats code like every Rust project.'),
+            P('I test dentro `mod tests` sono **unit test**: vedono anche le funzioni private, grazie a `use super::*`. I test **di integrazione** vanno nella cartella `tests/` e usano la crate da fuori, come farebbe chiunque la scarichi. Anche gli esempi nei commenti di documentazione (`///`) vengono compilati ed eseguiti da `cargo test`, così la documentazione non resta mai indietro rispetto al codice.', 'Tests inside `mod tests` are **unit tests**: they can see private functions too, thanks to `use super::*`. **Integration tests** go in the `tests/` folder and use the crate from outside, as anyone downloading it would. Even the examples in documentation comments (`///`) are compiled and run by `cargo test`, so the documentation never falls behind the code.'),
         ], [
             Q('x1', L('Quale comando esegue i test?', 'Which command runs the tests?'), ['cargo test', 'cargo check', 'rust test', 'cargo run --test-only'], 0, L('Compila ed esegue i `#[test]`.', 'It builds and runs the `#[test]`s.')),
             Q('x2', L('Quale macro confronta due valori in un test?', 'Which macro compares two values in a test?'), ['assert_eq!', 'compare!', 'equal!', 'check!'], 0, L('Mostra entrambi se diversi.', 'It shows both when different.')),
