@@ -204,6 +204,11 @@ sav-select:not(:defined) > option {
    ========================================================================== */
 
 /* Soft is the default: this class only matters to bring it back inside a section of a page that uses another style */
+/* Animations: --sav-motion scales every duration of the components (1 = as designed, 0 = none, 2 = twice as long).
+   animation="off" on any element turns them off there and inside it; on a component, animation-duration="ms" sets the pace. */
+[animation="off"] { --sav-motion: 0; }
+[animation="on"]:not([animation-duration]) { --sav-motion: 1; }
+
 .sav-style-soft {
   --sav-radius-sm: 4px; --sav-radius: 8px; --sav-radius-lg: 14px; --sav-border-width: 1px; --sav-focus-width: 3px;
   --sav-font-weight-semibold: 600; --sav-font-weight-bold: 700;
