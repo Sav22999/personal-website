@@ -212,12 +212,12 @@ sav-select:not(:defined) > option {
   --sav-shadow-lg: 0 18px 48px rgb(20 24 40 / 0.18), 0 4px 12px rgb(20 24 40 / 0.08);
   --sav-tilt: initial; --sav-tilt-lift: initial; --sav-card-back: initial; --sav-ring-cap: round; --sav-radius-pill: 999px;
   --sav-knob-radius: initial; --sav-knob-tilt: initial; --sav-avatar-radius: initial; --sav-avatar-tilt: initial; --sav-avatar-inset: initial; --sav-avatar-img-scale: initial;
-  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-button-shadow: initial; --sav-button-shadow-hover: initial;
+  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-button-shadow: initial; --sav-button-shadow-hover: initial;
   --sav-button-shadow-active: initial; --sav-button-hover-transform: initial; --sav-button-active-transform: initial;
   --sav-button-border-color: initial; --sav-button-letter-spacing: initial; --sav-button-text-transform: initial; --sav-button-font-scale: initial;
   --sav-control-shadow: initial; --sav-alert-shadow: initial; --sav-backdrop: initial; --sav-panel-shadow: initial; --sav-panel-lift: initial; --sav-panel-back: initial; --sav-panel-arrow: initial; --sav-tooltip-shadow: initial;
   --sav-sheen: initial; --sav-fill-opacity: initial; --sav-button-backdrop: initial; --sav-badge-shadow: initial; --sav-track-shadow: initial; --sav-switch-track: initial;
-  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-details-shadow: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
+  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-details-shadow: initial; --sav-details-plain-inline: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-current-behind: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
   --sav-range-height: initial; --sav-range-radius: initial; --sav-range-track-shadow: initial; --sav-range-thumb-width: initial; --sav-range-thumb-height: initial; --sav-range-thumb-radius: initial;
   --sav-range-thumb-tilt: initial; --sav-range-thumb-fill: initial; --sav-range-thumb-ink: initial; --sav-range-thumb-border-width: initial; --sav-range-thumb-shadow: initial; --sav-range-thumb-bg: initial;
 }
@@ -245,7 +245,7 @@ sav-select:not(:defined) > option {
   --sav-avatar-img-scale: 1.32;
   /* tabs */
   --sav-tab-active-bg: color-mix(in oklab, var(--sav-color-primary) 16%, transparent);
-  --sav-tab-vertical-active-bg: var(--sav-color-primary);
+  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary);
   --sav-tab-vertical-active-fg: var(--sav-color-on-primary);
   --sav-tab-vertical-active-line: none;
   --sav-tab-segment-shadow: 0 0 0 1px var(--sav-color-border);
@@ -282,7 +282,7 @@ sav-select:not(:defined) > option {
   --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border);
   --sav-tab-vertical-hover: var(--sav-color-surface-2);
   /* breadcrumb: the current page is a leaning blue tile */
-  --sav-breadcrumb-current-bg: var(--sav-color-primary);
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-current-behind: var(--sav-color-primary);
   --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
 }
 
@@ -362,7 +362,7 @@ sav-select:not(:defined) > option {
   --sav-badge-shadow: inset 0 0 0 1.5px var(--sav-color-text);
   --sav-ink-border: var(--sav-color-text);
   /* vertical tabs (and the site's side menu): an inked block with a hard shadow */
-  --sav-tab-vertical-active-bg: var(--sav-color-primary);
+  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary);
   --sav-tab-vertical-active-fg: var(--sav-color-on-primary);
   --sav-tab-vertical-active-shadow: inset 0 0 0 2px var(--sav-color-text), 3px 3px 0 var(--sav-color-text);
   --sav-tab-vertical-rail: transparent;
@@ -370,7 +370,7 @@ sav-select:not(:defined) > option {
   --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border);
   --sav-tab-vertical-hover: var(--sav-color-surface-2);
   /* breadcrumb: the current page is an inked block */
-  --sav-breadcrumb-current-bg: var(--sav-color-primary);
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-current-behind: var(--sav-color-primary);
   --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
   --sav-breadcrumb-current-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
 }
@@ -412,6 +412,7 @@ sav-select:not(:defined) > option {
   --sav-tab-active-bg: rgb(255 255 255 / .6);
   --sav-tab-segment-shadow: 0 2px 8px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .7);
   --sav-details-shadow: var(--sav-shadow-sm);
+  --sav-details-plain-inline: 1rem; /* plain accordion rows: text off the glass edge */
   --sav-alert-shadow: 0 6px 20px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .55);
   /* vertical tabs (and the site's side menu): a glass plate */
   --sav-tab-vertical-active-bg: var(--sav-tab-active-bg);
@@ -494,7 +495,7 @@ sav-select:not(:defined) > option {
   --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt;
   --sav-tilt: 0deg; --sav-tilt-lift: 0px; --sav-card-back: none; --sav-button-tilt: initial; --sav-button-tilt-hover: 0deg;
   --sav-knob-radius: 0px; --sav-knob-tilt: 0deg; --sav-avatar-radius: 0px; --sav-avatar-tilt: 0deg; --sav-avatar-inset: 0%; --sav-avatar-img-scale: 1;
-  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
+  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
   --sav-range-radius: 0px; --sav-range-thumb-radius: 0px; --sav-range-thumb-tilt: 0deg;
   --sav-spinner-tiles: 0; --sav-spinner-radius: 0px; --sav-ring-radius: 0px; --sav-ring-tilt: 0deg; --sav-ring-start: 12.5;
   --sav-panel-back: none; --sav-panel-arrow: block;
@@ -503,7 +504,7 @@ sav-select:not(:defined) > option {
   --sav-radius-sm: 10px; --sav-radius: 16px; --sav-radius-lg: 24px; --sav-radius-pill: 999px; --sav-ring-cap: round;
   --sav-tilt: 0deg; --sav-tilt-lift: 0px; --sav-card-back: none; --sav-button-tilt: initial; --sav-button-tilt-hover: 0deg;
   --sav-knob-radius: 50%; --sav-knob-tilt: 0deg; --sav-avatar-radius: 50%; --sav-avatar-tilt: 0deg; --sav-avatar-inset: 0%; --sav-avatar-img-scale: 1;
-  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
+  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
   --sav-range-radius: 999px; --sav-range-thumb-radius: 50%; --sav-range-thumb-tilt: 0deg;
   --sav-spinner-tiles: 0; --sav-spinner-radius: 9.5px; --sav-ring-radius: 42px; --sav-ring-tilt: 0deg; --sav-ring-start: 0;
   --sav-panel-back: none; --sav-panel-arrow: block;
@@ -513,11 +514,11 @@ sav-select:not(:defined) > option {
   --sav-tilt: initial; --sav-tilt-lift: -3px; --sav-card-back: block; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-shadow-sm: none;
   --sav-knob-radius: 0px; --sav-knob-tilt: 10deg; --sav-avatar-radius: 0px; --sav-avatar-tilt: 10deg; --sav-avatar-inset: 7%; --sav-avatar-img-scale: 1.32;
   --sav-tab-active-bg: color-mix(in oklab, var(--sav-color-primary) 16%, transparent);
-  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-fg: var(--sav-color-on-primary); --sav-tab-vertical-active-line: none;
+  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary); --sav-tab-vertical-active-fg: var(--sav-color-on-primary); --sav-tab-vertical-active-line: none;
   --sav-range-height: .5rem; --sav-range-radius: 0px; --sav-range-thumb-width: 1.15rem; --sav-range-thumb-height: 1.15rem; --sav-range-thumb-radius: 0px; --sav-range-thumb-tilt: 10deg;
   --sav-range-thumb-fill: 1; --sav-range-thumb-border-width: 0px; --sav-range-thumb-shadow: 3px 3px 0 rgb(0 0 0 / .2);
   --sav-spinner-tiles: 1; --sav-ring-radius: 0px; --sav-ring-tilt: 10deg; --sav-ring-start: 12.5;
   --sav-panel-back: block; --sav-panel-arrow: none; --sav-panel-shadow: 0 16px 40px rgb(0 0 0 / .22);
   --sav-tab-vertical-rail: transparent; --sav-tab-vertical-rail-padding: 0 .5rem 0 0; --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border); --sav-tab-vertical-hover: var(--sav-color-surface-2);
-  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-current-behind: var(--sav-color-primary); --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
 }
