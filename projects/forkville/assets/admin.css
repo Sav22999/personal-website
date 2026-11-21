@@ -1,0 +1,328 @@
+/* Forkville admin panel: same palette as the game, laid out for a desk. */
+body.admin {
+    background: var(--bg);
+    min-height: 100vh;
+}
+
+.gate {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+
+.admin-top {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 20px;
+    background: rgba(255, 246, 233, .96);
+    border-bottom: 2px solid var(--ink);
+    flex-wrap: wrap;
+}
+
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--ink);
+}
+
+.admin-brand img {
+    width: 34px;
+    height: 34px;
+}
+
+.admin-brand span {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 2px 7px;
+    border-radius: 6px;
+}
+
+.admin-top .tabs {
+    flex: 1;
+    max-width: 640px;
+}
+
+.admin-main {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.panel, .detail {
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: 18px;
+    padding: 16px;
+}
+
+.panel h2, .detail h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.stat {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 3px 0 var(--ink);
+}
+
+.stat b {
+    font-size: 26px;
+}
+
+.stat small {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.cols {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+}
+
+.top li {
+    margin: 4px 0;
+}
+
+table.grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.grid th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 8px;
+    border-bottom: 2px solid var(--line);
+}
+
+.grid td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.grid td.wrap {
+    max-width: 420px;
+}
+
+.grid.clickable tbody tr {
+    cursor: pointer;
+}
+
+.grid.clickable tbody tr:hover {
+    background: var(--surface-2);
+}
+
+.grid input[type=number] {
+    width: 100px;
+    height: 36px;
+    padding: 0 8px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.grid input.changed, .pantry-grid input.changed {
+    border-color: var(--primary);
+    background: #FFF0E6;
+    font-weight: 800;
+}
+
+.small {
+    font-size: 12px;
+}
+
+.tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    white-space: nowrap;
+}
+
+.tag.ok {
+    background: #E7F1D6;
+    color: #4E6A1E;
+}
+
+.tag.warn {
+    background: #FFF0C2;
+    color: #8C6612;
+}
+
+.tag.bad {
+    background: #FBE3E0;
+    color: var(--wrong);
+}
+
+.tag.admin {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+.players {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(360px, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.players .search input {
+    height: 44px;
+    margin-bottom: 8px;
+}
+
+.detail {
+    position: sticky;
+    top: 76px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+}
+
+.detail-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.detail-head h2 {
+    margin: 0;
+}
+
+.block {
+    border-top: 2px dashed var(--line);
+    padding: 12px 0 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.block h3 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.block p {
+    margin: 0;
+}
+
+.block input:not([type=checkbox]), .block select {
+    height: 38px;
+    padding: 0 10px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+}
+
+.fact {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.fact small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.pantry-grid, .recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 6px;
+}
+
+.ing {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ing input, .ing select {
+    width: 100%;
+}
+
+.icon-btn.small {
+    width: 30px;
+    height: 30px;
+}
+
+.subtabs {
+    align-self: flex-start;
+    flex-wrap: wrap;
+}
+
+.savebar {
+    position: sticky;
+    bottom: 12px;
+    align-self: center;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 8px 10px 8px 18px;
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    font-weight: 700;
+}
+
+.savebar .btn-ghost {
+    color: var(--bg);
+}
+
+@media (max-width: 900px) {
+    .cols, .players {
+        grid-template-columns: 1fr;
+    }
+
+    .detail {
+        position: static;
+        max-height: none;
+    }
+
+    .grid {
+        display: block;
+        overflow-x: auto;
+    }
+}

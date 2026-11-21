@@ -17,7 +17,8 @@ $canonical = '/contact-me/';
     <div class="contact-hero-content">
         <p class="section-label">Contact</p>
         <h1>Let's talk.</h1>
-        <p class="contact-hero-sub">Bug report, feature idea, collaboration, or just saying hi — pick the channel that works best for you.</p>
+        <p class="contact-hero-sub">Bug report, feature idea, collaboration, or just saying hi — pick the channel that
+            works best for you.</p>
     </div>
 </section>
 
@@ -25,18 +26,21 @@ $canonical = '/contact-me/';
     <div class="contact-options">
         <a class="contact-option primary" href="/contact-me/email/">
             <div class="contact-option-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <rect x="2" y="4" width="20" height="16" rx="2"/>
                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                 </svg>
             </div>
             <div class="contact-option-body">
                 <h3>Send an email</h3>
-                <p>Best for project requests, bug reports, and detailed messages. I'll get back to you as soon as possible.</p>
+                <p>Best for project requests, bug reports, and detailed messages. I'll get back to you as soon as
+                    possible.</p>
             </div>
             <span class="contact-option-cta">
                 <span>Open form</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
             </span>
@@ -53,7 +57,8 @@ $canonical = '/contact-me/';
                     <h3>Telegram</h3>
                     <p>Project updates and quick messages.</p>
                 </div>
-                <svg class="contact-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="contact-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2">
                     <path d="M7 17L17 7M17 7H7M17 7v10"/>
                 </svg>
             </a>
@@ -67,7 +72,8 @@ $canonical = '/contact-me/';
                     <h3>LinkedIn</h3>
                     <p>Professional connections and opportunities.</p>
                 </div>
-                <svg class="contact-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="contact-option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2">
                     <path d="M7 17L17 7M17 7H7M17 7v10"/>
                 </svg>
             </a>

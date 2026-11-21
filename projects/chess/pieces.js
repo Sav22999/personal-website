@@ -56,7 +56,7 @@ const PIECE_SVG = (() => {
         const at = (r, c) => (rows[r] && rows[r][c]) || '.';
         const solid = (r, c) => !'.k'.includes(at(r, c));
         const sq = (r, c) => `M${OX + c * S} ${OY + r * S}h${S}v${S}h-${S}z`;
-        const paths = { o: '', '#': '', h: '', d: '', x: '', k: '' };
+        const paths = {o: '', '#': '', h: '', d: '', x: '', k: ''};
         for (let r = -1; r <= rows.length; r++) {
             for (let c = -1; c <= 16; c++) {
                 const ch = at(r, c);
@@ -64,7 +64,7 @@ const PIECE_SVG = (() => {
                 else if (solid(r - 1, c) || solid(r + 1, c) || solid(r, c - 1) || solid(r, c + 1)) paths.o += sq(r, c);
             }
         }
-        const fill = { o: '--ps', '#': '--pf', h: '--ph', d: '--pd', x: '--ps', k: '--ps' };
+        const fill = {o: '--ps', '#': '--pf', h: '--ph', d: '--pd', x: '--ps', k: '--ps'};
         return `<g shape-rendering="crispEdges">${Object.entries(paths).filter(([, d]) => d).map(([k, d]) => `<path style="fill:var(${fill[k]});stroke:none" d="${d}"/>`).join('')}</g>`;
     };
     const pixel = {
@@ -100,9 +100,16 @@ const PIECE_SVG = (() => {
             '...h########d...', '...h########d...']),
     };
 
-    const SHAPES = { classic, pixel };
+    const SHAPES = {classic, pixel};
     // Style name -> shape set, in the order the picker shows them.
-    const STYLES = { classic: 'classic', wood: 'classic', flat: 'classic', marble: 'classic', glass: 'classic', pixel: 'pixel' };
+    const STYLES = {
+        classic: 'classic',
+        wood: 'classic',
+        flat: 'classic',
+        marble: 'classic',
+        glass: 'classic',
+        pixel: 'pixel'
+    };
     let current = 'classic';
 
     // stops: [offset, colour, opacity?]
@@ -131,7 +138,9 @@ const PIECE_SVG = (() => {
 
     return {
         STYLES: Object.keys(STYLES),
-        get style() { return current; },
+        get style() {
+            return current;
+        },
         // Not display:none: gradients inside a hidden SVG don't paint in every browser.
         sprite: `<svg xmlns="http://www.w3.org/2000/svg" id="piece-sprite" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">${defs}<g id="piece-symbols">${symbols('classic')}</g></svg>`,
         // Swapping the symbols redraws every <use> on the page, so nothing needs re-rendering.

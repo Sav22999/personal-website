@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">LetterHop</string>
+    <string name="host_name" translatable="false">www.saveriomorelli.com</string>
+    <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/letterhop/</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_text">LetterHop works offline once loaded. Check your connection to refresh.</string>
+    <string name="offline_retry">Try again</string>
+</resources>

@@ -26,9 +26,12 @@ function ini_bytes(string $v): int
     if ($v === '') return 0;
     $n = (int)$v;
     switch (strtolower(substr($v, -1))) {
-        case 'g': $n *= 1024;
-        case 'm': $n *= 1024;
-        case 'k': $n *= 1024;
+        case 'g':
+            $n *= 1024;
+        case 'm':
+            $n *= 1024;
+        case 'k':
+            $n *= 1024;
     }
     return $n;
 }
@@ -48,14 +51,14 @@ function document_row_out(array $d, bool $forAdmin): array
 {
     $path = documents_dir() . '/' . $d['file_name'];
     $out = [
-        'id'          => (int)$d['id'],
-        'title'       => $d['title'],
-        'edition'     => $d['edition'],
+        'id' => (int)$d['id'],
+        'title' => $d['title'],
+        'edition' => $d['edition'],
         'description' => $d['description'],
-        'file'        => DOCUMENTS_PUBLIC_PATH . $d['file_name'],
-        'size'        => (int)$d['file_size'],
-        'version'     => strtotime($d['updated_at'] . ' UTC') ?: 0,
-        'position'    => (int)$d['position'],
+        'file' => DOCUMENTS_PUBLIC_PATH . $d['file_name'],
+        'size' => (int)$d['file_size'],
+        'version' => strtotime($d['updated_at'] . ' UTC') ?: 0,
+        'position' => (int)$d['position'],
     ];
     if ($forAdmin) {
         $out['exists'] = is_file($path);

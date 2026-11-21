@@ -2,6 +2,6 @@
 importScripts('engine.js', 'ai.js');
 
 onmessage = (e) => {
-    const { id, state, level } = e.data;
-    postMessage({ id, uci: ChessAI.bestMove(state, level) });
+    const {id, state, level} = e.data;
+    postMessage({id, uci: ChessAI.bestMove(state, level)});
 };

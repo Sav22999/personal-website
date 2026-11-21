@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sea Battle</string>
+    <string name="host_name" translatable="false">www.saveriomorelli.com</string>
+    <string name="launch_url" translatable="false">https://www.saveriomorelli.com/projects/sea-battle/</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_text">Sea Battle needs internet for online games. Check your network and try again.</string>
+    <string name="offline_retry">Try again</string>
+</resources>

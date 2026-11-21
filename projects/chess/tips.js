@@ -1,18 +1,18 @@
 // Analysis behind the Tips feature: what a piece can do from its square, as plain facts the UI can phrase.
 const Tips = (() => {
-    const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+    const VALUE = {p: 1, n: 3, b: 3, r: 5, q: 9, k: 100};
     const other = (c) => (c === 'w' ? 'b' : 'w');
 
     // Lets players inspect either side: the piece's side is treated as the one to move.
     function asMover(state, color) {
-        return color === state.turn ? state : { ...state, turn: color, ep: -1 };
+        return color === state.turn ? state : {...state, turn: color, ep: -1};
     }
 
     function isPinned(state, sq, color) {
         if (state.board[sq].toLowerCase() === 'k' || Chess.inCheck(state, color)) return false;
         const board = state.board.slice();
         board[sq] = null;
-        return Chess.inCheck({ ...state, board }, color);
+        return Chess.inCheck({...state, board}, color);
     }
 
     function analyze(state, sq) {
@@ -61,10 +61,13 @@ const Tips = (() => {
         for (let sq = 0; sq < 64; sq++) {
             const p = state.board[sq];
             if (!p || Chess.colorOf(p) !== color || p.toLowerCase() === 'k') continue;
-            if (Chess.isAttacked(state, sq, other(color)) && !Chess.isAttacked(state, sq, color)) out.push({ sq, piece: p });
+            if (Chess.isAttacked(state, sq, other(color)) && !Chess.isAttacked(state, sq, color)) out.push({
+                sq,
+                piece: p
+            });
         }
         return out.sort((a, b) => VALUE[b.piece.toLowerCase()] - VALUE[a.piece.toLowerCase()]);
     }
 
-    return { analyze, hanging, VALUE };
+    return {analyze, hanging, VALUE};
 })();

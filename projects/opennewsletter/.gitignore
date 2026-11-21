@@ -1,0 +1,4 @@
+# Real database credentials: never commit them (use credentials-sample.php as a template)
+credentials.php
+# The SQL script for phpMyAdmin is part of the project (it contains no data or credentials)
+!install/*.sql

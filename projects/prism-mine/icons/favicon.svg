@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="0.7" cy="0.2" r="1">
+      <stop offset="0" stop-color="#4A2C16"/>
+      <stop offset="1" stop-color="#15100D"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g stroke-linecap="round" fill="none">
+    <path d="M30 236H168" stroke="#FFC266" stroke-width="40" filter="url(#glow)" opacity="0.7"/>
+    <path d="M30 236H168" stroke="#FFE2A8" stroke-width="16"/>
+    <path d="M168 236V30" stroke="#6FA0FF" stroke-width="40" filter="url(#glow)" opacity="0.7"/>
+    <path d="M168 236V30" stroke="#B9D3FF" stroke-width="16"/>
+  </g>
+  <g transform="translate(270 310)">
+    <polygon points="-130,-45 -65,-120 65,-120 130,-45 0,120" fill="#3E7BFA"/>
+    <polygon points="-130,-45 -65,-120 -32,-45" fill="#6FA0FF"/>
+    <polygon points="-32,-45 -65,-120 65,-120 32,-45" fill="#9CC3FF"/>
+    <polygon points="32,-45 65,-120 130,-45" fill="#5C8FFF"/>
+    <polygon points="-130,-45 -32,-45 0,120" fill="#2F66E0"/>
+    <polygon points="-32,-45 32,-45 0,120" fill="#4A85FF"/>
+    <polygon points="32,-45 130,-45 0,120" fill="#2556C4"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sudoku</string>
+    <string name="offline_title">Nessuna connessione</string>
+    <string name="offline_text">Sudoku funziona anche offline una volta aperto. Controlla la connessione per
+        ricaricare.
+    </string>
+    <string name="offline_retry">Riprova</string>
+</resources>

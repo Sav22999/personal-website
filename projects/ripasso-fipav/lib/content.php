@@ -4,11 +4,11 @@
 declare(strict_types=1);
 
 const SOURCE_PREFIX = [
-    'Regole di gioco'      => 'RG',
-    'Casistica'            => 'CAS',
+    'Regole di gioco' => 'RG',
+    'Casistica' => 'CAS',
     'Indicazioni tecniche' => 'IT',
-    'Normative federali'   => 'NF',
-    'Vademecum'            => 'VAD',
+    'Normative federali' => 'NF',
+    'Vademecum' => 'VAD',
 ];
 
 function bump_content_version(): void
@@ -44,11 +44,11 @@ function fetch_content(bool $forAdmin = false): array
     }
     foreach ($pdo->query('SELECT code, source, title, summary, full_text, change_season, change_type, change_note, updated_at FROM ' . t('refs')) as $r) {
         $item = [
-            'ref-code'      => $r['code'],
-            'ref-title'     => $r['title'],
-            'ref-text'      => $r['summary'],
+            'ref-code' => $r['code'],
+            'ref-title' => $r['title'],
+            'ref-text' => $r['summary'],
             'ref-full-text' => $r['full_text'],
-            'ref-from'      => $r['source'],
+            'ref-from' => $r['source'],
         ];
         if (!empty($r['change_season']) && !empty($r['change_type'])) {
             $item['ref-change'] = ['season' => $r['change_season'], 'type' => $r['change_type'], 'note' => (string)$r['change_note']];
@@ -65,11 +65,11 @@ function fetch_content(bool $forAdmin = false): array
     $questions = [];
     foreach ($pdo->query('SELECT id, code, text, type, difficulty, active, updated_at FROM ' . t('questions') . $where) as $q) {
         $questions[(int)$q['id']] = [
-            'question-code'       => $q['code'],
-            'question-text'       => $q['text'],
-            'question-type'       => $q['type'],
-            'question-answers'    => [],
-            'question-ref'        => [],
+            'question-code' => $q['code'],
+            'question-text' => $q['text'],
+            'question-type' => $q['type'],
+            'question-answers' => [],
+            'question-ref' => [],
             'question-difficulty' => $q['difficulty'],
         ];
         if ($forAdmin) {
@@ -89,11 +89,13 @@ function fetch_content(bool $forAdmin = false): array
         $questions[$qid]['question-ref'][] = $r['ref_code'];
     }
     $questions = array_values($questions);
-    usort($questions, function ($a, $b) { return strnatcmp($a['question-code'], $b['question-code']); });
+    usort($questions, function ($a, $b) {
+        return strnatcmp($a['question-code'], $b['question-code']);
+    });
 
     return [
-        'version'   => meta_get('content_version', '0'),
-        'refs'      => $refs,
+        'version' => meta_get('content_version', '0'),
+        'refs' => $refs,
         'questions' => $questions,
     ];
 }
@@ -102,7 +104,7 @@ function fetch_content(bool $forAdmin = false): array
 
 function validate_ref(array $in): array
 {
-    $code   = str_param($in, 'code', 32, true);
+    $code = str_param($in, 'code', 32, true);
     $source = str_param($in, 'source', 40, true);
     if (!in_array($source, SOURCES, true)) fail('Fonte non valida.', 422, 'validation');
     $prefix = SOURCE_PREFIX[$source];
@@ -126,14 +128,14 @@ function validate_ref(array $in): array
         }
     }
     return [
-        'code'      => $code,
-        'source'    => $source,
-        'title'     => str_param($in, 'title', 255, true),
-        'summary'   => str_param($in, 'summary', 5000, true),
+        'code' => $code,
+        'source' => $source,
+        'title' => str_param($in, 'title', 255, true),
+        'summary' => str_param($in, 'summary', 5000, true),
         'full_text' => str_param($in, 'full_text', 60000),
         'change_season' => $changeSeason === '' ? null : $changeSeason,
-        'change_type'   => $changeType === '' ? null : $changeType,
-        'change_note'   => $changeNote,
+        'change_type' => $changeType === '' ? null : $changeType,
+        'change_note' => $changeNote,
     ];
 }
 
@@ -216,17 +218,21 @@ function validate_question(array $in): array
         }
         if ($trueCorrect === null) fail('Indica se l\'affermazione è vera o falsa.', 422, 'validation');
         $answers = [
-            ['text' => 'Vero',  'correct' => $trueCorrect,  'value' => 'V'],
+            ['text' => 'Vero', 'correct' => $trueCorrect, 'value' => 'V'],
             ['text' => 'Falso', 'correct' => !$trueCorrect, 'value' => 'F'],
         ];
     } else {
         $n = count($answers);
-        $correct = count(array_filter($answers, function ($a) { return $a['correct']; }));
+        $correct = count(array_filter($answers, function ($a) {
+            return $a['correct'];
+        }));
         if ($n < 2) fail('Servono almeno 2 risposte.', 422, 'validation');
         if ($n > 10) fail('Massimo 10 risposte.', 422, 'validation');
         if ($type === 'multiple-choice' && $correct !== 1) fail('Nella scelta multipla deve esserci esattamente una risposta corretta.', 422, 'validation');
         if ($type === 'multi-select' && $correct < 1) fail('Seleziona almeno una risposta corretta.', 422, 'validation');
-        $texts = array_map(function ($a) { return mb_strtolower($a['text']); }, $answers);
+        $texts = array_map(function ($a) {
+            return mb_strtolower($a['text']);
+        }, $answers);
         if (count(array_unique($texts)) !== $n) fail('Ci sono risposte duplicate.', 422, 'validation');
         foreach ($answers as $i => &$a) $a['value'] = chr(65 + $i);
         unset($a);
@@ -234,7 +240,9 @@ function validate_question(array $in): array
 
     $refs = $in['refs'] ?? [];
     if (!is_array($refs)) fail('Riferimenti non validi.', 422, 'validation');
-    $refs = array_values(array_unique(array_filter(array_map(function ($r) { return trim((string)$r); }, $refs), 'strlen')));
+    $refs = array_values(array_unique(array_filter(array_map(function ($r) {
+        return trim((string)$r);
+    }, $refs), 'strlen')));
     if (count($refs) < 1) fail('Collega almeno un riferimento normativo.', 422, 'validation');
     if (count($refs) > 15) fail('Massimo 15 riferimenti per domanda.', 422, 'validation');
     $place = implode(',', array_fill(0, count($refs), '?'));
@@ -245,12 +253,12 @@ function validate_question(array $in): array
     if ($missing) fail('Riferimenti inesistenti: ' . implode(', ', $missing), 422, 'validation');
 
     return [
-        'text'       => $text,
-        'type'       => $type,
+        'text' => $text,
+        'type' => $type,
         'difficulty' => $difficulty,
-        'active'     => !array_key_exists('active', $in) || !empty($in['active']),
-        'answers'    => $answers,
-        'refs'       => $refs,
+        'active' => !array_key_exists('active', $in) || !empty($in['active']),
+        'answers' => $answers,
+        'refs' => $refs,
     ];
 }
 
@@ -352,20 +360,20 @@ function prefill_ref_changes(): void
 {
     $season = '2026/27';
     $rows = [
-        ['NF-2.8',   'changed', 'Dopo aver chiesto un Video Check, la squadra non può chiedere un tempo di riposo finché non è completata un’azione di gioco (sperimentazione FIVB).'],
-        ['NF-4.2',   'changed', 'La squadra in ricezione può cambiare posizione dal primo movimento del giocatore al servizio (un passo, un movimento preparatorio di braccia o gambe).'],
-        ['NF-4.3',   'changed', 'Fino a 8 sostituzioni per set (in deroga alla regola 15.1); restano le limitazioni della regola 15.6.'],
-        ['NF-4.4',   'changed', 'A referto fino a 14 atleti (sperimentazione FIVB); con più di 12 iscritti uno deve essere il Libero.'],
-        ['NF-4.5',   'changed', 'Dopo il 1° o 2° tocco la palla che colpisce soffitto o strutture può essere rigiocata dalla stessa squadra; se rimbalza nel campo avversario è fallo.'],
-        ['NF-4.6',   'changed', 'Stretta applicazione della regola 9.2.2 in attacco: vietati cambi di direzione durante il contatto, attacchi a 2 mani, palle spinte o accompagnate.'],
+        ['NF-2.8', 'changed', 'Dopo aver chiesto un Video Check, la squadra non può chiedere un tempo di riposo finché non è completata un’azione di gioco (sperimentazione FIVB).'],
+        ['NF-4.2', 'changed', 'La squadra in ricezione può cambiare posizione dal primo movimento del giocatore al servizio (un passo, un movimento preparatorio di braccia o gambe).'],
+        ['NF-4.3', 'changed', 'Fino a 8 sostituzioni per set (in deroga alla regola 15.1); restano le limitazioni della regola 15.6.'],
+        ['NF-4.4', 'changed', 'A referto fino a 14 atleti (sperimentazione FIVB); con più di 12 iscritti uno deve essere il Libero.'],
+        ['NF-4.5', 'changed', 'Dopo il 1° o 2° tocco la palla che colpisce soffitto o strutture può essere rigiocata dalla stessa squadra; se rimbalza nel campo avversario è fallo.'],
+        ['NF-4.6', 'changed', 'Stretta applicazione della regola 9.2.2 in attacco: vietati cambi di direzione durante il contatto, attacchi a 2 mani, palle spinte o accompagnate.'],
         ['NF-4.6.1', 'changed', 'Attacco a due mani verso il campo avversario: con traiettoria verso il basso è sempre fallo; verso l’alto è un palleggio, valutato come al solito.'],
-        ['NF-4.7',   'changed', 'Niente fischio per i servizi che non superano la rete o finiscono dentro/fuori senza tocchi; resta la segnaletica del 1° arbitro.'],
+        ['NF-4.7', 'changed', 'Niente fischio per i servizi che non superano la rete o finiscono dentro/fuori senza tocchi; resta la segnaletica del 1° arbitro.'],
         ['NF-4.7.1', 'changed', 'Servizio senza tocchi dentro, fuori o in rete: niente fischio; si fischia se la palla è toccata o se un giocatore tenta il recupero.'],
-        ['NF-4.8',   'changed', 'Ultimi 3 minuti del riscaldamento ufficiale con servizi alternati: squadra A dal 7° minuto all’8’30”, squadra B dall’8’30” al 10°.'],
-        ['NF-PR.1',  'new',     'Il «primo movimento» del giocatore al servizio deve essere legato al servizio: palleggi, rimbalzi o spostamenti non contano.'],
-        ['NF-PR.2',  'new',     'La palla può toccare il soffitto più volte, anche sopra il campo avversario; se resta bloccata perde l’azione chi l’ha toccata per ultimo.'],
-        ['NF-PR.3',  'new',     'Nel riscaldamento il 1° arbitro fischia inizio, turno di servizio di A, turno di B e fine.'],
-        ['NF-PR.4',  'new',     'Nuove indicazioni sull’utilizzo del secondo Libero nella Guida Pratica 2026/27 (pag. 44).'],
+        ['NF-4.8', 'changed', 'Ultimi 3 minuti del riscaldamento ufficiale con servizi alternati: squadra A dal 7° minuto all’8’30”, squadra B dall’8’30” al 10°.'],
+        ['NF-PR.1', 'new', 'Il «primo movimento» del giocatore al servizio deve essere legato al servizio: palleggi, rimbalzi o spostamenti non contano.'],
+        ['NF-PR.2', 'new', 'La palla può toccare il soffitto più volte, anche sopra il campo avversario; se resta bloccata perde l’azione chi l’ha toccata per ultimo.'],
+        ['NF-PR.3', 'new', 'Nel riscaldamento il 1° arbitro fischia inizio, turno di servizio di A, turno di B e fine.'],
+        ['NF-PR.4', 'new', 'Nuove indicazioni sull’utilizzo del secondo Libero nella Guida Pratica 2026/27 (pag. 44).'],
     ];
     $st = db()->prepare('UPDATE ' . t('refs') . ' SET change_season = ?, change_type = ?, change_note = ? WHERE code = ? AND change_season IS NULL');
     foreach ($rows as [$code, $type, $note]) $st->execute([$season, $type, $note, $code]);

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Schiffe versenken</string>
+    <string name="offline_title">Keine Verbindung</string>
+    <string name="offline_text">Schiffe versenken braucht Internet für Online-Spiele. Prüf deine Verbindung und versuch es erneut.</string>
+    <string name="offline_retry">Erneut versuchen</string>
+</resources>

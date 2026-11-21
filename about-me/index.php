@@ -60,7 +60,8 @@ $canonical = '/about-me/';
         <div class="timeline-item">
             <span class="timeline-badge badge-award">Award</span>
             <p class="timeline-date">October 2025</p>
-            <p class="timeline-text"><a href="/projects/notefox/">Notefox</a> earned the Recommended badge by Mozilla Firefox and was Featured on Chrome Web Store</p>
+            <p class="timeline-text"><a href="/projects/about/notefox/">Notefox</a> earned the Recommended badge by Mozilla
+                Firefox and was Featured on Chrome Web Store</p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
@@ -96,7 +97,10 @@ $canonical = '/about-me/';
         <div class="timeline-item">
             <span class="timeline-badge badge-award">Award</span>
             <p class="timeline-date">September 2022</p>
-            <p class="timeline-text">Won the <a href="https://www.mozillafoundation.org/en/blog/common-voice-for-everyone-mozilla-advances-projects-with-nvidia-enabling-voice-data-donation-in-low-internet-contexts/" target="_blank" rel="noopener">Mozilla Foundation &amp; NVIDIA open call</a> ($5,000) for enabling offline voice data donation with <a href="/projects/cv-project/">CV Project</a></p>
+            <p class="timeline-text">Won the <a
+                        href="https://www.mozillafoundation.org/en/blog/common-voice-for-everyone-mozilla-advances-projects-with-nvidia-enabling-voice-data-donation-in-low-internet-contexts/"
+                        target="_blank" rel="noopener">Mozilla Foundation &amp; NVIDIA open call</a> ($5,000) for
+                enabling offline voice data donation with <a href="/projects/about/cv-project/">CV Project</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-work">Work</span>
@@ -118,16 +122,19 @@ $canonical = '/about-me/';
         <div class="timeline-item">
             <span class="timeline-badge badge-award">Award</span>
             <p class="timeline-date">September 2021</p>
-            <p class="timeline-text">Received a €2,000 award from <a href="https://www.ils.org/2021/09/20/sostegno-common-voice/" target="_blank" rel="noopener">Italian Linux Society</a> in recognition of the work on <a href="/projects/cv-project/">CV Project</a></p>
+            <p class="timeline-text">Received a €2,000 award from <a
+                        href="https://www.ils.org/2021/09/20/sostegno-common-voice/" target="_blank" rel="noopener">Italian
+                    Linux Society</a> in recognition of the work on <a href="/projects/about/cv-project/">CV Project</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-award">Award</span>
             <p class="timeline-date">September 2021</p>
-            <p class="timeline-text"><a href="/projects/emoji/">Emoji</a> earned the Recommended badge by Mozilla Firefox, and was Featured on Chrome Web Store and Microsoft Edge Add-ons</p>
+            <p class="timeline-text"><a href="/projects/about/emoji/">Emoji</a> earned the Recommended badge by Mozilla
+                Firefox, and was Featured on Chrome Web Store and Microsoft Edge Add-ons</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">July 2021</p>
-            <p class="timeline-text">First release of the <a href="/projects/notefox/">Notefox</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/about/notefox/">Notefox</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2021 &mdash; 2026</p>
@@ -135,16 +142,16 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">May 2021</p>
-            <p class="timeline-text">First release of the <a href="/projects/limite/">Limite</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/about/limite/">Limite</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">January 2021</p>
-            <p class="timeline-text">First release (alpha) of <a href="/projects/word-of-the-day/">Word of the Day</a>
+            <p class="timeline-text">First release (alpha) of <a href="/projects/about/word-of-the-day/">Word of the Day</a>
             </p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">January 2021</p>
-            <p class="timeline-text">First release of <a href="/projects/sav-pdf-viewer/">Sav PDF Viewer Pro</a></p>
+            <p class="timeline-text">First release of <a href="/projects/about/sav-pdf-viewer/">Sav PDF Viewer Pro</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">October 2020 &mdash; December 2023</p>
@@ -162,11 +169,11 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">November 2019</p>
-            <p class="timeline-text">First release of the <a href="/projects/emoji/">Emoji</a> add-on</p>
+            <p class="timeline-text">First release of the <a href="/projects/about/emoji/">Emoji</a> add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">November 2019 &mdash; July 2026</p>
-            <p class="timeline-text">First release (alpha) of the <a href="/projects/cv-project/">CV Project</a> app</p>
+            <p class="timeline-text">First release (alpha) of the <a href="/projects/about/cv-project/">CV Project</a> app</p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-education">Education</span>
@@ -177,12 +184,12 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">April 2019</p>
-            <p class="timeline-text">First release of the <a href="/projects/accented-letters/">Accented Letters</a>
+            <p class="timeline-text">First release of the <a href="/projects/about/accented-letters/">Accented Letters</a>
                 add-on</p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">September 2018</p>
-            <p class="timeline-text">First release of <a href="/projects/mozitabot/">MozItaBot</a></p>
+            <p class="timeline-text">First release of <a href="/projects/about/mozitabot/">MozItaBot</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-other">Other</span>
@@ -197,7 +204,7 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2018 &mdash; 2020</p>
-            <p class="timeline-text">First release of <a href="/projects/nolimit-math/">NoLimit Math</a></p>
+            <p class="timeline-text">First release of <a href="/projects/about/nolimit-math/">NoLimit Math</a></p>
         </div>
         <div class="timeline-item">
             <span class="timeline-badge badge-volunteering">Volunteering</span>
@@ -206,7 +213,7 @@ $canonical = '/about-me/';
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2011 &mdash; 2020</p>
-            <p class="timeline-text">First release of <a href="/projects/my-code-editor/">My Code Editor</a></p>
+            <p class="timeline-text">First release of <a href="/projects/about/my-code-editor/">My Code Editor</a></p>
         </div>
         <div class="timeline-item minor">
             <p class="timeline-date">2004</p>

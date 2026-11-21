@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.mycurriculum",
+      "sha256_cert_fingerprints": [
+        "C0:E6:E3:05:58:91:64:E3:34:DC:87:3A:4B:F2:C3:A7:4A:96:3D:15:DE:36:21:49:A2:C1:4C:A5:37:1A:9C:8D"
+      ]
+    }
+  }
+]

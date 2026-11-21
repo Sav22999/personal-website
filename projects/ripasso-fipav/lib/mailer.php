@@ -86,6 +86,29 @@ class SmtpClient
         }
     }
 
+    private function expect($ok, string $what = ''): string
+    {
+        $reply = '';
+        while (($line = fgets($this->fp, 1024)) !== false) {
+            $reply .= $line;
+            if (strlen($line) < 4 || $line[3] !== '-') break;
+        }
+        $code = (int)substr($reply, 0, 3);
+        if (!in_array($code, (array)$ok, true)) {
+            $msg = $what !== '' ? $what : 'il server di posta ha risposto in modo inatteso';
+            error_log('Fischietto SMTP: ' . $msg . ' (' . trim(substr($reply, 0, 200)) . ')');
+            throw new RuntimeException($msg . ($code ? ' (codice ' . $code . ')' : ''));
+        }
+        return $reply;
+    }
+
+    /** @param int|int[] $ok expected reply codes */
+    private function command(string $line, $ok, string $what = ''): string
+    {
+        if (@fwrite($this->fp, $line . "\r\n") === false) throw new RuntimeException('connessione al server di posta interrotta');
+        return $this->expect($ok, $what);
+    }
+
     /** Sends one message; $html and $text are the two alternative bodies. */
     public function send(string $to, string $toName, string $subject, string $html, string $text): void
     {
@@ -119,6 +142,11 @@ class SmtpClient
         $this->command($data, 250, 'messaggio rifiutato dal server');
     }
 
+    public function __destruct()
+    {
+        $this->close();
+    }
+
     public function close(): void
     {
         if ($this->fp) {
@@ -126,34 +154,6 @@ class SmtpClient
             @fclose($this->fp);
             $this->fp = null;
         }
-    }
-
-    public function __destruct()
-    {
-        $this->close();
-    }
-
-    /** @param int|int[] $ok expected reply codes */
-    private function command(string $line, $ok, string $what = ''): string
-    {
-        if (@fwrite($this->fp, $line . "\r\n") === false) throw new RuntimeException('connessione al server di posta interrotta');
-        return $this->expect($ok, $what);
-    }
-
-    private function expect($ok, string $what = ''): string
-    {
-        $reply = '';
-        while (($line = fgets($this->fp, 1024)) !== false) {
-            $reply .= $line;
-            if (strlen($line) < 4 || $line[3] !== '-') break;
-        }
-        $code = (int)substr($reply, 0, 3);
-        if (!in_array($code, (array)$ok, true)) {
-            $msg = $what !== '' ? $what : 'il server di posta ha risposto in modo inatteso';
-            error_log('Fischietto SMTP: ' . $msg . ' (' . trim(substr($reply, 0, 200)) . ')');
-            throw new RuntimeException($msg . ($code ? ' (codice ' . $code . ')' : ''));
-        }
-        return $reply;
     }
 }
 
@@ -182,7 +182,9 @@ function send_mails(array $messages): array
             // After a failure the session may be in an unknown state: start a fresh one
             $client->close();
             $client = new SmtpClient($cfg);
-            try { $client->connect(); } catch (Throwable $e2) {
+            try {
+                $client->connect();
+            } catch (Throwable $e2) {
                 while (count($results) < count($messages)) $results[] = ['ok' => false, 'error' => $e2->getMessage()];
                 return $results;
             }

@@ -44,10 +44,29 @@ RedirectMatch 404 ^/vendor(/|$)
     ExpiresByType application/font-woff2 "access plus 1 year"
 </IfModule>
 
+# Fucina without the final slash: the address framed by the fucina.saveriomorelli.com mask. The rewrite rules of a
+# folder with its own .htaccess do not run on the folder itself, and Apache's own slash would answer http:// behind
+# Aruba's proxy, so the frame (in https) would be blocked: send it straight to the https address
+RedirectMatch 301 ^/projects/fucina$ https://www.saveriomorelli.com/projects/fucina/
+
 # Redirects
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # fucina.saveriomorelli.com shows Fucina (projects/fucina) at the root of its own address,
+    # when the subdomain points to this web space; www.saveriomorelli.com/projects/fucina/ keeps working too
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://fucina.saveriomorelli.com%{REQUEST_URI} [L,R=301]
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{DOCUMENT_ROOT}/projects/fucina/$1 -d
+    RewriteRule ^(.*[^/])$ https://fucina.saveriomorelli.com/$1/ [L,R=301]
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/(projects/fucina|errors)/
+    RewriteRule ^(.*)$ projects/fucina/$1 [L]
     RewriteRule ^contact/?$ /contact-me/ [L,R=301]
+    # A folder without its final slash: the slash is added staying on https (Aruba's proxy hides it, and a
+    # relative redirect would drop to http, which a page in https cannot show in a frame)
     RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^(.*[^/])$ %{REQUEST_URI}/ [L,R=301]
+    RewriteRule ^(.*[^/])$ https://%{HTTP_HOST}%{REQUEST_URI}/ [L,R=301]
 </IfModule>

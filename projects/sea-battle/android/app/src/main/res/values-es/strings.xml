@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Batalla Naval</string>
+    <string name="offline_title">Sin conexión</string>
+    <string name="offline_text">Batalla Naval necesita internet para las partidas en línea. Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="offline_retry">Reintentar</string>
+</resources>

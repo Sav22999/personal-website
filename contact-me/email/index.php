@@ -67,7 +67,8 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
                 </div>
                 <div id="project-type-other-group" class="form-group" hidden>
                     <label for="project_type_other">Specify <span class="field-badge required">Required</span></label>
-                    <input type="text" id="project_type_other" name="project_type_other" placeholder="Describe the project type">
+                    <input type="text" id="project_type_other" name="project_type_other"
+                           placeholder="Describe the project type">
                 </div>
             </div>
         </div>
@@ -105,7 +106,8 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
         <div id="fields-technical" class="form-dynamic-fields" hidden>
             <div class="form-row form-row-three">
                 <div class="form-group">
-                    <label for="project_version">Project version <span class="field-badge optional">Optional</span></label>
+                    <label for="project_version">Project version <span
+                                class="field-badge optional">Optional</span></label>
                     <input type="text" id="project_version" name="project_version" placeholder="e.g. 2.1.0">
                 </div>
                 <div class="form-group">

@@ -1,0 +1,559 @@
+/*!
+ * SavComponents v1.0.0 — design tokens and themes
+ * Every component reads these custom properties: override any of them on :root,
+ * on a container or on a single element to customise the look.
+ */
+
+:root,
+.sav-theme-light {
+  color-scheme: light;
+
+  /* Brand and semantic colours: one value each, every shade is derived from it */
+  --sav-color-primary: #66cbff;   /* the accent of saveriomorelli.com */
+  --sav-color-success: #118557;   /* white text on it: 4.6:1 (WCAG AA) */
+  --sav-color-warning: #e8a20c;
+  --sav-color-danger: #d73648;
+  --sav-color-neutral: #59627a;
+  --sav-color-protected: #5b4cf0;
+
+  /* Text drawn on top of a solid colour */
+  --sav-color-on-primary: #072536;
+  --sav-color-on-success: #ffffff;
+  --sav-color-on-warning: #2a1d00;
+  --sav-color-on-danger: #ffffff;
+  --sav-color-on-neutral: #ffffff;
+  --sav-color-on-protected: #ffffff;
+  /* how much of a colour is kept when it is used as text (soft and outline looks, links) */
+  --sav-tint: 52%;   /* how much colour goes into coloured text: 52% keeps 4.5:1 on light backgrounds */
+  /* indicators (progress, spinner, range, tab marker, filled star or icon, switch on): a little darker in light mode (same hue, lower lightness), 3:1 against the page */
+  --sav-indicator-l: .76;
+
+  /* Surfaces and text */
+  --sav-color-bg: #f6f7fb;
+  --sav-color-surface: #ffffff;
+  --sav-color-surface-2: #f0f2f7;
+  --sav-color-input-bg: #ffffff;
+  --sav-color-text: #1a1f2e;
+  --sav-color-text-muted: #5f6880;
+  --sav-color-border: #e2e5ee;
+  --sav-color-border-strong: #8a8f9d;   /* borders of fields and controls: 3:1 against the page (WCAG 1.4.11) */
+  --sav-color-focus: color-mix(in oklab, var(--sav-color-primary) 65%, var(--sav-color-text));   /* 3:1 against the page */
+  --sav-color-overlay: rgb(14 17 28 / 0.45);
+  --sav-color-tooltip-bg: #1a1f2e;
+  --sav-color-tooltip-text: #ffffff;
+
+  /* Code blocks */
+  --sav-code-bg: #f3f4f9;
+  --sav-code-text: #2a2f45;
+  --sav-code-gutter: #9aa1b5;
+  --sav-code-tag: #c2185b;
+  --sav-code-attr: #6a4fd8;
+  --sav-code-string: #0a7f5c;
+  --sav-code-keyword: #b5306f;
+  --sav-code-number: #b45309;
+  --sav-code-function: #2563c9;
+  --sav-code-comment: #8a90a6;
+  --sav-code-punct: #8a90a6;
+
+  /* Typography */
+  --sav-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sav-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sav-font-size-sm: 0.8125rem;
+  --sav-font-size-md: 0.9375rem;
+  --sav-font-size-lg: 1.0625rem;
+  --sav-font-weight-normal: 400;
+  --sav-font-weight-semibold: 600;
+  --sav-font-weight-bold: 700;
+
+  /* Shape */
+  --sav-radius-sm: 4px;
+  --sav-radius: 8px;
+  --sav-radius-lg: 14px;
+  --sav-radius-pill: 999px;
+  --sav-border-width: 1px;
+  --sav-focus-width: 3px;
+
+  /* Size of buttons, inputs and selects */
+  --sav-control-sm: 2rem;
+  --sav-control-md: 2.5rem;
+  --sav-control-lg: 3rem;
+
+  /* Depth */
+  --sav-shadow-sm: 0 1px 2px rgb(20 24 40 / 0.06), 0 1px 3px rgb(20 24 40 / 0.06);
+  --sav-shadow: 0 4px 12px rgb(20 24 40 / 0.08), 0 1px 3px rgb(20 24 40 / 0.06);
+  --sav-shadow-lg: 0 18px 48px rgb(20 24 40 / 0.18), 0 4px 12px rgb(20 24 40 / 0.08);
+
+  /* Motion */
+  --sav-duration: 160ms;
+  --sav-easing: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.sav-theme-dark {
+  color-scheme: dark;
+  --sav-color-primary: #66cbff;
+  --sav-color-success: #2fc98a;
+  --sav-color-warning: #f4b83a;
+  --sav-color-danger: #ff5f70;
+  --sav-color-neutral: #8a93ab;
+  --sav-color-protected: #8b7dff;
+  --sav-color-on-primary: #072536;
+  --sav-color-on-success: #002417;
+  --sav-color-on-warning: #2a1d00;
+  --sav-color-on-danger: #2d0007;
+  --sav-color-on-neutral: #0f121b;
+  --sav-color-on-protected: #120c3a;
+  --sav-tint: 85%;
+  --sav-indicator-l: 1;
+  --sav-color-bg: #0f121b;
+  --sav-color-surface: #171b27;
+  --sav-color-surface-2: #1f2433;
+  --sav-color-input-bg: #131722;
+  --sav-color-text: #e8ebf3;
+  --sav-color-text-muted: #9aa2b8;
+  --sav-color-border: #2a3042;
+  --sav-color-border-strong: #5b6275;
+  --sav-color-overlay: rgb(0 0 0 / 0.6);
+  --sav-color-tooltip-bg: #e8ebf3;
+  --sav-color-tooltip-text: #131722;
+  --sav-code-bg: #121624;
+  --sav-code-text: #d6dbea;
+  --sav-code-gutter: #5a6280;
+  --sav-code-tag: #ff7eb3;
+  --sav-code-attr: #b4a6ff;
+  --sav-code-string: #6fe0b4;
+  --sav-code-keyword: #ff8fc0;
+  --sav-code-number: #ffc46b;
+  --sav-code-function: #7cb8ff;
+  --sav-code-comment: #6b7390;
+  --sav-code-punct: #7c84a0;
+  --sav-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --sav-shadow: 0 4px 14px rgb(0 0 0 / 0.45);
+  --sav-shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+}
+
+/* "auto" follows the operating system */
+@media (prefers-color-scheme: dark) {
+  .sav-theme-auto {
+    color-scheme: dark;
+    --sav-color-primary: #66cbff;
+    --sav-color-success: #2fc98a;
+    --sav-color-warning: #f4b83a;
+    --sav-color-danger: #ff5f70;
+    --sav-color-neutral: #8a93ab;
+    --sav-color-protected: #8b7dff;
+    --sav-color-on-primary: #072536;
+    --sav-color-on-success: #002417;
+    --sav-color-on-warning: #2a1d00;
+    --sav-color-on-danger: #2d0007;
+    --sav-color-on-neutral: #0f121b;
+    --sav-color-on-protected: #120c3a;
+    --sav-tint: 85%;
+    --sav-indicator-l: 1;
+    --sav-color-bg: #0f121b;
+    --sav-color-surface: #171b27;
+    --sav-color-surface-2: #1f2433;
+    --sav-color-input-bg: #131722;
+    --sav-color-text: #e8ebf3;
+    --sav-color-text-muted: #9aa2b8;
+    --sav-color-border: #2a3042;
+    --sav-color-border-strong: #5b6275;
+    --sav-color-overlay: rgb(0 0 0 / 0.6);
+    --sav-color-tooltip-bg: #e8ebf3;
+    --sav-color-tooltip-text: #131722;
+    --sav-code-bg: #121624;
+    --sav-code-text: #d6dbea;
+    --sav-code-gutter: #5a6280;
+    --sav-code-tag: #ff7eb3;
+    --sav-code-attr: #b4a6ff;
+    --sav-code-string: #6fe0b4;
+    --sav-code-keyword: #ff8fc0;
+    --sav-code-number: #ffc46b;
+    --sav-code-function: #7cb8ff;
+    --sav-code-comment: #6b7390;
+    --sav-code-punct: #7c84a0;
+    --sav-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --sav-shadow: 0 4px 14px rgb(0 0 0 / 0.45);
+    --sav-shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Optional base: add class "sav-base" to <body> for a page that matches the theme */
+.sav-base {
+  margin: 0;
+  background: var(--sav-color-bg);
+  color: var(--sav-color-text);
+  font-family: var(--sav-font);
+  font-size: var(--sav-font-size-md);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide components until they are defined, to avoid a flash of raw content */
+:where(sav-dialog, sav-drawer, sav-dropdown, sav-tabs, sav-select):not(:defined) {
+  visibility: hidden;
+}
+sav-tooltip:not(:defined) > [slot="content"],
+sav-select:not(:defined) > option {
+  display: none;
+}
+
+/* ==========================================================================
+   Styles: put one class on <html> (or on any container) next to the colour mode.
+   sav-style-soft (default) · sav-style-tilt · sav-style-sharp · sav-style-brutal · sav-style-glass
+   Each style only changes tokens, so it works with any colour and with dark mode.
+   ========================================================================== */
+
+/* Soft is the default: this class only matters to bring it back inside a section of a page that uses another style */
+/* Animations: --sav-motion scales every duration of the components (1 = as designed, 0 = none, 2 = twice as long).
+   animation="off" on any element turns them off there and inside it; on a component, animation-duration="ms" sets the pace. */
+[animation="off"] { --sav-motion: 0; }
+[animation="on"]:not([animation-duration]) { --sav-motion: 1; }
+
+.sav-style-soft {
+  --sav-radius-sm: 4px; --sav-radius: 8px; --sav-radius-lg: 14px; --sav-border-width: 1px; --sav-focus-width: 3px;
+  --sav-font-weight-semibold: 600; --sav-font-weight-bold: 700;
+  --sav-shadow-sm: 0 1px 2px rgb(20 24 40 / 0.06), 0 1px 3px rgb(20 24 40 / 0.06);
+  --sav-shadow: 0 4px 12px rgb(20 24 40 / 0.08), 0 1px 3px rgb(20 24 40 / 0.06);
+  --sav-shadow-lg: 0 18px 48px rgb(20 24 40 / 0.18), 0 4px 12px rgb(20 24 40 / 0.08);
+  --sav-tilt: initial; --sav-tilt-lift: initial; --sav-card-back: initial; --sav-ring-cap: round; --sav-level-dot-cap: initial; --sav-radius-pill: 999px;
+  --sav-knob-radius: initial; --sav-knob-tilt: initial; --sav-avatar-radius: initial; --sav-avatar-tilt: initial; --sav-avatar-inset: initial; --sav-avatar-img-scale: initial;
+  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-button-shadow: initial; --sav-button-shadow-hover: initial;
+  --sav-button-shadow-active: initial; --sav-button-hover-transform: initial; --sav-button-active-transform: initial;
+  --sav-button-border-color: initial; --sav-button-letter-spacing: initial; --sav-button-text-transform: initial; --sav-button-font-scale: initial;
+  --sav-control-shadow: initial; --sav-alert-shadow: initial; --sav-backdrop: initial; --sav-panel-shadow: initial; --sav-panel-lift: initial; --sav-panel-back: initial; --sav-panel-arrow: initial; --sav-tooltip-shadow: initial;
+  --sav-sheen: initial; --sav-fill-opacity: initial; --sav-button-backdrop: initial; --sav-badge-shadow: initial; --sav-track-shadow: initial; --sav-switch-track: initial;
+  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-switch-track-shadow: initial; --sav-switch-on-shadow: initial; --sav-switch-backdrop: initial; --sav-switch-thumb-border: initial; --sav-details-shadow: initial; --sav-details-plain-inline: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-current-behind: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
+  --sav-range-height: initial; --sav-range-radius: initial; --sav-range-track-shadow: initial; --sav-range-thumb-width: initial; --sav-range-thumb-height: initial; --sav-range-thumb-radius: initial;
+  --sav-range-thumb-tilt: initial; --sav-range-thumb-fill: initial; --sav-range-thumb-ink: initial; --sav-range-thumb-border-width: initial; --sav-range-thumb-shadow: initial; --sav-range-thumb-bg: initial;
+}
+
+/* Tilt: square shapes whose background leans slightly, text always upright.
+   A nod to the saveriomorelli.com icon. */
+.sav-style-tilt {
+  --sav-radius-sm: 0px;
+  --sav-radius: 0px;
+  --sav-radius-lg: 0px;
+  --sav-font-weight-semibold: 650;
+  /* the lean: every element lifts 3px at its corners (short ones lean more, long ones less).
+     Set --sav-tilt to an angle (e.g. -2deg) to give everything the same angle instead. */
+  --sav-tilt-lift: -3px;
+  --sav-card-back: block;
+  --sav-radius-pill: 0px;
+  --sav-ring-cap: butt;
+  --sav-level-dot-cap: square; /* the dotted way of sav-level-path: little squares */
+  /* switch thumb, radio, checkbox: little squares leaning like the logo */
+  --sav-knob-radius: 0px;
+  --sav-knob-tilt: 10deg;
+  /* avatars: a leaning square with the picture upright */
+  --sav-avatar-radius: 0px;
+  --sav-avatar-tilt: 10deg;
+  --sav-avatar-inset: 7%;
+  --sav-avatar-img-scale: 1.32;
+  /* tabs */
+  --sav-tab-active-bg: color-mix(in oklab, var(--sav-color-primary) 16%, transparent);
+  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary);
+  --sav-tab-vertical-active-fg: var(--sav-color-on-primary);
+  --sav-tab-vertical-active-line: none;
+  --sav-tab-segment-shadow: 0 0 0 1px var(--sav-color-border);
+  --sav-button-hover-transform: none;
+  --sav-button-active-transform: scale(.97);
+  --sav-copy-shadow: 2px 2px 0 color-mix(in oklab, var(--sav-color-primary) 18%, transparent);
+  --sav-container-shadow: none;
+  --sav-shadow-sm: 3px 3px 0 color-mix(in oklab, var(--sav-color-primary) 14%, transparent);
+  --sav-shadow: 7px 7px 0 color-mix(in oklab, var(--sav-color-primary) 16%, transparent);
+  --sav-shadow-lg: 10px 10px 0 color-mix(in oklab, var(--sav-color-primary) 20%, transparent), 0 12px 32px rgb(0 0 0 / .12);
+  /* popups and dialogs: like the card, a tinted plate leaning the other way and a soft shadow, not an offset block */
+  --sav-panel-shadow: 0 16px 40px rgb(0 0 0 / .22);
+  --sav-panel-back: block;
+  --sav-panel-arrow: none;
+  --sav-tooltip-shadow: 0 6px 18px rgb(0 0 0 / .2);
+  --sav-focus-width: 2px;
+  /* range: a square track, the thumb a leaning tile like the logo */
+  --sav-range-height: .5rem;
+  --sav-range-radius: 0px;
+  --sav-range-thumb-width: 1.15rem;
+  --sav-range-thumb-height: 1.15rem;
+  --sav-range-thumb-radius: 0px;
+  --sav-range-thumb-tilt: 10deg;
+  --sav-range-thumb-fill: 1;
+  --sav-range-thumb-border-width: 0px;
+  --sav-range-thumb-shadow: 3px 3px 0 rgb(0 0 0 / .2);
+  /* spinner: the logo's four tiles lighting up; progress ring: a leaning square */
+  --sav-spinner-tiles: 1;
+  --sav-ring-radius: 0px;
+  --sav-ring-tilt: 10deg;
+  --sav-ring-start: 12.5;
+  --sav-tab-vertical-rail: transparent;
+  --sav-tab-vertical-rail-padding: 0 .5rem 0 0;
+  --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border);
+  --sav-tab-vertical-hover: var(--sav-color-surface-2);
+  /* breadcrumb: the current page is a leaning blue tile */
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-current-behind: var(--sav-color-primary);
+  --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
+}
+
+/* Sharp: straight corners, crisp lines, offset tinted shadows */
+.sav-style-sharp {
+  --sav-radius-sm: 0px;
+  --sav-radius: 2px;
+  --sav-radius-lg: 3px;
+  --sav-font-weight-semibold: 650;
+  --sav-shadow-sm: 3px 3px 0 color-mix(in oklab, var(--sav-color-primary) 16%, transparent);
+  --sav-shadow: 6px 6px 0 color-mix(in oklab, var(--sav-color-primary) 18%, transparent);
+  --sav-shadow-lg: 10px 10px 0 color-mix(in oklab, var(--sav-color-primary) 22%, transparent), 0 12px 32px rgb(0 0 0 / .12);
+  --sav-button-letter-spacing: .03em;
+  --sav-button-text-transform: uppercase;
+  --sav-button-font-scale: .88;
+  --sav-focus-width: 2px;
+  /* range: a thin line and an upright bar */
+  --sav-range-height: 4px;
+  --sav-range-radius: 0px;
+  --sav-range-thumb-width: .5rem;
+  --sav-range-thumb-height: 1.4rem;
+  --sav-range-thumb-radius: 0px;
+  --sav-range-thumb-fill: 1;
+  --sav-range-thumb-border-width: 0px;
+  --sav-range-thumb-shadow: 3px 3px 0 color-mix(in oklab, var(--sav-color-primary) 22%, transparent);
+  /* spinner and progress ring: squares */
+  --sav-spinner-radius: 0px;
+  --sav-ring-radius: 0px;
+  --sav-ring-start: 12.5;
+  /* no round shapes: badges, tags, pill tabs and avatars get the same small corners */
+  --sav-radius-pill: 3px;
+  --sav-avatar-radius: 3px;
+  /* breadcrumb: the current page is underlined */
+  --sav-breadcrumb-current-bg: transparent;
+  --sav-breadcrumb-current-fg: var(--sav-color-text);
+  --sav-breadcrumb-current-shadow: inset 0 -2px 0 oklch(from var(--sav-color-primary) calc(l * var(--sav-indicator-l, 1)) c h);
+}
+
+/* Brutal: thick ink borders and hard shadows that press down when clicked */
+.sav-style-brutal {
+  --sav-radius-sm: 3px;
+  --sav-radius: 5px;
+  --sav-radius-lg: 8px;
+  --sav-border-width: 2px;
+  --sav-color-border: var(--sav-color-text);
+  --sav-color-border-strong: var(--sav-color-text);
+  --sav-font-weight-semibold: 700;
+  --sav-font-weight-bold: 800;
+  --sav-shadow-sm: 3px 3px 0 var(--sav-color-text);
+  --sav-shadow: 5px 5px 0 var(--sav-color-text);
+  --sav-shadow-lg: 8px 8px 0 var(--sav-color-text);
+  --sav-button-border-color: var(--sav-color-text);
+  --sav-button-shadow: 3px 3px 0 var(--sav-color-text);
+  --sav-button-shadow-hover: 5px 5px 0 var(--sav-color-text);
+  --sav-button-hover-transform: translate(-2px, -2px);
+  --sav-button-shadow-active: 0 0 0 var(--sav-color-text);
+  --sav-button-active-transform: translate(3px, 3px);
+  --sav-control-shadow: 3px 3px 0 var(--sav-color-text);
+  --sav-alert-shadow: 4px 4px 0 var(--sav-color-text);
+  --sav-color-overlay: rgb(20 20 30 / .35);
+  /* range: a thick inked track and a chunky block with a hard shadow */
+  --sav-range-height: .75rem;
+  --sav-range-radius: 4px;
+  --sav-range-track-shadow: inset 0 0 0 2px var(--sav-color-text);
+  --sav-range-thumb-width: 1.4rem;
+  --sav-range-thumb-height: 1.4rem;
+  --sav-range-thumb-radius: 5px;
+  --sav-range-thumb-fill: 1;
+  --sav-range-thumb-ink: 1;
+  --sav-range-thumb-border-width: 2px;
+  --sav-range-thumb-shadow: 3px 3px 0 var(--sav-color-text);
+  /* switch: an inked track with a hard shadow (light when off, coloured when on) and an inked thumb */
+  --sav-switch-track: var(--sav-color-surface-2);
+  --sav-switch-track-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
+  --sav-switch-on-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
+  --sav-switch-thumb-bg: var(--sav-color-surface);
+  --sav-switch-thumb-border: 2px solid var(--sav-color-text);
+  --sav-switch-thumb-shadow: none;
+  /* spinner and progress ring: chunky rounded squares */
+  --sav-spinner-radius: 5px;
+  --sav-ring-radius: 18px;
+  --sav-ring-start: 7.87;
+  /* badges and tags get the ink outline too */
+  --sav-badge-shadow: inset 0 0 0 1.5px var(--sav-color-text);
+  --sav-ink-border: var(--sav-color-text);
+  /* vertical tabs (and the site's side menu): an inked block with a hard shadow */
+  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary);
+  --sav-tab-vertical-active-fg: var(--sav-color-on-primary);
+  --sav-tab-vertical-active-shadow: inset 0 0 0 2px var(--sav-color-text), 3px 3px 0 var(--sav-color-text);
+  --sav-tab-vertical-rail: transparent;
+  --sav-tab-vertical-rail-padding: 0 .5rem 0 0;
+  --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border);
+  --sav-tab-vertical-hover: var(--sav-color-surface-2);
+  /* breadcrumb: the current page is an inked block */
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-current-behind: var(--sav-color-primary);
+  --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
+  --sav-breadcrumb-current-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
+}
+
+/* Glass: translucent surfaces that blur what is behind them (best on a colourful background) */
+.sav-style-glass {
+  --sav-radius-sm: 8px;
+  --sav-radius: 14px;
+  --sav-radius-lg: 20px;
+  --sav-color-surface: rgb(255 255 255 / .55);
+  --sav-color-surface-2: rgb(255 255 255 / .38);
+  --sav-color-input-bg: rgb(255 255 255 / .5);
+  --sav-color-border: rgb(255 255 255 / .65);
+  --sav-color-border-strong: rgb(96 104 126 / .8);
+  --sav-backdrop: blur(16px) saturate(170%);
+  --sav-shadow-sm: 0 2px 10px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-shadow: 0 10px 30px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-shadow-lg: 0 24px 60px rgb(30 40 80 / .22), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-button-shadow: 0 4px 14px rgb(30 40 80 / .16), inset 0 1px 0 rgb(255 255 255 / .3);
+  /* range: a frosted groove and a bright pearl */
+  --sav-range-height: .5rem;
+  --sav-range-track-shadow: inset 0 1px 3px rgb(0 0 0 / .15), inset 0 0 0 1px var(--sav-color-border);
+  --sav-range-thumb-width: 1.4rem;
+  --sav-range-thumb-height: 1.4rem;
+  --sav-range-thumb-bg: rgb(255 255 255 / .92);
+  --sav-range-thumb-border-width: 0px;
+  --sav-range-thumb-shadow: 0 2px 10px rgb(20 30 60 / .3), inset 0 -2px 4px rgb(20 30 60 / .08);
+  /* the glass itself: a glossy sheen on every surface, colours a little see-through, frosted buttons and tracks */
+  --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .5), rgb(255 255 255 / .12) 42%, rgb(255 255 255 / 0) 62%);
+  --sav-fill-opacity: 100%;
+  --sav-tint: 46%;   /* coloured text over translucent glass: a bit darker to keep 4.5:1 */
+  --sav-button-backdrop: blur(10px) saturate(160%);
+  --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 1px rgb(255 255 255 / .25);
+  --sav-track-shadow: inset 0 1px 3px rgb(20 30 60 / .14), inset 0 0 0 1px rgb(255 255 255 / .45);
+  /* switch: a frosted track (blurred, with a rim of light), a lit coloured track when on, a glossy thumb */
+  --sav-switch-track: rgb(86 96 124 / .5);
+  --sav-switch-backdrop: blur(8px) saturate(170%);
+  --sav-switch-track-shadow: inset 0 1px 2px rgb(20 30 60 / .25), inset 0 0 0 1px rgb(255 255 255 / .55);
+  --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .45), inset 0 1px 2px rgb(20 30 60 / .15), 0 2px 10px color-mix(in oklab, var(--sav-color-primary) 45%, transparent);
+  --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(238 242 250));
+  --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .9);
+  --sav-switch-thumb-shadow: 0 2px 6px rgb(20 30 60 / .28), 0 0 0 .5px rgb(20 30 60 / .14);
+  --sav-color-tooltip-bg: rgb(26 31 46 / .78);
+  --sav-tab-active-bg: rgb(255 255 255 / .6);
+  --sav-tab-segment-shadow: 0 2px 8px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .7);
+  --sav-details-shadow: var(--sav-shadow-sm);
+  --sav-details-plain-inline: 1rem; /* plain accordion rows: text off the glass edge */
+  --sav-alert-shadow: 0 6px 20px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .55);
+  /* vertical tabs (and the site's side menu): a glass plate */
+  --sav-tab-vertical-active-bg: var(--sav-tab-active-bg);
+  --sav-tab-vertical-active-fg: var(--sav-color-text);
+  --sav-tab-vertical-active-shadow: var(--sav-tab-segment-shadow);
+  /* breadcrumb: the current page is a glass plate */
+  --sav-breadcrumb-current-bg: var(--sav-tab-active-bg);
+  --sav-breadcrumb-current-fg: var(--sav-color-text);
+  --sav-breadcrumb-current-shadow: var(--sav-tab-segment-shadow);
+}
+.sav-theme-dark.sav-style-glass,
+.sav-theme-dark .sav-style-glass:not(.sav-theme-light),
+.sav-style-glass .sav-theme-dark {
+  --sav-color-surface: rgb(30 34 50 / .5);
+  --sav-color-surface-2: rgb(255 255 255 / .07);
+  --sav-color-input-bg: rgb(10 12 20 / .35);
+  --sav-color-border: rgb(255 255 255 / .12);
+  --sav-color-border-strong: rgb(255 255 255 / .38);
+  --sav-shadow-sm: 0 2px 10px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .06);
+  --sav-shadow: 0 10px 30px rgb(0 0 0 / .4), inset 0 1px 0 rgb(255 255 255 / .06);
+  --sav-shadow-lg: 0 24px 60px rgb(0 0 0 / .55), inset 0 1px 0 rgb(255 255 255 / .08);
+  --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .12), rgb(255 255 255 / .03) 42%, rgb(255 255 255 / 0) 62%);
+  --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 0 0 1px rgb(255 255 255 / .1);
+  --sav-track-shadow: inset 0 1px 3px rgb(0 0 0 / .35), inset 0 0 0 1px rgb(255 255 255 / .08);
+  --sav-switch-track: rgb(255 255 255 / .24);
+  --sav-switch-track-shadow: inset 0 1px 2px rgb(0 0 0 / .4), inset 0 0 0 1px rgb(255 255 255 / .18);
+  --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .25), 0 2px 12px color-mix(in oklab, var(--sav-color-primary) 40%, transparent);
+  --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(225 230 242));
+  --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .7);
+  --sav-switch-thumb-shadow: 0 2px 8px rgb(0 0 0 / .45);
+  --sav-color-tooltip-bg: rgb(232 235 243 / .82);
+  --sav-tab-active-bg: rgb(255 255 255 / .1);
+  --sav-tab-segment-shadow: 0 2px 8px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .1);
+  --sav-alert-shadow: 0 6px 20px rgb(0 0 0 / .25), inset 0 1px 0 rgb(255 255 255 / .08);
+}
+.sav-theme-light.sav-style-glass,
+.sav-style-glass .sav-theme-light {
+  /* a light section inside a dark glass page (or the other way round) gets the light glass back */
+  --sav-tint: 46%;
+  --sav-indicator-l: .76;
+  --sav-color-surface: rgb(255 255 255 / .55);
+  --sav-color-surface-2: rgb(255 255 255 / .38);
+  --sav-color-input-bg: rgb(255 255 255 / .5);
+  --sav-color-border: rgb(255 255 255 / .65);
+  --sav-color-border-strong: rgb(96 104 126 / .8);
+  --sav-shadow-sm: 0 2px 10px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-shadow: 0 10px 30px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-shadow-lg: 0 24px 60px rgb(30 40 80 / .22), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .5), rgb(255 255 255 / .12) 42%, rgb(255 255 255 / 0) 62%);
+  --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 1px rgb(255 255 255 / .25);
+  --sav-track-shadow: inset 0 1px 3px rgb(20 30 60 / .14), inset 0 0 0 1px rgb(255 255 255 / .45);
+  /* switch: a frosted track (blurred, with a rim of light), a lit coloured track when on, a glossy thumb */
+  --sav-switch-track: rgb(86 96 124 / .5);
+  --sav-switch-backdrop: blur(8px) saturate(170%);
+  --sav-switch-track-shadow: inset 0 1px 2px rgb(20 30 60 / .25), inset 0 0 0 1px rgb(255 255 255 / .55);
+  --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .45), inset 0 1px 2px rgb(20 30 60 / .15), 0 2px 10px color-mix(in oklab, var(--sav-color-primary) 45%, transparent);
+  --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(238 242 250));
+  --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .9);
+  --sav-switch-thumb-shadow: 0 2px 6px rgb(20 30 60 / .28), 0 0 0 .5px rgb(20 30 60 / .14);
+  --sav-color-tooltip-bg: rgb(26 31 46 / .78);
+  --sav-tab-active-bg: rgb(255 255 255 / .6);
+  --sav-tab-segment-shadow: 0 2px 8px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .7);
+  --sav-alert-shadow: 0 6px 20px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .55);
+}
+@media (prefers-color-scheme: dark) {
+  .sav-theme-auto.sav-style-glass {
+    --sav-color-surface: rgb(30 34 50 / .5);
+    --sav-color-surface-2: rgb(255 255 255 / .07);
+    --sav-color-input-bg: rgb(10 12 20 / .35);
+    --sav-color-border: rgb(255 255 255 / .12);
+    --sav-color-border-strong: rgb(255 255 255 / .38);
+    --sav-shadow-sm: 0 2px 10px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .06);
+    --sav-shadow: 0 10px 30px rgb(0 0 0 / .4), inset 0 1px 0 rgb(255 255 255 / .06);
+    --sav-shadow-lg: 0 24px 60px rgb(0 0 0 / .55), inset 0 1px 0 rgb(255 255 255 / .08);
+    --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .12), rgb(255 255 255 / .03) 42%, rgb(255 255 255 / 0) 62%);
+    --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 0 0 1px rgb(255 255 255 / .1);
+    --sav-track-shadow: inset 0 1px 3px rgb(0 0 0 / .35), inset 0 0 0 1px rgb(255 255 255 / .08);
+    --sav-switch-track: rgb(255 255 255 / .24);
+    --sav-switch-track-shadow: inset 0 1px 2px rgb(0 0 0 / .4), inset 0 0 0 1px rgb(255 255 255 / .18);
+    --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .25), 0 2px 12px color-mix(in oklab, var(--sav-color-primary) 40%, transparent);
+    --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(225 230 242));
+    --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .7);
+    --sav-switch-thumb-shadow: 0 2px 8px rgb(0 0 0 / .45);
+    --sav-color-tooltip-bg: rgb(232 235 243 / .82);
+    --sav-tab-active-bg: rgb(255 255 255 / .1);
+    --sav-tab-segment-shadow: 0 2px 8px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .1);
+    --sav-alert-shadow: 0 6px 20px rgb(0 0 0 / .25), inset 0 1px 0 rgb(255 255 255 / .08);
+  }
+}
+
+/* ==========================================================================
+   Shape of a single component (or of everything inside a container):
+   <sav-button shape="tilt">, <sav-card shape="rounded">, <div shape="squared">…
+   It overrides the style of the page only for that element.
+   ========================================================================== */
+[shape="squared"] {
+  --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt; --sav-level-dot-cap: square;
+  --sav-tilt: 0deg; --sav-tilt-lift: 0px; --sav-card-back: none; --sav-button-tilt: initial; --sav-button-tilt-hover: 0deg;
+  --sav-knob-radius: 0px; --sav-knob-tilt: 0deg; --sav-avatar-radius: 0px; --sav-avatar-tilt: 0deg; --sav-avatar-inset: 0%; --sav-avatar-img-scale: 1;
+  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
+  --sav-range-radius: 0px; --sav-range-thumb-radius: 0px; --sav-range-thumb-tilt: 0deg;
+  --sav-spinner-tiles: 0; --sav-spinner-radius: 0px; --sav-ring-radius: 0px; --sav-ring-tilt: 0deg; --sav-ring-start: 12.5;
+  --sav-panel-back: none; --sav-panel-arrow: block;
+}
+[shape="rounded"] {
+  --sav-radius-sm: 10px; --sav-radius: 16px; --sav-radius-lg: 24px; --sav-radius-pill: 999px; --sav-ring-cap: round;
+  --sav-tilt: 0deg; --sav-tilt-lift: 0px; --sav-card-back: none; --sav-button-tilt: initial; --sav-button-tilt-hover: 0deg;
+  --sav-knob-radius: 50%; --sav-knob-tilt: 0deg; --sav-avatar-radius: 50%; --sav-avatar-tilt: 0deg; --sav-avatar-inset: 0%; --sav-avatar-img-scale: 1;
+  --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
+  --sav-range-radius: 999px; --sav-range-thumb-radius: 50%; --sav-range-thumb-tilt: 0deg;
+  --sav-spinner-tiles: 0; --sav-spinner-radius: 9.5px; --sav-ring-radius: 42px; --sav-ring-tilt: 0deg; --sav-ring-start: 0;
+  --sav-panel-back: none; --sav-panel-arrow: block;
+}
+[shape="tilt"] {
+  --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt; --sav-level-dot-cap: square;
+  --sav-tilt: initial; --sav-tilt-lift: -3px; --sav-card-back: block; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-shadow-sm: none;
+  --sav-knob-radius: 0px; --sav-knob-tilt: 10deg; --sav-avatar-radius: 0px; --sav-avatar-tilt: 10deg; --sav-avatar-inset: 7%; --sav-avatar-img-scale: 1.32;
+  --sav-tab-active-bg: color-mix(in oklab, var(--sav-color-primary) 16%, transparent);
+  --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary); --sav-tab-vertical-active-fg: var(--sav-color-on-primary); --sav-tab-vertical-active-line: none;
+  --sav-range-height: .5rem; --sav-range-radius: 0px; --sav-range-thumb-width: 1.15rem; --sav-range-thumb-height: 1.15rem; --sav-range-thumb-radius: 0px; --sav-range-thumb-tilt: 10deg;
+  --sav-range-thumb-fill: 1; --sav-range-thumb-border-width: 0px; --sav-range-thumb-shadow: 3px 3px 0 rgb(0 0 0 / .2);
+  --sav-spinner-tiles: 1; --sav-ring-radius: 0px; --sav-ring-tilt: 10deg; --sav-ring-start: 12.5;
+  --sav-panel-back: block; --sav-panel-arrow: none; --sav-panel-shadow: 0 16px 40px rgb(0 0 0 / .22);
+  --sav-tab-vertical-rail: transparent; --sav-tab-vertical-rail-padding: 0 .5rem 0 0; --sav-tab-vertical-divider: var(--sav-border-width) solid var(--sav-color-border); --sav-tab-vertical-hover: var(--sav-color-surface-2);
+  --sav-breadcrumb-current-bg: var(--sav-color-primary); --sav-current-behind: var(--sav-color-primary); --sav-breadcrumb-current-fg: var(--sav-color-on-primary);
+}

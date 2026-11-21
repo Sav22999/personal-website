@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#D9653B</color>
+    <!-- The launcher icon's background: the sky of the logo (the restaurant is the foreground layer) -->
+    <color name="ic_launcher_background">#BFE7EE</color>
+    <!-- Same background as the web game (bg variable), so the system bars blend with the page -->
+    <color name="background">#FFF6E9</color>
+</resources>
