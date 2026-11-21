@@ -222,7 +222,7 @@ sav-select:not(:defined) > option {
   --sav-button-border-color: initial; --sav-button-letter-spacing: initial; --sav-button-text-transform: initial; --sav-button-font-scale: initial;
   --sav-control-shadow: initial; --sav-alert-shadow: initial; --sav-backdrop: initial; --sav-panel-shadow: initial; --sav-panel-lift: initial; --sav-panel-back: initial; --sav-panel-arrow: initial; --sav-tooltip-shadow: initial;
   --sav-sheen: initial; --sav-fill-opacity: initial; --sav-button-backdrop: initial; --sav-badge-shadow: initial; --sav-track-shadow: initial; --sav-switch-track: initial;
-  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-details-shadow: initial; --sav-details-plain-inline: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-current-behind: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
+  --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-switch-track-shadow: initial; --sav-switch-on-shadow: initial; --sav-switch-backdrop: initial; --sav-switch-thumb-border: initial; --sav-details-shadow: initial; --sav-details-plain-inline: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-current-behind: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
   --sav-range-height: initial; --sav-range-radius: initial; --sav-range-track-shadow: initial; --sav-range-thumb-width: initial; --sav-range-thumb-height: initial; --sav-range-thumb-radius: initial;
   --sav-range-thumb-tilt: initial; --sav-range-thumb-fill: initial; --sav-range-thumb-ink: initial; --sav-range-thumb-border-width: initial; --sav-range-thumb-shadow: initial; --sav-range-thumb-bg: initial;
 }
@@ -410,9 +410,14 @@ sav-select:not(:defined) > option {
   --sav-button-backdrop: blur(10px) saturate(160%);
   --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 1px rgb(255 255 255 / .25);
   --sav-track-shadow: inset 0 1px 3px rgb(20 30 60 / .14), inset 0 0 0 1px rgb(255 255 255 / .45);
-  --sav-switch-track: rgb(96 104 126 / .82);
-  --sav-switch-thumb-bg: rgb(255 255 255 / .95);
-  --sav-switch-thumb-shadow: 0 2px 6px rgb(20 30 60 / .28), inset 0 -1px 2px rgb(20 30 60 / .08);
+  /* switch: a frosted track (blurred, with a rim of light), a lit coloured track when on, a glossy thumb */
+  --sav-switch-track: rgb(86 96 124 / .5);
+  --sav-switch-backdrop: blur(8px) saturate(170%);
+  --sav-switch-track-shadow: inset 0 1px 2px rgb(20 30 60 / .25), inset 0 0 0 1px rgb(255 255 255 / .55);
+  --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .45), inset 0 1px 2px rgb(20 30 60 / .15), 0 2px 10px color-mix(in oklab, var(--sav-color-primary) 45%, transparent);
+  --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(238 242 250));
+  --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .9);
+  --sav-switch-thumb-shadow: 0 2px 6px rgb(20 30 60 / .28), 0 0 0 .5px rgb(20 30 60 / .14);
   --sav-color-tooltip-bg: rgb(26 31 46 / .78);
   --sav-tab-active-bg: rgb(255 255 255 / .6);
   --sav-tab-segment-shadow: 0 2px 8px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .7);
@@ -442,7 +447,12 @@ sav-select:not(:defined) > option {
   --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .12), rgb(255 255 255 / .03) 42%, rgb(255 255 255 / 0) 62%);
   --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 0 0 1px rgb(255 255 255 / .1);
   --sav-track-shadow: inset 0 1px 3px rgb(0 0 0 / .35), inset 0 0 0 1px rgb(255 255 255 / .08);
-  --sav-switch-track: rgb(255 255 255 / .36);
+  --sav-switch-track: rgb(255 255 255 / .24);
+  --sav-switch-track-shadow: inset 0 1px 2px rgb(0 0 0 / .4), inset 0 0 0 1px rgb(255 255 255 / .18);
+  --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .25), 0 2px 12px color-mix(in oklab, var(--sav-color-primary) 40%, transparent);
+  --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(225 230 242));
+  --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .7);
+  --sav-switch-thumb-shadow: 0 2px 8px rgb(0 0 0 / .45);
   --sav-color-tooltip-bg: rgb(232 235 243 / .82);
   --sav-tab-active-bg: rgb(255 255 255 / .1);
   --sav-tab-segment-shadow: 0 2px 8px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .1);
@@ -464,7 +474,14 @@ sav-select:not(:defined) > option {
   --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .5), rgb(255 255 255 / .12) 42%, rgb(255 255 255 / 0) 62%);
   --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .45), inset 0 0 0 1px rgb(255 255 255 / .25);
   --sav-track-shadow: inset 0 1px 3px rgb(20 30 60 / .14), inset 0 0 0 1px rgb(255 255 255 / .45);
-  --sav-switch-track: rgb(96 104 126 / .82);
+  /* switch: a frosted track (blurred, with a rim of light), a lit coloured track when on, a glossy thumb */
+  --sav-switch-track: rgb(86 96 124 / .5);
+  --sav-switch-backdrop: blur(8px) saturate(170%);
+  --sav-switch-track-shadow: inset 0 1px 2px rgb(20 30 60 / .25), inset 0 0 0 1px rgb(255 255 255 / .55);
+  --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .45), inset 0 1px 2px rgb(20 30 60 / .15), 0 2px 10px color-mix(in oklab, var(--sav-color-primary) 45%, transparent);
+  --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(238 242 250));
+  --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .9);
+  --sav-switch-thumb-shadow: 0 2px 6px rgb(20 30 60 / .28), 0 0 0 .5px rgb(20 30 60 / .14);
   --sav-color-tooltip-bg: rgb(26 31 46 / .78);
   --sav-tab-active-bg: rgb(255 255 255 / .6);
   --sav-tab-segment-shadow: 0 2px 8px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .7);
@@ -483,7 +500,12 @@ sav-select:not(:defined) > option {
     --sav-sheen: linear-gradient(180deg, rgb(255 255 255 / .12), rgb(255 255 255 / .03) 42%, rgb(255 255 255 / 0) 62%);
     --sav-badge-shadow: inset 0 1px 0 rgb(255 255 255 / .2), inset 0 0 0 1px rgb(255 255 255 / .1);
     --sav-track-shadow: inset 0 1px 3px rgb(0 0 0 / .35), inset 0 0 0 1px rgb(255 255 255 / .08);
-    --sav-switch-track: rgb(255 255 255 / .36);
+    --sav-switch-track: rgb(255 255 255 / .24);
+    --sav-switch-track-shadow: inset 0 1px 2px rgb(0 0 0 / .4), inset 0 0 0 1px rgb(255 255 255 / .18);
+    --sav-switch-on-shadow: inset 0 0 0 1px rgb(255 255 255 / .25), 0 2px 12px color-mix(in oklab, var(--sav-color-primary) 40%, transparent);
+    --sav-switch-thumb-bg: linear-gradient(180deg, #fff, rgb(225 230 242));
+    --sav-switch-thumb-border: 1px solid rgb(255 255 255 / .7);
+    --sav-switch-thumb-shadow: 0 2px 8px rgb(0 0 0 / .45);
     --sav-color-tooltip-bg: rgb(232 235 243 / .82);
     --sav-tab-active-bg: rgb(255 255 255 / .1);
     --sav-tab-segment-shadow: 0 2px 8px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .1);
