@@ -215,7 +215,7 @@ sav-select:not(:defined) > option {
   --sav-shadow-sm: 0 1px 2px rgb(20 24 40 / 0.06), 0 1px 3px rgb(20 24 40 / 0.06);
   --sav-shadow: 0 4px 12px rgb(20 24 40 / 0.08), 0 1px 3px rgb(20 24 40 / 0.06);
   --sav-shadow-lg: 0 18px 48px rgb(20 24 40 / 0.18), 0 4px 12px rgb(20 24 40 / 0.08);
-  --sav-tilt: initial; --sav-tilt-lift: initial; --sav-card-back: initial; --sav-ring-cap: round; --sav-radius-pill: 999px;
+  --sav-tilt: initial; --sav-tilt-lift: initial; --sav-card-back: initial; --sav-ring-cap: round; --sav-level-dot-cap: initial; --sav-radius-pill: 999px;
   --sav-knob-radius: initial; --sav-knob-tilt: initial; --sav-avatar-radius: initial; --sav-avatar-tilt: initial; --sav-avatar-inset: initial; --sav-avatar-img-scale: initial;
   --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-button-shadow: initial; --sav-button-shadow-hover: initial;
   --sav-button-shadow-active: initial; --sav-button-hover-transform: initial; --sav-button-active-transform: initial;
@@ -240,6 +240,7 @@ sav-select:not(:defined) > option {
   --sav-card-back: block;
   --sav-radius-pill: 0px;
   --sav-ring-cap: butt;
+  --sav-level-dot-cap: square; /* the dotted way of sav-level-path: little squares */
   /* switch thumb, radio, checkbox: little squares leaning like the logo */
   --sav-knob-radius: 0px;
   --sav-knob-tilt: 10deg;
@@ -359,6 +360,13 @@ sav-select:not(:defined) > option {
   --sav-range-thumb-ink: 1;
   --sav-range-thumb-border-width: 2px;
   --sav-range-thumb-shadow: 3px 3px 0 var(--sav-color-text);
+  /* switch: an inked track with a hard shadow (light when off, coloured when on) and an inked thumb */
+  --sav-switch-track: var(--sav-color-surface-2);
+  --sav-switch-track-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
+  --sav-switch-on-shadow: inset 0 0 0 2px var(--sav-color-text), 2px 2px 0 var(--sav-color-text);
+  --sav-switch-thumb-bg: var(--sav-color-surface);
+  --sav-switch-thumb-border: 2px solid var(--sav-color-text);
+  --sav-switch-thumb-shadow: none;
   /* spinner and progress ring: chunky rounded squares */
   --sav-spinner-radius: 5px;
   --sav-ring-radius: 18px;
@@ -519,7 +527,7 @@ sav-select:not(:defined) > option {
    It overrides the style of the page only for that element.
    ========================================================================== */
 [shape="squared"] {
-  --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt;
+  --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt; --sav-level-dot-cap: square;
   --sav-tilt: 0deg; --sav-tilt-lift: 0px; --sav-card-back: none; --sav-button-tilt: initial; --sav-button-tilt-hover: 0deg;
   --sav-knob-radius: 0px; --sav-knob-tilt: 0deg; --sav-avatar-radius: 0px; --sav-avatar-tilt: 0deg; --sav-avatar-inset: 0%; --sav-avatar-img-scale: 1;
   --sav-tab-active-bg: initial; --sav-tab-vertical-active-bg: initial; --sav-tab-vertical-active-behind: initial; --sav-tab-vertical-active-fg: initial; --sav-tab-vertical-active-line: initial; --sav-tab-vertical-active-shadow: initial; --sav-tab-vertical-rail: initial; --sav-tab-vertical-rail-padding: initial; --sav-tab-vertical-divider: initial; --sav-tab-vertical-hover: initial;
@@ -537,7 +545,7 @@ sav-select:not(:defined) > option {
   --sav-panel-back: none; --sav-panel-arrow: block;
 }
 [shape="tilt"] {
-  --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt;
+  --sav-radius-sm: 0px; --sav-radius: 0px; --sav-radius-lg: 0px; --sav-radius-pill: 0px; --sav-ring-cap: butt; --sav-level-dot-cap: square;
   --sav-tilt: initial; --sav-tilt-lift: -3px; --sav-card-back: block; --sav-button-tilt: initial; --sav-button-tilt-hover: initial; --sav-shadow-sm: none;
   --sav-knob-radius: 0px; --sav-knob-tilt: 10deg; --sav-avatar-radius: 0px; --sav-avatar-tilt: 10deg; --sav-avatar-inset: 7%; --sav-avatar-img-scale: 1.32;
   --sav-tab-active-bg: color-mix(in oklab, var(--sav-color-primary) 16%, transparent);

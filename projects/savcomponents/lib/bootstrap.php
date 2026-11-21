@@ -12,7 +12,8 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavComponents';
 const AUTH_COOKIE = 'savcomponents_auth';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;  // 2: academy (progress of SavComponents Academy)
+const MAX_ACADEMY_BYTES = 150000; // JSON of the Academy progress of one account
 const MAX_ITEMS = 200;          // saved themes + components per account
 const MAX_CONFIG_BYTES = 20000; // JSON of one saved item
 const STYLES = ['soft', 'tilt', 'sharp', 'brutal', 'glass']; // see dist/sav.css

@@ -10,6 +10,8 @@
  * items          saved configurations: kind "theme" (style, mode, colours… for the whole site) or
  *                "component" (one component with its attributes and tokens). public_id is the address of the
  *                theme CSS that external sites link to (api/?r=theme.css&id=…).
+ * academy        SavComponents Academy (savcomponents.com/app): the progress of an account (lessons, quizzes, challenges,
+ *                badges, streak) as JSON, its XP and level, and the username shown on the leaderboard, if the user joins it.
  */
 
 declare(strict_types=1);
@@ -81,6 +83,19 @@ function schema_statements(string $p): array
             UNIQUE KEY `uq_public` (`public_id`),
             KEY `ix_user` (`user_id`, `kind`),
             " . $fk('item_user', 'user_id', 'users') . "
+        ) $e",
+        "CREATE TABLE IF NOT EXISTS `{$p}academy` (
+            `user_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+            `username` VARCHAR(24) NULL,
+            `xp` INT UNSIGNED NOT NULL DEFAULT 0,
+            `level` SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+            `streak` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+            `on_board` TINYINT(1) NOT NULL DEFAULT 0,
+            `progress` MEDIUMTEXT NOT NULL,
+            `updated_at` DATETIME NOT NULL,
+            UNIQUE KEY `uq_username` (`username`),
+            KEY `ix_board` (`on_board`, `xp`),
+            " . $fk('academy_user', 'user_id', 'users') . "
         ) $e",
     ];
 }

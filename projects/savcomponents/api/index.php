@@ -245,6 +245,14 @@ function theme_css(string $name, array $cfg): string
     return $out;
 }
 
+function academy_out(array $a): array
+{
+    return [
+        'username' => $a['username'], 'onBoard' => (bool)$a['on_board'], 'xp' => (int)$a['xp'], 'level' => (int)$a['level'],
+        'streak' => (int)$a['streak'], 'progress' => json_decode((string)$a['progress'], true) ?: new stdClass(), 'updatedAt' => $a['updated_at'],
+    ];
+}
+
 function count_items(int $uid): int
 {
     $st = db()->prepare('SELECT COUNT(*) FROM ' . t('items') . ' WHERE user_id = ?');
@@ -553,6 +561,67 @@ switch ($r) {
         if (is_master($u)) fail('is_master', 409); // remove it from $master_emails first
         db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$u['id']]);
         send_json(['ok' => true]);
+
+    // ================================================================ SavComponents Academy (savcomponents.com/app)
+
+    case 'academy.get':
+        $u = reader();
+        $st = db()->prepare('SELECT * FROM ' . t('academy') . ' WHERE user_id = ?');
+        $st->execute([$u['id']]);
+        $a = $st->fetch();
+        send_json(['ok' => true, 'academy' => $a ? academy_out($a) : null]);
+
+    case 'academy.save':
+        // the whole progress, already merged by the app with what it read (several devices)
+        $u = writer();
+        $b = body();
+        if (!is_array($b['progress'] ?? null)) fail('bad_request', 422);
+        $json = json_encode($b['progress'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false || strlen($json) > MAX_ACADEMY_BYTES) fail('too_large', 413);
+        $xp = max(0, min(10000000, (int)($b['xp'] ?? 0)));
+        $level = max(1, min(999, (int)($b['level'] ?? 1)));
+        $streak = max(0, min(9999, (int)($b['streak'] ?? 0)));
+        db()->prepare('INSERT INTO ' . t('academy') . ' (user_id, xp, level, streak, progress, updated_at) VALUES (?,?,?,?,?,?)
+            ON DUPLICATE KEY UPDATE xp = VALUES(xp), level = VALUES(level), streak = VALUES(streak), progress = VALUES(progress), updated_at = VALUES(updated_at)')
+            ->execute([$u['id'], $xp, $level, $streak, $json, now_utc()]);
+        send_json(['ok' => true, 'updatedAt' => now_utc()]);
+
+    case 'academy.profile':
+        // the username (the only thing other people see) and whether the account is on the leaderboard
+        $u = writer();
+        $b = body();
+        $name = s($b, 'username', 24);
+        if ($name !== '' && !preg_match('/^[A-Za-z0-9_]{3,20}$/', $name)) fail('username_invalid', 422);
+        $board = !empty($b['onBoard']) && $name !== '';
+        $st = db()->prepare('SELECT user_id FROM ' . t('academy') . ' WHERE username = ? AND user_id <> ?');
+        $st->execute([$name, $u['id']]);
+        if ($name !== '' && $st->fetch()) fail('username_taken', 409);
+        db()->prepare('INSERT INTO ' . t('academy') . " (user_id, username, on_board, progress, updated_at) VALUES (?,?,?,'{}',?)
+            ON DUPLICATE KEY UPDATE username = VALUES(username), on_board = VALUES(on_board)")
+            ->execute([$u['id'], $name === '' ? null : $name, $board ? 1 : 0, now_utc()]);
+        send_json(['ok' => true]);
+
+    case 'academy.board':
+        // public: the 20 learners with most XP among those who joined the leaderboard (username, level, XP, streak)
+        only('GET');
+        if (too_many_attempts('board', 120, 10)) fail('rate_limited', 429);
+        record_attempt('board');
+        $st = db()->query('SELECT a.username, a.xp, a.level, a.streak FROM ' . t('academy') . ' a JOIN ' . t('users') . " u ON u.id = a.user_id
+            WHERE a.on_board = 1 AND a.username IS NOT NULL AND u.status = 'active' ORDER BY a.xp DESC, a.updated_at ASC LIMIT 20");
+        $top = array_map(fn($x) => ['username' => $x['username'], 'xp' => (int)$x['xp'], 'level' => (int)$x['level'], 'streak' => (int)$x['streak']], $st->fetchAll());
+        $me = null;
+        $cu = current_user();
+        if ($cu) {
+            $m = db()->prepare('SELECT xp, on_board FROM ' . t('academy') . ' WHERE user_id = ?');
+            $m->execute([$cu['id']]);
+            $row = $m->fetch();
+            if ($row && (int)$row['on_board'] === 1) {
+                $rank = db()->prepare('SELECT COUNT(*) FROM ' . t('academy') . ' WHERE on_board = 1 AND username IS NOT NULL AND xp > ?');
+                $rank->execute([(int)$row['xp']]);
+                $me = ['rank' => (int)$rank->fetchColumn() + 1];
+            }
+        }
+        send_json(['ok' => true, 'top' => $top, 'me' => $me]);
 
     default:
         fail('not_found', 404);

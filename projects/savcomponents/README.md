@@ -5,7 +5,8 @@ The library and the documentation live in their own repository and site:
 This folder of saveriomorelli.com only hosts what needs a database:
 
 - `api/index.php` — JSON API: accounts (email + password, confirmation and password reset by email),
-  favourite components, saved themes and components, the master admin functions, and the public CSS of a saved theme
+  favourite components, saved themes and components, the progress of SavComponents Academy (savcomponents.com/academy:
+  `academy.get`, `academy.save`, `academy.profile`, `academy.board`), the master admin functions, and the public CSS of a saved theme
   (`api/?r=theme.css&id=…`, proxied by savcomponents.com as `/theme/<id>.css`).
 - `lib/` — bootstrap (sessions, CORS, rate limits), database schema (prefix `sc_`), emails (SMTP client shared with OpenNewsletter).
   `lib/sav.css` is a copy of the library stylesheet, used to build the theme CSS: `tools/release.sh` in the library repo refreshes it.
