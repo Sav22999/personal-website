@@ -13,6 +13,8 @@ require_once __DIR__ . '/engine.php';
 // Duel: both players get the same set of gems and hide them in their own mine (like Sea Battle).
 // On your turn you send one beam into the other mine or try an answer about it;
 // a right answer wins, a wrong one passes the turn and counts as a strike (3 strikes lose).
+// Both get the same number of turns: when the player who started gives the right answer, the other one
+// still has one last turn, only for an answer: right is a draw, anything else and the first one wins.
 // The `mine` column only holds the set of gems of the round; p1_mine and p2_mine are the two hidden mines.
 const ONLINE_WINDOW_SECONDS = 15;
 const LANGS = ['en', 'it', 'es', 'fr', 'de'];
@@ -86,6 +88,14 @@ function actionList($room)
 function slotToAct($room)
 {
     return count(actionList($room)) % 2 === 0 ? (int)$room['first_slot'] : other($room['first_slot']);
+}
+
+// The player who started has already solved: the other one is on the last turn, for an answer only
+function lastChance($room)
+{
+    if ($room['status'] !== 'playing') return false;
+    foreach (actionList($room) as $a) if ($a['t'] === 'g' && $a['ok']) return true;
+    return false;
 }
 
 function clockRunning($room)
@@ -372,20 +382,23 @@ function getPlayer($token)
     return $player;
 }
 
+// $winnerSlot null is a draw (both solved with the same number of turns): nobody gets a win
 function finishGame($room, $winnerSlot, $reason)
 {
     global $pdo;
+    $result = $winnerSlot === null ? 'draw' : ($winnerSlot === 1 ? '1-0' : '0-1');
     $pdo->prepare("UPDATE pm_rooms SET status = 'finished', result = ?, reason = ?, p1_ms = ?, p2_ms = ? WHERE id = ?")
-        ->execute([$winnerSlot === 1 ? '1-0' : '0-1', $reason, $room['p1_ms'], $room['p2_ms'], $room['id']]);
-    $pdo->prepare("UPDATE pm_players SET wins = wins + 1 WHERE room_id = ? AND slot = ?")->execute([$room['id'], $winnerSlot]);
+        ->execute([$result, $reason, $room['p1_ms'], $room['p2_ms'], $room['id']]);
+    if ($winnerSlot !== null) $pdo->prepare("UPDATE pm_players SET wins = wins + 1 WHERE room_id = ? AND slot = ?")->execute([$room['id'], $winnerSlot]);
 }
 
 // Time per turn: when it runs out, the turn passes to the other player (a skip in the list of actions).
-// Never ends the game, so it always returns false (the callers still treat true as "game over").
+// It ends the game only when the time runs out on the last turn (the player who started wins): then it returns true.
 function checkFlag(&$room)
 {
     global $pdo;
     if (!clockRunning($room)) return false;
+    $last = lastChance($room);
     $limit = (int)$room['time_control'] * 1000;
     $list = actionList($room);
     $started = (int)$room['turn_started_ms'];
@@ -394,12 +407,16 @@ function checkFlag(&$room)
         $list[] = ['s' => count($list) % 2 === 0 ? (int)$room['first_slot'] : other($room['first_slot']), 't' => 'x'];
         $started += $limit;
         $skipped++;
+        if ($last) break;
     }
     if (!$skipped) return false;
     $room['actions'] = json_encode($list);
     $room['turn_started_ms'] = $started;
     $pdo->prepare("UPDATE pm_rooms SET actions = ?, turn_started_ms = ? WHERE id = ?")->execute([$room['actions'], $started, $room['id']]);
-    return false;
+    if (!$last) return false;
+    finishGame($room, (int)$room['first_slot'], 'solved');
+    $room['status'] = 'finished';
+    return true;
 }
 
 // The opponent lost the connection (or left) for ABANDON_SECONDS: the player still here wins
@@ -490,6 +507,7 @@ function pollState()
         'oppMine' => $room['status'] === 'finished' ? ($room['p' . other($mySlot) . '_mine'] ?: null) : null,
         'placeLeftMs' => $room['status'] === 'placing' ? max(0, PLACE_SECONDS * 1000 - (nowMs() - (int)$room['place_started_ms'])) : 0,
         'turn' => $turn,
+        'lastChance' => lastChance($room),
         'turnLeftMs' => $turnLeftMs,
         'result' => $room['result'],
         'reason' => $room['reason'],
@@ -541,6 +559,11 @@ function probe()
             respondError('invalid_request');
             return;
         }
+        if (lastChance($room)) { // a beam now would only waste the last turn
+            $pdo->rollBack();
+            respondError('last_answer_only');
+            return;
+        }
         if (isset(usedPorts($room, $player['slot'])[$port])) {
             $pdo->rollBack();
             respondError('port_used');
@@ -584,9 +607,13 @@ function guess()
         $ok = PrismMineEngine::isCorrect($answer, $hidden, mineSize($room));
         $slot = (int)$player['slot'];
         $now = nowMs();
+        $last = lastChance($room);
         saveAction($room, ['s' => $slot, 't' => 'g', 'ok' => $ok], $now);
-        if ($ok) finishGame($room, $slot, 'solved');
-        else {
+        if ($last) finishGame($room, $ok ? null : other($slot), $ok ? 'draw' : 'solved');
+        elseif ($ok) {
+            // The player who started solved: the other one still gets the last turn (same number of turns)
+            if ($slot !== (int)$room['first_slot']) finishGame($room, $slot, 'solved');
+        } else {
             $strikes = count(array_filter(actionList($room), fn($a) => $a['t'] === 'g' && $a['s'] === $slot && !$a['ok']));
             if ($strikes >= MAX_STRIKES) finishGame($room, other($slot), 'strikes');
         }

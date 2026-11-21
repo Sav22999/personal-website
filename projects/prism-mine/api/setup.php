@@ -20,8 +20,8 @@ $queries = [
         `p2_ms` BIGINT NOT NULL DEFAULT 0,
         `turn_started_ms` BIGINT NOT NULL DEFAULT 0,
         `place_started_ms` BIGINT NOT NULL DEFAULT 0,
-        `result` VARCHAR(8) DEFAULT NULL COMMENT '1-0 or 0-1',
-        `reason` VARCHAR(20) DEFAULT NULL COMMENT 'solved, strikes, resign, timeout, abandon',
+        `result` VARCHAR(8) DEFAULT NULL COMMENT '1-0, 0-1 or draw',
+        `reason` VARCHAR(20) DEFAULT NULL COMMENT 'solved, draw, strikes, resign, timeout, abandon',
         `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX `idx_matchmaking` (`is_public`, `status`, `lang`)

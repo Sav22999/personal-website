@@ -380,7 +380,7 @@ function renderBoard() {
         used.set(pr.p, info);
         if (pr.exit !== null && pr.exit !== pr.p) used.set(pr.exit, info);
     });
-    const canProbe = isMyTurn();
+    const canProbe = isMyTurn() && !s.lastChance; // the last turn is for an answer only
     for (let p = 0; p < N * 4; p++) {
         const [x, y] = portCenter(p);
         const info = used.get(p);
@@ -489,7 +489,11 @@ function renderStatus() {
     } else if (s.status === 'playing') {
         if (s.mode === 'example') text = t('example_step', {n: s.exampleStep + 1, total: EXAMPLE.steps.length});
         else if (!online) text = s.mode === 'daily' ? t('daily_label', {date: s.date}) : t('level_' + s.level);
-        else if (s.turn === s.mySlot) {
+        else if (s.lastChance) {
+            // The player who started solved: the other one has one last answer to draw
+            text = s.turn === s.mySlot ? t('last_answer_turn', {name: nameOf(other(s.mySlot))}) : t('last_answer_wait', {name: nameOf(s.turn)});
+            cls = s.turn === s.mySlot ? 'mine' : '';
+        } else if (s.turn === s.mySlot) {
             text = t('your_turn');
             cls = 'mine';
         } else text = t('their_turn', {name: nameOf(s.turn)});
@@ -877,6 +881,7 @@ function renderGemToolbar() {
 function onPortActivate(p) {
     const s = session;
     if (!s || !isMyTurn()) return;
+    if (s.mode === 'online' && s.lastChance) return showError('last_answer_only');
     if (usedPorts().has(p)) {
         const pr = myProbes().find(x => x.p === p || x.exit === p);
         if (pr) showToast(probeText(pr));
@@ -1288,14 +1293,23 @@ function handlePollUpdate(data) {
             s.guesses.push({s: a.s, ok: a.ok});
             s.history.push({t: 'g'});
             if (!a.ok && a.s !== s.mySlot && fresh.length <= 2) showToast(t('opp_wrong', {name: nameOf(a.s)}));
+            // A right answer of the player who started: the other one still has the last turn
+            if (a.ok && data.status === 'playing' && fresh.length <= 2) {
+                playSound('right');
+                showToast(a.s === s.mySlot ? t('toast_solved_wait', {name: nameOf(other(a.s))}) : t('toast_opp_solved', {name: nameOf(a.s)}));
+            }
         }
     });
     s.turn = data.turn;
+    s.lastChance = !!data.lastChance;
 
     if (data.status === 'finished' && s.status !== 'finished') {
         s.hidden = P.decode(data.oppMine, N);
-        const winner = data.result === '1-0' ? 1 : 2;
-        endGame(winner === s.mySlot, data.reason, winner);
+        if (data.result === 'draw') endGame(false, 'draw', null);
+        else {
+            const winner = data.result === '1-0' ? 1 : 2;
+            endGame(winner === s.mySlot, data.reason, winner);
+        }
     }
 
     if (s.status !== 'waiting') {
@@ -1417,16 +1431,17 @@ function endGame(won, reason, winnerSlot = 1) {
     s.status = 'finished';
     clearInterval(clockInterval);
     const online = s.mode === 'online';
+    const draw = online && winnerSlot === null; // both solved with the same number of turns
     if (!online) storageSet('pm_daily_progress', '');
-    $('gameover-icon').innerHTML = won ? GAMEOVER_ICONS.win : GAMEOVER_ICONS.lose;
-    playSound(won ? 'right' : 'lose');
+    $('gameover-icon').innerHTML = won || draw ? GAMEOVER_ICONS.win : GAMEOVER_ICONS.lose;
+    playSound(won || draw ? 'right' : 'lose');
     $('btn-share-result').classList.add('hidden');
     $('rematch-status').textContent = '';
     $('btn-rematch').disabled = false;
 
     if (online) {
-        $('gameover-title').textContent = won ? t('you_won') : t('you_lost');
-        $('gameover-text').textContent = t('reason_' + reason, {name: nameOf(other(winnerSlot)), winner: nameOf(winnerSlot)});
+        $('gameover-title').textContent = draw ? t('draw_title') : won ? t('you_won') : t('you_lost');
+        $('gameover-text').textContent = draw ? t('reason_draw') : t('reason_' + reason, {name: nameOf(other(winnerSlot)), winner: nameOf(winnerSlot)});
         $('gameover-score').textContent = '';
         $('score-line').textContent = t('score_tracker', {p1: nameOf(1), s1: s.wins[1] || 0, p2: nameOf(2), s2: s.wins[2] || 0});
         $('btn-rematch').textContent = t('rematch');

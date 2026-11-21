@@ -1,7 +1,17 @@
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 // Newest first. Each entry lists notes per language; English is the fallback.
 const RELEASES = [
+    {
+        version: '1.5.0',
+        notes: {
+            en: ['Online duel: both players get the same number of turns. If the player who started solves, the other one has one last answer to draw'],
+            it: ["Duello online: entrambi hanno lo stesso numero di turni. Se chi ha iniziato risolve, l'altro ha un'ultima risposta per pareggiare"],
+            es: ['Duelo en línea: los dos tienen el mismo número de turnos. Si quien empezó resuelve, el otro tiene una última respuesta para empatar'],
+            fr: ['Duel en ligne : les deux joueurs ont le même nombre de tours. Si celui qui a commencé résout, l’autre a une dernière réponse pour égaliser'],
+            de: ['Online-Duell: Beide haben gleich viele Züge. Löst der Startspieler, hat der andere eine letzte Antwort zum Unentschieden'],
+        },
+    },
     {
         version: '1.4.0',
         notes: {

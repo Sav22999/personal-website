@@ -15,6 +15,7 @@ const RULES_TEXT = {
         duel: [
             'Both players get the same gems and hide them in their own mine, like in Sea Battle: 2 minutes, then the gems are placed at random.',
             'On your turn, send one beam into the other mine or submit an answer about it. A wrong answer passes the turn; three wrong answers lose the duel.',
+            'Both players get the same number of turns: if the player who started gives the right answer, the other one has one last turn for an answer (no beams). Right is a draw, wrong and the first one wins.',
             'Switch between “Their mine” (your beams and your sketch) and “Your mine” (the beams your opponent sent).',
             'With a clock, every turn has a time limit: when it runs out, the turn passes to the other player.',
             'If your opponent stays disconnected for 2 minutes, you win automatically.',
@@ -42,6 +43,7 @@ const RULES_TEXT = {
         duel: [
             'Entrambi ricevono le stesse gemme e le nascondono nella propria miniera, come a battaglia navale: 2 minuti, poi vengono messe a caso.',
             'Nel tuo turno manda un raggio nella miniera dell’avversario o dai una risposta su com’è fatta. Una risposta sbagliata passa il turno; tre risposte sbagliate fanno perdere il duello.',
+            'Entrambi hanno lo stesso numero di turni: se chi ha iniziato dà la risposta giusta, l’altro ha un ultimo turno per rispondere (niente raggi). Se indovina è pareggio, altrimenti vince chi ha iniziato.',
             'Passa da “La sua miniera” (i tuoi raggi e la tua bozza) a “La tua miniera” (i raggi che ti ha mandato l’avversario).',
             'Con l’orologio ogni turno ha un tempo massimo: quando scade, il turno passa all’avversario.',
             'Se l’avversario resta disconnesso per 2 minuti, vinci in automatico.',
@@ -69,6 +71,7 @@ const RULES_TEXT = {
         duel: [
             'Los dos reciben las mismas gemas y las esconden en su propia mina, como en la batalla naval: 2 minutos, y después se colocan al azar.',
             'En tu turno envía un rayo a la mina del rival o da una respuesta sobre ella. Una respuesta incorrecta pasa el turno; tres respuestas incorrectas pierden el duelo.',
+            'Los dos tienen el mismo número de turnos: si quien empezó da la respuesta correcta, el otro tiene un último turno para responder (sin rayos). Si acierta es empate; si no, gana quien empezó.',
             'Cambia entre “Su mina” (tus rayos y tu boceto) y “Tu mina” (los rayos que te envió el rival).',
             'Con reloj, cada turno tiene un tiempo máximo: cuando se acaba, el turno pasa al rival.',
             'Si tu rival sigue desconectado 2 minutos, ganas automáticamente.',
@@ -96,6 +99,7 @@ const RULES_TEXT = {
         duel: [
             'Les deux joueurs reçoivent les mêmes gemmes et les cachent dans leur propre mine, comme à la bataille navale : 2 minutes, puis elles sont placées au hasard.',
             'À ton tour, envoie un rayon dans la mine de l’adversaire ou donne une réponse sur elle. Une mauvaise réponse passe le tour ; trois mauvaises réponses font perdre le duel.',
+            'Les deux joueurs ont le même nombre de tours : si celui qui a commencé donne la bonne réponse, l’autre a un dernier tour pour répondre (sans rayon). Juste, c’est un match nul ; sinon, celui qui a commencé gagne.',
             'Passe de « Sa mine » (tes rayons et ton esquisse) à « Ta mine » (les rayons envoyés par l’adversaire).',
             'Avec une pendule, chaque tour a un temps maximum : quand il est écoulé, le tour passe à l’adversaire.',
             'Si ton adversaire reste déconnecté 2 minutes, tu gagnes automatiquement.',
@@ -123,6 +127,7 @@ const RULES_TEXT = {
         duel: [
             'Beide bekommen dieselben Edelsteine und verstecken sie in ihrer eigenen Mine, wie bei Schiffe versenken: 2 Minuten, dann werden sie zufällig gelegt.',
             'In deinem Zug schickst du einen Strahl in die gegnerische Mine oder gibst eine Antwort dazu. Eine falsche Antwort beendet den Zug; drei falsche Antworten verlieren das Duell.',
+            'Beide haben gleich viele Züge: Gibt der Startspieler die richtige Antwort, hat der andere noch einen letzten Zug für eine Antwort (kein Strahl). Richtig ist unentschieden, sonst gewinnt der Startspieler.',
             'Wechsle zwischen „Seine Mine“ (deine Strahlen und deine Skizze) und „Deine Mine“ (die Strahlen deines Gegners).',
             'Mit Uhr hat jeder Zug ein Zeitlimit: Ist es abgelaufen, geht der Zug an den Gegner.',
             'Bleibt dein Gegner 2 Minuten getrennt, gewinnst du automatisch.',
