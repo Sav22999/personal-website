@@ -57,3 +57,4 @@ projects/*/android/captures/
 
 # Status page cache
 projects/status/.cache.json
+*/.agent/*
