@@ -495,6 +495,10 @@ switch ($r) {
             'themes' => $q('SELECT COUNT(*) FROM ' . t('items') . " WHERE kind = 'theme'"),
             'components' => $q('SELECT COUNT(*) FROM ' . t('items') . " WHERE kind = 'component'"),
             'favorites' => $q('SELECT COUNT(*) FROM ' . t('favorites')),
+            // SavComponents Academy: accounts with progress, those on the leaderboard, those active in the last 30 days
+            'learners' => $q('SELECT COUNT(*) FROM ' . t('academy') . ' WHERE xp > 0'),
+            'onBoard' => $q('SELECT COUNT(*) FROM ' . t('academy') . ' WHERE on_board = 1'),
+            'learners30' => $q('SELECT COUNT(*) FROM ' . t('academy') . ' WHERE xp > 0 AND updated_at > UTC_TIMESTAMP() - INTERVAL 30 DAY'),
         ], 'topFavorites' => db()->query('SELECT component, COUNT(*) AS n FROM ' . t('favorites') . ' GROUP BY component ORDER BY n DESC LIMIT 8')->fetchAll()]);
 
     case 'admin.users':
