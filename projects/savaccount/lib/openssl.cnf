@@ -1,0 +1,4 @@
+# Only what openssl_pkey_new needs
+[req]
+distinguished_name = dn
+[dn]
