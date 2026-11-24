@@ -21,7 +21,7 @@ $canonical = '/projects/about/sav-pdf-viewer/';
                 "url": "https://www.saveriomorelli.com/"
             },
             "url": "https://www.savpdfviewer.com/",
-            "softwareVersion": "2.5.2",
+            "softwareVersion": "2.5.5",
             "offers": {
                 "@type": "Offer",
                 "price": "0",
@@ -78,7 +78,7 @@ $canonical = '/projects/about/sav-pdf-viewer/';
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Latest version</span>
-                    <span class="book-meta-value">v2.5.2</span>
+                    <span class="book-meta-value">v2.5.5</span>
                 </div>
                 <div class="book-meta-item">
                     <span class="book-meta-label">Active</span>
