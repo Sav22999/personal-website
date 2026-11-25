@@ -156,6 +156,7 @@ function app_url(): string
 function remember_app_url(): void
 {
     if (PHP_SAPI === 'cli' || !isset($_SERVER['HTTP_HOST'])) return;
+    if (is_file(dirname(__DIR__, 2) . '/.illerom-live')) return; // moved: the public address is the one on www.illerom.eu
     $url = app_url();
     try {
         $st = db()->query('SELECT v FROM ' . t('meta') . " WHERE k = 'app_url'");

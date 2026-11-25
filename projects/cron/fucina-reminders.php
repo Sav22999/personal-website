@@ -31,6 +31,10 @@ if (PHP_SAPI !== 'cli') {
     if (!hash_equals($secret, (string)($_GET['key'] ?? ''))) finish_fucina_reminders(403, ['error' => 'forbidden']);
 }
 
+// Moved to www.illerom.eu: the job runs there
+require __DIR__ . '/illerom.php';
+if ($moved = illerom_cron(basename(__FILE__))) finish_fucina_reminders($moved[0], $moved[1]);
+
 try {
     $now = new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
     $today = $now->format('Y-m-d');

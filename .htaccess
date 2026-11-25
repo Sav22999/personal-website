@@ -52,6 +52,18 @@ RedirectMatch 301 ^/projects/fucina$ https://www.saveriomorelli.com/projects/fuc
 # Redirects
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # Projects moved to www.illerom.eu (only while projects/.illerom-live exists; the rules of each project are in its folder).
+    # projects/illerom.php keeps the path and the parameters of invites, email links and so on
+    RewriteCond %{DOCUMENT_ROOT}/projects/.illerom-live -f
+    RewriteRule ^projects/about/(chess|opennewsletter|thinkhop|foodtrack|sudoku|mycurriculum|forkville|prism-mine|fucina|connect-four|letterhop|giftwise|sea-battle|faceguess)/?$ /projects/illerom.php [L]
+    RewriteCond %{DOCUMENT_ROOT}/projects/.illerom-live -f
+    RewriteCond %{HTTP_USER_AGENT} !App/Android
+    RewriteRule ^projects/forza-quattro(/|$) /projects/illerom.php [L]
+    RewriteCond %{DOCUMENT_ROOT}/projects/.illerom-live -f
+    RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+    RewriteCond %{REQUEST_URI} !(^/projects/illerom\.php|^/errors/|/api/|\.(js|css|png|svg|webp|jpe?g|woff2|ttf|webmanifest|json)$)
+    RewriteRule ^ /projects/illerom.php [L]
     # fucina.saveriomorelli.com shows Fucina (projects/fucina) at the root of its own address,
     # when the subdomain points to this web space; www.saveriomorelli.com/projects/fucina/ keeps working too
     RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
@@ -62,7 +74,7 @@ RedirectMatch 301 ^/projects/fucina$ https://www.saveriomorelli.com/projects/fuc
     RewriteCond %{DOCUMENT_ROOT}/projects/fucina/$1 -d
     RewriteRule ^(.*[^/])$ https://fucina.saveriomorelli.com/$1/ [L,R=301]
     RewriteCond %{HTTP_HOST} ^fucina\.saveriomorelli\.com$ [NC]
-    RewriteCond %{REQUEST_URI} !^/(projects/fucina|errors)/
+    RewriteCond %{REQUEST_URI} !^/(projects/fucina/|projects/illerom\.php$|errors/)
     RewriteRule ^(.*)$ projects/fucina/$1 [L]
     RewriteRule ^contact/?$ /contact-me/ [L,R=301]
     # A folder without its final slash: the slash is added staying on https (Aruba's proxy hides it, and a

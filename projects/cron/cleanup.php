@@ -8,6 +8,7 @@
  * sessions from older versions. It never touches the users' own data.
  * OpenNewsletter also deletes the subscriptions never confirmed within PENDING_SUBSCRIBER_DAYS (as its terms promise)
  * and the expired email-confirmation links of accounts.
+ * SavAccount cleans itself on savaccount.eu: here its clean-up is only started.
  *
  * URL:          https://www.saveriomorelli.com/projects/cron/cleanup.php?key=SECRET_KEY
  * Command line: php cleanup.php (no key needed)
@@ -47,6 +48,19 @@ function cleanTables($db, $prefix, $attemptsTable, $anonymise = true)
         'sessions' => $db->exec("DELETE FROM `{$prefix}auth_tokens` WHERE expires_at < UTC_TIMESTAMP()"),
         'attempts' => $attemptsTable !== null ? $db->exec("DELETE FROM `{$prefix}{$attemptsTable}` WHERE created_at < UTC_TIMESTAMP() - INTERVAL " . ATTEMPT_RETENTION_HOURS . " HOUR") : 0,
     ];
+}
+
+// SavAccount has its own server and settings: it is asked to clean itself, with a key that only opens that
+function cleanSavAccount()
+{
+    $credentials = is_file(__DIR__ . '/credentials.php') ? require __DIR__ . '/credentials.php' : [];
+    $key = (string)($credentials['savaccount_key'] ?? '');
+    if ($key === '' || !function_exists('curl_init')) throw new RuntimeException('savaccount_key is not configured');
+    $ch = curl_init('https://www.savaccount.eu/cron/cleanup');
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 60, CURLOPT_HTTPHEADER => ['X-Cron-Key: ' . $key]]);
+    $answer = json_decode((string)curl_exec($ch), true);
+    if (!is_array($answer) || empty($answer['ok'])) throw new RuntimeException('savaccount.eu answered ' . (int)curl_getinfo($ch, CURLINFO_HTTP_CODE));
+    return $answer['deleted'];
 }
 
 function validPrefix($prefix, $default)
@@ -100,11 +114,17 @@ if (PHP_SAPI !== 'cli') {
     if (!hash_equals($secret, (string)($_GET['key'] ?? ''))) finish(403, ['error' => 'forbidden']);
 }
 
-$failed = false;
+// The projects moved to www.illerom.eu are cleaned there: here only the others
+require __DIR__ . '/illerom.php';
+$moved = illerom_cron('cleanup.php');
+const STAY = ['savcomponents', 'dad/rendicontazione', 'fischietto'];
+
+$failed = $moved !== null && $moved[0] !== 200;
 
 // Apps first: db.php below stops the script when the games' database is down
 $expired = [];
 foreach (array_merge(array_keys(APPS), ['fischietto']) as $project) {
+    if ($moved !== null && !in_array($project, STAY, true)) continue;
     try {
         $expired[$project] = $project === 'fischietto' ? cleanFischietto() : cleanApp($project, APPS[$project]);
     } catch (Throwable $e) {
@@ -113,6 +133,16 @@ foreach (array_merge(array_keys(APPS), ['fischietto']) as $project) {
         $failed = true;
     }
 }
+
+try {
+    $expired['savaccount'] = cleanSavAccount();
+} catch (Throwable $e) {
+    error_log('Clean-up of savaccount failed: ' . $e->getMessage());
+    $expired['savaccount'] = 'failed: no valid answer from savaccount.eu';
+    $failed = true;
+}
+
+if ($moved !== null) finish($failed ? 500 : 200, ['ok' => !$failed, 'deleted_expired' => $expired, 'illerom' => $moved[1]]);
 
 // The games share one database: any of their connections reaches all the tables
 require __DIR__ . '/../connect-four/api/db.php';

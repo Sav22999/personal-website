@@ -34,6 +34,10 @@ if (PHP_SAPI !== 'cli') {
     if (!hash_equals($secret, (string)($_GET['key'] ?? ''))) finish_on_schedule(403, ['error' => 'forbidden']);
 }
 
+// Moved to www.illerom.eu: the job runs there
+require __DIR__ . '/illerom.php';
+if ($moved = illerom_cron(basename(__FILE__))) finish_on_schedule($moved[0], $moved[1]);
+
 @set_time_limit(300);
 ignore_user_abort(true);
 

@@ -55,135 +55,12 @@ return [
         ],
     ],
     [
-        'name' => 'FoodTrack',
-        'icon' => '/images/projects/foodtrack.png',
-        'url' => '/projects/foodtrack/',
+        'name' => 'Illerom',
+        'icon' => '/images/projects/illerom.png',
+        'url' => 'https://www.illerom.eu/',
+        'more' => ['label' => 'Detailed status', 'url' => 'https://www.illerom.eu/en/status/'],
         'services' => [
-            ['id' => 'foodtrack-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/foodtrack/'],
-            ['id' => 'foodtrack-db', 'name' => 'Accounts & pantry data', 'type' => 'app-db', 'dir' => 'foodtrack', 'prefix' => 'ft_'],
-            ['id' => 'foodtrack-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:foodtrack'],
-        ],
-    ],
-    [
-        'name' => 'Giftwise',
-        'icon' => '/images/projects/giftwise.png',
-        'url' => '/projects/giftwise/',
-        'services' => [
-            ['id' => 'giftwise-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/giftwise/'],
-            ['id' => 'giftwise-db', 'name' => 'Accounts & wish lists', 'type' => 'app-db', 'dir' => 'giftwise', 'prefix' => 'gw_'],
-            ['id' => 'giftwise-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:giftwise'],
-        ],
-    ],
-    [
-        'name' => 'Fucina',
-        'icon' => '/images/projects/fucina.png',
-        'url' => '/projects/fucina/',
-        'services' => [
-            ['id' => 'fucina-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/fucina/'],
-            ['id' => 'fucina-db', 'name' => 'Accounts & progress', 'type' => 'app-db', 'dir' => 'fucina', 'prefix' => 'fc_'],
-            ['id' => 'fucina-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:fucina'],
-        ],
-    ],
-    [
-        'name' => 'FaceGuess',
-        'icon' => '/images/projects/faceguess.png',
-        'url' => '/projects/faceguess/',
-        'services' => [
-            ['id' => 'faceguess-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/faceguess/'],
-            ['id' => 'faceguess-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'faceguess', 'table' => 'fg_rooms'],
-        ],
-    ],
-    [
-        'name' => 'Chess',
-        'icon' => '/images/projects/chess.png',
-        'url' => '/projects/chess/',
-        'services' => [
-            ['id' => 'chess-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/chess/'],
-            ['id' => 'chess-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'chess', 'table' => 'chess_rooms'],
-        ],
-    ],
-    [
-        'name' => 'Sudoku',
-        'icon' => '/images/projects/sudoku.png',
-        'url' => '/projects/sudoku/',
-        'services' => [
-            ['id' => 'sudoku-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/sudoku/'],
-        ],
-    ],
-    [
-        'name' => 'Prism Mine',
-        'icon' => '/images/projects/prism-mine.png',
-        'url' => '/projects/prism-mine/',
-        'services' => [
-            ['id' => 'prism-mine-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/prism-mine/'],
-            ['id' => 'prism-mine-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'prism-mine', 'table' => 'pm_rooms'],
-        ],
-    ],
-    [
-        'name' => 'Sea Battle',
-        'icon' => '/images/projects/sea-battle.png',
-        'url' => '/projects/sea-battle/',
-        'services' => [
-            ['id' => 'sea-battle-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/sea-battle/'],
-            ['id' => 'sea-battle-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'sea-battle', 'table' => 'sb_rooms'],
-        ],
-    ],
-    [
-        'name' => 'Connect Four',
-        'icon' => '/images/projects/connect-four.png',
-        'url' => '/projects/connect-four/',
-        'services' => [
-            ['id' => 'connect-four-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/connect-four/'],
-            ['id' => 'connect-four-db', 'name' => 'Online multiplayer', 'type' => 'game-db', 'dir' => 'connect-four', 'table' => 'c4_rooms'],
-        ],
-    ],
-    [
-        'name' => 'LetterHop',
-        'icon' => '/images/projects/letterhop.png',
-        'url' => '/projects/letterhop/',
-        'services' => [
-            ['id' => 'letterhop-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/letterhop/'],
-        ],
-    ],
-    [
-        'name' => 'ThinkHop',
-        'icon' => '/images/projects/thinkhop.png',
-        'url' => '/projects/thinkhop/',
-        'services' => [
-            ['id' => 'thinkhop-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/thinkhop/'],
-            ['id' => 'thinkhop-db', 'name' => 'Accounts & rankings', 'type' => 'app-db', 'dir' => 'thinkhop', 'prefix' => 'th_'],
-            ['id' => 'thinkhop-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:thinkhop'],
-        ],
-    ],
-    [
-        'name' => 'Forkville',
-        'icon' => '/images/projects/forkville.png?v=2',
-        'url' => '/projects/forkville/',
-        'services' => [
-            ['id' => 'forkville-web', 'name' => 'Game', 'type' => 'page', 'url' => '/projects/forkville/'],
-            ['id' => 'forkville-db', 'name' => 'Accounts & restaurants', 'type' => 'app-db', 'dir' => 'forkville', 'prefix' => 'fv_'],
-            ['id' => 'forkville-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:forkville'],
-        ],
-    ],
-    [
-        'name' => 'MyCurriculum',
-        'icon' => '/images/projects/mycurriculum.png',
-        'url' => '/projects/mycurriculum/',
-        'services' => [
-            ['id' => 'mycurriculum-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/mycurriculum/'],
-            ['id' => 'mycurriculum-db', 'name' => 'Accounts & CVs', 'type' => 'app-db', 'dir' => 'mycurriculum', 'prefix' => 'mc_'],
-            ['id' => 'mycurriculum-mail', 'name' => 'Emails', 'type' => 'mail', 'source' => 'app:mycurriculum'],
-        ],
-    ],
-    [
-        'name' => 'OpenNewsletter',
-        'icon' => '/projects/opennewsletter/icons/icon-192.png',
-        'url' => '/projects/opennewsletter/',
-        'services' => [
-            ['id' => 'opennewsletter-web', 'name' => 'Web app', 'type' => 'page', 'url' => '/projects/opennewsletter/'],
-            ['id' => 'opennewsletter-subscribe', 'name' => 'Subscription pages & widget', 'type' => 'page', 'url' => '/projects/opennewsletter/widget.js'],
-            ['id' => 'opennewsletter-db', 'name' => 'Accounts, groups & subscribers', 'type' => 'app-db', 'dir' => 'opennewsletter', 'prefix' => 'on_'],
-            ['id' => 'opennewsletter-mail', 'name' => 'Platform emails', 'type' => 'mail', 'source' => 'app:opennewsletter'],
+            ['id' => 'illerom-web', 'name' => 'Portal, games and apps', 'type' => 'http', 'url' => 'https://www.illerom.eu/en/'],
         ],
     ],
     [
@@ -195,6 +72,17 @@ return [
             ['id' => 'savcomponents-api', 'name' => 'Accounts API', 'type' => 'page', 'url' => '/projects/savcomponents/api/?r=auth.config'],
             ['id' => 'savcomponents-db', 'name' => 'Accounts, favourites & themes', 'type' => 'app-db', 'dir' => 'savcomponents', 'prefix' => 'sc_'],
             ['id' => 'savcomponents-mail', 'name' => 'Account emails', 'type' => 'mail', 'source' => 'app:savcomponents'],
+        ],
+    ],
+    [
+        'name' => 'SavAccount',
+        'icon' => '/images/projects/savaccount.png',
+        'url' => 'https://www.savaccount.eu/',
+        'services' => [
+            ['id' => 'savaccount-web', 'name' => 'Website', 'type' => 'http', 'url' => 'https://www.savaccount.eu/'],
+            ['id' => 'savaccount-oidc', 'name' => 'Sign-in for services (OpenID Connect)', 'type' => 'http', 'url' => 'https://www.savaccount.eu/.well-known/openid-configuration'],
+            ['id' => 'savaccount-api', 'name' => 'Accounts API & database', 'type' => 'http', 'url' => 'https://www.savaccount.eu/api/health'],
+            ['id' => 'savaccount-mail', 'name' => 'Codes & security emails', 'type' => 'http', 'url' => 'https://www.savaccount.eu/api/health.mail'],
         ],
     ],
     [

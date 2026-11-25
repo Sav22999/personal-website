@@ -6,6 +6,13 @@
 - **FoodTrack, Giftwise, Fucina, ThinkHop, Forkville, MyCurriculum, OpenNewsletter, SavComponents and Fischietto:** Cleans up expired sessions and login attempts older than 2 hours (IP addresses are only used for rate limiting over the past 60 minutes) and strips IP/browser data left on sessions from earlier versions. It never alters lists, items, wishes, stats, progress, or other user data.
 - **OpenNewsletter only:** also deletes subscriptions never confirmed within 7 days (as its terms promise) and expired account-confirmation links.
 - **SavComponents only:** also deletes expired email links (confirm / new password) and accounts never confirmed within 7 days.
+- **SavAccount:** it runs on savaccount.eu with its own settings: `cleanup.php` calls `https://www.savaccount.eu/cron/cleanup` with `savaccount_key` from `credentials.php` (the `$cron_key` of SavAccount). It deletes expired sessions, codes, links and tokens, rate-limit attempts older than 24 hours, accounts and addresses never confirmed within 48 hours and security-log events older than 90 days.
+
+## Projects moved to illerom.eu
+
+While `projects/.illerom-live` exists, the jobs of the moved projects run on `https://www.illerom.eu/cron/`: the scripts here
+forward to them (`illerom.php`), so the jobs already scheduled keep working. `cleanup.php` cleans here only SavComponents, SavAccount,
+Fischietto and Rendicontazione Ore, then asks illerom for the rest.
 
 ## ThinkHop Reminders
 

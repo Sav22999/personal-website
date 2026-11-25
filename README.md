@@ -7,7 +7,8 @@ Personal website of Saverio Morelli — frontend developer & UX designer.
 - `/` — Main site pages (home, about, projects, contact, donate)
 - `/contact-me/` — Contact form with ALTCHA proof-of-work anti-spam
 - `/htmlpertutti/` — *HTML per tutti* book page
-- `/projects/` — Project showcase pages
+- `/projects/` — Project showcase pages. Games and other apps moved to [illerom.eu](https://www.illerom.eu/): see
+  `projects/illerom.php` (redirects, active while `projects/.illerom-live` exists)
 - `/include/` — Shared PHP components (head, nav, footer, email template)
 - `/images/` — Icons, project images, and OpenGraph assets
 - `/old/` — Archived previous versions of the site

@@ -1,7 +1,6 @@
-# SavAccount API: only api/index.php is reachable, and only with the gateway key
+# Only a redirect is left here
 Options -Indexes
-RedirectMatch 404 ^/projects/savaccount/(lib|tests)(/|$)
-<FilesMatch "(^\.|^credentials.*\.php$|\.(md|sql|log|bak|cnf)$)">
+<FilesMatch "(^\.|^credentials.*\.php$|\.(md|sql|log|bak)$)">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>
@@ -10,9 +9,3 @@ RedirectMatch 404 ^/projects/savaccount/(lib|tests)(/|$)
     Deny from all
   </IfModule>
 </FilesMatch>
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteCond %{HTTPS} !=on
-  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
-  RewriteRule ^ - [F]
-</IfModule>

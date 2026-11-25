@@ -5,4 +5,5 @@
  */
 return [
     'cron_key' => 'REPLACE_WITH_A_LONG_RANDOM_KEY',
+    'savaccount_key' => '', // the $cron_key of SavAccount (server/credentials.php on savaccount.eu)
 ];

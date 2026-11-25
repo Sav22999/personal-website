@@ -30,6 +30,10 @@ if (PHP_SAPI !== 'cli') {
     if (!hash_equals($secret, (string)($_GET['key'] ?? ''))) finish_on_reminders(403, ['error' => 'forbidden']);
 }
 
+// Moved to www.illerom.eu: the job runs there
+require __DIR__ . '/illerom.php';
+if ($moved = illerom_cron(basename(__FILE__))) finish_on_reminders($moved[0], $moved[1]);
+
 try {
     if (!credentials()) throw new RuntimeException('opennewsletter/credentials.php not found');
     finish_on_reminders(200, ['ok' => true, 'reminded' => remind_pending()]);

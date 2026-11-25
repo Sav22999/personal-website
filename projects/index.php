@@ -159,95 +159,6 @@ $canonical = '/projects/';
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/about/foodtrack/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/foodtrack.png" alt="">
-            </div>
-            <h3>FoodTrack</h3>
-            <p>Keep track of the food in your fridge, freezer and pantry, get alerts before it expires, share spaces and
-                shopping lists with your household, plan your weekly meals and find recipes with what you already
-                have.</p>
-            <ul class="project-tags">
-                <li>Web app</li>
-                <li>Android</li>
-                <li>English</li>
-                <li>Italian</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/giftwise/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/giftwise.png" alt="">
-            </div>
-            <h3>Giftwise</h3>
-            <p>Wish lists for every occasion, shared with the people who follow you. Your friends agree among themselves
-                on who gives what and chat about it, without spoiling the surprise.</p>
-            <ul class="project-tags">
-                <li>Web app</li>
-                <li>Android</li>
-                <li>English</li>
-                <li>Italian</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/fucina/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/fucina.png" alt="">
-            </div>
-            <h3>Fucina</h3>
-            <p>Learn to code by playing, from HTML, CSS and JavaScript to Python, Java, SQL, Kotlin, Swift and Rust: levels
-                that get harder, quick drills, games, a daily challenge with its leaderboard, and certificates to unlock
-                with the Sparks you earn.</p>
-            <ul class="project-tags">
-                <li>Web app</li>
-                <li>English</li>
-                <li>Italian</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/mycurriculum/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/mycurriculum.png" alt="">
-            </div>
-            <h3>MyCurriculum</h3>
-            <p>Write your CV once, in every language you need: four templates, a PDF for each language and a public web
-                page to share. Start from the CV you already have by importing its PDF.</p>
-            <ul class="project-tags">
-                <li>Web app</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/opennewsletter/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/opennewsletter.png" alt="">
-            </div>
-            <h3>OpenNewsletter</h3>
-            <p>Newsletters written, approved and sent as a team: a drag-and-drop editor, roles and an approval step,
-                subscribers in every language, a ready subscription page and a widget for any website.</p>
-            <ul class="project-tags">
-                <li>Web app</li>
-                <li>English</li>
-                <li>Italian</li>
-            </ul>
-        </a>
         <a class="card" href="/projects/about/savcomponents/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -263,171 +174,45 @@ $canonical = '/projects/';
                 <li>Library</li>
             </ul>
         </a>
+        <a class="card" href="/projects/about/savaccount/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/savaccount.png" alt="">
+            </div>
+            <h3>SavAccount</h3>
+            <p>One account to sign in to many services, without Google, Microsoft or Apple. Verified addresses, two-step
+                verification, and you decide what each service gets.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>English</li>
+                <li>Italian</li>
+            </ul>
+        </a>
     </div>
 
     <div class="projects-divider">
         <span class="projects-divider-line"></span>
-        <h2>Built with AI</h2>
+        <h2>Games and other projects</h2>
         <span class="projects-divider-line"></span>
     </div>
     <div class="card-grid">
-        <a class="card" href="/projects/about/faceguess/">
+        <a class="card" href="https://www.illerom.eu/">
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
-                <img src="/images/projects/faceguess.png" alt="">
+                <img src="/images/projects/illerom.png" alt="">
             </div>
-            <h3>FaceGuess</h3>
-            <p>Two-player face-guessing game with unique characters generated every match. Play on the same device, no
-                app needed.</p>
+            <h3>Illerom</h3>
+            <p>My portal of open projects: games, apps and free alternatives to try, like Chess, ThinkHop, FoodTrack,
+                MyCurriculum, Fucina, Forkville and OpenNewsletter.</p>
             <ul class="project-tags">
-                <li>Web game</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/chess/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/chess.png" alt="">
-            </div>
-            <h3>Chess</h3>
-            <p>Play chess with a friend online, a random opponent, on the same device or against the computer. No
-                account required.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/sudoku/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/sudoku.png" alt="">
-            </div>
-            <h3>Sudoku</h3>
-            <p>The classic number puzzle with four difficulty levels, pencil notes you can turn into ink, tips that
-                explain the next logical move and a single-cell check. No sign-up needed.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/prism-mine/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/prism-mine.png" alt="">
-            </div>
-            <h3>Prism Mine</h3>
-            <p>A deduction game: send beams of light into a dark mine, see where they come out and in which colour,
-                and work out where the gems are hidden. Solo, a daily mine and online duels. No sign-up required.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/sea-battle/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/sea-battle.png" alt="">
-            </div>
-            <h3>Sea Battle</h3>
-            <p>The classic naval battle (Battaglia Navale): hide your fleet and sink your opponent's. Play a friend online,
-                a random opponent, on the same device or against the computer. No sign-up required.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/connect-four/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/connect-four.png" alt="">
-            </div>
-            <h3>Connect Four</h3>
-            <p>The classic four-in-a-row game: play a friend online, a random opponent, on the same device or against
-                the computer. Customise your discs with vibrant colors. No sign-up required.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/letterhop/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/letterhop.png" alt="">
-            </div>
-            <h3>LetterHop</h3>
-            <p>The word ladder game: go from one word to another changing one letter at a time. Three levels, five
-                languages, and the fewer words you use, the more points you get. No sign-up required.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/thinkhop/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/thinkhop.png" alt="">
-            </div>
-            <h3>ThinkHop</h3>
-            <p>The logic game: liars, treasure chests, mini sudoku, absurd reasoning and traps across 1,000 levels that keep
-                getting harder. Five languages, a daily ranking and friends, with no sign-up required to play.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>Android</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
-            </ul>
-        </a>
-        <a class="card" href="/projects/about/forkville/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-            <div class="card-icon card-icon-project">
-                <img src="/images/projects/forkville.png?v=3" alt="">
-            </div>
-            <h3>Forkville</h3>
-            <p>Run your own little restaurant in 3D: build and decorate it, hire chefs and waiters, grow ingredients,
-                improve your dishes and visit your friends' restaurants.</p>
-            <ul class="project-tags">
-                <li>Web game</li>
-                <li>3D</li>
-                <li>Built with Claude</li>
+                <li>Portal</li>
+                <li>Open source</li>
             </ul>
         </a>
     </div>

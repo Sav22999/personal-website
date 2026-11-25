@@ -29,6 +29,10 @@ if (PHP_SAPI !== 'cli') {
     if (!hash_equals($secret, (string)($_GET['key'] ?? ''))) finish_reminders(403, ['error' => 'forbidden']);
 }
 
+// Moved to www.illerom.eu: the job runs there
+require __DIR__ . '/illerom.php';
+if ($moved = illerom_cron(basename(__FILE__))) finish_reminders($moved[0], $moved[1]);
+
 /** Days in a row of daily challenges, ending yesterday. */
 function open_streak(int $userId, string $today): int
 {
