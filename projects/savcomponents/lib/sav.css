@@ -209,7 +209,9 @@ sav-select:not(:defined) > option {
 [animation="off"] { --sav-motion: 0; }
 [animation="on"]:not([animation-duration]) { --sav-motion: 1; }
 
-.sav-style-soft {
+/* Every style starts from Soft's values and from a clean slate: what a style set on a parent (Tilt's lean, Brutal's ink shadows,
+   Glass's sheen…) never leaks into a section of another style. Each style below then sets only what it changes. */
+.sav-style-soft, .sav-style-tilt, .sav-style-sharp, .sav-style-brutal, .sav-style-glass {
   --sav-radius-sm: 4px; --sav-radius: 8px; --sav-radius-lg: 14px; --sav-border-width: 1px; --sav-focus-width: 3px;
   --sav-font-weight-semibold: 600; --sav-font-weight-bold: 700;
   --sav-shadow-sm: 0 1px 2px rgb(20 24 40 / 0.06), 0 1px 3px rgb(20 24 40 / 0.06);
@@ -225,6 +227,9 @@ sav-select:not(:defined) > option {
   --sav-switch-thumb-bg: initial; --sav-switch-thumb-shadow: initial; --sav-switch-track-shadow: initial; --sav-switch-on-shadow: initial; --sav-switch-backdrop: initial; --sav-switch-thumb-border: initial; --sav-details-shadow: initial; --sav-details-plain-inline: initial; --sav-copy-shadow: initial; --sav-breadcrumb-current-bg: initial; --sav-current-behind: initial; --sav-breadcrumb-current-fg: initial; --sav-breadcrumb-current-shadow: initial; --sav-ink-border: initial; --sav-container-shadow: initial; --sav-spinner-tiles: initial; --sav-spinner-radius: initial; --sav-ring-radius: initial; --sav-ring-tilt: initial; --sav-ring-start: initial;
   --sav-range-height: initial; --sav-range-radius: initial; --sav-range-track-shadow: initial; --sav-range-thumb-width: initial; --sav-range-thumb-height: initial; --sav-range-thumb-radius: initial;
   --sav-range-thumb-tilt: initial; --sav-range-thumb-fill: initial; --sav-range-thumb-ink: initial; --sav-range-thumb-border-width: initial; --sav-range-thumb-shadow: initial; --sav-range-thumb-bg: initial;
+  --sav-tab-segment-shadow: initial; --sav-button-tilt: initial;
+  --sav-field-shadow: initial; --sav-field-sheen: initial; --sav-field-bg-hover: initial; --sav-field-bg-focus: initial; --sav-field-focus-shadow: initial;
+  --sav-field-focus-border: initial; --sav-field-filled-bg: initial; --sav-field-filled-border: initial; --sav-rating-empty: initial; --sav-chart-grid: initial;
 }
 
 /* Tilt: square shapes whose background leans slightly, text always upright.
@@ -268,6 +273,8 @@ sav-select:not(:defined) > option {
   --sav-panel-arrow: none;
   --sav-tooltip-shadow: 0 6px 18px rgb(0 0 0 / .2);
   --sav-focus-width: 2px;
+  /* fields: straight while you type, with a tinted block behind them like the cards */
+  --sav-field-focus-shadow: 4px 4px 0 color-mix(in oklab, var(--sav-color-primary) 30%, transparent);
   /* range: a square track, the thumb a leaning tile like the logo */
   --sav-range-height: .5rem;
   --sav-range-radius: 0px;
@@ -305,6 +312,9 @@ sav-select:not(:defined) > option {
   --sav-button-text-transform: uppercase;
   --sav-button-font-scale: .88;
   --sav-focus-width: 2px;
+  /* fields: a crisp line under the text when filled, an offset tinted block when focused */
+  --sav-field-focus-shadow: 3px 3px 0 color-mix(in oklab, var(--sav-color-primary) 34%, transparent);
+  --sav-field-filled-border: transparent transparent var(--sav-color-border-strong);
   /* range: a thin line and an upright bar */
   --sav-range-height: 4px;
   --sav-range-radius: 0px;
@@ -348,6 +358,10 @@ sav-select:not(:defined) > option {
   --sav-button-active-transform: translate(3px, 3px);
   --sav-control-shadow: 3px 3px 0 var(--sav-color-text);
   --sav-alert-shadow: 4px 4px 0 var(--sav-color-text);
+  /* fields: the ink border stays when focused; the hard shadow grows and takes the main colour */
+  --sav-field-focus-border: var(--sav-color-text);
+  --sav-field-focus-shadow: 5px 5px 0 var(--sav-color-primary);
+  --sav-field-filled-border: var(--sav-color-text);
   --sav-color-overlay: rgb(20 20 30 / .35);
   /* range: a thick inked track and a chunky block with a hard shadow */
   --sav-range-height: .75rem;
@@ -374,6 +388,10 @@ sav-select:not(:defined) > option {
   /* badges and tags get the ink outline too */
   --sav-badge-shadow: inset 0 0 0 1.5px var(--sav-color-text);
   --sav-ink-border: var(--sav-color-text);
+  /* rating: empty stars and hearts are light with an ink outline, not solid ink like the filled ones */
+  --sav-rating-empty: var(--sav-color-surface-2);
+  /* chart grid lines: a light ink, so they do not cross the bars like borders */
+  --sav-chart-grid: color-mix(in oklab, var(--sav-color-text) 16%, transparent);
   /* vertical tabs (and the site's side menu): an inked block with a hard shadow */
   --sav-tab-vertical-active-bg: var(--sav-color-primary); --sav-tab-vertical-active-behind: var(--sav-color-primary);
   --sav-tab-vertical-active-fg: var(--sav-color-on-primary);
@@ -440,6 +458,14 @@ sav-select:not(:defined) > option {
   --sav-breadcrumb-current-bg: var(--sav-tab-active-bg);
   --sav-breadcrumb-current-fg: var(--sav-color-text);
   --sav-breadcrumb-current-shadow: var(--sav-tab-segment-shadow);
+  /* fields: etched into the glass (a soft shadow inside at the top, a rim of light at the bottom), brighter on hover and focus,
+     with a coloured glow while you type */
+  --sav-field-sheen: linear-gradient(180deg, rgb(255 255 255 / .22), rgb(255 255 255 / 0) 60%);
+  --sav-field-shadow: inset 0 1px 3px rgb(20 30 60 / .12), inset 0 -1px 0 rgb(255 255 255 / .6), 0 1px 0 rgb(255 255 255 / .55);
+  --sav-field-bg-hover: rgb(255 255 255 / .64);
+  --sav-field-bg-focus: rgb(255 255 255 / .8);
+  --sav-field-focus-shadow: 0 0 0 4px color-mix(in oklab, var(--sav-color-primary) 26%, transparent), 0 6px 22px color-mix(in oklab, var(--sav-color-primary) 24%, transparent);
+  --sav-field-filled-bg: rgb(255 255 255 / .3);
 }
 .sav-theme-dark.sav-style-glass,
 .sav-theme-dark .sav-style-glass:not(.sav-theme-light),
@@ -465,6 +491,12 @@ sav-select:not(:defined) > option {
   --sav-tab-active-bg: rgb(255 255 255 / .1);
   --sav-tab-segment-shadow: 0 2px 8px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .1);
   --sav-alert-shadow: 0 6px 20px rgb(0 0 0 / .25), inset 0 1px 0 rgb(255 255 255 / .08);
+  --sav-field-sheen: linear-gradient(180deg, rgb(255 255 255 / .05), rgb(255 255 255 / 0) 60%);
+  --sav-field-shadow: inset 0 1px 3px rgb(0 0 0 / .4), inset 0 -1px 0 rgb(255 255 255 / .07), 0 1px 0 rgb(255 255 255 / .05);
+  --sav-field-bg-hover: rgb(16 19 30 / .45);
+  --sav-field-bg-focus: rgb(8 10 18 / .6);
+  --sav-field-focus-shadow: 0 0 0 4px color-mix(in oklab, var(--sav-color-primary) 30%, transparent), 0 6px 22px color-mix(in oklab, var(--sav-color-primary) 22%, transparent);
+  --sav-field-filled-bg: rgb(255 255 255 / .07);
 }
 .sav-theme-light.sav-style-glass,
 .sav-style-glass .sav-theme-light {
@@ -494,6 +526,14 @@ sav-select:not(:defined) > option {
   --sav-tab-active-bg: rgb(255 255 255 / .6);
   --sav-tab-segment-shadow: 0 2px 8px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .7);
   --sav-alert-shadow: 0 6px 20px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .55);
+  /* fields: etched into the glass (a soft shadow inside at the top, a rim of light at the bottom), brighter on hover and focus,
+     with a coloured glow while you type */
+  --sav-field-sheen: linear-gradient(180deg, rgb(255 255 255 / .22), rgb(255 255 255 / 0) 60%);
+  --sav-field-shadow: inset 0 1px 3px rgb(20 30 60 / .12), inset 0 -1px 0 rgb(255 255 255 / .6), 0 1px 0 rgb(255 255 255 / .55);
+  --sav-field-bg-hover: rgb(255 255 255 / .64);
+  --sav-field-bg-focus: rgb(255 255 255 / .8);
+  --sav-field-focus-shadow: 0 0 0 4px color-mix(in oklab, var(--sav-color-primary) 26%, transparent), 0 6px 22px color-mix(in oklab, var(--sav-color-primary) 24%, transparent);
+  --sav-field-filled-bg: rgb(255 255 255 / .3);
 }
 @media (prefers-color-scheme: dark) {
   .sav-theme-auto.sav-style-glass {
@@ -518,6 +558,12 @@ sav-select:not(:defined) > option {
     --sav-tab-active-bg: rgb(255 255 255 / .1);
     --sav-tab-segment-shadow: 0 2px 8px rgb(0 0 0 / .3), inset 0 1px 0 rgb(255 255 255 / .1);
     --sav-alert-shadow: 0 6px 20px rgb(0 0 0 / .25), inset 0 1px 0 rgb(255 255 255 / .08);
+    --sav-field-sheen: linear-gradient(180deg, rgb(255 255 255 / .05), rgb(255 255 255 / 0) 60%);
+    --sav-field-shadow: inset 0 1px 3px rgb(0 0 0 / .4), inset 0 -1px 0 rgb(255 255 255 / .07), 0 1px 0 rgb(255 255 255 / .05);
+    --sav-field-bg-hover: rgb(16 19 30 / .45);
+    --sav-field-bg-focus: rgb(8 10 18 / .6);
+    --sav-field-focus-shadow: 0 0 0 4px color-mix(in oklab, var(--sav-color-primary) 30%, transparent), 0 6px 22px color-mix(in oklab, var(--sav-color-primary) 22%, transparent);
+    --sav-field-filled-bg: rgb(255 255 255 / .07);
   }
 }
 
