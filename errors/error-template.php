@@ -9,10 +9,9 @@ function render_error_page($code, $title, $message)
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?php echo $code; ?> &ndash; <?php echo $title; ?></title>
         <link rel="icon" href="/images/icon.png">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
         <style>
+        @font-face { font-family: 'Inter'; src: url('/fonts/inter-latin-wght-normal.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+
             @font-face {
                 font-family: 'Stack Sans Notch';
                 src: url('/fonts/StackSansNotch.ttf') format('truetype');

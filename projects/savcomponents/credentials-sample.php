@@ -30,4 +30,12 @@ $portal_url = "https://savcomponents.com/";
 // Origins allowed to call the API from a browser (CORS). The portal signs in with a token, not a cookie.
 $allowed_origins = ["https://savcomponents.com", "https://www.savcomponents.com"];
 
+// "Continue with SavAccount" (https://www.savaccount.eu). In the SavAccount panel create a service for SavComponents and add the
+// redirect address https://www.saveriomorelli.com/projects/savcomponents/api/?r=auth.sav.callback (the one of this API).
+// Empty client id or secret: the button does not show.
+$savaccount_client_id = "";
+$savaccount_client_secret = "";
+// $savaccount_redirect_uri = ""; // only if the address above is not where this API answers
+// $savaccount_issuer = "https://www.savaccount.eu"; // only for tests against another SavAccount
+
 $debug = false;

@@ -13,6 +13,8 @@ $page_locale = isset($page_lang) ? $page_lang : 'en_US';
 <meta name="description" content="<?= htmlspecialchars($page_description) ?>">
 <meta name="author" content="Saverio Morelli">
 <link rel="canonical" href="<?= htmlspecialchars($page_url) ?>">
+<meta name="robots" content="<?= isset($robots) ? $robots : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' ?>">
+<link rel="alternate" type="text/markdown" href="/llms.txt" title="Saverio Morelli for language models">
 <meta property="og:type" content="website">
 <meta property="og:title" content="<?= htmlspecialchars($page_title) ?>">
 <meta property="og:description" content="<?= htmlspecialchars($page_description) ?>">
@@ -31,7 +33,4 @@ $page_locale = isset($page_lang) ? $page_lang : 'en_US';
 <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
 <meta name="theme-color" content="#222222">
 <link rel="sitemap" type="application/xml" href="/sitemap.xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">

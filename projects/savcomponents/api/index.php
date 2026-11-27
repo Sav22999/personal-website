@@ -4,6 +4,8 @@
  *
  * Accounts:   auth.config, auth.me, auth.register, auth.login, auth.resend, auth.verify, auth.forgot, auth.reset,
  *             auth.logout, auth.profile, auth.password, auth.delete
+ * SavAccount: auth.sav.start, auth.sav.callback (SavAccount comes back there), auth.sav.finish, auth.sav.create,
+ *             auth.sav.code, auth.sav.link, auth.sav.unlink   (see lib/savaccount.php)
  * Favourites: fav.list, fav.set
  * Saved:      item.list, item.save, item.delete   (kind "theme" or "component")
  * Public:     theme.css   (the CSS of a saved theme, linked from any external site)
@@ -56,6 +58,8 @@ if ($r === 'theme.css') {
     echo theme_css((string)$row['name'], json_decode((string)$row['config'], true) ?: []);
     exit;
 }
+
+if ($r === 'auth.sav.callback') sav_callback(); // a page SavAccount opens (it redirects back to the portal), not a JSON call
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos((string)($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json') !== 0) fail('bad_request', 415);
 
@@ -284,7 +288,7 @@ switch ($r) {
     // ================================================================ accounts
 
     case 'auth.config':
-        send_json(['ok' => true, 'installed' => true, 'mailReady' => mail_settings() !== null]);
+        send_json(['ok' => true, 'installed' => true, 'mailReady' => mail_settings() !== null, 'savaccount' => sav_enabled()]);
 
     case 'auth.me':
         only('GET');
@@ -396,7 +400,9 @@ switch ($r) {
     case 'auth.password':
         $u = writer();
         $b = body();
-        if (!password_verify((string)($b['current'] ?? ''), user_row($u['id'])['password_hash'])) fail('bad_password', 422);
+        $hash = (string)user_row($u['id'])['password_hash'];
+        // an account made with SavAccount has no password yet: it chooses one without the current one
+        if ($hash !== '' && !password_verify((string)($b['current'] ?? ''), $hash)) fail('bad_password', 422);
         $pw = (string)($b['password'] ?? '');
         validate_password($pw);
         db()->prepare('UPDATE ' . t('users') . ' SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $u['id']]);
@@ -407,10 +413,130 @@ switch ($r) {
 
     case 'auth.delete':
         $u = writer(true);
-        if (!password_verify((string)(body()['password'] ?? ''), user_row($u['id'])['password_hash'])) fail('bad_password', 422);
+        $row = user_row($u['id']);
+        // with a password it is asked again; without one (SavAccount only) the email address is written to confirm
+        $okDel = (string)$row['password_hash'] !== '' ? password_verify((string)(body()['password'] ?? ''), $row['password_hash'])
+            : mb_strtolower(s(body(), 'confirm', 190)) === mb_strtolower((string)$row['email']);
+        if (!$okDel) fail('bad_password', 422);
         db()->prepare('DELETE FROM ' . t('users') . ' WHERE id = ?')->execute([$u['id']]); // favourites, items and sessions go with it
         set_auth_cookie('', time() - 3600);
         send_json(['ok' => true]);
+
+    // ================================================================ SavAccount (lib/savaccount.php)
+
+    case 'auth.sav.start':
+        // {mode: login|connect, key, back: docs|academy} -> {url}: the page goes there; connect links the signed-in account
+        only('POST');
+        if (!sav_enabled()) fail('sav_off', 503);
+        if (too_many_attempts('sav', 30, 15)) fail('rate_limited', 429);
+        record_attempt('sav');
+        $b = body();
+        $mode = ($b['mode'] ?? '') === 'connect' ? 'connect' : 'login';
+        $back = array_key_exists((string)($b['back'] ?? ''), SAV_BACK) ? (string)$b['back'] : 'docs';
+        $uid = null;
+        if ($mode === 'connect') $uid = (int)writer()['id'];
+        send_json(['ok' => true, 'url' => sav_start($mode, sav_key($b), $back, $uid)]);
+
+    case 'auth.sav.finish':
+        // {handoff, key}: what SavAccount said. Signed in, linked, or what is left to do (a new account, or proving an existing one)
+        only('POST');
+        if (too_many_attempts('sav_finish', 30, 15)) fail('rate_limited', 429);
+        $b = body();
+        $h = (string)($b['handoff'] ?? '');
+        $f = preg_match('/^[a-f0-9]{64}$/', $h) ? sav_flow_row('handoff_hash = ? AND expires_at > ?', [hash('sha256', $h), now_utc()]) : null;
+        if (!$f || !hash_equals((string)$f['key_hash'], sav_key($b))) {
+            record_attempt('sav_finish');
+            fail('sav_expired', 410);
+        }
+        if (in_array($f['result'], ['taken', 'disabled', 'failed'], true)) {
+            sav_drop($f);
+            fail($f['result'] === 'disabled' ? 'disabled' : ($f['result'] === 'taken' ? 'sav_taken' : 'sav_failed'), 409);
+        }
+        if ($f['result'] === 'in') {
+            sav_drop($f);
+            signed_in((int)$f['target_id']);
+        }
+        if ($f['result'] === 'connected') {
+            $u = current_user();
+            if (!$u || (int)$u['id'] !== (int)$f['target_id']) fail('sav_expired', 410);
+            sav_drop($f);
+            sav_link((int)$u['id'], (string)$f['sub']);
+            send_json(['ok' => true, 'connected' => true, 'user' => public_user(user_row($u['id']))]);
+        }
+        if ($f['result'] === 'signup') send_json(['ok' => true, 'signup' => ['name' => $f['name'], 'email' => $f['email']]]);
+        if ($f['result'] === 'link') {
+            $u = user_row((int)$f['target_id']);
+            send_json(['ok' => true, 'link' => ['email' => $f['email'], 'hasPassword' => (string)($u['password_hash'] ?? '') !== '']]);
+        }
+        fail('sav_expired', 410);
+
+    case 'auth.sav.create':
+        // {handoff, key, name, acceptPrivacy}: a new account for an address nobody has, confirmed by SavAccount
+        only('POST');
+        $b = body();
+        $f = sav_flow_for($b, ['signup']);
+        $name = s($b, 'name', 80);
+        if (mb_strlen($name) < 2) fail('name_required', 422);
+        if (empty($b['acceptPrivacy'])) fail('privacy_required', 422);
+        // someone may have taken the address or this SavAccount in the meantime
+        if (user_by_email((string)$f['email']) || sav_user('sav_sub = ?', [(string)$f['sub']])) {
+            sav_drop($f);
+            fail('sav_expired', 410);
+        }
+        db()->prepare('INSERT INTO ' . t('users') . " (name, email, email_verified_at, password_hash, sav_sub, created_at) VALUES (?,?,?,'',?,?)")
+            ->execute([$name, $f['email'], now_utc(), $f['sub'], now_utc()]);
+        $uid = (int)db()->lastInsertId();
+        sav_drop($f);
+        signed_in($uid);
+
+    case 'auth.sav.code':
+        // {handoff, key}: sends a code to the address of the existing account, to prove it is theirs
+        only('POST');
+        $b = body();
+        $f = sav_flow_for($b, ['link']);
+        if (too_many_attempts('sav_code', 3, 15)) fail('rate_limited', 429);
+        record_attempt('sav_code');
+        $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        db()->prepare('UPDATE ' . t('sav_flows') . ' SET code_hash = ?, code_tries = 0, code_until = ? WHERE id = ?')
+            ->execute([hash('sha256', $f['id'] . ':' . $code), gmdate('Y-m-d H:i:s', time() + SAV_CODE_MINUTES * 60), $f['id']]);
+        send_sav_code(user_row((int)$f['target_id']), $code);
+        send_json(['ok' => true]);
+
+    case 'auth.sav.link':
+        // {handoff, key, password | code}: proves the existing account, joins the SavAccount to it and signs in
+        only('POST');
+        $b = body();
+        $f = sav_flow_for($b, ['link']);
+        if (too_many_attempts('sav_link', 10, 15)) fail('rate_limited', 429);
+        $u = user_row((int)$f['target_id']);
+        if (!$u || $u['status'] !== 'active') { sav_drop($f); fail('disabled', 403); }
+        $ok = false;
+        if (isset($b['code'])) {
+            // counted before it is compared; after 5 wrong codes a new one has to be asked for
+            if (!$f['code_hash'] || (int)$f['code_tries'] >= SAV_CODE_TRIES || strtotime($f['code_until'] . ' UTC') < time()) fail('sav_code_expired', 410);
+            db()->prepare('UPDATE ' . t('sav_flows') . ' SET code_tries = code_tries + 1 WHERE id = ?')->execute([$f['id']]);
+            $ok = hash_equals((string)$f['code_hash'], hash('sha256', $f['id'] . ':' . s($b, 'code', 12)));
+            if (!$ok) fail('sav_code_wrong', 422);
+        } else {
+            $ok = (string)$u['password_hash'] !== '' && password_verify((string)($b['password'] ?? ''), $u['password_hash']);
+            if (!$ok) {
+                record_attempt('sav_link');
+                fail('bad_password', 422);
+            }
+        }
+        sav_drop($f);
+        sav_link((int)$u['id'], (string)$f['sub']);
+        signed_in((int)$u['id']);
+
+    case 'auth.sav.unlink':
+        // only when the account has a password: it always keeps a way to sign in
+        $u = writer();
+        $row = user_row($u['id']);
+        if (empty($row['sav_sub'])) send_json(['ok' => true, 'user' => public_user($row)]);
+        if ((string)$row['password_hash'] === '') fail('sav_last_method', 409);
+        db()->prepare('UPDATE ' . t('users') . ' SET sav_sub = NULL WHERE id = ?')->execute([$u['id']]);
+        send_sav_notice($row, false);
+        send_json(['ok' => true, 'user' => public_user(user_row($u['id']))]);
 
     // ================================================================ favourites
 

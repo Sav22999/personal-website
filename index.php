@@ -10,23 +10,61 @@ $canonical = '/';
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
-            "@type": "Person",
-            "name": "Saverio Morelli",
-            "url": "https://www.saveriomorelli.com/",
-            "image": "https://www.saveriomorelli.com/images/me.jpg",
-            "jobTitle": "Frontend Developer & UX Designer",
-            "sameAs": [
-                "https://github.com/Sav22999",
-                "https://www.linkedin.com/in/saveriomorelli",
-                "https://www.instagram.com/sav.morelli/",
-                "https://t.me/sav_projects"
-            ],
-            "knowsAbout": [
-                "Frontend Development",
-                "UX Design",
-                "Open Source",
-                "Browser Extensions",
-                "Android Development"
+            "@graph": [
+                {
+                    "@type": "WebSite",
+                    "@id": "https://www.saveriomorelli.com/#website",
+                    "name": "Saverio Morelli",
+                    "url": "https://www.saveriomorelli.com/",
+                    "inLanguage": "en",
+                    "publisher": {"@id": "https://www.saveriomorelli.com/#person"}
+                },
+                {
+                    "@type": "ProfilePage",
+                    "@id": "https://www.saveriomorelli.com/#page",
+                    "url": "https://www.saveriomorelli.com/",
+                    "name": "Saverio Morelli",
+                    "isPartOf": {"@id": "https://www.saveriomorelli.com/#website"},
+                    "mainEntity": {"@id": "https://www.saveriomorelli.com/#person"}
+                },
+                {
+                    "@type": "Person",
+                    "@id": "https://www.saveriomorelli.com/#person",
+                    "name": "Saverio Morelli",
+                    "url": "https://www.saveriomorelli.com/",
+                    "image": "https://www.saveriomorelli.com/images/me.jpg",
+                    "jobTitle": "Frontend Developer & UX Designer",
+                    "description": "Frontend developer and UX designer based in Italy. He builds free, open-source and ad-free software: browser extensions, Android apps, web apps and games.",
+                    "nationality": {"@type": "Country", "name": "Italy"},
+                    "worksFor": {"@type": "Organization", "name": "Fondazione Bruno Kessler", "url": "https://www.fbk.eu"},
+                    "alumniOf": [
+                        {"@type": "CollegeOrUniversity", "name": "University of Udine", "url": "https://www.uniud.it/en/"},
+                        {"@type": "CollegeOrUniversity", "name": "University of Trento", "url": "https://www.unitn.it/en"}
+                    ],
+                    "sameAs": [
+                        "https://github.com/Sav22999",
+                        "https://www.linkedin.com/in/saveriomorelli",
+                        "https://www.instagram.com/sav.morelli/",
+                        "https://t.me/sav_projects"
+                    ],
+                    "knowsAbout": [
+                        "Frontend Development",
+                        "UX Design",
+                        "Open Source",
+                        "Browser Extensions",
+                        "Android Development",
+                        "Web Components",
+                        "Privacy"
+                    ],
+                    "owns": [
+                        {"@type": "WebSite", "name": "Illerom", "url": "https://www.illerom.eu/"},
+                        {"@type": "SoftwareApplication", "name": "Notefox", "url": "https://www.notefox.eu/"},
+                        {"@type": "SoftwareApplication", "name": "Sav PDF Viewer", "url": "https://www.savpdfviewer.com/"},
+                        {"@type": "SoftwareSourceCode", "name": "SavComponents", "url": "https://www.savcomponents.com/"},
+                        {"@type": "WebApplication", "name": "SavAccount", "url": "https://www.savaccount.eu/"},
+                        {"@type": "WebApplication", "name": "SavOffice", "url": "https://www.illerom.eu/savoffice/"}
+                    ]
+                }
             ]
         }
     </script>

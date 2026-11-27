@@ -4,7 +4,7 @@
  * Compatible with PHP 7.4+ and MySQL 5.7+ / MariaDB 10.3+.
  *
  * Accounts exist only to keep favourite components and saved configurations (themes and single components).
- * Email + password; the address must be confirmed before saving anything, and it can never be changed.
+ * Email + password, or SavAccount (lib/savaccount.php); the address must be confirmed before saving anything, and it can never be changed.
  * Errors are sent as codes: docs/account.js translates them.
  */
 
@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const APP_NAME = 'SavComponents';
 const AUTH_COOKIE = 'savcomponents_auth';
-const SCHEMA_VERSION = 2;  // 2: academy (progress of SavComponents Academy)
+const SCHEMA_VERSION = 3;  // 2: academy (progress of SavComponents Academy); 3: SavAccount (users.sav_sub, sav_flows)
 const MAX_ACADEMY_BYTES = 150000; // JSON of the Academy progress of one account
 const MAX_ITEMS = 200;          // saved themes + components per account
 const MAX_CONFIG_BYTES = 20000; // JSON of one saved item
@@ -41,6 +41,8 @@ function credentials(): ?array
     $master_emails = [];
     $portal_url = 'https://savcomponents.com/';
     $allowed_origins = ['https://savcomponents.com', 'https://www.savcomponents.com'];
+    $savaccount_client_id = $savaccount_client_secret = $savaccount_redirect_uri = '';
+    $savaccount_issuer = 'https://www.savaccount.eu';
     require $file;
     if (!$localhost_db || !$username_db || !$database_name) return $cfg = null;
     return $cfg = [
@@ -54,6 +56,10 @@ function credentials(): ?array
         'master_emails' => array_values(array_filter(array_map(fn($e) => mb_strtolower(trim((string)$e)), (array)$master_emails))),
         'portal_url' => rtrim((string)$portal_url, '/') . '/',
         'allowed_origins' => array_values(array_map(fn($o) => rtrim((string)$o, '/'), (array)$allowed_origins)),
+        'savaccount_client_id' => (string)$savaccount_client_id,
+        'savaccount_client_secret' => (string)$savaccount_client_secret,
+        'savaccount_redirect_uri' => (string)$savaccount_redirect_uri,
+        'savaccount_issuer' => (string)($savaccount_issuer ?: 'https://www.savaccount.eu'),
     ];
 }
 
@@ -288,6 +294,8 @@ function public_user(array $u): array
         'verified' => !empty($u['email_verified_at']),
         'master' => is_master($u),
         'createdAt' => iso($u['created_at']),
+        'hasPassword' => (string)($u['password_hash'] ?? '') !== '', // accounts made with SavAccount have none until they choose one
+        'savaccount' => !empty($u['sav_sub']),
     ];
 }
 
@@ -330,3 +338,4 @@ function clear_attempts(string $kind): void
 }
 
 require_once __DIR__ . '/mail.php';
+require_once __DIR__ . '/savaccount.php';

@@ -9,10 +9,14 @@ Saverio Morelli is a frontend developer and UX designer based in Italy. He build
 - [Notefox](https://www.notefox.eu): Take notes on any website. Private, open-source, with sync across devices. Available for Firefox, Chrome, and Edge.
 - [Sav PDF Viewer](https://www.savpdfviewer.com): Private, open-source PDF reader for Android. No ads, no permissions, no tracking. Used by 100,000+ people.
 - [Emoji](https://www.emojiaddon.com): Browser add-on to copy or insert any emoji with a click. Search by keywords, color, or gender.
+- [SavComponents](https://www.savcomponents.com): Open-source library of 81 ready-to-use web components for any website or web app. Standard HTML tags, no framework, no build step, five styles, a live customiser and an Academy with lessons and challenges.
+- [SavAccount](https://www.savaccount.eu): One account to sign in to many services without Google, Microsoft or Apple. Verified addresses, two-step verification, and you decide what each service gets.
 - [savmrl.it](https://savmrl.it): Free, anonymous link shortener and redirecting service.
 - [Accented Letters](https://github.com/Sav22999/accented-letters-addons): Firefox add-on to copy accented and special characters.
 - [Limite](https://github.com/Sav22999/limite): Browser add-on that tracks how much time you spend on each website.
 - [Word of the Day](https://github.com/Sav22999/word-of-the-day): Learn a new word every day. An Android app.
+- [Illerom](https://www.illerom.eu/): Portal of open projects to try right away, even before they are finished: 15 projects, among them 9 games, apps and the SavOffice suite. Open code, no adverts.
+- [SavOffice](https://www.illerom.eu/savoffice/): A free, open office of your own on Illerom: 12 apps that work together (SavBooks, SavCalendar, SavDocuments, SavDrive, SavForms, SavNewsletters, SavNotes, SavPresentations, SavSchedules, SavSpreadsheets, SavTasks, SavWhiteboard), with one account and the data in the European Union. In testing.
 - [Chess](https://www.illerom.eu/chess/): Free online chess in the browser. Play a friend with a room code, a random opponent, on the same device or against the computer, with tips, clock and chat. Built with Claude AI.
 - [FoodTrack](https://www.illerom.eu/foodtrack/): Web app (installable on Android) to track the food at home in spaces like fridge, freezer and pantry, get alerts on expiring products, share shopping lists and spaces with your household, plan your weekly meals and find recipes with the ingredients you already have. In English and Italian.
 - [Giftwise](https://www.illerom.eu/giftwise/): Web app (installable on Android) for wish lists for every occasion. Follow your friends to see their lists, mark a wish as "I'm getting it" and chat with the other followers, without the list owner ever seeing it. In English and Italian.
@@ -26,8 +30,14 @@ Saverio Morelli is a frontend developer and UX designer based in Italy. He build
 - [ThinkHop](https://www.illerom.eu/thinkhop/): Free logic game in the browser: liars, treasure chests, mini sudoku, absurd reasoning and traps across 1,000 levels, with a daily ranking and friends. Five languages, works offline. Built with Claude AI.
 - [Forkville](https://www.illerom.eu/forkville/): Free 3D restaurant game in the browser: build and decorate your restaurant, hire chefs and waiters, grow ingredients, improve your dishes, visit friends and climb the weekly ranking. Italian and English. Built with Claude AI.
 - [MyCurriculum](https://www.illerom.eu/mycurriculum/): Free CV builder: write your CV in several languages, choose among four templates, download each language as a PDF and share it as a web page with a language menu. Import an existing CV from a PDF. Italian and English interface.
-- [OpenNewsletter](https://www.illerom.eu/opennewsletter/): Free newsletters for teams: groups with roles (users, moderators, publishers, administrators), a drag-and-drop editor with templates, an approval step before sending at a chosen time, subscribers in several languages with double opt-in, a subscription page and a widget for any website, each group sending from its own email address. Italian and English interface.
+- [SavNewsletters](https://www.illerom.eu/savnewsletters/): Newsletters written, approved and sent as a team, part of SavOffice (formerly OpenNewsletter): groups with roles, a drag-and-drop editor with templates, an approval step before sending at a chosen time, subscribers in several languages, a subscription page and a widget for any website, each group sending from its own email address. Italian and English interface.
 - [HTML per tutti](https://www.saveriomorelli.com/htmlpertutti/): A book to learn HTML from scratch, written in Italian. Available on Amazon.
+
+## More for language models
+
+- [Illerom llms.txt](https://www.illerom.eu/llms.txt): every project of Illerom and the 12 apps of SavOffice (full version: https://www.illerom.eu/llms-full.txt)
+- [SavComponents llms.txt](https://www.savcomponents.com/llms.txt): every web component of the library, with its tag and examples (full version: https://www.savcomponents.com/llms-full.txt)
+- [SavAccount llms.txt](https://www.savaccount.eu/llms.txt): what SavAccount is and how a service connects to it
 
 ## Links
 

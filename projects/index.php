@@ -1,7 +1,7 @@
 <?php
 $current_page = 'projects';
 $title = 'Projects';
-$description = 'Open-source projects by Saverio Morelli: Notefox, Sav PDF Viewer, Emoji add-on, and more browser extensions and Android apps.';
+$description = 'Open-source projects by Saverio Morelli: Notefox, Sav PDF Viewer, SavComponents, SavAccount, browser extensions, and Illerom, the portal with the SavOffice suite and free games and apps.';
 $canonical = '/projects/';
 ?>
 <!DOCTYPE html>
@@ -35,7 +35,8 @@ $canonical = '/projects/';
                 <img src="/images/projects/websites-notes.png" alt="">
             </div>
             <h3>Notefox</h3>
-            <p>Take notes on any website. Private, open-source, with sync across devices.</p>
+            <p>Take notes on any website, in Firefox, Chrome and Edge. Private, open-source, with sync across
+                devices.</p>
             <ul class="project-tags">
                 <li>Browser extension</li>
             </ul>
@@ -168,8 +169,9 @@ $canonical = '/projects/';
                 <img src="/images/projects/savcomponents.png" alt="">
             </div>
             <h3>SavComponents</h3>
-            <p>34 ready-to-use web components for any website or web app. Standard HTML tags, no framework,
-                no build step, no dependencies. Five styles, customisable with CSS variables or a live customiser.</p>
+            <p>81 ready-to-use web components for any website or web app. Standard HTML tags, no framework,
+                no build step, no dependencies. Five styles, customisable with CSS variables or a live customiser,
+                and an Academy with lessons and challenges to learn them.</p>
             <ul class="project-tags">
                 <li>Library</li>
             </ul>
@@ -195,7 +197,7 @@ $canonical = '/projects/';
 
     <div class="projects-divider">
         <span class="projects-divider-line"></span>
-        <h2>Games and other projects</h2>
+        <h2>Games, apps and more on Illerom</h2>
         <span class="projects-divider-line"></span>
     </div>
     <div class="card-grid">
@@ -208,11 +210,30 @@ $canonical = '/projects/';
                 <img src="/images/projects/illerom.png" alt="">
             </div>
             <h3>Illerom</h3>
-            <p>My portal of open projects: games, apps and free alternatives to try, like Chess, ThinkHop, FoodTrack,
-                MyCurriculum, Fucina, Forkville and OpenNewsletter.</p>
+            <p>My portal of open projects to try right away, even before they are finished: 9 games like Chess,
+                ThinkHop and Forkville, apps like FoodTrack, MyCurriculum and Fucina, and the SavOffice suite. Open
+                code, no adverts.</p>
             <ul class="project-tags">
                 <li>Portal</li>
+                <li>15 projects</li>
                 <li>Open source</li>
+            </ul>
+        </a>
+        <a class="card" href="https://savoffice.eu/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/savoffice.png" alt="">
+            </div>
+            <h3>SavOffice</h3>
+            <p>A free, open office of your own: 12 apps that work together, from documents, spreadsheets and
+                presentations to drive, calendar, forms and newsletters. One account, data in the European Union.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>12 apps</li>
+                <li>In testing</li>
             </ul>
         </a>
     </div>

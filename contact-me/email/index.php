@@ -156,7 +156,7 @@ $form_token = $form_ts . '.' . hash_hmac('sha256', 'form:' . $form_ts, $config['
         </div>
 
         <p class="form-privacy">Your data will only be used to respond to your inquiry. It will not be shared with third
-            parties or used for any other purpose.</p>
+            parties or used for any other purpose. More in the <a href="/privacy/">privacy notice</a>.</p>
 
         <div id="form-status" class="form-status" hidden></div>
 

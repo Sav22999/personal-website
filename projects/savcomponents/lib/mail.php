@@ -54,7 +54,7 @@ function queue_mail(string $to, string $name, string $subject, string $html, str
     $queue->append(compact('to', 'name', 'subject', 'html', 'text'));
 }
 
-/** Square, slightly tilted button: the look of the site (inline styles for email clients). */
+/** Square, slightly tilted button: the look of the site (inline styles for email clients). No $url: no button. */
 function mail_layout(string $title, array $paragraphs, string $url, string $button): string
 {
     $p = implode('', array_map(fn($t) => '<p style="margin:0 0 14px">' . nl2br(e($t)) . '</p>', $paragraphs));
@@ -65,8 +65,8 @@ function mail_layout(string $title, array $paragraphs, string $url, string $butt
         . '<tr><td style="padding:0 4px 18px;font-size:19px;letter-spacing:-.01em">Sav<b>Components</b></td></tr>'
         . '<tr><td style="background:#ffffff;padding:28px;border:1px solid #e2e5ee;font-size:15px;line-height:1.55">'
         . '<h1 style="margin:0 0 16px;font-size:22px;line-height:1.25">' . e($title) . '</h1>' . $p
-        . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:6px"><tr><td style="background:#66cbff">'
-        . '<a href="' . e($url) . '" style="display:inline-block;padding:12px 24px;color:#072536;text-decoration:none;font-weight:700">' . e($button) . '</a></td></tr></table>'
+        . ($url === '' ? '' : '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:6px"><tr><td style="background:#66cbff">'
+        . '<a href="' . e($url) . '" style="display:inline-block;padding:12px 24px;color:#072536;text-decoration:none;font-weight:700">' . e($button) . '</a></td></tr></table>')
         . '</td></tr><tr><td style="padding:16px 4px 0;font-size:12px;color:#5f6880">Automatic email sent by SavComponents. Please do not reply.</td></tr>'
         . '</table></td></tr></table></body></html>';
 }
@@ -99,6 +99,28 @@ function send_reset(array $user): void
     queue_mail((string)$user['email'], (string)$user['name'], 'Choose a new SavComponents password',
         mail_layout('Choose a new password', [$hi, 'Someone (hopefully you) asked to reset the password of your SavComponents account.', 'The link works for 2 hours. If it was not you, ignore this email: your password does not change.'], $url, 'Choose a new password'),
         "$hi\n\nChoose a new SavComponents password:\n$url\n\nThe link works for 2 hours.");
+}
+
+/** The code that proves an account is yours before a SavAccount is joined to it. */
+function send_sav_code(array $user, string $code): void
+{
+    $hi = 'Hi ' . $user['name'] . ',';
+    $p = [$hi, 'Someone (hopefully you) wants to sign in to your SavComponents account with SavAccount. To join them, enter this code:', $code,
+        'It works for 15 minutes. If it was not you, ignore this email: nothing changes.'];
+    queue_mail((string)$user['email'], (string)$user['name'], "$code is your SavComponents code", mail_layout('Join your SavAccount', $p, '', ''),
+        "$hi\n\nTo join your SavAccount to your SavComponents account, enter this code: $code\n\nIt works for 15 minutes. If it was not you, ignore this email.");
+    if (!mail_settings() && config_value('debug', false)) error_log("SavComponents SavAccount code for user #{$user['id']}: $code");
+}
+
+/** A SavAccount was linked to the account, or unlinked from it. */
+function send_sav_notice(array $user, bool $linked): void
+{
+    $hi = 'Hi ' . $user['name'] . ',';
+    $p = $linked
+        ? [$hi, 'From now on you can also sign in to SavComponents with SavAccount.', 'If it was not you, sign in, unlink SavAccount in the settings of your account and change your password.']
+        : [$hi, 'You can no longer sign in to SavComponents with SavAccount.', 'If it was not you, sign in and change your password.'];
+    queue_mail((string)$user['email'], (string)$user['name'], $linked ? 'SavAccount linked to your SavComponents account' : 'SavAccount unlinked from your SavComponents account',
+        mail_layout($linked ? 'SavAccount linked' : 'SavAccount unlinked', $p, app_url() . '#account', 'Open my account'), implode("\n\n", $p));
 }
 
 // ---------------------------------------------------------------- minimal SMTP client (no libraries)

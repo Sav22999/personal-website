@@ -1,7 +1,7 @@
 <?php
 $current_page = 'projects';
 $title = 'SavComponents';
-$description = 'SavComponents: an open-source library of 34 web components you can theme and drop into any website. Standard custom elements, no framework, no build step, no dependencies. Five styles, light and dark mode, a live customiser. MIT licence. A project by Saverio Morelli.';
+$description = 'SavComponents: an open-source library of 81 web components you can theme and drop into any website. Standard custom elements, no framework, no build step, no dependencies. Five styles, light and dark mode, a live customiser. MIT licence. A project by Saverio Morelli.';
 $canonical = '/projects/about/savcomponents/';
 ?>
 <!DOCTYPE html>

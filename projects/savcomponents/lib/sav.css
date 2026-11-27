@@ -1,5 +1,5 @@
 /*!
- * SavComponents v1.1.0 — design tokens and themes
+ * SavComponents v1.1.2 — design tokens and themes
  * Every component reads these custom properties: override any of them on :root,
  * on a container or on a single element to customise the look.
  */
@@ -230,6 +230,7 @@ sav-select:not(:defined) > option {
   --sav-tab-segment-shadow: initial; --sav-button-tilt: initial;
   --sav-field-shadow: initial; --sav-field-sheen: initial; --sav-field-bg-hover: initial; --sav-field-bg-focus: initial; --sav-field-focus-shadow: initial;
   --sav-field-focus-border: initial; --sav-field-filled-bg: initial; --sav-field-filled-border: initial; --sav-rating-empty: initial; --sav-chart-grid: initial;
+  --sav-choice-checked-border: initial; --sav-choice-checked-shadow: initial; --sav-choice-checked-tint: initial; --sav-choice-hover-shadow: initial; --sav-choice-hover-transform: initial;
 }
 
 /* Tilt: square shapes whose background leans slightly, text always upright.
@@ -315,6 +316,8 @@ sav-select:not(:defined) > option {
   /* fields: a crisp line under the text when filled, an offset tinted block when focused */
   --sav-field-focus-shadow: 3px 3px 0 color-mix(in oklab, var(--sav-color-primary) 34%, transparent);
   --sav-field-filled-border: transparent transparent var(--sav-color-border-strong);
+  /* choice cards (radio group, appearance="cards"): the chosen one has a coloured line and a stronger offset block */
+  --sav-choice-checked-shadow: 0 0 0 1px var(--sav-color-primary), 4px 4px 0 color-mix(in oklab, var(--sav-color-primary) 38%, transparent);
   /* range: a thin line and an upright bar */
   --sav-range-height: 4px;
   --sav-range-radius: 0px;
@@ -362,6 +365,12 @@ sav-select:not(:defined) > option {
   --sav-field-focus-border: var(--sav-color-text);
   --sav-field-focus-shadow: 5px 5px 0 var(--sav-color-primary);
   --sav-field-filled-border: var(--sav-color-text);
+  /* choice cards: the ink border stays; hovering lifts them like a button, the chosen one gets a tint and a hard shadow in the main colour */
+  --sav-choice-checked-border: var(--sav-color-text);
+  --sav-choice-checked-shadow: 5px 5px 0 var(--sav-color-primary);
+  --sav-choice-checked-tint: 14%;
+  --sav-choice-hover-transform: translate(-2px, -2px);
+  --sav-choice-hover-shadow: 5px 5px 0 var(--sav-color-text);
   --sav-color-overlay: rgb(20 20 30 / .35);
   /* range: a thick inked track and a chunky block with a hard shadow */
   --sav-range-height: .75rem;
@@ -417,6 +426,9 @@ sav-select:not(:defined) > option {
   --sav-color-border: rgb(255 255 255 / .65);
   --sav-color-border-strong: rgb(96 104 126 / .8);
   --sav-backdrop: blur(16px) saturate(170%);
+  /* choice cards: the chosen one has a coloured rim and a soft glow, more of the colour shows through */
+  --sav-choice-checked-shadow: 0 0 0 1.5px var(--sav-color-primary), 0 8px 26px color-mix(in oklab, var(--sav-color-primary) 28%, transparent), inset 0 1px 0 rgb(255 255 255 / .6);
+  --sav-choice-checked-tint: 14%;
   --sav-shadow-sm: 0 2px 10px rgb(30 40 80 / .08), inset 0 1px 0 rgb(255 255 255 / .6);
   --sav-shadow: 0 10px 30px rgb(30 40 80 / .12), inset 0 1px 0 rgb(255 255 255 / .6);
   --sav-shadow-lg: 0 24px 60px rgb(30 40 80 / .22), inset 0 1px 0 rgb(255 255 255 / .6);
