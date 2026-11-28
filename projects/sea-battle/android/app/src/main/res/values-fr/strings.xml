@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bataille Navale</string>
+    <string name="offline_title">Pas de connexion</string>
+    <string name="offline_text">Bataille Navale a besoin d’internet pour les parties en ligne. Vérifie ta connexion et réessaie.</string>
+    <string name="offline_retry">Réessayer</string>
+</resources>

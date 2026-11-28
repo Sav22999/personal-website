@@ -1,0 +1,23 @@
+# Real database credentials: never commit them (use credentials-sample.php as a template)
+credentials.php
+# Images uploaded from the admin portal (user content, not part of the code)
+uploads/recipes/*
+!uploads/recipes/.htaccess
+# Android: signing keys, local SDK path and build output
+android/keystore.properties
+android/**/*.jks
+android/**/*.keystore
+android/local.properties
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/app/release/
+android/captures/
+*.apk
+*.aab
+*.log
+.DS_Store
+# The SQL scripts for phpMyAdmin are part of the project (they contain no data or credentials)
+!install/*.sql
+tools/icons-preview.html

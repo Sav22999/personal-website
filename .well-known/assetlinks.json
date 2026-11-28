@@ -1,0 +1,135 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.foodtrack",
+      "sha256_cert_fingerprints": [
+        "71:C0:D2:51:6B:31:58:88:8E:4D:E6:10:01:8B:83:44:CE:2D:ED:0E:13:60:B6:58:51:F7:CC:2A:3B:BC:7F:F2",
+        "D3:95:6C:F2:68:12:5B:50:0A:95:78:F2:40:21:18:19:57:6F:A3:A8:6D:A7:21:32:B9:1D:36:E9:B7:FB:6E:30"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.giftwise",
+      "sha256_cert_fingerprints": [
+        "40:9D:F5:44:E7:F8:C2:C7:FC:36:6E:FD:58:95:A8:83:11:3D:4F:20:E9:EA:8C:42:B6:E4:47:FE:30:17:0A:6E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.chess",
+      "sha256_cert_fingerprints": [
+        "F7:26:AC:07:EF:7B:29:98:EA:24:EC:6E:FA:27:DE:9F:92:F0:7F:28:61:BD:67:80:4C:F5:FE:3B:9C:CF:B4:0B"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.faceguess",
+      "sha256_cert_fingerprints": [
+        "71:83:45:8D:B9:F5:82:AA:66:C4:8B:ED:C3:3C:F5:56:46:D7:72:D8:18:AE:71:F5:73:58:74:74:B4:0D:28:C5"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.connectfour",
+      "sha256_cert_fingerprints": [
+        "91:81:E5:67:B0:26:58:97:54:C1:6B:7D:46:28:C8:85:59:08:08:A2:33:63:53:B3:8F:CD:99:A3:51:5F:0A:F2"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.sudoku",
+      "sha256_cert_fingerprints": [
+        "8D:FC:1D:DB:7C:DF:DE:C6:F7:D3:8A:57:69:FF:9B:22:7A:04:D3:BB:1A:8E:7B:0A:5F:4D:0D:FE:89:93:3A:D5"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.letterhop",
+      "sha256_cert_fingerprints": [
+        "CD:7D:93:2D:7F:1F:BE:1D:A3:32:C2:74:89:92:5E:84:71:D6:0C:D8:AD:41:FD:AF:C8:90:94:3F:85:F8:84:34"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.mycurriculum",
+      "sha256_cert_fingerprints": [
+        "C0:E6:E3:05:58:91:64:E3:34:DC:87:3A:4B:F2:C3:A7:4A:96:3D:15:DE:36:21:49:A2:C1:4C:A5:37:1A:9C:8D"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.thinkhop",
+      "sha256_cert_fingerprints": [
+        "F7:47:22:F2:54:0E:47:F0:60:BC:07:1A:6D:06:A2:F0:65:CF:86:68:9D:7D:0D:8A:1D:0C:3E:28:C0:55:A2:23"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.fucina",
+      "sha256_cert_fingerprints": [
+        "71:7D:59:05:17:B6:CD:4D:41:01:FE:38:5A:B9:3A:46:95:E0:DA:E5:7D:04:54:3D:6D:B3:D8:C2:31:85:EB:59"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.forkville",
+      "sha256_cert_fingerprints": [
+        "24:7E:D8:B1:25:D9:6C:51:43:A1:E4:49:B2:52:0F:57:2B:D3:2D:B6:22:7D:CE:4F:F3:31:C5:0B:E3:B7:B8:7D"
+      ]
+    }
+  }
+]

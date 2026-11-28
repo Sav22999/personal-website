@@ -1,7 +1,7 @@
 <?php
 $current_page = 'projects';
 $title = 'Projects';
-$description = 'Open-source projects by Saverio Morelli: Notefox, Sav PDF Viewer, Emoji add-on, and more browser extensions and Android apps.';
+$description = 'Open-source projects by Saverio Morelli: Notefox, Sav PDF Viewer, SavComponents, SavAccount, browser extensions, and Illerom, the portal with the SavOffice suite and free games and apps.';
 $canonical = '/projects/';
 ?>
 <!DOCTYPE html>
@@ -17,27 +17,33 @@ $canonical = '/projects/';
     <div class="projects-hero-content">
         <p class="section-label">Projects</p>
         <h1>What I've built.</h1>
-        <p class="projects-hero-sub">Personal and open-source projects I've designed and developed on my own — apps, browser extensions, tools, and more.</p>
+        <p class="projects-hero-sub">Personal and open-source projects I've designed and developed on my own — apps,
+            browser extensions, tools, and more.</p>
+        <a class="projects-status-link" href="/projects/status/"><span class="projects-status-dot" aria-hidden="true"></span>Status
+            of the services</a>
     </div>
 </section>
 
 <section class="section">
     <div class="card-grid">
-        <a class="card" href="/projects/notefox/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/notefox/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
                 <img src="/images/projects/websites-notes.png" alt="">
             </div>
             <h3>Notefox</h3>
-            <p>Take notes on any website. Private, open-source, with sync across devices.</p>
+            <p>Take notes on any website, in Firefox, Chrome and Edge. Private, open-source, with sync across
+                devices.</p>
             <ul class="project-tags">
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/sav-pdf-viewer/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/sav-pdf-viewer/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -50,8 +56,9 @@ $canonical = '/projects/';
                 <li>100K+ users</li>
             </ul>
         </a>
-        <a class="card" href="/projects/emoji/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/emoji/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -63,8 +70,9 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/savmrl/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/savmrl/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -76,8 +84,9 @@ $canonical = '/projects/';
                 <li>Web</li>
             </ul>
         </a>
-        <a class="card" href="/projects/accented-letters/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/accented-letters/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -89,8 +98,9 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/limite/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/limite/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -102,8 +112,9 @@ $canonical = '/projects/';
                 <li>Browser extension</li>
             </ul>
         </a>
-        <a class="card" href="/projects/mozita-l10n-addon/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/mozita-l10n-addon/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -117,61 +128,112 @@ $canonical = '/projects/';
             </ul>
         </a>
         <a class="card" href="/htmlpertutti/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
                 <img src="/images/projects/html-per-tutti.png" alt="">
             </div>
             <h3>HTML per tutti</h3>
-            <p>The definitive guide to learning HTML from scratch, with hands-on examples and clear explanations. Available on Amazon as paperback and eBook.</p>
+            <p>The definitive guide to learning HTML from scratch, with hands-on examples and clear explanations.
+                Available on Amazon as paperback and eBook.</p>
             <ul class="project-tags">
                 <li>Book</li>
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/ripasso-fipav/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/ripasso-fipav/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
                 <img src="/images/projects/ripasso-fipav.png" alt="">
             </div>
             <h3>Fischietto</h3>
-            <p>Personal, unofficial web app with quizzes, rule references and official documents to help volleyball referees study, revise and stay up to date with the FIPAV rulebook.</p>
+            <p>Personal, unofficial web app to help volleyball referees study, revise and stay up to date with the FIPAV
+                rulebook: quizzes, rule references, official documents, personal stats and a match simulation to referee
+                in real time.</p>
             <ul class="project-tags">
                 <li>Web app</li>
                 <li>Italian</li>
             </ul>
         </a>
-        <a class="card" href="/projects/faceguess/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/savcomponents/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
-                <img src="/images/projects/faceguess.png" alt="">
+                <img src="/images/projects/savcomponents.png" alt="">
             </div>
-            <h3>FaceGuess</h3>
-            <p>Two-player face-guessing game with unique characters generated every match. Play on the same device, no app needed.</p>
+            <h3>SavComponents</h3>
+            <p>81 ready-to-use web components for any website or web app. Standard HTML tags, no framework,
+                no build step, no dependencies. Five styles, customisable with CSS variables or a live customiser,
+                and an Academy with lessons and challenges to learn them.</p>
             <ul class="project-tags">
-                <li>Web game</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
+                <li>Library</li>
             </ul>
         </a>
-        <a class="card" href="/projects/chess/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card" href="/projects/about/savaccount/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
-                <img src="/images/projects/chess.png" alt="">
+                <img src="/images/projects/savaccount.png" alt="">
             </div>
-            <h3>Chess</h3>
-            <p>Play chess with a friend online, a random opponent, on the same device or against the computer. No account required.</p>
+            <h3>SavAccount</h3>
+            <p>One account to sign in to many services, without Google, Microsoft or Apple. Verified addresses, two-step
+                verification, and you decide what each service gets.</p>
             <ul class="project-tags">
-                <li>Web game</li>
-                <li>Multilingual</li>
-                <li>Built with Claude</li>
+                <li>Web app</li>
+                <li>English</li>
+                <li>Italian</li>
+            </ul>
+        </a>
+    </div>
+
+    <div class="projects-divider">
+        <span class="projects-divider-line"></span>
+        <h2>Games, apps and more on Illerom</h2>
+        <span class="projects-divider-line"></span>
+    </div>
+    <div class="card-grid">
+        <a class="card" href="https://www.illerom.eu/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/illerom.png" alt="">
+            </div>
+            <h3>Illerom</h3>
+            <p>My portal of open projects to try right away, even before they are finished: 9 games like Chess,
+                ThinkHop and Forkville, apps like FoodTrack, MyCurriculum and Fucina, and the SavOffice suite. Open
+                code, no adverts.</p>
+            <ul class="project-tags">
+                <li>Portal</li>
+                <li>15 projects</li>
+                <li>Open source</li>
+            </ul>
+        </a>
+        <a class="card" href="https://savoffice.eu/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <div class="card-icon card-icon-project">
+                <img src="/images/projects/savoffice.png" alt="">
+            </div>
+            <h3>SavOffice</h3>
+            <p>A free, open office of your own: 12 apps that work together, from documents, spreadsheets and
+                presentations to drive, calendar, forms and newsletters. One account, data in the European Union.</p>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>12 apps</li>
+                <li>In testing</li>
             </ul>
         </a>
     </div>
@@ -187,7 +249,8 @@ $canonical = '/projects/';
                 <path d="M7 17L17 7M17 7H7M17 7v10"/>
             </svg>
             <div class="card-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round">
                     <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/>
                     <path d="M9 18c-4.51 2-5-2-7-2"/>
                 </svg>
@@ -233,8 +296,9 @@ $canonical = '/projects/';
         <span class="projects-divider-line"></span>
     </div>
     <div class="card-grid">
-        <a class="card faded" href="/projects/emoticolor/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/emoticolor/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -242,10 +306,14 @@ $canonical = '/projects/';
             </div>
             <h3>Emoticolor</h3>
             <p>Emotion-based social network where users share how they feel through colors.</p>
-            <ul class="project-tags"><li>Web app</li><li>Thesis project</li></ul>
+            <ul class="project-tags">
+                <li>Web app</li>
+                <li>Thesis project</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/word-of-the-day/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/word-of-the-day/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -253,10 +321,13 @@ $canonical = '/projects/';
             </div>
             <h3>Word of the Day</h3>
             <p>Learn a new word every day with its definition, origin, and pronunciation.</p>
-            <ul class="project-tags"><li>Android</li></ul>
+            <ul class="project-tags">
+                <li>Android</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/cv-project/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/cv-project/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -264,10 +335,13 @@ $canonical = '/projects/';
             </div>
             <h3>CV Project</h3>
             <p>Unofficial Android app for contributing to Mozilla Common Voice.</p>
-            <ul class="project-tags"><li>Android</li></ul>
+            <ul class="project-tags">
+                <li>Android</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/my-code-editor/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/my-code-editor/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -275,10 +349,13 @@ $canonical = '/projects/';
             </div>
             <h3>My Code Editor</h3>
             <p>Free, lightweight HTML and CSS editor for Windows with live preview.</p>
-            <ul class="project-tags"><li>Windows</li></ul>
+            <ul class="project-tags">
+                <li>Windows</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/nolimit-math/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/nolimit-math/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -286,10 +363,13 @@ $canonical = '/projects/';
             </div>
             <h3>NoLimit Math</h3>
             <p>Desktop software for calculating mathematical limits and function plots.</p>
-            <ul class="project-tags"><li>Windows</li></ul>
+            <ul class="project-tags">
+                <li>Windows</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/scrolly/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/scrolly/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -297,10 +377,13 @@ $canonical = '/projects/';
             </div>
             <h3>Scrolly</h3>
             <p>Firefox add-on that saved and restored scroll positions for every page.</p>
-            <ul class="project-tags"><li>Browser extension</li></ul>
+            <ul class="project-tags">
+                <li>Browser extension</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/mozita-antispam/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/mozita-antispam/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -308,10 +391,13 @@ $canonical = '/projects/';
             </div>
             <h3>MozIta Antispam</h3>
             <p>Telegram bot for the Mozilla Italia community to detect and remove spam.</p>
-            <ul class="project-tags"><li>Telegram bot</li></ul>
+            <ul class="project-tags">
+                <li>Telegram bot</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/all-currencies/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/all-currencies/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -319,10 +405,13 @@ $canonical = '/projects/';
             </div>
             <h3>All Currencies</h3>
             <p>Firefox add-on to copy currency symbols with a single click.</p>
-            <ul class="project-tags"><li>Browser extension</li></ul>
+            <ul class="project-tags">
+                <li>Browser extension</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/mozita-myuserid-bot/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/mozita-myuserid-bot/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -330,10 +419,13 @@ $canonical = '/projects/';
             </div>
             <h3>MozIta MyUserId Bot</h3>
             <p>Telegram bot to get your own Telegram user ID.</p>
-            <ul class="project-tags"><li>Telegram bot</li></ul>
+            <ul class="project-tags">
+                <li>Telegram bot</li>
+            </ul>
         </a>
-        <a class="card faded" href="/projects/mozitabot/">
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a class="card faded" href="/projects/about/mozitabot/">
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
             <div class="card-icon card-icon-project">
@@ -341,7 +433,9 @@ $canonical = '/projects/';
             </div>
             <h3>MozItaBot</h3>
             <p>The official Telegram bot of the Mozilla Italia community.</p>
-            <ul class="project-tags"><li>Telegram bot</li></ul>
+            <ul class="project-tags">
+                <li>Telegram bot</li>
+            </ul>
         </a>
     </div>
 </section>

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.forkville",
+      "sha256_cert_fingerprints": [
+        "24:7E:D8:B1:25:D9:6C:51:43:A1:E4:49:B2:52:0F:57:2B:D3:2D:B6:22:7D:CE:4F:F3:31:C5:0B:E3:B7:B8:7D"
+      ]
+    }
+  }
+]

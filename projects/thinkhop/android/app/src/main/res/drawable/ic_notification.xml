@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon: the question mark of the logo, white on transparent (Android tints it) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="400"
+        android:viewportHeight="400">
+    <group android:translateX="-116" android:translateY="-62">
+        <path
+                android:pathData="M238,196a78,78 0,1 1,78 78"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="64"
+                android:strokeLineCap="round"
+                android:fillColor="#00000000"/>
+        <path
+                android:pathData="M298,242h36a14,14 0,0 1,14 14v66a14,14 0,0 1,-14 14h-36a14,14 0,0 1,-14 -14v-66a14,14 0,0 1,14 -14z"
+                android:fillColor="#FFFFFFFF"/>
+        <path
+                android:pathData="M316,402m-36,0a36,36 0,1 1,72 0a36,36 0,1 1,-72 0"
+                android:fillColor="#FFFFFFFF"/>
+    </group>
+</vector>

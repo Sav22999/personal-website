@@ -1,17 +1,26 @@
 const PALETTE = {
-    skin: { light: '#F6D5C0', fair: '#EBC09E', medium: '#D39B74', tan: '#B57C55', brown: '#8C5A3C', dark: '#5E3B28' },
-    hair: { black: '#231C1A', brown: '#5B3A24', blonde: '#D9B26A', red: '#A4472B', gray: '#8E8C8A', white: '#E6E2DA' },
-    eye: { brown: '#6B3E1F', blue: '#3C7BC4', green: '#3E8E5A', hazel: '#8C6A2E', gray: '#7C8A96' },
-    shirt: { red: '#D9534F', blue: '#3D7DD8', green: '#3FA36B', yellow: '#E8C547', purple: '#8A5CC9', orange: '#E8833A', black: '#2B2B33', white: '#EDEDF0' },
-    hat: { beanie: '#3E5C8A', cap: '#C94A3B', fedora: '#4A3B30', headband: '#E05A9A' },
+    skin: {light: '#F6D5C0', fair: '#EBC09E', medium: '#D39B74', tan: '#B57C55', brown: '#8C5A3C', dark: '#5E3B28'},
+    hair: {black: '#231C1A', brown: '#5B3A24', blonde: '#D9B26A', red: '#A4472B', gray: '#8E8C8A', white: '#E6E2DA'},
+    eye: {brown: '#6B3E1F', blue: '#3C7BC4', green: '#3E8E5A', hazel: '#8C6A2E', gray: '#7C8A96'},
+    shirt: {
+        red: '#D9534F',
+        blue: '#3D7DD8',
+        green: '#3FA36B',
+        yellow: '#E8C547',
+        purple: '#8A5CC9',
+        orange: '#E8833A',
+        black: '#2B2B33',
+        white: '#EDEDF0'
+    },
+    hat: {beanie: '#3E5C8A', cap: '#C94A3B', fedora: '#4A3B30', headband: '#E05A9A'},
 };
 
 const FACE_GEOMETRY = {
-    round:  { hw: 23,   top: 22, chin: 72 },
-    oval:   { hw: 21,   top: 21, chin: 74 },
-    square: { hw: 22,   top: 22, chin: 73 },
-    heart:  { hw: 22.5, top: 21, chin: 74 },
-    long:   { hw: 19.5, top: 19, chin: 76 },
+    round: {hw: 23, top: 22, chin: 72},
+    oval: {hw: 21, top: 21, chin: 74},
+    square: {hw: 22, top: 22, chin: 73},
+    heart: {hw: 22.5, top: 21, chin: 74},
+    long: {hw: 19.5, top: 19, chin: 76},
 };
 
 const EYE_Y = 47;
@@ -31,7 +40,10 @@ function shade(hex, amount) {
 
 function luminance(hex) {
     const n = parseInt(hex.slice(1), 16);
-    const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const lin = (v) => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
     return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
 }
 
@@ -56,7 +68,7 @@ function separateFromSkin(hair, skin) {
 }
 
 function headPath(f) {
-    const { hw, top, chin } = f;
+    const {hw, top, chin} = f;
     const L = 50 - hw, R = 50 + hw;
     switch (f.shape) {
         case 'square':
@@ -87,7 +99,7 @@ function curlRow(cx, cy, rx, ry, from, to, count, r, color) {
 }
 
 function hairBack(c, f, hc) {
-    const { top } = f;
+    const {top} = f;
     const L = 50 - f.hw - 2, R = 50 + f.hw + 2;
     const dark = shade(hc, -0.18);
     switch (c.hairStyle) {
@@ -127,7 +139,7 @@ function hairBack(c, f, hc) {
 }
 
 function hairFront(c, f, hc) {
-    const { top } = f;
+    const {top} = f;
     const L = 50 - f.hw - 2, R = 50 + f.hw + 2;
     const dark = shade(hc, -0.2);
     const cap = (vol, hairline, opacity = 1) =>
@@ -200,7 +212,7 @@ function hairFront(c, f, hc) {
 }
 
 const STYLES_COVERING_EARS = ['long-straight', 'wavy', 'long-curly', 'bob'];
-const STYLES_WITH_SIDEBURNS =['short', 'buzz', 'side-part', 'slicked', 'curly', 'spiky'];
+const STYLES_WITH_SIDEBURNS = ['short', 'buzz', 'side-part', 'slicked', 'curly', 'spiky'];
 
 function sideburns(c, f, hc) {
     if (c.gender !== 'male' || !STYLES_WITH_SIDEBURNS.includes(c.hairStyle)) return '';
@@ -254,7 +266,7 @@ function eyes(c, skin) {
 }
 
 function eyebrows(c) {
-    const w = { thin: 0.9, medium: 1.5, thick: 2.3 }[c.eyebrows];
+    const w = {thin: 0.9, medium: 1.5, thick: 2.3}[c.eyebrows];
     const col = browColor(c);
     let s = '';
     for (const x of [50 - EYE_DX, 50 + EYE_DX]) {
@@ -264,7 +276,7 @@ function eyebrows(c) {
 }
 
 function nose(c, skin) {
-    const w = { small: 2.2, medium: 3, large: 4 }[c.nose];
+    const w = {small: 2.2, medium: 3, large: 4}[c.nose];
     const col = shade(skin, -0.3);
     return `<path d="M51 48.5 Q52 53 ${50 + w * 0.6} 55.5" stroke="${col}" stroke-width="0.8" fill="none" opacity="0.6" stroke-linecap="round"/>` +
         `<path d="M${50 - w} 56 Q50 58.6 ${50 + w} 56" stroke="${col}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
@@ -313,7 +325,7 @@ function glasses(c, f) {
 
 function hat(c, f) {
     if (c.hat === 'none') return '';
-    const { top, hw } = f;
+    const {top, hw} = f;
     const L = 50 - hw - 2, R = 50 + hw + 2;
     const col = PALETTE.hat[c.hat];
     const dark = shade(col, -0.25);
@@ -351,7 +363,7 @@ function earrings(c, f) {
 
 function renderCharacterSVG(c) {
     const geo = FACE_GEOMETRY[c.faceShape] || FACE_GEOMETRY.oval;
-    const f = { ...geo, shape: c.faceShape, clipId: 'fg-face-' + (++svgIdSeq) };
+    const f = {...geo, shape: c.faceShape, clipId: 'fg-face-' + (++svgIdSeq)};
     const skin = PALETTE.skin[c.skinTone] || PALETTE.skin.medium;
     const hc = separateFromSkin(PALETTE.hair[c.hairColor] || PALETTE.hair.brown, skin);
     const hairOutline = (markup) => markup && c.hairStyle !== 'bald' && c.hairStyle !== 'buzz'
@@ -402,5 +414,11 @@ function renderCharacterSVG(c) {
 }
 
 function escapeAttr(str) {
-    return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    return String(str).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[ch]));
 }

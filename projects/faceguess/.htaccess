@@ -1,3 +1,19 @@
+# Moved to www.illerom.eu (active only while projects/.illerom-live exists): the pages go there through ../illerom.php.
+# Scripts, images and API stay, for the tabs still open and for the Android apps published before the move: those only
+# accept this address (a redirect would throw them out to the browser), so inside them everything goes on as before.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{DOCUMENT_ROOT}/projects/.illerom-live -f
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+    RewriteCond %{REQUEST_URI} !(/api/|^/errors/)
+    RewriteCond %{HTTP_USER_AGENT} !App/Android
+    RewriteCond %{HTTP_USER_AGENT} !;\ wv\) [OR]
+    RewriteCond %{HTTP_USER_AGENT} (FBAN|FBAV|FB_IAB|Instagram|LinkedInApp|Snapchat|TikTok|Pinterest)
+    RewriteCond %{HTTP:Sec-Fetch-Mode}:%{REQUEST_URI} ^navigate: [OR]
+    RewriteCond %{HTTP:Sec-Fetch-Mode}:%{REQUEST_URI} ^:(.*/|.*\.html|.*/(index|subscribe|unsubscribe|terms|certificate|verify)\.php|/projects/[a-z0-9-]+)$
+    RewriteRule ^ /projects/illerom.php [L]
+</IfModule>
+
 Options -Indexes
 
 AddType application/manifest+json .webmanifest

@@ -1,0 +1,2 @@
+# Real database credentials and keys: never commit them (template: credentials-sample.php)
+credentials.php

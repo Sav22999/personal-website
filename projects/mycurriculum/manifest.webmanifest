@@ -1,0 +1,74 @@
+{
+  "name": "MyCurriculum",
+  "short_name": "MyCurriculum",
+  "description": "Your CV in every language: templates, PDF download and a public web page.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F2EC",
+  "theme_color": "#3D52D5",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "business",
+    "education"
+  ],
+  "orientation": "any",
+  "shortcuts": [
+    {
+      "name": "Edit my CV",
+      "short_name": "My CV",
+      "url": "./",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "store/screens/en/1-editor.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Write your CV, one version per language"
+    },
+    {
+      "src": "store/screens/en/3-templates.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Eleven templates, twelve typefaces"
+    },
+    {
+      "src": "store/screens/wide-editor.png",
+      "sizes": "1440x900",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "The editor on a computer"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.thinkhop",
+      "sha256_cert_fingerprints": [
+        "F7:47:22:F2:54:0E:47:F0:60:BC:07:1A:6D:06:A2:F0:65:CF:86:68:9D:7D:0D:8A:1D:0C:3E:28:C0:55:A2:23"
+      ]
+    }
+  }
+]

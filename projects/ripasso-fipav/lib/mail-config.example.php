@@ -9,11 +9,11 @@
  * (lib/.htaccess blocks any direct access). Without it the portal works, but sends no emails.
  */
 return [
-    'smtp_host'       => 'smtps.example.com',
-    'smtp_port'       => 465,
-    'smtp_user'       => 'noreply@example.com',
-    'smtp_password'   => 'SMTP_PASSWORD',
+    'smtp_host' => 'smtps.example.com',
+    'smtp_port' => 465,
+    'smtp_user' => 'noreply@example.com',
+    'smtp_password' => 'SMTP_PASSWORD',
     'smtp_encryption' => 'ssl',            // ssl (port 465) or tls (STARTTLS, port 587)
-    'from_email'      => 'noreply@example.com',
-    'from_name'       => 'Fischietto',
+    'from_email' => 'noreply@example.com',
+    'from_name' => 'Fischietto',
 ];

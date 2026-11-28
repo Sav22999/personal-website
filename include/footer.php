@@ -7,6 +7,7 @@
             <?php /* <li><a href="/services/">Services</a></li> */ ?>
             <li><a href="/contact-me/">Contact</a></li>
             <li><a href="/donate/">Donate</a></li>
+            <li><a href="/privacy/">Privacy</a></li>
         </ul>
         <p class="footer-copy">Saverio Morelli</p>
     </div>

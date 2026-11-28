@@ -1,10 +1,12 @@
 # Credentials and secrets
 .mail-config.php
+.fcm-service-account.json
 old/include/variables.php
 old/api/emoticolor/credentials.php
 projects/ripasso-fipav/lib/config.php
 projects/ripasso-fipav/sql/
 projects/*/api/db.php
+projects/cron/credentials.php
 .env
 .env.*
 
@@ -15,8 +17,10 @@ projects/*/api/db.php
 *.bak
 
 # Dependencies
-vendor/
+/vendor/
 node_modules/
+__pycache__/
+!projects/foodtrack/assets/vendor/
 
 # IDE, tools and OS
 .DS_Store
@@ -33,3 +37,24 @@ Thumbs.db
 
 # Temporary/debug files
 preview-icons.html
+
+# Android builds and keys
+android/keystore.properties
+projects/*/android/keystore.properties
+projects/*/android/**/*.jks
+projects/*/android/**/*.keystore
+projects/*/android/local.properties
+projects/*/android/.gradle/
+projects/*/android/.idea/
+projects/*/android/build/
+projects/*/android/app/build/
+projects/*/android/app/release/
+# Firebase config (API key): kept only on the computer that builds the apps, from the Firebase console
+projects/*/android/app/google-services.json
+projects/*/android/captures/
+*.apk
+*.aab
+
+# Status page cache
+projects/status/.cache.json
+*/.agent/*

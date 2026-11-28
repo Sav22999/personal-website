@@ -1,0 +1,14 @@
+# Android: signing keys, local SDK path and build output
+android/keystore.properties
+android/**/*.jks
+android/**/*.keystore
+android/local.properties
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/app/release/
+android/captures/
+*.apk
+*.aab
+.DS_Store

@@ -12,11 +12,11 @@
 return [
     'db' => [
         // On Aruba the host is an IP address shown in the control panel (e.g. 89.46.111.xxx), not "localhost"
-        'host'    => 'localhost',
-        'port'    => 3306,
-        'name'    => 'NOME_DATABASE',
-        'user'    => 'UTENTE_DATABASE',
-        'pass'    => 'PASSWORD_DATABASE',
+        'host' => 'localhost',
+        'port' => 3306,
+        'name' => 'NOME_DATABASE',
+        'user' => 'UTENTE_DATABASE',
+        'pass' => 'PASSWORD_DATABASE',
         'charset' => 'utf8mb4',
     ],
 
@@ -32,7 +32,7 @@ return [
     // Optional: address that receives an email when a new user registers.
     // On Aruba the sender must be a mailbox on your domain (e.g. noreply@saveriomorelli.com).
     'notify_email' => '',
-    'mail_from'    => '',
+    'mail_from' => '',
 
     // Public URL of the portal, used in emails (e.g. https://www.saveriomorelli.com/projects/ripasso-fipav/)
     'public_url' => '',

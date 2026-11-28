@@ -1,6 +1,6 @@
 // Computer opponent: alpha-beta search over Chess engine moves, with material + piece-square evaluation.
 const ChessAI = (() => {
-    const VALUE = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
+    const VALUE = {p: 100, n: 320, b: 330, r: 500, q: 900, k: 0};
 
     // Piece-square tables from White's point of view, row 0 = rank 8 (simplified evaluation function).
     const PST = {
@@ -14,16 +14,20 @@ const ChessAI = (() => {
     };
 
     const LEVELS = {
-        easy: { depth: 1, noise: 140, timeMs: 300, blunder: 0.2 },
-        medium: { depth: 2, noise: 25, timeMs: 900, blunder: 0 },
-        hard: { depth: 4, noise: 0, timeMs: 1800, blunder: 0 },
+        easy: {depth: 1, noise: 140, timeMs: 300, blunder: 0.2},
+        medium: {depth: 2, noise: 25, timeMs: 900, blunder: 0},
+        hard: {depth: 4, noise: 0, timeMs: 1800, blunder: 0},
     };
 
     const MATE = 100000;
 
     function evaluate(s) {
         let score = 0, queens = 0, minors = 0;
-        for (const p of s.board) if (p) { const t = p.toLowerCase(); if (t === 'q') queens++; if (t === 'n' || t === 'b' || t === 'r') minors++; }
+        for (const p of s.board) if (p) {
+            const t = p.toLowerCase();
+            if (t === 'q') queens++;
+            if (t === 'n' || t === 'b' || t === 'r') minors++;
+        }
         const endgame = queens === 0 || (queens <= 2 && minors <= 2);
         for (let sq = 0; sq < 64; sq++) {
             const p = s.board[sq];
@@ -40,7 +44,10 @@ const ChessAI = (() => {
 
     // Captures first, most valuable victim / least valuable attacker.
     function ordered(moves) {
-        return moves.map(m => ({ m, k: (m.captured ? 10 * VALUE[m.captured.toLowerCase()] - VALUE[m.piece.toLowerCase()] : 0) + (m.promo ? 800 : 0) }))
+        return moves.map(m => ({
+            m,
+            k: (m.captured ? 10 * VALUE[m.captured.toLowerCase()] - VALUE[m.piece.toLowerCase()] : 0) + (m.promo ? 800 : 0)
+        }))
             .sort((a, b) => b.k - a.k).map(x => x.m);
     }
 
@@ -75,7 +82,7 @@ const ChessAI = (() => {
     function bestMove(state, level = 'medium') {
         const cfg = LEVELS[level] || LEVELS.medium;
         const start = performance.now();
-        const ctx = { stop: () => performance.now() - start > cfg.timeMs, quiescence: level !== 'easy' };
+        const ctx = {stop: () => performance.now() - start > cfg.timeMs, quiescence: level !== 'easy'};
         let root = ordered(Chess.legalMoves(state));
         if (!root.length) return null;
         // Easy level occasionally plays a random move, like a beginner would.
@@ -90,7 +97,7 @@ const ChessAI = (() => {
                 // lifted above the real best move by the noise); without noise a bound is enough.
                 const bound = cfg.noise ? Infinity : -alpha;
                 const score = -negamax(Chess.applyMove(state, m), depth - 1, -Infinity, bound, 1, ctx);
-                scored.push({ m, score: score + (cfg.noise ? (Math.random() * 2 - 1) * cfg.noise : 0) });
+                scored.push({m, score: score + (cfg.noise ? (Math.random() * 2 - 1) * cfg.noise : 0)});
                 if (score > alpha) alpha = score;
                 if (ctx.stop() && depth > 1) break;
             }
@@ -103,5 +110,5 @@ const ChessAI = (() => {
         return Chess.toUci(best);
     }
 
-    return { bestMove, evaluate, LEVELS };
+    return {bestMove, evaluate, LEVELS};
 })();

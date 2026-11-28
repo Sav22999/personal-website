@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saverio.fucina",
+      "sha256_cert_fingerprints": [
+        "71:7D:59:05:17:B6:CD:4D:41:01:FE:38:5A:B9:3A:46:95:E0:DA:E5:7D:04:54:3D:6D:B3:D8:C2:31:85:EB:59"
+      ]
+    }
+  }
+]
